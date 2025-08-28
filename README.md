@@ -75,6 +75,7 @@
 - **GitHub 镜像源(ghfast.top)** - 国内加速镜像
 - **GitHub 镜像源(gh-proxy.com)** - 国内加速镜像  
 - **123云盘源** - 云盘下载，不限速
+- **cloudreve分流** - 感谢Lotus大佬提供的分流，如有兴趣欢迎[去看看Lotus的主页](https://github.com/SummerLotus520/)或[进入荷花的小群](https://qm.qq.com/q/pj7Q9Tmh9K)
 
 ## 💻 选择版本
 
