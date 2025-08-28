@@ -11,22 +11,23 @@
 <!-- 项目状态徽章 -->
 <div align="center">
 
-[![GitHub Issues](https://img.shields.io/github/issues-search/SECTL/SecRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=问题)](https://github.com/SECTL/SecRandom/issues)
-[![最新版本](https://img.shields.io/github/v/release/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=最新正式版)](https://github.com/SECTL/SecRandom/releases/latest)
-[![最新Beta版本](https://img.shields.io/github/v/release/SECTL/SecRandom?include_prereleases&style=for-the-badge&label=测试版)](https://github.com/SECTL/SecRandom/releases/)
+[![议题](https://img.shields.io/github/issues-search/SECTL/SecRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=议题)](https://github.com/SECTL/SecRandom/issues)
+[![最新正式版本](https://img.shields.io/github/v/release/SECTL/SecRandom?style=for-the-badge&color=00b4ab&logo=github&label=最新正式版)](https://github.com/SECTL/SecRandom/releases/latest)
+[![最新版本](https://img.shields.io/github/v/release/SECTL/SecRandom?include_prereleases&style=for-the-badge&color=orange&logo=github&label=测试版)](https://github.com/SECTL/SecRandom/releases/)
 [![上次更新](https://img.shields.io/github/last-commit/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=最后摸鱼时间)](https://github.com/SECTL/SecRandom/commits/master)
-[![下载统计](https://img.shields.io/github/downloads/SECTL/SecRandom/total?style=for-the-badge&color=00b4ab&label=累计下载)](https://github.com/SECTL/SecRandom/releases)
-[![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%EF%BD%9C833875216-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/iWcfaPHn7W)
+[![下载统计](https://img.shields.io/github/downloads/SECTL/SecRandom/total?style=for-the-badge&label=累计下载)](https://github.com/SECTL/SecRandom/releases)
+[![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%EF%BD%9C833875216-blue?style=for-the-badge&logo=QQ&logoColor=white)](https://qm.qq.com/q/iWcfaPHn7W)
 [![bilibili](https://img.shields.io/badge/-UP%E4%B8%BB%EF%BD%9C黎泽懿-%23FB7299?style=for-the-badge&logo=bilibili)](https://space.bilibili.com/520571577)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](https://opensource.org/licenses/GPL-3.0)
+[![License: GPL v3](https://img.shields.io/badge/License-GPL--v3-blue.svg?style=for-the-badge)](https://opensource.org/licenses/GPL-3.0)
+[![Visitors](https://api.visitorbadge.io/api/combined?path=https%3A%2F%2Fgithub.com%2FSECTL%2FSecRandom&countColor=%23263759)](https://visitorbadge.io/status?path=https%3A%2F%2Fgithub.com%2FSECTL%2FSecRandom)
 
 </div>
 
 > [!note]
 > 
-> SecRandom 本体将基于GNU GPLv3协议开源
+> SecRandom 本体将基于 GNU GPLv3 协议开源
 > 
-> GNU GPLv3具有Copyleft特性，也就是说，您可以修改SecRandom的源代码，但是**必须将修改版本同样以GNU GPLv3协议开源**
+> GNU GPLv3 具有 Copyleft 特性，也就是说，您可以修改 SecRandom 的源代码，但是**必须将修改版本同样以 GNU GPLv3 协议开源**
 
 ## 📖 目录
 - [🌈 核心功能](#-核心功能)
@@ -194,7 +195,7 @@
 ## 📞 联系方式
 
 * 📧 [邮箱](mailto:lzy.12@foxmail.com)
-* 👥 [QQ群 833875216](https://qm.qq.com/q/iWcfaPHn7W)
+* 👥 [QQ群 | 833875216](https://qm.qq.com/q/iWcfaPHn7W)
 * 🎥 [B站主页](https://space.bilibili.com/520571577)
 * 🐛 [问题反馈](https://github.com/SECTL/SecRandom/issues)
 
