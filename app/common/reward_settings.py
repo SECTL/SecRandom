@@ -348,6 +348,7 @@ class reward_SettinsCard(GroupHeaderCardWidget):
                         except Exception as e:
                             logger.error(f"删除文件失败: {prize_pools_file}或{history_file}, 错误: {str(e)}")
 
+                list_folder = path_manager.get_resource_path('reward')
                 ensure_dir(list_folder)
                 
                 for prize_pools_name in prize_poolss:
