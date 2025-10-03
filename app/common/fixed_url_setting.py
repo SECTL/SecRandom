@@ -427,6 +427,63 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         self.load_settings()
         self.save_settings()
 
+    # 又臭又长还重复的东西不抽象成函数是抖m吗
+    def _fuckingResetter(self):
+        self.main_url_switch.setChecked(self.default_settings["enable_main_url"])
+        self.settings_url_switch.setChecked(self.default_settings["enable_settings_url"])
+        self.pumping_url_switch.setChecked(self.default_settings["enable_pumping_url"])
+        self.reward_url_switch.setChecked(self.default_settings["enable_reward_url"])
+        self.history_url_switch.setChecked(self.default_settings["enable_history_url"])
+        self.floating_url_switch.setChecked(self.default_settings["enable_floating_url"])
+        self.about_url_switch.setChecked(self.default_settings["enable_about_url"])
+        self.direct_extraction_url_switch.setChecked(self.default_settings["enable_direct_extraction_url"])
+        self.pumping_action_url_switch.setChecked(self.default_settings["enable_pumping_action_url"])
+        self.reward_action_url_switch.setChecked(self.default_settings["enable_reward_action_url"])
+        self.about_action_url_switch.setChecked(self.default_settings["enable_about_action_url"])
+        self.plugin_settings_action_url_switch.setChecked(self.default_settings["enable_plugin_settings_action_url"])
+        
+        # 加载点名Action参数URL独立开关
+        self.pumping_start_url_switch.setChecked(self.default_settings["enable_pumping_start_url"])
+        self.pumping_stop_url_switch.setChecked(self.default_settings["enable_pumping_stop_url"])
+        self.pumping_reset_url_switch.setChecked(self.default_settings["enable_pumping_reset_url"])
+        
+        # 加载抽奖Action参数URL独立开关
+        self.reward_start_url_switch.setChecked(self.default_settings["enable_reward_start_url"])
+        self.reward_stop_url_switch.setChecked(self.default_settings["enable_reward_stop_url"])
+        self.reward_reset_url_switch.setChecked(self.default_settings["enable_reward_reset_url"])
+        
+        # 加载关于界面Action参数URL独立开关
+        self.about_donation_url_switch.setChecked(self.default_settings["enable_about_donation_url"])
+        self.about_contributor_url_switch.setChecked(self.default_settings["enable_about_contributor_url"])
+        
+        # 加载插件设置Action参数URL独立开关
+        self.plugin_settings_open_url_switch.setChecked(self.default_settings["enable_plugin_settings_open_url"])
+
+        # 加载弹窗提醒设置
+        self.main_url_notification_combo.setCurrentIndex(self.default_settings["main_url_notification"])
+        self.settings_url_notification_combo.setCurrentIndex(self.default_settings["settings_url_notification"])
+        self.pumping_url_notification_combo.setCurrentIndex(self.default_settings["pumping_url_notification"])
+        self.reward_url_notification_combo.setCurrentIndex(self.default_settings["reward_url_notification"])
+        self.history_url_notification_combo.setCurrentIndex(self.default_settings["history_url_notification"])
+        self.floating_url_notification_combo.setCurrentIndex(self.default_settings["floating_url_notification"])
+        self.about_url_notification_combo.setCurrentIndex(self.default_settings["about_url_notification"])
+        self.direct_extraction_url_notification_combo.setCurrentIndex(self.default_settings["direct_extraction_url_notification"])
+        self.plugin_settings_url_notification_combo.setCurrentIndex(self.default_settings["plugin_settings_url_notification"])
+        self.pumping_start_url_notification_combo.setCurrentIndex(self.default_settings["pumping_start_url_notification"])
+        self.pumping_stop_url_notification_combo.setCurrentIndex(self.default_settings["pumping_stop_url_notification"])
+        self.pumping_reset_url_notification_combo.setCurrentIndex(self.default_settings["pumping_reset_url_notification"])
+        self.reward_start_url_notification_combo.setCurrentIndex(self.default_settings["reward_start_url_notification"])
+        self.reward_stop_url_notification_combo.setCurrentIndex(self.default_settings["reward_stop_url_notification"])
+        self.reward_reset_url_notification_combo.setCurrentIndex(self.default_settings["reward_reset_url_notification"])
+        self.about_donation_url_notification_combo.setCurrentIndex(self.default_settings["about_donation_url_notification"])
+        self.about_contributor_url_notification_combo.setCurrentIndex(self.default_settings["about_contributor_url_notification"])
+        self.plugin_settings_open_url_notification_combo.setCurrentIndex(self.default_settings["plugin_settings_open_url_notification"])
+    
+        # 加载跳过安全验证设置
+        self.settings_url_skip_security_switch.setChecked(self.default_settings["settings_url_skip_security"])
+        self.floating_url_skip_security_switch.setChecked(self.default_settings["floating_url_skip_security"])
+        self.plugin_settings_open_url_skip_security_switch.setChecked(self.default_settings["plugin_settings_open_url_skip_security"])
+
     def load_settings(self):
         try:
             if path_manager.file_exists(self.settings_file):
@@ -526,118 +583,11 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
 
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
-                self.main_url_switch.setChecked(self.default_settings["enable_main_url"])
-                self.settings_url_switch.setChecked(self.default_settings["enable_settings_url"])
-                self.pumping_url_switch.setChecked(self.default_settings["enable_pumping_url"])
-                self.reward_url_switch.setChecked(self.default_settings["enable_reward_url"])
-                self.history_url_switch.setChecked(self.default_settings["enable_history_url"])
-                self.floating_url_switch.setChecked(self.default_settings["enable_floating_url"])
-                self.about_url_switch.setChecked(self.default_settings["enable_about_url"])
-                self.direct_extraction_url_switch.setChecked(self.default_settings["enable_direct_extraction_url"])
-                self.pumping_action_url_switch.setChecked(self.default_settings["enable_pumping_action_url"])
-                self.reward_action_url_switch.setChecked(self.default_settings["enable_reward_action_url"])
-                self.about_action_url_switch.setChecked(self.default_settings["enable_about_action_url"])
-                self.plugin_settings_action_url_switch.setChecked(self.default_settings["enable_plugin_settings_action_url"])
-                
-                # 加载点名Action参数URL独立开关
-                self.pumping_start_url_switch.setChecked(self.default_settings["enable_pumping_start_url"])
-                self.pumping_stop_url_switch.setChecked(self.default_settings["enable_pumping_stop_url"])
-                self.pumping_reset_url_switch.setChecked(self.default_settings["enable_pumping_reset_url"])
-                
-                # 加载抽奖Action参数URL独立开关
-                self.reward_start_url_switch.setChecked(self.default_settings["enable_reward_start_url"])
-                self.reward_stop_url_switch.setChecked(self.default_settings["enable_reward_stop_url"])
-                self.reward_reset_url_switch.setChecked(self.default_settings["enable_reward_reset_url"])
-                
-                # 加载关于界面Action参数URL独立开关
-                self.about_donation_url_switch.setChecked(self.default_settings["enable_about_donation_url"])
-                self.about_contributor_url_switch.setChecked(self.default_settings["enable_about_contributor_url"])
-                
-                # 加载插件设置Action参数URL独立开关
-                self.plugin_settings_open_url_switch.setChecked(self.default_settings["enable_plugin_settings_open_url"])
-
-                # 加载弹窗提醒设置
-                self.main_url_notification_combo.setCurrentIndex(self.default_settings["main_url_notification"])
-                self.settings_url_notification_combo.setCurrentIndex(self.default_settings["settings_url_notification"])
-                self.pumping_url_notification_combo.setCurrentIndex(self.default_settings["pumping_url_notification"])
-                self.reward_url_notification_combo.setCurrentIndex(self.default_settings["reward_url_notification"])
-                self.history_url_notification_combo.setCurrentIndex(self.default_settings["history_url_notification"])
-                self.floating_url_notification_combo.setCurrentIndex(self.default_settings["floating_url_notification"])
-                self.about_url_notification_combo.setCurrentIndex(self.default_settings["about_url_notification"])
-                self.direct_extraction_url_notification_combo.setCurrentIndex(self.default_settings["direct_extraction_url_notification"])
-                self.plugin_settings_url_notification_combo.setCurrentIndex(self.default_settings["plugin_settings_url_notification"])
-                self.pumping_start_url_notification_combo.setCurrentIndex(self.default_settings["pumping_start_url_notification"])
-                self.pumping_stop_url_notification_combo.setCurrentIndex(self.default_settings["pumping_stop_url_notification"])
-                self.pumping_reset_url_notification_combo.setCurrentIndex(self.default_settings["pumping_reset_url_notification"])
-                self.reward_start_url_notification_combo.setCurrentIndex(self.default_settings["reward_start_url_notification"])
-                self.reward_stop_url_notification_combo.setCurrentIndex(self.default_settings["reward_stop_url_notification"])
-                self.reward_reset_url_notification_combo.setCurrentIndex(self.default_settings["reward_reset_url_notification"])
-                self.about_donation_url_notification_combo.setCurrentIndex(self.default_settings["about_donation_url_notification"])
-                self.about_contributor_url_notification_combo.setCurrentIndex(self.default_settings["about_contributor_url_notification"])
-                self.plugin_settings_open_url_notification_combo.setCurrentIndex(self.default_settings["plugin_settings_open_url_notification"])
-                
-                # 加载跳过安全验证设置
-                self.settings_url_skip_security_switch.setChecked(self.default_settings["settings_url_skip_security"])
-                self.floating_url_skip_security_switch.setChecked(self.default_settings["floating_url_skip_security"])
-                self.plugin_settings_open_url_skip_security_switch.setChecked(self.default_settings["plugin_settings_open_url_skip_security"])
-                
+                self._fuckingResetter()
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
-            self.main_url_switch.setChecked(self.default_settings["enable_main_url"])
-            self.settings_url_switch.setChecked(self.default_settings["enable_settings_url"])
-            self.pumping_url_switch.setChecked(self.default_settings["enable_pumping_url"])
-            self.reward_url_switch.setChecked(self.default_settings["enable_reward_url"])
-            self.history_url_switch.setChecked(self.default_settings["enable_history_url"])
-            self.floating_url_switch.setChecked(self.default_settings["enable_floating_url"])
-            self.about_url_switch.setChecked(self.default_settings["enable_about_url"])
-            self.direct_extraction_url_switch.setChecked(self.default_settings["enable_direct_extraction_url"])
-            self.pumping_action_url_switch.setChecked(self.default_settings["enable_pumping_action_url"])
-            self.reward_action_url_switch.setChecked(self.default_settings["enable_reward_action_url"])
-            self.about_action_url_switch.setChecked(self.default_settings["enable_about_action_url"])
-            self.plugin_settings_action_url_switch.setChecked(self.default_settings["enable_plugin_settings_action_url"])
-            
-            # 加载点名Action参数URL独立开关
-            self.pumping_start_url_switch.setChecked(self.default_settings["enable_pumping_start_url"])
-            self.pumping_stop_url_switch.setChecked(self.default_settings["enable_pumping_stop_url"])
-            self.pumping_reset_url_switch.setChecked(self.default_settings["enable_pumping_reset_url"])
-            
-            # 加载抽奖Action参数URL独立开关
-            self.reward_start_url_switch.setChecked(self.default_settings["enable_reward_start_url"])
-            self.reward_stop_url_switch.setChecked(self.default_settings["enable_reward_stop_url"])
-            self.reward_reset_url_switch.setChecked(self.default_settings["enable_reward_reset_url"])
-            
-            # 加载关于界面Action参数URL独立开关
-            self.about_donation_url_switch.setChecked(self.default_settings["enable_about_donation_url"])
-            self.about_contributor_url_switch.setChecked(self.default_settings["enable_about_contributor_url"])
-            
-            # 加载插件设置Action参数URL独立开关
-            self.plugin_settings_open_url_switch.setChecked(self.default_settings["enable_plugin_settings_open_url"])
-
-            # 加载弹窗提醒设置
-            self.main_url_notification_combo.setCurrentIndex(self.default_settings["main_url_notification"])
-            self.settings_url_notification_combo.setCurrentIndex(self.default_settings["settings_url_notification"])
-            self.pumping_url_notification_combo.setCurrentIndex(self.default_settings["pumping_url_notification"])
-            self.reward_url_notification_combo.setCurrentIndex(self.default_settings["reward_url_notification"])
-            self.history_url_notification_combo.setCurrentIndex(self.default_settings["history_url_notification"])
-            self.floating_url_notification_combo.setCurrentIndex(self.default_settings["floating_url_notification"])
-            self.about_url_notification_combo.setCurrentIndex(self.default_settings["about_url_notification"])
-            self.direct_extraction_url_notification_combo.setCurrentIndex(self.default_settings["direct_extraction_url_notification"])
-            self.plugin_settings_url_notification_combo.setCurrentIndex(self.default_settings["plugin_settings_url_notification"])
-            self.pumping_start_url_notification_combo.setCurrentIndex(self.default_settings["pumping_start_url_notification"])
-            self.pumping_stop_url_notification_combo.setCurrentIndex(self.default_settings["pumping_stop_url_notification"])
-            self.pumping_reset_url_notification_combo.setCurrentIndex(self.default_settings["pumping_reset_url_notification"])
-            self.reward_start_url_notification_combo.setCurrentIndex(self.default_settings["reward_start_url_notification"])
-            self.reward_stop_url_notification_combo.setCurrentIndex(self.default_settings["reward_stop_url_notification"])
-            self.reward_reset_url_notification_combo.setCurrentIndex(self.default_settings["reward_reset_url_notification"])
-            self.about_donation_url_notification_combo.setCurrentIndex(self.default_settings["about_donation_url_notification"])
-            self.about_contributor_url_notification_combo.setCurrentIndex(self.default_settings["about_contributor_url_notification"])
-            self.plugin_settings_open_url_notification_combo.setCurrentIndex(self.default_settings["plugin_settings_open_url_notification"])
-        
-            # 加载跳过安全验证设置
-            self.settings_url_skip_security_switch.setChecked(self.default_settings["settings_url_skip_security"])
-            self.floating_url_skip_security_switch.setChecked(self.default_settings["floating_url_skip_security"])
-            self.plugin_settings_open_url_skip_security_switch.setChecked(self.default_settings["plugin_settings_open_url_skip_security"])
+            self._fuckingResetter()
 
     def save_settings(self):
         # 先读取现有设置

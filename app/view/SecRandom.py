@@ -883,29 +883,19 @@ class Window(MSFluentWindow):
         
         # 通用界面创建函数
         def _create_interface(attr_name, class_type, sidebar_key, default_value, default_on_error=None, object_name=None, create_on_value_not=2, log_name=None, create_on_error=True):
-            try:
-                settings_path = path_manager.get_settings_path('custom_settings.json')
-                with open_file(settings_path, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    sidebar_settings = settings.get('sidebar', {})
-                    value = sidebar_settings.get(sidebar_key, default_value)
-                    if value != create_on_value_not:
-                        setattr(self, attr_name, class_type(self))
-                        if object_name:
-                            getattr(self, attr_name).setObjectName(object_name)
-                        logger.debug(f"{log_name or attr_name}界面已创建")
-                    else:
-                        logger.debug(f"'{log_name or attr_name}'界面已设置为不创建")
-                        setattr(self, attr_name, None)
-            except Exception as e:
-                logger.error(f"读取{log_name or attr_name}界面设置失败: {e}, 默认{'创建' if create_on_error else '不创建'}界面")
-                if create_on_error:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                value = sidebar_settings.get(sidebar_key, default_value)
+                if value != create_on_value_not:
                     setattr(self, attr_name, class_type(self))
                     if object_name:
                         getattr(self, attr_name).setObjectName(object_name)
                     logger.debug(f"{log_name or attr_name}界面已创建")
                 else:
-                    setattr(self, attr_name, default_on_error)
+                    logger.debug(f"'{log_name or attr_name}'界面已设置为不创建")
+                    setattr(self, attr_name, None)
 
         # 创建各个子界面
         # 抽象成函数，提升可读性喵~
@@ -2155,11 +2145,8 @@ class Window(MSFluentWindow):
             self.switchTo(self.pumping_peopleInterface)
             
             # 尝试调用点名界面的开始方法
-            if hasattr(self.pumping_peopleInterface, 'start_draw'):
-                self.pumping_peopleInterface.start_draw()
-                logger.info("抽选功能已成功启动")
-            else:
-                logger.warning("点名界面缺少start_draw方法")
+            self.pumping_peopleInterface.start_draw()
+            logger.info("抽选功能已成功启动")
         except Exception as e:
             logger.error(f"启动抽选功能失败: {e}")
     
@@ -2192,11 +2179,8 @@ class Window(MSFluentWindow):
             self.switchTo(self.pumping_peopleInterface)
             
             # 尝试调用点名界面的停止方法
-            if hasattr(self.pumping_peopleInterface, '_stop_animation') and self.pumping_peopleInterface.is_animating:
-                self.pumping_peopleInterface._stop_animation()
-                logger.info("抽选功能已成功停止")
-            else:
-                logger.warning("点名界面未在动画中或缺少_stop_animation方法")
+            self.pumping_peopleInterface._stop_animation()
+            logger.info("抽选功能已成功停止")
         except Exception as e:
             logger.error(f"停止抽选功能失败: {e}")
     
@@ -2215,11 +2199,8 @@ class Window(MSFluentWindow):
             # self.switchTo(self.pumping_peopleInterface)
             
             # 尝试调用点名界面的重置方法
-            if hasattr(self.pumping_peopleInterface, '_reset_to_initial_state'):
-                self.pumping_peopleInterface._reset_to_initial_state()
-                logger.info("抽选状态已成功重置")
-            else:
-                logger.warning("点名界面缺少_reset_to_initial_state方法")
+            self.pumping_peopleInterface._reset_to_initial_state()
+            logger.info("抽选状态已成功重置")
         except Exception as e:
             logger.error(f"重置抽选状态失败: {e}")
     
@@ -2252,11 +2233,8 @@ class Window(MSFluentWindow):
             self.switchTo(self.pumping_rewardInterface)
             
             # 尝试调用抽奖界面的开始方法
-            if hasattr(self.pumping_rewardInterface, 'start_draw'):
-                self.pumping_rewardInterface.start_draw()
-                logger.info("抽奖功能已成功启动")
-            else:
-                logger.warning("抽奖界面缺少start_draw方法")
+            self.pumping_rewardInterface.start_draw()
+            logger.info("抽奖功能已成功启动")
         except Exception as e:
             logger.error(f"启动抽奖功能失败: {e}")
     
@@ -2289,11 +2267,8 @@ class Window(MSFluentWindow):
             self.switchTo(self.pumping_rewardInterface)
             
             # 尝试调用抽奖界面的停止方法
-            if hasattr(self.pumping_rewardInterface, '_stop_animation') and self.pumping_rewardInterface.is_animating:
-                self.pumping_rewardInterface._stop_animation()
-                logger.info("抽奖功能已成功停止")
-            else:
-                logger.warning("抽奖界面未在动画中或缺少_stop_animation方法")
+            self.pumping_rewardInterface._stop_animation()
+            logger.info("抽奖功能已成功停止")
         except Exception as e:
             logger.error(f"停止抽奖功能失败: {e}")
     
@@ -2302,21 +2277,9 @@ class Window(MSFluentWindow):
         通过URL参数重置抽奖状态，检查当前界面并调用相应的重置方法"""
         logger.info("正在重置抽奖状态")
         try:
-            # # 确保主窗口可见
-            # if not self.isVisible():
-            #     self.show()
-            #     self.activateWindow()
-            #     self.raise_()
-            
-            # # 切换到抽奖界面
-            # self.switchTo(self.pumping_rewardInterface)
-            
             # 尝试调用抽奖界面的重置方法
-            if hasattr(self.pumping_rewardInterface, '_reset_to_initial_state'):
-                self.pumping_rewardInterface._reset_to_initial_state()
-                logger.info("抽奖状态已成功重置")
-            else:
-                logger.warning("抽奖界面缺少_reset_to_initial_state方法")
+            self.pumping_rewardInterface._reset_to_initial_state()
+            logger.info("抽奖状态已成功重置")
         except Exception as e:
             logger.error(f"重置抽奖状态失败: {e}")
 
@@ -2370,15 +2333,6 @@ class Window(MSFluentWindow):
         """通过URL参数打开捐赠支持对话框
         通过URL参数打开捐赠支持对话框，显示捐赠支持对话框"""
         try:
-            # # 确保主窗口可见
-            # if not self.isVisible():
-            #     self.show()
-            #     self.activateWindow()
-            #     self.raise_()
-            
-            # # 切换到关于界面
-            # self.switchTo(self.about_settingInterface)
-            
             # 打开捐赠支持对话框
             donation_dialog = DonationDialog(self)
             donation_dialog.exec_()
@@ -2390,15 +2344,6 @@ class Window(MSFluentWindow):
         """通过URL参数打开贡献者对话框
         通过URL参数打开贡献者对话框，显示贡献者对话框"""
         try:
-            # # 确保主窗口可见
-            # if not self.isVisible():
-            #     self.show()
-            #     self.activateWindow()
-            #     self.raise_()
-            
-            # # 切换到关于界面
-            # self.switchTo(self.about_settingInterface)
-            
             # 打开贡献者对话框
             contributor_dialog = ContributorDialog(self)
             contributor_dialog.exec_()
