@@ -1085,7 +1085,7 @@ class Window(MSFluentWindow):
                 # 点击历史记录导航项时切换到历史记录界面
                 history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
 
-        self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
+    # 移除关于按钮，不添加到主界面导航栏
 
         try:
             settings_side = sidebar_settings.get('show_settings_icon', 1)
