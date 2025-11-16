@@ -171,7 +171,7 @@ If you find SecRandom helpful, you're welcome to support our development work!
 
 * 📧 [Email](mailto:lzy.12@foxmail.com)
 * 👥 [QQ Group 833875216](https://qm.qq.com/q/iWcfaPHn7W)
-* #⃣️ [QQ Channel](https://pd.qq.com/s/4x5dafd34?b=9)
+* 💬 [QQ Channel](https://pd.qq.com/s/4x5dafd34?b=9)
 * 🎥 [Bilibili Homepage](https://space.bilibili.com/520571577)
 * 🐛 [Issue Report](https://github.com/SECTL/SecRandom/issues)
 

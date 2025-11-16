@@ -170,7 +170,7 @@ SecRandom的公平抽取的實作基於動態權重系統，透過多個方面�
 
 * 📧 [郵箱](mailto:lzy.12@foxmail.com)
 * 👥 [QQ群 833875216](https://qm.qq.com/q/iWcfaPHn7W)
-* #⃣️ [QQ頻道](https://pd.qq.com/s/4x5dafd34?b=9)
+* 💬 [QQ頻道](https://pd.qq.com/s/4x5dafd34?b=9)
 * 🎥 [B站主頁](https://space.bilibili.com/520571577)
 * 🐛 [問題回饋](https://github.com/SECTL/SecRandom/issues)
 
