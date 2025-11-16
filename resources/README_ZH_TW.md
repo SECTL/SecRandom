@@ -32,7 +32,7 @@
 > SecRandom 本體將基於GNU GPLv3協議開源
 >
 > GNU GPLv3具有Copyleft特性，也就是說，您可以修改SecRandom的原始碼，但是**必須將修改版本同樣以GNU GPLv3協議開源**
-
+---------
 > [!note]
 >
 > **SecRandom v2** 將會在 2025/12/14 (GMT +8:00 中國標準時間) 左右 發布！

@@ -31,7 +31,7 @@
 > SecRandom will be open source under the GNU GPLv3 license
 >
 > GNU GPLv3 has Copyleft characteristics, which means you can modify the source code of SecRandom, but **must also open source the modified version under the GNU GPLv3 license**
-
+---------
 > [!note]
 >
 > **SecRandom v2** will be released around 2025/12/14 (GMT +8:00 China Standard Time)!
