@@ -1,0 +1,50 @@
+# Linux 依赖配置 - 支持 Python 3.8.10
+
+# === GUI框架 ===
+PySide6==6.7.1
+PySide6-Qt6==6.7.3
+PySide6-Fluent-Widgets==1.9.1
+PySide6-Frameless-Window==0.7.4
+darkdetect==0.8.0
+
+# === 核心库 ===
+asyncio~=3.4.3
+loguru==0.7.3
+colorama==0.4.6
+packaging==25.0
+
+# === 数据处理 ===
+numpy~=1.24.4
+pandas~=2.0.3
+pillow~=10.4.0
+openpyxl==3.1.5
+
+# === 网络与通信 ===
+requests==2.32.4
+edge-tts==7.0.2
+
+# === 音频处理 ===
+pyttsx3==2.98
+sounddevice==0.5.2
+soundfile==0.13.1
+
+# === 系统工具 ===
+psutil~=7.0.0
+keyboard==0.13.5
+
+# === 加密与安全 ===
+pyotp==2.9.0
+pycryptodome==3.23.0
+
+# === 二维码处理 ===
+pyqrcode~=1.2.1
+pypng~=0.20220715.0
+colorthief==0.2.1
+
+# === Linux特定依赖 ===
+# Linux音频控制替代pycaw
+pulsectl==24.8.0; platform_system == "Linux"
+
+# === 其他依赖 ===
+sip~=6.8.6
+jinja2~=3.1.6

@@ -3,18 +3,9 @@
 # ==================================================
 
 from loguru import logger
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
-from qfluentwidgets import *
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+from qfluentwidgets import SearchLineEdit
 
-from app.tools.variable import *
-from app.tools.path_utils import *
-from app.tools.personalised import *
-from app.tools.settings_access import *
-from app.tools.settings_default import *
-from app.Language.obtain_language import *
 
 # ==================================================
 # 主页
@@ -54,5 +45,5 @@ class home(QWidget):
 
     def on_search(self, text):
         """搜索框的回调函数"""
-        logger.info(f"搜索内容: {text}")
+        logger.debug(f"搜索内容: {text}")
         # 这里可以添加搜索功能的实现

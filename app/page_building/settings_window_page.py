@@ -1,13 +1,15 @@
 # 导入库
-from PyQt6.QtWidgets import QFrame
+from PySide6.QtWidgets import QFrame
 
 # 导入页面模板
 from app.page_building.page_template import PageTemplate, PivotPageTemplate
 
 # 导入自定义页面内容组件
-from app.view.settings.home import home
-from app.view.settings.basic_settings import basic_settings
-from app.view.settings.about import about
+# 为了延迟导入，传入字符串路径，实际类将在 PageTemplate.create_content 动态导入
+# content path format: 'module.submodule:ClassName' 或 'module.submodule.ClassName'
+HOME_PATH = "app.view.settings.home:home"
+BASIC_SETTINGS_PATH = "app.view.settings.basic_settings:basic_settings"
+ABOUT_PATH = "app.view.settings.about:about"
 
 # 导入默认设置
 from app.tools.settings_default import *
@@ -18,14 +20,14 @@ class home_page(PageTemplate):
     """创建主页页面"""
 
     def __init__(self, parent: QFrame = None):
-        super().__init__(content_widget_class=home, parent=parent)
+        super().__init__(content_widget_class=HOME_PATH, parent=parent)
 
 
 class basic_settings_page(PageTemplate):
     """创建基础设置页面"""
 
     def __init__(self, parent: QFrame = None):
-        super().__init__(content_widget_class=basic_settings, parent=parent)
+        super().__init__(content_widget_class=BASIC_SETTINGS_PATH, parent=parent)
 
 
 class list_management_page(PivotPageTemplate):
@@ -140,8 +142,12 @@ class history_page(PivotPageTemplate):
     def __init__(self, parent: QFrame = None):
         page_config = {
             "history_management": get_content_name_async("history_management", "title"),
-            "roll_call_history_table": get_content_name_async("roll_call_history_table", "title"),
-            "lottery_history_table": get_content_name_async("lottery_history_table", "title")
+            "roll_call_history_table": get_content_name_async(
+                "roll_call_history_table", "title"
+            ),
+            "lottery_history_table": get_content_name_async(
+                "lottery_history_table", "title"
+            ),
         }
         super().__init__(page_config, parent)
         self.set_base_path("app.view.settings.history")
@@ -164,4 +170,4 @@ class about_page(PageTemplate):
     """创建关于页面"""
 
     def __init__(self, parent: QFrame = None):
-        super().__init__(content_widget_class=about, parent=parent)
+        super().__init__(content_widget_class=ABOUT_PATH, parent=parent)

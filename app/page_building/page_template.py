@@ -2,11 +2,14 @@
 # 导入库
 # ==================================================
 import importlib
+import time
 
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
+from loguru import logger
+
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
 from qfluentwidgets import *
 
 from app.tools.variable import *
@@ -52,11 +55,16 @@ class PageTemplate(QFrame):
                 background-color: transparent;
             }
         """)
-        QScroller.grabGesture(self.scroll_area_personal.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture)
+        QScroller.grabGesture(
+            self.scroll_area_personal.viewport(),
+            QScroller.ScrollerGestureType.LeftMouseButtonGesture,
+        )
 
         self.inner_frame_personal = QWidget(self.scroll_area_personal)
         self.inner_layout_personal = QVBoxLayout(self.inner_frame_personal)
-        self.inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        self.inner_layout_personal.setAlignment(
+            Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop
+        )
 
         self.scroll_area_personal.setWidget(self.inner_frame_personal)
 
@@ -73,9 +81,37 @@ class PageTemplate(QFrame):
         if not self.ui_created or self.content_created or not self.content_widget_class:
             return
 
-        self.contentWidget = self.content_widget_class(self)
-        self.inner_layout_personal.addWidget(self.contentWidget)
-        self.content_created = True
+        # 支持传入三种类型的 content_widget_class:
+        # 1) 直接的类 / 可调用对象 -> content_widget_class(self)
+        # 2) 字符串形式的导入路径，如 'app.view.settings.home:home' 或 'app.view.settings.home.home'
+        #    -> 动态导入模块并获取类
+        start = time.perf_counter()
+        try:
+            content_cls = None
+            content_name = None
+            if isinstance(self.content_widget_class, str):
+                path = self.content_widget_class
+                content_name = path
+                if ":" in path:
+                    module_name, attr = path.split(":", 1)
+                else:
+                    module_name, attr = path.rsplit(".", 1)
+                module = importlib.import_module(module_name)
+                content_cls = getattr(module, attr)
+            else:
+                content_cls = self.content_widget_class
+                content_name = getattr(content_cls, "__name__", str(content_cls))
+
+            # 实例化并添加到布局
+            self.contentWidget = content_cls(self)
+            self.inner_layout_personal.addWidget(self.contentWidget)
+            self.content_created = True
+
+            elapsed = time.perf_counter() - start
+            logger.debug(f"创建内容组件 {content_name} 耗时: {elapsed:.3f}s")
+        except Exception as e:
+            elapsed = time.perf_counter() - start
+            logger.error(f"创建内容组件失败 ({elapsed:.3f}s): {e}")
 
     def create_empty_content(self, message="该页面正在开发中，敬请期待！"):
         """创建空页面内容"""
@@ -112,18 +148,19 @@ class PageTemplate(QFrame):
     def remove_instance(cls, content_widget_class=None, parent=None):
         """移除特定实例"""
         if content_widget_class is None:
-            content_class_name = 'None'
+            content_class_name = "None"
         else:
-            if hasattr(content_widget_class, '__name__'):
+            if hasattr(content_widget_class, "__name__"):
                 content_class_name = content_widget_class.__name__
             else:
                 content_class_name = str(type(content_widget_class).__name__)
 
-        parent_id = id(parent) if parent else 'None'
+        parent_id = id(parent) if parent else "None"
         instance_key = f"{cls.__name__}_{content_class_name}_{parent_id}"
 
         if instance_key in cls._instances:
             del cls._instances[instance_key]
+
 
 class PivotPageTemplate(QFrame):
     """Pivot 导航页面模板类，支持动态加载不同的页面组件"""
@@ -216,12 +253,16 @@ class PivotPageTemplate(QFrame):
                 background-color: transparent;
             }
         """)
-        QScroller.grabGesture(scroll_area.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture)
+        QScroller.grabGesture(
+            scroll_area.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture
+        )
 
         # 创建内部框架
         inner_frame = QWidget(scroll_area)
         inner_layout = QVBoxLayout(inner_frame)
-        inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        inner_layout.setAlignment(
+            Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop
+        )
 
         scroll_area.setWidget(inner_frame)
         scroll_area.setObjectName(page_name)
@@ -233,16 +274,27 @@ class PivotPageTemplate(QFrame):
         self.pivot.addItem(
             routeKey=page_name,
             text=display_name,
-            onClick=lambda: self.switch_to_page(page_name)
+            onClick=lambda: self.switch_to_page(page_name),
         )
 
         # 存储滑动区域引用
         self.pages[page_name] = scroll_area
 
         # 延迟加载实际页面组件
-        QTimer.singleShot(0, lambda: self._load_page_content(page_name, display_name, scroll_area, inner_layout))
+        QTimer.singleShot(
+            0,
+            lambda: self._load_page_content(
+                page_name, display_name, scroll_area, inner_layout
+            ),
+        )
 
-    def _load_page_content(self, page_name: str, display_name: str, scroll_area: QScrollArea, inner_layout: QVBoxLayout):
+    def _load_page_content(
+        self,
+        page_name: str,
+        display_name: str,
+        scroll_area: QScrollArea,
+        inner_layout: QVBoxLayout,
+    ):
         """
         后台加载页面内容，避免堵塞进程
 
@@ -254,6 +306,7 @@ class PivotPageTemplate(QFrame):
         """
         try:
             # 动态导入页面组件
+            start = time.perf_counter()
             module = importlib.import_module(f"{self.base_path}.{page_name}")
             content_widget_class = getattr(module, page_name)
 
@@ -262,10 +315,18 @@ class PivotPageTemplate(QFrame):
             widget.setObjectName(page_name)
 
             # 清除加载提示
-            inner_layout.removeItem(inner_layout.itemAt(0))
+            if inner_layout.count() > 0:
+                item = inner_layout.itemAt(0)
+                if item:
+                    inner_layout.removeItem(item)
+                    if item.widget():
+                        item.widget().deleteLater()
 
             # 添加实际内容到内部布局
             inner_layout.addWidget(widget)
+
+            elapsed = time.perf_counter() - start
+            logger.debug(f"加载页面组件 {page_name} 耗时: {elapsed:.3f}s")
 
             # 如果当前页面就是正在加载的页面，确保滑动区域是当前可见的
             if self.current_page == page_name:
@@ -275,7 +336,12 @@ class PivotPageTemplate(QFrame):
             print(f"无法导入页面组件 {page_name}: {e}")
 
             # 清除加载提示
-            inner_layout.removeItem(inner_layout.itemAt(0))
+            if inner_layout.count() > 0:
+                item = inner_layout.itemAt(0)
+                if item:
+                    inner_layout.removeItem(item)
+                    if item.widget():
+                        item.widget().deleteLater()
 
             # 创建错误页面
             error_widget = QWidget()
@@ -299,11 +365,6 @@ class PivotPageTemplate(QFrame):
             # 如果当前页面就是正在加载的页面，确保滑动区域是当前可见的
             if self.current_page == page_name:
                 self.stacked_widget.setCurrentWidget(scroll_area)
-
-            # 删除占位符
-            placeholder_widget = inner_layout.itemAt(0).widget()
-            if placeholder_widget:
-                placeholder_widget.deleteLater()
 
     def switch_to_page(self, page_name: str):
         """切换到指定页面"""

@@ -1,19 +1,21 @@
 # ==================================================
 # 导入库
 # ==================================================
-from loguru import logger
-from PyQt6.QtCore import QFileSystemWatcher, QTimer
-from qfluentwidgets import GroupHeaderCardWidget, PushButton, ComboBox
 
-from app.tools.path_utils import get_path
-from app.tools.settings_access import readme_settings_async, update_settings
-from app.tools.personalised import get_theme_icon
-from app.Language.obtain_language import (
-    get_content_name_async,
-    get_content_description_async,
-    get_content_pushbutton_name_async,
-)
-from app.tools.list import get_pool_name_list
+from loguru import logger
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
+from qfluentwidgets import *
+
+from app.tools.variable import *
+from app.tools.path_utils import *
+from app.tools.personalised import *
+from app.tools.settings_default import *
+from app.tools.settings_access import *
+from app.Language.obtain_language import *
+from app.tools.list import *
 
 
 # ==================================================
@@ -27,7 +29,7 @@ class lottery_list(GroupHeaderCardWidget):
 
         # 设置班级名称按钮
         self.pool_name_button = PushButton(
-            get_content_pushbutton_name_async("lottery_list", "set_pool_name")
+            get_content_name_async("lottery_list", "set_pool_name")
         )
         self.pool_name_button.clicked.connect(lambda: self.set_pool_name())
 
@@ -50,19 +52,19 @@ class lottery_list(GroupHeaderCardWidget):
 
         # 导入奖品名单按钮
         self.import_prize_button = PushButton(
-            get_content_pushbutton_name_async("lottery_list", "import_prize_name")
+            get_content_name_async("lottery_list", "import_prize_name")
         )
         self.import_prize_button.clicked.connect(lambda: self.import_prize_name())
 
         # 奖品设置按钮
         self.prize_setting_button = PushButton(
-            get_content_pushbutton_name_async("lottery_list", "prize_setting")
+            get_content_name_async("lottery_list", "prize_setting")
         )
         self.prize_setting_button.clicked.connect(lambda: self.prize_setting())
 
         # 奖品权重设置按钮
         self.prize_weight_setting_button = PushButton(
-            get_content_pushbutton_name_async("lottery_list", "prize_weight_setting")
+            get_content_name_async("lottery_list", "prize_weight_setting")
         )
         self.prize_weight_setting_button.clicked.connect(
             lambda: self.prize_weight_setting()
@@ -70,7 +72,7 @@ class lottery_list(GroupHeaderCardWidget):
 
         # 导出奖品名单按钮
         self.export_prize_button = PushButton(
-            get_content_pushbutton_name_async("lottery_list", "export_prize_name")
+            get_content_name_async("lottery_list", "export_prize_name")
         )
         self.export_prize_button.clicked.connect(lambda: self.export_prize_name())
 

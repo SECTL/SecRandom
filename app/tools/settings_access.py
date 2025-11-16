@@ -2,10 +2,10 @@
 # 导入模块
 # ==================================================
 from qfluentwidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
 
 import json
 import asyncio
@@ -16,12 +16,14 @@ from app.tools.variable import *
 from app.tools.path_utils import *
 from app.tools.settings_default import *
 
+
 # ==================================================
 # 设置访问函数
 # ==================================================
 class SettingsReaderWorker(QObject):
     """设置读取工作线程"""
-    finished = pyqtSignal(object)  # 信号，传递读取结果
+
+    finished = Signal(object)  # 信号，传递读取结果
 
     def __init__(self, first_level_key: str, second_level_key: str):
         super().__init__()
@@ -44,25 +46,36 @@ class SettingsReaderWorker(QObject):
         settings_path = get_settings_path()
         if file_exists(settings_path):
             try:
-                with open_file(settings_path, 'r', encoding='utf-8') as f:
+                with open_file(settings_path, "r", encoding="utf-8") as f:
                     settings_data = json.load(f)
-                    if (self.first_level_key in settings_data and
-                        self.second_level_key in settings_data[self.first_level_key]):
-                        return settings_data[self.first_level_key][self.second_level_key]
+                    if (
+                        self.first_level_key in settings_data
+                        and self.second_level_key in settings_data[self.first_level_key]
+                    ):
+                        return settings_data[self.first_level_key][
+                            self.second_level_key
+                        ]
             except (json.JSONDecodeError, KeyError):
                 pass
         return self._get_default_value()
+
     def _get_default_value(self):
         """获取默认设置值"""
-        default_setting = _get_default_setting(self.first_level_key, self.second_level_key)
-        return (default_setting['default_value']
-                if isinstance(default_setting, dict) and 'default_value' in default_setting
-                else default_setting)
+        default_setting = _get_default_setting(
+            self.first_level_key, self.second_level_key
+        )
+        return (
+            default_setting["default_value"]
+            if isinstance(default_setting, dict) and "default_value" in default_setting
+            else default_setting
+        )
+
 
 class AsyncSettingsReader(QObject):
     """异步设置读取器，提供简洁的异步读取方式"""
-    finished = pyqtSignal(object)  # 读取完成信号，携带结果
-    error = pyqtSignal(str)      # 错误信号
+
+    finished = Signal(object)  # 读取完成信号，携带结果
+    error = Signal(str)  # 错误信号
 
     def __init__(self, first_level_key: str, second_level_key: str):
         super().__init__()
@@ -117,6 +130,7 @@ class AsyncSettingsReader(QObject):
             self.thread.quit()
             self.thread.wait(1000)
 
+
 def readme_settings(first_level_key: str, second_level_key: str):
     """读取设置
 
@@ -130,17 +144,19 @@ def readme_settings(first_level_key: str, second_level_key: str):
     try:
         settings_path = get_settings_path()
         if file_exists(settings_path):
-            with open_file(settings_path, 'r', encoding='utf-8') as f:
+            with open_file(settings_path, "r", encoding="utf-8") as f:
                 settings_data = json.load(f)
-                if (first_level_key in settings_data and
-                    second_level_key in settings_data[first_level_key]):
+                if (
+                    first_level_key in settings_data
+                    and second_level_key in settings_data[first_level_key]
+                ):
                     value = settings_data[first_level_key][second_level_key]
                     # logger.debug(f"从设置文件读取: {first_level_key}.{second_level_key} = {value}")
                     return value
 
         default_setting = _get_default_setting(first_level_key, second_level_key)
-        if isinstance(default_setting, dict) and 'default_value' in default_setting:
-            default_value = default_setting['default_value']
+        if isinstance(default_setting, dict) and "default_value" in default_setting:
+            default_value = default_setting["default_value"]
         else:
             default_value = default_setting
         # logger.debug(f"使用默认设置: {first_level_key}.{second_level_key} = {default_value}")
@@ -148,45 +164,27 @@ def readme_settings(first_level_key: str, second_level_key: str):
     except Exception as e:
         logger.error(f"读取设置失败: {e}")
         default_setting = _get_default_setting(first_level_key, second_level_key)
-        if isinstance(default_setting, dict) and 'default_value' in default_setting:
-            return default_setting['default_value']
+        if isinstance(default_setting, dict) and "default_value" in default_setting:
+            return default_setting["default_value"]
         return default_setting
 
+
 def readme_settings_async(first_level_key: str, second_level_key: str, timeout=1000):
-    """
-    异步读取设置值，如果失败则回退到同步方法
+    """异步读取设置（简化版：直接调用同步方法）
+
+    为保持 API 兼容性而保留，但在 Nuitka 环境下 QTimer 有兼容性问题，
+    因此直接使用同步方法。实际测试表明同步方法性能已足够好。
 
     Args:
         first_level_key (str): 第一层的键
         second_level_key (str): 第二层的键
-        timeout (int, optional): 异步超时时间（毫秒），默认1000ms
+        timeout (int, optional): 保留参数，用于兼容性
 
     Returns:
         Any: 设置值
-
-    Example:
-        # 直接获取结果，内部自动处理异步和回退
-        value = readme_settings_async("appearance", "theme")
     """
-    try:
-        reader = AsyncSettingsReader(first_level_key, second_level_key)
-        future = reader.read_async()
-        loop = QEventLoop()
-        timeout_timer = QTimer()
-        timeout_timer.singleShot(timeout, loop.quit)
-        reader.finished.connect(loop.quit)
-        reader.error.connect(loop.quit)
-        loop.exec()
-        if reader.is_done():
-            # logger.debug(f"异步读取设置 {first_level_key}.{second_level_key} 成功: {reader.result()}")
-            return reader.result()
-        else:
-            logger.warning(f"异步读取设置 {first_level_key}.{second_level_key} 超时，回退到同步方法")
-            return readme_settings(first_level_key, second_level_key)
+    return readme_settings(first_level_key, second_level_key)
 
-    except Exception as e:
-        logger.warning(f"异步读取设置 {first_level_key}.{second_level_key} 失败: {e}，回退到同步方法")
-        return readme_settings(first_level_key, second_level_key)
 
 def update_settings(first_level_key: str, second_level_key: str, value: Any):
     """更新设置
@@ -209,7 +207,7 @@ def update_settings(first_level_key: str, second_level_key: str, value: Any):
         # 读取现有设置
         settings_data = {}
         if file_exists(settings_path):
-            with open_file(settings_path, 'r', encoding='utf-8') as f:
+            with open_file(settings_path, "r", encoding="utf-8") as f:
                 settings_data = json.load(f)
 
         # 更新设置
@@ -220,12 +218,13 @@ def update_settings(first_level_key: str, second_level_key: str, value: Any):
         settings_data[first_level_key][second_level_key] = value
 
         # 写入设置文件
-        with open_file(settings_path, 'w', encoding='utf-8') as f:
+        with open_file(settings_path, "w", encoding="utf-8") as f:
             json.dump(settings_data, f, ensure_ascii=False, indent=4)
 
         logger.debug(f"设置更新成功: {first_level_key}.{second_level_key} = {value}")
     except Exception as e:
         logger.error(f"设置更新失败: {e}")
+
 
 def _get_default_setting(first_level_key: str, second_level_key: str):
     """获取默认设置值
@@ -245,8 +244,8 @@ def _get_default_setting(first_level_key: str, second_level_key: str):
         if second_level_key in default_settings[first_level_key]:
             setting_info = default_settings[first_level_key][second_level_key]
             # 如果是嵌套结构，提取 default_value
-            if isinstance(setting_info, dict) and 'default_value' in setting_info:
-                return setting_info['default_value']
+            if isinstance(setting_info, dict) and "default_value" in setting_info:
+                return setting_info["default_value"]
             # 否则直接返回值
             return setting_info
 

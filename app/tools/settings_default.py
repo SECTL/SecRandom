@@ -15,6 +15,7 @@ from app.tools.settings_default_storage import *
 
 Language = DEFAULT_LANGUAGE
 
+
 # ==================================================
 # 便捷函数
 # ==================================================
@@ -25,6 +26,7 @@ def get_default_settings():
         dict: 包含所有默认设置的层级字典
     """
     return DEFAULT_SETTINGS
+
 
 def get_default_setting(first_level_key: str, second_level_key: str):
     """根据键获取指定的默认设置值
@@ -40,6 +42,7 @@ def get_default_setting(first_level_key: str, second_level_key: str):
         if second_level_key in DEFAULT_SETTINGS[first_level_key]:
             return DEFAULT_SETTINGS[first_level_key][second_level_key]["default_value"]
     return None
+
 
 # ==================================================
 # 设置文件管理相关函数
@@ -66,14 +69,16 @@ def manage_settings_file():
                 for second_level_key, second_level_value in first_level_value.items():
                     # 如果默认值为 None，则不写入设置文件
                     if second_level_value["default_value"] is not None:
-                        flat_settings[first_level_key][second_level_key] = second_level_value["default_value"]
+                        flat_settings[first_level_key][second_level_key] = (
+                            second_level_value["default_value"]
+                        )
 
-            with open_file(settings_file, 'w', encoding='utf-8') as f:
+            with open_file(settings_file, "w", encoding="utf-8") as f:
                 json.dump(flat_settings, f, indent=4, ensure_ascii=False)
             return
 
         try:
-            with open_file(settings_file, 'r', encoding='utf-8') as f:
+            with open_file(settings_file, "r", encoding="utf-8") as f:
                 current_settings = json.load(f)
         except Exception as e:
             logger.error(f"读取设置文件失败: {e}，将重新创建默认设置文件")
@@ -83,9 +88,11 @@ def manage_settings_file():
                 for second_level_key, second_level_value in first_level_value.items():
                     # 如果默认值为 None，则不写入设置文件
                     if second_level_value["default_value"] is not None:
-                        flat_settings[first_level_key][second_level_key] = second_level_value["default_value"]
+                        flat_settings[first_level_key][second_level_key] = (
+                            second_level_value["default_value"]
+                        )
 
-            with open_file(settings_file, 'w', encoding='utf-8') as f:
+            with open_file(settings_file, "w", encoding="utf-8") as f:
                 json.dump(flat_settings, f, indent=4, ensure_ascii=False)
             return
 
@@ -104,17 +111,23 @@ def manage_settings_file():
                             # 如果值为 null，则不写入更新后的设置
                             if second_level_value is not None:
                                 # 如果已经是简单值，直接使用
-                                updated_settings[first_level_key][second_level_key] = second_level_value
+                                updated_settings[first_level_key][second_level_key] = (
+                                    second_level_value
+                                )
                         else:
                             # 如果是字典结构，提取 default_value
                             if "default_value" in second_level_value:
                                 # 如果 default_value 为 null，则不写入更新后的设置
                                 if second_level_value["default_value"] is not None:
-                                    updated_settings[first_level_key][second_level_key] = second_level_value["default_value"]
+                                    updated_settings[first_level_key][
+                                        second_level_key
+                                    ] = second_level_value["default_value"]
                             else:
                                 # 如果没有 default_value，使用整个值（但检查是否为 null）
                                 if second_level_value is not None:
-                                    updated_settings[first_level_key][second_level_key] = second_level_value
+                                    updated_settings[first_level_key][
+                                        second_level_key
+                                    ] = second_level_value
 
         # 添加缺失的设置项
         for first_level_key, first_level_value in default_settings.items():
@@ -125,7 +138,9 @@ def manage_settings_file():
                 if second_level_key not in updated_settings[first_level_key]:
                     # 如果默认值为 None，则不添加到设置文件
                     if second_level_value["default_value"] is not None:
-                        updated_settings[first_level_key][second_level_key] = second_level_value["default_value"]
+                        updated_settings[first_level_key][second_level_key] = (
+                            second_level_value["default_value"]
+                        )
                         settings_updated = True
                         # logger.debug(f"添加缺失的设置项: {first_level_key}.{second_level_key} = {second_level_value['default_value']}")
 
@@ -142,12 +157,15 @@ def manage_settings_file():
                 if second_level_key not in default_settings[first_level_key]:
                     # logger.debug(f"移除多余的设置项: {first_level_key}.{second_level_key}")
                     settings_updated = True
-                    if first_level_key in updated_settings and second_level_key in updated_settings[first_level_key]:
+                    if (
+                        first_level_key in updated_settings
+                        and second_level_key in updated_settings[first_level_key]
+                    ):
                         del updated_settings[first_level_key][second_level_key]
 
         if settings_updated:
             # logger.debug("设置文件已更新")
-            with open_file(settings_file, 'w', encoding='utf-8') as f:
+            with open_file(settings_file, "w", encoding="utf-8") as f:
                 json.dump(updated_settings, f, indent=4, ensure_ascii=False)
         else:
             # logger.debug("设置文件已是最新，无需更新")

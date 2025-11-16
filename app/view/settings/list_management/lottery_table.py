@@ -5,10 +5,10 @@ import json
 from collections import OrderedDict
 
 from loguru import logger
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
 from qfluentwidgets import *
 
 from app.tools.variable import *
@@ -19,13 +19,14 @@ from app.tools.settings_access import *
 from app.Language.obtain_language import *
 from app.tools.list import *
 
+
 # ==================================================
 # 抽奖名单表格
 # ==================================================
 class lottery_table(GroupHeaderCardWidget):
     """抽奖名单表格卡片"""
 
-    refresh_signal = pyqtSignal()
+    refresh_signal = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -53,15 +54,29 @@ class lottery_table(GroupHeaderCardWidget):
     def create_lottery_selection(self):
         """创建抽奖名单选择区域"""
         self.lottery_comboBox = ComboBox()
-        self.lottery_comboBox.setCurrentIndex(readme_settings_async("lottery_table", "select_pool_name"))
+        self.lottery_comboBox.setCurrentIndex(
+            readme_settings_async("lottery_table", "select_pool_name")
+        )
         if not get_pool_name_list():
             self.lottery_comboBox.setCurrentIndex(-1)
-            self.lottery_comboBox.setPlaceholderText(get_content_name_async("lottery_table", "select_pool_name"))
-        self.lottery_comboBox.currentIndexChanged.connect(lambda: update_settings("lottery_table", "select_pool_name", self.lottery_comboBox.currentIndex()))
+            self.lottery_comboBox.setPlaceholderText(
+                get_content_name_async("lottery_table", "select_pool_name")
+            )
+        self.lottery_comboBox.currentIndexChanged.connect(
+            lambda: update_settings(
+                "lottery_table",
+                "select_pool_name",
+                self.lottery_comboBox.currentIndex(),
+            )
+        )
         self.lottery_comboBox.currentTextChanged.connect(self.refresh_data)
 
-        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"),
-                        get_content_name_async("lottery_table", "select_pool_name"), get_content_description_async("lottery_table", "select_pool_name"), self.lottery_comboBox)
+        self.addGroup(
+            get_theme_icon("ic_fluent_class_20_filled"),
+            get_content_name_async("lottery_table", "select_pool_name"),
+            get_content_description_async("lottery_table", "select_pool_name"),
+            self.lottery_comboBox,
+        )
 
     def create_table(self):
         """创建表格区域"""
@@ -77,14 +92,22 @@ class lottery_table(GroupHeaderCardWidget):
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.verticalHeader().hide()
 
-        self.table.setHorizontalHeaderLabels(get_content_name_async("lottery_table", "HeaderLabels"))
+        self.table.setHorizontalHeaderLabels(
+            get_content_name_async("lottery_table", "HeaderLabels")
+        )
         self.table.horizontalHeader().resizeSection(0, 80)
         # 设置表格属性
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(
+            0, QHeaderView.ResizeMode.ResizeToContents
+        )
         for i in range(1, 4):
-            self.table.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
+            self.table.horizontalHeader().setSectionResizeMode(
+                i, QHeaderView.ResizeMode.Stretch
+            )
         for i in range(self.table.columnCount()):
-            self.table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.table.horizontalHeader().setDefaultAlignment(
+                Qt.AlignmentFlag.AlignCenter
+            )
         # 连接单元格修改信号
         self.table.cellChanged.connect(self.save_table_data)
         self.layout().addWidget(self.table)
@@ -137,17 +160,19 @@ class lottery_table(GroupHeaderCardWidget):
             self.lottery_comboBox.setCurrentIndex(index)
         elif not lottery_list:
             self.lottery_comboBox.setCurrentIndex(-1)
-            self.lottery_comboBox.setPlaceholderText(get_content_name_async("lottery_list", "select_pool_name"))
+            self.lottery_comboBox.setPlaceholderText(
+                get_content_name_async("lottery_list", "select_pool_name")
+            )
 
         # logger.debug(f"抽奖名单列表已刷新，共 {len(lottery_list)} 个抽奖名单")
         # 只有在表格已经创建时才刷新数据
-        if hasattr(self, 'table'):
+        if hasattr(self, "table"):
             self.refresh_data()
 
     def refresh_data(self):
         """刷新抽奖名单数据"""
         # 确保表格已经创建
-        if not hasattr(self, 'table'):
+        if not hasattr(self, "table"):
             return
 
         pool_name = self.lottery_comboBox.currentText()
@@ -172,31 +197,41 @@ class lottery_table(GroupHeaderCardWidget):
             for row, item in enumerate(pool):
                 # 是否存在勾选框
                 checkbox_item = QTableWidgetItem()
-                checkbox_item.setCheckState(Qt.CheckState.Checked if item.get('exist', True) else Qt.CheckState.Unchecked)
+                checkbox_item.setCheckState(
+                    Qt.CheckState.Checked
+                    if item.get("exist", True)
+                    else Qt.CheckState.Unchecked
+                )
                 checkbox_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.table.setItem(row, 0, checkbox_item)
 
                 # 奖品ID
-                id_item = QTableWidgetItem(str(item.get('id', row + 1)))
-                id_item.setFlags(id_item.flags() & ~Qt.ItemFlag.ItemIsEditable)  # 学号不可编辑
+                id_item = QTableWidgetItem(str(item.get("id", row + 1)))
+                id_item.setFlags(
+                    id_item.flags() & ~Qt.ItemFlag.ItemIsEditable
+                )  # 学号不可编辑
                 id_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.table.setItem(row, 1, id_item)
 
                 # 奖品名称
-                name_item = QTableWidgetItem(item.get('name', ''))
+                name_item = QTableWidgetItem(item.get("name", ""))
                 name_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.table.setItem(row, 2, name_item)
 
                 # 奖品权重
-                weight_item = QTableWidgetItem(str(item.get('weight', 1)))
+                weight_item = QTableWidgetItem(str(item.get("weight", 1)))
                 weight_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.table.setItem(row, 3, weight_item)
 
             # 调整列宽
             self.table.horizontalHeader().resizeSection(0, 80)
-            self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+            self.table.horizontalHeader().setSectionResizeMode(
+                0, QHeaderView.ResizeMode.ResizeToContents
+            )
             for i in range(1, 4):
-                self.table.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
+                self.table.horizontalHeader().setSectionResizeMode(
+                    i, QHeaderView.ResizeMode.Stretch
+                )
 
         except Exception as e:
             logger.error(f"刷新抽奖名单表格数据失败: {str(e)}")
@@ -224,9 +259,9 @@ class lottery_table(GroupHeaderCardWidget):
         item_name = name_item.text()
 
         # 加载当前抽奖池数据
-        pool_file = get_path("app/resources/list/lottery_list") / f'{pool_name}.json'
+        pool_file = get_path("app/resources/list/lottery_list") / f"{pool_name}.json"
         try:
-            with open_file(pool_file, 'r', encoding='utf-8') as f:
+            with open_file(pool_file, "r", encoding="utf-8") as f:
                 pool_data = json.load(f, object_pairs_hook=OrderedDict)
         except Exception as e:
             logger.error(f"加载抽奖池数据失败: {str(e)}")
@@ -235,8 +270,10 @@ class lottery_table(GroupHeaderCardWidget):
         # 通过奖品ID找到对应的奖品键
         matched_key = None
         for key, value in pool_data.items():
-            stored_id = value.get('id')
-            if str(stored_id).lstrip('0') == str(item_id).lstrip('0') or str(stored_id) == str(item_id):
+            stored_id = value.get("id")
+            if str(stored_id).lstrip("0") == str(item_id).lstrip("0") or str(
+                stored_id
+            ) == str(item_id):
                 matched_key = key
                 break
 
@@ -257,31 +294,33 @@ class lottery_table(GroupHeaderCardWidget):
                         new_pool_data[key] = value
                 pool_data = new_pool_data
         elif col == 3:  # 奖品权重列
-            pool_data[matched_key]['weight'] = int(new_value)
+            pool_data[matched_key]["weight"] = int(new_value)
         elif col == 0:  # "存在"勾选框列
             checkbox_item = self.table.item(row, 0)
             if checkbox_item:
                 is_checked = checkbox_item.checkState() == Qt.CheckState.Checked
-                pool_data[matched_key]['exist'] = is_checked
+                pool_data[matched_key]["exist"] = is_checked
 
         # 保存更新后的数据
         try:
             # 暂时禁用文件监视器，避免保存时触发刷新循环
-            if hasattr(self, 'file_watcher'):
+            if hasattr(self, "file_watcher"):
                 self.file_watcher.removePath(str(pool_file))
 
-            with open_file(pool_file, 'w', encoding='utf-8') as f:
+            with open_file(pool_file, "w", encoding="utf-8") as f:
                 json.dump(pool_data, f, ensure_ascii=False, indent=4)
             # logger.debug(f"抽奖池数据更新成功: {pool_name}")
 
             # 保存成功后设置列宽
             self.table.blockSignals(True)
             for i in range(1, 4):
-                self.table.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
+                self.table.horizontalHeader().setSectionResizeMode(
+                    i, QHeaderView.ResizeMode.Stretch
+                )
             self.table.blockSignals(False)
 
             # 重新启用文件监视器
-            if hasattr(self, 'file_watcher'):
+            if hasattr(self, "file_watcher"):
                 self.file_watcher.addPath(str(pool_file))
         except Exception as e:
             logger.error(f"保存抽奖池数据失败: {str(e)}")
@@ -293,11 +332,13 @@ class lottery_table(GroupHeaderCardWidget):
             else:
                 original_value = ""
                 if matched_key:
-                    original_value = pool_data[matched_key]['weight'] if col == 3 else ""
+                    original_value = (
+                        pool_data[matched_key]["weight"] if col == 3 else ""
+                    )
                 item.setText(str(original_value))
                 item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.table.blockSignals(False)  # 恢复信号
 
             # 即使保存失败也要重新启用文件监视器
-            if hasattr(self, 'file_watcher'):
+            if hasattr(self, "file_watcher"):
                 self.file_watcher.addPath(str(pool_file))

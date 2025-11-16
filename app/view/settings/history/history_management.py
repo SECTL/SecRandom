@@ -3,10 +3,10 @@
 # ==================================================
 
 from loguru import logger
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
 from qfluentwidgets import *
 
 from app.tools.variable import *
@@ -16,6 +16,7 @@ from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
 from app.tools.list import *
+
 
 # ==================================================
 # 历史记录管理
@@ -36,6 +37,7 @@ class history_management(QWidget):
         self.lottery_history = lottery_history(self)
         self.vBoxLayout.addWidget(self.lottery_history)
 
+
 class roll_call_history(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -44,31 +46,79 @@ class roll_call_history(GroupHeaderCardWidget):
 
         # 是否开启点名历史记录
         self.show_roll_call_history_button_switch = SwitchButton()
-        self.show_roll_call_history_button_switch.setOffText(get_content_switchbutton_name_async("history_management", "show_roll_call_history", "disable"))
-        self.show_roll_call_history_button_switch.setOnText(get_content_switchbutton_name_async("history_management", "show_roll_call_history", "enable"))
-        self.show_roll_call_history_button_switch.setChecked(readme_settings_async("history_management", "show_roll_call_history"))
-        self.show_roll_call_history_button_switch.checkedChanged.connect(lambda: update_settings("history_management", "show_roll_call_history", self.show_roll_call_history_button_switch.isChecked()))
+        self.show_roll_call_history_button_switch.setOffText(
+            get_content_switchbutton_name_async(
+                "history_management", "show_roll_call_history", "disable"
+            )
+        )
+        self.show_roll_call_history_button_switch.setOnText(
+            get_content_switchbutton_name_async(
+                "history_management", "show_roll_call_history", "enable"
+            )
+        )
+        self.show_roll_call_history_button_switch.setChecked(
+            readme_settings_async("history_management", "show_roll_call_history")
+        )
+        self.show_roll_call_history_button_switch.checkedChanged.connect(
+            lambda: update_settings(
+                "history_management",
+                "show_roll_call_history",
+                self.show_roll_call_history_button_switch.isChecked(),
+            )
+        )
 
         # 选择班级下拉框
         self.class_name_combo = ComboBox()
         self.refresh_class_list()  # 初始化班级列表
-        self.class_name_combo.setCurrentIndex(readme_settings_async("history_management", "select_class_name"))
+        self.class_name_combo.setCurrentIndex(
+            readme_settings_async("history_management", "select_class_name")
+        )
         if not get_class_name_list():
             self.class_name_combo.setCurrentIndex(-1)
-            self.class_name_combo.setPlaceholderText(get_content_name_async("history_management", "select_class_name"))
-        self.class_name_combo.currentIndexChanged.connect(lambda: update_settings("history_management", "select_class_name", self.class_name_combo.currentIndex()))
+            self.class_name_combo.setPlaceholderText(
+                get_content_name_async("history_management", "select_class_name")
+            )
+        self.class_name_combo.currentIndexChanged.connect(
+            lambda: update_settings(
+                "history_management",
+                "select_class_name",
+                self.class_name_combo.currentIndex(),
+            )
+        )
 
         # 清除历史记录按钮
-        self.clear_roll_call_history_button = PushButton(get_content_pushbutton_name_async("history_management", "clear_roll_call_history"))
-        self.clear_roll_call_history_button.clicked.connect(lambda: self.clear_roll_call_history)
+        self.clear_roll_call_history_button = PushButton(
+            get_content_pushbutton_name_async(
+                "history_management", "clear_roll_call_history"
+            )
+        )
+        self.clear_roll_call_history_button.clicked.connect(
+            lambda: self.clear_roll_call_history
+        )
 
         # 添加设置项到分组
-        self.addGroup(get_theme_icon("ic_fluent_history_20_filled"),
-                        get_content_name_async("history_management", "show_roll_call_history"), get_content_description_async("history_management", "show_roll_call_history"), self.show_roll_call_history_button_switch)
-        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"),
-                        get_content_name_async("history_management", "select_class_name"), get_content_description_async("history_management", "select_class_name"), self.class_name_combo)
-        self.addGroup(get_theme_icon("ic_fluent_people_community_20_filled"),
-                        get_content_name_async("history_management", "clear_roll_call_history"), get_content_description_async("history_management", "clear_roll_call_history"), self.clear_roll_call_history_button)
+        self.addGroup(
+            get_theme_icon("ic_fluent_history_20_filled"),
+            get_content_name_async("history_management", "show_roll_call_history"),
+            get_content_description_async(
+                "history_management", "show_roll_call_history"
+            ),
+            self.show_roll_call_history_button_switch,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_class_20_filled"),
+            get_content_name_async("history_management", "select_class_name"),
+            get_content_description_async("history_management", "select_class_name"),
+            self.class_name_combo,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_people_community_20_filled"),
+            get_content_name_async("history_management", "clear_roll_call_history"),
+            get_content_description_async(
+                "history_management", "clear_roll_call_history"
+            ),
+            self.clear_roll_call_history_button,
+        )
 
         # 设置文件系统监视器
         self.setup_file_watcher()
@@ -125,9 +175,12 @@ class roll_call_history(GroupHeaderCardWidget):
             self.class_name_combo.setCurrentIndex(index)
         elif not class_list:
             self.class_name_combo.setCurrentIndex(-1)
-            self.class_name_combo.setPlaceholderText(get_content_name_async("roll_call_list", "select_class_name"))
+            self.class_name_combo.setPlaceholderText(
+                get_content_name_async("roll_call_list", "select_class_name")
+            )
 
         # logger.debug(f"班级列表已刷新，共 {len(class_list)} 个班级")
+
 
 class lottery_history(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -137,31 +190,75 @@ class lottery_history(GroupHeaderCardWidget):
 
         # 是否开启抽奖历史记录
         self.show_lottery_history_button_switch = SwitchButton()
-        self.show_lottery_history_button_switch.setOffText(get_content_switchbutton_name_async("history_management", "show_lottery_history", "disable"))
-        self.show_lottery_history_button_switch.setOnText(get_content_switchbutton_name_async("history_management", "show_lottery_history", "enable"))
-        self.show_lottery_history_button_switch.setChecked(readme_settings_async("history_management", "show_lottery_history"))
-        self.show_lottery_history_button_switch.checkedChanged.connect(lambda: update_settings("history_management", "show_lottery_history", self.show_lottery_history_button_switch.isChecked()))
+        self.show_lottery_history_button_switch.setOffText(
+            get_content_switchbutton_name_async(
+                "history_management", "show_lottery_history", "disable"
+            )
+        )
+        self.show_lottery_history_button_switch.setOnText(
+            get_content_switchbutton_name_async(
+                "history_management", "show_lottery_history", "enable"
+            )
+        )
+        self.show_lottery_history_button_switch.setChecked(
+            readme_settings_async("history_management", "show_lottery_history")
+        )
+        self.show_lottery_history_button_switch.checkedChanged.connect(
+            lambda: update_settings(
+                "history_management",
+                "show_lottery_history",
+                self.show_lottery_history_button_switch.isChecked(),
+            )
+        )
 
         # 选择奖池下拉框
         self.pool_name_combo = ComboBox()
         self.refresh_pool_list()  # 初始化奖池列表
-        self.pool_name_combo.setCurrentIndex(readme_settings_async("history_management", "select_pool_name"))
+        self.pool_name_combo.setCurrentIndex(
+            readme_settings_async("history_management", "select_pool_name")
+        )
         if not get_pool_name_list():
             self.pool_name_combo.setCurrentIndex(-1)
-            self.pool_name_combo.setPlaceholderText(get_content_name_async("history_management", "select_pool_name"))
-        self.pool_name_combo.currentIndexChanged.connect(lambda: update_settings("history_management", "select_pool_name", self.pool_name_combo.currentIndex()))
+            self.pool_name_combo.setPlaceholderText(
+                get_content_name_async("history_management", "select_pool_name")
+            )
+        self.pool_name_combo.currentIndexChanged.connect(
+            lambda: update_settings(
+                "history_management",
+                "select_pool_name",
+                self.pool_name_combo.currentIndex(),
+            )
+        )
 
         # 清除历史记录按钮
-        self.clear_lottery_history_button = PushButton(get_content_pushbutton_name_async("history_management", "clear_lottery_history"))
+        self.clear_lottery_history_button = PushButton(
+            get_content_pushbutton_name_async(
+                "history_management", "clear_lottery_history"
+            )
+        )
         self.clear_lottery_history_button.clicked.connect(self.clear_lottery_history)
 
         # 添加设置项到分组
-        self.addGroup(get_theme_icon("ic_fluent_history_20_filled"),
-                        get_content_name_async("history_management", "show_lottery_history"), get_content_description_async("history_management", "show_lottery_history"), self.show_lottery_history_button_switch)
-        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"),
-                        get_content_name_async("history_management", "select_pool_name"), get_content_description_async("history_management", "select_pool_name"), self.pool_name_combo)
-        self.addGroup(get_theme_icon("ic_fluent_people_community_20_filled"),
-                        get_content_name_async("history_management", "clear_lottery_history"), get_content_description_async("history_management", "clear_lottery_history"), self.clear_lottery_history_button)
+        self.addGroup(
+            get_theme_icon("ic_fluent_history_20_filled"),
+            get_content_name_async("history_management", "show_lottery_history"),
+            get_content_description_async("history_management", "show_lottery_history"),
+            self.show_lottery_history_button_switch,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_class_20_filled"),
+            get_content_name_async("history_management", "select_pool_name"),
+            get_content_description_async("history_management", "select_pool_name"),
+            self.pool_name_combo,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_people_community_20_filled"),
+            get_content_name_async("history_management", "clear_lottery_history"),
+            get_content_description_async(
+                "history_management", "clear_lottery_history"
+            ),
+            self.clear_lottery_history_button,
+        )
 
         # 设置文件系统监视器
         self.setup_file_watcher()
@@ -218,6 +315,8 @@ class lottery_history(GroupHeaderCardWidget):
             self.pool_name_combo.setCurrentIndex(index)
         elif not pool_list:
             self.pool_name_combo.setCurrentIndex(-1)
-            self.pool_name_combo.setPlaceholderText(get_content_name_async("lottery_list", "select_pool_name"))
+            self.pool_name_combo.setPlaceholderText(
+                get_content_name_async("lottery_list", "select_pool_name")
+            )
 
         # logger.debug(f"奖池列表已刷新，共 {len(pool_list)} 个奖池")
