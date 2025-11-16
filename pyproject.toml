@@ -6,60 +6,52 @@ readme = "README.md"
 requires-python = "==3.8.10"
 
 dependencies = [
-    # GUI框架
-    "PyQt6==6.7.1",
-    "PyQt6-Qt6==6.7.3",
-    "PyQt6_sip==13.8.0",
-    "PyQt6-Fluent-Widgets==1.9.1",
-    "PyQt6-Frameless-Window==0.7.4",
+    "PySide6-Fluent-Widgets==1.9.1",
+    "pyside6>=6.6.3.1",
+    "pysidesix-frameless-window>=0.7.4",
     "darkdetect==0.8.0",
-
     # 核心库
     "asyncio~=3.4.3",
     "loguru==0.7.3",
     "colorama==0.4.6",
     "packaging==25.0",
-
     # 数据处理
     "numpy==1.24.4",
     "pandas~=2.0.3",
     "pillow~=10.4.0",
     "openpyxl==3.1.5",
-
     # 网络与通信
     "requests==2.32.4",
     "edge-tts==7.0.2",
-
     # 音频处理
     "pyttsx3==2.98",
     "sounddevice==0.5.2",
     "soundfile==0.13.1",
-
     # 系统工具
     "psutil~=7.0.0",
     "keyboard==0.13.5",
-
     # 加密与安全
     "pyotp==2.9.0",
     "pycryptodome==3.23.0",
-
     # 二维码处理
     "pyqrcode~=1.2.1",
     "pypng~=0.20220715.0",
     "colorthief==0.2.1",
-
     # Windows特定依赖
     "pywin32==310; platform_system == 'Windows'",
     "win32_setctime==1.2.0; platform_system == 'Windows'",
     "winshell==0.6; platform_system == 'Windows'",
-    "comtypes==1.4.10",
-    "wmi==1.5.1",
+    "comtypes==1.4.10; platform_system == 'Windows'",
+    "wmi==1.5.1; platform_system == 'Windows'",
     "pycaw==20240210; platform_system == 'Windows'",
-
+    # Linux特定依赖
+    "pulsectl==24.8.0; platform_system == 'Linux'",
     # 其他依赖
     "sip~=6.8.6",
     "jinja2~=3.1.6",
-    "pre-commit"
+    "nuitka>=2.8.4",
+    "imageio>=2.35.1",
+    "pre-commit>=3.5.0",
 ]
 
 [project.optional-dependencies]
@@ -82,7 +74,7 @@ dev-dependencies = [
     "pytest>=6.0",
     "black",
     "flake8",
+    "pyright>=1.1.407",
+    "pre-commit>=3.5.0",
+    "ruff>=0.14.3",
 ]
-
-[tool.ruff]
-lint.ignore=["E722","F405","F403","F811","E227","F841"]
