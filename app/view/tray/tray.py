@@ -2,18 +2,13 @@
 # 导入库
 # ==================================================
 
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
-from qfluentwidgets import *
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon
+from PySide6.QtGui import QIcon, QCursor
+from PySide6.QtCore import QTimer, QEvent, QPoint, Signal
+from qfluentwidgets import RoundMenu, Action
 
-from app.tools.variable import *
-from app.tools.path_utils import *
-from app.tools.personalised import *
-from app.tools.settings_default import *
-from app.tools.settings_access import *
-from app.Language.obtain_language import *
+from app.tools.variable import MENU_AUTO_CLOSE_TIMEOUT
+from app.tools.path_utils import get_resources_path
 
 
 # ==================================================
@@ -25,8 +20,9 @@ class Tray(QSystemTrayIcon):
     负责管理托盘图标和菜单，提供右键菜单功能。
     继承自QSystemTrayIcon以简化实现。
     """
-    showSettingsRequested = pyqtSignal()
-    showSettingsRequestedAbout = pyqtSignal()
+
+    showSettingsRequested = Signal()
+    showSettingsRequestedAbout = Signal()
 
     def __init__(self, parent=None):
         """初始化系统托盘图标
@@ -36,8 +32,10 @@ class Tray(QSystemTrayIcon):
         """
         super().__init__(parent)
         self.main_window = parent
-        self.setIcon(QIcon(str(get_resources_path('assets/icon', 'secrandom-icon-paper.png'))))
-        self.setToolTip('SecRandom')
+        self.setIcon(
+            QIcon(str(get_resources_path("assets/icon", "secrandom-icon-paper.png")))
+        )
+        self.setToolTip("SecRandom")
         self._create_menu()
         self.activated.connect(self._on_tray_activated)
 
@@ -55,24 +53,34 @@ class Tray(QSystemTrayIcon):
         self.tray_menu = RoundMenu(parent=self.main_window)
 
         # 关于SecRandom
-        self.tray_menu.addAction(Action('SecRandom', triggered=self.showSettingsRequestedAbout.emit))
+        self.tray_menu.addAction(
+            Action("SecRandom", triggered=self.showSettingsRequestedAbout.emit)
+        )
         self.tray_menu.addSeparator()
         # 主界面控制
-        self.tray_menu.addAction(Action('暂时显示/隐藏主界面', triggered=self.main_window.toggle_window))
+        self.tray_menu.addAction(
+            Action("暂时显示/隐藏主界面", triggered=self.main_window.toggle_window)
+        )
         # 设置界面
-        self.tray_menu.addAction(Action('打开设置界面', triggered=self.showSettingsRequested.emit))
+        self.tray_menu.addAction(
+            Action("打开设置界面", triggered=self.showSettingsRequested.emit)
+        )
         self.tray_menu.addSeparator()
         # 系统操作
-        self.tray_menu.addAction(Action('重启', triggered=self.main_window.restart_app))
-        self.tray_menu.addAction(Action('退出', triggered=self.main_window.close_window_secrandom))
+        self.tray_menu.addAction(Action("重启", triggered=self.main_window.restart_app))
+        self.tray_menu.addAction(
+            Action("退出", triggered=self.main_window.close_window_secrandom)
+        )
 
         self.tray_menu.installEventFilter(self)
 
     def _on_tray_activated(self, reason):
         """处理托盘图标点击事件
         当用户点击托盘图标时，显示菜单"""
-        if reason in (QSystemTrayIcon.ActivationReason.Trigger,
-                     QSystemTrayIcon.ActivationReason.Context):
+        if reason in (
+            QSystemTrayIcon.ActivationReason.Trigger,
+            QSystemTrayIcon.ActivationReason.Context,
+        ):
             pos = QCursor.pos()
             screen = QApplication.primaryScreen().availableGeometry()
             menu_size = self.tray_menu.sizeHint()
@@ -84,8 +92,12 @@ class Tray(QSystemTrayIcon):
                 adjusted_y = pos.y() - menu_size.height()
             else:
                 adjusted_y = pos.y()
-            adjusted_x = max(screen.left(), min(adjusted_x, screen.right() - menu_size.width()))
-            adjusted_y = max(screen.top(), min(adjusted_y, screen.bottom() - menu_size.height()))
+            adjusted_x = max(
+                screen.left(), min(adjusted_x, screen.right() - menu_size.width())
+            )
+            adjusted_y = max(
+                screen.top(), min(adjusted_y, screen.bottom() - menu_size.height())
+            )
             adjusted_pos = QPoint(adjusted_x, adjusted_y - 35)
             self.tray_menu.popup(adjusted_pos)
             self.menu_timer.start(MENU_AUTO_CLOSE_TIMEOUT)
@@ -111,8 +123,7 @@ class Tray(QSystemTrayIcon):
         if obj == self.tray_menu:
             if event.type() in (QEvent.Type.MouseButtonPress, QEvent.Type.Hide):
                 self.menu_timer.stop()
-        if (event.type() == QEvent.Type.MouseButtonPress and
-            self.tray_menu.isVisible()):
+        if event.type() == QEvent.Type.MouseButtonPress and self.tray_menu.isVisible():
             click_pos = event.globalPosition().toPoint()
             menu_rect = self.tray_menu.geometry()
             if not menu_rect.contains(click_pos):

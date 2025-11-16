@@ -5,10 +5,10 @@ import json
 from collections import OrderedDict
 
 from loguru import logger
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
 from qfluentwidgets import *
 
 from app.tools.variable import *
@@ -23,10 +23,11 @@ from app.tools.list import *
 # 点名名单表格
 # ==================================================
 
+
 class roll_call_table(GroupHeaderCardWidget):
     """点名名单表格卡片"""
 
-    refresh_signal = pyqtSignal()
+    refresh_signal = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -54,15 +55,29 @@ class roll_call_table(GroupHeaderCardWidget):
     def create_class_selection(self):
         """创建班级选择区域"""
         self.class_comboBox = ComboBox()
-        self.class_comboBox.setCurrentIndex(readme_settings_async("roll_call_table", "select_class_name"))
+        self.class_comboBox.setCurrentIndex(
+            readme_settings_async("roll_call_table", "select_class_name")
+        )
         if not get_class_name_list():
             self.class_comboBox.setCurrentIndex(-1)
-            self.class_comboBox.setPlaceholderText(get_content_name_async("roll_call_table", "select_class_name"))
-        self.class_comboBox.currentIndexChanged.connect(lambda: update_settings("roll_call_table", "select_class_name", self.class_comboBox.currentIndex()))
+            self.class_comboBox.setPlaceholderText(
+                get_content_name_async("roll_call_table", "select_class_name")
+            )
+        self.class_comboBox.currentIndexChanged.connect(
+            lambda: update_settings(
+                "roll_call_table",
+                "select_class_name",
+                self.class_comboBox.currentIndex(),
+            )
+        )
         self.class_comboBox.currentTextChanged.connect(self.refresh_data)
 
-        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"),
-                        get_content_name_async("roll_call_table", "select_class_name"), get_content_description_async("roll_call_table", "select_class_name"), self.class_comboBox)
+        self.addGroup(
+            get_theme_icon("ic_fluent_class_20_filled"),
+            get_content_name_async("roll_call_table", "select_class_name"),
+            get_content_description_async("roll_call_table", "select_class_name"),
+            self.class_comboBox,
+        )
 
     def create_table(self):
         """创建表格区域"""
@@ -78,14 +93,22 @@ class roll_call_table(GroupHeaderCardWidget):
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.verticalHeader().hide()
 
-        self.table.setHorizontalHeaderLabels(get_content_name_async("roll_call_table", "HeaderLabels"))
+        self.table.setHorizontalHeaderLabels(
+            get_content_name_async("roll_call_table", "HeaderLabels")
+        )
         self.table.horizontalHeader().resizeSection(0, 80)
         # 设置表格属性
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(
+            0, QHeaderView.ResizeMode.ResizeToContents
+        )
         for i in range(1, 5):
-            self.table.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
+            self.table.horizontalHeader().setSectionResizeMode(
+                i, QHeaderView.ResizeMode.Stretch
+            )
         for i in range(self.table.columnCount()):
-            self.table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.table.horizontalHeader().setDefaultAlignment(
+                Qt.AlignmentFlag.AlignCenter
+            )
         # 连接单元格修改信号
         self.table.cellChanged.connect(self.save_table_data)
         self.layout().addWidget(self.table)
@@ -138,17 +161,19 @@ class roll_call_table(GroupHeaderCardWidget):
             self.class_comboBox.setCurrentIndex(index)
         elif not class_list:
             self.class_comboBox.setCurrentIndex(-1)
-            self.class_comboBox.setPlaceholderText(get_content_name_async("roll_call_list", "select_class_name"))
+            self.class_comboBox.setPlaceholderText(
+                get_content_name_async("roll_call_list", "select_class_name")
+            )
 
         # logger.debug(f"班级列表已刷新，共 {len(class_list)} 个班级")
         # 只有在表格已经创建时才刷新数据
-        if hasattr(self, 'table'):
+        if hasattr(self, "table"):
             self.refresh_data()
 
     def refresh_data(self):
         """刷新表格数据"""
         # 确保表格已经创建
-        if not hasattr(self, 'table'):
+        if not hasattr(self, "table"):
             return
 
         class_name = self.class_comboBox.currentText()
@@ -173,36 +198,46 @@ class roll_call_table(GroupHeaderCardWidget):
             for row, student in enumerate(students):
                 # 是否在班级勾选框
                 checkbox_item = QTableWidgetItem()
-                checkbox_item.setCheckState(Qt.CheckState.Checked if student.get('exist', True) else Qt.CheckState.Unchecked)
+                checkbox_item.setCheckState(
+                    Qt.CheckState.Checked
+                    if student.get("exist", True)
+                    else Qt.CheckState.Unchecked
+                )
                 checkbox_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.table.setItem(row, 0, checkbox_item)
 
                 # 学号
-                id_item = QTableWidgetItem(str(student.get('id', row + 1)))
-                id_item.setFlags(id_item.flags() & ~Qt.ItemFlag.ItemIsEditable)  # 学号不可编辑
+                id_item = QTableWidgetItem(str(student.get("id", row + 1)))
+                id_item.setFlags(
+                    id_item.flags() & ~Qt.ItemFlag.ItemIsEditable
+                )  # 学号不可编辑
                 id_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.table.setItem(row, 1, id_item)
 
                 # 姓名
-                name_item = QTableWidgetItem(student.get('name', ''))
+                name_item = QTableWidgetItem(student.get("name", ""))
                 name_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.table.setItem(row, 2, name_item)
 
                 # 性别
-                gender_item = QTableWidgetItem(student.get('gender', ''))
+                gender_item = QTableWidgetItem(student.get("gender", ""))
                 gender_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.table.setItem(row, 3, gender_item)
 
                 # 小组
-                group_item = QTableWidgetItem(student.get('group', ''))
+                group_item = QTableWidgetItem(student.get("group", ""))
                 group_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.table.setItem(row, 4, group_item)
 
             # 调整列宽
             self.table.horizontalHeader().resizeSection(0, 80)
-            self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+            self.table.horizontalHeader().setSectionResizeMode(
+                0, QHeaderView.ResizeMode.ResizeToContents
+            )
             for i in range(1, 5):
-                self.table.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
+                self.table.horizontalHeader().setSectionResizeMode(
+                    i, QHeaderView.ResizeMode.Stretch
+                )
 
         except Exception as e:
             logger.error(f"刷新表格数据失败: {str(e)}")
@@ -231,9 +266,9 @@ class roll_call_table(GroupHeaderCardWidget):
 
         # 加载当前班级的学生数据
         roll_call_list_dir = get_path("app/resources/list/roll_call_list")
-        student_file = roll_call_list_dir / f'{class_name}.json'
+        student_file = roll_call_list_dir / f"{class_name}.json"
         try:
-            with open_file(student_file, 'r', encoding='utf-8') as f:
+            with open_file(student_file, "r", encoding="utf-8") as f:
                 student_data = json.load(f, object_pairs_hook=OrderedDict)
         except Exception as e:
             logger.error(f"加载学生数据失败: {str(e)}")
@@ -242,8 +277,10 @@ class roll_call_table(GroupHeaderCardWidget):
         # 通过学号找到对应的学生键
         matched_key = None
         for key, value in student_data.items():
-            stored_id = value.get('id')
-            if str(stored_id).lstrip('0') == str(student_id).lstrip('0') or str(stored_id) == str(student_id):
+            stored_id = value.get("id")
+            if str(stored_id).lstrip("0") == str(student_id).lstrip("0") or str(
+                stored_id
+            ) == str(student_id):
                 matched_key = key
                 break
 
@@ -264,33 +301,35 @@ class roll_call_table(GroupHeaderCardWidget):
                         new_student_data[key] = value
                 student_data = new_student_data
         elif col == 3:  # 性别列
-            student_data[matched_key]['gender'] = new_value
+            student_data[matched_key]["gender"] = new_value
         elif col == 4:  # 小组列
-            student_data[matched_key]['group'] = new_value
+            student_data[matched_key]["group"] = new_value
         elif col == 0:  # "是否在班级"勾选框列
             checkbox_item = self.table.item(row, 0)
             if checkbox_item:
                 is_checked = checkbox_item.checkState() == Qt.CheckState.Checked
-                student_data[matched_key]['exist'] = is_checked
+                student_data[matched_key]["exist"] = is_checked
 
         # 保存更新后的数据
         try:
             # 暂时禁用文件监视器，避免保存时触发刷新循环
-            if hasattr(self, 'file_watcher'):
+            if hasattr(self, "file_watcher"):
                 self.file_watcher.removePath(str(roll_call_list_dir))
 
-            with open_file(student_file, 'w', encoding='utf-8') as f:
+            with open_file(student_file, "w", encoding="utf-8") as f:
                 json.dump(student_data, f, ensure_ascii=False, indent=4)
             # logger.debug(f"学生数据更新成功: {student_name}")
 
             # 保存成功后设置列宽
             self.table.blockSignals(True)
             for i in range(1, 5):
-                self.table.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
+                self.table.horizontalHeader().setSectionResizeMode(
+                    i, QHeaderView.ResizeMode.Stretch
+                )
             self.table.blockSignals(False)
 
             # 重新启用文件监视器
-            if hasattr(self, 'file_watcher'):
+            if hasattr(self, "file_watcher"):
                 self.file_watcher.addPath(str(roll_call_list_dir))
         except Exception as e:
             logger.error(f"保存学生数据失败: {str(e)}")
@@ -302,11 +341,17 @@ class roll_call_table(GroupHeaderCardWidget):
             else:
                 original_value = ""
                 if matched_key:
-                    original_value = student_data[matched_key]['gender'] if col == 3 else student_data[matched_key]['group'] if col == 4 else ""
+                    original_value = (
+                        student_data[matched_key]["gender"]
+                        if col == 3
+                        else student_data[matched_key]["group"]
+                        if col == 4
+                        else ""
+                    )
                 item.setText(str(original_value))
                 item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.table.blockSignals(False)  # 恢复信号
 
             # 即使保存失败也要重新启用文件监视器
-            if hasattr(self, 'file_watcher'):
+            if hasattr(self, "file_watcher"):
                 self.file_watcher.addPath(str(roll_call_list_dir))

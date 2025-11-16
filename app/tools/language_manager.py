@@ -8,11 +8,15 @@ from loguru import logger
 
 from app.tools.path_utils import get_path, get_resources_path
 from app.tools.settings_access import readme_settings
+
 # from app.Language.ZH_CN import ZH_CN
 import glob
+import importlib
 import importlib.util
+import pkgutil
 
 from app.tools.variable import LANGUAGE_MODULE_DIR
+
 
 # ==================================================
 # 简化的语言管理器类
@@ -25,13 +29,10 @@ class SimpleLanguageManager:
 
         # 默认加载中文，从模块文件动态生成
         merged_zh_cn = self._merge_language_files("ZH_CN")
-        self._loaded_languages: Dict[str, Dict[str, Any]] = {
-            "ZH_CN": merged_zh_cn
-        }
+        self._loaded_languages: Dict[str, Dict[str, Any]] = {"ZH_CN": merged_zh_cn}
 
         # 加载resources/Language文件夹下的所有语言文件
         self._load_all_languages()
-
 
     def _merge_language_files(self, language_code: Optional[str]) -> Dict[str, Any]:
         """
@@ -47,33 +48,69 @@ class SimpleLanguageManager:
         language_code = "ZH_CN" if not language_code else language_code
         language_dir = get_path(LANGUAGE_MODULE_DIR)
 
-        # 检查语言目录是否存在
-        if not os.path.exists(language_dir):
+        module_entries: List[tuple[str, Optional[str]]] = []
+
+        if os.path.isdir(language_dir):
+            # 开发环境：直接从文件系统查找
+            language_module_files = glob.glob(os.path.join(language_dir, "*.py"))
+            for file_path in language_module_files:
+                if file_path.endswith("__init__.py"):
+                    continue
+                module_entries.append(
+                    (os.path.splitext(os.path.basename(file_path))[0], file_path)
+                )
+        else:
+            # 打包环境：利用包信息进行枚举
             logger.warning(f"语言模块目录不存在: {language_dir}")
+            try:
+                language_package = importlib.import_module("app.Language.modules")
+                discovered = {
+                    name.rsplit(".", 1)[-1]
+                    for _, name, is_pkg in pkgutil.walk_packages(
+                        getattr(language_package, "__path__", []),
+                        language_package.__name__ + ".",
+                    )
+                    if not is_pkg and not name.endswith(".__init__")
+                }
+                if discovered:
+                    module_entries.extend(
+                        (module_name, None) for module_name in sorted(discovered)
+                    )
+                else:
+                    logger.warning("未能通过 pkgutil.walk_packages 发现语言模块")
+            except Exception as discovery_error:
+                logger.error(f"枚举语言模块失败: {discovery_error}")
+
+        if not module_entries:
+            logger.warning("未找到任何语言模块，返回空语言数据")
             return merged
 
-        # 获取所有Python模块文件
-        language_module_files = glob.glob(os.path.join(language_dir, "*.py"))
-        language_module_files = [f for f in language_module_files if not f.endswith("__init__.py")]
-
-        # 遍历所有模块文件并动态导入
-        for file_path in language_module_files:
+        # 遍历所有模块并导入
+        for module_name, file_path in module_entries:
             try:
-                # 从文件名获取模块名（去掉.py扩展名）
-                language_module_name = os.path.basename(file_path)[:-3]
+                # 优先使用标准导入（适用于打包环境）
+                try:
+                    module = __import__(
+                        f"app.Language.modules.{module_name}",
+                        fromlist=[module_name],
+                    )
+                except ImportError:
+                    if not file_path:
+                        raise
+                    # 如果直接导入失败且存在文件路径，使用动态加载（开发环境）
+                    spec = importlib.util.spec_from_file_location(
+                        module_name, file_path
+                    )
+                    if spec is None:
+                        logger.warning(f"无法创建模块规范: {file_path}")
+                        continue
 
-                # 动态导入模块
-                spec = importlib.util.spec_from_file_location(language_module_name, file_path)
-                if spec is None:
-                    logger.warning(f"无法创建模块规范: {file_path}")
-                    continue
+                    module = importlib.util.module_from_spec(spec)
+                    if spec.loader is None:
+                        logger.warning(f"模块加载器为空: {file_path}")
+                        continue
 
-                module = importlib.util.module_from_spec(spec)
-                if spec.loader is None:
-                    logger.warning(f"模块加载器为空: {file_path}")
-                    continue
-
-                spec.loader.exec_module(module)
+                    spec.loader.exec_module(module)
 
                 # 遍历模块中的所有属性
                 for attr_name in dir(module):
@@ -100,7 +137,7 @@ class SimpleLanguageManager:
 
             # 遍历文件夹中的所有.json文件
             for filename in os.listdir(language_dir):
-                if filename.endswith('.json'):
+                if filename.endswith(".json"):
                     language_code = filename[:-5]  # 去掉.json后缀
 
                     # 跳过已加载的语言
@@ -111,7 +148,7 @@ class SimpleLanguageManager:
 
                     try:
                         # 加载语言文件
-                        with open(file_path, 'r', encoding='utf-8') as f:
+                        with open(file_path, "r", encoding="utf-8") as f:
                             language_data = json.load(f)
                             self._loaded_languages[language_code] = language_data
                     except Exception as e:
@@ -173,8 +210,10 @@ class SimpleLanguageManager:
         # 返回translate_JSON_file字段，如果不存在则返回空字典
         return language_data.get("translate_JSON_file", {})
 
+
 # 创建全局语言管理器实例
 _simple_language_manager = None
+
 
 def get_simple_language_manager() -> SimpleLanguageManager:
     """获取全局简化语言管理器实例"""
@@ -182,6 +221,7 @@ def get_simple_language_manager() -> SimpleLanguageManager:
     if _simple_language_manager is None:
         _simple_language_manager = SimpleLanguageManager()
     return _simple_language_manager
+
 
 # ==================================================
 # 简化的语言管理辅助函数
@@ -194,6 +234,7 @@ def get_current_language() -> str:
     """
     return get_simple_language_manager().get_current_language()
 
+
 def get_all_languages() -> Dict[str, Dict[str, Any]]:
     """获取所有已加载的语言数据
 
@@ -201,6 +242,7 @@ def get_all_languages() -> Dict[str, Dict[str, Any]]:
         包含所有语言数据的字典，键为语言代码，值为语言数据字典
     """
     return get_simple_language_manager().get_all_languages()
+
 
 def get_all_languages_name() -> List[str]:
     """获取所有已加载的语言名称
@@ -215,6 +257,7 @@ def get_all_languages_name() -> List[str]:
         language_names.append(name)
     return language_names
 
+
 def get_current_language_data() -> Dict[str, Any]:
     """获取当前语言数据
 
@@ -222,6 +265,7 @@ def get_current_language_data() -> Dict[str, Any]:
         当前语言数据字典
     """
     return get_simple_language_manager().get_current_language_data()
+
 
 def get_language_info(language_code: str) -> Optional[Dict[str, Any]]:
     """获取指定语言的信息（translate_JSON_file字段）

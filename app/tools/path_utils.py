@@ -26,6 +26,7 @@ from loguru import logger
 
 from app.tools.variable import *
 
+
 # ==================================================
 # 路径管理器类
 # ==================================================
@@ -43,9 +44,14 @@ class PathManager:
         Returns:
             Path: 应用程序根目录路径
         """
-        if getattr(sys, 'frozen', False):
+        if getattr(sys, "frozen", False):
             # 打包后的可执行文件
-            return Path(sys.executable).parent
+            # PyInstaller 会设置 sys._MEIPASS 指向临时解压目录
+            if hasattr(sys, "_MEIPASS"):
+                return Path(sys._MEIPASS)
+            # Nuitka 打包的可执行文件，使用可执行文件所在目录
+            else:
+                return Path(sys.executable).parent
         else:
             # 开发环境
             return Path(__file__).parent.parent.parent
@@ -89,6 +95,7 @@ class PathManager:
         absolute_path.mkdir(parents=True, exist_ok=True)
         return absolute_path
 
+
 # ==================================================
 # 路径获取相关函数
 # ==================================================
@@ -125,9 +132,13 @@ class PathGetter:
             Path: 资源文件的绝对路径
         """
         if filename:
-            return self._path_manager.get_absolute_path(f"app/resources/{resource_type}/{filename}")
+            return self._path_manager.get_absolute_path(
+                f"app/resources/{resource_type}/{filename}"
+            )
         else:
-            return self._path_manager.get_absolute_path(f"app/resources/{resource_type}")
+            return self._path_manager.get_absolute_path(
+                f"app/resources/{resource_type}"
+            )
 
     def get_config_path(self, config_type: str, filename: str = "") -> Path:
         """获取配置文件路径
@@ -140,7 +151,9 @@ class PathGetter:
             Path: 配置文件的绝对路径
         """
         if filename:
-            return self._path_manager.get_absolute_path(f"app/config/{config_type}/{filename}")
+            return self._path_manager.get_absolute_path(
+                f"app/config/{config_type}/{filename}"
+            )
         else:
             return self._path_manager.get_absolute_path(f"app/config/{config_type}")
 
@@ -180,6 +193,7 @@ class PathGetter:
         """
         return self._path_manager.get_absolute_path(f"app/resources/font/{filename}")
 
+
 # ==================================================
 # 文件操作相关函数
 # ==================================================
@@ -206,7 +220,12 @@ class FileOperations:
         absolute_path = self._path_manager.get_absolute_path(path)
         return absolute_path.exists()
 
-    def open_file(self, path: Union[str, Path], mode: str = "r", encoding: str = DEFAULT_FILE_ENCODING):
+    def open_file(
+        self,
+        path: Union[str, Path],
+        mode: str = "r",
+        encoding: str = DEFAULT_FILE_ENCODING,
+    ):
         """打开文件
 
         Args:
@@ -219,7 +238,7 @@ class FileOperations:
         """
         absolute_path = self._path_manager.get_absolute_path(path)
         # 二进制模式下不传递encoding参数
-        if 'b' in mode:
+        if "b" in mode:
             return open(absolute_path, mode)
         return open(absolute_path, mode, encoding=encoding)
 
@@ -242,6 +261,7 @@ class FileOperations:
             logger.error(f"删除文件失败: {path}, 错误: {e}")
             return False
 
+
 # ==================================================
 # 全局实例和便捷函数
 # ==================================================
@@ -251,6 +271,7 @@ path_manager = PathManager()
 # 创建路径获取器和文件操作器实例
 path_getter = PathGetter(path_manager)
 file_operations = FileOperations(path_manager)
+
 
 # ==================================================
 # 路径处理便捷函数列表
@@ -267,6 +288,7 @@ def get_path(relative_path: Union[str, Path]) -> Path:
     """
     return path_manager.get_absolute_path(relative_path)
 
+
 def ensure_dir(path: Union[str, Path]) -> Path:
     """确保目录存在的便捷函数
 
@@ -278,6 +300,7 @@ def ensure_dir(path: Union[str, Path]) -> Path:
     """
     return path_manager.ensure_directory_exists(path)
 
+
 def get_app_root() -> Path:
     """获取应用程序根目录的便捷函数
 
@@ -285,6 +308,7 @@ def get_app_root() -> Path:
         Path: 应用程序根目录路径
     """
     return path_manager._app_root
+
 
 # 2. 文件操作便捷函数
 def file_exists(path: Union[str, Path]) -> bool:
@@ -298,7 +322,10 @@ def file_exists(path: Union[str, Path]) -> bool:
     """
     return file_operations.file_exists(path)
 
-def open_file(path: Union[str, Path], mode: str = "r", encoding: str = DEFAULT_FILE_ENCODING):
+
+def open_file(
+    path: Union[str, Path], mode: str = "r", encoding: str = DEFAULT_FILE_ENCODING
+):
     """打开文件的便捷函数
 
     Args:
@@ -311,6 +338,7 @@ def open_file(path: Union[str, Path], mode: str = "r", encoding: str = DEFAULT_F
     """
     return file_operations.open_file(path, mode, encoding)
 
+
 def remove_file(path: Union[str, Path]) -> bool:
     """删除文件的便捷函数
 
@@ -321,6 +349,7 @@ def remove_file(path: Union[str, Path]) -> bool:
         bool: 删除是否成功
     """
     return file_operations.remove_file(path)
+
 
 # 3. 特定路径获取便捷函数
 def get_settings_path(filename: str = DEFAULT_SETTINGS_FILENAME) -> Path:
@@ -334,6 +363,7 @@ def get_settings_path(filename: str = DEFAULT_SETTINGS_FILENAME) -> Path:
     """
     return path_getter.get_settings_path(filename)
 
+
 def get_resources_path(config_type: str, filename: str = "") -> Path:
     """获取资源文件路径的便捷函数
 
@@ -345,6 +375,7 @@ def get_resources_path(config_type: str, filename: str = "") -> Path:
         Path: 资源文件的绝对路径
     """
     return path_getter.get_resources_path(config_type, filename)
+
 
 def get_config_path(config_type: str, filename: str = "") -> Path:
     """获取配置文件路径的便捷函数
@@ -358,6 +389,7 @@ def get_config_path(config_type: str, filename: str = "") -> Path:
     """
     return path_getter.get_config_path(config_type, filename)
 
+
 def get_temp_path(filename: str = "") -> Path:
     """获取临时文件路径的便捷函数
 
@@ -369,6 +401,7 @@ def get_temp_path(filename: str = "") -> Path:
     """
     return path_getter.get_temp_path(filename)
 
+
 def get_audio_path(filename: str) -> Path:
     """获取音频文件路径的便捷函数
 
@@ -379,6 +412,7 @@ def get_audio_path(filename: str) -> Path:
         Path: 音频文件的绝对路径
     """
     return path_getter.get_audio_path(filename)
+
 
 def get_font_path(filename: str = DEFAULT_FONT_FILENAME_PRIMARY) -> Path:
     """获取字体文件路径的便捷函数

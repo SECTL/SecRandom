@@ -2,17 +2,18 @@
 # 导入模块
 # ==================================================
 from qfluentwidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
 
 import json
 from typing import Dict
 from loguru import logger
-from PyQt6.QtCore import QDateTime
+from PySide6.QtCore import QDateTime
 
 from app.tools.path_utils import *
+
 
 # ==================================================
 # 判断当前时间是否在非上课时间段
@@ -57,7 +58,7 @@ def _is_instant_draw_disable_enabled() -> bool:
         if not file_exists(settings_path):
             return False
 
-        with open_file(settings_path, 'r', encoding='utf-8') as f:
+        with open_file(settings_path, "r", encoding="utf-8") as f:
             settings = json.load(f)
 
         program_functionality = settings.get("program_functionality", {})
@@ -79,10 +80,10 @@ def _get_non_class_times_config() -> Dict[str, str]:
         if not file_exists(time_settings_path):
             return {}
 
-        with open_file(time_settings_path, 'r', encoding='utf-8') as f:
+        with open_file(time_settings_path, "r", encoding="utf-8") as f:
             time_settings = json.load(f)
 
-        return time_settings.get('non_class_times', {})
+        return time_settings.get("non_class_times", {})
 
     except Exception as e:
         logger.error(f"读取时间设置失败: {e}")
@@ -115,7 +116,7 @@ def _is_time_in_ranges(current_seconds: int, time_ranges: Dict[str, str]) -> boo
     """
     for range_name, time_range in time_ranges.items():
         try:
-            start_end = time_range.split('-')
+            start_end = time_range.split("-")
             if len(start_end) != 2:
                 logger.warning(f"时间范围格式错误: {range_name} = {time_range}")
                 continue
@@ -133,7 +134,9 @@ def _is_time_in_ranges(current_seconds: int, time_ranges: Dict[str, str]) -> boo
                 return True
 
         except Exception as e:
-            logger.error(f"解析非上课时间段失败: {range_name} = {time_range}, 错误: {e}")
+            logger.error(
+                f"解析非上课时间段失败: {range_name} = {time_range}, 错误: {e}"
+            )
             continue
 
     return False
@@ -151,7 +154,7 @@ def _parse_time_string_to_seconds(time_str: str) -> int:
     Raises:
         ValueError: 如果时间字符串格式不正确
     """
-    time_parts = list(map(int, time_str.split(':')))
+    time_parts = list(map(int, time_str.split(":")))
 
     if len(time_parts) < 2 or len(time_parts) > 3:
         raise ValueError(f"时间字符串格式不正确: {time_str}")
