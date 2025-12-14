@@ -192,3 +192,5 @@ cython_debug/
 /data/list
 /data/audio
 /data/TEMP
+pyproject.toml
+uv.lock

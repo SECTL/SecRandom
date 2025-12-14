@@ -103,3 +103,7 @@ ignore = [
 # 可选：关闭某些规则或配置
 extend-ignore = []
 select = ["E", "F", "W", "C", "B", "B9"]
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
