@@ -67,6 +67,29 @@ class roll_call_history(GroupHeaderCardWidget):
             )
         )
 
+        # 是否显示权重
+        self.select_weight_switch = SwitchButton()
+        self.select_weight_switch.setOffText(
+            get_content_switchbutton_name_async(
+                "history_management", "select_weight", "disable"
+            )
+        )
+        self.select_weight_switch.setOnText(
+            get_content_switchbutton_name_async(
+                "history_management", "select_weight", "enable"
+            )
+        )
+        self.select_weight_switch.setChecked(
+            readme_settings_async("history_management", "select_weight")
+        )
+        self.select_weight_switch.checkedChanged.connect(
+            lambda: update_settings(
+                "history_management",
+                "select_weight",
+                self.select_weight_switch.isChecked(),
+            )
+        )
+
         # 选择班级下拉框
         self.class_name_combo = ComboBox()
         self.refresh_class_list()  # 初始化班级列表
@@ -111,6 +134,14 @@ class roll_call_history(GroupHeaderCardWidget):
                 "history_management", "show_roll_call_history"
             ),
             self.show_roll_call_history_button_switch,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_data_histogram_20_filled"),
+            get_content_name_async("history_management", "select_weight"),
+            get_content_description_async(
+                "history_management", "select_weight"
+            ),
+            self.select_weight_switch,
         )
         self.addGroup(
             get_theme_icon("ic_fluent_class_20_filled"),
