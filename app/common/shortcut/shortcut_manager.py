@@ -233,5 +233,5 @@ class ShortcutManager(QObject):
         # 无论是否有已注册快捷键，都尝试清理全局钩子，确保 keyboard 库的监听线程能正确关闭
         try:
             keyboard.unhook_all()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"清理全局键盘钩子失败: {e}")
