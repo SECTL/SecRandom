@@ -19,6 +19,15 @@ class WindowManager:
         self.settings_window: Optional["QWidget"] = None
         self.float_window: Optional["QWidget"] = None
         self.url_handler: Optional = None
+        self.shared_memory = None
+
+    def set_shared_memory(self, shared_memory) -> None:
+        """设置共享内存实例
+        
+        Args:
+            shared_memory: QSharedMemory 实例
+        """
+        self.shared_memory = shared_memory
 
     def set_url_handler(self, url_handler) -> None:
         """设置URL处理器
@@ -42,7 +51,9 @@ class WindowManager:
 
         self.create_float_window()
         self.main_window = MainWindow(
-            float_window=self.float_window, url_handler_instance=self.url_handler
+            float_window=self.float_window,
+            url_handler_instance=self.url_handler,
+            shared_memory=self.shared_memory,
         )
 
         self._connect_main_window_signals()

@@ -66,6 +66,7 @@ if CSHARP_AVAILABLE:
             self.client_thread: Optional[threading.Thread] = None
             self.is_running = False
             self.is_connected = False
+            self._stop_event = threading.Event()
             self._disconnect_logged = False  # 跟踪是否已记录断连日志
             self._last_on_class_left_log_time = 0  # 上次记录距离上课时间的时间
 
@@ -80,8 +81,9 @@ if CSHARP_AVAILABLE:
                 return True
 
             try:
+                self._stop_event.clear()
                 self.client_thread = threading.Thread(
-                    target=self._run_client, daemon=True
+                    target=self._run_client, daemon=False
                 )
                 self.client_thread.start()
                 self.is_running = True
@@ -92,23 +94,23 @@ if CSHARP_AVAILABLE:
 
         def stop_ipc_client(self):
             """停止 C# IPC 客户端"""
+            if not self.is_running:
+                return
+
             logger.debug("正在停止 C# IPC 客户端...")
             self.is_running = False
-
-            # 尝试主动调用 Dispose 以打破可能挂起的 Connect() 或其他 .NET 调用
-            try:
-                if self.ipc_client and hasattr(self.ipc_client, "Dispose"):
-                    self.ipc_client.Dispose()
-                    logger.debug("已手动调用 C# IPC 客户端 Dispose")
-            except Exception as e:
-                logger.debug(f"手动释放 C# IPC 客户端资源时出错: {e}")
+            self._stop_event.set()
 
             if self.client_thread and self.client_thread.is_alive():
                 logger.debug("等待 C# IPC 线程结束...")
-                # 缩短等待时间，因为线程是 daemon 的，不需要强求完美退出
-                self.client_thread.join(timeout=0.2)
+                # 给予足够的时间正常退出，因为 daemon=False
+                self.client_thread.join(timeout=1.0)
                 if self.client_thread.is_alive():
-                    logger.debug("C# IPC 线程未能在超时时间内完全结束，将随主进程退出")
+                    logger.warning("C# IPC 线程未能在超时时间内完全结束，可能由于 .NET 调用阻塞")
+            
+            # 线程结束后再清理资源，避免竞态条件
+            self.ipc_client = None
+            self.is_connected = False
             logger.debug("C# IPC 客户端停止指令已发出")
 
         def send_notification(
@@ -223,46 +225,74 @@ if CSHARP_AVAILABLE:
 
             async def client():
                 """异步客户端"""
-
-                self.ipc_client = IpcClient()
-                self.ipc_client.JsonIpcProvider.AddNotifyHandler(
-                    IpcRoutedNotifyIds.OnClassNotifyId,
-                    Action(lambda: self._on_class_test()),
-                )
-
-                task = self.ipc_client.Connect()
-                await loop.run_in_executor(None, lambda: task.Wait())
-                self.is_connected = True
-
-                while self.is_running:
-                    await asyncio.sleep(0.1)
-
-                    if not self._check_alive():
-                        if not self._disconnect_logged:
-                            logger.debug("C# IPC 断连！重连...")
-                            self._disconnect_logged = True
-                        self.is_connected = False
-
-                        task = self.ipc_client.Connect()
-                        await loop.run_in_executor(None, task.Wait)
-                        self.is_connected = True
-                        self._disconnect_logged = False
-
-                # 尝试调用 Dispose 释放资源
                 try:
-                    if self.ipc_client and hasattr(self.ipc_client, "Dispose"):
-                        self.ipc_client.Dispose()
-                except Exception as e:
-                    logger.debug(f"释放 C# IPC 客户端时出错: {e}")
+                    self.ipc_client = IpcClient()
+                    self.ipc_client.JsonIpcProvider.AddNotifyHandler(
+                        IpcRoutedNotifyIds.OnClassNotifyId,
+                        Action(lambda: self._on_class_test()),
+                    )
 
-                self.ipc_client = None
-                self.is_connected = False
+                    task = self.ipc_client.Connect()
+                    # 优化：在等待连接时定期检查 is_running 标志，以便快速响应退出请求
+                    # 避免在 .NET 内部 Wait() 导致线程无法被 Python 正常终止
+                    while self.is_running and not task.IsCompleted:
+                        await asyncio.sleep(0.1)
+                    
+                    if not self.is_running:
+                        return
+                        
+                    if task.IsFaulted:
+                        logger.error(f"C# IPC 连接失败: {task.Exception}")
+                        self.is_connected = False
+                        return
+                        
+                    self.is_connected = True
+
+                    while self.is_running:
+                        # 使用 wait 替代 sleep，提高响应速度并降低 CPU 占用
+                        await asyncio.sleep(0.5)
+
+                        if not self.is_running:
+                            break
+
+                        if not self._check_alive():
+                            if not self._disconnect_logged:
+                                logger.debug("C# IPC 断连！重连...")
+                                self._disconnect_logged = True
+                            self.is_connected = False
+
+                            task = self.ipc_client.Connect()
+                            while self.is_running and not task.IsCompleted:
+                                await asyncio.sleep(0.1)
+                            
+                            if not self.is_running:
+                                break
+                                
+                            if task.IsFaulted:
+                                continue
+                                
+                            self.is_connected = True
+                            self._disconnect_logged = False
+                except Exception as e:
+                    if self.is_running:
+                        logger.error(f"C# IPC 客户端运行出错: {e}")
+                finally:
+                    # 在线程内部安全地释放资源
+                    try:
+                        if self.ipc_client and hasattr(self.ipc_client, "Dispose"):
+                            self.ipc_client.Dispose()
+                            logger.debug("C# IPC 客户端资源已释放 (Dispose)")
+                    except Exception as e:
+                        logger.debug(f"释放 C# IPC 客户端资源时出错: {e}")
+                    self.is_connected = False
 
             # 启动新的 asyncio 事件循环
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            loop.run_until_complete(client())
-            loop.close()
+            try:
+                loop.run_until_complete(client())
+            finally:
+                loop.close()
 
         def _check_alive(self) -> bool:
             """客户端是否正常连接"""

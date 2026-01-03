@@ -68,6 +68,7 @@ def main():
     app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)
 
     window_manager = WindowManager()
+    window_manager.set_shared_memory(shared_memory)
     url_handler = create_url_handler()
     cs_ipc_handler = create_cs_ipc_handler()
     window_manager.set_url_handler(url_handler)

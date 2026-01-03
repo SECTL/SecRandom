@@ -69,7 +69,7 @@ class SettingsWindow(FluentWindow):
         self.show()
 
         # 初始化子界面
-        self.createSubInterface()
+        QTimer.singleShot(APP_INIT_DELAY, lambda: (self.createSubInterface()))
 
     @property
     def is_preview(self):
