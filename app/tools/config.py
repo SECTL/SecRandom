@@ -1301,7 +1301,7 @@ def export_all_data(parent: Optional[QWidget] = None) -> None:
         file_path, _ = QFileDialog.getSaveFileName(
             parent,
             get_content_pushbutton_name_async("basic_settings", "export_all_data"),
-            f"SecRandom_{VERSION}_all_data.zip",
+            f"SecRandom_{SPECIAL_VERSION}_all_data.zip",
             "ZIP Files (*.zip);;All Files (*)",
         )
         if not file_path:
@@ -1320,7 +1320,7 @@ def export_all_data(parent: Optional[QWidget] = None) -> None:
         with zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             version_info = {
                 "software_name": "SecRandom",
-                "version": VERSION,
+                "version": SPECIAL_VERSION,
             }
             zipf.writestr(
                 "version.json", json.dumps(version_info, ensure_ascii=False, indent=2)
@@ -1403,7 +1403,7 @@ def import_all_data(parent: Optional[QWidget] = None) -> None:
             if version_info:
                 software_name = version_info.get("software_name", "")
                 version = version_info.get("version", "")
-                current_version = VERSION
+                current_version = SPECIAL_VERSION
                 if software_name != "SecRandom" or version != current_version:
                     _mismatch_cancelled = False
 
