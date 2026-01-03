@@ -2,18 +2,19 @@
 # 导入库
 # ==================================================
 import sys
+import os
 import subprocess
 
 import loguru
 from loguru import logger
 from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import QTimer, QEvent, Signal
+from PySide6.QtCore import QTimer, QEvent, Signal, QSharedMemory
 from qfluentwidgets import FluentWindow, NavigationItemPosition
 
 from app.common.IPC_URL.csharp_ipc_handler import CSharpIPCHandler
 from app.common.shortcut import ShortcutManager
-from app.tools.variable import MINIMUM_WINDOW_SIZE, APP_INIT_DELAY
+from app.tools.variable import MINIMUM_WINDOW_SIZE, APP_INIT_DELAY, SHARED_MEMORY_KEY
 from app.tools.path_utils import get_data_path, get_app_root
 from app.tools.personalised import get_theme_icon
 from app.tools.settings_access import get_safe_font_size
@@ -32,6 +33,7 @@ from app.page_building.main_window_page import (
 from app.view.tray.tray import Tray
 from app.view.floating_window.levitation import LevitationWindow
 from app.common.IPC_URL.url_command_handler import URLCommandHandler
+from app.common.music.music_player import music_player
 
 
 # ==================================================
@@ -624,23 +626,77 @@ class MainWindow(FluentWindow):
     def close_window_secrandom(self):
         """关闭窗口
         执行安全验证后关闭程序，释放所有资源"""
+        logger.info("开始执行程序退出流程...")
+
+        # 尝试停止更新检查线程
+        try:
+            from app.tools import update_utils
+            if hasattr(update_utils, "update_check_thread") and update_utils.update_check_thread:
+                if update_utils.update_check_thread.isRunning():
+                    logger.debug("正在停止更新检查线程...")
+                    update_utils.update_check_thread.terminate()
+                    update_utils.update_check_thread.wait(500)
+        except Exception as e:
+            logger.debug(f"停止更新检查线程时出错: {e}")
+
+        # 停止所有后台服务（音乐、语音等）
+        self._stop_all_services()
+
         # 停止课前重置定时器
-        if self.pre_class_reset_timer.isActive():
+        if hasattr(self, "pre_class_reset_timer") and self.pre_class_reset_timer.isActive():
+            logger.debug("停止课前重置定时器")
             self.pre_class_reset_timer.stop()
 
         self.cleanup_shortcuts()
-        try:
-            loguru.logger.remove()
-        except Exception as e:
-            logger.error(f"日志系统关闭出错: {e}")
 
-        QApplication.quit()
         CSharpIPCHandler.instance().stop_ipc_client()
-        sys.exit(0)
+
+        logger.info("正在请求退出 QApplication...")
+        QApplication.quit()
+
+        # 尝试处理最后残留的事件
+        QApplication.processEvents()
+
+        # 显式释放共享内存
+        try:
+            shared_mem = QSharedMemory(SHARED_MEMORY_KEY)
+            if shared_mem.attach():
+                shared_mem.detach()
+                logger.debug("已分离共享内存")
+        except Exception as e:
+            logger.debug(f"释放共享内存时出错: {e}")
+
+        logger.info("退出流程执行完毕，终止进程")
+        # 刷新标准流并强制退出，解决退出挂起及 Python 解释器清理时的崩溃问题
+        try:
+            sys.stderr.flush()
+            sys.stdout.flush()
+        except Exception:
+            pass
+        os._exit(0)
+
+    def _stop_all_services(self):
+        """停止所有后台服务（音乐、语音等）"""
+        try:
+            # 停止全局音乐播放器
+            if music_player:
+                music_player.stop_music(fade_out=False)
+        except Exception as e:
+            logger.debug(f"停止音乐播放器时出错: {e}")
+
+        try:
+            # 停止各页面的语音播放器
+            for page in [self.roll_call_page, self.lottery_page]:
+                if page and hasattr(page, "tts_handler") and page.tts_handler:
+                    page.tts_handler.stop()
+        except Exception as e:
+            logger.debug(f"停止语音处理器时出错: {e}")
 
     def cleanup_shortcuts(self):
         """清理快捷键"""
         if hasattr(self, "shortcut_manager"):
+            if self.shortcut_manager.shortcuts:
+                logger.debug("正在清理所有快捷键...")
             self.shortcut_manager.cleanup()
 
     def _connect_shortcut_signals(self):
@@ -755,9 +811,8 @@ class MainWindow(FluentWindow):
         self, first_level_key: str, second_level_key: str, value
     ):
         """当快捷键设置发生变化时的处理函数"""
-        logger.debug(f"快捷键设置变化: {first_level_key}.{second_level_key} = {value}")
-
         if first_level_key == "shortcut_settings":
+            logger.debug(f"快捷键设置变化: {first_level_key}.{second_level_key} = {value}")
             if second_level_key == "enable_shortcut":
                 logger.debug(f"快捷键启用状态变化: {value}")
                 self.shortcut_manager.set_enabled(value)
@@ -789,21 +844,52 @@ class MainWindow(FluentWindow):
             logger.error(f"启动新进程失败: {e}")
             return
 
+        # 尝试停止更新检查线程
+        try:
+            from app.tools import update_utils
+            if hasattr(update_utils, "update_check_thread") and update_utils.update_check_thread:
+                if update_utils.update_check_thread.isRunning():
+                    logger.debug("正在停止更新检查线程...")
+                    update_utils.update_check_thread.terminate()
+                    update_utils.update_check_thread.wait(500)
+        except Exception as e:
+            logger.debug(f"停止更新检查线程时出错: {e}")
+
+        # 停止所有后台服务（音乐、语音等）
+        self._stop_all_services()
+
         # 停止课前重置定时器
-        if self.pre_class_reset_timer.isActive():
+        if hasattr(self, "pre_class_reset_timer") and self.pre_class_reset_timer.isActive():
+            logger.debug("停止课前重置定时器")
             self.pre_class_reset_timer.stop()
 
         self.cleanup_shortcuts()
 
-        try:
-            loguru.logger.remove()
-        except Exception as e:
-            logger.error(f"日志系统关闭出错: {e}")
-
-        # 完全退出当前应用程序
-        QApplication.quit()
         CSharpIPCHandler.instance().stop_ipc_client()
-        sys.exit(0)
+
+        logger.info("正在请求退出 QApplication 以进行重启...")
+        QApplication.quit()
+
+        # 尝试处理最后残留的事件
+        QApplication.processEvents()
+
+        # 显式释放共享内存
+        try:
+            shared_mem = QSharedMemory(SHARED_MEMORY_KEY)
+            if shared_mem.attach():
+                shared_mem.detach()
+                logger.debug("已分离共享内存")
+        except Exception as e:
+            logger.debug(f"释放共享内存时出错: {e}")
+
+        logger.info("重启前的清理流程执行完毕，终止当前进程")
+        # 刷新标准流并强制退出，解决退出挂起及 Python 解释器清理时的崩溃问题
+        try:
+            sys.stderr.flush()
+            sys.stdout.flush()
+        except Exception:
+            pass
+        os._exit(0)
 
     def _check_pre_class_reset(self):
         """每秒检测课前重置条件"""

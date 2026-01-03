@@ -81,7 +81,7 @@ if CSHARP_AVAILABLE:
 
             try:
                 self.client_thread = threading.Thread(
-                    target=self._run_client, daemon=False
+                    target=self._run_client, daemon=True
                 )
                 self.client_thread.start()
                 self.is_running = True
@@ -92,9 +92,24 @@ if CSHARP_AVAILABLE:
 
         def stop_ipc_client(self):
             """停止 C# IPC 客户端"""
+            logger.debug("正在停止 C# IPC 客户端...")
             self.is_running = False
+
+            # 尝试主动调用 Dispose 以打破可能挂起的 Connect() 或其他 .NET 调用
+            try:
+                if self.ipc_client and hasattr(self.ipc_client, "Dispose"):
+                    self.ipc_client.Dispose()
+                    logger.debug("已手动调用 C# IPC 客户端 Dispose")
+            except Exception as e:
+                logger.debug(f"手动释放 C# IPC 客户端资源时出错: {e}")
+
             if self.client_thread and self.client_thread.is_alive():
-                self.client_thread.join(timeout=1)
+                logger.debug("等待 C# IPC 线程结束...")
+                # 缩短等待时间，因为线程是 daemon 的，不需要强求完美退出
+                self.client_thread.join(timeout=0.2)
+                if self.client_thread.is_alive():
+                    logger.debug("C# IPC 线程未能在超时时间内完全结束，将随主进程退出")
+            logger.debug("C# IPC 客户端停止指令已发出")
 
         def send_notification(
             self,
@@ -220,7 +235,7 @@ if CSHARP_AVAILABLE:
                 self.is_connected = True
 
                 while self.is_running:
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(0.1)
 
                     if not self._check_alive():
                         if not self._disconnect_logged:
@@ -232,6 +247,13 @@ if CSHARP_AVAILABLE:
                         await loop.run_in_executor(None, task.Wait)
                         self.is_connected = True
                         self._disconnect_logged = False
+
+                # 尝试调用 Dispose 释放资源
+                try:
+                    if self.ipc_client and hasattr(self.ipc_client, "Dispose"):
+                        self.ipc_client.Dispose()
+                except Exception as e:
+                    logger.debug(f"释放 C# IPC 客户端时出错: {e}")
 
                 self.ipc_client = None
                 self.is_connected = False
@@ -291,6 +313,7 @@ else:
 
         def stop_ipc_client(self):
             """停止 C# IPC 客户端"""
+            logger.debug("C# IPC 处理器未启用，无需停止")
             pass
 
         def send_notification(

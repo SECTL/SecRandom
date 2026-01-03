@@ -588,13 +588,13 @@ async def get_latest_version_async(channel: int | None = None) -> dict | None:
         latest_no = metadata.get("latest_no", {})
 
         # 获取版本信息，如果通道不存在则使用稳定通道的版本
-        version = latest.get(channel_name, latest.get("release", VERSION))
+        version = latest.get(channel_name, latest.get("release", SPECIAL_VERSION))
         version_no = latest_no.get(channel_name, latest_no.get("release", 0))
 
         # 如果版本号是Disable，返回当前版本，禁止该通道更新
         if version == "Disable":
             logger.debug(f"通道 {channel_name} 已禁用，返回当前版本")
-            return {"version": VERSION, "version_no": 0}
+            return {"version": SPECIAL_VERSION, "version_no": 0}
 
         logger.debug(
             f"获取最新版本信息成功: 通道={channel_name}, 版本={version}, 版本号={version_no}"
@@ -628,7 +628,7 @@ def compare_versions(current_version: str, latest_version: str) -> int:
         latest_version (str): 最新版本号，格式为 "vX.X.X"、"vX.X.X.X" 或 "vX.X.X-alpha.1" 等
 
     Returns:
-        int: 1 表示有新版本，0 表示版本相同，-1 表示比较失败
+        int: 1 表示有新版本，0 表示版本相同，-1 表示当前版本更新，-2 表示比较失败
     """
     try:
         # 检查版本号是否为空
@@ -636,7 +636,7 @@ def compare_versions(current_version: str, latest_version: str) -> int:
             logger.error(
                 f"比较版本号失败: 版本号为空，current={current_version}, latest={latest_version}"
             )
-            return -1
+            return -2
 
         # 移除版本号前缀 "v"
         current = current_version.lstrip("v")
@@ -693,7 +693,7 @@ def compare_versions(current_version: str, latest_version: str) -> int:
         return 0  # 版本号完全相同
     except Exception as e:
         logger.error(f"比较版本号失败: {e}")
-        return -1
+        return -2
 
 
 def get_update_download_url(
@@ -1582,7 +1582,7 @@ class UpdateCheckThread(QThread):
             latest_version_no = latest_version_info["version_no"]
 
             # 比较版本号
-            compare_result = compare_versions(VERSION, latest_version)
+            compare_result = compare_versions(SPECIAL_VERSION, latest_version)
 
             # 获取下载文件夹路径
             download_dir = get_data_path("downloads")
@@ -1687,6 +1687,10 @@ class UpdateCheckThread(QThread):
                                 str(expected_file_path),
                                 file_size_str,
                             )
+                            # 更新全局状态
+                            update_status_manager.set_download_complete_with_size(
+                                str(expected_file_path), file_size_str
+                            )
                             return
                         else:
                             # 文件损坏，需要重新下载
@@ -1781,16 +1785,24 @@ class UpdateCheckThread(QThread):
                         safe_call_update_interface("set_download_failed")
                         # 更新全局状态
                         update_status_manager.set_download_failed()
-            elif compare_result == 0:
-                # 当前是最新版本
-                logger.debug("当前已是最新版本")
+            elif compare_result == 0 or compare_result == -1:
+                # 当前是最新版本或开发版本
+                if compare_result == 0:
+                    logger.debug("当前已是最新版本")
+                else:
+                    logger.debug(f"当前版本 ({SPECIAL_VERSION}) 比远程版本 ({latest_version}) 更新，视为最新版本")
+
                 # 通知更新页面已是最新版本
                 safe_call_update_interface("set_latest_version")
+                # 更新全局状态
+                update_status_manager.set_latest_version()
             else:
-                # 版本比较失败
+                # 版本比较失败 (compare_result == -2)
                 logger.debug("版本比较失败")
                 # 通知更新页面检查失败
                 safe_call_update_interface("set_check_failed")
+                # 更新全局状态
+                update_status_manager.set_check_failed()
 
             # 更新上次检查时间
             safe_call_update_interface("update_last_check_time")
@@ -1798,6 +1810,8 @@ class UpdateCheckThread(QThread):
             logger.error(f"启动时检查更新失败: {e}")
             # 通知更新页面检查失败
             safe_call_update_interface("set_check_failed")
+            # 更新全局状态
+            update_status_manager.set_check_failed()
         finally:
             # 关闭事件循环
             if loop and not loop.is_closed():

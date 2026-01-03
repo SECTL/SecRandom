@@ -102,10 +102,13 @@ def read_secrets() -> dict:
     # 不存在则创建空文件
     if not os.path.exists(p):
         ensure_dir(os.path.dirname(p))
-        with open(p, "wb") as f:
-            f.write(b"")
-        _set_hidden(str(p))
-        logger.debug(f"创建空安全配置文件：{p}")
+        try:
+            with open(p, "w", encoding="utf-8") as f:
+                json.dump({}, f)
+            _set_hidden(str(p))
+            logger.debug(f"创建空安全配置文件：{p}")
+        except Exception as e:
+            logger.warning(f"创建安全配置文件失败: {e}")
         return {}
     if os.path.exists(p):
         try:
@@ -185,10 +188,13 @@ def read_behind_scenes_settings() -> dict:
     p = get_settings_path("behind_scenes.json")
     if not os.path.exists(p):
         ensure_dir(os.path.dirname(p))
-        with open(p, "wb") as f:
-            f.write(b"")
-        _set_hidden(str(p))
-        logger.debug(f"创建空内幕设置文件：{p}")
+        try:
+            with open(p, "w", encoding="utf-8") as f:
+                json.dump({}, f)
+            _set_hidden(str(p))
+            logger.debug(f"创建空内幕设置文件：{p}")
+        except Exception as e:
+            logger.warning(f"创建内幕设置文件失败: {e}")
         return {}
     if os.path.exists(p):
         try:

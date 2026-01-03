@@ -221,10 +221,17 @@ class ShortcutManager(QObject):
 
     def cleanup(self):
         """清理所有快捷键"""
-        logger.info("清理所有快捷键")
-        for config_key, hotkey in self.shortcuts.items():
-            try:
-                keyboard.remove_hotkey(hotkey)
-            except Exception as e:
-                logger.error(f"注销快捷键失败 {config_key}: {e}")
-        self.shortcuts.clear()
+        if self.shortcuts:
+            logger.info(f"清理已注册的 {len(self.shortcuts)} 个快捷键")
+            for config_key, hotkey in self.shortcuts.items():
+                try:
+                    keyboard.remove_hotkey(hotkey)
+                except Exception as e:
+                    logger.error(f"注销快捷键失败 {config_key}: {e}")
+            self.shortcuts.clear()
+
+        # 无论是否有已注册快捷键，都尝试清理全局钩子，确保 keyboard 库的监听线程能正确关闭
+        try:
+            keyboard.unhook_all()
+        except Exception:
+            pass
