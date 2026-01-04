@@ -1825,7 +1825,7 @@ def stop_update_check():
     global update_check_thread
     if update_check_thread and update_check_thread.isRunning():
         logger.debug("停止更新检查线程...")
-        update_check_thread.stop()
+        update_check_thread.terminate()  # 直接强制终止
         # 给予一定时间正常退出
         if not update_check_thread.wait(1000):
             logger.warning("更新检查线程未能在超时时间内正常退出，强制终止")
