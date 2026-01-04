@@ -249,8 +249,11 @@ if CSHARP_AVAILABLE:
                     self.is_connected = True
 
                     while self.is_running:
-                        # 使用 wait 替代 sleep，提高响应速度并降低 CPU 占用
-                        await asyncio.sleep(0.5)
+                        # 缩短轮询间隔，提高退出响应速度 (每次睡眠 0.1s，共 0.5s)
+                        for _ in range(5):
+                            if not self.is_running:
+                                break
+                            await asyncio.sleep(0.1)
 
                         if not self.is_running:
                             break

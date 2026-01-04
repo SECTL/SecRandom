@@ -1597,7 +1597,7 @@ class UpdateCheckThread(QThread):
             latest_version_no = latest_version_info["version_no"]
 
             # 比较版本号
-            compare_result = compare_versions(VERSION, latest_version)
+            compare_result = compare_versions(SPECIAL_VERSION, latest_version)
 
             # 获取下载文件夹路径
             download_dir = get_data_path("downloads")
