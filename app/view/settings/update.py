@@ -309,7 +309,7 @@ class update(QWidget):
                     if mode == "force":
                         compare_result = compare_versions("v0.0.0", latest_version)
                     else:
-                        compare_result = compare_versions(SPECIAL_VERSION, latest_version)
+                        compare_result = compare_versions(VERSION, latest_version)
 
                     if compare_result == 1:
                         # 有新版本
