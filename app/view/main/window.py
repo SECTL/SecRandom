@@ -702,8 +702,9 @@ class MainWindow(FluentWindow):
             sys.stderr.flush()
             sys.stdout.flush()
         except Exception:
-            # 忽略流刷新错误，因为流可能已经关闭
-            pass
+        except Exception as e:
+            # 在退出前刷新标准流失败时忽略异常，但记录调试信息
+            logger.debug(f"刷新标准输出/错误流时出错: {e}")
 
     def _stop_all_services(self):
         """停止所有后台服务（音乐、语音等）"""
