@@ -701,7 +701,6 @@ class MainWindow(FluentWindow):
         try:
             sys.stderr.flush()
             sys.stdout.flush()
-        except Exception:
         except Exception as e:
             # 在退出前刷新标准流失败时忽略异常，但记录调试信息
             logger.debug(f"刷新标准输出/错误流时出错: {e}")

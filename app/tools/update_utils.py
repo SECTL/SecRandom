@@ -628,11 +628,7 @@ def compare_versions(current_version: str, latest_version: str) -> int:
         latest_version (str): 最新版本号，格式为 "vX.X.X"、"vX.X.X.X" 或 "vX.X.X-alpha.1" 等
 
     Returns:
-        int: 比较结果代码：
-             1  - 远程版本较新（建议更新）
-             0  - 版本相同
-             -1 - 当前版本较新（处于开发或预览分支）
-             -2 - 比较失败（版本号格式错误或为空）
+        int: 1 表示有新版本，0 表示版本相同，-1 表示比较失败
     """
     try:
         # 检查版本号是否为空
@@ -640,7 +636,7 @@ def compare_versions(current_version: str, latest_version: str) -> int:
             logger.error(
                 f"比较版本号失败: 版本号为空，current={current_version}, latest={latest_version}"
             )
-            return -2
+            return -1
 
         # 移除版本号前缀 "v"
         current = current_version.lstrip("v")
@@ -697,7 +693,7 @@ def compare_versions(current_version: str, latest_version: str) -> int:
         return 0  # 版本号完全相同
     except Exception as e:
         logger.error(f"比较版本号失败: {e}")
-        return -2
+        return -1
 
 
 def get_update_download_url(
@@ -1531,11 +1527,6 @@ class UpdateCheckThread(QThread):
     def __init__(self, settings_window=None):
         super().__init__()
         self.settings_window = settings_window
-        self._is_running = True
-
-    def stop(self):
-        """请求停止线程"""
-        self._is_running = False
 
     def run(self):
         """执行更新检查"""
@@ -1552,8 +1543,6 @@ class UpdateCheckThread(QThread):
             # 辅助函数：安全地调用更新页面的方法
             def safe_call_update_interface(method_name, *args):
                 """安全地调用更新页面的方法"""
-                if not self._is_running:
-                    return
                 if self.settings_window and hasattr(
                     self.settings_window, "updateInterface"
                 ):
@@ -1572,8 +1561,6 @@ class UpdateCheckThread(QThread):
                 logger.debug("自动更新模式为0，不执行更新检查")
                 return
 
-            if not self._is_running: return
-
             # 通知更新页面开始检查
             safe_call_update_interface("set_checking_status")
             # 更新全局状态
@@ -1582,8 +1569,6 @@ class UpdateCheckThread(QThread):
             # 获取最新版本信息（使用异步方式）
             logger.debug("开始检查更新")
             latest_version_info = loop.run_until_complete(get_latest_version_async())
-
-            if not self._is_running: return
 
             if not latest_version_info:
                 logger.debug("获取最新版本信息失败")
@@ -1597,7 +1582,7 @@ class UpdateCheckThread(QThread):
             latest_version_no = latest_version_info["version_no"]
 
             # 比较版本号
-            compare_result = compare_versions(SPECIAL_VERSION, latest_version)
+            compare_result = compare_versions(VERSION, latest_version)
 
             # 获取下载文件夹路径
             download_dir = get_data_path("downloads")
@@ -1702,10 +1687,6 @@ class UpdateCheckThread(QThread):
                                 str(expected_file_path),
                                 file_size_str,
                             )
-                            # 更新全局状态
-                            update_status_manager.set_download_complete_with_size(
-                                str(expected_file_path), file_size_str
-                            )
                             return
                         else:
                             # 文件损坏，需要重新下载
@@ -1800,24 +1781,16 @@ class UpdateCheckThread(QThread):
                         safe_call_update_interface("set_download_failed")
                         # 更新全局状态
                         update_status_manager.set_download_failed()
-            elif compare_result == 0 or compare_result == -1:
-                # 当前是最新版本或开发版本
-                if compare_result == 0:
-                    logger.debug("当前已是最新版本")
-                else:
-                    logger.debug(f"当前版本 ({VERSION}) 比远程版本 ({latest_version}) 更新，视为最新版本")
-
+            elif compare_result == 0:
+                # 当前是最新版本
+                logger.debug("当前已是最新版本")
                 # 通知更新页面已是最新版本
                 safe_call_update_interface("set_latest_version")
-                # 更新全局状态
-                update_status_manager.set_latest_version()
             else:
-                # 版本比较失败 (compare_result == -2)
+                # 版本比较失败
                 logger.debug("版本比较失败")
                 # 通知更新页面检查失败
                 safe_call_update_interface("set_check_failed")
-                # 更新全局状态
-                update_status_manager.set_check_failed()
 
             # 更新上次检查时间
             safe_call_update_interface("update_last_check_time")
@@ -1825,8 +1798,6 @@ class UpdateCheckThread(QThread):
             logger.error(f"启动时检查更新失败: {e}")
             # 通知更新页面检查失败
             safe_call_update_interface("set_check_failed")
-            # 更新全局状态
-            update_status_manager.set_check_failed()
         finally:
             # 关闭事件循环
             if loop and not loop.is_closed():
