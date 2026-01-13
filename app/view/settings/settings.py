@@ -3,9 +3,9 @@
 # ==================================================
 
 from loguru import logger
-from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import QTimer, QEvent, Signal
+from PySide6.QtCore import QTimer, QEvent, Signal, QSize
 from qfluentwidgets import FluentWindow, NavigationItemPosition
 
 from app.tools.variable import *
@@ -15,6 +15,7 @@ from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
 from app.common.IPC_URL.url_command_handler import URLCommandHandler
+from app.common.window.splash_screen import SplashScreen
 
 
 # ==================================================
@@ -521,6 +522,9 @@ class SettingsWindow(FluentWindow):
                     if not hasattr(self, "_created_pages"):
                         self._created_pages = {}
                     self._created_pages[name] = real_page
+                    
+                    # 重新添加导航项（如果之前因为卸载而被移除）
+                    self._restore_navigation_item_if_needed(name)
 
                     # 如果是 PivotPageTemplate，不再预加载所有子页面
                     # 子页面会在用户点击时按需加载
@@ -531,6 +535,131 @@ class SettingsWindow(FluentWindow):
                     logger.exception(f"延迟创建设置页面 {name} 失败: {e}")
         except Exception as e:
             logger.exception(f"处理堆叠窗口改变失败: {e}")
+
+    def _restore_navigation_item_if_needed(self, page_name: str):
+        """在页面重新创建时恢复导航项（如果之前因卸载而被移除）
+
+        Args:
+            page_name: 要恢复导航项的页面名称
+        """
+        # 映射界面名称到导航项属性和配置信息
+        nav_item_configs = {
+            "basicSettingsInterface": {
+                "item_attr": "basic_settings_item",
+                "icon": "ic_fluent_wrench_settings_20_filled",
+                "text_module": "basic_settings",
+                "setting_key": "base_settings",
+            },
+            "listManagementInterface": {
+                "item_attr": "list_management_item",
+                "icon": "ic_fluent_list_20_filled",
+                "text_module": "list_management",
+                "setting_key": "name_management",
+            },
+            "extractionSettingsInterface": {
+                "item_attr": "extraction_settings_item",
+                "icon": "ic_fluent_archive_20_filled",
+                "text_module": "extraction_settings",
+                "setting_key": "draw_settings",
+            },
+            "floatingWindowManagementInterface": {
+                "item_attr": "floating_window_management_item",
+                "icon": "ic_fluent_window_apps_20_filled",
+                "text_module": "floating_window_management",
+                "setting_key": "floating_window_management",
+            },
+            "notificationSettingsInterface": {
+                "item_attr": "notification_settings_item",
+                "icon": "ic_fluent_comment_note_20_filled",
+                "text_module": "notification_settings",
+                "setting_key": "notification_service",
+            },
+            "safetySettingsInterface": {
+                "item_attr": "safety_settings_item",
+                "icon": "ic_fluent_shield_20_filled",
+                "text_module": "safety_settings",
+                "setting_key": "security_settings",
+            },
+            "courseSettingsInterface": {
+                "item_attr": "course_settings_item",
+                "icon": "ic_fluent_calendar_ltr_20_filled",
+                "text_module": "linkage_settings",
+                "setting_key": "linkage_settings",
+            },
+            "voiceSettingsInterface": {
+                "item_attr": "voice_settings_item",
+                "icon": "ic_fluent_person_voice_20_filled",
+                "text_module": "voice_settings",
+                "setting_key": "voice_settings",
+            },
+            "historyInterface": {
+                "item_attr": "history_item",
+                "icon": "ic_fluent_history_20_filled",
+                "text_module": "history",
+                "setting_key": "settings_history",
+            },
+            "moreSettingsInterface": {
+                "item_attr": "more_settings_item",
+                "icon": "ic_fluent_more_horizontal_20_filled",
+                "text_module": "more_settings",
+                "setting_key": "more_settings",
+            },
+            "updateInterface": {
+                "item_attr": "update_item",
+                "icon": "ic_fluent_arrow_sync_20_filled",
+                "text_module": "update",
+                "setting_key": None,  # 固定显示
+            },
+            "aboutInterface": {
+                "item_attr": "about_item",
+                "icon": "ic_fluent_info_20_filled",
+                "text_module": "about",
+                "setting_key": None,  # 固定显示
+            },
+        }
+
+        if page_name not in nav_item_configs:
+            return
+
+        config = nav_item_configs[page_name]
+        nav_item_attr = config["item_attr"]
+        nav_item = getattr(self, nav_item_attr, None)
+
+        # 如果导航项已经存在，无需重新创建
+        if nav_item is not None:
+            return
+
+        # 获取容器
+        container = getattr(self, page_name, None)
+        if container is None:
+            return
+
+        # 确定位置
+        if config["setting_key"]:
+            setting_value = readme_settings_async(
+                "sidebar_management_settings", config["setting_key"]
+            )
+            position = (
+                NavigationItemPosition.BOTTOM
+                if setting_value == 1
+                else NavigationItemPosition.TOP
+            )
+        else:
+            # 更新和关于页面固定在底部
+            position = NavigationItemPosition.BOTTOM
+
+        # 重新添加导航项
+        try:
+            new_nav_item = self.addSubInterface(
+                container,
+                get_theme_icon(config["icon"]),
+                get_content_name_async(config["text_module"], "title"),
+                position=position,
+            )
+            setattr(self, nav_item_attr, new_nav_item)
+            logger.debug(f"已恢复导航项: {nav_item_attr}")
+        except Exception as e:
+            logger.exception(f"恢复导航项 {nav_item_attr} 失败: {e}")
 
     def _unload_inactive_pages(self, current_page: str):
         """卸载不活动的页面以释放内存
@@ -583,6 +712,39 @@ class SettingsWindow(FluentWindow):
             return
 
         try:
+            # 映射界面名称到导航项属性名称
+            interface_to_nav_item = {
+                "basicSettingsInterface": "basic_settings_item",
+                "listManagementInterface": "list_management_item",
+                "extractionSettingsInterface": "extraction_settings_item",
+                "floatingWindowManagementInterface": "floating_window_management_item",
+                "notificationSettingsInterface": "notification_settings_item",
+                "safetySettingsInterface": "safety_settings_item",
+                "courseSettingsInterface": "course_settings_item",
+                "voiceSettingsInterface": "voice_settings_item",
+                "historyInterface": "history_item",
+                "moreSettingsInterface": "more_settings_item",
+                "updateInterface": "update_item",
+                "aboutInterface": "about_item",
+            }
+
+            # 从导航面板中移除导航项
+            if page_name in interface_to_nav_item:
+                nav_item_attr = interface_to_nav_item[page_name]
+                nav_item = getattr(self, nav_item_attr, None)
+                
+                if nav_item is not None:
+                    # 获取导航项的 routeKey 并从导航面板中移除
+                    try:
+                        route_key = nav_item.routeKey()
+                        self.navigationInterface.removeItem(route_key)
+                        logger.debug(f"已从导航面板移除导航项: {route_key}")
+                    except Exception as e:
+                        logger.warning(f"移除导航项 {nav_item_attr} 时出错: {e}")
+                    
+                    # 清除导航项属性引用
+                    setattr(self, nav_item_attr, None)
+
             real_page = self._created_pages.pop(page_name)
 
             # 查找容器
