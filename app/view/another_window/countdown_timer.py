@@ -1976,6 +1976,7 @@ class CountdownTimerPage(QWidget):
         super().showEvent(event)
         self._sync_ui_from_engine()
         self._sync_controls_state()
+        QTimer.singleShot(0, self._apply_fullscreen_layout)
 
     def keyPressEvent(self, event):
         try:
