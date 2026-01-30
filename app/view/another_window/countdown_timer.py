@@ -2088,14 +2088,6 @@ class CountdownTimerPage(QWidget):
 
     def _delayed_layout_sync(self):
         """延迟布局同步，确保 widget 的 geometry 已经正确"""
-        # 强制触发窗口 resize 来修复布局问题
-        w = self.window()
-        if w:
-            size = w.size()
-            # 微调大小触发 resize 事件，然后恢复
-            w.resize(size.width() + 1, size.height())
-            w.resize(size)
-        
         self._sync_ui_from_engine()
         self._sync_controls_state()
         
