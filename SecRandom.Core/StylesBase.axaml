@@ -16,6 +16,8 @@
                                  UseSystemFontOnWindows="True"/>
     
     <StyleInclude Source="/Styles/NavigationBackButton.axaml" />
+    <StyleInclude Source="/Styles/PopupAnimations.axaml" />
+    <StyleInclude Source="/Styles/StackPanelIntroAnimation.axaml" />
     
     <Style Selector=":is(TextBlock):not(#Icon)">
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
