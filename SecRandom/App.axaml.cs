@@ -565,12 +565,11 @@ public partial class App : Application
             weightIndex = 0;
         }
 
-        var fontFamily = fontFamilyName == "MiSans"
-            ? new FontFamily("avares://SecRandom/Assets/Fonts/#MiSans")
-            : new FontFamily(fontFamilyName);
-
+        // 先不进行内置字体特殊处理。
+        var fontFamily = new FontFamily(fontFamilyName);
         Current.Resources["AppFontFamily"] = fontFamily;
         Current.Resources["AppFontWeight"] = UiFontWeights[weightIndex];
+        Current.Resources["ContentControlThemeFontFamily"] = fontFamily;
     }
 
     private static string ResolveUiFontFamilyName(string? uiFontFamilyName, int uiFontFamilyIndex)

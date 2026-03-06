@@ -2,7 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:styling="clr-namespace:FluentAvalonia.Styling;assembly=FluentAvalonia"
         xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
-        xmlns:controls="clr-namespace:SecRandom.Core.Controls">
+        xmlns:controls="clr-namespace:SecRandom.Core.Controls"
+        xmlns:faWindowing="clr-namespace:FluentAvalonia.UI.Windowing;assembly=FluentAvalonia">
     <Styles.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -11,23 +12,22 @@
         </ResourceDictionary>
     </Styles.Resources>
     
-    <styling:FluentAvaloniaTheme PreferSystemTheme="True" PreferUserAccentColor="True"
-                                 TextVerticalAlignmentOverrideBehavior="AlwaysEnabled"
-                                 UseSystemFontOnWindows="True"/>
+    <styling:FluentAvaloniaTheme PreferSystemTheme="True"
+                                 PreferUserAccentColor="True"
+                                 UseSystemFontOnWindows="False"
+                                 TextVerticalAlignmentOverrideBehavior="Disabled"/>
     
     <StyleInclude Source="/Styles/NavigationBackButton.axaml" />
     <StyleInclude Source="/Styles/PopupAnimations.axaml" />
     <StyleInclude Source="/Styles/StackPanelIntroAnimation.axaml" />
     
-    <Style Selector=":is(TextBlock):not(#Icon)">
-        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
-        <Setter Property="FontWeight" Value="{DynamicResource AppFontWeight}"/>
+    <Style Selector=":is(Window)">
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+        <Setter Property="FontWeight" Value="{DynamicResource AppFontWeight}" />
     </Style>
     
-    <!-- E70E 为向上箭头 E70D 为向下箭头 -->
-    <Style Selector=":is(TextBlock)[Text=&#xE70E;], :is(TextBlock)[Text=&#xE70D;]">
-        <Setter Property="FontFamily" Value="{DynamicResource SymbolThemeFontFamily}"/>
-        <Setter Property="FontWeight" Value="Normal"/>
+    <Style Selector=":is(Control)">
+        <Setter Property="TextElement.FontWeight" Value="{DynamicResource AppFontWeight}" />
     </Style>
     
     <StyleInclude Source="/Controls/TouchDragThumb.axaml"/>
