@@ -12,7 +12,7 @@
         <StackPanel Orientation="Vertical" Margin="12 12 18 12" Spacing="12">
             <StackPanel Orientation="Vertical" Spacing="0">
                 <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.SelectPool}"
-                                         Description="{x:Static pageLangs:Resources.SelectPoolDesc}"
+                                         Description="{x:Static pageLangs:Resources.Settings_SelectPoolDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8F1;}">
                     <fa:SettingsExpanderItem.Footer>
                         <ComboBox x:Name="PoolNameComboBox"

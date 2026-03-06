@@ -17,7 +17,7 @@
                        FontWeight="SemiBold"/>
 
             <StackPanel Orientation="Vertical" Spacing="0">
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.DataSourceMode}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_DataSourceMode}"
                                          Description="{x:Static pageLangs:Resources.Settings_DataSourceModeDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8F1;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -37,7 +37,7 @@
                        Margin="0 8 0 0"/>
 
             <StackPanel Orientation="Vertical" Spacing="0">
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.ScheduleImport}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_ScheduleImport}"
                                          Description="{x:Static pageLangs:Resources.Settings_ScheduleImportDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8A5;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -63,7 +63,7 @@
                        Margin="0 8 0 0"/>
 
             <StackPanel Orientation="Vertical" Spacing="0">
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.EnableClassBreak}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_EnableClassBreak}"
                                          Description="{x:Static pageLangs:Resources.Settings_EnableClassBreakDesc}"
                                          IconSource="{controls:FluentIconSource &#xE7A6;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -73,7 +73,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.EnableVerificationFlow}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_EnableVerificationFlow}"
                                          Description="{x:Static pageLangs:Resources.Settings_EnableVerificationFlowDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8D4;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -83,7 +83,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.PreClassEnableTime}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_PreClassEnableTime}"
                                          Description="{x:Static pageLangs:Resources.Settings_PreClassEnableTimeDesc}"
                                          IconSource="{controls:FluentIconSource &#xE823;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -95,7 +95,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.PostClassDisableDelay}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_PostClassDisableDelay}"
                                          Description="{x:Static pageLangs:Resources.Settings_PostClassDisableDelayDesc}"
                                          IconSource="{controls:FluentIconSource &#xE823;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -107,7 +107,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.HideFloatingWindowOnClassEnd}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_HideFloatingWindowOnClassEnd}"
                                          Description="{x:Static pageLangs:Resources.Settings_HideFloatingWindowOnClassEndDesc}"
                                          IconSource="{controls:FluentIconSource &#xE7AC;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -124,7 +124,7 @@
                        Margin="0 8 0 0"/>
 
             <StackPanel Orientation="Vertical" Spacing="0">
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.EnablePreClassReset}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_EnablePreClassReset}"
                                          Description="{x:Static pageLangs:Resources.Settings_EnablePreClassResetDesc}"
                                          IconSource="{controls:FluentIconSource &#xE777;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -134,7 +134,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.PreClassResetTime}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_PreClassResetTime}"
                                          Description="{x:Static pageLangs:Resources.Settings_PreClassResetTimeDesc}"
                                          IconSource="{controls:FluentIconSource &#xE823;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -154,7 +154,7 @@
                        Margin="0 8 0 0"/>
 
             <StackPanel Orientation="Vertical" Spacing="0">
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.EnableSubjectHistoryFilter}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_EnableSubjectHistoryFilter}"
                                          Description="{x:Static pageLangs:Resources.Settings_EnableSubjectHistoryFilterDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8EC;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -164,7 +164,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.SubjectHistoryBreakAssignment}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_SubjectHistoryBreakAssignment}"
                                          Description="{x:Static pageLangs:Resources.Settings_SubjectHistoryBreakAssignmentDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8EC;}">
                     <fa:SettingsExpanderItem.Footer>

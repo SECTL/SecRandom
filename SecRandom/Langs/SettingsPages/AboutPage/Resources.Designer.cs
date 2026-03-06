@@ -69,29 +69,11 @@ namespace SecRandom.Langs.SettingsPages.AboutPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 跳转.
-        /// </summary>
-        public static string Bilibili {
-            get {
-                return ResourceManager.GetString("Bilibili", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 检查更新.
         /// </summary>
         public static string CheckUpdate {
             get {
                 return ResourceManager.GetString("CheckUpdate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 贡献人员.
-        /// </summary>
-        public static string Contributors {
-            get {
-                return ResourceManager.GetString("Contributors", resourceCulture);
             }
         }
         
@@ -177,29 +159,11 @@ namespace SecRandom.Langs.SettingsPages.AboutPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 版权.
-        /// </summary>
-        public static string Copyright {
-            get {
-                return ResourceManager.GetString("Copyright", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 复制用户信息.
         /// </summary>
         public static string CopyUserInfo {
             get {
                 return ResourceManager.GetString("CopyUserInfo", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 捐赠支持.
-        /// </summary>
-        public static string Donation {
-            get {
-                return ResourceManager.GetString("Donation", resourceCulture);
             }
         }
         
@@ -213,29 +177,11 @@ namespace SecRandom.Langs.SettingsPages.AboutPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 跳转.
-        /// </summary>
-        public static string GitHub {
-            get {
-                return ResourceManager.GetString("GitHub", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 抽奖总次数.
         /// </summary>
         public static string LotteryTotalCount {
             get {
                 return ResourceManager.GetString("LotteryTotalCount", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 跳转.
-        /// </summary>
-        public static string OrganizationWebsite {
-            get {
-                return ResourceManager.GetString("OrganizationWebsite", resourceCulture);
             }
         }
         
@@ -285,7 +231,16 @@ namespace SecRandom.Langs.SettingsPages.AboutPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 访问黎泽懿_Aionflux的Bilibili账号.
+        ///   Looks up a localized string similar to 跳转.
+        /// </summary>
+        public static string Settings_Bilibili {
+            get {
+                return ResourceManager.GetString("Settings_Bilibili", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 访问黎泽懿_Aionflux 的 Bilibili 账号.
         /// </summary>
         public static string Settings_BilibiliDesc {
             get {
@@ -303,6 +258,15 @@ namespace SecRandom.Langs.SettingsPages.AboutPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 贡献人员.
+        /// </summary>
+        public static string Settings_Contributors {
+            get {
+                return ResourceManager.GetString("Settings_Contributors", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 点击查看详细贡献者信息.
         /// </summary>
         public static string Settings_ContributorsDesc {
@@ -312,11 +276,29 @@ namespace SecRandom.Langs.SettingsPages.AboutPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to SecRandom遵循GPL-3.0协议.
+        ///   Looks up a localized string similar to 版权.
+        /// </summary>
+        public static string Settings_Copyright {
+            get {
+                return ResourceManager.GetString("Settings_Copyright", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SecRandom 遵循 GPL-3.0 协议.
         /// </summary>
         public static string Settings_CopyrightDesc {
             get {
                 return ResourceManager.GetString("Settings_CopyrightDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 捐赠支持.
+        /// </summary>
+        public static string Settings_Donation {
+            get {
+                return ResourceManager.GetString("Settings_Donation", resourceCulture);
             }
         }
         
@@ -330,11 +312,29 @@ namespace SecRandom.Langs.SettingsPages.AboutPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 跳转.
+        /// </summary>
+        public static string Settings_GitHub {
+            get {
+                return ResourceManager.GetString("Settings_GitHub", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 访问项目代码仓库.
         /// </summary>
         public static string Settings_GitHubDesc {
             get {
                 return ResourceManager.GetString("Settings_GitHubDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 跳转.
+        /// </summary>
+        public static string Settings_OrganizationWebsite {
+            get {
+                return ResourceManager.GetString("Settings_OrganizationWebsite", resourceCulture);
             }
         }
         
@@ -348,11 +348,20 @@ namespace SecRandom.Langs.SettingsPages.AboutPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 选择SecRandom软件更新频道.
+        ///   Looks up a localized string similar to 选择 SecRandom 软件更新频道.
         /// </summary>
         public static string Settings_UpdateChannelDesc {
             get {
                 return ResourceManager.GetString("Settings_UpdateChannelDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 版本.
+        /// </summary>
+        public static string Settings_Version {
+            get {
+                return ResourceManager.GetString("Settings_Version", resourceCulture);
             }
         }
         
@@ -366,7 +375,16 @@ namespace SecRandom.Langs.SettingsPages.AboutPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 访问SecRandom软件官网.
+        ///   Looks up a localized string similar to 跳转.
+        /// </summary>
+        public static string Settings_Website {
+            get {
+                return ResourceManager.GetString("Settings_Website", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 访问 SecRandom 软件官网.
         /// </summary>
         public static string Settings_WebsiteDesc {
             get {
@@ -411,7 +429,7 @@ namespace SecRandom.Langs.SettingsPages.AboutPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 用户ID.
+        ///   Looks up a localized string similar to 用户 ID.
         /// </summary>
         public static string UserId {
             get {
@@ -452,24 +470,6 @@ namespace SecRandom.Langs.SettingsPages.AboutPage {
         public static string UserName {
             get {
                 return ResourceManager.GetString("UserName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 版本.
-        /// </summary>
-        public static string Version {
-            get {
-                return ResourceManager.GetString("Version", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 跳转.
-        /// </summary>
-        public static string Website {
-            get {
-                return ResourceManager.GetString("Website", resourceCulture);
             }
         }
     }

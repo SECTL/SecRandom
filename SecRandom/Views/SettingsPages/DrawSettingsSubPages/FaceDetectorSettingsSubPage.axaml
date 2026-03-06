@@ -17,7 +17,7 @@
                        FontWeight="SemiBold" />
 
             <StackPanel Orientation="Vertical" Spacing="0">
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.CameraSource}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_CameraSource}"
                                          Description="{x:Static pageLangs:Resources.Settings_CameraSourceDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8A7;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -29,7 +29,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.CameraDisplayResolution}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_CameraDisplayResolution}"
                                          Description="{x:Static pageLangs:Resources.Settings_CameraDisplayResolutionDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8D2;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -40,7 +40,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.CameraPreviewMode}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_CameraPreviewMode}"
                                          Description="{x:Static pageLangs:Resources.Settings_CameraPreviewModeDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8D4;}">
                     <fa:SettingsExpanderItem.Footer>

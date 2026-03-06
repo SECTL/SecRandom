@@ -22,7 +22,7 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
         Data.PropertyChanged += Data_OnPropertyChanged;
     }
 
-    protected virtual void Reload()
+    public virtual void Reload()
     {
         Data.PropertyChanged -= Data_OnPropertyChanged;
         Logger.LogInformation("重新加载配置文件...");

@@ -66,10 +66,13 @@
         <value>通知フローティングウィンドウ動作モードを設定</value>
     </data>
     <data name="ClassIslandNotificationServiceSettings" xml:space="preserve">
-        <value>ClassIsland通知サービス</value>
+        <value>ClassIsland 通知サービス</value>
     </data>
     <data name="Settings_ClassIslandNotificationServiceSettingsDesc" xml:space="preserve">
-        <value>ClassIsland通知サービスパラメータを設定</value>
+        <value>ClassIsland 通知サービスパラメータを設定</value>
+    </data>
+    <data name="Settings_CallNotificationService" xml:space="preserve">
+        <value>通知サービスを呼び出す</value>
     </data>
     <data name="CallNotificationService" xml:space="preserve">
         <value>通知サービスを呼び出す</value>
@@ -77,22 +80,22 @@
     <data name="Settings_CallNotificationServiceDesc" xml:space="preserve">
         <value>有効にするとシステム通知サービスを呼び出して結果を送信</value>
     </data>
-    <data name="Animation" xml:space="preserve">
+    <data name="Settings_Animation" xml:space="preserve">
         <value>アニメーション</value>
     </data>
-    <data name="AnimationDesc" xml:space="preserve">
+    <data name="Settings_AnimationDesc" xml:space="preserve">
         <value>通知ウィンドウ表示アニメーション効果を設定</value>
     </data>
-    <data name="FloatingWindowEnabledMonitor" xml:space="preserve">
+    <data name="Settings_FloatingWindowEnabledMonitor" xml:space="preserve">
         <value>モニター選択</value>
     </data>
     <data name="Settings_FloatingWindowEnabledMonitorDesc" xml:space="preserve">
         <value>通知フローティングウィンドウを表示するモニターを選択</value>
     </data>
-    <data name="FloatingWindowPosition" xml:space="preserve">
+    <data name="Settings_FloatingWindowPosition" xml:space="preserve">
         <value>フローティングウィンドウ位置</value>
     </data>
-    <data name="FloatingWindowPositionDesc" xml:space="preserve">
+    <data name="Settings_FloatingWindowPositionDesc" xml:space="preserve">
         <value>通知フローティングウィンドウの画面表示位置を設定</value>
     </data>
     <data name="FloatingWindowPosition0" xml:space="preserve">
@@ -144,7 +147,7 @@
         <value>フローティングウィンドウ自動クローズ時間</value>
     </data>
     <data name="Settings_FloatingWindowAutoCloseTimeDesc" xml:space="preserve">
-        <value>フローティングウィンドウの自動クローズ時間を設定（秒）、0に設定すると自動クローズなし</value>
+        <value>フローティングウィンドウの自動クローズ時間を設定（秒）、0 に設定すると自動クローズなし</value>
     </data>
     <data name="UseMainWindowWhenExceedThreshold" xml:space="preserve">
         <value>閾値超過時にフローティングウィンドウ通知を表示しない</value>
@@ -156,13 +159,13 @@
         <value>フローティングウィンドウ通知閾値</value>
     </data>
     <data name="MainWindowDisplayThresholdDesc" xml:space="preserve">
-        <value>フローティングウィンドウ通知をトリガーする人数閾値を設定、この数値を超えるとフローティングウィンドウ通知を表示しない、最小値は1</value>
+        <value>フローティングウィンドウ通知をトリガーする人数閾値を設定、この数値を超えるとフローティングウィンドウ通知を表示しない、最小値は 1</value>
     </data>
     <data name="NotificationServiceType" xml:space="preserve">
         <value>通知サービスタイプ</value>
     </data>
     <data name="Settings_NotificationServiceTypeDesc" xml:space="preserve">
-        <value>通知サービスタイプを選択、SecRandomまたはClassIsland</value>
+        <value>通知サービスタイプを選択、SecRandom または ClassIsland</value>
     </data>
     <data name="NotificationServiceType0" xml:space="preserve">
         <value>SecRandom</value>
@@ -177,7 +180,7 @@
         <value>通知表示時間</value>
     </data>
     <data name="Settings_NotificationDisplayDurationDesc" xml:space="preserve">
-        <value>ClassIsland通知表示時間を設定（秒）</value>
+        <value>ClassIsland 通知表示時間を設定（秒）</value>
     </data>
     <data name="DoNotStealFocus" xml:space="preserve">
         <value>フォーカスなしモード</value>
@@ -186,21 +189,21 @@
         <value>完了後にフォーカスを奪わず、元のトップレベルソフトフォーカスを維持</value>
     </data>
     <data name="ClassIslandNotificationHintTitle" xml:space="preserve">
-        <value>ClassIsland通知サービス</value>
+        <value>ClassIsland 通知サービス</value>
     </data>
     <data name="ClassIslandNotificationHintContent" xml:space="preserve">
-        <value>.NET 8ランタイムがインストールされ、ClassIslandにSecRandom-Ciプラグインがインストールされていることを確認してください</value>
+        <value>.NET 8 ランタイムがインストールされ、ClassIsland に SecRandom-Ci プラグインがインストールされていることを確認してください</value>
     </data>
     <data name="ClassIslandPluginNotificationHintTitle" xml:space="preserve">
-        <value>ClassIsland通知サービス</value>
+        <value>ClassIsland 通知サービス</value>
     </data>
     <data name="ClassIslandPluginNotificationHintContent" xml:space="preserve">
-        <value>プラグインがインストールされていないことを検出しました、ClassIslandにSecRandom-Ciプラグインをインストールしてください</value>
+        <value>プラグインがインストールされていないことを検出しました、ClassIsland に SecRandom-Ci プラグインをインストールしてください</value>
     </data>
     <data name="ClassIslandConfiguredSuccessfullyTitle" xml:space="preserve">
-        <value>ClassIsland通知サービス</value>
+        <value>ClassIsland 通知サービス</value>
     </data>
     <data name="ClassIslandConfiguredSuccessfullyContent" xml:space="preserve">
-        <value>ClassIslandとSecRandom-Ciプラグインが正常に動作していることを検出しました</value>
+        <value>ClassIsland と SecRandom-Ci プラグインが正常に動作していることを検出しました</value>
     </data>
 </root>

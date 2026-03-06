@@ -13,7 +13,7 @@
                   VerticalScrollBarVisibility="Auto">
         <StackPanel Orientation="Vertical" Margin="12 12 18 12" Spacing="12">
             <StackPanel Orientation="Vertical" Spacing="0">
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.CallNotificationService}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_CallNotificationService}"
                                          Description="{x:Static pageLangs:Resources.Settings_CallNotificationServiceDesc}"
                                          IconSource="{controls:FluentIconSource &#xE7E3;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -23,7 +23,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Animation}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_Animation}"
                                          Description="{x:Static pageLangs:Resources.AnimationDesc}"
                                          IconSource="{controls:FluentIconSource &#xE713;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -33,7 +33,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.NotificationServiceType}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_NotificationServiceType}"
                                          Description="{x:Static pageLangs:Resources.Settings_NotificationServiceTypeDesc}"
                                          IconSource="{controls:FluentIconSource &#xE753;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -46,7 +46,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.UseMainWindowWhenExceedThreshold}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_UseMainWindowWhenExceedThreshold}"
                                          Description="{x:Static pageLangs:Resources.Settings_UseMainWindowWhenExceedThresholdDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8A7;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -62,7 +62,7 @@
             </StackPanel>
 
             <StackPanel Orientation="Vertical" Spacing="0">
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FloatingWindowEnabledMonitor}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FloatingWindowEnabledMonitor}"
                                          Description="{x:Static pageLangs:Resources.Settings_FloatingWindowEnabledMonitorDesc}"
                                          IconSource="{controls:FluentIconSource &#xE7F4;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -72,8 +72,8 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FloatingWindowPosition}"
-                                         Description="{x:Static pageLangs:Resources.FloatingWindowPositionDesc}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FloatingWindowPosition}"
+                                         Description="{x:Static pageLangs:Resources.Settings_FloatingWindowPositionDesc}"
                                          IconSource="{controls:FluentIconSource &#xE791;}">
                     <fa:SettingsExpanderItem.Footer>
                         <ComboBox SelectedIndex="{Binding ViewModel.FloatingWindowPosition}"
@@ -91,7 +91,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FloatingWindowHorizontalOffset}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FloatingWindowHorizontalOffset}"
                                          Description="{x:Static pageLangs:Resources.Settings_FloatingWindowHorizontalOffsetDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8CB;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -103,7 +103,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FloatingWindowVerticalOffset}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FloatingWindowVerticalOffset}"
                                          Description="{x:Static pageLangs:Resources.Settings_FloatingWindowVerticalOffsetDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8CC;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -115,7 +115,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FloatingWindowTransparency}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FloatingWindowTransparency}"
                                          Description="{x:Static pageLangs:Resources.Settings_FloatingWindowTransparencyDesc}"
                                          IconSource="{controls:FluentIconSource &#xE790;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -127,7 +127,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FloatingWindowAutoCloseTime}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FloatingWindowAutoCloseTime}"
                                          Description="{x:Static pageLangs:Resources.Settings_FloatingWindowAutoCloseTimeDesc}"
                                          IconSource="{controls:FluentIconSource &#xE823;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -141,7 +141,7 @@
             </StackPanel>
 
             <StackPanel Orientation="Vertical" Spacing="0">
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.NotificationDisplayDuration}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_NotificationDisplayDuration}"
                                          Description="{x:Static pageLangs:Resources.Settings_NotificationDisplayDurationDesc}"
                                          IconSource="{controls:FluentIconSource &#xE916;}">
                     <fa:SettingsExpanderItem.Footer>

@@ -60,29 +60,11 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 动画模式.
-        /// </summary>
-        public static string Animation {
-            get {
-                return ResourceManager.GetString("Animation", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 自动播放动画.
         /// </summary>
         public static string AnimationAuto {
             get {
                 return ResourceManager.GetString("AnimationAuto", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 动画/结果颜色主题.
-        /// </summary>
-        public static string AnimationColorTheme {
-            get {
-                return ResourceManager.GetString("AnimationColorTheme", resourceCulture);
             }
         }
         
@@ -114,15 +96,6 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置动画效果.
-        /// </summary>
-        public static string AnimationDesc {
-            get {
-                return ResourceManager.GetString("AnimationDesc", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 直接显示结果.
         /// </summary>
         public static string AnimationDirect {
@@ -132,47 +105,11 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 动画/结果固定颜色.
-        /// </summary>
-        public static string AnimationFixedColor {
-            get {
-                return ResourceManager.GetString("AnimationFixedColor", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 动画间隔.
-        /// </summary>
-        public static string AnimationInterval {
-            get {
-                return ResourceManager.GetString("AnimationInterval", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 手动停止动画.
         /// </summary>
         public static string AnimationManual {
             get {
                 return ResourceManager.GetString("AnimationManual", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 自动播放次数.
-        /// </summary>
-        public static string AutoplayCount {
-            get {
-                return ResourceManager.GetString("AutoplayCount", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 摄像头显示分辨率.
-        /// </summary>
-        public static string CameraDisplayResolution {
-            get {
-                return ResourceManager.GetString("CameraDisplayResolution", resourceCulture);
             }
         }
         
@@ -204,15 +141,6 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 模式.
-        /// </summary>
-        public static string CameraPreviewMode {
-            get {
-                return ResourceManager.GetString("CameraPreviewMode", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 抽取模式.
         /// </summary>
         public static string CameraPreviewModePicking {
@@ -227,15 +155,6 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         public static string CameraPreviewModeRecognition {
             get {
                 return ResourceManager.GetString("CameraPreviewModeRecognition", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 摄像头.
-        /// </summary>
-        public static string CameraSource {
-            get {
-                return ResourceManager.GetString("CameraSource", resourceCulture);
             }
         }
         
@@ -263,15 +182,6 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         public static string ClearRecordRestart {
             get {
                 return ResourceManager.GetString("ClearRecordRestart", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 自定义字体.
-        /// </summary>
-        public static string CustomFont {
-            get {
-                return ResourceManager.GetString("CustomFont", resourceCulture);
             }
         }
         
@@ -339,15 +249,6 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 结果显示格式.
-        /// </summary>
-        public static string DisplayFormat {
-            get {
-                return ResourceManager.GetString("DisplayFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 学号.
         /// </summary>
         public static string DisplayFormatId {
@@ -371,15 +272,6 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         public static string DisplayFormatName {
             get {
                 return ResourceManager.GetString("DisplayFormatName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 结果显示样式.
-        /// </summary>
-        public static string DisplayStyle {
-            get {
-                return ResourceManager.GetString("DisplayStyle", resourceCulture);
             }
         }
         
@@ -515,15 +407,6 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         public static string FaceDetectorSettings {
             get {
                 return ResourceManager.GetString("FaceDetectorSettings", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 字体大小.
-        /// </summary>
-        public static string FontSize {
-            get {
-                return ResourceManager.GetString("FontSize", resourceCulture);
             }
         }
         
@@ -825,24 +708,6 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 结果布局动画时长.
-        /// </summary>
-        public static string ResultFlowAnimationDuration {
-            get {
-                return ResourceManager.GetString("ResultFlowAnimationDuration", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 结果布局动画.
-        /// </summary>
-        public static string ResultFlowAnimationStyle {
-            get {
-                return ResourceManager.GetString("ResultFlowAnimationStyle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 动画设置.
         /// </summary>
         public static string RollCallAnimationSettings {
@@ -897,11 +762,47 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 动画模式.
+        /// </summary>
+        public static string Settings_Animation {
+            get {
+                return ResourceManager.GetString("Settings_Animation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 动画/结果颜色主题.
+        /// </summary>
+        public static string Settings_AnimationColorTheme {
+            get {
+                return ResourceManager.GetString("Settings_AnimationColorTheme", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 设置动画/结果颜色主题.
         /// </summary>
         public static string Settings_AnimationColorThemeDesc {
             get {
                 return ResourceManager.GetString("Settings_AnimationColorThemeDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 设置动画效果.
+        /// </summary>
+        public static string Settings_AnimationDesc {
+            get {
+                return ResourceManager.GetString("Settings_AnimationDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 动画/结果固定颜色.
+        /// </summary>
+        public static string Settings_AnimationFixedColor {
+            get {
+                return ResourceManager.GetString("Settings_AnimationFixedColor", resourceCulture);
             }
         }
         
@@ -915,11 +816,29 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 动画间隔.
+        /// </summary>
+        public static string Settings_AnimationInterval {
+            get {
+                return ResourceManager.GetString("Settings_AnimationInterval", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 设置动画间隔时间（毫秒）.
         /// </summary>
         public static string Settings_AnimationIntervalDesc {
             get {
                 return ResourceManager.GetString("Settings_AnimationIntervalDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 自动播放次数.
+        /// </summary>
+        public static string Settings_AutoplayCount {
+            get {
+                return ResourceManager.GetString("Settings_AutoplayCount", resourceCulture);
             }
         }
         
@@ -933,11 +852,29 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 摄像头显示分辨率.
+        /// </summary>
+        public static string Settings_CameraDisplayResolution {
+            get {
+                return ResourceManager.GetString("Settings_CameraDisplayResolution", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 自动使用最高分辨率.
         /// </summary>
         public static string Settings_CameraDisplayResolutionDesc {
             get {
                 return ResourceManager.GetString("Settings_CameraDisplayResolutionDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 模式.
+        /// </summary>
+        public static string Settings_CameraPreviewMode {
+            get {
+                return ResourceManager.GetString("Settings_CameraPreviewMode", resourceCulture);
             }
         }
         
@@ -951,11 +888,29 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 摄像头.
+        /// </summary>
+        public static string Settings_CameraSource {
+            get {
+                return ResourceManager.GetString("Settings_CameraSource", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 选择人脸抽取使用的摄像头设备.
         /// </summary>
         public static string Settings_CameraSourceDesc {
             get {
                 return ResourceManager.GetString("Settings_CameraSourceDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 清除抽取记录方式.
+        /// </summary>
+        public static string Settings_ClearRecord {
+            get {
+                return ResourceManager.GetString("Settings_ClearRecord", resourceCulture);
             }
         }
         
@@ -969,6 +924,15 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 自定义字体.
+        /// </summary>
+        public static string Settings_CustomFont {
+            get {
+                return ResourceManager.GetString("Settings_CustomFont", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 选择自定义字体.
         /// </summary>
         public static string Settings_CustomFontDesc {
@@ -978,11 +942,29 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 默认抽取名单.
+        /// </summary>
+        public static string Settings_DefaultClass {
+            get {
+                return ResourceManager.GetString("Settings_DefaultClass", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 设置默认抽取名单.
         /// </summary>
         public static string Settings_DefaultClassDesc {
             get {
                 return ResourceManager.GetString("Settings_DefaultClassDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 默认抽取奖池.
+        /// </summary>
+        public static string Settings_DefaultPool {
+            get {
+                return ResourceManager.GetString("Settings_DefaultPool", resourceCulture);
             }
         }
         
@@ -1014,11 +996,29 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 结果显示格式.
+        /// </summary>
+        public static string Settings_DisplayFormat {
+            get {
+                return ResourceManager.GetString("Settings_DisplayFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 设置结果显示格式.
         /// </summary>
         public static string Settings_DisplayFormatDesc {
             get {
                 return ResourceManager.GetString("Settings_DisplayFormatDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 结果显示样式.
+        /// </summary>
+        public static string Settings_DisplayStyle {
+            get {
+                return ResourceManager.GetString("Settings_DisplayStyle", resourceCulture);
             }
         }
         
@@ -1041,11 +1041,29 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 抽取模式.
+        /// </summary>
+        public static string Settings_DrawMode {
+            get {
+                return ResourceManager.GetString("Settings_DrawMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 设置抽取模式.
         /// </summary>
         public static string Settings_DrawModeDesc {
             get {
                 return ResourceManager.GetString("Settings_DrawModeDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 抽取方式.
+        /// </summary>
+        public static string Settings_DrawType {
+            get {
+                return ResourceManager.GetString("Settings_DrawType", resourceCulture);
             }
         }
         
@@ -1059,6 +1077,15 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 字体大小.
+        /// </summary>
+        public static string Settings_FontSize {
+            get {
+                return ResourceManager.GetString("Settings_FontSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 设置字体大小.
         /// </summary>
         public static string Settings_FontSizeDesc {
@@ -1068,11 +1095,29 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 半重复抽取次数.
+        /// </summary>
+        public static string Settings_HalfRepeat {
+            get {
+                return ResourceManager.GetString("Settings_HalfRepeat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 设置每人被抽中多少次后清除抽取记录.
         /// </summary>
         public static string Settings_HalfRepeatDesc {
             get {
                 return ResourceManager.GetString("Settings_HalfRepeatDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 独立名单配置.
+        /// </summary>
+        public static string Settings_ListSpecificSettings {
+            get {
+                return ResourceManager.GetString("Settings_ListSpecificSettings", resourceCulture);
             }
         }
         
@@ -1194,11 +1239,29 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 结果布局动画时长.
+        /// </summary>
+        public static string Settings_ResultFlowAnimationDuration {
+            get {
+                return ResourceManager.GetString("Settings_ResultFlowAnimationDuration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 设置结果布局动画时长（毫秒）.
         /// </summary>
         public static string Settings_ResultFlowAnimationDurationDesc {
             get {
                 return ResourceManager.GetString("Settings_ResultFlowAnimationDurationDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 结果布局动画.
+        /// </summary>
+        public static string Settings_ResultFlowAnimationStyle {
+            get {
+                return ResourceManager.GetString("Settings_ResultFlowAnimationStyle", resourceCulture);
             }
         }
         
@@ -1212,11 +1275,29 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 显示随机组员格式.
+        /// </summary>
+        public static string Settings_ShowRandom {
+            get {
+                return ResourceManager.GetString("Settings_ShowRandom", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 设置随机组员显示格式.
         /// </summary>
         public static string Settings_ShowRandomDesc {
             get {
                 return ResourceManager.GetString("Settings_ShowRandomDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 显示标签.
+        /// </summary>
+        public static string Settings_ShowTags {
+            get {
+                return ResourceManager.GetString("Settings_ShowTags", resourceCulture);
             }
         }
         
@@ -1230,11 +1311,29 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 显示学生图片.
+        /// </summary>
+        public static string Settings_StudentImage {
+            get {
+                return ResourceManager.GetString("Settings_StudentImage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 设置是否显示学生图片.
         /// </summary>
         public static string Settings_StudentImageDesc {
             get {
                 return ResourceManager.GetString("Settings_StudentImageDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 学生图片文件夹.
+        /// </summary>
+        public static string Settings_StudentImageFolder {
+            get {
+                return ResourceManager.GetString("Settings_StudentImageFolder", resourceCulture);
             }
         }
         
@@ -1248,6 +1347,15 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 头像位置.
+        /// </summary>
+        public static string Settings_StudentImagePosition {
+            get {
+                return ResourceManager.GetString("Settings_StudentImagePosition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 设置学生头像在结果中的位置.
         /// </summary>
         public static string Settings_StudentImagePositionDesc {
@@ -1257,20 +1365,20 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 使用全局字体.
+        /// </summary>
+        public static string Settings_UseGlobalFont {
+            get {
+                return ResourceManager.GetString("Settings_UseGlobalFont", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 是否使用全局字体设置.
         /// </summary>
         public static string Settings_UseGlobalFontDesc {
             get {
                 return ResourceManager.GetString("Settings_UseGlobalFontDesc", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 显示随机组员格式.
-        /// </summary>
-        public static string ShowRandom {
-            get {
-                return ResourceManager.GetString("ShowRandom", resourceCulture);
             }
         }
         
@@ -1302,47 +1410,11 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 显示标签.
-        /// </summary>
-        public static string ShowTags {
-            get {
-                return ResourceManager.GetString("ShowTags", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 显示学生图片.
-        /// </summary>
-        public static string StudentImage {
-            get {
-                return ResourceManager.GetString("StudentImage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 学生图片文件夹.
-        /// </summary>
-        public static string StudentImageFolder {
-            get {
-                return ResourceManager.GetString("StudentImageFolder", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 打开.
         /// </summary>
         public static string StudentImageFolderButton {
             get {
                 return ResourceManager.GetString("StudentImageFolderButton", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 头像位置.
-        /// </summary>
-        public static string StudentImagePosition {
-            get {
-                return ResourceManager.GetString("StudentImagePosition", resourceCulture);
             }
         }
         
@@ -1379,15 +1451,6 @@ namespace SecRandom.Langs.SettingsPages.DrawSettingsPage {
         public static string StudentImagePositionTop {
             get {
                 return ResourceManager.GetString("StudentImagePositionTop", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 使用全局字体.
-        /// </summary>
-        public static string UseGlobalFont {
-            get {
-                return ResourceManager.GetString("UseGlobalFont", resourceCulture);
             }
         }
         

@@ -13,7 +13,7 @@
         <StackPanel Orientation="Vertical" Margin="12 12 18 12" Spacing="12">
             <StackPanel Orientation="Vertical" Spacing="0">
                 <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.SelectClass}"
-                                         Description="{x:Static pageLangs:Resources.SelectClassDesc}"
+                                         Description="{x:Static pageLangs:Resources.Settings_SelectClassDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8A7;}">
                     <fa:SettingsExpanderItem.Footer>
                         <ComboBox x:Name="ClassComboBox"

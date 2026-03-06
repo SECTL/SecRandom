@@ -34,7 +34,7 @@
     <data name="DrawSettingsNavHint" xml:space="preserve">
         <value>Select a settings entry from the left sidebar</value>
     </data>
-    <data name="ListSpecificSettings" xml:space="preserve">
+    <data name="Settings_ListSpecificSettings" xml:space="preserve">
         <value>List-Specific Settings</value>
     </data>
     <data name="ListSpecificSettingsSelectClass" xml:space="preserve">
@@ -76,13 +76,13 @@
     <data name="FaceDetectorExtractionFunction" xml:space="preserve">
         <value>Picking Function</value>
     </data>
-    <data name="CameraSource" xml:space="preserve">
+    <data name="Settings_CameraSource" xml:space="preserve">
         <value>Camera</value>
     </data>
     <data name="Settings_CameraSourceDesc" xml:space="preserve">
         <value>Select the camera device for face picking</value>
     </data>
-    <data name="CameraDisplayResolution" xml:space="preserve">
+    <data name="Settings_CameraDisplayResolution" xml:space="preserve">
         <value>Camera Resolution</value>
     </data>
     <data name="Settings_CameraDisplayResolutionDesc" xml:space="preserve">
@@ -97,7 +97,7 @@
     <data name="CameraDisplayResolutionUnknown" xml:space="preserve">
         <value>Unknown</value>
     </data>
-    <data name="CameraPreviewMode" xml:space="preserve">
+    <data name="Settings_CameraPreviewMode" xml:space="preserve">
         <value>Mode</value>
     </data>
     <data name="Settings_CameraPreviewModeDesc" xml:space="preserve">
@@ -163,7 +163,7 @@
     <data name="Settings_PlayResultAudioDesc" xml:space="preserve">
         <value>Play audio when showing result</value>
     </data>
-    <data name="DrawMode" xml:space="preserve">
+    <data name="Settings_DrawMode" xml:space="preserve">
         <value>Picking Mode</value>
     </data>
     <data name="Settings_DrawModeDesc" xml:space="preserve">
@@ -178,7 +178,7 @@
     <data name="DrawModeSemiRepeat" xml:space="preserve">
         <value>Semi-repeatedly pick</value>
     </data>
-    <data name="ClearRecord" xml:space="preserve">
+    <data name="Settings_ClearRecord" xml:space="preserve">
         <value>Clear History Method</value>
     </data>
     <data name="Settings_ClearRecordDesc" xml:space="preserve">
@@ -190,13 +190,13 @@
     <data name="ClearRecordAll" xml:space="preserve">
         <value>Until all have been picked</value>
     </data>
-    <data name="HalfRepeat" xml:space="preserve">
+    <data name="Settings_HalfRepeat" xml:space="preserve">
         <value>Semi-repeated Pick Count</value>
     </data>
     <data name="Settings_HalfRepeatDesc" xml:space="preserve">
         <value>Set the maximum picked times of each person to clean history</value>
     </data>
-    <data name="DrawType" xml:space="preserve">
+    <data name="Settings_DrawType" xml:space="preserve">
         <value>Picking Method</value>
     </data>
     <data name="Settings_DrawTypeDesc" xml:space="preserve">
@@ -208,7 +208,7 @@
     <data name="DrawTypeFair" xml:space="preserve">
         <value>Fair pick</value>
     </data>
-    <data name="DefaultClass" xml:space="preserve">
+    <data name="Settings_DefaultClass" xml:space="preserve">
         <value>Default Class</value>
     </data>
     <data name="Settings_DefaultClassDesc" xml:space="preserve">
@@ -247,7 +247,7 @@
     <data name="LotteryDisplaySettings" xml:space="preserve">
         <value>Display Settings</value>
     </data>
-    <data name="UseGlobalFont" xml:space="preserve">
+    <data name="Settings_UseGlobalFont" xml:space="preserve">
         <value>Use Global Font</value>
     </data>
     <data name="Settings_UseGlobalFontDesc" xml:space="preserve">
@@ -259,19 +259,19 @@
     <data name="UseGlobalFontCustom" xml:space="preserve">
         <value>Use custom font</value>
     </data>
-    <data name="CustomFont" xml:space="preserve">
+    <data name="Settings_CustomFont" xml:space="preserve">
         <value>Custom Font</value>
     </data>
     <data name="Settings_CustomFontDesc" xml:space="preserve">
         <value>Select custom font</value>
     </data>
-    <data name="FontSize" xml:space="preserve">
+    <data name="Settings_FontSize" xml:space="preserve">
         <value>Font Size</value>
     </data>
     <data name="Settings_FontSizeDesc" xml:space="preserve">
         <value>Set font size</value>
     </data>
-    <data name="DisplayFormat" xml:space="preserve">
+    <data name="Settings_DisplayFormat" xml:space="preserve">
         <value>Result Display Format</value>
     </data>
     <data name="Settings_DisplayFormatDesc" xml:space="preserve">
@@ -286,7 +286,7 @@
     <data name="DisplayFormatId" xml:space="preserve">
         <value>Student ID</value>
     </data>
-    <data name="DisplayStyle" xml:space="preserve">
+    <data name="Settings_DisplayStyle" xml:space="preserve">
         <value>Result Display Style</value>
     </data>
     <data name="Settings_DisplayStyleDesc" xml:space="preserve">
@@ -298,7 +298,7 @@
     <data name="DisplayStyleCard" xml:space="preserve">
         <value>Card</value>
     </data>
-    <data name="ShowRandom" xml:space="preserve">
+    <data name="Settings_ShowRandom" xml:space="preserve">
         <value>Format of Showing Random Group Member</value>
     </data>
     <data name="Settings_ShowRandomDesc" xml:space="preserve">
@@ -313,7 +313,7 @@
     <data name="ShowRandomDash" xml:space="preserve">
         <value>Group name[Dash]name</value>
     </data>
-    <data name="ShowTags" xml:space="preserve">
+    <data name="Settings_ShowTags" xml:space="preserve">
         <value>Show Tags</value>
     </data>
     <data name="Settings_ShowTagsDesc" xml:space="preserve">
@@ -328,10 +328,10 @@
     <data name="LotteryAnimationSettings" xml:space="preserve">
         <value>Animation Settings</value>
     </data>
-    <data name="Animation" xml:space="preserve">
+    <data name="Settings_Animation" xml:space="preserve">
         <value>Animation Mode</value>
     </data>
-    <data name="AnimationDesc" xml:space="preserve">
+    <data name="Settings_AnimationDesc" xml:space="preserve">
         <value>Set animation effect</value>
     </data>
     <data name="AnimationManual" xml:space="preserve">
@@ -343,25 +343,25 @@
     <data name="AnimationDirect" xml:space="preserve">
         <value>Directly show result</value>
     </data>
-    <data name="AnimationInterval" xml:space="preserve">
+    <data name="Settings_AnimationInterval" xml:space="preserve">
         <value>Animation Interval</value>
     </data>
     <data name="Settings_AnimationIntervalDesc" xml:space="preserve">
         <value>Set the interval between animations (ms)</value>
     </data>
-    <data name="AutoplayCount" xml:space="preserve">
+    <data name="Settings_AutoplayCount" xml:space="preserve">
         <value>Autoplay Count</value>
     </data>
     <data name="Settings_AutoplayCountDesc" xml:space="preserve">
         <value>Set the number of times to animate</value>
     </data>
-    <data name="ResultFlowAnimationStyle" xml:space="preserve">
+    <data name="Settings_ResultFlowAnimationStyle" xml:space="preserve">
         <value>Result Layout Animation</value>
     </data>
     <data name="Settings_ResultFlowAnimationStyleDesc" xml:space="preserve">
         <value>Set result flow layout intro animation</value>
     </data>
-    <data name="ResultFlowAnimationDuration" xml:space="preserve">
+    <data name="Settings_ResultFlowAnimationDuration" xml:space="preserve">
         <value>Result Layout Duration</value>
     </data>
     <data name="Settings_ResultFlowAnimationDurationDesc" xml:space="preserve">
@@ -376,7 +376,7 @@
     <data name="LotteryColorThemeSettings" xml:space="preserve">
         <value>Color Theme Settings</value>
     </data>
-    <data name="AnimationColorTheme" xml:space="preserve">
+    <data name="Settings_AnimationColorTheme" xml:space="preserve">
         <value>Animation/Result Color Theme</value>
     </data>
     <data name="Settings_AnimationColorThemeDesc" xml:space="preserve">
@@ -391,7 +391,7 @@
     <data name="AnimationColorThemeFixed" xml:space="preserve">
         <value>Fixed color</value>
     </data>
-    <data name="AnimationFixedColor" xml:space="preserve">
+    <data name="Settings_AnimationFixedColor" xml:space="preserve">
         <value>Animation/Result Fixed Color</value>
     </data>
     <data name="Settings_AnimationFixedColorDesc" xml:space="preserve">
@@ -436,13 +436,13 @@
     <data name="RollCallStudentImageSettings" xml:space="preserve">
         <value>Student Image Settings</value>
     </data>
-    <data name="StudentImage" xml:space="preserve">
+    <data name="Settings_StudentImage" xml:space="preserve">
         <value>Show Student Images</value>
     </data>
     <data name="Settings_StudentImageDesc" xml:space="preserve">
         <value>Set whether to show student images</value>
     </data>
-    <data name="StudentImagePosition" xml:space="preserve">
+    <data name="Settings_StudentImagePosition" xml:space="preserve">
         <value>Image Position</value>
     </data>
     <data name="Settings_StudentImagePositionDesc" xml:space="preserve">
@@ -460,7 +460,7 @@
     <data name="StudentImagePositionBottom" xml:space="preserve">
         <value>Bottom</value>
     </data>
-    <data name="StudentImageFolder" xml:space="preserve">
+    <data name="Settings_StudentImageFolder" xml:space="preserve">
         <value>Student Images Folder</value>
     </data>
     <data name="Settings_StudentImageFolderDesc" xml:space="preserve">

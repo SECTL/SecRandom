@@ -107,7 +107,7 @@
                                FontWeight="SemiBold"
                                Margin="0 8 0 0" />
                     <StackPanel Orientation="Vertical" Spacing="0">
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FontSize}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FontSize}"
                                                  Description="{x:Static pageLangs:Resources.Settings_FontSizeDesc}"
                                                  IconSource="{controls:FluentIconSource &#xE8D2;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -119,7 +119,7 @@
                             </fa:SettingsExpanderItem.Footer>
                         </fa:SettingsExpanderItem>
 
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.UseGlobalFont}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_UseGlobalFont}"
                                                  Description="{x:Static pageLangs:Resources.Settings_UseGlobalFontDesc}"
                                                  IconSource="{controls:FluentIconSource &#xE8D2;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -131,7 +131,7 @@
                             </fa:SettingsExpanderItem.Footer>
                         </fa:SettingsExpanderItem>
 
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.CustomFont}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_CustomFont}"
                                                  Description="{x:Static pageLangs:Resources.Settings_CustomFontDesc}"
                                                  IconSource="{controls:FluentIconSource &#xE8D2;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -150,7 +150,7 @@
                             </fa:SettingsExpanderItem.Footer>
                         </fa:SettingsExpanderItem>
 
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.DisplayFormat}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_DisplayFormat}"
                                                  Description="{x:Static pageLangs:Resources.Settings_DisplayFormatDesc}"
                                                  IconSource="{controls:FluentIconSource &#xF166;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -163,7 +163,7 @@
                             </fa:SettingsExpanderItem.Footer>
                         </fa:SettingsExpanderItem>
 
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.DisplayStyle}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_DisplayStyle}"
                                                  Description="{x:Static pageLangs:Resources.Settings_DisplayStyleDesc}"
                                                  IconSource="{controls:FluentIconSource &#xE9B3;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -175,7 +175,7 @@
                             </fa:SettingsExpanderItem.Footer>
                         </fa:SettingsExpanderItem>
 
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.ShowRandom}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_ShowRandom}"
                                                  Description="{x:Static pageLangs:Resources.Settings_ShowRandomDesc}"
                                                  IconSource="{controls:FluentIconSource &#xE9C6;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -188,7 +188,7 @@
                             </fa:SettingsExpanderItem.Footer>
                         </fa:SettingsExpanderItem>
 
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.ShowTags}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_ShowTags}"
                                                  Description="{x:Static pageLangs:Resources.Settings_ShowTagsDesc}"
                                                  IconSource="{controls:FluentIconSource &#xE8EC;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -204,8 +204,8 @@
                                FontWeight="SemiBold"
                                Margin="0 8 0 0" />
                     <StackPanel Orientation="Vertical" Spacing="0">
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Animation}"
-                                                 Description="{x:Static pageLangs:Resources.AnimationDesc}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_Animation}"
+                                                 Description="{x:Static pageLangs:Resources.Settings_AnimationDesc}"
                                                  IconSource="{controls:FluentIconSource &#xE7FC;}">
                             <fa:SettingsExpanderItem.Footer>
                                 <ComboBox SelectedIndex="{Binding Animation}"
@@ -217,7 +217,7 @@
                             </fa:SettingsExpanderItem.Footer>
                         </fa:SettingsExpanderItem>
 
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.AnimationInterval}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_AnimationInterval}"
                                                  Description="{x:Static pageLangs:Resources.Settings_AnimationIntervalDesc}"
                                                  IconSource="{controls:FluentIconSource &#xE823;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -229,7 +229,7 @@
                             </fa:SettingsExpanderItem.Footer>
                         </fa:SettingsExpanderItem>
 
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.AutoplayCount}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_AutoplayCount}"
                                                  Description="{x:Static pageLangs:Resources.Settings_AutoplayCountDesc}"
                                                  IconSource="{controls:FluentIconSource &#xE823;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -241,7 +241,7 @@
                             </fa:SettingsExpanderItem.Footer>
                         </fa:SettingsExpanderItem>
 
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.ResultFlowAnimationStyle}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_ResultFlowAnimationStyle}"
                                                  Description="{x:Static pageLangs:Resources.Settings_ResultFlowAnimationStyleDesc}"
                                                  IconSource="{controls:FluentIconSource &#xE9B3;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -251,7 +251,7 @@
                             </fa:SettingsExpanderItem.Footer>
                         </fa:SettingsExpanderItem>
 
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.ResultFlowAnimationDuration}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_ResultFlowAnimationDuration}"
                                                  Description="{x:Static pageLangs:Resources.Settings_ResultFlowAnimationDurationDesc}"
                                                  IconSource="{controls:FluentIconSource &#xE823;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -269,7 +269,7 @@
                                FontWeight="SemiBold"
                                Margin="0 8 0 0" />
                     <StackPanel Orientation="Vertical" Spacing="0">
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.AnimationColorTheme}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_AnimationColorTheme}"
                                                  Description="{x:Static pageLangs:Resources.Settings_AnimationColorThemeDesc}"
                                                  IconSource="{controls:FluentIconSource &#xE8D7;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -282,7 +282,7 @@
                             </fa:SettingsExpanderItem.Footer>
                         </fa:SettingsExpanderItem>
 
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.AnimationFixedColor}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_AnimationFixedColor}"
                                                  Description="{x:Static pageLangs:Resources.Settings_AnimationFixedColorDesc}"
                                                  IconSource="{controls:FluentIconSource &#xE8D7;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -297,7 +297,7 @@
                                FontWeight="SemiBold"
                                Margin="0 8 0 0" />
                     <StackPanel Orientation="Vertical" Spacing="0">
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.StudentImage}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_StudentImage}"
                                                  Description="{x:Static pageLangs:Resources.Settings_StudentImageDesc}"
                                                  IconSource="{controls:FluentIconSource &#xEB9F;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -307,7 +307,7 @@
                             </fa:SettingsExpanderItem.Footer>
                         </fa:SettingsExpanderItem>
 
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.StudentImagePosition}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_StudentImagePosition}"
                                                  Description="{x:Static pageLangs:Resources.Settings_StudentImagePositionDesc}"
                                                  IconSource="{controls:FluentIconSource &#xEB9F;}">
                             <fa:SettingsExpanderItem.Footer>
@@ -321,7 +321,7 @@
                             </fa:SettingsExpanderItem.Footer>
                         </fa:SettingsExpanderItem>
 
-                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.StudentImageFolder}"
+                        <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_StudentImageFolder}"
                                                  Description="{x:Static pageLangs:Resources.Settings_StudentImageFolderDesc}"
                                                  IconSource="{controls:FluentIconSource &#xE8B7;}">
                             <fa:SettingsExpanderItem.Footer>

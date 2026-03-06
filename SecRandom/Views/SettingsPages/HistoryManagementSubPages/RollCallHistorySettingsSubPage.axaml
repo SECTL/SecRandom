@@ -32,7 +32,7 @@
                 </fa:SettingsExpanderItem>
 
                 <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.SelectClass}"
-                                         Description="{x:Static pageLangs:Resources.SelectClassDesc}"
+                                         Description="{x:Static pageLangs:Resources.Settings_SelectClassDesc}"
                                          IconSource="{controls:FluentIconSource &#xE77B;}">
                     <fa:SettingsExpanderItem.Footer>
                         <ComboBox x:Name="ClassNameComboBox"

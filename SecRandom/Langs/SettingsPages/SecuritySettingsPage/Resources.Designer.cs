@@ -69,15 +69,6 @@ namespace SecRandom.Langs.SettingsPages.SecuritySettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 绑定U盘.
-        /// </summary>
-        public static string BindUsb {
-            get {
-                return ResourceManager.GetString("BindUsb", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 请先绑定U盘.
         /// </summary>
         public static string ErrorBindUsbFirst {
@@ -105,56 +96,11 @@ namespace SecRandom.Langs.SettingsPages.SecuritySettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 退出验证.
-        /// </summary>
-        public static string ExitSwitch {
-            get {
-                return ResourceManager.GetString("ExitSwitch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 该功能正在开发中.
         /// </summary>
         public static string FeatureInDevelopment {
             get {
                 return ResourceManager.GetString("FeatureInDevelopment", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 打开设置验证.
-        /// </summary>
-        public static string OpenSettingsSwitch {
-            get {
-                return ResourceManager.GetString("OpenSettingsSwitch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 设置预览开关.
-        /// </summary>
-        public static string PreviewSettingsSwitch {
-            get {
-                return ResourceManager.GetString("PreviewSettingsSwitch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 重启验证.
-        /// </summary>
-        public static string RestartSwitch {
-            get {
-                return ResourceManager.GetString("RestartSwitch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 安全开关.
-        /// </summary>
-        public static string SafetySwitch {
-            get {
-                return ResourceManager.GetString("SafetySwitch", resourceCulture);
             }
         }
         
@@ -168,11 +114,11 @@ namespace SecRandom.Langs.SettingsPages.SecuritySettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置/修改密码.
+        ///   Looks up a localized string similar to 绑定U盘.
         /// </summary>
-        public static string SetPassword {
+        public static string Settings_BindUsb {
             get {
-                return ResourceManager.GetString("SetPassword", resourceCulture);
+                return ResourceManager.GetString("Settings_BindUsb", resourceCulture);
             }
         }
         
@@ -186,11 +132,29 @@ namespace SecRandom.Langs.SettingsPages.SecuritySettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 退出验证.
+        /// </summary>
+        public static string Settings_ExitSwitch {
+            get {
+                return ResourceManager.GetString("Settings_ExitSwitch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 启用后退出软件时需要安全验证.
         /// </summary>
         public static string Settings_ExitSwitchDesc {
             get {
                 return ResourceManager.GetString("Settings_ExitSwitchDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 打开设置验证.
+        /// </summary>
+        public static string Settings_OpenSettingsSwitch {
+            get {
+                return ResourceManager.GetString("Settings_OpenSettingsSwitch", resourceCulture);
             }
         }
         
@@ -204,6 +168,15 @@ namespace SecRandom.Langs.SettingsPages.SecuritySettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 设置预览开关.
+        /// </summary>
+        public static string Settings_PreviewSettingsSwitch {
+            get {
+                return ResourceManager.GetString("Settings_PreviewSettingsSwitch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 进入设置的验证时允许预览设置.
         /// </summary>
         public static string Settings_PreviewSettingsSwitchDesc {
@@ -213,11 +186,29 @@ namespace SecRandom.Langs.SettingsPages.SecuritySettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 重启验证.
+        /// </summary>
+        public static string Settings_RestartSwitch {
+            get {
+                return ResourceManager.GetString("Settings_RestartSwitch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 启用后重启软件时需要安全验证.
         /// </summary>
         public static string Settings_RestartSwitchDesc {
             get {
                 return ResourceManager.GetString("Settings_RestartSwitchDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 安全开关.
+        /// </summary>
+        public static string Settings_SafetySwitch {
+            get {
+                return ResourceManager.GetString("Settings_SafetySwitch", resourceCulture);
             }
         }
         
@@ -240,11 +231,29 @@ namespace SecRandom.Langs.SettingsPages.SecuritySettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 设置/修改密码.
+        /// </summary>
+        public static string Settings_SetPassword {
+            get {
+                return ResourceManager.GetString("Settings_SetPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 设置或修改安全验证密码.
         /// </summary>
         public static string Settings_SetPasswordDesc {
             get {
                 return ResourceManager.GetString("Settings_SetPasswordDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 设置TOTP.
+        /// </summary>
+        public static string Settings_SetTotp {
+            get {
+                return ResourceManager.GetString("Settings_SetTotp", resourceCulture);
             }
         }
         
@@ -258,11 +267,29 @@ namespace SecRandom.Langs.SettingsPages.SecuritySettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 显示/隐藏浮窗验证.
+        /// </summary>
+        public static string Settings_ShowHideFloatingWindowSwitch {
+            get {
+                return ResourceManager.GetString("Settings_ShowHideFloatingWindowSwitch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 启用后显示或隐藏浮窗时需要安全验证.
         /// </summary>
         public static string Settings_ShowHideFloatingWindowSwitchDesc {
             get {
                 return ResourceManager.GetString("Settings_ShowHideFloatingWindowSwitchDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to TOTP验证.
+        /// </summary>
+        public static string Settings_TotpSwitch {
+            get {
+                return ResourceManager.GetString("Settings_TotpSwitch", resourceCulture);
             }
         }
         
@@ -276,11 +303,29 @@ namespace SecRandom.Langs.SettingsPages.SecuritySettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 解绑U盘.
+        /// </summary>
+        public static string Settings_UnbindUsb {
+            get {
+                return ResourceManager.GetString("Settings_UnbindUsb", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 解除U盘设备绑定.
         /// </summary>
         public static string Settings_UnbindUsbDesc {
             get {
                 return ResourceManager.GetString("Settings_UnbindUsbDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to U盘验证.
+        /// </summary>
+        public static string Settings_UsbSwitch {
+            get {
+                return ResourceManager.GetString("Settings_UsbSwitch", resourceCulture);
             }
         }
         
@@ -303,6 +348,15 @@ namespace SecRandom.Langs.SettingsPages.SecuritySettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 安全验证步骤.
+        /// </summary>
+        public static string Settings_VerificationProcess {
+            get {
+                return ResourceManager.GetString("Settings_VerificationProcess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 选择安全验证组合方式.
         /// </summary>
         public static string Settings_VerificationProcessDesc {
@@ -312,65 +366,11 @@ namespace SecRandom.Langs.SettingsPages.SecuritySettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置TOTP.
-        /// </summary>
-        public static string SetTotp {
-            get {
-                return ResourceManager.GetString("SetTotp", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 显示/隐藏浮窗验证.
-        /// </summary>
-        public static string ShowHideFloatingWindowSwitch {
-            get {
-                return ResourceManager.GetString("ShowHideFloatingWindowSwitch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to TOTP验证.
-        /// </summary>
-        public static string TotpSwitch {
-            get {
-                return ResourceManager.GetString("TotpSwitch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 解绑U盘.
-        /// </summary>
-        public static string UnbindUsb {
-            get {
-                return ResourceManager.GetString("UnbindUsb", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to U盘验证.
-        /// </summary>
-        public static string UsbSwitch {
-            get {
-                return ResourceManager.GetString("UsbSwitch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 验证方式.
         /// </summary>
         public static string VerificationMethod {
             get {
                 return ResourceManager.GetString("VerificationMethod", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 安全验证步骤.
-        /// </summary>
-        public static string VerificationProcess {
-            get {
-                return ResourceManager.GetString("VerificationProcess", resourceCulture);
             }
         }
         

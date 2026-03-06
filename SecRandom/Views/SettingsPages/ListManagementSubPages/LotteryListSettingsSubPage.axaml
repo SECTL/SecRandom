@@ -17,7 +17,7 @@
             
             <StackPanel Orientation="Vertical" Spacing="0">
                 <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.PreviewTable}"
-                                         Description="{x:Static pageLangs:Resources.SelectPoolDesc}"
+                                         Description="{x:Static pageLangs:Resources.Settings_SelectPoolDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8A1;}">
                     <fa:SettingsExpanderItem.Footer>
                         <Button Content="{x:Static basicLangs:Resources.Open}"

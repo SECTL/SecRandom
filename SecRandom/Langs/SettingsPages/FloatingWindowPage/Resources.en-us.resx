@@ -76,21 +76,21 @@
         <value>Press-and-hold time before dragging (ms)</value>
     </data>
 
-    <data name="DoNotStealFocus" xml:space="preserve">
+    <data name="Settings_DoNotStealFocus" xml:space="preserve">
         <value>Do not steal focus</value>
     </data>
-    <data name="DoNotStealFocusDesc" xml:space="preserve">
+    <data name="Settings_DoNotStealFocusDesc" xml:space="preserve">
         <value>Try not to take focus when interacting</value>
     </data>
 
-    <data name="ExtendQuickDrawComponent" xml:space="preserve">
+    <data name="Settings_ExtendQuickDrawComponent" xml:space="preserve">
         <value>Extend quick draw component</value>
     </data>
     <data name="Settings_ExtendQuickDrawComponentDesc" xml:space="preserve">
         <value>Show more quick draw information in the floating window</value>
     </data>
 
-    <data name="ResetFloatingWindowPosition" xml:space="preserve">
+    <data name="Settings_ResetFloatingWindowPosition" xml:space="preserve">
         <value>Reset position</value>
     </data>
     <data name="Settings_ResetFloatingWindowPositionDesc" xml:space="preserve">
@@ -100,7 +100,7 @@
         <value>Reset</value>
     </data>
 
-    <data name="FloatingWindowButtonControl" xml:space="preserve">
+    <data name="Settings_FloatingWindowButtonControl" xml:space="preserve">
         <value>Buttons</value>
     </data>
     <data name="Settings_FloatingWindowButtonControlDesc" xml:space="preserve">
@@ -122,7 +122,7 @@
         <value>Timer</value>
     </data>
 
-    <data name="FloatingWindowPlacement" xml:space="preserve">
+    <data name="Settings_FloatingWindowPlacement" xml:space="preserve">
         <value>Placement</value>
     </data>
     <data name="Settings_FloatingWindowPlacementDesc" xml:space="preserve">
@@ -138,7 +138,7 @@
         <value>Landscape</value>
     </data>
 
-    <data name="FloatingWindowDisplayStyle" xml:space="preserve">
+    <data name="Settings_FloatingWindowDisplayStyle" xml:space="preserve">
         <value>Display style</value>
     </data>
     <data name="Settings_FloatingWindowDisplayStyleDesc" xml:space="preserve">
@@ -154,7 +154,7 @@
         <value>Text only</value>
     </data>
 
-    <data name="FloatingWindowSize" xml:space="preserve">
+    <data name="Settings_FloatingWindowSize" xml:space="preserve">
         <value>Size</value>
     </data>
     <data name="Settings_FloatingWindowSizeDesc" xml:space="preserve">
@@ -182,7 +182,7 @@
         <value>XXL</value>
     </data>
 
-    <data name="FloatingWindowTheme" xml:space="preserve">
+    <data name="Settings_FloatingWindowTheme" xml:space="preserve">
         <value>Theme</value>
     </data>
     <data name="Settings_FloatingWindowThemeDesc" xml:space="preserve">
@@ -201,21 +201,21 @@
         <value>Dark</value>
     </data>
 
-    <data name="FloatingWindowStickToEdge" xml:space="preserve">
+    <data name="Settings_FloatingWindowStickToEdge" xml:space="preserve">
         <value>Stick to edge</value>
     </data>
     <data name="Settings_FloatingWindowStickToEdgeDesc" xml:space="preserve">
         <value>Automatically stick to screen edge when idle</value>
     </data>
 
-    <data name="FloatingWindowStickToEdgeRecoverSeconds" xml:space="preserve">
+    <data name="Settings_FloatingWindowStickToEdgeRecoverSeconds" xml:space="preserve">
         <value>Recover delay</value>
     </data>
     <data name="Settings_FloatingWindowStickToEdgeRecoverSecondsDesc" xml:space="preserve">
         <value>Delay before restoring from edge mode (s)</value>
     </data>
 
-    <data name="FloatingWindowStickToEdgeDisplayStyle" xml:space="preserve">
+    <data name="Settings_FloatingWindowStickToEdgeDisplayStyle" xml:space="preserve">
         <value>Edge display style</value>
     </data>
     <data name="Settings_FloatingWindowStickToEdgeDisplayStyleDesc" xml:space="preserve">
@@ -231,27 +231,27 @@
         <value>Arrow</value>
     </data>
 
-    <data name="HideFloatingWindowOnForeground" xml:space="preserve">
+    <data name="Settings_HideFloatingWindowOnForeground" xml:space="preserve">
         <value>Hide on foreground</value>
     </data>
     <data name="Settings_HideFloatingWindowOnForegroundDesc" xml:space="preserve">
         <value>Automatically hide when matched window is foreground</value>
     </data>
 
-    <data name="HideFloatingWindowOnForegroundWindowTitles" xml:space="preserve">
+    <data name="Settings_HideFloatingWindowOnForegroundWindowTitles" xml:space="preserve">
         <value>Window titles</value>
     </data>
     <data name="Settings_HideFloatingWindowOnForegroundWindowTitlesDesc" xml:space="preserve">
         <value>Comma-separated keywords to match titles</value>
     </data>
 
-    <data name="HideFloatingWindowOnForegroundProcessNames" xml:space="preserve">
+    <data name="Settings_HideFloatingWindowOnForegroundProcessNames" xml:space="preserve">
         <value>Process names</value>
     </data>
     <data name="Settings_HideFloatingWindowOnForegroundProcessNamesDesc" xml:space="preserve">
         <value>Comma-separated keywords to match processes</value>
     </data>
-    <data name="AcrylicBackground" xml:space="preserve">
+    <data name="Settings_AcrylicBackground" xml:space="preserve">
         <value>Acrylic background</value>
     </data>
     <data name="Settings_AcrylicBackgroundDesc" xml:space="preserve">

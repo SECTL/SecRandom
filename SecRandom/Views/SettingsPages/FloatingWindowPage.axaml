@@ -76,8 +76,8 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.DoNotStealFocus}"
-                                         Description="{x:Static pageLangs:Resources.DoNotStealFocusDesc}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_DoNotStealFocus}"
+                                         Description="{x:Static pageLangs:Resources.Settings_DoNotStealFocusDesc}"
                                          IconSource="{controls:FluentIconSource &#xE7AC;}">
                     <fa:SettingsExpanderItem.Footer>
                         <ToggleSwitch IsChecked="{Binding IsDoNotStealFocusEnabled}"
@@ -86,7 +86,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.ExtendQuickDrawComponent}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_ExtendQuickDrawComponent}"
                                          Description="{x:Static pageLangs:Resources.Settings_ExtendQuickDrawComponentDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8D9;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -96,7 +96,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.AcrylicBackground}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_AcrylicBackground}"
                                          Description="{x:Static pageLangs:Resources.Settings_AcrylicBackgroundDesc}"
                                          IconSource="{controls:FluentIconSource &#xE51F;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -106,7 +106,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
                 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.ResetFloatingWindowPosition}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_ResetFloatingWindowPosition}"
                                          Description="{x:Static pageLangs:Resources.Settings_ResetFloatingWindowPositionDesc}"
                                          IconSource="{controls:FluentIconSource &#xE777;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -123,7 +123,7 @@
                        Margin="0 8 0 0"/>
             
             <StackPanel Orientation="Vertical" Spacing="0">
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FloatingWindowButtonControl}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FloatingWindowButtonControl}"
                                          Description="{x:Static pageLangs:Resources.Settings_FloatingWindowButtonControlDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8FD;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -143,7 +143,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FloatingWindowPlacement}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FloatingWindowPlacement}"
                                          Description="{x:Static pageLangs:Resources.Settings_FloatingWindowPlacementDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8E9;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -156,7 +156,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FloatingWindowDisplayStyle}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FloatingWindowDisplayStyle}"
                                          Description="{x:Static pageLangs:Resources.Settings_FloatingWindowDisplayStyleDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8F2;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -169,7 +169,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FloatingWindowSize}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FloatingWindowSize}"
                                          Description="{x:Static pageLangs:Resources.Settings_FloatingWindowSizeDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8A3;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -186,7 +186,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
                 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FloatingWindowTheme}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FloatingWindowTheme}"
                                          Description="{x:Static pageLangs:Resources.Settings_FloatingWindowThemeDesc}"
                                          IconSource="{controls:FluentIconSource &#xE790;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -207,7 +207,7 @@
                        Margin="0 8 0 0"/>
             
             <StackPanel Orientation="Vertical" Spacing="0">
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FloatingWindowStickToEdge}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FloatingWindowStickToEdge}"
                                          Description="{x:Static pageLangs:Resources.Settings_FloatingWindowStickToEdgeDesc}"
                                          IconSource="{controls:FluentIconSource &#xE840;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -217,7 +217,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FloatingWindowStickToEdgeRecoverSeconds}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FloatingWindowStickToEdgeRecoverSeconds}"
                                          Description="{x:Static pageLangs:Resources.Settings_FloatingWindowStickToEdgeRecoverSecondsDesc}"
                                          IconSource="{controls:FluentIconSource &#xE823;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -229,7 +229,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.FloatingWindowStickToEdgeDisplayStyle}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_FloatingWindowStickToEdgeDisplayStyle}"
                                          Description="{x:Static pageLangs:Resources.Settings_FloatingWindowStickToEdgeDisplayStyleDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8E9;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -249,7 +249,7 @@
                        Margin="0 8 0 0"/>
             
             <StackPanel Orientation="Vertical" Spacing="0">
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.HideFloatingWindowOnForeground}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_HideFloatingWindowOnForeground}"
                                          Description="{x:Static pageLangs:Resources.Settings_HideFloatingWindowOnForegroundDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8A7;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -259,7 +259,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.HideFloatingWindowOnForegroundWindowTitles}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_HideFloatingWindowOnForegroundWindowTitles}"
                                          Description="{x:Static pageLangs:Resources.Settings_HideFloatingWindowOnForegroundWindowTitlesDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8A7;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -269,7 +269,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.HideFloatingWindowOnForegroundProcessNames}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_HideFloatingWindowOnForegroundProcessNames}"
                                          Description="{x:Static pageLangs:Resources.Settings_HideFloatingWindowOnForegroundProcessNamesDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8A7;}">
                     <fa:SettingsExpanderItem.Footer>

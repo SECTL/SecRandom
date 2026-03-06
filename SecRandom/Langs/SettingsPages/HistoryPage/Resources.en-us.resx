@@ -69,7 +69,7 @@
   <data name="SelectClass" xml:space="preserve">
     <value>Select class</value>
   </data>
-  <data name="SelectClassDesc" xml:space="preserve">
+  <data name="Settings_SelectClassDesc" xml:space="preserve">
     <value>Choose a class to view history</value>
   </data>
   <data name="ClearRollCallHistory" xml:space="preserve">
@@ -87,7 +87,7 @@
   <data name="SelectPool" xml:space="preserve">
     <value>Select pool</value>
   </data>
-  <data name="SelectPoolDesc" xml:space="preserve">
+  <data name="Settings_SelectPoolDesc" xml:space="preserve">
     <value>Choose a lottery pool to view history</value>
   </data>
   <data name="ClearLotteryHistory" xml:space="preserve">

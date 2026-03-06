@@ -17,61 +17,61 @@
                    HorizontalAlignment="Center"/>
 
             <StackPanel Orientation="Vertical" Spacing="0">
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Bilibili}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_Bilibili}"
                                          Description="{x:Static pageLangs:Resources.Settings_BilibiliDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8C1;}">
                     <fa:SettingsExpanderItem.Footer>
-                        <Button Content="{x:Static pageLangs:Resources.Bilibili}"
+                        <Button Content="{x:Static pageLangs:Resources.Settings_Bilibili}"
                                 Click="OpenBilibili_Click"/>
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.GitHub}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_GitHub}"
                                          Description="{x:Static pageLangs:Resources.Settings_GitHubDesc}"
                                          IconSource="{controls:FluentIconSource &#xE774;}">
                     <fa:SettingsExpanderItem.Footer>
-                        <Button Content="{x:Static pageLangs:Resources.GitHub}"
+                        <Button Content="{x:Static pageLangs:Resources.Settings_GitHub}"
                                 Click="OpenGitHub_Click"/>
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Contributors}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_Contributors}"
                                          Description="{x:Static pageLangs:Resources.Settings_ContributorsDesc}"
                                          IconSource="{controls:FluentIconSource &#xE716;}">
                     <fa:SettingsExpanderItem.Footer>
-                        <Button Content="{x:Static pageLangs:Resources.Contributors}"
+                        <Button Content="{x:Static pageLangs:Resources.Settings_Contributors}"
                                 Click="ShowContributors_Click"/>
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Donation}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_Donation}"
                                          Description="{x:Static pageLangs:Resources.Settings_DonationDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8A1;}">
                     <fa:SettingsExpanderItem.Footer>
-                        <Button Content="{x:Static pageLangs:Resources.Donation}"
+                        <Button Content="{x:Static pageLangs:Resources.Settings_Donation}"
                                 Click="OpenDonation_Click"/>
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Website}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_Website}"
                                          Description="{x:Static pageLangs:Resources.Settings_WebsiteDesc}"
                                          IconSource="{controls:FluentIconSource &#xE774;}">
                     <fa:SettingsExpanderItem.Footer>
-                        <Button Content="{x:Static pageLangs:Resources.Website}"
+                        <Button Content="{x:Static pageLangs:Resources.Settings_Website}"
                                 Click="OpenWebsite_Click"/>
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.OrganizationWebsite}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_OrganizationWebsite}"
                                          Description="{x:Static pageLangs:Resources.Settings_OrganizationWebsiteDesc}"
                                          IconSource="{controls:FluentIconSource &#xE774;}">
                     <fa:SettingsExpanderItem.Footer>
-                        <Button Content="{x:Static pageLangs:Resources.OrganizationWebsite}"
+                        <Button Content="{x:Static pageLangs:Resources.Settings_OrganizationWebsite}"
                                 Click="OpenOrganizationWebsite_Click"/>
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Copyright}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_Copyright}"
                                          Description="{x:Static pageLangs:Resources.Settings_CopyrightDesc}"
                                          IconSource="{controls:FluentIconSource &#xE8B1;}">
                     <fa:SettingsExpanderItem.Footer>
@@ -79,7 +79,7 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Version}"
+                <fa:SettingsExpanderItem Content="{x:Static pageLangs:Resources.Settings_Version}"
                                          Description="{x:Static pageLangs:Resources.Settings_VersionDesc}"
                                          IconSource="{controls:FluentIconSource &#xE73E;}">
                     <fa:SettingsExpanderItem.Footer>

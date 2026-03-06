@@ -28,49 +28,49 @@
     <data name="Settings_VerificationMethodDesc" xml:space="preserve">
         <value>配置安全功能验证方式</value>
     </data>
-    <data name="SafetySwitch" xml:space="preserve">
+    <data name="Settings_SafetySwitch" xml:space="preserve">
         <value>安全开关</value>
     </data>
     <data name="Settings_SafetySwitchDesc" xml:space="preserve">
         <value>启用后所有安全操作都需要验证密码</value>
     </data>
-    <data name="SetPassword" xml:space="preserve">
+    <data name="Settings_SetPassword" xml:space="preserve">
         <value>设置/修改密码</value>
     </data>
     <data name="Settings_SetPasswordDesc" xml:space="preserve">
         <value>设置或修改安全验证密码</value>
     </data>
-    <data name="TotpSwitch" xml:space="preserve">
+    <data name="Settings_TotpSwitch" xml:space="preserve">
         <value>TOTP验证</value>
     </data>
     <data name="Settings_TotpSwitchDesc" xml:space="preserve">
         <value>启用后可在安全操作中使用TOTP动态口令</value>
     </data>
-    <data name="SetTotp" xml:space="preserve">
+    <data name="Settings_SetTotp" xml:space="preserve">
         <value>设置TOTP</value>
     </data>
     <data name="Settings_SetTotpDesc" xml:space="preserve">
         <value>配置TOTP动态口令验证</value>
     </data>
-    <data name="UsbSwitch" xml:space="preserve">
+    <data name="Settings_UsbSwitch" xml:space="preserve">
         <value>U盘验证</value>
     </data>
     <data name="Settings_UsbSwitchDesc" xml:space="preserve">
         <value>启用后可在安全操作中使用U盘验证</value>
     </data>
-    <data name="BindUsb" xml:space="preserve">
+    <data name="Settings_BindUsb" xml:space="preserve">
         <value>绑定U盘</value>
     </data>
     <data name="Settings_BindUsbDesc" xml:space="preserve">
         <value>绑定用于验证的U盘设备</value>
     </data>
-    <data name="UnbindUsb" xml:space="preserve">
+    <data name="Settings_UnbindUsb" xml:space="preserve">
         <value>解绑U盘</value>
     </data>
     <data name="Settings_UnbindUsbDesc" xml:space="preserve">
         <value>解除U盘设备绑定</value>
     </data>
-    <data name="VerificationProcess" xml:space="preserve">
+    <data name="Settings_VerificationProcess" xml:space="preserve">
         <value>安全验证步骤</value>
     </data>
     <data name="Settings_VerificationProcessDesc" xml:space="preserve">
@@ -106,31 +106,31 @@
     <data name="Settings_SecurityOperationsDesc" xml:space="preserve">
         <value>配置需要安全验证的操作</value>
     </data>
-    <data name="ShowHideFloatingWindowSwitch" xml:space="preserve">
+    <data name="Settings_ShowHideFloatingWindowSwitch" xml:space="preserve">
         <value>显示/隐藏浮窗验证</value>
     </data>
     <data name="Settings_ShowHideFloatingWindowSwitchDesc" xml:space="preserve">
         <value>启用后显示或隐藏浮窗时需要安全验证</value>
     </data>
-    <data name="RestartSwitch" xml:space="preserve">
+    <data name="Settings_RestartSwitch" xml:space="preserve">
         <value>重启验证</value>
     </data>
     <data name="Settings_RestartSwitchDesc" xml:space="preserve">
         <value>启用后重启软件时需要安全验证</value>
     </data>
-    <data name="ExitSwitch" xml:space="preserve">
+    <data name="Settings_ExitSwitch" xml:space="preserve">
         <value>退出验证</value>
     </data>
     <data name="Settings_ExitSwitchDesc" xml:space="preserve">
         <value>启用后退出软件时需要安全验证</value>
     </data>
-    <data name="OpenSettingsSwitch" xml:space="preserve">
+    <data name="Settings_OpenSettingsSwitch" xml:space="preserve">
         <value>打开设置验证</value>
     </data>
     <data name="Settings_OpenSettingsSwitchDesc" xml:space="preserve">
         <value>启用后打开设置窗口时需要安全验证</value>
     </data>
-    <data name="PreviewSettingsSwitch" xml:space="preserve">
+    <data name="Settings_PreviewSettingsSwitch" xml:space="preserve">
         <value>设置预览开关</value>
     </data>
     <data name="Settings_PreviewSettingsSwitchDesc" xml:space="preserve">

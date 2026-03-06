@@ -22,19 +22,19 @@
     <data name="About" xml:space="preserve">
         <value>About</value>
     </data>
-    <data name="GitHub" xml:space="preserve">
+    <data name="Settings_GitHub" xml:space="preserve">
         <value>Visit</value>
     </data>
     <data name="Settings_GitHubDesc" xml:space="preserve">
         <value>Visit project repository</value>
     </data>
-    <data name="Bilibili" xml:space="preserve">
+    <data name="Settings_Bilibili" xml:space="preserve">
         <value>Visit</value>
     </data>
     <data name="Settings_BilibiliDesc" xml:space="preserve">
         <value>Visit 黎泽懿_Aionflux's Bilibili account</value>
     </data>
-    <data name="Contributors" xml:space="preserve">
+    <data name="Settings_Contributors" xml:space="preserve">
         <value>Contributors</value>
     </data>
     <data name="Settings_ContributorsDesc" xml:space="preserve">
@@ -67,31 +67,31 @@
     <data name="ContributorsRole11" xml:space="preserve">
         <value>Log</value>
     </data>
-    <data name="Donation" xml:space="preserve">
+    <data name="Settings_Donation" xml:space="preserve">
         <value>Donate</value>
     </data>
     <data name="Settings_DonationDesc" xml:space="preserve">
         <value>Buy me a coffee</value>
     </data>
-    <data name="Website" xml:space="preserve">
+    <data name="Settings_Website" xml:space="preserve">
         <value>Visit</value>
     </data>
     <data name="Settings_WebsiteDesc" xml:space="preserve">
         <value>Visit SecRandom's official website</value>
     </data>
-    <data name="OrganizationWebsite" xml:space="preserve">
+    <data name="Settings_OrganizationWebsite" xml:space="preserve">
         <value>Visit</value>
     </data>
     <data name="Settings_OrganizationWebsiteDesc" xml:space="preserve">
         <value>Visit SECTL's official website</value>
     </data>
-    <data name="Copyright" xml:space="preserve">
+    <data name="Settings_Copyright" xml:space="preserve">
         <value>Copyright</value>
     </data>
     <data name="Settings_CopyrightDesc" xml:space="preserve">
         <value>SecRandom follows GPL-3.0</value>
     </data>
-    <data name="Version" xml:space="preserve">
+    <data name="Settings_Version" xml:space="preserve">
         <value>Version</value>
     </data>
     <data name="Settings_VersionDesc" xml:space="preserve">

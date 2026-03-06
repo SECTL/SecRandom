@@ -69,7 +69,7 @@
   <data name="SelectClass" xml:space="preserve">
     <value>选择班级</value>
   </data>
-  <data name="SelectClassDesc" xml:space="preserve">
+  <data name="Settings_SelectClassDesc" xml:space="preserve">
     <value>选择要查看历史记录的班级</value>
   </data>
   <data name="ClearRollCallHistory" xml:space="preserve">
@@ -87,7 +87,7 @@
   <data name="SelectPool" xml:space="preserve">
     <value>选择奖池</value>
   </data>
-  <data name="SelectPoolDesc" xml:space="preserve">
+  <data name="Settings_SelectPoolDesc" xml:space="preserve">
     <value>选择要查看历史记录的奖池</value>
   </data>
   <data name="ClearLotteryHistory" xml:space="preserve">

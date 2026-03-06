@@ -34,6 +34,9 @@
     <data name="DrawSettingsNavHint" xml:space="preserve">
         <value>请在左侧导航栏选择具体设置</value>
     </data>
+    <data name="Settings_ListSpecificSettings" xml:space="preserve">
+        <value>独立名单配置</value>
+    </data>
     <data name="ListSpecificSettings" xml:space="preserve">
         <value>独立名单配置</value>
     </data>
@@ -76,13 +79,13 @@
     <data name="FaceDetectorExtractionFunction" xml:space="preserve">
         <value>抽取功能</value>
     </data>
-    <data name="CameraSource" xml:space="preserve">
+    <data name="Settings_CameraSource" xml:space="preserve">
         <value>摄像头</value>
     </data>
     <data name="Settings_CameraSourceDesc" xml:space="preserve">
         <value>选择人脸抽取使用的摄像头设备</value>
     </data>
-    <data name="CameraDisplayResolution" xml:space="preserve">
+    <data name="Settings_CameraDisplayResolution" xml:space="preserve">
         <value>摄像头显示分辨率</value>
     </data>
     <data name="Settings_CameraDisplayResolutionDesc" xml:space="preserve">
@@ -97,7 +100,7 @@
     <data name="CameraDisplayResolutionUnknown" xml:space="preserve">
         <value>未知</value>
     </data>
-    <data name="CameraPreviewMode" xml:space="preserve">
+    <data name="Settings_CameraPreviewMode" xml:space="preserve">
         <value>模式</value>
     </data>
     <data name="Settings_CameraPreviewModeDesc" xml:space="preserve">
@@ -163,6 +166,9 @@
     <data name="Settings_PlayResultAudioDesc" xml:space="preserve">
         <value>抽取结果展示时是否播放音效</value>
     </data>
+    <data name="Settings_DrawMode" xml:space="preserve">
+        <value>抽取模式</value>
+    </data>
     <data name="DrawMode" xml:space="preserve">
         <value>抽取模式</value>
     </data>
@@ -178,6 +184,9 @@
     <data name="DrawModeSemiRepeat" xml:space="preserve">
         <value>半重复抽取</value>
     </data>
+    <data name="Settings_ClearRecord" xml:space="preserve">
+        <value>清除抽取记录方式</value>
+    </data>
     <data name="ClearRecord" xml:space="preserve">
         <value>清除抽取记录方式</value>
     </data>
@@ -190,11 +199,17 @@
     <data name="ClearRecordAll" xml:space="preserve">
         <value>直到全部抽取完</value>
     </data>
+    <data name="Settings_HalfRepeat" xml:space="preserve">
+        <value>半重复抽取次数</value>
+    </data>
     <data name="HalfRepeat" xml:space="preserve">
         <value>半重复抽取次数</value>
     </data>
     <data name="Settings_HalfRepeatDesc" xml:space="preserve">
         <value>设置每人被抽中多少次后清除抽取记录</value>
+    </data>
+    <data name="Settings_DrawType" xml:space="preserve">
+        <value>抽取方式</value>
     </data>
     <data name="DrawType" xml:space="preserve">
         <value>抽取方式</value>
@@ -208,6 +223,9 @@
     <data name="DrawTypeFair" xml:space="preserve">
         <value>公平抽取</value>
     </data>
+    <data name="Settings_DefaultClass" xml:space="preserve">
+        <value>默认抽取名单</value>
+    </data>
     <data name="DefaultClass" xml:space="preserve">
         <value>默认抽取名单</value>
     </data>
@@ -218,6 +236,9 @@
         <value>选择名单</value>
     </data>
     <data name="DefaultPool" xml:space="preserve">
+        <value>默认抽取奖池</value>
+    </data>
+    <data name="Settings_DefaultPool" xml:space="preserve">
         <value>默认抽取奖池</value>
     </data>
     <data name="Settings_DefaultPoolDesc" xml:space="preserve">
@@ -247,7 +268,7 @@
     <data name="LotteryDisplaySettings" xml:space="preserve">
         <value>显示设置</value>
     </data>
-    <data name="UseGlobalFont" xml:space="preserve">
+    <data name="Settings_UseGlobalFont" xml:space="preserve">
         <value>使用全局字体</value>
     </data>
     <data name="Settings_UseGlobalFontDesc" xml:space="preserve">
@@ -259,19 +280,19 @@
     <data name="UseGlobalFontCustom" xml:space="preserve">
         <value>使用自定义字体</value>
     </data>
-    <data name="CustomFont" xml:space="preserve">
+    <data name="Settings_CustomFont" xml:space="preserve">
         <value>自定义字体</value>
     </data>
     <data name="Settings_CustomFontDesc" xml:space="preserve">
         <value>选择自定义字体</value>
     </data>
-    <data name="FontSize" xml:space="preserve">
+    <data name="Settings_FontSize" xml:space="preserve">
         <value>字体大小</value>
     </data>
     <data name="Settings_FontSizeDesc" xml:space="preserve">
         <value>设置字体大小</value>
     </data>
-    <data name="DisplayFormat" xml:space="preserve">
+    <data name="Settings_DisplayFormat" xml:space="preserve">
         <value>结果显示格式</value>
     </data>
     <data name="Settings_DisplayFormatDesc" xml:space="preserve">
@@ -286,7 +307,7 @@
     <data name="DisplayFormatId" xml:space="preserve">
         <value>学号</value>
     </data>
-    <data name="DisplayStyle" xml:space="preserve">
+    <data name="Settings_DisplayStyle" xml:space="preserve">
         <value>结果显示样式</value>
     </data>
     <data name="Settings_DisplayStyleDesc" xml:space="preserve">
@@ -298,7 +319,7 @@
     <data name="DisplayStyleCard" xml:space="preserve">
         <value>卡片样式</value>
     </data>
-    <data name="ShowRandom" xml:space="preserve">
+    <data name="Settings_ShowRandom" xml:space="preserve">
         <value>显示随机组员格式</value>
     </data>
     <data name="Settings_ShowRandomDesc" xml:space="preserve">
@@ -313,7 +334,7 @@
     <data name="ShowRandomDash" xml:space="preserve">
         <value>组名[短横杠]姓名</value>
     </data>
-    <data name="ShowTags" xml:space="preserve">
+    <data name="Settings_ShowTags" xml:space="preserve">
         <value>显示标签</value>
     </data>
     <data name="Settings_ShowTagsDesc" xml:space="preserve">
@@ -328,10 +349,10 @@
     <data name="LotteryAnimationSettings" xml:space="preserve">
         <value>动画设置</value>
     </data>
-    <data name="Animation" xml:space="preserve">
+    <data name="Settings_Animation" xml:space="preserve">
         <value>动画模式</value>
     </data>
-    <data name="AnimationDesc" xml:space="preserve">
+    <data name="Settings_AnimationDesc" xml:space="preserve">
         <value>设置动画效果</value>
     </data>
     <data name="AnimationManual" xml:space="preserve">
@@ -343,25 +364,25 @@
     <data name="AnimationDirect" xml:space="preserve">
         <value>直接显示结果</value>
     </data>
-    <data name="AnimationInterval" xml:space="preserve">
+    <data name="Settings_AnimationInterval" xml:space="preserve">
         <value>动画间隔</value>
     </data>
     <data name="Settings_AnimationIntervalDesc" xml:space="preserve">
         <value>设置动画间隔时间（毫秒）</value>
     </data>
-    <data name="AutoplayCount" xml:space="preserve">
+    <data name="Settings_AutoplayCount" xml:space="preserve">
         <value>自动播放次数</value>
     </data>
     <data name="Settings_AutoplayCountDesc" xml:space="preserve">
         <value>设置动画自动播放次数</value>
     </data>
-    <data name="ResultFlowAnimationStyle" xml:space="preserve">
+    <data name="Settings_ResultFlowAnimationStyle" xml:space="preserve">
         <value>结果布局动画</value>
     </data>
     <data name="Settings_ResultFlowAnimationStyleDesc" xml:space="preserve">
         <value>设置结果布局出现动画效果</value>
     </data>
-    <data name="ResultFlowAnimationDuration" xml:space="preserve">
+    <data name="Settings_ResultFlowAnimationDuration" xml:space="preserve">
         <value>结果布局动画时长</value>
     </data>
     <data name="Settings_ResultFlowAnimationDurationDesc" xml:space="preserve">
@@ -376,7 +397,7 @@
     <data name="LotteryColorThemeSettings" xml:space="preserve">
         <value>颜色主题设置</value>
     </data>
-    <data name="AnimationColorTheme" xml:space="preserve">
+    <data name="Settings_AnimationColorTheme" xml:space="preserve">
         <value>动画/结果颜色主题</value>
     </data>
     <data name="Settings_AnimationColorThemeDesc" xml:space="preserve">
@@ -391,7 +412,7 @@
     <data name="AnimationColorThemeFixed" xml:space="preserve">
         <value>固定颜色</value>
     </data>
-    <data name="AnimationFixedColor" xml:space="preserve">
+    <data name="Settings_AnimationFixedColor" xml:space="preserve">
         <value>动画/结果固定颜色</value>
     </data>
     <data name="Settings_AnimationFixedColorDesc" xml:space="preserve">
@@ -436,13 +457,13 @@
     <data name="RollCallStudentImageSettings" xml:space="preserve">
         <value>学生头像设置</value>
     </data>
-    <data name="StudentImage" xml:space="preserve">
+    <data name="Settings_StudentImage" xml:space="preserve">
         <value>显示学生图片</value>
     </data>
     <data name="Settings_StudentImageDesc" xml:space="preserve">
         <value>设置是否显示学生图片</value>
     </data>
-    <data name="StudentImagePosition" xml:space="preserve">
+    <data name="Settings_StudentImagePosition" xml:space="preserve">
         <value>头像位置</value>
     </data>
     <data name="Settings_StudentImagePositionDesc" xml:space="preserve">
@@ -460,7 +481,7 @@
     <data name="StudentImagePositionBottom" xml:space="preserve">
         <value>底部</value>
     </data>
-    <data name="StudentImageFolder" xml:space="preserve">
+    <data name="Settings_StudentImageFolder" xml:space="preserve">
         <value>学生图片文件夹</value>
     </data>
     <data name="Settings_StudentImageFolderDesc" xml:space="preserve">

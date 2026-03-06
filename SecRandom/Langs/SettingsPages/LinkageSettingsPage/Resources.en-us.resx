@@ -3,7 +3,7 @@
 <root>
     <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
         <xsd:element name="root" msdata:IsDataSet="true">
-            
+
         </xsd:element>
     </xsd:schema>
     <resheader name="resmimetype">
@@ -26,7 +26,7 @@
     <data name="CsesImport" xml:space="preserve">
         <value>CSES Schedule Import</value>
     </data>
-    <data name="ScheduleImport" xml:space="preserve">
+    <data name="Settings_ScheduleImport" xml:space="preserve">
         <value>Schedule import</value>
     </data>
     <data name="Settings_ScheduleImportDesc" xml:space="preserve">
@@ -66,19 +66,19 @@
     <data name="ClassBreak" xml:space="preserve">
         <value>Class Break Settings</value>
     </data>
-    <data name="EnableClassBreak" xml:space="preserve">
+    <data name="Settings_EnableClassBreak" xml:space="preserve">
         <value>Class-break lock</value>
     </data>
     <data name="Settings_EnableClassBreakDesc" xml:space="preserve">
         <value>When enabled, drawing during breaks requires security authorization</value>
     </data>
-    <data name="PreClassEnableTime" xml:space="preserve">
+    <data name="Settings_PreClassEnableTime" xml:space="preserve">
         <value>Pre-class enable time</value>
     </data>
     <data name="Settings_PreClassEnableTimeDesc" xml:space="preserve">
         <value>Enable N seconds before class starts (0-1440 seconds)</value>
     </data>
-    <data name="PostClassDisableDelay" xml:space="preserve">
+    <data name="Settings_PostClassDisableDelay" xml:space="preserve">
         <value>Post-class disable delay</value>
     </data>
     <data name="Settings_PostClassDisableDelayDesc" xml:space="preserve">
@@ -88,7 +88,7 @@
     <data name="Verification" xml:space="preserve">
         <value>Verification</value>
     </data>
-    <data name="EnableVerificationFlow" xml:space="preserve">
+    <data name="Settings_EnableVerificationFlow" xml:space="preserve">
         <value>Verification flow</value>
     </data>
     <data name="Settings_EnableVerificationFlowDesc" xml:space="preserve">
@@ -98,13 +98,13 @@
     <data name="PreClassReset" xml:space="preserve">
         <value>Pre-class reset settings</value>
     </data>
-    <data name="EnablePreClassReset" xml:space="preserve">
+    <data name="Settings_EnablePreClassReset" xml:space="preserve">
         <value>Pre-class reset</value>
     </data>
     <data name="Settings_EnablePreClassResetDesc" xml:space="preserve">
         <value>When enabled, clears temporary records and UI results N seconds before class</value>
     </data>
-    <data name="PreClassResetTime" xml:space="preserve">
+    <data name="Settings_PreClassResetTime" xml:space="preserve">
         <value>Pre-class reset time</value>
     </data>
     <data name="Settings_PreClassResetTimeDesc" xml:space="preserve">
@@ -114,13 +114,13 @@
     <data name="SubjectHistory" xml:space="preserve">
         <value>Subject History Filter</value>
     </data>
-    <data name="EnableSubjectHistoryFilter" xml:space="preserve">
+    <data name="Settings_EnableSubjectHistoryFilter" xml:space="preserve">
         <value>Subject history filter</value>
     </data>
     <data name="Settings_EnableSubjectHistoryFilterDesc" xml:space="preserve">
         <value>When enabled, only uses history of the current subject for weighting</value>
     </data>
-    <data name="SubjectHistoryBreakAssignment" xml:space="preserve">
+    <data name="Settings_SubjectHistoryBreakAssignment" xml:space="preserve">
         <value>Break assignment</value>
     </data>
     <data name="Settings_SubjectHistoryBreakAssignmentDesc" xml:space="preserve">
@@ -139,7 +139,7 @@
     <data name="DataSource" xml:space="preserve">
         <value>Data Source Selection</value>
     </data>
-    <data name="DataSourceMode" xml:space="preserve">
+    <data name="Settings_DataSourceMode" xml:space="preserve">
         <value>Data source</value>
     </data>
     <data name="Settings_DataSourceModeDesc" xml:space="preserve">
@@ -158,7 +158,7 @@
     <data name="FloatingWindow" xml:space="preserve">
         <value>Floating window</value>
     </data>
-    <data name="HideFloatingWindowOnClassEnd" xml:space="preserve">
+    <data name="Settings_HideFloatingWindowOnClassEnd" xml:space="preserve">
         <value>Hide on class end</value>
     </data>
     <data name="Settings_HideFloatingWindowOnClassEndDesc" xml:space="preserve">

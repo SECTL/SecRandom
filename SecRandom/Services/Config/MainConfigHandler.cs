@@ -29,7 +29,7 @@ public class MainConfigHandler : ConfigHandlerBase<MainConfigModel>
         AttachThemeManagementHandlers();
     }
 
-    protected override void Reload()
+    public override void Reload()
     {
         DetachBasicSettingsHandlers();
         DetachDrawSettingsHandlers();

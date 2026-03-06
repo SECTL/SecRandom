@@ -348,29 +348,11 @@ namespace SecRandom.Langs.SettingsPages.HistoryPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 选择要查看历史记录的班级.
-        /// </summary>
-        public static string SelectClassDesc {
-            get {
-                return ResourceManager.GetString("SelectClassDesc", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 选择奖池.
         /// </summary>
         public static string SelectPool {
             get {
                 return ResourceManager.GetString("SelectPool", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 选择要查看历史记录的奖池.
-        /// </summary>
-        public static string SelectPoolDesc {
-            get {
-                return ResourceManager.GetString("SelectPoolDesc", resourceCulture);
             }
         }
         
@@ -488,6 +470,24 @@ namespace SecRandom.Langs.SettingsPages.HistoryPage {
         public static string Settings_RollCallHistoryTableDesc {
             get {
                 return ResourceManager.GetString("Settings_RollCallHistoryTableDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 选择要查看历史记录的班级.
+        /// </summary>
+        public static string Settings_SelectClassDesc {
+            get {
+                return ResourceManager.GetString("Settings_SelectClassDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 选择要查看历史记录的奖池.
+        /// </summary>
+        public static string Settings_SelectPoolDesc {
+            get {
+                return ResourceManager.GetString("Settings_SelectPoolDesc", resourceCulture);
             }
         }
         

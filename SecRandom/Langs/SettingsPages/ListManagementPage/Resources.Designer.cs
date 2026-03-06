@@ -402,6 +402,15 @@ namespace SecRandom.Langs.SettingsPages.ListManagementPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 错误.
+        /// </summary>
+        public static string Error {
+            get {
+                return ResourceManager.GetString("Error", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 现有奖池.
         /// </summary>
         public static string ExistingPools {
@@ -870,15 +879,6 @@ namespace SecRandom.Langs.SettingsPages.ListManagementPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 从已有班级中选择一个班级.
-        /// </summary>
-        public static string SelectClassDesc {
-            get {
-                return ResourceManager.GetString("SelectClassDesc", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 选择文件.
         /// </summary>
         public static string SelectFile {
@@ -902,15 +902,6 @@ namespace SecRandom.Langs.SettingsPages.ListManagementPage {
         public static string SelectPool {
             get {
                 return ResourceManager.GetString("SelectPool", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 从已有奖池中选择一个奖池.
-        /// </summary>
-        public static string SelectPoolDesc {
-            get {
-                return ResourceManager.GetString("SelectPoolDesc", resourceCulture);
             }
         }
         
@@ -974,15 +965,6 @@ namespace SecRandom.Langs.SettingsPages.ListManagementPage {
         public static string Settings_CountSettingsDesc {
             get {
                 return ResourceManager.GetString("Settings_CountSettingsDesc", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 错误.
-        /// </summary>
-        public static string Error {
-            get {
-                return ResourceManager.GetString("Error", resourceCulture);
             }
         }
         
@@ -1064,6 +1046,24 @@ namespace SecRandom.Langs.SettingsPages.ListManagementPage {
         public static string Settings_PrizeSettingsDesc {
             get {
                 return ResourceManager.GetString("Settings_PrizeSettingsDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 从已有班级中选择一个班级.
+        /// </summary>
+        public static string Settings_SelectClassDesc {
+            get {
+                return ResourceManager.GetString("Settings_SelectClassDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 从已有奖池中选择一个奖池.
+        /// </summary>
+        public static string Settings_SelectPoolDesc {
+            get {
+                return ResourceManager.GetString("Settings_SelectPoolDesc", resourceCulture);
             }
         }
         

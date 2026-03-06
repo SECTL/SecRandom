@@ -76,21 +76,21 @@
         <value>拖动前需要长按的时长（毫秒）</value>
     </data>
 
-    <data name="DoNotStealFocus" xml:space="preserve">
+    <data name="Settings_DoNotStealFocus" xml:space="preserve">
         <value>不抢占焦点</value>
     </data>
-    <data name="DoNotStealFocusDesc" xml:space="preserve">
+    <data name="Settings_DoNotStealFocusDesc" xml:space="preserve">
         <value>点击悬浮窗时尽量不切换焦点</value>
     </data>
 
-    <data name="ExtendQuickDrawComponent" xml:space="preserve">
+    <data name="Settings_ExtendQuickDrawComponent" xml:space="preserve">
         <value>扩展快速抽取组件</value>
     </data>
     <data name="Settings_ExtendQuickDrawComponentDesc" xml:space="preserve">
         <value>在悬浮窗中显示更多快速抽取信息</value>
     </data>
 
-    <data name="ResetFloatingWindowPosition" xml:space="preserve">
+    <data name="Settings_ResetFloatingWindowPosition" xml:space="preserve">
         <value>重置悬浮窗位置</value>
     </data>
     <data name="Settings_ResetFloatingWindowPositionDesc" xml:space="preserve">
@@ -100,7 +100,7 @@
         <value>重置</value>
     </data>
 
-    <data name="FloatingWindowButtonControl" xml:space="preserve">
+    <data name="Settings_FloatingWindowButtonControl" xml:space="preserve">
         <value>按钮显示</value>
     </data>
     <data name="Settings_FloatingWindowButtonControlDesc" xml:space="preserve">
@@ -122,7 +122,7 @@
         <value>计时器</value>
     </data>
 
-    <data name="FloatingWindowPlacement" xml:space="preserve">
+    <data name="Settings_FloatingWindowPlacement" xml:space="preserve">
         <value>布局模式</value>
     </data>
     <data name="Settings_FloatingWindowPlacementDesc" xml:space="preserve">
@@ -138,7 +138,7 @@
         <value>横向</value>
     </data>
 
-    <data name="FloatingWindowDisplayStyle" xml:space="preserve">
+    <data name="Settings_FloatingWindowDisplayStyle" xml:space="preserve">
         <value>显示样式</value>
     </data>
     <data name="Settings_FloatingWindowDisplayStyleDesc" xml:space="preserve">
@@ -154,7 +154,7 @@
         <value>仅文字</value>
     </data>
 
-    <data name="FloatingWindowSize" xml:space="preserve">
+    <data name="Settings_FloatingWindowSize" xml:space="preserve">
         <value>尺寸</value>
     </data>
     <data name="Settings_FloatingWindowSizeDesc" xml:space="preserve">
@@ -182,7 +182,7 @@
         <value>超超大</value>
     </data>
 
-    <data name="FloatingWindowTheme" xml:space="preserve">
+    <data name="Settings_FloatingWindowTheme" xml:space="preserve">
         <value>主题</value>
     </data>
     <data name="Settings_FloatingWindowThemeDesc" xml:space="preserve">
@@ -201,21 +201,21 @@
         <value>深色</value>
     </data>
 
-    <data name="FloatingWindowStickToEdge" xml:space="preserve">
+    <data name="Settings_FloatingWindowStickToEdge" xml:space="preserve">
         <value>自动贴边</value>
     </data>
     <data name="Settings_FloatingWindowStickToEdgeDesc" xml:space="preserve">
         <value>停止操作后自动贴到屏幕边缘</value>
     </data>
 
-    <data name="FloatingWindowStickToEdgeRecoverSeconds" xml:space="preserve">
+    <data name="Settings_FloatingWindowStickToEdgeRecoverSeconds" xml:space="preserve">
         <value>贴边恢复延迟</value>
     </data>
     <data name="Settings_FloatingWindowStickToEdgeRecoverSecondsDesc" xml:space="preserve">
         <value>贴边后恢复显示的延迟（秒）</value>
     </data>
 
-    <data name="FloatingWindowStickToEdgeDisplayStyle" xml:space="preserve">
+    <data name="Settings_FloatingWindowStickToEdgeDisplayStyle" xml:space="preserve">
         <value>贴边显示样式</value>
     </data>
     <data name="Settings_FloatingWindowStickToEdgeDisplayStyleDesc" xml:space="preserve">
@@ -231,27 +231,27 @@
         <value>箭头</value>
     </data>
 
-    <data name="HideFloatingWindowOnForeground" xml:space="preserve">
+    <data name="Settings_HideFloatingWindowOnForeground" xml:space="preserve">
         <value>前台窗口时隐藏</value>
     </data>
     <data name="Settings_HideFloatingWindowOnForegroundDesc" xml:space="preserve">
         <value>当特定窗口位于前台时自动隐藏悬浮窗</value>
     </data>
 
-    <data name="HideFloatingWindowOnForegroundWindowTitles" xml:space="preserve">
+    <data name="Settings_HideFloatingWindowOnForegroundWindowTitles" xml:space="preserve">
         <value>窗口标题包含</value>
     </data>
     <data name="Settings_HideFloatingWindowOnForegroundWindowTitlesDesc" xml:space="preserve">
         <value>用英文逗号分隔，匹配标题关键字</value>
     </data>
 
-    <data name="HideFloatingWindowOnForegroundProcessNames" xml:space="preserve">
+    <data name="Settings_HideFloatingWindowOnForegroundProcessNames" xml:space="preserve">
         <value>进程名包含</value>
     </data>
     <data name="Settings_HideFloatingWindowOnForegroundProcessNamesDesc" xml:space="preserve">
         <value>用英文逗号分隔，匹配进程名关键字</value>
     </data>
-    <data name="AcrylicBackground" xml:space="preserve">
+    <data name="Settings_AcrylicBackground" xml:space="preserve">
         <value>亚克力背景</value>
     </data>
     <data name="Settings_AcrylicBackgroundDesc" xml:space="preserve">

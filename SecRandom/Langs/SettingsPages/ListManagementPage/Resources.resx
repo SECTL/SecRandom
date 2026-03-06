@@ -52,7 +52,7 @@
     <data name="SelectClass" xml:space="preserve">
         <value>选择班级</value>
     </data>
-    <data name="SelectClassDesc" xml:space="preserve">
+    <data name="Settings_SelectClassDesc" xml:space="preserve">
         <value>从已有班级中选择一个班级</value>
     </data>
     <data name="ImportStudentList" xml:space="preserve">
@@ -100,7 +100,7 @@
     <data name="SelectPool" xml:space="preserve">
         <value>选择奖池</value>
     </data>
-    <data name="SelectPoolDesc" xml:space="preserve">
+    <data name="Settings_SelectPoolDesc" xml:space="preserve">
         <value>从已有奖池中选择一个奖池</value>
     </data>
     <data name="ImportPrizeList" xml:space="preserve">

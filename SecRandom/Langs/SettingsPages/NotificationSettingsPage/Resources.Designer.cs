@@ -60,15 +60,6 @@ namespace SecRandom.Langs.SettingsPages.NotificationSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 动画效果.
-        /// </summary>
-        public static string Animation {
-            get {
-                return ResourceManager.GetString("Animation", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 控制通知窗口动画效果显示.
         /// </summary>
         public static string AnimationDesc {
@@ -83,15 +74,6 @@ namespace SecRandom.Langs.SettingsPages.NotificationSettingsPage {
         public static string BasicSettings {
             get {
                 return ResourceManager.GetString("BasicSettings", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 调用通知服务.
-        /// </summary>
-        public static string CallNotificationService {
-            get {
-                return ResourceManager.GetString("CallNotificationService", resourceCulture);
             }
         }
         
@@ -177,33 +159,6 @@ namespace SecRandom.Langs.SettingsPages.NotificationSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 浮窗自动关闭时间.
-        /// </summary>
-        public static string FloatingWindowAutoCloseTime {
-            get {
-                return ResourceManager.GetString("FloatingWindowAutoCloseTime", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 显示器选择.
-        /// </summary>
-        public static string FloatingWindowEnabledMonitor {
-            get {
-                return ResourceManager.GetString("FloatingWindowEnabledMonitor", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 水平偏移.
-        /// </summary>
-        public static string FloatingWindowHorizontalOffset {
-            get {
-                return ResourceManager.GetString("FloatingWindowHorizontalOffset", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 浮窗模式.
         /// </summary>
         public static string FloatingWindowMode {
@@ -218,15 +173,6 @@ namespace SecRandom.Langs.SettingsPages.NotificationSettingsPage {
         public static string FloatingWindowModeDesc {
             get {
                 return ResourceManager.GetString("FloatingWindowModeDesc", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 浮窗位置.
-        /// </summary>
-        public static string FloatingWindowPosition {
-            get {
-                return ResourceManager.GetString("FloatingWindowPosition", resourceCulture);
             }
         }
         
@@ -312,33 +258,6 @@ namespace SecRandom.Langs.SettingsPages.NotificationSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置通知浮窗屏幕显示位置.
-        /// </summary>
-        public static string FloatingWindowPositionDesc {
-            get {
-                return ResourceManager.GetString("FloatingWindowPositionDesc", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 透明度.
-        /// </summary>
-        public static string FloatingWindowTransparency {
-            get {
-                return ResourceManager.GetString("FloatingWindowTransparency", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 垂直偏移.
-        /// </summary>
-        public static string FloatingWindowVerticalOffset {
-            get {
-                return ResourceManager.GetString("FloatingWindowVerticalOffset", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 抽奖通知.
         /// </summary>
         public static string LotteryNotificationSettings {
@@ -380,24 +299,6 @@ namespace SecRandom.Langs.SettingsPages.NotificationSettingsPage {
         public static string MainWindowDisplayThresholdDesc {
             get {
                 return ResourceManager.GetString("MainWindowDisplayThresholdDesc", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 通知显示时长.
-        /// </summary>
-        public static string NotificationDisplayDuration {
-            get {
-                return ResourceManager.GetString("NotificationDisplayDuration", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 通知服务类型.
-        /// </summary>
-        public static string NotificationServiceType {
-            get {
-                return ResourceManager.GetString("NotificationServiceType", resourceCulture);
             }
         }
         
@@ -483,11 +384,38 @@ namespace SecRandom.Langs.SettingsPages.NotificationSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 动画效果.
+        /// </summary>
+        public static string Settings_Animation {
+            get {
+                return ResourceManager.GetString("Settings_Animation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 控制通知窗口动画效果显示.
+        /// </summary>
+        public static string Settings_AnimationDesc {
+            get {
+                return ResourceManager.GetString("Settings_AnimationDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 配置通知显示基础参数.
         /// </summary>
         public static string Settings_BasicSettingsDesc {
             get {
                 return ResourceManager.GetString("Settings_BasicSettingsDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 调用通知服务.
+        /// </summary>
+        public static string Settings_CallNotificationService {
+            get {
+                return ResourceManager.GetString("Settings_CallNotificationService", resourceCulture);
             }
         }
         
@@ -510,11 +438,29 @@ namespace SecRandom.Langs.SettingsPages.NotificationSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 浮窗自动关闭时间.
+        /// </summary>
+        public static string Settings_FloatingWindowAutoCloseTime {
+            get {
+                return ResourceManager.GetString("Settings_FloatingWindowAutoCloseTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 设置浮窗自动关闭时间（秒），设为0表示不自动关闭.
         /// </summary>
         public static string Settings_FloatingWindowAutoCloseTimeDesc {
             get {
                 return ResourceManager.GetString("Settings_FloatingWindowAutoCloseTimeDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 显示器选择.
+        /// </summary>
+        public static string Settings_FloatingWindowEnabledMonitor {
+            get {
+                return ResourceManager.GetString("Settings_FloatingWindowEnabledMonitor", resourceCulture);
             }
         }
         
@@ -528,11 +474,47 @@ namespace SecRandom.Langs.SettingsPages.NotificationSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 水平偏移.
+        /// </summary>
+        public static string Settings_FloatingWindowHorizontalOffset {
+            get {
+                return ResourceManager.GetString("Settings_FloatingWindowHorizontalOffset", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 调整通知浮窗相对默认位置水平偏移量（像素）.
         /// </summary>
         public static string Settings_FloatingWindowHorizontalOffsetDesc {
             get {
                 return ResourceManager.GetString("Settings_FloatingWindowHorizontalOffsetDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 浮窗位置.
+        /// </summary>
+        public static string Settings_FloatingWindowPosition {
+            get {
+                return ResourceManager.GetString("Settings_FloatingWindowPosition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 设置通知浮窗屏幕显示位置.
+        /// </summary>
+        public static string Settings_FloatingWindowPositionDesc {
+            get {
+                return ResourceManager.GetString("Settings_FloatingWindowPositionDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 透明度.
+        /// </summary>
+        public static string Settings_FloatingWindowTransparency {
+            get {
+                return ResourceManager.GetString("Settings_FloatingWindowTransparency", resourceCulture);
             }
         }
         
@@ -546,11 +528,29 @@ namespace SecRandom.Langs.SettingsPages.NotificationSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 垂直偏移.
+        /// </summary>
+        public static string Settings_FloatingWindowVerticalOffset {
+            get {
+                return ResourceManager.GetString("Settings_FloatingWindowVerticalOffset", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 调整通知浮窗相对默认位置垂直偏移量（像素）.
         /// </summary>
         public static string Settings_FloatingWindowVerticalOffsetDesc {
             get {
                 return ResourceManager.GetString("Settings_FloatingWindowVerticalOffsetDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 通知显示时长.
+        /// </summary>
+        public static string Settings_NotificationDisplayDuration {
+            get {
+                return ResourceManager.GetString("Settings_NotificationDisplayDuration", resourceCulture);
             }
         }
         
@@ -564,11 +564,29 @@ namespace SecRandom.Langs.SettingsPages.NotificationSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 通知服务类型.
+        /// </summary>
+        public static string Settings_NotificationServiceType {
+            get {
+                return ResourceManager.GetString("Settings_NotificationServiceType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 选择通知服务类型，SecRandom或ClassIsland.
         /// </summary>
         public static string Settings_NotificationServiceTypeDesc {
             get {
                 return ResourceManager.GetString("Settings_NotificationServiceTypeDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 超过阈值时不显示浮窗通知.
+        /// </summary>
+        public static string Settings_UseMainWindowWhenExceedThreshold {
+            get {
+                return ResourceManager.GetString("Settings_UseMainWindowWhenExceedThreshold", resourceCulture);
             }
         }
         
@@ -596,15 +614,6 @@ namespace SecRandom.Langs.SettingsPages.NotificationSettingsPage {
         public static string TitleDesc {
             get {
                 return ResourceManager.GetString("TitleDesc", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 超过阈值时不显示浮窗通知.
-        /// </summary>
-        public static string UseMainWindowWhenExceedThreshold {
-            get {
-                return ResourceManager.GetString("UseMainWindowWhenExceedThreshold", resourceCulture);
             }
         }
     }

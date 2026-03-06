@@ -155,11 +155,6 @@ public partial class FloatingWindow : Window
         
         return b;
     }
-    
-    private void OpenMainWindowButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        App.ShowMainWindow();
-    }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {

@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
@@ -181,11 +182,11 @@ public partial class App : Application
 
                 services.AddGroup(new GroupInfo(Langs.Common.Resources.DrawSettings, "settings.draw", "\uE07C"));
                 services.AddSettingsPage<RollCallSettingsSubPage>(Langs.SettingsPages.DrawSettingsPage.Resources.RollCallSettings);
-                services.AddSettingsPage<RollCallListSpecificSettingsPage>(Langs.SettingsPages.DrawSettingsPage.Resources.ListSpecificSettings);
+                services.AddSettingsPage<RollCallListSpecificSettingsPage>(Langs.SettingsPages.DrawSettingsPage.Resources.Settings_ListSpecificSettings);
                 services.AddSettingsPage<QuickDrawSettingsSubPage>(Langs.SettingsPages.DrawSettingsPage.Resources.QuickDrawSettings);
-                services.AddSettingsPage<QuickDrawListSpecificSettingsPage>(Langs.SettingsPages.DrawSettingsPage.Resources.ListSpecificSettings);
+                services.AddSettingsPage<QuickDrawListSpecificSettingsPage>(Langs.SettingsPages.DrawSettingsPage.Resources.Settings_ListSpecificSettings);
                 services.AddSettingsPage<LotterySettingsSubPage>(Langs.SettingsPages.DrawSettingsPage.Resources.LotterySettings);
-                services.AddSettingsPage<LotteryListSpecificSettingsPage>(Langs.SettingsPages.DrawSettingsPage.Resources.ListSpecificSettings);
+                services.AddSettingsPage<LotteryListSpecificSettingsPage>(Langs.SettingsPages.DrawSettingsPage.Resources.Settings_ListSpecificSettings);
                 services.AddSettingsPage<FaceDetectorSettingsSubPage>(Langs.SettingsPages.DrawSettingsPage.Resources.FaceDetectorSettings);
 
                 #endregion
@@ -271,6 +272,30 @@ public partial class App : Application
         
         // 启动服务主机
         _ = IAppHost.Host.StartAsync();
+        
+        // RESOURCES TEST
+        if (true) return;
+        
+        var resources = Assembly.GetExecutingAssembly().DefinedTypes
+            .Where(info => info.Namespace?.StartsWith("SecRandom.Langs.SettingsPages") ?? false)
+            .OrderBy(info => info.FullName ?? "???")
+            .ToList();
+        using (logger.BeginScope("RESOURCES TEST"))
+        {
+            foreach (var resourceType in resources)
+            {
+                using (logger.BeginScope(resourceType.FullName ?? "???"))
+                {
+                    foreach (var declaredProperty in resourceType.DeclaredProperties)
+                    {
+                        if (declaredProperty.Name.StartsWith("Settings_"))
+                        {
+                            logger.LogDebug(declaredProperty.Name);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public static void Stop()

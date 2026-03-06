@@ -57,11 +57,11 @@ public partial class App
         // 抽签设置
         ["settings.draw"] = () => Langs.Common.Resources.DrawSettings,
         ["settings.draw.rollCall"] = () => Langs.SettingsPages.DrawSettingsPage.Resources.RollCallSettings,
-        ["settings.draw.rollCall.listSpecific"] = () => Langs.SettingsPages.DrawSettingsPage.Resources.ListSpecificSettings,
+        ["settings.draw.rollCall.listSpecific"] = () => Langs.SettingsPages.DrawSettingsPage.Resources.Settings_ListSpecificSettings,
         ["settings.draw.quickDraw"] = () => Langs.SettingsPages.DrawSettingsPage.Resources.QuickDrawSettings,
-        ["settings.draw.quickDraw.listSpecific"] = () => Langs.SettingsPages.DrawSettingsPage.Resources.ListSpecificSettings,
+        ["settings.draw.quickDraw.listSpecific"] = () => Langs.SettingsPages.DrawSettingsPage.Resources.Settings_ListSpecificSettings,
         ["settings.draw.lottery"] = () => Langs.SettingsPages.DrawSettingsPage.Resources.LotterySettings,
-        ["settings.draw.lottery.listSpecific"] = () => Langs.SettingsPages.DrawSettingsPage.Resources.ListSpecificSettings,
+        ["settings.draw.lottery.listSpecific"] = () => Langs.SettingsPages.DrawSettingsPage.Resources.Settings_ListSpecificSettings,
         ["settings.draw.faceDetector"] = () => Langs.SettingsPages.DrawSettingsPage.Resources.FaceDetectorSettings,
 
         // 通知设置

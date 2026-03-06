@@ -105,7 +105,7 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to CSES课程表导入.
+        ///   Looks up a localized string similar to CSES 课程表导入.
         /// </summary>
         public static string CsesImport {
             get {
@@ -123,16 +123,7 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 数据源选择.
-        /// </summary>
-        public static string DataSourceMode {
-            get {
-                return ResourceManager.GetString("DataSourceMode", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 使用ClassIsland数据源.
+        ///   Looks up a localized string similar to 使用 ClassIsland 数据源.
         /// </summary>
         public static string DataSourceModeClassIsland {
             get {
@@ -141,7 +132,7 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 使用CSES课表数据.
+        ///   Looks up a localized string similar to 使用 CSES 课表数据.
         /// </summary>
         public static string DataSourceModeCses {
             get {
@@ -155,42 +146,6 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         public static string DataSourceModeManual {
             get {
                 return ResourceManager.GetString("DataSourceModeManual", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 课间禁用功能.
-        /// </summary>
-        public static string EnableClassBreak {
-            get {
-                return ResourceManager.GetString("EnableClassBreak", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 课前重置功能.
-        /// </summary>
-        public static string EnablePreClassReset {
-            get {
-                return ResourceManager.GetString("EnablePreClassReset", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 科目历史记录过滤.
-        /// </summary>
-        public static string EnableSubjectHistoryFilter {
-            get {
-                return ResourceManager.GetString("EnableSubjectHistoryFilter", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 验证流程功能.
-        /// </summary>
-        public static string EnableVerificationFlow {
-            get {
-                return ResourceManager.GetString("EnableVerificationFlow", resourceCulture);
             }
         }
         
@@ -209,15 +164,6 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         public static string FloatingWindow {
             get {
                 return ResourceManager.GetString("FloatingWindow", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 下课时隐藏悬浮窗.
-        /// </summary>
-        public static string HideFloatingWindowOnClassEnd {
-            get {
-                return ResourceManager.GetString("HideFloatingWindowOnClassEnd", resourceCulture);
             }
         }
         
@@ -303,24 +249,6 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 下课后延迟禁用时间.
-        /// </summary>
-        public static string PostClassDisableDelay {
-            get {
-                return ResourceManager.GetString("PostClassDisableDelay", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 上课前提前解禁时间.
-        /// </summary>
-        public static string PreClassEnableTime {
-            get {
-                return ResourceManager.GetString("PreClassEnableTime", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 课前重置设置.
         /// </summary>
         public static string PreClassReset {
@@ -330,20 +258,11 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 课前重置时间.
+        ///   Looks up a localized string similar to 数据源选择.
         /// </summary>
-        public static string PreClassResetTime {
+        public static string Settings_DataSourceMode {
             get {
-                return ResourceManager.GetString("PreClassResetTime", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 课程表导入.
-        /// </summary>
-        public static string ScheduleImport {
-            get {
-                return ResourceManager.GetString("ScheduleImport", resourceCulture);
+                return ResourceManager.GetString("Settings_DataSourceMode", resourceCulture);
             }
         }
         
@@ -357,11 +276,29 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 课间禁用功能.
+        /// </summary>
+        public static string Settings_EnableClassBreak {
+            get {
+                return ResourceManager.GetString("Settings_EnableClassBreak", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 开启后，在下课时间段内抽取需要安全验证.
         /// </summary>
         public static string Settings_EnableClassBreakDesc {
             get {
                 return ResourceManager.GetString("Settings_EnableClassBreakDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 课前重置功能.
+        /// </summary>
+        public static string Settings_EnablePreClassReset {
+            get {
+                return ResourceManager.GetString("Settings_EnablePreClassReset", resourceCulture);
             }
         }
         
@@ -375,11 +312,29 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 科目历史记录过滤.
+        /// </summary>
+        public static string Settings_EnableSubjectHistoryFilter {
+            get {
+                return ResourceManager.GetString("Settings_EnableSubjectHistoryFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 启用后，计算权重时只使用当前科目的历史记录.
         /// </summary>
         public static string Settings_EnableSubjectHistoryFilterDesc {
             get {
                 return ResourceManager.GetString("Settings_EnableSubjectHistoryFilterDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 验证流程功能.
+        /// </summary>
+        public static string Settings_EnableVerificationFlow {
+            get {
+                return ResourceManager.GetString("Settings_EnableVerificationFlow", resourceCulture);
             }
         }
         
@@ -393,6 +348,15 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 下课时隐藏悬浮窗.
+        /// </summary>
+        public static string Settings_HideFloatingWindowOnClassEnd {
+            get {
+                return ResourceManager.GetString("Settings_HideFloatingWindowOnClassEnd", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 当检测到下课（非上课时段）时自动隐藏浮窗.
         /// </summary>
         public static string Settings_HideFloatingWindowOnClassEndDesc {
@@ -402,7 +366,16 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 下课后多少秒内延迟触发课间禁用（0-1440秒）.
+        ///   Looks up a localized string similar to 下课后延迟禁用时间.
+        /// </summary>
+        public static string Settings_PostClassDisableDelay {
+            get {
+                return ResourceManager.GetString("Settings_PostClassDisableDelay", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 下课后多少秒内延迟触发课间禁用（0-1440 秒）.
         /// </summary>
         public static string Settings_PostClassDisableDelayDesc {
             get {
@@ -411,7 +384,16 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 在上课前多少秒提前解禁（0-1440秒）.
+        ///   Looks up a localized string similar to 上课前提前解禁时间.
+        /// </summary>
+        public static string Settings_PreClassEnableTime {
+            get {
+                return ResourceManager.GetString("Settings_PreClassEnableTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 在上课前多少秒提前解禁（0-1440 秒）.
         /// </summary>
         public static string Settings_PreClassEnableTimeDesc {
             get {
@@ -420,7 +402,16 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 在上课前多少秒清除临时记录和界面结果（1-1440秒）.
+        ///   Looks up a localized string similar to 课前重置时间.
+        /// </summary>
+        public static string Settings_PreClassResetTime {
+            get {
+                return ResourceManager.GetString("Settings_PreClassResetTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 在上课前多少秒清除临时记录和界面结果（1-1440 秒）.
         /// </summary>
         public static string Settings_PreClassResetTimeDesc {
             get {
@@ -429,11 +420,29 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 从CSES格式文件导入上课时间段，用于课间禁用功能.
+        ///   Looks up a localized string similar to 课程表导入.
+        /// </summary>
+        public static string Settings_ScheduleImport {
+            get {
+                return ResourceManager.GetString("Settings_ScheduleImport", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 从 CSES 格式文件导入上课时间段，用于课间禁用功能.
         /// </summary>
         public static string Settings_ScheduleImportDesc {
             get {
                 return ResourceManager.GetString("Settings_ScheduleImportDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 课间归属.
+        /// </summary>
+        public static string Settings_SubjectHistoryBreakAssignment {
+            get {
+                return ResourceManager.GetString("Settings_SubjectHistoryBreakAssignment", resourceCulture);
             }
         }
         
@@ -452,15 +461,6 @@ namespace SecRandom.Langs.SettingsPages.LinkageSettingsPage {
         public static string SubjectHistory {
             get {
                 return ResourceManager.GetString("SubjectHistory", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 课间归属.
-        /// </summary>
-        public static string SubjectHistoryBreakAssignment {
-            get {
-                return ResourceManager.GetString("SubjectHistoryBreakAssignment", resourceCulture);
             }
         }
         

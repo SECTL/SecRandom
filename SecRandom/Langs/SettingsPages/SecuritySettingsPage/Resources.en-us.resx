@@ -28,49 +28,49 @@
     <data name="Settings_VerificationMethodDesc" xml:space="preserve">
         <value>Configure basic safety verification method</value>
     </data>
-    <data name="SafetySwitch" xml:space="preserve">
+    <data name="Settings_SafetySwitch" xml:space="preserve">
         <value>Safety switch</value>
     </data>
     <data name="Settings_SafetySwitchDesc" xml:space="preserve">
         <value>When enabled, all safety actions require password</value>
     </data>
-    <data name="SetPassword" xml:space="preserve">
+    <data name="Settings_SetPassword" xml:space="preserve">
         <value>Set password</value>
     </data>
     <data name="Settings_SetPasswordDesc" xml:space="preserve">
         <value>Set safety verification password</value>
     </data>
-    <data name="TotpSwitch" xml:space="preserve">
+    <data name="Settings_TotpSwitch" xml:space="preserve">
         <value>TOTP verification</value>
     </data>
     <data name="Settings_TotpSwitchDesc" xml:space="preserve">
         <value>Enable to use the TOTP dynamic password in secure operations</value>
     </data>
-    <data name="SetTotp" xml:space="preserve">
+    <data name="Settings_SetTotp" xml:space="preserve">
         <value>Set TOTP</value>
     </data>
     <data name="Settings_SetTotpDesc" xml:space="preserve">
         <value>Configure TOTP one-time password verification</value>
     </data>
-    <data name="UsbSwitch" xml:space="preserve">
+    <data name="Settings_UsbSwitch" xml:space="preserve">
         <value>USB drive verification</value>
     </data>
     <data name="Settings_UsbSwitchDesc" xml:space="preserve">
         <value>Enable to use USB drive verification in secure operations</value>
     </data>
-    <data name="BindUsb" xml:space="preserve">
+    <data name="Settings_BindUsb" xml:space="preserve">
         <value>Bind USB drive</value>
     </data>
     <data name="Settings_BindUsbDesc" xml:space="preserve">
         <value>Bind the USB drive to verify</value>
     </data>
-    <data name="UnbindUsb" xml:space="preserve">
+    <data name="Settings_UnbindUsb" xml:space="preserve">
         <value>Unbind USB drive</value>
     </data>
     <data name="Settings_UnbindUsbDesc" xml:space="preserve">
         <value>Unbind USB drive</value>
     </data>
-    <data name="VerificationProcess" xml:space="preserve">
+    <data name="Settings_VerificationProcess" xml:space="preserve">
         <value>Verification process</value>
     </data>
     <data name="Settings_VerificationProcessDesc" xml:space="preserve">
@@ -106,31 +106,31 @@
     <data name="Settings_SecurityOperationsDesc" xml:space="preserve">
         <value>Configure actions need basic safety verification</value>
     </data>
-    <data name="ShowHideFloatingWindowSwitch" xml:space="preserve">
+    <data name="Settings_ShowHideFloatingWindowSwitch" xml:space="preserve">
         <value>Show/hide float window verification</value>
     </data>
     <data name="Settings_ShowHideFloatingWindowSwitchDesc" xml:space="preserve">
         <value>When enabled, showing or hiding float window will need verification</value>
     </data>
-    <data name="RestartSwitch" xml:space="preserve">
+    <data name="Settings_RestartSwitch" xml:space="preserve">
         <value>Restart Verification</value>
     </data>
     <data name="Settings_RestartSwitchDesc" xml:space="preserve">
         <value>When enabled, restarting app will need verification</value>
     </data>
-    <data name="ExitSwitch" xml:space="preserve">
+    <data name="Settings_ExitSwitch" xml:space="preserve">
         <value>Exit Verification</value>
     </data>
     <data name="Settings_ExitSwitchDesc" xml:space="preserve">
         <value>When enabled, exiting app will need verification</value>
     </data>
-    <data name="OpenSettingsSwitch" xml:space="preserve">
+    <data name="Settings_OpenSettingsSwitch" xml:space="preserve">
         <value>Open settings validation</value>
     </data>
     <data name="Settings_OpenSettingsSwitchDesc" xml:space="preserve">
         <value>Secure authentication is required when opening settings</value>
     </data>
-    <data name="PreviewSettingsSwitch" xml:space="preserve">
+    <data name="Settings_PreviewSettingsSwitch" xml:space="preserve">
         <value>Preview settings switch</value>
     </data>
     <data name="Settings_PreviewSettingsSwitchDesc" xml:space="preserve">

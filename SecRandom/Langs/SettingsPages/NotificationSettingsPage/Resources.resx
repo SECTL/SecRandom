@@ -71,28 +71,31 @@
     <data name="Settings_ClassIslandNotificationServiceSettingsDesc" xml:space="preserve">
         <value>配置ClassIsland通知服务参数</value>
     </data>
-    <data name="CallNotificationService" xml:space="preserve">
+    <data name="Settings_CallNotificationService" xml:space="preserve">
         <value>调用通知服务</value>
     </data>
     <data name="Settings_CallNotificationServiceDesc" xml:space="preserve">
         <value>启用后调用系统通知服务发送结果</value>
     </data>
-    <data name="Animation" xml:space="preserve">
+    <data name="Settings_Animation" xml:space="preserve">
         <value>动画效果</value>
+    </data>
+    <data name="Settings_AnimationDesc" xml:space="preserve">
+        <value>控制通知窗口动画效果显示</value>
     </data>
     <data name="AnimationDesc" xml:space="preserve">
         <value>控制通知窗口动画效果显示</value>
     </data>
-    <data name="FloatingWindowEnabledMonitor" xml:space="preserve">
+    <data name="Settings_FloatingWindowEnabledMonitor" xml:space="preserve">
         <value>显示器选择</value>
     </data>
     <data name="Settings_FloatingWindowEnabledMonitorDesc" xml:space="preserve">
         <value>选择显示通知浮窗的显示器</value>
     </data>
-    <data name="FloatingWindowPosition" xml:space="preserve">
+    <data name="Settings_FloatingWindowPosition" xml:space="preserve">
         <value>浮窗位置</value>
     </data>
-    <data name="FloatingWindowPositionDesc" xml:space="preserve">
+    <data name="Settings_FloatingWindowPositionDesc" xml:space="preserve">
         <value>设置通知浮窗屏幕显示位置</value>
     </data>
     <data name="FloatingWindowPosition0" xml:space="preserve">
@@ -122,31 +125,31 @@
     <data name="FloatingWindowPosition8" xml:space="preserve">
         <value>底部右侧</value>
     </data>
-    <data name="FloatingWindowHorizontalOffset" xml:space="preserve">
+    <data name="Settings_FloatingWindowHorizontalOffset" xml:space="preserve">
         <value>水平偏移</value>
     </data>
     <data name="Settings_FloatingWindowHorizontalOffsetDesc" xml:space="preserve">
         <value>调整通知浮窗相对默认位置水平偏移量（像素）</value>
     </data>
-    <data name="FloatingWindowVerticalOffset" xml:space="preserve">
+    <data name="Settings_FloatingWindowVerticalOffset" xml:space="preserve">
         <value>垂直偏移</value>
     </data>
     <data name="Settings_FloatingWindowVerticalOffsetDesc" xml:space="preserve">
         <value>调整通知浮窗相对默认位置垂直偏移量（像素）</value>
     </data>
-    <data name="FloatingWindowTransparency" xml:space="preserve">
+    <data name="Settings_FloatingWindowTransparency" xml:space="preserve">
         <value>透明度</value>
     </data>
     <data name="Settings_FloatingWindowTransparencyDesc" xml:space="preserve">
         <value>调整通知浮窗透明度，数值越小越透明（0-100）</value>
     </data>
-    <data name="FloatingWindowAutoCloseTime" xml:space="preserve">
+    <data name="Settings_FloatingWindowAutoCloseTime" xml:space="preserve">
         <value>浮窗自动关闭时间</value>
     </data>
     <data name="Settings_FloatingWindowAutoCloseTimeDesc" xml:space="preserve">
         <value>设置浮窗自动关闭时间（秒），设为0表示不自动关闭</value>
     </data>
-    <data name="UseMainWindowWhenExceedThreshold" xml:space="preserve">
+    <data name="Settings_UseMainWindowWhenExceedThreshold" xml:space="preserve">
         <value>超过阈值时不显示浮窗通知</value>
     </data>
     <data name="Settings_UseMainWindowWhenExceedThresholdDesc" xml:space="preserve">
@@ -158,7 +161,7 @@
     <data name="MainWindowDisplayThresholdDesc" xml:space="preserve">
         <value>设置触发浮窗通知的人数阈值，超过此数值则不显示浮窗通知，最小值为1</value>
     </data>
-    <data name="NotificationServiceType" xml:space="preserve">
+    <data name="Settings_NotificationServiceType" xml:space="preserve">
         <value>通知服务类型</value>
     </data>
     <data name="Settings_NotificationServiceTypeDesc" xml:space="preserve">
@@ -173,7 +176,7 @@
     <data name="NotificationServiceType2" xml:space="preserve">
         <value>SecRandom+ClassIsland</value>
     </data>
-    <data name="NotificationDisplayDuration" xml:space="preserve">
+    <data name="Settings_NotificationDisplayDuration" xml:space="preserve">
         <value>通知显示时长</value>
     </data>
     <data name="Settings_NotificationDisplayDurationDesc" xml:space="preserve">

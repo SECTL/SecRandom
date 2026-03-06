@@ -22,19 +22,19 @@
     <data name="About" xml:space="preserve">
         <value>关于</value>
     </data>
-    <data name="GitHub" xml:space="preserve">
+    <data name="Settings_GitHub" xml:space="preserve">
         <value>跳转</value>
     </data>
     <data name="Settings_GitHubDesc" xml:space="preserve">
         <value>访问项目代码仓库</value>
     </data>
-    <data name="Bilibili" xml:space="preserve">
+    <data name="Settings_Bilibili" xml:space="preserve">
         <value>跳转</value>
     </data>
     <data name="Settings_BilibiliDesc" xml:space="preserve">
-        <value>访问黎泽懿_Aionflux的Bilibili账号</value>
+        <value>访问黎泽懿_Aionflux 的 Bilibili 账号</value>
     </data>
-    <data name="Contributors" xml:space="preserve">
+    <data name="Settings_Contributors" xml:space="preserve">
         <value>贡献人员</value>
     </data>
     <data name="Settings_ContributorsDesc" xml:space="preserve">
@@ -67,38 +67,38 @@
     <data name="ContributorsRole11" xml:space="preserve">
         <value>日志</value>
     </data>
-    <data name="Donation" xml:space="preserve">
+    <data name="Settings_Donation" xml:space="preserve">
         <value>捐赠支持</value>
     </data>
     <data name="Settings_DonationDesc" xml:space="preserve">
         <value>支持项目发展，感谢您的捐赠</value>
     </data>
-    <data name="Website" xml:space="preserve">
+    <data name="Settings_Website" xml:space="preserve">
         <value>跳转</value>
     </data>
     <data name="Settings_WebsiteDesc" xml:space="preserve">
-        <value>访问SecRandom软件官网</value>
+        <value>访问 SecRandom 软件官网</value>
     </data>
-    <data name="OrganizationWebsite" xml:space="preserve">
+    <data name="Settings_OrganizationWebsite" xml:space="preserve">
         <value>跳转</value>
     </data>
     <data name="Settings_OrganizationWebsiteDesc" xml:space="preserve">
         <value>访问 SECTL 组织官网</value>
     </data>
-    <data name="Copyright" xml:space="preserve">
+    <data name="Settings_Copyright" xml:space="preserve">
         <value>版权</value>
     </data>
     <data name="Settings_CopyrightDesc" xml:space="preserve">
-        <value>SecRandom遵循GPL-3.0协议</value>
+        <value>SecRandom 遵循 GPL-3.0 协议</value>
     </data>
-    <data name="Version" xml:space="preserve">
+    <data name="Settings_Version" xml:space="preserve">
         <value>版本</value>
     </data>
     <data name="Settings_VersionDesc" xml:space="preserve">
         <value>显示当前软件版本号</value>
     </data>
     <data name="UserId" xml:space="preserve">
-        <value>用户ID</value>
+        <value>用户 ID</value>
     </data>
     <data name="UserIdDesc" xml:space="preserve">
         <value>用于错误追踪的离线唯一标识</value>
@@ -149,7 +149,7 @@
         <value>更新频道</value>
     </data>
     <data name="Settings_UpdateChannelDesc" xml:space="preserve">
-        <value>选择SecRandom软件更新频道</value>
+        <value>选择 SecRandom 软件更新频道</value>
     </data>
     <data name="UpdateChannelOfficial" xml:space="preserve">
         <value>正式版</value>
