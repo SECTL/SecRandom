@@ -85,6 +85,6 @@ public partial class App
     
     public static bool IsMicaSupported { get; } = 
         OperatingSystem.IsWindows() 
-        && Environment.OSVersion.Version >= new Version(10, 0, 18362, 0)
+        && Environment.OSVersion.Version >= new Version(10, 0, 22000, 0)
         && AvaloniaUnsafeAccessorHelpers.GetActiveWin32CompositionMode() == AvaloniaUnsafeAccessorHelpers.Win32CompositionMode.WinUiComposition;
 }
