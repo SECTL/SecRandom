@@ -273,7 +273,7 @@ class QuickDrawAnimation(QObject):
 
         BehindScenesUtils.clear_cache()
 
-        music_player.stop_music(fade_out=True)
+        music_player.stop_music(fade_out=False)
 
         result_music = read_quick_draw_setting(class_name, "result_music")
         if result_music:
@@ -284,8 +284,7 @@ class QuickDrawAnimation(QObject):
                 fade_in=True,
             )
 
-        # 动画完成后，更新浮窗通知并启动自动关闭定时器
-        # 确保 final_selected_students 不为 None 且不为空列表，final_class_name 不为 None
+        # 立即显示最终结果，不等待 signal 触发
         if (
             self.final_selected_students
             and self.final_selected_students is not None
@@ -303,7 +302,8 @@ class QuickDrawAnimation(QObject):
                 is_animating=False,
             )
 
-        self.animation_finished.emit()
+        # 立即显示结果，不等待 animation_finished signal
+        self._display_final_result_immediate()
 
     def _animate_result(self):
         """动画过程中更新显示"""
@@ -487,6 +487,46 @@ class QuickDrawAnimation(QObject):
 
         except Exception as e:
             logger.exception(f"display_final_result: 显示最终结果失败: {e}")
+
+    def _display_final_result_immediate(self):
+        """立即显示最终结果，用于手动停止时直接显示"""
+        try:
+            if not self.final_selected_students or not self.final_class_name:
+                return
+
+            draw_count = read_quick_draw_setting(self.active_class_name, "draw_count")
+
+            RollCallUtils.display_result(
+                result_grid=self.roll_call_widget.result_grid,
+                class_name=self.final_class_name,
+                selected_students=self.final_selected_students,
+                draw_count=draw_count,
+                group_index=getattr(
+                    self.roll_call_widget.range_combobox, "currentIndex", lambda: 0
+                )(),
+                settings_group="quick_draw_settings",
+                display_settings=self.quick_draw_settings,
+                selected_students_dict=self.final_selected_students_dict,
+            )
+
+            self._record_drawn_student(self.quick_draw_settings)
+
+            self._update_quick_draw_count_label()
+
+            from app.tools.variable import APP_INIT_DELAY
+            from PySide6.QtCore import QTimer
+
+            QTimer.singleShot(
+                APP_INIT_DELAY, self.roll_call_widget._update_remaining_list_delayed
+            )
+
+            self._sync_final_result_to_widget()
+            self.roll_call_widget.play_voice_result()
+
+        except Exception as e:
+            logger.exception(
+                f"_display_final_result_immediate: 立即显示最终结果失败: {e}"
+            )
 
     def _record_drawn_student(self, quick_draw_settings):
         """记录已抽取的学生
