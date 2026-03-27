@@ -42,7 +42,7 @@ class MusicPlayer:
         self._volume: float = 1.0  # 默认音量
         self._fade_in_duration: float = 0.0  # 渐入时长(秒)
         self._fade_out_duration: float = 0.0  # 渐出时长(秒)
-        self._fade_out_thread: Optional[threading.Thread] = None
+        self._fade_out_remaining_time: float = 0.0  # 渐出剩余时间(秒)，由主线程设置
         self._last_error: Optional[str] = None
 
     def play_music(
@@ -77,8 +77,8 @@ class MusicPlayer:
             logger.warning("音频播放依赖不可用，无法播放音乐")
             return False
 
-        # 停止当前播放的音乐
-        self.stop_music()
+        # 停止当前播放的音乐（强制停止，不使用渐出）
+        self.stop_music(fade_out=False, wait_for_thread=True)
 
         # 检查是否为随机播放
         is_random_play = music_file == get_content_name_async(
@@ -163,11 +163,12 @@ class MusicPlayer:
         logger.info(f"开始播放音乐: {music_file}, 音量: {self._volume}, 循环: {loop}")
         return True
 
-    def stop_music(self, fade_out: bool = True) -> None:
+    def stop_music(self, fade_out: bool = True, wait_for_thread: bool = False) -> None:
         """停止播放音乐
 
         Args:
             fade_out: 是否使用渐出效果
+            wait_for_thread: 是否等待播放线程结束（用于开始新播放前强制停止）
         """
         if not self._is_playing:
             return
@@ -176,21 +177,18 @@ class MusicPlayer:
 
         # 如果需要渐出效果且当前有渐出时长设置
         if fade_out and self._fade_out_duration > 0 and self._is_playing:
-            # 启动渐出线程
-            self._fade_out_thread = threading.Thread(
-                target=self._fade_out_worker, daemon=True
-            )
-            self._fade_out_thread.start()
-            # 等待渐出完成
-            self._fade_out_thread.join(timeout=self._fade_out_duration + 1.0)
+            self._fade_out_remaining_time = self._fade_out_duration
+            logger.debug(f"设置音乐渐出，时长: {self._fade_out_duration}秒")
+            # 渐出由音频线程处理，主线程不等待
+            self._is_playing = False
+        else:
+            # 不需要渐出，直接设置停止标志
+            self._stop_flag.set()
+            self._is_playing = False
 
-        # 设置停止标志
-        self._stop_flag.set()
-        self._is_playing = False
-
-        # 等待播放线程结束
-        if self._play_thread and self._play_thread.is_alive():
-            self._play_thread.join(timeout=2.0)
+        # 只在需要时等待线程结束（如开始新播放前强制停止）
+        if wait_for_thread and self._play_thread and self._play_thread.is_alive():
+            self._play_thread.join(timeout=1.0)
 
         self._current_music = None
         logger.debug("音乐已停止")
@@ -267,10 +265,12 @@ class MusicPlayer:
                             elif chunk.shape[1] != 1:
                                 chunk = chunk[:, :1]
 
+                            # 应用音量（渐入、正常、渐出）
                             if (
                                 fade_in_total_samples > 0
                                 and fade_in_pos < fade_in_total_samples
                             ):
+                                # 渐入效果
                                 remaining = min(
                                     fade_in_total_samples - fade_in_pos, chunk.shape[0]
                                 )
@@ -281,7 +281,37 @@ class MusicPlayer:
                                 if remaining < chunk.shape[0]:
                                     chunk[remaining:] *= self._volume
                                 fade_in_pos += remaining
+                            elif self._fade_out_remaining_time > 0:
+                                # 渐出效果
+                                chunk_duration = chunk.shape[0] / fs
+                                if self._fade_out_remaining_time >= chunk_duration:
+                                    # 整个块都在渐出范围内
+                                    fade_out_ratio = 1.0 - (
+                                        (self._fade_out_duration - self._fade_out_remaining_time)
+                                        / self._fade_out_duration
+                                    )
+                                    chunk *= self._volume * fade_out_ratio
+                                    self._fade_out_remaining_time -= chunk_duration
+                                else:
+                                    # 部分块渐出，剩余部分静音
+                                    fade_out_samples = int(
+                                        self._fade_out_remaining_time * fs
+                                    )
+                                    if fade_out_samples > 0:
+                                        fade_out_ratio = 1.0 - (
+                                            (self._fade_out_duration - self._fade_out_remaining_time)
+                                            / self._fade_out_duration
+                                        )
+                                        chunk[:fade_out_samples] *= self._volume * fade_out_ratio
+                                        chunk[fade_out_samples:] = 0
+                                    else:
+                                        chunk[:] = 0
+                                    self._fade_out_remaining_time = 0
+                                    # 渐出完成，设置停止标志
+                                    self._stop_flag.set()
+                                    break
                             else:
+                                # 正常播放
                                 chunk *= self._volume
 
                             try:
@@ -315,32 +345,6 @@ class MusicPlayer:
                     logger.exception(f"关闭音频流失败: {e}")
             self._is_playing = False
             logger.debug("音乐播放工作线程结束")
-
-    def _fade_out_worker(self) -> None:
-        """渐出效果工作线程"""
-        if not self._is_playing or self._fade_out_duration <= 0:
-            return
-
-        logger.debug(f"开始音乐渐出，时长: {self._fade_out_duration}秒")
-
-        # 计算渐出步数
-        fade_out_steps = int(self._fade_out_duration * 50)  # 50Hz更新率
-        fade_out_step = 0
-        initial_volume = self._volume
-
-        # 渐出效果循环
-        while fade_out_step < fade_out_steps and not self._stop_flag.is_set():
-            # 计算当前音量（线性递减）
-            progress = fade_out_step / fade_out_steps
-            self._volume = initial_volume * (1.0 - progress)
-
-            # 等待下一帧
-            time.sleep(1.0 / 50)  # 50Hz更新率
-            fade_out_step += 1
-
-        # 渐出完成，设置停止标志
-        self._stop_flag.set()
-        logger.debug("音乐渐出完成")
 
 
 # 创建全局音乐播放器实例
