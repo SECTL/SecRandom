@@ -1,41 +1,69 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Avalonia.Controls;
+using Avalonia.Controls.Converters;
 using Avalonia.Media;
 
 namespace SecRandom.Core.Abstraction;
 
 public class ColorJsonConverter : JsonConverter<Color>
 {
+    /// <inheritdoc />
     public override Color Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType == JsonTokenType.String)
         {
-            var value = reader.GetString();
-            if (string.IsNullOrEmpty(value))
-            {
-                return Colors.White;
-            }
-            
-            try
-            {
-                return Color.Parse(value);
-            }
-            catch
-            {
-                return Colors.White;
-            }
+            return ColorToHexConverter.ParseHexString(reader.GetString() ?? "", AlphaComponentPosition.Trailing) ?? default;
         }
 
-        if (reader.TokenType == JsonTokenType.Number)
+        if (reader.TokenType == JsonTokenType.StartObject)
         {
-            return Color.FromUInt32(reader.GetUInt32());
-        }
+            byte a = 0;
+            byte r = 0;
+            byte g = 0;
+            byte b = 0;
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonTokenType.EndObject)
+                    break;
 
-        return Colors.White;
+                if (reader.TokenType != JsonTokenType.PropertyName)
+                    throw new JsonException();
+
+                var propertyName = reader.GetString();
+
+                reader.Read(); // 读取属性值
+
+                switch (propertyName)
+                {
+                    case "A":
+                        a = reader.GetByte();
+                        break;
+                    case "R":
+                        r = reader.GetByte();
+                        break;
+                    case "G":
+                        g = reader.GetByte();
+                        break;
+                    case "B":
+                        b = reader.GetByte();
+                        break;
+                    default:
+                        reader.Skip(); // 忽略未知字段
+                        break;
+                }
+            }
+
+            return new Color(a, r, g, b);
+        }
+        
+        reader.Skip();
+        return default;
     }
 
+    /// <inheritdoc />
     public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions options)
     {
-        writer.WriteStringValue(value.ToString());
+        writer.WriteStringValue(ColorToHexConverter.ToHexString(value, AlphaComponentPosition.Trailing, includeSymbol:true));
     }
 }

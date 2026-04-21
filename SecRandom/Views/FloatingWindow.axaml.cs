@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
@@ -12,7 +13,7 @@ using Avalonia.VisualTree;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Controls;
-using SecRandom.Models.Config;
+using SecRandom.Models.SubConfigs;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
@@ -35,16 +36,16 @@ public partial class FloatingWindow : Window
         AddHandler(PointerPressedEvent, OnPointerPressed, handledEventsToo: true);
         AddHandler(PointerReleasedEvent, OnPointerReleased, handledEventsToo: true);
 
-        ViewModel.Config.FloatingWindowSettings.PropertyChanged += (sender, args) =>
-        {
-            OnLoaded(this, new RoutedEventArgs());
-        };
-
-        ViewModel.Config.FloatingWindowSettings.FloatingWindowButtonControl.CollectionChanged += (sender, args) =>
-        {
-            CheckIsVisibleValidate();
-            RefreshItems();
-        };
+        // ViewModel.Config.FloatingWindowSettings.PropertyChanged += (sender, args) =>
+        // {
+        //     OnLoaded(this, new RoutedEventArgs());
+        // };
+        //
+        // ViewModel.Config.FloatingWindowSettings.FloatingWindowButtonControl.CollectionChanged += (sender, args) =>
+        // {
+        //     CheckIsVisibleValidate();
+        //     RefreshItems();
+        // };
         
         CheckIsVisibleValidate();
         RefreshItems();
@@ -52,11 +53,11 @@ public partial class FloatingWindow : Window
 
     private void CheckIsVisibleValidate()
     {
-        var settings = ViewModel.Config.FloatingWindowSettings;
-        if (!settings.FloatingWindowButtonControl.Any())
-        {
-            _ = MakeIsVisibleValidate();
-        }
+        // var settings = ViewModel.Config.FloatingWindowSettings;
+        // if (!settings.FloatingWindowButtonControl.Any())
+        // {
+        //     _ = MakeIsVisibleValidate();
+        // }
     }
 
     private async Task MakeIsVisibleValidate()
@@ -64,7 +65,7 @@ public partial class FloatingWindow : Window
         await Task.Delay(1);
         Dispatcher.UIThread.Invoke(() =>
         {
-            ViewModel.Config.FloatingWindowSettings.FloatingWindowButtonControl.Add("roll_call");
+            // ViewModel.Config.FloatingWindowSettings.FloatingWindowButtonControl.Add("roll_call");
         });
     }
 
@@ -73,7 +74,7 @@ public partial class FloatingWindow : Window
         RootStackPanel.Children.Clear();
         RootStackPanel.Children.Add(new TouchDragThumb { Orientation = Orientation.Horizontal, Height = 24 });
 
-        foreach (var controlName in ViewModel.Config.FloatingWindowSettings.FloatingWindowButtonControl)
+        foreach (var controlName in (List<string>)["roll_call"]) // ViewModel.Config.FloatingWindowSettings.FloatingWindowButtonControl
         {
             var control = controlName switch
             {
@@ -167,7 +168,8 @@ public partial class FloatingWindow : Window
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         Position = new PixelPoint(ViewModel.Config.FloatPosition.X, ViewModel.Config.FloatPosition.Y);
-        if (App.IsAcrylicBlurSupported && ViewModel.Config.FloatingWindowSettings.IsAcrylicBackgroundEnabled)
+        // if (App.IsAcrylicBlurSupported && ViewModel.Config.FloatingWindowSettings.IsAcrylicBackgroundEnabled)
+        if (App.IsAcrylicBlurSupported)
         {
             TransparencyLevelHint = [WindowTransparencyLevel.AcrylicBlur];
         }

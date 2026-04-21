@@ -25,8 +25,9 @@
         Loaded="OnLoaded">
     <Grid>
         <Border Background="{StaticResource SolidBackgroundFillColorQuarternaryBrush}"
-                Opacity="{Binding ViewModel.Config.FloatingWindowSettings.FloatingWindowOpacity}"
+                Opacity="0.8"
                 CornerRadius="8" ClipToBounds="True" />
+        <!-- Opacity="{Binding ViewModel.Config.FloatingWindowSettings.FloatingWindowOpacity}" -->
         
         <StackPanel x:Name="RootStackPanel"
                     Orientation="Vertical"

@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
-using SecRandom.Models.Config;
+using SecRandom.Models.SubConfigs;
 
 namespace SecRandom.Models;
 
@@ -13,12 +13,4 @@ public partial class MainConfigModel : ConfigBase
 
     [ObservableProperty] private FloatPositionConfig _floatPosition = new();
     
-    [ObservableProperty] private BasicSettingsConfig _basicSettings = new();
-    [ObservableProperty] private DrawSettingsConfig _drawSettings = new();
-    [ObservableProperty] private FloatingWindowSettingsConfig _floatingWindowSettings = new();
-    [ObservableProperty] private LinkageSettingsConfig _linkageSettings = new();
-    [ObservableProperty] private SecuritySettingsConfig _securitySettings = new();
-    [ObservableProperty] private NotificationSettingsConfig _notificationSettings = new();
-    [ObservableProperty] private ThemeManagementSettingsConfig _themeManagement = new();
-    [ObservableProperty] private UserSettingsConfig _userSettings = new();
 }

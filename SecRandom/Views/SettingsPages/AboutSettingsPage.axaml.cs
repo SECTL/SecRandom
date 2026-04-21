@@ -6,10 +6,10 @@ using SecRandom.Core.Enums;
 
 namespace SecRandom.Views.SettingsPages;
 
-[PageInfo("settings.basic", "\uf4c4")]
-public partial class BasicSettingsPage : UserControl
+[PageInfo("settings.about", "\uE9E3", location: PageLocation.Bottom)]
+public partial class AboutSettingsPage : UserControl
 {
-    public BasicSettingsPage()
+    public AboutSettingsPage()
     {
         InitializeComponent();
     }
