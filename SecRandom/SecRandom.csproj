@@ -25,6 +25,11 @@
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
+
+        <EmbeddedResource Update="Langs\SettingsPages\About\Resources.resx">
+          <Generator>PublicResXFileCodeGenerator</Generator>
+          <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>
@@ -39,10 +44,15 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
+
+        <Compile Update="Langs\SettingsPages\About\Resources.Designer.cs">
+          <DesignTime>True</DesignTime>
+          <AutoGen>True</AutoGen>
+          <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Langs\SettingsPages\" />
       <Folder Include="Themes\" />
     </ItemGroup>
 </Project>

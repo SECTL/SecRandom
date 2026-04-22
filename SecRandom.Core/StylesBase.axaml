@@ -2,12 +2,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:styling="clr-namespace:FluentAvalonia.Styling;assembly=FluentAvalonia"
         xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
-        xmlns:controls="clr-namespace:SecRandom.Core.Controls">
+        xmlns:controls="clr-namespace:SecRandom.Core.Controls"
+        xmlns:system="clr-namespace:System;assembly=System.Runtime">
     <Styles.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <MergeResourceInclude Source="/Styles/MultiComboBox.axaml" />
             </ResourceDictionary.MergedDictionaries>
+            
+            <system:Double x:Key="PageContainerWidth">960</system:Double>
         </ResourceDictionary>
     </Styles.Resources>
     
@@ -20,6 +23,7 @@
     <StyleInclude Source="/Styles/PopupAnimations.axaml" />
     <StyleInclude Source="/Styles/StackPanelIntroAnimation.axaml" />
     <StyleInclude Source="/Styles/TabStrip.axaml"/>
+    <StyleInclude Source="/Controls/StickyScrollViewer.axaml" />
     
     <Style Selector=":is(Window)">
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
@@ -45,6 +49,12 @@
     <Style Selector="ToggleSwitch">
         <Setter Property="OnContent" Value=""/>
         <Setter Property="OffContent" Value=""/>
+    </Style>
+    
+    <Style Selector="StackPanel.settings-container">
+        <Setter Property="Margin" Value="12 12 18 12"/>
+        <Setter Property="MaxWidth" Value="{StaticResource PageContainerWidth}" />
+        <Setter Property="Spacing" Value="4"/>
     </Style>
     
     <Style Selector="asyncImageLoader|AdvancedImage">

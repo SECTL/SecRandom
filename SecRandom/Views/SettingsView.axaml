@@ -48,7 +48,7 @@
                   Classes.FullWidth="{Binding ViewModel.SelectedPageInfo.UseFullWidth}">
                 <Grid.Styles>
                     <Style Selector="Grid#PageContent:not(.FullWidth)">
-                        <Setter Property="MaxWidth" Value="960"/>
+                        <Setter Property="MaxWidth" Value="{StaticResource PageContainerWidth}"/>
                     </Style>
                 </Grid.Styles>
                 

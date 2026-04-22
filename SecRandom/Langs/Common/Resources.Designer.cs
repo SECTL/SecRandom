@@ -150,7 +150,7 @@ namespace SecRandom.Langs.Common {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 关于.
+        ///   Looks up a localized string similar to 关于 SecRandom.
         /// </summary>
         public static string Settings_About {
             get {

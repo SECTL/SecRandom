@@ -38,7 +38,7 @@
         <value>计时器</value>
     </data>
     <data name="Settings_About" xml:space="preserve">
-        <value>关于</value>
+        <value>关于 SecRandom</value>
     </data>
     <data name="Settings_Basic" xml:space="preserve">
         <value>基础设置</value>
