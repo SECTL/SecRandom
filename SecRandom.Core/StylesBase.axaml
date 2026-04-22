@@ -3,7 +3,8 @@
         xmlns:styling="clr-namespace:FluentAvalonia.Styling;assembly=FluentAvalonia"
         xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
         xmlns:controls="clr-namespace:SecRandom.Core.Controls"
-        xmlns:system="clr-namespace:System;assembly=System.Runtime">
+        xmlns:system="clr-namespace:System;assembly=System.Runtime"
+        xmlns:windowing="clr-namespace:FluentAvalonia.UI.Windowing;assembly=FluentAvalonia">
     <Styles.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -55,6 +56,11 @@
         <Setter Property="Margin" Value="12 12 18 12"/>
         <Setter Property="MaxWidth" Value="{StaticResource PageContainerWidth}" />
         <Setter Property="Spacing" Value="4"/>
+    </Style>
+    
+    <Style Selector="windowing|AppSplashScreen">
+        <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorBase}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimary}" />
     </Style>
     
     <Style Selector="asyncImageLoader|AdvancedImage">

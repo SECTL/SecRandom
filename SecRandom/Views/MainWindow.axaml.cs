@@ -3,6 +3,7 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using FluentAvalonia.UI.Windowing;
+using SecRandom.Core.Controls;
 
 namespace SecRandom.Views;
 
@@ -10,6 +11,7 @@ public partial class MainWindow : AppWindow
 {
     public MainWindow()
     {
+        SplashScreen = new EmptySplashScreen();
         InitializeComponent();
 
         TitleBar.Height = 48;
