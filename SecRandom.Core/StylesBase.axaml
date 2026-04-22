@@ -51,7 +51,7 @@
         <Setter Property="OffContent" Value=""/>
     </Style>
     
-    <Style Selector="StackPanel.settings-container">
+    <Style Selector="StackPanel.page-container">
         <Setter Property="Margin" Value="12 12 18 12"/>
         <Setter Property="MaxWidth" Value="{StaticResource PageContainerWidth}" />
         <Setter Property="Spacing" Value="4"/>

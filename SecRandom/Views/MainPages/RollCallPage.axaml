@@ -5,7 +5,7 @@
              xmlns:langs="using:SecRandom.Langs.MainPages.RollCall"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.MainPages.RollCallPage">
-    <StackPanel Orientation="Vertical" Margin="12 12 18 12">
+    <StackPanel Classes="page-container">
         <TextBlock Text="{x:Static langs:Resources.Welcome}" />
     </StackPanel>
 </UserControl>

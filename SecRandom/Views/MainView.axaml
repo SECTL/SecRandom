@@ -42,16 +42,17 @@
                            FooterMenuItemsSource="{Binding ViewModel.NavigationViewFooterItems, Mode=OneWay}"
                            SelectedItem="{Binding ViewModel.SelectedNavigationViewItem, UpdateSourceTrigger=PropertyChanged}"
                            ItemInvoked="NavigationView_OnItemInvoked">
-            <Grid RowDefinitions="Auto *" x:Name="PageContent"
-                  Classes.FullWidth="{Binding ViewModel.SelectedPageInfo.UseFullWidth}">
-                <Grid.Styles>
-                    <Style Selector="Grid#PageContent:not(.FullWidth)">
-                        <Setter Property="MaxWidth" Value="{StaticResource PageContainerWidth}"/>
-                    </Style>
-                </Grid.Styles>
-                
-                <Grid Grid.Row="0" Margin="12 16 18 0"
-                      IsVisible="{Binding !ViewModel.SelectedPageInfo.HidePageTitle}">
+            <Grid RowDefinitions="Auto, *">
+                <Grid Grid.Row="0" Margin="12 16 18 0" 
+                      IsVisible="{Binding !ViewModel.SelectedPageInfo.HidePageTitle}"
+                      Classes.FullWidth="{Binding ViewModel.SelectedPageInfo.UseFullWidth}"
+                      x:Name="TitleContainer">
+                    <Grid.Styles>
+                        <Style Selector="Grid#TitleContainer:not(.FullWidth)">
+                            <Setter Property="MaxWidth" Value="{StaticResource PageContainerWidth}"/>
+                        </Style>
+                    </Grid.Styles>
+                    
                     <TextBlock FontWeight="Normal"
                                Text="{Binding ViewModel.SelectedPageInfo.Name}"
                                Theme="{StaticResource TitleTextBlockStyle}"/>

@@ -58,7 +58,7 @@
                             </Border.Background>
                         </Border>
                     </Panel>
-                    <Image Source="/Assets/Banners/cropped-banner.png" Stretch="Uniform" 
+                    <Image Source="/Assets/Banners/secrandom-banner.png" Stretch="Uniform" 
                            HorizontalAlignment="Center"
                            MaxWidth="{StaticResource PageContainerWidth}"
                            VerticalAlignment="Top">
@@ -76,7 +76,7 @@
             </Grid>
         </controls:StickyScrollViewer.HeaderContent>
         
-        <StackPanel Classes="settings-container">
+        <StackPanel Classes="page-container animated-intro">
             <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
             <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
             <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
