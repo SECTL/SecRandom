@@ -21,7 +21,7 @@ namespace SecRandom.Langs.SettingsPages.About {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    public class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -35,7 +35,7 @@ namespace SecRandom.Langs.SettingsPages.About {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SecRandom.Langs.SettingsPages.About.Resources", typeof(Resources).Assembly);
@@ -50,12 +50,192 @@ namespace SecRandom.Langs.SettingsPages.About {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 复制用户信息.
+        /// </summary>
+        public static string C_CopyUserInformation {
+            get {
+                return ResourceManager.GetString("C_CopyUserInformation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 组织主页.
+        /// </summary>
+        public static string C_OrgHome {
+            get {
+                return ResourceManager.GetString("C_OrgHome", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 项目主页.
+        /// </summary>
+        public static string C_ProjectHome {
+            get {
+                return ResourceManager.GetString("C_ProjectHome", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 鸣谢.
+        /// </summary>
+        public static string S_Ack {
+            get {
+                return ResourceManager.GetString("S_Ack", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 贡献人员.
+        /// </summary>
+        public static string S_Ack_Contributors {
+            get {
+                return ResourceManager.GetString("S_Ack_Contributors", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 在线人数.
+        /// </summary>
+        public static string S_Ack_OnlineUsers {
+            get {
+                return ResourceManager.GetString("S_Ack_OnlineUsers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 感谢各位用户的支持，您的使用就是对我们最大的鼓励.
+        /// </summary>
+        public static string S_Ack_OnlineUsers_D {
+            get {
+                return ResourceManager.GetString("S_Ack_OnlineUsers_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 应用信息.
+        /// </summary>
+        public static string S_App {
+            get {
+                return ResourceManager.GetString("S_App", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 应用协议.
+        /// </summary>
+        public static string S_App_License {
+            get {
+                return ResourceManager.GetString("S_App_License", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 常用链接.
+        /// </summary>
+        public static string S_App_UsefulLinks {
+            get {
+                return ResourceManager.GetString("S_App_UsefulLinks", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 应用作者.
+        /// </summary>
+        public static string S_Author {
+            get {
+                return ResourceManager.GetString("S_Author", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 哔哩哔哩.
+        /// </summary>
+        public static string S_Author_Bilibili {
+            get {
+                return ResourceManager.GetString("S_Author_Bilibili", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 访问 黎泽懿_Aionflux 的哔哩哔哩账号.
+        /// </summary>
+        public static string S_Author_BiliBili_D {
+            get {
+                return ResourceManager.GetString("S_Author_BiliBili_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SecRandom 主开发者.
+        /// </summary>
+        public static string S_Author_D {
+            get {
+                return ResourceManager.GetString("S_Author_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 捐赠支持.
+        /// </summary>
+        public static string S_Author_Donate {
+            get {
+                return ResourceManager.GetString("S_Author_Donate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 访问 黎泽懿_Aionflux 的爱发电账号，支持项目发展，感谢您的捐赠.
+        /// </summary>
+        public static string S_Author_Donate_D {
+            get {
+                return ResourceManager.GetString("S_Author_Donate_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SECTL 思拓创联.
+        /// </summary>
+        public static string S_Author_Org {
+            get {
+                return ResourceManager.GetString("S_Author_Org", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SecRandom 所属组织.
+        /// </summary>
+        public static string S_Author_Org_D {
+            get {
+                return ResourceManager.GetString("S_Author_Org_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 黎泽懿_Aionflux.
+        /// </summary>
+        public static string S_Author_R {
+            get {
+                return ResourceManager.GetString("S_Author_R", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 用户信息.
+        /// </summary>
+        public static string S_UserInformation {
+            get {
+                return ResourceManager.GetString("S_UserInformation", resourceCulture);
             }
         }
     }

@@ -91,4 +91,13 @@
     <data name="Menu_ExitProgram" xml:space="preserve">
         <value>退出程序</value>
     </data>
+    <data name="App_Description" xml:space="preserve">
+        <value>一个易用的点名/抽奖软件，专为教育场景设计，让课堂点名更高效透明</value>
+    </data>
+    <data name="App_License" xml:space="preserve">
+        <value>本项目基于 GNU General Public License v3.0 获得许可。</value>
+    </data>
+    <data name="C_ToBeWritten" xml:space="preserve">
+        <value>(等待编写)</value>
+    </data>
 </root>

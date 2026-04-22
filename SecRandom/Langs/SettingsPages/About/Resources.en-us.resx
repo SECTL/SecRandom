@@ -18,4 +18,64 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
+    <data name="S_App_UsefulLinks" xml:space="preserve">
+        <value>Useful Links</value>
+    </data>
+    <data name="S_App" xml:space="preserve">
+        <value>Program Information</value>
+    </data>
+    <data name="C_ProjectHome" xml:space="preserve">
+        <value>Project Home</value>
+    </data>
+    <data name="S_Author_D" xml:space="preserve">
+        <value>Lead Developer of SecRandom</value>
+    </data>
+    <data name="S_Author_Bilibili" xml:space="preserve">
+        <value>BiliBili</value>
+    </data>
+    <data name="S_Author_BiliBili_D" xml:space="preserve">
+        <value>Visit 黎泽懿_Aionflux's BiliBili account</value>
+    </data>
+    <data name="S_Author_Donate" xml:space="preserve">
+        <value>Donate</value>
+    </data>
+    <data name="S_Author_Donate_D" xml:space="preserve">
+        <value>Visit 黎泽懿_Aionflux's Afdian page to support the project's development. Thank you for your donation!</value>
+    </data>
+    <data name="S_Author_Org" xml:space="preserve">
+        <value>SECTL</value>
+    </data>
+    <data name="S_Author_Org_D" xml:space="preserve">
+        <value>SecRandom's Affiliated Organization</value>
+    </data>
+    <data name="S_App_License" xml:space="preserve">
+        <value>Program License</value>
+    </data>
+    <data name="C_OrgHome" xml:space="preserve">
+        <value>Organization Home</value>
+    </data>
+    <data name="S_Ack" xml:space="preserve">
+        <value>Acknowledgments</value>
+    </data>
+    <data name="S_Ack_OnlineUsers" xml:space="preserve">
+        <value>Online Users</value>
+    </data>
+    <data name="S_Ack_OnlineUsers_D" xml:space="preserve">
+        <value>Thank you for your support. Your use of the software is the greatest encouragement we could receive.</value>
+    </data>
+    <data name="S_Ack_Contributors" xml:space="preserve">
+        <value>Contributors</value>
+    </data>
+    <data name="S_UserInformation" xml:space="preserve">
+        <value>User Information</value>
+    </data>
+    <data name="C_CopyUserInformation" xml:space="preserve">
+        <value>Copy User Information</value>
+    </data>
+    <data name="S_Author" xml:space="preserve">
+        <value>Program Author</value>
+    </data>
+    <data name="S_Author_R" xml:space="preserve">
+        <value>黎泽懿_Aionflux</value>
+    </data>
 </root>

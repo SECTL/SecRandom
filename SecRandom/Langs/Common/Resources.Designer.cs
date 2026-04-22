@@ -60,6 +60,33 @@ namespace SecRandom.Langs.Common {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 一个易用的点名/抽奖软件，专为教育场景设计，让课堂点名更高效透明.
+        /// </summary>
+        public static string App_Description {
+            get {
+                return ResourceManager.GetString("App_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 本项目基于 GNU General Public License v3.0 获得许可。.
+        /// </summary>
+        public static string App_License {
+            get {
+                return ResourceManager.GetString("App_License", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (等待编写).
+        /// </summary>
+        public static string C_ToBeWritten {
+            get {
+                return ResourceManager.GetString("C_ToBeWritten", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 人脸抽取.
         /// </summary>
         public static string Feat_FaceDraw {

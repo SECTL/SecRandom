@@ -91,4 +91,13 @@
     <data name="Menu_ExitProgram" xml:space="preserve">
         <value>Exit Program</value>
     </data>
+    <data name="App_Description" xml:space="preserve">
+        <value>An easy-to-use roll-call/lottery software designed specifically for educational settings, making classroom roll-call more efficient and transparent.</value>
+    </data>
+    <data name="App_License" xml:space="preserve">
+        <value>This project is licensed under the GNU General Public License v3.0.</value>
+    </data>
+    <data name="C_ToBeWritten" xml:space="preserve">
+        <value>(To be written)</value>
+    </data>
 </root>

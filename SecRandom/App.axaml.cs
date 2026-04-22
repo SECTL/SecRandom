@@ -40,6 +40,7 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         InitializeLanguages(new CultureInfo("zh-hans"));
+        // InitializeLanguages(new CultureInfo("en-us"));
         BuildHost();
         
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)

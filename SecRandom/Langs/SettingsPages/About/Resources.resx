@@ -18,4 +18,64 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
+    <data name="S_App_UsefulLinks" xml:space="preserve">
+        <value>常用链接</value>
+    </data>
+    <data name="S_App" xml:space="preserve">
+        <value>应用信息</value>
+    </data>
+    <data name="C_ProjectHome" xml:space="preserve">
+        <value>项目主页</value>
+    </data>
+    <data name="S_Author_R" xml:space="preserve">
+        <value>黎泽懿_Aionflux</value>
+    </data>
+    <data name="S_Author_D" xml:space="preserve">
+        <value>SecRandom 主开发者</value>
+    </data>
+    <data name="S_Author_Bilibili" xml:space="preserve">
+        <value>哔哩哔哩</value>
+    </data>
+    <data name="S_Author_BiliBili_D" xml:space="preserve">
+        <value>访问 黎泽懿_Aionflux 的哔哩哔哩账号</value>
+    </data>
+    <data name="S_Author_Donate" xml:space="preserve">
+        <value>捐赠支持</value>
+    </data>
+    <data name="S_Author_Donate_D" xml:space="preserve">
+        <value>访问 黎泽懿_Aionflux 的爱发电账号，支持项目发展，感谢您的捐赠</value>
+    </data>
+    <data name="S_Author_Org" xml:space="preserve">
+        <value>SECTL 思拓创联</value>
+    </data>
+    <data name="S_Author_Org_D" xml:space="preserve">
+        <value>SecRandom 所属组织</value>
+    </data>
+    <data name="S_App_License" xml:space="preserve">
+        <value>应用协议</value>
+    </data>
+    <data name="C_OrgHome" xml:space="preserve">
+        <value>组织主页</value>
+    </data>
+    <data name="S_Ack" xml:space="preserve">
+        <value>鸣谢</value>
+    </data>
+    <data name="S_Ack_OnlineUsers" xml:space="preserve">
+        <value>在线人数</value>
+    </data>
+    <data name="S_Ack_OnlineUsers_D" xml:space="preserve">
+        <value>感谢各位用户的支持，您的使用就是对我们最大的鼓励</value>
+    </data>
+    <data name="S_Ack_Contributors" xml:space="preserve">
+        <value>贡献人员</value>
+    </data>
+    <data name="S_UserInformation" xml:space="preserve">
+        <value>用户信息</value>
+    </data>
+    <data name="C_CopyUserInformation" xml:space="preserve">
+        <value>复制用户信息</value>
+    </data>
+    <data name="S_Author" xml:space="preserve">
+        <value>应用作者</value>
+    </data>
 </root>
