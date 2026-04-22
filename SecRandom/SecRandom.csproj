@@ -35,51 +35,6 @@
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
-
-        <EmbeddedResource Update="Langs\SettingsPages\BasicSettingsPage\Resources.resx">
-            <Generator>PublicResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-
-        <EmbeddedResource Update="Langs\SettingsPages\ListManagementSubPages\ListSettingsSubPage\Resources.resx">
-            <Generator>PublicResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-
-        <EmbeddedResource Update="Langs\SettingsPages\ListManagementSubPages\LotterySubPages\Resources.resx">
-            <Generator>PublicResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-
-        <EmbeddedResource Update="Langs\SettingsPages\ListManagementSubPages\RollCallSubPages\Resources.resx">
-            <Generator>PublicResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-
-        <EmbeddedResource Update="Langs\SettingsPages\ListManagementSubPages\TablePreview\Resources.resx">
-            <Generator>PublicResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-
-        <EmbeddedResource Update="Langs\SettingsPages\FloatingWindowPage\Resources.resx">
-            <Generator>PublicResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-
-        <EmbeddedResource Update="Langs\SettingsPages\SecuritySettingsPage\Resources.resx">
-            <Generator>PublicResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-
-        <EmbeddedResource Update="Langs\SettingsPages\LinkageSettingsPage\Resources.resx">
-            <Generator>PublicResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-
-        <EmbeddedResource Update="Langs\SettingsPages\ThemeManagementPage\Resources.resx">
-            <Generator>PublicResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>
@@ -90,36 +45,6 @@
         </Compile>
 
         <Compile Update="Langs\Pages\RollCallPage\Resources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Resources.resx</DependentUpon>
-        </Compile>
-
-        <Compile Update="Langs\SettingsPages\BasicSettingsPage\Resources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Resources.resx</DependentUpon>
-        </Compile>
-
-        <Compile Update="Langs\SettingsPages\NotificationSettingsSubPages\Resources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Resources.resx</DependentUpon>
-        </Compile>
-
-        <Compile Update="Langs\SettingsPages\FloatingWindowPage\Resources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Resources.resx</DependentUpon>
-        </Compile>
-
-        <Compile Update="Langs\SettingsPages\LinkageSettingsPage\Resources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Resources.resx</DependentUpon>
-        </Compile>
-
-        <Compile Update="Langs\SettingsPages\SecuritySettingsPage\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>
