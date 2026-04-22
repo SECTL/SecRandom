@@ -1,0 +1,3 @@
+files:
+  - source: /SecRandom/Langs/**/Resources.resx
+    translation: /SecRandom/Langs/**/Resources.%locale%.resx
