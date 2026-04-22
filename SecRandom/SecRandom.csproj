@@ -21,7 +21,7 @@
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
-        <EmbeddedResource Update="Langs\Pages\RollCallPage\Resources.resx">
+        <EmbeddedResource Update="Langs\MainPages\RollCall\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
@@ -34,7 +34,7 @@
             <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
 
-        <Compile Update="Langs\Pages\RollCallPage\Resources.Designer.cs">
+        <Compile Update="Langs\MainPages\RollCall\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>

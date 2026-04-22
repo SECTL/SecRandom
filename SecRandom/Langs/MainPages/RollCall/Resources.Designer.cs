@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SecRandom.Langs.MainPages.RollCallPage {
+namespace SecRandom.Langs.MainPages.RollCall {
     using System;
     
     
@@ -38,7 +38,7 @@ namespace SecRandom.Langs.MainPages.RollCallPage {
         public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SecRandom.Langs.MainPages.RollCallPage.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SecRandom.Langs.MainPages.RollCall.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
