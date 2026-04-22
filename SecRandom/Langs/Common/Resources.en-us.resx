@@ -19,76 +19,76 @@
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
 
-    <data name="Settings" xml:space="preserve">
+    <data name="Feat_Settings" xml:space="preserve">
         <value>Settings</value>
     </data>
-    <data name="RollCall" xml:space="preserve">
+    <data name="Feat_RollCall" xml:space="preserve">
         <value>Roll Call</value>
     </data>
-    <data name="About" xml:space="preserve">
+    <data name="Settings_About" xml:space="preserve">
         <value>About</value>
     </data>
-    <data name="BasicSettings" xml:space="preserve">
+    <data name="Settings_Basic" xml:space="preserve">
         <value>Basic Settings</value>
     </data>
-    <data name="RosterManagement" xml:space="preserve">
+    <data name="Settings_RosterManagement" xml:space="preserve">
         <value>Roster Management</value>
     </data>
-    <data name="DrawSettings" xml:space="preserve">
+    <data name="Settings_Draw" xml:space="preserve">
         <value>Draw Settings</value>
     </data>
-    <data name="FloatingWindowManagement" xml:space="preserve">
+    <data name="Settings_FloatingWindow" xml:space="preserve">
         <value>Floating Window</value>
     </data>
-    <data name="NotificationSettings" xml:space="preserve">
+    <data name="Settings_Notification" xml:space="preserve">
         <value>Notification Settings</value>
     </data>
-    <data name="RollCallNotificationSettings" xml:space="preserve">
+    <data name="Settings_RollCallNotification" xml:space="preserve">
         <value>Picking Notification Settings</value>
     </data>
-    <data name="QuickDrawNotificationSettings" xml:space="preserve">
+    <data name="Settings_QuickDrawNotification" xml:space="preserve">
         <value>Quick Pick Notification Settings</value>
     </data>
-    <data name="LotteryNotificationSettings" xml:space="preserve">
+    <data name="Settings_LotteryNotification" xml:space="preserve">
         <value>Lottery Notification Settings</value>
     </data>
-    <data name="SecuritySettings" xml:space="preserve">
+    <data name="Settings_Security" xml:space="preserve">
         <value>Security Settings</value>
     </data>
-    <data name="LinkageSettings" xml:space="preserve">
+    <data name="Settings_Linkage" xml:space="preserve">
         <value>Linkage Settings</value>
     </data>
-    <data name="VoiceSettings" xml:space="preserve">
+    <data name="Settings_Voice" xml:space="preserve">
         <value>Voice Settings</value>
     </data>
-    <data name="ThemeManagement" xml:space="preserve">
+    <data name="Settings_Theme" xml:space="preserve">
         <value>Theme Management</value>
     </data>
-    <data name="History" xml:space="preserve">
+    <data name="Feat_History" xml:space="preserve">
         <value>History</value>
     </data>
-    <data name="UpdateSettings" xml:space="preserve">
+    <data name="Settings_Update" xml:space="preserve">
         <value>Update Settings</value>
     </data>
-    <data name="FaceDraw" xml:space="preserve">
+    <data name="Feat_FaceDraw" xml:space="preserve">
         <value>Roll Call</value>
     </data>
-    <data name="Lottery" xml:space="preserve">
+    <data name="Feat_Lottery" xml:space="preserve">
         <value>Lottery</value>
     </data>
-    <data name="QuickDraw" xml:space="preserve">
+    <data name="Feat_QuickDraw" xml:space="preserve">
         <value>Quick Draw</value>
     </data>
-    <data name="Timer" xml:space="preserve">
+    <data name="Feat_Timer" xml:space="preserve">
         <value>Timer</value>
     </data>
-    <data name="OpenSettings" xml:space="preserve">
+    <data name="Menu_OpenSettings" xml:space="preserve">
         <value>Open Settings</value>
     </data>
-    <data name="OpenMainWindow" xml:space="preserve">
+    <data name="Menu_OpenMainWindow" xml:space="preserve">
         <value>Open Main Window</value>
     </data>
-    <data name="ExitProgram" xml:space="preserve">
+    <data name="Menu_ExitProgram" xml:space="preserve">
         <value>Exit Program</value>
     </data>
 </root>

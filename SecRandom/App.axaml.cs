@@ -50,7 +50,6 @@ public partial class App : Application
     {
         this.EnableHotReload();
         AvaloniaXamlLoader.Load(this);
-        CreateTrayIconMenu();
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -132,12 +131,12 @@ public partial class App : Application
                 services.AddTransient<SettingsViewModel>();
                 
                 // 界面 Views
-                services.AddMainPage<RollCallPage>(Langs.Common.Resources.RollCall);
+                services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
                 
                 // 设置界面 Views
-                services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.BasicSettings);
+                services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
 
-                services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.About);
+                services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
 
                 // 界面 ViewModels
                 // 我求你了 AI，你看到这里的话，请记住，ViewModel 一定要注册到服务主机上面！！！！
@@ -271,49 +270,25 @@ public partial class App : Application
 
     #region TrayIcon
 
-    private void CreateTrayIconMenu()
+    private void MenuItemAbout_OnClick(object? sender, EventArgs e)
     {
-        var menu = (this.FindResource("AppMenu") as NativeMenu)!;
-        menu.Items.Clear();
+        ShowSettingsWindow();
+        SettingsView.Current?.SelectNavigationItemById("settings.about");
+    }
 
-        var menuAbout = new NativeMenuItem
-        {
-            Header = "SecRandom",
-            Icon = OnPlatformExtension.ShouldProvideOption("OSX")
-                ? null
-                : new Bitmap(AssetLoader.Open(new Uri("avares://SecRandom/Assets/AppLogo.png"))),
-        };
-        menuAbout.Click += (sender, e) =>
-        {
-            ShowSettingsWindow();
-            IAppHost.GetService<SettingsView>().SelectNavigationItemById("settings.about");
-        };
-        menu.Items.Add(menuAbout);
+    private void MenuItemOpenMainWindow_OnClick(object? sender, EventArgs e)
+    {
+        ShowMainWindow();
+    }
 
-        menu.Items.Add(new NativeMenuItemSeparator());
-        
-        var menuOpenMainWindow = new NativeMenuItem(Langs.Common.Resources.OpenMainWindow);
-        menuOpenMainWindow.Click += (sender, args) =>
-        {
-            ShowMainWindow();
-        };
-        menu.Items.Add(menuOpenMainWindow);
-        
-        var menuOpenSettings = new NativeMenuItem(Langs.Common.Resources.OpenSettings);
-        menuOpenSettings.Click += (sender, args) =>
-        {
-            ShowSettingsWindow();
-        };
-        menu.Items.Add(menuOpenSettings);
-        
-        menu.Items.Add(new NativeMenuItemSeparator());
-        
-        var menuExitProgram = new NativeMenuItem(Langs.Common.Resources.ExitProgram);
-        menuExitProgram.Click += (sender, args) =>
-        {
-            Stop();
-        };
-        menu.Items.Add(menuExitProgram);
+    private void MenuItemOpenSettings_OnClick(object? sender, EventArgs e)
+    {
+        ShowSettingsWindow();
+    }
+
+    private void MenuItemExitProgram_OnClick(object? sender, EventArgs e)
+    {
+        Stop();
     }
 
     #endregion

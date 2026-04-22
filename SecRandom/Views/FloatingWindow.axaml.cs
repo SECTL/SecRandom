@@ -101,7 +101,7 @@ public partial class FloatingWindow : Window
         var b = new CommandBarButton
         {
             IconSource = new FluentIconSource("\uECAA"),
-            Label = Langs.Common.Resources.RollCall,
+            Label = Langs.Common.Resources.Feat_RollCall,
         };
         
         b.Click += (sender, args) =>
@@ -118,7 +118,7 @@ public partial class FloatingWindow : Window
         var b = new CommandBarButton
         {
             IconSource = new FluentIconSource("\uE84E"),
-            Label = Langs.Common.Resources.QuickDraw,
+            Label = Langs.Common.Resources.Feat_QuickDraw,
         };
 
         return b;
@@ -129,7 +129,7 @@ public partial class FloatingWindow : Window
         var b = new CommandBarButton
         {
             IconSource = new FluentIconSource("\uE8EC"),
-            Label = Langs.Common.Resources.Lottery,
+            Label = Langs.Common.Resources.Feat_Lottery,
         };
 
         return b;
@@ -140,7 +140,7 @@ public partial class FloatingWindow : Window
         var b = new CommandBarButton
         {
             IconSource = new FluentIconSource("\uF3EE"),
-            Label = Langs.Common.Resources.FaceDraw,
+            Label = Langs.Common.Resources.Feat_FaceDraw,
         };
 
         return b;
@@ -151,7 +151,7 @@ public partial class FloatingWindow : Window
         var b = new CommandBarButton
         {
             IconSource = new FluentIconSource("\uF360"),
-            Label = Langs.Common.Resources.Timer,
+            Label = Langs.Common.Resources.Feat_Timer,
         };
         
         return b;

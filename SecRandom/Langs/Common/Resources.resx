@@ -19,76 +19,76 @@
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
 
-    <data name="Settings" xml:space="preserve">
+    <data name="Feat_Settings" xml:space="preserve">
         <value>设置</value>
     </data>
-    <data name="RollCall" xml:space="preserve">
+    <data name="Feat_RollCall" xml:space="preserve">
         <value>点名</value>
     </data>
-    <data name="QuickDraw" xml:space="preserve">
+    <data name="Feat_QuickDraw" xml:space="preserve">
         <value>闪抽</value>
     </data>
-    <data name="Lottery" xml:space="preserve">
+    <data name="Feat_Lottery" xml:space="preserve">
         <value>抽奖</value>
     </data>
-    <data name="FaceDraw" xml:space="preserve">
+    <data name="Feat_FaceDraw" xml:space="preserve">
         <value>人脸抽取</value>
     </data>
-    <data name="Timer" xml:space="preserve">
+    <data name="Feat_Timer" xml:space="preserve">
         <value>计时器</value>
     </data>
-    <data name="About" xml:space="preserve">
+    <data name="Settings_About" xml:space="preserve">
         <value>关于</value>
     </data>
-    <data name="BasicSettings" xml:space="preserve">
+    <data name="Settings_Basic" xml:space="preserve">
         <value>基础设置</value>
     </data>
-    <data name="RosterManagement" xml:space="preserve">
+    <data name="Settings_RosterManagement" xml:space="preserve">
         <value>名单管理</value>
     </data>
-    <data name="DrawSettings" xml:space="preserve">
+    <data name="Settings_Draw" xml:space="preserve">
         <value>抽取设置</value>
     </data>
-    <data name="FloatingWindowManagement" xml:space="preserve">
+    <data name="Settings_FloatingWindow" xml:space="preserve">
         <value>浮窗管理</value>
     </data>
-    <data name="NotificationSettings" xml:space="preserve">
+    <data name="Settings_Notification" xml:space="preserve">
         <value>通知设置</value>
     </data>
-    <data name="RollCallNotificationSettings" xml:space="preserve">
+    <data name="Settings_RollCallNotification" xml:space="preserve">
         <value>点名通知设置</value>
     </data>
-    <data name="QuickDrawNotificationSettings" xml:space="preserve">
+    <data name="Settings_QuickDrawNotification" xml:space="preserve">
         <value>闪抽通知设置</value>
     </data>
-    <data name="LotteryNotificationSettings" xml:space="preserve">
+    <data name="Settings_LotteryNotification" xml:space="preserve">
         <value>抽奖通知设置</value>
     </data>
-    <data name="SecuritySettings" xml:space="preserve">
+    <data name="Settings_Security" xml:space="preserve">
         <value>安全设置</value>
     </data>
-    <data name="LinkageSettings" xml:space="preserve">
+    <data name="Settings_Linkage" xml:space="preserve">
         <value>联动设置</value>
     </data>
-    <data name="VoiceSettings" xml:space="preserve">
+    <data name="Settings_Voice" xml:space="preserve">
         <value>语音设置</value>
     </data>
-    <data name="ThemeManagement" xml:space="preserve">
+    <data name="Settings_Theme" xml:space="preserve">
         <value>主题管理</value>
     </data>
-    <data name="History" xml:space="preserve">
+    <data name="Feat_History" xml:space="preserve">
         <value>历史记录</value>
     </data>
-    <data name="UpdateSettings" xml:space="preserve">
+    <data name="Settings_Update" xml:space="preserve">
         <value>更新设置</value>
     </data>
-    <data name="OpenSettings" xml:space="preserve">
+    <data name="Menu_OpenSettings" xml:space="preserve">
         <value>打开设置</value>
     </data>
-    <data name="OpenMainWindow" xml:space="preserve">
+    <data name="Menu_OpenMainWindow" xml:space="preserve">
         <value>打开主窗口</value>
     </data>
-    <data name="ExitProgram" xml:space="preserve">
+    <data name="Menu_ExitProgram" xml:space="preserve">
         <value>退出程序</value>
     </data>
 </root>

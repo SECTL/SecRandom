@@ -1,10 +1,36 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:langs="clr-namespace:SecRandom.Langs.Common"
              x:Class="SecRandom.App"
              RequestedThemeVariant="Default">
     <TrayIcon.Icons>
         <TrayIcons>
-            <TrayIcon Icon="/Assets/AppLogo.ico" ToolTipText="SecRandom" Menu="{DynamicResource AppMenu}" />
+            <TrayIcon Icon="/Assets/AppLogo.ico" ToolTipText="SecRandom">
+                <TrayIcon.Menu>
+                    <NativeMenu>
+                        <NativeMenuItem Header="SecRandom" Click="MenuItemAbout_OnClick">
+                            <NativeMenuItem.Icon>
+                                <OnPlatform Default="Assets/AppLogo.png">
+                                    <On Content="{x:Null}" Options="macOS"/>
+                                </OnPlatform>
+                            </NativeMenuItem.Icon>
+                        </NativeMenuItem>
+                        
+                        <NativeMenuItemSeparator />
+                        
+                        <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenMainWindow}"
+                                        Click="MenuItemOpenMainWindow_OnClick"/>
+                        
+                        <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenSettings}"
+                                        Click="MenuItemOpenSettings_OnClick"/>
+                        
+                        <NativeMenuItemSeparator />
+                        
+                        <NativeMenuItem Header="{x:Static langs:Resources.Menu_ExitProgram}"
+                                        Click="MenuItemExitProgram_OnClick"/>
+                    </NativeMenu>
+                </TrayIcon.Menu>
+            </TrayIcon>
         </TrayIcons>
     </TrayIcon.Icons>
     
@@ -19,6 +45,7 @@
     <Application.Resources>
         <FontFamily x:Key="FluentSystemIconsResizeable">avares://SecRandom/Assets/Fonts/#FluentSystemIcons-Resizable</FontFamily>
         <FontFamily x:Key="AppFontFamily">avares://SecRandom/Assets/Fonts/MiSans/#MiSans</FontFamily>
+        <FontFamily x:Key="ContentControlThemeFontFamily">avares://SecRandom/Assets/Fonts/MiSans/#MiSans</FontFamily>
         <FontWeight x:Key="AppFontWeight">Normal</FontWeight>
         
         <NativeMenu x:Key="AppMenu" />

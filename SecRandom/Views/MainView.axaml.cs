@@ -94,7 +94,7 @@ public partial class MainView : UserControl, INavigationPageFactory
 
         var settingsPageInfo = new PageInfo("settings", "\uef26", null, PageLocation.Bottom)
         {
-            Name = Langs.Common.Resources.Settings
+            Name = Langs.Common.Resources.Feat_Settings
         };
         ViewModel.NavigationViewFooterItems.Add(settingsPageInfo.ToNavigationViewItemBase());
     }
