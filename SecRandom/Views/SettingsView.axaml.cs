@@ -8,6 +8,7 @@ using Avalonia.Media.Imaging;
 using DynamicData;
 using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Controls;
@@ -59,6 +60,14 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         var appToastAdorner = _appToastAdorner = new AppToastAdorner(this);
         layer?.Children.Add(appToastAdorner);
         AdornerLayer.SetAdornedElement(appToastAdorner, this);
+        
+        if (GlobalConstants.IsDevelopment)
+        {
+            var adorner = new DevelopmentBuildAdorner();
+            layer?.Children.Add(adorner);
+            AdornerLayer.SetAdornedElement(adorner, this);
+        }
+        
         _isAdornerAdded = true;
     }
     

@@ -55,4 +55,6 @@
     <ItemGroup>
       <Folder Include="Themes\" />
     </ItemGroup>
+
+    <Import Project="..\Global.props" />
 </Project>

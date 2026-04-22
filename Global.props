@@ -1,0 +1,39 @@
+﻿<Project>
+    <PropertyGroup>
+        <!-- we'll do our own versioning -->
+        <GitVersion>false</GitVersion>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
+        <NullabilityInfoContextSupport>True</NullabilityInfoContextSupport>
+        <ErrorOnDuplicatePublishOutputFiles>False</ErrorOnDuplicatePublishOutputFiles>
+        <CheckEolWorkloads>false</CheckEolWorkloads>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="ClassIsland.SimpleGitInfoGenerator" Version="1.0.0.1"
+                          PrivateAssets="All" IncludeAssets="build;analyzers"/>
+
+        <Compile Include="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)'))/AssemblyInfo.cs">
+            <LinkBase>Properties</LinkBase>
+        </Compile>
+    </ItemGroup>
+    
+    <PropertyGroup>
+        <GitVersion_UpdateAssemblyInfo>true</GitVersion_UpdateAssemblyInfo>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.200" PrivateAssets="All"/>
+    </ItemGroup>
+    
+    <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <DebugType>full</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    </PropertyGroup>
+</Project>

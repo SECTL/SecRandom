@@ -25,4 +25,6 @@
     <ItemGroup>
         <ProjectReference Include="..\SecRandom\SecRandom.csproj"/>
     </ItemGroup>
+
+    <Import Project="..\Global.props" />
 </Project>

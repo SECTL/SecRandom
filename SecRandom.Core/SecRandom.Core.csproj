@@ -30,4 +30,6 @@
       <AdditionalFiles Include="Styles\TabStrip.axaml" />
     </ItemGroup>
 
+    <Import Project="..\Global.props" />
+
 </Project>

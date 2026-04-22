@@ -133,7 +133,7 @@ public partial class App : Application
         var logger = IAppHost.GetService<ILogger<App>>();
         
         logger.LogInformation("SecRandom {VERSION} (Codename: {CODENAME})",
-            GlobalConstants.Version, GlobalConstants.Codename);
+            GlobalConstants.Version, GlobalConstants.CodeName);
         logger.LogInformation("Copyright by SECTL(2025~{YEAR})  Licensed under GPL3.0", DateTime.Now.Year);
         logger.LogInformation("Host built.");
         
