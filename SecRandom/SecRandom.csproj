@@ -53,5 +53,6 @@
 
     <ItemGroup>
       <Folder Include="Langs\SettingsPages\" />
+      <Folder Include="Themes\" />
     </ItemGroup>
 </Project>

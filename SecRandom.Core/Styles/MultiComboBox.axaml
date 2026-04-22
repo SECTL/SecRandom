@@ -283,6 +283,8 @@
         <Setter Property="Background" Value="{DynamicResource ComboBoxItemBackground}" />
         <Setter Property="Padding" Value="{DynamicResource ComboBoxItemThemePadding}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        
+        <!-- 累了，先这样吧，后续再实现 tablet 切换ui -->
         <Setter Property="Template">
             <ControlTemplate TargetType="u:MultiComboBoxItem">
                 <Border
@@ -295,12 +297,8 @@
                     Margin="5,2,5,2"
                     TemplatedControl.IsTemplateFocusTarget="True">
                     <Grid x:Name="RootGrid">
-                        <StackPanel Orientation="Horizontal" Margin="-4">
-                            <Viewbox Width="24" Height="24" Margin="-4 0 4 0"
-                                     Stretch="Uniform" StretchDirection="Both" VerticalAlignment="Center">
-                                <CheckBox Name="CheckBox" IsHitTestVisible="False" Width="20" Height="20" />
-                            </Viewbox>
-                            
+                        <CheckBox Name="CheckBox" HorizontalAlignment="Stretch"
+                                  IsChecked="{TemplateBinding IsSelected, Mode=TwoWay}">
                             <ContentPresenter Name="ContentPresenter"
                                               Content="{TemplateBinding Content}"
                                               ContentTemplate="{TemplateBinding ContentTemplate}"
@@ -311,11 +309,45 @@
                                               BorderBrush="{x:Null}"
                                               CornerRadius="{TemplateBinding CornerRadius}"
                                               BorderThickness="0"/>
-                        </StackPanel>
+                        </CheckBox>
                     </Grid>
                 </Border>
             </ControlTemplate>
         </Setter>
+        
+        <!-- <Setter Property="Template"> -->
+        <!--     <ControlTemplate TargetType="u:MultiComboBoxItem"> -->
+        <!--         <Border -->
+        <!--             x:Name="RootBorder" -->
+        <!--             Padding="{TemplateBinding Padding}" -->
+        <!--             Background="{TemplateBinding Background}" -->
+        <!--             BorderBrush="{TemplateBinding BorderBrush}" -->
+        <!--             BorderThickness="{TemplateBinding BorderThickness}"  -->
+        <!--             CornerRadius="{TemplateBinding CornerRadius}" -->
+        <!--             Margin="5,2,5,2" -->
+        <!--             TemplatedControl.IsTemplateFocusTarget="True"> -->
+        <!--             <Grid x:Name="RootGrid"> -->
+        <!--                 <StackPanel Orientation="Horizontal" Margin="-4"> -->
+        <!--                     <Viewbox Width="24" Height="24" Margin="-4 0 4 0" -->
+        <!--                              Stretch="Uniform" StretchDirection="Both" VerticalAlignment="Center"> -->
+        <!--                         <CheckBox Name="CheckBox" IsHitTestVisible="False" Width="20" Height="20" /> -->
+        <!--                     </Viewbox> -->
+        <!--                      -->
+        <!--                     <ContentPresenter Name="ContentPresenter" -->
+        <!--                                       Content="{TemplateBinding Content}" -->
+        <!--                                       ContentTemplate="{TemplateBinding ContentTemplate}" -->
+        <!--                                       Foreground="{TemplateBinding Foreground}" -->
+        <!--                                       HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" -->
+        <!--                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}" -->
+        <!--                                       Background="{x:Null}" -->
+        <!--                                       BorderBrush="{x:Null}" -->
+        <!--                                       CornerRadius="{TemplateBinding CornerRadius}" -->
+        <!--                                       BorderThickness="0"/> -->
+        <!--                 </StackPanel> -->
+        <!--             </Grid> -->
+        <!--         </Border> -->
+        <!--     </ControlTemplate> -->
+        <!-- </Setter> -->
         
         <Style Selector="^:pointerover">
             <Style Selector="^ /template/ Border#RootBorder">
@@ -357,9 +389,6 @@
             </Style>
             <Style Selector="^ /template/ ContentPresenter#ContentPresenter">
                 <Setter Property="Foreground" Value="{DynamicResource ComboBoxItemForegroundSelected}" />
-            </Style>
-            <Style Selector="^ /template/ CheckBox#CheckBox">
-                <Setter Property="IsChecked" Value="True" />
             </Style>
         </Style>
 

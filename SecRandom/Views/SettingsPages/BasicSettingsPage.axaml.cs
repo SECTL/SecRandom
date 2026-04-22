@@ -1,8 +1,5 @@
-﻿using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
+﻿using Avalonia.Controls;
 using SecRandom.Core.Attributes;
-using SecRandom.Core.Enums;
 
 namespace SecRandom.Views.SettingsPages;
 

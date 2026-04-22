@@ -26,4 +26,8 @@
         <PackageReference Include="Xaml.Behaviors" Version="11.3.9.5" />
     </ItemGroup>
 
+    <ItemGroup>
+      <AdditionalFiles Include="Styles\TabStrip.axaml" />
+    </ItemGroup>
+
 </Project>

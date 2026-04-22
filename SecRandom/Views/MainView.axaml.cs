@@ -40,10 +40,7 @@ public partial class MainView : UserControl, INavigationPageFactory
         _navigationFrame = this.FindControl<Frame>("NavigationFrame");
         _navigationView = this.FindControl<NavigationView>("NavigationView");
 
-        if (_navigationFrame != null)
-        {
-            _navigationFrame.NavigationPageFactory = this;
-        }
+        _navigationFrame?.NavigationPageFactory = this;
 
         BuildNavigationMenuItems();
         SelectNavigationItemById(DefaultMainPageId);
@@ -66,9 +63,9 @@ public partial class MainView : UserControl, INavigationPageFactory
         }
 
         var layer = AdornerLayer.GetAdornerLayer(element);
-        var appToastAdorner = _appToastAdorner = new AppToastAdorner(this);
-        layer?.Children.Add(appToastAdorner);
-        AdornerLayer.SetAdornedElement(appToastAdorner, this);
+        _appToastAdorner = new AppToastAdorner(this);
+        layer?.Children.Add(_appToastAdorner);
+        AdornerLayer.SetAdornedElement(_appToastAdorner, this);
         _isAdornerAdded = true;
     }
     
@@ -150,10 +147,7 @@ public partial class MainView : UserControl, INavigationPageFactory
 
     private void TogglePaneButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (_navigationView != null)
-        {
-            _navigationView.IsPaneOpen = !_navigationView.IsPaneOpen;
-        }
+        _navigationView?.IsPaneOpen = !_navigationView.IsPaneOpen;
     }
 
     public Control? GetPage(Type srcType)

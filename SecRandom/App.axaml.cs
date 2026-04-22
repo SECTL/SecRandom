@@ -1,19 +1,11 @@
 using System;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text.Json;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
-using Avalonia.Markup.Xaml.MarkupExtensions;
-using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
-using Avalonia.Styling;
 using Avalonia.Threading;
 using HotAvalonia;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,11 +14,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
-using SecRandom.Core.Attributes;
 using SecRandom.Core.Extensions.Registry;
-using SecRandom.Core.Enums;
-using SecRandom.Core.Models;
-using SecRandom.Core.Services;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Services.Config;
 using SecRandom.ViewModels;
@@ -43,7 +31,6 @@ public partial class App : Application
     private static FloatingWindow? _floatingWindow;
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
-    private static string? _startupConfigFilePath;
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     
     public override void Initialize()
@@ -54,7 +41,6 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        _startupConfigFilePath = Utils.GetFilePath("Config.json");
         InitializeLanguages(new CultureInfo("zh-hans"));
         BuildHost();
         
@@ -189,11 +175,8 @@ public partial class App : Application
         var logger = IAppHost.GetService<ILogger<App>>();
         logger.LogInformation("正在停止应用");
 
-        if (_floatingWindow != null)
-        {
-            _floatingWindow.CanClose = true;
-        }
-        
+        _floatingWindow?.CanClose = true;
+
         var configHandler = IAppHost.GetService<MainConfigHandler>();
         configHandler.Save();
         _desktopLifetime?.Shutdown();

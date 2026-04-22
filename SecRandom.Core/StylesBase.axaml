@@ -20,6 +20,7 @@
     <StyleInclude Source="/Styles/NavigationBackButton.axaml" />
     <StyleInclude Source="/Styles/PopupAnimations.axaml" />
     <StyleInclude Source="/Styles/StackPanelIntroAnimation.axaml" />
+    <StyleInclude Source="/Styles/TabStrip.axaml"/>
     
     <Style Selector=":is(Window)">
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />

@@ -9,6 +9,14 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
 {
     private ILogger<DesktopConfigService> Logger { get; } = logger;
     
+    public override bool IsConfigExists<T>(T fallback)
+    {
+        var filePath = fallback.ConfigFilePath;
+        Logger.LogInformation("在 {PATH} 判断配置...", filePath);
+
+        return File.Exists(filePath);
+    }
+    
     public override T LoadConfig<T>(T fallback)
     {
         var filePath = fallback.ConfigFilePath;
@@ -26,9 +34,9 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
             var json = File.ReadAllText(filePath);
             return JsonSerializer.Deserialize<T>(json, JsonOptions) ?? fallback;
         }
-        catch (JsonException ex)
+        catch
         {
-            Logger.LogWarning(ex, "配置解析失败，正在回滚并保存...");
+            Logger.LogWarning("加载失败，正在回滚并保存...");
             SaveConfig(fallback);
             return fallback;
         }
