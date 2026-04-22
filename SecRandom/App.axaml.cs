@@ -7,7 +7,6 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
-using HotAvalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -35,7 +34,6 @@ public partial class App : Application
     
     public override void Initialize()
     {
-        this.EnableHotReload();
         AvaloniaXamlLoader.Load(this);
     }
 
