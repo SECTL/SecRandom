@@ -4,6 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="clr-namespace:SecRandom.Core.Controls;assembly=SecRandom.Core"
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:system="clr-namespace:System;assembly=System.Runtime"
+             xmlns:core="clr-namespace:SecRandom.Core;assembly=SecRandom.Core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.AboutSettingsPage">
     <controls:StickyScrollViewer CollapsedHeight="58">
@@ -77,22 +79,112 @@
         </controls:StickyScrollViewer.HeaderContent>
         
         <StackPanel Classes="page-container animated-intro">
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
-            <fa:SettingsExpander Header="SecRandom"></fa:SettingsExpander>
+            <fa:SettingsExpander Header="SecRandom" IsExpanded="True"
+                                 Description="一个易用的点名/抽奖软件，专为教育场景设计，让课堂点名更高效透明">
+                <fa:SettingsExpander.Footer>
+                    <TextBlock Text="{x:Static core:GlobalConstants.DisplayVersion}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                </fa:SettingsExpander.Footer>
+                
+                <fa:SettingsExpander.IconSource>
+                    <fa:ImageIconSource Source="/Assets/AppLogo.png"/>
+                </fa:SettingsExpander.IconSource>
+                
+                <fa:SettingsExpanderItem Description="本项目基于 GNU General Public License v3.0 获得许可。">
+                    <TextBlock Background="Transparent" >
+                        <Run Text="Copyright (c) 2025-"/>
+                        <Run Text="{Binding Year, Source={x:Static system:DateTime.Now}, Mode=OneWay}" />
+                        SECTL
+                    </TextBlock>
+                </fa:SettingsExpanderItem>
+                
+                <fa:SettingsExpanderItem Content="常用链接">
+                    <fa:SettingsExpanderItem.Footer>
+                        <WrapPanel>
+                            <WrapPanel.Styles>
+                                <Style Selector="HyperlinkButton">
+                                    <Setter Property="Padding" Value="4"/>
+                                    <Setter Property="Margin" Value="2"/>
+                                </Style>
+                            </WrapPanel.Styles>
+                            
+                            <HyperlinkButton Click="UriNavigationCommands_OnClick"
+                                             CommandParameter="https://secrandom.sectl.top">
+                                <TextBlock Text="项目主页"/>
+                            </HyperlinkButton>
+                            
+                            <HyperlinkButton Click="UriNavigationCommands_OnClick"
+                                             CommandParameter="https://github.com/SECTL/SecRandom">
+                                <TextBlock Text="GitHub"/>
+                            </HyperlinkButton>
+                        </WrapPanel>
+                    </fa:SettingsExpanderItem.Footer>
+                </fa:SettingsExpanderItem>
+            </fa:SettingsExpander>
+            
+            <fa:SettingsExpander Header="黎泽懿_Aionflux" Description="SecRandom 主开发者" IsExpanded="True">
+                <fa:SettingsExpander.IconSource>
+                    <fa:ImageIconSource Source="/Assets/AuthorAionflux.png"/>
+                </fa:SettingsExpander.IconSource>
+                
+                <fa:SettingsExpanderItem Content="哔哩哔哩" Description="访问 黎泽懿_Aionflux 的哔哩哔哩账号"
+                                         IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xEC2E;}"
+                                         Click="UriNavigationCommands_OnClick" CommandParameter="https://space.bilibili.com/520571577" />
+                
+                <fa:SettingsExpanderItem Content="捐赠支持" Description="访问 黎泽懿_Aionflux 的爱发电账号，支持项目发展，感谢您的捐赠"
+                                         IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xEC2E;}"
+                                         Click="UriNavigationCommands_OnClick" CommandParameter="https://afdian.com/a/lzy0983" />
+                
+                <fa:SettingsExpanderItem Content="SECTL 思拓创联" Description="SecRandom 所属组织">
+                    <fa:SettingsExpanderItem.IconSource>
+                        <fa:ImageIconSource Source="/Assets/SECTLLogo.png"/>
+                    </fa:SettingsExpanderItem.IconSource>
+                    
+                    <fa:SettingsExpanderItem.Footer>
+                        <WrapPanel>
+                            <WrapPanel.Styles>
+                                <Style Selector="HyperlinkButton">
+                                    <Setter Property="Padding" Value="4"/>
+                                    <Setter Property="Margin" Value="2"/>
+                                </Style>
+                            </WrapPanel.Styles>
+                            
+                            <HyperlinkButton Click="UriNavigationCommands_OnClick"
+                                             CommandParameter="https://sectl.top">
+                                <TextBlock Text="组织主页"/>
+                            </HyperlinkButton>
+                        </WrapPanel>
+                    </fa:SettingsExpanderItem.Footer>
+                </fa:SettingsExpanderItem>
+            </fa:SettingsExpander>
+            
+            <fa:SettingsExpander Header="鸣谢" IconSource="{controls:FluentIconSource &#xE970;}" IsExpanded="True">
+                <fa:SettingsExpanderItem Content="在线人数" IconSource="{controls:FluentIconSource &#xECAA;}"
+                                         Description="感谢各位用户的支持，您的使用就是对我们最大的鼓励">
+                    <fa:SettingsExpanderItem.Footer>
+                        <TextBlock VerticalAlignment="Center" Text="(等待编写)" />
+                    </fa:SettingsExpanderItem.Footer>
+                </fa:SettingsExpanderItem>
+                
+                <fa:SettingsExpanderItem Content="贡献人员" Footer="(等待编写)"
+                                         IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xEC2E;}" />
+            </fa:SettingsExpander>
+            
+            <Expander IsExpanded="True">
+                <Expander.Header>
+                    <Grid ColumnDefinitions="* Auto" Margin="0 0 -12 0">
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="用户信息" />
+                            
+                        <Button Grid.Column="1" Theme="{StaticResource TransparentButton}"
+                                ToolTip.Tip="复制用户信息">
+                            <controls:FluentIcon Glyph="&#xE58B;" />
+                        </Button>
+                    </Grid>
+                </Expander.Header>
+                
+                <TextBlock>111</TextBlock>
+            </Expander>
         </StackPanel>
     </controls:StickyScrollViewer>
 </UserControl>
