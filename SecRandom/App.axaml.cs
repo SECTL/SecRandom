@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
+using Pastel;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Extensions.Registry;
@@ -155,14 +156,20 @@ public partial class App : Application
         {
             foreach (var resourceType in resources)
             {
-                using (logger.BeginScope(resourceType.FullName ?? "???"))
+                var settingsPageId = resourceType.FullName?.Split(".")[3];
+                if (settingsPageId == null) continue;
+                
+                var settingsPageName =
+                    typeof(Langs.Common.Resources).GetProperty("Settings_" + settingsPageId)?.GetValue(null) ?? "???";
+                
+                var properties = resourceType.DeclaredProperties;
+                
+                using var scope = logger.BeginScope($"[{settingsPageId}] {settingsPageName}");
+                foreach (var declaredProperty in properties)
                 {
-                    foreach (var declaredProperty in resourceType.DeclaredProperties)
+                    if (declaredProperty.Name.StartsWith("S_"))
                     {
-                        if (declaredProperty.Name.StartsWith("Settings_"))
-                        {
-                            logger.LogDebug(declaredProperty.Name);
-                        }
+                        logger.LogDebug("[{Name}] {Value}", declaredProperty.Name, declaredProperty.GetValue(null));
                     }
                 }
             }
