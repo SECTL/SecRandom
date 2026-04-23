@@ -35,9 +35,9 @@ public class FileLoggerProvider : ILoggerProvider
     {
         try
         {
-            var logs = Directory.GetFiles(Utils.GetFilePath("logs"));
+            var logs = Directory.GetFiles(Utils.GetDirectoryPath("logs"));
             var currentLogFile = GetLogFileName();
-            _logStream = File.Open(Path.Combine(Utils.GetFilePath("logs"), currentLogFile), FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+            _logStream = File.Open(Path.Combine(Utils.GetDirectoryPath("logs"), currentLogFile), FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
             _logWriter = new StreamWriter(_logStream)
             {
                 AutoFlush = true
@@ -82,7 +82,7 @@ public class FileLoggerProvider : ILoggerProvider
 
     private static List<string?> GetLogs()
     {
-        return Directory.GetFiles(Utils.GetFilePath("logs")).Select(Path.GetFileName).ToList();
+        return Directory.GetFiles(Utils.GetDirectoryPath("logs")).Select(Path.GetFileName).ToList();
     }
 
     internal void WriteLog(string log)
