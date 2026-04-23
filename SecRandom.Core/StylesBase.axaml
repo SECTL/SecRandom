@@ -88,4 +88,57 @@
             </Style>
         </Style>
     </Style>
+    
+    <Style Selector="Carousel.animated">
+        <Setter Property="PageTransition">
+            <Setter.Value>
+                <CompositePageTransition>
+                    <PageSlide Duration="0:0:0.3" Orientation="Horizontal"
+                               SlideOutEasing="0.76, 0, 0.24, 1"
+                               SlideInEasing="0.76, 0, 0.24, 1"/>
+                    <CrossFade Duration="0:0:0.3"/>
+                </CompositePageTransition>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <Style Selector="TabControl TabItem, TabStrip TabStripItem">
+        <Style Selector="^ TextBlock">
+            <Setter Property="FontWeight" Value="Regular"/>
+        </Style>
+    </Style>
+
+    <Style Selector="TabControl.compact TabItem">
+        <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="TextElement.FontSize" Value="14"/>
+            <Setter Property="TextElement.FontWeight" Value="Medium"/>
+        </Style>
+        <Setter Property="MinHeight" Value="28"/>
+    </Style>
+    
+    <Style Selector="TabStrip.compact TabStripItem">
+        <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="TextElement.FontSize" Value="14"/>
+            <Setter Property="TextElement.FontWeight" Value="Medium"/>
+        </Style>
+        <Setter Property="MinHeight" Value="28"/>
+    </Style>
+    
+    <Style Selector="Expander.compact">
+        <Setter Property="Padding" Value="8"/>
+        <Style Selector="^ /template/ ToggleButton#ExpanderHeader">
+            <Setter Property="MinHeight" Value="36"/>
+        </Style>
+        <Style Selector="^ /template/ ToggleButton#ExpanderHeader /template/ Border#Root">
+            <Setter Property="Padding" Value="8 0 0 0"/>
+        </Style>
+        <Style Selector="^ /template/ ToggleButton#ExpanderHeader /template/ Border#ExpandCollapseChevronBorder">
+            <Setter Property="Margin" Value="4,-8,8,-8"/>
+        </Style>
+    </Style>
+    
+    <Style Selector="Expander.stretch-header /template/ ToggleButton#ExpanderHeader /template/ ContentPresenter#ContentPresenter">
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    </Style>
 </Styles>
