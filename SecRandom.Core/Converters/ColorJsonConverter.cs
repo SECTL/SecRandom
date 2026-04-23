@@ -4,7 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Converters;
 using Avalonia.Media;
 
-namespace SecRandom.Core.Abstraction;
+namespace SecRandom.Core.Converters;
 
 public class ColorJsonConverter : JsonConverter<Color>
 {

@@ -1,0 +1,167 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+        <xsd:element name="root" msdata:IsDataSet="true">
+            
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="C_VersionNotice" xml:space="preserve">
+        <value>版本公告</value>
+    </data>
+    <data name="C_VersionNoticeText" xml:space="preserve">
+        <value>当前处于 Avalonia 重构阶段，暂不新增功能，重心放在性能优化与问题修复。
+敬请期待基于 Avalonia 架构的 v3 版本！
+bug 报 GitHub Issue 或 SECTL QQ组织群 - 833875216</value>
+    </data>
+    <data name="C_VersionNoticeHide" xml:space="preserve">
+        <value>不再显示</value>
+    </data>
+    <data name="S_Behavior" xml:space="preserve">
+        <value>行为</value>
+    </data>
+    <data name="S_Behavior_Autostart" xml:space="preserve">
+        <value>开机自启</value>
+    </data>
+    <data name="S_Behavior_Autostart_D" xml:space="preserve">
+        <value>设置软件是否随系统启动自动运行</value>
+    </data>
+    <data name="S_Behavior_ShowStartupWindow" xml:space="preserve">
+        <value>启动显示主窗口</value>
+    </data>
+    <data name="S_Behavior_ShowStartupWindow_D" xml:space="preserve">
+        <value>设置软件启动时是否自动显示主窗口</value>
+    </data>
+    <data name="S_Behavior_AutoSaveWindowSize" xml:space="preserve">
+        <value>自动保存窗口大小</value>
+    </data>
+    <data name="S_Behavior_AutoSaveWindowSize_D" xml:space="preserve">
+        <value>是否自动保存窗口大小</value>
+    </data>
+    <data name="S_Behavior_MainWindowTopmostMode" xml:space="preserve">
+        <value>主窗口置顶模式</value>
+    </data>
+    <data name="S_Behavior_MainWindowTopmostMode_D" xml:space="preserve">
+        <value>选择主窗口置顶方式（UIAccess 置顶需以管理员运行）</value>
+    </data>
+    <data name="S_Behavior_BackgroundResident" xml:space="preserve">
+        <value>后台驻留</value>
+    </data>
+    <data name="S_Behavior_BackgroundResident_D" xml:space="preserve">
+        <value>关闭所有窗口后是否仍在后台常驻</value>
+    </data>
+    <data name="S_Behavior_UrlProtocol" xml:space="preserve">
+        <value>URL 协议注册 &amp; IPC 服务</value>
+    </data>
+    <data name="S_Behavior_UrlProtocol_D" xml:space="preserve">
+        <value>注册自定义 URL 协议 (secrandom://)，并启用 IPC 通信，支持链接启动与外部联动</value>
+    </data>
+    <data name="S_Personalized_Theme" xml:space="preserve">
+        <value>主题模式</value>
+    </data>
+    <data name="S_Personalized_Theme_D" xml:space="preserve">
+        <value>选择软件界面主题样式</value>
+    </data>
+    <data name="S_Personalized_Language" xml:space="preserve">
+        <value>显示语言</value>
+    </data>
+    <data name="S_Personalized_Language_D" xml:space="preserve">
+        <value>切换软件界面语言（重启软件后生效）</value>
+    </data>
+    <data name="S_Personalized_Font" xml:space="preserve">
+        <value>字体</value>
+    </data>
+    <data name="S_Personalized_Font_D" xml:space="preserve">
+        <value>设置软件界面显示字体（重启软件后生效）</value>
+    </data>
+    <data name="S_Personalized_FontWeight" xml:space="preserve">
+        <value>字体粗细</value>
+    </data>
+    <data name="S_Personalized_FontWeight_D" xml:space="preserve">
+        <value>设置软件界面字体粗细（重启软件后生效）</value>
+    </data>
+    <data name="S_Personalized_DpiScale" xml:space="preserve">
+        <value>DPI 缩放</value>
+    </data>
+    <data name="S_Personalized_DpiScale_D" xml:space="preserve">
+        <value>调整软件界面缩放比例（重启软件后生效）</value>
+    </data>
+    <data name="S_Personalized_ThemeColor" xml:space="preserve">
+        <value>主题颜色</value>
+    </data>
+    <data name="S_Personalized_ThemeColor_D" xml:space="preserve">
+        <value>设置软件界面主题色彩</value>
+    </data>
+    <data name="C_ThemeManager" xml:space="preserve">
+        <value>主题管理</value>
+    </data>
+    <data name="C_ThemeManager_D" xml:space="preserve">
+        <value>打开主题管理与背景设置</value>
+    </data>
+    <data name="O_MainWindowTopmostMode_None" xml:space="preserve">
+        <value>关闭置顶</value>
+    </data>
+    <data name="O_MainWindowTopmostMode_Topmost" xml:space="preserve">
+        <value>置顶</value>
+    </data>
+    <data name="O_MainWindowTopmostMode_UiAccess" xml:space="preserve">
+        <value>UIAccess 置顶</value>
+    </data>
+    <data name="O_Theme_Light" xml:space="preserve">
+        <value>浅色</value>
+    </data>
+    <data name="O_Theme_Dark" xml:space="preserve">
+        <value>深色</value>
+    </data>
+    <data name="O_Theme_Auto" xml:space="preserve">
+        <value>跟随系统</value>
+    </data>
+    <data name="S_Personalized" xml:space="preserve">
+        <value>个性化</value>
+    </data>
+    <data name="O_FontWeight_Thin" xml:space="preserve">
+        <value>极细</value><comment>FontWeight 100</comment>
+    </data>
+    <data name="O_FontWeight_ExtraLight" xml:space="preserve">
+        <value>特细</value><comment>FontWeight 200</comment>
+    </data>
+    <data name="O_FontWeight_Light" xml:space="preserve">
+        <value>细体</value><comment>FontWeight 300</comment>
+    </data>
+    <data name="O_FontWeight_Regular" xml:space="preserve">
+        <value>常规</value><comment>FontWeight 400</comment>
+    </data>
+    <data name="O_FontWeight_Medium" xml:space="preserve">
+        <value>中等</value><comment>FontWeight 500</comment>
+    </data>
+    <data name="O_FontWeight_SemiBold" xml:space="preserve">
+        <value>半粗</value><comment>FontWeight 600</comment>
+    </data>
+    <data name="O_FontWeight_Bold" xml:space="preserve">
+        <value>粗体</value><comment>FontWeight 700</comment>
+    </data>
+    <data name="O_FontWeight_ExtraBold" xml:space="preserve">
+        <value>特粗</value><comment>FontWeight 800</comment>
+    </data>
+    <data name="O_FontWeight_Black" xml:space="preserve">
+        <value>极粗</value><comment>FontWeight 900</comment>
+    </data>
+    <data name="O_DpiScale_Auto" xml:space="preserve">
+        <value>自动</value>
+    </data>
+    <data name="S_DataManagement" xml:space="preserve">
+        <value>数据管理</value>
+    </data>
+</root>

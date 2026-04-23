@@ -2,7 +2,186 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
+             xmlns:lc="clr-namespace:SecRandom.Langs.Common"
+             xmlns:lsb="clr-namespace:SecRandom.Langs.SettingsPages.Basic"
+             xmlns:controls="clr-namespace:SecRandom.Core.Controls;assembly=SecRandom.Core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.SettingsPages.BasicSettingsPage">
-    Welcome to Avalonia!
+             x:Class="SecRandom.Views.SettingsPages.BasicSettingsPage"
+             x:DataType="local:BasicSettingsPage"
+             d:DataContext="{d:DesignInstance local:BasicSettingsPage}">
+    <ScrollViewer>
+        <StackPanel Classes="page-container animated-intro">
+            <fa:InfoBar Title="{x:Static lsb:Resources.C_VersionNotice}"
+                        Severity="Informational" IsClosable="False"
+                        IsOpen="{Binding Settings.ShowVersionNotice, Mode=OneWay}">
+                <fa:InfoBar.ActionButton>
+                    <Button Content="{x:Static lsb:Resources.C_VersionNoticeHide}"
+                            Click="HideVersionNoticeButton_OnClick" />
+                </fa:InfoBar.ActionButton>
+                
+                <TextBlock Text="{x:Static lsb:Resources.C_VersionNoticeText}" Margin="0 0 0 8" />
+            </fa:InfoBar>
+            
+            <controls:IconText x:Name="S_Behavior"
+                               Text="{x:Static lsb:Resources.S_Behavior}"
+                               Glyph="&#xE84F;" Margin="0 0 0 4" />
+            
+            <fa:SettingsExpander x:Name="S_Behavior_Autostart"
+                                 Header="{x:Static lsb:Resources.S_Behavior_Autostart}"
+                                 Description="{x:Static lsb:Resources.S_Behavior_Autostart_D}"
+                                 IconSource="{controls:FluentIconSource &#xE160;}">
+                <fa:SettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.Autostart}" />
+                </fa:SettingsExpander.Footer>
+            </fa:SettingsExpander>
+            
+            <fa:SettingsExpander x:Name="S_Behavior_ShowStartupWindow"
+                                 Header="{x:Static lsb:Resources.S_Behavior_ShowStartupWindow}"
+                                 Description="{x:Static lsb:Resources.S_Behavior_ShowStartupWindow_D}"
+                                 IconSource="{controls:FluentIconSource &#xF482;}">
+                <fa:SettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.ShowStartupWindow}" />
+                </fa:SettingsExpander.Footer>
+            </fa:SettingsExpander>
+            
+            <fa:SettingsExpander x:Name="S_Behavior_AutoSaveWindowSize"
+                                 Header="{x:Static lsb:Resources.S_Behavior_AutoSaveWindowSize}"
+                                 Description="{x:Static lsb:Resources.S_Behavior_AutoSaveWindowSize_D}"
+                                 IconSource="{controls:FluentIconSource &#xEEB4;}">
+                <fa:SettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.AutoSaveWindowSize}" />
+                </fa:SettingsExpander.Footer>
+            </fa:SettingsExpander>
+            
+            <fa:SettingsExpander x:Name="S_Behavior_MainWindowTopmostMode"
+                                 Header="{x:Static lsb:Resources.S_Behavior_MainWindowTopmostMode}"
+                                 Description="{x:Static lsb:Resources.S_Behavior_MainWindowTopmostMode_D}"
+                                 IconSource="{controls:FluentIconSource &#xEDA0;}">
+                <fa:SettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.MainWindowTopmostMode}">
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_MainWindowTopmostMode_None}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_MainWindowTopmostMode_Topmost}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_MainWindowTopmostMode_UiAccess}" />
+                    </ComboBox>
+                </fa:SettingsExpander.Footer>
+            </fa:SettingsExpander>
+            
+            <fa:SettingsExpander x:Name="S_Behavior_BackgroundResident"
+                                 Header="{x:Static lsb:Resources.S_Behavior_BackgroundResident}"
+                                 Description="{x:Static lsb:Resources.S_Behavior_BackgroundResident_D}"
+                                 IconSource="{controls:FluentIconSource &#xEE82;}">
+                <fa:SettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.BackgroundResident}" />
+                </fa:SettingsExpander.Footer>
+            </fa:SettingsExpander>
+            
+            <fa:SettingsExpander x:Name="S_Behavior_UrlProtocol"
+                                 Header="{x:Static lsb:Resources.S_Behavior_UrlProtocol}"
+                                 Description="{x:Static lsb:Resources.S_Behavior_UrlProtocol_D}"
+                                 IconSource="{controls:FluentIconSource &#xEAAF;}">
+                <fa:SettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.UrlProtocol}" />
+                </fa:SettingsExpander.Footer>
+            </fa:SettingsExpander>
+            
+            <Separator Margin="0 12 0 4" />
+            <controls:IconText x:Name="S_Personalized"
+                               Text="{x:Static lsb:Resources.S_Personalized}"
+                               Glyph="&#xE51D;" Margin="0 0 0 4" />
+            
+            <fa:SettingsExpander x:Name="S_Personalized_Theme"
+                                 Header="{x:Static lsb:Resources.S_Personalized_Theme}"
+                                 Description="{x:Static lsb:Resources.S_Personalized_Theme_D}"
+                                 IconSource="{controls:FluentIconSource &#xE5CA;}">
+                <fa:SettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.Theme}">
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_Theme_Light}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_Theme_Dark}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_Theme_Auto}" />
+                    </ComboBox>
+                </fa:SettingsExpander.Footer>
+            </fa:SettingsExpander>
+            
+            <fa:SettingsExpander Header="{x:Static lsb:Resources.C_ThemeManager}"
+                                 Description="{x:Static lsb:Resources.C_ThemeManager_D}"
+                                 IconSource="{controls:FluentIconSource &#xEC49;}"
+                                 IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xE44E;}" />
+            
+            <fa:SettingsExpander x:Name="S_Personalized_Language"
+                                 Header="{x:Static lsb:Resources.S_Personalized_Language}"
+                                 Description="{x:Static lsb:Resources.S_Personalized_Language_D}"
+                                 IconSource="{controls:FluentIconSource &#xEACD;}">
+                <fa:SettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.Language}">
+                        <ComboBoxItem Content="简体中文" />
+                        <ComboBoxItem Content="English" />
+                        <ComboBoxItem Content="日本語" />
+                    </ComboBox>
+                </fa:SettingsExpander.Footer>
+            </fa:SettingsExpander>
+            
+            <fa:SettingsExpander x:Name="S_Personalized_Font"
+                                 Header="{x:Static lsb:Resources.S_Personalized_Font}"
+                                 Description="{x:Static lsb:Resources.S_Personalized_Font_D}"
+                                 IconSource="{controls:FluentIconSource &#xF26E;}">
+                <fa:SettingsExpander.Footer>
+                    <TextBlock Text="{x:Static lc:Resources.C_ToBeWritten}"
+                               VerticalAlignment="Center" />
+                </fa:SettingsExpander.Footer>
+            </fa:SettingsExpander>
+            
+            <fa:SettingsExpander x:Name="S_Personalized_FontWeight"
+                                 Header="{x:Static lsb:Resources.S_Personalized_FontWeight}"
+                                 Description="{x:Static lsb:Resources.S_Personalized_FontWeight_D}"
+                                 IconSource="{controls:FluentIconSource &#xF1F1;}">
+                <fa:SettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.FontWeight}">
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Thin}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_ExtraLight}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Light}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Regular}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Medium}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_SemiBold}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Bold}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_ExtraBold}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Black}" />
+                    </ComboBox>
+                </fa:SettingsExpander.Footer>
+            </fa:SettingsExpander>
+            
+            <fa:SettingsExpander x:Name="S_Personalized_DpiScale"
+                                 Header="{x:Static lsb:Resources.S_Personalized_DpiScale}"
+                                 Description="{x:Static lsb:Resources.S_Personalized_DpiScale_D}"
+                                 IconSource="{controls:FluentIconSource &#xF4CE;}">
+                <fa:SettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.DpiScale}">
+                        <ComboBoxItem Content="100%" />
+                        <ComboBoxItem Content="125%" />
+                        <ComboBoxItem Content="150%" />
+                        <ComboBoxItem Content="175%" />
+                        <ComboBoxItem Content="200%" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_DpiScale_Auto}" />
+                    </ComboBox>
+                </fa:SettingsExpander.Footer>
+            </fa:SettingsExpander>
+            
+            <fa:SettingsExpander x:Name="S_Personalized_ThemeColor"
+                                 Header="{x:Static lsb:Resources.S_Personalized_ThemeColor}"
+                                 Description="{x:Static lsb:Resources.S_Personalized_ThemeColor_D}"
+                                 IconSource="{controls:FluentIconSource &#xE51D;}">
+                <fa:SettingsExpander.Footer>
+                    <ColorPicker Color="{Binding Settings.ThemeColor}" />
+                </fa:SettingsExpander.Footer>
+            </fa:SettingsExpander>
+            
+            <Separator Margin="0 12 0 4" />
+            <controls:IconText x:Name="S_DataManagement"
+                               Text="{x:Static lsb:Resources.S_DataManagement}"
+                               Glyph="&#xE5E4;" Margin="0 0 0 4" />
+            
+            <TextBlock Text="{x:Static lc:Resources.C_ToBeWritten}" />
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

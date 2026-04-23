@@ -4,7 +4,8 @@
         xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
         xmlns:controls="clr-namespace:SecRandom.Core.Controls"
         xmlns:system="clr-namespace:System;assembly=System.Runtime"
-        xmlns:windowing="clr-namespace:FluentAvalonia.UI.Windowing;assembly=FluentAvalonia">
+        xmlns:windowing="clr-namespace:FluentAvalonia.UI.Windowing;assembly=FluentAvalonia"
+        xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia">
     <Styles.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -140,5 +141,17 @@
     <Style Selector="Expander.stretch-header /template/ ToggleButton#ExpanderHeader /template/ ContentPresenter#ContentPresenter">
         <Setter Property="HorizontalAlignment" Value="Stretch"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    </Style>
+    
+    <Style Selector="fa|SettingsExpanderItem">
+        <Style Selector="^ ToggleSwitch">
+            <Setter Property="Margin" Value="0 -12"/>
+            <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+                <Setter Property="IsVisible" Value="False"/>
+            </Style>
+        </Style>
+        <Style Selector="^ Slider">
+            <Setter Property="Margin" Value="0 -12"/>
+        </Style>
     </Style>
 </Styles>

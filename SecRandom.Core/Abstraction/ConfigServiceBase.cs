@@ -1,4 +1,6 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using SecRandom.Core.Converters;
 
 namespace SecRandom.Core.Abstraction;
 
@@ -8,7 +10,9 @@ public abstract class ConfigServiceBase
     {
         WriteIndented = true,
         PropertyNameCaseInsensitive = true,
-        Converters = { new ColorJsonConverter() }
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        Converters = { new ColorJsonConverter() },
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
     public abstract bool IsConfigExists<T>(T fallback) where T : ConfigBase;
