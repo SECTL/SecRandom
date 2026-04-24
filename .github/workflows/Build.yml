@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "发布版本（默认：VERSION 文件）"
+        description: "发布版本（默认：最新的 tag）"
         required: false
         default: ""
       create_release:
@@ -128,14 +128,14 @@ jobs:
           elif [ -n "${GITHUB_REF_NAME:-}" ]; then
             version="${GITHUB_REF_NAME}"
           elif [ -f VERSION ]; then
-            version="$(cat VERSION | tr -d '\r\n\t ' )"
+            version="$(git describe --tags --abbrev=0 | tr -d '\r\n\t ' )"
           else
             version="${GITHUB_SHA}"
           fi
 
           version_no_v="${version#v}"
           major_version="v${version_no_v%%.*}"
-          changelog="CHANGELOG/${major_version}/${version}/CHANGELOG.md"
+          changelog="CHANGELOG/v3/${version}/CHANGELOG.md"
           if [ "${create_release}" = "true" ] && [ ! -f "${changelog}" ]; then
             echo "Missing changelog: ${changelog}"
             exit 1

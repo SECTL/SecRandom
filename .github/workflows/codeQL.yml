@@ -26,13 +26,15 @@ jobs:
     steps:
       - name: 检出仓库
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
 
       - name: 安装 .NET SDK
         if: ${{ matrix.language == 'csharp' }}
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-          dotnet-quality: preview
 
       - name: 初始化 CodeQL
         uses: github/codeql-action/init@v4
