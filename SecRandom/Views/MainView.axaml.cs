@@ -121,6 +121,17 @@ public partial class MainView : UserControl, INavigationPageFactory
         ViewModel.SelectedNavigationViewItem = item;
     }
 
+    public void OpenDrawer(object content)
+    {
+        ViewModel.DrawerContent = content;
+        ViewModel.IsDrawerOpen = true;
+    }
+
+    public void CloseDrawer()
+    {
+        ViewModel.IsDrawerOpen = false;
+    }
+    
     private void CoreNavigate(PageInfo info)
     {
         if (info.Id == "settings")

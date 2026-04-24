@@ -16,4 +16,8 @@ public partial class SettingsViewModel : ObservableRecipient
 
     public ObservableCollection<string> NavigationHistory { get; } = [];
     [ObservableProperty] private bool _canGoBack = false;
+
+    [ObservableProperty] private bool _isDrawerOpen = false;
+    [ObservableProperty] private object? _drawerContent = false;
+    [ObservableProperty] private bool _isRequestedRestart = false;
 }

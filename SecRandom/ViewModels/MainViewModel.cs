@@ -15,4 +15,8 @@ public partial class MainViewModel(MainConfigHandler configHandler)
     public ObservableCollection<NavigationViewItemBase> FlattenNavigationItems { get; } = [];
     public ObservableCollection<NavigationViewItemBase> NavigationViewItems { get; } = [];
     public ObservableCollection<NavigationViewItemBase> NavigationViewFooterItems { get; } = [];
+
+    [ObservableProperty] private bool _isDrawerOpen = false;
+    [ObservableProperty] private object? _drawerContent = false;
+    [ObservableProperty] private bool _isRequestedRestart = false;
 }

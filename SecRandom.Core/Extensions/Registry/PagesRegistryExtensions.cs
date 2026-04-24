@@ -16,7 +16,7 @@ public static class PagesRegistryExtensions
     
     public static IServiceCollection AddMainPageSeparator(this IServiceCollection services, PageLocation location = PageLocation.Top)
     {
-        PagesRegistryService.MainItems.Add(new PageInfo(true));
+        PagesRegistryService.MainItems.Add(new PageInfo(true, location));
         return services;
     }
     
@@ -27,7 +27,7 @@ public static class PagesRegistryExtensions
     
     public static IServiceCollection AddSettingsPageSeparator(this IServiceCollection services, PageLocation location = PageLocation.Top)
     {
-        PagesRegistryService.SettingsItems.Add(new PageInfo(true));
+        PagesRegistryService.SettingsItems.Add(new PageInfo(true, location));
         return services;
     }
 

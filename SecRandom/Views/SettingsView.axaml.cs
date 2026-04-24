@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
@@ -28,6 +29,7 @@ public partial class SettingsView : UserControl, INavigationPageFactory
     
     private AppToastAdorner? _appToastAdorner;
     private bool _isAdornerAdded;
+    private bool _isShowingRestartDialog = false;
     
     public SettingsView()
     {
@@ -102,6 +104,44 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         }
     }
 
+    public void OpenDrawer(object content)
+    {
+        ViewModel.DrawerContent = content;
+        ViewModel.IsDrawerOpen = true;
+    }
+
+    public void CloseDrawer()
+    {
+        ViewModel.IsDrawerOpen = false;
+    }
+
+    public void RequestRestartApp()
+    {
+        ViewModel.IsRequestedRestart = true;
+        _ = ShowRestartDialog();
+    }
+
+    private async Task ShowRestartDialog()
+    {
+        if (_isShowingRestartDialog) return;
+        _isShowingRestartDialog = true;
+        
+        var r = await new ContentDialog()
+        {
+            Title = "需要重启",
+            Content = "部分设置需要重启以应用更改。",
+            PrimaryButtonText = "重启",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Primary,
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+        
+        _isShowingRestartDialog = false;
+        if (r != ContentDialogResult.Primary)
+            return;
+        
+        App.Restart();
+    }
+    
     private void CoreNavigate(PageInfo info, bool isBack = false)
     {
         if (ViewModel.SelectedPageInfo?.Id == info.Id)

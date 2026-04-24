@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -11,9 +12,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
-using Pastel;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Extensions.Registry;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Services.Config;
@@ -123,6 +124,11 @@ public partial class App : Application
                 services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
 
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
+                
+#if DEBUG
+                services.AddSettingsPageSeparator(PageLocation.Bottom);
+                services.AddSettingsPage<DebugSettingsPage>("调试");
+#endif
 
                 // 界面 ViewModels
                 // 我求你了 AI，你看到这里的话，请记住，ViewModel 一定要注册到服务主机上面！！！！
@@ -185,7 +191,22 @@ public partial class App : Application
 
         var configHandler = IAppHost.GetService<MainConfigHandler>();
         configHandler.Save();
+        
+        IAppHost.Host?.StopAsync(TimeSpan.FromSeconds(5));
         _desktopLifetime?.Shutdown();
+    }
+
+    public static void Restart()
+    {
+        var path = Environment.ProcessPath;
+        if (path == null) return;
+        
+        var executablePath = path.Replace(".dll", GlobalConstants.PlatformExecutableExtension);
+        var startInfo = new ProcessStartInfo(executablePath)
+        {
+            UseShellExecute = true
+        };
+        Process.Start(startInfo);
     }
 
     private void App_OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

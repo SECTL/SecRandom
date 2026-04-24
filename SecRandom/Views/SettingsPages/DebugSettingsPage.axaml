@@ -1,0 +1,26 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:controls="clr-namespace:SecRandom.Core.Controls;assembly=SecRandom.Core"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SecRandom.Views.SettingsPages.DebugSettingsPage">
+    <UserControl.Resources>
+        <StackPanel x:Key="DrawerTest" Margin="16" Width="300">
+            <TextBlock>Drawer 测试</TextBlock>
+        </StackPanel>
+    </UserControl.Resources>
+    
+    <ScrollViewer>
+        <StackPanel Classes="page-container animated-intro">
+            <fa:SettingsExpander IconSource="{controls:FluentIconSource &#xE06F;}"
+                                 Header="UI 功能测试" IsExpanded="True">
+                <fa:SettingsExpanderItem Content="发送 Toast" IsClickEnabled="True"
+                                         Click="SendToast_OnClick" />
+                <fa:SettingsExpanderItem Content="打开 Drawer" IsClickEnabled="True"
+                                         Click="OpenDrawer_Test" />
+            </fa:SettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
