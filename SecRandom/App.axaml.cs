@@ -198,8 +198,8 @@ public partial class App : Application
 
         _floatingWindow?.CanClose = true;
 
-        var configHandler = IAppHost.GetService<MainConfigHandler>();
-        configHandler.Save();
+        IAppHost.GetService<MainConfigHandler>().Save();
+        IAppHost.GetService<IProfileService>().SaveProfile();
         
         IAppHost.Host?.StopAsync(TimeSpan.FromSeconds(5));
         _desktopLifetime?.Shutdown();

@@ -10,5 +10,5 @@ public interface IProfileService
     public PrizeList? CurrentPrizeList { get; }
     public PrizeHistory? CurrentPrizeHistory { get; }
 
-    public void Save();
+    public void SaveProfile();
 }

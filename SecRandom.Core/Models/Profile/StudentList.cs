@@ -4,9 +4,18 @@ using SecRandom.Core.Abstraction;
 
 namespace SecRandom.Core.Models.Profile;
 
-public class StudentList(string name) : ConfigBase
+public class StudentList : ProfileConfigBase
 {
-    [JsonIgnore] public override string ConfigFilePath => Utils.GetFilePath("data", "list", "roll_call_list", name);
+    [JsonIgnore] public sealed override string Name { get; set; } = string.Empty;
+    [JsonIgnore] public override string ConfigFilePath =>
+        Utils.GetFilePath("data", "list", "roll_call_list", $"{Name}.json");
     
     public ObservableCollection<Student> Students { get; set; } = [];
+    
+    public StudentList() { }
+    
+    public StudentList(string name)
+    {
+        Name = name;
+    }
 }

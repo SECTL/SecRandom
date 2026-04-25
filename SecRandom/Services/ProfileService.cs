@@ -33,7 +33,7 @@ public class ProfileService : IProfileService
         CurrentPrizeHistory = _prizeHistoryConfig.Data;
     }
     
-    public void Save()
+    public void SaveProfile()
     {
         _studentListConfig?.Save();
         _studentHistoryConfig?.Save();
