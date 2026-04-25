@@ -6,6 +6,7 @@ public enum DrawStatus
     NoCandidates,
     NoEligibleCandidates,
     RepeatLimitExhausted,
+    InvalidWeight,
     Failure
 }
 
