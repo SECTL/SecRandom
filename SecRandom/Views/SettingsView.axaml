@@ -14,6 +14,14 @@
     <Grid RowDefinitions="Auto *">
         <Border Grid.Row="0" Height="48">
             <StackPanel Orientation="Horizontal" Margin="8" Spacing="8">
+                <Button Name="TogglePaneButton"
+                        Theme="{StaticResource PaneToggleButtonStyle}"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Margin="-7 -8 -8 -8"
+                        Click="TogglePaneButton_OnClick"
+                        IsVisible="{Binding !#NavigationView.IsPaneToggleButtonVisible}"
+                        MinWidth="40" Width="48"/>
+                
                 <Button Name="BackButton"
                         HorizontalAlignment="Center" VerticalAlignment="Center"
                         Margin="-7 -8 -15 -8"
@@ -27,7 +35,7 @@
                 <Image Source="/Assets/AppLogo.png"
                        Width="18" Height="18"
                        VerticalAlignment="Center"
-                       Margin="7 0 0 2"
+                       Margin="8 0 0 0"
                        IsHitTestVisible="False"/>
 
                 <TextBlock Text="SecRandom"
@@ -45,6 +53,12 @@
                            FooterMenuItemsSource="{Binding ViewModel.NavigationViewFooterItems, Mode=OneWay}"
                            SelectedItem="{Binding ViewModel.SelectedNavigationViewItem, UpdateSourceTrigger=PropertyChanged}"
                            ItemInvoked="NavigationView_OnItemInvoked">
+            <fa:NavigationView.Styles>
+                <Style Selector="fa|NavigationView#NavigationView:minimal">
+                    <Setter Property="IsPaneToggleButtonVisible" Value="False"/>
+                </Style>
+            </fa:NavigationView.Styles>
+            
             <controls:DrawerHost IsDrawerOpen="{Binding ViewModel.IsDrawerOpen, Mode=TwoWay}"
                                  DrawerPlacement="Right"
                                  DrawerContent="{Binding ViewModel.DrawerContent}">

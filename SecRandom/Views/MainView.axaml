@@ -23,7 +23,6 @@
                 <Image Source="/Assets/AppLogo.png"
                        Width="18" Height="18"
                        VerticalAlignment="Center"
-                       Margin="0 0 0 2"
                        IsHitTestVisible="False"/>
 
                 <TextBlock Text="SecRandom"

@@ -162,6 +162,11 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         NavigationFrame.NavigateFromObject(info);
     }
 
+    private void TogglePaneButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        NavigationView.IsPaneOpen = !NavigationView.IsPaneOpen;
+    }
+
     private void BackButton_OnClick(object? sender, RoutedEventArgs e)
     {
         var history = ViewModel.NavigationHistory;
