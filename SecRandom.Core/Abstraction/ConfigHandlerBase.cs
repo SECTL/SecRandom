@@ -11,6 +11,17 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
     private ConfigServiceBase ConfigService { get; }
     private Func<T> FallbackFactory { get; }
     
+    protected ConfigHandlerBase(Func<T> fallbackFactory)
+    {
+        Logger = (ILogger)IAppHost.Host?.Services.GetService(typeof(ILogger<>).MakeGenericType(GetType()))!;
+        ConfigService = IAppHost.GetService<ConfigServiceBase>();
+        FallbackFactory = fallbackFactory;
+
+        Logger.LogInformation("加载配置文件...");
+        Data = ConfigService.LoadConfig(FallbackFactory());
+        Data.PropertyChanged += Data_OnPropertyChanged;
+    }
+    
     protected ConfigHandlerBase(ILogger logger, ConfigServiceBase configService, Func<T> fallbackFactory)
     {
         Logger = logger;

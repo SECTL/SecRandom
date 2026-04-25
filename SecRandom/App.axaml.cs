@@ -14,9 +14,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Extensions.Registry;
 using SecRandom.Core.Services.Logging;
+using SecRandom.Services;
 using SecRandom.Services.Config;
 using SecRandom.ViewModels;
 using SecRandom.Views;
@@ -113,6 +115,7 @@ public partial class App : Application
                 services.AddSingleton<MainConfigHandler>();
                 
                 // 服务
+                services.AddSingleton<IProfileService, ProfileService>();
                 
                 // 窗口
                 services.AddTransient<MainView>();
@@ -151,6 +154,8 @@ public partial class App : Application
         
         var lifetime = IAppHost.GetService<IHostApplicationLifetime>();
         lifetime.ApplicationStopping.Register(Stop);
+
+        IAppHost.GetService<IProfileService>();
         
         // 启动服务主机
         _ = IAppHost.Host.StartAsync();

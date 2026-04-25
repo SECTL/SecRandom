@@ -4,9 +4,11 @@ namespace SecRandom.Core.Abstraction.Services;
 
 public interface IProfileService
 {
-    public StudentList CurrentStudentList { get; }
-    public StudentHistory CurrentStudentHistory { get; }
+    public StudentList? CurrentStudentList { get; }
+    public StudentHistory? CurrentStudentHistory { get; }
     
-    public PrizeList CurrentPrizeList { get; }
-    public PrizeHistory CurrentPrizeHistory { get; }
+    public PrizeList? CurrentPrizeList { get; }
+    public PrizeHistory? CurrentPrizeHistory { get; }
+
+    public void Save();
 }
