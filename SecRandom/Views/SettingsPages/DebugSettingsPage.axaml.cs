@@ -6,7 +6,7 @@ using SecRandom.Core.Helpers.UI;
 
 namespace SecRandom.Views.SettingsPages;
 
-[PageInfo("settings.debug", "\uE2C7", location: PageLocation.Bottom)]
+[PageInfo("settings.debug", "\uE2C8", location: PageLocation.Bottom)]
 public partial class DebugSettingsPage : UserControl
 {
     public DebugSettingsPage()

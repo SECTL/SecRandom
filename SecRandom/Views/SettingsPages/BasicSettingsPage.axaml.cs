@@ -7,7 +7,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages;
 
-[PageInfo("settings.basic", "\uf4c4")]
+[PageInfo("settings.basic", "\uF4C5")]
 public partial class BasicSettingsPage : UserControl
 {
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();

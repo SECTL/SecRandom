@@ -33,7 +33,7 @@
             <fa:SettingsExpander x:Name="S_Behavior_Autostart"
                                  Header="{x:Static lsb:Resources.S_Behavior_Autostart}"
                                  Description="{x:Static lsb:Resources.S_Behavior_Autostart_D}"
-                                 IconSource="{controls:FluentIconSource &#xE160;}">
+                                 IconSource="{controls:FluentIconSource &#xE161;}">
                 <fa:SettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.Autostart}" />
                 </fa:SettingsExpander.Footer>
@@ -42,7 +42,7 @@
             <fa:SettingsExpander x:Name="S_Behavior_ShowStartupWindow"
                                  Header="{x:Static lsb:Resources.S_Behavior_ShowStartupWindow}"
                                  Description="{x:Static lsb:Resources.S_Behavior_ShowStartupWindow_D}"
-                                 IconSource="{controls:FluentIconSource &#xF482;}">
+                                 IconSource="{controls:FluentIconSource &#xF483;}">
                 <fa:SettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.ShowStartupWindow}" />
                 </fa:SettingsExpander.Footer>
@@ -51,7 +51,7 @@
             <fa:SettingsExpander x:Name="S_Behavior_AutoSaveWindowSize"
                                  Header="{x:Static lsb:Resources.S_Behavior_AutoSaveWindowSize}"
                                  Description="{x:Static lsb:Resources.S_Behavior_AutoSaveWindowSize_D}"
-                                 IconSource="{controls:FluentIconSource &#xEEB4;}">
+                                 IconSource="{controls:FluentIconSource &#xEEB5;}">
                 <fa:SettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.AutoSaveWindowSize}" />
                 </fa:SettingsExpander.Footer>
@@ -60,7 +60,7 @@
             <fa:SettingsExpander x:Name="S_Behavior_MainWindowTopmostMode"
                                  Header="{x:Static lsb:Resources.S_Behavior_MainWindowTopmostMode}"
                                  Description="{x:Static lsb:Resources.S_Behavior_MainWindowTopmostMode_D}"
-                                 IconSource="{controls:FluentIconSource &#xEDA0;}">
+                                 IconSource="{controls:FluentIconSource &#xEDA1;}">
                 <fa:SettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.MainWindowTopmostMode}">
                         <ComboBoxItem Content="{x:Static lsb:Resources.O_MainWindowTopmostMode_None}" />
@@ -73,7 +73,7 @@
             <fa:SettingsExpander x:Name="S_Behavior_BackgroundResident"
                                  Header="{x:Static lsb:Resources.S_Behavior_BackgroundResident}"
                                  Description="{x:Static lsb:Resources.S_Behavior_BackgroundResident_D}"
-                                 IconSource="{controls:FluentIconSource &#xEE82;}">
+                                 IconSource="{controls:FluentIconSource &#xEE83;}">
                 <fa:SettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.BackgroundResident}" />
                 </fa:SettingsExpander.Footer>
@@ -82,7 +82,7 @@
             <fa:SettingsExpander x:Name="S_Behavior_UrlProtocol"
                                  Header="{x:Static lsb:Resources.S_Behavior_UrlProtocol}"
                                  Description="{x:Static lsb:Resources.S_Behavior_UrlProtocol_D}"
-                                 IconSource="{controls:FluentIconSource &#xEAAF;}">
+                                 IconSource="{controls:FluentIconSource &#xEAB0;}">
                 <fa:SettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.UrlProtocol}" />
                 </fa:SettingsExpander.Footer>
@@ -91,12 +91,12 @@
             <Separator Margin="0 12 0 4" />
             <controls:IconText x:Name="S_Personalized"
                                Text="{x:Static lsb:Resources.S_Personalized}"
-                               Glyph="&#xE51D;" Margin="0 0 0 4" />
+                               Glyph="&#xE51E;" Margin="0 0 0 4" />
             
             <fa:SettingsExpander x:Name="S_Personalized_Theme"
                                  Header="{x:Static lsb:Resources.S_Personalized_Theme}"
                                  Description="{x:Static lsb:Resources.S_Personalized_Theme_D}"
-                                 IconSource="{controls:FluentIconSource &#xE5CA;}">
+                                 IconSource="{controls:FluentIconSource &#xE5CB;}">
                 <fa:SettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.Theme}">
                         <ComboBoxItem Content="{x:Static lsb:Resources.O_Theme_Light}" />
@@ -108,13 +108,13 @@
             
             <fa:SettingsExpander Header="{x:Static lsb:Resources.C_ThemeManager}"
                                  Description="{x:Static lsb:Resources.C_ThemeManager_D}"
-                                 IconSource="{controls:FluentIconSource &#xEC49;}"
+                                 IconSource="{controls:FluentIconSource &#xEC4A;}"
                                  IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xE44E;}" />
             
             <fa:SettingsExpander x:Name="S_Personalized_Language"
                                  Header="{x:Static lsb:Resources.S_Personalized_Language}"
                                  Description="{x:Static lsb:Resources.S_Personalized_Language_D}"
-                                 IconSource="{controls:FluentIconSource &#xEACD;}">
+                                 IconSource="{controls:FluentIconSource &#xEACE;}">
                 <fa:SettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.Language}">
                         <ComboBoxItem Content="简体中文" />
@@ -127,7 +127,7 @@
             <fa:SettingsExpander x:Name="S_Personalized_Font"
                                  Header="{x:Static lsb:Resources.S_Personalized_Font}"
                                  Description="{x:Static lsb:Resources.S_Personalized_Font_D}"
-                                 IconSource="{controls:FluentIconSource &#xF26E;}">
+                                 IconSource="{controls:FluentIconSource &#xF26F;}">
                 <fa:SettingsExpander.Footer>
                     <TextBlock Text="{x:Static lc:Resources.C_ToBeWritten}"
                                VerticalAlignment="Center" />
@@ -137,7 +137,7 @@
             <fa:SettingsExpander x:Name="S_Personalized_FontWeight"
                                  Header="{x:Static lsb:Resources.S_Personalized_FontWeight}"
                                  Description="{x:Static lsb:Resources.S_Personalized_FontWeight_D}"
-                                 IconSource="{controls:FluentIconSource &#xF1F1;}">
+                                 IconSource="{controls:FluentIconSource &#xF1F2;}">
                 <fa:SettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.FontWeight}">
                         <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Thin}" />
@@ -156,7 +156,7 @@
             <fa:SettingsExpander x:Name="S_Personalized_DpiScale"
                                  Header="{x:Static lsb:Resources.S_Personalized_DpiScale}"
                                  Description="{x:Static lsb:Resources.S_Personalized_DpiScale_D}"
-                                 IconSource="{controls:FluentIconSource &#xF4CE;}">
+                                 IconSource="{controls:FluentIconSource &#xF4CF;}">
                 <fa:SettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.DpiScale}">
                         <ComboBoxItem Content="100%" />
@@ -172,7 +172,7 @@
             <fa:SettingsExpander x:Name="S_Personalized_ThemeColor"
                                  Header="{x:Static lsb:Resources.S_Personalized_ThemeColor}"
                                  Description="{x:Static lsb:Resources.S_Personalized_ThemeColor_D}"
-                                 IconSource="{controls:FluentIconSource &#xE51D;}">
+                                 IconSource="{controls:FluentIconSource &#xE51E;}">
                 <fa:SettingsExpander.Footer>
                     <ColorPicker Color="{Binding Settings.ThemeColor}" />
                 </fa:SettingsExpander.Footer>
@@ -181,7 +181,7 @@
             <Separator Margin="0 12 0 4" />
             <controls:IconText x:Name="S_DataManagement"
                                Text="{x:Static lsb:Resources.S_DataManagement}"
-                               Glyph="&#xE5E4;" Margin="0 0 0 4" />
+                               Glyph="&#xE5E5;" Margin="0 0 0 4" />
             
             <TextBlock Text="{x:Static lc:Resources.C_ToBeWritten}" />
         </StackPanel>
