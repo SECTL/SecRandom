@@ -31,7 +31,7 @@ public static class PagesRegistryExtensions
         return services;
     }
 
-    public static IServiceCollection AddGroup(this IServiceCollection services, GroupInfo info)
+    public static IServiceCollection AddGroup(this IServiceCollection services, PageGroupInfo info)
     {
         if (PagesRegistryService.GroupItems.FirstOrDefault(x => x.Id == info.Id) != null)
         {
