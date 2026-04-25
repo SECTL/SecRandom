@@ -7,4 +7,5 @@
                        x:Class="SecRandom.Views.MainWindow"
                        Icon="/Assets/AppLogo.ico"
                        WindowStartupLocation="CenterScreen"
+                       MinHeight="600" MinWidth="400"
                        Loaded="OnLoaded"/>

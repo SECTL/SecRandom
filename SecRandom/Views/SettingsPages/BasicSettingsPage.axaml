@@ -21,7 +21,9 @@
                             Click="HideVersionNoticeButton_OnClick" />
                 </fa:InfoBar.ActionButton>
                 
-                <TextBlock Text="{x:Static lsb:Resources.C_VersionNoticeText}" Margin="0 0 0 8" />
+                <TextBlock Text="{x:Static lsb:Resources.C_VersionNoticeText}"
+                           TextWrapping="Wrap"
+                           Margin="0 0 0 8" />
             </fa:InfoBar>
             
             <controls:IconText x:Name="S_Behavior"
