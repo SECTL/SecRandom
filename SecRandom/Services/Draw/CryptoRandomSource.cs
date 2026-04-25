@@ -1,6 +1,7 @@
-﻿using System.Security.Cryptography;
+﻿using System;
+using System.Security.Cryptography;
 
-namespace SecRandom.Core.Services.Draw;
+namespace SecRandom.Services.Draw;
 
 public sealed class CryptoRandomSource : IRandomSource
 {

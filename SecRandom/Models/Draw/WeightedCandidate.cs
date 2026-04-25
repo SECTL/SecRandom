@@ -1,4 +1,4 @@
-﻿namespace SecRandom.Core.Models.Draw;
+﻿namespace SecRandom.Models.Draw;
 
 public struct WeightedCandidate<TCandidate>
 {

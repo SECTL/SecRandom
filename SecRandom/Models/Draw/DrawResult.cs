@@ -1,4 +1,6 @@
-﻿namespace SecRandom.Core.Models.Draw;
+﻿using System.Collections.Generic;
+
+namespace SecRandom.Models.Draw;
 
 public enum DrawStatus
 {

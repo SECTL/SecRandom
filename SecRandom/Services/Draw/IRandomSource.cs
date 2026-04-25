@@ -1,4 +1,4 @@
-﻿namespace SecRandom.Core.Services.Draw;
+﻿namespace SecRandom.Services.Draw;
 
 public interface IRandomSource
 {

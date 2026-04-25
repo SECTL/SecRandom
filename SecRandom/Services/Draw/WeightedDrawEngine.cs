@@ -1,15 +1,16 @@
-﻿using Avalonia.Xaml.Interactions.Custom;
-using SecRandom.Core.Models.Draw;
+﻿using System.Collections.Generic;
+using System.Linq;
+using SecRandom.Models.Draw;
 
-namespace SecRandom.Core.Services.Draw;
+namespace SecRandom.Services.Draw;
 
 public class WeightedDrawEngine<TCandidate>
 {
-    private readonly IRandomSource _random;
+    private readonly IRandomSource random;
 
     public WeightedDrawEngine(IRandomSource random)
     {
-        _random = random;
+        this.random = random;
     }
 
     public DrawResult<TCandidate> Draw(DrawRequest<TCandidate> request)
@@ -38,7 +39,7 @@ public class WeightedDrawEngine<TCandidate>
         List<TCandidate> res = [];
         for (int i = 1; i <= request.Count; i++)
         {
-            double r = _random.NextDouble() * totalW;
+            double r = random.NextDouble() * totalW;
             for (int j = 0; j < candidates.Count; j++)
             {
                 r -= candidates[j].Weight;
