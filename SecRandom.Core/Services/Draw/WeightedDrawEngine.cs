@@ -19,17 +19,14 @@ public class WeightedDrawEngine<TCandidate>
             {
                 Status = DrawStatus.NoCandidates
             };
+        if (request.Count > request.Candidates.Count)
+            return new DrawResult<TCandidate>
+            {
+                Status = DrawStatus.Failure
+            };
+
         // 获取总权重
-        double totalW = 0;
-        foreach (var cand in request.Candidates)
-        {
-            if (cand.Weight < 0)
-                return new DrawResult<TCandidate>
-                {
-                    Status = DrawStatus.InvalidWeight
-                };
-            totalW += cand.Weight;
-        }
+        double totalW = request.Candidates.Sum(c => c.Weight);
 
         if (totalW == 0)
             return new DrawResult<TCandidate>
@@ -45,9 +42,10 @@ public class WeightedDrawEngine<TCandidate>
             for (int j = 0; j < candidates.Count; j++)
             {
                 r -= candidates[j].Weight;
-                if (r.CompareTo(0.0) < 0)
+                if (r < 0)
                 {
                     res.Add(candidates[j].Candidate);
+                    totalW -= candidates[j].Weight;
                     candidates.RemoveAt(j);
                     break;
                 }
