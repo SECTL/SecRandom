@@ -10,6 +10,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <MergeResourceInclude Source="/Styles/MultiComboBox.axaml" />
+                <MergeResourceInclude Source="/Controls/DevelopmentBuildAdorner.axaml" />
             </ResourceDictionary.MergedDictionaries>
             
             <system:Double x:Key="PageContainerWidth">960</system:Double>

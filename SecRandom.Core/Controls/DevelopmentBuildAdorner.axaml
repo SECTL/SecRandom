@@ -12,7 +12,7 @@
                        FontSize="12"
                        Opacity="0.8">
                 开发中画面，不代表最终品质。<LineBreak/>
-                Wanderer
+                SecRandom
                 <Run Text="{x:Static core:GlobalConstants.VersionLong}"/>
             </TextBlock>
         </Grid>
