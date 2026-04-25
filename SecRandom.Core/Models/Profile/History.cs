@@ -5,8 +5,8 @@ namespace SecRandom.Core.Models.Profile;
 
 public partial class History : ObservableRecipient
 {
-    [ObservableProperty] public partial int TotalCount { get; set; } = 0;
-    [ObservableProperty] public partial DateTime LastDrawnTime { get; set; } = DateTime.MinValue;
-    [ObservableProperty] public partial int RoundsMissed { get; set; } = 0;
-    [ObservableProperty] public partial ObservableCollection<HistoryItem> history { get; set; } = [];
+    [ObservableProperty] private int _totalCount = 0;
+    [ObservableProperty] private DateTime _lastDrawnTime = DateTime.MinValue;
+    [ObservableProperty] private int _roundsMissed = 0;
+    [ObservableProperty] private ObservableCollection<HistoryItem> _histories = [];
 }

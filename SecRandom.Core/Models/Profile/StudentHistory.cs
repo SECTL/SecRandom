@@ -14,6 +14,6 @@ public partial class StudentHistory(string name) : ConfigBase
     public ObservableDictionary<string, int> GroupStats { get; set; } = [];
     public ObservableDictionary<HumanGender, int> GenderStatus { get; set; } = [];
 
-    [ObservableProperty] public partial int TotalRounds { get; set; } = 0;
-    [ObservableProperty] public partial int TotalStats { get; set; } = 0;
+    [ObservableProperty] private int _totalRounds = 0;
+    [ObservableProperty] private int _totalStats = 0;
 }

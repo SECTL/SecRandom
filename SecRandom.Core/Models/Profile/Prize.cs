@@ -4,10 +4,8 @@ namespace SecRandom.Core.Models.Profile;
 
 public partial class Prize : AttachableSettingsObject
 {
-    [ObservableProperty] public partial string Name { get; set; } = string.Empty;
-    [ObservableProperty] public partial int Count { get; set; } = 1;
-    [ObservableProperty] public partial double Weight { get; set; } = 1;
-    [ObservableProperty] public partial bool Exists { get; set; } = true;
-
-    // [ObservableProperty] public partial ObservableCollection<Guid> Tags { get; set; } = [];
+    [ObservableProperty] private string _name = string.Empty;
+    [ObservableProperty] private int _count = 1;
+    [ObservableProperty] private double _weight = 1;
+    [ObservableProperty] private bool _exists = true;
 }

@@ -5,12 +5,12 @@ namespace SecRandom.Core.Models.Profile;
 
 public partial class HistoryItem : ObservableRecipient
 {
-    [ObservableProperty] public partial DateTime DrawTime { get; set; } = DateTime.Now;
+    [ObservableProperty] private DateTime _drawTime = DateTime.Now;
     
-    [ObservableProperty] public partial int DrawMethod { get; set; } = 1;
-    [ObservableProperty] public partial int DrawNumbers { get; set; } = 1;
-    [ObservableProperty] public partial string DrawGroup { get; set; } = string.Empty;
-    [ObservableProperty] public partial HumanGender DrawGender { get; set; } = HumanGender.None;
+    [ObservableProperty] private int _drawMethod = 1;
+    [ObservableProperty] private int _drawNumbers = 1;
+    [ObservableProperty] private string _drawGroup = string.Empty;
+    [ObservableProperty] private HumanGender _drawGender = HumanGender.None;
     
-    [ObservableProperty] public partial double Weight { get; set; } = 1;
+    [ObservableProperty] private double _weight = 1;
 }
