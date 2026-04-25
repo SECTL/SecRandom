@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
+using SecRandom.Controls.AttachedSettings;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
@@ -127,6 +128,9 @@ public partial class App : Application
 
                 services.AddTransient<ProfileSettingsView>();
                 services.AddTransient<ProfileSettingsViewModel>();
+                
+                // 附加设置
+                services.AddAttachedSettingsControl<BehindSceneAttachedSettingsControl>(Langs.Common.Resources.AttachedSettings_BehindScene);
                 
                 // 界面 Views
                 services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);

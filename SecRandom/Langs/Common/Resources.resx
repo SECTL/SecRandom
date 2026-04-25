@@ -103,4 +103,7 @@
     <data name="Menu_OpenProfileSettings" xml:space="preserve">
         <value>编辑档案</value>
     </data>
+    <data name="AttachedSettings_BehindScene" xml:space="preserve">
+        <value>内幕设置</value>
+    </data>
 </root>

@@ -103,4 +103,7 @@
     <data name="Menu_OpenProfileSettings" xml:space="preserve">
         <value>Open Profile Settings</value>
     </data>
+    <data name="AttachedSettings_BehindScene" xml:space="preserve">
+        <value>Behind Scene Settings</value>
+    </data>
 </root>

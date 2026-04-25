@@ -8,7 +8,7 @@ namespace SecRandom.Core.Extensions.Registry;
 
 public static class AttachedSettingsRegistryExtensions
 {
-    public static IServiceCollection AddAttachedSettingsControl<T>(this IServiceCollection services)
+    public static IServiceCollection AddAttachedSettingsControl<T>(this IServiceCollection services, string name)
         where T : AttachedSettingsControlBase
     {
         var type = typeof(T);
@@ -29,7 +29,8 @@ public static class AttachedSettingsRegistryExtensions
         }
         
         services.AddKeyedTransient<AttachedSettingsControlBase, T>(info.Guid);
-        
+
+        info.Name = name;
         info.AttachedSettingsControlType = typeof(T);
         info.Targets = usages.Targets;
         
