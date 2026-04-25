@@ -1,0 +1,72 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="using:FluentAvalonia.UI.Controls"
+             xmlns:views="clr-namespace:SecRandom.Views"
+             xmlns:controls="clr-namespace:SecRandom.Core.Controls;assembly=SecRandom.Core"
+             xmlns:lc="clr-namespace:SecRandom.Langs.Common"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SecRandom.Views.ProfileSettingsView"
+             x:DataType="views:ProfileSettingsView"
+             d:DataContext="{d:DesignInstance views:ProfileSettingsView}"
+             Loaded="OnLoaded"
+             Unloaded="OnUnloaded">
+    <Grid RowDefinitions="Auto Auto *">
+        <Border Grid.Row="0" Height="48">
+            <StackPanel Orientation="Horizontal" Margin="8" Spacing="8">
+                <Image Source="/Assets/AppLogo.png"
+                       Width="18" Height="18"
+                       Margin="6 0 0 0"
+                       VerticalAlignment="Center"
+                       IsHitTestVisible="False"/>
+
+                <TextBlock Text="SecRandom"
+                           FontSize="12"
+                           VerticalAlignment="Center"
+                           IsHitTestVisible="False"/>
+            </StackPanel>
+        </Border>
+        
+        <fa:NavigationView Grid.Row="1"
+                           x:Name="NavigationView"
+                           PaneDisplayMode="Top"
+                           IsBackButtonVisible="False"
+                           IsPaneToggleButtonVisible="False"
+                           IsSettingsVisible="False"
+                           SelectedItem="{Binding ViewModel.SelectedPageItem}">
+            <fa:NavigationView.MenuItems>
+                <fa:NavigationViewItem Content="11111" IconSource="{controls:FluentIconSource &#xECAB;}" />
+                <fa:NavigationViewItem Content="22222" IconSource="{controls:FluentIconSource &#xE27E;}" />
+                <fa:NavigationViewItem Content="33333" IconSource="{controls:FluentIconSource &#xE5ED;}" />
+            </fa:NavigationView.MenuItems>
+            
+            <fa:NavigationView.PaneFooter>
+                <fa:CommandBar HorizontalAlignment="Right" DefaultLabelPosition="Right">
+                    <fa:CommandBar.PrimaryCommands>
+                        <fa:CommandBarButton IconSource="{controls:FluentIconSource &#xEEB5;}"
+                                             Label="111"
+                                             ToolTip.Tip="Save"/>
+                
+                        <fa:CommandBarButton IconSource="{controls:FluentIconSource &#xEE2F;}"
+                                             Label="222"
+                                             ToolTip.Tip="Help"/>
+                    </fa:CommandBar.PrimaryCommands>
+                </fa:CommandBar>
+            </fa:NavigationView.PaneFooter>
+        </fa:NavigationView>
+        
+        <Border Grid.Row="2" Background="{DynamicResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+            <controls:DrawerHost IsDrawerOpen="{Binding ViewModel.IsDrawerOpen, Mode=TwoWay}"
+                                 DrawerPlacement="Right"
+                                 DrawerContent="{Binding ViewModel.DrawerContent}">
+                <Carousel SelectedIndex="{Binding ViewModel.SelectedPageIndex}"
+                          Classes="animated">
+                    <TextBlock Margin="8" Text="1" />
+                    <TextBlock Margin="8" Text="2" />
+                    <TextBlock Margin="8" Text="3" />
+                </Carousel>
+            </controls:DrawerHost>
+        </Border>
+    </Grid>
+</UserControl>

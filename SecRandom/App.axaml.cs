@@ -34,6 +34,7 @@ public partial class App : Application
     private static FloatingWindow? _floatingWindow;
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
+    private static MainWindow? _profileSettingsWindow;
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     
     public override void Initialize()
@@ -123,6 +124,9 @@ public partial class App : Application
                 
                 services.AddTransient<SettingsView>();
                 services.AddTransient<SettingsViewModel>();
+
+                services.AddTransient<ProfileSettingsView>();
+                services.AddTransient<ProfileSettingsViewModel>();
                 
                 // 界面 Views
                 services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
@@ -279,6 +283,28 @@ public partial class App : Application
         _settingsWindow.Activate();
     }
 
+    private void ShowProfileSettingsWindow()
+    {
+        if (_profileSettingsWindow is { IsVisible: true })
+        {
+            _profileSettingsWindow.Activate();
+            return;
+        }
+        
+        if (_profileSettingsWindow is not { IsLoaded: true })
+        {
+            _profileSettingsWindow = new MainWindow
+            {
+                Content = IAppHost.GetService<ProfileSettingsView>(),
+                Title = "SecRandom"
+            };
+            _profileSettingsWindow.Closed += (_, _) => _profileSettingsWindow = null;
+        }
+
+        _profileSettingsWindow.Show();
+        _profileSettingsWindow.Activate();
+    }
+
     #endregion
 
     private static void InitializeLanguages(CultureInfo cultureInfo)
@@ -303,6 +329,11 @@ public partial class App : Application
     private void MenuItemOpenSettings_OnClick(object? sender, EventArgs e)
     {
         ShowSettingsWindow();
+    }
+
+    private void MenuItemOpenProfileSettings_OnClick(object? sender, EventArgs e)
+    {
+        ShowProfileSettingsWindow();
     }
 
     private void MenuItemExitProgram_OnClick(object? sender, EventArgs e)

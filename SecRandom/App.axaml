@@ -21,6 +21,9 @@
                         <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenMainWindow}"
                                         Click="MenuItemOpenMainWindow_OnClick"/>
                         
+                        <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenProfileSettings}"
+                                        Click="MenuItemOpenProfileSettings_OnClick"/>
+                        
                         <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenSettings}"
                                         Click="MenuItemOpenSettings_OnClick"/>
                         

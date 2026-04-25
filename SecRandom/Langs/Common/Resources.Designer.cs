@@ -168,6 +168,15 @@ namespace SecRandom.Langs.Common {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 编辑档案.
+        /// </summary>
+        public static string Menu_OpenProfileSettings {
+            get {
+                return ResourceManager.GetString("Menu_OpenProfileSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 打开设置.
         /// </summary>
         public static string Menu_OpenSettings {

@@ -100,4 +100,7 @@
     <data name="C_ToBeWritten" xml:space="preserve">
         <value>(To be written)</value>
     </data>
+    <data name="Menu_OpenProfileSettings" xml:space="preserve">
+        <value>Open Profile Settings</value>
+    </data>
 </root>
