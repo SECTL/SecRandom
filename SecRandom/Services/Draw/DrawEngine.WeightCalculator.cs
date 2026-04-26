@@ -24,23 +24,24 @@ public partial class DrawEngine
 
         //拿到所有符合条件的学生的历史记录（我太难了）
         //而且还得保证性能
-        HashSet<string> validStudentName = candidates.Select(s => s.Name).ToHashSet();
-        int maxStudentDrawCount = studentHistory.Students
-            .Where(s => validStudentName.Contains(s.Key))
-            .Select(s => s.Value.TotalCount)
+        if (candidates.Count == 0)
+            return [];
+
+        int maxStudentDrawCount = candidates
+            .Select(getStudentDrawCount)
             .DefaultIfEmpty(0)
             .Max();
 
         var frequencyFunction = configData.FairDrawSettings.FrequencyFunction;
 
         if (configData.FairDrawSettings.FairDraw == false) //公平抽取未开启则回退
-            return candidates.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList();
+            return candidates.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = baseWeight }).ToList();
 
         List<WeightedCandidate<Student>> calculatedStudentWeight = [];
 
         foreach (var candidate in candidates)
         {
-            int currentCount = studentHistory.Students.GetValueOrDefault(candidate.Id)?.TotalCount ?? 0;
+            int currentCount = getStudentDrawCount(candidate);
 
             //计算频率因子
             double freqencyIndex = 0.0;
@@ -63,7 +64,9 @@ public partial class DrawEngine
             }
 
             if (configData.FairDrawSettings.CoolStartEnabled)
-                freqencyIndex = Math.Min(0.8 + 0.2 * freqencyIndex, freqencyIndex) * frequencyWeight;
+                freqencyIndex = Math.Min(0.8 + 0.2 * freqencyIndex, freqencyIndex);
+
+            freqencyIndex *= frequencyWeight;
 
             //计算小组平衡
             double groupIndex = 0.0;
@@ -92,18 +95,18 @@ public partial class DrawEngine
             {
                 // 有效小组数量
                 int effectiveGenderCount = studentHistory.GenderStatus.Count;
-                int effectiveGenderMaxDrawCount = studentHistory.GenderStatus.Select(s => s.Value).ToList().Max();
+                int effectiveGenderMaxDrawCount = studentHistory.GenderStatus.Values.DefaultIfEmpty(0).Max();
                 int currentGenderDrawCount = studentHistory.GenderStatus.GetValueOrDefault(candidate.Gender);
                 if (effectiveGenderCount > 3)
-                    genderIndex = 1.0 / (0.2 * currentGenderDrawCount + 1.0) * groupWeight;
+                    genderIndex = 1.0 / (0.2 * currentGenderDrawCount + 1.0) * genderWeight;
                 else
                 {
                     if (effectiveGenderMaxDrawCount == 0)
-                        genderIndex = 0.2 * groupWeight;
+                        genderIndex = 0.2 * genderWeight;
                     else if (currentGenderDrawCount == 0)
-                        genderIndex = 0.5 * groupWeight;
+                        genderIndex = 0.5 * genderWeight;
                     else
-                        genderIndex = groupWeight *
+                        genderIndex = genderWeight *
                                       (1.0 - (currentGenderDrawCount * 1.0 / effectiveGenderMaxDrawCount));
                 }
             }
@@ -112,33 +115,34 @@ public partial class DrawEngine
             double timeIndex = 0.0;
             if (configData.FairDrawSettings.FairDrawTime)
             {
-                timeIndex = Math.Min(1,
-                    (DateTime.Now - studentHistory.Students.GetValueOrDefault(candidate.Id)?.LastDrawnTime ??
-                     new TimeSpan(int.MaxValue)).Days / 30.0);
+                var lastDrawnTime = getStudentLastDrawnTime(candidate);
+                if (lastDrawnTime != DateTime.MinValue)
+                    timeIndex = Math.Min(1, (DateTime.Now - lastDrawnTime).Days / 30.0) * timeWeight;
             }
 
             //最后计算总的权重
-            double totalIndex = freqencyIndex + groupIndex + genderIndex + timeIndex;
+            double totalIndex = baseWeight + freqencyIndex + groupIndex + genderIndex + timeIndex;
             calculatedStudentWeight.Add(new WeightedCandidate<Student> { Candidate = candidate, Weight = totalIndex });
         }
 
         //实行屏蔽保护
-        double minWeight = calculatedStudentWeight.Min(s => s.Weight);
-        double maxWeight = calculatedStudentWeight.Max(s => s.Weight);
+        double minWeight = configData.FairDrawSettings.MinWeight;
+        double maxWeight = configData.FairDrawSettings.MaxWeight;
         if (configData.FairDrawSettings.ShieldEnabled)
         {
             var currentTime = DateTime.Now;
             calculatedStudentWeight = calculatedStudentWeight.Select(ws =>
             {
-                var prevDrawTime = studentHistory.Students.TryGetValue(ws.Candidate.Id, out var h)
-                    ? h.LastDrawnTime
-                    : DateTime.Now;
+                var prevDrawTime = getStudentLastDrawnTime(ws.Candidate);
+                if (prevDrawTime == DateTime.MinValue)
+                    return new WeightedCandidate<Student> { Candidate = ws.Candidate, Weight = ws.Weight };
+
                 var shieldTimeSpan = configData.FairDrawSettings.ShieldTimeUnit switch
                 {
                     ShieldTimeUnit.Hours => TimeSpan.FromHours(configData.FairDrawSettings.ShieldTime),
                     ShieldTimeUnit.Minutes => TimeSpan.FromMinutes(configData.FairDrawSettings.ShieldTime),
                     ShieldTimeUnit.Seconds => TimeSpan.FromSeconds(configData.FairDrawSettings.ShieldTime),
-                    _ => TimeSpan.FromDays(configData.FairDrawSettings.ShieldTime)
+                    _ => TimeSpan.FromSeconds(configData.FairDrawSettings.ShieldTime)
                 };
                 if (currentTime - prevDrawTime < shieldTimeSpan)
                     return new WeightedCandidate<Student> { Candidate = ws.Candidate, Weight = minWeight / 10.0 };
@@ -160,5 +164,18 @@ public partial class DrawEngine
         }).ToList();
 
         return calculatedStudentWeight;
+    }
+
+    private DateTime getStudentLastDrawnTime(Student student)
+    {
+        if (!string.IsNullOrWhiteSpace(student.Id) &&
+            studentHistory.Students.TryGetValue(student.Id, out var historyById))
+            return historyById.LastDrawnTime;
+
+        if (!string.IsNullOrWhiteSpace(student.Name) &&
+            studentHistory.Students.TryGetValue(student.Name, out var historyByName))
+            return historyByName.LastDrawnTime;
+
+        return DateTime.MinValue;
     }
 }

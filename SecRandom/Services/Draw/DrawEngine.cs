@@ -8,10 +8,13 @@ namespace SecRandom.Services.Draw;
 
 public partial class DrawEngine
 {
-    private MainConfigModel configData = IAppHost.GetService<MainConfigHandler>().Data;
-    private StudentHistory studentHistory = IAppHost.GetService<IProfileService>().CurrentStudentHistory;
-    private PrizeHistory prizeHistory = IAppHost.GetService<IProfileService>().CurrentPrizeHistory;
-    private StudentList studentList = IAppHost.GetService<IProfileService>().CurrentStudentList;
-    private PrizeList prizeList = IAppHost.GetService<IProfileService>().CurrentPrizeList;
+    private readonly MainConfigHandler configHandler = IAppHost.GetService<MainConfigHandler>();
+    private readonly IProfileService profileService = IAppHost.GetService<IProfileService>();
+
+    private MainConfigModel configData => configHandler.Data;
+    private StudentHistory studentHistory => profileService.CurrentStudentHistory ?? new StudentHistory();
+    private PrizeHistory prizeHistory => profileService.CurrentPrizeHistory ?? new PrizeHistory();
+    private StudentList studentList => profileService.CurrentStudentList ?? new StudentList();
+    private PrizeList prizeList => profileService.CurrentPrizeList ?? new PrizeList();
 
 }

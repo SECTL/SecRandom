@@ -15,21 +15,40 @@ public class WeightedDrawEngine<TCandidate>
 
     public DrawResult<TCandidate> Draw(DrawRequest<TCandidate> request)
     {
-        if (request.Count == 0)
+        if (request.Count <= 0)
+            return new DrawResult<TCandidate>
+            {
+                Status = DrawStatus.Failure
+            };
+
+        if (request.Candidates.Count == 0)
             return new DrawResult<TCandidate>
             {
                 Status = DrawStatus.NoCandidates
             };
+
         if (request.Count > request.Candidates.Count)
             return new DrawResult<TCandidate>
             {
                 Status = DrawStatus.Failure
             };
 
+        if (request.Candidates.Any(c => c.Weight < 0 || double.IsNaN(c.Weight) || double.IsInfinity(c.Weight)))
+            return new DrawResult<TCandidate>
+            {
+                Status = DrawStatus.InvalidWeight
+            };
+
+        if (request.Count > request.Candidates.Count(c => c.Weight > 0))
+            return new DrawResult<TCandidate>
+            {
+                Status = DrawStatus.NoEligibleCandidates
+            };
+
         // 获取总权重
         double totalW = request.Candidates.Sum(c => c.Weight);
 
-        if (totalW == 0)
+        if (totalW <= 0)
             return new DrawResult<TCandidate>
             {
                 Status = DrawStatus.NoEligibleCandidates
