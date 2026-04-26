@@ -22,3 +22,4 @@ public class PrizeDrawRequest
     public int Count { get; set; } = 1;
     public Func<Prize,bool>? Filter { get; set; }
 }
+
