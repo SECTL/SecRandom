@@ -1,7 +1,7 @@
 ﻿namespace SecRandom.Models.Draw;
 
-public struct WeightedCandidate<TCandidate>
+public class WeightedCandidate<TCandidate>
 {
-    public TCandidate Candidate { get; init; }
+    public required TCandidate Candidate { get; init; }
     public double Weight { get; set; }
 }

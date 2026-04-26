@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using SecRandom.Core;
+using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Profile;
 using SecRandom.Enums;
 using SecRandom.Models.Draw;
@@ -177,5 +180,18 @@ public partial class DrawEngine
             return historyByName.LastDrawnTime;
 
         return DateTime.MinValue;
+    }
+
+    private WeightedCandidate<Student> applyBehindSceneWeight(WeightedCandidate<Student> original)
+    {
+        var behindSceneSettings =
+            original.Candidate.GetAttachedObject<BehindSceneAttachedSettings>(
+                Guid.Parse(GlobalConstants.BehindSceneAttachedSettings));
+        if (behindSceneSettings is null)
+            return original;
+        if(!behindSceneSettings.IsAttachSettingsEnabled)
+            return original;
+        original.Weight *= behindSceneSettings.Probability;
+        return original;
     }
 }

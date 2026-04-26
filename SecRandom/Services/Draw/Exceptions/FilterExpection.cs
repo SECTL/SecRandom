@@ -9,3 +9,11 @@ public class CandidateNotFoundException : Exception
     public CandidateNotFoundException(string message, Exception inner)
         : base(message, inner) { }
 }
+
+public class RepeatLimitExhaustedException : Exception
+{
+    public RepeatLimitExhaustedException() { }
+    public RepeatLimitExhaustedException(string message) : base(message) { }
+    public RepeatLimitExhaustedException(string message, Exception inner)
+        : base(message, inner) { }
+}

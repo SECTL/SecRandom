@@ -17,6 +17,9 @@ public partial class DrawEngine
         if (filteredList.Count == 0)
             throw new CandidateNotFoundException();
 
+        if (drawCount > filteredList.Count)
+            throw new RepeatLimitExhaustedException();
+
         //平均值差值保护
         if (!configData.FairDrawSettings.EnableAvgGapProtection)
             return filteredList;
@@ -63,8 +66,8 @@ public partial class DrawEngine
                 .ToList();
         }
 
-        if (pool.Count == 0)
-            pool = filteredList.OrderBy(s => countByStudent[s]).ToList();
+        if (pool.Count == 0 || pool.Count < drawCount)
+            throw new RepeatLimitExhaustedException();
 
         return pool;
     }
