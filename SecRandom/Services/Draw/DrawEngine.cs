@@ -39,6 +39,7 @@ public class DrawEngine
         int maxStudentDrawCount = studentHistory.Students
             .Where(s => validStudentName.Contains(s.Key))
             .Select(s => s.Value.TotalCount)
+            .DefaultIfEmpty(0)
             .Max();
 
         var frequencyFunction = configData.FairDrawSettings.FrequencyFunction;
@@ -50,7 +51,7 @@ public class DrawEngine
 
         foreach (var candidate in candidates)
         {
-            int currentCount = studentHistory.Students[candidate.Id].TotalCount;
+            int currentCount = studentHistory.Students.GetValueOrDefault(candidate.Id)?.TotalCount ?? 0;
 
             //计算频率因子
             double freqencyIndex = 0.0;
@@ -81,8 +82,8 @@ public class DrawEngine
             {
                 // 有效小组数量
                 int effectiveGroupCount = studentHistory.GroupStats.Count;
-                int effectiveGroupMaxDrawCount = studentHistory.GroupStats.Select(s => s.Value).ToList().Max();
-                int currentGroupDrawCount = studentHistory.GroupStats[candidate.Id];
+                int effectiveGroupMaxDrawCount = studentHistory.GroupStats.Values.DefaultIfEmpty(0).Max();
+                int currentGroupDrawCount = studentHistory.GroupStats.GetValueOrDefault(candidate.Group);
                 if (effectiveGroupCount > 3)
                     groupIndex = 1.0 / (0.2 * currentGroupDrawCount + 1.0) * groupWeight;
                 else
@@ -103,7 +104,7 @@ public class DrawEngine
                 // 有效小组数量
                 int effectiveGenderCount = studentHistory.GenderStatus.Count;
                 int effectiveGenderMaxDrawCount = studentHistory.GenderStatus.Select(s => s.Value).ToList().Max();
-                int currentGenderDrawCount = studentHistory.GenderStatus[candidate.Gender];
+                int currentGenderDrawCount = studentHistory.GenderStatus.GetValueOrDefault(candidate.Gender);
                 if (effectiveGenderCount > 3)
                     genderIndex = 1.0 / (0.2 * currentGenderDrawCount + 1.0) * groupWeight;
                 else
@@ -123,7 +124,8 @@ public class DrawEngine
             if (configData.FairDrawSettings.FairDrawTime)
             {
                 timeIndex = Math.Min(1,
-                    (DateTime.Now - studentHistory.Students[candidate.Id].LastDrawnTime).Days / 30.0);
+                    (DateTime.Now - studentHistory.Students.GetValueOrDefault(candidate.Id)?.LastDrawnTime ??
+                     new TimeSpan(int.MaxValue)).Days / 30.0);
             }
 
             //最后计算总的权重
