@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using SecRandom.Enums;
+using SecRandom.Core.Enums;
 
-namespace SecRandom.Models.SubConfigs;
+namespace SecRandom.Core.Models.SubConfigs;
 
 public partial class FairDrawSettingsConfig : ObservableObject
 {

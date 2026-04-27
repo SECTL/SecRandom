@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using SecRandom.Core;
-using SecRandom.Core.Abstraction;
+﻿using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Models;
 using SecRandom.Core.Models.AttachedSettings;
+using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Models.Profile;
-using SecRandom.Models;
-using SecRandom.Models.Draw;
-using SecRandom.Services.Config;
-using SecRandom.Services.Draw.Exceptions;
+using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Draw.Exceptions;
 
-namespace SecRandom.Services.Draw;
+namespace SecRandom.Core.Services.Draw;
 
 public partial class DrawEngine
 {

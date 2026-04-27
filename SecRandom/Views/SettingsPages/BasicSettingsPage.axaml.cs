@@ -2,7 +2,7 @@
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
-using SecRandom.Models.SubConfigs;
+using SecRandom.Core.Models.SubConfigs;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages;

@@ -18,6 +18,7 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Extensions.Registry;
+using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Services;
 using SecRandom.Services.Config;

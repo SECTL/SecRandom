@@ -1,8 +1,7 @@
-﻿using System;
-using SecRandom.Core.Abstraction;
+﻿using SecRandom.Core.Abstraction;
 using SecRandom.Core.Models.Profile;
 
-namespace SecRandom.Services.Config;
+namespace SecRandom.Core.Services.Config;
 
 public class ProfileConfigHandlerBase<T> : ConfigHandlerBase<T> where T : ProfileConfigBase
 {

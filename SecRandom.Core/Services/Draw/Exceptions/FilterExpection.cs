@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace SecRandom.Services.Draw.Exceptions;
+﻿namespace SecRandom.Core.Services.Draw.Exceptions;
 
 public class CandidateNotFoundException : Exception
 {

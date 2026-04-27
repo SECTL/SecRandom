@@ -12,7 +12,7 @@ using Avalonia.VisualTree;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Controls;
-using SecRandom.Models.SubConfigs;
+using SecRandom.Core.Models.SubConfigs;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;

@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using SecRandom.Core.Models.Profile;
+﻿using SecRandom.Core.Models.Profile;
 
-namespace SecRandom.Models.Draw;
+namespace SecRandom.Core.Models.Draw;
 
 public class DrawRequest<TCandidate>
 {

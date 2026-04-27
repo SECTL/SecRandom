@@ -1,10 +1,9 @@
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
-using SecRandom.Core;
 using SecRandom.Core.Abstraction;
-using SecRandom.Models.SubConfigs;
+using SecRandom.Core.Models.SubConfigs;
 
-namespace SecRandom.Models;
+namespace SecRandom.Core.Models;
 
 public partial class MainConfigModel : ConfigBase
 {

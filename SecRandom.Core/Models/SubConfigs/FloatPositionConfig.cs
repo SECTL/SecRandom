@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace SecRandom.Models.SubConfigs;
+namespace SecRandom.Core.Models.SubConfigs;
 
 public partial class FloatPositionConfig : ObservableObject
 {

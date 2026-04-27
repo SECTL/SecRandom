@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using SecRandom.Models;
-using SecRandom.Services.Config;
+using SecRandom.Core.Models;
+using SecRandom.Core.Services.Config;
 
 namespace SecRandom.ViewModels;
 

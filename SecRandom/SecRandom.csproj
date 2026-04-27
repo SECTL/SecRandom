@@ -75,10 +75,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Themes\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1" />
     </ItemGroup>
 

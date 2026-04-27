@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace SecRandom.Enums;
+namespace SecRandom.Core.Enums;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum LanguageMode

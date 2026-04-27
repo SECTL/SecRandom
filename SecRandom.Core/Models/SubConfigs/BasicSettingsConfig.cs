@@ -1,9 +1,8 @@
-﻿using System;
-using Avalonia.Media;
+﻿using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using SecRandom.Enums;
+using SecRandom.Core.Enums;
 
-namespace SecRandom.Models.SubConfigs;
+namespace SecRandom.Core.Models.SubConfigs;
 
 public partial class BasicSettingsConfig : ObservableObject
 {

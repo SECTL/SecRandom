@@ -1,4 +1,4 @@
-﻿namespace SecRandom.Enums;
+﻿namespace SecRandom.Core.Enums;
 
 public enum FontWeightMode
 {

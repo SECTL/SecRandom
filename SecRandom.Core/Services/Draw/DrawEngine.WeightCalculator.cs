@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using SecRandom.Core;
+﻿using SecRandom.Core.Enums;
 using SecRandom.Core.Models.AttachedSettings;
+using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Models.Profile;
-using SecRandom.Enums;
-using SecRandom.Models.Draw;
 
-namespace SecRandom.Services.Draw;
+namespace SecRandom.Core.Services.Draw;
 
 public partial class DrawEngine
 {

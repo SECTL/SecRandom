@@ -1,16 +1,15 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using SecRandom.Models.Draw;
+﻿using SecRandom.Core.Interfaces;
+using SecRandom.Core.Models.Draw;
 
-namespace SecRandom.Services.Draw;
+namespace SecRandom.Core.Services.Draw;
 
 public class WeightedDrawEngine<TCandidate>
 {
-    private readonly IRandomSource random;
+    private readonly IRandomSource _random;
 
     public WeightedDrawEngine(IRandomSource random)
     {
-        this.random = random;
+        _random = random;
     }
 
     public DrawResult<TCandidate> Draw(DrawRequest<TCandidate> request)
@@ -58,7 +57,7 @@ public class WeightedDrawEngine<TCandidate>
         List<TCandidate> res = [];
         for (int i = 1; i <= request.Count; i++)
         {
-            double r = random.NextDouble() * totalW;
+            double r = _random.NextDouble() * totalW;
             for (int j = 0; j < candidates.Count; j++)
             {
                 r -= candidates[j].Weight;

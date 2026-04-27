@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
-using SecRandom.Models;
+using SecRandom.Core.Models;
 
-namespace SecRandom.Services.Config;
+namespace SecRandom.Core.Services.Config;
 
 public class MainConfigHandler : ConfigHandlerBase<MainConfigModel>
 {
