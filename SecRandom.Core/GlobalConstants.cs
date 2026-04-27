@@ -19,6 +19,9 @@ public static class GlobalConstants
     public static string PlatformExecutableExtension => System.OperatingSystem.IsWindows() ? ".exe" : "";
 
     public const string BehindSceneAttachedSettings = "F45DFB95-7D20-4BAB-86A3-8864BBDFCE9E";
+
+    public const string DefaultThemeColor = "#66CCFF";  // 天依蓝
+    public const string DefaultFontFamily = "MiSans";
     
 #if DEBUG
     public static bool IsDevelopment => true;
