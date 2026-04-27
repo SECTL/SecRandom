@@ -14,5 +14,6 @@ public partial class MainConfigModel : ConfigBase
     [ObservableProperty] private FloatPositionConfig _floatPosition = new();
     
     [ObservableProperty] private BasicSettingsConfig _basicSettings = new();
+    
     [ObservableProperty] private FairDrawSettingsConfig _fairDrawSettings = new();
 }

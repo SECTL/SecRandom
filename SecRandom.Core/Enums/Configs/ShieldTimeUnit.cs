@@ -1,4 +1,4 @@
-﻿namespace SecRandom.Core.Enums;
+﻿namespace SecRandom.Core.Enums.Configs;
 
 public enum ShieldTimeUnit
 {

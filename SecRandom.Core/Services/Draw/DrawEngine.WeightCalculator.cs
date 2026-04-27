@@ -1,4 +1,4 @@
-﻿using SecRandom.Core.Enums;
+﻿using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Shared.Models.Profile;
