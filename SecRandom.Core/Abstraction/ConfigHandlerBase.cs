@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using Microsoft.Extensions.Logging;
+using SecRandom.Shared.Abstraction;
 
 namespace SecRandom.Core.Abstraction;
 

@@ -3,7 +3,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 
-namespace SecRandom.Core.ComponentModels;
+namespace SecRandom.Shared.ComponentModels;
 
 /// <summary>
 /// 同时实现 <see cref="IDictionary"/>、<see cref="IList"/>、<see cref="INotifyCollectionChanged"/> 的字典结构。

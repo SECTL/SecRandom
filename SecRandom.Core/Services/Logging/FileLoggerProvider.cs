@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Helpers;
+using SecRandom.Shared;
 
 namespace SecRandom.Core.Services.Logging;
 

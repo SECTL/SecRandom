@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using SecRandom.Core.Enums;
+using SecRandom.Shared.Enums;
 
-namespace SecRandom.Core.Models.Profile;
+namespace SecRandom.Shared.Models.Profile;
 
 public partial class Student : AttachableSettingsObject
 {

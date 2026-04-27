@@ -1,5 +1,6 @@
 ﻿using SecRandom.Core.Abstraction;
-using SecRandom.Core.Models.Profile;
+using SecRandom.Shared.Abstraction;
+using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.Config;
 

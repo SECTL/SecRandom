@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace SecRandom.Core.Abstraction;
+namespace SecRandom.Shared.Abstraction;
 
 public abstract class ConfigBase : ObservableObject
 {

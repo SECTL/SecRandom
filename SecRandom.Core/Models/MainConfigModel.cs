@@ -1,7 +1,8 @@
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
-using SecRandom.Core.Abstraction;
 using SecRandom.Core.Models.SubConfigs;
+using SecRandom.Shared;
+using SecRandom.Shared.Abstraction;
 
 namespace SecRandom.Core.Models;
 

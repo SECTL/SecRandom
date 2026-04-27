@@ -1,4 +1,4 @@
-﻿using SecRandom.Core.Models.Profile;
+﻿using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Models.Draw;
 

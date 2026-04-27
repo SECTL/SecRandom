@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace SecRandom.Core.Models.Profile;
+namespace SecRandom.Shared.Models.Profile;
 
 public partial class Prize : AttachableSettingsObject
 {

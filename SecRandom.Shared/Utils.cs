@@ -1,4 +1,4 @@
-﻿namespace SecRandom.Core;
+﻿namespace SecRandom.Shared;
 
 public static partial class Utils
 {

@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace SecRandom.Core.Models;
+namespace SecRandom.Shared.Models;
 
 public class AttachableSettingsObject : ObservableRecipient
 {

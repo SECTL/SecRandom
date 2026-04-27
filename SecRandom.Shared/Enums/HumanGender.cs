@@ -1,4 +1,4 @@
-﻿namespace SecRandom.Core.Enums;
+﻿namespace SecRandom.Shared.Enums;
 
 public enum HumanGender
 {

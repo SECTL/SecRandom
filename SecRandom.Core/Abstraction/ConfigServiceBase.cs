@@ -1,6 +1,7 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using SecRandom.Core.Converters;
+using SecRandom.Shared.Abstraction;
 
 namespace SecRandom.Core.Abstraction;
 

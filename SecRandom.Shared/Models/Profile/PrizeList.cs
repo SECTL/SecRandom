@@ -1,8 +1,8 @@
 ﻿using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
-using SecRandom.Core.Abstraction;
+using SecRandom.Shared.Abstraction;
 
-namespace SecRandom.Core.Models.Profile;
+namespace SecRandom.Shared.Models.Profile;
 
 public class PrizeList : ProfileConfigBase
 {

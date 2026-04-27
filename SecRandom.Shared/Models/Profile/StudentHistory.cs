@@ -1,10 +1,10 @@
 ﻿using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
-using SecRandom.Core.Abstraction;
-using SecRandom.Core.ComponentModels;
-using SecRandom.Core.Enums;
+using SecRandom.Shared.Abstraction;
+using SecRandom.Shared.ComponentModels;
+using SecRandom.Shared.Enums;
 
-namespace SecRandom.Core.Models.Profile;
+namespace SecRandom.Shared.Models.Profile;
 
 public partial class StudentHistory : ProfileConfigBase
 {

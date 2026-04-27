@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace SecRandom.Core.Abstraction;
+namespace SecRandom.Shared.Abstraction;
 
 public abstract class ProfileConfigBase : ConfigBase
 {

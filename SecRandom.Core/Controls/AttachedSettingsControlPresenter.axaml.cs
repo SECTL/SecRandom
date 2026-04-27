@@ -1,14 +1,11 @@
-﻿using System.ComponentModel;
-using System.Reactive.Subjects;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using SecRandom.Core.Abstraction.Controls;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Interfaces;
-using SecRandom.Core.Models;
-using SecRandom.Core.Models.Profile;
-using Student = SecRandom.Core.Models.Profile.Student;
+using SecRandom.Shared.Models;
+using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Controls;
 
