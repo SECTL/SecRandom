@@ -3,9 +3,9 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
-using SecRandom.Core.Models.Profile;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw.Exceptions;
+using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.Draw;
 

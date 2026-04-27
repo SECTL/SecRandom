@@ -1,7 +1,7 @@
 ﻿using SecRandom.Core.Enums;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
-using SecRandom.Core.Models.Profile;
+using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.Draw;
 

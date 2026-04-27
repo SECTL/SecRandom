@@ -1,5 +1,5 @@
-﻿using SecRandom.Core.Models.Profile;
-using SecRandom.Core.Services.Draw.Exceptions;
+﻿using SecRandom.Core.Services.Draw.Exceptions;
+using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.Draw;
 
