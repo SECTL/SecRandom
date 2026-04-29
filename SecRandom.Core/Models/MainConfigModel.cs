@@ -15,6 +15,7 @@ public partial class MainConfigModel : ConfigBase
     
     // 基本设置
     [ObservableProperty] private BasicSettingsConfig _basicSettings = new();
+    [ObservableProperty] private BackupConfig _backup = new();
     // 抽取设置
     [ObservableProperty] private RollCallSettingsConfig _rollCallSettings = new();
     [ObservableProperty] private QuickDrawSettingsConfig _quickDrawSettings = new();
