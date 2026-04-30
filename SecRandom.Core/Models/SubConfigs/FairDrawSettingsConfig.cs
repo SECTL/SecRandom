@@ -29,4 +29,6 @@ public partial class FairDrawSettingsConfig : ObservableObject
 	[ObservableProperty] private double _groupWeight = 0.8;
 	[ObservableProperty] private double _genderWeight = 0.8;
 	[ObservableProperty] private double _timeWeight = 0.5;
+
+	[ObservableProperty] private bool _enableBehindSceneSettings = false;
 }
