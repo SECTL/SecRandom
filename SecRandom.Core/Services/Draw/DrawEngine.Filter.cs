@@ -1,4 +1,5 @@
-﻿using SecRandom.Core.Services.Draw.Exceptions;
+﻿using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Services.Draw.Exceptions;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.Draw;
@@ -115,10 +116,39 @@ public partial class DrawEngine
         if (currentPool.Count == 0)
             throw new CandidateNotFoundException();
 
-        if (count > currentPool.Count)
+        if (configData.LotterySettings.DrawType == LotteryDrawType.Count)
+        {
+            currentPool = currentPool
+                .Where(p => p.Count - getPrizeDrawCount(p) > 0)
+                .ToList();
+
+            if (currentPool.Count == 0)
+                throw new RepeatLimitExhaustedException();
+
+            return currentPool;
+        }
+
+        var repeatThreshold = getLotteryRepeatThreshold();
+        if (repeatThreshold > 0)
+        {
+            currentPool = currentPool
+                .Where(p => getPrizeDrawCount(p) < repeatThreshold)
+                .ToList();
+        }
+
+        if (currentPool.Count == 0 || count > currentPool.Count)
             throw new RepeatLimitExhaustedException();
 
         return currentPool;
 
+    }
+
+    private int getPrizeDrawCount(Prize prize)
+    {
+        if (!string.IsNullOrWhiteSpace(prize.Name) &&
+            prizeHistory.Prizes.TryGetValue(prize.Name, out var historyByName))
+            return historyByName.TotalCount;
+
+        return 0;
     }
 }

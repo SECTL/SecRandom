@@ -1,5 +1,4 @@
 ﻿using SecRandom.Core.Enums.Configs;
-using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Shared.Models.Profile;
 
@@ -61,8 +60,9 @@ public partial class DrawEngine
                     break;
             }
 
-            if (configData.FairDrawSettings.CoolStartEnabled)
-                freqencyIndex = Math.Min(0.8 + 0.2 * freqencyIndex, freqencyIndex);
+            if (configData.FairDrawSettings.CoolStartEnabled &&
+                studentHistory.TotalStats < configData.FairDrawSettings.CoolStartRounds)
+                freqencyIndex = Math.Max(0.8 + 0.2 * freqencyIndex, freqencyIndex);
 
             freqencyIndex *= frequencyWeight;
 
@@ -139,7 +139,6 @@ public partial class DrawEngine
                 {
                     ShieldTimeUnit.Hours => TimeSpan.FromHours(configData.FairDrawSettings.ShieldTime),
                     ShieldTimeUnit.Minutes => TimeSpan.FromMinutes(configData.FairDrawSettings.ShieldTime),
-                    ShieldTimeUnit.Seconds => TimeSpan.FromSeconds(configData.FairDrawSettings.ShieldTime),
                     _ => TimeSpan.FromSeconds(configData.FairDrawSettings.ShieldTime)
                 };
                 if (currentTime - prevDrawTime < shieldTimeSpan)
@@ -175,18 +174,5 @@ public partial class DrawEngine
             return historyByName.LastDrawnTime;
 
         return DateTime.MinValue;
-    }
-
-    private WeightedCandidate<Student> applyBehindSceneWeight(WeightedCandidate<Student> original)
-    {
-        var behindSceneSettings =
-            original.Candidate.GetAttachedObject<BehindSceneAttachedSettings>(
-                Guid.Parse(GlobalConstants.BehindSceneAttachedSettings));
-        if (behindSceneSettings is null)
-            return original;
-        if(!behindSceneSettings.IsAttachSettingsEnabled)
-            return original;
-        original.Weight *= behindSceneSettings.Probability;
-        return original;
     }
 }
