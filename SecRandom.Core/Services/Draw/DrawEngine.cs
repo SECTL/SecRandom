@@ -24,20 +24,19 @@ public partial class DrawEngine
     {
         try
         {
+            //先添加半重复的条件
+            bool filter1(Student student) => filter(student) &&
+                                             (!studentHistory.Students.TryGetValue(student.Id, out var value) ||
+                                              (value.TotalCount < configData.RollCallSettings.HalfRepeat));
 
             //先筛选出符合条件的学生
-            var usable = filterStudents(filter, count);
-            //TODO: 等待半重复功能加进来之后实现半重复抽取功能的筛选
-            // filter = student => !filter1(student) || !studentHistory.Students.TryGetValue(student.Id, out var h) ||
-            //                     (h.TotalCount >= 0);
-            // usable = filterStudents(filter, count);
+            var usable = filterStudents(filter1, count);
+
 
             var weightedCandidates = CalculateStudentWeight(usable);
             var drawEngine = new WeightedDrawEngine<Student>(new CryptoRandomSource());
 
-
-            //TODO: 等待加入抽取设置开关后再执行具体判断是否需要幕后设置
-            if (true)
+            if(true)
             {
                 List<WeightedCandidate<Student>> tempWeightedCandidates = [];
                 List<WeightedCandidate<Student>> mustStudent = []; //必中学生列表，稍后result中将会加入他们
@@ -56,6 +55,7 @@ public partial class DrawEngine
                     }
                     else if (currentBehindSceneSettings is { IsAttachSettingsEnabled: true, Probability: <= 0 })
                         continue; //必不中直接丢弃
+
                     applyBehindSceneWeight(candidate);
                     tempWeightedCandidates.Add(candidate);
                 }
