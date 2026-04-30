@@ -104,4 +104,21 @@ public partial class DrawEngine
 
         return pool;
     }
+
+    private List<Prize> filterPrizes(Func<Prize, bool> filter, int count)
+    {
+        var currentPool = prizeList.Prizes
+            .Where(p => p.Exists)
+            .Where(filter)
+            .ToList();
+
+        if (currentPool.Count == 0)
+            throw new CandidateNotFoundException();
+
+        if (count > currentPool.Count)
+            throw new RepeatLimitExhaustedException();
+
+        return currentPool;
+
+    }
 }

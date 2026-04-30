@@ -8,16 +8,3 @@ public class DrawRequest<TCandidate>
 
     public int Count { get; init; } = 1; // 抽取个数
 }
-
-public class StudentDrawRequest
-{
-    public int Count { get; set; } = 1;
-    public Func<Student,bool>? Filter { get; set; }
-}
-
-public class PrizeDrawRequest
-{
-    public int Count { get; set; } = 1;
-    public Func<Prize,bool>? Filter { get; set; }
-}
-

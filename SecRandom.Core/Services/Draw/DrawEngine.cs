@@ -1,5 +1,6 @@
 ﻿using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
@@ -24,19 +25,37 @@ public partial class DrawEngine
     {
         try
         {
+            var repeatThreshold = getRollCallRepeatThreshold();
+
             //先添加半重复的条件
-            bool filter1(Student student) => filter(student) &&
-                                             (!studentHistory.Students.TryGetValue(student.Id, out var value) ||
-                                              (value.TotalCount < configData.RollCallSettings.HalfRepeat));
+            bool filter1(Student student)
+            {
+                if (!filter(student))
+                    return false;
+
+                if (repeatThreshold <= 0)
+                    return true;
+
+                return getStudentDrawCount(student) < repeatThreshold;
+            }
 
             //先筛选出符合条件的学生
             var usable = filterStudents(filter1, count);
 
 
-            var weightedCandidates = CalculateStudentWeight(usable);
+            var weightedCandidates = configData.RollCallSettings.DrawType switch
+            {
+                DrawType.Fair => CalculateStudentWeight(usable),
+                DrawType.Random => usable
+                    .Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 })
+                    .ToList(),
+                _ => usable
+                    .Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 })
+                    .ToList()
+            };
             var drawEngine = new WeightedDrawEngine<Student>(new CryptoRandomSource());
 
-            if(true)
+            if (weightedCandidates.Count > 0)
             {
                 List<WeightedCandidate<Student>> tempWeightedCandidates = [];
                 List<WeightedCandidate<Student>> mustStudent = []; //必中学生列表，稍后result中将会加入他们
@@ -111,5 +130,16 @@ public partial class DrawEngine
                 Status = DrawStatus.NoCandidates
             };
         }
+    }
+
+    private int getRollCallRepeatThreshold()
+    {
+        return configData.RollCallSettings.DrawMode switch
+        {
+            DrawMode.Repeat => 0,
+            DrawMode.NoRepeat => 1,
+            DrawMode.HalfRepeat => Math.Max(1, configData.RollCallSettings.HalfRepeat),
+            _ => 1
+        };
     }
 }
