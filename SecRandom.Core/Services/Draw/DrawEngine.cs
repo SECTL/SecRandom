@@ -134,11 +134,11 @@ public partial class DrawEngine
 
     private int getRollCallRepeatThreshold()
     {
-        return configData.RollCallSettings.DrawMode switch
+        return configData.DefaultDrawSettings.DrawMode switch
         {
             DrawMode.Repeat => 0,
             DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, configData.RollCallSettings.HalfRepeat),
+            DrawMode.HalfRepeat => Math.Max(1, configData.DefaultDrawSettings.HalfRepeat),
             _ => 1
         };
     }
