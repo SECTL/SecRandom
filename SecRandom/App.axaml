@@ -1,6 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:langs="clr-namespace:SecRandom.Langs.Common"
+             xmlns:core="clr-namespace:SecRandom.Core;assembly=SecRandom.Core"
              x:Class="SecRandom.App"
              RequestedThemeVariant="Default">
     <TrayIcon.Icons>
@@ -22,6 +23,7 @@
                                         Click="MenuItemOpenMainWindow_OnClick"/>
                         
                         <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenProfileSettings}"
+                                        IsVisible="{x:Static core:GlobalConstants.IsDevelopment}"
                                         Click="MenuItemOpenProfileSettings_OnClick"/>
                         
                         <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenSettings}"

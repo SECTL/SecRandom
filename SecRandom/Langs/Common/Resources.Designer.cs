@@ -177,7 +177,7 @@ namespace SecRandom.Langs.Common {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 编辑档案.
+        ///   Looks up a localized string similar to 编辑档案 (debug).
         /// </summary>
         public static string Menu_OpenProfileSettings {
             get {
