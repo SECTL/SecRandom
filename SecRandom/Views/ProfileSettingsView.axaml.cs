@@ -5,7 +5,11 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Controls;
+using SecRandom.Core.Helpers.UI;
+using SecRandom.Core.Services.Config;
+using SecRandom.Shared.Models.Profile;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
@@ -63,6 +67,7 @@ public partial class ProfileSettingsView : UserControl
     
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        SaveSelectedStudentListConfig();
         DataContext = null;
     }
     
@@ -75,5 +80,37 @@ public partial class ProfileSettingsView : UserControl
     public void CloseDrawer()
     {
         ViewModel.IsDrawerOpen = false;
+    }
+
+    private void SaveSelectedStudentListConfig()
+    {
+        if (ViewModel.SelectedStudentListConfig == null)
+            return;
+        
+        ViewModel.SelectedStudentListConfig.Save();
+
+        var service = IAppHost.GetService<IProfileService>();
+        if (service.StudentListConfig?.Name == ViewModel.SelectedStudentListName)
+        {
+            service.StudentListConfig.Reload();
+        }
+    }
+    
+    private void SaveProfileButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        SaveSelectedStudentListConfig();
+        this.ShowSuccessToast(Langs.ProfileSettings.Resources.Message_SavedProfile);
+    }
+
+    private void StudentListBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        SaveSelectedStudentListConfig();
+        ViewModel.SelectedStudentListConfig = new StudentListConfig(ViewModel.SelectedStudentListName);
+        ViewModel.SelectedStudentList = ViewModel.SelectedStudentListConfig.Data;
+    }
+
+    private void CreateStudentButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        ViewModel.SelectedStudentList?.Students.Add(new Student());
     }
 }

@@ -6,19 +6,19 @@ namespace SecRandom.Core.Services.Config;
 
 public class ProfileConfigHandlerBase<T> : ConfigHandlerBase<T> where T : ProfileConfigBase
 {
-    private readonly string _name;
-    
+    public string Name { get; }
+
     public ProfileConfigHandlerBase(string name)
         : base(() => (T)Activator.CreateInstance(typeof(T), args: [name])!)
     {
-        _name = name;
+        Name = name;
         Data.Name = name;
     }
 
     public override void Reload()
     {
         base.Reload();
-        Data.Name = _name;
+        Data.Name = Name;
     }
 }
 

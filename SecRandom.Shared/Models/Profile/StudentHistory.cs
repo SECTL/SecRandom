@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.ComponentModels;
-using SecRandom.Shared.Enums;
 
 namespace SecRandom.Shared.Models.Profile;
 
@@ -14,7 +13,7 @@ public partial class StudentHistory : ProfileConfigBase
     
     public ObservableDictionary<string, History> Students { get; set; } = [];
     public ObservableDictionary<string, int> GroupStats { get; set; } = [];
-    public ObservableDictionary<HumanGender, int> GenderStatus { get; set; } = [];
+    public ObservableDictionary<string, int> GenderStatus { get; set; } = [];
 
     [ObservableProperty] private int _totalRounds = 0;
     [ObservableProperty] private int _totalStats = 0;

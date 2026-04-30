@@ -7,7 +7,7 @@
              x:Class="SecRandom.Core.Controls.AttachedSettingsControlPresenter">
     <Grid DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=controls:AttachedSettingsControlPresenter}}">
         <Expander Classes="compact stretch-header" HorizontalContentAlignment="Stretch"
-                  IsExpanded="{Binding AssociatedAttachedSettings.IsAttachSettingsEnabled}">
+                  IsExpanded="{Binding AssociatedAttachedSettings.IsAttachSettingsEnabled, Mode=OneWay}">
             <Expander.Header>
                 <DockPanel HorizontalAlignment="Stretch">
                     <ToggleSwitch DockPanel.Dock="Right"

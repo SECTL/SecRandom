@@ -22,6 +22,21 @@
         <ProjectReference Include="..\SecRandom.Shared\SecRandom.Shared.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <EmbeddedResource Update="Langs\Common\Resources.resx">
+        <Generator>PublicResXFileCodeGenerator</Generator>
+        <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Langs\Common\Resources.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>Resources.resx</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
     <Import Project="..\Global.props" />
 
 </Project>

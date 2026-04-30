@@ -28,6 +28,9 @@
     <StyleInclude Source="/Styles/TabStrip.axaml"/>
     <StyleInclude Source="/Controls/StickyScrollViewer.axaml" />
     <StyleInclude Source="/Controls/DrawerHost.axaml" />
+    <StyleInclude Source="/Controls/Empty.axaml" />
+    <StyleInclude Source="/Controls/Emptiable.axaml" />
+    <StyleInclude Source="/Controls/Field.axaml" />
     
     <Style Selector=":is(Window)">
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
@@ -155,5 +158,9 @@
         <Style Selector="^ Slider">
             <Setter Property="Margin" Value="0 -12"/>
         </Style>
+    </Style>
+    
+    <Style Selector="fa|CommandBar.hide-popup-indicator fa|CommandBarButton:labelright /template/ fa|FontIcon#SubItemChevron">
+        <Setter Property="IsVisible" Value="False"/>
     </Style>
 </Styles>

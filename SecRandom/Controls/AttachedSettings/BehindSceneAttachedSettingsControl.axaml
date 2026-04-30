@@ -5,12 +5,12 @@
              xmlns:fa="using:FluentAvalonia.UI.Controls"
              xmlns:local="clr-namespace:SecRandom.Controls.AttachedSettings"
              xmlns:la="clr-namespace:SecRandom.Langs.AttachedSettings"
+             xmlns:controls="clr-namespace:SecRandom.Core.Controls;assembly=SecRandom.Core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Controls.AttachedSettings.BehindSceneAttachedSettingsControl"
              x:Name="RootControl">
-    <StackPanel Orientation="Vertical" Spacing="4"
-                DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=local:BehindSceneAttachedSettingsControl}}">
-        <TextBlock Text="{x:Static la:Resources.C_Probability}" />
+    <controls:Field Label="{x:Static la:Resources.C_Probability}"
+                    DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=local:BehindSceneAttachedSettingsControl}}">
         <fa:NumberBox Value="{Binding Settings.Probability}" />
-    </StackPanel>
+    </controls:Field>
 </UserControl>

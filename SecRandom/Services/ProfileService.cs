@@ -11,34 +11,34 @@ public class ProfileService : IProfileService
     
     public PrizeList? CurrentPrizeList { get; set; }
     public PrizeHistory? CurrentPrizeHistory { get; set; }
-
-    private StudentListConfig? _studentListConfig = null;
-    private StudentHistoryConfig? _studentHistoryConfig = null;
     
-    private PrizeListConfig? _prizeListConfig = null;
-    private PrizeHistoryConfig? _prizeHistoryConfig = null;
+    public StudentListConfig? StudentListConfig { get; set; }
+    public StudentHistoryConfig? StudentHistoryConfig { get; set; }
+    
+    public PrizeListConfig? PrizeListConfig { get; set; }
+    public PrizeHistoryConfig? PrizeHistoryConfig { get; set; }
 
     public ProfileService()
     {
-        _studentListConfig = new StudentListConfig("testing");
-        _studentHistoryConfig = new StudentHistoryConfig("testing");
+        StudentListConfig = new StudentListConfig("testing");
+        StudentHistoryConfig = new StudentHistoryConfig("testing");
         
-        _prizeListConfig = new PrizeListConfig("testing");
-        _prizeHistoryConfig = new PrizeHistoryConfig("testing");
+        PrizeListConfig = new PrizeListConfig("testing");
+        PrizeHistoryConfig = new PrizeHistoryConfig("testing");
 
-        CurrentStudentList = _studentListConfig.Data;
-        CurrentStudentHistory = _studentHistoryConfig.Data;
+        CurrentStudentList = StudentListConfig.Data;
+        CurrentStudentHistory = StudentHistoryConfig.Data;
         
-        CurrentPrizeList = _prizeListConfig.Data;
-        CurrentPrizeHistory = _prizeHistoryConfig.Data;
+        CurrentPrizeList = PrizeListConfig.Data;
+        CurrentPrizeHistory = PrizeHistoryConfig.Data;
     }
     
     public void SaveProfile()
     {
-        _studentListConfig?.Save();
-        _studentHistoryConfig?.Save();
+        StudentListConfig?.Save();
+        StudentHistoryConfig?.Save();
         
-        _prizeListConfig?.Save();
-        _prizeHistoryConfig?.Save();
+        PrizeListConfig?.Save();
+        PrizeHistoryConfig?.Save();
     }
 }

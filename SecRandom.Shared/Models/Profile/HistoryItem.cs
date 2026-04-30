@@ -1,5 +1,4 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using SecRandom.Shared.Enums;
 
 namespace SecRandom.Shared.Models.Profile;
 
@@ -10,7 +9,7 @@ public partial class HistoryItem : ObservableRecipient
     [ObservableProperty] private int _drawMethod = 1;
     [ObservableProperty] private int _drawNumbers = 1;
     [ObservableProperty] private string _drawGroup = string.Empty;
-    [ObservableProperty] private HumanGender _drawGender = HumanGender.None;
+    [ObservableProperty] private string _drawGender = string.Empty;
     
     [ObservableProperty] private double _weight = 1;
 }
