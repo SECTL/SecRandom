@@ -1,5 +1,4 @@
-﻿using Avalonia.Media;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Core.Enums.Configs;
 
 namespace SecRandom.Core.Models.SubConfigs;

@@ -1,6 +1,4 @@
-﻿using SecRandom.Shared.Models.Profile;
-
-namespace SecRandom.Core.Models.Draw;
+﻿namespace SecRandom.Core.Models.Draw;
 
 public class DrawRequest<TCandidate>
 {

@@ -26,7 +26,6 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Extensions.Registry;
 using SecRandom.Core.Models;
-using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Services;
