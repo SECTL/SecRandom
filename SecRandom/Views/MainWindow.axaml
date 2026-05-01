@@ -3,9 +3,9 @@
                        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                        xmlns:faWindowing="using:FluentAvalonia.UI.Windowing"
-                       mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                       mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
                        x:Class="SecRandom.Views.MainWindow"
                        Icon="/Assets/AppLogo.ico"
                        WindowStartupLocation="CenterScreen"
-                       MinHeight="600" MinWidth="400"
+                       MinWidth="800" MinHeight="600"
                        Loaded="OnLoaded"/>
