@@ -204,6 +204,15 @@ namespace SecRandom.Langs.Common {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 备份设置.
+        /// </summary>
+        public static string Settings_Backup {
+            get {
+                return ResourceManager.GetString("Settings_Backup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 基础设置.
         /// </summary>
         public static string Settings_Basic {

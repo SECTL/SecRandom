@@ -106,4 +106,7 @@
     <data name="AttachedSettings_BehindScene" xml:space="preserve">
         <value>内幕设置</value>
     </data>
+    <data name="Settings_Backup" xml:space="preserve">
+        <value>备份设置</value>
+    </data>
 </root>

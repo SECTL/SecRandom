@@ -138,6 +138,7 @@ public partial class App : Application
                 
                 // 设置界面 Views
                 services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
+                services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
 
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
                 
@@ -191,7 +192,7 @@ public partial class App : Application
                 using var scope = logger.BeginScope($"[{settingsPageId}] {settingsPageName}");
                 foreach (var declaredProperty in properties)
                 {
-                    if (declaredProperty.Name.StartsWith("S_"))
+                    if (declaredProperty.Name.StartsWith("S_") && !declaredProperty.Name.EndsWith("_R"))
                     {
                         logger.LogDebug("[{Name}] {Value}", declaredProperty.Name, declaredProperty.GetValue(null));
                     }
