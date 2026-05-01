@@ -141,6 +141,11 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         
         App.Restart();
     }
+
+    private void ButtonRestartApp_OnClick(object? sender, RoutedEventArgs e)
+    {
+        _ = ShowRestartDialog();
+    }
     
     private void CoreNavigate(PageInfo info, bool isBack = false)
     {

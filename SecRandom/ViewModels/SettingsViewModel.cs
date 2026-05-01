@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Attributes;
@@ -20,4 +21,6 @@ public partial class SettingsViewModel : ObservableRecipient
     [ObservableProperty] private bool _isDrawerOpen = false;
     [ObservableProperty] private object? _drawerContent = false;
     [ObservableProperty] private bool _isRequestedRestart = false;
+
+    public bool IsWindows => OperatingSystem.IsWindows();
 }
