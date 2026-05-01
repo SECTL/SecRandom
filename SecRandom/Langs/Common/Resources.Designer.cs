@@ -159,6 +159,51 @@ namespace SecRandom.Langs.Common {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 需要重启.
+        /// </summary>
+        public static string M_NeedsRestarting {
+            get {
+                return ResourceManager.GetString("M_NeedsRestarting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 取消.
+        /// </summary>
+        public static string M_NeedsRestarting_Close {
+            get {
+                return ResourceManager.GetString("M_NeedsRestarting_Close", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 部分设置需要重启以应用更改。.
+        /// </summary>
+        public static string M_NeedsRestarting_D {
+            get {
+                return ResourceManager.GetString("M_NeedsRestarting_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 重启.
+        /// </summary>
+        public static string M_NeedsRestarting_Primary {
+            get {
+                return ResourceManager.GetString("M_NeedsRestarting_Primary", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 部分设置需要重启才能生效，点击以重启应用。.
+        /// </summary>
+        public static string M_NeedsRestarting_Tooltip {
+            get {
+                return ResourceManager.GetString("M_NeedsRestarting_Tooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 退出程序.
         /// </summary>
         public static string Menu_ExitProgram {

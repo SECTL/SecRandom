@@ -126,12 +126,12 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         if (_isShowingRestartDialog) return;
         _isShowingRestartDialog = true;
         
-        var r = await new ContentDialog()
+        var r = await new ContentDialog
         {
-            Title = "需要重启",
-            Content = "部分设置需要重启以应用更改。",
-            PrimaryButtonText = "重启",
-            CloseButtonText = "取消",
+            Title = Langs.Common.Resources.M_NeedsRestarting,
+            Content = Langs.Common.Resources.M_NeedsRestarting_D,
+            PrimaryButtonText = Langs.Common.Resources.M_NeedsRestarting_Primary,
+            CloseButtonText = Langs.Common.Resources.M_NeedsRestarting_Close,
             DefaultButton = ContentDialogButton.Primary,
         }.ShowAsync(TopLevel.GetTopLevel(this));
         

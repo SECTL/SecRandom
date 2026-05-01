@@ -112,4 +112,19 @@
     <data name="Menu_RestartProgram" xml:space="preserve">
         <value>Restart Program</value>
     </data>
+    <data name="M_NeedsRestarting" xml:space="preserve">
+        <value>Needs Restarting</value>
+    </data>
+    <data name="M_NeedsRestarting_D" xml:space="preserve">
+        <value>Some settings require a restart to take effect.</value>
+    </data>
+    <data name="M_NeedsRestarting_Primary" xml:space="preserve">
+        <value>Restart</value>
+    </data>
+    <data name="M_NeedsRestarting_Close" xml:space="preserve">
+        <value>Cancel</value>
+    </data>
+    <data name="M_NeedsRestarting_Tooltip" xml:space="preserve">
+        <value>Some settings require a restart to take effect. Click to restart the application.</value>
+    </data>
 </root>
