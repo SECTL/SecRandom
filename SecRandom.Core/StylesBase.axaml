@@ -14,13 +14,15 @@
             </ResourceDictionary.MergedDictionaries>
             
             <system:Double x:Key="PageContainerWidth">960</system:Double>
+    
+            <styling:FluentAvaloniaTheme x:Key="FluentAvaloniaTheme"
+                                         PreferSystemTheme="True"
+                                         UseSystemFontOnWindows="False"
+                                         TextVerticalAlignmentOverrideBehavior="Disabled"/>
         </ResourceDictionary>
     </Styles.Resources>
     
-    <styling:FluentAvaloniaTheme PreferSystemTheme="True"
-                                 PreferUserAccentColor="True"
-                                 UseSystemFontOnWindows="False"
-                                 TextVerticalAlignmentOverrideBehavior="Disabled"/>
+    <StaticResource ResourceKey="FluentAvaloniaTheme" />
     
     <StyleInclude Source="/Styles/NavigationBackButton.axaml" />
     <StyleInclude Source="/Styles/PopupAnimations.axaml" />
@@ -39,6 +41,11 @@
     
     <Style Selector=":is(Control)">
         <Setter Property="TextElement.FontWeight" Value="{DynamicResource AppFontWeight}" />
+    </Style>
+    
+    <Style Selector="fa|ContentDialog">
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+        <Setter Property="FontWeight" Value="{DynamicResource AppFontWeight}" />
     </Style>
     
     <StyleInclude Source="/Controls/TouchDragThumb.axaml"/>

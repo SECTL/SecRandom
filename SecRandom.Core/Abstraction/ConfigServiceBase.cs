@@ -7,7 +7,7 @@ namespace SecRandom.Core.Abstraction;
 
 public abstract class ConfigServiceBase
 {
-    protected readonly JsonSerializerOptions JsonOptions = new()
+    public static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
         PropertyNameCaseInsensitive = true,

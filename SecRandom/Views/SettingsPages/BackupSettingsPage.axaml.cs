@@ -9,7 +9,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages;
 
-[PageInfo("settings.backup", "\uE07D")]
+[PageInfo("settings.basic.backup", "\uE07D", isHide: true)]
 public partial class BackupSettingsPage : UserControl
 {
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();

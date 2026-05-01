@@ -109,4 +109,7 @@
     <data name="Settings_Backup" xml:space="preserve">
         <value>备份设置</value>
     </data>
+    <data name="Menu_RestartProgram" xml:space="preserve">
+        <value>重启程序</value>
+    </data>
 </root>

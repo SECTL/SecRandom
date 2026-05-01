@@ -31,6 +31,9 @@
                         
                         <NativeMenuItemSeparator />
                         
+                        <NativeMenuItem Header="{x:Static langs:Resources.Menu_RestartProgram}"
+                                        Click="MenuItemRestartProgram_OnClick"/>
+                        
                         <NativeMenuItem Header="{x:Static langs:Resources.Menu_ExitProgram}"
                                         Click="MenuItemExitProgram_OnClick"/>
                     </NativeMenu>

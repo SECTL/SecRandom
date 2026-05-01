@@ -106,4 +106,10 @@
     <data name="AttachedSettings_BehindScene" xml:space="preserve">
         <value>Behind Scene Settings</value>
     </data>
+    <data name="Settings_Backup" xml:space="preserve">
+        <value>Backup Settings</value>
+    </data>
+    <data name="Menu_RestartProgram" xml:space="preserve">
+        <value>Restart Program</value>
+    </data>
 </root>

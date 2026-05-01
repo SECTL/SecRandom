@@ -195,6 +195,15 @@ namespace SecRandom.Langs.Common {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 重启程序.
+        /// </summary>
+        public static string Menu_RestartProgram {
+            get {
+                return ResourceManager.GetString("Menu_RestartProgram", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 关于 SecRandom.
         /// </summary>
         public static string Settings_About {

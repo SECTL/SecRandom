@@ -24,7 +24,7 @@
         SizeToContent="WidthAndHeight"
         Loaded="OnLoaded">
     <Grid>
-        <Border Background="{StaticResource SolidBackgroundFillColorQuarternaryBrush}"
+        <Border Background="{DynamicResource SolidBackgroundFillColorQuarternaryBrush}"
                 Opacity="0.8"
                 CornerRadius="8" ClipToBounds="True" />
         <!-- Opacity="{Binding ViewModel.Config.FloatingWindowSettings.FloatingWindowOpacity}" -->

@@ -17,7 +17,6 @@ public partial class BasicSettingsConfig : ObservableObject
     [ObservableProperty] private LanguageMode _language = LanguageMode.ChineseSimplified;
     [ObservableProperty] private string _font = GlobalConstants.DefaultFontFamily;
     [ObservableProperty] private FontWeightMode _fontWeight = FontWeightMode.Regular;
-    [ObservableProperty] private DpiScaleMode _dpiScale = DpiScaleMode.Auto;
     [ObservableProperty] private Color _themeColor = Color.Parse(GlobalConstants.DefaultThemeColor);
     
     // Hidden Configs

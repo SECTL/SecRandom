@@ -84,19 +84,13 @@ bug 报 GitHub Issue 或 SECTL QQ组织群 - 833875216</value>
         <value>字体</value>
     </data>
     <data name="S_Personalized_Font_D" xml:space="preserve">
-        <value>设置软件界面显示字体（重启软件后生效）</value>
+        <value>设置软件界面显示字体</value>
     </data>
     <data name="S_Personalized_FontWeight" xml:space="preserve">
         <value>字体粗细</value>
     </data>
     <data name="S_Personalized_FontWeight_D" xml:space="preserve">
-        <value>设置软件界面字体粗细（重启软件后生效）</value>
-    </data>
-    <data name="S_Personalized_DpiScale" xml:space="preserve">
-        <value>DPI 缩放</value>
-    </data>
-    <data name="S_Personalized_DpiScale_D" xml:space="preserve">
-        <value>调整软件界面缩放比例（重启软件后生效）</value>
+        <value>设置软件界面字体粗细</value>
     </data>
     <data name="S_Personalized_ThemeColor" xml:space="preserve">
         <value>主题颜色</value>
@@ -163,5 +157,8 @@ bug 报 GitHub Issue 或 SECTL QQ组织群 - 833875216</value>
     </data>
     <data name="S_DataManagement" xml:space="preserve">
         <value>数据管理</value>
+    </data>
+    <data name="O_FontFamily_Default" xml:space="preserve">
+        <value>MiSans (默认)</value>
     </data>
 </root>

@@ -116,6 +116,15 @@ namespace SecRandom.Langs.SettingsPages.Basic {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to MiSans (默认).
+        /// </summary>
+        public static string O_FontFamily_Default {
+            get {
+                return ResourceManager.GetString("O_FontFamily_Default", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 极粗.
         /// </summary>
         public static string O_FontWeight_Black {
@@ -386,24 +395,6 @@ namespace SecRandom.Langs.SettingsPages.Basic {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to DPI 缩放.
-        /// </summary>
-        public static string S_Personalized_DpiScale {
-            get {
-                return ResourceManager.GetString("S_Personalized_DpiScale", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 调整软件界面缩放比例（重启软件后生效）.
-        /// </summary>
-        public static string S_Personalized_DpiScale_D {
-            get {
-                return ResourceManager.GetString("S_Personalized_DpiScale_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 字体.
         /// </summary>
         public static string S_Personalized_Font {
@@ -413,7 +404,7 @@ namespace SecRandom.Langs.SettingsPages.Basic {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置软件界面显示字体（重启软件后生效）.
+        ///   Looks up a localized string similar to 设置软件界面显示字体.
         /// </summary>
         public static string S_Personalized_Font_D {
             get {
@@ -431,7 +422,7 @@ namespace SecRandom.Langs.SettingsPages.Basic {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 设置软件界面字体粗细（重启软件后生效）.
+        ///   Looks up a localized string similar to 设置软件界面字体粗细.
         /// </summary>
         public static string S_Personalized_FontWeight_D {
             get {

@@ -1,13 +1,19 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
+using FluentAvalonia.Styling;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,7 +23,10 @@ using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Extensions.Registry;
+using SecRandom.Core.Models;
+using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Services;
@@ -41,19 +50,35 @@ public partial class App : Application
     
     public override void Initialize()
     {
+        // 初始化语言
+        var content = File.ReadAllText(new MainConfigModel().ConfigFilePath);
+        var settings = JsonSerializer.Deserialize<MainConfigModel>(content, ConfigServiceBase.JsonOptions);
+        var culture = settings?.BasicSettings.Language switch
+        {
+            LanguageMode.ChineseSimplified => "zh-Hans",
+            LanguageMode.English => "en-US",
+            LanguageMode.Japanese => "ja-JP",
+            _ => "zh-Hans"
+        };
+        InitializeLanguages(new CultureInfo(culture));
+        
+        // 启动服务主机
+        BuildHost();
+        
+        // 初始化 Avalonia App
         AvaloniaXamlLoader.Load(this);
         
+        // 刷新个性化设置
+        RefreshPersonalizedSettings();
+        
 #if DEBUG
+        // 附加开发者工具
         this.AttachDeveloperTools();
 #endif
     }
 
     public override void OnFrameworkInitializationCompleted()
     {
-        InitializeLanguages(new CultureInfo("zh-hans"));
-        // InitializeLanguages(new CultureInfo("en-us"));
-        BuildHost();
-        
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
@@ -89,7 +114,7 @@ public partial class App : Application
         }
     }
     
-    private static void BuildHost()
+    private void BuildHost()
     {
         if (IAppHost.Host is not null)
         {
@@ -157,8 +182,7 @@ public partial class App : Application
 
         var logger = IAppHost.GetService<ILogger<App>>();
         
-        logger.LogInformation("SecRandom {VERSION} (Codename: {CODENAME})",
-            GlobalConstants.Version, GlobalConstants.CodeName);
+        logger.LogInformation("SecRandom {VERSION} (Codename: {CODENAME})", GlobalConstants.Version, GlobalConstants.CodeName);
         logger.LogInformation("Copyright by SECTL(2025~{YEAR})  Licensed under GPL3.0", DateTime.Now.Year);
         logger.LogInformation("Host built.");
         
@@ -217,6 +241,8 @@ public partial class App : Application
 
     public static void Restart()
     {
+        Stop();
+        
         var path = Environment.ProcessPath;
         if (path == null) return;
         
@@ -241,6 +267,51 @@ public partial class App : Application
     {
         var configHandler = IAppHost.GetService<MainConfigHandler>();
         configHandler.Save();
+    }
+
+    private static void InitializeLanguages(CultureInfo cultureInfo)
+    {
+        CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+        CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+    }
+
+    public void RefreshPersonalizedSettings()
+    {
+        var config = IAppHost.GetService<MainConfigHandler>().Data;
+        var settings = config.BasicSettings;
+
+        var fontFamily = settings.Font;
+        if (fontFamily == "MiSans")
+            fontFamily = "avares://SecRandom/Assets/Fonts/MiSans/#MiSans";
+
+        // 主题模式
+        RequestedThemeVariant = settings.Theme switch
+        {
+            ThemeMode.Auto => ThemeVariant.Default,
+            ThemeMode.Light => ThemeVariant.Light,
+            ThemeMode.Dark => ThemeVariant.Dark,
+            _ => ThemeVariant.Default
+        };
+        var fluentAvaloniaTheme = this.FindResource("FluentAvaloniaTheme") as FluentAvaloniaTheme;
+        fluentAvaloniaTheme?.PreferSystemTheme = settings.Theme == ThemeMode.Auto;
+        
+        // 主题色
+        fluentAvaloniaTheme?.CustomAccentColor = settings.ThemeColor;
+        Resources["SystemAccentColor"] = settings.ThemeColor;
+        Resources["SystemAccentColorLight1"] = settings.ThemeColor;
+        Resources["SystemAccentColorLight2"] = settings.ThemeColor;
+        Resources["SystemAccentColorLight3"] = settings.ThemeColor;
+        Resources["SystemAccentColorDark1"] = settings.ThemeColor;
+        Resources["SystemAccentColorDark2"] = settings.ThemeColor;
+        Resources["SystemAccentColorDark3"] = settings.ThemeColor;
+
+        _mainWindow?.RefreshButtonColors();
+        _settingsWindow?.RefreshButtonColors();
+        _profileSettingsWindow?.RefreshButtonColors();
+        
+        // 字体
+        Resources["ContentControlThemeFontFamily"] = Resources["AppFontFamily"] = new FontFamily(fontFamily);
+        Resources["AppFontWeight"] = Enum.Parse<FontWeight>(settings.FontWeight.ToString());
     }
 
     #region Windows
@@ -313,12 +384,6 @@ public partial class App : Application
 
     #endregion
 
-    private static void InitializeLanguages(CultureInfo cultureInfo)
-    {
-        CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-        CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
-    }
-
     #region TrayIcon
 
     private void MenuItemAbout_OnClick(object? sender, EventArgs e)
@@ -340,6 +405,11 @@ public partial class App : Application
     private void MenuItemOpenProfileSettings_OnClick(object? sender, EventArgs e)
     {
         ShowProfileSettingsWindow();
+    }
+
+    private void MenuItemRestartProgram_OnClick(object? sender, EventArgs e)
+    {
+        Restart();
     }
 
     private void MenuItemExitProgram_OnClick(object? sender, EventArgs e)

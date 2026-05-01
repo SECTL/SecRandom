@@ -7,10 +7,17 @@
              xmlns:lc="clr-namespace:SecRandom.Langs.Common"
              xmlns:lsb="clr-namespace:SecRandom.Langs.SettingsPages.Basic"
              xmlns:controls="clr-namespace:SecRandom.Core.Controls;assembly=SecRandom.Core"
+             xmlns:converters="clr-namespace:SecRandom.Converters"
+             xmlns:secRandom="clr-namespace:SecRandom"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.BasicSettingsPage"
              x:DataType="local:BasicSettingsPage"
-             d:DataContext="{d:DesignInstance local:BasicSettingsPage}">
+             d:DataContext="{d:DesignInstance local:BasicSettingsPage}"
+             Unloaded="OnUnloaded">
+    <UserControl.Resources>
+        <converters:StringToFontFamilyConverter x:Key="StringToFontFamilyConverter" />
+    </UserControl.Resources>
+    
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
             <fa:InfoBar Title="{x:Static lsb:Resources.C_VersionNotice}"
@@ -129,8 +136,43 @@
                                  Description="{x:Static lsb:Resources.S_Personalized_Font_D}"
                                  IconSource="{controls:FluentIconSource &#xF26F;}">
                 <fa:SettingsExpander.Footer>
-                    <TextBlock Text="{x:Static lc:Resources.C_ToBeWritten}"
-                               VerticalAlignment="Center" />
+                    <ComboBox x:Name="FontComboBox"
+                              HorizontalAlignment="Left" MaxDropDownHeight="360"
+                              ItemsSource="{Binding FontFamilies}"
+                              SelectedValue="{Binding Settings.Font, Converter={StaticResource StringToFontFamilyConverter}}">
+                        <ComboBox.Styles>
+                            <Style Selector="ComboBoxItem">
+                                <Setter Property="MinHeight" Value="32"/>
+                                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            </Style>
+                            
+                            <Style Selector="#FontComboBox /template/ Popup#PART_Popup">
+                                <Setter Property="Width" Value="280"/>
+                                <Setter Property="PlacementMode" Value="BottomEdgeAlignedRight"/>
+                            </Style>
+                        </ComboBox.Styles>
+                        
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock FontFamily="{Binding}" FontWeight="Normal"
+                                           ToolTip.Tip="{Binding Name}"
+                                           Height="20" MaxWidth="240"
+                                           TextWrapping="NoWrap"
+                                           TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center"
+                                           Classes.DefaultFont="{Binding Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static secRandom:App.DefaultFontFamily}}">
+                                    <TextBlock.Styles>
+                                        <Style Selector="TextBlock">
+                                            <Style Selector="^.DefaultFont">
+                                                <Setter Property="Text" Value="{x:Static lsb:Resources.O_FontFamily_Default}"/>
+                                            </Style>
+                                            <Setter Property="Text" Value="{Binding}" />
+                                        </Style>
+                                    </TextBlock.Styles>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                 </fa:SettingsExpander.Footer>
             </fa:SettingsExpander>
             
@@ -149,22 +191,6 @@
                         <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Bold}" />
                         <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_ExtraBold}" />
                         <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Black}" />
-                    </ComboBox>
-                </fa:SettingsExpander.Footer>
-            </fa:SettingsExpander>
-            
-            <fa:SettingsExpander x:Name="S_Personalized_DpiScale"
-                                 Header="{x:Static lsb:Resources.S_Personalized_DpiScale}"
-                                 Description="{x:Static lsb:Resources.S_Personalized_DpiScale_D}"
-                                 IconSource="{controls:FluentIconSource &#xF4CF;}">
-                <fa:SettingsExpander.Footer>
-                    <ComboBox SelectedIndex="{Binding Settings.DpiScale}">
-                        <ComboBoxItem Content="100%" />
-                        <ComboBoxItem Content="125%" />
-                        <ComboBoxItem Content="150%" />
-                        <ComboBoxItem Content="175%" />
-                        <ComboBoxItem Content="200%" />
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_DpiScale_Auto}" />
                     </ComboBox>
                 </fa:SettingsExpander.Footer>
             </fa:SettingsExpander>

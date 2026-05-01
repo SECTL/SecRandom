@@ -1,5 +1,6 @@
 ﻿using System;
 using Avalonia;
+using Avalonia.Media;
 
 namespace SecRandom.Desktop;
 
@@ -16,5 +17,9 @@ sealed class Program
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
+            .With(new FontManagerOptions
+            {
+                DefaultFamilyName = "avares://SecRandom/Assets/Fonts/MiSans/#MiSans",
+            })
             .LogToTrace();
 }
