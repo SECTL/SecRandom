@@ -12,9 +12,8 @@
         ShowActivated="False"
         Topmost="True"
         ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="-1"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="Manual"
         SystemDecorations="None"
         Background="Transparent"
         CanMinimize="False"
@@ -26,6 +25,8 @@
     <Grid>
         <Border Background="{DynamicResource SolidBackgroundFillColorQuarternaryBrush}"
                 Opacity="0.8"
+                BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
+                BorderThickness="2"
                 CornerRadius="8" ClipToBounds="True" />
         <!-- Opacity="{Binding ViewModel.Config.FloatingWindowSettings.FloatingWindowOpacity}" -->
         
