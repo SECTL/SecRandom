@@ -67,16 +67,12 @@ services.AddSettingsPage<LotteryTablePreviewPage>(
 - 每个页面的本地化拆分到独立文件夹，结构固定：
   - `Resources.resx`（zh-hans）
   - `Resources.Designer.cs`
-  - `Resources.en-us.resx`
-  - `Resources.ja-jp.resx`
+  - `Resources.en-US.resx`
+  - `Resources.ja-JP.resx`
 - `SecRandom/SecRandom.csproj` 只需要注册 `Resources.resx` 和 `Resources.Designer.cs`（照现有条目追加，不要把所有语言文件都注册进去）。
+- 注意必须使用 `PublicResXFileCodeGenerator`
 - 页面标题/菜单标题优先直接用 `Langs.*.Resources.*`。
-
-### 语言切换的隐藏点（会影响侧边栏标题刷新）
-
-- 切换语言时会“刷新已注册页面标题”，但依赖 `SecRandom/App.Consts.cs` 里的 `PageNameProviders`。
-- 新增页面如果希望语言切换时侧边栏标题跟着变：
-  - 把 pageId 加进 `PageNameProviders`（否则标题可能停留在注册时的旧语言字符串）。
+- 大部分情况无需处理 en-US 和 ja-JP 的创建和本地化，由 Crowdin 处理。
 
 ## 配置系统（必须理解）
 
@@ -87,16 +83,13 @@ services.AddSettingsPage<LotteryTablePreviewPage>(
 ### 配置集合类保存（易踩坑）
 
 - `Dictionary` 内部增删改不会触发 `PropertyChanged`，不会自动保存。
-- 正确姿势：每次更新都“整体替换属性值”（复制新字典再赋值）。
-  - 本项目 list-specific overrides 就是这么做的：`DrawSettingsListSpecificViewModels.cs`。
+- 正确姿势：在 Unloaded 等方法调用 Save 方法，或更新完毕就调用。
 
 ## UI 常用小用法（写页面时直接拿来用）
 
 - Toast：
   - 页面里直接 `this.ShowWarningToast(...) / ShowErrorToast(...)`
   - 不需要自己管理容器，MainView/SettingsView Loaded 时会注入 `AppToastAdorner`
-- 文件夹驱动的下拉列表（名单/奖池名）：
-  - 优先复用 `ListNamesSource`（FileSystemWatcher + debounce 自动刷新）
 
 ## 新增功能 Checklist（照这个做，基本不会漏）
 
