@@ -1,4 +1,3 @@
-using System.Reflection;
 using Avalonia.Media;
 
 namespace SecRandom.Core;
@@ -11,7 +10,7 @@ public static class GlobalConstants
     public static string FullCommitHash => GitInfo.CommitHash;
     
     public static string CodeName => "Nonomi";
-    public static string Version => Assembly.GetExecutingAssembly().GetName().Version!.ToString();
+    public static string Version => $"v{Tag}";
     public static string DisplayVersion => $"{Version} (Codename {CodeName})";
     public static string VersionLong => $"{Version}-{CodeName}-{CommitHash}({Branch})";
 
