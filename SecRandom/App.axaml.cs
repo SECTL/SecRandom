@@ -68,14 +68,8 @@ public partial class App : Application
             InitializeLanguages(new CultureInfo("zh-Hans"));
         }
         
-        // 启动服务主机
-        BuildHost();
-        
         // 初始化 Avalonia App
         AvaloniaXamlLoader.Load(this);
-        
-        // 刷新个性化设置
-        RefreshPersonalizedSettings();
         
 #if DEBUG
         // 附加开发者工具
@@ -85,6 +79,9 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        // 启动服务主机
+        BuildHost();
+        
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
@@ -194,6 +191,9 @@ public partial class App : Application
         
         var lifetime = IAppHost.GetService<IHostApplicationLifetime>();
         lifetime.ApplicationStopping.Register(Stop);
+        
+        // 刷新个性化设置
+        RefreshPersonalizedSettings();
 
         IAppHost.GetService<IProfileService>();
         
