@@ -20,7 +20,10 @@ public partial class MainWindow : AppWindow
         TitleBar.ExtendsContentIntoTitleBar = true;
         TitleBar.TitleBarHitTestType = TitleBarHitTestType.Complex;
         
-        RefreshButtonColors();
+        // 覆盖标题栏按钮颜色
+        TitleBar.ButtonHoverBackgroundColor = Color.FromArgb(23, 0, 0, 0);
+        TitleBar.ButtonPressedBackgroundColor = Color.FromArgb(52, 0, 0, 0);
+        TitleBar.ButtonInactiveForegroundColor = Colors.Gray;
     }
 
     private void InitializeComponent()
@@ -35,12 +38,5 @@ public partial class MainWindow : AppWindow
             TransparencyLevelHint = [WindowTransparencyLevel.Mica];
             Background = Brushes.Transparent;
         }
-    }
-
-    public void RefreshButtonColors()
-    {
-        var basicSettings = IAppHost.GetService<MainConfigHandler>().Data.BasicSettings;
-        TitleBar.ButtonHoverBackgroundColor = basicSettings.ThemeColor;
-        TitleBar.ButtonPressedBackgroundColor = basicSettings.ThemeColor;
     }
 }

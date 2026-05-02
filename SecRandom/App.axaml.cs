@@ -50,16 +50,23 @@ public partial class App : Application
     public override void Initialize()
     {
         // 初始化语言
-        var content = File.ReadAllText(new MainConfigModel().ConfigFilePath);
-        var settings = JsonSerializer.Deserialize<MainConfigModel>(content, ConfigServiceBase.JsonOptions);
-        var culture = settings?.BasicSettings.Language switch
+        try
         {
-            LanguageMode.ChineseSimplified => "zh-Hans",
-            LanguageMode.English => "en-US",
-            LanguageMode.Japanese => "ja-JP",
-            _ => "zh-Hans"
-        };
-        InitializeLanguages(new CultureInfo(culture));
+            var content = File.ReadAllText(new MainConfigModel().ConfigFilePath);
+            var settings = JsonSerializer.Deserialize<MainConfigModel>(content, ConfigServiceBase.JsonOptions);
+            var culture = settings?.BasicSettings.Language switch
+            {
+                LanguageMode.ChineseSimplified => "zh-Hans",
+                LanguageMode.English => "en-US",
+                LanguageMode.Japanese => "ja-JP",
+                _ => "zh-Hans"
+            };
+            InitializeLanguages(new CultureInfo(culture));
+        }
+        catch (FileNotFoundException)
+        {
+            InitializeLanguages(new CultureInfo("zh-Hans"));
+        }
         
         // 启动服务主机
         BuildHost();
@@ -303,10 +310,6 @@ public partial class App : Application
         Resources["SystemAccentColorDark1"] = settings.ThemeColor;
         Resources["SystemAccentColorDark2"] = settings.ThemeColor;
         Resources["SystemAccentColorDark3"] = settings.ThemeColor;
-
-        _mainWindow?.RefreshButtonColors();
-        _settingsWindow?.RefreshButtonColors();
-        _profileSettingsWindow?.RefreshButtonColors();
         
         // 字体
         Resources["ContentControlThemeFontFamily"] = Resources["AppFontFamily"] = new FontFamily(fontFamily);
