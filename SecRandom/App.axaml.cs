@@ -310,10 +310,6 @@ public partial class App : Application
         Resources["SystemAccentColorDark1"] = settings.ThemeColor;
         Resources["SystemAccentColorDark2"] = settings.ThemeColor;
         Resources["SystemAccentColorDark3"] = settings.ThemeColor;
-
-        _mainWindow?.RefreshButtonColors();
-        _settingsWindow?.RefreshButtonColors();
-        _profileSettingsWindow?.RefreshButtonColors();
         
         // 字体
         Resources["ContentControlThemeFontFamily"] = Resources["AppFontFamily"] = new FontFamily(fontFamily);
