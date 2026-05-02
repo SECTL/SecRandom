@@ -61,8 +61,6 @@ public partial class DrawEngine
                     .ToList()
             };
             var result = drawWithBehindSceneWeights(weightedCandidates, count);
-            if (result.IsSuccess)
-                recordStudentHistory(result.Result, weightedCandidates);
 
             return result;
         }
@@ -265,50 +263,6 @@ public partial class DrawEngine
     private static BehindSceneAttachedSettings? getBehindSceneSettings(IAttachableSettingsObject candidate)
     {
         return candidate.GetAttachedObject<BehindSceneAttachedSettings>(BehindSceneAttachedSettingsId);
-    }
-
-    private void recordStudentHistory(
-        IReadOnlyList<Student> drawnStudents,
-        IReadOnlyList<WeightedCandidate<Student>> weightedCandidates)
-    {
-        var currentTime = DateTime.Now;
-        var weightByStudent = weightedCandidates
-            .GroupBy(c => c.Candidate)
-            .ToDictionary(g => g.Key, g => g.First().Weight);
-
-        foreach (var student in studentList.Students)
-        {
-            var key = getStudentHistoryKey(student);
-            if (string.IsNullOrWhiteSpace(key))
-                continue;
-
-            var history = getOrCreateStudentHistory(key);
-            if (drawnStudents.Contains(student))
-            {
-                history.TotalCount++;
-                history.LastDrawnTime = currentTime;
-                history.RoundsMissed = 0;
-                history.Histories.Add(new HistoryItem
-                {
-                    DrawTime = currentTime,
-                    DrawNumbers = drawnStudents.Count,
-                    DrawGroup = student.Group,
-                    DrawGender = student.Gender,
-                    Weight = weightByStudent.GetValueOrDefault(student, 1.0)
-                });
-
-                studentHistory.GroupStats[student.Group] = studentHistory.GroupStats.GetValueOrDefault(student.Group) + 1;
-                studentHistory.GenderStatus[student.Gender] = studentHistory.GenderStatus.GetValueOrDefault(student.Gender) + 1;
-            }
-            else
-            {
-                history.RoundsMissed++;
-            }
-        }
-
-        studentHistory.TotalRounds++;
-        studentHistory.TotalStats += drawnStudents.Count;
-        profileService.SaveProfile();
     }
 
     private void recordPrizeHistory(
