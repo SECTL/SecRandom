@@ -6,6 +6,8 @@ using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw.Exceptions;
+using SecRandom.Shared.Extensions;
+using SecRandom.Shared.Interfaces;
 using SecRandom.Shared.Models;
 using SecRandom.Shared.Models.Profile;
 
@@ -173,7 +175,7 @@ public partial class DrawEngine
     private DrawResult<TCandidate> drawWithBehindSceneWeights<TCandidate>(
         IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates,
         int count)
-        where TCandidate : AttachableSettingsObject
+        where TCandidate : IAttachableSettingsObject
     {
         var drawEngine = new WeightedDrawEngine<TCandidate>(new CryptoRandomSource());
         List<WeightedCandidate<TCandidate>> guaranteedCandidates = [];
@@ -260,7 +262,7 @@ public partial class DrawEngine
         };
     }
 
-    private static BehindSceneAttachedSettings? getBehindSceneSettings(AttachableSettingsObject candidate)
+    private static BehindSceneAttachedSettings? getBehindSceneSettings(IAttachableSettingsObject candidate)
     {
         return candidate.GetAttachedObject<BehindSceneAttachedSettings>(BehindSceneAttachedSettingsId);
     }

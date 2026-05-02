@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace SecRandom.Core.Interfaces;
+namespace SecRandom.Shared.Interfaces;
 
 public interface IAttachedSettings
 {

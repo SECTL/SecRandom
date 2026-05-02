@@ -1,36 +1,11 @@
 ﻿using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
+using SecRandom.Shared.Extensions;
+using SecRandom.Shared.Interfaces;
 
 namespace SecRandom.Shared.Models;
 
-public class AttachableSettingsObject : ObservableRecipient
+public class AttachableSettingsObject : ObservableRecipient, IAttachableSettingsObject
 {
     public Dictionary<Guid, object?> AttachedObjects { get; set; } = [];
-    
-    public T? GetAttachedObject<T>(Guid id)
-    {
-        AttachedObjects.TryGetValue(id, out var o);
-        if (o is JsonElement o1)
-        {
-            return o1.Deserialize<T>();
-        }
-        return (T?)o;
-    }
-    
-    public void WriteAttachedObject<T>(Guid id, T o)
-    {
-        AttachedObjects[id] = o;
-    }
-    
-    public T GetAttachedObject<T>(Guid id, T defaultValue)
-    {
-        var r = GetAttachedObject<T>(id);
-        if (r != null)
-        {
-            WriteAttachedObject(id, r);
-            return r;
-        }
-        WriteAttachedObject(id, defaultValue);
-        return defaultValue;
-    }
 }
