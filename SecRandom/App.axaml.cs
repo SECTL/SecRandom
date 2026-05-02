@@ -147,6 +147,7 @@ public partial class App : Application
                 
                 // 服务
                 services.AddSingleton<IProfileService, ProfileService>();
+                services.AddSingleton<SettingsSearchService>();
                 
                 // 窗口
                 services.AddTransient<MainView>();
@@ -201,33 +202,10 @@ public partial class App : Application
         _ = IAppHost.Host.StartAsync();
         
         // RESOURCES TEST
-        if (true) return;
-        
-        var resources = Assembly.GetExecutingAssembly().DefinedTypes
-            .Where(info => info.Namespace?.StartsWith("SecRandom.Langs.SettingsPages") ?? false)
-            .OrderBy(info => info.FullName ?? "???")
-            .ToList();
-        using (logger.BeginScope("RESOURCES TEST"))
+        var isVisible = false;
+        if (GlobalConstants.IsDevelopment && isVisible)
         {
-            foreach (var resourceType in resources)
-            {
-                var settingsPageId = resourceType.FullName?.Split(".")[3];
-                if (settingsPageId == null) continue;
-                
-                var settingsPageName =
-                    typeof(Langs.Common.Resources).GetProperty("Settings_" + settingsPageId)?.GetValue(null) ?? "???";
-                
-                var properties = resourceType.DeclaredProperties;
-                
-                using var scope = logger.BeginScope($"[{settingsPageId}] {settingsPageName}");
-                foreach (var declaredProperty in properties)
-                {
-                    if (declaredProperty.Name.StartsWith("S_") && !declaredProperty.Name.EndsWith("_R"))
-                    {
-                        logger.LogDebug("[{Name}] {Value}", declaredProperty.Name, declaredProperty.GetValue(null));
-                    }
-                }
-            }
+            IAppHost.GetService<SettingsSearchService>().LogTestInformation();
         }
     }
 
