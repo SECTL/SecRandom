@@ -1,5 +1,5 @@
 using System.Reflection;
-using ClassIsland;
+using SecRandom;
 
 [assembly: AssemblyVersion(GitInfo.Tag)]
 [assembly: AssemblyInformationalVersion($"{GitInfo.Tag}+{GitInfo.CommitHash}")]

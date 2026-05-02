@@ -9,5 +9,7 @@
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     </ItemGroup>
+
+    <Import Project="..\Global.props" />
     
 </Project>

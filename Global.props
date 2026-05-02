@@ -11,7 +11,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ClassIsland.SimpleGitInfoGenerator" Version="1.0.0.1"
+        <PackageReference Include="SecRandom.SimpleGitInfoGenerator" Version="1.0.0.0"
                           PrivateAssets="All" IncludeAssets="build;analyzers"/>
 
         <Compile Include="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)'))/AssemblyInfo.cs">

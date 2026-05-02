@@ -1,6 +1,5 @@
 using System.Reflection;
 using Avalonia.Media;
-using ClassIsland;
 
 namespace SecRandom.Core;
 
@@ -16,7 +15,7 @@ public static class GlobalConstants
     public static string DisplayVersion => $"{Version} (Codename {CodeName})";
     public static string VersionLong => $"{Version}-{CodeName}-{CommitHash}({Branch})";
 
-    public static string PlatformExecutableExtension => System.OperatingSystem.IsWindows() ? ".exe" : "";
+    public static string PlatformExecutableExtension => OperatingSystem.IsWindows() ? ".exe" : "";
 
     public const string BehindSceneAttachedSettings = "F45DFB95-7D20-4BAB-86A3-8864BBDFCE9E";
 
