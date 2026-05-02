@@ -251,6 +251,34 @@
                                  Description="{x:Static lsb:Resources.S_DataManagement_ImportAllData_D}"
                                  IconSource="{controls:FluentIconSource &#xE617;}"
                                  IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xE44E;}" />
+            
+            <Separator Margin="0 12 0 4" />
+            <controls:IconText x:Name="S_Telemetry"
+                               Text="{x:Static lsb:Resources.S_Telemetry}"
+                               Glyph="&#xEE23;" Margin="0 0 0 4" />
+            
+            
+            <fa:SettingsExpander x:Name="S_Telemetry_Enabled"
+                                 Header="{x:Static lsb:Resources.S_Telemetry_Enabled}"
+                                 Description="{x:Static lsb:Resources.S_Telemetry_Enabled_D}"
+                                 IconSource="{controls:FluentIconSource &#xEE21;}">
+                <fa:SettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.TelemetryEnabled}" />
+                </fa:SettingsExpander.Footer>
+            </fa:SettingsExpander>
+            
+            <fa:SettingsExpander x:Name="S_Telemetry_Mode"
+                                 Header="{x:Static lsb:Resources.S_Telemetry_Mode}"
+                                 Description="{x:Static lsb:Resources.S_Telemetry_Mode_D}"
+                                 IconSource="{controls:FluentIconSource &#xE905;}">
+                <fa:SettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.TelemetryMode}">
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_TelemetryMode_Full}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_TelemetryMode_Anonymous}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_TelemetryMode_Off}" />
+                    </ComboBox>
+                </fa:SettingsExpander.Footer>
+            </fa:SettingsExpander>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

@@ -107,15 +107,6 @@ namespace SecRandom.Langs.SettingsPages.Basic {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 自动.
-        /// </summary>
-        public static string O_DpiScale_Auto {
-            get {
-                return ResourceManager.GetString("O_DpiScale_Auto", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to MiSans (默认).
         /// </summary>
         public static string O_FontFamily_Default {
@@ -229,6 +220,33 @@ namespace SecRandom.Langs.SettingsPages.Basic {
         public static string O_MainWindowTopmostMode_UiAccess {
             get {
                 return ResourceManager.GetString("O_MainWindowTopmostMode_UiAccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 匿名上报.
+        /// </summary>
+        public static string O_TelemetryMode_Anonymous {
+            get {
+                return ResourceManager.GetString("O_TelemetryMode_Anonymous", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 完整上报.
+        /// </summary>
+        public static string O_TelemetryMode_Full {
+            get {
+                return ResourceManager.GetString("O_TelemetryMode_Full", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 停止上报.
+        /// </summary>
+        public static string O_TelemetryMode_Off {
+            get {
+                return ResourceManager.GetString("O_TelemetryMode_Off", resourceCulture);
             }
         }
         
@@ -607,6 +625,51 @@ namespace SecRandom.Langs.SettingsPages.Basic {
         public static string S_Personalized_ThemeColor_D {
             get {
                 return ResourceManager.GetString("S_Personalized_ThemeColor_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 遥测.
+        /// </summary>
+        public static string S_Telemetry {
+            get {
+                return ResourceManager.GetString("S_Telemetry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 启用遥测.
+        /// </summary>
+        public static string S_Telemetry_Enabled {
+            get {
+                return ResourceManager.GetString("S_Telemetry_Enabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 开启后上报在线状态数据以帮助改进软件.
+        /// </summary>
+        public static string S_Telemetry_Enabled_D {
+            get {
+                return ResourceManager.GetString("S_Telemetry_Enabled_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 在线状态.
+        /// </summary>
+        public static string S_Telemetry_Mode {
+            get {
+                return ResourceManager.GetString("S_Telemetry_Mode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 完整上报含位置信息，匿名上报仅计入在线人数不报位置，停止则不上报.
+        /// </summary>
+        public static string S_Telemetry_Mode_D {
+            get {
+                return ResourceManager.GetString("S_Telemetry_Mode_D", resourceCulture);
             }
         }
     }
