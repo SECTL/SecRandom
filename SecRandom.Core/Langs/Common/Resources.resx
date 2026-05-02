@@ -18,16 +18,4 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
-    <data name="Gender_Female" xml:space="preserve">
-        <value>女</value>
-    </data>
-    <data name="Gender_Male" xml:space="preserve">
-        <value>男</value>
-    </data>
-    <data name="Gender_None" xml:space="preserve">
-        <value>无</value>
-    </data>
-    <data name="Gender_Unknown" xml:space="preserve">
-        <value>未知</value>
-    </data>
 </root>

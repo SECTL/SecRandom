@@ -46,4 +46,9 @@ public partial class BasicSettingsPage : UserControl
     {
         Settings.ShowVersionNotice = false;
     }
+
+    private void OpenBackupManagerButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        SettingsView.Current?.SelectNavigationItemById("settings.basic.backup");
+    }
 }

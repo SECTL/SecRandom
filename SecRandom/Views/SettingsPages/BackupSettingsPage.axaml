@@ -12,7 +12,7 @@
              x:DataType="local:BackupSettingsPage"
              d:DataContext="{d:DesignInstance local:BackupSettingsPage}">
     <ScrollViewer>
-        <StackPanel Classes="page-container">
+        <StackPanel Classes="page-container animated-intro">
             <fa:SettingsExpander x:Name="S_AutoBackup"
                                  Header="{x:Static lsb:Resources.S_AutoBackup}"
                                  Description="{x:Static lsb:Resources.S_AutoBackup_D}"

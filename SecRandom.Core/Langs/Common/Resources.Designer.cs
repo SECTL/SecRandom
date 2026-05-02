@@ -58,41 +58,5 @@ namespace SecRandom.Core.Langs.Common {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 女.
-        /// </summary>
-        public static string Gender_Female {
-            get {
-                return ResourceManager.GetString("Gender_Female", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 男.
-        /// </summary>
-        public static string Gender_Male {
-            get {
-                return ResourceManager.GetString("Gender_Male", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 无.
-        /// </summary>
-        public static string Gender_None {
-            get {
-                return ResourceManager.GetString("Gender_None", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 未知.
-        /// </summary>
-        public static string Gender_Unknown {
-            get {
-                return ResourceManager.GetString("Gender_Unknown", resourceCulture);
-            }
-        }
     }
 }

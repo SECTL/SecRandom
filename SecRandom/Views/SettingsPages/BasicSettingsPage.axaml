@@ -209,7 +209,48 @@
                                Text="{x:Static lsb:Resources.S_DataManagement}"
                                Glyph="&#xE5E5;" Margin="0 0 0 4" />
             
-            <TextBlock Text="{x:Static lc:Resources.C_ToBeWritten}" />
+            <fa:SettingsExpander x:Name="S_DataManagement_LogViewer"
+                                 Header="{x:Static lsb:Resources.S_DataManagement_LogViewer}"
+                                 Description="{x:Static lsb:Resources.S_DataManagement_LogViewer_D}"
+                                 IconSource="{controls:FluentIconSource &#xE687;}"
+                                 IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xE44E;}" />
+            
+            <fa:SettingsExpander x:Name="S_DataManagement_BackupManager"
+                                 Header="{x:Static lsb:Resources.S_DataManagement_BackupManager}"
+                                 Description="{x:Static lsb:Resources.S_DataManagement_BackupManager_D}"
+                                 IconSource="{controls:FluentIconSource &#xEEB5;}"
+                                 IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xE44E;}"
+                                 Click="OpenBackupManagerButton_OnClick" />
+            
+            <fa:SettingsExpander x:Name="S_DataManagement_ExportDiagnosticData"
+                                 Header="{x:Static lsb:Resources.S_DataManagement_ExportDiagnosticData}"
+                                 Description="{x:Static lsb:Resources.S_DataManagement_ExportDiagnosticData_D}"
+                                 IconSource="{controls:FluentIconSource &#xE5FF;}"
+                                 IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xE44E;}" />
+            
+            <fa:SettingsExpander x:Name="S_DataManagement_ExportSettings"
+                                 Header="{x:Static lsb:Resources.S_DataManagement_ExportSettings}"
+                                 Description="{x:Static lsb:Resources.S_DataManagement_ExportSettings_D}"
+                                 IconSource="{controls:FluentIconSource &#xE0B9;}"
+                                 IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xE44E;}" />
+            
+            <fa:SettingsExpander x:Name="S_DataManagement_ImportSettings"
+                                 Header="{x:Static lsb:Resources.S_DataManagement_ImportSettings}"
+                                 Description="{x:Static lsb:Resources.S_DataManagement_ImportSettings_D}"
+                                 IconSource="{controls:FluentIconSource &#xE0B9;}"
+                                 IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xE44E;}" />
+            
+            <fa:SettingsExpander x:Name="S_DataManagement_ExportAllData"
+                                 Header="{x:Static lsb:Resources.S_DataManagement_ExportAllData}"
+                                 Description="{x:Static lsb:Resources.S_DataManagement_ExportAllData_D}"
+                                 IconSource="{controls:FluentIconSource &#xE617;}"
+                                 IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xE44E;}" />
+            
+            <fa:SettingsExpander x:Name="S_DataManagement_ImportAllData"
+                                 Header="{x:Static lsb:Resources.S_DataManagement_ImportAllData}"
+                                 Description="{x:Static lsb:Resources.S_DataManagement_ImportAllData_D}"
+                                 IconSource="{controls:FluentIconSource &#xE617;}"
+                                 IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xE44E;}" />
         </StackPanel>
     </ScrollViewer>
 </UserControl>
