@@ -88,6 +88,7 @@ public class SettingsSearchService
                     PageId = settingsPageInfo.Id,
                     PageName = settingsPageInfo.Name,
                     IsCategory = true,
+                    CategoryId = rootId,
                     CategoryName = rootName,
                     Id = rootId,
                     Name = rootName,
@@ -102,6 +103,7 @@ public class SettingsSearchService
                     {
                         PageId = settingsPageInfo.Id,
                         PageName = settingsPageInfo.Name,
+                        CategoryId = rootId,
                         CategoryName = rootName,
                         Id = fullId,
                         Name = (string)properties.First(property => property.Name == fullId).GetValue(null)!,

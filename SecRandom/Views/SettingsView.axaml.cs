@@ -1,14 +1,20 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using DynamicData;
 using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
@@ -16,6 +22,8 @@ using SecRandom.Core.Controls;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Extensions;
 using SecRandom.Core.Services;
+using SecRandom.Core.Services.Config;
+using SecRandom.Models;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
@@ -23,13 +31,18 @@ namespace SecRandom.Views;
 public partial class SettingsView : UserControl, INavigationPageFactory
 {
     public static SettingsView? Current { get; private set; }
-    
-    public SettingsViewModel ViewModel { get; } = IAppHost.GetService<SettingsViewModel>();
+    public static AutoCompleteFilterPredicate<object?> SettingsFilterProperty => SearchFilter;
     private const string DefaultMainPageId = "settings.basic";
     
+    public SettingsViewModel ViewModel { get; } = IAppHost.GetService<SettingsViewModel>();
+
+    private ILogger<SettingsView> _logger = IAppHost.GetService<ILogger<SettingsView>>();
     private AppToastAdorner? _appToastAdorner;
     private bool _isAdornerAdded;
     private bool _isShowingRestartDialog = false;
+    
+    private Border? _currentHighlight;
+    private Action? _highlightCleanup;
     
     public SettingsView()
     {
@@ -45,6 +58,169 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
         RenderOptions.SetEdgeMode(this, EdgeMode.Antialias);
     }
+
+    #region Misc
+
+    public static bool SearchFilter(string? search, object? item)
+    {
+        if (string.IsNullOrWhiteSpace(search) || item is not SettingsMetadata metadata) return false;
+        
+        search = search.Trim();
+
+        const StringComparison mode = StringComparison.OrdinalIgnoreCase;
+
+        if (metadata.ToString().StartsWith(search, mode)) return true;
+        
+        // 按名称搜素
+        var part1 = 
+            metadata.PageName.Contains(search, mode) ||
+            metadata.CategoryName.Contains(search, mode) ||
+            metadata.Name.Contains(search, mode) ||
+            metadata.Description.Contains(search, mode);
+        if (part1) return part1;
+        
+        // 按 id 搜索
+        if (search == @".") return false;
+        return metadata.PageId.Contains(search, mode) ||
+               metadata.Id.Contains(search, mode);
+    }
+
+    private void SearchBox_OnKeyUp(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || ViewModel.SelectedSettings == null) return;
+        
+        var settings = ViewModel.SelectedSettings;
+        
+        _logger.LogInformation("跳转到设置 [{PageId}] {Id}", settings.PageId, settings.Id);
+        SelectNavigationItemById(settings.PageId);
+
+        if (settings.IsPage) return;
+
+        var pageRoot = NavigationFrame.Content as Control;
+        
+        var settingsControl = pageRoot?.FindControl<Control>(settings.Id);
+        _logger.LogInformation("设置控件: {Control}", settingsControl);
+        
+        if (!settings.IsCategory)
+        {
+            var categoryControl = pageRoot?.FindControl<Control>(settings.CategoryId);
+            _logger.LogInformation("分类控件: {Control}", categoryControl);
+        
+            if (categoryControl is SettingsExpander settingsExpander)
+            {
+                settingsExpander.IsExpanded = true;
+            }
+        }
+        
+        Dispatcher.UIThread.Post(() =>
+        {
+            settingsControl?.BringIntoView();
+            settingsControl?.Focus();
+            
+            HighlightControl(settingsControl, TimeSpan.FromSeconds(3));
+        }, DispatcherPriority.Render);
+    }
+
+    public void HighlightControl(Control? target, TimeSpan? duration = null)
+    {
+        // Powered By DeepSeek V4
+        
+        RemoveHighlight();
+        if (target == null) return;
+
+        var controlRoot = FindControlRootPanel(target);
+        if (controlRoot is not Panel panel) return;
+
+        var overlay = panel.FindControl<Canvas>(@"__highlightOverlay");
+        if (overlay == null)
+        {
+            overlay = new Canvas
+            {
+                Name = @"__highlightOverlay",
+                ZIndex = 1000,
+                IsHitTestVisible = false
+            };
+            panel.Children.Add(overlay);
+        }
+
+        var transform = target.TransformToVisual(overlay);
+        if (transform == null) return;
+        var position = transform.Value.Transform(new Point(0, 0));
+
+        var color = IAppHost.GetService<MainConfigHandler>().Data.BasicSettings.ThemeColor;
+        var highlight = new Border
+        {
+            Width = target.Bounds.Width,
+            Height = target.Bounds.Height,
+            Background = new SolidColorBrush(Color.FromArgb(32, color.R, color.G, color.B)),
+            BorderBrush = new SolidColorBrush(color),
+            BorderThickness = new Thickness(4),
+            CornerRadius = new CornerRadius(4),
+            IsHitTestVisible = false
+        };
+
+        Canvas.SetLeft(highlight, position.X);
+        Canvas.SetTop(highlight, position.Y);
+        overlay.Children.Add(highlight);
+        _currentHighlight = highlight;
+
+        void OnLayoutUpdated(object? s, EventArgs e)
+        {
+            if (target == null || highlight == null) return;
+            
+            var newTransform = target.TransformToVisual(overlay);
+            if (newTransform == null) return;
+            var newPos = newTransform.Value.Transform(new Point(0, 0));
+            
+            Canvas.SetLeft(highlight, newPos.X);
+            Canvas.SetTop(highlight, newPos.Y);
+            highlight.Width = target.Bounds.Width;
+            highlight.Height = target.Bounds.Height;
+        }
+        target.LayoutUpdated += OnLayoutUpdated;
+
+        if (duration.HasValue)
+        {
+            var timer = new Timer(duration.Value.TotalMilliseconds) { AutoReset = false };
+            timer.Elapsed += (_, _) =>
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (_currentHighlight == highlight)
+                        RemoveHighlight();
+                });
+            };
+            timer.Start();
+        }
+
+        _highlightCleanup = () =>
+        {
+            target.LayoutUpdated -= OnLayoutUpdated;
+            overlay.Children.Remove(highlight);
+        };
+    }
+
+    private void RemoveHighlight()
+    {
+        _highlightCleanup?.Invoke();
+        _currentHighlight = null;
+    }
+
+    private static Control? FindControlRootPanel(Control control)
+    {
+        var parent = control.Parent;
+        while (parent != null)
+        {
+            if (parent is Panel panel)
+                return panel;
+            parent = parent.Parent;
+        }
+        return control.GetVisualRoot() as Control;
+    }
+
+    #endregion
+
+    #region Lifecycle
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
@@ -78,31 +254,9 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         DataContext = null;
     }
 
-    private void BuildNavigationMenuItems()
-    {
-        ViewModel.NavigationViewItems.Clear();
-        ViewModel.NavigationViewFooterItems.Clear();
-        
-        ViewModel.NavigationViewItems
-            .AddRange(PagesRegistryService.SettingsItems
-                .Where(info => info.Location == PageLocation.Top)
-                .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
-        
-        ViewModel.NavigationViewFooterItems
-            .AddRange(PagesRegistryService.SettingsItems
-                .Where(info => info.Location == PageLocation.Bottom)
-                .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
-    }
+    #endregion
 
-    public void SelectNavigationItemById(string id, bool isBack = false)
-    {
-        var info = PagesRegistryService.SettingsItems.FirstOrDefault(info => info.Id == id);
-        
-        if (info != null)
-        {
-            CoreNavigate(info, isBack);
-        }
-    }
+    #region Drawer
 
     public void OpenDrawer(object content)
     {
@@ -114,6 +268,10 @@ public partial class SettingsView : UserControl, INavigationPageFactory
     {
         ViewModel.IsDrawerOpen = false;
     }
+
+    #endregion
+
+    #region Restart App
 
     public void RequestRestartApp()
     {
@@ -128,10 +286,10 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         
         var r = await new ContentDialog
         {
-            Title = Langs.Common.Resources.M_NeedsRestarting,
-            Content = Langs.Common.Resources.M_NeedsRestarting_D,
-            PrimaryButtonText = Langs.Common.Resources.M_NeedsRestarting_Primary,
-            CloseButtonText = Langs.Common.Resources.M_NeedsRestarting_Close,
+            Title = Langs.SettingsView.Resources.M_NeedsRestarting,
+            Content = Langs.SettingsView.Resources.M_NeedsRestarting_D,
+            PrimaryButtonText = Langs.SettingsView.Resources.M_NeedsRestarting_Primary,
+            CloseButtonText = Langs.SettingsView.Resources.M_NeedsRestarting_Close,
             DefaultButton = ContentDialogButton.Primary,
         }.ShowAsync(TopLevel.GetTopLevel(this));
         
@@ -145,6 +303,26 @@ public partial class SettingsView : UserControl, INavigationPageFactory
     private void ButtonRestartApp_OnClick(object? sender, RoutedEventArgs e)
     {
         _ = ShowRestartDialog();
+    }
+
+    #endregion
+
+    #region Navigation
+
+    private void BuildNavigationMenuItems()
+    {
+        ViewModel.NavigationViewItems.Clear();
+        ViewModel.NavigationViewFooterItems.Clear();
+        
+        ViewModel.NavigationViewItems
+            .AddRange(PagesRegistryService.SettingsItems
+                .Where(info => info.Location == PageLocation.Top)
+                .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
+        
+        ViewModel.NavigationViewFooterItems
+            .AddRange(PagesRegistryService.SettingsItems
+                .Where(info => info.Location == PageLocation.Bottom)
+                .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
     }
     
     private void CoreNavigate(PageInfo info, bool isBack = false)
@@ -165,6 +343,16 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         ViewModel.SelectedNavigationViewItem = item;
         ViewModel.SelectedPageInfo = info;
         NavigationFrame.NavigateFromObject(info);
+    }
+
+    public void SelectNavigationItemById(string id, bool isBack = false)
+    {
+        var info = PagesRegistryService.SettingsItems.FirstOrDefault(info => info.Id == id);
+        
+        if (info != null)
+        {
+            CoreNavigate(info, isBack);
+        }
     }
 
     private void TogglePaneButton_OnClick(object? sender, RoutedEventArgs e)
@@ -217,6 +405,7 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         if (target is not PageInfo info)
         {
             return null;
+            
         }
 
         var page = IAppHost.Host!.Services.GetKeyedService<UserControl>(info.Id);
@@ -227,4 +416,6 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         }
         return page;
     }
+
+    #endregion
 }

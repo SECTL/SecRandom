@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:fa="using:FluentAvalonia.UI.Controls"
-             xmlns:lc="clr-namespace:SecRandom.Langs.Common"
+             xmlns:ls="clr-namespace:SecRandom.Langs.SettingsView"
              xmlns:views="using:SecRandom.Views"
              xmlns:controls="clr-namespace:SecRandom.Core.Controls;assembly=SecRandom.Core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
@@ -14,9 +14,8 @@
              Unloaded="OnUnloaded">
     <Grid RowDefinitions="Auto *">
         <Border Grid.Row="0" Height="48">
-            <Panel>
-                <StackPanel HorizontalAlignment="Left"
-                            Orientation="Horizontal" Margin="8" Spacing="8">
+            <Grid ColumnDefinitions="Auto * 3* * Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="8" Spacing="8">
                     <Button Name="TogglePaneButton"
                             Theme="{StaticResource PaneToggleButtonStyle}"
                             HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -47,19 +46,33 @@
                                IsHitTestVisible="False"/>
                 </StackPanel>
                 
-                <StackPanel HorizontalAlignment="Right"
-                            Orientation="Horizontal" Spacing="8">
+                <AutoCompleteBox Grid.Column="2"
+                                 VerticalAlignment="Center" MaxWidth="420"
+                                 FilterMode="Custom"
+                                 MaxDropDownHeight="480"
+                                 ItemsSource="{Binding ViewModel.SettingsMetadata}"
+                                 ItemFilter="{x:Static views:SettingsView.SettingsFilterProperty}"
+                                 Watermark="{x:Static ls:Resources.C_SearchBox_Watermark}"
+                                 SelectedItem="{Binding ViewModel.SelectedSettings}"
+                                 KeyUp="SearchBox_OnKeyUp">
+                    <AutoCompleteBox.InnerRightContent>
+                        <controls:FluentIcon Glyph="&#xEEF3;" Margin="6"
+                                             Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </AutoCompleteBox.InnerRightContent>
+                </AutoCompleteBox>
+                
+                <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
                     <Button Classes="accent"
                             Margin="0 -8" VerticalAlignment="Center"
                             IsVisible="{Binding ViewModel.IsRequestedRestart}"
-                            ToolTip.Tip="{x:Static lc:Resources.M_NeedsRestarting_Tooltip}"
+                            ToolTip.Tip="{x:Static ls:Resources.M_NeedsRestarting_Tooltip}"
                             Click="ButtonRestartApp_OnClick">
-                        <controls:IconText Glyph="&#xE0BD;" Text="{x:Static lc:Resources.M_NeedsRestarting}"/>
+                        <controls:IconText Glyph="&#xE0BD;" Text="{x:Static ls:Resources.M_NeedsRestarting}"/>
                     </Button>
                 
                     <Border Width="140" IsVisible="{Binding ViewModel.IsWindows}" />
                 </StackPanel>
-            </Panel>
+            </Grid>
         </Border>
         
         <fa:NavigationView Grid.Row="1"

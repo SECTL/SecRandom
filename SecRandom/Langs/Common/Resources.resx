@@ -112,19 +112,4 @@
     <data name="Menu_RestartProgram" xml:space="preserve">
         <value>重启程序</value>
     </data>
-    <data name="M_NeedsRestarting" xml:space="preserve">
-        <value>需要重启</value>
-    </data>
-    <data name="M_NeedsRestarting_D" xml:space="preserve">
-        <value>部分设置需要重启以应用更改。</value>
-    </data>
-    <data name="M_NeedsRestarting_Primary" xml:space="preserve">
-        <value>重启</value>
-    </data>
-    <data name="M_NeedsRestarting_Close" xml:space="preserve">
-        <value>取消</value>
-    </data>
-    <data name="M_NeedsRestarting_Tooltip" xml:space="preserve">
-        <value>部分设置需要重启才能生效，点击以重启应用。</value>
-    </data>
 </root>

@@ -1,13 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Attributes;
+using SecRandom.Models;
+using SecRandom.Services;
 
 namespace SecRandom.ViewModels;
 
 public partial class SettingsViewModel : ObservableRecipient
 {
+    public bool IsWindows => OperatingSystem.IsWindows();
+    
     [ObservableProperty] private object? _frameContent;
     [ObservableProperty] private PageInfo? _selectedPageInfo = null;
     [ObservableProperty] private NavigationViewItemBase? _selectedNavigationViewItem = null;
@@ -22,5 +27,13 @@ public partial class SettingsViewModel : ObservableRecipient
     [ObservableProperty] private object? _drawerContent = false;
     [ObservableProperty] private bool _isRequestedRestart = false;
 
-    public bool IsWindows => OperatingSystem.IsWindows();
+    public SettingsSearchService SettingsSearchService { get; }
+    public List<SettingsMetadata> SettingsMetadata { get; }
+    [ObservableProperty] private SettingsMetadata? _selectedSettings = null;
+
+    public SettingsViewModel(SettingsSearchService settingsSearchService)
+    {
+        SettingsSearchService = settingsSearchService;
+        SettingsMetadata = SettingsSearchService.SettingsMetadata;
+    }
 }

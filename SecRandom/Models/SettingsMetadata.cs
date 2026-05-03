@@ -7,6 +7,7 @@ public class SettingsMetadata
     public string PageName { get; set; } = string.Empty;
 
     public bool IsCategory { get; set; } = false;
+    public string CategoryId { get; set; } = string.Empty;
     public string CategoryName { get; set; } = string.Empty;
     
     public string Id { get; set; } = string.Empty;
