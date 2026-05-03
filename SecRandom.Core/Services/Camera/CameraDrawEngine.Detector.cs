@@ -11,9 +11,13 @@ public partial class CameraDrawEngine
 {
     private sealed record DetectedFace(float X, float Y, float Width, float Height, float Confidence);
 
+    private enum DetectorBackend { YuNet, Ultralight, Damoyolo }
+
     private readonly object detectorLock = new();
     private FaceDetectorYN? yunetDetector;
     private Net? ultralightNet;
+    private Net? damoyoloNet;
+    private DetectorBackend activeBackend;
     private string? loadedDetectorModel;
     private string? lastDetectionErrorMessage;
     private Size detectorInputSize;
@@ -26,9 +30,13 @@ public partial class CameraDrawEngine
             {
                 ensureDetectorLoaded();
 
-                IReadOnlyList<DetectedFace> faces = yunetDetector != null
-                    ? detectFacesWithYunet(frameBgr)
-                    : detectFacesWithUltralight(frameBgr);
+                IReadOnlyList<DetectedFace> faces = activeBackend switch
+                {
+                    DetectorBackend.YuNet => detectFacesWithYunet(frameBgr),
+                    DetectorBackend.Damoyolo => detectFacesWithDamoyolo(frameBgr),
+                    DetectorBackend.Ultralight => detectFacesWithUltralight(frameBgr),
+                    _ => Array.Empty<DetectedFace>()
+                };
 
                 lastDetectionErrorMessage = null;
                 var mergedFaces = mergeFaceBoxes(frameBgr.Width, frameBgr.Height, faces);
@@ -63,6 +71,8 @@ public partial class CameraDrawEngine
         yunetDetector = null;
         ultralightNet?.Dispose();
         ultralightNet = null;
+        damoyoloNet?.Dispose();
+        damoyoloNet = null;
     }
 
     private void ensureDetectorLoaded()
@@ -70,10 +80,17 @@ public partial class CameraDrawEngine
         var modelName = string.IsNullOrWhiteSpace(detectorModel)
             ? "version-RFB-640.onnx"
             : detectorModel.Trim();
-        var inputSize = resolveDetectorInputSize(modelName);
+        var backend = modelName.Contains("yunet", StringComparison.OrdinalIgnoreCase)
+            ? DetectorBackend.YuNet
+            : modelName.Contains("damoyolo", StringComparison.OrdinalIgnoreCase)
+                ? DetectorBackend.Damoyolo
+                : DetectorBackend.Ultralight;
+        var inputSize = backend == DetectorBackend.Damoyolo
+            ? new Size(640, 640)
+            : resolveDetectorInputSize(modelName);
 
         if (loadedDetectorModel == modelName && detectorInputSize == inputSize &&
-            (yunetDetector != null || ultralightNet != null))
+            (yunetDetector != null || ultralightNet != null || damoyoloNet != null))
             return;
 
         disposeDetector();
@@ -92,10 +109,18 @@ public partial class CameraDrawEngine
                 5000,
                 Backend.DEFAULT,
                 Target.CPU);
+            activeBackend = DetectorBackend.YuNet;
+        }
+        else if (modelName.Contains("damoyolo", StringComparison.OrdinalIgnoreCase))
+        {
+            damoyoloNet = CvDnn.ReadNetFromOnnx(modelPath);
+            activeBackend = DetectorBackend.Damoyolo;
+            detectorInputSize = new Size(640, 640);
         }
         else
         {
             ultralightNet = CvDnn.ReadNetFromOnnx(modelPath);
+            activeBackend = DetectorBackend.Ultralight;
         }
 
         loadedDetectorModel = modelName;
@@ -224,6 +249,57 @@ public partial class CameraDrawEngine
         }
     }
 
+    private IReadOnlyList<DetectedFace> detectFacesWithDamoyolo(Mat frameBgr)
+    {
+        if (damoyoloNet == null)
+            return [];
+
+        var scale = Math.Min(640f / frameBgr.Width, 640f / frameBgr.Height);
+        var newWidth = Math.Max(1, (int)(frameBgr.Width * scale));
+        var newHeight = Math.Max(1, (int)(frameBgr.Height * scale));
+        var padX = (640 - newWidth) / 2;
+        var padY = (640 - newHeight) / 2;
+
+        using var resizedFrame = new Mat();
+        Cv2.Resize(frameBgr, resizedFrame, new Size(newWidth, newHeight), 0, 0, InterpolationFlags.Linear);
+        using var resized = new Mat(new Size(640, 640), frameBgr.Type(), new Scalar(0, 0, 0));
+        using (var roi = new Mat(resized, new Rect(padX, padY, newWidth, newHeight)))
+        {
+            resizedFrame.CopyTo(roi);
+        }
+
+        using var blob = CvDnn.BlobFromImage(
+            resized,
+            1.0 / 255.0,
+            new Size(640, 640),
+            new Scalar(0, 0, 0),
+            true,
+            false);
+
+        damoyoloNet.SetInput(blob, string.Empty);
+
+        var outputNames = damoyoloNet.GetUnconnectedOutLayersNames()
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Select(name => name!)
+            .ToList();
+        if (outputNames.Count == 0)
+            throw new InvalidOperationException(cameraText("DetectorOutputUnsupported"));
+
+        logger.LogDebug($"DAMOYOLO outputs: {string.Join(", ", outputNames)}");
+
+        var outputMats = outputNames.Select(_ => new Mat()).ToArray();
+        try
+        {
+            damoyoloNet.Forward(outputMats, outputNames);
+            return parseDamoyoloOutput(outputMats, frameBgr.Width, frameBgr.Height);
+        }
+        finally
+        {
+            foreach (var output in outputMats)
+                output.Dispose();
+        }
+    }
+
     private static Mat resizeForDetector(Mat frameBgr, Size inputSize)
     {
         if (frameBgr.Width == inputSize.Width && frameBgr.Height == inputSize.Height)
@@ -299,6 +375,194 @@ public partial class CameraDrawEngine
 
         CvDnn.NMSBoxes(nmsBoxes, nmsScores, 0.7f, 0.4f, out var picked, 1.0f, 0);
         return picked.Length == 0 ? [] : picked.Select(index => candidates[index]).ToList();
+    }
+
+    private static IReadOnlyList<DetectedFace> parseDamoyoloOutput(
+        IReadOnlyList<Mat> outputs,
+        int frameWidth,
+        int frameHeight)
+    {
+        var outputData = outputs.Select(readOutputData).ToList();
+
+        if (tryParseDamoyoloFourTensorOutputs(outputs, outputData, frameWidth, frameHeight, out var fourTensorFaces))
+            return fourTensorFaces;
+
+        for (var outputIndex = 0; outputIndex < outputs.Count; outputIndex++)
+        {
+            var data = outputData[outputIndex];
+            if (data.Length == 0 || inferDamoyoloOutputColumns(outputs[outputIndex], data.Length) != 6)
+                continue;
+
+            List<DetectedFace> results = [];
+            var count = data.Length / 6;
+            for (var i = 0; i < count; i++)
+            {
+                var offset = i * 6;
+                var confidence = data[offset + 4];
+                if (confidence <= 0.7f)
+                    continue;
+
+                var candidate = mapDamoyoloFace(
+                    data[offset],
+                    data[offset + 1],
+                    data[offset + 2],
+                    data[offset + 3],
+                    confidence,
+                    frameWidth,
+                    frameHeight);
+                if (candidate != null)
+                {
+                    results.Add(candidate);
+                    continue;
+                }
+
+                candidate = mapDamoyoloFace(
+                    data[offset + 2],
+                    data[offset + 3],
+                    data[offset + 4],
+                    data[offset + 5],
+                    data[offset + 1],
+                    frameWidth,
+                    frameHeight);
+                if (candidate != null)
+                    results.Add(candidate);
+            }
+
+            return results;
+        }
+
+        throw new InvalidOperationException(cameraText("DetectorOutputUnsupported"));
+    }
+
+    private static bool tryParseDamoyoloFourTensorOutputs(
+        IReadOnlyList<Mat> outputs,
+        IReadOnlyList<float[]> outputData,
+        int frameWidth,
+        int frameHeight,
+        out IReadOnlyList<DetectedFace> faces)
+    {
+        faces = [];
+        if (outputs.Count < 4 || outputData.Count < 4)
+            return false;
+
+        var numDets = outputData[0].Length > 0 ? Math.Max(0, (int)MathF.Round(outputData[0][0])) : 0;
+        var boxes = outputData[1];
+        var scores = outputData[2];
+        if (inferDamoyoloOutputColumns(outputs[1], boxes.Length) != 4 || scores.Length == 0)
+        {
+            var boxesIndex = -1;
+            var numIndex = -1;
+            for (var i = 0; i < outputs.Count; i++)
+            {
+                if (numIndex < 0 && outputData[i].Length == 1)
+                    numIndex = i;
+                if (boxesIndex < 0 && inferDamoyoloOutputColumns(outputs[i], outputData[i].Length) == 4)
+                    boxesIndex = i;
+            }
+
+            if (boxesIndex < 0)
+                return false;
+
+            boxes = outputData[boxesIndex];
+            if (numIndex >= 0)
+                numDets = Math.Max(0, (int)MathF.Round(outputData[numIndex][0]));
+
+            var scoreIndex = Enumerable.Range(0, outputs.Count)
+                .FirstOrDefault(index => index != boxesIndex && index != numIndex && outputData[index].Length >= boxes.Length / 4);
+            if (scoreIndex == boxesIndex || scoreIndex == numIndex || outputData[scoreIndex].Length < boxes.Length / 4)
+                return false;
+
+            scores = outputData[scoreIndex];
+        }
+
+        var count = numDets > 0
+            ? Math.Min(numDets, Math.Min(boxes.Length / 4, scores.Length))
+            : Math.Min(boxes.Length / 4, scores.Length);
+        if (count <= 0)
+        {
+            faces = [];
+            return true;
+        }
+
+        List<DetectedFace> results = [];
+        for (var i = 0; i < count; i++)
+        {
+            var confidence = scores[i];
+            if (confidence <= 0.7f)
+                continue;
+
+            var boxIndex = i * 4;
+            var candidate = mapDamoyoloFace(
+                boxes[boxIndex],
+                boxes[boxIndex + 1],
+                boxes[boxIndex + 2],
+                boxes[boxIndex + 3],
+                confidence,
+                frameWidth,
+                frameHeight);
+            if (candidate != null)
+                results.Add(candidate);
+        }
+
+        faces = results;
+        return true;
+    }
+
+    private static DetectedFace? mapDamoyoloFace(
+        float x1,
+        float y1,
+        float x2,
+        float y2,
+        float confidence,
+        int frameWidth,
+        int frameHeight)
+    {
+        if (confidence <= 0.7f || x2 <= x1 || y2 <= y1)
+            return null;
+
+        if (Math.Max(Math.Max(x1, y1), Math.Max(x2, y2)) <= 1.5f)
+        {
+            x1 *= 640f;
+            y1 *= 640f;
+            x2 *= 640f;
+            y2 *= 640f;
+        }
+
+        float scale = Math.Min(640f / frameWidth, 640f / frameHeight);
+        int newWidth = (int)(frameWidth * scale);
+        int newHeight = (int)(frameHeight * scale);
+        int padX = (640 - newWidth) / 2;
+        int padY = (640 - newHeight) / 2;
+        float x1Orig = (x1 - padX) / scale;
+        float y1Orig = (y1 - padY) / scale;
+        float x2Orig = (x2 - padX) / scale;
+        float y2Orig = (y2 - padY) / scale;
+
+        return clampFace(x1Orig, y1Orig, x2Orig - x1Orig, y2Orig - y1Orig, confidence, frameWidth, frameHeight);
+    }
+
+    private static int inferDamoyoloOutputColumns(Mat output, int dataLength)
+    {
+        if (output.Dims > 0)
+        {
+            var last = output.Size(output.Dims - 1);
+            if (last == 4 || last == 6)
+                return last;
+        }
+
+        if (output.Cols == 4 || output.Cols == 6)
+            return output.Cols;
+
+        if (output.Channels() == 4 || output.Channels() == 6)
+            return output.Channels();
+
+        if (dataLength % 6 == 0)
+            return 6;
+
+        if (dataLength % 4 == 0)
+            return 4;
+
+        return 0;
     }
 
     private static float[] readOutputData(Mat output)
