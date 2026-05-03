@@ -5,12 +5,13 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.FluentIcons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages;
 
-[PageInfo("settings.basic", "\uF4C5")]
+[PageInfo("settings.basic", FI.ic_wrench_settings_regular)]
 public partial class BasicSettingsPage : UserControl
 {
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
