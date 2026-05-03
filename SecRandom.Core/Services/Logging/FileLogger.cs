@@ -32,6 +32,6 @@ public class FileLogger(FileLoggerProvider provider, string categoryName) : ILog
         var newStack = (previous ?? ImmutableStack<object>.Empty).Push(state);
         ScopeStack.Value = newStack;
 
-        return new LoggingScope(() => ScopeStack.Value = previous);
+        return new LoggingScope(() => ScopeStack.Value = previous ?? ImmutableStack<object>.Empty);
     }
 }
