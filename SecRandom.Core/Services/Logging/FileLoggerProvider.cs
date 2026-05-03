@@ -47,21 +47,22 @@ public class FileLoggerProvider : ILoggerProvider
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            CreateLogger(typeof(FileLoggerProvider).FullName!).LogError(e, "Failed to initialize file logger provider.");
         }
     }
 
-    private static void ProcessPreviousLogs(string[] logs, string currentLogFile)
+    private void ProcessPreviousLogs(string[] logs, string currentLogFile)
     {
+        var logger = CreateLogger(typeof(FileLoggerProvider).FullName!);
         foreach (var i in logs.Where(x => Path.GetFileName(x) != currentLogFile && Path.GetExtension(x) == ".log"))
         {
             try
             {
                 GZipHelper.CompressFileAndDelete(i);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Console.WriteLine("无法删除日志 {0}", Path.GetFileName(i));
+                logger.LogWarning(ex, "Failed to compress previous log file: {LogFile}", Path.GetFileName(i));
             }
         }
 
@@ -76,7 +77,7 @@ public class FileLoggerProvider : ILoggerProvider
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                logger.LogWarning(e, "Failed to delete expired log file: {LogFile}", Path.GetFileName(i));
             }
         }
     }
@@ -98,9 +99,8 @@ public class FileLoggerProvider : ILoggerProvider
                 }
                 _logWriter?.WriteLine(log);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Console.WriteLine(e);
                 _canWrite = false;
             }
         }

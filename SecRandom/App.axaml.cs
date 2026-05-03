@@ -40,13 +40,13 @@ namespace SecRandom;
 public partial class App : Application
 {
     public new static App Current => (Application.Current as App)!;
-    
+
     private static FloatingWindow? _floatingWindow;
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
     private static MainWindow? _profileSettingsWindow;
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
-    
+
     public override void Initialize()
     {
         // 初始化语言
@@ -67,10 +67,10 @@ public partial class App : Application
         {
             InitializeLanguages(new CultureInfo("zh-Hans"));
         }
-        
+
         // 初始化 Avalonia App
         AvaloniaXamlLoader.Load(this);
-        
+
 #if DEBUG
         // 附加开发者工具
         this.AttachDeveloperTools();
@@ -81,10 +81,10 @@ public partial class App : Application
     {
         // 启动服务主机
         BuildHost();
-        
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
+            // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
 
@@ -97,10 +97,10 @@ public partial class App : Application
         {
             throw new PlatformNotSupportedException();
         }
-        
+
         AppDomain.CurrentDomain.ProcessExit += CurrentDomainOnProcessExit;
         Dispatcher.UIThread.UnhandledException += App_OnDispatcherUnhandledException;
-        
+
         base.OnFrameworkInitializationCompleted();
     }
 
@@ -116,7 +116,7 @@ public partial class App : Application
             BindingPlugins.DataValidators.Remove(plugin);
         }
     }
-    
+
     private void BuildHost()
     {
         if (IAppHost.Host is not null)
@@ -138,39 +138,42 @@ public partial class App : Application
                     builder.SetMinimumLevel(LogLevel.Trace);
 #endif
                 });
-                
+
                 services.AddSingleton<ILoggerProvider, FileLoggerProvider>();
-                
+
                 // 配置
                 services.AddSingleton<ConfigServiceBase, DesktopConfigService>();
                 services.AddSingleton<MainConfigHandler>();
-                
+
                 // 服务
                 services.AddSingleton<IProfileService, ProfileService>();
                 services.AddSingleton<SettingsSearchService>();
-                
+
                 // 窗口
                 services.AddTransient<MainView>();
                 services.AddTransient<MainViewModel>();
-                
+
                 services.AddTransient<SettingsView>();
                 services.AddTransient<SettingsViewModel>();
 
                 services.AddTransient<ProfileSettingsView>();
                 services.AddTransient<ProfileSettingsViewModel>();
-                
+
                 // 附加设置
                 services.AddAttachedSettingsControl<BehindSceneAttachedSettingsControl>(Langs.Common.Resources.AttachedSettings_BehindScene);
-                
+
                 // 界面 Views
                 services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
-                
+#if DEBUG
+                services.AddMainPage<CameraPreviewTestPage>("摄像头测试");
+#endif
+
                 // 设置界面 Views
                 services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
                 services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
 
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
-                
+
 #if DEBUG
                 services.AddSettingsPageSeparator(PageLocation.Bottom);
                 services.AddSettingsPage<DebugSettingsPage>("调试");
@@ -185,22 +188,22 @@ public partial class App : Application
             .Build();
 
         var logger = IAppHost.GetService<ILogger<App>>();
-        
+
         logger.LogInformation("SecRandom {VERSION} (Codename: {CODENAME})", GlobalConstants.Version, GlobalConstants.CodeName);
         logger.LogInformation("Copyright by SECTL(2025~{YEAR})  Licensed under GPL3.0", DateTime.Now.Year);
         logger.LogInformation("Host built.");
-        
+
         var lifetime = IAppHost.GetService<IHostApplicationLifetime>();
         lifetime.ApplicationStopping.Register(Stop);
-        
+
         // 刷新个性化设置
         RefreshPersonalizedSettings();
 
         IAppHost.GetService<IProfileService>();
-        
+
         // 启动服务主机
         _ = IAppHost.Host.StartAsync();
-        
+
         // RESOURCES TEST
         var isVisible = false;
         if (GlobalConstants.IsDevelopment && isVisible)
@@ -212,13 +215,13 @@ public partial class App : Application
     public static void Stop()
     {
         var logger = IAppHost.GetService<ILogger<App>>();
-        logger.LogInformation("正在停止应用");
+        logger.LogInformation("Stopping application.");
 
         _floatingWindow?.CanClose = true;
 
         IAppHost.GetService<MainConfigHandler>().Save();
         IAppHost.GetService<IProfileService>().SaveProfile();
-        
+
         IAppHost.Host?.StopAsync(TimeSpan.FromSeconds(5));
         _desktopLifetime?.Shutdown();
     }
@@ -226,10 +229,10 @@ public partial class App : Application
     public static void Restart()
     {
         Stop();
-        
+
         var path = Environment.ProcessPath;
         if (path == null) return;
-        
+
         var executablePath = path.Replace(".dll", GlobalConstants.PlatformExecutableExtension);
         var startInfo = new ProcessStartInfo(executablePath)
         {
@@ -242,9 +245,9 @@ public partial class App : Application
     {
         var configHandler = IAppHost.GetService<MainConfigHandler>();
         configHandler.Save();
-        
+
         var logger = IAppHost.GetService<ILogger<App>>();
-        logger.LogCritical(e.Exception, "发生严重错误");
+        logger.LogCritical(e.Exception, "Unhandled application exception.");
     }
 
     private void CurrentDomainOnProcessExit(object? sender, EventArgs e)
@@ -278,7 +281,7 @@ public partial class App : Application
         };
         var fluentAvaloniaTheme = this.FindResource("FluentAvaloniaTheme") as FluentAvaloniaTheme;
         fluentAvaloniaTheme?.PreferSystemTheme = settings.Theme == ThemeMode.Auto;
-        
+
         // 主题色
         fluentAvaloniaTheme?.CustomAccentColor = settings.ThemeColor;
         Resources["SystemAccentColor"] = settings.ThemeColor;
@@ -288,7 +291,7 @@ public partial class App : Application
         Resources["SystemAccentColorDark1"] = settings.ThemeColor;
         Resources["SystemAccentColorDark2"] = settings.ThemeColor;
         Resources["SystemAccentColorDark3"] = settings.ThemeColor;
-        
+
         // 字体
         Resources["ContentControlThemeFontFamily"] = Resources["AppFontFamily"] = new FontFamily(fontFamily);
         Resources["AppFontWeight"] = Enum.Parse<FontWeight>(settings.FontWeight.ToString());
@@ -317,7 +320,7 @@ public partial class App : Application
         _mainWindow.Show();
         _mainWindow.Activate();
     }
-    
+
     public static void ShowSettingsWindow()
     {
         if (_settingsWindow is { IsVisible: true })
@@ -325,7 +328,7 @@ public partial class App : Application
             _settingsWindow.Activate();
             return;
         }
-        
+
         if (_settingsWindow is not { IsLoaded: true })
         {
             _settingsWindow = new MainWindow
@@ -347,7 +350,7 @@ public partial class App : Application
             _profileSettingsWindow.Activate();
             return;
         }
-        
+
         if (_profileSettingsWindow is not { IsLoaded: true })
         {
             _profileSettingsWindow = new MainWindow

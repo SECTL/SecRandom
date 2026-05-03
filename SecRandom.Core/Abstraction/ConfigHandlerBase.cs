@@ -18,7 +18,7 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
         ConfigService = IAppHost.GetService<ConfigServiceBase>();
         FallbackFactory = fallbackFactory;
 
-        Logger.LogInformation("加载配置文件...");
+        Logger.LogInformation("Loading config file.");
         Data = ConfigService.LoadConfig(FallbackFactory());
         Data.PropertyChanged += Data_OnPropertyChanged;
     }
@@ -29,7 +29,7 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
         ConfigService = configService;
         FallbackFactory = fallbackFactory;
 
-        Logger.LogInformation("加载配置文件...");
+        Logger.LogInformation("Loading config file.");
         Data = ConfigService.LoadConfig(FallbackFactory());
         Data.PropertyChanged += Data_OnPropertyChanged;
     }
@@ -37,20 +37,20 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
     public virtual void Reload()
     {
         Data.PropertyChanged -= Data_OnPropertyChanged;
-        Logger.LogInformation("重新加载配置文件...");
+        Logger.LogInformation("Reloading config file.");
         Data = ConfigService.LoadConfig(FallbackFactory());
         Data.PropertyChanged += Data_OnPropertyChanged;
     }
     
     public virtual void Save()
     {
-        Logger.LogInformation("保存配置文件...");
+        Logger.LogInformation("Saving config file.");
         ConfigService.SaveConfig(Data);
     }
     
     public virtual void Delete()
     {
-        Logger.LogInformation("删除配置文件...");
+        Logger.LogInformation("Deleting config file.");
         ConfigService.DeleteConfig(Data);
     }
     
