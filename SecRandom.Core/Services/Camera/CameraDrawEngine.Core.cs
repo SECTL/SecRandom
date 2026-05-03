@@ -118,7 +118,7 @@ public partial class CameraDrawEngine
 
         emitTimer = new Timer(emitInterval.TotalMilliseconds);
         emitTimer.Elapsed += OnEmitTimerElapsed;
-        emitTimer.AutoReset = true;
+        emitTimer.AutoReset = false;
         emitTimer.Start();
         logger.LogDebug("Camera emit timer started: interval={IntervalMilliseconds}ms", emitInterval.TotalMilliseconds);
     }
@@ -270,6 +270,8 @@ public partial class CameraDrawEngine
         {
             frameToProcess?.Dispose();
             Interlocked.Exchange(ref isEmittingFrame, 0);
+            if (isPreviewRunning && emitTimer != null)
+                emitTimer.Start();
         }
     }
 

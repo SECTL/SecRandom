@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using OpenCvSharp;
 using OpenCvSharp.Dnn;
+using System.Runtime.InteropServices;
 using SecRandom.Core.Models.Camera;
 using SecRandom.Shared;
 
@@ -13,7 +14,6 @@ public partial class CameraDrawEngine
     private readonly object detectorLock = new();
     private FaceDetectorYN? yunetDetector;
     private Net? ultralightNet;
-    private IReadOnlyList<Rect2f>? ultralightPriors;
     private string? loadedDetectorModel;
     private string? lastDetectionErrorMessage;
     private Size detectorInputSize;
@@ -63,7 +63,6 @@ public partial class CameraDrawEngine
         yunetDetector = null;
         ultralightNet?.Dispose();
         ultralightNet = null;
-        ultralightPriors = null;
     }
 
     private void ensureDetectorLoaded()
@@ -97,7 +96,6 @@ public partial class CameraDrawEngine
         else
         {
             ultralightNet = CvDnn.ReadNetFromOnnx(modelPath);
-            ultralightPriors = generateUltralightPriors(inputSize.Width, inputSize.Height);
         }
 
         loadedDetectorModel = modelName;
@@ -137,13 +135,16 @@ public partial class CameraDrawEngine
 
     private Size resolveDetectorInputSize(string modelName)
     {
+        if (modelName.Contains("640", StringComparison.OrdinalIgnoreCase))
+            return new Size(640, 480);
+
+        if (modelName.Contains("320", StringComparison.OrdinalIgnoreCase))
+            return new Size(320, 240);
+
         var width = targetWidth > 0 ? targetWidth : 0;
         var height = targetHeight > 0 ? targetHeight : 0;
         if (width > 0 && height > 0)
             return new Size(width, height);
-
-        if (modelName.Contains("640", StringComparison.OrdinalIgnoreCase))
-            return new Size(640, 480);
 
         return new Size(320, 240);
     }
@@ -182,7 +183,7 @@ public partial class CameraDrawEngine
 
     private IReadOnlyList<DetectedFace> detectFacesWithUltralight(Mat frameBgr)
     {
-        if (ultralightNet == null || ultralightPriors == null)
+        if (ultralightNet == null)
             return [];
 
         using var resized = resizeForDetector(frameBgr, detectorInputSize);
@@ -203,8 +204,18 @@ public partial class CameraDrawEngine
         List<Mat> outputs = [];
         try
         {
-            ultralightNet.Forward(outputs, outputNames);
-            return parseUltralightOutputs(outputs, ultralightPriors, frameBgr.Width, frameBgr.Height);
+            if (outputNames.Count == 0)
+            {
+                outputs.Add(ultralightNet.Forward());
+            }
+            else
+            {
+                var outputMats = outputNames.Select(_ => new Mat()).ToArray();
+                ultralightNet.Forward(outputMats, outputNames);
+                outputs.AddRange(outputMats);
+            }
+
+            return parseUltralightOutputs(outputs, frameBgr.Width, frameBgr.Height);
         }
         finally
         {
@@ -225,7 +236,6 @@ public partial class CameraDrawEngine
 
     private IReadOnlyList<DetectedFace> parseUltralightOutputs(
         IReadOnlyList<Mat> outputs,
-        IReadOnlyList<Rect2f> priors,
         int frameWidth,
         int frameHeight)
     {
@@ -234,7 +244,8 @@ public partial class CameraDrawEngine
 
         foreach (var output in outputs)
         {
-            if (!output.GetArray(out float[] data) || data.Length == 0)
+            var data = readOutputData(output);
+            if (data.Length == 0)
                 continue;
 
             var columns = inferOutputColumns(output, data.Length);
@@ -247,12 +258,10 @@ public partial class CameraDrawEngine
         if (scores == null || boxes == null)
             throw new InvalidOperationException(cameraText("DetectorOutputUnsupported"));
 
-        var count = Math.Min(Math.Min(scores.Length / 2, boxes.Length / 4), priors.Count);
+        var count = Math.Min(scores.Length / 2, boxes.Length / 4);
         if (count <= 0)
             return [];
 
-        var scaleX = (float)frameWidth / detectorInputSize.Width;
-        var scaleY = (float)frameHeight / detectorInputSize.Height;
         List<Rect> nmsBoxes = [];
         List<float> nmsScores = [];
         List<DetectedFace> candidates = [];
@@ -263,21 +272,15 @@ public partial class CameraDrawEngine
             if (confidence <= 0.7f)
                 continue;
 
-            var prior = priors[i];
             var boxIndex = i * 4;
-            var centerX = prior.X + boxes[boxIndex] * 0.1f * prior.Width;
-            var centerY = prior.Y + boxes[boxIndex + 1] * 0.1f * prior.Height;
-            var width = prior.Width * MathF.Exp(boxes[boxIndex + 2] * 0.2f);
-            var height = prior.Height * MathF.Exp(boxes[boxIndex + 3] * 0.2f);
-
-            var x = (centerX - width / 2.0f) * detectorInputSize.Width * scaleX;
-            var y = (centerY - height / 2.0f) * detectorInputSize.Height * scaleY;
-            var w = width * detectorInputSize.Width * scaleX;
-            var h = height * detectorInputSize.Height * scaleY;
-            if (w <= 0 || h <= 0)
+            var x1 = boxes[boxIndex] * frameWidth;
+            var y1 = boxes[boxIndex + 1] * frameHeight;
+            var x2 = boxes[boxIndex + 2] * frameWidth;
+            var y2 = boxes[boxIndex + 3] * frameHeight;
+            if (x2 <= x1 || y2 <= y1)
                 continue;
 
-            var candidate = clampFace(x, y, w, h, confidence, frameWidth, frameHeight);
+            var candidate = clampFace(x1, y1, x2 - x1, y2 - y1, confidence, frameWidth, frameHeight);
             if (candidate == null)
                 continue;
 
@@ -296,6 +299,20 @@ public partial class CameraDrawEngine
 
         CvDnn.NMSBoxes(nmsBoxes, nmsScores, 0.7f, 0.4f, out var picked, 1.0f, 0);
         return picked.Length == 0 ? [] : picked.Select(index => candidates[index]).ToList();
+    }
+
+    private static float[] readOutputData(Mat output)
+    {
+        if (output.Empty() || output.Data == IntPtr.Zero)
+            return [];
+
+        var length = checked((int)output.Total() * output.Channels());
+        if (length == 0)
+            return [];
+
+        var data = new float[length];
+        Marshal.Copy(output.Data, data, 0, data.Length);
+        return data;
     }
 
     private static int inferOutputColumns(Mat output, int dataLength)
@@ -320,38 +337,6 @@ public partial class CameraDrawEngine
             return 2;
 
         return 0;
-    }
-
-    private static IReadOnlyList<Rect2f> generateUltralightPriors(int inputWidth, int inputHeight)
-    {
-        float[][] minBoxes =
-        [
-            [10.0f, 16.0f, 24.0f],
-            [32.0f, 48.0f],
-            [64.0f, 96.0f],
-            [128.0f, 192.0f, 256.0f]
-        ];
-        int[] strides = [8, 16, 32, 64];
-        List<Rect2f> priors = [];
-
-        for (var level = 0; level < strides.Length; level++)
-        {
-            var stride = strides[level];
-            var featureMapWidth = (int)Math.Ceiling(inputWidth / (double)stride);
-            var featureMapHeight = (int)Math.Ceiling(inputHeight / (double)stride);
-            for (var y = 0; y < featureMapHeight; y++)
-            {
-                for (var x = 0; x < featureMapWidth; x++)
-                {
-                    var centerX = (x + 0.5f) * stride / inputWidth;
-                    var centerY = (y + 0.5f) * stride / inputHeight;
-                    foreach (var box in minBoxes[level])
-                        priors.Add(new Rect2f(centerX, centerY, box / inputWidth, box / inputHeight));
-                }
-            }
-        }
-
-        return priors;
     }
 
     private static IReadOnlyList<FaceBox> mergeFaceBoxes(int frameWidth, int frameHeight, IReadOnlyList<DetectedFace> faces)
