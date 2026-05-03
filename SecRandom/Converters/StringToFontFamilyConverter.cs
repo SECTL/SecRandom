@@ -35,7 +35,7 @@ public class StringToFontFamilyConverter : IValueConverter
             }
             return v.ToString();
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return App.DefaultFontFamily.ToString();
         }

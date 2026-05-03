@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Core.Interfaces;
+using SecRandom.Shared.Interfaces;
 
 namespace SecRandom.Core.Models.AttachedSettings;
 

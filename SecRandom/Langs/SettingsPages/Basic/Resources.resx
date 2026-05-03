@@ -152,13 +152,76 @@ bug 报 GitHub Issue 或 SECTL QQ组织群 - 833875216</value>
     <data name="O_FontWeight_Black" xml:space="preserve">
         <value>极粗</value><comment>FontWeight 900</comment>
     </data>
-    <data name="O_DpiScale_Auto" xml:space="preserve">
-        <value>自动</value>
-    </data>
     <data name="S_DataManagement" xml:space="preserve">
         <value>数据管理</value>
     </data>
     <data name="O_FontFamily_Default" xml:space="preserve">
         <value>MiSans (默认)</value>
+    </data>
+    <data name="S_DataManagement_LogViewer" xml:space="preserve">
+        <value>查看日志</value>
+    </data>
+    <data name="S_DataManagement_LogViewer_D" xml:space="preserve">
+        <value>查看和管理程序日志文件</value>
+    </data>
+    <data name="S_DataManagement_BackupManager" xml:space="preserve">
+        <value>备份管理</value>
+    </data>
+    <data name="S_DataManagement_BackupManager_D" xml:space="preserve">
+        <value>管理自动备份与手动备份</value>
+    </data>
+    <data name="S_DataManagement_ExportDiagnosticData" xml:space="preserve">
+        <value>导出诊断数据</value>
+    </data>
+    <data name="S_DataManagement_ExportDiagnosticData_D" xml:space="preserve">
+        <value>退出软件时导出诊断信息，用于排查问题</value>
+    </data>
+    <data name="S_DataManagement_ExportSettings" xml:space="preserve">
+        <value>导出设置</value>
+    </data>
+    <data name="S_DataManagement_ExportSettings_D" xml:space="preserve">
+        <value>将当前设置导出为配置文件，用于备份和迁移</value>
+    </data>
+    <data name="S_DataManagement_ImportSettings" xml:space="preserve">
+        <value>导入设置</value>
+    </data>
+    <data name="S_DataManagement_ImportSettings_D" xml:space="preserve">
+        <value>从配置文件导入设置，覆盖当前配置信息</value>
+    </data>
+    <data name="S_DataManagement_ExportAllData" xml:space="preserve">
+        <value>导出所有数据</value>
+    </data>
+    <data name="S_DataManagement_ExportAllData_D" xml:space="preserve">
+        <value>退出软件时导出全部数据和设置</value>
+    </data>
+    <data name="S_DataManagement_ImportAllData" xml:space="preserve">
+        <value>导入所有数据</value>
+    </data>
+    <data name="S_DataManagement_ImportAllData_D" xml:space="preserve">
+        <value>启动软件时从备份文件恢复全部数据</value>
+    </data>
+    <data name="S_Telemetry" xml:space="preserve">
+        <value>遥测</value>
+    </data>
+    <data name="S_Telemetry_Enabled" xml:space="preserve">
+        <value>启用遥测</value>
+    </data>
+    <data name="S_Telemetry_Enabled_D" xml:space="preserve">
+        <value>开启后上报在线状态数据以帮助改进软件</value>
+    </data>
+    <data name="S_Telemetry_Mode" xml:space="preserve">
+        <value>在线状态</value>
+    </data>
+    <data name="S_Telemetry_Mode_D" xml:space="preserve">
+        <value>完整上报含位置信息，匿名上报仅计入在线人数不报位置，停止则不上报</value>
+    </data>
+    <data name="O_TelemetryMode_Full" xml:space="preserve">
+        <value>完整上报</value>
+    </data>
+    <data name="O_TelemetryMode_Anonymous" xml:space="preserve">
+        <value>匿名上报</value>
+    </data>
+    <data name="O_TelemetryMode_Off" xml:space="preserve">
+        <value>停止上报</value>
     </data>
 </root>

@@ -59,7 +59,7 @@ public class FileLoggerProvider : ILoggerProvider
             {
                 GZipHelper.CompressFileAndDelete(i);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Console.WriteLine("无法删除日志 {0}", Path.GetFileName(i));
             }

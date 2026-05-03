@@ -8,4 +8,6 @@ public static class AttachedSettingsRegistryService
     public static ObservableCollection<AttachedSettingsControlInfo> RegisteredControls { get; } = [];
     public static ObservableCollection<AttachedSettingsControlInfo> StudentAttachedSettingsControls { get; } = [];
     public static ObservableCollection<AttachedSettingsControlInfo> PrizeAttachedSettingsControls { get; } = [];
+    public static ObservableCollection<AttachedSettingsControlInfo> StudentListAttachedSettingsControls { get; } = [];
+    public static ObservableCollection<AttachedSettingsControlInfo> PrizeListAttachedSettingsControls { get; } = [];
 }

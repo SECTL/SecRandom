@@ -56,6 +56,7 @@ public static class PagesRegistryExtensions
         }
 
         info.Name = name;
+        info.SettingsPageType = typeof(T);
         services.AddKeyedTransient<UserControl, T>(info.Id);
         list.Add(info);
         return services;

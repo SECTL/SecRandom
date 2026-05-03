@@ -6,6 +6,8 @@ using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw.Exceptions;
+using SecRandom.Shared.Extensions;
+using SecRandom.Shared.Interfaces;
 using SecRandom.Shared.Models;
 using SecRandom.Shared.Models.Profile;
 
@@ -58,9 +60,7 @@ public partial class DrawEngine
                     .Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 })
                     .ToList()
             };
-            var result = drawWithBehindSceneWeights(weightedCandidates, count);
-
-            return result;
+            return drawWithBehindSceneWeights(weightedCandidates, count);
         }
         catch (RepeatLimitExhaustedException)
         {
@@ -118,11 +118,7 @@ public partial class DrawEngine
             if (count > weightedCandidates.Count)
                 throw new RepeatLimitExhaustedException();
 
-            var result = drawWithBehindSceneWeights(weightedCandidates, count);
-            if (result.IsSuccess)
-                recordPrizeHistory(result.Result, weightedCandidates);
-
-            return result;
+            return drawWithBehindSceneWeights(weightedCandidates, count);
         }
         catch (RepeatLimitExhaustedException)
         {
@@ -171,7 +167,7 @@ public partial class DrawEngine
     private DrawResult<TCandidate> drawWithBehindSceneWeights<TCandidate>(
         IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates,
         int count)
-        where TCandidate : AttachableSettingsObject
+        where TCandidate : IAttachableSettingsObject
     {
         var drawEngine = new WeightedDrawEngine<TCandidate>(new CryptoRandomSource());
         List<WeightedCandidate<TCandidate>> guaranteedCandidates = [];
@@ -258,74 +254,8 @@ public partial class DrawEngine
         };
     }
 
-    private static BehindSceneAttachedSettings? getBehindSceneSettings(AttachableSettingsObject candidate)
+    private static BehindSceneAttachedSettings? getBehindSceneSettings(IAttachableSettingsObject candidate)
     {
         return candidate.GetAttachedObject<BehindSceneAttachedSettings>(BehindSceneAttachedSettingsId);
-    }
-
-    private void recordPrizeHistory(
-        IReadOnlyList<Prize> drawnPrizes,
-        IReadOnlyList<WeightedCandidate<Prize>> weightedCandidates)
-    {
-        var currentTime = DateTime.Now;
-        var weightByPrize = weightedCandidates
-            .GroupBy(c => c.Candidate)
-            .ToDictionary(g => g.Key, g => g.First().Weight);
-
-        foreach (var prize in drawnPrizes)
-        {
-            if (string.IsNullOrWhiteSpace(prize.Name))
-                continue;
-
-            var history = getOrCreatePrizeHistory(prize.Name);
-            history.TotalCount++;
-            history.LastDrawnTime = currentTime;
-            history.RoundsMissed = 0;
-            history.Histories.Add(new HistoryItem
-            {
-                DrawTime = currentTime,
-                DrawNumbers = drawnPrizes.Count,
-                Weight = weightByPrize.GetValueOrDefault(prize, prize.Weight)
-            });
-        }
-
-        foreach (var prize in prizeList.Prizes.Where(p => !drawnPrizes.Contains(p)))
-        {
-            if (string.IsNullOrWhiteSpace(prize.Name) || !prizeHistory.Prizes.TryGetValue(prize.Name, out var history))
-                continue;
-
-            history.RoundsMissed++;
-        }
-
-        prizeHistory.TotalRounds++;
-        prizeHistory.TotalStats += drawnPrizes.Count;
-        profileService.SaveProfile();
-    }
-
-    private History getOrCreateStudentHistory(string key)
-    {
-        if (!studentHistory.Students.TryGetValue(key, out var history))
-        {
-            history = new History();
-            studentHistory.Students[key] = history;
-        }
-
-        return history;
-    }
-
-    private History getOrCreatePrizeHistory(string key)
-    {
-        if (!prizeHistory.Prizes.TryGetValue(key, out var history))
-        {
-            history = new History();
-            prizeHistory.Prizes[key] = history;
-        }
-
-        return history;
-    }
-
-    private static string getStudentHistoryKey(Student student)
-    {
-        return !string.IsNullOrWhiteSpace(student.Id) ? student.Id : student.Name;
     }
 }

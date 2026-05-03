@@ -68,14 +68,8 @@ public partial class App : Application
             InitializeLanguages(new CultureInfo("zh-Hans"));
         }
         
-        // 启动服务主机
-        BuildHost();
-        
         // 初始化 Avalonia App
         AvaloniaXamlLoader.Load(this);
-        
-        // 刷新个性化设置
-        RefreshPersonalizedSettings();
         
 #if DEBUG
         // 附加开发者工具
@@ -85,6 +79,9 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        // 启动服务主机
+        BuildHost();
+        
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
@@ -150,6 +147,7 @@ public partial class App : Application
                 
                 // 服务
                 services.AddSingleton<IProfileService, ProfileService>();
+                services.AddSingleton<SettingsSearchService>();
                 
                 // 窗口
                 services.AddTransient<MainView>();
@@ -194,6 +192,9 @@ public partial class App : Application
         
         var lifetime = IAppHost.GetService<IHostApplicationLifetime>();
         lifetime.ApplicationStopping.Register(Stop);
+        
+        // 刷新个性化设置
+        RefreshPersonalizedSettings();
 
         IAppHost.GetService<IProfileService>();
         
@@ -201,33 +202,10 @@ public partial class App : Application
         _ = IAppHost.Host.StartAsync();
         
         // RESOURCES TEST
-        if (true) return;
-        
-        var resources = Assembly.GetExecutingAssembly().DefinedTypes
-            .Where(info => info.Namespace?.StartsWith("SecRandom.Langs.SettingsPages") ?? false)
-            .OrderBy(info => info.FullName ?? "???")
-            .ToList();
-        using (logger.BeginScope("RESOURCES TEST"))
+        var isVisible = false;
+        if (GlobalConstants.IsDevelopment && isVisible)
         {
-            foreach (var resourceType in resources)
-            {
-                var settingsPageId = resourceType.FullName?.Split(".")[3];
-                if (settingsPageId == null) continue;
-                
-                var settingsPageName =
-                    typeof(Langs.Common.Resources).GetProperty("Settings_" + settingsPageId)?.GetValue(null) ?? "???";
-                
-                var properties = resourceType.DeclaredProperties;
-                
-                using var scope = logger.BeginScope($"[{settingsPageId}] {settingsPageName}");
-                foreach (var declaredProperty in properties)
-                {
-                    if (declaredProperty.Name.StartsWith("S_") && !declaredProperty.Name.EndsWith("_R"))
-                    {
-                        logger.LogDebug("[{Name}] {Value}", declaredProperty.Name, declaredProperty.GetValue(null));
-                    }
-                }
-            }
+            IAppHost.GetService<SettingsSearchService>().LogTestInformation();
         }
     }
 

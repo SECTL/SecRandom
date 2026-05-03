@@ -4,6 +4,7 @@ using SecRandom.Core.Abstraction.Controls;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Interfaces;
+using SecRandom.Shared.Interfaces;
 using SecRandom.Shared.Models;
 using SecRandom.Shared.Models.Profile;
 
@@ -20,10 +21,10 @@ public partial class AttachedSettingsControlPresenter : UserControl
         set => SetValue(ControlInfoProperty, value);
     }
 
-    public static readonly StyledProperty<AttachableSettingsObject> TargetObjectProperty = AvaloniaProperty.Register<AttachedSettingsControlPresenter, AttachableSettingsObject>(
+    public static readonly StyledProperty<IAttachableSettingsObject> TargetObjectProperty = AvaloniaProperty.Register<AttachedSettingsControlPresenter, IAttachableSettingsObject>(
         nameof(TargetObject));
 
-    public AttachableSettingsObject TargetObject
+    public IAttachableSettingsObject TargetObject
     {
         get => GetValue(TargetObjectProperty);
         set => SetValue(TargetObjectProperty, value);
@@ -74,6 +75,9 @@ public partial class AttachedSettingsControlPresenter : UserControl
         control?.Target = TargetObject switch
         {
             Student => AttachedSettingsTargets.Student,
+            Prize => AttachedSettingsTargets.Prize,
+            StudentList => AttachedSettingsTargets.StudentList,
+            PrizeList => AttachedSettingsTargets.PrizeList,
             _ => AttachedSettingsTargets.None
         };
         

@@ -44,6 +44,14 @@ public static class AttachedSettingsRegistryExtensions
         {
             AttachedSettingsRegistryService.PrizeAttachedSettingsControls.Add(info);
         }
+        if (usages.Targets.HasFlag(AttachedSettingsTargets.StudentList))
+        {
+            AttachedSettingsRegistryService.StudentListAttachedSettingsControls.Add(info);
+        }
+        if (usages.Targets.HasFlag(AttachedSettingsTargets.PrizeList))
+        {
+            AttachedSettingsRegistryService.PrizeListAttachedSettingsControls.Add(info);
+        }
 
         return services;
     }

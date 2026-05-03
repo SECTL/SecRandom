@@ -18,6 +18,9 @@ public partial class BasicSettingsConfig : ObservableObject
     [ObservableProperty] private string _font = GlobalConstants.DefaultFontFamily;
     [ObservableProperty] private FontWeightMode _fontWeight = FontWeightMode.Regular;
     [ObservableProperty] private Color _themeColor = Color.Parse(GlobalConstants.DefaultThemeColor);
+
+    [ObservableProperty] private bool _telemetryEnabled = true;
+    [ObservableProperty] private TelemetryMode _telemetryMode = TelemetryMode.Full;
     
     // Hidden Configs
     [ObservableProperty] private Guid _offlineUserId = Guid.NewGuid();

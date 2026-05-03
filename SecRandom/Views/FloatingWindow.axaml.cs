@@ -25,6 +25,7 @@ public partial class FloatingWindow : Window
     public FloatingWindow()
     {
         DataContext = this;
+        Position = new PixelPoint(ViewModel.Config.FloatPosition.X, ViewModel.Config.FloatPosition.Y);
         InitializeComponent();
         
         RenderOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
@@ -166,16 +167,7 @@ public partial class FloatingWindow : Window
     
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        Position = new PixelPoint(ViewModel.Config.FloatPosition.X, ViewModel.Config.FloatPosition.Y);
-        // if (App.IsAcrylicBlurSupported && ViewModel.Config.FloatingWindowSettings.IsAcrylicBackgroundEnabled)
-        if (App.IsAcrylicBlurSupported)
-        {
-            TransparencyLevelHint = [WindowTransparencyLevel.AcrylicBlur];
-        }
-        else
-        {
-            TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
-        }
+        TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
     }
 
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)

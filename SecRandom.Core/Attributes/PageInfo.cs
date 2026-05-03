@@ -19,6 +19,8 @@ public class PageInfo : Attribute
     public bool UseFullWidth { get; }
     public bool HidePageTitle { get; }
 
+    public Type? SettingsPageType { get; set; }
+    
     public PageInfo(bool isSeparator, PageLocation location = PageLocation.Top)
     {
         if (isSeparator)
