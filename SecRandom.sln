@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecRandom.Core.Tests", "Sec
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecRandom.Shared", "SecRandom.Shared\SecRandom.Shared.csproj", "{247526C7-9978-45BD-9790-2C75EF099328}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecRandom.FluentIconMappingGenerator", "vendors\SecRandom.FluentIconMappingGenerator\SecRandom.FluentIconMappingGenerator.csproj", "{79C529FD-70E8-4A4A-8907-DE822554967C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,10 @@ Global
 		{247526C7-9978-45BD-9790-2C75EF099328}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{247526C7-9978-45BD-9790-2C75EF099328}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{247526C7-9978-45BD-9790-2C75EF099328}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79C529FD-70E8-4A4A-8907-DE822554967C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79C529FD-70E8-4A4A-8907-DE822554967C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79C529FD-70E8-4A4A-8907-DE822554967C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79C529FD-70E8-4A4A-8907-DE822554967C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
