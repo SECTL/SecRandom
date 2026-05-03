@@ -1,13 +1,9 @@
-﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
-using Avalonia.Xaml.Interactions.Custom;
-using OpenCvSharp;
+﻿using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Camera;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
-using SecRandom.Shared.ComponentModels;
 
 namespace SecRandom.Core.Services.Camera;
 
@@ -16,7 +12,21 @@ public partial class CameraDrawEngine
     public event EventHandler<CameraFramePacket>? FrameReady;
 
     private FaceDetectorSettingsConfig configData =>
-        IAppHost.GetService<MainConfigHandler>().Data.FaceDetectorSettingsConfig;
+        getFaceDetectorSettingsConfig();
+
+    private static FaceDetectorSettingsConfig getFaceDetectorSettingsConfig()
+    {
+        object handler = IAppHost.GetService<MainConfigHandler>();
+        var config = handler.GetType().GetProperty("Data")?.GetValue(handler);
+        if (config == null)
+            throw new InvalidOperationException(cameraText("ConfigMissing", nameof(FaceDetectorSettingsConfig)));
+
+        var property = config.GetType().GetProperty(nameof(FaceDetectorSettingsConfig));
+        if (property?.GetValue(config) is FaceDetectorSettingsConfig value)
+            return value;
+
+        throw new InvalidOperationException(cameraText("ConfigMissing", nameof(FaceDetectorSettingsConfig)));
+    }
 
     private int targetWidth => configData.ModelInputWidth;
     private int targetHeight => configData.ModelInputHeight;
@@ -44,4 +54,6 @@ public partial class CameraDrawEngine
     {
         FrameReady?.Invoke(this, e);
     }
+
+    private readonly ILogger logger = IAppHost.GetService<ILogger<CameraDrawEngine>>();
 }
