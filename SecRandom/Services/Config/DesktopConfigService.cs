@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
@@ -12,7 +13,7 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
     public override bool IsConfigExists<T>(T fallback)
     {
         var filePath = fallback.ConfigFilePath;
-        Logger.LogInformation("在 {PATH} 判断配置...", filePath);
+        Logger.LogInformation("Checking config file existence: {Path}", filePath);
 
         return File.Exists(filePath);
     }
@@ -20,11 +21,11 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
     public override T LoadConfig<T>(T fallback)
     {
         var filePath = fallback.ConfigFilePath;
-        Logger.LogInformation("从 {PATH} 加载配置...", filePath);
+        Logger.LogInformation("Loading config file: {Path}", filePath);
         
         if (!File.Exists(filePath))
         {
-            Logger.LogWarning("加载失败，正在回滚并保存...");
+            Logger.LogWarning("Config file does not exist; saving fallback config.");
             SaveConfig(fallback);
             return fallback;
         }
@@ -34,9 +35,9 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
             var json = File.ReadAllText(filePath);
             return JsonSerializer.Deserialize<T>(json, JsonOptions) ?? fallback;
         }
-        catch
+        catch (Exception ex)
         {
-            Logger.LogWarning("加载失败，正在回滚并保存...");
+            Logger.LogWarning(ex, "Failed to load config file; saving fallback config: {Path}", filePath);
             SaveConfig(fallback);
             return fallback;
         }
@@ -45,7 +46,7 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
     public override void SaveConfig<T>(T config)
     {
         var filePath = config.ConfigFilePath;
-        Logger.LogInformation("往 {PATH} 保存配置...", filePath);
+        Logger.LogInformation("Saving config file: {Path}", filePath);
         
         var json = JsonSerializer.Serialize(config, JsonOptions);
         File.WriteAllText(filePath, json);
@@ -54,7 +55,7 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
     public override void DeleteConfig<T>(T config)
     {
         var filePath = config.ConfigFilePath;
-        Logger.LogInformation("在 {PATH} 删除配置...", filePath);
+        Logger.LogInformation("Deleting config file: {Path}", filePath);
         
         if (!File.Exists(filePath)) return;
         File.Delete(filePath);
