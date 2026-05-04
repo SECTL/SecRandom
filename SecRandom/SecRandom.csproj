@@ -120,6 +120,7 @@
 
     <ItemGroup>
       <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1" />
+      <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.25.1" />
     </ItemGroup>
 
     <Import Project="..\Global.props" />
