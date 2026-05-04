@@ -332,8 +332,21 @@ public partial class CameraDrawEngine
         return results
             .Select(result =>
             {
-                var tensor = result.AsTensor<float>();
-                return new OnnxDetectorOutput(tensor.ToArray(), tensor.Dimensions.ToArray());
+                // Try float first (most common)
+                var floatTensor = result.AsTensor<float>();
+                if (floatTensor != null)
+                    return new OnnxDetectorOutput(floatTensor.ToArray(), floatTensor.Dimensions.ToArray());
+
+                // Try int64 (for num_dets, det_classes)
+                var int64Tensor = result.AsTensor<long>();
+                if (int64Tensor != null)
+                {
+                    var floatData = int64Tensor.ToArray().Select(x => (float)x).ToArray();
+                    return new OnnxDetectorOutput(floatData, int64Tensor.Dimensions.ToArray());
+                }
+
+                // Fallback: try to get raw value
+                throw new InvalidOperationException($"Unsupported tensor type for output '{result.Name}'");
             })
             .ToList();
     }
