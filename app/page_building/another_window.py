@@ -705,6 +705,10 @@ def create_remaining_list_window(
             except Exception:
                 pass
 
+    get_page_callback = _create_page_loader(window, "remaining_list", on_ready)
+
+    return window, get_page_callback
+
 
 # ==================================================
 # 权重计算规则窗口
@@ -735,10 +739,6 @@ def create_weight_formula_window(parent=None, settings_group=None):
     window.switch_to_page("weight_formula")
     window.show()
     return window
-
-    get_page_callback = _create_page_loader(window, "remaining_list", on_ready)
-
-    return window, get_page_callback
 
 
 # ==================================================
