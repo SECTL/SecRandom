@@ -53,7 +53,7 @@ from app.Language.obtain_language import (
 def configure_logging():
     """配置日志系统"""
     log_dir = get_path(LOG_DIR)
-    log_dir.mkdir(exist_ok=True)
+    log_dir.mkdir(parents=True, exist_ok=True)
 
     log_level = "DEBUG"
 
