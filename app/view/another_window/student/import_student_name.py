@@ -450,6 +450,9 @@ class ImportStudentNameWindow(QWidget):
                 )
 
             # 获取列名
+            # 将所有列名转换为字符串，避免整数列名与UI层字符串不匹配的问题
+            data.columns = [str(col) for col in data.columns]
+
             columns = list(data.columns)
 
             # 通过信号通知UI线程文件加载完成
@@ -938,4 +941,4 @@ class ImportStudentNameWindow(QWidget):
                 f"已覆盖班级 '{class_name}' 的数据，共 {len(all_students)} 名学生"
             )
         else:
-            logger.info(f"已保存 {len(all_students)} 名学生到新班级 '{class_name}'")
+            logger.info(f"已保存 {len(all_students)} 名学生到新班级 '{class_name}'")
