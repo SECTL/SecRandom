@@ -2,26 +2,25 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:controls="clr-namespace:SecRandom.Core.Controls;assembly=SecRandom.Core"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              xmlns:system="clr-namespace:System;assembly=System.Runtime"
-             xmlns:core="clr-namespace:SecRandom.Core;assembly=SecRandom.Core"
              xmlns:lc="clr-namespace:SecRandom.Langs.Common"
              xmlns:lsa="clr-namespace:SecRandom.Langs.SettingsPages.About"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.AboutSettingsPage">
-    <controls:StickyScrollViewer CollapsedHeight="58">
-        <controls:StickyScrollViewer.HeaderContent>
+    <sr:StickyScrollViewer CollapsedHeight="58">
+        <sr:StickyScrollViewer.HeaderContent>
             <Grid>
-                <Panel MaxHeight="300" 
-                       Opacity="{Binding $self.(controls:StickyScrollViewer.HeaderFadingOpacity)}"
+                <Panel MaxHeight="300"
+                       Opacity="{Binding $self.(sr:StickyScrollViewer.HeaderFadingOpacity)}"
                        Background="Transparent">
                     <Panel.OpacityMask>
                         <LinearGradientBrush StartPoint="0%, 0%"
                                              EndPoint="0%, 100%">
-                            <GradientStop Color="#ffffffff" Offset="0.0"/>
-                            <GradientStop Color="#ffffffff" Offset="0.75"/>
-                            <GradientStop Color="#00ffffff" Offset="0.92"/>
+                            <GradientStop Color="#ffffffff" Offset="0.0" />
+                            <GradientStop Color="#ffffffff" Offset="0.75" />
+                            <GradientStop Color="#00ffffff" Offset="0.92" />
                         </LinearGradientBrush>
                     </Panel.OpacityMask>
                     <Border Background="#0d1111" />
@@ -32,12 +31,12 @@
                                     <Animation Delay="0:0:0.25" Duration="0:0:0.2"
                                                FillMode="Both" Easing="0,0 0,1">
                                         <KeyFrame Cue="0%">
-                                            <Setter Property="Opacity" Value="0.0"/>
+                                            <Setter Property="Opacity" Value="0.0" />
                                         </KeyFrame>
                                         <KeyFrame Cue="100%">
-                                            <Setter Property="Opacity" Value="1.0"/>
+                                            <Setter Property="Opacity" Value="1.0" />
                                         </KeyFrame>
-                                    </Animation> 
+                                    </Animation>
                                 </Style.Animations>
                             </Style>
                         </Panel.Styles>
@@ -46,8 +45,8 @@
                                 Margin="-150 -100 0 0">
                             <Border.Background>
                                 <RadialGradientBrush Center="50%, 50%">
-                                    <GradientStop Offset="0.2" Color="#ff0c0e1f"/>
-                                    <GradientStop Offset="1" Color="#ff0d1111"/>
+                                    <GradientStop Offset="0.2" Color="#ff0c0e1f" />
+                                    <GradientStop Offset="1" Color="#ff0d1111" />
                                 </RadialGradientBrush>
                             </Border.Background>
                         </Border>
@@ -56,151 +55,154 @@
                                 Margin="0 0 100 -50">
                             <Border.Background>
                                 <RadialGradientBrush Center="50%, 50%">
-                                    <GradientStop Offset="0.2" Color="#ff0c0e1f"/>
-                                    <GradientStop Offset="1" Color="#ff0d1111"/>
+                                    <GradientStop Offset="0.2" Color="#ff0c0e1f" />
+                                    <GradientStop Offset="1" Color="#ff0d1111" />
                                 </RadialGradientBrush>
                             </Border.Background>
                         </Border>
                     </Panel>
-                    <Image Source="/Assets/Banners/secrandom-banner.png" Stretch="Uniform" 
+                    <Image Source="/Assets/Banners/secrandom-banner.png" Stretch="Uniform"
                            HorizontalAlignment="Center"
                            MaxWidth="{StaticResource PageContainerWidth}"
                            VerticalAlignment="Top">
                     </Image>
                 </Panel>
-                
+
                 <Border Margin="12 16 18 0"
                         MaxWidth="{StaticResource PageContainerWidth}">
                     <TextBlock FontWeight="Normal"
                                Text="{x:Static lc:Resources.Settings_About}"
                                VerticalAlignment="Bottom"
                                Theme="{StaticResource TitleTextBlockStyle}"
-                               Margin="0 8"/>
+                               Margin="0 8" />
                 </Border>
             </Grid>
-        </controls:StickyScrollViewer.HeaderContent>
-        
+        </sr:StickyScrollViewer.HeaderContent>
+
         <StackPanel Classes="page-container animated-intro">
             <fa:SettingsExpander x:Name="S_App" Header="SecRandom" IsExpanded="True"
                                  Description="{x:Static lc:Resources.App_Description}">
                 <fa:SettingsExpander.Footer>
-                    <TextBlock Text="{x:Static core:GlobalConstants.DisplayVersion}"
+                    <TextBlock Text="{x:Static sr:GlobalConstants.DisplayVersion}"
                                FontSize="12"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </fa:SettingsExpander.Footer>
-                
+
                 <fa:SettingsExpander.IconSource>
-                    <fa:ImageIconSource Source="/Assets/AppLogo.png"/>
+                    <fa:ImageIconSource Source="/Assets/AppLogo.png" />
                 </fa:SettingsExpander.IconSource>
-                
+
                 <fa:SettingsExpanderItem x:Name="S_App_License" Description="{x:Static lc:Resources.App_License}">
-                    <TextBlock Background="Transparent" >
-                        <Run Text="Copyright (c) 2025-"/>
+                    <TextBlock Background="Transparent">
+                        <Run Text="Copyright (c) 2025-" />
                         <Run Text="{Binding Year, Source={x:Static system:DateTime.Now}, Mode=OneWay}" />
                         SECTL
                     </TextBlock>
                 </fa:SettingsExpanderItem>
-                
-                <fa:SettingsExpanderItem x:Name="S_App_UsefulLinks" Content="{x:Static lsa:Resources.S_App_UsefulLinks}">
+
+                <fa:SettingsExpanderItem x:Name="S_App_UsefulLinks"
+                                         Content="{x:Static lsa:Resources.S_App_UsefulLinks}">
                     <fa:SettingsExpanderItem.Footer>
                         <WrapPanel>
                             <WrapPanel.Styles>
                                 <Style Selector="HyperlinkButton">
-                                    <Setter Property="Padding" Value="4"/>
-                                    <Setter Property="Margin" Value="2"/>
+                                    <Setter Property="Padding" Value="4" />
+                                    <Setter Property="Margin" Value="2" />
                                 </Style>
                             </WrapPanel.Styles>
-                            
+
                             <HyperlinkButton Click="UriNavigationCommands_OnClick"
                                              CommandParameter="https://secrandom.sectl.top">
-                                <TextBlock Text="{x:Static lsa:Resources.C_ProjectHome}"/>
+                                <TextBlock Text="{x:Static lsa:Resources.C_ProjectHome}" />
                             </HyperlinkButton>
-                            
+
                             <HyperlinkButton Click="UriNavigationCommands_OnClick"
                                              CommandParameter="https://github.com/SECTL/SecRandom">
-                                <TextBlock Text="GitHub"/>
+                                <TextBlock Text="GitHub" />
                             </HyperlinkButton>
                         </WrapPanel>
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
             </fa:SettingsExpander>
-            
+
             <fa:SettingsExpander x:Name="S_Author"
                                  Header="{x:Static lsa:Resources.S_Author_R}"
                                  Description="{x:Static lsa:Resources.S_Author_D}" IsExpanded="True">
                 <fa:SettingsExpander.IconSource>
-                    <fa:ImageIconSource Source="/Assets/AuthorAionflux.png"/>
+                    <fa:ImageIconSource Source="/Assets/AuthorAionflux.png" />
                 </fa:SettingsExpander.IconSource>
-                
+
                 <fa:SettingsExpanderItem x:Name="S_Author_Bilibili"
                                          Content="{x:Static lsa:Resources.S_Author_Bilibili}"
                                          Description="{x:Static lsa:Resources.S_Author_BiliBili_D}"
-                                         IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xEC2E;}"
-                                         Click="UriNavigationCommands_OnClick" CommandParameter="https://space.bilibili.com/520571577" />
-                
+                                         IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}"
+                                         Click="UriNavigationCommands_OnClick"
+                                         CommandParameter="https://space.bilibili.com/520571577" />
+
                 <fa:SettingsExpanderItem x:Name="S_Author_Donate"
                                          Content="{x:Static lsa:Resources.S_Author_Donate}"
                                          Description="{x:Static lsa:Resources.S_Author_Donate_D}"
-                                         IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xEC2E;}"
-                                         Click="UriNavigationCommands_OnClick" CommandParameter="https://afdian.com/a/lzy0983" />
-                
+                                         IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}"
+                                         Click="UriNavigationCommands_OnClick"
+                                         CommandParameter="https://afdian.com/a/lzy0983" />
+
                 <fa:SettingsExpanderItem x:Name="S_Author_Org"
                                          Content="{x:Static lsa:Resources.S_Author_Org}"
                                          Description="{x:Static lsa:Resources.S_Author_Org_D}">
                     <fa:SettingsExpanderItem.IconSource>
-                        <fa:ImageIconSource Source="/Assets/SECTLLogo.png"/>
+                        <fa:ImageIconSource Source="/Assets/SECTLLogo.png" />
                     </fa:SettingsExpanderItem.IconSource>
-                    
+
                     <fa:SettingsExpanderItem.Footer>
                         <WrapPanel>
                             <WrapPanel.Styles>
                                 <Style Selector="HyperlinkButton">
-                                    <Setter Property="Padding" Value="4"/>
-                                    <Setter Property="Margin" Value="2"/>
+                                    <Setter Property="Padding" Value="4" />
+                                    <Setter Property="Margin" Value="2" />
                                 </Style>
                             </WrapPanel.Styles>
-                            
+
                             <HyperlinkButton Click="UriNavigationCommands_OnClick"
                                              CommandParameter="https://sectl.top">
-                                <TextBlock Text="{x:Static lsa:Resources.C_OrgHome}"/>
+                                <TextBlock Text="{x:Static lsa:Resources.C_OrgHome}" />
                             </HyperlinkButton>
                         </WrapPanel>
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
             </fa:SettingsExpander>
-            
+
             <fa:SettingsExpander x:Name="S_Ack"
                                  Header="{x:Static lsa:Resources.S_Ack}"
-                                 IconSource="{controls:FluentIconSource &#xE971;}" IsExpanded="True">
+                                 IconSource="{sr:FluentIconSource &#xE971;}" IsExpanded="True">
                 <fa:SettingsExpanderItem x:Name="S_Ack_OnlineUsers"
                                          Content="{x:Static lsa:Resources.S_Ack_OnlineUsers}"
                                          Description="{x:Static lsa:Resources.S_Ack_OnlineUsers_D}"
-                                         IconSource="{controls:FluentIconSource &#xECAB;}">
+                                         IconSource="{sr:FluentIconSource &#xECAB;}">
                     <fa:SettingsExpanderItem.Footer>
                         <TextBlock VerticalAlignment="Center" Text="{x:Static lc:Resources.C_ToBeWritten}" />
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
-                
+
                 <fa:SettingsExpanderItem Content="{x:Static lsa:Resources.S_Ack_Contributors}"
                                          Footer="{x:Static lc:Resources.C_ToBeWritten}"
-                                         IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xEC2E;}" />
+                                         IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}" />
             </fa:SettingsExpander>
-            
+
             <Expander x:Name="S_UserInformation" IsExpanded="True">
                 <Expander.Header>
                     <Grid ColumnDefinitions="* Auto" Margin="0 0 -12 0">
                         <TextBlock Grid.Column="0" VerticalAlignment="Center"
                                    Text="{x:Static lsa:Resources.S_UserInformation}" />
-                            
+
                         <Button Grid.Column="1" Theme="{StaticResource TransparentButton}"
                                 ToolTip.Tip="{x:Static lsa:Resources.C_CopyUserInformation}">
-                            <controls:FluentIcon Glyph="&#xE58B;" />
+                            <sr:FluentIcon Glyph="&#xE58B;" />
                         </Button>
                     </Grid>
                 </Expander.Header>
-                
+
                 <TextBlock>111</TextBlock>
             </Expander>
         </StackPanel>
-    </controls:StickyScrollViewer>
+    </sr:StickyScrollViewer>
 </UserControl>

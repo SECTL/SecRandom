@@ -1,7 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:langs="clr-namespace:SecRandom.Langs.Common"
-             xmlns:core="clr-namespace:SecRandom.Core;assembly=SecRandom.Core"
              x:Class="SecRandom.App"
              RequestedThemeVariant="Default">
     <TrayIcon.Icons>
@@ -12,50 +12,50 @@
                         <NativeMenuItem Header="SecRandom" Click="MenuItemAbout_OnClick">
                             <NativeMenuItem.Icon>
                                 <OnPlatform Default="Assets/AppLogo.png">
-                                    <On Content="{x:Null}" Options="macOS"/>
+                                    <On Content="{x:Null}" Options="macOS" />
                                 </OnPlatform>
                             </NativeMenuItem.Icon>
                         </NativeMenuItem>
-                        
+
                         <NativeMenuItemSeparator />
-                        
+
                         <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenMainWindow}"
-                                        Click="MenuItemOpenMainWindow_OnClick"/>
-                        
+                                        Click="MenuItemOpenMainWindow_OnClick" />
+
                         <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenProfileSettings}"
-                                        IsVisible="{x:Static core:GlobalConstants.IsDevelopment}"
-                                        Click="MenuItemOpenProfileSettings_OnClick"/>
-                        
+                                        IsVisible="{x:Static sr:GlobalConstants.IsDevelopment}"
+                                        Click="MenuItemOpenProfileSettings_OnClick" />
+
                         <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenSettings}"
-                                        Click="MenuItemOpenSettings_OnClick"/>
-                        
+                                        Click="MenuItemOpenSettings_OnClick" />
+
                         <NativeMenuItemSeparator />
-                        
+
                         <NativeMenuItem Header="{x:Static langs:Resources.Menu_RestartProgram}"
-                                        Click="MenuItemRestartProgram_OnClick"/>
-                        
+                                        Click="MenuItemRestartProgram_OnClick" />
+
                         <NativeMenuItem Header="{x:Static langs:Resources.Menu_ExitProgram}"
-                                        Click="MenuItemExitProgram_OnClick"/>
+                                        Click="MenuItemExitProgram_OnClick" />
                     </NativeMenu>
                 </TrayIcon.Menu>
             </TrayIcon>
         </TrayIcons>
     </TrayIcon.Icons>
-    
+
     <Application.Styles>
-        <StyleInclude Source="/Styles.axaml"/>
-        
+        <StyleInclude Source="/Styles.axaml" />
+
         <Style Selector=":is(Window)">
-            <Setter Property="Icon" Value="/Assets/AppLogo.png"/>
+            <Setter Property="Icon" Value="/Assets/AppLogo.png" />
         </Style>
     </Application.Styles>
-    
+
     <Application.Resources>
         <FontFamily x:Key="FluentSystemIconsResizeable">avares://SecRandom/Assets/Fonts/#FluentSystemIcons-Resizable</FontFamily>
         <FontFamily x:Key="AppFontFamily">avares://SecRandom/Assets/Fonts/MiSans/#MiSans</FontFamily>
         <FontFamily x:Key="ContentControlThemeFontFamily">avares://SecRandom/Assets/Fonts/MiSans/#MiSans</FontFamily>
         <FontWeight x:Key="AppFontWeight">Normal</FontWeight>
-        
+
         <NativeMenu x:Key="AppMenu" />
     </Application.Resources>
 </Application>

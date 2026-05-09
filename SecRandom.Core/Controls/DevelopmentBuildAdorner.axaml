@@ -1,9 +1,8 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:core="clr-namespace:SecRandom.Core"
-                    xmlns:controls="clr-namespace:SecRandom.Core.Controls">
+                    xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core">
     <ControlTemplate x:Key="DevelopmentBuildAdornerControlTemplate"
-                     TargetType="controls:DevelopmentBuildAdorner">
+                     TargetType="sr:DevelopmentBuildAdorner">
         <Grid VerticalAlignment="Stretch"
               IsHitTestVisible="False"
               HorizontalAlignment="Stretch">
@@ -11,15 +10,15 @@
                        HorizontalAlignment="Left"
                        FontSize="12"
                        Opacity="0.8">
-                开发中画面，不代表最终品质。<LineBreak/>
+                开发中画面，不代表最终品质。<LineBreak />
                 SecRandom
-                <Run Text="{x:Static core:GlobalConstants.VersionLong}"/>
+                <Run Text="{x:Static sr:GlobalConstants.VersionLong}" />
             </TextBlock>
         </Grid>
     </ControlTemplate>
-    
-    <ControlTheme TargetType="controls:DevelopmentBuildAdorner"
-                  x:Key="{x:Type controls:DevelopmentBuildAdorner}">
-        <Setter Property="Template" Value="{StaticResource DevelopmentBuildAdornerControlTemplate}"/>
+
+    <ControlTheme TargetType="sr:DevelopmentBuildAdorner"
+                  x:Key="{x:Type sr:DevelopmentBuildAdorner}">
+        <Setter Property="Template" Value="{StaticResource DevelopmentBuildAdornerControlTemplate}" />
     </ControlTheme>
 </ResourceDictionary>

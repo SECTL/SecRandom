@@ -2,10 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:fa="using:FluentAvalonia.UI.Controls"
              xmlns:ls="clr-namespace:SecRandom.Langs.SettingsView"
              xmlns:views="using:SecRandom.Views"
-             xmlns:controls="clr-namespace:SecRandom.Core.Controls;assembly=SecRandom.Core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsView"
              x:DataType="views:SettingsView"
@@ -22,8 +22,8 @@
                             Margin="-7 -8 -8 -8"
                             Click="TogglePaneButton_OnClick"
                             IsVisible="{Binding !#NavigationView.IsPaneToggleButtonVisible}"
-                            MinWidth="40" Width="48"/>
-                    
+                            MinWidth="40" Width="48" />
+
                     <Button Name="BackButton"
                             HorizontalAlignment="Center" VerticalAlignment="Center"
                             Margin="-7 -8 -15 -8"
@@ -33,19 +33,19 @@
                             Classes="nav-back"
                             IsHitTestVisible="True">
                     </Button>
-                    
+
                     <Image Source="/Assets/AppLogo.png"
                            Width="18" Height="18"
                            VerticalAlignment="Center"
                            Margin="8 0 0 0"
-                           IsHitTestVisible="False"/>
+                           IsHitTestVisible="False" />
 
                     <TextBlock Text="SecRandom"
                                FontSize="12"
                                VerticalAlignment="Center"
-                               IsHitTestVisible="False"/>
+                               IsHitTestVisible="False" />
                 </StackPanel>
-                
+
                 <AutoCompleteBox Grid.Column="2"
                                  VerticalAlignment="Center" MaxWidth="420"
                                  FilterMode="Custom"
@@ -56,25 +56,25 @@
                                  SelectedItem="{Binding ViewModel.SelectedSettings}"
                                  KeyUp="SearchBox_OnKeyUp">
                     <AutoCompleteBox.InnerRightContent>
-                        <controls:FluentIcon Glyph="&#xEEF3;" Margin="6"
-                                             Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <sr:FluentIcon Glyph="&#xEEF3;" Margin="6"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     </AutoCompleteBox.InnerRightContent>
                 </AutoCompleteBox>
-                
+
                 <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
                     <Button Classes="accent"
                             Margin="0 -8" VerticalAlignment="Center"
                             IsVisible="{Binding ViewModel.IsRequestedRestart}"
                             ToolTip.Tip="{x:Static ls:Resources.M_NeedsRestarting_Tooltip}"
                             Click="ButtonRestartApp_OnClick">
-                        <controls:IconText Glyph="&#xE0BD;" Text="{x:Static ls:Resources.M_NeedsRestarting}"/>
+                        <sr:IconText Glyph="&#xE0BD;" Text="{x:Static ls:Resources.M_NeedsRestarting}" />
                     </Button>
-                
+
                     <Border Width="140" IsVisible="{Binding ViewModel.IsWindows}" />
                 </StackPanel>
             </Grid>
         </Border>
-        
+
         <fa:NavigationView Grid.Row="1"
                            x:Name="NavigationView"
                            PaneDisplayMode="Auto"
@@ -85,34 +85,34 @@
                            ItemInvoked="NavigationView_OnItemInvoked">
             <fa:NavigationView.Styles>
                 <Style Selector="fa|NavigationView#NavigationView:minimal">
-                    <Setter Property="IsPaneToggleButtonVisible" Value="False"/>
+                    <Setter Property="IsPaneToggleButtonVisible" Value="False" />
                 </Style>
             </fa:NavigationView.Styles>
-            
-            <controls:DrawerHost IsDrawerOpen="{Binding ViewModel.IsDrawerOpen, Mode=TwoWay}"
-                                 DrawerPlacement="Right"
-                                 DrawerContent="{Binding ViewModel.DrawerContent}">
+
+            <sr:DrawerHost IsDrawerOpen="{Binding ViewModel.IsDrawerOpen, Mode=TwoWay}"
+                           DrawerPlacement="Right"
+                           DrawerContent="{Binding ViewModel.DrawerContent}">
                 <Grid RowDefinitions="Auto, *">
-                    <Grid Grid.Row="0" Margin="12 16 18 0" 
+                    <Grid Grid.Row="0" Margin="12 16 18 0"
                           IsVisible="{Binding !ViewModel.SelectedPageInfo.HidePageTitle}"
                           Classes.FullWidth="{Binding ViewModel.SelectedPageInfo.UseFullWidth}"
                           x:Name="TitleContainer">
                         <Grid.Styles>
                             <Style Selector="Grid#TitleContainer:not(.FullWidth)">
-                                <Setter Property="MaxWidth" Value="{StaticResource PageContainerWidth}"/>
+                                <Setter Property="MaxWidth" Value="{StaticResource PageContainerWidth}" />
                             </Style>
                         </Grid.Styles>
-                    
+
                         <TextBlock FontWeight="Normal"
                                    Text="{Binding ViewModel.SelectedPageInfo.Name}"
-                                   Theme="{StaticResource TitleTextBlockStyle}"/>
+                                   Theme="{StaticResource TitleTextBlockStyle}" />
                     </Grid>
-                
+
                     <fa:Frame Grid.Row="1" x:Name="NavigationFrame"
                               IsNavigationStackEnabled="False" CacheSize="0"
-                              Content="{Binding ViewModel.FrameContent}"/>
+                              Content="{Binding ViewModel.FrameContent}" />
                 </Grid>
-            </controls:DrawerHost>
+            </sr:DrawerHost>
         </fa:NavigationView>
     </Grid>
 </UserControl>

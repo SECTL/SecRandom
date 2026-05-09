@@ -1,6 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:core="clr-namespace:SecRandom.Core">
+        xmlns:sr="clr-namespace:SecRandom.Core">
     <Design.PreviewWith>
         <Border Padding="20">
             <!-- Add Controls for Previewer Here -->
@@ -8,7 +8,7 @@
     </Design.PreviewWith>
 
     <Style Selector="Button.nav-back">
-        <Setter Property="Theme" Value="{StaticResource PaneToggleButtonStyle}"/>
+        <Setter Property="Theme" Value="{StaticResource PaneToggleButtonStyle}" />
         <Setter Property="Template">
             <ControlTemplate>
                 <Border Name="LayoutRoot"
@@ -32,7 +32,7 @@
                                 <TextBlock Name="Icon"
                                            Text="&#xe109;"
                                            Margin="0 0 0 0"
-                                           FontFamily="{x:Static core:GlobalConstants.FluentIconsFontFamily}"
+                                           FontFamily="{x:Static sr:GlobalConstants.FluentIconsFontFamily}"
                                            FontSize="{TemplateBinding FontSize}"
                                            RenderTransformOrigin="100%, 50%"
                                            RenderTransform="none">

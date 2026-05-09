@@ -3,7 +3,7 @@
 <Styles
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:behaviors="using:SecRandom.Core.Behaviors"
+    xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
     x:CompileBindings="True">
 
     <Design.PreviewWith>
@@ -26,10 +26,10 @@
             </StackPanel>
         </Border>
     </Design.PreviewWith>
-    
+
     <Styles.Resources>
         <!--  Add Resources Here  -->
-        
+
         <ControlTheme x:Key="TabItemStyle" TargetType="TabStripItem">
             <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -193,38 +193,38 @@
                         x:Name="Border">
                         <Border.Transitions>
                             <Transitions>
-                                <BrushTransition Property="Background" Duration="0:0:0.1" Easing="0,0 0,1"/>
-                                <BrushTransition Property="BorderBrush" Duration="0:0:0.1" Easing="0,0 0,1"/>
-                                <BrushTransition Property="TextElement.Foreground" Duration="0:0:0.1" Easing="0,0 0,1"/>
+                                <BrushTransition Property="Background" Duration="0:0:0.1" Easing="0,0 0,1" />
+                                <BrushTransition Property="BorderBrush" Duration="0:0:0.1" Easing="0,0 0,1" />
+                                <BrushTransition Property="TextElement.Foreground" Duration="0:0:0.1" Easing="0,0 0,1" />
                             </Transitions>
                         </Border.Transitions>
                         <ItemsPresenter
-                             Margin="{TemplateBinding Padding}"
-                             VerticalAlignment="Stretch"
-                             ItemsPanel="{TemplateBinding ItemsPanel}" />
+                            Margin="{TemplateBinding Padding}"
+                            VerticalAlignment="Stretch"
+                            ItemsPanel="{TemplateBinding ItemsPanel}" />
                     </Border>
                 </ControlTemplate>
             </Setter>
-            
+
             <Style Selector="^.toggle">
                 <Setter Property="Interaction.Behaviors">
                     <BehaviorCollectionTemplate>
                         <BehaviorCollection>
-                            <behaviors:ToggleTabStripBehavior/>
+                            <sr:ToggleTabStripBehavior />
                         </BehaviorCollection>
                     </BehaviorCollectionTemplate>
                 </Setter>
-                
+
                 <Style Selector="^ /template/ Border#Border">
                     <Style Selector="^ :is(Control)">
-                        <Setter Property="IsHitTestVisible" Value="False"/>
+                        <Setter Property="IsHitTestVisible" Value="False" />
                     </Style>
                 </Style>
                 <Style Selector="^:pointerover">
-                    <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorSecondaryBrush}"/>
+                    <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorSecondaryBrush}" />
                 </Style>
                 <Style Selector="^:pointerdown">
-                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Background" Value="Transparent" />
                 </Style>
             </Style>
         </ControlTheme>

@@ -2,11 +2,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
              xmlns:lc="clr-namespace:SecRandom.Langs.Common"
              xmlns:lsb="clr-namespace:SecRandom.Langs.SettingsPages.Backup"
-             xmlns:controls="clr-namespace:SecRandom.Core.Controls;assembly=SecRandom.Core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.BackupSettingsPage"
              x:DataType="local:BackupSettingsPage"
@@ -16,12 +16,12 @@
             <fa:SettingsExpander x:Name="S_AutoBackup"
                                  Header="{x:Static lsb:Resources.S_AutoBackup}"
                                  Description="{x:Static lsb:Resources.S_AutoBackup_D}"
-                                 IconSource="{controls:FluentIconSource &#xE083;}"
+                                 IconSource="{sr:FluentIconSource &#xE083;}"
                                  IsExpanded="True">
                 <fa:SettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.AutoBackupEnabled}" />
                 </fa:SettingsExpander.Footer>
-                
+
                 <fa:SettingsExpanderItem x:Name="S_AutoBackup_IntervalDays"
                                          Content="{x:Static lsb:Resources.S_AutoBackup_IntervalDays}"
                                          Description="{x:Static lsb:Resources.S_AutoBackup_IntervalDays_D}">
@@ -30,7 +30,7 @@
                                        Increment="1" FormatString="0" MinWidth="150" />
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
-            
+
                 <fa:SettingsExpanderItem x:Name="S_AutoBackup_MaxCount"
                                          Content="{x:Static lsb:Resources.S_AutoBackup_MaxCount}"
                                          Description="{x:Static lsb:Resources.S_AutoBackup_MaxCount_D}">
@@ -39,13 +39,13 @@
                                        Increment="1" FormatString="0" MinWidth="150" />
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
-                
+
                 <fa:SettingsExpanderItem x:Name="S_AutoBackup_ViewFolder"
                                          Content="{x:Static lsb:Resources.S_AutoBackup_ViewFolder}"
                                          Description="{x:Static lsb:Resources.S_AutoBackup_ViewFolder_D}"
-                                         IconSource="{controls:FluentIconSource &#xE88D;}"
-                                         IsClickEnabled="True" ActionIconSource="{controls:FluentIconSource &#xEC2E;}"/>
-                
+                                         IconSource="{sr:FluentIconSource &#xE88D;}"
+                                         IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}" />
+
                 <fa:SettingsExpanderItem x:Name="S_AutoBackup_Usage"
                                          Content="{x:Static lsb:Resources.S_AutoBackup_Usage_R}"
                                          Description="{x:Static lsb:Resources.S_AutoBackup_Usage_D}">
@@ -54,17 +54,17 @@
                                    VerticalAlignment="Center" />
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
-                
+
                 <fa:SettingsExpanderItem x:Name="S_AutoBackup_ManualBackup"
                                          Content="{x:Static lsb:Resources.S_AutoBackup_ManualBackup}"
                                          Description="{x:Static lsb:Resources.S_AutoBackup_ManualBackup_D}"
-                                         IsClickEnabled="True"/>
+                                         IsClickEnabled="True" />
             </fa:SettingsExpander>
-            
+
             <fa:SettingsExpander x:Name="S_Includes"
                                  Header="{x:Static lsb:Resources.S_Includes}"
                                  Description="{x:Static lsb:Resources.S_Includes_D}"
-                                 IconSource="{controls:FluentIconSource &#xE601;}">
+                                 IconSource="{sr:FluentIconSource &#xE601;}">
                 <fa:SettingsExpanderItem x:Name="S_Includes_Config"
                                          Content="{x:Static lsb:Resources.S_Includes_Config}"
                                          Description="{x:Static lsb:Resources.S_Includes_Config_D}">
@@ -72,7 +72,7 @@
                         <ToggleSwitch IsChecked="{Binding Settings.IncludeConfig}"></ToggleSwitch>
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
-                
+
                 <fa:SettingsExpanderItem x:Name="S_Includes_List"
                                          Content="{x:Static lsb:Resources.S_Includes_List}"
                                          Description="{x:Static lsb:Resources.S_Includes_List_D}">
@@ -120,7 +120,7 @@
                         <ToggleSwitch IsChecked="{Binding Settings.IncludeThemes}"></ToggleSwitch>
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
-                
+
                 <fa:SettingsExpanderItem x:Name="S_Includes_Logs"
                                          Content="{x:Static lsb:Resources.S_Includes_Logs}"
                                          Description="{x:Static lsb:Resources.S_Includes_Logs_D}">
@@ -129,14 +129,14 @@
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
             </fa:SettingsExpander>
-            
+
             <Separator Margin="0 12 0 4" />
-            <controls:IconText x:Name="S_RestoreBackup"
-                               Text="{x:Static lsb:Resources.S_RestoreBackup}"
-                               Glyph="&#xE0BD;" Margin="0 0 0 4" />
-            
+            <sr:IconText x:Name="S_RestoreBackup"
+                         Text="{x:Static lsb:Resources.S_RestoreBackup}"
+                         Glyph="&#xE0BD;" Margin="0 0 0 4" />
+
             <Button Content="{x:Static lsb:Resources.C_RefreshBackups}" />
-            
+
             <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                     BorderThickness="1 1 1 0"
                     CornerRadius="4 4 0 0" ClipToBounds="True">
@@ -150,28 +150,30 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Width="3*"
                                             Header="{x:Static lsb:Resources.C_Backups_FileName}"
-                                            Binding="{Binding FileName}"/>
-                        
+                                            Binding="{Binding FileName}" />
+
                         <DataGridTextColumn Width="*"
                                             Header="{x:Static lsb:Resources.C_Backups_DateTime}"
-                                            Binding="{Binding DateTime}"/>
-                        
+                                            Binding="{Binding DateTime}" />
+
                         <DataGridTextColumn Width="*"
                                             Header="{x:Static lsb:Resources.C_Backups_Size}"
-                                            Binding="{Binding Size}"/>
-                        
+                                            Binding="{Binding Size}" />
+
                         <DataGridTemplateColumn Header="{x:Static lsb:Resources.C_Backups_Operations}">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
                                         <Button Theme="{StaticResource TransparentButton}">
-                                            <controls:IconText
-                                                Glyph="&#xE0BD;" Text="{x:Static lsb:Resources.C_Backups_Operations_Restore}" />
+                                            <sr:IconText
+                                                Glyph="&#xE0BD;"
+                                                Text="{x:Static lsb:Resources.C_Backups_Operations_Restore}" />
                                         </Button>
-                                        
+
                                         <Button Theme="{StaticResource TransparentButton}" Foreground="Red">
-                                            <controls:IconText
-                                                Glyph="&#xE61D;" Text="{x:Static lsb:Resources.C_Backups_Operations_Delete}" />
+                                            <sr:IconText
+                                                Glyph="&#xE61D;"
+                                                Text="{x:Static lsb:Resources.C_Backups_Operations_Delete}" />
                                         </Button>
                                     </StackPanel>
                                 </DataTemplate>

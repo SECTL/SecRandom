@@ -2,9 +2,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:fa="using:FluentAvalonia.UI.Controls"
              xmlns:views="clr-namespace:SecRandom.Views"
-             xmlns:controls="clr-namespace:SecRandom.Core.Controls;assembly=SecRandom.Core"
              xmlns:lc="clr-namespace:SecRandom.Langs.Common"
              xmlns:lcc="clr-namespace:SecRandom.Core.Langs.Common;assembly=SecRandom.Core"
              xmlns:lp="clr-namespace:SecRandom.Langs.ProfileSettings"
@@ -23,15 +23,15 @@
                        Width="18" Height="18"
                        Margin="6 0 0 0"
                        VerticalAlignment="Center"
-                       IsHitTestVisible="False"/>
+                       IsHitTestVisible="False" />
 
                 <TextBlock Text="SecRandom"
                            FontSize="12"
                            VerticalAlignment="Center"
-                           IsHitTestVisible="False"/>
+                           IsHitTestVisible="False" />
             </StackPanel>
         </Border>
-        
+
         <fa:NavigationView Grid.Row="1"
                            x:Name="NavigationView"
                            PaneDisplayMode="Top"
@@ -41,35 +41,35 @@
                            SelectedItem="{Binding ViewModel.SelectedPageItem}">
             <fa:NavigationView.MenuItems>
                 <fa:NavigationViewItem Content="{x:Static lp:Resources.Page_Students}"
-                                       IconSource="{controls:FluentIconSource &#xECAB;}" />
-                
+                                       IconSource="{sr:FluentIconSource &#xECAB;}" />
+
                 <fa:NavigationViewItem Content="{x:Static lp:Resources.Page_Prizes}"
-                                       IconSource="{controls:FluentIconSource &#xE27E;}" />
-                
+                                       IconSource="{sr:FluentIconSource &#xE27E;}" />
+
                 <fa:NavigationViewItem Content="{x:Static lp:Resources.Page_History}"
-                                       IconSource="{controls:FluentIconSource &#xE5ED;}" />
+                                       IconSource="{sr:FluentIconSource &#xE5ED;}" />
             </fa:NavigationView.MenuItems>
-            
+
             <fa:NavigationView.PaneFooter>
                 <fa:CommandBar HorizontalAlignment="Right" DefaultLabelPosition="Right">
                     <fa:CommandBar.PrimaryCommands>
-                        <fa:CommandBarButton IconSource="{controls:FluentIconSource &#xEEB5;}"
+                        <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xEEB5;}"
                                              Label="{x:Static lp:Resources.Command_Save}"
                                              ToolTip.Tip="{x:Static lp:Resources.Command_Save_D}"
-                                             Click="SaveProfileButton_OnClick"/>
-                
-                        <fa:CommandBarButton IconSource="{controls:FluentIconSource &#xEE2F;}"
+                                             Click="SaveProfileButton_OnClick" />
+
+                        <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xEE2F;}"
                                              Label="{x:Static lp:Resources.Command_Help}"
-                                             ToolTip.Tip="{x:Static lp:Resources.Command_Help_D}"/>
+                                             ToolTip.Tip="{x:Static lp:Resources.Command_Help_D}" />
                     </fa:CommandBar.PrimaryCommands>
                 </fa:CommandBar>
             </fa:NavigationView.PaneFooter>
         </fa:NavigationView>
-        
+
         <Border Grid.Row="2" Background="{DynamicResource LayerOnMicaBaseAltFillColorDefaultBrush}">
-            <controls:DrawerHost IsDrawerOpen="{Binding ViewModel.IsDrawerOpen, Mode=TwoWay}"
-                                 DrawerPlacement="Right"
-                                 DrawerContent="{Binding ViewModel.DrawerContent}">
+            <sr:DrawerHost IsDrawerOpen="{Binding ViewModel.IsDrawerOpen, Mode=TwoWay}"
+                           DrawerPlacement="Right"
+                           DrawerContent="{Binding ViewModel.DrawerContent}">
                 <Carousel SelectedIndex="{Binding ViewModel.SelectedPageIndex}"
                           Classes="animated">
                     <!-- Students -->
@@ -79,17 +79,17 @@
                             <ColumnDefinition Width="5" />
                             <ColumnDefinition Width="5*" />
                         </Grid.ColumnDefinitions>
-                        
+
                         <Grid Grid.Column="0" RowDefinitions="Auto, *">
                             <fa:CommandBar Grid.Row="0" DefaultLabelPosition="Right">
                                 <fa:CommandBar.PrimaryCommands>
-                                    <fa:CommandBarButton IconSource="{controls:FluentIconSource &#xe00d;}"
+                                    <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xe00d;}"
                                                          Label="{x:Static lps:Resources.Command_CreateList}"
                                                          ToolTip.Tip="{x:Static lps:Resources.Command_CreateList_D}" />
-                                    
+
                                     <fa:CommandBarSeparator />
-                                    
-                                    <fa:CommandBarButton IconSource="{controls:FluentIconSource &#xe58d;}"
+
+                                    <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xe58d;}"
                                                          Label="{x:Static lps:Resources.Command_DuplicateList}"
                                                          ToolTip.Tip="{x:Static lps:Resources.Command_DuplicateList_D}" />
                                 </fa:CommandBar.PrimaryCommands>
@@ -100,40 +100,40 @@
                                      SelectedValue="{Binding ViewModel.SelectedStudentListName}"
                                      SelectionChanged="StudentListBox_OnSelectionChanged" />
                         </Grid>
-                        
+
                         <GridSplitter Grid.Column="1" Margin="2 0" />
-                        
-                        <controls:Emptiable Grid.Column="2"
-                                            Data="{Binding ViewModel.SelectedStudentList}"
-                                            IsDirectContentMode="True">
+
+                        <sr:Emptiable Grid.Column="2"
+                                      Data="{Binding ViewModel.SelectedStudentList}"
+                                      IsDirectContentMode="True">
                             <Grid RowDefinitions="Auto *">
                                 <fa:CommandBar Grid.Row="0" DefaultLabelPosition="Right" Classes="hide-popup-indicator">
                                     <fa:CommandBar.PrimaryCommands>
-                                        <fa:CommandBarButton IconSource="{controls:FluentIconSource &#xE00D;}"
+                                        <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xE00D;}"
                                                              Label="add"
                                                              Click="CreateStudentButton_OnClick" />
 
-                                        <fa:CommandBarButton IconSource="{controls:FluentIconSource &#xE61D;}"
+                                        <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xE61D;}"
                                                              Label="delete"
                                                              IsEnabled="{Binding ViewModel.SelectedStudent, Converter={x:Static ObjectConverters.IsNotNull}}" />
-                                        
-                                        <fa:CommandBarButton IconSource="{controls:FluentIconSource &#xEFDD;}"
+
+                                        <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xEFDD;}"
                                                              Label="import" />
-                                        
-                                        <fa:CommandBarSeparator/>
-                                        
-                                        <fa:CommandBarButton IconSource="{controls:FluentIconSource &#xe61d;}"
+
+                                        <fa:CommandBarSeparator />
+
+                                        <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xe61d;}"
                                                              Label="delete list" />
                                     </fa:CommandBar.PrimaryCommands>
                                 </fa:CommandBar>
-                                
+
                                 <Grid Grid.Row="1">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="2*" />
                                         <ColumnDefinition Width="5" />
                                         <ColumnDefinition Width="1*" MinWidth="300" MaxWidth="500" />
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <DataGrid Grid.Column="0"
                                               AutoGenerateColumns="False"
                                               CanUserSortColumns="True"
@@ -146,56 +146,57 @@
                                         <DataGrid.Columns>
                                             <DataGridCheckBoxColumn Header="exists"
                                                                     Binding="{Binding Exists}" />
-                                            
+
                                             <DataGridTextColumn Header="id"
                                                                 Binding="{Binding Id}" />
-                                            
+
                                             <DataGridTextColumn Header="name"
                                                                 Binding="{Binding Name}" />
-                                            
+
                                             <DataGridTextColumn Header="group"
                                                                 Binding="{Binding Group}" />
-                                            
+
                                             <DataGridTextColumn Header="gender"
                                                                 Binding="{Binding Gender}" />
                                         </DataGrid.Columns>
                                     </DataGrid>
-                                    
+
                                     <GridSplitter Grid.Column="1" />
-                                    
-                                    <controls:Emptiable Grid.Column="2"
-                                                        Data="{Binding ViewModel.SelectedStudent}"
-                                                        IsDirectContentMode="True">
+
+                                    <sr:Emptiable Grid.Column="2"
+                                                  Data="{Binding ViewModel.SelectedStudent}"
+                                                  IsDirectContentMode="True">
                                         <ScrollViewer>
-                                            <StackPanel Margin="8" Spacing="4" DataContext="{Binding ViewModel.SelectedStudent}">
+                                            <StackPanel Margin="8" Spacing="4"
+                                                        DataContext="{Binding ViewModel.SelectedStudent}">
                                                 <CheckBox IsChecked="{Binding Exists}"
                                                           Content="exists" />
-                                                
-                                                <controls:Field Label="id">
+
+                                                <sr:Field Label="id">
                                                     <TextBox Text="{Binding Id}" />
-                                                </controls:Field>
-                                                
-                                                <controls:Field Label="name">
+                                                </sr:Field>
+
+                                                <sr:Field Label="name">
                                                     <TextBox Text="{Binding Name}" />
-                                                </controls:Field>
-                                                
-                                                <controls:Field Label="group">
+                                                </sr:Field>
+
+                                                <sr:Field Label="group">
                                                     <TextBox Text="{Binding Group}" />
-                                                </controls:Field>
-                                                
-                                                <controls:Field Label="gender">
+                                                </sr:Field>
+
+                                                <sr:Field Label="gender">
                                                     <TextBox Text="{Binding Gender}" />
-                                                </controls:Field>
-                                                
+                                                </sr:Field>
+
                                                 <Separator Margin="0 4" />
-                                                
-                                                <controls:IconText Glyph="&#xEF2B;" Text="attached settings" />
-                                                
+
+                                                <sr:IconText Glyph="&#xEF2B;" Text="attached settings" />
+
                                                 <ItemsControl
                                                     ItemsSource="{x:Static services:AttachedSettingsRegistryService.StudentAttachedSettingsControls}">
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <controls:AttachedSettingsControlPresenter
+                                                            <sr:AttachedSettingsControlPresenter
                                                                 ControlInfo="{Binding}"
                                                                 TargetObject="{Binding $parent[views:ProfileSettingsView].ViewModel.SelectedStudent}" />
                                                         </DataTemplate>
@@ -203,19 +204,19 @@
                                                 </ItemsControl>
                                             </StackPanel>
                                         </ScrollViewer>
-                                    </controls:Emptiable>
+                                    </sr:Emptiable>
                                 </Grid>
                             </Grid>
-                        </controls:Emptiable>
+                        </sr:Emptiable>
                     </Grid>
-                    
+
                     <!-- Prizes -->
                     <TextBlock Margin="8" Text="Coming Soon~" />
-                    
+
                     <!-- History -->
                     <TextBlock Margin="8" Text="Coming Soon~" />
                 </Carousel>
-            </controls:DrawerHost>
+            </sr:DrawerHost>
         </Border>
     </Grid>
 </UserControl>

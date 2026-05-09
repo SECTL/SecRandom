@@ -1,11 +1,11 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls2="using:SecRandom.Core.Controls">
+        xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core">
     <Design.PreviewWith>
-        <controls2:FluentIcon />
+        <sr:FluentIcon />
     </Design.PreviewWith>
 
-    <Style Selector="controls2|FluentIcon">
-        <Setter Property="FontFamily" Value="{DynamicResource FluentSystemIconsResizeable}"/>
+    <Style Selector="sr|FluentIcon">
+        <Setter Property="FontFamily" Value="{DynamicResource FluentSystemIconsResizeable}" />
     </Style>
 </Styles>

@@ -2,15 +2,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:local="clr-namespace:SecRandom.Controls.AttachedSettings"
              xmlns:la="clr-namespace:SecRandom.Langs.AttachedSettings"
-             xmlns:controls="clr-namespace:SecRandom.Core.Controls;assembly=SecRandom.Core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Controls.AttachedSettings.BehindSceneAttachedSettingsControl"
              x:Name="RootControl">
-    <controls:Field Label="{x:Static la:Resources.C_Probability}"
-                    DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=local:BehindSceneAttachedSettingsControl}}">
+    <sr:Field Label="{x:Static la:Resources.C_Probability}"
+              DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=local:BehindSceneAttachedSettingsControl}}">
         <NumericUpDown Value="{Binding Settings.Probability}"
                        Increment="0.5" />
-    </controls:Field>
+    </sr:Field>
 </UserControl>
