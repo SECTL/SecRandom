@@ -5,6 +5,5 @@ namespace SecRandom.Shared.Abstraction;
 
 public abstract class ConfigBase : ObservableObject
 {
-    [JsonIgnore]
-    public abstract string ConfigFilePath { get; }
+    [JsonIgnore] public abstract string ConfigFilePath { get; }
 }

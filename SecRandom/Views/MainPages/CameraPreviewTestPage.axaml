@@ -18,29 +18,31 @@
                 <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
                     <TextBlock Text="摄像头检测测试"
                                FontSize="22"
-                               FontWeight="SemiBold"/>
+                               FontWeight="SemiBold" />
                     <TextBlock x:Name="StatusTextBlock"
                                Text="准备启动摄像头预览"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
 
-                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                            VerticalAlignment="Center">
                     <Button x:Name="StartStopButton"
                             Content="开始预览"
                             MinWidth="104"
-                            Click="StartStopButton_OnClick"/>
+                            Click="StartStopButton_OnClick" />
                     <Button x:Name="ModeButton"
                             Content="切换到抽取（0 人）"
                             MinWidth="150"
-                            Click="ModeButton_OnClick"/>
+                            Click="ModeButton_OnClick" />
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12">
                     <Border CornerRadius="999" Padding="10 5" Background="{DynamicResource SystemFillColorAccentBrush}">
-                        <TextBlock x:Name="ModeTextBlock" Text="预览模式" Foreground="White" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="ModeTextBlock" Text="预览模式" Foreground="White" FontWeight="SemiBold" />
                     </Border>
-                    <TextBlock x:Name="FaceCountTextBlock" Text="检测到 0 人" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="FrameInfoTextBlock" Text="等待帧数据" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock x:Name="FaceCountTextBlock" Text="检测到 0 人" VerticalAlignment="Center" />
+                    <TextBlock x:Name="FrameInfoTextBlock" Text="等待帧数据" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -53,54 +55,54 @@
                 BorderThickness="1">
             <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
                 <StackPanel Grid.Row="0" Grid.Column="0" Spacing="6">
-                    <TextBlock Text="摄像头" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="摄像头" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <ComboBox x:Name="CameraComboBox"
                               MinHeight="36"
                               HorizontalAlignment="Stretch"
-                              SelectionChanged="CameraComboBox_OnSelectionChanged"/>
+                              SelectionChanged="CameraComboBox_OnSelectionChanged" />
                 </StackPanel>
 
                 <StackPanel Grid.Row="0" Grid.Column="1" Spacing="6">
-                    <TextBlock Text="分辨率" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="分辨率" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <ComboBox x:Name="ResolutionComboBox"
                               MinHeight="36"
                               HorizontalAlignment="Stretch"
-                              SelectionChanged="ResolutionComboBox_OnSelectionChanged"/>
+                              SelectionChanged="ResolutionComboBox_OnSelectionChanged" />
                 </StackPanel>
 
                 <StackPanel Grid.Row="0" Grid.Column="2" Spacing="6">
-                    <TextBlock Text="检测模型" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="检测模型" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <ComboBox x:Name="ModelComboBox"
                               MinHeight="36"
                               HorizontalAlignment="Stretch"
-                              SelectionChanged="ModelComboBox_OnSelectionChanged"/>
+                              SelectionChanged="ModelComboBox_OnSelectionChanged" />
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Grid.Column="0" Spacing="6">
-                    <TextBlock Text="模型输入宽度" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="模型输入宽度" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <NumericUpDown x:Name="InputWidthBox"
                                    Minimum="160"
                                    Maximum="1920"
                                    Increment="20"
-                                   ValueChanged="InputSizeBox_OnValueChanged"/>
+                                   ValueChanged="InputSizeBox_OnValueChanged" />
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Grid.Column="1" Spacing="6">
-                    <TextBlock Text="模型输入高度" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="模型输入高度" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <NumericUpDown x:Name="InputHeightBox"
                                    Minimum="120"
                                    Maximum="1080"
                                    Increment="20"
-                                   ValueChanged="InputSizeBox_OnValueChanged"/>
+                                   ValueChanged="InputSizeBox_OnValueChanged" />
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Grid.Column="2" Spacing="6">
-                    <TextBlock Text="抽取时长（秒）" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="抽取时长（秒）" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <NumericUpDown x:Name="PickingSecondsBox"
                                    Minimum="1"
                                    Maximum="30"
                                    Increment="1"
-                                   ValueChanged="PickingSecondsBox_OnValueChanged"/>
+                                   ValueChanged="PickingSecondsBox_OnValueChanged" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -112,13 +114,13 @@
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1">
             <Grid>
-                <pages:CameraPreviewSurface x:Name="PreviewSurface"/>
+                <pages:CameraPreviewSurface x:Name="PreviewSurface" />
                 <TextBlock x:Name="EmptyPreviewTextBlock"
                            Text="未收到摄像头画面"
                            Foreground="#99FFFFFF"
                            FontSize="18"
                            HorizontalAlignment="Center"
-                           VerticalAlignment="Center"/>
+                           VerticalAlignment="Center" />
             </Grid>
         </Border>
     </Grid>

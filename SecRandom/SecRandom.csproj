@@ -27,38 +27,38 @@
         </EmbeddedResource>
 
         <EmbeddedResource Update="Langs\SettingsPages\About\Resources.resx">
-          <Generator>PublicResXFileCodeGenerator</Generator>
-          <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
         <EmbeddedResource Update="Langs\SettingsPages\Basic\Resources.resx">
-          <Generator>PublicResXFileCodeGenerator</Generator>
-          <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
         <EmbeddedResource Update="Langs\AttachedSettings\Resources.resx">
-          <Generator>PublicResXFileCodeGenerator</Generator>
-          <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
         <EmbeddedResource Update="Langs\ProfileSettings\Resources.resx">
-          <Generator>PublicResXFileCodeGenerator</Generator>
-          <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
         <EmbeddedResource Update="Langs\ProfileSettings\Students\Resources.resx">
-          <Generator>PublicResXFileCodeGenerator</Generator>
-          <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
         <EmbeddedResource Update="Langs\SettingsPages\Backup\Resources.resx">
-          <Generator>PublicResXFileCodeGenerator</Generator>
-          <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
         <EmbeddedResource Update="Langs\SettingsView\Resources.resx">
-          <Generator>PublicResXFileCodeGenerator</Generator>
-          <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
     </ItemGroup>
 
@@ -76,52 +76,52 @@
         </Compile>
 
         <Compile Update="Langs\SettingsPages\About\Resources.Designer.cs">
-          <DesignTime>True</DesignTime>
-          <AutoGen>True</AutoGen>
-          <DependentUpon>Resources.resx</DependentUpon>
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
 
         <Compile Update="Langs\SettingsPages\Basic\Resources.Designer.cs">
-          <DesignTime>True</DesignTime>
-          <AutoGen>True</AutoGen>
-          <DependentUpon>Resources.resx</DependentUpon>
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
 
         <Compile Update="Langs\AttachedSettings\Resources.Designer.cs">
-          <DesignTime>True</DesignTime>
-          <AutoGen>True</AutoGen>
-          <DependentUpon>Resources.resx</DependentUpon>
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
 
         <Compile Update="Langs\ProfileSettings\Resources.Designer.cs">
-          <DesignTime>True</DesignTime>
-          <AutoGen>True</AutoGen>
-          <DependentUpon>Resources.resx</DependentUpon>
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
 
         <Compile Update="Langs\ProfileSettings\Students\Resources.Designer.cs">
-          <DesignTime>True</DesignTime>
-          <AutoGen>True</AutoGen>
-          <DependentUpon>Resources.resx</DependentUpon>
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
 
         <Compile Update="Langs\SettingsPages\Backup\Resources.Designer.cs">
-          <DesignTime>True</DesignTime>
-          <AutoGen>True</AutoGen>
-          <DependentUpon>Resources.resx</DependentUpon>
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
 
         <Compile Update="Langs\SettingsView\Resources.Designer.cs">
-          <DesignTime>True</DesignTime>
-          <AutoGen>True</AutoGen>
-          <DependentUpon>Resources.resx</DependentUpon>
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1" />
-      <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.25.1" />
+        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1"/>
+        <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.25.1"/>
     </ItemGroup>
 
-    <Import Project="..\Global.props" />
+    <Import Project="..\Global.props"/>
 </Project>

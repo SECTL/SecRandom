@@ -7,14 +7,48 @@ namespace SecRandom.Core.Services.Logging;
 
 public class FileLoggerProvider : ILoggerProvider
 {
+    private const int LogRetentionDays = 30;
+
+    private readonly object _lock = new();
+
+    private readonly ConcurrentDictionary<string, FileLogger> _loggers = new();
     private readonly Stream? _logStream;
     private readonly StreamWriter? _logWriter;
 
-    private readonly ConcurrentDictionary<string, FileLogger> _loggers = new();
+    private bool _canWrite = true;
 
-    private const int LogRetentionDays = 30;
+    public FileLoggerProvider()
+    {
+        try
+        {
+            var logs = Directory.GetFiles(Utils.GetDirectoryPath("logs"));
+            var currentLogFile = GetLogFileName();
+            _logStream = File.Open(Path.Combine(Utils.GetDirectoryPath("logs"), currentLogFile), FileMode.Create,
+                FileAccess.ReadWrite, FileShare.Read);
+            _logWriter = new StreamWriter(_logStream)
+            {
+                AutoFlush = true
+            };
+            _ = Task.Run(() => ProcessPreviousLogs(logs, currentLogFile));
+        }
+        catch (Exception e)
+        {
+            CreateLogger(typeof(FileLoggerProvider).FullName!)
+                .LogError(e, "Failed to initialize file logger provider.");
+        }
+    }
 
-    private readonly object _lock = new object();
+    public void Dispose()
+    {
+        _logWriter?.Close();
+        _loggers.Clear();
+        GC.SuppressFinalize(this);
+    }
+
+    public ILogger CreateLogger(string categoryName)
+    {
+        return _loggers.GetOrAdd(categoryName, new FileLogger(this, categoryName));
+    }
 
     public static string GetLogFileName()
     {
@@ -30,32 +64,10 @@ public class FileLoggerProvider : ILoggerProvider
         return filename;
     }
 
-    private bool _canWrite = true;
-
-    public FileLoggerProvider()
-    {
-        try
-        {
-            var logs = Directory.GetFiles(Utils.GetDirectoryPath("logs"));
-            var currentLogFile = GetLogFileName();
-            _logStream = File.Open(Path.Combine(Utils.GetDirectoryPath("logs"), currentLogFile), FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
-            _logWriter = new StreamWriter(_logStream)
-            {
-                AutoFlush = true
-            };
-            _ = Task.Run(() =>  ProcessPreviousLogs(logs, currentLogFile));
-        }
-        catch (Exception e)
-        {
-            CreateLogger(typeof(FileLoggerProvider).FullName!).LogError(e, "Failed to initialize file logger provider.");
-        }
-    }
-
     private void ProcessPreviousLogs(string[] logs, string currentLogFile)
     {
         var logger = CreateLogger(typeof(FileLoggerProvider).FullName!);
         foreach (var i in logs.Where(x => Path.GetFileName(x) != currentLogFile && Path.GetExtension(x) == ".log"))
-        {
             try
             {
                 GZipHelper.CompressFileAndDelete(i);
@@ -64,13 +76,11 @@ public class FileLoggerProvider : ILoggerProvider
             {
                 logger.LogWarning(ex, "Failed to compress previous log file: {LogFile}", Path.GetFileName(i));
             }
-        }
 
         var now = DateTime.Now;
         foreach (var i in logs.Where(x => (now - File.GetLastWriteTime(x)).TotalDays > LogRetentionDays &&
                                           Path.GetFileName(x) != currentLogFile &&
                                           (x.EndsWith(".log") || x.EndsWith(".log.gz"))))
-        {
             try
             {
                 File.Delete(i);
@@ -79,7 +89,6 @@ public class FileLoggerProvider : ILoggerProvider
             {
                 logger.LogWarning(e, "Failed to delete expired log file: {LogFile}", Path.GetFileName(i));
             }
-        }
     }
 
     private static List<string?> GetLogs()
@@ -93,10 +102,8 @@ public class FileLoggerProvider : ILoggerProvider
         {
             try
             {
-                if (!_canWrite)
-                {
-                    return;
-                }
+                if (!_canWrite) return;
+
                 _logWriter?.WriteLine(log);
             }
             catch (Exception)
@@ -104,17 +111,5 @@ public class FileLoggerProvider : ILoggerProvider
                 _canWrite = false;
             }
         }
-    }
-
-    public void Dispose()
-    {
-        _logWriter?.Close();
-        _loggers.Clear();
-        GC.SuppressFinalize(this);
-    }
-
-    public ILogger CreateLogger(string categoryName)
-    {
-        return _loggers.GetOrAdd(categoryName, new FileLogger(this, categoryName));
     }
 }

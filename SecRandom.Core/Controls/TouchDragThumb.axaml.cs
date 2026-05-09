@@ -6,17 +6,18 @@ namespace SecRandom.Core.Controls;
 
 public class TouchDragThumb : Thumb
 {
-    public static readonly StyledProperty<Orientation> OrientationProperty = AvaloniaProperty.Register<TouchDragThumb, Orientation>(
-        nameof(Orientation), Orientation.Vertical);
+    public static readonly StyledProperty<Orientation> OrientationProperty =
+        AvaloniaProperty.Register<TouchDragThumb, Orientation>(
+            nameof(Orientation), Orientation.Vertical);
+
+    public static readonly StyledProperty<bool> IsCompactProperty = AvaloniaProperty.Register<TouchDragThumb, bool>(
+        nameof(IsCompact));
 
     public Orientation Orientation
     {
         get => GetValue(OrientationProperty);
         set => SetValue(OrientationProperty, value);
     }
-
-    public static readonly StyledProperty<bool> IsCompactProperty = AvaloniaProperty.Register<TouchDragThumb, bool>(
-        nameof(IsCompact));
 
     public bool IsCompact
     {

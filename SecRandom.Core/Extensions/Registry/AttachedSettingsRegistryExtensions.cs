@@ -12,46 +12,37 @@ public static class AttachedSettingsRegistryExtensions
         where T : AttachedSettingsControlBase
     {
         var type = typeof(T);
-        
-        if (type.GetCustomAttributes(false).FirstOrDefault(x => x is AttachedSettingsControlInfo) is not AttachedSettingsControlInfo info)
-        {
+
+        if (type.GetCustomAttributes(false).FirstOrDefault(x => x is AttachedSettingsControlInfo) is not
+            AttachedSettingsControlInfo info)
             throw new InvalidOperationException($"无法注册附加设置控件 {type.FullName}，因为此控件有注册信息。");
-        }
-        
-        if (type.GetCustomAttributes(false).FirstOrDefault(x => x is AttachedSettingsUsage) is not AttachedSettingsUsage usages)
-        {
+
+        if (type.GetCustomAttributes(false).FirstOrDefault(x => x is AttachedSettingsUsage) is not AttachedSettingsUsage
+            usages)
             throw new InvalidOperationException($"无法注册附加设置控件 {type.FullName}，因为此控件没有用法信息。");
-        }
 
         if (AttachedSettingsRegistryService.RegisteredControls.FirstOrDefault(x => x.Guid == info.Guid) != null)
-        {
             throw new InvalidOperationException($"此附加设置控件id {info.Guid} 已经被占用。");
-        }
-        
+
         services.AddKeyedTransient<AttachedSettingsControlBase, T>(info.Guid);
 
         info.Name = name;
         info.AttachedSettingsControlType = typeof(T);
         info.Targets = usages.Targets;
-        
+
         AttachedSettingsRegistryService.RegisteredControls.Add(info);
-        
+
         if (usages.Targets.HasFlag(AttachedSettingsTargets.Student))
-        {
             AttachedSettingsRegistryService.StudentAttachedSettingsControls.Add(info);
-        }
+
         if (usages.Targets.HasFlag(AttachedSettingsTargets.Prize))
-        {
             AttachedSettingsRegistryService.PrizeAttachedSettingsControls.Add(info);
-        }
+
         if (usages.Targets.HasFlag(AttachedSettingsTargets.StudentList))
-        {
             AttachedSettingsRegistryService.StudentListAttachedSettingsControls.Add(info);
-        }
+
         if (usages.Targets.HasFlag(AttachedSettingsTargets.PrizeList))
-        {
             AttachedSettingsRegistryService.PrizeListAttachedSettingsControls.Add(info);
-        }
 
         return services;
     }

@@ -1,9 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 
 <root>
-    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root"
+                xmlns="">
         <xsd:element name="root" msdata:IsDataSet="true">
-            
+
         </xsd:element>
     </xsd:schema>
     <resheader name="resmimetype">
@@ -13,10 +14,14 @@
         <value>1.3</value>
     </resheader>
     <resheader name="reader">
-        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
     </resheader>
     <resheader name="writer">
-        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
     </resheader>
     <data name="C_VersionNotice" xml:space="preserve">
         <value>版本公告</value>
@@ -126,31 +131,40 @@ bug 报 GitHub Issue 或 SECTL QQ组织群 - 833875216</value>
         <value>个性化</value>
     </data>
     <data name="O_FontWeight_Thin" xml:space="preserve">
-        <value>极细</value><comment>FontWeight 100</comment>
+        <value>极细</value>
+        <comment>FontWeight 100</comment>
     </data>
     <data name="O_FontWeight_ExtraLight" xml:space="preserve">
-        <value>特细</value><comment>FontWeight 200</comment>
+        <value>特细</value>
+        <comment>FontWeight 200</comment>
     </data>
     <data name="O_FontWeight_Light" xml:space="preserve">
-        <value>细体</value><comment>FontWeight 300</comment>
+        <value>细体</value>
+        <comment>FontWeight 300</comment>
     </data>
     <data name="O_FontWeight_Regular" xml:space="preserve">
-        <value>常规</value><comment>FontWeight 400</comment>
+        <value>常规</value>
+        <comment>FontWeight 400</comment>
     </data>
     <data name="O_FontWeight_Medium" xml:space="preserve">
-        <value>中等</value><comment>FontWeight 500</comment>
+        <value>中等</value>
+        <comment>FontWeight 500</comment>
     </data>
     <data name="O_FontWeight_SemiBold" xml:space="preserve">
-        <value>半粗</value><comment>FontWeight 600</comment>
+        <value>半粗</value>
+        <comment>FontWeight 600</comment>
     </data>
     <data name="O_FontWeight_Bold" xml:space="preserve">
-        <value>粗体</value><comment>FontWeight 700</comment>
+        <value>粗体</value>
+        <comment>FontWeight 700</comment>
     </data>
     <data name="O_FontWeight_ExtraBold" xml:space="preserve">
-        <value>特粗</value><comment>FontWeight 800</comment>
+        <value>特粗</value>
+        <comment>FontWeight 800</comment>
     </data>
     <data name="O_FontWeight_Black" xml:space="preserve">
-        <value>极粗</value><comment>FontWeight 900</comment>
+        <value>极粗</value>
+        <comment>FontWeight 900</comment>
     </data>
     <data name="S_DataManagement" xml:space="preserve">
         <value>数据管理</value>

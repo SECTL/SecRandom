@@ -6,7 +6,7 @@ using Avalonia.Controls.Templates;
 namespace SecRandom.Core.Controls;
 
 /// <summary>
-/// 可为空的内容控件。
+///     可为空的内容控件。
 /// </summary>
 [PseudoClasses(":empty", ":default-empty-content")]
 public class Emptiable : ContentControl
@@ -14,14 +14,31 @@ public class Emptiable : ContentControl
     public static readonly StyledProperty<object?> DataProperty = AvaloniaProperty.Register<Emptiable, object?>(
         nameof(Data));
 
+    public static readonly StyledProperty<bool> IsDirectContentModeProperty =
+        AvaloniaProperty.Register<Emptiable, bool>(
+            nameof(IsDirectContentMode));
+
+    public static readonly StyledProperty<object?> EmptyContentProperty = AvaloniaProperty.Register<Emptiable, object?>(
+        nameof(EmptyContent));
+
+    public static readonly StyledProperty<IDataTemplate> EmptyContentTemplateProperty =
+        AvaloniaProperty.Register<Emptiable, IDataTemplate>(
+            nameof(EmptyContentTemplate));
+
+    public Emptiable()
+    {
+        this.GetObservable(ContentProperty).Subscribe(_ => UpdateContentEmptyState());
+        this.GetObservable(DataProperty).Subscribe(_ => UpdateContentEmptyState());
+        this.GetObservable(IsDirectContentModeProperty).Subscribe(_ => UpdateContentEmptyState());
+        this.GetObservable(EmptyContentProperty)
+            .Subscribe(_ => PseudoClasses.Set(":default-empty-content", EmptyContent == null));
+    }
+
     public object? Data
     {
         get => GetValue(DataProperty);
         set => SetValue(DataProperty, value);
     }
-
-    public static readonly StyledProperty<bool> IsDirectContentModeProperty = AvaloniaProperty.Register<Emptiable, bool>(
-        nameof(IsDirectContentMode));
 
     public bool IsDirectContentMode
     {
@@ -29,17 +46,11 @@ public class Emptiable : ContentControl
         set => SetValue(IsDirectContentModeProperty, value);
     }
 
-    public static readonly StyledProperty<object?> EmptyContentProperty = AvaloniaProperty.Register<Emptiable, object?>(
-        nameof(EmptyContent));
-
     public object? EmptyContent
     {
         get => GetValue(EmptyContentProperty);
         set => SetValue(EmptyContentProperty, value);
     }
-
-    public static readonly StyledProperty<IDataTemplate> EmptyContentTemplateProperty = AvaloniaProperty.Register<Emptiable, IDataTemplate>(
-        nameof(EmptyContentTemplate));
 
     public IDataTemplate EmptyContentTemplate
     {
@@ -50,14 +61,5 @@ public class Emptiable : ContentControl
     private void UpdateContentEmptyState()
     {
         PseudoClasses.Set(":empty", IsDirectContentMode ? Data == null : Content == null);
-    }
-
-    public Emptiable()
-    {
-        this.GetObservable(ContentProperty).Subscribe(_ => UpdateContentEmptyState());
-        this.GetObservable(DataProperty).Subscribe(_ => UpdateContentEmptyState());
-        this.GetObservable(IsDirectContentModeProperty).Subscribe(_ => UpdateContentEmptyState());
-        this.GetObservable(EmptyContentProperty)
-            .Subscribe(_ => PseudoClasses.Set(":default-empty-content", EmptyContent == null));
     }
 }

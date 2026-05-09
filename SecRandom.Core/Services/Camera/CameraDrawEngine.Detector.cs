@@ -1,11 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Runtime.InteropServices;
+using Microsoft.Extensions.Logging;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
-using OpenCvSharp.Dnn;
 using SecRandom.Core.Models.Camera;
 using SecRandom.Shared;
-using System.Runtime.InteropServices;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace SecRandom.Core.Services.Camera;
 
@@ -19,65 +19,43 @@ public partial class CameraDrawEngine
     private const int DamoyoloInputHeight = 640;
     private const bool DamoyoloUseLetterbox = false;
 
-    private sealed record DetectedFace(float X, float Y, float Width, float Height, float Confidence);
+    private readonly object _detectorLock = new();
+    private DetectorBackend _activeBackend;
+    private string? _damoyoloInputName;
+    private InferenceSession? _damoyoloSession;
+    private Size _detectorInputSize;
+    private string? _lastDetectionErrorMessage;
+    private string? _loadedDetectorModel;
+    private string? _ultralightInputName;
+    private InferenceSession? _ultralightSession;
+    private FaceDetectorYN? _yunetDetector;
 
-    private enum DetectorBackend
+    private (IReadOnlyList<FaceBox> Faces, DetectionState State) DetectFaces(Mat frameBgr)
     {
-        YuNet,
-        Ultralight,
-        Damoyolo
-    }
-
-    private sealed record TensorPreprocessResult(
-        DenseTensor<float> Tensor,
-        float ScaleX,
-        float ScaleY,
-        int PadX,
-        int PadY,
-        Size InputSize);
-
-    private sealed record OrtOutput(string Name, int[] Dimensions, float[] Data)
-    {
-        public int LastDimension => Dimensions.Length == 0 ? 0 : Dimensions[^1];
-    }
-
-    private readonly object detectorLock = new();
-    private FaceDetectorYN? yunetDetector;
-    private InferenceSession? ultralightSession;
-    private InferenceSession? damoyoloSession;
-    private string? ultralightInputName;
-    private string? damoyoloInputName;
-    private DetectorBackend activeBackend;
-    private string? loadedDetectorModel;
-    private string? lastDetectionErrorMessage;
-    private Size detectorInputSize;
-
-    private (IReadOnlyList<FaceBox> Faces, DetectionState State) detectFaces(Mat frameBgr)
-    {
-        lock (detectorLock)
+        lock (_detectorLock)
         {
             try
             {
-                ensureDetectorLoaded();
+                EnsureDetectorLoaded();
 
-                IReadOnlyList<DetectedFace> faces = activeBackend switch
+                var faces = _activeBackend switch
                 {
-                    DetectorBackend.YuNet => detectFacesWithYunet(frameBgr),
-                    DetectorBackend.Damoyolo => detectFacesWithDamoyolo(frameBgr),
-                    DetectorBackend.Ultralight => detectFacesWithUltralight(frameBgr),
+                    DetectorBackend.YuNet => DetectFacesWithYunet(frameBgr),
+                    DetectorBackend.Damoyolo => DetectFacesWithDamoyolo(frameBgr),
+                    DetectorBackend.Ultralight => DetectFacesWithUltralight(frameBgr),
                     _ => Array.Empty<DetectedFace>()
                 };
 
-                lastDetectionErrorMessage = null;
-                var mergedFaces = mergeFaceBoxes(frameBgr.Width, frameBgr.Height, faces);
+                _lastDetectionErrorMessage = null;
+                var mergedFaces = MergeFaceBoxes(frameBgr.Width, frameBgr.Height, faces);
                 return (mergedFaces, mergedFaces.Count == 0 ? DetectionState.NoFace : DetectionState.HasFaces);
             }
             catch (Exception ex)
             {
-                if (lastDetectionErrorMessage != ex.Message)
+                if (_lastDetectionErrorMessage != ex.Message)
                 {
-                    lastDetectionErrorMessage = ex.Message;
-                    logger.LogDebug(ex, "Face detection failed.");
+                    _lastDetectionErrorMessage = ex.Message;
+                    _logger.LogDebug(ex, "Face detection failed.");
                 }
 
                 return ([], DetectionState.Error);
@@ -85,93 +63,89 @@ public partial class CameraDrawEngine
         }
     }
 
-    private void reloadDetector()
+    private void _ReloadDetector()
     {
-        lock (detectorLock)
+        lock (_detectorLock)
         {
-            disposeDetector();
-            loadedDetectorModel = null;
-            lastDetectionErrorMessage = null;
+            DisposeDetector();
+            _loadedDetectorModel = null;
+            _lastDetectionErrorMessage = null;
         }
     }
 
-    private void disposeDetector()
+    private void DisposeDetector()
     {
-        yunetDetector?.Dispose();
-        yunetDetector = null;
+        _yunetDetector?.Dispose();
+        _yunetDetector = null;
 
-        ultralightSession?.Dispose();
-        ultralightSession = null;
-        ultralightInputName = null;
+        _ultralightSession?.Dispose();
+        _ultralightSession = null;
+        _ultralightInputName = null;
 
-        damoyoloSession?.Dispose();
-        damoyoloSession = null;
-        damoyoloInputName = null;
+        _damoyoloSession?.Dispose();
+        _damoyoloSession = null;
+        _damoyoloInputName = null;
     }
 
-    private void ensureDetectorLoaded()
+    private void EnsureDetectorLoaded()
     {
-        var modelName = string.IsNullOrWhiteSpace(detectorModel)
+        var modelName = string.IsNullOrWhiteSpace(DetectorModel)
             ? "version-RFB-640.onnx"
-            : detectorModel.Trim();
+            : DetectorModel.Trim();
 
-        var backend = resolveDetectorBackend(modelName);
+        var backend = ResolveDetectorBackend(modelName);
         var inputSize = backend == DetectorBackend.Damoyolo
             ? new Size(DamoyoloInputWidth, DamoyoloInputHeight)
-            : resolveDetectorInputSize(modelName);
+            : ResolveDetectorInputSize(modelName);
 
-        if (loadedDetectorModel == modelName && detectorInputSize == inputSize && isDetectorLoaded(backend))
+        if (_loadedDetectorModel == modelName && _detectorInputSize == inputSize && IsDetectorLoaded(backend))
             return;
 
-        disposeDetector();
+        DisposeDetector();
 
-        var modelPath = resolveDetectorModelPath(modelName);
-        ensureModelFileIsUsable(modelPath);
+        var modelPath = ResolveDetectorModelPath(modelName);
+        EnsureModelFileIsUsable(modelPath);
 
         switch (backend)
         {
             case DetectorBackend.YuNet:
-                yunetDetector = FaceDetectorYN.Create(
+                _yunetDetector = FaceDetectorYN.Create(
                     modelPath,
                     string.Empty,
                     inputSize,
-                    YuNetConfidenceThreshold,
-                    0.3f,
-                    5000,
-                    Backend.DEFAULT,
-                    Target.CPU);
+                    YuNetConfidenceThreshold);
                 break;
 
             case DetectorBackend.Damoyolo:
-                damoyoloSession = new InferenceSession(modelPath);
-                damoyoloInputName = getSingleInputName(damoyoloSession, modelName);
-                logOrtMetadata("DAMOYOLO", damoyoloSession);
+                _damoyoloSession = new InferenceSession(modelPath);
+                _damoyoloInputName = GetSingleInputName(_damoyoloSession, modelName);
+                LogOrtMetadata("DAMOYOLO", _damoyoloSession);
                 break;
 
             case DetectorBackend.Ultralight:
-                ultralightSession = new InferenceSession(modelPath);
-                ultralightInputName = getSingleInputName(ultralightSession, modelName);
-                logOrtMetadata("Ultralight", ultralightSession);
+                _ultralightSession = new InferenceSession(modelPath);
+                _ultralightInputName = GetSingleInputName(_ultralightSession, modelName);
+                LogOrtMetadata("Ultralight", _ultralightSession);
                 break;
         }
 
-        activeBackend = backend;
-        loadedDetectorModel = modelName;
-        detectorInputSize = inputSize;
+        _activeBackend = backend;
+        _loadedDetectorModel = modelName;
+        _detectorInputSize = inputSize;
     }
 
-    private bool isDetectorLoaded(DetectorBackend backend)
+    private bool IsDetectorLoaded(DetectorBackend backend)
     {
         return backend switch
         {
-            DetectorBackend.YuNet => yunetDetector != null,
-            DetectorBackend.Ultralight => ultralightSession != null,
-            DetectorBackend.Damoyolo => damoyoloSession != null,
+            DetectorBackend.YuNet => _yunetDetector != null,
+            DetectorBackend.Ultralight => _ultralightSession != null,
+            DetectorBackend.Damoyolo => _damoyoloSession != null,
             _ => false
         };
     }
 
-    private static DetectorBackend resolveDetectorBackend(string modelName)
+    private static DetectorBackend ResolveDetectorBackend(string modelName)
     {
         if (modelName.Contains("yunet", StringComparison.OrdinalIgnoreCase))
             return DetectorBackend.YuNet;
@@ -182,7 +156,7 @@ public partial class CameraDrawEngine
         return DetectorBackend.Ultralight;
     }
 
-    private static string resolveDetectorModelPath(string modelName)
+    private static string ResolveDetectorModelPath(string modelName)
     {
         var outputPath = Utils.GetFilePath("cv_models", modelName);
         if (File.Exists(outputPath))
@@ -196,24 +170,25 @@ public partial class CameraDrawEngine
                 return candidate;
         }
 
-        throw new FileNotFoundException(cameraText("DetectorModelNotFound", modelName), outputPath);
+        throw new FileNotFoundException(CameraText("DetectorModelNotFound", modelName), outputPath);
     }
 
-    private static void ensureModelFileIsUsable(string modelPath)
+    private static void EnsureModelFileIsUsable(string modelPath)
     {
         var info = new FileInfo(modelPath);
         if (!info.Exists || info.Length <= 0)
-            throw new FileNotFoundException(cameraText("DetectorModelNotFound", Path.GetFileName(modelPath)), modelPath);
+            throw new FileNotFoundException(CameraText("DetectorModelNotFound", Path.GetFileName(modelPath)),
+                modelPath);
 
         if (info.Length <= 512)
         {
             var header = File.ReadAllText(modelPath);
             if (header.StartsWith("version https://git-lfs.github.com/spec", StringComparison.Ordinal))
-                throw new InvalidOperationException(cameraText("DetectorModelIsLfsPointer", modelPath));
+                throw new InvalidOperationException(CameraText("DetectorModelIsLfsPointer", modelPath));
         }
     }
 
-    private Size resolveDetectorInputSize(string modelName)
+    private Size ResolveDetectorInputSize(string modelName)
     {
         if (modelName.Contains("640", StringComparison.OrdinalIgnoreCase))
             return new Size(640, 480);
@@ -221,28 +196,28 @@ public partial class CameraDrawEngine
         if (modelName.Contains("320", StringComparison.OrdinalIgnoreCase))
             return new Size(320, 240);
 
-        var width = targetWidth > 0 ? targetWidth : 0;
-        var height = targetHeight > 0 ? targetHeight : 0;
+        var width = TargetWidth > 0 ? TargetWidth : 0;
+        var height = TargetHeight > 0 ? TargetHeight : 0;
         if (width > 0 && height > 0)
             return new Size(width, height);
 
         return new Size(320, 240);
     }
 
-    private IReadOnlyList<DetectedFace> detectFacesWithYunet(Mat frameBgr)
+    private IReadOnlyList<DetectedFace> DetectFacesWithYunet(Mat frameBgr)
     {
-        if (yunetDetector == null)
+        if (_yunetDetector == null)
             return [];
 
-        using var resized = resizeForDetector(frameBgr, detectorInputSize);
+        using var resized = ResizeForDetector(frameBgr, _detectorInputSize);
 
         using var faces = new Mat();
-        var count = yunetDetector.Detect(resized, faces);
+        var count = _yunetDetector.Detect(resized, faces);
         if (count <= 0 || faces.Empty())
             return [];
 
-        var scaleX = (float)frameBgr.Width / detectorInputSize.Width;
-        var scaleY = (float)frameBgr.Height / detectorInputSize.Height;
+        var scaleX = (float)frameBgr.Width / _detectorInputSize.Width;
+        var scaleY = (float)frameBgr.Height / _detectorInputSize.Height;
         List<DetectedFace> results = [];
         for (var i = 0; i < faces.Rows; i++)
         {
@@ -261,106 +236,106 @@ public partial class CameraDrawEngine
         return results;
     }
 
-    private IReadOnlyList<DetectedFace> detectFacesWithUltralight(Mat frameBgr)
+    private IReadOnlyList<DetectedFace> DetectFacesWithUltralight(Mat frameBgr)
     {
-        if (ultralightSession == null || string.IsNullOrWhiteSpace(ultralightInputName))
+        if (_ultralightSession == null || string.IsNullOrWhiteSpace(_ultralightInputName))
             return [];
 
-        using var resized = resizeForDetector(frameBgr, detectorInputSize);
-        var tensor = createTensorFromMat(
+        using var resized = ResizeForDetector(frameBgr, _detectorInputSize);
+        var tensor = CreateTensorFromMat(
             resized,
-            detectorInputSize,
-            scaleFactor: 1.0f / 128.0f,
-            mean0: 127.0f,
-            mean1: 127.0f,
-            mean2: 127.0f,
-            swapRB: true);
+            _detectorInputSize,
+            1.0f / 128.0f,
+            127.0f,
+            127.0f,
+            127.0f,
+            true);
 
-        var outputs = runOrt(ultralightSession, ultralightInputName, tensor);
-        return parseUltralightOutputs(outputs, frameBgr.Width, frameBgr.Height);
+        var outputs = RunOrt(_ultralightSession, _ultralightInputName, tensor);
+        return ParseUltralightOutputs(outputs, frameBgr.Width, frameBgr.Height);
     }
 
-    private IReadOnlyList<DetectedFace> detectFacesWithDamoyolo(Mat frameBgr)
+    private IReadOnlyList<DetectedFace> DetectFacesWithDamoyolo(Mat frameBgr)
     {
-        if (damoyoloSession == null || string.IsNullOrWhiteSpace(damoyoloInputName))
+        if (_damoyoloSession == null || string.IsNullOrWhiteSpace(_damoyoloInputName))
             return [];
 
         var inputSize = new Size(DamoyoloInputWidth, DamoyoloInputHeight);
         var preprocess = DamoyoloUseLetterbox
-            ? createLetterboxTensorFromMat(
+            ? CreateLetterboxTensorFromMat(
                 frameBgr,
                 inputSize,
-                scaleFactor: 1.0f / 255.0f,
-                mean0: 0.0f,
-                mean1: 0.0f,
-                mean2: 0.0f,
-                swapRB: true)
-            : createDirectResizeTensorFromMat(
+                1.0f / 255.0f,
+                0.0f,
+                0.0f,
+                0.0f,
+                true)
+            : CreateDirectResizeTensorFromMat(
                 frameBgr,
                 inputSize,
-                scaleFactor: 1.0f / 255.0f,
-                mean0: 0.0f,
-                mean1: 0.0f,
-                mean2: 0.0f,
-                swapRB: true);
+                1.0f / 255.0f,
+                0.0f,
+                0.0f,
+                0.0f,
+                true);
 
-        var outputs = runOrt(damoyoloSession, damoyoloInputName, preprocess.Tensor);
-        logDamoyoloOutputSummary(outputs);
-        return parseDamoyoloOutputs(outputs, frameBgr.Width, frameBgr.Height, preprocess);
+        var outputs = RunOrt(_damoyoloSession, _damoyoloInputName, preprocess.Tensor);
+        LogDamoyoloOutputSummary(outputs);
+        return ParseDamoyoloOutputs(outputs, frameBgr.Width, frameBgr.Height, preprocess);
     }
 
-    private static Mat resizeForDetector(Mat frameBgr, Size inputSize)
+    private static Mat ResizeForDetector(Mat frameBgr, Size inputSize)
     {
         if (frameBgr.Width == inputSize.Width && frameBgr.Height == inputSize.Height)
             return frameBgr.Clone();
 
         var resized = new Mat();
-        Cv2.Resize(frameBgr, resized, inputSize, 0, 0, InterpolationFlags.Linear);
+        Cv2.Resize(frameBgr, resized, inputSize);
         return resized;
     }
 
-    private static DenseTensor<float> createTensorFromMat(
+    private static DenseTensor<float> CreateTensorFromMat(
         Mat frameBgr,
         Size inputSize,
         float scaleFactor,
         float mean0,
         float mean1,
         float mean2,
-        bool swapRB)
+        bool swapRb)
     {
-        using var source = ensureBgr8(frameBgr);
-        using var resized = resizeForDetector(source, inputSize);
-        return createNchwTensorFromBgr8(resized, scaleFactor, mean0, mean1, mean2, swapRB);
+        using var source = EnsureBgr8(frameBgr);
+        using var resized = ResizeForDetector(source, inputSize);
+        return CreateNchwTensorFromBgr8(resized, scaleFactor, mean0, mean1, mean2, swapRb);
     }
 
-    private static TensorPreprocessResult createDirectResizeTensorFromMat(
+    private static TensorPreprocessResult CreateDirectResizeTensorFromMat(
         Mat frameBgr,
         Size inputSize,
         float scaleFactor,
         float mean0,
         float mean1,
         float mean2,
-        bool swapRB)
+        bool swapRb)
     {
-        using var source = ensureBgr8(frameBgr);
-        using var resized = resizeForDetector(source, inputSize);
-        var tensor = createNchwTensorFromBgr8(resized, scaleFactor, mean0, mean1, mean2, swapRB);
+        using var source = EnsureBgr8(frameBgr);
+        using var resized = ResizeForDetector(source, inputSize);
+        var tensor = CreateNchwTensorFromBgr8(resized, scaleFactor, mean0, mean1, mean2, swapRb);
 
         var scaleX = (float)inputSize.Width / source.Width;
         var scaleY = (float)inputSize.Height / source.Height;
         return new TensorPreprocessResult(tensor, scaleX, scaleY, 0, 0, inputSize);
     }
 
-    private static TensorPreprocessResult createLetterboxTensorFromMat(
+    private static TensorPreprocessResult CreateLetterboxTensorFromMat(
         Mat frameBgr,
         Size inputSize,
         float scaleFactor,
         float mean0,
         float mean1,
         float mean2,
-        bool swapRB)
+        bool swapRb)
     {
-        using var source = ensureBgr8(frameBgr);
+        using var source = EnsureBgr8(frameBgr);
 
         var scale = Math.Min((float)inputSize.Width / source.Width, (float)inputSize.Height / source.Height);
         var newWidth = Math.Max(1, (int)(source.Width * scale));
@@ -369,7 +344,7 @@ public partial class CameraDrawEngine
         var padY = (inputSize.Height - newHeight) / 2;
 
         using var resizedFrame = new Mat();
-        Cv2.Resize(source, resizedFrame, new Size(newWidth, newHeight), 0, 0, InterpolationFlags.Linear);
+        Cv2.Resize(source, resizedFrame, new Size(newWidth, newHeight));
 
         using var padded = new Mat(inputSize, MatType.CV_8UC3, new Scalar(0, 0, 0));
         using (var roi = new Mat(padded, new Rect(padX, padY, newWidth, newHeight)))
@@ -377,46 +352,39 @@ public partial class CameraDrawEngine
             resizedFrame.CopyTo(roi);
         }
 
-        var tensor = createNchwTensorFromBgr8(padded, scaleFactor, mean0, mean1, mean2, swapRB);
+        var tensor = CreateNchwTensorFromBgr8(padded, scaleFactor, mean0, mean1, mean2, swapRb);
         return new TensorPreprocessResult(tensor, scale, scale, padX, padY, inputSize);
     }
 
-    private static Mat ensureBgr8(Mat frame)
+    private static Mat EnsureBgr8(Mat frame)
     {
         if (frame.Empty())
-            throw new InvalidOperationException(cameraText("DetectorOutputUnsupported"));
+            throw new InvalidOperationException(CameraText("DetectorOutputUnsupported"));
 
         if (frame.Type() == MatType.CV_8UC3)
             return frame.Clone();
 
         var converted = new Mat();
         if (frame.Channels() == 4)
-        {
             Cv2.CvtColor(frame, converted, ColorConversionCodes.BGRA2BGR);
-        }
         else if (frame.Channels() == 1)
-        {
             Cv2.CvtColor(frame, converted, ColorConversionCodes.GRAY2BGR);
-        }
         else if (frame.Channels() == 3)
-        {
             frame.ConvertTo(converted, MatType.CV_8UC3);
-        }
         else
-        {
-            throw new NotSupportedException($"Unsupported detector frame format: channels={frame.Channels()}, type={frame.Type()}.");
-        }
+            throw new NotSupportedException(
+                $"Unsupported detector frame format: channels={frame.Channels()}, type={frame.Type()}.");
 
         return converted;
     }
 
-    private static DenseTensor<float> createNchwTensorFromBgr8(
+    private static DenseTensor<float> CreateNchwTensorFromBgr8(
         Mat imageBgr,
         float scaleFactor,
         float mean0,
         float mean1,
         float mean2,
-        bool swapRB)
+        bool swapRb)
     {
         if (imageBgr.Type() != MatType.CV_8UC3)
             throw new NotSupportedException($"Detector tensor input must be CV_8UC3, got {imageBgr.Type()}.");
@@ -448,7 +416,7 @@ public partial class CameraDrawEngine
                     var g = bytes[offset + 1];
                     var r = bytes[offset + 2];
 
-                    if (swapRB)
+                    if (swapRb)
                     {
                         tensor[0, 0, y, x] = (r - mean0) * scaleFactor;
                         tensor[0, 1, y, x] = (g - mean1) * scaleFactor;
@@ -471,7 +439,7 @@ public partial class CameraDrawEngine
         }
     }
 
-    private IReadOnlyList<OrtOutput> runOrt(InferenceSession session, string inputName, DenseTensor<float> inputTensor)
+    private IReadOnlyList<OrtOutput> RunOrt(InferenceSession session, string inputName, DenseTensor<float> inputTensor)
     {
         var inputs = new[]
         {
@@ -479,24 +447,25 @@ public partial class CameraDrawEngine
         };
 
         using var results = session.Run(inputs);
-        return results.Select(readOrtOutput).ToList();
+        return results.Select(ReadOrtOutput).ToList();
     }
 
-    private static OrtOutput readOrtOutput(DisposableNamedOnnxValue output)
+    private static OrtOutput ReadOrtOutput(DisposableNamedOnnxValue output)
     {
         return output.Value switch
         {
-            Tensor<float> tensor => createOrtOutput(output.Name, tensor, static value => value),
-            Tensor<double> tensor => createOrtOutput(output.Name, tensor, static value => (float)value),
-            Tensor<int> tensor => createOrtOutput(output.Name, tensor, static value => value),
-            Tensor<long> tensor => createOrtOutput(output.Name, tensor, static value => value),
-            Tensor<short> tensor => createOrtOutput(output.Name, tensor, static value => value),
-            Tensor<byte> tensor => createOrtOutput(output.Name, tensor, static value => value),
-            _ => throw new NotSupportedException($"Unsupported ONNX output type for '{output.Name}': {output.Value?.GetType().FullName ?? "null"}.")
+            Tensor<float> tensor => CreateOrtOutput(output.Name, tensor, static value => value),
+            Tensor<double> tensor => CreateOrtOutput(output.Name, tensor, static value => (float)value),
+            Tensor<int> tensor => CreateOrtOutput(output.Name, tensor, static value => value),
+            Tensor<long> tensor => CreateOrtOutput(output.Name, tensor, static value => value),
+            Tensor<short> tensor => CreateOrtOutput(output.Name, tensor, static value => value),
+            Tensor<byte> tensor => CreateOrtOutput(output.Name, tensor, static value => value),
+            _ => throw new NotSupportedException(
+                $"Unsupported ONNX output type for '{output.Name}': {output.Value?.GetType().FullName ?? "null"}.")
         };
     }
 
-    private static OrtOutput createOrtOutput<T>(string name, Tensor<T> tensor, Func<T, float> convert)
+    private static OrtOutput CreateOrtOutput<T>(string name, Tensor<T> tensor, Func<T, float> convert)
     {
         var raw = tensor.ToArray();
         var data = new float[raw.Length];
@@ -506,7 +475,7 @@ public partial class CameraDrawEngine
         return new OrtOutput(name, tensor.Dimensions.ToArray(), data);
     }
 
-    private static string getSingleInputName(InferenceSession session, string modelName)
+    private static string GetSingleInputName(InferenceSession session, string modelName)
     {
         var inputName = session.InputMetadata.Keys.FirstOrDefault();
         if (string.IsNullOrWhiteSpace(inputName))
@@ -515,55 +484,51 @@ public partial class CameraDrawEngine
         return inputName;
     }
 
-    private void logOrtMetadata(string backendName, InferenceSession session)
+    private void LogOrtMetadata(string backendName, InferenceSession session)
     {
         foreach (var (name, metadata) in session.InputMetadata)
-        {
-            logger.LogDebug(
+            _logger.LogDebug(
                 "{Backend} ONNX input: {Name}, type={Type}, shape=[{Shape}]",
                 backendName,
                 name,
                 metadata.ElementType,
-                string.Join(", ", metadata.Dimensions.Select(formatOrtDimension)));
-        }
+                string.Join(", ", metadata.Dimensions.Select(FormatOrtDimension)));
 
         foreach (var (name, metadata) in session.OutputMetadata)
-        {
-            logger.LogDebug(
+            _logger.LogDebug(
                 "{Backend} ONNX output: {Name}, type={Type}, shape=[{Shape}]",
                 backendName,
                 name,
                 metadata.ElementType,
-                string.Join(", ", metadata.Dimensions.Select(formatOrtDimension)));
-        }
+                string.Join(", ", metadata.Dimensions.Select(FormatOrtDimension)));
     }
 
-    private static string formatOrtDimension(int dimension)
+    private static string FormatOrtDimension(int dimension)
     {
         return dimension <= 0 ? "?" : dimension.ToString();
     }
 
-    private void logDamoyoloOutputSummary(IReadOnlyList<OrtOutput> outputs)
+    private void LogDamoyoloOutputSummary(IReadOnlyList<OrtOutput> outputs)
     {
-        if (!logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
+        if (!_logger.IsEnabled(LogLevel.Debug))
             return;
 
-        var numDets = findOutputByName(outputs, "num_dets")?.Data.FirstOrDefault();
-        var scores = findOutputByName(outputs, "det_scores")?.Data ?? [];
+        var numDets = FindOutputByName(outputs, "num_dets")?.Data.FirstOrDefault();
+        var scores = FindOutputByName(outputs, "det_scores")?.Data ?? [];
         var maxScore = scores.Length == 0 ? 0.0f : scores.Max();
         var topScores = scores
             .OrderByDescending(score => score)
             .Take(5)
             .Select(score => score.ToString("0.000"));
 
-        logger.LogDebug(
+        _logger.LogDebug(
             "DAMOYOLO summary: num_dets={NumDets}, max_score={MaxScore:0.000}, top_scores=[{TopScores}]",
             numDets,
             maxScore,
             string.Join(", ", topScores));
     }
 
-    private static IReadOnlyList<DetectedFace> parseUltralightOutputs(
+    private static IReadOnlyList<DetectedFace> ParseUltralightOutputs(
         IReadOnlyList<OrtOutput> outputs,
         int frameWidth,
         int frameHeight)
@@ -576,7 +541,7 @@ public partial class CameraDrawEngine
             if (output.Data.Length == 0)
                 continue;
 
-            var columns = inferOutputColumns(output);
+            var columns = InferOutputColumns(output);
             if (columns == 2)
                 scores = output.Data;
             else if (columns == 4)
@@ -584,7 +549,7 @@ public partial class CameraDrawEngine
         }
 
         if (scores == null || boxes == null)
-            throw new InvalidOperationException(cameraText("DetectorOutputUnsupported"));
+            throw new InvalidOperationException(CameraText("DetectorOutputUnsupported"));
 
         var count = Math.Min(scores.Length / 2, boxes.Length / 4);
         if (count <= 0)
@@ -605,49 +570,50 @@ public partial class CameraDrawEngine
             if (x2 <= x1 || y2 <= y1)
                 continue;
 
-            var candidate = clampFace(x1, y1, x2 - x1, y2 - y1, confidence, frameWidth, frameHeight);
+            var candidate = ClampFace(x1, y1, x2 - x1, y2 - y1, confidence, frameWidth, frameHeight);
             if (candidate != null)
                 candidates.Add(candidate);
         }
 
-        return applyNms(candidates, UltralightConfidenceThreshold, UltralightNmsThreshold);
+        return ApplyNms(candidates, UltralightConfidenceThreshold, UltralightNmsThreshold);
     }
 
-    private static IReadOnlyList<DetectedFace> parseDamoyoloOutputs(
+    private static IReadOnlyList<DetectedFace> ParseDamoyoloOutputs(
         IReadOnlyList<OrtOutput> outputs,
         int frameWidth,
         int frameHeight,
         TensorPreprocessResult preprocess)
     {
-        var numDetsOutput = findOutputByName(outputs, "num_dets") ??
+        var numDetsOutput = FindOutputByName(outputs, "num_dets") ??
                             outputs.FirstOrDefault(output => output.Data.Length == 1 &&
-                                                             output.Name.Contains("num", StringComparison.OrdinalIgnoreCase));
-        var boxesOutput = findOutputByName(outputs, "det_boxes") ??
-                          outputs.FirstOrDefault(output => output.Name.Contains("box", StringComparison.OrdinalIgnoreCase) &&
-                                                           inferOutputColumns(output) == 4) ??
-                          outputs.FirstOrDefault(output => inferOutputColumns(output) == 4);
-        var scoresOutput = findOutputByName(outputs, "det_scores") ??
-                           outputs.FirstOrDefault(output => output.Name.Contains("score", StringComparison.OrdinalIgnoreCase));
+                                                             output.Name.Contains("num",
+                                                                 StringComparison.OrdinalIgnoreCase));
+        var boxesOutput = FindOutputByName(outputs, "det_boxes") ??
+                          outputs.FirstOrDefault(output =>
+                              output.Name.Contains("box", StringComparison.OrdinalIgnoreCase) &&
+                              InferOutputColumns(output) == 4) ??
+                          outputs.FirstOrDefault(output => InferOutputColumns(output) == 4);
+        var scoresOutput = FindOutputByName(outputs, "det_scores") ??
+                           outputs.FirstOrDefault(output =>
+                               output.Name.Contains("score", StringComparison.OrdinalIgnoreCase));
 
         if (boxesOutput != null && scoresOutput != null)
-        {
-            return parseDamoyoloEndToEndOutput(
+            return ParseDamoyoloEndToEndOutput(
                 numDetsOutput,
                 boxesOutput,
                 scoresOutput,
                 frameWidth,
                 frameHeight,
                 preprocess);
-        }
 
-        var sixColumnOutput = outputs.FirstOrDefault(output => inferOutputColumns(output) == 6);
+        var sixColumnOutput = outputs.FirstOrDefault(output => InferOutputColumns(output) == 6);
         if (sixColumnOutput != null)
-            return parseDamoyoloSixColumnOutput(sixColumnOutput, frameWidth, frameHeight, preprocess);
+            return ParseDamoyoloSixColumnOutput(sixColumnOutput, frameWidth, frameHeight, preprocess);
 
-        throw new InvalidOperationException(cameraText("DetectorOutputUnsupported"));
+        throw new InvalidOperationException(CameraText("DetectorOutputUnsupported"));
     }
 
-    private static IReadOnlyList<DetectedFace> parseDamoyoloEndToEndOutput(
+    private static IReadOnlyList<DetectedFace> ParseDamoyoloEndToEndOutput(
         OrtOutput? numDetsOutput,
         OrtOutput boxesOutput,
         OrtOutput scoresOutput,
@@ -676,7 +642,7 @@ public partial class CameraDrawEngine
                 continue;
 
             var boxIndex = i * 4;
-            var candidate = mapDamoyoloFace(
+            var candidate = MapDamoyoloFace(
                 boxes[boxIndex],
                 boxes[boxIndex + 1],
                 boxes[boxIndex + 2],
@@ -692,7 +658,7 @@ public partial class CameraDrawEngine
         return results;
     }
 
-    private static IReadOnlyList<DetectedFace> parseDamoyoloSixColumnOutput(
+    private static IReadOnlyList<DetectedFace> ParseDamoyoloSixColumnOutput(
         OrtOutput output,
         int frameWidth,
         int frameHeight,
@@ -711,7 +677,7 @@ public partial class CameraDrawEngine
             if (confidence <= DamoyoloConfidenceThreshold)
                 continue;
 
-            var candidate = mapDamoyoloFace(
+            var candidate = MapDamoyoloFace(
                 data[offset],
                 data[offset + 1],
                 data[offset + 2],
@@ -726,7 +692,7 @@ public partial class CameraDrawEngine
                 continue;
             }
 
-            candidate = mapDamoyoloFace(
+            candidate = MapDamoyoloFace(
                 data[offset + 2],
                 data[offset + 3],
                 data[offset + 4],
@@ -742,7 +708,7 @@ public partial class CameraDrawEngine
         return results;
     }
 
-    private static DetectedFace? mapDamoyoloFace(
+    private static DetectedFace? MapDamoyoloFace(
         float x1,
         float y1,
         float x2,
@@ -768,17 +734,19 @@ public partial class CameraDrawEngine
         var x2Orig = (x2 - preprocess.PadX) / preprocess.ScaleX;
         var y2Orig = (y2 - preprocess.PadY) / preprocess.ScaleY;
 
-        return clampFace(x1Orig, y1Orig, x2Orig - x1Orig, y2Orig - y1Orig, confidence, frameWidth, frameHeight);
+        return ClampFace(x1Orig, y1Orig, x2Orig - x1Orig, y2Orig - y1Orig, confidence, frameWidth, frameHeight);
     }
 
-    private static OrtOutput? findOutputByName(IReadOnlyList<OrtOutput> outputs, string expectedName)
+    private static OrtOutput? FindOutputByName(IReadOnlyList<OrtOutput> outputs, string expectedName)
     {
-        return outputs.FirstOrDefault(output => string.Equals(output.Name, expectedName, StringComparison.OrdinalIgnoreCase)) ??
-               outputs.FirstOrDefault(output => output.Name.EndsWith($"/{expectedName}", StringComparison.OrdinalIgnoreCase)) ??
+        return outputs.FirstOrDefault(output =>
+                   string.Equals(output.Name, expectedName, StringComparison.OrdinalIgnoreCase)) ??
+               outputs.FirstOrDefault(output =>
+                   output.Name.EndsWith($"/{expectedName}", StringComparison.OrdinalIgnoreCase)) ??
                outputs.FirstOrDefault(output => output.Name.Contains(expectedName, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static int inferOutputColumns(OrtOutput output)
+    private static int InferOutputColumns(OrtOutput output)
     {
         if (output.LastDimension is 2 or 4 or 6)
             return output.LastDimension;
@@ -795,7 +763,7 @@ public partial class CameraDrawEngine
         return 0;
     }
 
-    private static IReadOnlyList<DetectedFace> applyNms(
+    private static IReadOnlyList<DetectedFace> ApplyNms(
         IReadOnlyList<DetectedFace> candidates,
         float scoreThreshold,
         float iouThreshold)
@@ -820,7 +788,7 @@ public partial class CameraDrawEngine
             for (var i = order.Count - 1; i >= 0; i--)
             {
                 var other = order[i];
-                if (intersectionOverUnion(candidates[current], candidates[other]) >= iouThreshold)
+                if (IntersectionOverUnion(candidates[current], candidates[other]) >= iouThreshold)
                     order.RemoveAt(i);
             }
         }
@@ -828,16 +796,18 @@ public partial class CameraDrawEngine
         return picked.Select(index => candidates[index]).ToList();
     }
 
-    private static IReadOnlyList<FaceBox> mergeFaceBoxes(int frameWidth, int frameHeight, IReadOnlyList<DetectedFace> faces)
+    private static IReadOnlyList<FaceBox> MergeFaceBoxes(int frameWidth, int frameHeight,
+        IReadOnlyList<DetectedFace> faces)
     {
         var cleaned = faces
-            .Select(face => clampFace(face.X, face.Y, face.Width, face.Height, face.Confidence, frameWidth, frameHeight))
+            .Select(face =>
+                ClampFace(face.X, face.Y, face.Width, face.Height, face.Confidence, frameWidth, frameHeight))
             .Where(face => face != null)
             .Select(face => face!)
             .ToList();
 
         if (cleaned.Count <= 1)
-            return cleaned.Select(toFaceBox).ToList();
+            return cleaned.Select(ToFaceBox).ToList();
 
         var frameArea = frameWidth * frameHeight;
         var averageArea = cleaned.Average(face => Math.Max(1.0f, face.Width) * Math.Max(1.0f, face.Height));
@@ -845,19 +815,15 @@ public partial class CameraDrawEngine
         var parent = Enumerable.Range(0, cleaned.Count).ToArray();
 
         for (var i = 0; i < cleaned.Count; i++)
-        {
-            for (var j = i + 1; j < cleaned.Count; j++)
-            {
-                if (intersectionOverUnion(cleaned[i], cleaned[j]) >= 0.2f ||
-                    treatAsParts && expandedIntersects(cleaned[i], cleaned[j]))
-                    union(parent, i, j);
-            }
-        }
+        for (var j = i + 1; j < cleaned.Count; j++)
+            if (IntersectionOverUnion(cleaned[i], cleaned[j]) >= 0.2f ||
+                (treatAsParts && ExpandedIntersects(cleaned[i], cleaned[j])))
+                Union(parent, i, j);
 
         var clusters = new Dictionary<int, List<DetectedFace>>();
         for (var i = 0; i < cleaned.Count; i++)
         {
-            var root = find(parent, i);
+            var root = Find(parent, i);
             if (!clusters.TryGetValue(root, out var cluster))
             {
                 cluster = [];
@@ -875,7 +841,7 @@ public partial class CameraDrawEngine
                 var x2 = cluster.Max(face => face.X + face.Width);
                 var y2 = cluster.Max(face => face.Y + face.Height);
                 var confidence = cluster.Max(face => face.Confidence);
-                return toFaceBox(new DetectedFace(x1, y1, x2 - x1, y2 - y1, confidence));
+                return ToFaceBox(new DetectedFace(x1, y1, x2 - x1, y2 - y1, confidence));
             })
             .OrderBy(face => face.X1)
             .ThenBy(face => face.Y1)
@@ -883,7 +849,8 @@ public partial class CameraDrawEngine
             .ToList();
     }
 
-    private static DetectedFace? clampFace(float x, float y, float width, float height, float confidence, int frameWidth, int frameHeight)
+    private static DetectedFace? ClampFace(float x, float y, float width, float height, float confidence,
+        int frameWidth, int frameHeight)
     {
         var x1 = Math.Clamp(x, 0, Math.Max(0, frameWidth - 1));
         var y1 = Math.Clamp(y, 0, Math.Max(0, frameHeight - 1));
@@ -895,12 +862,12 @@ public partial class CameraDrawEngine
         return new DetectedFace(x1, y1, x2 - x1, y2 - y1, confidence);
     }
 
-    private static FaceBox toFaceBox(DetectedFace face)
+    private static FaceBox ToFaceBox(DetectedFace face)
     {
         return new FaceBox(face.X, face.Y, face.X + face.Width, face.Y + face.Height, face.Confidence);
     }
 
-    private static float intersectionOverUnion(DetectedFace a, DetectedFace b)
+    private static float IntersectionOverUnion(DetectedFace a, DetectedFace b)
     {
         var x1 = Math.Max(a.X, b.X);
         var y1 = Math.Max(a.Y, b.Y);
@@ -915,14 +882,14 @@ public partial class CameraDrawEngine
         return intersection / (areaA + areaB - intersection);
     }
 
-    private static bool expandedIntersects(DetectedFace a, DetectedFace b)
+    private static bool ExpandedIntersects(DetectedFace a, DetectedFace b)
     {
         var margin = 0.6f * Math.Min(Math.Max(a.Width, a.Height), Math.Max(b.Width, b.Height));
         return Math.Min(a.X + a.Width + margin, b.X + b.Width + margin) - Math.Max(a.X - margin, b.X - margin) > 0 &&
                Math.Min(a.Y + a.Height + margin, b.Y + b.Height + margin) - Math.Max(a.Y - margin, b.Y - margin) > 0;
     }
 
-    private static int find(int[] parent, int index)
+    private static int Find(int[] parent, int index)
     {
         while (parent[index] != index)
         {
@@ -933,11 +900,33 @@ public partial class CameraDrawEngine
         return parent[index];
     }
 
-    private static void union(int[] parent, int left, int right)
+    private static void Union(int[] parent, int left, int right)
     {
-        var leftRoot = find(parent, left);
-        var rightRoot = find(parent, right);
+        var leftRoot = Find(parent, left);
+        var rightRoot = Find(parent, right);
         if (leftRoot != rightRoot)
             parent[rightRoot] = leftRoot;
+    }
+
+    private sealed record DetectedFace(float X, float Y, float Width, float Height, float Confidence);
+
+    private enum DetectorBackend
+    {
+        YuNet,
+        Ultralight,
+        Damoyolo
+    }
+
+    private sealed record TensorPreprocessResult(
+        DenseTensor<float> Tensor,
+        float ScaleX,
+        float ScaleY,
+        int PadX,
+        int PadY,
+        Size InputSize);
+
+    private sealed record OrtOutput(string Name, int[] Dimensions, float[] Data)
+    {
+        public int LastDimension => Dimensions.Length == 0 ? 0 : Dimensions[^1];
     }
 }

@@ -19,28 +19,22 @@ public partial class AboutSettingsPage : UserControl
     private void OpenLink(string url)
     {
         if (OperatingSystem.IsWindows())
-        {
             Process.Start(new ProcessStartInfo(url)
             {
                 UseShellExecute = true
             });
-        }
         else if (OperatingSystem.IsLinux())
-        {
             Process.Start(new ProcessStartInfo("xdg-open", url)
             {
                 UseShellExecute = false
             });
-        }
         else if (OperatingSystem.IsMacOS())
-        {
             Process.Start(new ProcessStartInfo("open", url)
             {
                 UseShellExecute = false
             });
-        }
     }
-    
+
     private void UriNavigationCommands_OnClick(object sender, RoutedEventArgs e)
     {
         var url = e.Source switch
@@ -50,9 +44,6 @@ public partial class AboutSettingsPage : UserControl
             _ => null
         };
 
-        if (url != null)
-        {
-            OpenLink(url);
-        }
+        if (url != null) OpenLink(url);
     }
 }

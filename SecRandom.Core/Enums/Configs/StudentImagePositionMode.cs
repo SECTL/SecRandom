@@ -5,5 +5,5 @@ public enum StudentImagePositionMode
     Left,
     Top,
     Right,
-    Bottom,
+    Bottom
 }

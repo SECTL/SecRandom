@@ -9,14 +9,14 @@ namespace SecRandom.ViewModels;
 public partial class MainViewModel(MainConfigHandler configHandler)
     : ViewModelBase(configHandler)
 {
+    [ObservableProperty] private object? _drawerContent = false;
     [ObservableProperty] private object? _frameContent;
-    [ObservableProperty] private PageInfo? _selectedPageInfo = null;
-    [ObservableProperty] private NavigationViewItemBase? _selectedNavigationViewItem = null;
+
+    [ObservableProperty] private bool _isDrawerOpen;
+    [ObservableProperty] private bool _isRequestedRestart;
+    [ObservableProperty] private NavigationViewItemBase? _selectedNavigationViewItem;
+    [ObservableProperty] private PageInfo? _selectedPageInfo;
     public ObservableCollection<NavigationViewItemBase> FlattenNavigationItems { get; } = [];
     public ObservableCollection<NavigationViewItemBase> NavigationViewItems { get; } = [];
     public ObservableCollection<NavigationViewItemBase> NavigationViewFooterItems { get; } = [];
-
-    [ObservableProperty] private bool _isDrawerOpen = false;
-    [ObservableProperty] private object? _drawerContent = false;
-    [ObservableProperty] private bool _isRequestedRestart = false;
 }

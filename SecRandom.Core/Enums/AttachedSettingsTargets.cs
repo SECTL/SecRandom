@@ -7,5 +7,5 @@ public enum AttachedSettingsTargets
     Student = 1,
     Prize = 2,
     StudentList = 4,
-    PrizeList = 8,
+    PrizeList = 8
 }

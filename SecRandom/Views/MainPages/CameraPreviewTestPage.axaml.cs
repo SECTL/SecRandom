@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -21,41 +22,30 @@ using SecRandom.Core.Services.Config;
 
 namespace SecRandom.Views.MainPages;
 
-[PageInfo("main.cameraPreviewTest", "\uE722", null, useFullWidth: true, hidePageTitle: true)]
+[PageInfo("main.cameraPreviewTest", "\uE722", useFullWidth: true, hidePageTitle: true)]
 public partial class CameraPreviewTestPage : UserControl
 {
-    private sealed record CameraOption(string Name, string Source)
-    {
-        public override string ToString() => string.IsNullOrWhiteSpace(Name) ? Source : Name;
-    }
-
-    private sealed record ResolutionOption(int Width, int Height, string PixelFormat, double Fps)
-    {
-        public string Text => $"{Width}x{Height} · {PixelFormat} · {Fps:0.#} FPS";
-        public override string ToString() => Text;
-    }
-
     private readonly CameraDrawEngine _cameraDrawEngine = new();
-    private CancellationTokenSource? _previewCancellation;
-    private Task? _previewTask;
     private ComboBox? _cameraComboBox;
-    private ComboBox? _resolutionComboBox;
-    private ComboBox? _modelComboBox;
-    private NumericUpDown? _inputWidthBox;
-    private NumericUpDown? _inputHeightBox;
-    private NumericUpDown? _pickingSecondsBox;
-    private CameraPreviewSurface? _previewSurface;
     private TextBlock? _emptyPreviewTextBlock;
-    private TextBlock? _statusTextBlock;
     private TextBlock? _faceCountTextBlock;
     private TextBlock? _frameInfoTextBlock;
-    private TextBlock? _modeTextBlock;
-    private Button? _startStopButton;
-    private Button? _modeButton;
-    private bool _isPickingMode;
+    private NumericUpDown? _inputHeightBox;
+    private NumericUpDown? _inputWidthBox;
     private bool _isLoadingConfig;
+    private bool _isPickingMode;
     private int _lastFaceCount;
     private long _lastFrameId;
+    private Button? _modeButton;
+    private ComboBox? _modelComboBox;
+    private TextBlock? _modeTextBlock;
+    private NumericUpDown? _pickingSecondsBox;
+    private CancellationTokenSource? _previewCancellation;
+    private CameraPreviewSurface? _previewSurface;
+    private Task? _previewTask;
+    private ComboBox? _resolutionComboBox;
+    private Button? _startStopButton;
+    private TextBlock? _statusTextBlock;
 
     public CameraPreviewTestPage()
     {
@@ -63,7 +53,7 @@ public partial class CameraPreviewTestPage : UserControl
         _cameraDrawEngine.FrameReady += CameraDrawEngineOnFrameReady;
     }
 
-    private void OnLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         _cameraComboBox = this.FindControl<ComboBox>("CameraComboBox");
         _resolutionComboBox = this.FindControl<ComboBox>("ResolutionComboBox");
@@ -80,31 +70,31 @@ public partial class CameraPreviewTestPage : UserControl
         _startStopButton = this.FindControl<Button>("StartStopButton");
         _modeButton = this.FindControl<Button>("ModeButton");
 
-        ensureCameraConfig();
-        loadConfigurationOptions();
-        updateModeTexts();
+        EnsureCameraConfig();
+        LoadConfigurationOptions();
+        UpdateModeTexts();
     }
 
-    private async void OnUnloaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private async void OnUnloaded(object? sender, RoutedEventArgs e)
     {
         _cameraDrawEngine.FrameReady -= CameraDrawEngineOnFrameReady;
-        await stopPreviewAsync();
+        await StopPreviewAsync();
         _previewSurface?.Clear();
     }
 
-    private async void StartStopButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private async void StartStopButton_OnClick(object? sender, RoutedEventArgs e)
     {
         if (_previewCancellation == null)
-            await startPreviewAsync();
+            await StartPreviewAsync();
         else
-            await stopPreviewAsync();
+            await StopPreviewAsync();
     }
 
-    private void ModeButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void ModeButton_OnClick(object? sender, RoutedEventArgs e)
     {
         _isPickingMode = !_isPickingMode;
         _previewSurface?.SetPickingMode(_isPickingMode);
-        updateModeTexts();
+        UpdateModeTexts();
     }
 
     private void CameraComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -112,9 +102,9 @@ public partial class CameraPreviewTestPage : UserControl
         if (_isLoadingConfig || _cameraComboBox?.SelectedItem is not CameraOption camera)
             return;
 
-        var config = getFaceDetectorSettingsConfig();
+        var config = GetFaceDetectorSettingsConfig();
         config.CameraSource = camera.Source;
-        populateResolutionOptions(camera.Source, config);
+        PopulateResolutionOptions(camera.Source, config);
         if (_resolutionComboBox?.SelectedItem is ResolutionOption resolution)
             config.CameraDisplayResolutionMap[camera.Source] = $"{resolution.Width}x{resolution.Height}";
     }
@@ -124,7 +114,7 @@ public partial class CameraPreviewTestPage : UserControl
         if (_isLoadingConfig || _resolutionComboBox?.SelectedItem is not ResolutionOption resolution)
             return;
 
-        var config = getFaceDetectorSettingsConfig();
+        var config = GetFaceDetectorSettingsConfig();
         if (!string.IsNullOrWhiteSpace(config.CameraSource))
             config.CameraDisplayResolutionMap[config.CameraSource] = $"{resolution.Width}x{resolution.Height}";
     }
@@ -134,7 +124,7 @@ public partial class CameraPreviewTestPage : UserControl
         if (_isLoadingConfig || _modelComboBox?.SelectedItem is not string model)
             return;
 
-        getFaceDetectorSettingsConfig().DetectorType = model;
+        GetFaceDetectorSettingsConfig().DetectorType = model;
     }
 
     private void InputSizeBox_OnValueChanged(object? sender, NumericUpDownValueChangedEventArgs e)
@@ -142,7 +132,7 @@ public partial class CameraPreviewTestPage : UserControl
         if (_isLoadingConfig || _inputWidthBox?.Value is null || _inputHeightBox?.Value is null)
             return;
 
-        var config = getFaceDetectorSettingsConfig();
+        var config = GetFaceDetectorSettingsConfig();
         config.ModelInputWidth = decimal.ToInt32(_inputWidthBox.Value.Value);
         config.ModelInputHeight = decimal.ToInt32(_inputHeightBox.Value.Value);
     }
@@ -152,12 +142,12 @@ public partial class CameraPreviewTestPage : UserControl
         if (_isLoadingConfig || _pickingSecondsBox?.Value is null)
             return;
 
-        getFaceDetectorSettingsConfig().PickingDurationSeconds = decimal.ToInt32(_pickingSecondsBox.Value.Value);
+        GetFaceDetectorSettingsConfig().PickingDurationSeconds = decimal.ToInt32(_pickingSecondsBox.Value.Value);
     }
 
-    private async Task startPreviewAsync()
+    private async Task StartPreviewAsync()
     {
-        ensureCameraConfig();
+        EnsureCameraConfig();
 
         _previewCancellation = new CancellationTokenSource();
         _startStopButton!.Content = "停止预览";
@@ -168,7 +158,7 @@ public partial class CameraPreviewTestPage : UserControl
         await Task.Yield();
     }
 
-    private async Task stopPreviewAsync()
+    private async Task StopPreviewAsync()
     {
         var cancellation = _previewCancellation;
         if (cancellation == null)
@@ -198,10 +188,10 @@ public partial class CameraPreviewTestPage : UserControl
 
     private void CameraDrawEngineOnFrameReady(object? sender, CameraFramePacket packet)
     {
-        Dispatcher.UIThread.Post(() => updateFrame(packet));
+        Dispatcher.UIThread.Post(() => UpdateFrame(packet));
     }
 
-    private void updateFrame(CameraFramePacket packet)
+    private void UpdateFrame(CameraFramePacket packet)
     {
         _lastFaceCount = packet.Faces.Count;
         _lastFrameId = packet.FrameId;
@@ -215,10 +205,10 @@ public partial class CameraPreviewTestPage : UserControl
             DetectionState.Error => "检测器返回错误，仍继续显示画面",
             _ => "正在显示摄像头画面"
         };
-        updateModeTexts();
+        UpdateModeTexts();
     }
 
-    private void updateModeTexts()
+    private void UpdateModeTexts()
     {
         if (_modeTextBlock != null)
             _modeTextBlock.Text = _isPickingMode ? "抽取模式" : "预览模式";
@@ -230,9 +220,9 @@ public partial class CameraPreviewTestPage : UserControl
             _modeButton.Content = _isPickingMode ? $"切换到预览（{_lastFaceCount} 人）" : $"切换到抽取（{_lastFaceCount} 人）";
     }
 
-    private static void ensureCameraConfig()
+    private static void EnsureCameraConfig()
     {
-        var config = getFaceDetectorSettingsConfig();
+        var config = GetFaceDetectorSettingsConfig();
         if (!string.IsNullOrWhiteSpace(config.CameraSource) &&
             config.CameraDisplayResolutionMap.ContainsKey(config.CameraSource))
             return;
@@ -252,22 +242,24 @@ public partial class CameraPreviewTestPage : UserControl
         config.CameraDisplayResolutionMap[device.Source] = $"{resolution.Width}x{resolution.Height}";
     }
 
-    private void loadConfigurationOptions()
+    private void LoadConfigurationOptions()
     {
-        var config = getFaceDetectorSettingsConfig();
+        var config = GetFaceDetectorSettingsConfig();
         _isLoadingConfig = true;
         try
         {
             var devices = CameraDrawEngine.GetAllCameraDevices().ToList();
             var cameras = devices.Select(device => new CameraOption(device.Name, device.Source)).ToList();
             _cameraComboBox!.ItemsSource = cameras;
-            _cameraComboBox.SelectedItem = cameras.FirstOrDefault(item => item.Source == config.CameraSource) ?? cameras.FirstOrDefault();
+            _cameraComboBox.SelectedItem = cameras.FirstOrDefault(item => item.Source == config.CameraSource) ??
+                                           cameras.FirstOrDefault();
 
-            populateResolutionOptions(config.CameraSource, config);
+            PopulateResolutionOptions(config.CameraSource, config);
 
-            var models = listDetectorModels().ToList();
+            var models = ListDetectorModels().ToList();
             _modelComboBox!.ItemsSource = models;
-            _modelComboBox.SelectedItem = models.FirstOrDefault(model => model == config.DetectorType) ?? models.FirstOrDefault();
+            _modelComboBox.SelectedItem =
+                models.FirstOrDefault(model => model == config.DetectorType) ?? models.FirstOrDefault();
 
             _inputWidthBox!.Value = config.ModelInputWidth;
             _inputHeightBox!.Value = config.ModelInputHeight;
@@ -279,7 +271,7 @@ public partial class CameraPreviewTestPage : UserControl
         }
     }
 
-    private void populateResolutionOptions(string cameraSource, FaceDetectorSettingsConfig config)
+    private void PopulateResolutionOptions(string cameraSource, FaceDetectorSettingsConfig config)
     {
         var device = CameraDrawEngine.GetAllCameraDevices().FirstOrDefault(item => item.Source == cameraSource);
         var resolutions = device?.Resolutions
@@ -290,17 +282,18 @@ public partial class CameraPreviewTestPage : UserControl
 
         _resolutionComboBox!.ItemsSource = resolutions;
         config.CameraDisplayResolutionMap.TryGetValue(cameraSource, out var selectedResolutionText);
-        _resolutionComboBox.SelectedItem = resolutions.FirstOrDefault(item => $"{item.Width}x{item.Height}" == selectedResolutionText) ??
-                                           resolutions.FirstOrDefault(item => item.Width == 640 && item.Height == 480) ??
-                                           resolutions.FirstOrDefault();
+        _resolutionComboBox.SelectedItem =
+            resolutions.FirstOrDefault(item => $"{item.Width}x{item.Height}" == selectedResolutionText) ??
+            resolutions.FirstOrDefault(item => item.Width == 640 && item.Height == 480) ??
+            resolutions.FirstOrDefault();
     }
 
-    private static IEnumerable<string> listDetectorModels()
+    private static IEnumerable<string> ListDetectorModels()
     {
         var folders = new[]
         {
             Path.Combine(AppContext.BaseDirectory, "data", "cv_models"),
-            findWorkspaceModelDirectory()
+            FindWorkspaceModelDirectory()
         };
 
         return folders
@@ -313,7 +306,7 @@ public partial class CameraPreviewTestPage : UserControl
             .OrderBy(name => name);
     }
 
-    private static string? findWorkspaceModelDirectory()
+    private static string? FindWorkspaceModelDirectory()
     {
         for (var current = new DirectoryInfo(AppContext.BaseDirectory); current != null; current = current.Parent)
         {
@@ -325,7 +318,7 @@ public partial class CameraPreviewTestPage : UserControl
         return null;
     }
 
-    private static FaceDetectorSettingsConfig getFaceDetectorSettingsConfig()
+    private static FaceDetectorSettingsConfig GetFaceDetectorSettingsConfig()
     {
         object handler = IAppHost.GetService<MainConfigHandler>();
         var config = handler.GetType().GetProperty("Data")?.GetValue(handler);
@@ -340,6 +333,24 @@ public partial class CameraPreviewTestPage : UserControl
     {
         AvaloniaXamlLoader.Load(this);
     }
+
+    private sealed record CameraOption(string Name, string Source)
+    {
+        public override string ToString()
+        {
+            return string.IsNullOrWhiteSpace(Name) ? Source : Name;
+        }
+    }
+
+    private sealed record ResolutionOption(int Width, int Height, string PixelFormat, double Fps)
+    {
+        public string Text => $"{Width}x{Height} · {PixelFormat} · {Fps:0.#} FPS";
+
+        public override string ToString()
+        {
+            return Text;
+        }
+    }
 }
 
 public sealed class CameraPreviewSurface : Control
@@ -351,8 +362,8 @@ public sealed class CameraPreviewSurface : Control
 
     private WriteableBitmap? _bitmap;
     private FaceBox[] _faces = [];
-    private int _frameWidth;
     private int _frameHeight;
+    private int _frameWidth;
     private bool _isPickingMode;
 
     public void SetFrame(CameraFramePacket packet, bool isPickingMode)
@@ -374,7 +385,7 @@ public sealed class CameraPreviewSurface : Control
 
         using (var framebuffer = _bitmap.Lock())
         {
-            copyBgraBuffer(packet.BgraBuffer, framebuffer, packet.Width, packet.Height);
+            CopyBgraBuffer(packet.BgraBuffer, framebuffer, packet.Width, packet.Height);
         }
 
         InvalidateVisual();
@@ -404,7 +415,7 @@ public sealed class CameraPreviewSurface : Control
         if (_bitmap == null || _frameWidth <= 0 || _frameHeight <= 0)
             return;
 
-        var imageRect = getContainRect(Bounds.Size, _frameWidth, _frameHeight);
+        var imageRect = GetContainRect(Bounds.Size, _frameWidth, _frameHeight);
         context.DrawImage(_bitmap, imageRect);
 
         var scale = imageRect.Width / _frameWidth;
@@ -429,7 +440,7 @@ public sealed class CameraPreviewSurface : Control
         base.OnDetachedFromVisualTree(e);
     }
 
-    private static Rect getContainRect(Size bounds, int width, int height)
+    private static Rect GetContainRect(Size bounds, int width, int height)
     {
         var scale = Math.Min(bounds.Width / width, bounds.Height / height);
         var imageWidth = width * scale;
@@ -437,7 +448,7 @@ public sealed class CameraPreviewSurface : Control
         return new Rect((bounds.Width - imageWidth) / 2, (bounds.Height - imageHeight) / 2, imageWidth, imageHeight);
     }
 
-    private static void copyBgraBuffer(byte[] source, ILockedFramebuffer target, int width, int height)
+    private static void CopyBgraBuffer(byte[] source, ILockedFramebuffer target, int width, int height)
     {
         var sourceStride = width * 4;
         if (target.RowBytes == sourceStride)

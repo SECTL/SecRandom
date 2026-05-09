@@ -11,29 +11,30 @@ namespace SecRandom.ViewModels;
 
 public partial class SettingsViewModel : ObservableRecipient
 {
-    public bool IsWindows => OperatingSystem.IsWindows();
-    
-    [ObservableProperty] private object? _frameContent;
-    [ObservableProperty] private PageInfo? _selectedPageInfo = null;
-    [ObservableProperty] private NavigationViewItemBase? _selectedNavigationViewItem = null;
-    public ObservableCollection<NavigationViewItemBase> FlattenNavigationItems { get; } = [];
-    public ObservableCollection<NavigationViewItemBase> NavigationViewItems { get; } = [];
-    public ObservableCollection<NavigationViewItemBase> NavigationViewFooterItems { get; } = [];
-
-    public ObservableCollection<string> NavigationHistory { get; } = [];
-    [ObservableProperty] private bool _canGoBack = false;
-
-    [ObservableProperty] private bool _isDrawerOpen = false;
+    [ObservableProperty] private bool _canGoBack;
     [ObservableProperty] private object? _drawerContent = false;
-    [ObservableProperty] private bool _isRequestedRestart = false;
 
-    public SettingsSearchService SettingsSearchService { get; }
-    public List<SettingsMetadata> SettingsMetadata { get; }
-    [ObservableProperty] private SettingsMetadata? _selectedSettings = null;
+    [ObservableProperty] private object? _frameContent;
+
+    [ObservableProperty] private bool _isDrawerOpen;
+    [ObservableProperty] private bool _isRequestedRestart;
+    [ObservableProperty] private NavigationViewItemBase? _selectedNavigationViewItem;
+    [ObservableProperty] private PageInfo? _selectedPageInfo;
+    [ObservableProperty] private SettingsMetadata? _selectedSettings;
 
     public SettingsViewModel(SettingsSearchService settingsSearchService)
     {
         SettingsSearchService = settingsSearchService;
         SettingsMetadata = SettingsSearchService.SettingsMetadata;
     }
+
+    public bool IsWindows => OperatingSystem.IsWindows();
+    public ObservableCollection<NavigationViewItemBase> FlattenNavigationItems { get; } = [];
+    public ObservableCollection<NavigationViewItemBase> NavigationViewItems { get; } = [];
+    public ObservableCollection<NavigationViewItemBase> NavigationViewFooterItems { get; } = [];
+
+    public ObservableCollection<string> NavigationHistory { get; } = [];
+
+    public SettingsSearchService SettingsSearchService { get; }
+    public List<SettingsMetadata> SettingsMetadata { get; }
 }

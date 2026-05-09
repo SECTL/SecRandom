@@ -12,9 +12,8 @@ public class ColorJsonConverter : JsonConverter<Color>
     public override Color Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType == JsonTokenType.String)
-        {
-            return ColorToHexConverter.ParseHexString(reader.GetString() ?? "", AlphaComponentPosition.Trailing) ?? default;
-        }
+            return ColorToHexConverter.ParseHexString(reader.GetString() ?? "", AlphaComponentPosition.Trailing) ??
+                   default;
 
         if (reader.TokenType == JsonTokenType.StartObject)
         {
@@ -56,7 +55,7 @@ public class ColorJsonConverter : JsonConverter<Color>
 
             return new Color(a, r, g, b);
         }
-        
+
         reader.Skip();
         return default;
     }
@@ -64,6 +63,7 @@ public class ColorJsonConverter : JsonConverter<Color>
     /// <inheritdoc />
     public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions options)
     {
-        writer.WriteStringValue(ColorToHexConverter.ToHexString(value, AlphaComponentPosition.Trailing, includeSymbol:true));
+        writer.WriteStringValue(ColorToHexConverter.ToHexString(value, AlphaComponentPosition.Trailing,
+            includeSymbol: true));
     }
 }

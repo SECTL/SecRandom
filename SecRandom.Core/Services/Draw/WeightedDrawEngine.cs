@@ -45,7 +45,7 @@ public class WeightedDrawEngine<TCandidate>
             };
 
         // 获取总权重
-        double totalW = request.Candidates.Sum(c => c.Weight);
+        var totalW = request.Candidates.Sum(c => c.Weight);
 
         if (totalW <= 0)
             return new DrawResult<TCandidate>
@@ -55,10 +55,10 @@ public class WeightedDrawEngine<TCandidate>
 
         var candidates = request.Candidates.ToList();
         List<TCandidate> res = [];
-        for (int i = 1; i <= request.Count; i++)
+        for (var i = 1; i <= request.Count; i++)
         {
-            double r = _random.NextDouble() * totalW;
-            for (int j = 0; j < candidates.Count; j++)
+            var r = _random.NextDouble() * totalW;
+            for (var j = 0; j < candidates.Count; j++)
             {
                 r -= candidates[j].Weight;
                 if (r < 0)

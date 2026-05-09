@@ -11,7 +11,7 @@ public class ToggleTabStripBehavior : Behavior<TabStrip>
 {
     [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "get_PseudoClasses")]
     private static extern IPseudoClasses GetPseudoClasses(StyledElement element);
-    
+
     protected override void OnAttached()
     {
         if (AssociatedObject != null)
@@ -19,6 +19,7 @@ public class ToggleTabStripBehavior : Behavior<TabStrip>
             AssociatedObject.PointerPressed += AssociatedObjectOnPointerPressed;
             AssociatedObject.PointerReleased += AssociatedObjectOnPointerReleased;
         }
+
         base.OnAttached();
     }
 
@@ -36,10 +37,7 @@ public class ToggleTabStripBehavior : Behavior<TabStrip>
     private void AssociatedObjectOnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         e.Handled = true;
-        if (AssociatedObject != null)
-        {
-            GetPseudoClasses(AssociatedObject).Set(":pointerdown", true);
-        }
+        if (AssociatedObject != null) GetPseudoClasses(AssociatedObject).Set(":pointerdown", true);
     }
 
     protected override void OnDetaching()
@@ -50,6 +48,7 @@ public class ToggleTabStripBehavior : Behavior<TabStrip>
             AssociatedObject.PointerPressed -= AssociatedObjectOnPointerPressed;
             AssociatedObject.PointerReleased -= AssociatedObjectOnPointerReleased;
         }
+
         base.OnDetaching();
     }
 }

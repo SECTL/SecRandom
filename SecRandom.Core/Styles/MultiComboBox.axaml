@@ -7,7 +7,7 @@
         <Border Padding="50 50 50 300">
             <StackPanel Spacing="10">
                 <Button>Remove Focus</Button>
-                
+
                 <TextBlock>FluentAvalonia.UI:</TextBlock>
                 <ComboBox Width="200">
                     <ComboBoxItem>111</ComboBoxItem>
@@ -16,7 +16,7 @@
                     <ComboBoxItem>444</ComboBoxItem>
                     <ComboBoxItem>555</ComboBoxItem>
                 </ComboBox>
-                
+
                 <TextBlock>Ursa.Avalonia:</TextBlock>
                 <u:MultiComboBox Width="200">
                     <u:MultiComboBoxItem>111</u:MultiComboBoxItem>
@@ -69,7 +69,7 @@
         <Setter Property="RadiusX" Value="{DynamicResource ComboBoxItemPillCornerRadius}" />
         <Setter Property="RadiusY" Value="{DynamicResource ComboBoxItemPillCornerRadius}" />
     </ControlTheme>
-    
+
     <ControlTheme TargetType="u:MultiComboBox" x:Key="{x:Type u:MultiComboBox}">
         <Setter Property="Focusable" Value="True" />
         <Setter Property="Padding" Value="{DynamicResource ComboBoxPadding}" />
@@ -98,7 +98,7 @@
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
                                     MinWidth="{DynamicResource ComboBoxThemeMinWidth}"
-                                    CornerRadius="{TemplateBinding CornerRadius}"/>
+                                    CornerRadius="{TemplateBinding CornerRadius}" />
 
                             <Border x:Name="HighlightBackground"
                                     Grid.Row="1"
@@ -115,7 +115,7 @@
                                        Margin="{TemplateBinding Padding}"
                                        Text="{TemplateBinding Watermark}"
                                        IsVisible="False" />
-                            
+
                             <Grid
                                 ColumnDefinitions="Auto * Auto"
                                 x:Name="ContentPresenter"
@@ -133,7 +133,7 @@
                                     Foreground="{DynamicResource TextBoxInnerForeground}"
                                     IsVisible="{TemplateBinding InnerLeftContent,
                                                             Converter={x:Static ObjectConverters.IsNotNull}}" />
-                                
+
                                 <u:MultiComboBoxSelectedItemList
                                     Grid.Column="1"
                                     VerticalAlignment="Center"
@@ -146,7 +146,7 @@
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                 </u:MultiComboBoxSelectedItemList>
-                                
+
                                 <ContentPresenter
                                     Grid.Column="2"
                                     Margin="8,0"
@@ -196,9 +196,10 @@
                                         HorizontalAlignment="Stretch"
                                         CornerRadius="{DynamicResource OverlayCornerRadius}"
                                         BackgroundSizing="InnerBorderEdge">
-                                    <ScrollViewer HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
-                                                  VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}"
-                                                  IsDeferredScrollingEnabled="{TemplateBinding (ScrollViewer.IsDeferredScrollingEnabled)}">
+                                    <ScrollViewer
+                                        HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                                        VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}"
+                                        IsDeferredScrollingEnabled="{TemplateBinding (ScrollViewer.IsDeferredScrollingEnabled)}">
                                         <ItemsPresenter Name="PART_ItemsPresenter"
                                                         Margin="{DynamicResource ComboBoxDropdownContentMargin}"
                                                         ItemsPanel="{TemplateBinding ItemsPanel}" />
@@ -268,7 +269,7 @@
         </Style>
 
         <Style Selector="^:error /template/ Border#Background">
-            <Setter Property="BorderBrush" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemFillColorCriticalBrush}" />
         </Style>
     </ControlTheme>
 
@@ -283,7 +284,7 @@
         <Setter Property="Background" Value="{DynamicResource ComboBoxItemBackground}" />
         <Setter Property="Padding" Value="{DynamicResource ComboBoxItemThemePadding}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-        
+
         <!-- 累了，先这样吧，后续再实现 tablet 切换ui -->
         <Setter Property="Template">
             <ControlTemplate TargetType="u:MultiComboBoxItem">
@@ -292,7 +293,7 @@
                     Padding="{TemplateBinding Padding}"
                     Background="{TemplateBinding Background}"
                     BorderBrush="{TemplateBinding BorderBrush}"
-                    BorderThickness="{TemplateBinding BorderThickness}" 
+                    BorderThickness="{TemplateBinding BorderThickness}"
                     CornerRadius="{TemplateBinding CornerRadius}"
                     Margin="5,2,5,2"
                     TemplatedControl.IsTemplateFocusTarget="True">
@@ -308,13 +309,13 @@
                                               Background="{x:Null}"
                                               BorderBrush="{x:Null}"
                                               CornerRadius="{TemplateBinding CornerRadius}"
-                                              BorderThickness="0"/>
+                                              BorderThickness="0" />
                         </CheckBox>
                     </Grid>
                 </Border>
             </ControlTemplate>
         </Setter>
-        
+
         <!-- <Setter Property="Template"> -->
         <!--     <ControlTemplate TargetType="u:MultiComboBoxItem"> -->
         <!--         <Border -->
@@ -348,7 +349,7 @@
         <!--         </Border> -->
         <!--     </ControlTemplate> -->
         <!-- </Setter> -->
-        
+
         <Style Selector="^:pointerover">
             <Style Selector="^ /template/ Border#RootBorder">
                 <Setter Property="Background" Value="{DynamicResource ComboBoxItemBackgroundPointerOver}" />
@@ -393,7 +394,7 @@
         </Style>
 
         <!-- WinUI styles not implemented: SelectedUnfocused  -->
-        
+
         <Style Selector="^:selected:disabled">
             <Style Selector="^ /template/ Rectangle#Pill">
                 <Setter Property="Opacity" Value="1" />
@@ -442,7 +443,7 @@
             </ControlTemplate>
         </Setter>
     </ControlTheme>
-    
+
     <ControlTheme x:Key="{x:Type u:ClosableTag}" TargetType="u:ClosableTag">
         <Setter Property="VerticalAlignment" Value="Stretch" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
@@ -467,7 +468,7 @@
                             FontSize="12"
                             Foreground="{TemplateBinding Foreground}"
                             TextTrimming="CharacterEllipsis" />
-                        
+
                         <Button
                             Name="{x:Static u:ClosableTag.PART_CloseButton}"
                             Theme="{StaticResource TransparentButton}"

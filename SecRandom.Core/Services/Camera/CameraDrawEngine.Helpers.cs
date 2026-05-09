@@ -11,13 +11,13 @@ public partial class CameraDrawEngine
         var devices = new CaptureDevices();
         foreach (var desc in devices.GetDescriptors())
         {
-            CameraDeviceInfo dev = new CameraDeviceInfo
+            var dev = new CameraDeviceInfo
             (
-                Name: desc.Name,
-                Source: desc.Identity?.ToString() ?? string.Empty,
-                Resolutions: desc.Characteristics.Select<VideoCharacteristics, CameraResolutionInfo>(characteristics =>
-                    new CameraResolutionInfo(Width: characteristics.Width, Height: characteristics.Height,
-                        PixelFormat: characteristics.RawPixelFormat, Fps: characteristics.FramesPerSecond)).ToList()
+                desc.Name,
+                desc.Identity?.ToString() ?? string.Empty,
+                desc.Characteristics.Select<VideoCharacteristics, CameraResolutionInfo>(characteristics =>
+                    new CameraResolutionInfo(characteristics.Width, characteristics.Height,
+                        characteristics.RawPixelFormat, characteristics.FramesPerSecond)).ToList()
             );
             list.Add(dev);
         }
@@ -25,7 +25,7 @@ public partial class CameraDrawEngine
         return list;
     }
 
-    private static CaptureDeviceDescriptor? getFirstDescriptorByName(string name)
+    private static CaptureDeviceDescriptor? GetFirstDescriptorByName(string name)
     {
         if (string.IsNullOrEmpty(name))
             return null;
@@ -38,17 +38,17 @@ public partial class CameraDrawEngine
         return descriptor;
     }
 
-    private static (int Width, int Height) parseResolution(string resolutionString)
+    private static (int Width, int Height) ParseResolution(string resolutionString)
     {
         if (string.IsNullOrWhiteSpace(resolutionString))
             return (0, 0);
 
-        string[] parts = resolutionString.Split('x');
+        var parts = resolutionString.Split('x');
         if (parts.Length != 2)
             return (0, 0);
 
-        if (!int.TryParse(parts[0].Trim(), out int width) ||
-            !int.TryParse(parts[1].Trim(), out int height))
+        if (!int.TryParse(parts[0].Trim(), out var width) ||
+            !int.TryParse(parts[1].Trim(), out var height))
             return (0, 0);
 
         return (width, height);

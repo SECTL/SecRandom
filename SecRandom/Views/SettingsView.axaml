@@ -31,8 +31,7 @@
                             IsVisible="{Binding ViewModel.CanGoBack}"
                             MinWidth="40" Width="48"
                             Classes="nav-back"
-                            IsHitTestVisible="True">
-                    </Button>
+                            IsHitTestVisible="True" />
 
                     <Image Source="/Assets/AppLogo.png"
                            Width="18" Height="18"

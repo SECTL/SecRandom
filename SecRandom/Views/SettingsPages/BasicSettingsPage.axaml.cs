@@ -14,19 +14,19 @@ namespace SecRandom.Views.SettingsPages;
 [PageInfo("settings.basic", FluentIcons.WrenchSettingsRegular)]
 public partial class BasicSettingsPage : UserControl
 {
-    public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
-    public BasicSettingsConfig Settings { get; }
-
-    public List<FontFamily> FontFamilies { get; } = [..FontManager.Current.SystemFonts, App.DefaultFontFamily];
-    
     public BasicSettingsPage()
     {
         Settings = ViewModel.Config.BasicSettings;
         DataContext = this;
         InitializeComponent();
-        
+
         Settings.PropertyChanged += SettingsOnPropertyChanged;
     }
+
+    public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
+    public BasicSettingsConfig Settings { get; }
+
+    public List<FontFamily> FontFamilies { get; } = [..FontManager.Current.SystemFonts, App.DefaultFontFamily];
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
@@ -35,10 +35,7 @@ public partial class BasicSettingsPage : UserControl
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(Settings.Language))
-        {
-            SettingsView.Current?.RequestRestartApp();
-        }
+        if (e.PropertyName == nameof(Settings.Language)) SettingsView.Current?.RequestRestartApp();
 
         App.Current.RefreshPersonalizedSettings();
     }

@@ -8,8 +8,7 @@ public enum DetectionState
     Error
 }
 
-public sealed record CameraFramePacket
-(
+public sealed record CameraFramePacket(
     Guid SessionId,
     long FrameId,
     int Width,
@@ -17,6 +16,4 @@ public sealed record CameraFramePacket
     IReadOnlyList<FaceBox> Faces,
     DetectionState State,
     byte[] BgraBuffer
-    );
-
-
+);

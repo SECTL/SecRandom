@@ -5,16 +5,16 @@ namespace SecRandom.Core.Services.Camera;
 
 public partial class CameraDrawEngine
 {
-    private void requestCameraRestart()
+    private void RequestCameraRestart()
     {
-        if (!isPreviewRunning) return;
-        requireCameraRestart = true;
+        if (!IsPreviewRunning) return;
+        RequireCameraRestart = true;
     }
 
-    private void requestDetectorReload()
+    private void RequestDetectorReload()
     {
-        if (!isPreviewRunning) return;
-        requireDetectorReload = true;
+        if (!IsPreviewRunning) return;
+        RequireDetectorReload = true;
     }
 
     private void OnSettingsChanged(object? sender, PropertyChangedEventArgs e)
@@ -23,18 +23,18 @@ public partial class CameraDrawEngine
         {
             //需要重启摄像头的时候
             case nameof(FaceDetectorSettingsConfig.CameraSource):
-                requestCameraRestart();
+                RequestCameraRestart();
                 break;
             case nameof(FaceDetectorSettingsConfig.DetectorType):
             case nameof(FaceDetectorSettingsConfig.ModelInputHeight):
             case nameof(FaceDetectorSettingsConfig.ModelInputWidth):
-                requestDetectorReload();
+                RequestDetectorReload();
                 break;
         }
     }
 
     private void OnResolutionMapChanged(object? sender, PropertyChangedEventArgs e)
     {
-        requestCameraRestart();
+        RequestCameraRestart();
     }
 }

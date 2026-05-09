@@ -9,51 +9,50 @@ namespace SecRandom.Core.Services.Camera;
 
 public partial class CameraDrawEngine
 {
+    private readonly ILogger _logger = IAppHost.GetService<ILogger<CameraDrawEngine>>();
+
+    public CameraDrawEngine()
+    {
+        ConfigData.PropertyChanged += OnSettingsChanged;
+        ConfigData.CameraDisplayResolutionMap.PropertyChanged += OnResolutionMapChanged;
+    }
+
+    private FaceDetectorSettingsConfig ConfigData =>
+        GetFaceDetectorSettingsConfig();
+
+    private int TargetWidth => ConfigData.ModelInputWidth;
+    private int TargetHeight => ConfigData.ModelInputHeight;
+    private string TargetCameraSource => ConfigData.CameraSource;
+    private CameraPreviewMode CameraPreviewMode => ConfigData.CameraPreviewMode;
+    private string DetectorModel => ConfigData.DetectorType;
+
+    private string? CurrentCameraResolution =>
+        !string.IsNullOrWhiteSpace(TargetCameraSource) &&
+        ConfigData.CameraDisplayResolutionMap.TryGetValue(TargetCameraSource, out var value)
+            ? value
+            : null;
+
+    private bool RequireCameraRestart { get; set; }
+    private bool RequireDetectorReload { get; set; }
+    private bool IsPreviewRunning { get; set; }
     public event EventHandler<CameraFramePacket>? FrameReady;
 
-    private FaceDetectorSettingsConfig configData =>
-        getFaceDetectorSettingsConfig();
-
-    private static FaceDetectorSettingsConfig getFaceDetectorSettingsConfig()
+    private static FaceDetectorSettingsConfig GetFaceDetectorSettingsConfig()
     {
         object handler = IAppHost.GetService<MainConfigHandler>();
         var config = handler.GetType().GetProperty("Data")?.GetValue(handler);
         if (config == null)
-            throw new InvalidOperationException(cameraText("ConfigMissing", nameof(FaceDetectorSettingsConfig)));
+            throw new InvalidOperationException(CameraText("ConfigMissing", nameof(FaceDetectorSettingsConfig)));
 
         var property = config.GetType().GetProperty(nameof(FaceDetectorSettingsConfig));
         if (property?.GetValue(config) is FaceDetectorSettingsConfig value)
             return value;
 
-        throw new InvalidOperationException(cameraText("ConfigMissing", nameof(FaceDetectorSettingsConfig)));
-    }
-
-    private int targetWidth => configData.ModelInputWidth;
-    private int targetHeight => configData.ModelInputHeight;
-    private string targetCameraSource => configData.CameraSource;
-    private CameraPreviewMode cameraPreviewMode => configData.CameraPreviewMode;
-    private string detectorModel => configData.DetectorType;
-
-    private string? currentCameraResolution =>
-        !string.IsNullOrWhiteSpace(targetCameraSource) &&
-        configData.CameraDisplayResolutionMap.TryGetValue(targetCameraSource, out var value)
-            ? value
-            : null;
-
-    private bool requireCameraRestart { get; set; }
-    private bool requireDetectorReload { get; set; }
-    private bool isPreviewRunning { get; set; }
-
-    public CameraDrawEngine()
-    {
-        configData.PropertyChanged += OnSettingsChanged;
-        configData.CameraDisplayResolutionMap.PropertyChanged += OnResolutionMapChanged;
+        throw new InvalidOperationException(CameraText("ConfigMissing", nameof(FaceDetectorSettingsConfig)));
     }
 
     protected virtual void OnFrameReady(CameraFramePacket e)
     {
         FrameReady?.Invoke(this, e);
     }
-
-    private readonly ILogger logger = IAppHost.GetService<ILogger<CameraDrawEngine>>();
 }

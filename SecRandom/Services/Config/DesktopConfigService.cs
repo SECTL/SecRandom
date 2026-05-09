@@ -9,7 +9,7 @@ namespace SecRandom.Services.Config;
 public class DesktopConfigService(ILogger<DesktopConfigService> logger) : ConfigServiceBase
 {
     private ILogger<DesktopConfigService> Logger { get; } = logger;
-    
+
     public override bool IsConfigExists<T>(T fallback)
     {
         var filePath = fallback.ConfigFilePath;
@@ -17,19 +17,19 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
 
         return File.Exists(filePath);
     }
-    
+
     public override T LoadConfig<T>(T fallback)
     {
         var filePath = fallback.ConfigFilePath;
         Logger.LogInformation("Loading config file: {Path}", filePath);
-        
+
         if (!File.Exists(filePath))
         {
             Logger.LogWarning("Config file does not exist; saving fallback config.");
             SaveConfig(fallback);
             return fallback;
         }
-        
+
         try
         {
             var json = File.ReadAllText(filePath);
@@ -47,7 +47,7 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
     {
         var filePath = config.ConfigFilePath;
         Logger.LogInformation("Saving config file: {Path}", filePath);
-        
+
         var json = JsonSerializer.Serialize(config, JsonOptions);
         File.WriteAllText(filePath, json);
     }
@@ -56,7 +56,7 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
     {
         var filePath = config.ConfigFilePath;
         Logger.LogInformation("Deleting config file: {Path}", filePath);
-        
+
         if (!File.Exists(filePath)) return;
         File.Delete(filePath);
     }

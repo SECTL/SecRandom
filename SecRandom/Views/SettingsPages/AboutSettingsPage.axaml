@@ -64,8 +64,7 @@
                     <Image Source="/Assets/Banners/secrandom-banner.png" Stretch="Uniform"
                            HorizontalAlignment="Center"
                            MaxWidth="{StaticResource PageContainerWidth}"
-                           VerticalAlignment="Top">
-                    </Image>
+                           VerticalAlignment="Top" />
                 </Panel>
 
                 <Border Margin="12 16 18 0"

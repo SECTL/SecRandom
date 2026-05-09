@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
 namespace IconsMappingGenerator;
@@ -11,25 +10,25 @@ namespace IconsMappingGenerator;
 [Generator]
 public class IconsMappingGenerator : IIncrementalGenerator
 {
-    public void Initialize(IncrementalGeneratorInitializationContext context) 
+    public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        RegisterSource(context, GetProvider(context,"FluentIconMappingFile"), "FluentIcon");
+        RegisterSource(context, GetProvider(context, "FluentIconMappingFile"), "FluentIcon");
         // RegisterSource(context, GetProvider(context,"LucideIconMappingFile"), "LucideIcon");
     }
 
     private IncrementalValuesProvider<(AdditionalText File, GenerateOptions Options)> GetProvider(
-        IncrementalGeneratorInitializationContext context, 
+        IncrementalGeneratorInitializationContext context,
         string propName)
     {
         return context.AdditionalTextsProvider
             .Combine(context.AnalyzerConfigOptionsProvider)
             .Select((pair, _) =>
             {
-                (AdditionalText? additionalFile, AnalyzerConfigOptionsProvider? optionsProvider) = pair;
-                AnalyzerConfigOptions fileOptions = optionsProvider.GetOptions(additionalFile);
-                fileOptions.TryGetValue($"build_property.{propName}", out string? filePath);
+                var (additionalFile, optionsProvider) = pair;
+                var fileOptions = optionsProvider.GetOptions(additionalFile);
+                fileOptions.TryGetValue($"build_property.{propName}", out var filePath);
 
-                return (File: additionalFile, Options: new GenerateOptions(FilePath: filePath ?? ""));
+                return (File: additionalFile, Options: new GenerateOptions(filePath ?? ""));
             })
             .Where(tuple =>
             {
@@ -37,15 +36,15 @@ public class IconsMappingGenerator : IIncrementalGenerator
                     string.IsNullOrWhiteSpace(tuple.File.Path))
                     return false;
 
-                string expectedNorm = tuple.Options.FilePath.Replace('\\', '/');
-                string actualNorm = tuple.File.Path.Replace('\\', '/');
+                var expectedNorm = tuple.Options.FilePath.Replace('\\', '/');
+                var actualNorm = tuple.File.Path.Replace('\\', '/');
                 return actualNorm.EndsWith(expectedNorm, StringComparison.OrdinalIgnoreCase);
             });
     }
 
-    private void RegisterSource(IncrementalGeneratorInitializationContext context, 
-        IncrementalValuesProvider<(AdditionalText File, GenerateOptions Options)> provider, 
-        string iconBrand) 
+    private void RegisterSource(IncrementalGeneratorInitializationContext context,
+        IncrementalValuesProvider<(AdditionalText File, GenerateOptions Options)> provider,
+        string iconBrand)
     {
         context.RegisterSourceOutput(provider, (spc, input) =>
         {
@@ -57,11 +56,11 @@ public class IconsMappingGenerator : IIncrementalGenerator
                 var diagnostic = Diagnostic.Create(
                     new DiagnosticDescriptor(
                         "FMG001",
-                         "Cannot read mapping file",
-                         "无法读取图标映射文件 '{0}'",
-                         "IconsMappingGenerator",
-                         DiagnosticSeverity.Error,
-                         true),
+                        "Cannot read mapping file",
+                        "无法读取图标映射文件 '{0}'",
+                        "IconsMappingGenerator",
+                        DiagnosticSeverity.Error,
+                        true),
                     Location.None,
                     additionalFile.Path);
                 spc.ReportDiagnostic(diagnostic);
@@ -78,17 +77,18 @@ public class IconsMappingGenerator : IIncrementalGenerator
             spc.AddSource($"{iconBrand}.g.cs", SourceText.From(enumCode, Encoding.UTF8));
         });
     }
-    
+
     private List<(string Key, string Name, int CodePoint)> ParseIcons(string jsonContent)
     {
-        return HardDecoder.ParseJson(jsonContent).Select(prop => {
-            string name = prop.Key.Replace("ic_fluent_","")
-                .Replace("_20_","_")
-                .Replace("-","_");
-            StringBuilder builder = new StringBuilder();
-            foreach (string s in name.Split(['_'], StringSplitOptions.RemoveEmptyEntries)) {
+        return HardDecoder.ParseJson(jsonContent).Select(prop =>
+        {
+            var name = prop.Key.Replace("ic_fluent_", "")
+                .Replace("_20_", "_")
+                .Replace("-", "_");
+            var builder = new StringBuilder();
+            foreach (var s in name.Split(['_'], StringSplitOptions.RemoveEmptyEntries))
                 builder.Append(char.ToUpper(s[0]) + s.Substring(1));
-            }
+
             return (prop.Key, builder.ToString(), prop.Value);
         }).ToList();
     }
@@ -108,7 +108,6 @@ public class IconsMappingGenerator : IIncrementalGenerator
                         """);
 
         foreach (var (key, name, codePoint) in icons)
-        {
             sb.AppendLine($$"""
                                     /// <summary>
                                     /// {{key}}
@@ -116,7 +115,6 @@ public class IconsMappingGenerator : IIncrementalGenerator
                                     public const string {{name}} = "\u{{codePoint:X4}}";
                                     
                             """);
-        }
 
         sb.AppendLine("""
                             }
@@ -129,25 +127,23 @@ public class IconsMappingGenerator : IIncrementalGenerator
     {
         var sb = new StringBuilder();
         sb.AppendLine($$"""
-                      // <auto-generated/>
-                      namespace SecRandom.Core.Icons
-                      {
-                            /// <summary>
-                            /// {{enumName}} 枚举
-                            /// </summary>
-                            public enum {{enumName}}
-                            {
-                      """);
+                        // <auto-generated/>
+                        namespace SecRandom.Core.Icons
+                        {
+                              /// <summary>
+                              /// {{enumName}} 枚举
+                              /// </summary>
+                              public enum {{enumName}}
+                              {
+                        """);
 
         foreach (var (key, name, codePoint) in icons)
-        {
             sb.AppendLine($"""
-                                    /// <summary>
-                                    /// {key}
-                                    /// </summary>
-                                    {name} = {codePoint},
-                            """);
-        }
+                                   /// <summary>
+                                   /// {key}
+                                   /// </summary>
+                                   {name} = {codePoint},
+                           """);
 
         sb.AppendLine("""
                             }

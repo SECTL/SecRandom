@@ -43,19 +43,14 @@
             <Setter Property="Grid.RowSpan" Value="1" />
             <Setter Property="Grid.Row" Value="1" />
         </Style>
-        <Style Selector="^ /template/ Grid#InnerGrid">
-
-        </Style>
+        <Style Selector="^ /template/ Grid#InnerGrid" />
         <Style Selector="^:header-collapsed">
-            <Style Selector="^ /template/ ContentPresenter#PART_Header">
-            </Style>
+            <Style Selector="^ /template/ ContentPresenter#PART_Header" />
             <Style Selector="^ /template/ ScrollViewer#PART_MainScrollViewer">
                 <Setter Property="Grid.RowSpan" Value="1" />
                 <Setter Property="Grid.Row" Value="1" />
             </Style>
-            <Style Selector="^ /template/ Grid#InnerGrid">
-
-            </Style>
+            <Style Selector="^ /template/ Grid#InnerGrid" />
         </Style>
     </Style>
 </Styles>

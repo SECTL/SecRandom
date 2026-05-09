@@ -1,63 +1,65 @@
-﻿using FlashCap;
+﻿using System.Globalization;
+using System.Resources;
+using System.Runtime.InteropServices;
+using System.Timers;
+using FlashCap;
+using Microsoft.Extensions.Logging;
 using OpenCvSharp;
 using SecRandom.Core.Models.Camera;
-using System.Globalization;
-using System.Resources;
-using System.Timers;
-using Microsoft.Extensions.Logging;
 using Timer = System.Timers.Timer;
 
 namespace SecRandom.Core.Services.Camera;
 
 public partial class CameraDrawEngine
 {
-    private static readonly ResourceManager camera_resources = new(
+    private static readonly ResourceManager CameraResources = new(
         "SecRandom.Core.Services.Camera.CameraDrawEngine.Resources",
         typeof(CameraDrawEngine).Assembly);
 
-    private CaptureDevice? captureDevice;
-    private Timer? emitTimer;
-    private Mat? latestFrame;
-    private readonly object frameLock = new();
-    private readonly TimeSpan emitInterval = TimeSpan.FromMilliseconds(50);
-    private long frameCounter = 0;
-    private int isEmittingFrame = 0;
-    private Guid currentSessionId = Guid.NewGuid();
-    private VideoCharacteristics? currentConfig;
+    private readonly TimeSpan _emitInterval = TimeSpan.FromMilliseconds(50);
+    private readonly object _frameLock = new();
+
+    private CaptureDevice? _captureDevice;
+    private VideoCharacteristics? _currentConfig;
+    private Guid _currentSessionId = Guid.NewGuid();
+    private Timer? _emitTimer;
+    private long _frameCounter;
+    private int _isEmittingFrame;
+    private Mat? _latestFrame;
 
     public async Task StartPreviewAsync(CancellationToken ct)
     {
-        if (isPreviewRunning)
+        if (IsPreviewRunning)
             return;
 
-        await workerLoop(ct);
+        await WorkerLoop(ct);
     }
 
     public async Task StopPreviewAsync()
     {
-        isPreviewRunning = false;
-        await cleanupCameraResources();
+        IsPreviewRunning = false;
+        await CleanupCameraResources();
     }
 
-    private async Task workerLoop(CancellationToken ct)
+    private async Task WorkerLoop(CancellationToken ct)
     {
-        isPreviewRunning = true;
+        IsPreviewRunning = true;
 
         try
         {
-            await initializeCamera(ct);
+            await InitializeCamera(ct);
 
-            while (isPreviewRunning && !ct.IsCancellationRequested)
+            while (IsPreviewRunning && !ct.IsCancellationRequested)
             {
-                if (requireCameraRestart)
+                if (RequireCameraRestart)
                 {
-                    requireCameraRestart = false;
-                    await restartCamera(ct);
+                    RequireCameraRestart = false;
+                    await RestartCamera(ct);
                 }
 
-                if (requireDetectorReload)
+                if (RequireDetectorReload)
                 {
-                    requireDetectorReload = false;
+                    RequireDetectorReload = false;
                     await ReloadDetector();
                 }
 
@@ -66,121 +68,117 @@ public partial class CameraDrawEngine
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
-            isPreviewRunning = false;
+            IsPreviewRunning = false;
         }
         catch (Exception ex)
         {
-            logger.LogDebug(ex, "Camera worker loop failed.");
+            _logger.LogDebug(ex, "Camera worker loop failed.");
         }
         finally
         {
-            await cleanupCameraResources();
-            isPreviewRunning = false;
+            await CleanupCameraResources();
+            IsPreviewRunning = false;
         }
     }
 
-    private async Task initializeCamera(CancellationToken ct)
+    private async Task InitializeCamera(CancellationToken ct)
     {
-        logger.LogInformation(
+        _logger.LogInformation(
             "Initializing camera preview: target={CameraSource}, resolution={Resolution}",
-            targetCameraSource,
-            currentCameraResolution);
+            TargetCameraSource,
+            CurrentCameraResolution);
 
-        var descriptor = getFirstDescriptorByName(targetCameraSource);
+        var descriptor = GetFirstDescriptorByName(TargetCameraSource);
         if (descriptor == null)
         {
-            logger.LogError("Camera not found: {CameraSource}", targetCameraSource);
-            throw new InvalidOperationException(cameraText("CameraNotFound", targetCameraSource));
+            _logger.LogError("Camera not found: {CameraSource}", TargetCameraSource);
+            throw new InvalidOperationException(CameraText("CameraNotFound", TargetCameraSource));
         }
 
-        logger.LogDebug("Found camera descriptor: {CameraName}", descriptor.Name);
-        var (width, height) = parseResolution(currentCameraResolution ?? "");
-        logger.LogDebug("Resolved camera resolution: {Width}x{Height}", width, height);
+        _logger.LogDebug("Found camera descriptor: {CameraName}", descriptor.Name);
+        var (width, height) = ParseResolution(CurrentCameraResolution ?? "");
+        _logger.LogDebug("Resolved camera resolution: {Width}x{Height}", width, height);
 
         var config = descriptor.Characteristics.FirstOrDefault(c =>
             c.Width == width && c.Height == height);
 
         if (config == null)
         {
-            logger.LogError("Unsupported camera resolution: {Resolution}", currentCameraResolution);
+            _logger.LogError("Unsupported camera resolution: {Resolution}", CurrentCameraResolution);
             throw new InvalidOperationException(
-                cameraText("ResolutionNotSupported", currentCameraResolution ?? string.Empty, targetCameraSource));
+                CameraText("ResolutionNotSupported", CurrentCameraResolution ?? string.Empty, TargetCameraSource));
         }
 
-        currentConfig = config;
-        currentSessionId = Guid.NewGuid();
-        frameCounter = 0;
+        _currentConfig = config;
+        _currentSessionId = Guid.NewGuid();
+        _frameCounter = 0;
 
-        logger.LogDebug("Opening camera device.");
-        captureDevice = await descriptor.OpenAsync(config, TranscodeFormats.Auto, OnFrameArrived);
-        logger.LogDebug("Starting camera capture.");
-        await captureDevice.StartAsync(ct);
+        _logger.LogDebug("Opening camera device.");
+        _captureDevice = await descriptor.OpenAsync(config, TranscodeFormats.Auto, OnFrameArrived);
+        _logger.LogDebug("Starting camera capture.");
+        await _captureDevice.StartAsync(ct);
 
-        emitTimer = new Timer(emitInterval.TotalMilliseconds);
-        emitTimer.Elapsed += OnEmitTimerElapsed;
-        emitTimer.AutoReset = false;
-        emitTimer.Start();
-        logger.LogDebug("Camera emit timer started: interval={IntervalMilliseconds}ms", emitInterval.TotalMilliseconds);
+        _emitTimer = new Timer(_emitInterval.TotalMilliseconds);
+        _emitTimer.Elapsed += OnEmitTimerElapsed;
+        _emitTimer.AutoReset = false;
+        _emitTimer.Start();
+        _logger.LogDebug("Camera emit timer started: interval={IntervalMilliseconds}ms",
+            _emitInterval.TotalMilliseconds);
     }
 
-    private async Task restartCamera(CancellationToken ct)
+    private async Task RestartCamera(CancellationToken ct)
     {
-        await cleanupCameraResources();
-        reloadDetector();
+        await CleanupCameraResources();
+        _ReloadDetector();
         await Task.Delay(100, ct);
-        await initializeCamera(ct);
+        await InitializeCamera(ct);
     }
 
     private Task ReloadDetector()
     {
-        reloadDetector();
+        _ReloadDetector();
         return Task.CompletedTask;
     }
 
-    private async Task cleanupCameraResources()
+    private async Task CleanupCameraResources()
     {
-        if (emitTimer != null)
+        if (_emitTimer != null)
         {
-            emitTimer.Stop();
-            emitTimer.Elapsed -= OnEmitTimerElapsed;
-            emitTimer.Dispose();
-            emitTimer = null;
+            _emitTimer.Stop();
+            _emitTimer.Elapsed -= OnEmitTimerElapsed;
+            _emitTimer.Dispose();
+            _emitTimer = null;
         }
 
-        if (captureDevice != null)
-        {
+        if (_captureDevice != null)
             try
             {
-                await captureDevice.StopAsync();
-                captureDevice.Dispose();
+                await _captureDevice.StopAsync();
+                _captureDevice.Dispose();
             }
             catch (Exception ex)
             {
-                logger.LogDebug(ex, "Failed to dispose camera resources.");
+                _logger.LogDebug(ex, "Failed to dispose camera resources.");
             }
             finally
             {
-                captureDevice = null;
+                _captureDevice = null;
             }
-        }
 
-        lock (frameLock)
+        lock (_frameLock)
         {
-            latestFrame?.Dispose();
-            latestFrame = null;
+            _latestFrame?.Dispose();
+            _latestFrame = null;
         }
 
-        reloadDetector();
+        _ReloadDetector();
     }
 
     private void OnFrameArrived(PixelBufferScope bufferScope)
     {
         try
         {
-            if (currentConfig == null)
-            {
-                return;
-            }
+            if (_currentConfig == null) return;
 
             var imageSegment = bufferScope.Buffer.ReferImage();
 
@@ -189,32 +187,34 @@ public partial class CameraDrawEngine
             // 对于 YUYV：转码为 RGB24 DIB
             // DIB 格式：BITMAPFILEHEADER (14 bytes) + BITMAPINFOHEADER (40 bytes) + pixel data
 
-            int dibHeaderSize = 14 + 40; // BMP file header + info header
-            int pixelDataOffset = imageSegment.Offset + dibHeaderSize;
-            int pixelDataSize = imageSegment.Count - dibHeaderSize;
+            var dibHeaderSize = 14 + 40; // BMP file header + info header
+            var pixelDataOffset = imageSegment.Offset + dibHeaderSize;
+            var pixelDataSize = imageSegment.Count - dibHeaderSize;
 
-            int expectedSize = currentConfig.Width * currentConfig.Height * 3;
+            var expectedSize = _currentConfig.Width * _currentConfig.Height * 3;
 
             // DIB 位图是 BGR 格式，底部到顶部存储（倒置）
-            Mat bgrMat = Cv2.ImDecode(new Span<byte>(imageSegment.Array!, imageSegment.Offset, imageSegment.Count).ToArray(), ImreadModes.Color);
+            var bgrMat =
+                Cv2.ImDecode(new Span<byte>(imageSegment.Array!, imageSegment.Offset, imageSegment.Count).ToArray(),
+                    ImreadModes.Color);
 
-            lock (frameLock)
+            lock (_frameLock)
             {
-                latestFrame?.Dispose();
-                latestFrame = bgrMat;
+                _latestFrame?.Dispose();
+                _latestFrame = bgrMat;
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to process camera frame.");
+            _logger.LogError(ex, "Failed to process camera frame.");
         }
     }
 
     private void OnEmitTimerElapsed(object? sender, ElapsedEventArgs e)
     {
-        if (Interlocked.CompareExchange(ref isEmittingFrame, 1, 0) != 0)
+        if (Interlocked.CompareExchange(ref _isEmittingFrame, 1, 0) != 0)
         {
-            logger.LogWarning("Skipping frame emission because the previous frame is still processing.");
+            _logger.LogWarning("Skipping frame emission because the previous frame is still processing.");
             return;
         }
 
@@ -222,16 +222,12 @@ public partial class CameraDrawEngine
 
         try
         {
-            lock (frameLock)
+            lock (_frameLock)
             {
-                if (latestFrame != null && !latestFrame.IsDisposed)
-                {
-                    frameToProcess = latestFrame.Clone();
-                }
+                if (_latestFrame != null && !_latestFrame.IsDisposed)
+                    frameToProcess = _latestFrame.Clone();
                 else
-                {
-                    logger.LogWarning("Skipping frame emission because the latest frame is unavailable.");
-                }
+                    _logger.LogWarning("Skipping frame emission because the latest frame is unavailable.");
             }
 
             if (frameToProcess == null)
@@ -240,44 +236,44 @@ public partial class CameraDrawEngine
             using var bgraFrame = new Mat();
             Cv2.CvtColor(frameToProcess, bgraFrame, ColorConversionCodes.BGR2BGRA);
 
-            byte[] bgraBuffer = new byte[bgraFrame.Total() * bgraFrame.ElemSize()];
-            System.Runtime.InteropServices.Marshal.Copy(
+            var bgraBuffer = new byte[bgraFrame.Total() * bgraFrame.ElemSize()];
+            Marshal.Copy(
                 bgraFrame.Data,
                 bgraBuffer,
                 0,
                 bgraBuffer.Length
             );
 
-            var (faces, detectionState) = detectFaces(frameToProcess);
+            var (faces, detectionState) = DetectFaces(frameToProcess);
 
             var packet = new CameraFramePacket(
-                SessionId: currentSessionId,
-                FrameId: Interlocked.Increment(ref frameCounter),
-                Width: bgraFrame.Width,
-                Height: bgraFrame.Height,
-                Faces: faces,
-                State: detectionState,
-                BgraBuffer: bgraBuffer
+                _currentSessionId,
+                Interlocked.Increment(ref _frameCounter),
+                bgraFrame.Width,
+                bgraFrame.Height,
+                faces,
+                detectionState,
+                bgraBuffer
             );
 
             OnFrameReady(packet);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to emit camera frame.");
+            _logger.LogError(ex, "Failed to emit camera frame.");
         }
         finally
         {
             frameToProcess?.Dispose();
-            Interlocked.Exchange(ref isEmittingFrame, 0);
-            if (isPreviewRunning && emitTimer != null)
-                emitTimer.Start();
+            Interlocked.Exchange(ref _isEmittingFrame, 0);
+            if (IsPreviewRunning && _emitTimer != null)
+                _emitTimer.Start();
         }
     }
 
-    private static string cameraText(string name, params object[] args)
+    private static string CameraText(string name, params object[] args)
     {
-        var format = camera_resources.GetString(name, CultureInfo.CurrentUICulture) ?? name;
+        var format = CameraResources.GetString(name, CultureInfo.CurrentUICulture) ?? name;
         return args.Length == 0 ? format : string.Format(CultureInfo.CurrentCulture, format, args);
     }
 }

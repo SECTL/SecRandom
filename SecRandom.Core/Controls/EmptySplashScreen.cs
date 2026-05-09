@@ -7,11 +7,15 @@ namespace SecRandom.Core.Controls;
 
 public class EmptySplashScreen : IApplicationSplashScreen
 {
-    public async Task RunTasks(CancellationToken cancellationToken) { }
+    public async Task RunTasks(CancellationToken cancellationToken)
+    {
+    }
 
     public string AppName => "SecRandom";
+
     public IImage AppIcon { get; } =
         new Bitmap(AssetLoader.Open(new Uri("avares://SecRandom/Assets/AppLogo.png")));
+
     public object? SplashScreenContent => null;
     public int MinimumShowTime => 1000;
 }

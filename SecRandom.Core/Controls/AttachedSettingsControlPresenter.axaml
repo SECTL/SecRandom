@@ -16,8 +16,7 @@
                                   ToolTip.Tip="是否在此处启用特定的设置"
                                   OnContent="" OffContent="" Margin="0,-8,0,-4"
                                   VerticalAlignment="Center"
-                                  IsEnabled="{Binding ControlInfo.HasEnabledState, Mode=OneWay}">
-                    </ToggleSwitch>
+                                  IsEnabled="{Binding ControlInfo.HasEnabledState, Mode=OneWay}" />
 
                     <Grid>
                         <sr:IconText Glyph="{Binding ControlInfo.IconGlyph, Mode=OneWay}"

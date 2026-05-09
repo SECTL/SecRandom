@@ -28,11 +28,9 @@ public class StringToFontFamilyConverter : IValueConverter
         try
         {
             var v = (FontFamily)value!;
-            
-            if (v.Key != null)
-            {
-                return v.Key.ToString().Replace("compositefont:", "");
-            }
+
+            if (v.Key != null) return v.Key.ToString().Replace("compositefont:", "");
+
             return v.ToString();
         }
         catch (Exception)

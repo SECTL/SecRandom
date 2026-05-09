@@ -9,7 +9,8 @@ namespace SecRandom.Core.Extensions;
 
 public static class PageItemsExtensions
 {
-    public static List<NavigationViewItemBase> ToNavigationViewItems(this IEnumerable<PageInfo> infosEnumerable, ObservableCollection<NavigationViewItemBase> flattenNavigationItems)
+    public static List<NavigationViewItemBase> ToNavigationViewItems(this IEnumerable<PageInfo> infosEnumerable,
+        ObservableCollection<NavigationViewItemBase> flattenNavigationItems)
     {
         var infos = infosEnumerable
             .Where(info => !info.IsHide)
@@ -19,13 +20,10 @@ public static class PageItemsExtensions
             .ToList();
         var addedGroups = new HashSet<string>();
         List<NavigationViewItemBase> navigationViewItems = [];
-        
+
         foreach (var i in infos)
         {
-            if (i.GroupId != null && addedGroups.Contains(i.GroupId))
-            {
-                continue;
-            }
+            if (i.GroupId != null && addedGroups.Contains(i.GroupId)) continue;
 
             NavigationViewItemBase item;
 
@@ -39,7 +37,7 @@ public static class PageItemsExtensions
                     Tag = group
                 };
 
-                if (groups.FirstOrDefault(x => x.Key == i.GroupId) is {} groupItems)
+                if (groups.FirstOrDefault(x => x.Key == i.GroupId) is { } groupItems)
                 {
                     var children = groupItems
                         .Select(x => x.ToNavigationViewItemBase())
@@ -56,10 +54,10 @@ public static class PageItemsExtensions
                 item = i.ToNavigationViewItemBase();
                 flattenNavigationItems.Add(item);
             }
-                
+
             navigationViewItems.Add(item);
         }
-        
+
         return navigationViewItems;
     }
 }

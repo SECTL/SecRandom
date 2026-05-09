@@ -3,4 +3,4 @@
 public record CameraDetectionSession(
     Guid SessionId,
     DateTimeOffset StartedAt
-    );
+);

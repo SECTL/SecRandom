@@ -5,7 +5,7 @@ using FluentAvalonia.UI.Controls;
 namespace SecRandom.Core.Controls;
 
 /// <summary>
-/// 空白内容占位符
+///     空白内容占位符
 /// </summary>
 public class Empty : TemplatedControl
 {
@@ -15,14 +15,20 @@ public class Empty : TemplatedControl
             FontSize = 64
         });
 
+    public static readonly StyledProperty<string> TextProperty = AvaloniaProperty.Register<Empty, string>(
+        nameof(Text), "Nothing~");
+
+    public static readonly StyledProperty<double> IconHeightProperty = AvaloniaProperty.Register<Empty, double>(
+        nameof(IconHeight), 64.0);
+
+    public static readonly StyledProperty<double> IconWidthProperty = AvaloniaProperty.Register<Empty, double>(
+        nameof(IconWidth), 64.0);
+
     public IconSource Icon
     {
         get => GetValue(IconProperty);
         set => SetValue(IconProperty, value);
     }
-
-    public static readonly StyledProperty<string> TextProperty = AvaloniaProperty.Register<Empty, string>(
-        nameof(Text), "Nothing~");
 
     public string Text
     {
@@ -30,17 +36,11 @@ public class Empty : TemplatedControl
         set => SetValue(TextProperty, value);
     }
 
-    public static readonly StyledProperty<double> IconHeightProperty = AvaloniaProperty.Register<Empty, double>(
-        nameof(IconHeight), 64.0);
-
     public double IconHeight
     {
         get => GetValue(IconHeightProperty);
         set => SetValue(IconHeightProperty, value);
     }
-
-    public static readonly StyledProperty<double> IconWidthProperty = AvaloniaProperty.Register<Empty, double>(
-        nameof(IconWidth), 64.0);
 
     public double IconWidth
     {

@@ -5,13 +5,11 @@ namespace SecRandom.Shared.Interfaces;
 public interface IAttachedSettings
 {
     public bool IsAttachSettingsEnabled { get; set; }
-    
+
     public static bool GetIsEnabled(object? obj)
     {
-        if (obj == null)
-        {
-            return false;
-        }
+        if (obj == null) return false;
+
         return obj switch
         {
             JsonElement json when json.TryGetProperty(nameof(IsAttachSettingsEnabled), out var element) =>

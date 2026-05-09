@@ -19,19 +19,16 @@ namespace SecRandom.Views;
 
 public partial class FloatingWindow : Window
 {
-    public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
-    public bool CanClose { get; set; } = false;
-
     public FloatingWindow()
     {
         DataContext = this;
         Position = new PixelPoint(ViewModel.Config.FloatPosition.X, ViewModel.Config.FloatPosition.Y);
         InitializeComponent();
-        
+
         RenderOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
         RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
         RenderOptions.SetEdgeMode(this, EdgeMode.Antialias);
-        
+
         Closing += OnClosing;
         AddHandler(PointerPressedEvent, OnPointerPressed, handledEventsToo: true);
         AddHandler(PointerReleasedEvent, OnPointerReleased, handledEventsToo: true);
@@ -46,10 +43,13 @@ public partial class FloatingWindow : Window
         //     CheckIsVisibleValidate();
         //     RefreshItems();
         // };
-        
+
         CheckIsVisibleValidate();
         RefreshItems();
     }
+
+    public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
+    public bool CanClose { get; set; } = false;
 
     private void CheckIsVisibleValidate()
     {
@@ -74,7 +74,8 @@ public partial class FloatingWindow : Window
         RootStackPanel.Children.Clear();
         RootStackPanel.Children.Add(new TouchDragThumb { Orientation = Orientation.Horizontal, Height = 24 });
 
-        foreach (var controlName in (List<string>)["roll_call"]) // ViewModel.Config.FloatingWindowSettings.FloatingWindowButtonControl
+        foreach (var controlName in
+                 (List<string>)["roll_call"]) // ViewModel.Config.FloatingWindowSettings.FloatingWindowButtonControl
         {
             var control = controlName switch
             {
@@ -91,7 +92,7 @@ public partial class FloatingWindow : Window
                 RootStackPanel.Children.Add(new TextBlock { Text = controlName });
                 continue;
             }
-            
+
             RootStackPanel.Children.Add(control);
         }
     }
@@ -101,9 +102,9 @@ public partial class FloatingWindow : Window
         var b = new CommandBarButton
         {
             IconSource = new FluentIconSource("\uECAA"),
-            Label = Langs.Common.Resources.Feat_RollCall,
+            Label = Langs.Common.Resources.Feat_RollCall
         };
-        
+
         b.Click += (sender, args) =>
         {
             App.ShowMainWindow();
@@ -112,13 +113,13 @@ public partial class FloatingWindow : Window
 
         return b;
     }
-    
+
     private static CommandBarButton GetQuickDrawButton()
     {
         var b = new CommandBarButton
         {
             IconSource = new FluentIconSource("\uE84E"),
-            Label = Langs.Common.Resources.Feat_QuickDraw,
+            Label = Langs.Common.Resources.Feat_QuickDraw
         };
 
         return b;
@@ -129,42 +130,39 @@ public partial class FloatingWindow : Window
         var b = new CommandBarButton
         {
             IconSource = new FluentIconSource("\uE8EC"),
-            Label = Langs.Common.Resources.Feat_Lottery,
+            Label = Langs.Common.Resources.Feat_Lottery
         };
 
         return b;
     }
-    
+
     private static CommandBarButton GetFaceDrawButton()
     {
         var b = new CommandBarButton
         {
             IconSource = new FluentIconSource("\uF3EE"),
-            Label = Langs.Common.Resources.Feat_FaceDraw,
+            Label = Langs.Common.Resources.Feat_FaceDraw
         };
 
         return b;
     }
-    
+
     private static CommandBarButton GetTimerButton()
     {
         var b = new CommandBarButton
         {
             IconSource = new FluentIconSource("\uF360"),
-            Label = Langs.Common.Resources.Feat_Timer,
+            Label = Langs.Common.Resources.Feat_Timer
         };
-        
+
         return b;
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        if (!CanClose)
-        {
-            e.Cancel = true;
-        }
+        if (!CanClose) e.Cancel = true;
     }
-    
+
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
@@ -177,16 +175,13 @@ public partial class FloatingWindow : Window
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
             var source = e.Source as Control;
-        
-            if (IsChildOfButton(source))
-            {
-                return;
-            }
-            
+
+            if (IsChildOfButton(source)) return;
+
             BeginMoveDrag(e);
         }
     }
-    
+
     private static bool IsChildOfButton(Visual? visual)
     {
         while (visual != null)
@@ -195,13 +190,14 @@ public partial class FloatingWindow : Window
                 return true;
             visual = visual.GetVisualParent();
         }
+
         return false;
     }
 
     private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
-        
+
         ViewModel.Config.FloatPosition = new FloatPositionConfig { X = Position.X, Y = Position.Y };
     }
 }

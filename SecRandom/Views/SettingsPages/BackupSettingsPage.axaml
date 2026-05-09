@@ -69,7 +69,7 @@
                                          Content="{x:Static lsb:Resources.S_Includes_Config}"
                                          Description="{x:Static lsb:Resources.S_Includes_Config_D}">
                     <fa:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeConfig}"></ToggleSwitch>
+                        <ToggleSwitch IsChecked="{Binding Settings.IncludeConfig}" />
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
@@ -77,7 +77,7 @@
                                          Content="{x:Static lsb:Resources.S_Includes_List}"
                                          Description="{x:Static lsb:Resources.S_Includes_List_D}">
                     <fa:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeList}"></ToggleSwitch>
+                        <ToggleSwitch IsChecked="{Binding Settings.IncludeList}" />
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
@@ -85,7 +85,7 @@
                                          Content="{x:Static lsb:Resources.S_Includes_History}"
                                          Description="{x:Static lsb:Resources.S_Includes_History_D}">
                     <fa:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeHistory}"></ToggleSwitch>
+                        <ToggleSwitch IsChecked="{Binding Settings.IncludeHistory}" />
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
@@ -93,7 +93,7 @@
                                          Content="{x:Static lsb:Resources.S_Includes_Audio}"
                                          Description="{x:Static lsb:Resources.S_Includes_Audio_D}">
                     <fa:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeAudio}"></ToggleSwitch>
+                        <ToggleSwitch IsChecked="{Binding Settings.IncludeAudio}" />
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
@@ -101,7 +101,7 @@
                                          Content="{x:Static lsb:Resources.S_Includes_Cses}"
                                          Description="{x:Static lsb:Resources.S_Includes_Cses_D}">
                     <fa:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeCses}"></ToggleSwitch>
+                        <ToggleSwitch IsChecked="{Binding Settings.IncludeCses}" />
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
@@ -109,7 +109,7 @@
                                          Content="{x:Static lsb:Resources.S_Includes_Images}"
                                          Description="{x:Static lsb:Resources.S_Includes_Images_D}">
                     <fa:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeImages}"></ToggleSwitch>
+                        <ToggleSwitch IsChecked="{Binding Settings.IncludeImages}" />
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
@@ -117,7 +117,7 @@
                                          Content="{x:Static lsb:Resources.S_Includes_Themes}"
                                          Description="{x:Static lsb:Resources.S_Includes_Themes_D}">
                     <fa:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeThemes}"></ToggleSwitch>
+                        <ToggleSwitch IsChecked="{Binding Settings.IncludeThemes}" />
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
 
@@ -125,7 +125,7 @@
                                          Content="{x:Static lsb:Resources.S_Includes_Logs}"
                                          Description="{x:Static lsb:Resources.S_Includes_Logs_D}">
                     <fa:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeLogs}"></ToggleSwitch>
+                        <ToggleSwitch IsChecked="{Binding Settings.IncludeLogs}" />
                     </fa:SettingsExpanderItem.Footer>
                 </fa:SettingsExpanderItem>
             </fa:SettingsExpander>

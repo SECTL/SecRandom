@@ -13,53 +13,36 @@ namespace SecRandom.Core.Controls;
 [TemplatePart("PART_DrawerContentBorder", typeof(Border))]
 public class DrawerHost : ContentControl
 {
-    public static readonly StyledProperty<object?> DrawerContentProperty = AvaloniaProperty.Register<DrawerHost, object?>(
-        nameof(DrawerContent));
-
-    public object? DrawerContent
+    public enum DrawerPlacementEnum
     {
-        get => GetValue(DrawerContentProperty);
-        set => SetValue(DrawerContentProperty, value);
+        Left,
+        Right
     }
 
-    public static readonly StyledProperty<IDataTemplate?> DrawerContentTemplateProperty = AvaloniaProperty.Register<DrawerHost, IDataTemplate?>(
-        nameof(DrawerContentTemplate));
+    public static readonly StyledProperty<object?> DrawerContentProperty =
+        AvaloniaProperty.Register<DrawerHost, object?>(
+            nameof(DrawerContent));
 
-    public IDataTemplate? DrawerContentTemplate
-    {
-        get => GetValue(DrawerContentTemplateProperty);
-        set => SetValue(DrawerContentTemplateProperty, value);
-    }
+    public static readonly StyledProperty<IDataTemplate?> DrawerContentTemplateProperty =
+        AvaloniaProperty.Register<DrawerHost, IDataTemplate?>(
+            nameof(DrawerContentTemplate));
 
     public static readonly StyledProperty<bool> IsDrawerOpenProperty = AvaloniaProperty.Register<DrawerHost, bool>(
         nameof(IsDrawerOpen));
 
-    public bool IsDrawerOpen
-    {
-        get => GetValue(IsDrawerOpenProperty);
-        set => SetValue(IsDrawerOpenProperty, value);
-    }
+    public static readonly StyledProperty<DrawerPlacementEnum> DrawerPlacementProperty =
+        AvaloniaProperty.Register<DrawerHost, DrawerPlacementEnum>(
+            nameof(DrawerPlacement));
 
-    public static readonly StyledProperty<DrawerPlacementEnum> DrawerPlacementProperty = AvaloniaProperty.Register<DrawerHost, DrawerPlacementEnum>(
-        nameof(DrawerPlacement));
+    public static readonly StyledProperty<double> ActualDrawerWidthProperty =
+        AvaloniaProperty.Register<DrawerHost, double>(
+            nameof(ActualDrawerWidth));
 
-    public DrawerPlacementEnum DrawerPlacement
-    {
-        get => GetValue(DrawerPlacementProperty);
-        set => SetValue(DrawerPlacementProperty, value);
-    }
+    public static readonly FuncValueConverter<double, double> NegativeDoubleConverter = new(x => -x);
 
-    public static readonly StyledProperty<double> ActualDrawerWidthProperty = AvaloniaProperty.Register<DrawerHost, double>(
-        nameof(ActualDrawerWidth));
-
-    public double ActualDrawerWidth
-    {
-        get => GetValue(ActualDrawerWidthProperty);
-        set => SetValue(ActualDrawerWidthProperty, value);
-    }
+    private Border? _drawerContentBorder;
 
     private Border? _ignoreLayer;
-    private Border? _drawerContentBorder;
 
     public DrawerHost()
     {
@@ -67,17 +50,41 @@ public class DrawerHost : ContentControl
         KeyDown += OnKeyDown;
     }
 
+    public object? DrawerContent
+    {
+        get => GetValue(DrawerContentProperty);
+        set => SetValue(DrawerContentProperty, value);
+    }
+
+    public IDataTemplate? DrawerContentTemplate
+    {
+        get => GetValue(DrawerContentTemplateProperty);
+        set => SetValue(DrawerContentTemplateProperty, value);
+    }
+
+    public bool IsDrawerOpen
+    {
+        get => GetValue(IsDrawerOpenProperty);
+        set => SetValue(IsDrawerOpenProperty, value);
+    }
+
+    public DrawerPlacementEnum DrawerPlacement
+    {
+        get => GetValue(DrawerPlacementProperty);
+        set => SetValue(DrawerPlacementProperty, value);
+    }
+
+    public double ActualDrawerWidth
+    {
+        get => GetValue(ActualDrawerWidthProperty);
+        set => SetValue(ActualDrawerWidthProperty, value);
+    }
+
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Handled)
-        {
-            return;
-        }
+        if (e.Handled) return;
 
-        if (e.Key == Key.Escape)
-        {
-            IsDrawerOpen = false;
-        }
+        if (e.Key == Key.Escape) IsDrawerOpen = false;
     }
 
     private void UpdateDrawerPlacement()
@@ -88,17 +95,18 @@ public class DrawerHost : ContentControl
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
-        if (_drawerContentBorder != null) 
+        if (_drawerContentBorder != null)
             _drawerContentBorder.SizeChanged -= DrawerContentBorderOnSizeChanged;
-        if (_ignoreLayer != null) 
+        if (_ignoreLayer != null)
             _ignoreLayer.PointerPressed -= IgnoreLayerOnPointerPressed;
 
         _ignoreLayer = this.GetTemplateChildren().OfType<Border>().FirstOrDefault(x => x.Name == "PART_IgnoreLayer");
-        _drawerContentBorder = this.GetTemplateChildren().OfType<Border>().FirstOrDefault(x => x.Name == "PART_DrawerContentBorder");
+        _drawerContentBorder = this.GetTemplateChildren().OfType<Border>()
+            .FirstOrDefault(x => x.Name == "PART_DrawerContentBorder");
 
-        if (_drawerContentBorder != null) 
+        if (_drawerContentBorder != null)
             _drawerContentBorder.SizeChanged += DrawerContentBorderOnSizeChanged;
-        if (_ignoreLayer != null) 
+        if (_ignoreLayer != null)
             _ignoreLayer.PointerPressed += IgnoreLayerOnPointerPressed;
 
         base.OnApplyTemplate(e);
@@ -112,14 +120,5 @@ public class DrawerHost : ContentControl
     private void DrawerContentBorderOnSizeChanged(object? sender, SizeChangedEventArgs e)
     {
         ActualDrawerWidth = e.NewSize.Width;
-    }
-
-    public static readonly FuncValueConverter<double, double> NegativeDoubleConverter =
-        new FuncValueConverter<double, double>(x => -x);
-
-    public enum DrawerPlacementEnum
-    {
-        Left,
-        Right
     }
 }

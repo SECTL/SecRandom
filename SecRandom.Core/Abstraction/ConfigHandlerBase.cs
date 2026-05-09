@@ -6,12 +6,6 @@ namespace SecRandom.Core.Abstraction;
 
 public abstract class ConfigHandlerBase<T> where T : ConfigBase
 {
-    public T Data { get; private set; }
-    
-    private ILogger Logger { get; }
-    private ConfigServiceBase ConfigService { get; }
-    private Func<T> FallbackFactory { get; }
-    
     protected ConfigHandlerBase(Func<T> fallbackFactory)
     {
         Logger = (ILogger)IAppHost.Host?.Services.GetService(typeof(ILogger<>).MakeGenericType(GetType()))!;
@@ -22,7 +16,7 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
         Data = ConfigService.LoadConfig(FallbackFactory());
         Data.PropertyChanged += Data_OnPropertyChanged;
     }
-    
+
     protected ConfigHandlerBase(ILogger logger, ConfigServiceBase configService, Func<T> fallbackFactory)
     {
         Logger = logger;
@@ -34,6 +28,12 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
         Data.PropertyChanged += Data_OnPropertyChanged;
     }
 
+    public T Data { get; private set; }
+
+    private ILogger Logger { get; }
+    private ConfigServiceBase ConfigService { get; }
+    private Func<T> FallbackFactory { get; }
+
     public virtual void Reload()
     {
         Data.PropertyChanged -= Data_OnPropertyChanged;
@@ -41,19 +41,19 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
         Data = ConfigService.LoadConfig(FallbackFactory());
         Data.PropertyChanged += Data_OnPropertyChanged;
     }
-    
+
     public virtual void Save()
     {
         Logger.LogInformation("Saving config file.");
         ConfigService.SaveConfig(Data);
     }
-    
+
     public virtual void Delete()
     {
         Logger.LogInformation("Deleting config file.");
         ConfigService.DeleteConfig(Data);
     }
-    
+
     protected virtual void Data_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         Save();

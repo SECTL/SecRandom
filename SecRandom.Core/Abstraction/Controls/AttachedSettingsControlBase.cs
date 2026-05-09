@@ -10,38 +10,34 @@ namespace SecRandom.Core.Abstraction.Controls;
 
 public abstract class AttachedSettingsControlBase : UserControl
 {
-    public static readonly StyledProperty<AttachedSettingsTargets> TargetProperty = AvaloniaProperty.Register<AttachedSettingsControlBase, AttachedSettingsTargets>(
-        nameof(Target));
+    public static readonly StyledProperty<AttachedSettingsTargets> TargetProperty =
+        AvaloniaProperty.Register<AttachedSettingsControlBase, AttachedSettingsTargets>(nameof(Target));
 
     public AttachedSettingsTargets Target
     {
         get => GetValue(TargetProperty);
         set => SetValue(TargetProperty, value);
     }
-    
+
     [NotNull] internal object? SettingsInternal { get; set; }
 
     public static AttachedSettingsControlBase? GetInstance(AttachedSettingsControlInfo info, ref object? settings)
     {
         var control = IAppHost.Host?.Services.GetKeyedService<AttachedSettingsControlBase>(info.Guid);
-        if (control == null)
-        {
-            return null;
-        }
+        if (control == null) return null;
 
         var baseType = info.AttachedSettingsControlType.BaseType;
         if (baseType?.GetGenericArguments().Length > 0)
         {
             var settingsType = baseType.GetGenericArguments().First();
             var settingsReal = settings ?? Activator.CreateInstance(settingsType);
-            if (settingsReal is JsonElement json)
-            {
-                settingsReal = json.Deserialize(settingsType);
-            }
+            if (settingsReal is JsonElement json) settingsReal = json.Deserialize(settingsType);
+
             settings = settingsReal;
 
             control.SettingsInternal = settingsReal;
         }
+
         return control;
     }
 }

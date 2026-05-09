@@ -7,13 +7,16 @@ namespace SecRandom.Core.Services.Logging;
 
 public class LoggingConsoleFormatter() : ConsoleFormatter("secrandom")
 {
-    public override void Write<TState>(in LogEntry<TState> logEntry, IExternalScopeProvider? scopeProvider, TextWriter textWriter)
+    public override void Write<TState>(in LogEntry<TState> logEntry, IExternalScopeProvider? scopeProvider,
+        TextWriter textWriter)
     {
         var separator = " | ".Pastel(ConsoleColor.Gray);
         var scopeSeparator = " => ".Pastel(ConsoleColor.Gray);
         var now = DateTimeOffset.Now.ToString("yyyy/MM/dd HH:mm:ss").Pastel(ConsoleColor.DarkGray);
-        var message = logEntry.Formatter(logEntry.State, logEntry.Exception) + (logEntry.Exception != null ? Environment.NewLine+ logEntry.Exception.ToString().Pastel("#cccccc") : "");
-        
+        var message = logEntry.Formatter(logEntry.State, logEntry.Exception) + (logEntry.Exception != null
+            ? Environment.NewLine + logEntry.Exception.ToString().Pastel("#cccccc")
+            : "");
+
         textWriter.Write(now);
         textWriter.Write(separator);
         textWriter.Write(GetLogLevelString(logEntry.LogLevel));

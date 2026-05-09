@@ -12,4 +12,3 @@ using SecRandom;
 #if Platforms_MacOs
 [assembly:SupportedOSPlatform("macos")]
 #endif
- 

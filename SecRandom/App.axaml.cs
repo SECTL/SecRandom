@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
@@ -39,13 +38,12 @@ namespace SecRandom;
 
 public partial class App : Application
 {
-    public new static App Current => (Application.Current as App)!;
-
     private static FloatingWindow? _floatingWindow;
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
     private static MainWindow? _profileSettingsWindow;
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
+    public new static App Current => (Application.Current as App)!;
 
     public override void Initialize()
     {
@@ -111,18 +109,12 @@ public partial class App : Application
             BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
 
         // remove each entry found
-        foreach (var plugin in dataValidationPluginsToRemove)
-        {
-            BindingPlugins.DataValidators.Remove(plugin);
-        }
+        foreach (var plugin in dataValidationPluginsToRemove) BindingPlugins.DataValidators.Remove(plugin);
     }
 
     private void BuildHost()
     {
-        if (IAppHost.Host is not null)
-        {
-            return;
-        }
+        if (IAppHost.Host is not null) return;
 
         IAppHost.Host = Host
             .CreateDefaultBuilder()
@@ -160,7 +152,8 @@ public partial class App : Application
                 services.AddTransient<ProfileSettingsViewModel>();
 
                 // 附加设置
-                services.AddAttachedSettingsControl<BehindSceneAttachedSettingsControl>(Langs.Common.Resources.AttachedSettings_BehindScene);
+                services.AddAttachedSettingsControl<BehindSceneAttachedSettingsControl>(Langs.Common.Resources
+                    .AttachedSettings_BehindScene);
 
                 // 界面 Views
                 services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
@@ -189,7 +182,8 @@ public partial class App : Application
 
         var logger = IAppHost.GetService<ILogger<App>>();
 
-        logger.LogInformation("SecRandom {VERSION} (Codename: {CODENAME})", GlobalConstants.Version, GlobalConstants.CodeName);
+        logger.LogInformation("SecRandom {VERSION} (Codename: {CODENAME})", GlobalConstants.Version,
+            GlobalConstants.CodeName);
         logger.LogInformation("Copyright by SECTL(2025~{YEAR})  Licensed under GPL3.0", DateTime.Now.Year);
         logger.LogInformation("Host built.");
 
@@ -207,9 +201,7 @@ public partial class App : Application
         // RESOURCES TEST
         var isVisible = false;
         if (GlobalConstants.IsDevelopment && isVisible)
-        {
             IAppHost.GetService<SettingsSearchService>().LogTestInformation();
-        }
     }
 
     public static void Stop()

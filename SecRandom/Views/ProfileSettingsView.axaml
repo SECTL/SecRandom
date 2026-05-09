@@ -5,8 +5,6 @@
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:fa="using:FluentAvalonia.UI.Controls"
              xmlns:views="clr-namespace:SecRandom.Views"
-             xmlns:lc="clr-namespace:SecRandom.Langs.Common"
-             xmlns:lcc="clr-namespace:SecRandom.Core.Langs.Common;assembly=SecRandom.Core"
              xmlns:lp="clr-namespace:SecRandom.Langs.ProfileSettings"
              xmlns:lps="clr-namespace:SecRandom.Langs.ProfileSettings.Students"
              xmlns:services="clr-namespace:SecRandom.Core.Services;assembly=SecRandom.Core"

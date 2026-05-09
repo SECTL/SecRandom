@@ -5,6 +5,6 @@ namespace SecRandom.Core.Models.SubConfigs;
 
 public partial class RollCallSettingsConfig : OverridableDrawSettings
 {
-    [ObservableProperty] private DrawType _drawType = DrawType.Random;
     [ObservableProperty] private string _defaultClass = string.Empty;
+    [ObservableProperty] private DrawType _drawType = DrawType.Random;
 }

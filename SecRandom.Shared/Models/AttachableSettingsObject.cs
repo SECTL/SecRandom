@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-using CommunityToolkit.Mvvm.ComponentModel;
-using SecRandom.Shared.Extensions;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Shared.Interfaces;
 
 namespace SecRandom.Shared.Models;

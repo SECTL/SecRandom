@@ -8,34 +8,34 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw.Exceptions;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Interfaces;
-using SecRandom.Shared.Models;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.Draw;
 
 public partial class DrawEngine
 {
-    private static readonly Guid BehindSceneAttachedSettingsId = Guid.Parse(GlobalConstants.BehindSceneAttachedSettings);
+    private static readonly Guid BehindSceneAttachedSettingsId =
+        Guid.Parse(GlobalConstants.BehindSceneAttachedSettings);
 
-    private readonly MainConfigHandler configHandler = IAppHost.GetService<MainConfigHandler>();
-    private readonly IProfileService profileService = IAppHost.GetService<IProfileService>();
+    private readonly MainConfigHandler _configHandler = IAppHost.GetService<MainConfigHandler>();
+    private readonly IProfileService _profileService = IAppHost.GetService<IProfileService>();
 
-    private MainConfigModel configData => configHandler.Data;
-    private StudentHistory studentHistory => profileService.CurrentStudentHistory ?? new StudentHistory();
-    private PrizeHistory prizeHistory => profileService.CurrentPrizeHistory ?? new PrizeHistory();
-    private StudentList studentList => profileService.CurrentStudentList ?? new StudentList();
-    private PrizeList prizeList => profileService.CurrentPrizeList ?? new PrizeList();
+    private MainConfigModel ConfigData => _configHandler.Data;
+    private StudentHistory StudentHistory => _profileService.CurrentStudentHistory ?? new StudentHistory();
+    private PrizeHistory PrizeHistory => _profileService.CurrentPrizeHistory ?? new PrizeHistory();
+    private StudentList StudentList => _profileService.CurrentStudentList ?? new StudentList();
+    private PrizeList PrizeList => _profileService.CurrentPrizeList ?? new PrizeList();
 
     public DrawResult<Student> DrawStudent(int count, Func<Student, bool> filter)
     {
         var hasBaseCandidates = false;
-        var repeatThreshold = getRollCallRepeatThreshold();
+        var repeatThreshold = GetRollCallRepeatThreshold();
         try
         {
-            hasBaseCandidates = studentList.Students.Any(filter);
+            hasBaseCandidates = StudentList.Students.Any(filter);
 
             //先添加半重复的条件
-            bool filter1(Student student)
+            bool Filter1(Student student)
             {
                 if (!filter(student))
                     return false;
@@ -43,14 +43,14 @@ public partial class DrawEngine
                 if (repeatThreshold <= 0)
                     return true;
 
-                return getStudentDrawCount(student) < repeatThreshold;
+                return GetStudentDrawCount(student) < repeatThreshold;
             }
 
             //先筛选出符合条件的学生
-            var usable = filterStudents(filter1, count);
+            var usable = FilterStudents(Filter1, count);
 
 
-            var weightedCandidates = configData.RollCallSettings.DrawType switch
+            var weightedCandidates = ConfigData.RollCallSettings.DrawType switch
             {
                 DrawType.Fair => CalculateStudentWeight(usable),
                 DrawType.Random => usable
@@ -60,7 +60,7 @@ public partial class DrawEngine
                     .Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 })
                     .ToList()
             };
-            return drawWithBehindSceneWeights(weightedCandidates, count);
+            return DrawWithBehindSceneWeights(weightedCandidates, count);
         }
         catch (RepeatLimitExhaustedException)
         {
@@ -72,12 +72,10 @@ public partial class DrawEngine
         catch (CandidateNotFoundException)
         {
             if (hasBaseCandidates && repeatThreshold > 0)
-            {
                 return new DrawResult<Student>
                 {
                     Status = DrawStatus.RepeatLimitExhausted
                 };
-            }
 
             return new DrawResult<Student>
             {
@@ -86,24 +84,24 @@ public partial class DrawEngine
         }
     }
 
-    private int getRollCallRepeatThreshold()
+    private int GetRollCallRepeatThreshold()
     {
-        return configData.DefaultDrawSettings.DrawMode switch
+        return ConfigData.DefaultDrawSettings.DrawMode switch
         {
             DrawMode.Repeat => 0,
             DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, configData.DefaultDrawSettings.HalfRepeat),
+            DrawMode.HalfRepeat => Math.Max(1, ConfigData.DefaultDrawSettings.HalfRepeat),
             _ => 1
         };
     }
 
-    private int getLotteryRepeatThreshold()
+    private int GetLotteryRepeatThreshold()
     {
-        return configData.LotterySettings.DrawMode switch
+        return ConfigData.LotterySettings.DrawMode switch
         {
             DrawMode.Repeat => 0,
             DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, configData.LotterySettings.HalfRepeat),
+            DrawMode.HalfRepeat => Math.Max(1, ConfigData.LotterySettings.HalfRepeat),
             _ => 1
         };
     }
@@ -112,13 +110,13 @@ public partial class DrawEngine
     {
         try
         {
-            var usable = filterPrizes(filter, count);
-            var weightedCandidates = buildPrizeCandidates(usable);
+            var usable = FilterPrizes(filter, count);
+            var weightedCandidates = BuildPrizeCandidates(usable);
 
             if (count > weightedCandidates.Count)
                 throw new RepeatLimitExhaustedException();
 
-            return drawWithBehindSceneWeights(weightedCandidates, count);
+            return DrawWithBehindSceneWeights(weightedCandidates, count);
         }
         catch (RepeatLimitExhaustedException)
         {
@@ -136,22 +134,20 @@ public partial class DrawEngine
         }
     }
 
-    private List<WeightedCandidate<Prize>> buildPrizeCandidates(List<Prize> prizes)
+    private List<WeightedCandidate<Prize>> BuildPrizeCandidates(List<Prize> prizes)
     {
-        if (configData.LotterySettings.DrawType == LotteryDrawType.Count)
+        if (ConfigData.LotterySettings.DrawType == LotteryDrawType.Count)
         {
             List<WeightedCandidate<Prize>> result = [];
             foreach (var prize in prizes)
             {
-                var remainingCount = Math.Max(0, prize.Count - getPrizeDrawCount(prize));
+                var remainingCount = Math.Max(0, prize.Count - GetPrizeDrawCount(prize));
                 for (var i = 0; i < remainingCount; i++)
-                {
                     result.Add(new WeightedCandidate<Prize>
                     {
                         Candidate = prize,
                         Weight = prize.Weight
                     });
-                }
             }
 
             return result;
@@ -164,7 +160,7 @@ public partial class DrawEngine
         }).ToList();
     }
 
-    private DrawResult<TCandidate> drawWithBehindSceneWeights<TCandidate>(
+    private DrawResult<TCandidate> DrawWithBehindSceneWeights<TCandidate>(
         IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates,
         int count)
         where TCandidate : IAttachableSettingsObject
@@ -176,7 +172,7 @@ public partial class DrawEngine
 
         foreach (var candidate in weightedCandidates)
         {
-            var settings = getBehindSceneSettings(candidate.Candidate);
+            var settings = GetBehindSceneSettings(candidate.Candidate);
             if (guaranteedCandidateSet.Contains(candidate.Candidate))
                 continue;
 
@@ -212,24 +208,20 @@ public partial class DrawEngine
         }
 
         if (guaranteedCandidates.Count >= count)
-        {
             return drawEngine.Draw(new DrawRequest<TCandidate>
             {
                 Candidates = guaranteedCandidates,
                 Count = count
             });
-        }
 
         var result = guaranteedCandidates.Select(c => c.Candidate).ToList();
         var remainingCount = count - result.Count;
         if (remainingCount <= 0)
-        {
             return new DrawResult<TCandidate>
             {
                 Result = result,
                 Status = DrawStatus.Success
             };
-        }
 
         if (effectiveCandidates.Count < remainingCount)
             return new DrawResult<TCandidate>
@@ -254,7 +246,7 @@ public partial class DrawEngine
         };
     }
 
-    private static BehindSceneAttachedSettings? getBehindSceneSettings(IAttachableSettingsObject candidate)
+    private static BehindSceneAttachedSettings? GetBehindSceneSettings(IAttachableSettingsObject candidate)
     {
         return candidate.GetAttachedObject<BehindSceneAttachedSettings>(BehindSceneAttachedSettingsId);
     }

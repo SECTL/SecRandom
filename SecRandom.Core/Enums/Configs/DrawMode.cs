@@ -4,5 +4,5 @@ public enum DrawMode
 {
     Repeat,
     NoRepeat,
-    HalfRepeat,
+    HalfRepeat
 }

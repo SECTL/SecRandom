@@ -9,19 +9,11 @@ namespace SecRandom.Core.Controls;
 
 public partial class AppToastAdorner : UserControl
 {
-    private Control? _control;
-    public ObservableCollection<ToastMessage> Messages { get; } = [];
-    
     public static readonly RoutedEvent<ShowToastEventArgs> ShowToastEvent =
         RoutedEvent.Register<AppToastAdorner, ShowToastEventArgs>(nameof(ShowToast), RoutingStrategies.Bubble);
 
-    // Provide CLR accessors for the event
-    public event EventHandler<ShowToastEventArgs> ShowToast
-    { 
-        add => AddHandler(ShowToastEvent, value);
-        remove => RemoveHandler(ShowToastEvent, value);
-    }
-    
+    private Control? _control;
+
     public AppToastAdorner()
     {
         InitializeComponent();
@@ -31,6 +23,15 @@ public partial class AppToastAdorner : UserControl
     {
         InitializeComponent();
         Attach(control);
+    }
+
+    public ObservableCollection<ToastMessage> Messages { get; } = [];
+
+    // Provide CLR accessors for the event
+    public event EventHandler<ShowToastEventArgs> ShowToast
+    {
+        add => AddHandler(ShowToastEvent, value);
+        remove => RemoveHandler(ShowToastEvent, value);
     }
 
     public void Attach(Control control)
@@ -48,10 +49,7 @@ public partial class AppToastAdorner : UserControl
 
     private void ControlOnUnloaded(object? sender, EventArgs e)
     {
-        if (_control is null)
-        {
-            return;
-        }
+        if (_control is null) return;
 
         _control.Unloaded -= ControlOnUnloaded;
         _control.RemoveHandler(ShowToastEvent, OnShowToast);
@@ -65,19 +63,13 @@ public partial class AppToastAdorner : UserControl
         {
             DispatcherTimer.RunOnce(() => Messages.Remove(e.Message), TimeSpan.FromSeconds(0.3));
         });
-        if (e.Message.AutoClose)
-        {
-            DispatcherTimer.RunOnce(() => e.Message.Close(), e.Message.Duration);
-        }
+        if (e.Message.AutoClose) DispatcherTimer.RunOnce(() => e.Message.Close(), e.Message.Duration);
     }
 
     [RelayCommand]
     private void CloseToast(ToastMessage message)
     {
-        if (!Messages.Contains(message))
-        {
-            return;
-        }
+        if (!Messages.Contains(message)) return;
 
         message.Close();
     }

@@ -9,14 +9,15 @@ public class FileLogger(FileLoggerProvider provider, string categoryName) : ILog
     private FileLoggerProvider Provider { get; } = provider;
     private string CategoryName { get; } = categoryName;
 
-    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+        Func<TState, Exception?, string> formatter)
     {
         var scopes = new List<string>();
         if (ScopeStack.Value != null)
-        {
             scopes.AddRange(ScopeStack.Value.Select(scope => (scope.ToString() ?? "") + "=>"));
-        }
-        var message = string.Join("", scopes) + formatter(state, exception) + (exception != null ? Environment.NewLine + exception : "");
+
+        var message = string.Join("", scopes) + formatter(state, exception) +
+                      (exception != null ? Environment.NewLine + exception : "");
         Provider.WriteLog($"{DateTime.Now}|{logLevel}|{CategoryName}|{message}");
     }
 

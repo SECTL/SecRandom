@@ -9,23 +9,25 @@ namespace SecRandom.Core.Models;
 
 public partial class MainConfigModel : ConfigBase
 {
-    [JsonIgnore]
-    public override string ConfigFilePath => Utils.GetFilePath("config", "settings.json");
+    [ObservableProperty] private BackupConfig _backup = new();
 
-    [ObservableProperty] private FloatPositionConfig _floatPosition = new();
-    
     // 基本设置
     [ObservableProperty] private BasicSettingsConfig _basicSettings = new();
-    [ObservableProperty] private BackupConfig _backup = new();
+
     // 抽取设置
     [ObservableProperty] private DefaultDrawSettingsConfig _defaultDrawSettings = new();
-    [ObservableProperty] private RollCallSettingsConfig _rollCallSettings = new();
-    [ObservableProperty] private QuickDrawSettingsConfig _quickDrawSettings = new();
-    [ObservableProperty] private LotterySettingsConfig _lotterySettings = new();
     [ObservableProperty] private FaceDetectorSettingsConfig _faceDetectorSettingsConfig = new();
+
     // ...
     // 更多设置->公平抽取设置
     [ObservableProperty] private FairDrawSettingsConfig _fairDrawSettings = new();
+
+    [ObservableProperty] private FloatPositionConfig _floatPosition = new();
+    [ObservableProperty] private LotterySettingsConfig _lotterySettings = new();
+    [ObservableProperty] private QuickDrawSettingsConfig _quickDrawSettings = new();
+    [ObservableProperty] private RollCallSettingsConfig _rollCallSettings = new();
+
+    [JsonIgnore] public override string ConfigFilePath => Utils.GetFilePath("config", "settings.json");
     // ...
 
     public DrawSettingsConfigBase GetOverrideDrawSettings(
@@ -42,9 +44,12 @@ public partial class MainConfigModel : ConfigBase
         return settingsType switch
         {
             OverridableDrawSettingsType.Display => settings.OverrideDisplaySettings ? settings : DefaultDrawSettings,
-            OverridableDrawSettingsType.Animation => settings.OverrideAnimationSettings ? settings : DefaultDrawSettings,
+            OverridableDrawSettingsType.Animation =>
+                settings.OverrideAnimationSettings ? settings : DefaultDrawSettings,
             OverridableDrawSettingsType.Color => settings.OverrideColorSettings ? settings : DefaultDrawSettings,
-            OverridableDrawSettingsType.StudentImage => settings.OverrideStudentImageSettings ? settings : DefaultDrawSettings,
+            OverridableDrawSettingsType.StudentImage => settings.OverrideStudentImageSettings
+                ? settings
+                : DefaultDrawSettings,
             OverridableDrawSettingsType.Music => settings.OverrideMusicSettings ? settings : DefaultDrawSettings,
             _ => throw new ArgumentOutOfRangeException(nameof(settingsType), settingsType, null)
         };

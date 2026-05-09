@@ -29,7 +29,7 @@
                 BorderThickness="2"
                 CornerRadius="8" ClipToBounds="True" />
         <!-- Opacity="{Binding ViewModel.Config.FloatingWindowSettings.FloatingWindowOpacity}" -->
-        
+
         <StackPanel x:Name="RootStackPanel"
                     Orientation="Vertical"
                     VerticalAlignment="Center"

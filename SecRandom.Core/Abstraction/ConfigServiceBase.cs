@@ -13,7 +13,7 @@ public abstract class ConfigServiceBase
         PropertyNameCaseInsensitive = true,
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
         Converters = { new ColorJsonConverter() },
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
     public abstract bool IsConfigExists<T>(T fallback) where T : ConfigBase;

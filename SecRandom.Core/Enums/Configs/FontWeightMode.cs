@@ -10,5 +10,5 @@ public enum FontWeightMode
     SemiBold,
     Bold,
     ExtraBold,
-    Black,
+    Black
 }

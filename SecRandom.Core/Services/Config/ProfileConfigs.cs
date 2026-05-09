@@ -6,14 +6,14 @@ namespace SecRandom.Core.Services.Config;
 
 public class ProfileConfigHandlerBase<T> : ConfigHandlerBase<T> where T : ProfileConfigBase
 {
-    public string Name { get; }
-
     public ProfileConfigHandlerBase(string name)
-        : base(() => (T)Activator.CreateInstance(typeof(T), args: [name])!)
+        : base(() => (T)Activator.CreateInstance(typeof(T), [name])!)
     {
         Name = name;
         Data.Name = name;
     }
+
+    public string Name { get; }
 
     public override void Reload()
     {
@@ -23,7 +23,9 @@ public class ProfileConfigHandlerBase<T> : ConfigHandlerBase<T> where T : Profil
 }
 
 public class StudentListConfig(string name) : ProfileConfigHandlerBase<StudentList>(name);
+
 public class StudentHistoryConfig(string name) : ProfileConfigHandlerBase<StudentHistory>(name);
 
 public class PrizeListConfig(string name) : ProfileConfigHandlerBase<PrizeList>(name);
+
 public class PrizeHistoryConfig(string name) : ProfileConfigHandlerBase<PrizeHistory>(name);

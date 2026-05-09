@@ -9,7 +9,7 @@ public class SettingsMetadata
     public bool IsCategory { get; set; } = false;
     public string CategoryId { get; set; } = string.Empty;
     public string CategoryName { get; set; } = string.Empty;
-    
+
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
@@ -23,13 +23,13 @@ public class SettingsMetadata
         {
             if (Description == string.Empty)
                 return $@"{PageName} - {CategoryName}";
-            
+
             return $@"{PageName} - {CategoryName} | {Description}";
         }
-        
+
         if (Description == string.Empty)
             return $@"{PageName} - {CategoryName} - {Name}";
-        
+
         return $@"{PageName} - {CategoryName} - {Name} | {Description}";
     }
 }

@@ -16,12 +16,9 @@ namespace SecRandom.Views;
 
 public partial class ProfileSettingsView : UserControl
 {
-    public static ProfileSettingsView? Current { get; private set; }
-    public ProfileSettingsViewModel ViewModel { get; } = IAppHost.GetService<ProfileSettingsViewModel>();
-    
     private AppToastAdorner? _appToastAdorner;
     private bool _isAdornerAdded;
-    
+
     public ProfileSettingsView()
     {
         Current = this;
@@ -29,13 +26,11 @@ public partial class ProfileSettingsView : UserControl
         InitializeComponent();
 
         NavigationView.SelectedItem = NavigationView.MenuItems[0];
-        
+
         ViewModel.PropertyChanged += (sender, e) =>
         {
             if (e.PropertyName == nameof(ProfileSettingsViewModel.SelectedPageItem))
-            {
                 ViewModel.SelectedPageIndex = NavigationView.MenuItems.IndexOf(ViewModel.SelectedPageItem);
-            }
         };
 
         RenderOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
@@ -43,34 +38,34 @@ public partial class ProfileSettingsView : UserControl
         RenderOptions.SetEdgeMode(this, EdgeMode.Antialias);
     }
 
+    public static ProfileSettingsView? Current { get; private set; }
+    public ProfileSettingsViewModel ViewModel { get; } = IAppHost.GetService<ProfileSettingsViewModel>();
+
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        if (Content is not Control element || _isAdornerAdded)
-        {
-            return;
-        }
+        if (Content is not Control element || _isAdornerAdded) return;
 
         var layer = AdornerLayer.GetAdornerLayer(element);
         _appToastAdorner = new AppToastAdorner(this);
         layer?.Children.Add(_appToastAdorner);
         AdornerLayer.SetAdornedElement(_appToastAdorner, this);
-        
+
         if (GlobalConstants.IsDevelopment)
         {
             var adorner = new DevelopmentBuildAdorner();
             layer?.Children.Add(adorner);
             AdornerLayer.SetAdornedElement(adorner, this);
         }
-        
+
         _isAdornerAdded = true;
     }
-    
+
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
         SaveSelectedStudentListConfig();
         DataContext = null;
     }
-    
+
     public void OpenDrawer(object content)
     {
         ViewModel.DrawerContent = content;
@@ -86,16 +81,13 @@ public partial class ProfileSettingsView : UserControl
     {
         if (ViewModel.SelectedStudentListConfig == null)
             return;
-        
+
         ViewModel.SelectedStudentListConfig.Save();
 
         var service = IAppHost.GetService<IProfileService>();
-        if (service.StudentListConfig?.Name == ViewModel.SelectedStudentListName)
-        {
-            service.StudentListConfig.Reload();
-        }
+        if (service.StudentListConfig?.Name == ViewModel.SelectedStudentListName) service.StudentListConfig.Reload();
     }
-    
+
     private void SaveProfileButton_OnClick(object? sender, RoutedEventArgs e)
     {
         SaveSelectedStudentListConfig();
