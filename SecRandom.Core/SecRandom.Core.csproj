@@ -7,6 +7,16 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <FluentIconMappingFile>Assets/FluentSystemIcons-Resizable.json</FluentIconMappingFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <CompilerVisibleProperty Include="FluentIconMappingFile" />
+        <AdditionalFiles Include="$(MSBuildProjectDirectory)\$(FluentIconMappingFile)" />
+        <CompilerVisibleProperty Include="LucideIconMappingFile" />
+    </ItemGroup>
+    
     <ItemGroup>
         <PackageReference Include="AsyncImageLoader.Avalonia" Version="3.6.0" />
         <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
@@ -25,6 +35,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\SecRandom.Shared\SecRandom.Shared.csproj" />
+        <ProjectReference Include="..\roslyn\IconsMappingGenerator\IconsMappingGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <ItemGroup>
@@ -47,6 +58,5 @@
     </ItemGroup>
 
     <Import Project="..\Global.props" />
-    <Import Project=".\FluentIcon.props" />
 
 </Project>
