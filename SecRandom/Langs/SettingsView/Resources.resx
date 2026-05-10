@@ -41,4 +41,43 @@
     <data name="C_SearchBox_Watermark" xml:space="preserve">
         <value>搜索设置...</value>
     </data>
+    <data name="C_MoreOptions" xml:space="preserve">
+        <value>更多选项...</value>
+    </data>
+    <data name="C_MoreOptions_LogViewer" xml:space="preserve">
+        <value>查看日志</value>
+    </data>
+    <data name="C_MoreOptions_LogViewer_D" xml:space="preserve">
+        <value>查看和管理程序日志文件</value>
+    </data>
+    <data name="C_MoreOptions_ExportDiagnosticData" xml:space="preserve">
+        <value>导出诊断数据</value>
+    </data>
+    <data name="C_MoreOptions_ExportDiagnosticData_D" xml:space="preserve">
+        <value>退出软件时导出诊断信息，用于排查问题</value>
+    </data>
+    <data name="C_MoreOptions_ExportSettings" xml:space="preserve">
+        <value>导出设置</value>
+    </data>
+    <data name="C_MoreOptions_ExportSettings_D" xml:space="preserve">
+        <value>将当前设置导出为配置文件，用于备份和迁移</value>
+    </data>
+    <data name="C_MoreOptions_ImportSettings" xml:space="preserve">
+        <value>导入设置</value>
+    </data>
+    <data name="C_MoreOptions_ImportSettings_D" xml:space="preserve">
+        <value>从配置文件导入设置，覆盖当前配置信息</value>
+    </data>
+    <data name="C_MoreOptions_ExportAllData" xml:space="preserve">
+        <value>导出所有数据</value>
+    </data>
+    <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve">
+        <value>退出软件时导出全部数据和设置</value>
+    </data>
+    <data name="C_MoreOptions_ImportAllData" xml:space="preserve">
+        <value>导入所有数据</value>
+    </data>
+    <data name="C_MoreOptions_ImportAllData_D" xml:space="preserve">
+        <value>启动软件时从备份文件恢复全部数据</value>
+    </data>
 </root>

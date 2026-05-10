@@ -34,7 +34,7 @@
         <value>About SecRandom</value>
     </data>
     <data name="Settings_Basic" xml:space="preserve">
-        <value>Basic Settings</value>
+        <value>Basic</value>
     </data>
     <data name="Settings_RosterManagement" xml:space="preserve">
         <value>Roster Management</value>
@@ -116,5 +116,11 @@
     </data>
     <data name="Menu_RestartProgram" xml:space="preserve">
         <value>Restart Program</value>
+    </data>
+    <data name="Settings_General" xml:space="preserve">
+        <value>General Settings</value>
+    </data>
+    <data name="Settings_Home" xml:space="preserve">
+        <value>Home</value>
     </data>
 </root>

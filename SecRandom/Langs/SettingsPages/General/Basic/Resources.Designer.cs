@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SecRandom.Langs.SettingsPages.Basic {
+namespace SecRandom.Langs.SettingsPages.General.Basic {
     using System;
     
     
@@ -38,7 +38,7 @@ namespace SecRandom.Langs.SettingsPages.Basic {
         public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SecRandom.Langs.SettingsPages.Basic.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SecRandom.Langs.SettingsPages.General.Basic.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -391,141 +391,6 @@ namespace SecRandom.Langs.SettingsPages.Basic {
         public static string S_Behavior_UrlProtocol_D {
             get {
                 return ResourceManager.GetString("S_Behavior_UrlProtocol_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 数据管理.
-        /// </summary>
-        public static string S_DataManagement {
-            get {
-                return ResourceManager.GetString("S_DataManagement", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 备份管理.
-        /// </summary>
-        public static string S_DataManagement_BackupManager {
-            get {
-                return ResourceManager.GetString("S_DataManagement_BackupManager", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 管理自动备份与手动备份.
-        /// </summary>
-        public static string S_DataManagement_BackupManager_D {
-            get {
-                return ResourceManager.GetString("S_DataManagement_BackupManager_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 导出所有数据.
-        /// </summary>
-        public static string S_DataManagement_ExportAllData {
-            get {
-                return ResourceManager.GetString("S_DataManagement_ExportAllData", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 退出软件时导出全部数据和设置.
-        /// </summary>
-        public static string S_DataManagement_ExportAllData_D {
-            get {
-                return ResourceManager.GetString("S_DataManagement_ExportAllData_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 导出诊断数据.
-        /// </summary>
-        public static string S_DataManagement_ExportDiagnosticData {
-            get {
-                return ResourceManager.GetString("S_DataManagement_ExportDiagnosticData", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 退出软件时导出诊断信息，用于排查问题.
-        /// </summary>
-        public static string S_DataManagement_ExportDiagnosticData_D {
-            get {
-                return ResourceManager.GetString("S_DataManagement_ExportDiagnosticData_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 导出设置.
-        /// </summary>
-        public static string S_DataManagement_ExportSettings {
-            get {
-                return ResourceManager.GetString("S_DataManagement_ExportSettings", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 将当前设置导出为配置文件，用于备份和迁移.
-        /// </summary>
-        public static string S_DataManagement_ExportSettings_D {
-            get {
-                return ResourceManager.GetString("S_DataManagement_ExportSettings_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 导入所有数据.
-        /// </summary>
-        public static string S_DataManagement_ImportAllData {
-            get {
-                return ResourceManager.GetString("S_DataManagement_ImportAllData", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 启动软件时从备份文件恢复全部数据.
-        /// </summary>
-        public static string S_DataManagement_ImportAllData_D {
-            get {
-                return ResourceManager.GetString("S_DataManagement_ImportAllData_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 导入设置.
-        /// </summary>
-        public static string S_DataManagement_ImportSettings {
-            get {
-                return ResourceManager.GetString("S_DataManagement_ImportSettings", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 从配置文件导入设置，覆盖当前配置信息.
-        /// </summary>
-        public static string S_DataManagement_ImportSettings_D {
-            get {
-                return ResourceManager.GetString("S_DataManagement_ImportSettings_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 查看日志.
-        /// </summary>
-        public static string S_DataManagement_LogViewer {
-            get {
-                return ResourceManager.GetString("S_DataManagement_LogViewer", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 查看和管理程序日志文件.
-        /// </summary>
-        public static string S_DataManagement_LogViewer_D {
-            get {
-                return ResourceManager.GetString("S_DataManagement_LogViewer_D", resourceCulture);
             }
         }
         

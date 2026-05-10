@@ -60,6 +60,123 @@ namespace SecRandom.Langs.SettingsView {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 更多选项....
+        /// </summary>
+        public static string C_MoreOptions {
+            get {
+                return ResourceManager.GetString("C_MoreOptions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 导出所有数据.
+        /// </summary>
+        public static string C_MoreOptions_ExportAllData {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_ExportAllData", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 退出软件时导出全部数据和设置.
+        /// </summary>
+        public static string C_MoreOptions_ExportAllData_D {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_ExportAllData_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 导出诊断数据.
+        /// </summary>
+        public static string C_MoreOptions_ExportDiagnosticData {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_ExportDiagnosticData", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 退出软件时导出诊断信息，用于排查问题.
+        /// </summary>
+        public static string C_MoreOptions_ExportDiagnosticData_D {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_ExportDiagnosticData_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 导出设置.
+        /// </summary>
+        public static string C_MoreOptions_ExportSettings {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_ExportSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 将当前设置导出为配置文件，用于备份和迁移.
+        /// </summary>
+        public static string C_MoreOptions_ExportSettings_D {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_ExportSettings_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 导入所有数据.
+        /// </summary>
+        public static string C_MoreOptions_ImportAllData {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_ImportAllData", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 启动软件时从备份文件恢复全部数据.
+        /// </summary>
+        public static string C_MoreOptions_ImportAllData_D {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_ImportAllData_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 导入设置.
+        /// </summary>
+        public static string C_MoreOptions_ImportSettings {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_ImportSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 从配置文件导入设置，覆盖当前配置信息.
+        /// </summary>
+        public static string C_MoreOptions_ImportSettings_D {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_ImportSettings_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 查看日志.
+        /// </summary>
+        public static string C_MoreOptions_LogViewer {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_LogViewer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 查看和管理程序日志文件.
+        /// </summary>
+        public static string C_MoreOptions_LogViewer_D {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_LogViewer_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 搜索设置....
         /// </summary>
         public static string C_SearchBox_Watermark {

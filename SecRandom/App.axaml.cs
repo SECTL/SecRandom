@@ -24,6 +24,7 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Extensions.Registry;
+using SecRandom.Core.Icons;
 using SecRandom.Core.Models;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Logging;
@@ -33,6 +34,7 @@ using SecRandom.ViewModels;
 using SecRandom.Views;
 using SecRandom.Views.MainPages;
 using SecRandom.Views.SettingsPages;
+using SecRandom.Views.SettingsPages.General;
 
 namespace SecRandom;
 
@@ -162,6 +164,11 @@ public partial class App : Application
 #endif
 
                 // 设置界面 Views
+                services.AddSettingsPage<HomeSettingsPage>(Langs.Common.Resources.Settings_Home);
+                services.AddSettingsPageSeparator();
+                
+                services.AddGroup(new PageGroupInfo(
+                    Langs.Common.Resources.Settings_General, @"settings.general", FluentIcons.SettingsRegular));
                 services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
                 services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
 

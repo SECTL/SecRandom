@@ -7,9 +7,9 @@ using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Models;
 using SecRandom.ViewModels;
 
-namespace SecRandom.Views.SettingsPages;
+namespace SecRandom.Views.SettingsPages.General;
 
-[PageInfo("settings.basic.backup", "\uE07D", isHide: true)]
+[PageInfo("settings.general.backup", "\uE07D", "settings.general")]
 public partial class BackupSettingsPage : UserControl
 {
     public BackupSettingsPage()

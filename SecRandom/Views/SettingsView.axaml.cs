@@ -30,7 +30,7 @@ namespace SecRandom.Views;
 
 public partial class SettingsView : UserControl, INavigationPageFactory
 {
-    private const string DefaultMainPageId = "settings.basic";
+    private const string DefaultMainPageId = "settings.home";
 
     private readonly ILogger<SettingsView> _logger = IAppHost.GetService<ILogger<SettingsView>>();
     private AppToastAdorner? _appToastAdorner;

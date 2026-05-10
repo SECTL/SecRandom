@@ -222,7 +222,7 @@ namespace SecRandom.Langs.Common {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 基础设置.
+        ///   Looks up a localized string similar to 基础.
         /// </summary>
         public static string Settings_Basic {
             get {
@@ -245,6 +245,24 @@ namespace SecRandom.Langs.Common {
         public static string Settings_FloatingWindow {
             get {
                 return ResourceManager.GetString("Settings_FloatingWindow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 通用设置.
+        /// </summary>
+        public static string Settings_General {
+            get {
+                return ResourceManager.GetString("Settings_General", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 主页.
+        /// </summary>
+        public static string Settings_Home {
+            get {
+                return ResourceManager.GetString("Settings_Home", resourceCulture);
             }
         }
         

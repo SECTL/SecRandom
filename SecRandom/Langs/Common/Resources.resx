@@ -46,7 +46,7 @@
         <value>关于 SecRandom</value>
     </data>
     <data name="Settings_Basic" xml:space="preserve">
-        <value>基础设置</value>
+        <value>基础</value>
     </data>
     <data name="Settings_RosterManagement" xml:space="preserve">
         <value>名单管理</value>
@@ -116,5 +116,11 @@
     </data>
     <data name="Menu_RestartProgram" xml:space="preserve">
         <value>重启程序</value>
+    </data>
+    <data name="Settings_General" xml:space="preserve">
+        <value>通用设置</value>
+    </data>
+    <data name="Settings_Home" xml:space="preserve">
+        <value>主页</value>
     </data>
 </root>

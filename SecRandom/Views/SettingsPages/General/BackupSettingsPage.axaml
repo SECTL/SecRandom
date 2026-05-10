@@ -4,11 +4,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
-             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.General"
              xmlns:lc="clr-namespace:SecRandom.Langs.Common"
-             xmlns:lsb="clr-namespace:SecRandom.Langs.SettingsPages.Backup"
+             xmlns:lsb="clr-namespace:SecRandom.Langs.SettingsPages.General.Backup"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.SettingsPages.BackupSettingsPage"
+             x:Class="SecRandom.Views.SettingsPages.General.BackupSettingsPage"
              x:DataType="local:BackupSettingsPage"
              d:DataContext="{d:DesignInstance local:BackupSettingsPage}">
     <ScrollViewer>

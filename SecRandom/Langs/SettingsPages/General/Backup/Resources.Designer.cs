@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SecRandom.Langs.SettingsPages.Backup {
+namespace SecRandom.Langs.SettingsPages.General.Backup {
     using System;
     
     
@@ -38,7 +38,7 @@ namespace SecRandom.Langs.SettingsPages.Backup {
         public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SecRandom.Langs.SettingsPages.Backup.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SecRandom.Langs.SettingsPages.General.Backup.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

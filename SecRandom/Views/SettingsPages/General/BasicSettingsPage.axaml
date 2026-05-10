@@ -3,13 +3,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
-             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
-             xmlns:lsb="clr-namespace:SecRandom.Langs.SettingsPages.Basic"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.General"
+             xmlns:lsb="clr-namespace:SecRandom.Langs.SettingsPages.General.Basic"
              xmlns:converters="clr-namespace:SecRandom.Converters"
              xmlns:secRandom="clr-namespace:SecRandom"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.SettingsPages.BasicSettingsPage"
+             x:Class="SecRandom.Views.SettingsPages.General.BasicSettingsPage"
              x:DataType="local:BasicSettingsPage"
              d:DataContext="{d:DesignInstance local:BasicSettingsPage}"
              Unloaded="OnUnloaded">
@@ -206,63 +206,7 @@
                     <ColorPicker Color="{Binding Settings.ThemeColor}" />
                 </fa:SettingsExpander.Footer>
             </fa:SettingsExpander>
-
-            <Separator Margin="0 12 0 4" />
-            <sr:IconText x:Name="S_DataManagement"
-                         Text="{x:Static lsb:Resources.S_DataManagement}"
-                         Glyph="{sr:Fi DataScatterRegular}"
-                         Margin="0 0 0 4" />
-
-            <fa:SettingsExpander x:Name="S_DataManagement_LogViewer"
-                                 Header="{x:Static lsb:Resources.S_DataManagement_LogViewer}"
-                                 Description="{x:Static lsb:Resources.S_DataManagement_LogViewer_D}"
-                                 IconSource="{sr:FluentIconSource {sr:Fi DocumentRegular}}"
-                                 IsClickEnabled="True"
-                                 ActionIconSource="{sr:FluentIconSource {sr:Fi ChevronRightRegular}}" />
-
-            <fa:SettingsExpander x:Name="S_DataManagement_BackupManager"
-                                 Header="{x:Static lsb:Resources.S_DataManagement_BackupManager}"
-                                 Description="{x:Static lsb:Resources.S_DataManagement_BackupManager_D}"
-                                 IconSource="{sr:FluentIconSource {sr:Fi SaveRegular}}"
-                                 IsClickEnabled="True"
-                                 ActionIconSource="{sr:FluentIconSource {sr:Fi ChevronRightRegular}}"
-                                 Click="OpenBackupManagerButton_OnClick" />
-
-            <fa:SettingsExpander x:Name="S_DataManagement_ExportDiagnosticData"
-                                 Header="{x:Static lsb:Resources.S_DataManagement_ExportDiagnosticData}"
-                                 Description="{x:Static lsb:Resources.S_DataManagement_ExportDiagnosticData_D}"
-                                 IconSource="{sr:FluentIconSource {sr:Fi DatabaseArrowDownRegular}}"
-                                 IsClickEnabled="True"
-                                 ActionIconSource="{sr:FluentIconSource {sr:Fi ChevronRightRegular}}" />
-
-            <fa:SettingsExpander x:Name="S_DataManagement_ExportSettings"
-                                 Header="{x:Static lsb:Resources.S_DataManagement_ExportSettings}"
-                                 Description="{x:Static lsb:Resources.S_DataManagement_ExportSettings_D}"
-                                 IconSource="{sr:FluentIconSource {sr:Fi ArrowClockwiseDashesSettingsRegular}}"
-                                 IsClickEnabled="True"
-                                 ActionIconSource="{sr:FluentIconSource {sr:Fi ChevronRightRegular}}" />
-
-            <fa:SettingsExpander x:Name="S_DataManagement_ImportSettings"
-                                 Header="{x:Static lsb:Resources.S_DataManagement_ImportSettings}"
-                                 Description="{x:Static lsb:Resources.S_DataManagement_ImportSettings_D}"
-                                 IconSource="{sr:FluentIconSource {sr:Fi ArrowClockwiseDashesSettingsRegular}}"
-                                 IsClickEnabled="True"
-                                 ActionIconSource="{sr:FluentIconSource {sr:Fi ChevronRightRegular}}" />
-
-            <fa:SettingsExpander x:Name="S_DataManagement_ExportAllData"
-                                 Header="{x:Static lsb:Resources.S_DataManagement_ExportAllData}"
-                                 Description="{x:Static lsb:Resources.S_DataManagement_ExportAllData_D}"
-                                 IconSource="{sr:FluentIconSource {sr:Fi DatabaseWindowRegular}}"
-                                 IsClickEnabled="True"
-                                 ActionIconSource="{sr:FluentIconSource {sr:Fi ChevronRightRegular}}" />
-
-            <fa:SettingsExpander x:Name="S_DataManagement_ImportAllData"
-                                 Header="{x:Static lsb:Resources.S_DataManagement_ImportAllData}"
-                                 Description="{x:Static lsb:Resources.S_DataManagement_ImportAllData_D}"
-                                 IconSource="{sr:FluentIconSource {sr:Fi DatabaseWindowRegular}}"
-                                 IsClickEnabled="True"
-                                 ActionIconSource="{sr:FluentIconSource {sr:Fi ChevronRightRegular}}" />
-
+            
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_Telemetry"
                          Text="{x:Static lsb:Resources.S_Telemetry}"

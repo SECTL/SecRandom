@@ -9,9 +9,9 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.ViewModels;
 
-namespace SecRandom.Views.SettingsPages;
+namespace SecRandom.Views.SettingsPages.General;
 
-[PageInfo("settings.basic", FluentIcons.WrenchSettingsRegular)]
+[PageInfo("settings.general.basic", FluentIcons.WrenchSettingsRegular, "settings.general")]
 public partial class BasicSettingsPage : UserControl
 {
     public BasicSettingsPage()
