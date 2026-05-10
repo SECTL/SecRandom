@@ -73,17 +73,10 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         if (metadata.ToString().StartsWith(search, mode)) return true;
 
         // 按名称搜素
-        var part1 =
-            metadata.PageName.Contains(search, mode) ||
-            metadata.CategoryName.Contains(search, mode) ||
-            metadata.Name.Contains(search, mode) ||
-            metadata.Description.Contains(search, mode);
-        if (part1) return part1;
-
-        // 按 id 搜索
-        if (search == @".") return false;
-        return metadata.PageId.Contains(search, mode) ||
-               metadata.Id.Contains(search, mode);
+        return metadata.PageName.Contains(search, mode) ||
+               metadata.CategoryName.Contains(search, mode) ||
+               metadata.Name.Contains(search, mode) ||
+               metadata.Description.Contains(search, mode);
     }
 
     private void SearchBox_OnKeyUp(object? sender, KeyEventArgs e)
