@@ -10,11 +10,13 @@ import json
 import platform
 import ctypes
 import uuid
+import zipfile
 from loguru import logger
 
 from app.tools.variable import *
 from app.tools.path_utils import *
 from app.tools.settings_default_storage import *
+from app.tools.path_utils import atomic_write_json
 
 Language = DEFAULT_LANGUAGE
 
@@ -53,6 +55,49 @@ def get_default_setting(first_level_key: str, second_level_key: str):
 _DEVICE_UUID_FILE = "device_uuid.json"
 
 
+def _try_recover_settings_from_backup() -> dict | None:
+    """尝试从最近的备份中恢复 settings.json 内容。
+
+    遍历备份目录中的 zip 文件（按修改时间倒序），查找包含
+    config/settings.json 的备份，返回其中可解析的设置字典。
+    如果所有备份都无法恢复则返回 None。
+    """
+    try:
+        backup_dir = get_data_path("backup")
+        if not backup_dir.exists():
+            return None
+
+        zip_files = sorted(
+            backup_dir.glob("*.zip"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+
+        for zip_path in zip_files:
+            try:
+                with zipfile.ZipFile(str(zip_path), "r") as zf:
+                    for candidate in (
+                        "config/settings.json",
+                        "settings.json",
+                    ):
+                        if candidate in zf.namelist():
+                            with zf.open(candidate) as member:
+                                content = member.read().decode("utf-8")
+                            if content and content.strip():
+                                recovered = json.loads(content)
+                                if isinstance(recovered, dict):
+                                    logger.info(
+                                        f"从备份 {zip_path.name} 恢复设置成功"
+                                    )
+                                    return recovered
+            except Exception:
+                continue
+    except Exception as e:
+        logger.warning(f"扫描备份恢复设置失败: {e}")
+
+    return None
+
+
 def ensure_device_uuid():
     """确保 offline_user_id 为标准的 36 位 UUID 格式
 
@@ -89,8 +134,7 @@ def ensure_device_uuid():
         new_uuid = str(uuid.uuid4()).lower()
         settings.setdefault("basic_settings", {})["offline_user_id"] = new_uuid
         try:
-            with open_file(settings_file, "w", encoding="utf-8") as f:
-                json.dump(settings, f, indent=4, ensure_ascii=False)
+            atomic_write_json(settings_file, settings)
             logger.info(f"已生成新的 offline_user_id: {new_uuid}")
         except Exception as e:
             logger.error(f"写入 offline_user_id 失败: {e}")
@@ -134,27 +178,31 @@ def manage_settings_file():
                             second_level_value["default_value"]
                         )
 
-            with open_file(settings_file, "w", encoding="utf-8") as f:
-                json.dump(flat_settings, f, indent=4, ensure_ascii=False)
+            atomic_write_json(settings_file, flat_settings)
             return
 
         try:
             with open_file(settings_file, "r", encoding="utf-8") as f:
                 current_settings = json.load(f)
         except Exception as e:
-            logger.warning(f"读取设置文件失败: {e}，将重新创建默认设置文件")
+            logger.warning(f"读取设置文件失败: {e}，尝试从备份恢复")
+            recovered = _try_recover_settings_from_backup()
+            if recovered is not None:
+                logger.info("从备份恢复设置成功，将使用恢复的设置")
+                atomic_write_json(settings_file, recovered)
+                return
+
+            logger.warning("无可用备份，将创建默认设置文件")
             flat_settings = {}
             for first_level_key, first_level_value in default_settings.items():
                 flat_settings[first_level_key] = {}
                 for second_level_key, second_level_value in first_level_value.items():
-                    # 如果默认值为 None，则不写入设置文件
                     if second_level_value["default_value"] is not None:
                         flat_settings[first_level_key][second_level_key] = (
                             second_level_value["default_value"]
                         )
 
-            with open_file(settings_file, "w", encoding="utf-8") as f:
-                json.dump(flat_settings, f, indent=4, ensure_ascii=False)
+            atomic_write_json(settings_file, flat_settings)
             return
 
         # 检查并更新设置文件
@@ -232,9 +280,7 @@ def manage_settings_file():
                         del updated_settings[first_level_key][second_level_key]
 
         if settings_updated:
-            # logger.debug("设置文件已更新")
-            with open_file(settings_file, "w", encoding="utf-8") as f:
-                json.dump(updated_settings, f, indent=4, ensure_ascii=False)
+            atomic_write_json(settings_file, updated_settings)
         else:
             # logger.debug("设置文件已是最新，无需更新")
             pass

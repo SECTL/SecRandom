@@ -18,6 +18,7 @@ from typing import Any
 from app.tools.variable import *
 from app.tools.path_utils import *
 from app.tools.settings_default import *
+from app.tools.path_utils import atomic_write_json
 
 
 _UNSET = object()
@@ -374,9 +375,7 @@ def update_settings(first_level_key: str, second_level_key: str, value: Any):
         # 直接保存值，不保存嵌套结构
         settings_data[first_level_key][second_level_key] = value
 
-        # 写入设置文件
-        with open_file(settings_path, "w", encoding="utf-8") as f:
-            json.dump(settings_data, f, ensure_ascii=False, indent=4)
+        atomic_write_json(settings_path, settings_data)
         _replace_settings_cache(settings_data)
 
         if not (

@@ -29,6 +29,7 @@ from app.tools.path_utils import (
     get_data_path,
     get_settings_path,
     get_path,
+    atomic_write_json,
 )
 from app.tools.personalised import get_theme_icon
 from app.tools.settings_access import readme_settings_async
@@ -956,8 +957,7 @@ def import_settings(parent: Optional[QWidget] = None) -> None:
 
             if dialog.exec():
                 settings_path = get_settings_path()
-                with open(settings_path, "w", encoding="utf-8") as f:
-                    json.dump(imported_settings, f, ensure_ascii=False, indent=4)
+                atomic_write_json(settings_path, imported_settings)
 
                 success_dialog = MessageBox(
                     get_any_position_value_async(
@@ -2093,8 +2093,7 @@ def _save_drawn_records(file_path: str, drawn_records: dict) -> None:
         drawn_records: 已抽取的学生记录字典
     """
     try:
-        with open(file_path, "w", encoding="utf-8") as file:
-            json.dump(drawn_records, file, ensure_ascii=False, indent=2)
+        atomic_write_json(file_path, drawn_records, indent=2)
     except IOError as e:
         logger.exception(f"保存已抽取记录失败: {e}")
 

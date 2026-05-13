@@ -20,8 +20,10 @@
 # 导入模块
 # ==================================================
 import os
+import json
 import shutil
 import sys
+import tempfile
 from pathlib import Path
 from typing import Union
 from loguru import logger
@@ -534,3 +536,69 @@ def get_font_path(filename: str = DEFAULT_FONT_FILENAME_PRIMARY) -> Path:
         Path: 字体文件的绝对路径
     """
     return path_getter.get_font_path(filename)
+
+
+def atomic_write_json(
+    target_path: Union[str, Path],
+    data: dict,
+    indent: int = 4,
+    ensure_ascii: bool = False,
+) -> None:
+    """原子写入 JSON 文件，防止写入过程中崩溃导致数据丢失。
+
+    先写入临时文件，再通过 os.replace() 原子替换目标文件。
+    在 POSIX 系统上 os.replace() 是原子的；在 Windows 上也是
+    近似原子的（NTFS 上 REPLACEFILE 操作为原子）。
+
+    Args:
+        target_path: 目标文件路径（相对或绝对）
+        data: 要写入的字典数据
+        indent: JSON 缩进层级
+        ensure_ascii: 是否转义非 ASCII 字符
+    """
+    absolute_path = path_manager.get_absolute_path(target_path)
+    ensure_dir(absolute_path.parent)
+    dir_path = str(absolute_path.parent)
+
+    tmp_fd, tmp_path = tempfile.mkstemp(dir=dir_path, suffix=".tmp")
+    try:
+        with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=indent, ensure_ascii=ensure_ascii)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, str(absolute_path))
+    except BaseException:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
+
+
+def atomic_write_bytes(
+    target_path: Union[str, Path],
+    data: bytes,
+) -> None:
+    """原子写入二进制文件，防止写入过程中崩溃导致数据丢失。
+
+    Args:
+        target_path: 目标文件路径（相对或绝对）
+        data: 要写入的二进制数据
+    """
+    absolute_path = path_manager.get_absolute_path(target_path)
+    ensure_dir(absolute_path.parent)
+    dir_path = str(absolute_path.parent)
+
+    tmp_fd, tmp_path = tempfile.mkstemp(dir=dir_path, suffix=".tmp")
+    try:
+        with os.fdopen(tmp_fd, "wb") as f:
+            f.write(data)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, str(absolute_path))
+    except BaseException:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise

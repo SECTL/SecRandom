@@ -9,7 +9,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from app.tools.path_utils import get_path
+from app.tools.path_utils import get_path, atomic_write_json
 
 
 _history_cache_lock = threading.RLock()
@@ -127,8 +127,7 @@ def save_history_data(history_type: str, file_name: str, data: Dict[str, Any]) -
     """
     file_path = get_history_file_path(history_type, file_name)
     try:
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+        atomic_write_json(file_path, data)
         with _history_cache_lock:
             _history_data_cache[file_path] = (
                 _get_file_signature(file_path),
