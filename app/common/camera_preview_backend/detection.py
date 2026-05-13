@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import math
+import shutil
+import sys
 import threading
 from pathlib import Path
 from typing import Optional, Tuple
@@ -355,7 +357,43 @@ def create_ultralight_net(*, model_path: Path):
 
     if not hasattr(cv2, "dnn"):
         raise RuntimeError("OpenCV dnn is not available in this build")
-    return cv2.dnn.readNetFromONNX(str(model_path))
+
+    try:
+        return cv2.dnn.readNetFromONNX(str(model_path))
+    except Exception as exc:
+        if not getattr(sys, "frozen", False):
+            raise RuntimeError(f"加载 ONNX 模型失败: {model_path}") from exc
+
+        import tempfile
+
+        temp_dir = Path(tempfile.gettempdir()) / "SecRandom" / "cv_models"
+        try:
+            temp_dir.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            temp_dir = Path(tempfile.gettempdir())
+
+        temp_path = temp_dir / model_path.name
+        try:
+            needs_copy = True
+            if temp_path.exists():
+                try:
+                    needs_copy = (
+                        temp_path.stat().st_size != model_path.stat().st_size
+                        or int(temp_path.stat().st_mtime)
+                        != int(model_path.stat().st_mtime)
+                    )
+                except Exception:
+                    needs_copy = True
+
+            if needs_copy:
+                shutil.copy2(model_path, temp_path)
+
+            logger.warning(
+                f"直接加载 ONNX 模型失败，尝试使用临时副本重新加载: {model_path}"
+            )
+            return cv2.dnn.readNetFromONNX(str(temp_path))
+        except Exception as fallback_exc:
+            raise RuntimeError(f"加载 ONNX 模型失败: {model_path}") from fallback_exc
 
 
 def _generate_ultralight_priors(input_size: Tuple[int, int]):

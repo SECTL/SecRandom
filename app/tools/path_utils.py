@@ -20,6 +20,7 @@
 # 导入模块
 # ==================================================
 import os
+import shutil
 import sys
 from pathlib import Path
 from typing import Union
@@ -34,10 +35,16 @@ from app.tools.variable import *
 class PathManager:
     """路径管理器 - 统一管理应用程序中的所有路径"""
 
+    _MUTABLE_ROOT_DATA_FILES = {
+        "device_uuid.json",
+    }
+
     def __init__(self):
         """初始化路径管理器"""
         self._app_root = self._get_app_root()
+        self._runtime_root = self._get_runtime_root()
         logger.debug(f"应用程序根目录: {self._app_root}")
+        logger.debug(f"应用程序运行数据目录: {self._runtime_root}")
 
     def _get_app_root(self) -> Path:
         """获取应用程序根目录
@@ -51,6 +58,94 @@ class PathManager:
         else:
             # 开发环境
             return Path(__file__).parent.parent.parent
+
+    def _get_runtime_root(self) -> Path:
+        """获取运行时可写根目录。"""
+        if not getattr(sys, "frozen", False):
+            return self._app_root
+
+        app_name = APPLY_NAME or "SecRandom"
+
+        if sys.platform.startswith(("win", "cygwin", "msys")):
+            base = os.environ.get("APPDATA") or os.environ.get("LOCALAPPDATA")
+            if base:
+                return Path(base) / app_name
+            return Path.home() / "AppData" / "Roaming" / app_name
+
+        if sys.platform == "darwin":
+            return Path.home() / "Library" / "Application Support" / app_name
+
+        xdg_data_home = os.environ.get("XDG_DATA_HOME")
+        if xdg_data_home:
+            return Path(xdg_data_home) / app_name
+        return Path.home() / ".local" / "share" / app_name
+
+    def _is_mutable_relative_path(self, relative_path: str) -> bool:
+        normalized = str(relative_path or "").replace("\\", "/").lstrip("/")
+        if not normalized:
+            return False
+
+        if normalized == "config" or normalized.startswith("config/"):
+            return True
+        if normalized == LOG_DIR or normalized.startswith(f"{LOG_DIR}/"):
+            return True
+
+        if normalized == "data" or normalized.startswith("data/"):
+            parts = normalized.split("/")
+            if len(parts) < 2:
+                return True
+            if len(parts) == 2 and parts[1] in self._MUTABLE_ROOT_DATA_FILES:
+                return True
+            data_type = parts[1]
+            mutable_data_types = {
+                "backup",
+                "downloads",
+                "TEMP",
+                "history",
+                "list",
+                "audio",
+                "themes",
+                "CSES",
+                "images",
+                "Language",
+            }
+            return data_type in mutable_data_types
+
+        return False
+
+    def _build_relative_path(self, base_path: Path, relative_path: str) -> Path:
+        normalized = str(relative_path or "").replace("\\", "/").lstrip("/")
+        if not normalized:
+            return base_path
+        return base_path.joinpath(*normalized.split("/"))
+
+    def _migrate_legacy_mutable_path(self, relative_path: str, runtime_path: Path):
+        """将旧版打包目录中的可变数据迁移到运行时目录。"""
+        if not getattr(sys, "frozen", False):
+            return
+
+        if runtime_path.exists():
+            return
+
+        legacy_path = self._build_relative_path(self._app_root, relative_path)
+        if legacy_path == runtime_path or not legacy_path.exists():
+            return
+
+        try:
+            runtime_path.parent.mkdir(parents=True, exist_ok=True)
+
+            if legacy_path.is_dir():
+                shutil.copytree(legacy_path, runtime_path, dirs_exist_ok=True)
+            else:
+                shutil.copy2(legacy_path, runtime_path)
+
+            logger.info(
+                f"已将旧版可变数据迁移到运行目录: {legacy_path} -> {runtime_path}"
+            )
+        except Exception as e:
+            logger.warning(
+                f"迁移旧版可变数据失败: {legacy_path} -> {runtime_path}, 错误: {e}"
+            )
 
     def get_absolute_path(self, relative_path: Union[str, Path]) -> Path:
         """将相对路径转换为绝对路径
@@ -67,9 +162,6 @@ class PathManager:
         else:
             relative_path_str = relative_path
 
-        # 获取app_root的字符串表示
-        app_root_str = str(self._app_root)
-
         # 使用字符串检查判断是否为绝对路径
         # Windows绝对路径：以驱动器号开头，如 C:\ 或 c:/
         # Linux绝对路径：以 / 开头
@@ -84,23 +176,14 @@ class PathManager:
             # 直接返回Path对象
             return Path(relative_path_str)
 
-        # 使用字符串拼接构建绝对路径，避免使用Path的/运算符
-        # 确保路径分隔符正确
-        if os.name == "nt":
-            # Windows使用\作为路径分隔符
-            if relative_path_str.startswith("\\") or relative_path_str.startswith("/"):
-                # 去掉相对路径开头的分隔符
-                relative_path_str = relative_path_str[1:]
-            absolute_path_str = rf"{app_root_str}\{relative_path_str}"
-        else:
-            # Linux使用/作为路径分隔符
-            if relative_path_str.startswith("/"):
-                # 去掉相对路径开头的分隔符
-                relative_path_str = relative_path_str[1:]
-            absolute_path_str = f"{app_root_str}/{relative_path_str}"
+        if self._is_mutable_relative_path(relative_path_str):
+            runtime_path = self._build_relative_path(
+                self._runtime_root, relative_path_str
+            )
+            self._migrate_legacy_mutable_path(relative_path_str, runtime_path)
+            return runtime_path
 
-        # 返回Path对象
-        return Path(absolute_path_str)
+        return self._build_relative_path(self._app_root, relative_path_str)
 
     def ensure_directory_exists(self, path: Union[str, Path]) -> Path:
         """确保目录存在，如果不存在则创建

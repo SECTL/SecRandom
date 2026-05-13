@@ -274,7 +274,7 @@ async def get_best_source() -> dict:
 
         return best_source
     except Exception as e:
-        logger.exception(f"获取最佳镜像源失败: {e}")
+        logger.warning(f"获取最佳镜像源失败: {e}")
         return UPDATE_SOURCES[0]  # 返回默认源
 
 
@@ -295,7 +295,7 @@ def get_update_source_url() -> str:
         else:
             return "https://github.com"
     except Exception as e:
-        logger.exception(f"获取更新源 URL 失败: {e}")
+        logger.warning(f"获取更新源 URL 失败: {e}")
         return "https://github.com"
 
 
@@ -315,7 +315,7 @@ async def get_update_source_url_async() -> str:
         else:
             return "https://github.com"
     except Exception as e:
-        logger.exception(f"获取更新源 URL 失败: {e}")
+        logger.warning(f"获取更新源 URL 失败: {e}")
         return "https://github.com"
 
 
@@ -444,7 +444,7 @@ async def get_metadata_info_async() -> dict | None:
                 continue
 
         # 所有镜像源都失败了
-        logger.exception("所有镜像源都获取 metadata.yaml 文件失败")
+        logger.warning("所有镜像源都获取 metadata.yaml 文件失败")
         return None
     else:
         # 使用指定的更新源
@@ -479,7 +479,7 @@ async def get_metadata_info_async() -> dict | None:
                         )
                         return metadata
             except Exception as e:
-                logger.exception(
+                logger.warning(
                     f"使用指定的更新源 {source['name']} 获取 metadata.yaml 失败: {e}"
                 )
                 return None
@@ -541,7 +541,7 @@ async def get_latest_version_async(channel: int | None = None) -> dict | None:
         )
         return {"version": version, "version_no": version_no}
     except Exception as e:
-        logger.exception(f"获取最新版本信息失败: {e}")
+        logger.warning(f"获取最新版本信息失败: {e}")
         return None
 
 
@@ -680,7 +680,7 @@ def get_update_download_url(
         logger.debug(f"生成更新下载 URL 成功: {download_url}")
         return download_url
     except Exception as e:
-        logger.exception(f"生成更新下载 URL 失败: {e}")
+        logger.warning(f"生成更新下载 URL 失败: {e}")
         # 返回默认的 GitHub 下载 URL
         return f"https://github.com/SECTL/SecRandom/releases/download/{version}/SecRandom-{system}-{version}-{arch}-{struct}.zip"
 
@@ -729,7 +729,7 @@ async def get_update_download_url_async(
         logger.debug(f"生成更新下载 URL 成功: {download_url}")
         return download_url
     except Exception as e:
-        logger.exception(f"生成更新下载 URL 失败: {e}")
+        logger.warning(f"生成更新下载 URL 失败: {e}")
         # 返回默认的 GitHub 下载 URL
         return f"https://github.com/SECTL/SecRandom/releases/download/{version}/SecRandom-{system}-{version}-{arch}-{struct}.zip"
 
@@ -764,9 +764,9 @@ async def download_update_async(
     file_name = _render_update_filename(
         name_format,
         version=version,
-        arch=metadata.get("arch", ARCH),
-        system=metadata.get("system", SYSTEM),
-        struct=metadata.get("struct", STRUCT),
+        arch=metadata.get("arch", ARCH) if isinstance(metadata, dict) else ARCH,
+        system=metadata.get("system", SYSTEM) if isinstance(metadata, dict) else SYSTEM,
+        struct=metadata.get("struct", STRUCT) if isinstance(metadata, dict) else STRUCT,
     )
 
     # 确定下载保存路径
@@ -848,7 +848,7 @@ async def download_update_async(
                         file_path.unlink()
                         logger.info(f"已删除损坏的文件: {file_path}")
                     except Exception as unlink_error:
-                        logger.exception(f"删除损坏文件失败: {unlink_error}")
+                        logger.warning(f"删除损坏文件失败: {unlink_error}")
                 # 继续尝试下一个镜像源
                 continue
 
@@ -862,11 +862,11 @@ async def download_update_async(
                     file_path.unlink()
                     logger.info(f"已删除部分下载文件: {file_path}")
                 except Exception as unlink_error:
-                    logger.exception(f"删除部分下载文件失败: {unlink_error}")
+                    logger.warning(f"删除部分下载文件失败: {unlink_error}")
             continue
 
     # 所有镜像源都失败了
-    logger.exception("所有镜像源都下载更新文件失败")
+    logger.warning("所有镜像源都下载更新文件失败")
     return None
 
 
@@ -1439,7 +1439,7 @@ class UpdateCheckThread(QThread):
                         # 更新全局状态
                         update_status_manager.set_download_cancelled()
                     else:
-                        logger.exception("自动下载更新失败")
+                        logger.warning("自动下载更新失败")
                         # 通知更新页面下载失败
                         safe_call_update_interface("set_download_failed")
                         # 更新全局状态
@@ -1458,7 +1458,7 @@ class UpdateCheckThread(QThread):
             # 更新上次检查时间
             safe_call_update_interface("update_last_check_time")
         except Exception as e:
-            logger.exception(f"启动时检查更新失败: {e}")
+            logger.warning(f"启动时检查更新失败: {e}")
             # 通知更新页面检查失败
             safe_call_update_interface("set_check_failed")
         finally:

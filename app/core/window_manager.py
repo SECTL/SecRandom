@@ -2,7 +2,7 @@ import os
 from typing import Optional, Callable, TYPE_CHECKING
 from loguru import logger
 from PySide6.QtCore import QTimer
-from app.tools.settings_access import readme_settings_async
+from app.tools.settings_access import get_bool_setting
 from app.core.utils import safe_execute, safe_close_window, activate_window
 
 if TYPE_CHECKING:
@@ -35,7 +35,7 @@ class WindowManager:
 
     def create_main_window(self) -> None:
         """创建主窗口实例"""
-        guide_completed = readme_settings_async("basic_settings", "guide_completed")
+        guide_completed = get_bool_setting("basic_settings", "guide_completed", False)
         if not guide_completed:
             self.show_guide_window()
             return
@@ -44,7 +44,7 @@ class WindowManager:
             self._create_main_window_impl, error_message="创建主窗口失败"
         )
         if not success:
-            logger.exception("主窗口创建失败", exc_info=True)
+            logger.warning("主窗口创建失败")
 
     def _create_main_window_impl(self) -> None:
         """创建主窗口的实现"""
@@ -155,10 +155,10 @@ class WindowManager:
 
     def _configure_main_window_display(self) -> None:
         """配置主窗口显示"""
-        show_startup_window = readme_settings_async(
-            "basic_settings", "show_startup_window"
+        show_startup_window = get_bool_setting(
+            "basic_settings", "show_startup_window", True
         )
-        is_maximized = readme_settings_async("window", "is_maximized")
+        is_maximized = get_bool_setting("window", "is_maximized", False)
         if show_startup_window:
             if is_maximized:
                 from app.tools.variable import APP_INIT_DELAY
@@ -174,8 +174,8 @@ class WindowManager:
                 self.main_window.show()
                 self._schedule_main_window_shown_tasks()
 
-        startup_display_float = readme_settings_async(
-            "floating_window_management", "startup_display_floating_window"
+        startup_display_float = get_bool_setting(
+            "floating_window_management", "startup_display_floating_window", False
         )
         if startup_display_float:
             if self.float_window is None:

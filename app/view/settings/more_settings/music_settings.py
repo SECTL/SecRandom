@@ -31,6 +31,10 @@ class music_settings(QWidget):
         self.music_management_widget = music_management(self)
         self.vBoxLayout.addWidget(self.music_management_widget)
 
+        # 添加循环播放背景音乐设置
+        self.music_loop_setting_widget = music_loop_setting(self)
+        self.vBoxLayout.addWidget(self.music_loop_setting_widget)
+
         # 添加音乐设置表格组件
         self.music_settings_table_widget = music_settings_table(self)
         self.vBoxLayout.addWidget(self.music_settings_table_widget)
@@ -207,6 +211,40 @@ class music_management(GroupHeaderCardWidget):
                 500,
                 lambda: self.parent().music_settings_table_widget.refresh_music_files(),
             )
+
+
+class music_loop_setting(GroupHeaderCardWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setTitle(get_content_name_async("music_settings", "background_music_loop"))
+        self.setBorderRadius(8)
+
+        self.background_music_loop_switch = SwitchButton()
+        self.background_music_loop_switch.setOffText(
+            get_content_switchbutton_name_async(
+                "music_settings", "background_music_loop", "disable"
+            )
+        )
+        self.background_music_loop_switch.setOnText(
+            get_content_switchbutton_name_async(
+                "music_settings", "background_music_loop", "enable"
+            )
+        )
+        _loop = readme_settings_async("music_settings", "background_music_loop")
+        self.background_music_loop_switch.setChecked(True if _loop is None else _loop)
+        self.background_music_loop_switch.checkedChanged.connect(
+            self.__on_background_music_loop_changed
+        )
+
+        self.addGroup(
+            get_theme_icon("ic_fluent_arrow_repeat_all_20_filled"),
+            get_content_name_async("music_settings", "background_music_loop"),
+            get_content_description_async("music_settings", "background_music_loop"),
+            self.background_music_loop_switch,
+        )
+
+    def __on_background_music_loop_changed(self, checked):
+        update_settings("music_settings", "background_music_loop", checked)
 
 
 class music_settings_table(GroupHeaderCardWidget):

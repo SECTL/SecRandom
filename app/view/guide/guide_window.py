@@ -22,7 +22,7 @@ class GuideWindow(FramelessWindow):
     _DEFAULT_TITLEBAR_HEIGHT = 32
     _TITLEBAR_LEFT_OFFSET_PX = 5
 
-    def __init__(self, parent=None):
+    def __init__(self, width=800, height=600, parent=None):
         super().__init__(parent)
         self.setTitleBar(FluentTitleBar(self))
         try:
@@ -36,7 +36,7 @@ class GuideWindow(FramelessWindow):
             QIcon(str(get_data_path("assets/icon", "secrandom-icon-paper.png")))
         )
         self.setWindowTitle("SecRandom")
-        self.resize(800, 600)
+        self.resize(width, height)
         self.setWindowModality(Qt.WindowModality.NonModal)
 
         # 标题栏
@@ -89,6 +89,8 @@ class GuideWindow(FramelessWindow):
 
     def showEvent(self, event):
         super().showEvent(event)
+        desktop = QApplication.primaryScreen().availableGeometry()
+        self.move(desktop.center() - self.rect().center())
         QTimer.singleShot(0, self._sync_layout_margins_with_titlebar)
         QTimer.singleShot(0, self._rebuild_titlebar_title_and_icon)
         if self._initial_show_animated:

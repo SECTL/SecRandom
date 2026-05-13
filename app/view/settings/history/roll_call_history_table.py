@@ -1106,6 +1106,9 @@ class roll_call_history_table(GroupHeaderCardWidget):
                 "roll_call_history_table", "HeaderLabels_Individual_weight"
             )
 
+        if isinstance(headers, dict):
+            headers = list(headers.values())
+
         has_gender, has_group = False, False
         if self.current_class_name:
             has_gender, has_group = check_class_has_gender_or_group(

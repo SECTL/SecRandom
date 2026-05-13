@@ -542,7 +542,7 @@ class FaceDetectorWorker(QObject):
         try:
             model_path = resolve_onnx_model_path(filename)
         except FileNotFoundError as exc:
-            logger.exception("模型缺失: {}", exc)
+            logger.warning("模型缺失: {}", exc)
             self._detector_state = None
             self.error_occurred.emit("model_missing", "Model missing", str(exc))
             return
@@ -552,7 +552,7 @@ class FaceDetectorWorker(QObject):
                 model_path=model_path, input_size=self._input_size
             )
         except Exception as exc:
-            logger.exception("模型不兼容: {}", exc)
+            logger.warning("模型不兼容: {}", exc)
             self._detector_state = None
             self.error_occurred.emit(
                 "model_incompatible", "Model incompatible", str(exc)

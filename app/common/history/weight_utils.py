@@ -5,7 +5,11 @@ import math
 from random import SystemRandom
 from loguru import logger
 
-from app.tools.settings_access import readme_settings_async
+from app.tools.settings_access import (
+    get_bool_setting,
+    get_float_setting,
+    get_int_setting,
+)
 from app.Language.obtain_language import get_content_combo_name_async
 from app.common.history.file_utils import load_history_data
 from app.common.history.history_reader import filter_roll_call_history_by_subject
@@ -66,53 +70,37 @@ def format_weight_for_display(weights_data: list, weight_key: str = "weight") ->
 def _load_weight_settings() -> dict:
     """加载权重设置"""
     return {
-        "fair_draw_enabled": readme_settings_async("fair_draw_settings", "fair_draw")
-        or False,
-        "fair_draw_group_enabled": readme_settings_async(
+        "fair_draw_enabled": get_bool_setting("fair_draw_settings", "fair_draw"),
+        "fair_draw_group_enabled": get_bool_setting(
             "fair_draw_settings", "fair_draw_group"
-        )
-        or False,
-        "fair_draw_gender_enabled": readme_settings_async(
+        ),
+        "fair_draw_gender_enabled": get_bool_setting(
             "fair_draw_settings", "fair_draw_gender"
-        )
-        or False,
-        "fair_draw_time_enabled": readme_settings_async(
+        ),
+        "fair_draw_time_enabled": get_bool_setting(
             "fair_draw_settings", "fair_draw_time"
-        )
-        or False,
-        "base_weight": readme_settings_async("fair_draw_settings", "base_weight")
-        or 1.0,
-        "min_weight": readme_settings_async("fair_draw_settings", "min_weight") or 0.1,
-        "max_weight": readme_settings_async("fair_draw_settings", "max_weight") or 5.0,
-        "frequency_function": readme_settings_async(
-            "fair_draw_settings", "frequency_function"
-        )
-        or 1,
-        "frequency_weight": readme_settings_async(
-            "fair_draw_settings", "frequency_weight"
-        )
-        or 1.0,
-        "group_weight": readme_settings_async("fair_draw_settings", "group_weight")
-        or 1.0,
-        "gender_weight": readme_settings_async("fair_draw_settings", "gender_weight")
-        or 1.0,
-        "time_weight": readme_settings_async("fair_draw_settings", "time_weight")
-        or 1.0,
-        "cold_start_enabled": readme_settings_async(
+        ),
+        "base_weight": get_float_setting("fair_draw_settings", "base_weight", 1.0),
+        "min_weight": get_float_setting("fair_draw_settings", "min_weight", 0.1),
+        "max_weight": get_float_setting("fair_draw_settings", "max_weight", 5.0),
+        "frequency_function": get_int_setting(
+            "fair_draw_settings", "frequency_function", 1
+        ),
+        "frequency_weight": get_float_setting(
+            "fair_draw_settings", "frequency_weight", 1.0
+        ),
+        "group_weight": get_float_setting("fair_draw_settings", "group_weight", 1.0),
+        "gender_weight": get_float_setting("fair_draw_settings", "gender_weight", 1.0),
+        "time_weight": get_float_setting("fair_draw_settings", "time_weight", 1.0),
+        "cold_start_enabled": get_bool_setting(
             "fair_draw_settings", "cold_start_enabled"
-        )
-        or False,
-        "cold_start_rounds": readme_settings_async(
-            "fair_draw_settings", "cold_start_rounds"
-        )
-        or 10,
-        "shield_enabled": readme_settings_async("advanced_settings", "shield_enabled")
-        or False,
-        "shield_time": readme_settings_async("advanced_settings", "shield_time") or 0,
-        "shield_time_unit": readme_settings_async(
-            "advanced_settings", "shield_time_unit"
-        )
-        or 0,
+        ),
+        "cold_start_rounds": get_int_setting(
+            "fair_draw_settings", "cold_start_rounds", 10
+        ),
+        "shield_enabled": get_bool_setting("advanced_settings", "shield_enabled"),
+        "shield_time": get_int_setting("advanced_settings", "shield_time", 0),
+        "shield_time_unit": get_int_setting("advanced_settings", "shield_time_unit", 0),
     }
 
 

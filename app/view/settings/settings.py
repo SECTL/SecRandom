@@ -49,9 +49,9 @@ class SettingsWindow(FluentWindow):
 
     def __init__(self, parent=None, is_preview=False):
         self.resize_timer = None
-        super().__init__()
+        super().__init__(parent)
         self.setObjectName("settingWindow")
-        self.parent = parent
+        self._host_window = parent
         self._is_preview = is_preview
 
         self._initialize_variables()
@@ -283,7 +283,11 @@ class SettingsWindow(FluentWindow):
 
     def _setup_url_handler(self):
         """设置URL处理器"""
+        self.showMainPageRequested.connect(self._handle_main_page_requested)
         self.url_command_handler = URLCommandHandler(self)
+        self.url_command_handler.showMainPageRequested.connect(
+            self._handle_main_page_requested
+        )
         self.url_command_handler.showSettingsRequested.connect(
             self._handle_settings_page_request
         )
@@ -398,12 +402,31 @@ class SettingsWindow(FluentWindow):
         Args:
             event: 关闭事件对象
         """
+        try:
+            self._stop_navigation_animations()
+        except Exception:
+            pass
         self.hide()
         event.ignore()
         is_maximized = self.isMaximized()
         update_settings("settings", "is_maximized", is_maximized)
         if not is_maximized:
             self.save_window_size(self.width(), self.height())
+
+    def _stop_navigation_animations(self):
+        """在隐藏设置窗口前尽量停止导航动画，避免悬空回调。"""
+        navigation = getattr(self, "navigationInterface", None)
+        if navigation is None:
+            return
+
+        try:
+            panel = getattr(navigation, "panel", None)
+            if panel is not None:
+                indicator_ani = getattr(panel, "indicatorAni", None)
+                if indicator_ani is not None:
+                    indicator_ani.stop()
+        except Exception:
+            pass
 
     def resizeEvent(self, event):
         """窗口大小变化事件处理
@@ -504,8 +527,11 @@ class SettingsWindow(FluentWindow):
             self._handle_settings_page_request(page_name)
         else:
             logger.debug(f"设置窗口转发主页面请求: {page_name}")
-            if hasattr(self, "parent") and self.parent:
-                self.showMainPageRequested.emit(page_name)
+            host_window = getattr(self, "_host_window", None)
+            if host_window is not None and hasattr(
+                host_window, "_handle_main_page_requested"
+            ):
+                host_window._handle_main_page_requested(page_name)
 
     def _handle_settings_page_request(self, page_name: str):
         """处理设置页面请求
@@ -526,6 +552,10 @@ class SettingsWindow(FluentWindow):
 
             if interface and nav_item:
                 logger.debug(f"切换到设置页面: {page_name}")
+                try:
+                    self._stop_navigation_animations()
+                except Exception:
+                    pass
                 self.switchTo(interface)
                 self.show()
                 self.activateWindow()
@@ -850,7 +880,6 @@ class SettingsWindow(FluentWindow):
                 )
 
         self.splashScreen.finish()
-        self.showMainPageRequested.connect(self._handle_main_page_requested)
 
         if hasattr(self, "basicSettingsInterface") and self.basicSettingsInterface:
             QTimer.singleShot(SETTINGS_DEFAULT_PAGE_DELAY_MS, self._load_default_page)
@@ -1309,4 +1338,4 @@ class SettingsWindow(FluentWindow):
             self.show()
             self.activateWindow()
             self.raise_()
-            self.switchTo(self.aboutInterface)
+        self.switchTo(self.aboutInterface)

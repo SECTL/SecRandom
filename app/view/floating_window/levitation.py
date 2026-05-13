@@ -296,12 +296,9 @@ class LevitationWindow(QWidget):
             self.setAttribute(Qt.WA_ShowWithoutActivating, no_focus)
         except Exception:
             pass
-        flags = self._base_window_flags
-        if getattr(self, "_topmost_mode", 1) != 0:
-            flags |= Qt.WindowStaysOnTopHint
-        if no_focus:
-            flags |= Qt.WindowDoesNotAcceptFocus
-        self.setWindowFlags(flags)
+        topmost = getattr(self, "_topmost_mode", 1) != 0
+        self.setWindowFlag(Qt.WindowStaysOnTopHint, topmost)
+        self.setWindowFlag(Qt.WindowDoesNotAcceptFocus, no_focus)
         if self.isVisible():
             prev_suppress = bool(getattr(self, "_suppress_visibility_tracking", False))
             self._suppress_visibility_tracking = True
@@ -345,7 +342,9 @@ class LevitationWindow(QWidget):
                                 if self._uia_topmost_timer.isActive():
                                     self._uia_topmost_timer.stop()
                             else:
-                                logger.debug("需要UIAccess置顶，准备重启切换为UIAccess进程")
+                                logger.debug(
+                                    "需要UIAccess置顶，准备重启切换为UIAccess进程"
+                                )
                                 self._request_uiaccess_restart()
                             return
                     except Exception:
@@ -1342,7 +1341,9 @@ class LevitationWindow(QWidget):
 
             was_disabled = self._quick_draw_disabled
             self._quick_draw_disabled = True
-            logger.debug(f"_handle_button_click: 已禁用闪抽按钮（防抖），之前状态={was_disabled}")
+            logger.debug(
+                f"_handle_button_click: 已禁用闪抽按钮（防抖），之前状态={was_disabled}"
+            )
 
             try:
                 is_non_class_time = _is_non_class_time()
@@ -1354,7 +1355,9 @@ class LevitationWindow(QWidget):
                     if verification_required:
                         logger.info("当前时间在非上课时间段内，需要密码验证")
                         require_and_run(
-                            "quick_draw", self, lambda: self._emit_signal_with_reenable(signal)
+                            "quick_draw",
+                            self,
+                            lambda: self._emit_signal_with_reenable(signal),
                         )
                         return
                     else:
@@ -1364,7 +1367,8 @@ class LevitationWindow(QWidget):
                         return
 
                 disable_time = int(
-                    readme_settings_async("quick_draw_settings", "disable_after_click") or 0
+                    readme_settings_async("quick_draw_settings", "disable_after_click")
+                    or 0
                 )
 
                 if disable_time >= 1:
@@ -1372,10 +1376,14 @@ class LevitationWindow(QWidget):
                     logger.info(f"闪抽功能已禁用，将在 {disable_time}s 后恢复")
                 else:
                     self._quick_draw_disabled = False
-                    logger.debug("_handle_button_click: 未设置禁用时间，立即恢复闪抽按钮")
+                    logger.debug(
+                        "_handle_button_click: 未设置禁用时间，立即恢复闪抽按钮"
+                    )
 
             except Exception as e:
-                logger.exception(f"_handle_button_click: 处理闪抽按钮点击时发生异常: {e}")
+                logger.exception(
+                    f"_handle_button_click: 处理闪抽按钮点击时发生异常: {e}"
+                )
                 self._quick_draw_disabled = False
                 logger.debug("_handle_button_click: 发生异常，已恢复闪抽按钮")
                 return

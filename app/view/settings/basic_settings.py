@@ -49,6 +49,10 @@ from app.tools.config import (
     NotificationType,
     NotificationConfig,
 )
+from app.tools.online_status import (
+    start_online_status_reporter,
+    stop_online_status_reporter,
+)
 from app.common.IPC_URL import URLIPCHandler
 from app.common.windows.uiaccess import is_uiaccess_process
 from app.page_building.another_window import (
@@ -83,6 +87,10 @@ class basic_settings(QWidget):
         # 添加数据管理组件
         self.data_management_widget = basic_settings_data_management(self)
         self.vBoxLayout.addWidget(self.data_management_widget)
+
+        # 添加遥测与隐私设置组件
+        self.telemetry_widget = basic_settings_telemetry(self)
+        self.vBoxLayout.addWidget(self.telemetry_widget)
 
 
 class VersionNoticeCard(HeaderCardWidget):
@@ -616,6 +624,98 @@ class basic_settings_function(GroupHeaderCardWidget):
             self.url_protocol_switch.checkedChanged.connect(
                 self.__on_url_protocol_changed
             )
+
+
+class basic_settings_telemetry(GroupHeaderCardWidget):
+    """遥测与隐私设置"""
+
+    _MODES = ["full", "anonymous", "off"]
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setTitle(get_content_name_async("basic_settings", "telemetry_category"))
+        self.setBorderRadius(8)
+
+        # 遥测开关（主开关）
+        self.telemetry_switch = SwitchButton()
+        self.telemetry_switch.setOffText(
+            get_content_switchbutton_name_async(
+                "basic_settings", "telemetry", "disable"
+            )
+        )
+        self.telemetry_switch.setOnText(
+            get_content_switchbutton_name_async("basic_settings", "telemetry", "enable")
+        )
+        self.telemetry_switch.setChecked(
+            readme_settings_async("basic_settings", "telemetry_enabled") is not False
+        )
+        self.telemetry_switch.checkedChanged.connect(self.__on_telemetry_changed)
+
+        self.addGroup(
+            get_theme_icon("ic_fluent_pulse_20_filled"),
+            get_content_name_async("basic_settings", "telemetry"),
+            get_content_description_async("basic_settings", "telemetry"),
+            self.telemetry_switch,
+        )
+
+        # 在线状态上报模式
+        self.telemetry_mode_combo = ComboBox()
+        self.telemetry_mode_combo.addItems(
+            get_content_combo_name_async("basic_settings", "telemetry_mode")
+        )
+        current_mode = (
+            readme_settings_async("basic_settings", "telemetry_mode") or "full"
+        )
+        try:
+            self.telemetry_mode_combo.setCurrentIndex(self._MODES.index(current_mode))
+        except ValueError:
+            self.telemetry_mode_combo.setCurrentIndex(0)
+        self.telemetry_mode_combo.currentIndexChanged.connect(
+            self.__on_telemetry_mode_changed
+        )
+
+        self.addGroup(
+            get_theme_icon("ic_fluent_globe_20_filled"),
+            get_content_name_async("basic_settings", "telemetry_mode"),
+            get_content_description_async("basic_settings", "telemetry_mode"),
+            self.telemetry_mode_combo,
+        )
+
+    def __on_telemetry_changed(self, checked):
+        update_settings("basic_settings", "telemetry_enabled", checked)
+        if checked:
+            show_notification(
+                NotificationType.SUCCESS,
+                NotificationConfig(
+                    title=get_content_name_async("basic_settings", "telemetry"),
+                    content=get_any_position_value_async(
+                        "basic_settings", "telemetry_notification", "enable"
+                    ),
+                ),
+                parent=self.window(),
+            )
+        else:
+            show_notification(
+                NotificationType.INFO,
+                NotificationConfig(
+                    title=get_content_name_async("basic_settings", "telemetry"),
+                    content=get_any_position_value_async(
+                        "basic_settings", "telemetry_notification", "disable"
+                    ),
+                ),
+                parent=self.window(),
+            )
+
+    def __on_telemetry_mode_changed(self, index):
+        mode = self._MODES[index]
+        update_settings("basic_settings", "telemetry_mode", mode)
+        try:
+            if mode == "off":
+                stop_online_status_reporter()
+            else:
+                start_online_status_reporter()
+        except Exception:
+            pass
 
 
 class basic_settings_personalised(GroupHeaderCardWidget):

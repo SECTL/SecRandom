@@ -84,6 +84,24 @@ def create_sentry_before_send_filter():
     过滤掉不需要上报的错误，如第三方库错误和常见的无害错误
     """
 
+    _NETWORK_ERROR_TYPES = {
+        "ClientConnectorError",
+        "ClientConnectorDNSError",
+        "ClientConnectorCertificateError",
+        "ClientConnectionResetError",
+        "ClientOSError",
+        "ConnectionTimeoutError",
+        "SocketTimeoutError",
+    }
+
+    def _is_benign_oserror(module: str, value: str) -> bool:
+        message = str(value)
+        if "Bad file descriptor" in message:
+            return True
+        if "WinError 10022" in message or "无效的参数" in message:
+            return True
+        return module.startswith(("socket", "asyncio", "selectors"))
+
     def before_send(event, hint):
         # 1. 检查是否有堆栈信息
         has_stacktrace = False
@@ -130,6 +148,38 @@ def create_sentry_before_send_filter():
 
                 # 过滤 COM 相关
                 if type_ == "COMError" and "没有注册类" in str(value):
+                    return None
+
+                if type_ == "KeyboardInterrupt":
+                    return None
+
+                if type_ == "ModuleNotFoundError" and "PySide6.QtMultimedia" in str(
+                    value
+                ):
+                    return None
+
+                if type_ == "OSError" and _is_benign_oserror(module, value):
+                    return None
+
+                if type_ == "ValueError" and "generator already executing" in str(
+                    value
+                ):
+                    return None
+
+                if type_ == "error" and "GetCursorPos" in str(value):
+                    return None
+
+                # 过滤网络连接相关错误（预期的网络故障，非产品缺陷）
+                if type_ in _NETWORK_ERROR_TYPES:
+                    return None
+
+                # 过滤 aiohttp 超时和限流错误
+                if type_ == "TimeoutError" and module in (
+                    "aiohttp.helpers",
+                    "aiohttp.streams",
+                ):
+                    return None
+                if type_ == "ClientResponseError" and "429" in str(value):
                     return None
 
         return event
@@ -640,7 +690,7 @@ def _restore_windows_volume(volume_value: int) -> None:
         finally:
             comtypes.CoUninitialize()
     except Exception as e:
-        logger.exception(f"Windows音量控制失败: {e}")
+        logger.warning(f"Windows音量控制失败: {e}")
 
 
 def _restore_linux_volume(volume_value: int) -> None:
@@ -669,7 +719,7 @@ def _restore_linux_volume(volume_value: int) -> None:
             pulse.volume_set_all_chans(default_sink, volume_value / 100.0)
             logger.info(f"Linux音量设置为: {volume_value}%")
     except Exception as e:
-        logger.exception(f"Linux音量控制失败: {e}")
+        logger.warning(f"Linux音量控制失败: {e}")
 
 
 def set_autostart(enabled: bool) -> bool:
@@ -2001,8 +2051,10 @@ def _load_drawn_records(file_path: str) -> dict:
                         drawn_records[name] = count
 
         return drawn_records
+    except FileNotFoundError:
+        return {}
     except (json.JSONDecodeError, IOError) as e:
-        logger.exception(f"读取已抽取记录失败: {e}")
+        logger.warning(f"读取已抽取记录失败: {e}")
         return {}
 
 

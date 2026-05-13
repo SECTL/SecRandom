@@ -85,7 +85,7 @@ def _load_harmonyos_font(font_weight: int) -> str:
     font_id = QFontDatabase.addApplicationFont(str(font_path))
 
     if font_id < 0:
-        logger.exception(f"加载字体文件失败: {font_path}")
+        logger.warning(f"加载字体文件失败: {font_path}")
         return FONT_FAMILY_DEFAULT
 
     font_family = QFontDatabase.applicationFontFamilies(font_id)[0]

@@ -142,8 +142,10 @@ class ShortcutManager(QObject):
         for config_key, hotkey in self.shortcuts.items():
             try:
                 keyboard.remove_hotkey(hotkey)
+            except KeyError as e:
+                logger.warning(f"注销快捷键失败 {config_key}: {e}")
             except Exception as e:
-                logger.exception(f"注销快捷键失败 {config_key}: {e}")
+                logger.warning(f"注销快捷键失败 {config_key}: {e}")
 
         self.shortcuts.clear()
 
@@ -161,9 +163,12 @@ class ShortcutManager(QObject):
             try:
                 old_hotkey = self.shortcuts[config_key]
                 keyboard.remove_hotkey(old_hotkey)
-                del self.shortcuts[config_key]
+            except KeyError as e:
+                logger.warning(f"注销快捷键失败 {config_key}: {e}")
             except Exception as e:
-                logger.exception(f"注销快捷键失败 {config_key}: {e}")
+                logger.warning(f"注销快捷键失败 {config_key}: {e}")
+            finally:
+                self.shortcuts.pop(config_key, None)
 
         if shortcut_str and self._enabled and self._available:
             try:
@@ -224,8 +229,10 @@ class ShortcutManager(QObject):
             for config_key, hotkey in self.shortcuts.items():
                 try:
                     keyboard.remove_hotkey(hotkey)
+                except KeyError as e:
+                    logger.warning(f"注销快捷键失败 {config_key}: {e}")
                 except Exception as e:
-                    logger.exception(f"注销快捷键失败 {config_key}: {e}")
+                    logger.warning(f"注销快捷键失败 {config_key}: {e}")
             self.shortcuts.clear()
             logger.info("快捷键已禁用")
 
@@ -248,5 +255,5 @@ class ShortcutManager(QObject):
             keyboard.unhook_all()
             logger.debug("已清理所有 keyboard 钩子")
         except Exception as e:
-            logger.exception(f"清理 keyboard 钩子失败: {e}")
+            logger.warning(f"清理 keyboard 钩子失败: {e}")
         self.shortcuts.clear()

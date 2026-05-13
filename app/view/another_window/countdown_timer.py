@@ -41,6 +41,7 @@ from qfluentwidgets import (
     CaptionLabel,
     PrimaryPushButton,
     PushButton,
+    qconfig,
     SegmentedWidget,
     Slider,
     TableWidget,
@@ -53,7 +54,7 @@ from app.Language.obtain_language import (
     get_content_name_async,
     get_content_pushbutton_name_async,
 )
-from app.tools.personalised import get_theme_icon, load_custom_font
+from app.tools.personalised import get_theme_icon, is_dark_theme, load_custom_font
 
 
 @dataclass(frozen=True)
@@ -502,8 +503,18 @@ class CountdownTimerPage(QWidget):
                 self._mode_segment_expanded_width
             )
             self._install_shortcuts()
+            self._apply_time_text_style()
         finally:
             self.setUpdatesEnabled(True)
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (
+            QEvent.Type.PaletteChange,
+            QEvent.Type.ApplicationPaletteChange,
+            QEvent.Type.StyleChange,
+        ):
+            self._apply_time_text_style()
 
     def _build_top_bar(self, root: QVBoxLayout):
         self.top_bar_container = QWidget(self)
@@ -1291,6 +1302,24 @@ class CountdownTimerPage(QWidget):
                 f.setPointSize(int(date_size))
                 self.clock_date_label.setFont(f)
 
+        self._apply_time_text_style()
+
+    def _time_text_color(self) -> str:
+        if is_dark_theme(qconfig):
+            return "rgba(255, 255, 255, 230)"
+        return "rgba(0, 0, 0, 220)"
+
+    def _apply_time_text_style(self):
+        color = self._time_text_color()
+        style = f"color: {color}; background: transparent;"
+        for lab in [
+            *getattr(self, "_digit_labels", []),
+            *getattr(self, "_separator_labels", []),
+            getattr(self, "_ms_label", None),
+        ]:
+            if lab is not None:
+                lab.setStyleSheet(style)
+
     @staticmethod
     def _format_stopwatch_ms(total_ms: int) -> str:
         total_ms = max(0, int(total_ms))
@@ -1358,16 +1387,14 @@ class CountdownTimerPage(QWidget):
     def _on_flash_tick(self):
         if self._flash_steps <= 0:
             self._flash_timer.stop()
-            for lab in self._digit_labels:
-                lab.setStyleSheet("")
+            self._apply_time_text_style()
             return
         self._flash_steps -= 1
         if self._flash_steps % 2 == 0:
             for lab in self._digit_labels:
                 lab.setStyleSheet("color: rgb(255, 90, 90);")
         else:
-            for lab in self._digit_labels:
-                lab.setStyleSheet("")
+            self._apply_time_text_style()
 
     def _apply_start_enabled(self):
         mode = self._engine.mode()

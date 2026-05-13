@@ -14,6 +14,8 @@ from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
+from app.common.fair_draw.best_config import BestConfigCard
+from app.page_building.another_window import create_analysis_window
 
 
 # ==================================================
@@ -26,6 +28,14 @@ class fair_draw(QWidget):
         self.vBoxLayout = QVBoxLayout(self)
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
         self.vBoxLayout.setSpacing(10)
+
+        # 0. 最佳配置入口
+        self.best_config_widget = BestConfigCard(self)
+        self.best_config_widget.analyze_clicked.connect(
+            lambda: create_analysis_window()
+        )
+        self.best_config_widget.reset_applied.connect(self._refresh_best_config)
+        self.vBoxLayout.addWidget(self.best_config_widget)
 
         # 1. 基础开关设置 - 控制哪些因素参与公平计算
         self.basic_fair_settings_widget = basic_fair_settings(self)
@@ -46,6 +56,25 @@ class fair_draw(QWidget):
         # 5. 权重调整选项 - 包括权重范围、平衡权重等高级调整
         self.advanced_weight_widget = advanced_weight_settings(self)
         self.vBoxLayout.addWidget(self.advanced_weight_widget)
+
+    def _refresh_best_config(self):
+        self.basic_fair_settings_widget.deleteLater()
+        self.core_fair_mechanism_widget.deleteLater()
+        self.draw_protection_widget.deleteLater()
+        self.initial_stage_widget.deleteLater()
+        self.advanced_weight_widget.deleteLater()
+
+        self.basic_fair_settings_widget = basic_fair_settings(self)
+        self.core_fair_mechanism_widget = core_fair_mechanism(self)
+        self.draw_protection_widget = draw_protection(self)
+        self.initial_stage_widget = cold_start_settings(self)
+        self.advanced_weight_widget = advanced_weight_settings(self)
+
+        self.vBoxLayout.insertWidget(2, self.basic_fair_settings_widget)
+        self.vBoxLayout.insertWidget(3, self.core_fair_mechanism_widget)
+        self.vBoxLayout.insertWidget(4, self.draw_protection_widget)
+        self.vBoxLayout.insertWidget(5, self.initial_stage_widget)
+        self.vBoxLayout.insertWidget(6, self.advanced_weight_widget)
 
 
 class basic_fair_settings(GroupHeaderCardWidget):

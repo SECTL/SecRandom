@@ -323,7 +323,7 @@ class lottery_table(GroupHeaderCardWidget):
                 break
 
         if not matched_key:
-            logger.exception(f"未找到奖品ID为 {item_id} 的奖品，奖品名称: {item_name}")
+            logger.warning(f"未找到奖品ID为 {item_id} 的奖品，奖品名称: {item_name}")
             return
 
         # 根据列索引更新相应的字段

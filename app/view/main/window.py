@@ -26,6 +26,7 @@ from app.Language.obtain_language import (
     update_settings,
 )
 from app.common.safety.verify_ops import require_and_run
+from app.common.data.list import get_class_name_list
 from app.view.main.quick_draw_animation import QuickDrawAnimation
 from app.tools.list_specific_settings_access import (
     read_quick_draw_setting,
@@ -202,13 +203,7 @@ class MainWindow(FluentWindow):
             )
 
         mode = int(mode)
-        flags = self.windowFlags()
-        if mode != 0:
-            flags |= Qt.WindowStaysOnTopHint
-        else:
-            flags &= ~Qt.WindowStaysOnTopHint
-
-        self.setWindowFlags(flags)
+        self.setWindowFlag(Qt.WindowStaysOnTopHint, mode != 0)
         if self.isVisible():
             self.show()
 
@@ -906,7 +901,7 @@ class MainWindow(FluentWindow):
             dict: 原始设置字典
         """
         return {
-            "count": roll_call_widget.current_count,
+            "count": getattr(roll_call_widget, "current_count", 1),
             "list_index": roll_call_widget.list_combobox.currentIndex(),
             "range_index": roll_call_widget.range_combobox.currentIndex(),
             "gender_index": roll_call_widget.gender_combobox.currentIndex(),
@@ -921,9 +916,12 @@ class MainWindow(FluentWindow):
         roll_call_widget.current_count = 1
         roll_call_widget.count_label.setText("1")
 
-        if roll_call_widget.list_combobox.count() > 0:
-            roll_call_widget.list_combobox.setCurrentIndex(0)
-            roll_call_widget.on_class_changed()
+        list_name = self._get_effective_quick_draw_class_name()
+        if roll_call_widget.list_combobox.count() > 0 and list_name:
+            list_index = roll_call_widget.list_combobox.findText(list_name)
+            if list_index >= 0:
+                roll_call_widget.list_combobox.setCurrentIndex(list_index)
+                roll_call_widget.on_class_changed()
 
         if roll_call_widget.range_combobox.count() > 0:
             roll_call_widget.range_combobox.setCurrentIndex(0)
@@ -940,7 +938,7 @@ class MainWindow(FluentWindow):
         Args:
             roll_call_widget: 点名组件对象
         """
-        list_name = readme_settings_async("quick_draw_settings", "default_class")
+        list_name = self._get_effective_quick_draw_class_name()
         quick_draw_settings = {
             "draw_mode": read_quick_draw_setting(list_name, "draw_mode"),
             "half_repeat": read_quick_draw_setting(list_name, "half_repeat"),
@@ -968,6 +966,35 @@ class MainWindow(FluentWindow):
 
         quick_draw_animation = QuickDrawAnimation(roll_call_widget)
         quick_draw_animation.execute_quick_draw(quick_draw_settings)
+
+    def _get_effective_quick_draw_class_name(self):
+        """获取闪抽实际使用的班级名称"""
+        list_name = readme_settings_async("quick_draw_settings", "default_class")
+        class_names = get_class_name_list()
+
+        try:
+            extend_enabled = bool(
+                readme_settings_async(
+                    "floating_window_management", "extend_quick_draw_component"
+                )
+            )
+        except Exception:
+            extend_enabled = False
+
+        if extend_enabled:
+            saved_class_name = str(
+                readme_settings_async(
+                    "floating_window_management", "quick_draw_class_name"
+                )
+                or ""
+            )
+            if saved_class_name and saved_class_name in get_class_name_list():
+                return saved_class_name
+
+        if list_name in class_names:
+            return list_name
+
+        return class_names[0] if class_names else ""
 
     def _restore_original_settings(self, roll_call_widget, original_settings):
         """恢复原始设置

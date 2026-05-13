@@ -4,6 +4,8 @@
 **Project:** SecRandom - 公平随机抽取系统 (Fair Random Selection System)
 **Stack:** Python 3.13.5 + PySide6 + PySide6-Fluent-Widgets
 **License:** GPLv3
+**Language:** 中文回复
+**Comments:** 中文注释
 
 ---
 
@@ -190,6 +192,25 @@ python scripts/export_zh_cn_language.py    # Export source strings
 - Lock file `uv.lock` is tracked (unusual but intentional)
 - .NET DLLs required for Windows features (camera, USB binding)
 - Sentry + PostHog telemetry initialized in main.py
+
+### Sentry 日志级别与上报行为
+
+Sentry 通过 `LoguruIntegration` 接入，配置在 `main.py:62-66`：
+- `event_level=LoggingLevels.ERROR.value` — 只有 ERROR 级别以上才触发 Sentry 事件
+- `before_send` 过滤器在 `app/tools/config.py:81-137`，会丢弃没有堆栈信息的 ERROR 事件
+
+**关键规则：选择正确的日志级别来控制是否上报 Sentry**
+
+| 日志方法 | 级别 | 有堆栈? | Sentry 行为 | 适用场景 |
+|----------|------|---------|-------------|----------|
+| `logger.exception()` | ERROR | ✅ 有 | **上报** | 真正的 bug，需要修复 |
+| `logger.error()` | ERROR | ❌ 无 | **不上报**（被 before_send 过滤） | 预期错误，不需要上报但需要记录 |
+| `logger.warning()` | WARNING | ❌ 无 | **不上报**（低于 event_level） | 预期的降级状态 |
+
+**实际应用：**
+- 网络超时、连接失败等**预期故障** → 用 `logger.warning()` 或 `logger.error()`
+- 代码逻辑错误、未处理异常等**真正 bug** → 用 `logger.exception()`
+- `before_send` 中还可以按异常类型过滤（如网络异常类型），作为额外防御层
 
 ### Vendored Dependencies
 - `vendors/pythonnet-stub-generator/` - MIT licensed, modified for .NET 9.0

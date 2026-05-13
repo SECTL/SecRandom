@@ -128,7 +128,7 @@ def setup_local_server(
         QLocalServer.removeServer(SHARED_MEMORY_KEY)
 
         if not server.listen(SHARED_MEMORY_KEY):
-            logger.exception(f"无法启动本地服务器: {server.errorString()}")
+            logger.warning(f"无法启动本地服务器: {server.errorString()}")
             return None
 
     server.newConnection.connect(

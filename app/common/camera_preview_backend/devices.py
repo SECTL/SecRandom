@@ -147,7 +147,7 @@ def _list_cameras_via_qt() -> list[CameraDeviceInfo]:
 
         qt_devices = list(QMediaDevices.videoInputs())
     except Exception as exc:
-        logger.exception("通过 QtMultimedia 枚举摄像头失败: {}", exc)
+        logger.warning("通过 QtMultimedia 枚举摄像头失败: {}", exc)
         qt_devices = []
 
     results: list[CameraDeviceInfo] = []
@@ -178,7 +178,7 @@ def _list_cameras_via_opencv() -> list[CameraDeviceInfo]:
     try:
         import cv2  # type: ignore
     except Exception as exc:
-        logger.exception("OpenCV 导入失败，无法通过 OpenCV 枚举摄像头: {}", exc)
+        logger.warning("OpenCV 导入失败，无法通过 OpenCV 枚举摄像头: {}", exc)
         return []
 
     _silence_opencv_logs(cv2)

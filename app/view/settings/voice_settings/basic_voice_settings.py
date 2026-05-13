@@ -38,6 +38,10 @@ class basic_voice_settings(QWidget):
         self.volume_widget = basic_settings_volume(self)
         self.vBoxLayout.addWidget(self.volume_widget)
 
+        # 添加播报完成等待设置组件
+        self.voice_wait_widget = basic_settings_voice_wait(self)
+        self.vBoxLayout.addWidget(self.voice_wait_widget)
+
 
 class basic_settings_voice_engine(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -277,4 +281,32 @@ class basic_settings_volume(GroupHeaderCardWidget):
             get_content_name_async("basic_voice_settings", "system_volume_size"),
             get_content_description_async("basic_voice_settings", "system_volume_size"),
             self.system_volume_size,
+        )
+
+
+class basic_settings_voice_wait(GroupHeaderCardWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setTitle(
+            get_content_name_async("basic_voice_settings", "voice_wait_group")
+        )
+        self.setBorderRadius(8)
+
+        self.voice_wait_complete_switch = SwitchButton()
+        self.voice_wait_complete_switch.setChecked(
+            readme_settings_async("basic_voice_settings", "voice_wait_complete")
+        )
+        self.voice_wait_complete_switch.checkedChanged.connect(
+            lambda state: update_settings(
+                "basic_voice_settings", "voice_wait_complete", state
+            )
+        )
+
+        self.addGroup(
+            get_theme_icon("ic_fluent_timer_20_filled"),
+            get_content_name_async("basic_voice_settings", "voice_wait_complete"),
+            get_content_description_async(
+                "basic_voice_settings", "voice_wait_complete"
+            ),
+            self.voice_wait_complete_switch,
         )

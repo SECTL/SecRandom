@@ -450,10 +450,12 @@ def start_roll_call_draw(widget):
 
     if animation == 0:
         if animation_music:
+            loop = readme_settings_async("music_settings", "background_music_loop")
+            loop = True if loop is None else loop
             music_player.play_music(
                 music_file=animation_music,
                 settings_group="roll_call_settings",
-                loop=True,
+                loop=loop,
                 fade_in=True,
             )
         widget.start_button.setText(
@@ -466,10 +468,12 @@ def start_roll_call_draw(widget):
         widget.start_button.clicked.connect(lambda: widget.stop_animation())
     elif animation == 1:
         if animation_music:
+            loop = readme_settings_async("music_settings", "background_music_loop")
+            loop = True if loop is None else loop
             music_player.play_music(
                 music_file=animation_music,
                 settings_group="roll_call_settings",
-                loop=True,
+                loop=loop,
                 fade_in=True,
             )
         widget.is_animating = True
@@ -569,6 +573,12 @@ def stop_animation(widget):
     widget.start_button.setText(
         get_content_pushbutton_name_async("roll_call", "start_button")
     )
+    # Immediately show one more animation frame to avoid perceptible delay
+    # between the last timer tick and the final computed result.
+    # This bridges the visual gap while finalize_draw() runs its
+    # weight/history computation below (see #218).
+    if widget.is_animating:
+        draw_random(widget)
     widget.is_animating = False
     BehindScenesUtils.clear_cache()
     try:
@@ -578,7 +588,6 @@ def stop_animation(widget):
             "Error disconnecting start_button clicked during stop_animation (ignored): {}",
             e,
         )
-    widget.start_button.clicked.connect(lambda: widget.start_draw())
 
     result = widget.manager.finalize_draw(widget.current_count, parent=widget)
     if isinstance(result, dict) and result.get("reset_required"):
@@ -592,6 +601,7 @@ def stop_animation(widget):
         QTimer.singleShot(
             APP_INIT_DELAY, lambda: _update_remaining_list_delayed(widget)
         )
+        _reconnect_after_voice(widget)
         return
 
     widget.final_selected_students = result.get("selected_students") or []
@@ -637,6 +647,7 @@ def stop_animation(widget):
                     widget, "final_selected_students_dict", None
                 ),
             )
+            _update_weight_panel(widget)
             RollCallUtils.show_notification_if_enabled(
                 class_name=widget.final_class_name,
                 selected_students=widget.final_selected_students,
@@ -659,6 +670,49 @@ def stop_animation(widget):
                 loop=False,
                 fade_in=True,
             )
+
+    _reconnect_after_voice(widget)
+
+
+def _reconnect_after_voice(widget):
+    try:
+        voice_wait_enabled = readme_settings_async(
+            "basic_voice_settings", "voice_wait_complete"
+        )
+    except Exception:
+        voice_wait_enabled = True
+
+    if not voice_wait_enabled:
+        widget.start_button.clicked.connect(lambda: widget.start_draw())
+        return
+
+    try:
+        voice_enabled = readme_settings_async("basic_voice_settings", "voice_enable")
+    except Exception:
+        voice_enabled = False
+
+    if not voice_enabled:
+        widget.start_button.clicked.connect(lambda: widget.start_draw())
+        return
+
+    if not hasattr(widget, "tts_handler") or widget.tts_handler is None:
+        widget.start_button.clicked.connect(lambda: widget.start_draw())
+        return
+
+    QTimer.singleShot(200, lambda: _poll_voice_completion(widget))
+
+
+def _poll_voice_completion(widget, poll_count=0):
+    if not widget.tts_handler.playback_system.is_playing():
+        widget.start_button.clicked.connect(lambda: widget.start_draw())
+        return
+
+    if poll_count > 300:
+        logger.warning("Voice playback timeout, reconnecting start button anyway")
+        widget.start_button.clicked.connect(lambda: widget.start_draw())
+        return
+
+    QTimer.singleShot(100, lambda: _poll_voice_completion(widget, poll_count + 1))
 
 
 def play_voice_result(widget):
@@ -1246,3 +1300,62 @@ def _update_remaining_list_delayed(widget):
                     )
     except Exception as e:
         logger.exception(f"延迟更新剩余名单时发生错误: {e}")
+
+
+def _update_weight_panel(widget):
+    """更新权重透明化面板"""
+    try:
+        enabled = readme_settings_async(
+            "roll_call_settings", "show_weight_transparency"
+        )
+        logger.debug(f"权重透明化(RollCall)：设置={enabled}")
+        if not enabled:
+            if hasattr(widget, "weight_panel"):
+                widget.weight_panel.clear()
+                widget.weight_panel.setVisible(False)
+            return
+
+        selected_students_dict = (
+            getattr(widget, "final_selected_students_dict", None) or []
+        )
+        logger.debug(f"权重面板(RollCall)：抽取结果数量={len(selected_students_dict)}")
+
+        students_with_weight = []
+        for student in selected_students_dict:
+            if not isinstance(student, dict):
+                continue
+            if "weight_details" in student:
+                students_with_weight.append(student)
+            elif "name" in student or "id" in student:
+                students_with_weight.append(student)
+
+        # 如果没有 weight_details，尝试计算（不限抽取模式均显示）
+        if students_with_weight and "weight_details" not in (
+            students_with_weight[0] or {}
+        ):
+            class_name = getattr(widget, "final_class_name", None) or getattr(
+                widget.manager, "current_class_name", ""
+            )
+            if class_name:
+                from app.common.history import calculate_weight
+
+                students_with_weight = calculate_weight(
+                    students_with_weight, class_name
+                )
+                logger.debug(
+                    f"权重面板(RollCall)：已为 {len(students_with_weight)} 个学生计算权重"
+                )
+
+        if hasattr(widget, "weight_panel") and students_with_weight:
+            widget.weight_panel.set_students(students_with_weight)
+            widget.weight_panel.setVisible(True)
+            logger.debug(
+                f"权重面板(RollCall)已更新，展示 {len(students_with_weight)} 个学生"
+            )
+        else:
+            logger.debug(
+                f"权重面板(RollCall)未显示: has_panel={hasattr(widget, 'weight_panel')}, "
+                f"count={len(students_with_weight)}"
+            )
+    except Exception as e:
+        logger.exception(f"更新权重面板失败: {e}")

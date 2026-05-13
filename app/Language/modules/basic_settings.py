@@ -8,6 +8,10 @@ basic_settings = {
             "description": "管理软件的数据导入和导出",
         },
         "personalised": {"name": "个性化", "description": "自定义软件外观和用户体验"},
+        "telemetry_category": {
+            "name": "遥测与隐私",
+            "description": "管理在线状态上报和隐私相关设置",
+        },
         "simplified_mode": {
             "name": "精简设置模式",
             "description": "隐藏高级设置项，仅显示推荐设置",
@@ -336,6 +340,20 @@ basic_settings = {
             "import_failure_title": {"name": "导入设置"},
             "import_failure_content": {"name": "导入设置失败:\n{error}"},
         },
+        "telemetry": {
+            "name": "遥测",
+            "description": "开启后上报在线状态数据以帮助改进软件",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "telemetry_notification": {
+            "enable": "已开启遥测",
+            "disable": "已关闭遥测，重启后生效",
+        },
+        "telemetry_mode": {
+            "name": "在线状态",
+            "description": "完整上报含位置信息，匿名上报仅计入在线人数不报位置，停止则不上报",
+            "combo_items": ["完整上报", "匿名上报", "停止上报"],
+        },
         "success_enable_content": {"name": "已开启启动显示主窗口"},
         "info_disable_content": {"name": "已关闭启动显示主窗口"},
         "data_import_export": {
@@ -404,6 +422,10 @@ basic_settings = {
         "personalised": {
             "name": "Customization",
             "description": "Customize the look and experience of software",
+        },
+        "telemetry_category": {
+            "name": "Telemetry & Privacy",
+            "description": "Manage online status reporting and privacy settings",
         },
         "simplified_mode": {
             "name": "Simplified mode",
@@ -787,6 +809,20 @@ basic_settings = {
                 "name": "Diagnostic data will soon be exported, including:\n\nsoftware information, settings,\nname list, prize list,\nhistory, log file\n\nNOTE: exported data may contain sensitive information, please keep it safe.\n\nContinue exporting?"
             },
         },
+        "telemetry": {
+            "name": "Telemetry",
+            "description": "Report online status data to help improve the software",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "telemetry_notification": {
+            "enable": "Telemetry enabled",
+            "disable": "Telemetry disabled, restart required",
+        },
+        "telemetry_mode": {
+            "name": "Online Status",
+            "description": "Full includes location, Anonymous counts presence only, Stopped disables reporting",
+            "combo_items": ["Full", "Anonymous", "Stopped"],
+        },
         "success_enable_content": {
             "name": "Enabled displaying main window when launching"
         },
@@ -810,6 +846,10 @@ basic_settings = {
         "personalised": {
             "name": "パーソナライズ",
             "description": "ソフトウェアの外観とユーザー体験をカスタマイズ",
+        },
+        "telemetry_category": {
+            "name": "テレメトリとプライバシー",
+            "description": "オンライン状態の報告とプライバシー設定を管理",
         },
         "simplified_mode": {
             "name": "簡易設定モード",
@@ -1158,6 +1198,20 @@ basic_settings = {
             "import_failure_content": {
                 "name": "設定のインポートに失敗しました:\n{error}"
             },
+        },
+        "telemetry": {
+            "name": "テレメトリ",
+            "description": "ソフトウェア改善のため、オンライン状態データを報告",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "telemetry_notification": {
+            "enable": "テレメトリを有効にしました",
+            "disable": "テレメトリを無効にしました、再起動が必要です",
+        },
+        "telemetry_mode": {
+            "name": "オンライン状態",
+            "description": "完全は位置情報を含む、匿名は人数のみカウント、停止は報告しない",
+            "combo_items": ["完全", "匿名", "停止"],
         },
         "success_enable_content": {
             "name": "起動時にメインウィンドウを表示を有効にしました"

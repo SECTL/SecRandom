@@ -73,6 +73,22 @@ roll_call_settings = {
             "description": "设置默认抽取名单",
         },
         "font_size": {"name": "字体大小", "description": "设置点名结果字体大小"},
+        "reminder_text": {
+            "name": "抽取前/清空后提示语",
+            "description": "设置抽取前和清空后显示的提示文字",
+        },
+        "reminder_font_size": {
+            "name": "提示语字体大小",
+            "description": "设置提示语文字的字体大小",
+        },
+        "reminder_text_color": {
+            "name": "提示语颜色",
+            "description": "设置提示语文字的颜色",
+        },
+        "reminder_text_opacity": {
+            "name": "提示语透明度",
+            "description": "设置提示语文字的透明度（0-100）",
+        },
         "use_global_font": {
             "name": "使用全局字体",
             "description": "是否使用全局字体设置",
@@ -143,6 +159,31 @@ roll_call_settings = {
         "open_student_image_folder": {
             "name": "学生图片文件夹",
             "description": "管理学生图片文件，图片文件名需与学生姓名一致",
+        },
+        "show_weight_transparency": {
+            "name": "权重透明化",
+            "description": "在抽取结果界面展示每位参与者的权重明细",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "wp_title": {"name": "权重明细", "description": ""},
+        "wp_collapse": {"name": "折叠", "description": ""},
+        "wp_expand": {"name": "展开", "description": ""},
+        "wp_help": {"name": "查看权重计算规则", "description": ""},
+        "wp_col_student": {"name": "学生", "description": ""},
+        "wp_col_base": {"name": "基础权重", "description": ""},
+        "wp_col_freq": {"name": "频率因子", "description": ""},
+        "wp_col_group": {"name": "小组平衡", "description": ""},
+        "wp_col_gender": {"name": "性别平衡", "description": ""},
+        "wp_col_time": {"name": "时间因子", "description": ""},
+        "wp_col_shield": {"name": "屏蔽", "description": ""},
+        "wp_col_total": {"name": "最终权重", "description": ""},
+        "wp_shielded": {"name": "已屏蔽", "description": ""},
+        "wp_normal": {"name": "正常", "description": ""},
+        "wp_formula_title": {"name": "权重计算规则", "description": ""},
+        "wp_close": {"name": "关闭", "description": ""},
+        "wp_formula_content": {
+            "name": "**权重计算规则**\n\n**总权重 = 基础权重 + 频率因子 + 小组平衡 + 性别平衡 + 时间因子**\n\n---\n\n**基础权重**: 每个学生的基础分，可在设置中调整（默认1.0）\n\n**频率因子**: 被抽中次数越少 → 因子越高\n• 支持线性/平方根/指数三种算法（可在设置中选择）\n• 前10轮自动保护新同学（冷启动）\n\n**小组平衡**: 所在小组被抽越少 → 加成越高\n\n**性别平衡**: 该性别被抽越少 → 加成越高\n\n**时间因子**: 距离上次被抽越久 → 权重逐渐恢复\n• 超30天未抽 → 时间因子加满\n\n---\n\n**特殊规则**:\n• 屏蔽保护：刚抽过的人在设定时间内几乎不会被再抽到（权重降至 1/10）\n• 权重范围：最低 0.05，最高 5.0\n\n**平均值差值保护**（独立机制）: 只允许抽取次数≤平均值的成员进入候选池，差距过大时排除极值",
+            "description": "",
         },
     },
     "EN_US": {
@@ -220,6 +261,22 @@ roll_call_settings = {
         "font_size": {
             "name": "Font size",
             "description": "Set picking result font size",
+        },
+        "reminder_text": {
+            "name": "Reminder text",
+            "description": "Text displayed before the draw and after resetting",
+        },
+        "reminder_font_size": {
+            "name": "Reminder font size",
+            "description": "Font size for the reminder text",
+        },
+        "reminder_text_color": {
+            "name": "Reminder color",
+            "description": "Color of the reminder text",
+        },
+        "reminder_text_opacity": {
+            "name": "Reminder opacity",
+            "description": "Opacity of the reminder text (0-100)",
         },
         "use_global_font": {
             "name": "Use global font",
@@ -306,6 +363,31 @@ roll_call_settings = {
             "name": "Default class",
             "description": "Set the default class to use for drawing",
         },
+        "show_weight_transparency": {
+            "name": "Weight Transparency",
+            "description": "Show weight details for each participant on the result interface",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "wp_title": {"name": "Weight Details", "description": ""},
+        "wp_collapse": {"name": "Collapse", "description": ""},
+        "wp_expand": {"name": "Expand", "description": ""},
+        "wp_help": {"name": "View Weight Calculation Rules", "description": ""},
+        "wp_col_student": {"name": "Student", "description": ""},
+        "wp_col_base": {"name": "Base", "description": ""},
+        "wp_col_freq": {"name": "Frequency", "description": ""},
+        "wp_col_group": {"name": "Group", "description": ""},
+        "wp_col_gender": {"name": "Gender", "description": ""},
+        "wp_col_time": {"name": "Time", "description": ""},
+        "wp_col_shield": {"name": "Shield", "description": ""},
+        "wp_col_total": {"name": "Total", "description": ""},
+        "wp_shielded": {"name": "Shielded", "description": ""},
+        "wp_normal": {"name": "Normal", "description": ""},
+        "wp_formula_title": {"name": "Weight Calculation Rules", "description": ""},
+        "wp_close": {"name": "Close", "description": ""},
+        "wp_formula_content": {
+            "name": "**Weight Calculation Rules**\n\n**Total Weight = Base Weight + Frequency Factor + Group Balance + Gender Balance + Time Factor**\n\n---\n\n**Base Weight**: Initial weight for each student, adjustable in settings (default 1.0)\n\n**Frequency Factor**: Fewer draws → higher factor\n• Supports Linear/Square Root/Exponential (configurable)\n• First 10 rounds protect new students (Cold Start)\n\n**Group Balance**: Group drawn less often → higher bonus\n\n**Gender Balance**: Gender drawn less often → higher bonus\n\n**Time Factor**: Longer since last drawn → weight gradually recovers\n• Over 30 days → time factor maxed out\n\n---\n\n**Special Rules**:\n• Shield Protection: Recently drawn students are almost never drawn again (weight reduced to 1/10)\n• Weight Range: Minimum 0.05, Maximum 5.0\n\n**Average Gap Protection** (independent mechanism): Only candidates with draw count ≤ average enter the pool; extreme values are excluded when gap is too large",
+            "description": "",
+        },
     },
     "JA_JP": {
         "title": {"name": "点呼設定", "description": "点呼機能設定"},
@@ -382,6 +464,22 @@ roll_call_settings = {
         "font_size": {
             "name": "フォントサイズ",
             "description": "点呼結果のフォントサイズを設定",
+        },
+        "reminder_text": {
+            "name": "リマインダーテキスト",
+            "description": "抽選前とリセット後に表示するテキスト",
+        },
+        "reminder_font_size": {
+            "name": "リマインダーフォントサイズ",
+            "description": "リマインダーテキストのフォントサイズ",
+        },
+        "reminder_text_color": {
+            "name": "リマインダー色",
+            "description": "リマインダーテキストの色",
+        },
+        "reminder_text_opacity": {
+            "name": "リマインダー透明度",
+            "description": "リマインダーテキストの透明度（0-100）",
         },
         "use_global_font": {
             "name": "グローバルフォントを使用",
@@ -969,6 +1067,22 @@ lottery_settings = {
             "description": "设置默认使用的抽取名单",
         },
         "font_size": {"name": "字体大小", "description": "设置抽奖结果字体大小"},
+        "reminder_text": {
+            "name": "抽取前/清空后提示语",
+            "description": "设置抽取前和清空后显示的提示文字",
+        },
+        "reminder_font_size": {
+            "name": "提示语字体大小",
+            "description": "设置提示语文字的字体大小",
+        },
+        "reminder_text_color": {
+            "name": "提示语颜色",
+            "description": "设置提示语文字的颜色",
+        },
+        "reminder_text_opacity": {
+            "name": "提示语透明度",
+            "description": "设置提示语文字的透明度（0-100）",
+        },
         "use_global_font": {
             "name": "使用全局字体",
             "description": "是否使用全局字体设置",
@@ -1048,6 +1162,31 @@ lottery_settings = {
             "name": "奖品图片文件夹",
             "description": "管理奖品图片文件，图片文件名需与奖品名称一致",
         },
+        "show_weight_transparency": {
+            "name": "权重透明化",
+            "description": "在抽取结果界面展示每位参与者的权重明细",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "wp_title": {"name": "权重明细", "description": ""},
+        "wp_collapse": {"name": "折叠", "description": ""},
+        "wp_expand": {"name": "展开", "description": ""},
+        "wp_help": {"name": "查看权重计算规则", "description": ""},
+        "wp_col_student": {"name": "学生", "description": ""},
+        "wp_col_base": {"name": "基础权重", "description": ""},
+        "wp_col_freq": {"name": "频率因子", "description": ""},
+        "wp_col_group": {"name": "小组平衡", "description": ""},
+        "wp_col_gender": {"name": "性别平衡", "description": ""},
+        "wp_col_time": {"name": "时间因子", "description": ""},
+        "wp_col_shield": {"name": "屏蔽", "description": ""},
+        "wp_col_total": {"name": "最终权重", "description": ""},
+        "wp_shielded": {"name": "已屏蔽", "description": ""},
+        "wp_normal": {"name": "正常", "description": ""},
+        "wp_formula_title": {"name": "权重计算规则", "description": ""},
+        "wp_close": {"name": "关闭", "description": ""},
+        "wp_formula_content": {
+            "name": "**权重计算规则**\n\n**总权重 = 基础权重 + 频率因子 + 小组平衡 + 性别平衡 + 时间因子**\n\n---\n\n**基础权重**: 每个学生的基础分，可在设置中调整（默认1.0）\n\n**频率因子**: 被抽中次数越少 → 因子越高\n• 支持线性/平方根/指数三种算法（可在设置中选择）\n• 前10轮自动保护新同学（冷启动）\n\n**小组平衡**: 所在小组被抽越少 → 加成越高\n\n**性别平衡**: 该性别被抽越少 → 加成越高\n\n**时间因子**: 距离上次被抽越久 → 权重逐渐恢复\n• 超30天未抽 → 时间因子加满\n\n---\n\n**特殊规则**:\n• 屏蔽保护：刚抽过的人在设定时间内几乎不会被再抽到（权重降至 1/10）\n• 权重范围：最低 0.05，最高 5.0\n\n**平均值差值保护**（独立机制）: 只允许抽取次数≤平均值的成员进入候选池，差距过大时排除极值",
+            "description": "",
+        },
     },
     "EN_US": {
         "title": {"name": "Lottery settings", "description": "Lottery settings"},
@@ -1124,6 +1263,22 @@ lottery_settings = {
         "font_size": {
             "name": "Font size",
             "description": "Set the lottery result font size",
+        },
+        "reminder_text": {
+            "name": "Reminder text",
+            "description": "Text displayed before the draw and after resetting",
+        },
+        "reminder_font_size": {
+            "name": "Reminder font size",
+            "description": "Font size for the reminder text",
+        },
+        "reminder_text_color": {
+            "name": "Reminder color",
+            "description": "Color of the reminder text",
+        },
+        "reminder_text_opacity": {
+            "name": "Reminder opacity",
+            "description": "Opacity of the reminder text (0-100)",
         },
         "use_global_font": {
             "name": "Use global font",
@@ -1228,6 +1383,31 @@ lottery_settings = {
             "name": "Default pool",
             "description": "Set the default pool to use for drawing",
         },
+        "show_weight_transparency": {
+            "name": "Weight Transparency",
+            "description": "Show weight details for each participant on the result interface",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "wp_title": {"name": "Weight Details", "description": ""},
+        "wp_collapse": {"name": "Collapse", "description": ""},
+        "wp_expand": {"name": "Expand", "description": ""},
+        "wp_help": {"name": "View Weight Calculation Rules", "description": ""},
+        "wp_col_student": {"name": "Student", "description": ""},
+        "wp_col_base": {"name": "Base", "description": ""},
+        "wp_col_freq": {"name": "Frequency", "description": ""},
+        "wp_col_group": {"name": "Group", "description": ""},
+        "wp_col_gender": {"name": "Gender", "description": ""},
+        "wp_col_time": {"name": "Time", "description": ""},
+        "wp_col_shield": {"name": "Shield", "description": ""},
+        "wp_col_total": {"name": "Total", "description": ""},
+        "wp_shielded": {"name": "Shielded", "description": ""},
+        "wp_normal": {"name": "Normal", "description": ""},
+        "wp_formula_title": {"name": "Weight Calculation Rules", "description": ""},
+        "wp_close": {"name": "Close", "description": ""},
+        "wp_formula_content": {
+            "name": "**Weight Calculation Rules**\n\n**Total Weight = Base Weight + Frequency Factor + Group Balance + Gender Balance + Time Factor**\n\n---\n\n**Base Weight**: Initial weight for each student, adjustable in settings (default 1.0)\n\n**Frequency Factor**: Fewer draws → higher factor\n• Supports Linear/Square Root/Exponential (configurable)\n• First 10 rounds protect new students (Cold Start)\n\n**Group Balance**: Group drawn less often → higher bonus\n\n**Gender Balance**: Gender drawn less often → higher bonus\n\n**Time Factor**: Longer since last drawn → weight gradually recovers\n• Over 30 days → time factor maxed out\n\n---\n\n**Special Rules**:\n• Shield Protection: Recently drawn students are almost never drawn again (weight reduced to 1/10)\n• Weight Range: Minimum 0.05, Maximum 5.0\n\n**Average Gap Protection** (independent mechanism): Only candidates with draw count ≤ average enter the pool; extreme values are excluded when gap is too large",
+            "description": "",
+        },
     },
     "JA_JP": {
         "title": {"name": "抽選設定", "description": "抽選機能設定"},
@@ -1304,6 +1484,22 @@ lottery_settings = {
         "font_size": {
             "name": "フォントサイズ",
             "description": "抽選結果のフォントサイズを設定",
+        },
+        "reminder_text": {
+            "name": "リマインダーテキスト",
+            "description": "抽選前とリセット後に表示するテキスト",
+        },
+        "reminder_font_size": {
+            "name": "リマインダーフォントサイズ",
+            "description": "リマインダーテキストのフォントサイズ",
+        },
+        "reminder_text_color": {
+            "name": "リマインダー色",
+            "description": "リマインダーテキストの色",
+        },
+        "reminder_text_opacity": {
+            "name": "リマインダー透明度",
+            "description": "リマインダーテキストの透明度（0-100）",
         },
         "use_global_font": {
             "name": "グローバルフォントを使用",

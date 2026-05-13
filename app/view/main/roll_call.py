@@ -146,6 +146,7 @@ class roll_call(QWidget):
         self._setup_main_layout(container)
 
         QTimer.singleShot(0, self.populate_lists)
+        QTimer.singleShot(500, self._show_reminder)
 
     def _create_result_widget(self, parent_layout):
         """创建结果显示区域
@@ -175,6 +176,13 @@ class roll_call(QWidget):
         )
         self.result_layout.addLayout(self.result_grid)
         parent_layout.addWidget(self.result_widget)
+
+        # 权重透明化面板（底部，默认隐藏）
+        from app.common.display.weight_panel import WeightPanel
+
+        self.weight_panel = WeightPanel(self, settings_group="roll_call_settings")
+        self.weight_panel.setVisible(False)
+        parent_layout.addWidget(self.weight_panel)
 
     def _create_buttons(self):
         """创建按钮控件"""
@@ -582,7 +590,38 @@ class roll_call(QWidget):
         )
 
     def _do_reset_count(self):
-        return roll_call_manager.do_reset_count(self)
+        result = roll_call_manager.do_reset_count(self)
+        self._show_reminder()
+        return result
+
+    def _show_reminder(self):
+        reminder_text = readme_settings_async("roll_call_settings", "reminder_text", "")
+        if not reminder_text.strip():
+            return
+        font_size = get_safe_font_size("roll_call_settings", "reminder_font_size", 30)
+        color_hex = readme_settings_async(
+            "roll_call_settings", "reminder_text_color", "#808080"
+        )
+        opacity_raw = readme_settings_async(
+            "roll_call_settings", "reminder_text_opacity", 50
+        )
+        try:
+            opacity_pct = int(opacity_raw)
+        except (ValueError, TypeError):
+            opacity_pct = 50
+        alpha = max(0, min(255, int(opacity_pct * 255 / 100)))
+        color = QColor(color_hex)
+
+        ResultDisplayUtils.clear_grid(self.result_grid)
+        label = QLabel(reminder_text)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        font = label.font()
+        font.setPointSize(font_size)
+        label.setFont(font)
+        label.setStyleSheet(
+            f"color: rgba({color.red()}, {color.green()}, {color.blue()}, {alpha});"
+        )
+        self.result_grid.addWidget(label)
 
     def reset_count(self):
         """重置人数"""
@@ -591,6 +630,9 @@ class roll_call(QWidget):
     def clear_result(self):
         """清空结果显示"""
         ResultDisplayUtils.clear_grid(self.result_grid)
+        if hasattr(self, "weight_panel"):
+            self.weight_panel.clear()
+            self.weight_panel.setVisible(False)
 
     def update_count(self, change):
         return roll_call_manager.update_count(self, change)

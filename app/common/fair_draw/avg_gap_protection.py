@@ -5,7 +5,7 @@
 from typing import List, Dict, Any
 from loguru import logger
 from app.common.history import *
-from app.tools.settings_access import readme_settings_async
+from app.tools.settings_access import get_bool_setting, get_int_setting
 
 
 # ==================================================
@@ -95,12 +95,12 @@ def apply_avg_gap_protection(
         处理后的候选池
     """
     # 检查功能是否启用
-    if not readme_settings_async("fair_draw_settings", "enable_avg_gap_protection"):
+    if not get_bool_setting("fair_draw_settings", "enable_avg_gap_protection"):
         return candidates
 
     # 集中获取所有配置
-    gap_threshold = readme_settings_async("fair_draw_settings", "gap_threshold")
-    min_pool_size = readme_settings_async("fair_draw_settings", "min_pool_size")
+    gap_threshold = get_int_setting("fair_draw_settings", "gap_threshold", 3)
+    min_pool_size = get_int_setting("fair_draw_settings", "min_pool_size", 1)
 
     logger.debug(
         f"应用平均值差值保护，抽取人数: {draw_count}, 差距阈值: {gap_threshold}, 最小池大小: {min_pool_size}"

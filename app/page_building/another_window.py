@@ -21,6 +21,7 @@ from app.view.another_window.current_config_viewer import CurrentConfigViewerWin
 from app.view.another_window.log_viewer import LogViewerWindow
 from app.view.another_window.backup_manager import BackupManagerWindow
 from app.view.another_window.countdown_timer import CountdownTimerPage
+from app.view.another_window.weight_formula import WeightFormulaPage
 from app.Language.obtain_language import *
 from app.tools.variable import *
 
@@ -710,6 +711,37 @@ def create_remaining_list_window(
 
 
 # ==================================================
+# 权重计算规则窗口
+# ==================================================
+class weight_formula_window_template(PageTemplate):
+    def __init__(self, parent=None, settings_group=None):
+        self._sr_settings_group = settings_group
+
+        def factory(parent):
+            return WeightFormulaPage(
+                parent=parent, settings_group=self._sr_settings_group
+            )
+
+        factory.__name__ = "WeightFormulaPage"
+        super().__init__(content_widget_class=factory, parent=parent)
+
+
+def create_weight_formula_window(parent=None, settings_group=None):
+    title = get_content_name_async(
+        settings_group or "lottery_settings", "wp_formula_title"
+    )
+    window = SimpleWindowTemplate(title, width=550, height=500, parent=parent)
+    window.add_page_from_template(
+        "weight_formula",
+        weight_formula_window_template,
+        settings_group=settings_group,
+    )
+    window.switch_to_page("weight_formula")
+    window.show()
+    return window
+
+
+# ==================================================
 # 当前配置查看窗口
 # ==================================================
 class current_config_viewer_window_template(PageTemplate):
@@ -790,6 +822,31 @@ def create_backup_manager_window():
         backup_manager_window_template,
         900,
         650,
+    )
+
+
+# ==================================================
+# 智能分析窗口
+# ==================================================
+class analysis_window_template(PageTemplate):
+    def __init__(self, parent=None):
+        def factory(parent):
+            from app.view.another_window.analysis_window import AnalysisWindow
+
+            return AnalysisWindow(parent=parent)
+
+        factory.__name__ = "AnalysisWindow"
+        super().__init__(content_widget_class=factory, parent=parent)
+
+
+def create_analysis_window():
+    window, _ = _create_reusable_window(
+        "best_config_analysis",
+        ("best_config", "analysis_window_title"),
+        analysis_window_template,
+        680,
+        540,
+        parent=None,
     )
     try:
         if hasattr(window, "enable_close_guard"):

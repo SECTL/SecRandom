@@ -17,7 +17,11 @@ from app.tools.config import (
     create_sentry_before_send_filter,
 )
 from app.tools.settings_default import manage_settings_file
-from app.tools.settings_access import readme_settings_async, get_or_create_user_id
+from app.tools.settings_access import (
+    get_bool_setting,
+    get_or_create_user_id,
+    get_setting,
+)
 from app.tools.online_status import (
     start_online_status_reporter,
     stop_online_status_reporter,
@@ -180,9 +184,6 @@ def initialize_application():
     logger.remove()
     configure_logging()
 
-    if DEV_VERSION not in VERSION:
-        initialize_sentry()
-
     wm.app_start_time = time.perf_counter()
 
     shared_memory, is_first_instance = check_single_instance()
@@ -235,8 +236,7 @@ def setup_qt_application():
     gc.enable()
 
     try:
-        resident = readme_settings_async("basic_settings", "background_resident")
-        resident = True if resident is None else resident
+        resident = get_bool_setting("basic_settings", "background_resident", True)
         app.setQuitOnLastWindowClosed(not resident)
     except Exception:
         app.setQuitOnLastWindowClosed(APP_QUIT_ON_LAST_WINDOW_CLOSED)
@@ -396,7 +396,7 @@ def restart_application(program_dir):
             logger.info("Linux/Unix/macOS 平台：使用 execl 重启应用程序")
             os.execl(executable, executable, *filtered_args)
     except Exception as e:
-        logger.exception(f"重启应用程序失败: {e}")
+        logger.warning(f"重启应用程序失败: {e}")
         os._exit(1)
 
 
@@ -476,6 +476,12 @@ def main():
 
     manage_settings_file()
 
+    if DEV_VERSION not in VERSION:
+        if get_bool_setting("basic_settings", "telemetry_enabled", True):
+            initialize_sentry()  # 初始化 Sentry 事件上报
+    if get_setting("basic_settings", "telemetry_mode") != "off":
+        initialize_online_status()  # 初始化在线状态上报
+
     app, window_manager, url_handler, cs_ipc_handler, local_server = (
         setup_qt_application()
     )
@@ -489,7 +495,6 @@ def main():
 
     if VERSION == DEV_VERSION:
         setup_dev_hints(app)
-        initialize_online_status()
 
     try:
         exit_code = app.exec()

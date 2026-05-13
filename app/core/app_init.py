@@ -3,7 +3,7 @@ from loguru import logger
 
 from app.tools.settings_default import manage_settings_file
 from app.tools.config import remove_record
-from app.tools.settings_access import readme_settings_async
+from app.tools.settings_access import get_bool_setting, get_setting
 from app.tools.update_utils import check_for_updates_on_startup
 from app.tools.variable import APP_INIT_DELAY
 from app.core.font_manager import (
@@ -93,7 +93,7 @@ class AppInitializer:
         """应用主题设置"""
         from qfluentwidgets import setTheme, Theme
 
-        theme = readme_settings_async("basic_settings", "theme")
+        theme = get_setting("basic_settings", "theme")
         if theme == "DARK":
             setTheme(Theme.DARK)
         elif theme == "AUTO":
@@ -109,9 +109,7 @@ class AppInitializer:
         QTimer.singleShot(
             APP_INIT_DELAY,
             lambda: safe_execute(
-                lambda: setThemeColor(
-                    readme_settings_async("basic_settings", "theme_color")
-                ),
+                lambda: setThemeColor(get_setting("basic_settings", "theme_color")),
                 error_message="加载主题颜色失败",
             ),
         )
@@ -137,7 +135,7 @@ class AppInitializer:
 
     def _create_main_window(self) -> None:
         """创建主窗口实例（但不自动显示）"""
-        guide_completed = readme_settings_async("basic_settings", "guide_completed")
+        guide_completed = get_bool_setting("basic_settings", "guide_completed", False)
         init_delay = 0 if not guide_completed else APP_INIT_DELAY
         QTimer.singleShot(
             init_delay,
@@ -148,7 +146,7 @@ class AppInitializer:
 
     def _apply_font_settings(self) -> None:
         """应用字体设置"""
-        guide_completed = readme_settings_async("basic_settings", "guide_completed")
+        guide_completed = get_bool_setting("basic_settings", "guide_completed", False)
         init_delay = 0 if not guide_completed else APP_INIT_DELAY
         QTimer.singleShot(
             init_delay,
@@ -156,7 +154,7 @@ class AppInitializer:
         )
 
     def _warmup_face_detector_devices(self) -> None:
-        guide_completed = readme_settings_async("basic_settings", "guide_completed")
+        guide_completed = get_bool_setting("basic_settings", "guide_completed", False)
         init_delay = 1500 if not guide_completed else APP_INIT_DELAY + 1500
         QTimer.singleShot(
             init_delay,

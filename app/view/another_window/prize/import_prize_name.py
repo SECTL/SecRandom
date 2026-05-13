@@ -304,6 +304,12 @@ class ImportPrizeNameWindow(QWidget):
         self.fileLoaded.connect(self.__on_file_loaded)
         self.fileLoadError.connect(self.__on_file_load_error)
 
+    def __show_loading_animation(self):
+        """显示加载动画占位实现。"""
+
+    def __hide_loading_animation(self):
+        """隐藏加载动画占位实现。"""
+
     def __update_ui_state(self):
         """更新UI状态"""
         has_file = self.file_path is not None
@@ -388,12 +394,15 @@ class ImportPrizeNameWindow(QWidget):
         if file_path:
             # 更新文件路径标签
             self.file_path_label.setText(os.path.basename(file_path))
+            self.__show_loading_animation()
 
             # 使用线程池在后台加载文件
             self.executor.submit(self.__load_file, file_path)
 
     def __on_file_loaded(self, data, columns):
         """文件加载完成后的处理"""
+        self.__hide_loading_animation()
+
         # 更新UI数据
         self.data = data
         self.columns = columns
@@ -474,7 +483,13 @@ class ImportPrizeNameWindow(QWidget):
             self.fileLoaded.emit(data, columns)
 
         except Exception as e:
-            logger.exception(f"加载文件失败: {e}")
+            if isinstance(
+                e,
+                (ValueError, FileNotFoundError, UnicodeDecodeError, ImportError),
+            ):
+                logger.warning(f"加载文件失败: {e}")
+            else:
+                logger.exception(f"加载文件失败: {e}")
             # 通过信号通知UI线程文件加载失败
             self.fileLoadError.emit(str(e))
 
@@ -497,11 +512,12 @@ class ImportPrizeNameWindow(QWidget):
 
         # 添加所有列
         for column in self.columns:
-            self.name_column_combo.addItem(column)
-            self.id_column_combo.addItem(column)
-            self.weight_column_combo.addItem(column)
-            self.count_column_combo.addItem(column)
-            self.tags_column_combo.addItem(column)
+            column_text = str(column)
+            self.name_column_combo.addItem(column_text)
+            self.id_column_combo.addItem(column_text)
+            self.weight_column_combo.addItem(column_text)
+            self.count_column_combo.addItem(column_text)
+            self.tags_column_combo.addItem(column_text)
 
     def __auto_map_columns(self):
         """自动映射列"""
@@ -586,7 +602,7 @@ class ImportPrizeNameWindow(QWidget):
             best_score = 0
 
             for column in columns:
-                column_lower = column.lower()
+                column_lower = str(column).lower()
                 for i, keyword in enumerate(keywords):
                     # 完全匹配得分最高
                     if column_lower == keyword.lower():

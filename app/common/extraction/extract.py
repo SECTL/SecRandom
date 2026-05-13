@@ -158,9 +158,7 @@ def _is_non_class_time() -> bool:
                     and on_class_left_time > 0
                 ):
                     try:
-                        elapsed_seconds = (
-                            ipc_handler.get_elapsed_since_previous_time_point_end_seconds()
-                        )
+                        elapsed_seconds = ipc_handler.get_elapsed_since_previous_time_point_end_seconds()
                         if 0 < elapsed_seconds <= post_class_disable_delay:
                             return False
                     except Exception as e:
@@ -169,7 +167,9 @@ def _is_non_class_time() -> bool:
                 return is_breaking
 
             except Exception as e:
-                logger.error(f"ClassIsland IPC 调用失败: {e}，跳过课间禁用判断，允许抽取")
+                logger.error(
+                    f"ClassIsland IPC 调用失败: {e}，跳过课间禁用判断，允许抽取"
+                )
                 return False
 
         current_day_of_week = _get_current_day_of_week()

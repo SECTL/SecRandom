@@ -21,10 +21,18 @@ basic_voice_settings = {
             "description": "选择语音合成引擎类型",
         },
         "volume_group": {"name": "语音设置", "description": "调整语音播报相关设置"},
+        "voice_wait_group": {
+            "name": "防止连续点击",
+            "description": "防止在语音播报完成前连续抽取",
+        },
         "voice_enable": {
             "name": "语音功能开关",
             "description": "开启或关闭语音播报功能",
             "switchbutton_name": {"enable": "开启", "disable": "关闭"},
+        },
+        "voice_wait_complete": {
+            "name": "播报完成等待",
+            "description": "开启后，等待当前语音播报完成才允许下一次抽取",
         },
         "voice_engine": {
             "name": "语音引擎",
@@ -66,6 +74,10 @@ basic_voice_settings = {
         "volume_group": {
             "name": "Volume settings",
             "description": "Adjust speech volume",
+        },
+        "voice_wait_group": {
+            "name": "Prevent rapid clicking",
+            "description": "Prevent consecutive draws before voice announcement completes",
         },
         "system_volume_group": {
             "name": "System volume control",
@@ -118,6 +130,10 @@ basic_voice_settings = {
             "description": "Enable or disable voice announcements",
             "switchbutton_name": {"enable": "Enabled", "disable": "Disabled"},
         },
+        "voice_wait_complete": {
+            "name": "Wait for announcement",
+            "description": "When enabled, wait for the current announcement to complete before allowing the next draw",
+        },
     },
     "JA_JP": {
         "title": {
@@ -131,6 +147,10 @@ basic_voice_settings = {
         "volume_group": {
             "name": "音声設定",
             "description": "音声再生関連設定を調整",
+        },
+        "voice_wait_group": {
+            "name": "連続クリック防止",
+            "description": "音声再生が完了する前に連続抽選が行われないようにする",
         },
         "system_volume_group": {
             "name": "システム音量制御",
@@ -182,6 +202,10 @@ basic_voice_settings = {
             "name": "音声スイッチ",
             "description": "音声再生を有効または無効にする",
             "switchbutton_name": {"enable": "有効", "disable": "無効"},
+        },
+        "voice_wait_complete": {
+            "name": "再生完了待機",
+            "description": "有効にすると、現在の音声再生が完了するまで次の抽選を許可しません",
         },
     },
 }

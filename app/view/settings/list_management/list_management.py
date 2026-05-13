@@ -419,7 +419,7 @@ class roll_call_list(GroupHeaderCardWidget):
                 duration=3000,
             )
             show_notification(NotificationType.ERROR, config, parent=self)
-            logger.exception(f"学生名单导出失败: {message}")
+            logger.warning(f"学生名单导出失败: {message}")
 
     def setup_file_watcher(self):
         """设置文件系统监视器，监控班级名单文件夹的变化 - 使用共享监视器"""
@@ -953,7 +953,7 @@ class lottery_list(GroupHeaderCardWidget):
                 duration=3000,
             )
             show_notification(NotificationType.ERROR, config, parent=self)
-            logger.exception(f"奖品名单导出失败: {message}")
+            logger.warning(f"奖品名单导出失败: {message}")
 
     def setup_file_watcher(self):
         """设置文件系统监视器，监控奖池名单文件夹的变化 - 使用共享监视器"""

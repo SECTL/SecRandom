@@ -6,7 +6,7 @@ SECTL 在线状态上报模块
 服务端会根据 last_active 时间判断用户是否在线（5分钟内活跃视为在线）。
 """
 
-import json
+import re
 import uuid
 import socket
 import threading
@@ -16,7 +16,7 @@ from typing import Optional, Dict, Any
 import requests
 from loguru import logger
 
-from app.tools.path_utils import get_data_path
+from app.tools.settings_access import readme_settings_async
 from app.tools.variable import (
     SECTL_API_BASE_URL,
     SECTL_PLATFORM_ID,
@@ -26,9 +26,17 @@ from app.tools.variable import (
 )
 
 
-_DEVICE_UUID_FILE = "device_uuid.json"
 _online_status_reporter: Optional["OnlineStatusReporter"] = None
 _executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="online_status")
+_ip_location_cache: Dict[str, Optional[str] | bool] = {
+    "initialized": False,
+    "ip_address": None,
+    "country": None,
+    "province": None,
+    "city": None,
+    "district": None,
+}
+_ip_location_cache_lock = threading.Lock()
 
 
 def _detect_device_type() -> str:
@@ -68,22 +76,36 @@ def _get_local_ip() -> str:
 
 def _get_public_ip(timeout_seconds: float = 5.0) -> Optional[str]:
     services = [
-        "https://321260.xyz/api/ip.php", # v4出口网络
+        "https://321260.xyz/api/ip.php",  # v4出口网络 (优先)
+        "https://ddns.oray.com/checkip",
+        "http://v4.66666.host:66/ip",
+        "https://myip.ipip.net",
     ]
 
     for service in services:
         try:
             response = requests.get(service, timeout=timeout_seconds)
             if response.status_code == 200:
-                return response.text.strip()
+                text = response.text.strip()
+                match = re.search(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", text)
+                if match:
+                    return match.group(0)
         except Exception:
             continue
 
+    logger.warning("所有公网IP服务均获取失败")
     return None
 
 
 def _get_ip_location(ip: str, timeout_seconds: float = 10.0) -> Dict[str, Any]:
-    if not ip or ip == "unknown" or ip.startswith("127.") or ip == "localhost" or ip.startswith("192.168.") or ip.startswith("10."):
+    if (
+        not ip
+        or ip == "unknown"
+        or ip.startswith("127.")
+        or ip == "localhost"
+        or ip.startswith("192.168.")
+        or ip.startswith("10.")
+    ):
         return {
             "country": "本地",
             "province": "本地",
@@ -103,12 +125,15 @@ def _get_ip_location(ip: str, timeout_seconds: float = 10.0) -> Dict[str, Any]:
         data = response.json()
 
         if data.get("ip"):
-            region_parts = [p.strip() for p in (data.get("region") or "").split(" ") if p.strip()]
+            region_parts = [
+                p.strip() for p in (data.get("region") or "").split(" ") if p.strip()
+            ]
             return {
                 "country": region_parts[0] if len(region_parts) > 0 else "未知",
                 "province": region_parts[1] if len(region_parts) > 1 else "未知",
                 "city": region_parts[2] if len(region_parts) > 2 else "未知",
-                "district": data.get("district") or (region_parts[3] if len(region_parts) > 3 else "未知"),
+                "district": data.get("district")
+                or (region_parts[3] if len(region_parts) > 3 else "未知"),
             }
         else:
             raise Exception(f"IP lookup failed: {data.get('msg', 'Unknown error')}")
@@ -121,31 +146,61 @@ def _get_ip_location(ip: str, timeout_seconds: float = 10.0) -> Dict[str, Any]:
         }
 
 
-def _load_or_create_device_uuid() -> str:
-    uuid_file = get_data_path(_DEVICE_UUID_FILE)
+def _build_ip_location_cache() -> Dict[str, str]:
+    telemetry_mode = readme_settings_async("basic_settings", "telemetry_mode") or "full"
+    if telemetry_mode == "anonymous":
+        return {
+            "ip_address": "0.0.0.0",
+            "country": "未知",
+            "province": "未知",
+            "city": "未知",
+            "district": "未知",
+        }
 
-    if uuid_file.exists():
-        try:
-            with open(uuid_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                device_uuid = data.get("device_uuid")
-                if device_uuid:
-                    try:
-                        uuid.UUID(device_uuid)
-                        return device_uuid
-                    except ValueError:
-                        pass
-        except Exception:
-            pass
+    ip_address = _get_public_ip(SECTL_ONLINE_REPORT_TIMEOUT_SECONDS)
+    if not ip_address:
+        ip_address = _get_local_ip()
+
+    location = _get_ip_location(ip_address, SECTL_ONLINE_REPORT_TIMEOUT_SECONDS)
+    return {
+        "ip_address": ip_address,
+        "country": location.get("country", "未知"),
+        "province": location.get("province", "未知"),
+        "city": location.get("city", "未知"),
+        "district": location.get("district", "未知"),
+    }
+
+
+def initialize_ip_location_cache(
+    force_refresh: bool = False,
+) -> Dict[str, Optional[str] | bool]:
+    """初始化在线状态上报使用的 IP 与位置信息缓存。"""
+    with _ip_location_cache_lock:
+        if _ip_location_cache.get("initialized") and not force_refresh:
+            return dict(_ip_location_cache)
+
+    cache_data = _build_ip_location_cache()
+
+    with _ip_location_cache_lock:
+        _ip_location_cache.update(cache_data)
+        _ip_location_cache["initialized"] = True
+        return dict(_ip_location_cache)
+
+
+def _get_ip_location_cache() -> Dict[str, Optional[str] | bool]:
+    with _ip_location_cache_lock:
+        return dict(_ip_location_cache)
+
+
+def _load_or_create_device_uuid() -> str:
+    device_uuid = readme_settings_async("basic_settings", "offline_user_id")
+    if device_uuid:
+        return device_uuid
 
     device_uuid = str(uuid.uuid4()).lower()
-    try:
-        uuid_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(uuid_file, "w", encoding="utf-8") as f:
-            json.dump({"device_uuid": device_uuid}, f)
-    except Exception:
-        pass
+    from app.tools.settings_access import update_settings
 
+    update_settings("basic_settings", "offline_user_id", device_uuid)
     return device_uuid
 
 
@@ -159,17 +214,22 @@ def _do_report(
     city: Optional[str],
     district: Optional[str],
 ) -> Dict[str, Any]:
-    if not ip_address:
-        ip_address = _get_public_ip(SECTL_ONLINE_REPORT_TIMEOUT_SECONDS)
-        if not ip_address:
-            ip_address = _get_local_ip()
+    telemetry_mode = readme_settings_async("basic_settings", "telemetry_mode") or "full"
+    report_ip = telemetry_mode != "anonymous"
+    logger.debug(f"上报模式: {telemetry_mode}, report_ip={report_ip}")
 
-    if not all([country, province, city, district]):
-        location = _get_ip_location(ip_address, SECTL_ONLINE_REPORT_TIMEOUT_SECONDS)
-        country = country or location.get("country", "未知")
-        province = province or location.get("province", "未知")
-        city = city or location.get("city", "未知")
-        district = district or location.get("district", "未知")
+    if report_ip:
+        ip_address = ip_address or "unknown"
+        country = country or "未知"
+        province = province or "未知"
+        city = city or "未知"
+        district = district or "未知"
+    else:
+        ip_address = "0.0.0.0"
+        country = "未知"
+        province = "未知"
+        city = "未知"
+        district = "未知"
 
     payload = {
         "platform_id": platform_id,
@@ -192,7 +252,9 @@ def _do_report(
         if response.status_code >= 400:
             try:
                 error_data = response.json()
-                logger.warning(f"上报在线状态失败: {error_data.get('error_description', error_data.get('error', 'Unknown error'))}")
+                logger.warning(
+                    f"上报在线状态失败: {error_data.get('error_description', error_data.get('error', 'Unknown error'))}"
+                )
             except Exception:
                 logger.warning(f"上报在线状态失败: HTTP {response.status_code}")
             return {"success": False, "error": "request_failed"}
@@ -200,7 +262,10 @@ def _do_report(
         result = response.json()
         online_count = result.get("online_count", 0)
         update_online_count_cache(online_count)
-        logger.info(f"上报在线状态成功，当前在线人数: {online_count}")
+        if report_ip:
+            logger.info(f"上报在线状态成功，当前在线人数: {online_count}")
+        else:
+            logger.info("上报在线状态成功")
         return result
 
     except requests.exceptions.Timeout:
@@ -227,6 +292,13 @@ def report_online_status_async(
     platform_id = platform_id or SECTL_PLATFORM_ID
     device_uuid = device_uuid or _load_or_create_device_uuid()
     device_type = device_type or _detect_device_type()
+    cache = _get_ip_location_cache()
+    if cache.get("initialized"):
+        ip_address = ip_address or str(cache.get("ip_address") or "unknown")
+        country = country or str(cache.get("country") or "未知")
+        province = province or str(cache.get("province") or "未知")
+        city = city or str(cache.get("city") or "未知")
+        district = district or str(cache.get("district") or "未知")
 
     _executor.submit(
         _do_report,
@@ -265,17 +337,15 @@ class OnlineStatusReporter:
 
     def _init_ip_and_location_async(self):
         def _do_init():
-            ip_address = _get_public_ip(SECTL_ONLINE_REPORT_TIMEOUT_SECONDS)
-            if not ip_address:
-                ip_address = _get_local_ip()
-            location = _get_ip_location(ip_address, SECTL_ONLINE_REPORT_TIMEOUT_SECONDS)
-            self._ip_address = ip_address
-            self._country = location.get("country", "未知")
-            self._province = location.get("province", "未知")
-            self._city = location.get("city", "未知")
-            self._district = location.get("district", "未知")
-            self._initialized = True
-            logger.debug(f"在线状态上报器初始化完成，IP: {ip_address}, 位置: {self._country} {self._province} {self._city}")
+            cache = initialize_ip_location_cache()
+            self._ip_address = str(cache.get("ip_address") or "unknown")
+            self._country = str(cache.get("country") or "未知")
+            self._province = str(cache.get("province") or "未知")
+            self._city = str(cache.get("city") or "未知")
+            self._district = str(cache.get("district") or "未知")
+            with self._lock:
+                self._initialized = True
+            logger.debug("在线状态上报器初始化完成")
             self._report_async()
 
         _executor.submit(_do_init)
@@ -286,8 +356,7 @@ class OnlineStatusReporter:
             if not self._is_running:
                 return
             self._timer = threading.Timer(
-                self.report_interval_ms / 1000.0,
-                self._on_timer_tick
+                self.report_interval_ms / 1000.0, self._on_timer_tick
             )
             self._timer.daemon = True
             self._timer.start()
@@ -324,7 +393,11 @@ class OnlineStatusReporter:
         if not self._is_running:
             return
 
-        logger.debug(f"触发在线状态上报，IP: {self._ip_address}, 已初始化: {self._initialized}")
+        if not self._initialized:
+            logger.debug("在线状态上报器尚未完成 IP 与位置缓存初始化，跳过本次上报")
+            return
+
+        logger.debug("触发在线状态上报")
 
         _executor.submit(
             _do_report,
@@ -369,6 +442,12 @@ def start_online_status_reporter():
         _online_status_reporter = initialize_online_status_reporter()
 
     _online_status_reporter.start()
+    try:
+        from app.tools.platform_report import record_app_launch_metric_async
+
+        record_app_launch_metric_async()
+    except Exception as e:
+        logger.warning(f"记录应用启动自定义报告失败: {e}")
 
 
 def stop_online_status_reporter():
@@ -413,5 +492,6 @@ def get_cached_online_count() -> int:
 
 def update_online_count_cache(count: int):
     import time
+
     _online_count_cache["count"] = count
     _online_count_cache["updated_at"] = time.time()

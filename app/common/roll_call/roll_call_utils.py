@@ -14,6 +14,7 @@ from app.tools.config import (
     record_drawn_student,
 )
 from app.tools.settings_access import readme_settings_async, get_safe_font_size
+from app.tools.platform_report import record_roll_call_metric_async
 from app.tools.list_specific_settings_access import read_roll_call_setting
 from app.common.display.result_display import ResultDisplayUtils
 from app.common.history import save_roll_call_history
@@ -739,6 +740,7 @@ class RollCallUtils:
         gender_filter,
         group_filter,
         half_repeat,
+        report_metric=True,
     ):
         """
         记录已抽取的学生
@@ -763,12 +765,14 @@ class RollCallUtils:
                 del RollCallUtils._drawn_record_cache[record_key]
 
         if selected_students_dict:
-            save_roll_call_history(
+            saved = save_roll_call_history(
                 class_name=class_name,
                 selected_students=selected_students_dict,
                 group_filter=group_filter,
                 gender_filter=gender_filter,
             )
+            if saved and report_metric:
+                record_roll_call_metric_async()
 
     @staticmethod
     def prepare_notification_settings_by_group(

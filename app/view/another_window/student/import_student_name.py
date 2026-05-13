@@ -300,6 +300,12 @@ class ImportStudentNameWindow(QWidget):
         self.fileLoaded.connect(self.__on_file_loaded)
         self.fileLoadError.connect(self.__on_file_load_error)
 
+    def __show_loading_animation(self):
+        """显示加载动画占位实现。"""
+
+    def __hide_loading_animation(self):
+        """隐藏加载动画占位实现。"""
+
     def __update_ui_state(self):
         """更新UI状态"""
         has_file = self.file_path is not None
@@ -361,12 +367,15 @@ class ImportStudentNameWindow(QWidget):
         if file_path:
             # 更新文件路径标签
             self.file_path_label.setText(os.path.basename(file_path))
+            self.__show_loading_animation()
 
             # 使用线程池在后台加载文件
             self.executor.submit(self.__load_file, file_path)
 
     def __on_file_loaded(self, data, columns):
         """文件加载完成后的处理"""
+        self.__hide_loading_animation()
+
         # 更新UI数据
         self.data = data
         self.columns = columns
@@ -440,6 +449,9 @@ class ImportStudentNameWindow(QWidget):
                     get_content_name_async("import_student_name", "unsupported_format")
                 )
 
+            # 将列名转换为字符串，避免整数列名与UI层字符串不匹配
+            data.columns = [str(col) for col in data.columns]
+
             # 获取列名
             columns = list(data.columns)
 
@@ -447,7 +459,13 @@ class ImportStudentNameWindow(QWidget):
             self.fileLoaded.emit(data, columns)
 
         except Exception as e:
-            logger.exception(f"加载文件失败: {e}")
+            if isinstance(
+                e,
+                (ValueError, FileNotFoundError, UnicodeDecodeError, ImportError),
+            ):
+                logger.warning(f"加载文件失败: {e}")
+            else:
+                logger.exception(f"加载文件失败: {e}")
             # 通过信号通知UI线程文件加载失败
             self.fileLoadError.emit(str(e))
 
@@ -468,11 +486,12 @@ class ImportStudentNameWindow(QWidget):
 
         # 添加所有列
         for column in self.columns:
-            self.name_column_combo.addItem(column)
-            self.id_column_combo.addItem(column)
-            self.gender_column_combo.addItem(column)
-            self.group_column_combo.addItem(column)
-            self.tags_column_combo.addItem(column)
+            column_text = str(column)
+            self.name_column_combo.addItem(column_text)
+            self.id_column_combo.addItem(column_text)
+            self.gender_column_combo.addItem(column_text)
+            self.group_column_combo.addItem(column_text)
+            self.tags_column_combo.addItem(column_text)
 
     def __auto_map_columns(self):
         """自动映射列"""
@@ -570,7 +589,7 @@ class ImportStudentNameWindow(QWidget):
             best_score = 0
 
             for column in columns:
-                column_lower = column.lower()
+                column_lower = str(column).lower()
                 for i, keyword in enumerate(keywords):
                     # 完全匹配得分最高
                     if column_lower == keyword.lower():
@@ -722,6 +741,14 @@ class ImportStudentNameWindow(QWidget):
             group_column = self.group_column_combo.currentText()
             tags_column = self.tags_column_combo.currentText()
 
+            none_text = get_content_name_async(
+                "import_student_name", "column_mapping_none"
+            )
+            if id_column == none_text:
+                id_column = None
+            if name_column == none_text:
+                name_column = None
+
             # 验证必选项：学号和姓名列都必须选择
             if not id_column:
                 raise ValueError(
@@ -734,17 +761,11 @@ class ImportStudentNameWindow(QWidget):
                 )
 
             # 检查是否选择了"无"选项（空字符串）
-            if gender_column == get_content_name_async(
-                "import_student_name", "column_mapping_none"
-            ):
+            if gender_column == none_text:
                 gender_column = None
-            if group_column == get_content_name_async(
-                "import_student_name", "column_mapping_none"
-            ):
+            if group_column == none_text:
                 group_column = None
-            if tags_column == get_content_name_async(
-                "import_student_name", "column_mapping_none"
-            ):
+            if tags_column == none_text:
                 tags_column = None
 
             # 提取数据

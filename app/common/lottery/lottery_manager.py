@@ -27,6 +27,7 @@ from app.tools.config import (
     reset_drawn_prize_record,
 )
 from app.tools.settings_access import readme_settings_async
+from app.tools.platform_report import record_lottery_metric_async
 from app.tools.list_specific_settings_access import (
     read_lottery_setting,
     get_safe_font_size_list_specific,
@@ -663,9 +664,11 @@ class LotteryManager(QObject):
             ]
             record_drawn_prize(self.current_pool_name, prize_names)
 
-        save_lottery_history(
+        saved = save_lottery_history(
             self.current_pool_name, selected_items, group_filter, gender_filter
         )
+        if saved:
+            record_lottery_metric_async()
 
         if self.enable_student_assignment and self.current_class_name:
             student_dicts = []
@@ -694,6 +697,7 @@ class LotteryManager(QObject):
                 self.current_gender_filter,
                 self.current_group_filter,
                 half_repeat,
+                report_metric=False,
             )
 
     def reset_records(self, parent=None):
@@ -754,10 +758,12 @@ def start_lottery_draw(widget):
 
     if animation == 0:
         if animation_music:
+            loop = readme_settings_async("music_settings", "background_music_loop")
+            loop = True if loop is None else loop
             music_player.play_music(
                 music_file=animation_music,
                 settings_group="lottery_settings",
-                loop=True,
+                loop=loop,
                 fade_in=True,
             )
 
@@ -771,10 +777,12 @@ def start_lottery_draw(widget):
         widget.start_button.clicked.connect(lambda: widget.stop_animation())
     elif animation == 1:
         if animation_music:
+            loop = readme_settings_async("music_settings", "background_music_loop")
+            loop = True if loop is None else loop
             music_player.play_music(
                 music_file=animation_music,
                 settings_group="lottery_settings",
-                loop=True,
+                loop=loop,
                 fade_in=True,
             )
 
@@ -948,7 +956,6 @@ def stop_animation(widget):
             "Error disconnecting start_button clicked during stop_animation (ignored): {}",
             e,
         )
-    widget.start_button.clicked.connect(lambda: widget.start_draw())
 
     music_player.stop_music(fade_out=True)
 
@@ -968,6 +975,7 @@ def stop_animation(widget):
         ):
             widget.remaining_list_page.count_changed.emit(widget.remaining_count)
         QTimer.singleShot(APP_INIT_DELAY, widget._update_remaining_list_delayed)
+        _reconnect_after_voice(widget)
         return
 
     widget.final_selected_students = result.get("selected_prizes") or result.get(
@@ -1016,6 +1024,8 @@ def stop_animation(widget):
             draw_count=actual_draw_count,
             selected_students_dict=widget.final_selected_students_dict,
         )
+
+        _update_weight_panel(widget)
 
         settings = widget.manager.get_notification_settings(
             widget.final_pool_name, refresh=True
@@ -1090,6 +1100,49 @@ def stop_animation(widget):
             )
 
         play_voice_result(widget)
+
+    _reconnect_after_voice(widget)
+
+
+def _reconnect_after_voice(widget):
+    try:
+        voice_wait_enabled = readme_settings_async(
+            "basic_voice_settings", "voice_wait_complete"
+        )
+    except Exception:
+        voice_wait_enabled = True
+
+    if not voice_wait_enabled:
+        widget.start_button.clicked.connect(lambda: widget.start_draw())
+        return
+
+    try:
+        voice_enabled = readme_settings_async("basic_voice_settings", "voice_enable")
+    except Exception:
+        voice_enabled = False
+
+    if not voice_enabled:
+        widget.start_button.clicked.connect(lambda: widget.start_draw())
+        return
+
+    if not hasattr(widget, "tts_handler") or widget.tts_handler is None:
+        widget.start_button.clicked.connect(lambda: widget.start_draw())
+        return
+
+    QTimer.singleShot(200, lambda: _poll_voice_completion(widget))
+
+
+def _poll_voice_completion(widget, poll_count=0):
+    if not widget.tts_handler.playback_system.is_playing():
+        widget.start_button.clicked.connect(lambda: widget.start_draw())
+        return
+
+    if poll_count > 300:
+        logger.warning("Voice playback timeout, reconnecting start button anyway")
+        widget.start_button.clicked.connect(lambda: widget.start_draw())
+        return
+
+    QTimer.singleShot(100, lambda: _poll_voice_completion(widget, poll_count + 1))
 
 
 def play_voice_result(widget):
@@ -1651,3 +1704,57 @@ def on_class_changed(widget, *_):
     finally:
         widget.range_combobox.blockSignals(False)
         widget.gender_combobox.blockSignals(False)
+
+
+def _update_weight_panel(widget):
+    """更新权重透明化面板"""
+    try:
+        enabled = readme_settings_async("lottery_settings", "show_weight_transparency")
+        logger.debug(f"权重透明化(Lottery)：设置={enabled}")
+        if not enabled:
+            if hasattr(widget, "weight_panel"):
+                widget.weight_panel.clear()
+                widget.weight_panel.setVisible(False)
+            return
+
+        students_with_weight = []
+        for prize in widget.final_selected_students_dict or []:
+            if not isinstance(prize, dict):
+                continue
+            student = prize.get("student")
+            if isinstance(student, dict):
+                students_with_weight.append(student)
+
+        logger.debug(f"权重面板(Lottery)：抽取结果数量={len(students_with_weight)}")
+
+        # lottery 结果中 student 来自 roll_call_utils，通常已有 weight_details
+        # 如果没有，尝试计算
+        if students_with_weight and "weight_details" not in (
+            students_with_weight[0] or {}
+        ):
+            class_name = getattr(widget, "final_class_name", None) or getattr(
+                widget.manager, "current_class_name", ""
+            )
+            if class_name:
+                from app.common.history import calculate_weight
+
+                students_with_weight = calculate_weight(
+                    students_with_weight, class_name
+                )
+                logger.debug(
+                    f"权重面板(Lottery)：已计算 {len(students_with_weight)} 个学生权重"
+                )
+
+        if hasattr(widget, "weight_panel") and students_with_weight:
+            widget.weight_panel.set_students(students_with_weight)
+            widget.weight_panel.setVisible(True)
+            logger.debug(
+                f"权重面板(Lottery)已更新，展示 {len(students_with_weight)} 个学生"
+            )
+        else:
+            logger.debug(
+                f"权重面板(Lottery)未显示: has_panel={hasattr(widget, 'weight_panel')}, "
+                f"count={len(students_with_weight)}"
+            )
+    except Exception as e:
+        logger.exception(f"更新权重面板失败: {e}")

@@ -90,7 +90,7 @@ def _load_font_by_setting(font_family_setting: str) -> Optional[str]:
         font_id = QFontDatabase.addApplicationFont(str(font_path))
 
         if font_id < 0:
-            logger.exception(f"加载自定义字体失败: {font_path}")
+            logger.warning(f"加载自定义字体失败: {font_path}")
             return None
 
         font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
@@ -113,7 +113,7 @@ def _load_default_font() -> Optional[str]:
     font_id = QFontDatabase.addApplicationFont(str(font_path))
 
     if font_id < 0:
-        logger.exception(f"加载默认字体失败: {font_path}")
+        logger.warning(f"加载默认字体失败: {font_path}")
         return None
 
     font_family = QFontDatabase.applicationFontFamilies(font_id)[0]

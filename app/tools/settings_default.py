@@ -9,6 +9,7 @@
 import json
 import platform
 import ctypes
+import uuid
 from loguru import logger
 
 from app.tools.variable import *
@@ -49,6 +50,52 @@ def get_default_setting(first_level_key: str, second_level_key: str):
 # ==================================================
 # 设置文件管理相关函数
 # ==================================================
+_DEVICE_UUID_FILE = "device_uuid.json"
+
+
+def ensure_device_uuid():
+    """确保 offline_user_id 为标准的 36 位 UUID 格式
+
+    如果设置中 offline_user_id 不存在或格式无效，自动生成标准 UUID 写入。
+    此函数应在 manage_settings_file() 已确保 settings.json 存在后调用。
+    """
+    settings_file = get_settings_path()
+    if not file_exists(settings_file):
+        return
+
+    try:
+        with open_file(settings_file, "r", encoding="utf-8") as f:
+            settings = json.load(f)
+    except Exception:
+        return
+
+    uuid_str = settings.get("basic_settings", {}).get("offline_user_id", "")
+    needs_regenerate = False
+
+    if uuid_str:
+        try:
+            parsed = uuid.UUID(uuid_str)
+            if str(parsed) != uuid_str.lower():
+                logger.warning(f"offline_user_id 格式不标准，将重新生成: {uuid_str}")
+                needs_regenerate = True
+        except (ValueError, AttributeError):
+            logger.warning(f"offline_user_id 无效，将重新生成: {uuid_str}")
+            needs_regenerate = True
+    else:
+        logger.info("offline_user_id 为空，将生成新的 UUID")
+        needs_regenerate = True
+
+    if needs_regenerate:
+        new_uuid = str(uuid.uuid4()).lower()
+        settings.setdefault("basic_settings", {})["offline_user_id"] = new_uuid
+        try:
+            with open_file(settings_file, "w", encoding="utf-8") as f:
+                json.dump(settings, f, indent=4, ensure_ascii=False)
+            logger.info(f"已生成新的 offline_user_id: {new_uuid}")
+        except Exception as e:
+            logger.error(f"写入 offline_user_id 失败: {e}")
+
+
 def manage_settings_file():
     """管理设置文件，确保其存在且完整
 
@@ -56,7 +103,9 @@ def manage_settings_file():
     1. 如果设置文件不存在，创建带有默认值的设置文件
     2. 如果设置文件存在但缺少某些设置项，补全这些设置项
     3. 如果设置文件中有多余的设置项，移除这些设置项
+    4. 确保 device_uuid 存在且格式正确
     """
+    ensure_device_uuid()
     try:
         settings_file = get_settings_path()
         ensure_dir(settings_file.parent)
@@ -93,7 +142,7 @@ def manage_settings_file():
             with open_file(settings_file, "r", encoding="utf-8") as f:
                 current_settings = json.load(f)
         except Exception as e:
-            logger.exception(f"读取设置文件失败: {e}，将重新创建默认设置文件")
+            logger.warning(f"读取设置文件失败: {e}，将重新创建默认设置文件")
             flat_settings = {}
             for first_level_key, first_level_value in default_settings.items():
                 flat_settings[first_level_key] = {}

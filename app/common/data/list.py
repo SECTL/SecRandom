@@ -2,10 +2,59 @@
 # 导入模块
 # ==================================================
 import json
+import copy
+import threading
 from typing import List, Dict, Any, Tuple
 from loguru import logger
 
 from app.tools.path_utils import *
+
+
+_list_cache_lock = threading.RLock()
+_student_list_cache: Dict[Any, Tuple[Any, List[Dict[str, Any]]]] = {}
+_pool_list_cache: Dict[Any, Tuple[Any, List[Dict[str, Any]]]] = {}
+_class_name_cache: Dict[Any, Tuple[Any, List[str]]] = {}
+_pool_name_cache: Dict[Any, Tuple[Any, List[str]]] = {}
+
+
+def _get_file_signature(path):
+    try:
+        stat = path.stat()
+        return (stat.st_mtime_ns, stat.st_size)
+    except Exception:
+        return None
+
+
+def _get_directory_signature(path):
+    try:
+        stat = path.stat()
+        return (stat.st_mtime_ns, stat.st_size)
+    except Exception:
+        return None
+
+
+def clear_list_cache(list_type: str | None = None, name: str | None = None):
+    """清空名单缓存，供导入、重命名、删除名单后主动调用。"""
+    with _list_cache_lock:
+        if list_type is None:
+            _student_list_cache.clear()
+            _pool_list_cache.clear()
+            _class_name_cache.clear()
+            _pool_name_cache.clear()
+            return
+
+        if list_type == "roll_call":
+            _class_name_cache.clear()
+            if name is None:
+                _student_list_cache.clear()
+            else:
+                _student_list_cache.pop(name, None)
+        elif list_type == "lottery":
+            _pool_name_cache.clear()
+            if name is None:
+                _pool_list_cache.clear()
+            else:
+                _pool_list_cache.pop(name, None)
 
 
 def _normalize_tags(value) -> List[str]:
@@ -101,7 +150,15 @@ def get_class_name_list() -> List[str]:
         if not roll_call_list_dir.exists():
             logger.warning(f"班级名单文件夹不存在: {roll_call_list_dir}")
             roll_call_list_dir.mkdir(parents=True, exist_ok=True)
+            with _list_cache_lock:
+                _class_name_cache.clear()
             return []
+
+        signature = _get_directory_signature(roll_call_list_dir)
+        with _list_cache_lock:
+            cached = _class_name_cache.get(roll_call_list_dir)
+            if cached is not None and cached[0] == signature:
+                return list(cached[1])
 
         # 获取文件夹中的所有文件
         class_files = []
@@ -114,6 +171,8 @@ def get_class_name_list() -> List[str]:
         class_files.sort()
 
         # logger.debug(f"找到 {len(class_files)} 个班级: {class_files}")
+        with _list_cache_lock:
+            _class_name_cache[roll_call_list_dir] = (signature, class_files)
         return class_files
 
     except Exception as e:
@@ -141,7 +200,15 @@ def get_student_list(class_name: str) -> List[Dict[str, Any]]:
         # 如果文件不存在，返回空列表
         if not class_file_path.exists():
             logger.warning(f"班级名单文件不存在: {class_file_path}")
+            with _list_cache_lock:
+                _student_list_cache.pop(class_name, None)
             return []
+
+        signature = _get_file_signature(class_file_path)
+        with _list_cache_lock:
+            cached = _student_list_cache.get(class_name)
+            if cached is not None and cached[0] == signature:
+                return copy.deepcopy(cached[1])
 
         # 读取JSON文件
         with open(class_file_path, "r", encoding="utf-8") as f:
@@ -164,7 +231,9 @@ def get_student_list(class_name: str) -> List[Dict[str, Any]]:
         student_list.sort(key=lambda x: x["id"])
 
         # logger.debug(f"班级 {class_name} 共有 {len(student_list)} 名学生")
-        return student_list
+        with _list_cache_lock:
+            _student_list_cache[class_name] = (signature, student_list)
+        return copy.deepcopy(student_list)
 
     except Exception as e:
         logger.error(f"获取学生列表失败: {e}")
@@ -262,7 +331,15 @@ def get_pool_name_list() -> List[str]:
         if not lottery_list_dir.exists():
             logger.warning(f"奖池名单文件夹不存在: {lottery_list_dir}")
             lottery_list_dir.mkdir(parents=True, exist_ok=True)
+            with _list_cache_lock:
+                _pool_name_cache.clear()
             return []
+
+        signature = _get_directory_signature(lottery_list_dir)
+        with _list_cache_lock:
+            cached = _pool_name_cache.get(lottery_list_dir)
+            if cached is not None and cached[0] == signature:
+                return list(cached[1])
 
         # 获取文件夹中的所有文件
         pool_files = []
@@ -275,6 +352,8 @@ def get_pool_name_list() -> List[str]:
         pool_files.sort()
 
         # logger.debug(f"找到 {len(pool_files)} 个奖池: {pool_files}")
+        with _list_cache_lock:
+            _pool_name_cache[lottery_list_dir] = (signature, pool_files)
         return pool_files
 
     except Exception as e:
@@ -302,7 +381,15 @@ def get_pool_list(pool_name: str) -> List[Dict[str, Any]]:
         # 如果文件不存在，返回空列表
         if not pool_file_path.exists():
             logger.warning(f"奖池名单文件不存在: {pool_file_path}")
+            with _list_cache_lock:
+                _pool_list_cache.pop(pool_name, None)
             return []
+
+        signature = _get_file_signature(pool_file_path)
+        with _list_cache_lock:
+            cached = _pool_list_cache.get(pool_name)
+            if cached is not None and cached[0] == signature:
+                return copy.deepcopy(cached[1])
 
         # 读取JSON文件
         with open(pool_file_path, "r", encoding="utf-8") as f:
@@ -332,7 +419,9 @@ def get_pool_list(pool_name: str) -> List[Dict[str, Any]]:
         pool_list.sort(key=lambda x: x["id"])
 
         # logger.debug(f"奖池 {pool_name} 共有 {len(pool_list)} 个奖品")
-        return pool_list
+        with _list_cache_lock:
+            _pool_list_cache[pool_name] = (signature, pool_list)
+        return copy.deepcopy(pool_list)
 
     except Exception as e:
         logger.error(f"获取奖池列表失败: {e}")
@@ -501,10 +590,13 @@ def _generic_export_excel(export_data: List[Dict], file_path: str) -> Tuple[bool
         if not file_path.endswith(".xlsx"):
             file_path += ".xlsx"
 
-        # 保存为xlsx文件
-        df.to_excel(file_path, index=False, engine="openpyxl")
+        target_path = get_path(file_path)
+        target_path.parent.mkdir(parents=True, exist_ok=True)
 
-        success_msg = f"已导出到: {file_path}"
+        # 保存为xlsx文件
+        df.to_excel(target_path, index=False, engine="openpyxl")
+
+        success_msg = f"已导出到: {target_path}"
         logger.info(success_msg)
         return True, success_msg
 
@@ -529,10 +621,13 @@ def _generic_export_csv(export_data: List[Dict], file_path: str) -> Tuple[bool, 
         if not file_path.endswith(".csv"):
             file_path += ".csv"
 
-        # 保存为CSV文件
-        df.to_csv(file_path, index=False, encoding="utf-8-sig")
+        target_path = get_path(file_path)
+        target_path.parent.mkdir(parents=True, exist_ok=True)
 
-        success_msg = f"已导出到: {file_path}"
+        # 保存为CSV文件
+        df.to_csv(target_path, index=False, encoding="utf-8-sig")
+
+        success_msg = f"已导出到: {target_path}"
         logger.info(success_msg)
         return True, success_msg
 
@@ -549,12 +644,15 @@ def _generic_export_txt(names: List[str], file_path: str) -> Tuple[bool, str]:
         if not file_path.endswith(".txt"):
             file_path += ".txt"
 
+        target_path = get_path(file_path)
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+
         # 提取姓名并保存为TXT文件，每行一个姓名
-        with open(file_path, "w", encoding="utf-8") as f:
+        with open(target_path, "w", encoding="utf-8") as f:
             for name in names:
                 f.write(f"{name}\n")
 
-        success_msg = f"已导出到: {file_path}"
+        success_msg = f"已导出到: {target_path}"
         logger.info(success_msg)
         return True, success_msg
 

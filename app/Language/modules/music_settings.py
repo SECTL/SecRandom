@@ -29,6 +29,11 @@ music_settings = {
         "roll_call": {"name": "点名", "description": "点名功能"},
         "quick_draw": {"name": "闪抽", "description": "闪抽功能"},
         "lottery": {"name": "抽奖", "description": "抽奖功能"},
+        "background_music_loop": {
+            "name": "循环播放背景音乐",
+            "description": "设定背景音乐播放完毕后是否继续循环播放",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
         "no_music": {"name": "无音乐", "description": "不使用音乐"},
         "random_play": {"name": "随机播放", "description": "随机选择音乐文件播放"},
     },
@@ -89,6 +94,11 @@ music_settings = {
             "description": "Instant pick function",
         },
         "lottery": {"name": "Lottery", "description": "Lottery function"},
+        "background_music_loop": {
+            "name": "Loop background music",
+            "description": "Whether to continue looping background music after it finishes",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
         "no_music": {"name": "No music", "description": "Do not use music"},
         "random_play": {
             "name": "Random Play",
@@ -146,6 +156,11 @@ music_settings = {
         "quick_draw": {"name": "クイックピック", "description": "クイックピック機能"},
         "instant_draw": {"name": "即時ピック", "description": "即時ピック機能"},
         "lottery": {"name": "抽選", "description": "抽選機能"},
+        "background_music_loop": {
+            "name": "BGMをループ再生",
+            "description": "BGMの再生が終了した後もループ再生を続けるかどうか",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
         "no_music": {"name": "音楽なし", "description": "音楽を使用しない"},
         "random_play": {
             "name": "ランダム再生",

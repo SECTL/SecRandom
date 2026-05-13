@@ -974,6 +974,17 @@ class FloatingNotificationManager:
                 text = re.sub(r"\s{2,}", " ", text)
                 return text.strip()
 
+            def _safe_student_id(value):
+                if value is None:
+                    return 0
+                try:
+                    float_val = float(value)
+                    if float_val != float_val:
+                        return 0
+                    return int(float_val)
+                except (ValueError, TypeError, OverflowError):
+                    return 0
+
             show_random = 0
             if settings:
                 try:
@@ -1000,10 +1011,7 @@ class FloatingNotificationManager:
                 for item in ipc_students:
                     if not isinstance(item, dict):
                         continue
-                    try:
-                        student_id = int(item.get("student_id", 0) or 0)
-                    except Exception:
-                        student_id = 0
+                    student_id = _safe_student_id(item.get("student_id", 0))
                     student_name = _normalize_text(item.get("student_name", ""))
                     display_text = (
                         _normalize_text(item.get("display_text", "")) or student_name
@@ -1063,9 +1071,12 @@ class FloatingNotificationManager:
                     normalized_name = _normalize_text(item[1])
                     exist = bool(item[2])
 
+                    # 安全转换student_id，处理浮点数字符串如"18.0"和"nan"
+                    student_id_int = _safe_student_id(student_id)
+
                     selected_students_for_ipc.append(
                         {
-                            "student_id": int(student_id or 0),
+                            "student_id": student_id_int,
                             "student_name": normalized_name,
                             "display_text": normalized_name,
                             "exists": exist,
