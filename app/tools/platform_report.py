@@ -9,7 +9,11 @@ from datetime import datetime
 import requests
 from loguru import logger
 
-from app.tools.settings_access import get_int_setting, readme_settings_async, update_settings
+from app.tools.settings_access import (
+    get_int_setting,
+    readme_settings_async,
+    update_settings,
+)
 from app.tools.variable import (
     SECTL_API_BASE_URL,
     SECTL_ONLINE_REPORT_TIMEOUT_SECONDS,

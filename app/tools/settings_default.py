@@ -86,9 +86,7 @@ def _try_recover_settings_from_backup() -> dict | None:
                             if content and content.strip():
                                 recovered = json.loads(content)
                                 if isinstance(recovered, dict):
-                                    logger.info(
-                                        f"从备份 {zip_path.name} 恢复设置成功"
-                                    )
+                                    logger.info(f"从备份 {zip_path.name} 恢复设置成功")
                                     return recovered
             except Exception:
                 continue
