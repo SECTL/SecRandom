@@ -11,13 +11,13 @@
 
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
-            <fa:SettingsExpander IconSource="{sr:FluentIconSource &#xE06F;}"
-                                 Header="UI 功能测试" IsExpanded="True">
-                <fa:SettingsExpanderItem Content="发送 Toast" IsClickEnabled="True"
-                                         Click="SendToast_OnClick" />
-                <fa:SettingsExpanderItem Content="打开 Drawer" IsClickEnabled="True"
-                                         Click="OpenDrawer_Test" />
-            </fa:SettingsExpander>
+            <fa:FASettingsExpander IconSource="{sr:FluentIconSource &#xE06F;}"
+                                   Header="UI 功能测试" IsExpanded="True">
+                <fa:FASettingsExpanderItem Content="发送 Toast" IsClickEnabled="True"
+                                           Click="SendToast_OnClick" />
+                <fa:FASettingsExpanderItem Content="打开 Drawer" IsClickEnabled="True"
+                                           Click="OpenDrawer_Test" />
+            </fa:FASettingsExpander>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

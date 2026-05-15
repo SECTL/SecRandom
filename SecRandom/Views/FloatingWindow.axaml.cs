@@ -25,7 +25,7 @@ public partial class FloatingWindow : Window
         Position = new PixelPoint(ViewModel.Config.FloatPosition.X, ViewModel.Config.FloatPosition.Y);
         InitializeComponent();
 
-        RenderOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
+        TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
         RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
         RenderOptions.SetEdgeMode(this, EdgeMode.Antialias);
 
@@ -97,9 +97,9 @@ public partial class FloatingWindow : Window
         }
     }
 
-    private static CommandBarButton GetRollCallButton()
+    private static FACommandBarButton GetRollCallButton()
     {
-        var b = new CommandBarButton
+        var b = new FACommandBarButton
         {
             IconSource = new FluentIconSource("\uECAA"),
             Label = Langs.Common.Resources.Feat_RollCall
@@ -114,9 +114,9 @@ public partial class FloatingWindow : Window
         return b;
     }
 
-    private static CommandBarButton GetQuickDrawButton()
+    private static FACommandBarButton GetQuickDrawButton()
     {
-        var b = new CommandBarButton
+        var b = new FACommandBarButton
         {
             IconSource = new FluentIconSource("\uE84E"),
             Label = Langs.Common.Resources.Feat_QuickDraw
@@ -125,9 +125,9 @@ public partial class FloatingWindow : Window
         return b;
     }
 
-    private static CommandBarButton GetLotteryButton()
+    private static FACommandBarButton GetLotteryButton()
     {
-        var b = new CommandBarButton
+        var b = new FACommandBarButton
         {
             IconSource = new FluentIconSource("\uE8EC"),
             Label = Langs.Common.Resources.Feat_Lottery
@@ -136,9 +136,9 @@ public partial class FloatingWindow : Window
         return b;
     }
 
-    private static CommandBarButton GetFaceDrawButton()
+    private static FACommandBarButton GetFaceDrawButton()
     {
-        var b = new CommandBarButton
+        var b = new FACommandBarButton
         {
             IconSource = new FluentIconSource("\uF3EE"),
             Label = Langs.Common.Resources.Feat_FaceDraw
@@ -147,9 +147,9 @@ public partial class FloatingWindow : Window
         return b;
     }
 
-    private static CommandBarButton GetTimerButton()
+    private static FACommandBarButton GetTimerButton()
     {
-        var b = new CommandBarButton
+        var b = new FACommandBarButton
         {
             IconSource = new FluentIconSource("\uF360"),
             Label = Langs.Common.Resources.Feat_Timer
@@ -186,7 +186,7 @@ public partial class FloatingWindow : Window
     {
         while (visual != null)
         {
-            if (visual is Button or CommandBarButton)
+            if (visual is Button or FACommandBarButton)
                 return true;
             visual = visual.GetVisualParent();
         }

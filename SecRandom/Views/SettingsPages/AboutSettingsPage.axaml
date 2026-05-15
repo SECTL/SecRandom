@@ -79,29 +79,29 @@
         </sr:StickyScrollViewer.HeaderContent>
 
         <StackPanel Classes="page-container animated-intro">
-            <fa:SettingsExpander x:Name="S_App" Header="SecRandom" IsExpanded="True"
-                                 Description="{x:Static lc:Resources.App_Description}">
-                <fa:SettingsExpander.Footer>
+            <fa:FASettingsExpander x:Name="S_App" Header="SecRandom" IsExpanded="True"
+                                   Description="{x:Static lc:Resources.App_Description}">
+                <fa:FASettingsExpander.Footer>
                     <TextBlock Text="{x:Static sr:GlobalConstants.DisplayVersion}"
                                FontSize="12"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                </fa:SettingsExpander.Footer>
+                </fa:FASettingsExpander.Footer>
 
-                <fa:SettingsExpander.IconSource>
-                    <fa:ImageIconSource Source="/Assets/AppLogo.png" />
-                </fa:SettingsExpander.IconSource>
+                <fa:FASettingsExpander.IconSource>
+                    <fa:FAImageIconSource Source="/Assets/AppLogo.png" />
+                </fa:FASettingsExpander.IconSource>
 
-                <fa:SettingsExpanderItem x:Name="S_App_License" Description="{x:Static lc:Resources.App_License}">
+                <fa:FASettingsExpanderItem x:Name="S_App_License" Description="{x:Static lc:Resources.App_License}">
                     <TextBlock Background="Transparent">
                         <Run Text="Copyright (c) 2025-" />
                         <Run Text="{Binding Year, Source={x:Static system:DateTime.Now}, Mode=OneWay}" />
                         SECTL
                     </TextBlock>
-                </fa:SettingsExpanderItem>
+                </fa:FASettingsExpanderItem>
 
-                <fa:SettingsExpanderItem x:Name="S_App_UsefulLinks"
-                                         Content="{x:Static lsa:Resources.S_App_UsefulLinks}">
-                    <fa:SettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem x:Name="S_App_UsefulLinks"
+                                           Content="{x:Static lsa:Resources.S_App_UsefulLinks}">
+                    <fa:FASettingsExpanderItem.Footer>
                         <WrapPanel>
                             <WrapPanel.Styles>
                                 <Style Selector="HyperlinkButton">
@@ -120,39 +120,39 @@
                                 <TextBlock Text="GitHub" />
                             </HyperlinkButton>
                         </WrapPanel>
-                    </fa:SettingsExpanderItem.Footer>
-                </fa:SettingsExpanderItem>
-            </fa:SettingsExpander>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
 
-            <fa:SettingsExpander x:Name="S_Author"
-                                 Header="{x:Static lsa:Resources.S_Author_R}"
-                                 Description="{x:Static lsa:Resources.S_Author_D}" IsExpanded="True">
-                <fa:SettingsExpander.IconSource>
-                    <fa:ImageIconSource Source="/Assets/AuthorAionflux.png" />
-                </fa:SettingsExpander.IconSource>
+            <fa:FASettingsExpander x:Name="S_Author"
+                                   Header="{x:Static lsa:Resources.S_Author_R}"
+                                   Description="{x:Static lsa:Resources.S_Author_D}" IsExpanded="True">
+                <fa:FASettingsExpander.IconSource>
+                    <fa:FAImageIconSource Source="/Assets/AuthorAionflux.png" />
+                </fa:FASettingsExpander.IconSource>
 
-                <fa:SettingsExpanderItem x:Name="S_Author_Bilibili"
-                                         Content="{x:Static lsa:Resources.S_Author_Bilibili}"
-                                         Description="{x:Static lsa:Resources.S_Author_BiliBili_D}"
-                                         IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}"
-                                         Click="UriNavigationCommands_OnClick"
-                                         CommandParameter="https://space.bilibili.com/520571577" />
+                <fa:FASettingsExpanderItem x:Name="S_Author_Bilibili"
+                                           Content="{x:Static lsa:Resources.S_Author_Bilibili}"
+                                           Description="{x:Static lsa:Resources.S_Author_BiliBili_D}"
+                                           IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}"
+                                           Click="UriNavigationCommands_OnClick"
+                                           CommandParameter="https://space.bilibili.com/520571577" />
 
-                <fa:SettingsExpanderItem x:Name="S_Author_Donate"
-                                         Content="{x:Static lsa:Resources.S_Author_Donate}"
-                                         Description="{x:Static lsa:Resources.S_Author_Donate_D}"
-                                         IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}"
-                                         Click="UriNavigationCommands_OnClick"
-                                         CommandParameter="https://afdian.com/a/lzy0983" />
+                <fa:FASettingsExpanderItem x:Name="S_Author_Donate"
+                                           Content="{x:Static lsa:Resources.S_Author_Donate}"
+                                           Description="{x:Static lsa:Resources.S_Author_Donate_D}"
+                                           IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}"
+                                           Click="UriNavigationCommands_OnClick"
+                                           CommandParameter="https://afdian.com/a/lzy0983" />
 
-                <fa:SettingsExpanderItem x:Name="S_Author_Org"
-                                         Content="{x:Static lsa:Resources.S_Author_Org}"
-                                         Description="{x:Static lsa:Resources.S_Author_Org_D}">
-                    <fa:SettingsExpanderItem.IconSource>
-                        <fa:ImageIconSource Source="/Assets/SECTLLogo.png" />
-                    </fa:SettingsExpanderItem.IconSource>
+                <fa:FASettingsExpanderItem x:Name="S_Author_Org"
+                                           Content="{x:Static lsa:Resources.S_Author_Org}"
+                                           Description="{x:Static lsa:Resources.S_Author_Org_D}">
+                    <fa:FASettingsExpanderItem.IconSource>
+                        <fa:FAImageIconSource Source="/Assets/SECTLLogo.png" />
+                    </fa:FASettingsExpanderItem.IconSource>
 
-                    <fa:SettingsExpanderItem.Footer>
+                    <fa:FASettingsExpanderItem.Footer>
                         <WrapPanel>
                             <WrapPanel.Styles>
                                 <Style Selector="HyperlinkButton">
@@ -166,26 +166,26 @@
                                 <TextBlock Text="{x:Static lsa:Resources.C_OrgHome}" />
                             </HyperlinkButton>
                         </WrapPanel>
-                    </fa:SettingsExpanderItem.Footer>
-                </fa:SettingsExpanderItem>
-            </fa:SettingsExpander>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
 
-            <fa:SettingsExpander x:Name="S_Ack"
-                                 Header="{x:Static lsa:Resources.S_Ack}"
-                                 IconSource="{sr:FluentIconSource &#xE971;}" IsExpanded="True">
-                <fa:SettingsExpanderItem x:Name="S_Ack_OnlineUsers"
-                                         Content="{x:Static lsa:Resources.S_Ack_OnlineUsers}"
-                                         Description="{x:Static lsa:Resources.S_Ack_OnlineUsers_D}"
-                                         IconSource="{sr:FluentIconSource &#xECAB;}">
-                    <fa:SettingsExpanderItem.Footer>
+            <fa:FASettingsExpander x:Name="S_Ack"
+                                   Header="{x:Static lsa:Resources.S_Ack}"
+                                   IconSource="{sr:FluentIconSource &#xE971;}" IsExpanded="True">
+                <fa:FASettingsExpanderItem x:Name="S_Ack_OnlineUsers"
+                                           Content="{x:Static lsa:Resources.S_Ack_OnlineUsers}"
+                                           Description="{x:Static lsa:Resources.S_Ack_OnlineUsers_D}"
+                                           IconSource="{sr:FluentIconSource &#xECAB;}">
+                    <fa:FASettingsExpanderItem.Footer>
                         <TextBlock VerticalAlignment="Center" Text="{x:Static lc:Resources.C_ToBeWritten}" />
-                    </fa:SettingsExpanderItem.Footer>
-                </fa:SettingsExpanderItem>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
 
-                <fa:SettingsExpanderItem Content="{x:Static lsa:Resources.S_Ack_Contributors}"
-                                         Footer="{x:Static lc:Resources.C_ToBeWritten}"
-                                         IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}" />
-            </fa:SettingsExpander>
+                <fa:FASettingsExpanderItem Content="{x:Static lsa:Resources.S_Ack_Contributors}"
+                                           Footer="{x:Static lc:Resources.C_ToBeWritten}"
+                                           IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}" />
+            </fa:FASettingsExpander>
 
             <Expander x:Name="S_UserInformation" IsExpanded="True">
                 <Expander.Header>

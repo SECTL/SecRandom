@@ -32,16 +32,16 @@
             </StackPanel>
         </Border>
 
-        <fa:NavigationView Grid.Row="1"
-                           x:Name="NavigationView"
-                           PaneDisplayMode="Auto"
-                           IsSettingsVisible="False"
-                           IsPaneToggleButtonVisible="False"
-                           IsPaneOpen="False"
-                           MenuItemsSource="{Binding ViewModel.NavigationViewItems, Mode=OneWay}"
-                           FooterMenuItemsSource="{Binding ViewModel.NavigationViewFooterItems, Mode=OneWay}"
-                           SelectedItem="{Binding ViewModel.SelectedNavigationViewItem, UpdateSourceTrigger=PropertyChanged}"
-                           ItemInvoked="NavigationView_OnItemInvoked">
+        <fa:FANavigationView Grid.Row="1"
+                             x:Name="NavigationView"
+                             PaneDisplayMode="Auto"
+                             IsSettingsVisible="False"
+                             IsPaneToggleButtonVisible="False"
+                             IsPaneOpen="False"
+                             MenuItemsSource="{Binding ViewModel.NavigationViewItems, Mode=OneWay}"
+                             FooterMenuItemsSource="{Binding ViewModel.NavigationViewFooterItems, Mode=OneWay}"
+                             SelectedItem="{Binding ViewModel.SelectedNavigationViewItem, UpdateSourceTrigger=PropertyChanged}"
+                             ItemInvoked="NavigationView_OnItemInvoked">
             <sr:DrawerHost IsDrawerOpen="{Binding ViewModel.IsDrawerOpen, Mode=TwoWay}"
                            DrawerPlacement="Right"
                            DrawerContent="{Binding ViewModel.DrawerContent}">
@@ -61,11 +61,11 @@
                                    Theme="{StaticResource TitleTextBlockStyle}" />
                     </Grid>
 
-                    <fa:Frame Grid.Row="1" x:Name="NavigationFrame"
-                              IsNavigationStackEnabled="False" CacheSize="0"
-                              Content="{Binding ViewModel.FrameContent}" />
+                    <fa:FAFrame Grid.Row="1" x:Name="NavigationFrame"
+                                IsNavigationStackEnabled="False" CacheSize="0"
+                                Content="{Binding ViewModel.FrameContent}" />
                 </Grid>
             </sr:DrawerHost>
-        </fa:NavigationView>
+        </fa:FANavigationView>
     </Grid>
 </UserControl>

@@ -167,18 +167,18 @@
                                     IsVisible="False"
                                     HorizontalAlignment="Right" />
 
-                            <ui:FontIcon x:Name="DropDownGlyph"
-                                         Foreground="{DynamicResource ComboBoxDropDownGlyphForeground}"
-                                         MinHeight="{DynamicResource ComboBoxMinHeight}"
-                                         Grid.Row="1"
-                                         Grid.Column="1"
-                                         IsHitTestVisible="False"
-                                         Margin="0 0 14 0"
-                                         FontFamily="{DynamicResource SymbolThemeFontFamily}"
-                                         FontSize="12"
-                                         Glyph="&#xE70D;"
-                                         HorizontalAlignment="Right"
-                                         VerticalAlignment="Center" />
+                            <ui:FAFontIcon x:Name="DropDownGlyph"
+                                           Foreground="{DynamicResource ComboBoxDropDownGlyphForeground}"
+                                           MinHeight="{DynamicResource ComboBoxMinHeight}"
+                                           Grid.Row="1"
+                                           Grid.Column="1"
+                                           IsHitTestVisible="False"
+                                           Margin="0 0 14 0"
+                                           FontFamily="{DynamicResource SymbolThemeFontFamily}"
+                                           FontSize="12"
+                                           Glyph="&#xE70D;"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center" />
 
                             <Popup Name="PART_Popup"
                                    WindowManagerAddShadowHint="False"
@@ -248,7 +248,7 @@
                 <Setter Property="Background" Value="{DynamicResource ComboBoxBackgroundDisabled}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource ComboBoxBorderBrushDisabled}" />
             </Style>
-            <Style Selector="^ /template/ ui|FontIcon#DropDownGlyph">
+            <Style Selector="^ /template/ ui|FAFontIcon#DropDownGlyph">
                 <Setter Property="Foreground" Value="{DynamicResource ComboBoxDropDownGlyphForegroundDisabled}" />
             </Style>
         </Style>
@@ -263,7 +263,7 @@
             <Style Selector="^ /template/ TextBlock#PlaceholderTextBlock">
                 <Setter Property="Foreground" Value="{DynamicResource ComboBoxPlaceHolderForegroundFocused}" />
             </Style>
-            <Style Selector="^ /template/ ui|FontIcon#DropDownGlyph">
+            <Style Selector="^ /template/ ui|FAFontIcon#DropDownGlyph">
                 <Setter Property="Foreground" Value="{DynamicResource ComboBoxDropDownGlyphForegroundFocused}" />
             </Style>
         </Style>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Rendering;
@@ -9,7 +10,7 @@ internal static class AvaloniaUnsafeAccessorHelpers
 {
     public enum Win32CompositionMode
     {
-        WinUiComposition = 1,
+        WinUIComposition = 1,
         DirectComposition = 2,
         LowLatencyDxgiSwapChain = 3,
         RedirectionSurface = 4
@@ -24,7 +25,8 @@ internal static class AvaloniaUnsafeAccessorHelpers
     private static extern object? GetAvaloniaDependencyService(IAvaloniaDependencyResolver? avaloniaLocator,
         Type serviceType);
 
-    private static T? GetAvaloniaLocatorService<T>() where T : class
+    internal static T? GetAvaloniaLocatorService<T>()
+        where T : class
     {
         if (AvaloniaLocator is null)
             return null;
@@ -34,15 +36,25 @@ internal static class AvaloniaUnsafeAccessorHelpers
 
     public static Win32CompositionMode? GetActiveWin32CompositionMode()
     {
-        var renderTimer = GetAvaloniaLocatorService<IRenderTimer>();
-        var renderTimerClassName = renderTimer?.GetType().Name;
-        var win32CompositionMode = renderTimerClassName switch
+        // In Avalonia 12, IRenderTimer is no longer registered in the AvaloniaLocator.
+        // Composition connections register as IRenderLoop (via RenderLoop.FromTimer(connection)).
+        // We retrieve the IRenderLoop, then extract the underlying IRenderTimer from
+        // DefaultRenderLoop's private _timer field to determine the actual composition mode.
+        var renderLoop = GetAvaloniaLocatorService<IRenderLoop>();
+        if (renderLoop is null)
+            return Win32CompositionMode.RedirectionSurface;
+
+        var timerField = renderLoop.GetType().GetField("_timer",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        var timer = timerField?.GetValue(renderLoop);
+        var timerClassName = timer?.GetType().Name;
+
+        return timerClassName switch
         {
-            "WinUiCompositorConnection" => Win32CompositionMode.WinUiComposition,
+            "WinUiCompositorConnection" => Win32CompositionMode.WinUIComposition,
             "DirectCompositionConnection" => Win32CompositionMode.DirectComposition,
             "DxgiConnection" => Win32CompositionMode.LowLatencyDxgiSwapChain,
             _ => Win32CompositionMode.RedirectionSurface
         };
-        return win32CompositionMode;
     }
 }

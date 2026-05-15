@@ -28,7 +28,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
 
-public partial class SettingsView : UserControl, INavigationPageFactory
+public partial class SettingsView : UserControl, IFANavigationPageFactory
 {
     private const string DefaultMainPageId = "settings.home";
 
@@ -50,7 +50,7 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         BuildNavigationMenuItems();
         SelectNavigationItemById(DefaultMainPageId);
 
-        RenderOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
+        TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
         RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
         RenderOptions.SetEdgeMode(this, EdgeMode.Antialias);
     }
@@ -100,7 +100,7 @@ public partial class SettingsView : UserControl, INavigationPageFactory
             var categoryControl = pageRoot?.FindControl<Control>(settings.CategoryId);
             _logger.LogInformation("分类控件: {Control}", categoryControl);
 
-            if (categoryControl is SettingsExpander settingsExpander) settingsExpander.IsExpanded = true;
+            if (categoryControl is FASettingsExpander settingsExpander) settingsExpander.IsExpanded = true;
         }
 
         Dispatcher.UIThread.Post(() =>
@@ -208,7 +208,7 @@ public partial class SettingsView : UserControl, INavigationPageFactory
             parent = parent.Parent;
         }
 
-        return control.GetVisualRoot() as Control;
+        return control.GetVisualParent() as Control;
     }
 
     #endregion
@@ -271,17 +271,17 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         if (_isShowingRestartDialog) return;
         _isShowingRestartDialog = true;
 
-        var r = await new ContentDialog
+        var r = await new FAContentDialog
         {
             Title = Langs.SettingsView.Resources.M_NeedsRestarting,
             Content = Langs.SettingsView.Resources.M_NeedsRestarting_D,
             PrimaryButtonText = Langs.SettingsView.Resources.M_NeedsRestarting_Primary,
             CloseButtonText = Langs.SettingsView.Resources.M_NeedsRestarting_Close,
-            DefaultButton = ContentDialogButton.Primary
+            DefaultButton = FAContentDialogButton.Primary
         }.ShowAsync(TopLevel.GetTopLevel(this));
 
         _isShowingRestartDialog = false;
-        if (r != ContentDialogResult.Primary)
+        if (r != FAContentDialogResult.Primary)
             return;
 
         App.Restart();
@@ -354,11 +354,11 @@ public partial class SettingsView : UserControl, INavigationPageFactory
         if (!history.Any()) ViewModel.CanGoBack = false;
     }
 
-    private void NavigationView_OnItemInvoked(object? sender, NavigationViewItemInvokedEventArgs e)
+    private void NavigationView_OnItemInvoked(object? sender, FANavigationViewItemInvokedEventArgs e)
     {
         PageInfo? info = null;
 
-        if (e.InvokedItemContainer is NavigationViewItem { Tag: PageInfo containerInfo })
+        if (e.InvokedItemContainer is FANavigationViewItem { Tag: PageInfo containerInfo })
             info = containerInfo;
         else if (e.InvokedItem is PageInfo invokedInfo) info = invokedInfo;
 

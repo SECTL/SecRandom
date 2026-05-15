@@ -2,12 +2,10 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Styling;
@@ -56,10 +54,10 @@ public partial class App : Application
             var settings = JsonSerializer.Deserialize<MainConfigModel>(content, ConfigServiceBase.JsonOptions);
             var culture = settings?.BasicSettings.Language switch
             {
-                LanguageMode.ChineseSimplified => "zh-Hans",
-                LanguageMode.English => "en-US",
-                LanguageMode.Japanese => "ja-JP",
-                _ => "zh-Hans"
+                LanguageMode.ChineseSimplified => @"zh-Hans",
+                LanguageMode.English => @"en-US",
+                LanguageMode.Japanese => @"ja-JP",
+                _ => @"zh-Hans"
             };
             InitializeLanguages(new CultureInfo(culture));
         }
@@ -84,10 +82,6 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
-            // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
-            DisableAvaloniaDataAnnotationValidation();
-
             _desktopLifetime = desktop;
             _floatingWindow = new FloatingWindow();
             _floatingWindow.Closed += (_, _) => _floatingWindow = null;
@@ -104,16 +98,6 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    private static void DisableAvaloniaDataAnnotationValidation()
-    {
-        // Get an array of plugins to remove
-        var dataValidationPluginsToRemove =
-            BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
-
-        // remove each entry found
-        foreach (var plugin in dataValidationPluginsToRemove) BindingPlugins.DataValidators.Remove(plugin);
-    }
-
     private void BuildHost()
     {
         if (IAppHost.Host is not null) return;
@@ -127,7 +111,7 @@ public partial class App : Application
                 services.AddLogging(builder =>
                 {
                     builder.AddConsoleFormatter<LoggingConsoleFormatter, ConsoleFormatterOptions>();
-                    builder.AddConsole(console => { console.FormatterName = "secrandom"; });
+                    builder.AddConsole(console => { console.FormatterName = @"secrandom"; });
 #if DEBUG
                     builder.SetMinimumLevel(LogLevel.Trace);
 #endif
@@ -166,7 +150,7 @@ public partial class App : Application
                 // 设置界面 Views
                 services.AddSettingsPage<HomeSettingsPage>(Langs.Common.Resources.Settings_Home);
                 services.AddSettingsPageSeparator();
-                
+
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_General, @"settings.general", FluentIcons.SettingsRegular));
                 services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
@@ -189,9 +173,9 @@ public partial class App : Application
 
         var logger = IAppHost.GetService<ILogger<App>>();
 
-        logger.LogInformation("SecRandom {VERSION} (Codename: {CODENAME})", GlobalConstants.Version,
+        logger.LogInformation(@"SecRandom {VERSION} (Codename: {CODENAME})", GlobalConstants.Version,
             GlobalConstants.CodeName);
-        logger.LogInformation("Copyright by SECTL(2025~{YEAR})  Licensed under GPL3.0", DateTime.Now.Year);
+        logger.LogInformation(@"Copyright by SECTL(2025~{YEAR})  Licensed under GPL3.0", DateTime.Now.Year);
         logger.LogInformation("Host built.");
 
         var lifetime = IAppHost.GetService<IHostApplicationLifetime>();
@@ -232,7 +216,7 @@ public partial class App : Application
         var path = Environment.ProcessPath;
         if (path == null) return;
 
-        var executablePath = path.Replace(".dll", GlobalConstants.PlatformExecutableExtension);
+        var executablePath = path.Replace(@".dll", GlobalConstants.PlatformExecutableExtension);
         var startInfo = new ProcessStartInfo(executablePath)
         {
             UseShellExecute = true
@@ -267,8 +251,8 @@ public partial class App : Application
         var settings = config.BasicSettings;
 
         var fontFamily = settings.Font;
-        if (fontFamily == "MiSans")
-            fontFamily = "avares://SecRandom/Assets/Fonts/MiSans/#MiSans";
+        if (fontFamily == @"MiSans")
+            fontFamily = @"avares://SecRandom/Assets/Fonts/MiSans/#MiSans";
 
         // 主题模式
         RequestedThemeVariant = settings.Theme switch
@@ -278,22 +262,22 @@ public partial class App : Application
             ThemeMode.Dark => ThemeVariant.Dark,
             _ => ThemeVariant.Default
         };
-        var fluentAvaloniaTheme = this.FindResource("FluentAvaloniaTheme") as FluentAvaloniaTheme;
+        var fluentAvaloniaTheme = this.FindResource(@"FluentAvaloniaTheme") as FluentAvaloniaTheme;
         fluentAvaloniaTheme?.PreferSystemTheme = settings.Theme == ThemeMode.Auto;
 
         // 主题色
         fluentAvaloniaTheme?.CustomAccentColor = settings.ThemeColor;
-        Resources["SystemAccentColor"] = settings.ThemeColor;
-        Resources["SystemAccentColorLight1"] = settings.ThemeColor;
-        Resources["SystemAccentColorLight2"] = settings.ThemeColor;
-        Resources["SystemAccentColorLight3"] = settings.ThemeColor;
-        Resources["SystemAccentColorDark1"] = settings.ThemeColor;
-        Resources["SystemAccentColorDark2"] = settings.ThemeColor;
-        Resources["SystemAccentColorDark3"] = settings.ThemeColor;
+        Resources[@"SystemAccentColor"] = settings.ThemeColor;
+        Resources[@"SystemAccentColorLight1"] = settings.ThemeColor;
+        Resources[@"SystemAccentColorLight2"] = settings.ThemeColor;
+        Resources[@"SystemAccentColorLight3"] = settings.ThemeColor;
+        Resources[@"SystemAccentColorDark1"] = settings.ThemeColor;
+        Resources[@"SystemAccentColorDark2"] = settings.ThemeColor;
+        Resources[@"SystemAccentColorDark3"] = settings.ThemeColor;
 
-        // 字体
-        Resources["ContentControlThemeFontFamily"] = Resources["AppFontFamily"] = new FontFamily(fontFamily);
-        Resources["AppFontWeight"] = Enum.Parse<FontWeight>(settings.FontWeight.ToString());
+        // 字体@
+        Resources[@"ContentControlThemeFontFamily"] = Resources[@"AppFontFamily"] = new FontFamily(fontFamily);
+        Resources[@"AppFontWeight"] = Enum.Parse<FontWeight>(settings.FontWeight.ToString());
     }
 
     #region Windows
@@ -311,7 +295,7 @@ public partial class App : Application
             _mainWindow = new MainWindow
             {
                 Content = IAppHost.GetService<MainView>(),
-                Title = "SecRandom"
+                Title = @"SecRandom"
             };
             _mainWindow.Closed += (_, _) => _mainWindow = null;
         }
@@ -333,7 +317,7 @@ public partial class App : Application
             _settingsWindow = new MainWindow
             {
                 Content = IAppHost.GetService<SettingsView>(),
-                Title = "SecRandom"
+                Title = @"SecRandom"
             };
             _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         }
@@ -355,7 +339,7 @@ public partial class App : Application
             _profileSettingsWindow = new MainWindow
             {
                 Content = IAppHost.GetService<ProfileSettingsView>(),
-                Title = "SecRandom"
+                Title = @"SecRandom"
             };
             _profileSettingsWindow.Closed += (_, _) => _profileSettingsWindow = null;
         }
@@ -371,7 +355,7 @@ public partial class App : Application
     private void MenuItemAbout_OnClick(object? sender, EventArgs e)
     {
         ShowSettingsWindow();
-        SettingsView.Current?.SelectNavigationItemById("settings.about");
+        SettingsView.Current?.SelectNavigationItemById(@"settings.about");
     }
 
     private void MenuItemOpenMainWindow_OnClick(object? sender, EventArgs e)

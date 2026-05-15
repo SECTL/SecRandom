@@ -9,7 +9,6 @@
 
     <Style Selector="sr|Field">
         <!-- Set Defaults -->
-        <Setter Property="Cursor" Value="{Binding $self.Content.Cursor}" />
         <Setter Property="Template">
             <ControlTemplate>
                 <Grid RowDefinitions="Auto,*" ColumnDefinitions="Auto,*,Auto">

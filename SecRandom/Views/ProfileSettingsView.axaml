@@ -7,6 +7,7 @@
              xmlns:views="clr-namespace:SecRandom.Views"
              xmlns:lp="clr-namespace:SecRandom.Langs.ProfileSettings"
              xmlns:lps="clr-namespace:SecRandom.Langs.ProfileSettings.Students"
+             xmlns:attributes="using:SecRandom.Core.Attributes"
              xmlns:services="clr-namespace:SecRandom.Core.Services;assembly=SecRandom.Core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.ProfileSettingsView"
@@ -30,39 +31,39 @@
             </StackPanel>
         </Border>
 
-        <fa:NavigationView Grid.Row="1"
-                           x:Name="NavigationView"
-                           PaneDisplayMode="Top"
-                           IsBackButtonVisible="False"
-                           IsPaneToggleButtonVisible="False"
-                           IsSettingsVisible="False"
-                           SelectedItem="{Binding ViewModel.SelectedPageItem}">
-            <fa:NavigationView.MenuItems>
-                <fa:NavigationViewItem Content="{x:Static lp:Resources.Page_Students}"
-                                       IconSource="{sr:FluentIconSource &#xECAB;}" />
+        <fa:FANavigationView Grid.Row="1"
+                             x:Name="NavigationView"
+                             PaneDisplayMode="Top"
+                             IsBackButtonVisible="False"
+                             IsPaneToggleButtonVisible="False"
+                             IsSettingsVisible="False"
+                             SelectedItem="{Binding ViewModel.SelectedPageItem}">
+            <fa:FANavigationView.MenuItems>
+                <fa:FANavigationViewItem Content="{x:Static lp:Resources.Page_Students}"
+                                         IconSource="{sr:FluentIconSource &#xECAB;}" />
 
-                <fa:NavigationViewItem Content="{x:Static lp:Resources.Page_Prizes}"
-                                       IconSource="{sr:FluentIconSource &#xE27E;}" />
+                <fa:FANavigationViewItem Content="{x:Static lp:Resources.Page_Prizes}"
+                                         IconSource="{sr:FluentIconSource &#xE27E;}" />
 
-                <fa:NavigationViewItem Content="{x:Static lp:Resources.Page_History}"
-                                       IconSource="{sr:FluentIconSource &#xE5ED;}" />
-            </fa:NavigationView.MenuItems>
+                <fa:FANavigationViewItem Content="{x:Static lp:Resources.Page_History}"
+                                         IconSource="{sr:FluentIconSource &#xE5ED;}" />
+            </fa:FANavigationView.MenuItems>
 
-            <fa:NavigationView.PaneFooter>
-                <fa:CommandBar HorizontalAlignment="Right" DefaultLabelPosition="Right">
-                    <fa:CommandBar.PrimaryCommands>
-                        <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xEEB5;}"
-                                             Label="{x:Static lp:Resources.Command_Save}"
-                                             ToolTip.Tip="{x:Static lp:Resources.Command_Save_D}"
-                                             Click="SaveProfileButton_OnClick" />
+            <fa:FANavigationView.PaneFooter>
+                <fa:FACommandBar HorizontalAlignment="Right" DefaultLabelPosition="Right">
+                    <fa:FACommandBar.PrimaryCommands>
+                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xEEB5;}"
+                                               Label="{x:Static lp:Resources.Command_Save}"
+                                               ToolTip.Tip="{x:Static lp:Resources.Command_Save_D}"
+                                               Click="SaveProfileButton_OnClick" />
 
-                        <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xEE2F;}"
-                                             Label="{x:Static lp:Resources.Command_Help}"
-                                             ToolTip.Tip="{x:Static lp:Resources.Command_Help_D}" />
-                    </fa:CommandBar.PrimaryCommands>
-                </fa:CommandBar>
-            </fa:NavigationView.PaneFooter>
-        </fa:NavigationView>
+                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xEE2F;}"
+                                               Label="{x:Static lp:Resources.Command_Help}"
+                                               ToolTip.Tip="{x:Static lp:Resources.Command_Help_D}" />
+                    </fa:FACommandBar.PrimaryCommands>
+                </fa:FACommandBar>
+            </fa:FANavigationView.PaneFooter>
+        </fa:FANavigationView>
 
         <Border Grid.Row="2" Background="{DynamicResource LayerOnMicaBaseAltFillColorDefaultBrush}">
             <sr:DrawerHost IsDrawerOpen="{Binding ViewModel.IsDrawerOpen, Mode=TwoWay}"
@@ -79,19 +80,19 @@
                         </Grid.ColumnDefinitions>
 
                         <Grid Grid.Column="0" RowDefinitions="Auto, *">
-                            <fa:CommandBar Grid.Row="0" DefaultLabelPosition="Right">
-                                <fa:CommandBar.PrimaryCommands>
-                                    <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xe00d;}"
-                                                         Label="{x:Static lps:Resources.Command_CreateList}"
-                                                         ToolTip.Tip="{x:Static lps:Resources.Command_CreateList_D}" />
+                            <fa:FACommandBar Grid.Row="0" DefaultLabelPosition="Right">
+                                <fa:FACommandBar.PrimaryCommands>
+                                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xe00d;}"
+                                                           Label="{x:Static lps:Resources.Command_CreateList}"
+                                                           ToolTip.Tip="{x:Static lps:Resources.Command_CreateList_D}" />
 
-                                    <fa:CommandBarSeparator />
+                                    <fa:FACommandBarSeparator />
 
-                                    <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xe58d;}"
-                                                         Label="{x:Static lps:Resources.Command_DuplicateList}"
-                                                         ToolTip.Tip="{x:Static lps:Resources.Command_DuplicateList_D}" />
-                                </fa:CommandBar.PrimaryCommands>
-                            </fa:CommandBar>
+                                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xe58d;}"
+                                                           Label="{x:Static lps:Resources.Command_DuplicateList}"
+                                                           ToolTip.Tip="{x:Static lps:Resources.Command_DuplicateList_D}" />
+                                </fa:FACommandBar.PrimaryCommands>
+                            </fa:FACommandBar>
 
                             <ListBox Grid.Row="1"
                                      ItemsSource="{Binding ViewModel.StudentLists, Mode=OneWay}"
@@ -105,25 +106,26 @@
                                       Data="{Binding ViewModel.SelectedStudentList}"
                                       IsDirectContentMode="True">
                             <Grid RowDefinitions="Auto *">
-                                <fa:CommandBar Grid.Row="0" DefaultLabelPosition="Right" Classes="hide-popup-indicator">
-                                    <fa:CommandBar.PrimaryCommands>
-                                        <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xE00D;}"
-                                                             Label="add"
-                                                             Click="CreateStudentButton_OnClick" />
+                                <fa:FACommandBar Grid.Row="0" DefaultLabelPosition="Right"
+                                                 Classes="hide-popup-indicator">
+                                    <fa:FACommandBar.PrimaryCommands>
+                                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xE00D;}"
+                                                               Label="add"
+                                                               Click="CreateStudentButton_OnClick" />
 
-                                        <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xE61D;}"
-                                                             Label="delete"
-                                                             IsEnabled="{Binding ViewModel.SelectedStudent, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xE61D;}"
+                                                               Label="delete"
+                                                               IsEnabled="{Binding ViewModel.SelectedStudent, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
-                                        <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xEFDD;}"
-                                                             Label="import" />
+                                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xEFDD;}"
+                                                               Label="import" />
 
-                                        <fa:CommandBarSeparator />
+                                        <fa:FACommandBarSeparator />
 
-                                        <fa:CommandBarButton IconSource="{sr:FluentIconSource &#xe61d;}"
-                                                             Label="delete list" />
-                                    </fa:CommandBar.PrimaryCommands>
-                                </fa:CommandBar>
+                                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xe61d;}"
+                                                               Label="delete list" />
+                                    </fa:FACommandBar.PrimaryCommands>
+                                </fa:FACommandBar>
 
                                 <Grid Grid.Row="1">
                                     <Grid.ColumnDefinitions>
@@ -193,7 +195,8 @@
                                                 <ItemsControl
                                                     ItemsSource="{x:Static services:AttachedSettingsRegistryService.StudentAttachedSettingsControls}">
                                                     <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
+                                                        <DataTemplate
+                                                            x:DataType="attributes:AttachedSettingsControlInfo">
                                                             <sr:AttachedSettingsControlPresenter
                                                                 ControlInfo="{Binding}"
                                                                 TargetObject="{Binding $parent[views:ProfileSettingsView].ViewModel.SelectedStudent}" />

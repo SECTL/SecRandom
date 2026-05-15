@@ -52,7 +52,7 @@
                                 <Setter Property="RenderTransform" Value="translateY(0px)" />
                             </Style>
 
-                            <Style Selector="fa|InfoBar[Severity=Informational]">
+                            <Style Selector="fa|FAInfoBar[Severity=Informational]">
                                 <Setter Property="Background"
                                         Value="{DynamicResource SystemFillColorSolidNeutralBackgroundBrush}" />
                             </Style>
@@ -67,18 +67,18 @@
                             </DataTriggerBehavior>
                         </Interaction.Behaviors>
 
-                        <fa:InfoBar Severity="{Binding Severity}"
-                                    Title="{Binding Title}"
-                                    Message="{Binding Message}"
-                                    ActionButton="{Binding ActionContent}"
-                                    IsEnabled="{Binding IsOpen}"
-                                    IsClosable="{Binding CanUserClose}"
-                                    IsOpen="True"
-                                    IsVisible="{Binding $self.IsOpen}"
-                                    Margin="0 0 0 4"
-                                    HorizontalAlignment="Right"
-                                    CloseButtonCommand="{Binding CloseToastCommand, RelativeSource={RelativeSource AncestorType=sr:AppToastAdorner}}"
-                                    CloseButtonCommandParameter="{Binding}" />
+                        <fa:FAInfoBar Severity="{Binding Severity}"
+                                      Title="{Binding Title}"
+                                      Message="{Binding Message}"
+                                      ActionButton="{Binding ActionContent}"
+                                      IsEnabled="{Binding IsOpen}"
+                                      IsClosable="{Binding CanUserClose}"
+                                      IsOpen="True"
+                                      IsVisible="{Binding $self.IsOpen}"
+                                      Margin="0 0 0 4"
+                                      HorizontalAlignment="Right"
+                                      CloseButtonCommand="{Binding CloseToastCommand, RelativeSource={RelativeSource AncestorType=sr:AppToastAdorner}}"
+                                      CloseButtonCommandParameter="{Binding}" />
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

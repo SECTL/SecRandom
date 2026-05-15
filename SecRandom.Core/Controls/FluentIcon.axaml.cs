@@ -2,7 +2,7 @@ using FluentAvalonia.UI.Controls;
 
 namespace SecRandom.Core.Controls;
 
-public class FluentIcon : FontIcon
+public class FluentIcon : FAFontIcon
 {
     public FluentIcon()
     {

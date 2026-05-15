@@ -43,7 +43,7 @@
         <Setter Property="TextElement.FontWeight" Value="{DynamicResource AppFontWeight}" />
     </Style>
 
-    <Style Selector="fa|ContentDialog">
+    <Style Selector="fa|FAContentDialog">
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
         <Setter Property="FontWeight" Value="{DynamicResource AppFontWeight}" />
     </Style>
@@ -71,7 +71,7 @@
         <Setter Property="Spacing" Value="4" />
     </Style>
 
-    <Style Selector="windowing|AppSplashScreen">
+    <Style Selector="windowing|FAAppSplashScreen">
         <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorBase}" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimary}" />
     </Style>
@@ -157,7 +157,7 @@
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     </Style>
 
-    <Style Selector="fa|SettingsExpanderItem">
+    <Style Selector="fa|FASettingsExpanderItem">
         <Style Selector="^ ToggleSwitch">
             <Setter Property="Margin" Value="0 -12" />
             <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
@@ -170,7 +170,7 @@
     </Style>
 
     <Style
-        Selector="fa|CommandBar.hide-popup-indicator fa|CommandBarButton:labelright /template/ fa|FontIcon#SubItemChevron">
+        Selector="fa|FACommandBar.hide-popup-indicator fa|FACommandBarButton:labelright /template/ fa|FAFontIcon#SubItemChevron">
         <Setter Property="IsVisible" Value="False" />
     </Style>
 </Styles>

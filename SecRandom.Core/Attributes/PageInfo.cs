@@ -56,11 +56,11 @@ public class PageInfo : Attribute
 
     public Type? SettingsPageType { get; set; }
 
-    public NavigationViewItemBase ToNavigationViewItemBase()
+    public FANavigationViewItemBase ToNavigationViewItemBase()
     {
-        if (IsSeparator) return new NavigationViewItemSeparator();
+        if (IsSeparator) return new FANavigationViewItemSeparator();
 
-        return new NavigationViewItem
+        return new FANavigationViewItem
         {
             IconSource = new FluentIconSource(IconGlyph),
             Content = Name,

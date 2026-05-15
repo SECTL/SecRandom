@@ -39,7 +39,7 @@ public partial class AboutSettingsPage : UserControl
     {
         var url = e.Source switch
         {
-            SettingsExpanderItem s => s.CommandParameter?.ToString(),
+            FASettingsExpanderItem s => s.CommandParameter?.ToString(),
             Button s => s.CommandParameter?.ToString(),
             _ => null
         };

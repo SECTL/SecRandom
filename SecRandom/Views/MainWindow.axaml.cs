@@ -7,7 +7,7 @@ using SecRandom.Core.Controls;
 
 namespace SecRandom.Views;
 
-public partial class MainWindow : AppWindow
+public partial class MainWindow : FAAppWindow
 {
     public MainWindow()
     {
@@ -16,7 +16,7 @@ public partial class MainWindow : AppWindow
 
         TitleBar.Height = 48;
         TitleBar.ExtendsContentIntoTitleBar = true;
-        TitleBar.TitleBarHitTestType = TitleBarHitTestType.Complex;
+        TitleBar.TitleBarHitTestType = FATitleBarHitTestType.Complex;
 
         // 覆盖标题栏按钮颜色
         TitleBar.ButtonHoverBackgroundColor = Color.FromArgb(23, 0, 0, 0);

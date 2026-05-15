@@ -7,7 +7,7 @@ namespace SecRandom.Core.Services.Config;
 public class ProfileConfigHandlerBase<T> : ConfigHandlerBase<T> where T : ProfileConfigBase
 {
     public ProfileConfigHandlerBase(string name)
-        : base(() => (T)Activator.CreateInstance(typeof(T), [name])!)
+        : base(() => (T)Activator.CreateInstance(typeof(T), name)!)
     {
         Name = name;
         Data.Name = name;

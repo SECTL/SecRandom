@@ -9,7 +9,7 @@ namespace SecRandom.Core.Controls;
 /// </summary>
 public class Empty : TemplatedControl
 {
-    public static readonly StyledProperty<IconSource> IconProperty = AvaloniaProperty.Register<Empty, IconSource>(
+    public static readonly StyledProperty<FAIconSource> IconProperty = AvaloniaProperty.Register<Empty, FAIconSource>(
         nameof(Icon), new FluentIconSource("\ue262")
         {
             FontSize = 64
@@ -24,7 +24,7 @@ public class Empty : TemplatedControl
     public static readonly StyledProperty<double> IconWidthProperty = AvaloniaProperty.Register<Empty, double>(
         nameof(IconWidth), 64.0);
 
-    public IconSource Icon
+    public FAIconSource Icon
     {
         get => GetValue(IconProperty);
         set => SetValue(IconProperty, value);

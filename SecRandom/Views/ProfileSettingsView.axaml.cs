@@ -33,7 +33,7 @@ public partial class ProfileSettingsView : UserControl
                 ViewModel.SelectedPageIndex = NavigationView.MenuItems.IndexOf(ViewModel.SelectedPageItem);
         };
 
-        RenderOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
+        TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
         RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
         RenderOptions.SetEdgeMode(this, EdgeMode.Antialias);
     }

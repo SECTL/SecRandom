@@ -18,19 +18,19 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AsyncImageLoader.Avalonia" Version="3.6.0"/>
+        <PackageReference Include="AsyncImageLoader.Avalonia" Version="3.8.0"/>
         <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)"/>
         <PackageReference Include="DynamicData" Version="9.4.1"/>
         <PackageReference Include="FlashCap" Version="1.11.0"/>
-        <PackageReference Include="FluentAvaloniaUI" Version="2.4.1"/>
-        <PackageReference Include="Irihi.Ursa" Version="1.15.0"/>
+        <PackageReference Include="FluentAvaloniaUI" Version="3.0.0-preview1" />
+        <PackageReference Include="Irihi.Ursa" Version="2.0.0"/>
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3"/>
         <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.25.1"/>
         <PackageReference Include="MiniExcel" Version="1.34.2"/>
         <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260427"/>
         <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260302"/>
         <PackageReference Include="Pastel" Version="4.2.0"/>
-        <PackageReference Include="Xaml.Behaviors" Version="11.3.9.5"/>
+        <PackageReference Include="Xaml.Behaviors" Version="12.0.0"/>
     </ItemGroup>
 
     <ItemGroup>

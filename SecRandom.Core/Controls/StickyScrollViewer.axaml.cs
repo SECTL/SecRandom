@@ -98,14 +98,14 @@ public class StickyScrollViewer : ContentControl
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
-        if (this.GetTemplateChildren().OfType<ScrollViewer>().FirstOrDefault(x => x.Name == MainScrollViewerName) is
+        if (this.GetTemplateDescendants().OfType<ScrollViewer>().FirstOrDefault(x => x.Name == MainScrollViewerName) is
             { } scrollViewer)
         {
             _mainScrollViewer = scrollViewer;
             _mainScrollViewer.ScrollChanged += MainScrollViewerOnScrollChanged;
         }
 
-        if (this.GetTemplateChildren().OfType<ContentPresenter>().FirstOrDefault(x => x.Name == HeaderName) is
+        if (this.GetTemplateDescendants().OfType<ContentPresenter>().FirstOrDefault(x => x.Name == HeaderName) is
             { } header)
         {
             _header = header;

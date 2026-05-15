@@ -1,4 +1,3 @@
-using Avalonia.Markup.Xaml;
 using SecRandom.Core.Icons;
 
 namespace SecRandom.Core.MarkupExtensions;
@@ -22,7 +21,6 @@ public class FiExtension
     /// <summary>
     ///     Fluent Icon 种类
     /// </summary>
-    [ConstructorArgument(nameof(Icon))]
     public FluentIconKind Icon { get; set; }
 
     /// <summary>

@@ -20,12 +20,12 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
 
-public partial class MainView : UserControl, INavigationPageFactory
+public partial class MainView : UserControl, IFANavigationPageFactory
 {
     private const string DefaultMainPageId = "main.rollCall";
 
-    private readonly Frame? _navigationFrame;
-    private readonly NavigationView? _navigationView;
+    private readonly FAFrame? _navigationFrame;
+    private readonly FANavigationView? _navigationView;
 
     private AppToastAdorner? _appToastAdorner;
     private bool _isAdornerAdded;
@@ -36,15 +36,15 @@ public partial class MainView : UserControl, INavigationPageFactory
         DataContext = this;
         InitializeComponent();
 
-        _navigationFrame = this.FindControl<Frame>("NavigationFrame");
-        _navigationView = this.FindControl<NavigationView>("NavigationView");
+        _navigationFrame = this.FindControl<FAFrame>("NavigationFrame");
+        _navigationView = this.FindControl<FANavigationView>("NavigationView");
 
         _navigationFrame?.NavigationPageFactory = this;
 
         BuildNavigationMenuItems();
         SelectNavigationItemById(DefaultMainPageId);
 
-        RenderOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
+        TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
         RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
         RenderOptions.SetEdgeMode(this, EdgeMode.Antialias);
     }
@@ -155,11 +155,11 @@ public partial class MainView : UserControl, INavigationPageFactory
         _navigationFrame?.NavigateFromObject(info);
     }
 
-    private void NavigationView_OnItemInvoked(object? sender, NavigationViewItemInvokedEventArgs e)
+    private void NavigationView_OnItemInvoked(object? sender, FANavigationViewItemInvokedEventArgs e)
     {
         PageInfo? info = null;
 
-        if (e.InvokedItemContainer is NavigationViewItem { Tag: PageInfo containerInfo })
+        if (e.InvokedItemContainer is FANavigationViewItem { Tag: PageInfo containerInfo })
             info = containerInfo;
         else if (e.InvokedItem is PageInfo invokedInfo) info = invokedInfo;
 

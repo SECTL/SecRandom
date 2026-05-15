@@ -15,7 +15,7 @@ public partial class ProfileSettingsViewModel : ViewModelBase
     [ObservableProperty] private object? _drawerContent = false;
     [ObservableProperty] private bool _isDrawerOpen;
     [ObservableProperty] private int _selectedPageIndex;
-    [ObservableProperty] private NavigationViewItemBase? _selectedPageItem;
+    [ObservableProperty] private FANavigationViewItemBase? _selectedPageItem;
     [ObservableProperty] private Student? _selectedStudent;
     [ObservableProperty] private StudentList? _selectedStudentList;
     [ObservableProperty] private StudentListConfig? _selectedStudentListConfig;
