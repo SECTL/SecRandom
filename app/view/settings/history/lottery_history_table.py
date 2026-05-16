@@ -1025,9 +1025,9 @@ class lottery_history_table(GroupHeaderCardWidget):
 
         export_type = (
             "excel"
-            if "Excel 文件 (*.xlsx)" in selected_filter
+            if ".xlsx" in selected_filter
             else "csv"
-            if "CSV 文件 (*.csv)" in selected_filter
+            if ".csv" in selected_filter
             else "txt"
         )
 
