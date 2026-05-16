@@ -35,8 +35,16 @@ class lottery_table(GroupHeaderCardWidget):
         self.parent = parent
         self.setTitle(get_content_name_async("lottery_table", "title"))
         self.setBorderRadius(8)
+        self._search_timer = QTimer(self)
+        self._search_timer.setSingleShot(True)
+        self._search_timer.setInterval(300)
+        self._search_timer.timeout.connect(self._apply_search_filter)
+
         # 创建抽奖名单选择区域
         QTimer.singleShot(APPLY_DELAY, self.create_lottery_selection)
+
+        # 创建搜索栏
+        QTimer.singleShot(APPLY_DELAY, self.create_search_bar)
 
         # 创建表格区域
         QTimer.singleShot(APPLY_DELAY, self.create_table)
@@ -85,6 +93,46 @@ class lottery_table(GroupHeaderCardWidget):
             get_content_description_async("lottery_table", "select_pool_name"),
             self.lottery_comboBox,
         )
+
+    def create_search_bar(self):
+        """创建搜索栏"""
+        self.search_line_edit = SearchLineEdit()
+        self.search_line_edit.setPlaceholderText(
+            get_content_name_async("lottery_table", "search_placeholder")
+        )
+        self.search_line_edit.setClearButtonEnabled(True)
+        self.search_line_edit.textChanged.connect(self._on_search_text_changed)
+
+        self.addGroup(
+            get_theme_icon("ic_fluent_search_20_filled"),
+            get_content_name_async("lottery_table", "search"),
+            get_content_description_async("lottery_table", "search"),
+            self.search_line_edit,
+        )
+
+    def _on_search_text_changed(self):
+        """搜索文本变化时启动防抖计时器"""
+        self._search_timer.start()
+
+    def _apply_search_filter(self):
+        """根据搜索关键词过滤表格行"""
+        if not hasattr(self, "table") or self.table is None:
+            return
+
+        keyword = self.search_line_edit.text().strip().lower()
+
+        for row in range(self.table.rowCount()):
+            if not keyword:
+                self.table.setRowHidden(row, False)
+                continue
+
+            matched = False
+            for col in range(self.table.columnCount()):
+                item = self.table.item(row, col)
+                if item and keyword in item.text().lower():
+                    matched = True
+                    break
+            self.table.setRowHidden(row, not matched)
 
     def create_table(self):
         """创建表格区域"""
@@ -283,6 +331,7 @@ class lottery_table(GroupHeaderCardWidget):
         finally:
             # 恢复信号
             self.table.blockSignals(False)
+            self._apply_search_filter()
 
     def save_table_data(self, row, col):
         """保存表格编辑的数据"""

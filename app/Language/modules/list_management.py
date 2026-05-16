@@ -122,6 +122,14 @@ roll_call_table = {
             "name": "选择班级",
             "description": "选择要显示的点名班级",
         },
+        "search": {
+            "name": "搜索名单",
+            "description": "在名单中搜索学生",
+        },
+        "search_placeholder": {
+            "name": "输入学号、姓名、性别、小组或标签进行筛选",
+            "description": "搜索框占位符",
+        },
         "HeaderLabels": {
             "name": ["存在", "学号", "姓名", "性别", "小组", "标签"],
             "description": "点名表格的列标题",
@@ -150,6 +158,14 @@ roll_call_table = {
         "select_class_name": {
             "name": "Select class",
             "description": "Select the class to show",
+        },
+        "search": {
+            "name": "Search list",
+            "description": "Search students in the list",
+        },
+        "search_placeholder": {
+            "name": "Filter by ID, name, gender, group or tags",
+            "description": "Search box placeholder",
         },
         "HeaderLabels": {
             "name": {
@@ -189,6 +205,14 @@ roll_call_table = {
         "select_class_name": {
             "name": "クラスを選択",
             "description": "表示する点呼クラスを選択",
+        },
+        "search": {
+            "name": "リスト検索",
+            "description": "リスト内の学生を検索",
+        },
+        "search_placeholder": {
+            "name": "学籍番号、氏名、性別、グループ、タグで絞り込み",
+            "description": "検索ボックスのプレースホルダー",
         },
         "HeaderLabels": {
             "name": ["存在", "学籍番号", "氏名", "性別", "グループ", "タグ"],
@@ -311,6 +335,14 @@ lottery_table = {
             "name": "选择奖池",
             "description": "选择要显示的抽奖奖池",
         },
+        "search": {
+            "name": "搜索名单",
+            "description": "在名单中搜索奖品",
+        },
+        "search_placeholder": {
+            "name": "输入序号、奖品、权重、标签或数量进行筛选",
+            "description": "搜索框占位符",
+        },
         "HeaderLabels": {
             "name": ["存在", "序号", "奖品", "权重", "标签", "数量"],
             "description": "抽奖表格的列标题",
@@ -339,6 +371,14 @@ lottery_table = {
         "select_pool_name": {
             "name": "Select pool",
             "description": "Select the pool to show",
+        },
+        "search": {
+            "name": "Search list",
+            "description": "Search prizes in the list",
+        },
+        "search_placeholder": {
+            "name": "Filter by serial, prize, weight, tags or count",
+            "description": "Search box placeholder",
         },
         "HeaderLabels": {
             "name": {
@@ -378,6 +418,14 @@ lottery_table = {
         "select_pool_name": {
             "name": "賞プールを選択",
             "description": "表示する抽選賞プールを選択",
+        },
+        "search": {
+            "name": "リスト検索",
+            "description": "リスト内の賞品を検索",
+        },
+        "search_placeholder": {
+            "name": "番号、賞品、重み、タグ、数量で絞り込み",
+            "description": "検索ボックスのプレースホルダー",
         },
         "HeaderLabels": {
             "name": ["存在", "番号", "賞品", "重み", "タグ", "数量"],
