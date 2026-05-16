@@ -3602,30 +3602,30 @@ wheels = [
 
 [[package]]
 name = "pyside6-fluent-widgets"
-version = "1.11.0"
+version = "1.11.2"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple" }
 dependencies = [
     { name = "darkdetect" },
     { name = "pyside6" },
     { name = "pysidesix-frameless-window" },
 ]
-sdist = { url = "https://mirrors.aliyun.com/pypi/packages/f7/79/89ede298a98552317b71c199f7001f728401ea5e5f05ccece5cb390f71f6/pyside6_fluent_widgets-1.11.0.tar.gz", hash = "sha256:ac74b7d08fd78b06304416ac6d62cc47818949d79605899eb64c53bd99c6c322" }
+sdist = { url = "https://mirrors.aliyun.com/pypi/packages/f1/22/01a72ab00873fac2575e8045cd4dfcb003afc0f0764982c706817be5629a/pyside6_fluent_widgets-1.11.2.tar.gz", hash = "sha256:cf49ff76b9b2ad1dc24f071a1b2a3f5f0a67d7adf655915071ddfb7342caf175" }
 wheels = [
-    { url = "https://mirrors.aliyun.com/pypi/packages/3e/4a/49d2b3b7bb35e006de4a3a2192c78a005cd1d44bd18e33ae12fc6cb3672c/pyside6_fluent_widgets-1.11.0-py3-none-any.whl", hash = "sha256:d13763304137fb843b955dbaad9e0ffafca306018769d0ea9094b9f707ff7938" },
+    { url = "https://mirrors.aliyun.com/pypi/packages/78/cb/ad62113621b3e619e4fa069a383e5060a6169e93a9df73f15f2cf68bdf5a/pyside6_fluent_widgets-1.11.2-py3-none-any.whl", hash = "sha256:7d3bb3d79b743cbb16eef0a0471f1d0c47d6c8c8dd78402820bd3cdae4da1ea0" },
 ]
 
 [[package]]
 name = "pysidesix-frameless-window"
-version = "0.7.7"
+version = "0.8.1"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple" }
 dependencies = [
     { name = "pycocoa", marker = "sys_platform == 'darwin'" },
     { name = "pyobjc", marker = "sys_platform == 'darwin'" },
     { name = "pywin32", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://mirrors.aliyun.com/pypi/packages/cf/ba/c41e25e8884224d15b14ffad34c921f350a6b0cfce823f150a514a0d3788/pysidesix_frameless_window-0.7.7.tar.gz", hash = "sha256:4f975bae89a6ebd8babeed693341f242b268c94816e81602e026eb95703d4eb4" }
+sdist = { url = "https://mirrors.aliyun.com/pypi/packages/e7/44/ee4b9ead46ec5fcc4d9a303f6ac82cb17b0e188bfe629ef962c4046cded5/pysidesix_frameless_window-0.8.1.tar.gz", hash = "sha256:95eefa64abdaca9d730bc097fd39e2cd07d3443a47a1645cc936a0076996d7cd" }
 wheels = [
-    { url = "https://mirrors.aliyun.com/pypi/packages/70/e2/fb1e36cbd8ed5c0db161ace24ad40b5278ac9af6fecc9bcd6ab68712fb1c/pysidesix_frameless_window-0.7.7-py3-none-any.whl", hash = "sha256:cd6b2961cc30d9290f84462bc59de674bea6a72df5d36fb57d5fb49d660c13e8" },
+    { url = "https://mirrors.aliyun.com/pypi/packages/60/02/13dc76880e9f54102b8d4859a1a14061c6914c12d8c8554dc49ef55ab209/pysidesix_frameless_window-0.8.1-py3-none-any.whl", hash = "sha256:0445e7ce095c3631893ec54edb470a47c2bb05ea64db736f446211550b7c2237" },
 ]
 
 [[package]]
@@ -3888,7 +3888,7 @@ requires-dist = [
     { name = "pypng", specifier = "~=0.20220715.0" },
     { name = "pyqrcode", specifier = "~=1.2.1" },
     { name = "pyside6", specifier = ">6.6.3.1" },
-    { name = "pyside6-fluent-widgets", specifier = "==1.11.0" },
+    { name = "pyside6-fluent-widgets", specifier = "==1.11.2" },
     { name = "pysidesix-frameless-window", specifier = ">=0.7.4" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=6.0" },
     { name = "pythonnet", specifier = ">=3.0.5" },

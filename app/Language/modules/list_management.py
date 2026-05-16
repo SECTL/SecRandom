@@ -797,7 +797,17 @@ qfiledialog = {
                     "name": "Excel 文件 (*.xlsx);;CSV 文件 (*.csv);;TXT 文件（仅姓名） (*.txt)",
                     "description": "保存学生名单对话框过滤器",
                 },
-            }
+            },
+            "export_history": {
+                "caption": {
+                    "name": "导出点名记录",
+                    "description": "导出点名记录对话框标题",
+                },
+                "filter": {
+                    "name": "Excel 文件 (*.xlsx);;CSV 文件 (*.csv);;TXT 文件 (*.txt)",
+                    "description": "导出点名记录对话框过滤器",
+                },
+            },
         },
         "lottery": {
             "export_prize_name": {
@@ -809,7 +819,17 @@ qfiledialog = {
                     "name": "Excel 文件 (*.xlsx);;CSV 文件 (*.csv);;TXT 文件（仅奖品名） (*.txt)",
                     "description": "保存奖品名单对话框过滤器",
                 },
-            }
+            },
+            "export_history": {
+                "caption": {
+                    "name": "导出抽奖记录",
+                    "description": "导出抽奖记录对话框标题",
+                },
+                "filter": {
+                    "name": "Excel 文件 (*.xlsx);;CSV 文件 (*.csv);;TXT 文件 (*.txt)",
+                    "description": "导出抽奖记录对话框过滤器",
+                },
+            },
         },
     },
     "EN_US": {
@@ -823,7 +843,17 @@ qfiledialog = {
                     "name": "Excel files (*.xlsx);;CSV files (*.csv);;TXT files (name only) (*.txt)",
                     "description": "Save student list dialog filter",
                 },
-            }
+            },
+            "export_history": {
+                "caption": {
+                    "name": "Export picking records",
+                    "description": "Export picking records dialog title",
+                },
+                "filter": {
+                    "name": "Excel files (*.xlsx);;CSV files (*.csv);;TXT files (*.txt)",
+                    "description": "Export picking records dialog filter",
+                },
+            },
         },
         "lottery": {
             "export_prize_name": {
@@ -835,7 +865,17 @@ qfiledialog = {
                     "name": "Excel files (*.xlsx);;CSV files (*.csv);;TXT files (only prizes) (*.txt)",
                     "description": "Save prize list dialog filter",
                 },
-            }
+            },
+            "export_history": {
+                "caption": {
+                    "name": "Export lottery records",
+                    "description": "Export lottery records dialog title",
+                },
+                "filter": {
+                    "name": "Excel files (*.xlsx);;CSV files (*.csv);;TXT files (*.txt)",
+                    "description": "Export lottery records dialog filter",
+                },
+            },
         },
     },
     "JA_JP": {
@@ -849,7 +889,17 @@ qfiledialog = {
                     "name": "Excelファイル (*.xlsx);;CSVファイル (*.csv);;TXTファイル（氏名のみ） (*.txt)",
                     "description": "学生リスト保存ダイアログフィルター",
                 },
-            }
+            },
+            "export_history": {
+                "caption": {
+                    "name": "点呼記録をエクスポート",
+                    "description": "点呼記録エクスポートダイアログタイトル",
+                },
+                "filter": {
+                    "name": "Excelファイル (*.xlsx);;CSVファイル (*.csv);;TXTファイル (*.txt)",
+                    "description": "点呼記録エクスポートダイアログフィルター",
+                },
+            },
         },
         "lottery": {
             "export_prize_name": {
@@ -861,7 +911,17 @@ qfiledialog = {
                     "name": "Excelファイル (*.xlsx);;CSVファイル (*.csv);;TXTファイル（賞品名のみ） (*.txt)",
                     "description": "賞品リスト保存ダイアログフィルター",
                 },
-            }
+            },
+            "export_history": {
+                "caption": {
+                    "name": "抽選記録をエクスポート",
+                    "description": "抽選記録エクスポートダイアログタイトル",
+                },
+                "filter": {
+                    "name": "Excelファイル (*.xlsx);;CSVファイル (*.csv);;TXTファイル (*.txt)",
+                    "description": "抽選記録エクスポートダイアログフィルター",
+                },
+            },
         },
     },
 }

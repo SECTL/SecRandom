@@ -226,6 +226,14 @@ roll_call_history_table = {
             "name": "公平抽取",
             "description": "公平抽取模式",
         },
+        "export": {
+            "name": "导出记录",
+            "description": "将当前表格数据导出为文件",
+        },
+        "export_button": {
+            "name": "导出",
+            "description": "导出按钮文本",
+        },
     },
     "EN_US": {
         "title": {
@@ -319,6 +327,14 @@ roll_call_history_table = {
         "draw_method_weight": {
             "name": "Fair pick",
             "description": "Fair picking mode",
+        },
+        "export": {
+            "name": "Export records",
+            "description": "Export current table data to a file",
+        },
+        "export_button": {
+            "name": "Export",
+            "description": "Export button text",
         },
         "select_weight": {
             "name": "Show weight",
@@ -419,6 +435,14 @@ roll_call_history_table = {
             "name": "公平抽出",
             "description": "公平抽出モード",
         },
+        "export": {
+            "name": "記録をエクスポート",
+            "description": "現在のテーブルデータをファイルにエクスポート",
+        },
+        "export_button": {
+            "name": "エクスポート",
+            "description": "エクスポートボタンテキスト",
+        },
         "select_weight": {
             "name": "重みを表示",
             "description": "テーブルに重みを表示するかどうか",
@@ -459,6 +483,14 @@ lottery_history_table = {
         "HeaderLabels_Individual_weight": {
             "name": ["抽奖时间", "抽取数量", "课程", "权重"],
             "description": "抽奖历史记录表格列标题（单次记录）",
+        },
+        "export": {
+            "name": "导出记录",
+            "description": "将当前表格数据导出为文件",
+        },
+        "export_button": {
+            "name": "导出",
+            "description": "导出按钮文本",
         },
     },
     "EN_US": {
@@ -508,6 +540,14 @@ lottery_history_table = {
             },
             "description": "Lottery history table title column header weight (individual)",
         },
+        "export": {
+            "name": "Export records",
+            "description": "Export current table data to a file",
+        },
+        "export_button": {
+            "name": "Export",
+            "description": "Export button text",
+        },
     },
     "JA_JP": {
         "title": {
@@ -555,6 +595,14 @@ lottery_history_table = {
                 "3": "重み",
             },
             "description": "抽選履歴テーブルの列タイトル（単一記録）",
+        },
+        "export": {
+            "name": "記録をエクスポート",
+            "description": "現在のテーブルデータをファイルにエクスポート",
+        },
+        "export_button": {
+            "name": "エクスポート",
+            "description": "エクスポートボタンテキスト",
         },
     },
 }
