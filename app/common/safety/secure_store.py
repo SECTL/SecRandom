@@ -146,25 +146,12 @@ def write_secrets(d: dict) -> None:
         atomic_write_bytes(p, b"SRV1" + payload)
         _set_hidden(str(p))
         logger.debug(f"写入安全配置成功：{p}")
+    except PermissionError as e:
+        logger.error(
+            f"写入安全配置失败：文件被占用或无写权限，请关闭占用程序或检查权限：{p}, 错误：{e}"
+        )
     except Exception as e:
-        logger.warning(f"写入安全配置失败：{p}, 错误：{e}")
-        try:
-            raw = json.dumps(d, ensure_ascii=False, indent=4).encode("utf-8")
-            comp = zlib.compress(raw, level=6)
-            key = _platform_key()
-            payload = _encrypt_payload(comp, key)
-            with open(p, "wb") as f:
-                f.write(b"SRV1" + payload)
-            _set_hidden(str(p))
-            logger.debug(f"降级直接写入安全配置成功：{p}")
-        except Exception as e2:
-            logger.warning(f"降级写入安全配置也失败：{e2}")
-            try:
-                with open(p, "w", encoding="utf-8") as f:
-                    json.dump(d, f, ensure_ascii=False, indent=4)
-                logger.warning(f"写入安全配置降级为明文JSON：{p}")
-            except Exception as e3:
-                logger.warning(f"降级写入明文JSON也失败：{e3}")
+        logger.error(f"写入安全配置失败：{p}, 错误：{e}")
 
 
 def read_behind_scenes_settings() -> dict:
@@ -224,22 +211,9 @@ def write_behind_scenes_settings(d: dict) -> None:
         atomic_write_bytes(p, b"SRV1" + payload)
         _set_hidden(str(p))
         logger.debug(f"写入内幕设置成功：{p}")
+    except PermissionError as e:
+        logger.error(
+            f"写入内幕设置失败：文件被占用或无写权限，请关闭占用程序或检查权限：{p}, 错误：{e}"
+        )
     except Exception as e:
         logger.error(f"写入内幕设置失败：{p}, 错误：{e}")
-        try:
-            raw = json.dumps(d, ensure_ascii=False, indent=4).encode("utf-8")
-            comp = zlib.compress(raw, level=6)
-            key = _platform_key()
-            payload = _encrypt_payload(comp, key)
-            with open(p, "wb") as f:
-                f.write(b"SRV1" + payload)
-            _set_hidden(str(p))
-            logger.debug(f"降级直接写入内幕设置成功：{p}")
-        except Exception as e2:
-            logger.error(f"降级写入内幕设置也失败：{e2}")
-            try:
-                with open(p, "w", encoding="utf-8") as f:
-                    json.dump(d, f, ensure_ascii=False, indent=4)
-                logger.warning(f"写入内幕设置降级为明文JSON：{p}")
-            except Exception as e3:
-                logger.exception(f"降级写入明文JSON也失败：{e3}")

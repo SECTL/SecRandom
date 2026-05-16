@@ -7,6 +7,7 @@
 # --------- 标准库 ---------
 import asyncio
 import concurrent.futures
+import inspect
 import json
 import os
 import platform
@@ -44,6 +45,16 @@ from edge_tts.exceptions import NoAudioReceived, WebSocketError
 from app.tools.path_utils import ensure_dir, get_audio_path
 from app.tools.settings_access import readme_settings_async
 from app.tools.config import restore_volume
+
+try:
+    _EDGE_TTS_SUPPORTS_AUDIO_FORMAT = (
+        "audio_format" in inspect.signature(edge_tts.Communicate).parameters
+    )
+except (AttributeError, TypeError, ValueError):
+    _EDGE_TTS_SUPPORTS_AUDIO_FORMAT = False
+    logger.warning("无法检测 edge-tts audio_format 参数支持情况，将使用兼容模式")
+
+LIBSNDFILE_FORMAT_ERROR_CODE = 1  # libsndfile 错误码 1 表示格式不识别
 
 
 # 权限检查装饰器
@@ -382,7 +393,7 @@ class VoiceCacheManager:
         logger.debug(f"获取语音: text='{text}', voice='{voice}'")
 
         file_path: str = self._get_cache_file_path(text, voice)
-        if os.path.exists(file_path):
+        if os.path.exists(file_path) and self._is_valid_audio(file_path):
             logger.debug(f"命中磁盘缓存: {file_path}")
             return file_path
 
@@ -403,7 +414,14 @@ class VoiceCacheManager:
 
         while retry_count < max_retries:
             try:
-                communicate = edge_tts.Communicate(text, voice)
+                if _EDGE_TTS_SUPPORTS_AUDIO_FORMAT:
+                    communicate = edge_tts.Communicate(
+                        text,
+                        voice,
+                        audio_format="riff-24khz-16bit-mono-pcm",
+                    )
+                else:
+                    communicate = edge_tts.Communicate(text, voice)
                 await communicate.save(file_path)
                 logger.debug(f"成功生成语音并保存至: {file_path}")
                 return
@@ -467,6 +485,31 @@ class VoiceCacheManager:
         )
         filename = f"{voice}_{safe_text}.wav"
         return os.path.join(self.audio_dir, filename)
+
+    def _is_valid_audio(self, file_path: str) -> bool:
+        """检查音频文件是否为有效格式"""
+        if sf is None:
+            # 未安装 soundfile 时无法做格式探测，跳过校验避免误删缓存
+            logger.warning(f"soundfile 不可用，跳过音频格式校验: {file_path}")
+            return True
+
+        try:
+            sf.info(file_path)
+            return True
+        except sf.LibsndfileError as e:
+            # 非“格式不识别”错误通常是临时I/O问题（如锁文件），保留缓存避免误删
+            if e.code != LIBSNDFILE_FORMAT_ERROR_CODE:
+                logger.warning(f"检查缓存文件失败，保留原文件: {file_path}, 错误: {e}")
+                return True
+
+            logger.warning(f"缓存文件格式无效，将重新生成: {file_path}")
+            try:
+                os.remove(file_path)
+            except OSError as remove_error:
+                logger.warning(
+                    f"删除无效缓存文件失败: {file_path}, 错误: {remove_error}"
+                )
+            return False
 
     def _save_to_disk(self, file_path: str, data: np.ndarray, fs: int) -> None:
         """保存到磁盘"""

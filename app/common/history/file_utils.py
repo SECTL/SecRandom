@@ -58,18 +58,36 @@ def clear_history_cache(history_type: str | None = None, file_name: str | None =
 # ==================================================
 # 历史记录文件路径处理函数
 # ==================================================
-def get_history_file_path(history_type: str, file_name: str) -> Path:
+def get_history_file_path(
+    history_type: str, file_name: str, strict: bool = False
+) -> Path:
     """获取历史记录文件路径
 
     Args:
         history_type: 历史记录类型 (roll_call, lottery 等)
         file_name: 文件名（不含扩展名）
+        strict: 当目录创建失败时是否抛出异常
 
     Returns:
         Path: 历史记录文件路径
     """
     history_dir = get_path(f"data/history/{history_type}_history")
-    history_dir.mkdir(parents=True, exist_ok=True)
+    if history_dir.exists() and not history_dir.is_dir():
+        logger.warning(f"检测到旧版历史记录文件，正在删除以创建目录: {history_dir}")
+        try:
+            history_dir.unlink(missing_ok=True)
+        except PermissionError as e:
+            logger.error(f"删除旧版历史记录文件失败（权限不足）: {history_dir}, 错误: {e}")
+        except OSError as e:
+            logger.error(f"删除旧版历史记录文件失败: {history_dir}, 错误: {e}")
+    try:
+        history_dir.mkdir(parents=True, exist_ok=True)
+    except FileExistsError:
+        logger.error(f"创建历史记录目录失败，目标仍为文件: {history_dir}")
+    except OSError as e:
+        logger.error(f"创建历史记录目录失败: {history_dir}, 错误: {e}")
+    if strict and not history_dir.is_dir():
+        raise NotADirectoryError(f"历史记录目录不可用: {history_dir}")
     return history_dir / f"{file_name}.json"
 
 
@@ -88,7 +106,11 @@ def load_history_data(history_type: str, file_name: str) -> Dict[str, Any]:
     Returns:
         Dict[str, Any]: 历史记录数据
     """
-    file_path = get_history_file_path(history_type, file_name)
+    try:
+        file_path = get_history_file_path(history_type, file_name, strict=True)
+    except OSError as e:
+        logger.error(f"获取历史记录文件路径失败: {e}")
+        return {}
 
     if not file_path.exists():
         with _history_cache_lock:
@@ -125,8 +147,8 @@ def save_history_data(history_type: str, file_name: str, data: Dict[str, Any]) -
     Returns:
         bool: 保存是否成功
     """
-    file_path = get_history_file_path(history_type, file_name)
     try:
+        file_path = get_history_file_path(history_type, file_name, strict=True)
         atomic_write_json(file_path, data)
         with _history_cache_lock:
             _history_data_cache[file_path] = (

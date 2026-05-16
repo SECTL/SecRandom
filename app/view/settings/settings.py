@@ -424,7 +424,11 @@ class SettingsWindow(FluentWindow):
             if panel is not None:
                 indicator_ani = getattr(panel, "indicatorAni", None)
                 if indicator_ani is not None:
-                    indicator_ani.stop()
+                    indicator_ani.blockSignals(True)
+                    try:
+                        indicator_ani.stop()
+                    finally:
+                        indicator_ani.blockSignals(False)
         except Exception:
             pass
 
@@ -1338,4 +1342,4 @@ class SettingsWindow(FluentWindow):
             self.show()
             self.activateWindow()
             self.raise_()
-        self.switchTo(self.aboutInterface)
+        self.switchTo(self.aboutInterface)

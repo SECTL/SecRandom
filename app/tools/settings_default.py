@@ -186,22 +186,21 @@ def manage_settings_file():
             logger.warning(f"读取设置文件失败: {e}，尝试从备份恢复")
             recovered = _try_recover_settings_from_backup()
             if recovered is not None:
-                logger.info("从备份恢复设置成功，将使用恢复的设置")
-                atomic_write_json(settings_file, recovered)
+                logger.info("从备份恢复设置成功，将使用恢复的设置继续合并")
+                current_settings = recovered
+            else:
+                logger.warning("无可用备份，将创建默认设置文件")
+                flat_settings = {}
+                for first_level_key, first_level_value in default_settings.items():
+                    flat_settings[first_level_key] = {}
+                    for second_level_key, second_level_value in first_level_value.items():
+                        if second_level_value["default_value"] is not None:
+                            flat_settings[first_level_key][second_level_key] = (
+                                second_level_value["default_value"]
+                            )
+
+                atomic_write_json(settings_file, flat_settings)
                 return
-
-            logger.warning("无可用备份，将创建默认设置文件")
-            flat_settings = {}
-            for first_level_key, first_level_value in default_settings.items():
-                flat_settings[first_level_key] = {}
-                for second_level_key, second_level_value in first_level_value.items():
-                    if second_level_value["default_value"] is not None:
-                        flat_settings[first_level_key][second_level_key] = (
-                            second_level_value["default_value"]
-                        )
-
-            atomic_write_json(settings_file, flat_settings)
-            return
 
         # 检查并更新设置文件
         settings_updated = False
