@@ -193,7 +193,10 @@ def manage_settings_file():
                 flat_settings = {}
                 for first_level_key, first_level_value in default_settings.items():
                     flat_settings[first_level_key] = {}
-                    for second_level_key, second_level_value in first_level_value.items():
+                    for (
+                        second_level_key,
+                        second_level_value,
+                    ) in first_level_value.items():
                         if second_level_value["default_value"] is not None:
                             flat_settings[first_level_key][second_level_key] = (
                                 second_level_value["default_value"]

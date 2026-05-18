@@ -1342,4 +1342,4 @@ class SettingsWindow(FluentWindow):
             self.show()
             self.activateWindow()
             self.raise_()
-        self.switchTo(self.aboutInterface)
+        self.switchTo(self.aboutInterface)

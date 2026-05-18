@@ -1,0 +1,19 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run SecRandom Desktop" type="UvRunConfigurationType" factoryName="UvRunConfigurationType">
+    <option name="args">
+      <list />
+    </option>
+    <option name="checkSync" value="true" />
+    <option name="debugJustMyCode" value="false" />
+    <option name="env">
+      <map />
+    </option>
+    <option name="runType" value="MODULE" />
+    <option name="scriptOrModule" value="main" />
+    <option name="uvArgs">
+      <list />
+    </option>
+    <option name="uvSdkKey" value="uv (SecRandom) (3)" />
+    <method v="2" />
+  </configuration>
+</component>

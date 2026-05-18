@@ -84,6 +84,7 @@ class MainWindow(FluentWindow):
         self.camera_preview_page = None
         self.history_page = None
         self.settingsInterface = None
+        self._quick_draw_roll_call_widget = None
         self._has_been_shown = False
         self.pre_class_reset_performed = False
 
@@ -743,21 +744,19 @@ class MainWindow(FluentWindow):
 
     def _handle_increase_roll_call_count(self):
         """处理增加点名人数快捷键"""
-        if hasattr(self, "roll_call_page") and self.roll_call_page:
-            if (
-                hasattr(self.roll_call_page, "contentWidget")
-                and self.roll_call_page.contentWidget
-            ):
-                self.roll_call_page.contentWidget.update_count(1)
+        roll_call_widget = self._get_roll_call_business_widget(
+            getattr(self, "roll_call_page", None), allow_fallback=False
+        )
+        if roll_call_widget and hasattr(roll_call_widget, "update_count"):
+            roll_call_widget.update_count(1)
 
     def _handle_decrease_roll_call_count(self):
         """处理减少点名人数快捷键"""
-        if hasattr(self, "roll_call_page") and self.roll_call_page:
-            if (
-                hasattr(self.roll_call_page, "contentWidget")
-                and self.roll_call_page.contentWidget
-            ):
-                self.roll_call_page.contentWidget.update_count(-1)
+        roll_call_widget = self._get_roll_call_business_widget(
+            getattr(self, "roll_call_page", None), allow_fallback=False
+        )
+        if roll_call_widget and hasattr(roll_call_widget, "update_count"):
+            roll_call_widget.update_count(-1)
 
     def _handle_increase_lottery_count(self):
         """处理增加抽奖人数快捷键"""
@@ -779,12 +778,11 @@ class MainWindow(FluentWindow):
 
     def _handle_start_roll_call(self):
         """处理开始点名快捷键"""
-        if hasattr(self, "roll_call_page") and self.roll_call_page:
-            if (
-                hasattr(self.roll_call_page, "contentWidget")
-                and self.roll_call_page.contentWidget
-            ):
-                self.roll_call_page.contentWidget.start_draw()
+        roll_call_widget = self._get_roll_call_business_widget(
+            getattr(self, "roll_call_page", None), allow_fallback=False
+        )
+        if roll_call_widget and hasattr(roll_call_widget, "start_draw"):
+            roll_call_widget.start_draw()
 
     def _handle_start_lottery(self):
         """处理开始抽奖快捷键"""
@@ -836,17 +834,18 @@ class MainWindow(FluentWindow):
         点击悬浮窗中的闪抽按钮时调用"""
         logger.debug("_handle_quick_draw: 收到闪抽请求")
 
-        if not hasattr(self, "roll_call_page") or not self.roll_call_page:
-            logger.exception("_handle_quick_draw: roll_call_page未创建")
-            return
+        roll_call_page = getattr(self, "roll_call_page", None)
+        if roll_call_page is None:
+            logger.warning("_handle_quick_draw: 点名页面尚未创建，尝试使用闪抽后台组件")
+        else:
+            logger.debug("_handle_quick_draw: roll_call_page已创建")
 
-        logger.debug("_handle_quick_draw: roll_call_page已创建")
-
-        roll_call_page = self.roll_call_page
-        roll_call_widget = self._get_roll_call_widget(roll_call_page)
+        roll_call_widget = self._get_roll_call_business_widget(
+            roll_call_page, allow_fallback=True
+        )
 
         if not roll_call_widget:
-            logger.exception("_handle_quick_draw: 无法获取roll_call_widget")
+            logger.error("_handle_quick_draw: 无法获取可用于闪抽的点名业务组件")
             return
 
         logger.debug("_handle_quick_draw: 成功获取roll_call_widget")
@@ -859,37 +858,103 @@ class MainWindow(FluentWindow):
         finally:
             self._restore_original_settings(roll_call_widget, original_settings)
 
-    def _get_roll_call_widget(self, roll_call_page):
-        """获取点名页面组件
+    def _get_roll_call_business_widget(self, roll_call_page, allow_fallback=False):
+        """获取可执行闪抽的点名业务组件
 
         Args:
             roll_call_page: 点名页面对象
+            allow_fallback: 是否允许使用闪抽后台组件
 
         Returns:
-            点名组件对象或None
+            点名业务组件对象或None
         """
-        if (
-            hasattr(roll_call_page, "roll_call_widget")
-            and roll_call_page.roll_call_widget
-        ):
-            return roll_call_page.roll_call_widget
+        business_widget = self._find_roll_call_business_widget(roll_call_page)
+        if business_widget:
+            return business_widget
 
-        if hasattr(roll_call_page, "contentWidget") and roll_call_page.contentWidget:
-            return roll_call_page.contentWidget
+        if roll_call_page is None:
+            return self._get_quick_draw_roll_call_widget() if allow_fallback else None
 
         roll_call_page.create_content()
         QApplication.processEvents()
 
-        if (
-            hasattr(roll_call_page, "roll_call_widget")
-            and roll_call_page.roll_call_widget
-        ):
-            return roll_call_page.roll_call_widget
+        business_widget = self._find_roll_call_business_widget(roll_call_page)
+        if business_widget:
+            return business_widget
 
-        if hasattr(roll_call_page, "contentWidget") and roll_call_page.contentWidget:
-            return roll_call_page.contentWidget
+        if not allow_fallback:
+            logger.warning("_get_roll_call_business_widget: 当前点名页面不是业务组件")
+            return None
+
+        logger.warning(
+            "_get_roll_call_business_widget: 当前点名页面不是业务组件，改用闪抽后台组件"
+        )
+        return self._get_quick_draw_roll_call_widget()
+
+    def _find_roll_call_business_widget(self, roll_call_page):
+        """从点名页面中查找真正的点名业务组件"""
+        if roll_call_page is None:
+            return None
+
+        for attr_name in ("roll_call_widget", "contentWidget"):
+            widget = getattr(roll_call_page, attr_name, None)
+            if self._is_roll_call_widget_usable(widget):
+                return widget
 
         return None
+
+    def _is_roll_call_widget_usable(self, widget):
+        """判断组件是否具备闪抽所需的点名业务能力"""
+        if widget is None:
+            return False
+
+        try:
+            # HTML 主题包装器只负责展示，不承载点名业务控件。
+            if widget.property("theme_html_wrapper"):
+                return False
+
+            required_attrs = (
+                "list_combobox",
+                "range_combobox",
+                "gender_combobox",
+                "count_label",
+                "many_count_label",
+                "manager",
+                "result_grid",
+            )
+            required_methods = (
+                "on_class_changed",
+                "on_filter_changed",
+                "_update_remaining_list_delayed",
+                "play_voice_result",
+            )
+
+            return all(hasattr(widget, attr) for attr in required_attrs) and all(
+                callable(getattr(widget, method, None)) for method in required_methods
+            )
+        except RuntimeError:
+            return False
+
+    def _get_quick_draw_roll_call_widget(self):
+        """获取闪抽使用的后台点名组件"""
+        if (
+            self._quick_draw_roll_call_widget is not None
+            and self._is_roll_call_widget_usable(self._quick_draw_roll_call_widget)
+        ):
+            return self._quick_draw_roll_call_widget
+
+        try:
+            from app.view.main.roll_call import roll_call
+
+            widget = roll_call(self)
+            widget.setObjectName("quick_draw_roll_call_widget")
+            widget.hide()
+            self._quick_draw_roll_call_widget = widget
+            QApplication.processEvents()
+            return widget
+        except Exception as e:
+            logger.exception(f"创建闪抽默认点名组件失败: {e}")
+            return None
 
     def _save_original_settings(self, roll_call_widget):
         """保存原始设置

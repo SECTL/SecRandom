@@ -27,7 +27,7 @@ countdown_timer = {
             "description": "退出全屏",
             "pushbutton_name": "退出全屏",
         },
-        "opacity": {"name": "透明度", "description": "调整窗口透明度"},
+        "opacity": {"name": "不透明度", "description": "调整窗口不透明度"},
         "presets": {"name": "预设", "description": "常用倒计时预设"},
         "preset_common": {"name": "常用", "description": "常用预设"},
         "preset_recent": {"name": "最近", "description": "最近使用"},

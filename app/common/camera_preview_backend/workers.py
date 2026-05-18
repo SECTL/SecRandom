@@ -10,6 +10,7 @@ from loguru import logger
 from PySide6.QtCore import QObject, Signal, Slot, QTimer, Qt
 
 from app.common.camera_preview_backend.detection import (
+    FaceDetectorModelError,
     create_onnx_face_detector,
     detect_faces_onnx,
     list_onnx_model_filenames,
@@ -577,6 +578,14 @@ class FaceDetectorWorker(QObject):
             if state is None:
                 return
             results = detect_faces_onnx(frame_bgr, detector_state=state)
+        except FaceDetectorModelError as exc:
+            # 模型/尺寸不兼容属于用户可恢复错误，不用 exception 触发 Sentry。
+            logger.error("人脸检测模型不兼容: {}", exc)
+            self._detector_state = None
+            self.error_occurred.emit(
+                "model_incompatible", "Face detection model incompatible", str(exc)
+            )
+            return
         except Exception as exc:
             logger.exception("人脸检测失败: {}", exc)
             key = "detect_failed"

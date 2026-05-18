@@ -15,6 +15,24 @@ from app.tools.path_utils import ensure_dir, get_data_path
 Rect = Tuple[int, int, int, int]
 _CV2_IMPORT_LOCK = threading.Lock()
 
+# UltraLight/RFB 模型的输入尺寸写在 ONNX 图结构里，不能被 UI 配置覆盖。
+_ULTRALIGHT_DEFAULT_INPUT_SIZE = (320, 240)
+_ULTRALIGHT_INPUT_SIZE_BY_NAME = {
+    "version-rfb-320.onnx": (320, 240),
+    "version-rfb-640.onnx": (640, 480),
+    "version-slim-320.onnx": (320, 240),
+}
+
+# 这类 OpenCV DNN 断言通常表示输入尺寸和固定图结构不匹配。
+_OPENCV_DNN_SHAPE_ERROR_MARKERS = (
+    "NaryEltwiseLayerImpl::findCommonShape",
+    "shape[i] == 1 || outShape[i] == 1",
+)
+
+
+class FaceDetectorModelError(RuntimeError):
+    """人脸检测模型与当前检测器不兼容，调用方应按用户可恢复错误处理。"""
+
 
 def merge_face_rects(frame_size: Tuple[int, int], rects: list[Rect]) -> list[Rect]:
     h = int(frame_size[0]) if frame_size and len(frame_size) > 0 else 0
@@ -194,6 +212,19 @@ def resolve_onnx_model_path(
     raise FileNotFoundError(str(path))
 
 
+def _normalize_input_size(input_size: Optional[Tuple[int, int]]) -> Tuple[int, int] | None:
+    """将设置项里的输入尺寸归一化，非法值按未配置处理。"""
+    try:
+        if input_size is not None:
+            w = int(input_size[0])
+            h = int(input_size[1])
+            if w > 0 and h > 0:
+                return (w, h)
+    except Exception:
+        pass
+    return None
+
+
 def get_default_yunet_model_filename() -> str:
     """获取 YuNet 轻量人脸检测模型的默认文件名。"""
     return "face_detection_yunet_2023mar_int8bq.onnx"
@@ -343,12 +374,21 @@ def detect_faces_yunet(
 
 
 def _ultralight_input_size_from_name(model_name: str) -> Tuple[int, int]:
+    """根据 UltraLight 模型文件名选择其固定输入尺寸。"""
     name = str(model_name or "").lower()
+    for marker, input_size in _ULTRALIGHT_INPUT_SIZE_BY_NAME.items():
+        if marker in name:
+            return input_size
     if "640" in name:
         return (640, 480)
     if "320" in name:
         return (320, 240)
-    return (320, 240)
+    return _ULTRALIGHT_DEFAULT_INPUT_SIZE
+
+
+def _is_opencv_dnn_shape_error(exc: BaseException) -> bool:
+    msg = str(exc)
+    return any(marker in msg for marker in _OPENCV_DNN_SHAPE_ERROR_MARKERS)
 
 
 def create_ultralight_net(*, model_path: Path):
@@ -457,7 +497,14 @@ def detect_faces_ultralight(
         out_names = net.getUnconnectedOutLayersNames()
     except Exception:
         out_names = []
-    outs = net.forward(out_names) if out_names else net.forward()
+    try:
+        outs = net.forward(out_names) if out_names else net.forward()
+    except Exception as exc:
+        if _is_opencv_dnn_shape_error(exc):
+            raise FaceDetectorModelError(
+                f"ONNX 模型输入尺寸与模型结构不兼容: {input_size}"
+            ) from exc
+        raise
     if outs is None:
         raise RuntimeError("ONNX forward returned None")
 
@@ -472,7 +519,7 @@ def detect_faces_ultralight(
             boxes = arr
 
     if scores is None or boxes is None:
-        raise RuntimeError(
+        raise FaceDetectorModelError(
             "Unsupported ONNX model outputs (need Nx2 scores and Nx4 boxes)"
         )
 
@@ -565,19 +612,7 @@ def create_onnx_face_detector(
     *, model_path: Path, input_size: Optional[Tuple[int, int]] = None
 ):
     name = model_path.name.lower()
-
-    override_w = 0
-    override_h = 0
-    try:
-        if input_size is not None:
-            override_w = int(input_size[0])
-            override_h = int(input_size[1])
-    except Exception:
-        override_w = 0
-        override_h = 0
-    override_size = (
-        (override_w, override_h) if override_w > 0 and override_h > 0 else None
-    )
+    override_size = _normalize_input_size(input_size)
 
     if "yunet" in name:
         detector = create_yunet_face_detector(
@@ -592,9 +627,14 @@ def create_onnx_face_detector(
         }
 
     default_input_size = _ultralight_input_size_from_name(model_path.name)
-    resolved_input_size = (
-        override_size if override_size is not None else default_input_size
-    )
+    resolved_input_size = default_input_size
+    if override_size is not None and override_size != default_input_size:
+        # 外部 input_size 只适用于 YuNet；UltraLight 必须按模型固定尺寸推理。
+        logger.warning(
+            "UltraLight ONNX 模型使用固定输入尺寸 {}，忽略外部配置的输入尺寸 {}",
+            default_input_size,
+            override_size,
+        )
     net = create_ultralight_net(model_path=model_path)
     priors = _generate_ultralight_priors(resolved_input_size)
     return {

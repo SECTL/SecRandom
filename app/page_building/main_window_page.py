@@ -75,6 +75,7 @@ class roll_call_page(PageTemplate):
                 widget = item.widget()
                 widget.deleteLater()
         self.content_created = False
+        self.roll_call_widget = None
         self.contentWidget = None
 
 
@@ -135,6 +136,7 @@ class lottery_page(PageTemplate):
                 widget = item.widget()
                 widget.deleteLater()
         self.content_created = False
+        self.lottery_widget = None
         self.contentWidget = None
 
 

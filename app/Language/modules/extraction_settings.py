@@ -86,8 +86,8 @@ roll_call_settings = {
             "description": "设置提示语文字的颜色",
         },
         "reminder_text_opacity": {
-            "name": "提示语透明度",
-            "description": "设置提示语文字的透明度（0-100）",
+            "name": "提示语不透明度",
+            "description": "设置提示语文字的不透明度（0-100）",
         },
         "use_global_font": {
             "name": "使用全局字体",
@@ -478,8 +478,8 @@ roll_call_settings = {
             "description": "リマインダーテキストの色",
         },
         "reminder_text_opacity": {
-            "name": "リマインダー透明度",
-            "description": "リマインダーテキストの透明度（0-100）",
+            "name": "リマインダー不透明度",
+            "description": "リマインダーテキストの不透明度（0-100）",
         },
         "use_global_font": {
             "name": "グローバルフォントを使用",
@@ -1080,8 +1080,8 @@ lottery_settings = {
             "description": "设置提示语文字的颜色",
         },
         "reminder_text_opacity": {
-            "name": "提示语透明度",
-            "description": "设置提示语文字的透明度（0-100）",
+            "name": "提示语不透明度",
+            "description": "设置提示语文字的不透明度（0-100）",
         },
         "use_global_font": {
             "name": "使用全局字体",
@@ -1498,8 +1498,8 @@ lottery_settings = {
             "description": "リマインダーテキストの色",
         },
         "reminder_text_opacity": {
-            "name": "リマインダー透明度",
-            "description": "リマインダーテキストの透明度（0-100）",
+            "name": "リマインダー不透明度",
+            "description": "リマインダーテキストの不透明度（0-100）",
         },
         "use_global_font": {
             "name": "グローバルフォントを使用",

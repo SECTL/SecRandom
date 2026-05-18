@@ -18,8 +18,8 @@ floating_window_management = {
             "switchbutton_name": {"enable": "", "disable": ""},
         },
         "floating_window_opacity": {
-            "name": "浮窗透明度",
-            "description": "调整浮窗透明度",
+            "name": "浮窗不透明度",
+            "description": "调整浮窗不透明度",
         },
         "floating_window_topmost_mode": {
             "name": "置顶模式",
@@ -366,8 +366,8 @@ floating_window_management = {
             "switchbutton_name": {"enable": "", "disable": ""},
         },
         "floating_window_opacity": {
-            "name": "フローティングウィンドウ透明度",
-            "description": "フローティングウィンドウの透明度を調整",
+            "name": "フローティングウィンドウ不透明度",
+            "description": "フローティングウィンドウの不透明度を調整",
         },
         "floating_window_topmost_mode": {
             "name": "最前面モード",

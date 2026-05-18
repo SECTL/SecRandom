@@ -91,8 +91,8 @@ roll_call_notification_settings = {
             "description": "调整点名通知浮窗相对默认位置垂直偏移量（像素）",
         },
         "floating_window_transparency": {
-            "name": "透明度",
-            "description": "调整点名通知浮窗透明度，数值越小越透明（0-100）",
+            "name": "不透明度",
+            "description": "调整点名通知浮窗不透明度，数值越小越透明（0-100）",
         },
         "floating_window_auto_close_time": {
             "name": "浮窗自动关闭时间",
@@ -291,8 +291,8 @@ roll_call_notification_settings = {
             "description": "点呼通知フローティングウィンドウのデフォルト位置からの垂直オフセット（ピクセル）を設定",
         },
         "floating_window_transparency": {
-            "name": "透明度",
-            "description": "点呼通知フローティングウィンドウの透明度を設定、値が小さいほど透明（0-100）",
+            "name": "不透明度",
+            "description": "点呼通知フローティングウィンドウの不透明度を設定、値が小さいほど透明（0-100）",
         },
         "floating_window_auto_close_time": {
             "name": "フローティングウィンドウ自動クローズ時間",
@@ -392,8 +392,8 @@ quick_draw_notification_settings = {
             "description": "设置闪抽通知浮窗相对默认位置垂直偏移量（像素）",
         },
         "floating_window_transparency": {
-            "name": "浮窗透明度",
-            "description": "设置闪抽通知浮窗透明度，数值越小越透明（0-100）",
+            "name": "浮窗不透明度",
+            "description": "设置闪抽通知浮窗不透明度，数值越小越透明（0-100）",
         },
         "floating_window_auto_close_time": {
             "name": "浮窗自动关闭时间",
@@ -553,8 +553,8 @@ quick_draw_notification_settings = {
             "description": "クイックピック通知フローティングウィンドウのデフォルト位置からの垂直オフセット（ピクセル）を設定",
         },
         "floating_window_transparency": {
-            "name": "フローティングウィンドウ透明度",
-            "description": "クイックピック通知フローティングウィンドウの透明度を設定、値が小さいほど透明（0-100）",
+            "name": "フローティングウィンドウ不透明度",
+            "description": "クイックピック通知フローティングウィンドウの不透明度を設定、値が小さいほど透明（0-100）",
         },
         "floating_window_auto_close_time": {
             "name": "フローティングウィンドウ自動クローズ時間",
@@ -645,8 +645,8 @@ lottery_notification_settings = {
             "description": "设置抽奖通知浮窗相对默认位置垂直偏移量（像素）",
         },
         "floating_window_transparency": {
-            "name": "浮窗透明度",
-            "description": "设置抽奖通知浮窗透明度，数值越小越透明（0-100）",
+            "name": "浮窗不透明度",
+            "description": "设置抽奖通知浮窗不透明度，数值越小越透明（0-100）",
         },
         "floating_window_auto_close_time": {
             "name": "浮窗自动关闭时间",
@@ -836,8 +836,8 @@ lottery_notification_settings = {
             "description": "抽選通知フローティングウィンドウのデフォルト位置からの垂直オフセット（ピクセル）を設定",
         },
         "floating_window_transparency": {
-            "name": "フローティングウィンドウ透明度",
-            "description": "抽選通知フローティングウィンドウの透明度を設定、値が小さいほど透明（0-100）",
+            "name": "フローティングウィンドウ不透明度",
+            "description": "抽選通知フローティングウィンドウの不透明度を設定、値が小さいほど透明（0-100）",
         },
         "floating_window_auto_close_time": {
             "name": "フローティングウィンドウ自動クローズ時間",

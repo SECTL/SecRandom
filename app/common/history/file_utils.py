@@ -77,7 +77,9 @@ def get_history_file_path(
         try:
             history_dir.unlink(missing_ok=True)
         except PermissionError as e:
-            logger.error(f"删除旧版历史记录文件失败（权限不足）: {history_dir}, 错误: {e}")
+            logger.error(
+                f"删除旧版历史记录文件失败（权限不足）: {history_dir}, 错误: {e}"
+            )
         except OSError as e:
             logger.error(f"删除旧版历史记录文件失败: {history_dir}, 错误: {e}")
     try:
