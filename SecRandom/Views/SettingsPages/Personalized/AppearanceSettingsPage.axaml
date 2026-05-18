@@ -1,0 +1,134 @@
+﻿
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Personalized"
+             xmlns:lspa="clr-namespace:SecRandom.Langs.SettingsPages.Personalized.Appearance"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:secRandom="clr-namespace:SecRandom"
+             xmlns:converters="clr-namespace:SecRandom.Converters"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SecRandom.Views.SettingsPages.Personalized.AppearanceSettingsPage"
+             x:DataType="local:AppearanceSettingsPage"
+             d:DataContext="{d:DesignInstance local:AppearanceSettingsPage}"
+             Unloaded="OnUnloaded">
+    <UserControl.Resources>
+        <converters:StringToFontFamilyConverter x:Key="StringToFontFamilyConverter" />
+    </UserControl.Resources>
+    
+    <ScrollViewer>
+        <StackPanel Classes="page-container">
+            <sr:IconText x:Name="S_Theme"
+                         Text="{x:Static lspa:Resources.S_Theme}"
+                         Glyph="{sr:Fi ColorRegular}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_Theme_Theme"
+                                   Header="{x:Static lspa:Resources.S_Theme_Theme}"
+                                   Description="{x:Static lspa:Resources.S_Theme_Theme_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi DarkThemeRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.Theme}">
+                        <ComboBoxItem Content="{x:Static lspa:Resources.O_Theme_Light}" />
+                        <ComboBoxItem Content="{x:Static lspa:Resources.O_Theme_Dark}" />
+                        <ComboBoxItem Content="{x:Static lspa:Resources.O_Theme_Auto}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Theme_ThemeColor"
+                                   Header="{x:Static lspa:Resources.S_Theme_ThemeColor}"
+                                   Description="{x:Static lspa:Resources.S_Theme_ThemeColor_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ColorPicker Color="{Binding Settings.ThemeColor}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+            
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText x:Name="S_Font"
+                         Text="{x:Static lspa:Resources.S_Font}"
+                         Glyph="{sr:Fi TextFontRegular}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_Font_FontFamily"
+                                   Header="{x:Static lspa:Resources.S_Font_FontFamily}"
+                                   Description="{x:Static lspa:Resources.S_Font_FontFamily_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox x:Name="FontComboBox"
+                              HorizontalAlignment="Left" MaxDropDownHeight="360"
+                              ItemsSource="{Binding FontFamilies}"
+                              SelectedValue="{Binding Settings.Font, Converter={StaticResource StringToFontFamilyConverter}}">
+                        <ComboBox.Styles>
+                            <Style Selector="ComboBoxItem">
+                                <Setter Property="MinHeight" Value="32" />
+                                <Setter Property="VerticalContentAlignment" Value="Center" />
+                            </Style>
+
+                            <Style Selector="#FontComboBox /template/ Popup#PART_Popup">
+                                <Setter Property="Width" Value="280" />
+                                <Setter Property="Placement" Value="BottomEdgeAlignedRight" />
+                            </Style>
+                        </ComboBox.Styles>
+
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock FontFamily="{Binding}" FontWeight="Normal"
+                                           ToolTip.Tip="{Binding Name}"
+                                           Height="20" MaxWidth="240"
+                                           TextWrapping="NoWrap"
+                                           TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center"
+                                           Classes.DefaultFont="{Binding Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static secRandom:App.DefaultFontFamily}}">
+                                    <TextBlock.Styles>
+                                        <Style Selector="TextBlock">
+                                            <Style Selector="^.DefaultFont">
+                                                <Setter Property="Text"
+                                                        Value="{x:Static lspa:Resources.O_FontFamily_Default}" />
+                                            </Style>
+                                            <Setter Property="Text" Value="{Binding}" />
+                                        </Style>
+                                    </TextBlock.Styles>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Font_FontWeight"
+                                   Header="{x:Static lspa:Resources.S_Font_FontWeight}"
+                                   Description="{x:Static lspa:Resources.S_Font_FontWeight_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextBoldRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.FontWeight}">
+                        <ComboBoxItem Content="{x:Static lspa:Resources.O_FontWeight_Thin}" />
+                        <ComboBoxItem Content="{x:Static lspa:Resources.O_FontWeight_ExtraLight}" />
+                        <ComboBoxItem Content="{x:Static lspa:Resources.O_FontWeight_Light}" />
+                        <ComboBoxItem Content="{x:Static lspa:Resources.O_FontWeight_Regular}" />
+                        <ComboBoxItem Content="{x:Static lspa:Resources.O_FontWeight_Medium}" />
+                        <ComboBoxItem Content="{x:Static lspa:Resources.O_FontWeight_SemiBold}" />
+                        <ComboBoxItem Content="{x:Static lspa:Resources.O_FontWeight_Bold}" />
+                        <ComboBoxItem Content="{x:Static lspa:Resources.O_FontWeight_ExtraBold}" />
+                        <ComboBoxItem Content="{x:Static lspa:Resources.O_FontWeight_Black}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+            
+            <TabControl Classes="compact" Padding="0">
+                <TabItem Header="{x:Static lspa:Resources.C_Font_Preview}">
+                    <TextBox Margin="0 4 0 0"
+                             Padding="8"
+                             FontSize="17"
+                             TextAlignment="Center"
+                             IsReadOnly="False"
+                             AcceptsReturn="True"
+                             Text="{x:Static lspa:Resources.C_Font_Preview_Text}" />
+                </TabItem>
+            </TabControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

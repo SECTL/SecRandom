@@ -213,6 +213,15 @@ namespace SecRandom.Langs.Common {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 外观.
+        /// </summary>
+        public static string Settings_Appearance {
+            get {
+                return ResourceManager.GetString("Settings_Appearance", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 备份设置.
         /// </summary>
         public static string Settings_Backup {
@@ -290,6 +299,15 @@ namespace SecRandom.Langs.Common {
         public static string Settings_Notification {
             get {
                 return ResourceManager.GetString("Settings_Notification", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 个性化设置.
+        /// </summary>
+        public static string Settings_Personalized {
+            get {
+                return ResourceManager.GetString("Settings_Personalized", resourceCulture);
             }
         }
         

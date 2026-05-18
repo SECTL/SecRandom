@@ -74,102 +74,6 @@ bug 报 GitHub Issue 或 SECTL QQ组织群 - 833875216</value>
     <data name="S_Behavior_UrlProtocol_D" xml:space="preserve">
         <value>注册自定义 URL 协议 (secrandom://)，并启用 IPC 通信，支持链接启动与外部联动</value>
     </data>
-    <data name="S_Personalized_Theme" xml:space="preserve">
-        <value>主题模式</value>
-    </data>
-    <data name="S_Personalized_Theme_D" xml:space="preserve">
-        <value>选择软件界面主题样式</value>
-    </data>
-    <data name="S_Personalized_Language" xml:space="preserve">
-        <value>显示语言</value>
-    </data>
-    <data name="S_Personalized_Language_D" xml:space="preserve">
-        <value>切换软件界面语言（重启软件后生效）</value>
-    </data>
-    <data name="S_Personalized_Font" xml:space="preserve">
-        <value>字体</value>
-    </data>
-    <data name="S_Personalized_Font_D" xml:space="preserve">
-        <value>设置软件界面显示字体</value>
-    </data>
-    <data name="S_Personalized_FontWeight" xml:space="preserve">
-        <value>字体粗细</value>
-    </data>
-    <data name="S_Personalized_FontWeight_D" xml:space="preserve">
-        <value>设置软件界面字体粗细</value>
-    </data>
-    <data name="S_Personalized_ThemeColor" xml:space="preserve">
-        <value>主题颜色</value>
-    </data>
-    <data name="S_Personalized_ThemeColor_D" xml:space="preserve">
-        <value>设置软件界面主题色彩</value>
-    </data>
-    <data name="C_ThemeManager" xml:space="preserve">
-        <value>主题管理</value>
-    </data>
-    <data name="C_ThemeManager_D" xml:space="preserve">
-        <value>打开主题管理与背景设置</value>
-    </data>
-    <data name="O_MainWindowTopmostMode_None" xml:space="preserve">
-        <value>关闭置顶</value>
-    </data>
-    <data name="O_MainWindowTopmostMode_Topmost" xml:space="preserve">
-        <value>置顶</value>
-    </data>
-    <data name="O_MainWindowTopmostMode_UiAccess" xml:space="preserve">
-        <value>UIAccess 置顶</value>
-    </data>
-    <data name="O_Theme_Light" xml:space="preserve">
-        <value>浅色</value>
-    </data>
-    <data name="O_Theme_Dark" xml:space="preserve">
-        <value>深色</value>
-    </data>
-    <data name="O_Theme_Auto" xml:space="preserve">
-        <value>跟随系统</value>
-    </data>
-    <data name="S_Personalized" xml:space="preserve">
-        <value>个性化</value>
-    </data>
-    <data name="O_FontWeight_Thin" xml:space="preserve">
-        <value>极细</value>
-        <comment>FontWeight 100</comment>
-    </data>
-    <data name="O_FontWeight_ExtraLight" xml:space="preserve">
-        <value>特细</value>
-        <comment>FontWeight 200</comment>
-    </data>
-    <data name="O_FontWeight_Light" xml:space="preserve">
-        <value>细体</value>
-        <comment>FontWeight 300</comment>
-    </data>
-    <data name="O_FontWeight_Regular" xml:space="preserve">
-        <value>常规</value>
-        <comment>FontWeight 400</comment>
-    </data>
-    <data name="O_FontWeight_Medium" xml:space="preserve">
-        <value>中等</value>
-        <comment>FontWeight 500</comment>
-    </data>
-    <data name="O_FontWeight_SemiBold" xml:space="preserve">
-        <value>半粗</value>
-        <comment>FontWeight 600</comment>
-    </data>
-    <data name="O_FontWeight_Bold" xml:space="preserve">
-        <value>粗体</value>
-        <comment>FontWeight 700</comment>
-    </data>
-    <data name="O_FontWeight_ExtraBold" xml:space="preserve">
-        <value>特粗</value>
-        <comment>FontWeight 800</comment>
-    </data>
-    <data name="O_FontWeight_Black" xml:space="preserve">
-        <value>极粗</value>
-        <comment>FontWeight 900</comment>
-    </data>
-    <data name="O_FontFamily_Default" xml:space="preserve">
-        <value>MiSans (默认)</value>
-    </data>
     <data name="S_Telemetry" xml:space="preserve">
         <value>遥测</value>
     </data>
@@ -193,5 +97,20 @@ bug 报 GitHub Issue 或 SECTL QQ组织群 - 833875216</value>
     </data>
     <data name="O_TelemetryMode_Off" xml:space="preserve">
         <value>停止上报</value>
+    </data>
+    <data name="O_MainWindowTopmostMode_None" xml:space="preserve">
+        <value>关闭置顶</value>
+    </data>
+    <data name="O_MainWindowTopmostMode_Topmost" xml:space="preserve">
+        <value>置顶</value>
+    </data>
+    <data name="O_MainWindowTopmostMode_UiAccess" xml:space="preserve">
+        <value>UIAccess 置顶</value>
+    </data>
+    <data name="S_Behavior_Language" xml:space="preserve">
+        <value>显示语言</value>
+    </data>
+    <data name="S_Behavior_Language_D" xml:space="preserve">
+        <value>切换软件界面语言（重启软件后生效）</value>
     </data>
 </root>

@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel;
-using SecRandom.Core.Models.SubConfigs;
+using FaceDetectorSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.FaceDetectorSettingsConfig;
 
 namespace SecRandom.Core.Services.Camera;
 

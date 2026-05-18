@@ -138,7 +138,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         if (transform == null) return;
         var position = transform.Value.Transform(new Point(0, 0));
 
-        var color = IAppHost.GetService<MainConfigHandler>().Data.BasicSettings.ThemeColor;
+        var color = IAppHost.GetService<MainConfigHandler>().Data.Appearance.ThemeColor;
         var highlight = new Border
         {
             Width = target.Bounds.Width,

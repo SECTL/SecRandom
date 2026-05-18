@@ -2,8 +2,8 @@
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Camera;
-using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using FaceDetectorSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.FaceDetectorSettingsConfig;
 
 namespace SecRandom.Core.Services.Camera;
 

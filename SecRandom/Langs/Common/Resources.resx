@@ -124,4 +124,10 @@
     <data name="Settings_Home" xml:space="preserve">
         <value>主页</value>
     </data>
+    <data name="Settings_Personalized" xml:space="preserve">
+        <value>个性化设置</value>
+    </data>
+    <data name="Settings_Appearance" xml:space="preserve">
+        <value>外观</value>
+    </data>
 </root>

@@ -124,4 +124,10 @@
     <data name="Settings_Home" xml:space="preserve">
         <value>Home</value>
     </data>
+    <data name="Settings_Personalized" xml:space="preserve">
+        <value>Personalized Settings</value>
+    </data>
+    <data name="Settings_Appearance" xml:space="preserve">
+        <value>Appearance</value>
+    </data>
 </root>

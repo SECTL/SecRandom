@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 using Avalonia.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
-using SecRandom.Core.Models.SubConfigs;
+using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Models;
 using SecRandom.ViewModels;
 

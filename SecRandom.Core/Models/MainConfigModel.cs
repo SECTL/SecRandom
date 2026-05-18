@@ -4,31 +4,40 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
+using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.AppearanceSettingsConfig;
+using BackupConfig = SecRandom.Core.Models.SubConfigs.General.BackupConfig;
+using BasicSettingsConfig = SecRandom.Core.Models.SubConfigs.General.BasicSettingsConfig;
+using DefaultDrawSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.DefaultDrawSettingsConfig;
+using DrawSettingsConfigBase = SecRandom.Core.Models.SubConfigs.Picking.DrawSettingsConfigBase;
+using FaceDetectorSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.FaceDetectorSettingsConfig;
+using FairDrawSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.FairDrawSettingsConfig;
+using LotterySettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.LotterySettingsConfig;
+using OverridableDrawSettings = SecRandom.Core.Models.SubConfigs.Picking.OverridableDrawSettings;
+using QuickDrawSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.QuickDrawSettingsConfig;
+using RollCallSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.RollCallSettingsConfig;
 
 namespace SecRandom.Core.Models;
 
 public partial class MainConfigModel : ConfigBase
 {
-    [ObservableProperty] private BackupConfig _backup = new();
-
-    // 基本设置
-    [ObservableProperty] private BasicSettingsConfig _basicSettings = new();
-
-    // 抽取设置
-    [ObservableProperty] private DefaultDrawSettingsConfig _defaultDrawSettings = new();
-    [ObservableProperty] private FaceDetectorSettingsConfig _faceDetectorSettingsConfig = new();
-
-    // ...
-    // 更多设置->公平抽取设置
-    [ObservableProperty] private FairDrawSettingsConfig _fairDrawSettings = new();
-
     [ObservableProperty] private FloatPositionConfig _floatPosition = new();
-    [ObservableProperty] private LotterySettingsConfig _lotterySettings = new();
-    [ObservableProperty] private QuickDrawSettingsConfig _quickDrawSettings = new();
+    
+    // 通用
+    [ObservableProperty] private BasicSettingsConfig _basic = new();
+    [ObservableProperty] private BackupConfig _backup = new();
+    
+    // 个性化
+    [ObservableProperty] private AppearanceSettingsConfig _appearance = new();
+    
+    // 抽取设置
+    [ObservableProperty] private FairDrawSettingsConfig _fairDrawSettings = new();
+    [ObservableProperty] private DefaultDrawSettingsConfig _defaultDrawSettings = new();
     [ObservableProperty] private RollCallSettingsConfig _rollCallSettings = new();
+    [ObservableProperty] private QuickDrawSettingsConfig _quickDrawSettings = new();
+    [ObservableProperty] private LotterySettingsConfig _lotterySettings = new();
+    [ObservableProperty] private FaceDetectorSettingsConfig _faceDetectorSettings = new();
 
     [JsonIgnore] public override string ConfigFilePath => Utils.GetFilePath("config", "settings.json");
-    // ...
 
     public DrawSettingsConfigBase GetOverrideDrawSettings(
         DrawSettingsType drawSettingsType, OverridableDrawSettingsType settingsType)

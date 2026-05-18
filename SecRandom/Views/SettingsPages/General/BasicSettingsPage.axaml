@@ -5,18 +5,12 @@
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.General"
              xmlns:lsb="clr-namespace:SecRandom.Langs.SettingsPages.General.Basic"
-             xmlns:converters="clr-namespace:SecRandom.Converters"
-             xmlns:secRandom="clr-namespace:SecRandom"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.General.BasicSettingsPage"
              x:DataType="local:BasicSettingsPage"
              d:DataContext="{d:DesignInstance local:BasicSettingsPage}"
              Unloaded="OnUnloaded">
-    <UserControl.Resources>
-        <converters:StringToFontFamilyConverter x:Key="StringToFontFamilyConverter" />
-    </UserControl.Resources>
-
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
             <fa:FAInfoBar Title="{x:Static lsb:Resources.C_VersionNotice}"
@@ -36,6 +30,19 @@
                          Text="{x:Static lsb:Resources.S_Behavior}"
                          Glyph="{sr:Fi FlashRegular}"
                          Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_Behavior_Language"
+                                   Header="{x:Static lsb:Resources.S_Behavior_Language}"
+                                   Description="{x:Static lsb:Resources.S_Behavior_Language_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LocalLanguageRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.Language}">
+                        <ComboBoxItem Content="简体中文" />
+                        <ComboBoxItem Content="English" />
+                        <ComboBoxItem Content="日本語" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
 
             <fa:FASettingsExpander x:Name="S_Behavior_Autostart"
                                    Header="{x:Static lsb:Resources.S_Behavior_Autostart}"
@@ -92,118 +99,6 @@
                                    IconSource="{sr:FluentIconSource {sr:Fi LinkRegular}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.UrlProtocol}" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <Separator Margin="0 12 0 4" />
-            <sr:IconText x:Name="S_Personalized"
-                         Text="{x:Static lsb:Resources.S_Personalized}"
-                         Glyph="{sr:Fi ColorRegular}"
-                         Margin="0 0 0 4" />
-
-            <fa:FASettingsExpander x:Name="S_Personalized_Theme"
-                                   Header="{x:Static lsb:Resources.S_Personalized_Theme}"
-                                   Description="{x:Static lsb:Resources.S_Personalized_Theme_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi DarkThemeRegular}}">
-                <fa:FASettingsExpander.Footer>
-                    <ComboBox SelectedIndex="{Binding Settings.Theme}">
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_Theme_Light}" />
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_Theme_Dark}" />
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_Theme_Auto}" />
-                    </ComboBox>
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander Header="{x:Static lsb:Resources.C_ThemeManager}"
-                                   Description="{x:Static lsb:Resources.C_ThemeManager_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PaintBrushRegular}}"
-                                   IsClickEnabled="True"
-                                   ActionIconSource="{sr:FluentIconSource {sr:Fi ChevronRightRegular}}" />
-
-            <fa:FASettingsExpander x:Name="S_Personalized_Language"
-                                   Header="{x:Static lsb:Resources.S_Personalized_Language}"
-                                   Description="{x:Static lsb:Resources.S_Personalized_Language_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi LocalLanguageRegular}}">
-                <fa:FASettingsExpander.Footer>
-                    <ComboBox SelectedIndex="{Binding Settings.Language}">
-                        <ComboBoxItem Content="简体中文" />
-                        <ComboBoxItem Content="English" />
-                        <ComboBoxItem Content="日本語" />
-                    </ComboBox>
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander x:Name="S_Personalized_Font"
-                                   Header="{x:Static lsb:Resources.S_Personalized_Font}"
-                                   Description="{x:Static lsb:Resources.S_Personalized_Font_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontRegular}}">
-                <fa:FASettingsExpander.Footer>
-                    <ComboBox x:Name="FontComboBox"
-                              HorizontalAlignment="Left" MaxDropDownHeight="360"
-                              ItemsSource="{Binding FontFamilies}"
-                              SelectedValue="{Binding Settings.Font, Converter={StaticResource StringToFontFamilyConverter}}">
-                        <ComboBox.Styles>
-                            <Style Selector="ComboBoxItem">
-                                <Setter Property="MinHeight" Value="32" />
-                                <Setter Property="VerticalContentAlignment" Value="Center" />
-                            </Style>
-
-                            <Style Selector="#FontComboBox /template/ Popup#PART_Popup">
-                                <Setter Property="Width" Value="280" />
-                                <Setter Property="Placement" Value="BottomEdgeAlignedRight" />
-                            </Style>
-                        </ComboBox.Styles>
-
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock FontFamily="{Binding}" FontWeight="Normal"
-                                           ToolTip.Tip="{Binding Name}"
-                                           Height="20" MaxWidth="240"
-                                           TextWrapping="NoWrap"
-                                           TextTrimming="CharacterEllipsis"
-                                           VerticalAlignment="Center"
-                                           Classes.DefaultFont="{Binding Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static secRandom:App.DefaultFontFamily}}">
-                                    <TextBlock.Styles>
-                                        <Style Selector="TextBlock">
-                                            <Style Selector="^.DefaultFont">
-                                                <Setter Property="Text"
-                                                        Value="{x:Static lsb:Resources.O_FontFamily_Default}" />
-                                            </Style>
-                                            <Setter Property="Text" Value="{Binding}" />
-                                        </Style>
-                                    </TextBlock.Styles>
-                                </TextBlock>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander x:Name="S_Personalized_FontWeight"
-                                   Header="{x:Static lsb:Resources.S_Personalized_FontWeight}"
-                                   Description="{x:Static lsb:Resources.S_Personalized_FontWeight_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TextBoldRegular}}">
-                <fa:FASettingsExpander.Footer>
-                    <ComboBox SelectedIndex="{Binding Settings.FontWeight}">
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Thin}" />
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_ExtraLight}" />
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Light}" />
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Regular}" />
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Medium}" />
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_SemiBold}" />
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Bold}" />
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_ExtraBold}" />
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_FontWeight_Black}" />
-                    </ComboBox>
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander x:Name="S_Personalized_ThemeColor"
-                                   Header="{x:Static lsb:Resources.S_Personalized_ThemeColor}"
-                                   Description="{x:Static lsb:Resources.S_Personalized_ThemeColor_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
-                <fa:FASettingsExpander.Footer>
-                    <ColorPicker Color="{Binding Settings.ThemeColor}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

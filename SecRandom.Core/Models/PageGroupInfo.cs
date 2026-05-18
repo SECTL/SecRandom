@@ -1,8 +1,10 @@
-﻿namespace SecRandom.Core.Models;
+﻿using System.ComponentModel;
+
+namespace SecRandom.Core.Models;
 
 public class PageGroupInfo
 {
-    public PageGroupInfo(string name, string id, string iconGlyph)
+    public PageGroupInfo(string name, [Localizable(false)] string id, [Localizable(false)] string iconGlyph)
     {
         Name = name;
         Id = id;

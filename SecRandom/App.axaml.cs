@@ -33,6 +33,7 @@ using SecRandom.Views;
 using SecRandom.Views.MainPages;
 using SecRandom.Views.SettingsPages;
 using SecRandom.Views.SettingsPages.General;
+using SecRandom.Views.SettingsPages.Personalized;
 
 namespace SecRandom;
 
@@ -52,7 +53,7 @@ public partial class App : Application
         {
             var content = File.ReadAllText(new MainConfigModel().ConfigFilePath);
             var settings = JsonSerializer.Deserialize<MainConfigModel>(content, ConfigServiceBase.JsonOptions);
-            var culture = settings?.BasicSettings.Language switch
+            var culture = settings?.Basic.Language switch
             {
                 LanguageMode.ChineseSimplified => @"zh-Hans",
                 LanguageMode.English => @"en-US",
@@ -152,9 +153,13 @@ public partial class App : Application
                 services.AddSettingsPageSeparator();
 
                 services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_General, @"settings.general", FluentIcons.SettingsRegular));
+                    Langs.Common.Resources.Settings_General, "settings.general", FluentIcons.SettingsRegular));
                 services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
                 services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
+
+                services.AddGroup(new PageGroupInfo(
+                    Langs.Common.Resources.Settings_Personalized, "settings.personalized", FluentIcons.ColorRegular));
+                services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
 
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
 
@@ -248,7 +253,7 @@ public partial class App : Application
     public void RefreshPersonalizedSettings()
     {
         var config = IAppHost.GetService<MainConfigHandler>().Data;
-        var settings = config.BasicSettings;
+        var settings = config.Appearance;
 
         var fontFamily = settings.Font;
         if (fontFamily == @"MiSans")

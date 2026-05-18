@@ -16,7 +16,7 @@ using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Models.Camera;
-using SecRandom.Core.Models.SubConfigs;
+using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Camera;
 using SecRandom.Core.Services.Config;
 

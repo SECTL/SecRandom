@@ -1,13 +1,15 @@
-﻿namespace SecRandom.Shared;
+﻿using System.ComponentModel;
+
+namespace SecRandom.Shared;
 
 public static class Utils
 {
-    private static string GetPath(params string[] strings)
+    private static string GetPath([Localizable(false)] params string[] strings)
     {
         return Path.Combine([AppContext.BaseDirectory, "data", ..strings]);
     }
 
-    public static string GetFilePath(params string[] strings)
+    public static string GetFilePath([Localizable(false)] params string[] strings)
     {
         var path = GetPath(strings);
 
@@ -17,7 +19,7 @@ public static class Utils
         return path;
     }
 
-    public static string GetDirectoryPath(params string[] strings)
+    public static string GetDirectoryPath([Localizable(false)] params string[] strings)
     {
         var path = GetPath(strings);
 

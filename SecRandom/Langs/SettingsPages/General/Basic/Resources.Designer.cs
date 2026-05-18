@@ -60,24 +60,6 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 主题管理.
-        /// </summary>
-        public static string C_ThemeManager {
-            get {
-                return ResourceManager.GetString("C_ThemeManager", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 打开主题管理与背景设置.
-        /// </summary>
-        public static string C_ThemeManager_D {
-            get {
-                return ResourceManager.GetString("C_ThemeManager_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 版本公告.
         /// </summary>
         public static string C_VersionNotice {
@@ -103,96 +85,6 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
         public static string C_VersionNoticeText {
             get {
                 return ResourceManager.GetString("C_VersionNoticeText", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to MiSans (默认).
-        /// </summary>
-        public static string O_FontFamily_Default {
-            get {
-                return ResourceManager.GetString("O_FontFamily_Default", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 极粗.
-        /// </summary>
-        public static string O_FontWeight_Black {
-            get {
-                return ResourceManager.GetString("O_FontWeight_Black", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 粗体.
-        /// </summary>
-        public static string O_FontWeight_Bold {
-            get {
-                return ResourceManager.GetString("O_FontWeight_Bold", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 特粗.
-        /// </summary>
-        public static string O_FontWeight_ExtraBold {
-            get {
-                return ResourceManager.GetString("O_FontWeight_ExtraBold", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 特细.
-        /// </summary>
-        public static string O_FontWeight_ExtraLight {
-            get {
-                return ResourceManager.GetString("O_FontWeight_ExtraLight", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 细体.
-        /// </summary>
-        public static string O_FontWeight_Light {
-            get {
-                return ResourceManager.GetString("O_FontWeight_Light", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 中等.
-        /// </summary>
-        public static string O_FontWeight_Medium {
-            get {
-                return ResourceManager.GetString("O_FontWeight_Medium", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 常规.
-        /// </summary>
-        public static string O_FontWeight_Regular {
-            get {
-                return ResourceManager.GetString("O_FontWeight_Regular", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 半粗.
-        /// </summary>
-        public static string O_FontWeight_SemiBold {
-            get {
-                return ResourceManager.GetString("O_FontWeight_SemiBold", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 极细.
-        /// </summary>
-        public static string O_FontWeight_Thin {
-            get {
-                return ResourceManager.GetString("O_FontWeight_Thin", resourceCulture);
             }
         }
         
@@ -247,33 +139,6 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
         public static string O_TelemetryMode_Off {
             get {
                 return ResourceManager.GetString("O_TelemetryMode_Off", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 跟随系统.
-        /// </summary>
-        public static string O_Theme_Auto {
-            get {
-                return ResourceManager.GetString("O_Theme_Auto", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 深色.
-        /// </summary>
-        public static string O_Theme_Dark {
-            get {
-                return ResourceManager.GetString("O_Theme_Dark", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 浅色.
-        /// </summary>
-        public static string O_Theme_Light {
-            get {
-                return ResourceManager.GetString("O_Theme_Light", resourceCulture);
             }
         }
         
@@ -341,6 +206,24 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 显示语言.
+        /// </summary>
+        public static string S_Behavior_Language {
+            get {
+                return ResourceManager.GetString("S_Behavior_Language", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 切换软件界面语言（重启软件后生效）.
+        /// </summary>
+        public static string S_Behavior_Language_D {
+            get {
+                return ResourceManager.GetString("S_Behavior_Language_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 主窗口置顶模式.
         /// </summary>
         public static string S_Behavior_MainWindowTopmostMode {
@@ -391,105 +274,6 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
         public static string S_Behavior_UrlProtocol_D {
             get {
                 return ResourceManager.GetString("S_Behavior_UrlProtocol_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 个性化.
-        /// </summary>
-        public static string S_Personalized {
-            get {
-                return ResourceManager.GetString("S_Personalized", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 字体.
-        /// </summary>
-        public static string S_Personalized_Font {
-            get {
-                return ResourceManager.GetString("S_Personalized_Font", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 设置软件界面显示字体.
-        /// </summary>
-        public static string S_Personalized_Font_D {
-            get {
-                return ResourceManager.GetString("S_Personalized_Font_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 字体粗细.
-        /// </summary>
-        public static string S_Personalized_FontWeight {
-            get {
-                return ResourceManager.GetString("S_Personalized_FontWeight", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 设置软件界面字体粗细.
-        /// </summary>
-        public static string S_Personalized_FontWeight_D {
-            get {
-                return ResourceManager.GetString("S_Personalized_FontWeight_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 显示语言.
-        /// </summary>
-        public static string S_Personalized_Language {
-            get {
-                return ResourceManager.GetString("S_Personalized_Language", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 切换软件界面语言（重启软件后生效）.
-        /// </summary>
-        public static string S_Personalized_Language_D {
-            get {
-                return ResourceManager.GetString("S_Personalized_Language_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 主题模式.
-        /// </summary>
-        public static string S_Personalized_Theme {
-            get {
-                return ResourceManager.GetString("S_Personalized_Theme", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 选择软件界面主题样式.
-        /// </summary>
-        public static string S_Personalized_Theme_D {
-            get {
-                return ResourceManager.GetString("S_Personalized_Theme_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 主题颜色.
-        /// </summary>
-        public static string S_Personalized_ThemeColor {
-            get {
-                return ResourceManager.GetString("S_Personalized_ThemeColor", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 设置软件界面主题色彩.
-        /// </summary>
-        public static string S_Personalized_ThemeColor_D {
-            get {
-                return ResourceManager.GetString("S_Personalized_ThemeColor_D", resourceCulture);
             }
         }
         

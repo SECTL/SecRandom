@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true">
+
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <data name="S_Theme_Theme" xml:space="preserve">
+        <value>主题模式</value>
+    </data>
+    <data name="S_Theme_Theme_D" xml:space="preserve">
+        <value>选择软件界面主题样式</value>
+    </data>
+    <data name="S_Font_FontFamily" xml:space="preserve">
+        <value>字体家族</value>
+    </data>
+    <data name="S_Font_FontFamily_D" xml:space="preserve">
+        <value>设置软件界面显示字体家族</value>
+    </data>
+    <data name="S_Font_FontWeight" xml:space="preserve">
+        <value>字体粗细</value>
+    </data>
+    <data name="S_Font_FontWeight_D" xml:space="preserve">
+        <value>设置软件界面字体粗细</value>
+    </data>
+    <data name="S_Theme_ThemeColor" xml:space="preserve">
+        <value>主题颜色</value>
+    </data>
+    <data name="S_Theme_ThemeColor_D" xml:space="preserve">
+        <value>设置软件界面主题色彩</value>
+    </data>
+    <data name="O_Theme_Light" xml:space="preserve">
+        <value>浅色</value>
+    </data>
+    <data name="O_Theme_Dark" xml:space="preserve">
+        <value>深色</value>
+    </data>
+    <data name="O_Theme_Auto" xml:space="preserve">
+        <value>跟随系统</value>
+    </data>
+    <data name="S_Font" xml:space="preserve">
+        <value>字体</value>
+    </data>
+    <data name="O_FontWeight_Thin" xml:space="preserve">
+        <value>极细</value>
+        <comment>FontWeight 100</comment>
+    </data>
+    <data name="O_FontWeight_ExtraLight" xml:space="preserve">
+        <value>特细</value>
+        <comment>FontWeight 200</comment>
+    </data>
+    <data name="O_FontWeight_Light" xml:space="preserve">
+        <value>细体</value>
+        <comment>FontWeight 300</comment>
+    </data>
+    <data name="O_FontWeight_Regular" xml:space="preserve">
+        <value>常规</value>
+        <comment>FontWeight 400</comment>
+    </data>
+    <data name="O_FontWeight_Medium" xml:space="preserve">
+        <value>中等</value>
+        <comment>FontWeight 500</comment>
+    </data>
+    <data name="O_FontWeight_SemiBold" xml:space="preserve">
+        <value>半粗</value>
+        <comment>FontWeight 600</comment>
+    </data>
+    <data name="O_FontWeight_Bold" xml:space="preserve">
+        <value>粗体</value>
+        <comment>FontWeight 700</comment>
+    </data>
+    <data name="O_FontWeight_ExtraBold" xml:space="preserve">
+        <value>特粗</value>
+        <comment>FontWeight 800</comment>
+    </data>
+    <data name="O_FontWeight_Black" xml:space="preserve">
+        <value>极粗</value>
+        <comment>FontWeight 900</comment>
+    </data>
+    <data name="O_FontFamily_Default" xml:space="preserve">
+        <value>MiSans (默认)</value>
+    </data>
+    <data name="S_Theme" xml:space="preserve">
+        <value>主题</value>
+    </data>
+    <data name="C_Font_Preview" xml:space="preserve">
+        <value>字体预览</value>
+    </data>
+    <data name="C_Font_Preview_Text" xml:space="preserve">
+        <value>树梢树枝树根根 亲山亲水有亲人
+第一小组 张三 第二小组 李四 第三小组 王五 第四小组 赵六
+the quick brown fox jumps over a lazy dog
+THE QUICK BROWN FOX JUMPS OVER A LAZY DOG
+点名 闪抽 抽奖 人脸抽 1234567890 +-*/</value>
+    </data>
+</root>
