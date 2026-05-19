@@ -178,7 +178,7 @@ def _calculate_frequency_factor(settings, total_count, max_total_count, is_cold_
         factor = math.sqrt(max_total_count + 1) / math.sqrt(total_count + 1)
 
     if is_cold_start:
-        factor = min(0.8 + (factor * 0.2), factor)
+        factor = max(0.8 + (factor * 0.2), factor)
 
     return factor * settings["frequency_weight"]
 
