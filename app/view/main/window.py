@@ -1220,10 +1220,11 @@ class MainWindow(FluentWindow):
         执行安全验证后重启程序，清理所有资源"""
         logger.info("正在发起重启请求...")
 
-        if self.pre_class_reset_timer.isActive():
-            self.pre_class_reset_timer.stop()
-
-        self.cleanup_shortcuts()
+        self._stop_pre_class_reset_timer()
+        self._cleanup_shortcuts()
+        self._stop_ipc_client()
+        self._close_all_windows()
+        self._close_main_window()
 
         # 使用 EXIT_CODE_RESTART 退出码来触发重启
         # main.py 中的 handle_exit() 函数会检测此退出码并执行重启逻辑

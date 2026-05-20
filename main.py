@@ -186,9 +186,9 @@ def initialize_application():
 
     wm.app_start_time = time.perf_counter()
 
-    shared_memory, is_first_instance = check_single_instance()
-
     time.sleep(PROCESS_EXIT_WAIT_SECONDS)
+
+    shared_memory, is_first_instance = check_single_instance()
 
     return program_dir, shared_memory, is_first_instance
 
