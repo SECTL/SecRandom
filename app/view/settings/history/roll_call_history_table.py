@@ -27,6 +27,7 @@ from app.common.history.history_reader import (
     get_roll_call_student_stats_data,
     check_class_has_gender_or_group,
 )
+from .export_utils import export_history_table_data
 
 
 # ==================================================
@@ -1160,134 +1161,17 @@ class roll_call_history_table(GroupHeaderCardWidget):
         self.table.setHorizontalHeaderLabels(headers)
 
     def export_history_data(self):
-        """导出当前表格数据到文件"""
         if not self.current_class_name:
             return
 
-        if self.table.rowCount() == 0:
-            return
+        if self.current_row < self.total_rows:
+            self.force_load_all = True
+            self.refresh_data()
 
-        file_path, selected_filter = QFileDialog.getSaveFileName(
-            self,
-            get_any_position_value_async(
-                "qfiledialog",
-                "roll_call",
-                "export_history",
-                "caption",
-                "name",
-            ),
-            f"{self.current_class_name}_点名记录-SecRandom",
-            get_any_position_value_async(
-                "qfiledialog",
-                "roll_call",
-                "export_history",
-                "filter",
-                "name",
-            ),
+        export_history_table_data(
+            table_widget=self.table,
+            current_mode=self.current_mode,
+            i18n_domain="roll_call",
+            current_name=self.current_class_name,
+            parent_widget=self,
         )
-
-        if not file_path:
-            return
-
-        export_type = (
-            "excel"
-            if ".xlsx" in selected_filter
-            else "csv"
-            if ".csv" in selected_filter
-            else "txt"
-        )
-
-        if export_type == "excel" and not file_path.endswith(".xlsx"):
-            file_path += ".xlsx"
-        elif export_type == "csv" and not file_path.endswith(".csv"):
-            file_path += ".csv"
-        elif export_type == "txt" and not file_path.endswith(".txt"):
-            file_path += ".txt"
-
-        try:
-            headers = []
-            for col in range(self.table.columnCount()):
-                header_item = self.table.horizontalHeaderItem(col)
-                headers.append(header_item.text() if header_item else f"列{col}")
-
-            export_data = []
-            for row in range(self.table.rowCount()):
-                row_data = {}
-                for col in range(self.table.columnCount()):
-                    item = self.table.item(row, col)
-                    row_data[headers[col]] = item.text() if item else ""
-                export_data.append(row_data)
-
-            if export_type == "excel":
-                import pandas as pd
-
-                df = pd.DataFrame(export_data)
-                df.to_excel(file_path, index=False, engine="openpyxl")
-            elif export_type == "csv":
-                import pandas as pd
-
-                df = pd.DataFrame(export_data)
-                df.to_csv(file_path, index=False, encoding="utf-8-sig")
-            else:
-                name_col_idx = None
-                for col in range(self.table.columnCount()):
-                    header_item = self.table.horizontalHeaderItem(col)
-                    if header_item and header_item.text() in ("姓名", "Name"):
-                        name_col_idx = col
-                        break
-
-                with open(file_path, "w", encoding="utf-8") as f:
-                    for row in range(self.table.rowCount()):
-                        if name_col_idx is not None:
-                            item = self.table.item(row, name_col_idx)
-                            f.write(f"{item.text()}\n" if item else "\n")
-                        else:
-                            for col in range(self.table.columnCount()):
-                                item = self.table.item(row, col)
-                                f.write(f"{item.text()}\t" if item else "\t")
-                            f.write("\n")
-
-            config = NotificationConfig(
-                title=get_any_position_value_async(
-                    "notification",
-                    "roll_call",
-                    "export",
-                    "title",
-                    "success",
-                    "name",
-                ),
-                content=(get_any_position_value_async(
-                    "notification",
-                    "roll_call",
-                    "export",
-                    "content",
-                    "success",
-                    "name",
-                ) or "").format(path=file_path),
-                duration=3000,
-            )
-            show_notification(NotificationType.SUCCESS, config, parent=self)
-            logger.info(f"点名历史记录导出成功: {file_path}")
-
-        except Exception as e:
-            logger.exception(f"导出点名历史记录失败: {e}")
-            config = NotificationConfig(
-                title=get_any_position_value_async(
-                    "notification",
-                    "roll_call",
-                    "export",
-                    "title",
-                    "failure",
-                    "name",
-                ),
-                content=(get_any_position_value_async(
-                    "notification",
-                    "roll_call",
-                    "export",
-                    "content",
-                    "error",
-                    "name",
-                ) or "").format(message=str(e)),
-                duration=3000,
-            )
-            show_notification(NotificationType.ERROR, config, parent=self)

@@ -234,6 +234,10 @@ roll_call_history_table = {
             "name": "导出",
             "description": "导出按钮文本",
         },
+        "export_default_filename": {
+            "name": "点名记录",
+            "description": "导出文件默认文件名中的描述文字",
+        },
     },
     "EN_US": {
         "title": {
@@ -335,6 +339,10 @@ roll_call_history_table = {
         "export_button": {
             "name": "Export",
             "description": "Export button text",
+        },
+        "export_default_filename": {
+            "name": "Picking records",
+            "description": "Description text in the default export filename",
         },
         "select_weight": {
             "name": "Show weight",
@@ -443,6 +451,10 @@ roll_call_history_table = {
             "name": "エクスポート",
             "description": "エクスポートボタンテキスト",
         },
+        "export_default_filename": {
+            "name": "点呼記録",
+            "description": "エクスポートファイルのデフォルトファイル名の説明文",
+        },
         "select_weight": {
             "name": "重みを表示",
             "description": "テーブルに重みを表示するかどうか",
@@ -491,6 +503,10 @@ lottery_history_table = {
         "export_button": {
             "name": "导出",
             "description": "导出按钮文本",
+        },
+        "export_default_filename": {
+            "name": "抽奖记录",
+            "description": "导出文件默认文件名中的描述文字",
         },
     },
     "EN_US": {
@@ -548,6 +564,10 @@ lottery_history_table = {
             "name": "Export",
             "description": "Export button text",
         },
+        "export_default_filename": {
+            "name": "Lottery records",
+            "description": "Description text in the default export filename",
+        },
     },
     "JA_JP": {
         "title": {
@@ -603,6 +623,10 @@ lottery_history_table = {
         "export_button": {
             "name": "エクスポート",
             "description": "エクスポートボタンテキスト",
+        },
+        "export_default_filename": {
+            "name": "抽選記録",
+            "description": "エクスポートファイルのデフォルトファイル名の説明文",
         },
     },
 }
