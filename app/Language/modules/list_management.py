@@ -782,6 +782,184 @@ notification = {
             },
         },
     },
+    "JA_JP": {
+        "roll_call": {
+            "class_name_setting": {
+                "title": {
+                    "name": "クラス名設定",
+                    "description": "クラス名設定通知タイトル",
+                },
+                "content": {
+                    "name": "クラス名設定ウィンドウを開きました",
+                    "description": "クラス名設定通知内容",
+                },
+            },
+            "import_student_name": {
+                "title": {
+                    "name": "学生リストインポート",
+                    "description": "学生リストインポート通知タイトル",
+                },
+                "content": {
+                    "name": "学生リストインポートウィンドウを開きました",
+                    "description": "学生リストインポート通知内容",
+                },
+            },
+            "name_setting": {
+                "title": {
+                    "name": "氏名設定",
+                    "description": "氏名設定通知タイトル",
+                },
+                "content": {
+                    "name": "氏名設定ウィンドウを開きました",
+                    "description": "氏名設定通知内容",
+                },
+            },
+            "gender_setting": {
+                "title": {
+                    "name": "性別設定",
+                    "description": "性別設定通知タイトル",
+                },
+                "content": {
+                    "name": "性別設定ウィンドウを開きました",
+                    "description": "性別設定通知内容",
+                },
+            },
+            "group_setting": {
+                "title": {
+                    "name": "グループ設定",
+                    "description": "グループ設定通知タイトル",
+                },
+                "content": {
+                    "name": "グループ設定ウィンドウを開きました",
+                    "description": "グループ設定通知内容",
+                },
+            },
+            "tag_setting": {
+                "title": {
+                    "name": "タグ設定",
+                    "description": "タグ設定通知タイトル",
+                },
+                "content": {
+                    "name": "タグ設定ウィンドウを開きました",
+                    "description": "タグ設定通知内容",
+                },
+            },
+            "export": {
+                "title": {
+                    "success": {
+                        "name": "エクスポート成功",
+                        "description": "エクスポート成功通知タイトル",
+                    },
+                    "failure": {
+                        "name": "エクスポート失敗",
+                        "description": "エクスポート失敗通知タイトル",
+                    },
+                },
+                "content": {
+                    "success": {
+                        "name": "学生リストをエクスポートしました: {path}",
+                        "description": "エクスポート成功通知内容",
+                    },
+                    "failure": {
+                        "name": "エクスポートするクラスを先に選択してください",
+                        "description": "エクスポート失敗通知内容（クラス未選択）",
+                    },
+                    "error": {
+                        "name": "{message}",
+                        "description": "エクスポートエラー通知内容",
+                    },
+                },
+            },
+        },
+        "lottery": {
+            "pool_name_setting": {
+                "title": {
+                    "name": "賞プール名設定",
+                    "description": "賞プール名設定通知タイトル",
+                },
+                "content": {
+                    "name": "賞プール名設定ウィンドウを開きました",
+                    "description": "賞プール名設定通知内容",
+                },
+            },
+            "import_prize_name": {
+                "title": {
+                    "name": "賞品リストインポート",
+                    "description": "賞品リストインポート通知タイトル",
+                },
+                "content": {
+                    "name": "賞品リストインポートウィンドウを開きました",
+                    "description": "賞品リストインポート通知内容",
+                },
+            },
+            "prize_setting": {
+                "title": {
+                    "name": "賞品設定",
+                    "description": "賞品設定通知タイトル",
+                },
+                "content": {
+                    "name": "賞品設定ウィンドウを開きました",
+                    "description": "賞品設定通知内容",
+                },
+            },
+            "prize_weight_setting": {
+                "title": {
+                    "name": "賞品重み設定",
+                    "description": "賞品重み設定通知タイトル",
+                },
+                "content": {
+                    "name": "賞品重み設定ウィンドウを開きました",
+                    "description": "賞品重み設定通知内容",
+                },
+            },
+            "tag_setting": {
+                "title": {
+                    "name": "タグ設定",
+                    "description": "タグ設定通知タイトル",
+                },
+                "content": {
+                    "name": "タグ設定ウィンドウを開きました",
+                    "description": "タグ設定通知内容",
+                },
+            },
+            "prize_count_setting": {
+                "title": {
+                    "name": "賞品数量設定",
+                    "description": "賞品数量設定通知タイトル",
+                },
+                "content": {
+                    "name": "賞品数量設定ウィンドウを開きました",
+                    "description": "賞品数量設定通知内容",
+                },
+            },
+            "export": {
+                "title": {
+                    "success": {
+                        "name": "エクスポート成功",
+                        "description": "エクスポート成功通知タイトル",
+                    },
+                    "failure": {
+                        "name": "エクスポート失敗",
+                        "description": "エクスポート失敗通知タイトル",
+                    },
+                },
+                "content": {
+                    "success": {
+                        "name": "賞品リストをエクスポートしました: {path}",
+                        "description": "エクスポート成功通知内容",
+                    },
+                    "failure": {
+                        "name": "エクスポートする賞プールを先に選択してください",
+                        "description": "エクスポート失敗通知内容（賞プール未選択）",
+                    },
+                    "error": {
+                        "name": "{message}",
+                        "description": "エクスポートエラー通知内容",
+                    },
+                },
+            },
+        },
+    },
 }
 
 # QFileDialog 文本配置

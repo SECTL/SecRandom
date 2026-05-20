@@ -1090,14 +1090,14 @@ class lottery_history_table(GroupHeaderCardWidget):
                     "success",
                     "name",
                 ),
-                content=get_any_position_value_async(
+                content=(get_any_position_value_async(
                     "notification",
                     "lottery",
                     "export",
                     "content",
                     "success",
                     "name",
-                ).format(path=file_path),
+                ) or "").format(path=file_path),
                 duration=3000,
             )
             show_notification(NotificationType.SUCCESS, config, parent=self)
@@ -1114,14 +1114,14 @@ class lottery_history_table(GroupHeaderCardWidget):
                     "failure",
                     "name",
                 ),
-                content=get_any_position_value_async(
+                content=(get_any_position_value_async(
                     "notification",
                     "lottery",
                     "export",
                     "content",
                     "error",
                     "name",
-                ).format(message=str(e)),
+                ) or "").format(message=str(e)),
                 duration=3000,
             )
             show_notification(NotificationType.ERROR, config, parent=self)
