@@ -858,6 +858,22 @@ class roll_call_history_table(GroupHeaderCardWidget):
         # 更新当前班级名称
         self.current_class_name = self.class_comboBox.currentText()
 
+        # 更新模式下拉框中的学生名称列表
+        if hasattr(self, "mode_comboBox"):
+            current_mode = self.mode_comboBox.currentIndex()
+            self.mode_comboBox.blockSignals(True)
+            self.mode_comboBox.clear()
+            self.all_names = get_all_names("roll_call", self.current_class_name)
+            self.mode_comboBox.addItems(
+                get_content_combo_name_async("roll_call_history_table", "select_mode")
+                + self.all_names
+            )
+            if current_mode < self.mode_comboBox.count():
+                self.mode_comboBox.setCurrentIndex(current_mode)
+            else:
+                self.mode_comboBox.setCurrentIndex(0)
+            self.mode_comboBox.blockSignals(False)
+
         # 更新课程列表
         self._update_subject_list()
 
