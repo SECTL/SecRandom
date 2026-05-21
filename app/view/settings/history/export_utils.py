@@ -321,7 +321,7 @@ def export_history_table_data(
         get_any_position_value_async(
             "qfiledialog", i18n_domain, "export_history", "caption", "name"
         ),
-        f"{current_name}_{get_content_name_async(f'{i18n_domain}_history_table', 'export_default_filename')}-SecRandom",
+        f"{current_name}_{get_content_name_async(f'{i18n_domain}_history_table', 'export_default_filename') or ''}-SecRandom",
         get_any_position_value_async(
             "qfiledialog", i18n_domain, "export_history", "filter", "name"
         ),
