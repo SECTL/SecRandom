@@ -998,9 +998,12 @@ class lottery_history_table(GroupHeaderCardWidget):
         if not self.current_pool_name:
             return
 
-        if self.current_row < self.total_rows:
-            self.force_load_all = True
-            self.refresh_data()
+        current_item_name = ""
+        if self.current_mode >= 2:
+            if hasattr(self, "mode_comboBox"):
+                current_item_name = self.mode_comboBox.currentText()
+            elif hasattr(self, "current_lottery_name"):
+                current_item_name = self.current_lottery_name
 
         export_history_table_data(
             table_widget=self.table,
@@ -1008,4 +1011,6 @@ class lottery_history_table(GroupHeaderCardWidget):
             i18n_domain="lottery",
             current_name=self.current_pool_name,
             parent_widget=self,
+            current_subject=self.current_subject,
+            current_item_name=current_item_name,
         )

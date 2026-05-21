@@ -1164,9 +1164,12 @@ class roll_call_history_table(GroupHeaderCardWidget):
         if not self.current_class_name:
             return
 
-        if self.current_row < self.total_rows:
-            self.force_load_all = True
-            self.refresh_data()
+        current_item_name = ""
+        if self.current_mode >= 2:
+            if hasattr(self, "mode_comboBox"):
+                current_item_name = self.mode_comboBox.currentText()
+            elif hasattr(self, "current_student_name"):
+                current_item_name = self.current_student_name
 
         export_history_table_data(
             table_widget=self.table,
@@ -1174,4 +1177,6 @@ class roll_call_history_table(GroupHeaderCardWidget):
             i18n_domain="roll_call",
             current_name=self.current_class_name,
             parent_widget=self,
+            current_subject=self.current_subject,
+            current_item_name=current_item_name,
         )

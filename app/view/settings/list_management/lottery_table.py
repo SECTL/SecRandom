@@ -118,6 +118,8 @@ class lottery_table(GroupHeaderCardWidget):
         """根据搜索关键词过滤表格行"""
         if not hasattr(self, "table") or self.table is None:
             return
+        if not hasattr(self, "search_line_edit"):
+            return
 
         keyword = self.search_line_edit.text().strip().lower()
 
