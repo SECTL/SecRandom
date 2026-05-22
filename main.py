@@ -479,8 +479,8 @@ def main():
     if DEV_VERSION not in VERSION:
         if get_bool_setting("basic_settings", "telemetry_enabled", True):
             initialize_sentry()  # 初始化 Sentry 事件上报
-    if get_setting("basic_settings", "telemetry_mode") != "off":
-        initialize_online_status()  # 初始化在线状态上报
+        if get_setting("basic_settings", "telemetry_mode") != "off":
+            initialize_online_status()  # 初始化在线状态上报
 
     app, window_manager, url_handler, cs_ipc_handler, local_server = (
         setup_qt_application()
