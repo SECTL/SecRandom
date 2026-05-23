@@ -1,4 +1,4 @@
-name: Build (new Nuitka)
+name: Build (Nuitka)
 
 on:
   push:
@@ -55,44 +55,26 @@ jobs:
         shell: pwsh
         run: |
           $dst = "dist/main.dist/app/Language/modules"
-          # -Force 会自动递归创建不存在的父目录
           New-Item -ItemType Directory -Force -Path $dst | Out-Null
-          # 确保源文件存在再复制，避免报错
-          if (Test-Path "app/Language/modules/*.py") {
-              Copy-Item -Path "app/Language/modules/*.py" -Destination $dst -Force
-          } else {
-              Write-Warning "Source language modules not found!"
-          }
+          Copy-Item -Path "app/Language/modules/*.py" -Destination $dst -Force
 
-      - name: Pack artifact
+      - name: Pack
         shell: pwsh
         run: |
-          $src = "dist/main.dist"
-          $folderName = "SecRandom-${{ steps.version.outputs.plain }}-${{ matrix.platform }}-x64"
-          $dst = "dist/$folderName"
-          
-          # 安全重命名：如果目标已存在，先删除
-          if (Test-Path $dst) { Remove-Item -Recurse -Force $dst }
-          Rename-Item -Path $src -NewName $folderName
-          
-          # 更改压缩路径：压缩整个文件夹，这样解压后包含外层目录，不会散落一地
-          Compress-Archive -Path $dst -DestinationPath "$dst.zip" -Force
-          
-          echo "artifact=$dst" | Out-File -Append -FilePath $env:GITHUB_OUTPUT -Encoding utf8
-          echo "zip=$dst.zip" | Out-File -Append -FilePath $env:GITHUB_OUTPUT -Encoding utf8
+          $name = "SecRandom-${{ steps.version.outputs.plain }}-${{ matrix.platform }}-x64"
+          Rename-Item -Path dist/main.dist -NewName $name
+          Compress-Archive -Path $name -DestinationPath "$name.zip"
 
       - uses: actions/upload-artifact@v4
         with:
           name: SecRandom-${{ steps.version.outputs.plain }}-${{ matrix.platform }}-x64
-          path: dist/SecRandom-${{ steps.version.outputs.plain }}-${{ matrix.platform }}-x64.zip
+          path: SecRandom-${{ steps.version.outputs.plain }}-${{ matrix.platform }}-x64/
 
-      - name: Create release
-        # 允许通过 Tag 触发，或者手动触发时也创建 Release 草稿
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+      - name: Create release (tag only)
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ steps.version.outputs.version }}
-          tag_name: ${{ steps.version.outputs.version }} # 手动触发时明确指定 Tag 名
           draft: true
           files: |
-            dist/SecRandom-${{ steps.version.outputs.plain }}-${{ matrix.platform }}-x64.zip
+            SecRandom-${{ steps.version.outputs.plain }}-${{ matrix.platform }}-x64.zip

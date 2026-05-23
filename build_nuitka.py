@@ -26,6 +26,17 @@ from app.tools.variable import APPLY_NAME, VERSION, APP_DESCRIPTION, AUTHOR, WEB
 
 from packaging_utils_deb import DebBuilder
 
+# app/ 下的所有动态导入（语言模块、设置页面等）由 --include-package=app 递归覆盖。
+# 以下第三方包内部有插件/集成系统，Nuitka 静态分析无法发现：
+#   sentry_sdk  - 集成模块通过 importlib.import_module 加载
+#   pythonnet   - 运行时 load("coreclr") + import clr
+#   imageio     - 图片格式插件动态发现
+DYNAMIC_IMPORT_PACKAGES = [
+    "sentry_sdk",
+    "pythonnet",
+    "imageio",
+]
+
 
 def _print_packaging_summary() -> None:
     data_includes = collect_data_includes()
@@ -33,7 +44,11 @@ def _print_packaging_summary() -> None:
     for item in data_includes:
         kind = "dir" if item.is_dir else "file"
         print(f"  {kind}  {item.source} -> {item.target}")
-    print("\n动态导入包: --include-package=app (递归包含所有子包)")
+
+    all_packages = ["app"] + DYNAMIC_IMPORT_PACKAGES
+    print("\n--include-package ({} entries):".format(len(all_packages)))
+    for pkg in all_packages:
+        print(f"  {pkg}")
 
 
 def _gather_data_flags() -> list[str]:
@@ -94,8 +109,11 @@ def get_nuitka_command() -> list[str]:
 
     cmd.extend(_gather_data_flags())
 
-    # 递归包含 app/ 下所有子包（覆盖语言模块、设置页面等动态导入）
+    # 递归包含 app/ 下所有子包
     cmd.append("--include-package=app")
+    # 第三方包中有插件/集成系统的动态导入
+    for pkg in DYNAMIC_IMPORT_PACKAGES:
+        cmd.append(f"--include-package={pkg}")
 
     if sys.platform == "win32" and ICON_FILE.exists():
         cmd.append(f"--windows-icon-from-ico={ICON_FILE}")
@@ -182,7 +200,6 @@ def main():
             cmd,
             check=True,
             cwd=PROJECT_ROOT,
-            capture_output=False,
             text=True,
             encoding="utf-8",
             errors="replace",
