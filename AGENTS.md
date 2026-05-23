@@ -35,7 +35,9 @@ SecRandom-C/
 
 Nested instruction files:
 - `SecRandom/AGENTS.md`: app layer, DI composition, views/viewmodels, app services, localization.
+- `SecRandom/Views/SettingsPages/AGENTS.md`: settings page subtree, page IDs, restart semantics, grouped localization expectations.
 - `SecRandom.Core/AGENTS.md`: plugin-facing core, draw/config/logging services, shared controls/styles.
+- `SecRandom.Core/Services/Camera/AGENTS.md`: camera preview loop, detector model loading, and device/restart invariants.
 - `SecRandom.Shared/AGENTS.md`: UI-free shared contracts and persistence model boundaries.
 
 ## WHERE TO LOOK
