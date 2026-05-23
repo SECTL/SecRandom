@@ -9,7 +9,6 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsView"
              x:DataType="views:SettingsView"
-             d:DataContext="{d:DesignInstance views:SettingsView}"
              Loaded="OnLoaded"
              Unloaded="OnUnloaded">
     <Grid RowDefinitions="Auto *">

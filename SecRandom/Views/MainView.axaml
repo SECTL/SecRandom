@@ -8,7 +8,6 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.MainView"
              x:DataType="views:MainView"
-             d:DataContext="{d:DesignInstance views:MainView}"
              Loaded="OnLoaded"
              Unloaded="OnUnloaded">
     <Grid RowDefinitions="Auto *">

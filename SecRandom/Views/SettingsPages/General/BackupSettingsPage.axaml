@@ -9,8 +9,7 @@
              xmlns:lsb="clr-namespace:SecRandom.Langs.SettingsPages.General.Backup"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.General.BackupSettingsPage"
-             x:DataType="local:BackupSettingsPage"
-             d:DataContext="{d:DesignInstance local:BackupSettingsPage}">
+             x:DataType="local:BackupSettingsPage">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
             <fa:FASettingsExpander x:Name="S_AutoBackup"

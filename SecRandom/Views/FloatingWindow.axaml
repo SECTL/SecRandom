@@ -6,7 +6,6 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="SecRandom.Views.FloatingWindow"
         x:DataType="views:FloatingWindow"
-        d:DataContext="{d:DesignInstance views:FloatingWindow}"
         Title="SecRandom"
         Width="1" Height="1"
         ShowActivated="False"

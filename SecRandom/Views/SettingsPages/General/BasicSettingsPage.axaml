@@ -9,7 +9,6 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.General.BasicSettingsPage"
              x:DataType="local:BasicSettingsPage"
-             d:DataContext="{d:DesignInstance local:BasicSettingsPage}"
              Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
