@@ -122,6 +122,14 @@ roll_call_table = {
             "name": "选择班级",
             "description": "选择要显示的点名班级",
         },
+        "search": {
+            "name": "搜索名单",
+            "description": "在名单中搜索学生",
+        },
+        "search_placeholder": {
+            "name": "输入学号、姓名、性别、小组或标签进行筛选",
+            "description": "搜索框占位符",
+        },
         "HeaderLabels": {
             "name": ["存在", "学号", "姓名", "性别", "小组", "标签"],
             "description": "点名表格的列标题",
@@ -150,6 +158,14 @@ roll_call_table = {
         "select_class_name": {
             "name": "Select class",
             "description": "Select the class to show",
+        },
+        "search": {
+            "name": "Search list",
+            "description": "Search students in the list",
+        },
+        "search_placeholder": {
+            "name": "Filter by ID, name, gender, group or tags",
+            "description": "Search box placeholder",
         },
         "HeaderLabels": {
             "name": {
@@ -189,6 +205,14 @@ roll_call_table = {
         "select_class_name": {
             "name": "クラスを選択",
             "description": "表示する点呼クラスを選択",
+        },
+        "search": {
+            "name": "リスト検索",
+            "description": "リスト内の学生を検索",
+        },
+        "search_placeholder": {
+            "name": "学籍番号、氏名、性別、グループ、タグで絞り込み",
+            "description": "検索ボックスのプレースホルダー",
         },
         "HeaderLabels": {
             "name": ["存在", "学籍番号", "氏名", "性別", "グループ", "タグ"],
@@ -311,6 +335,14 @@ lottery_table = {
             "name": "选择奖池",
             "description": "选择要显示的抽奖奖池",
         },
+        "search": {
+            "name": "搜索名单",
+            "description": "在名单中搜索奖品",
+        },
+        "search_placeholder": {
+            "name": "输入序号、奖品、权重、标签或数量进行筛选",
+            "description": "搜索框占位符",
+        },
         "HeaderLabels": {
             "name": ["存在", "序号", "奖品", "权重", "标签", "数量"],
             "description": "抽奖表格的列标题",
@@ -339,6 +371,14 @@ lottery_table = {
         "select_pool_name": {
             "name": "Select pool",
             "description": "Select the pool to show",
+        },
+        "search": {
+            "name": "Search list",
+            "description": "Search prizes in the list",
+        },
+        "search_placeholder": {
+            "name": "Filter by serial, prize, weight, tags or count",
+            "description": "Search box placeholder",
         },
         "HeaderLabels": {
             "name": {
@@ -378,6 +418,14 @@ lottery_table = {
         "select_pool_name": {
             "name": "賞プールを選択",
             "description": "表示する抽選賞プールを選択",
+        },
+        "search": {
+            "name": "リスト検索",
+            "description": "リスト内の賞品を検索",
+        },
+        "search_placeholder": {
+            "name": "番号、賞品、重み、タグ、数量で絞り込み",
+            "description": "検索ボックスのプレースホルダー",
         },
         "HeaderLabels": {
             "name": ["存在", "番号", "賞品", "重み", "タグ", "数量"],
@@ -734,6 +782,184 @@ notification = {
             },
         },
     },
+    "JA_JP": {
+        "roll_call": {
+            "class_name_setting": {
+                "title": {
+                    "name": "クラス名設定",
+                    "description": "クラス名設定通知タイトル",
+                },
+                "content": {
+                    "name": "クラス名設定ウィンドウを開きました",
+                    "description": "クラス名設定通知内容",
+                },
+            },
+            "import_student_name": {
+                "title": {
+                    "name": "学生リストインポート",
+                    "description": "学生リストインポート通知タイトル",
+                },
+                "content": {
+                    "name": "学生リストインポートウィンドウを開きました",
+                    "description": "学生リストインポート通知内容",
+                },
+            },
+            "name_setting": {
+                "title": {
+                    "name": "氏名設定",
+                    "description": "氏名設定通知タイトル",
+                },
+                "content": {
+                    "name": "氏名設定ウィンドウを開きました",
+                    "description": "氏名設定通知内容",
+                },
+            },
+            "gender_setting": {
+                "title": {
+                    "name": "性別設定",
+                    "description": "性別設定通知タイトル",
+                },
+                "content": {
+                    "name": "性別設定ウィンドウを開きました",
+                    "description": "性別設定通知内容",
+                },
+            },
+            "group_setting": {
+                "title": {
+                    "name": "グループ設定",
+                    "description": "グループ設定通知タイトル",
+                },
+                "content": {
+                    "name": "グループ設定ウィンドウを開きました",
+                    "description": "グループ設定通知内容",
+                },
+            },
+            "tag_setting": {
+                "title": {
+                    "name": "タグ設定",
+                    "description": "タグ設定通知タイトル",
+                },
+                "content": {
+                    "name": "タグ設定ウィンドウを開きました",
+                    "description": "タグ設定通知内容",
+                },
+            },
+            "export": {
+                "title": {
+                    "success": {
+                        "name": "エクスポート成功",
+                        "description": "エクスポート成功通知タイトル",
+                    },
+                    "failure": {
+                        "name": "エクスポート失敗",
+                        "description": "エクスポート失敗通知タイトル",
+                    },
+                },
+                "content": {
+                    "success": {
+                        "name": "学生リストをエクスポートしました: {path}",
+                        "description": "エクスポート成功通知内容",
+                    },
+                    "failure": {
+                        "name": "エクスポートするクラスを先に選択してください",
+                        "description": "エクスポート失敗通知内容（クラス未選択）",
+                    },
+                    "error": {
+                        "name": "{message}",
+                        "description": "エクスポートエラー通知内容",
+                    },
+                },
+            },
+        },
+        "lottery": {
+            "pool_name_setting": {
+                "title": {
+                    "name": "賞プール名設定",
+                    "description": "賞プール名設定通知タイトル",
+                },
+                "content": {
+                    "name": "賞プール名設定ウィンドウを開きました",
+                    "description": "賞プール名設定通知内容",
+                },
+            },
+            "import_prize_name": {
+                "title": {
+                    "name": "賞品リストインポート",
+                    "description": "賞品リストインポート通知タイトル",
+                },
+                "content": {
+                    "name": "賞品リストインポートウィンドウを開きました",
+                    "description": "賞品リストインポート通知内容",
+                },
+            },
+            "prize_setting": {
+                "title": {
+                    "name": "賞品設定",
+                    "description": "賞品設定通知タイトル",
+                },
+                "content": {
+                    "name": "賞品設定ウィンドウを開きました",
+                    "description": "賞品設定通知内容",
+                },
+            },
+            "prize_weight_setting": {
+                "title": {
+                    "name": "賞品重み設定",
+                    "description": "賞品重み設定通知タイトル",
+                },
+                "content": {
+                    "name": "賞品重み設定ウィンドウを開きました",
+                    "description": "賞品重み設定通知内容",
+                },
+            },
+            "tag_setting": {
+                "title": {
+                    "name": "タグ設定",
+                    "description": "タグ設定通知タイトル",
+                },
+                "content": {
+                    "name": "タグ設定ウィンドウを開きました",
+                    "description": "タグ設定通知内容",
+                },
+            },
+            "prize_count_setting": {
+                "title": {
+                    "name": "賞品数量設定",
+                    "description": "賞品数量設定通知タイトル",
+                },
+                "content": {
+                    "name": "賞品数量設定ウィンドウを開きました",
+                    "description": "賞品数量設定通知内容",
+                },
+            },
+            "export": {
+                "title": {
+                    "success": {
+                        "name": "エクスポート成功",
+                        "description": "エクスポート成功通知タイトル",
+                    },
+                    "failure": {
+                        "name": "エクスポート失敗",
+                        "description": "エクスポート失敗通知タイトル",
+                    },
+                },
+                "content": {
+                    "success": {
+                        "name": "賞品リストをエクスポートしました: {path}",
+                        "description": "エクスポート成功通知内容",
+                    },
+                    "failure": {
+                        "name": "エクスポートする賞プールを先に選択してください",
+                        "description": "エクスポート失敗通知内容（賞プール未選択）",
+                    },
+                    "error": {
+                        "name": "{message}",
+                        "description": "エクスポートエラー通知内容",
+                    },
+                },
+            },
+        },
+    },
 }
 
 # QFileDialog 文本配置
@@ -749,7 +975,17 @@ qfiledialog = {
                     "name": "Excel 文件 (*.xlsx);;CSV 文件 (*.csv);;TXT 文件（仅姓名） (*.txt)",
                     "description": "保存学生名单对话框过滤器",
                 },
-            }
+            },
+            "export_history": {
+                "caption": {
+                    "name": "导出点名记录",
+                    "description": "导出点名记录对话框标题",
+                },
+                "filter": {
+                    "name": "Excel 文件 (*.xlsx);;CSV 文件 (*.csv);;TXT 文件 (*.txt)",
+                    "description": "导出点名记录对话框过滤器",
+                },
+            },
         },
         "lottery": {
             "export_prize_name": {
@@ -761,7 +997,17 @@ qfiledialog = {
                     "name": "Excel 文件 (*.xlsx);;CSV 文件 (*.csv);;TXT 文件（仅奖品名） (*.txt)",
                     "description": "保存奖品名单对话框过滤器",
                 },
-            }
+            },
+            "export_history": {
+                "caption": {
+                    "name": "导出抽奖记录",
+                    "description": "导出抽奖记录对话框标题",
+                },
+                "filter": {
+                    "name": "Excel 文件 (*.xlsx);;CSV 文件 (*.csv);;TXT 文件 (*.txt)",
+                    "description": "导出抽奖记录对话框过滤器",
+                },
+            },
         },
     },
     "EN_US": {
@@ -775,7 +1021,17 @@ qfiledialog = {
                     "name": "Excel files (*.xlsx);;CSV files (*.csv);;TXT files (name only) (*.txt)",
                     "description": "Save student list dialog filter",
                 },
-            }
+            },
+            "export_history": {
+                "caption": {
+                    "name": "Export picking records",
+                    "description": "Export picking records dialog title",
+                },
+                "filter": {
+                    "name": "Excel files (*.xlsx);;CSV files (*.csv);;TXT files (*.txt)",
+                    "description": "Export picking records dialog filter",
+                },
+            },
         },
         "lottery": {
             "export_prize_name": {
@@ -787,7 +1043,17 @@ qfiledialog = {
                     "name": "Excel files (*.xlsx);;CSV files (*.csv);;TXT files (only prizes) (*.txt)",
                     "description": "Save prize list dialog filter",
                 },
-            }
+            },
+            "export_history": {
+                "caption": {
+                    "name": "Export lottery records",
+                    "description": "Export lottery records dialog title",
+                },
+                "filter": {
+                    "name": "Excel files (*.xlsx);;CSV files (*.csv);;TXT files (*.txt)",
+                    "description": "Export lottery records dialog filter",
+                },
+            },
         },
     },
     "JA_JP": {
@@ -801,7 +1067,17 @@ qfiledialog = {
                     "name": "Excelファイル (*.xlsx);;CSVファイル (*.csv);;TXTファイル（氏名のみ） (*.txt)",
                     "description": "学生リスト保存ダイアログフィルター",
                 },
-            }
+            },
+            "export_history": {
+                "caption": {
+                    "name": "点呼記録をエクスポート",
+                    "description": "点呼記録エクスポートダイアログタイトル",
+                },
+                "filter": {
+                    "name": "Excelファイル (*.xlsx);;CSVファイル (*.csv);;TXTファイル (*.txt)",
+                    "description": "点呼記録エクスポートダイアログフィルター",
+                },
+            },
         },
         "lottery": {
             "export_prize_name": {
@@ -813,7 +1089,17 @@ qfiledialog = {
                     "name": "Excelファイル (*.xlsx);;CSVファイル (*.csv);;TXTファイル（賞品名のみ） (*.txt)",
                     "description": "賞品リスト保存ダイアログフィルター",
                 },
-            }
+            },
+            "export_history": {
+                "caption": {
+                    "name": "抽選記録をエクスポート",
+                    "description": "抽選記録エクスポートダイアログタイトル",
+                },
+                "filter": {
+                    "name": "Excelファイル (*.xlsx);;CSVファイル (*.csv);;TXTファイル (*.txt)",
+                    "description": "抽選記録エクスポートダイアログフィルター",
+                },
+            },
         },
     },
 }

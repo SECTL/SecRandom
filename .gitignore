@@ -184,6 +184,7 @@ cython_debug/
 
 # VSCode
 .vscode/settings.json
+.vscode/launch.json
 /.trae
 /app/config
 /app/config

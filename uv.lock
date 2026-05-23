@@ -3544,7 +3544,7 @@ wheels = [
 [[package]]
 name = "pyside6-fluent-widgets"
 version = "1.11.2"
-source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
+source = { registry = "https://mirrors.aliyun.com/pypi/simple" }
 dependencies = [
     { name = "darkdetect" },
     { name = "pyside6" },
@@ -3558,7 +3558,7 @@ wheels = [
 [[package]]
 name = "pysidesix-frameless-window"
 version = "0.8.1"
-source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
+source = { registry = "https://mirrors.aliyun.com/pypi/simple" }
 dependencies = [
     { name = "pycocoa", marker = "sys_platform == 'darwin'" },
     { name = "pyobjc", marker = "sys_platform == 'darwin'" },

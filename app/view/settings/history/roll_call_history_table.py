@@ -13,6 +13,7 @@ from qfluentwidgets import *
 from app.tools.variable import *
 from app.tools.path_utils import *
 from app.tools.personalised import *
+from app.tools.config import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
@@ -26,6 +27,7 @@ from app.common.history.history_reader import (
     get_roll_call_student_stats_data,
     check_class_has_gender_or_group,
 )
+from .export_utils import export_history_table_data
 
 
 # ==================================================
@@ -145,6 +147,20 @@ class roll_call_history_table(GroupHeaderCardWidget):
             get_content_name_async("roll_call_history_table", "select_mode"),
             get_content_description_async("roll_call_history_table", "select_mode"),
             self.mode_subject_widget,
+        )
+
+        # 创建导出按钮
+        self.export_button = PushButton(
+            get_content_name_async("roll_call_history_table", "export_button")
+        )
+        self.export_button.setFixedWidth(120)
+        self.export_button.clicked.connect(self.export_history_data)
+
+        self.addGroup(
+            get_theme_icon("ic_fluent_document_arrow_down_20_filled"),
+            get_content_name_async("roll_call_history_table", "export"),
+            get_content_description_async("roll_call_history_table", "export"),
+            self.export_button,
         )
 
     def create_table(self):
@@ -842,6 +858,22 @@ class roll_call_history_table(GroupHeaderCardWidget):
         # 更新当前班级名称
         self.current_class_name = self.class_comboBox.currentText()
 
+        # 更新模式下拉框中的学生名称列表
+        if hasattr(self, "mode_comboBox"):
+            current_mode = self.mode_comboBox.currentIndex()
+            self.mode_comboBox.blockSignals(True)
+            self.mode_comboBox.clear()
+            self.all_names = get_all_names("roll_call", self.current_class_name)
+            self.mode_comboBox.addItems(
+                get_content_combo_name_async("roll_call_history_table", "select_mode")
+                + self.all_names
+            )
+            if current_mode < self.mode_comboBox.count():
+                self.mode_comboBox.setCurrentIndex(current_mode)
+            else:
+                self.mode_comboBox.setCurrentIndex(0)
+            self.mode_comboBox.blockSignals(False)
+
         # 更新课程列表
         self._update_subject_list()
 
@@ -1143,3 +1175,24 @@ class roll_call_history_table(GroupHeaderCardWidget):
 
         self.table.setColumnCount(len(headers))
         self.table.setHorizontalHeaderLabels(headers)
+
+    def export_history_data(self):
+        if not self.current_class_name:
+            return
+
+        current_item_name = ""
+        if self.current_mode >= 2:
+            if hasattr(self, "mode_comboBox"):
+                current_item_name = self.mode_comboBox.currentText()
+            elif hasattr(self, "current_student_name"):
+                current_item_name = self.current_student_name
+
+        export_history_table_data(
+            table_widget=self.table,
+            current_mode=self.current_mode,
+            i18n_domain="roll_call",
+            current_name=self.current_class_name,
+            parent_widget=self,
+            current_subject=self.current_subject,
+            current_item_name=current_item_name,
+        )
