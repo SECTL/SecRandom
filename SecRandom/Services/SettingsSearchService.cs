@@ -37,7 +37,13 @@ public class SettingsSearchService
 
             var settingsPageClassName = @"SecRandom.Views.SettingsPages." + settingsPageResourceId + @"SettingsPage";
             var settingsPageInfo = PagesRegistryService.SettingsItems
-                .First(info => info.SettingsPageType?.FullName == settingsPageClassName);
+                .FirstOrDefault(info => info.SettingsPageType?.FullName == settingsPageClassName);
+            if (settingsPageInfo == null)
+            {
+                _logger.LogDebug("Skipping settings search metadata for resource without page: {Resource}",
+                    resourceType.FullName);
+                continue;
+            }
 
             SettingsMetadata.Add(new SettingsMetadata
             {

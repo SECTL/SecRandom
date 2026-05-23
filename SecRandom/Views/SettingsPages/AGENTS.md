@@ -18,7 +18,8 @@ SecRandom/Views/SettingsPages/
 ├── DebugSettingsPage.axaml(.cs)          # DEBUG-only bottom page
 ├── General/                              # Grouped settings.general.* pages
 ├── ListManagement/                       # Grouped settings.listManagement.* pages
-└── Personalized/                         # Grouped settings.personalized.* pages
+├── Personalized/                         # Grouped settings.personalized.* pages
+└── Picking/                              # Grouped settings.picking.* draw setting pages
 ```
 
 ## WHERE TO LOOK
@@ -29,7 +30,8 @@ SecRandom/Views/SettingsPages/
 | Top-level settings landing | `HomeSettingsPage.axaml(.cs)` | Page ID `settings.home`; no group. |
 | General settings behavior | `General/BasicSettingsPage.axaml(.cs)` | Language change triggers `SettingsView.Current?.RequestRestartApp()`. |
 | Backup settings UI | `General/BackupSettingsPage.axaml(.cs)` | Currently UI/demo-facing backup list; real persistence lives elsewhere. |
-| List management settings | `ListManagement/RollCallListSettingsPage.axaml(.cs)` | Point-call list viewing/import; uses profile list config persistence. |
+| List management settings | `ListManagement/RollCallListSettingsPage.axaml(.cs)`, `ListManagement/LotteryListSettingsPage.axaml(.cs)` | Point-call list and lottery prize-pool viewing/import; uses profile list config persistence. |
+| Draw settings | `Picking/DefaultDrawSettingsPage.axaml(.cs)`, `Picking/RollCallDrawSettingsPage.axaml(.cs)`, `Picking/QuickDrawSettingsPage.axaml(.cs)`, `Picking/LotteryDrawSettingsPage.axaml(.cs)` | Default draw settings are flat grouped sections; specific draw pages show unique settings first and expandable override sections. |
 | Personalized appearance settings | `Personalized/AppearanceSettingsPage.axaml(.cs)` | Mutations call `App.Current.RefreshPersonalizedSettings()`. |
 | About / external links | `AboutSettingsPage.axaml(.cs)` | Platform-specific `Process.Start` flow for URLs. |
 | Shell navigation semantics | `../SettingsView.axaml.cs` | Default page `settings.basic`, history stack, generated menu. |

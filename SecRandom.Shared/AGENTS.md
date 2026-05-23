@@ -42,7 +42,7 @@ SecRandom.Shared/
 - Keep this project UI-free and Avalonia-free; it targets `net8.0` while app/Core target `net10.0`.
 - Shared models are data contracts used across projects; avoid Host, logging, windows, or app service dependencies.
 - Profile models may be observable/serializable contract types; keep property defaults safe for missing JSON.
-- `Student` includes persisted optional metadata fields such as `Tags`; keep new fields backward-compatible with empty defaults.
+- `Student` and `Prize` include persisted optional metadata fields such as `Tags`; keep new fields backward-compatible with empty defaults.
 - Attached settings objects use `Guid` keys and `Dictionary<Guid, object?>`; coordinate changes with Core draw/settings
   consumers.
 - Prefer small extension methods and plain contracts here; richer behavior belongs in `SecRandom.Core`.

@@ -59,6 +59,7 @@ public partial class MainConfigModel : ConfigBase
             OverridableDrawSettingsType.StudentImage => settings.OverrideStudentImageSettings
                 ? settings
                 : DefaultDrawSettings,
+            OverridableDrawSettingsType.Reminder => settings.OverrideReminderSettings ? settings : DefaultDrawSettings,
             OverridableDrawSettingsType.Music => settings.OverrideMusicSettings ? settings : DefaultDrawSettings,
             _ => throw new ArgumentOutOfRangeException(nameof(settingsType), settingsType, null)
         };

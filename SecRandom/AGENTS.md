@@ -61,6 +61,7 @@ SecRandom/
 ## LOCALIZATION
 
 - Each page has its own folder under `Langs/`.
+- List management pages currently include roll-call lists (`data/list/roll_call_list`) and lottery prize pools (`data/list/lottery_list`).
 - Required files for a localized resource set: `Resources.resx` and `Resources.Designer.cs`; culture files such as
   `Resources.en-US.resx` / `Resources.ja-JP.resx` are optional and must keep exact on-disk casing.
 - Register only base `.resx` and designer in `SecRandom.csproj` using existing `EmbeddedResource` / `Compile` pattern.

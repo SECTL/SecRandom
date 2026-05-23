@@ -6,5 +6,6 @@ public enum OverridableDrawSettingsType
     Animation,
     Color,
     StudentImage,
+    Reminder,
     Music
 }

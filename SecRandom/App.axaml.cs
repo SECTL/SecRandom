@@ -39,6 +39,7 @@ using SecRandom.Views.SettingsPages;
 using SecRandom.Views.SettingsPages.General;
 using SecRandom.Views.SettingsPages.ListManagement;
 using SecRandom.Views.SettingsPages.Personalized;
+using SecRandom.Views.SettingsPages.Picking;
 
 namespace SecRandom;
 
@@ -176,6 +177,15 @@ public partial class App : Application
                     Langs.Common.Resources.Settings_RosterManagement, "settings.listManagement", FluentIcons.PeopleListRegular));
                 services.AddSettingsPage<RollCallListSettingsPage>(Langs.SettingsPages.ListManagement.RollCallList
                     .Resources.Page_Title);
+                services.AddSettingsPage<LotteryListSettingsPage>(Langs.SettingsPages.ListManagement.LotteryList
+                    .Resources.Page_Title);
+
+                services.AddGroup(new PageGroupInfo(
+                    Langs.Common.Resources.Settings_Draw, "settings.picking", FluentIcons.SettingsRegular));
+                services.AddSettingsPage<DefaultDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_Default);
+                services.AddSettingsPage<RollCallDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_RollCall);
+                services.AddSettingsPage<QuickDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
+                services.AddSettingsPage<LotteryDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_Lottery);
 
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
 

@@ -1,0 +1,68 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.ListManagement"
+             xmlns:lr="clr-namespace:SecRandom.Langs.SettingsPages.ListManagement.LotteryList"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="560"
+             x:Class="SecRandom.Views.SettingsPages.ListManagement.LotteryListSettingsPage"
+             x:DataType="local:LotteryListSettingsPage"
+             Unloaded="OnUnloaded">
+    <ScrollViewer>
+        <StackPanel Classes="page-container animated-intro" Spacing="8">
+            <fa:FAInfoBar Title="{x:Static lr:Resources.C_InfoTitle}"
+                          Message="{x:Static lr:Resources.C_InfoMessage}"
+                          Severity="Informational"
+                          IsClosable="False"
+                          IsOpen="True" />
+
+            <fa:FASettingsExpander Header="{x:Static lr:Resources.S_CurrentList}"
+                                   Description="{x:Static lr:Resources.S_CurrentList_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryRegular}}"
+                                   IsExpanded="True">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox MinWidth="220"
+                              ItemsSource="{Binding PrizeListNames}"
+                              SelectedItem="{Binding SelectedPrizeListName, Mode=TwoWay}"
+                              SelectionChanged="PrizeListComboBox_OnSelectionChanged" />
+                </fa:FASettingsExpander.Footer>
+
+                <fa:FASettingsExpanderItem>
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="{x:Static lr:Resources.C_AddList}" Click="AddListButton_OnClick" />
+                            <Button Content="{x:Static lr:Resources.C_RenameList}" Click="RenameListButton_OnClick" />
+                            <Button Content="{x:Static lr:Resources.C_Refresh}" Click="RefreshButton_OnClick" />
+                            <Button Classes="accent" Content="{x:Static lr:Resources.C_ImportList}" Click="ImportButton_OnClick" />
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+
+            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    ClipToBounds="True">
+                <DataGrid MinHeight="320"
+                          AutoGenerateColumns="False"
+                          CanUserSortColumns="True"
+                          CanUserResizeColumns="True"
+                          GridLinesVisibility="Horizontal"
+                          IsReadOnly="False"
+                          SelectionMode="Single"
+                          ItemsSource="{Binding SelectedPrizeList.Prizes}">
+                    <DataGrid.Columns>
+                        <DataGridCheckBoxColumn Header="{x:Static lr:Resources.C_Exists}" Binding="{Binding Exists}" />
+                        <DataGridTextColumn Header="{x:Static lr:Resources.C_PrizeId}" Binding="{Binding Id}" />
+                        <DataGridTextColumn Width="2*" Header="{x:Static lr:Resources.C_Name}" Binding="{Binding Name}" />
+                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Weight}" Binding="{Binding Weight}" />
+                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Count}" Binding="{Binding Count}" />
+                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Tags}" Binding="{Binding Tags}" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

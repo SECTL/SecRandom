@@ -13,10 +13,15 @@ public partial class DrawSettingsConfigBase : ObservableObject
     [ObservableProperty] private DisplayStyleMode _displayStyle = DisplayStyleMode.Default;
     [ObservableProperty] private ShowRandomMode _showRandom = ShowRandomMode.None;
     [ObservableProperty] private bool _showTags = false;
+    [ObservableProperty] private bool _showWeightTransparency = false;
+    [ObservableProperty] private string _reminderText = "别紧张";
+    [ObservableProperty] private int _reminderFontSize = 30;
+    [ObservableProperty] private Color _reminderTextColor = Color.Parse("#808080");
+    [ObservableProperty] private int _reminderTextOpacity = 50;
 
     [ObservableProperty] private AnimationMode _animation = AnimationMode.AutoPlay;
     [ObservableProperty] private int _animationInterval = 80;
-    [ObservableProperty] private int _autoplayCount = 10;
+    [ObservableProperty] private int _autoplayCount = 5;
     [ObservableProperty] private bool _resultFlowAnimationStyle = false;
     [ObservableProperty] private int _resultFlowAnimationDuration = 250;
 
@@ -37,4 +42,5 @@ public partial class DrawSettingsConfigBase : ObservableObject
     [ObservableProperty] private int _resultMusicFadeOut = 300;
     
     [ObservableProperty] private int _animationMusicVolume = 100;
+    [ObservableProperty] private int _resultMusicVolume = 100;
 }
