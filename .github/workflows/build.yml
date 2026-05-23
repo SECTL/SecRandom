@@ -1,0 +1,98 @@
+name: Build (new Nuitka)
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "版本号 (e.g. v2.3.10)"
+        required: true
+        type: string
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13.5"
+
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            V="${{ github.event.inputs.version }}"
+          else
+            V="${{ github.ref_name }}"
+          fi
+          PLAIN="${V#v}"
+          echo "version=$V" >> $GITHUB_OUTPUT
+          echo "plain=$PLAIN" >> $GITHUB_OUTPUT
+          echo "Version: $V"
+
+      - name: Update version in source
+        run: uv run python update_version.py
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Build with Nuitka
+        run: uv run python build_nuitka.py
+        env:
+          CI: "true"
+
+      - name: Copy language modules
+        shell: pwsh
+        run: |
+          $dst = "dist/main.dist/app/Language/modules"
+          # -Force 会自动递归创建不存在的父目录
+          New-Item -ItemType Directory -Force -Path $dst | Out-Null
+          # 确保源文件存在再复制，避免报错
+          if (Test-Path "app/Language/modules/*.py") {
+              Copy-Item -Path "app/Language/modules/*.py" -Destination $dst -Force
+          } else {
+              Write-Warning "Source language modules not found!"
+          }
+
+      - name: Pack artifact
+        shell: pwsh
+        run: |
+          $src = "dist/main.dist"
+          $folderName = "SecRandom-${{ steps.version.outputs.plain }}-${{ matrix.platform }}-x64"
+          $dst = "dist/$folderName"
+          
+          # 安全重命名：如果目标已存在，先删除
+          if (Test-Path $dst) { Remove-Item -Recurse -Force $dst }
+          Rename-Item -Path $src -NewName $folderName
+          
+          # 更改压缩路径：压缩整个文件夹，这样解压后包含外层目录，不会散落一地
+          Compress-Archive -Path $dst -DestinationPath "$dst.zip" -Force
+          
+          echo "artifact=$dst" | Out-File -Append -FilePath $env:GITHUB_OUTPUT -Encoding utf8
+          echo "zip=$dst.zip" | Out-File -Append -FilePath $env:GITHUB_OUTPUT -Encoding utf8
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SecRandom-${{ steps.version.outputs.plain }}-${{ matrix.platform }}-x64
+          path: dist/SecRandom-${{ steps.version.outputs.plain }}-${{ matrix.platform }}-x64.zip
+
+      - name: Create release
+        # 允许通过 Tag 触发，或者手动触发时也创建 Release 草稿
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.version.outputs.version }}
+          tag_name: ${{ steps.version.outputs.version }} # 手动触发时明确指定 Tag 名
+          draft: true
+          files: |
+            dist/SecRandom-${{ steps.version.outputs.plain }}-${{ matrix.platform }}-x64.zip
