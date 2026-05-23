@@ -20,6 +20,7 @@ SecRandom.Core/
 ├── Behaviors/            # Shared Avalonia behaviors
 ├── Controls/             # Reusable Avalonia controls/templates
 ├── Converters/           # Shared Avalonia converters
+├── Assets/               # Icon mapping JSON inputs for generated Fluent/Lucide icon enums
 ├── Helpers/              # Core helper utilities
 ├── Interfaces/           # Core-facing interfaces
 ├── Styles/               # Modular shared style files
@@ -69,6 +70,7 @@ SecRandom.Core/
   files.
 - Controls should keep `.axaml` and `.axaml.cs` side by side and expose reusable Avalonia properties/templates.
 - Shared styles are modular; add new broad styles under `Styles/` and include from `StylesBase.axaml`.
+- Fluent icon names come from `Assets/FluentSystemIcons-Resizable.json` and are exposed through generated `sr:Fi` enum values plus `FluentIcons.*` string constants; prefer `{sr:FluentIconSource {sr:Fi NameRegular}}` in XAML and `FluentIcons.NameRegular` in attributes/code instead of raw glyphs.
 - Comments should explain public-contract constraints, draw fairness reasoning, or platform quirks; avoid restating
   obvious property wiring.
 

@@ -10,51 +10,59 @@
              x:Class="SecRandom.Views.SettingsPages.ListManagement.RollCallListSettingsPage"
              x:DataType="local:RollCallListSettingsPage"
              Unloaded="OnUnloaded">
-    <Grid RowDefinitions="Auto,Auto,*" Classes="page-container animated-intro">
-        <fa:FAInfoBar Grid.Row="0"
-                      Title="{x:Static lr:Resources.C_InfoTitle}"
-                      Message="{x:Static lr:Resources.C_InfoMessage}"
-                      Severity="Informational"
-                      IsClosable="False"
-                      IsOpen="True" />
+    <ScrollViewer>
+        <StackPanel Classes="page-container animated-intro" Spacing="8">
+            <fa:FAInfoBar Title="{x:Static lr:Resources.C_InfoTitle}"
+                          Message="{x:Static lr:Resources.C_InfoMessage}"
+                          Severity="Informational"
+                          IsClosable="False"
+                          IsOpen="True" />
 
-        <fa:FASettingsExpander Grid.Row="1"
-                               Header="{x:Static lr:Resources.S_CurrentList}"
-                               Description="{x:Static lr:Resources.S_CurrentList_D}"
-                               IconSource="{sr:FluentIconSource &#xE8D4;}"
-                               IsExpanded="True">
-            <fa:FASettingsExpander.Footer>
-                <StackPanel Orientation="Horizontal" Spacing="8">
+            <fa:FASettingsExpander Header="{x:Static lr:Resources.S_CurrentList}"
+                                   Description="{x:Static lr:Resources.S_CurrentList_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleListRegular}}"
+                                   IsExpanded="True">
+                <fa:FASettingsExpander.Footer>
                     <ComboBox MinWidth="220"
                               ItemsSource="{Binding StudentListNames}"
                               SelectedItem="{Binding SelectedStudentListName, Mode=TwoWay}"
                               SelectionChanged="StudentListComboBox_OnSelectionChanged" />
-                    <Button Content="{x:Static lr:Resources.C_Refresh}" Click="RefreshButton_OnClick" />
-                    <Button Classes="accent" Content="{x:Static lr:Resources.C_ImportList}" Click="ImportButton_OnClick" />
-                </StackPanel>
-            </fa:FASettingsExpander.Footer>
-        </fa:FASettingsExpander>
+                </fa:FASettingsExpander.Footer>
 
-        <Border Grid.Row="2"
-                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="4"
-                ClipToBounds="True">
-            <DataGrid AutoGenerateColumns="False"
-                      CanUserSortColumns="True"
-                      CanUserResizeColumns="True"
-                      GridLinesVisibility="Horizontal"
-                      IsReadOnly="False"
-                      SelectionMode="Single"
-                      ItemsSource="{Binding SelectedStudentList.Students}">
-                <DataGrid.Columns>
-                    <DataGridCheckBoxColumn Header="{x:Static lr:Resources.C_Exists}" Binding="{Binding Exists}" />
-                    <DataGridTextColumn Header="{x:Static lr:Resources.C_StudentId}" Binding="{Binding Id}" />
-                    <DataGridTextColumn Width="2*" Header="{x:Static lr:Resources.C_Name}" Binding="{Binding Name}" />
-                    <DataGridTextColumn Header="{x:Static lr:Resources.C_Gender}" Binding="{Binding Gender}" />
-                    <DataGridTextColumn Header="{x:Static lr:Resources.C_Group}" Binding="{Binding Group}" />
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
-    </Grid>
+                <fa:FASettingsExpanderItem>
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="{x:Static lr:Resources.C_AddList}" Click="AddListButton_OnClick" />
+                            <Button Content="{x:Static lr:Resources.C_RenameList}" Click="RenameListButton_OnClick" />
+                            <Button Content="{x:Static lr:Resources.C_Refresh}" Click="RefreshButton_OnClick" />
+                            <Button Classes="accent" Content="{x:Static lr:Resources.C_ImportList}" Click="ImportButton_OnClick" />
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+
+            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    ClipToBounds="True">
+                <DataGrid MinHeight="320"
+                          AutoGenerateColumns="False"
+                          CanUserSortColumns="True"
+                          CanUserResizeColumns="True"
+                          GridLinesVisibility="Horizontal"
+                          IsReadOnly="False"
+                          SelectionMode="Single"
+                          ItemsSource="{Binding SelectedStudentList.Students}">
+                    <DataGrid.Columns>
+                        <DataGridCheckBoxColumn Header="{x:Static lr:Resources.C_Exists}" Binding="{Binding Exists}" />
+                        <DataGridTextColumn Header="{x:Static lr:Resources.C_StudentId}" Binding="{Binding Id}" />
+                        <DataGridTextColumn Width="2*" Header="{x:Static lr:Resources.C_Name}" Binding="{Binding Name}" />
+                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Gender}" Binding="{Binding Gender}" />
+                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Group}" Binding="{Binding Group}" />
+                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Tags}" Binding="{Binding Tags}" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

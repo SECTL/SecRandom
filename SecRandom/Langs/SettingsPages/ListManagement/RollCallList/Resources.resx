@@ -45,6 +45,12 @@
     <data name="C_ImportList" xml:space="preserve">
         <value>导入名单</value>
     </data>
+    <data name="C_AddList" xml:space="preserve">
+        <value>新增名单</value>
+    </data>
+    <data name="C_RenameList" xml:space="preserve">
+        <value>重命名</value>
+    </data>
     <data name="C_Exists" xml:space="preserve">
         <value>存在</value>
     </data>
@@ -161,6 +167,36 @@
     </data>
     <data name="M_ImportSuccess" xml:space="preserve">
         <value>已导入 {0} 名学生到“{1}”。</value>
+    </data>
+    <data name="M_ListNameDialogTitle_Add" xml:space="preserve">
+        <value>新增名单</value>
+    </data>
+    <data name="M_ListNameDialogTitle_Rename" xml:space="preserve">
+        <value>重命名名单</value>
+    </data>
+    <data name="M_ListNameDialogPrimary_Add" xml:space="preserve">
+        <value>新增</value>
+    </data>
+    <data name="M_ListNameDialogPrimary_Rename" xml:space="preserve">
+        <value>保存</value>
+    </data>
+    <data name="M_ListNamePlaceholder" xml:space="preserve">
+        <value>请输入名单名称</value>
+    </data>
+    <data name="M_ListNameEmpty" xml:space="preserve">
+        <value>名单名称不能为空。</value>
+    </data>
+    <data name="M_ListNameExists" xml:space="preserve">
+        <value>名单“{0}”已存在。</value>
+    </data>
+    <data name="M_ListNameInvalid" xml:space="preserve">
+        <value>名单名称不能包含文件名非法字符。</value>
+    </data>
+    <data name="M_AddListSuccess" xml:space="preserve">
+        <value>已新增名单“{0}”。</value>
+    </data>
+    <data name="M_RenameListSuccess" xml:space="preserve">
+        <value>已重命名为“{0}”。</value>
     </data>
     <data name="K_IdColumns" xml:space="preserve">
         <value>学号|学籍号|学生ID|student id|student_id|student number|student no|roll no|roll number|学员编号|编号|座号|座位号|sid|id|no</value>

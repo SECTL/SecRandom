@@ -173,7 +173,7 @@ public partial class App : Application
                 services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
 
                 services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_RosterManagement, "settings.listManagement", "\uE8D4"));
+                    Langs.Common.Resources.Settings_RosterManagement, "settings.listManagement", FluentIcons.PeopleListRegular));
                 services.AddSettingsPage<RollCallListSettingsPage>(Langs.SettingsPages.ListManagement.RollCallList
                     .Resources.Page_Title);
 

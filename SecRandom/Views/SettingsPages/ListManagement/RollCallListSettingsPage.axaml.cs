@@ -13,6 +13,7 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Helpers.UI;
+using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
@@ -20,7 +21,7 @@ using LR = SecRandom.Langs.SettingsPages.ListManagement.RollCallList.Resources;
 
 namespace SecRandom.Views.SettingsPages.ListManagement;
 
-[PageInfo("settings.listManagement.rollCallList", "\uE8D4", "settings.listManagement")]
+[PageInfo("settings.listManagement.rollCallList", FluentIcons.PeopleListRegular, "settings.listManagement")]
 public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChanged
 {
     private string _selectedStudentListName = string.Empty;
@@ -61,10 +62,15 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
     private void RefreshStudentLists()
     {
         var previous = SelectedStudentListName;
+        RefreshStudentLists(previous);
+    }
+
+    private void RefreshStudentLists(string selectedName)
+    {
         StudentListNames.Clear();
 
-        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "roll_call_list"), "*.json")
-                     .OrderBy(Path.GetFileName))
+        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("data", "list", "roll_call_list"), "*.json")
+                      .OrderBy(Path.GetFileName))
             StudentListNames.Add(Path.GetFileNameWithoutExtension(file));
 
         if (StudentListNames.Count == 0)
@@ -74,7 +80,7 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
             StudentListNames.Add(config.Name);
         }
 
-        SelectedStudentListName = StudentListNames.Contains(previous) ? previous : StudentListNames[0];
+        SelectedStudentListName = StudentListNames.Contains(selectedName) ? selectedName : StudentListNames[0];
         LoadSelectedStudentList();
     }
 
@@ -112,6 +118,54 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         RefreshStudentLists();
     }
 
+    private async void AddListButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var listName = await ShowListNameDialogAsync(LR.M_ListNameDialogTitle_Add, LR.M_ListNameDialogPrimary_Add,
+            CreateDefaultListName());
+        if (listName == null)
+            return;
+
+        if (!ValidateNewListName(listName))
+            return;
+
+        SaveSelectedStudentList();
+        var config = new StudentListConfig(listName);
+        config.Save();
+        RefreshStudentLists(listName);
+        this.ShowSuccessToast(string.Format(LR.M_AddListSuccess, listName));
+    }
+
+    private async void RenameListButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(SelectedStudentListName) || SelectedStudentListConfig == null)
+        {
+            this.ShowWarningToast(LR.M_SelectListFirst);
+            return;
+        }
+
+        var oldName = SelectedStudentListName;
+        var newName = await ShowListNameDialogAsync(LR.M_ListNameDialogTitle_Rename, LR.M_ListNameDialogPrimary_Rename,
+            oldName);
+        if (newName == null || newName == oldName)
+            return;
+
+        if (!ValidateNewListName(newName))
+            return;
+
+        SaveSelectedStudentList();
+
+        var oldPath = GetStudentListPath(oldName);
+        var newPath = GetStudentListPath(newName);
+        File.Move(oldPath, newPath);
+
+        var service = IAppHost.GetService<IProfileService>();
+        if (service.StudentListConfig?.Name == oldName)
+            service.StudentListConfig.Reload();
+
+        RefreshStudentLists(newName);
+        this.ShowSuccessToast(string.Format(LR.M_RenameListSuccess, newName));
+    }
+
     private void ImportButton_OnClick(object? sender, RoutedEventArgs e)
     {
         if (SelectedStudentListConfig == null)
@@ -136,6 +190,69 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         }.ShowAsync(TopLevel.GetTopLevel(this));
 
         return result == FAContentDialogResult.Primary;
+    }
+
+    private async Task<string?> ShowListNameDialogAsync(string title, string primaryButtonText, string listName)
+    {
+        var textBox = new TextBox
+        {
+            Text = listName,
+            PlaceholderText = LR.M_ListNamePlaceholder,
+            MinWidth = 320
+        };
+
+        var result = await new FAContentDialog
+        {
+            Title = title,
+            Content = textBox,
+            PrimaryButtonText = primaryButtonText,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Primary
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+
+        return result == FAContentDialogResult.Primary ? textBox.Text?.Trim() : null;
+    }
+
+    private bool ValidateNewListName(string listName)
+    {
+        if (string.IsNullOrWhiteSpace(listName))
+        {
+            this.ShowWarningToast(LR.M_ListNameEmpty);
+            return false;
+        }
+
+        if (listName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+        {
+            this.ShowWarningToast(LR.M_ListNameInvalid);
+            return false;
+        }
+
+        if (File.Exists(GetStudentListPath(listName)))
+        {
+            this.ShowWarningToast(string.Format(LR.M_ListNameExists, listName));
+            return false;
+        }
+
+        return true;
+    }
+
+    private string CreateDefaultListName()
+    {
+        var baseName = LR.C_DefaultListName;
+        if (!File.Exists(GetStudentListPath(baseName)))
+            return baseName;
+
+        for (var i = 2;; i++)
+        {
+            var name = $"{baseName} {i}";
+            if (!File.Exists(GetStudentListPath(name)))
+                return name;
+        }
+    }
+
+    private static string GetStudentListPath(string listName)
+    {
+        return Utils.GetFilePath("data", "list", "roll_call_list", $"{listName}.json");
     }
 
     private async void OnStudentsImported(IReadOnlyList<Student> students)

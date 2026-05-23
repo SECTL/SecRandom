@@ -49,6 +49,7 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.RollCallList {
         }
 
         public static string C_Cancel => ResourceManager.GetString("C_Cancel", resourceCulture);
+        public static string C_AddList => ResourceManager.GetString("C_AddList", resourceCulture);
         public static string C_ColumnMapping => ResourceManager.GetString("C_ColumnMapping", resourceCulture);
         public static string C_ColumnMapping_D => ResourceManager.GetString("C_ColumnMapping_D", resourceCulture);
         public static string C_DefaultListName => ResourceManager.GetString("C_DefaultListName", resourceCulture);
@@ -69,6 +70,7 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.RollCallList {
         public static string C_NoFileSelected => ResourceManager.GetString("C_NoFileSelected", resourceCulture);
         public static string C_NoneColumn => ResourceManager.GetString("C_NoneColumn", resourceCulture);
         public static string C_Refresh => ResourceManager.GetString("C_Refresh", resourceCulture);
+        public static string C_RenameList => ResourceManager.GetString("C_RenameList", resourceCulture);
         public static string C_SelectFile => ResourceManager.GetString("C_SelectFile", resourceCulture);
         public static string C_SelectFileButton => ResourceManager.GetString("C_SelectFileButton", resourceCulture);
         public static string C_StudentId => ResourceManager.GetString("C_StudentId", resourceCulture);
@@ -88,6 +90,15 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.RollCallList {
         public static string M_DuplicateTitle => ResourceManager.GetString("M_DuplicateTitle", resourceCulture);
         public static string M_FileLoaded => ResourceManager.GetString("M_FileLoaded", resourceCulture);
         public static string M_ImportSuccess => ResourceManager.GetString("M_ImportSuccess", resourceCulture);
+        public static string M_AddListSuccess => ResourceManager.GetString("M_AddListSuccess", resourceCulture);
+        public static string M_ListNameDialogPrimary_Add => ResourceManager.GetString("M_ListNameDialogPrimary_Add", resourceCulture);
+        public static string M_ListNameDialogPrimary_Rename => ResourceManager.GetString("M_ListNameDialogPrimary_Rename", resourceCulture);
+        public static string M_ListNameDialogTitle_Add => ResourceManager.GetString("M_ListNameDialogTitle_Add", resourceCulture);
+        public static string M_ListNameDialogTitle_Rename => ResourceManager.GetString("M_ListNameDialogTitle_Rename", resourceCulture);
+        public static string M_ListNameEmpty => ResourceManager.GetString("M_ListNameEmpty", resourceCulture);
+        public static string M_ListNameExists => ResourceManager.GetString("M_ListNameExists", resourceCulture);
+        public static string M_ListNameInvalid => ResourceManager.GetString("M_ListNameInvalid", resourceCulture);
+        public static string M_ListNamePlaceholder => ResourceManager.GetString("M_ListNamePlaceholder", resourceCulture);
         public static string M_LoadFailed => ResourceManager.GetString("M_LoadFailed", resourceCulture);
         public static string M_OverwriteContent => ResourceManager.GetString("M_OverwriteContent", resourceCulture);
         public static string M_OverwritePrimary => ResourceManager.GetString("M_OverwritePrimary", resourceCulture);
@@ -95,6 +106,7 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.RollCallList {
         public static string M_SelectFileFirst => ResourceManager.GetString("M_SelectFileFirst", resourceCulture);
         public static string M_SelectListFirst => ResourceManager.GetString("M_SelectListFirst", resourceCulture);
         public static string M_SelectRequiredColumns => ResourceManager.GetString("M_SelectRequiredColumns", resourceCulture);
+        public static string M_RenameListSuccess => ResourceManager.GetString("M_RenameListSuccess", resourceCulture);
         public static string Page_Title => ResourceManager.GetString("Page_Title", resourceCulture);
         public static string S_CurrentList => ResourceManager.GetString("S_CurrentList", resourceCulture);
         public static string S_CurrentList_D => ResourceManager.GetString("S_CurrentList_D", resourceCulture);

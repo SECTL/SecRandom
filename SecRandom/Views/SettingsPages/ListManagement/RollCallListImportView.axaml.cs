@@ -279,6 +279,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
                 Name = GetColumnValue(row, NameColumn),
                 Gender = GetColumnValue(row, GenderColumn),
                 Group = GetColumnValue(row, GroupColumn),
+                Tags = string.Join(' ', SplitTags(GetColumnValue(row, TagsColumn))),
                 Exists = true
             })
             .Where(student => !string.IsNullOrWhiteSpace(student.Name))
