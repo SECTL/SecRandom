@@ -320,13 +320,8 @@ public partial class CameraPreviewTestPage : UserControl
 
     private static FaceDetectorSettingsConfig GetFaceDetectorSettingsConfig()
     {
-        object handler = IAppHost.GetService<MainConfigHandler>();
-        var config = handler.GetType().GetProperty("Data")?.GetValue(handler);
-        var property = config?.GetType().GetProperty(nameof(FaceDetectorSettingsConfig));
-        if (property?.GetValue(config) is FaceDetectorSettingsConfig value)
-            return value;
-
-        throw new InvalidOperationException(nameof(FaceDetectorSettingsConfig));
+        var handler = IAppHost.GetService<MainConfigHandler>();
+        return handler.Data.FaceDetectorSettings;
     }
 
     private void InitializeComponent()

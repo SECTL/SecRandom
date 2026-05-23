@@ -39,16 +39,8 @@ public partial class CameraDrawEngine
 
     private static FaceDetectorSettingsConfig GetFaceDetectorSettingsConfig()
     {
-        object handler = IAppHost.GetService<MainConfigHandler>();
-        var config = handler.GetType().GetProperty("Data")?.GetValue(handler);
-        if (config == null)
-            throw new InvalidOperationException(CameraText("ConfigMissing", nameof(FaceDetectorSettingsConfig)));
-
-        var property = config.GetType().GetProperty(nameof(FaceDetectorSettingsConfig));
-        if (property?.GetValue(config) is FaceDetectorSettingsConfig value)
-            return value;
-
-        throw new InvalidOperationException(CameraText("ConfigMissing", nameof(FaceDetectorSettingsConfig)));
+        var handler = IAppHost.GetService<MainConfigHandler>();
+        return handler.Data.FaceDetectorSettings;
     }
 
     protected virtual void OnFrameReady(CameraFramePacket e)
