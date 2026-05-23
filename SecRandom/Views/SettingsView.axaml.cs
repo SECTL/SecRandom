@@ -284,7 +284,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         if (r != FAContentDialogResult.Primary)
             return;
 
-        App.Restart();
+        App.Current.Restart();
     }
 
     private void ButtonRestartApp_OnClick(object? sender, RoutedEventArgs e)

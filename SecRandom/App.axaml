@@ -4,44 +4,6 @@
              xmlns:langs="clr-namespace:SecRandom.Langs.Common"
              x:Class="SecRandom.App"
              RequestedThemeVariant="Default">
-    <TrayIcon.Icons>
-        <TrayIcons>
-            <TrayIcon Icon="/Assets/AppLogo.ico" ToolTipText="SecRandom">
-                <TrayIcon.Menu>
-                    <NativeMenu>
-                        <NativeMenuItem Header="SecRandom" Click="MenuItemAbout_OnClick">
-                            <NativeMenuItem.Icon>
-                                <OnPlatform Default="Assets/AppLogo.png">
-                                    <On Content="{x:Null}" Options="macOS" />
-                                </OnPlatform>
-                            </NativeMenuItem.Icon>
-                        </NativeMenuItem>
-
-                        <NativeMenuItemSeparator />
-
-                        <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenMainWindow}"
-                                        Click="MenuItemOpenMainWindow_OnClick" />
-
-                        <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenProfileSettings}"
-                                        IsVisible="{x:Static sr:GlobalConstants.IsDevelopment}"
-                                        Click="MenuItemOpenProfileSettings_OnClick" />
-
-                        <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenSettings}"
-                                        Click="MenuItemOpenSettings_OnClick" />
-
-                        <NativeMenuItemSeparator />
-
-                        <NativeMenuItem Header="{x:Static langs:Resources.Menu_RestartProgram}"
-                                        Click="MenuItemRestartProgram_OnClick" />
-
-                        <NativeMenuItem Header="{x:Static langs:Resources.Menu_ExitProgram}"
-                                        Click="MenuItemExitProgram_OnClick" />
-                    </NativeMenu>
-                </TrayIcon.Menu>
-            </TrayIcon>
-        </TrayIcons>
-    </TrayIcon.Icons>
-
     <Application.Styles>
         <StyleInclude Source="/Styles.axaml" />
 
@@ -56,6 +18,34 @@
         <FontFamily x:Key="ContentControlThemeFontFamily">avares://SecRandom/Assets/Fonts/MiSans/#MiSans</FontFamily>
         <FontWeight x:Key="AppFontWeight">Normal</FontWeight>
 
-        <NativeMenu x:Key="AppMenu" />
+        <NativeMenu x:Key="AppMenu">
+            <NativeMenuItem Header="SecRandom" Click="MenuItemAbout_OnClick">
+                <NativeMenuItem.Icon>
+                    <OnPlatform Default="Assets/AppLogo.png">
+                        <On Content="{x:Null}" Options="macOS" />
+                    </OnPlatform>
+                </NativeMenuItem.Icon>
+            </NativeMenuItem>
+
+            <NativeMenuItemSeparator />
+
+            <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenMainWindow}"
+                            Click="MenuItemOpenMainWindow_OnClick" />
+
+            <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenProfileSettings}"
+                            IsVisible="{x:Static sr:GlobalConstants.IsDevelopment}"
+                            Click="MenuItemOpenProfileSettings_OnClick" />
+
+            <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenSettings}"
+                            Click="MenuItemOpenSettings_OnClick" />
+
+            <NativeMenuItemSeparator />
+
+            <NativeMenuItem Header="{x:Static langs:Resources.Menu_RestartProgram}"
+                            Click="MenuItemRestartProgram_OnClick" />
+
+            <NativeMenuItem Header="{x:Static langs:Resources.Menu_ExitProgram}"
+                            Click="MenuItemExitProgram_OnClick" />
+        </NativeMenu>
     </Application.Resources>
 </Application>

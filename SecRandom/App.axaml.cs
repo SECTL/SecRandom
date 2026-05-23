@@ -2,12 +2,16 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using Avalonia.Platform;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using FluentAvalonia.Styling;
@@ -46,6 +50,9 @@ public partial class App : Application
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     public new static App Current => (Application.Current as App)!;
 
+    public event EventHandler? AppStarted;
+    public event EventHandler? AppStopping;
+    
     public override void Initialize()
     {
         // 初始化语言
@@ -93,6 +100,8 @@ public partial class App : Application
             throw new PlatformNotSupportedException();
         }
 
+        InitializeApp();
+        
         AppDomain.CurrentDomain.ProcessExit += CurrentDomainOnProcessExit;
         Dispatcher.UIThread.UnhandledException += App_OnDispatcherUnhandledException;
 
@@ -127,6 +136,7 @@ public partial class App : Application
                 // 服务
                 services.AddSingleton<IProfileService, ProfileService>();
                 services.AddSingleton<SettingsSearchService>();
+                services.AddHostedService<TaskBarIconService>();
 
                 // 窗口
                 services.AddTransient<MainView>();
@@ -200,10 +210,23 @@ public partial class App : Application
             IAppHost.GetService<SettingsSearchService>().LogTestInformation();
     }
 
-    public static void Stop()
+    public void InitializeApp()
+    {
+        var taskBarIconService = IAppHost.Host!.Services
+            .GetServices<IHostedService>().OfType<TaskBarIconService>().First();
+        taskBarIconService.MainTaskBarIcon.Menu = this.FindResource(@"AppMenu") as NativeMenu;
+        taskBarIconService.MainTaskBarIcon.IsVisible = true;
+        taskBarIconService.MainTaskBarIcon.Clicked += MainTaskBarIconOnClicked;
+        
+        AppStarted?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void Stop()
     {
         var logger = IAppHost.GetService<ILogger<App>>();
         logger.LogInformation("Stopping application.");
+        
+        AppStopping?.Invoke(this, EventArgs.Empty);
 
         _floatingWindow?.CanClose = true;
 
@@ -214,7 +237,7 @@ public partial class App : Application
         _desktopLifetime?.Shutdown();
     }
 
-    public static void Restart()
+    public void Restart()
     {
         Stop();
 
@@ -356,6 +379,32 @@ public partial class App : Application
     #endregion
 
     #region TrayIcon
+
+    private void MainTaskBarIconOnClicked(object? sender, EventArgs e)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+        
+        var taskBarIconService = IAppHost.Host!.Services
+            .GetServices<IHostedService>().OfType<TaskBarIconService>().First();
+        
+        var impl = typeof(TrayIcon)
+            .GetProperty("Impl", BindingFlags.NonPublic | BindingFlags.Instance)?
+            .GetValue(taskBarIconService.MainTaskBarIcon) as ITrayIconImpl;
+
+        var type = AppDomain.CurrentDomain.GetAssemblies()
+            .Where(a => a.FullName?.StartsWith(@"Avalonia.Win32") ?? false)
+            .SelectMany(a => a.GetTypes())
+            .FirstOrDefault(t => t.Name == "TrayIconImpl");
+
+        if (impl == null || type == null) return;
+        
+        var methodInfo = type.GetMethod("OnRightClicked",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        methodInfo?.Invoke(impl, null);
+    }
 
     private void MenuItemAbout_OnClick(object? sender, EventArgs e)
     {
