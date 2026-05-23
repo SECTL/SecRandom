@@ -27,10 +27,10 @@
 ---
 
 - 名单管理 ListManagement `alpha1`
-    - 点名名单 RollCall
-    - 点名表格
-    - 抽奖名单 Lottery
-    - 抽奖表格
+    - 点名名单 RollCallList
+    - 点名表格 RollCallTable
+    - 抽奖名单 LotteryList
+    - 抽奖表格 LotteryTable
 
 
 - 抽取设置 Picking `alpha1`
