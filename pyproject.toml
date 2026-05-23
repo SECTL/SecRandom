@@ -79,7 +79,7 @@ build-backend = "setuptools.build_meta"
 py-modules = []
 
 [[tool.uv.index]]
-url = "https://mirrors.aliyun.com/pypi/simple"
+url = "https://mirrors.aliyun.com/pypi/simple/"
 default = true
 
 [dependency-groups]
