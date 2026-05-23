@@ -1,0 +1,98 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.ListManagement"
+             xmlns:lr="clr-namespace:SecRandom.Langs.SettingsPages.ListManagement.RollCallList"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="720"
+             x:Class="SecRandom.Views.SettingsPages.ListManagement.RollCallListImportView"
+             x:DataType="local:RollCallListImportView">
+    <ScrollViewer Width="460">
+        <StackPanel Margin="20" Spacing="14">
+            <TextBlock Text="{x:Static lr:Resources.C_ImportTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="{Binding TargetListDescription}" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                    BorderThickness="1" CornerRadius="6" Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{x:Static lr:Resources.C_SelectFile}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding SelectedFileName}"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <Button Content="{x:Static lr:Resources.C_SelectFileButton}" Click="SelectFileButton_OnClick" />
+                    <TextBlock Text="{x:Static lr:Resources.C_SupportedFormats}"
+                               TextWrapping="Wrap"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                </StackPanel>
+            </Border>
+
+            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                    BorderThickness="1" CornerRadius="6" Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{x:Static lr:Resources.C_ColumnMapping}" FontWeight="SemiBold" />
+                    <TextBlock Text="{x:Static lr:Resources.C_ColumnMapping_D}"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+                    <sr:Field Label="{x:Static lr:Resources.C_StudentIdColumn}">
+                        <ComboBox MaxWidth="360"
+                                  ItemsSource="{Binding RequiredColumnOptions}"
+                                  SelectedItem="{Binding IdColumn, Mode=TwoWay}" />
+                    </sr:Field>
+                    <sr:Field Label="{x:Static lr:Resources.C_NameColumn}">
+                        <ComboBox MaxWidth="360"
+                                  ItemsSource="{Binding RequiredColumnOptions}"
+                                  SelectedItem="{Binding NameColumn, Mode=TwoWay}" />
+                    </sr:Field>
+                    <sr:Field Label="{x:Static lr:Resources.C_GenderColumn}">
+                        <ComboBox MaxWidth="360"
+                                  ItemsSource="{Binding OptionalColumnOptions}"
+                                  SelectedItem="{Binding GenderColumn, Mode=TwoWay}" />
+                    </sr:Field>
+                    <sr:Field Label="{x:Static lr:Resources.C_GroupColumn}">
+                        <ComboBox MaxWidth="360"
+                                  ItemsSource="{Binding OptionalColumnOptions}"
+                                  SelectedItem="{Binding GroupColumn, Mode=TwoWay}" />
+                    </sr:Field>
+                    <sr:Field Label="{x:Static lr:Resources.C_TagsColumn}">
+                        <ComboBox MaxWidth="360"
+                                  ItemsSource="{Binding OptionalColumnOptions}"
+                                  SelectedItem="{Binding TagsColumn, Mode=TwoWay}" />
+                    </sr:Field>
+                </StackPanel>
+            </Border>
+
+            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                    BorderThickness="1" CornerRadius="6" ClipToBounds="True">
+                <DataGrid Height="150"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          CanUserSortColumns="False"
+                          GridLinesVisibility="Horizontal"
+                          ItemsSource="{Binding PreviewRows}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="{x:Static lr:Resources.C_StudentId}" Binding="{Binding Id}" />
+                        <DataGridTextColumn Width="2*" Header="{x:Static lr:Resources.C_Name}" Binding="{Binding Name}" />
+                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Gender}" Binding="{Binding Gender}" />
+                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Group}" Binding="{Binding Group}" />
+                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Tags}" Binding="{Binding Tags}" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                <Button Content="{x:Static lr:Resources.C_Cancel}" Click="CancelButton_OnClick" />
+                <Button Classes="accent"
+                        Content="{x:Static lr:Resources.C_Import}"
+                        IsEnabled="{Binding CanImport}"
+                        Click="ImportButton_OnClick" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

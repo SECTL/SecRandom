@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.ListManagement"
+             xmlns:lr="clr-namespace:SecRandom.Langs.SettingsPages.ListManagement.RollCallList"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="560"
+             x:Class="SecRandom.Views.SettingsPages.ListManagement.RollCallListSettingsPage"
+             x:DataType="local:RollCallListSettingsPage"
+             Unloaded="OnUnloaded">
+    <Grid RowDefinitions="Auto,Auto,*" Classes="page-container animated-intro">
+        <fa:FAInfoBar Grid.Row="0"
+                      Title="{x:Static lr:Resources.C_InfoTitle}"
+                      Message="{x:Static lr:Resources.C_InfoMessage}"
+                      Severity="Informational"
+                      IsClosable="False"
+                      IsOpen="True" />
+
+        <fa:FASettingsExpander Grid.Row="1"
+                               Header="{x:Static lr:Resources.S_CurrentList}"
+                               Description="{x:Static lr:Resources.S_CurrentList_D}"
+                               IconSource="{sr:FluentIconSource &#xE8D4;}"
+                               IsExpanded="True">
+            <fa:FASettingsExpander.Footer>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <ComboBox MinWidth="220"
+                              ItemsSource="{Binding StudentListNames}"
+                              SelectedItem="{Binding SelectedStudentListName, Mode=TwoWay}"
+                              SelectionChanged="StudentListComboBox_OnSelectionChanged" />
+                    <Button Content="{x:Static lr:Resources.C_Refresh}" Click="RefreshButton_OnClick" />
+                    <Button Classes="accent" Content="{x:Static lr:Resources.C_ImportList}" Click="ImportButton_OnClick" />
+                </StackPanel>
+            </fa:FASettingsExpander.Footer>
+        </fa:FASettingsExpander>
+
+        <Border Grid.Row="2"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4"
+                ClipToBounds="True">
+            <DataGrid AutoGenerateColumns="False"
+                      CanUserSortColumns="True"
+                      CanUserResizeColumns="True"
+                      GridLinesVisibility="Horizontal"
+                      IsReadOnly="False"
+                      SelectionMode="Single"
+                      ItemsSource="{Binding SelectedStudentList.Students}">
+                <DataGrid.Columns>
+                    <DataGridCheckBoxColumn Header="{x:Static lr:Resources.C_Exists}" Binding="{Binding Exists}" />
+                    <DataGridTextColumn Header="{x:Static lr:Resources.C_StudentId}" Binding="{Binding Id}" />
+                    <DataGridTextColumn Width="2*" Header="{x:Static lr:Resources.C_Name}" Binding="{Binding Name}" />
+                    <DataGridTextColumn Header="{x:Static lr:Resources.C_Gender}" Binding="{Binding Gender}" />
+                    <DataGridTextColumn Header="{x:Static lr:Resources.C_Group}" Binding="{Binding Group}" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>

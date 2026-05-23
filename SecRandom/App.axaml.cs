@@ -37,6 +37,7 @@ using SecRandom.Views;
 using SecRandom.Views.MainPages;
 using SecRandom.Views.SettingsPages;
 using SecRandom.Views.SettingsPages.General;
+using SecRandom.Views.SettingsPages.ListManagement;
 using SecRandom.Views.SettingsPages.Personalized;
 
 namespace SecRandom;
@@ -170,6 +171,11 @@ public partial class App : Application
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_Personalized, "settings.personalized", FluentIcons.ColorRegular));
                 services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
+
+                services.AddGroup(new PageGroupInfo(
+                    Langs.Common.Resources.Settings_RosterManagement, "settings.listManagement", "\uE8D4"));
+                services.AddSettingsPage<RollCallListSettingsPage>(Langs.SettingsPages.ListManagement.RollCallList
+                    .Resources.Page_Title);
 
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
 

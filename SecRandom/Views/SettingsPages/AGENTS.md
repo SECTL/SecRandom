@@ -17,6 +17,7 @@ SecRandom/Views/SettingsPages/
 ├── AboutSettingsPage.axaml(.cs)          # Bottom-nav about page; opens external links
 ├── DebugSettingsPage.axaml(.cs)          # DEBUG-only bottom page
 ├── General/                              # Grouped settings.general.* pages
+├── ListManagement/                       # Grouped settings.listManagement.* pages
 └── Personalized/                         # Grouped settings.personalized.* pages
 ```
 
@@ -28,6 +29,7 @@ SecRandom/Views/SettingsPages/
 | Top-level settings landing | `HomeSettingsPage.axaml(.cs)` | Page ID `settings.home`; no group. |
 | General settings behavior | `General/BasicSettingsPage.axaml(.cs)` | Language change triggers `SettingsView.Current?.RequestRestartApp()`. |
 | Backup settings UI | `General/BackupSettingsPage.axaml(.cs)` | Currently UI/demo-facing backup list; real persistence lives elsewhere. |
+| List management settings | `ListManagement/RollCallListSettingsPage.axaml(.cs)` | Point-call list viewing/import; uses profile list config persistence. |
 | Personalized appearance settings | `Personalized/AppearanceSettingsPage.axaml(.cs)` | Mutations call `App.Current.RefreshPersonalizedSettings()`. |
 | About / external links | `AboutSettingsPage.axaml(.cs)` | Platform-specific `Process.Start` flow for URLs. |
 | Shell navigation semantics | `../SettingsView.axaml.cs` | Default page `settings.basic`, history stack, generated menu. |
