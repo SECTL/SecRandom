@@ -16,7 +16,7 @@
     <UserControl.Resources>
         <converters:StringToFontFamilyConverter x:Key="StringToFontFamilyConverter" />
     </UserControl.Resources>
-    
+
     <ScrollViewer>
         <StackPanel Classes="page-container">
             <sr:IconText x:Name="S_Theme"
@@ -45,7 +45,7 @@
                     <ColorPicker Color="{Binding Settings.ThemeColor}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
-            
+
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_Font"
                          Text="{x:Static lspa:Resources.S_Font}"
@@ -116,7 +116,7 @@
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
-            
+
             <TabControl Classes="compact" Padding="0">
                 <TabItem Header="{x:Static lspa:Resources.C_Font_Preview}">
                     <TextBox Margin="0 4 0 0"

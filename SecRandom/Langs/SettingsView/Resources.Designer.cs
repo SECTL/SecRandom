@@ -9,8 +9,8 @@
 
 namespace SecRandom.Langs.SettingsView {
     using System;
-    
-    
+
+
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -22,15 +22,15 @@ namespace SecRandom.Langs.SettingsView {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -44,7 +44,7 @@ namespace SecRandom.Langs.SettingsView {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -58,7 +58,7 @@ namespace SecRandom.Langs.SettingsView {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 更多选项....
         /// </summary>
@@ -67,7 +67,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 导出所有数据.
         /// </summary>
@@ -76,7 +76,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ExportAllData", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 退出软件时导出全部数据和设置.
         /// </summary>
@@ -85,7 +85,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ExportAllData_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 导出诊断数据.
         /// </summary>
@@ -94,7 +94,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ExportDiagnosticData", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 退出软件时导出诊断信息，用于排查问题.
         /// </summary>
@@ -103,7 +103,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ExportDiagnosticData_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 导出设置.
         /// </summary>
@@ -112,7 +112,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ExportSettings", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 将当前设置导出为配置文件，用于备份和迁移.
         /// </summary>
@@ -121,7 +121,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ExportSettings_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 导入所有数据.
         /// </summary>
@@ -130,7 +130,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ImportAllData", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 启动软件时从备份文件恢复全部数据.
         /// </summary>
@@ -139,7 +139,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ImportAllData_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 导入设置.
         /// </summary>
@@ -148,7 +148,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ImportSettings", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 从配置文件导入设置，覆盖当前配置信息.
         /// </summary>
@@ -157,7 +157,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ImportSettings_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 查看日志.
         /// </summary>
@@ -166,7 +166,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_LogViewer", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 查看和管理程序日志文件.
         /// </summary>
@@ -175,7 +175,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_LogViewer_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 搜索设置....
         /// </summary>
@@ -184,7 +184,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_SearchBox_Watermark", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 需要重启.
         /// </summary>
@@ -193,7 +193,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("M_NeedsRestarting", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 取消.
         /// </summary>
@@ -202,7 +202,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("M_NeedsRestarting_Close", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 部分设置需要重启以应用更改。.
         /// </summary>
@@ -211,7 +211,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("M_NeedsRestarting_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 重启.
         /// </summary>
@@ -220,7 +220,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("M_NeedsRestarting_Primary", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 部分设置需要重启才能生效，点击以重启应用。.
         /// </summary>

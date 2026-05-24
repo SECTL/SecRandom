@@ -9,8 +9,8 @@
 
 namespace SecRandom.Langs.Common {
     using System;
-    
-    
+
+
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -22,15 +22,15 @@ namespace SecRandom.Langs.Common {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -44,7 +44,7 @@ namespace SecRandom.Langs.Common {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -58,7 +58,7 @@ namespace SecRandom.Langs.Common {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 一个易用的点名/抽奖软件，专为教育场景设计，让课堂点名更高效透明.
         /// </summary>
@@ -67,7 +67,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("App_Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 本项目基于 GNU General Public License v3.0 获得许可。.
         /// </summary>
@@ -76,7 +76,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("App_License", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 内幕设置.
         /// </summary>
@@ -85,7 +85,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("AttachedSettings_BehindScene", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to (等待编写).
         /// </summary>
@@ -94,7 +94,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("C_ToBeWritten", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 人脸抽取.
         /// </summary>
@@ -103,7 +103,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Feat_FaceDraw", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 历史记录.
         /// </summary>
@@ -112,7 +112,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Feat_History", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 抽奖.
         /// </summary>
@@ -121,7 +121,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Feat_Lottery", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 闪抽.
         /// </summary>
@@ -130,7 +130,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Feat_QuickDraw", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 点名.
         /// </summary>
@@ -139,7 +139,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Feat_RollCall", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 设置.
         /// </summary>
@@ -148,7 +148,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Feat_Settings", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 计时器.
         /// </summary>
@@ -157,7 +157,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Feat_Timer", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 退出程序.
         /// </summary>
@@ -166,7 +166,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Menu_ExitProgram", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 打开主窗口.
         /// </summary>
@@ -175,7 +175,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Menu_OpenMainWindow", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 编辑档案 (debug).
         /// </summary>
@@ -184,7 +184,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Menu_OpenProfileSettings", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 打开设置.
         /// </summary>
@@ -193,7 +193,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Menu_OpenSettings", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 重启程序.
         /// </summary>
@@ -202,7 +202,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Menu_RestartProgram", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 关于 SecRandom.
         /// </summary>
@@ -211,7 +211,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_About", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 外观.
         /// </summary>
@@ -220,7 +220,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_Appearance", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 备份设置.
         /// </summary>
@@ -229,7 +229,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_Backup", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 基础.
         /// </summary>
@@ -238,7 +238,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_Basic", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 抽取设置.
         /// </summary>
@@ -247,7 +247,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_Draw", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 浮窗管理.
         /// </summary>
@@ -256,7 +256,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_FloatingWindow", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 通用设置.
         /// </summary>
@@ -265,7 +265,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_General", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 主页.
         /// </summary>
@@ -274,7 +274,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_Home", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 联动设置.
         /// </summary>
@@ -283,7 +283,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_Linkage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 抽奖通知设置.
         /// </summary>
@@ -292,7 +292,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_LotteryNotification", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 通知设置.
         /// </summary>
@@ -301,7 +301,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_Notification", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 个性化设置.
         /// </summary>
@@ -310,7 +310,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_Personalized", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 闪抽通知设置.
         /// </summary>
@@ -319,7 +319,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_QuickDrawNotification", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 点名通知设置.
         /// </summary>
@@ -328,7 +328,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_RollCallNotification", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 名单管理.
         /// </summary>
@@ -337,7 +337,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_RosterManagement", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 安全设置.
         /// </summary>
@@ -346,7 +346,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_Security", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 主题管理.
         /// </summary>
@@ -355,7 +355,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_Theme", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 更新设置.
         /// </summary>
@@ -364,7 +364,7 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_Update", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 语音设置.
         /// </summary>

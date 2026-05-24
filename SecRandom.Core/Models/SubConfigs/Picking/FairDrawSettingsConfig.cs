@@ -19,10 +19,10 @@ public partial class FairDrawSettingsConfig : ObservableObject
     [ObservableProperty] private bool _shieldEnabled = false;
     [ObservableProperty] private double _shieldTime = 5.00;
     [ObservableProperty] private ShieldTimeUnit _shieldTimeUnit = ShieldTimeUnit.Seconds;
-    
+
     [ObservableProperty] private bool _coolStartEnabled = true;
     [ObservableProperty] private int _coolStartRounds = 10;
-    
+
 	[ObservableProperty] private double _baseWeight = 1.0;
 	[ObservableProperty] private double _minWeight = 0.5;
 	[ObservableProperty] private double _maxWeight = 5.0;

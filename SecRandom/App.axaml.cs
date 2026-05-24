@@ -32,6 +32,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Services;
 using SecRandom.Services.Config;
+using SecRandom.Services.Telemetry;
 using SecRandom.ViewModels;
 using SecRandom.Views;
 using SecRandom.Views.MainPages;
@@ -50,11 +51,13 @@ public partial class App : Application
     private static MainWindow? _settingsWindow;
     private static MainWindow? _profileSettingsWindow;
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
+    private readonly object _shutdownGate = new();
+    private bool _isStopping;
     public new static App Current => (Application.Current as App)!;
 
     public event EventHandler? AppStarted;
     public event EventHandler? AppStopping;
-    
+
     public override void Initialize()
     {
         // 初始化语言
@@ -103,7 +106,7 @@ public partial class App : Application
         }
 
         InitializeApp();
-        
+
         AppDomain.CurrentDomain.ProcessExit += CurrentDomainOnProcessExit;
         Dispatcher.UIThread.UnhandledException += App_OnDispatcherUnhandledException;
 
@@ -124,6 +127,12 @@ public partial class App : Application
                 {
                     builder.AddConsoleFormatter<LoggingConsoleFormatter, ConsoleFormatterOptions>();
                     builder.AddConsole(console => { console.FormatterName = @"secrandom"; });
+                    builder.AddSentry(options =>
+                    {
+                        // SDK 生命周期由 TelemetryRuntimeService 按隐私开关统一控制，日志 Provider 只复用已初始化的 SDK。
+                        options.InitializeSdk = false;
+                        options.MinimumEventLevel = LogLevel.Error;
+                    });
 #if DEBUG
                     builder.SetMinimumLevel(LogLevel.Trace);
 #endif
@@ -138,6 +147,9 @@ public partial class App : Application
                 // 服务
                 services.AddSingleton<IProfileService, ProfileService>();
                 services.AddSingleton<SettingsSearchService>();
+                services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
+                services.AddSingleton<TelemetryRuntimeService>();
+                services.AddHostedService<OnlineStatusService>();
                 services.AddHostedService<TaskBarIconService>();
 
                 // 窗口
@@ -167,6 +179,7 @@ public partial class App : Application
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_General, "settings.general", FluentIcons.SettingsRegular));
                 services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
+                services.AddSettingsPage<PrivacySettingsPage>(Langs.SettingsPages.General.Privacy.Resources.Page_Title);
                 services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
 
                 services.AddGroup(new PageGroupInfo(
@@ -209,16 +222,15 @@ public partial class App : Application
         logger.LogInformation(@"Copyright by SECTL(2025~{YEAR})  Licensed under GPL3.0", DateTime.Now.Year);
         logger.LogInformation("Host built.");
 
-        var lifetime = IAppHost.GetService<IHostApplicationLifetime>();
-        lifetime.ApplicationStopping.Register(Stop);
-
         // 刷新个性化设置
         RefreshPersonalizedSettings();
 
         IAppHost.GetService<IProfileService>();
 
+        ObserveTask(InitializeRuntimeServicesAsync(), "Runtime service initialization failed.");
+
         // 启动服务主机
-        _ = IAppHost.Host.StartAsync();
+        ObserveTask(IAppHost.Host.StartAsync(), "Host startup failed.");
 
         // RESOURCES TEST
         var isVisible = false;
@@ -233,29 +245,70 @@ public partial class App : Application
         taskBarIconService.MainTaskBarIcon.Menu = this.FindResource(@"AppMenu") as NativeMenu;
         taskBarIconService.MainTaskBarIcon.IsVisible = true;
         taskBarIconService.MainTaskBarIcon.Clicked += MainTaskBarIconOnClicked;
-        
+
         AppStarted?.Invoke(this, EventArgs.Empty);
     }
 
     public void Stop()
     {
-        var logger = IAppHost.GetService<ILogger<App>>();
-        logger.LogInformation("Stopping application.");
-        
+        ObserveTask(StopAsync(), "Application shutdown failed.");
+    }
+
+    public async Task StopAsync()
+    {
+        await StopAsync(requestLifetimeShutdown: true).ConfigureAwait(false);
+    }
+
+    private async Task StopAsync(bool requestLifetimeShutdown)
+    {
+        lock (_shutdownGate)
+        {
+            if (_isStopping)
+            {
+                IAppHost.TryGetService<ILogger<App>>()?
+                    .LogDebug("Skipping duplicate application shutdown request.");
+                return;
+            }
+
+            _isStopping = true;
+        }
+
+        IAppHost.TryGetService<ILogger<App>>()?
+            .LogInformation("Stopping application.");
+
         AppStopping?.Invoke(this, EventArgs.Empty);
 
         _floatingWindow?.CanClose = true;
 
         IAppHost.GetService<MainConfigHandler>().Save();
         IAppHost.GetService<IProfileService>().SaveProfile();
+        await ShutdownTelemetryAsync().ConfigureAwait(false);
 
-        IAppHost.Host?.StopAsync(TimeSpan.FromSeconds(5));
-        _desktopLifetime?.Shutdown();
+        IHost? host = IAppHost.Host;
+        if (host is not null)
+        {
+            await host.StopAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            host.Dispose();
+        }
+
+        IAppHost.Host = null;
+
+        if (requestLifetimeShutdown)
+            RequestDesktopShutdown();
     }
 
-    public void Restart()
+    public async void Restart()
     {
-        Stop();
+        try
+        {
+            await StopAsync(requestLifetimeShutdown: false).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            IAppHost.TryGetService<ILogger<App>>()?
+                .LogError(ex, "Application restart shutdown phase failed.");
+            return;
+        }
 
         var path = Environment.ProcessPath;
         if (path == null) return;
@@ -266,6 +319,7 @@ public partial class App : Application
             UseShellExecute = true
         };
         Process.Start(startInfo);
+        RequestDesktopShutdown();
     }
 
     private void App_OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
@@ -275,12 +329,110 @@ public partial class App : Application
 
         var logger = IAppHost.GetService<ILogger<App>>();
         logger.LogCritical(e.Exception, "Unhandled application exception.");
+
+        ObserveTask(CaptureUnhandledExceptionAsync(e.Exception), "Unhandled exception telemetry capture failed.");
     }
 
     private void CurrentDomainOnProcessExit(object? sender, EventArgs e)
     {
-        var configHandler = IAppHost.GetService<MainConfigHandler>();
-        configHandler.Save();
+        try
+        {
+            IAppHost.TryGetService<MainConfigHandler>()?.Save();
+            IAppHost.TryGetService<IProfileService>()?.SaveProfile();
+        }
+        catch (Exception ex)
+        {
+            IAppHost.TryGetService<ILogger<App>>()?
+                .LogError(ex, "Process-exit persistence failed.");
+        }
+    }
+
+    private static async Task InitializeRuntimeServicesAsync()
+    {
+        try
+        {
+            var telemetry = IAppHost.GetService<TelemetryRuntimeService>();
+            await telemetry.InitializeAsync().ConfigureAwait(false);
+            await SendSentryTestEventAsync(telemetry).ConfigureAwait(false);
+            Dispatcher.UIThread.Post(() => throw new InvalidOperationException("SENTRY_TEST_FAKE_ERROR_UNHANDLED"));
+        }
+        catch (Exception ex)
+        {
+            IAppHost.TryGetService<ILogger<App>>()?
+                .LogError(ex, "Telemetry initialization failed.");
+        }
+    }
+
+    private static void ObserveTask(Task task, string failureMessage)
+    {
+        _ = ObserveTaskAsync(task, failureMessage);
+    }
+
+    private static async Task ObserveTaskAsync(Task task, string failureMessage)
+    {
+        try
+        {
+            await task.ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            IAppHost.TryGetService<ILogger<App>>()?
+                .LogError(ex, failureMessage);
+        }
+    }
+
+    private static async Task CaptureUnhandledExceptionAsync(Exception exception)
+    {
+        try
+        {
+            TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
+            if (telemetry is not null)
+                await telemetry.CaptureExceptionAsync(exception).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            IAppHost.TryGetService<ILogger<App>>()?
+                .LogError(ex, "Unhandled exception telemetry capture failed.");
+        }
+    }
+
+    private static async Task SendSentryTestEventAsync(TelemetryRuntimeService telemetry)
+    {
+        var exception = new InvalidOperationException("SENTRY_TEST_FAKE_ERROR");
+        var logger = IAppHost.GetService<ILogger<App>>();
+
+        logger.LogError(exception, "SENTRY_TEST_FAKE_ERROR log event.");
+        await telemetry.CaptureExceptionAsync(exception).ConfigureAwait(false);
+        await telemetry.FlushAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+    }
+
+    private static async Task ShutdownTelemetryAsync()
+    {
+        try
+        {
+            TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
+            if (telemetry is not null)
+                await telemetry.ShutdownAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            IAppHost.TryGetService<ILogger<App>>()?
+                .LogError(ex, "Telemetry shutdown failed.");
+        }
+    }
+
+    private static void RequestDesktopShutdown()
+    {
+        if (_desktopLifetime is null)
+            return;
+
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            _desktopLifetime.Shutdown();
+            return;
+        }
+
+        Dispatcher.UIThread.Post(() => _desktopLifetime?.Shutdown());
     }
 
     private static void InitializeLanguages(CultureInfo cultureInfo)
@@ -402,10 +554,10 @@ public partial class App : Application
         {
             return;
         }
-        
+
         var taskBarIconService = IAppHost.Host!.Services
             .GetServices<IHostedService>().OfType<TaskBarIconService>().First();
-        
+
         var impl = typeof(TrayIcon)
             .GetProperty("Impl", BindingFlags.NonPublic | BindingFlags.Instance)?
             .GetValue(taskBarIconService.MainTaskBarIcon) as ITrayIconImpl;
@@ -416,7 +568,7 @@ public partial class App : Application
             .FirstOrDefault(t => t.Name == "TrayIconImpl");
 
         if (impl == null || type == null) return;
-        
+
         var methodInfo = type.GetMethod("OnRightClicked",
             BindingFlags.NonPublic | BindingFlags.Instance);
         methodInfo?.Invoke(impl, null);

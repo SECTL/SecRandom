@@ -101,33 +101,6 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <Separator Margin="0 12 0 4" />
-            <sr:IconText x:Name="S_Telemetry"
-                         Text="{x:Static lsb:Resources.S_Telemetry}"
-                         Glyph="{sr:Fi PulseSquareRegular}" Margin="0 0 0 4" />
-
-
-            <fa:FASettingsExpander x:Name="S_Telemetry_Enabled"
-                                   Header="{x:Static lsb:Resources.S_Telemetry_Enabled}"
-                                   Description="{x:Static lsb:Resources.S_Telemetry_Enabled_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PulseRegular}}">
-                <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding Settings.TelemetryEnabled}" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander x:Name="S_Telemetry_Mode"
-                                   Header="{x:Static lsb:Resources.S_Telemetry_Mode}"
-                                   Description="{x:Static lsb:Resources.S_Telemetry_Mode_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi GlobeRegular}}">
-                <fa:FASettingsExpander.Footer>
-                    <ComboBox SelectedIndex="{Binding Settings.TelemetryMode}">
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_TelemetryMode_Full}" />
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_TelemetryMode_Anonymous}" />
-                        <ComboBoxItem Content="{x:Static lsb:Resources.O_TelemetryMode_Off}" />
-                    </ComboBox>
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

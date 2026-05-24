@@ -51,21 +51,21 @@
                                         Content="&#xE740;"
                                         Classes="CaptionButton"
                                         Classes.inactive="{Binding !$parent[Window].IsActive}"/>
-                                
+
                                 <Button Name="PART_MinimizeButton"
                                         Theme="{StaticResource FluentDrawnCaptionButton}"
                                         WindowDecorationProperties.ElementRole="MinimizeButton"
-                                        Content="&#xE738;"                                        
+                                        Content="&#xE738;"
                                         Classes="CaptionButton"
                                         Classes.inactive="{Binding !$parent[Window].IsActive}"/>
-                                
+
                                 <Button Name="PART_MaximizeButton"
                                         Theme="{StaticResource FluentDrawnCaptionButton}"
                                         WindowDecorationProperties.ElementRole="MaximizeButton"
                                         Content="&#xE739;"
                                         Classes="CaptionButton"
                                         Classes.inactive="{Binding !$parent[Window].IsActive}" />
-                                                                
+
                                 <Button Name="PART_CloseButton"
                                         Classes="Close CaptionButton"
                                         Theme="{StaticResource FluentDrawnCaptionButton}"

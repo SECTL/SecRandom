@@ -38,8 +38,8 @@
         </Setter>
 
         <Style
-            Selector="^ /template/ Label#LabelControl, 
-                ^ /template/ TextBlock#PrefixTextBlock, 
+            Selector="^ /template/ Label#LabelControl,
+                ^ /template/ TextBlock#PrefixTextBlock,
                 ^ /template/ TextBlock#SuffixTextBlock">
             <Setter Property="IsVisible" Value="False" />
         </Style>

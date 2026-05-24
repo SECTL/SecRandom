@@ -7,6 +7,7 @@ using SecRandom.Shared.Abstraction;
 using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.AppearanceSettingsConfig;
 using BackupConfig = SecRandom.Core.Models.SubConfigs.General.BackupConfig;
 using BasicSettingsConfig = SecRandom.Core.Models.SubConfigs.General.BasicSettingsConfig;
+using GeneralSettingsConfig = SecRandom.Core.Models.SubConfigs.General.GeneralSettingsConfig;
 using DefaultDrawSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.DefaultDrawSettingsConfig;
 using DrawSettingsConfigBase = SecRandom.Core.Models.SubConfigs.Picking.DrawSettingsConfigBase;
 using FaceDetectorSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.FaceDetectorSettingsConfig;
@@ -21,14 +22,13 @@ namespace SecRandom.Core.Models;
 public partial class MainConfigModel : ConfigBase
 {
     [ObservableProperty] private FloatPositionConfig _floatPosition = new();
-    
+
     // 通用
-    [ObservableProperty] private BasicSettingsConfig _basic = new();
-    [ObservableProperty] private BackupConfig _backup = new();
-    
+    [ObservableProperty] private GeneralSettingsConfig _general = new();
+
     // 个性化
     [ObservableProperty] private AppearanceSettingsConfig _appearance = new();
-    
+
     // 抽取设置
     [ObservableProperty] private FairDrawSettingsConfig _fairDrawSettings = new();
     [ObservableProperty] private DefaultDrawSettingsConfig _defaultDrawSettings = new();
@@ -38,6 +38,32 @@ public partial class MainConfigModel : ConfigBase
     [ObservableProperty] private FaceDetectorSettingsConfig _faceDetectorSettings = new();
 
     [JsonIgnore] public override string ConfigFilePath => Utils.GetFilePath("config", "settings.json");
+
+    [JsonIgnore]
+    public BasicSettingsConfig Basic
+    {
+        get => General.Basic;
+        set => General.Basic = value;
+    }
+
+    [JsonIgnore]
+    public BackupConfig Backup
+    {
+        get => General.Backup;
+        set => General.Backup = value;
+    }
+
+    [JsonPropertyName("basic")]
+    public BasicSettingsConfig LegacyBasicOnLoad
+    {
+        set => General.ApplyLegacyBasic(value);
+    }
+
+    [JsonPropertyName("backup")]
+    public BackupConfig LegacyBackupOnLoad
+    {
+        set => General.ApplyLegacyBackup(value);
+    }
 
     public DrawSettingsConfigBase GetOverrideDrawSettings(
         DrawSettingsType drawSettingsType, OverridableDrawSettingsType settingsType)

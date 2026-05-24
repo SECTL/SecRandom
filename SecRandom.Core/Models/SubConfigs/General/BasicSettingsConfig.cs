@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Core.Enums.Configs;
+using System.Text.Json.Serialization;
 
 namespace SecRandom.Core.Models.SubConfigs.General;
 
@@ -12,10 +13,22 @@ public partial class BasicSettingsConfig : ObservableObject
     [ObservableProperty] private TopmostMode _mainWindowTopmostMode = TopmostMode.None;
     [ObservableProperty] private bool _backgroundResident = true;
     [ObservableProperty] private bool _urlProtocol = false;
-    
-    [ObservableProperty] private bool _telemetryEnabled = true;
-    [ObservableProperty] private TelemetryMode _telemetryMode = TelemetryMode.Full;
-    
+
+    [JsonIgnore] public bool? LegacyTelemetryEnabled { get; private set; }
+    [JsonIgnore] public TelemetryMode? LegacyTelemetryMode { get; private set; }
+
+    [JsonPropertyName("telemetry_enabled")]
+    public bool LegacyTelemetryEnabledOnLoad
+    {
+        set => LegacyTelemetryEnabled = value;
+    }
+
+    [JsonPropertyName("telemetry_mode")]
+    public TelemetryMode LegacyTelemetryModeOnLoad
+    {
+        set => LegacyTelemetryMode = value;
+    }
+
     // Hidden Configs
     [ObservableProperty] private Guid _offlineUserId = Guid.NewGuid();
     [ObservableProperty] private bool _guideCompleted = false;

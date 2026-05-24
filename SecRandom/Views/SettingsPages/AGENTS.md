@@ -29,17 +29,19 @@ SecRandom/Views/SettingsPages/
 | Register settings page | `SecRandom/App.axaml.cs` | `BuildHost()` plus `[PageInfo(...)]` are both required. |
 | Top-level settings landing | `HomeSettingsPage.axaml(.cs)` | Page ID `settings.home`; no group. |
 | General settings behavior | `General/BasicSettingsPage.axaml(.cs)` | Language change triggers `SettingsView.Current?.RequestRestartApp()`. |
+| Privacy settings behavior | `General/PrivacySettingsPage.axaml(.cs)` | Binds to `MainConfigModel.General.PrivacySettings`; Sentry telemetry changes apply live through `TelemetryRuntimeService`, and online status changes apply live through `OnlineStatusService`. |
 | Backup settings UI | `General/BackupSettingsPage.axaml(.cs)` | Currently UI/demo-facing backup list; real persistence lives elsewhere. |
 | List management settings | `ListManagement/RollCallListSettingsPage.axaml(.cs)`, `ListManagement/LotteryListSettingsPage.axaml(.cs)` | Point-call list and lottery prize-pool viewing/import; uses profile list config persistence. |
 | Draw settings | `Picking/DefaultDrawSettingsPage.axaml(.cs)`, `Picking/RollCallDrawSettingsPage.axaml(.cs)`, `Picking/QuickDrawSettingsPage.axaml(.cs)`, `Picking/LotteryDrawSettingsPage.axaml(.cs)` | Default draw settings are flat grouped sections; specific draw pages show unique settings first and expandable override sections. |
 | Personalized appearance settings | `Personalized/AppearanceSettingsPage.axaml(.cs)` | Mutations call `App.Current.RefreshPersonalizedSettings()`. |
 | About / external links | `AboutSettingsPage.axaml(.cs)` | Platform-specific `Process.Start` flow for URLs. |
-| Shell navigation semantics | `../SettingsView.axaml.cs` | Default page `settings.basic`, history stack, generated menu. |
+| Shell navigation semantics | `../SettingsView.axaml.cs` | Default page `settings.home`, history stack, generated menu. |
 | Localization pairing | `../../Langs/SettingsPages/` | Page folders mirror settings-page domains, except DEBUG-only pages. |
 
 ## CONVENTIONS
 
 - Every non-debug settings page needs `[PageInfo]`, Host registration, and a matching localization folder under `SecRandom/Langs/SettingsPages/` when user-facing text is localized.
+- Privacy page localization lives under `General/Privacy/` and is registered like other settings pages with only `Resources.resx` + `Resources.Designer.cs` in the project file.
 - Page IDs here follow `settings.xxx` or `settings.group.xxx`; current grouped pages use `settings.general.*` and `settings.personalized.*`.
 - Group membership is owned by the `groupId` in `[PageInfo(...)]` and by `services.AddGroup(...)` in `BuildHost()`; do not handwire grouping in the page.
 - Pages usually resolve `ViewModelBase` via `IAppHost.GetService<ViewModelBase>()`, set `DataContext = this`, and expose `Settings` from `ViewModel.Config.*`.

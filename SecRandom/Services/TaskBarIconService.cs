@@ -16,7 +16,7 @@ public class TaskBarIconService : IHostedService
             Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://SecRandom/Assets/AppLogo.png"))),
             ToolTipText = @"SecRandom"
         };
-    
+
     public TaskBarIconService()
     {
         App.Current.AppStopping += CurrentOnAppStopping;
@@ -29,14 +29,14 @@ public class TaskBarIconService : IHostedService
             MainTaskBarIcon.IsVisible = false;
         });
     }
-    
+
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        
+
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        
+
     }
 }

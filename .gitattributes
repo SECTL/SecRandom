@@ -1,1 +1,19 @@
-﻿
+﻿* text=auto eol=crlf
+
+# 二进制资源不参与换行规范化。
+*.ico binary
+*.icns binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.onnx binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.exe binary

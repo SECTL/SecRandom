@@ -9,8 +9,8 @@
 
 namespace SecRandom.Langs.ProfileSettings.Students {
     using System;
-    
-    
+
+
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -22,15 +22,15 @@ namespace SecRandom.Langs.ProfileSettings.Students {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -44,7 +44,7 @@ namespace SecRandom.Langs.ProfileSettings.Students {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -58,7 +58,7 @@ namespace SecRandom.Langs.ProfileSettings.Students {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 添加.
         /// </summary>
@@ -67,7 +67,7 @@ namespace SecRandom.Langs.ProfileSettings.Students {
                 return ResourceManager.GetString("Command_CreateList", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 新建一个名单。.
         /// </summary>
@@ -76,7 +76,7 @@ namespace SecRandom.Langs.ProfileSettings.Students {
                 return ResourceManager.GetString("Command_CreateList_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 复制.
         /// </summary>
@@ -85,7 +85,7 @@ namespace SecRandom.Langs.ProfileSettings.Students {
                 return ResourceManager.GetString("Command_DuplicateList", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 复制一个当前选中的名单的副本。.
         /// </summary>

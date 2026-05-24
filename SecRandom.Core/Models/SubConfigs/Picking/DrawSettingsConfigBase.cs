@@ -30,17 +30,17 @@ public partial class DrawSettingsConfigBase : ObservableObject
 
     [ObservableProperty] private bool _studentImage = false;
     [ObservableProperty] private StudentImagePositionMode _studentImagePosition = StudentImagePositionMode.Left;
-    
+
     // music settings below
-    
+
     [ObservableProperty] private string _animationMusic = string.Empty;
     [ObservableProperty] private int _animationMusicFadeIn = 300;
     [ObservableProperty] private int _animationMusicFadeOut = 300;
-    
+
     [ObservableProperty] private string _resultMusic = string.Empty;
     [ObservableProperty] private int _resultMusicFadeIn = 300;
     [ObservableProperty] private int _resultMusicFadeOut = 300;
-    
+
     [ObservableProperty] private int _animationMusicVolume = 100;
     [ObservableProperty] private int _resultMusicVolume = 100;
 }

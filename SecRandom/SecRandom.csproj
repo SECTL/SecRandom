@@ -8,11 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <AvaloniaResource Include="Assets\**"/>
+        <AvaloniaResource Include="Assets\**" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SecRandom.Core\SecRandom.Core.csproj"/>
+        <ProjectReference Include="..\SecRandom.Core\SecRandom.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -32,6 +32,11 @@
         </EmbeddedResource>
 
         <EmbeddedResource Update="Langs\SettingsPages\General\Basic\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
+        <EmbeddedResource Update="Langs\SettingsPages\General\Privacy\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
@@ -107,6 +112,12 @@
             <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
 
+        <Compile Update="Langs\SettingsPages\General\Privacy\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+
         <Compile Update="Langs\SettingsPages\General\Backup\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
@@ -163,9 +174,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1"/>
-        <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.25.1"/>
+        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1" />
+        <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.25.1" />
+        <PackageReference Include="Sentry" Version="6.5.0" />
+        <PackageReference Include="Sentry.Extensions.Logging" Version="6.5.0" />
+        <PackageReference Include="Sentry.Profiling" Version="6.5.0" />
     </ItemGroup>
 
-    <Import Project="..\Global.props"/>
+    <Import Project="..\Global.props" />
 </Project>

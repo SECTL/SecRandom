@@ -31,4 +31,9 @@
         <Using Include="Xunit"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\SecRandom.Core\SecRandom.Core.csproj"/>
+        <ProjectReference Include="..\SecRandom\SecRandom.csproj"/>
+    </ItemGroup>
+
 </Project>

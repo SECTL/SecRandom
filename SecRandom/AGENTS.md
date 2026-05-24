@@ -19,7 +19,7 @@ SecRandom/
 ├── App.Consts.cs        # App UI constants/support flags
 ├── Views/               # Main shell, settings shell, pages, windows
 ├── ViewModels/          # App VM state; inherits ViewModelBase
-├── Services/            # App-only services; desktop config storage, profiles, settings search
+├── Services/            # App-only services; desktop config storage, profiles, settings search, telemetry runtime seam
 ├── Models/              # App-local view/support models
 ├── Helpers/             # App-local helpers
 ├── Converters/          # App-local Avalonia converters
@@ -38,19 +38,23 @@ SecRandom/
 | Settings flow                | `App.ShowSettingsWindow()`, `Views/SettingsView.axaml.cs`               | Settings has navigation history and restart prompt.                                                                      |
 | Profile settings window      | `App.ShowProfileSettingsWindow()`, `Views/ProfileSettingsView.axaml.cs` | Profile list/history management window.                                                                                  |
 | Add main page                | `Views/MainPages/`, `BuildHost()`                                       | `[PageInfo]` + `AddMainPage<T>()`.                                                                                       |
-| Add settings page            | `Views/SettingsPages/`, `Langs/SettingsPages/`, `App.axaml.cs`          | `[PageInfo]` + localization folder + `AddSettingsPage<T>()`; update title/resource wiring if language refresh is needed. |
+| Add settings page            | `Views/SettingsPages/`, `Langs/SettingsPages/`, `App.axaml.cs`          | `[PageInfo]` + localization folder + `AddSettingsPage<T>()`; update title/resource wiring if language refresh is needed. General pages currently include `Basic`, `Privacy`, and `Backup`. |
 | App config JSON              | `Services/Config/DesktopConfigService.cs`                               | Core handlers call into this app-specific storage.                                                                       |
 | Searchable settings metadata | `Services/SettingsSearchService.cs`                                     | Reflects `Langs.SettingsPages.*` resources and registered settings pages.                                                |
 | Profile persistence          | `Services/ProfileService.cs`                                            | Current lists/history and `SaveProfile()`.                                                                               |
+| Telemetry runtime seam       | `Services/Telemetry/`                                                   | App-layer-only Sentry policy/runtime lifecycle boundary; reads and live-applies `PrivacySettings.SentryTelemetryEnabled`.  |
+| Online status reporting      | `Services/OnlineStatusService.cs`                                       | Host-managed SECTL online status reporter; reads `PrivacySettings.OnlineStatusMode`.                                      |
 
 ## CONVENTIONS
 
 - `BuildHost()` registers logging, config, services, windows/views, ViewModels, attached settings controls, and
   navigation pages.
+- Telemetry runtime policy belongs in app-layer services and should live-apply `MainConfigHandler.Data.General.PrivacySettings.SentryTelemetryEnabled`; do not move SDK-specific wiring into Core or Shared. The concrete Sentry adapter stays under `SecRandom/Services/Telemetry/SentryTelemetrySdkAdapter.cs`.
+- Background app services such as `OnlineStatusService` are registered through Host and must honor `PrivacySettings.OnlineStatusMode` before doing network work.
 - ViewModels must be registered in Host and inherit `ViewModelBase`; `ViewModelBase` exposes `Config`.
 - Use `IAppHost.GetService<T>()` for existing service resolution patterns in views and services.
 - Views usually set `DataContext = this` and expose a `ViewModel` property.
-- Main default page: `main.rollCall`; settings default page: `settings.basic`.
+- Main default page: `main.rollCall`; settings default page: `settings.home`.
 - Page IDs follow root rules: `main.xxx`, `settings.xxx`, `settings.group.xxx`.
 - Toasts are available from views via `this.ShowWarningToast(...)` / `ShowErrorToast(...)`; shell views inject
   `AppToastAdorner` on load.
@@ -61,6 +65,7 @@ SecRandom/
 ## LOCALIZATION
 
 - Each page has its own folder under `Langs/`.
+- Privacy settings localization lives under `Langs/SettingsPages/General/Privacy/` and follows the same base `.resx` + designer registration pattern as other settings pages.
 - List management pages currently include roll-call lists (`data/list/roll_call_list`) and lottery prize pools (`data/list/lottery_list`).
 - Required files for a localized resource set: `Resources.resx` and `Resources.Designer.cs`; culture files such as
   `Resources.en-US.resx` / `Resources.ja-JP.resx` are optional and must keep exact on-disk casing.

@@ -15,7 +15,7 @@ Maintenance contract:
 **Last modified model:** deepseek-v4-pro
 
 ## OVERVIEW
-SecRandom is a GPLv3 C#/.NET desktop app for fair random drawing in education scenarios. Stack: .NET solution, Avalonia + FluentAvalonia UI, Microsoft.Extensions.Hosting DI, xUnit v3 placeholder tests.
+SecRandom is a GPLv3 C#/.NET desktop app for fair random drawing in education scenarios. Stack: .NET solution, Avalonia + FluentAvalonia UI, Microsoft.Extensions.Hosting DI, xUnit v3 tests.
 
 ## STRUCTURE
 ```
@@ -24,7 +24,7 @@ SecRandom-C/
 ├── SecRandom.Core/        # Core/domain + reusable UI controls/styles + config/logging/draw services
 ├── SecRandom.Shared/      # Cross-project contracts, base config/model types, IPC/profile models
 ├── SecRandom.Desktop/     # Tiny executable launcher; Program.cs only bootstraps Avalonia
-├── SecRandom.Core.Tests/  # xUnit v3 test project; currently placeholder coverage
+├── SecRandom.Core.Tests/  # xUnit v3 test project; currently covers legacy privacy/telemetry migration
 ├── docs/                  # Project rules, localization, namespace boundaries
 ├── CHANGELOG/             # Versioned release notes, mostly v3 tree
 ├── resources/             # README mirrors, screenshots, banners, root static assets
@@ -47,14 +47,14 @@ Nested instruction files:
 | Desktop startup | `SecRandom.Desktop/Program.cs` | Process entry → Avalonia lifetime. |
 | App composition / DI | `SecRandom/App.axaml.cs` | `BuildHost()` is the registration source of truth. |
 | Main navigation | `SecRandom/Views/MainView.axaml.cs` | Default page `main.rollCall`; keyed DI page factory. |
-| Settings navigation | `SecRandom/Views/SettingsView.axaml.cs` | Default page `settings.basic`; has back stack + restart dialog. |
+| Settings navigation | `SecRandom/Views/SettingsView.axaml.cs` | Default page `settings.home`; has back stack + restart dialog. General group now includes `settings.general.basic`, `settings.general.privacy`, and `settings.general.backup`. |
 | Page registration helpers | `SecRandom.Core/Extensions/Registry/` | `AddMainPage`, `AddSettingsPage`, groups, separators. |
 | Page registry state | `SecRandom.Core/Services/PagesRegistryService.cs` | Main/settings/group collections. |
 | Fair draw logic | `SecRandom.Core/Services/Draw/` | Partial `DrawEngine`, weighted draw, filters, crypto RNG. |
 | Camera draw logic | `SecRandom.Core/Services/Camera/` | `CameraDrawEngine` partial: face detection, camera discovery, camera-based draw loop. |
 | Config persistence | `SecRandom.Core/Services/Config/`, `SecRandom/Services/Config/DesktopConfigService.cs` | Handler in Core, desktop JSON storage in app layer. |
 | Reusable controls/styles | `SecRandom.Core/Controls/`, `SecRandom.Core/Styles/`, `SecRandom.Core/StylesBase.axaml` | App style entrypoint includes Core bundle. |
-| Localization rules | `SecRandom/Langs/`, `SecRandom.Core/Langs/`, `docs/localization.md` | Per-page resource folders; `.csproj` registers base resx/designer only. |
+| Localization rules | `SecRandom/Langs/`, `SecRandom.Core/Langs/`, `docs/localization.md` | Per-page resource folders; `.csproj` registers base resx/designer only. Privacy page resources live under `SecRandom/Langs/SettingsPages/General/Privacy/`. |
 | Shared contracts | `SecRandom.Shared/` | Keep UI/runtime dependencies out. |
 | Project rules | `docs/project_rules.md` | Strongest local convention source. |
 
@@ -73,7 +73,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 | `DrawEngine` | domain service | `SecRandom.Core/Services/Draw/DrawEngine*.cs` | Student/prize drawing, fairness weights, repeat/avg-gap filtering. |
 | `WeightedDrawEngine<T>` | algorithm | `SecRandom.Core/Services/Draw/WeightedDrawEngine.cs` | Validates weights and samples without replacement. |
 | `CameraDrawEngine` | domain service | `SecRandom.Core/Services/Camera/CameraDrawEngine*.cs` | Camera-based face detection, device discovery, and draw loop. |
-| `MainConfigHandler` | config handler | `SecRandom.Core/Services/Config/MainConfigHandler.cs` | Main config wrapper over `ConfigHandlerBase<MainConfigModel>`. |
+| `MainConfigHandler` | config handler | `SecRandom.Core/Services/Config/MainConfigHandler.cs` | Main config wrapper over `ConfigHandlerBase<MainConfigModel>`; persists the canonical `General` subtree and still loads legacy root `basic`/`backup` JSON. |
 | `ProfileService` | app service | `SecRandom/Services/ProfileService.cs` | Current profile runtime state and persistence. |
 | `IProfileService` | service contract | `SecRandom.Core/Abstraction/Services/IProfileService.cs` | Current lists/history + profile save boundary. |
 | `SettingsSearchService` | app service | `SecRandom/Services/SettingsSearchService.cs` | Indexes settings pages via reflected localization resources. |
@@ -83,6 +83,8 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 
 ## CONVENTIONS
 - `docs/project_rules.md` overrides inference when adding features.
+- General settings now live under `MainConfigModel.General`; `MainConfigModel.Basic` / `Backup` remain compatibility bridges for existing callers while new config splits belong under `SecRandom.Core/Models/SubConfigs/General/`.
+- Privacy settings split Sentry upload from online status reporting: `SentryTelemetryEnabled` only controls `SecRandom/Services/Telemetry/`, while `OnlineStatusMode` only controls `SecRandom/Services/OnlineStatusService.cs`.
 - ViewModels must be registered in `SecRandom/App.axaml.cs` `BuildHost()`; reusable services also go through Host.
 - Resolve shared services via `IAppHost.GetService<T>()` / `TryGetService<T>()` unless constructor injection is already the local style.
 - Navigation pages need `[PageInfo(...)]` plus `services.AddMainPage<T>()` or `services.AddSettingsPage<T>()` in `BuildHost()`.
@@ -144,7 +146,7 @@ CI RIDs: `win-x64`, `win-x86`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64
 ## NOTES
 - Build workflow uses .NET SDK `10.0.100`; publish job currently uses `9.0.311`; CodeQL uses `10.0.x`.
 - Release workflow triggers on tags `v*`, manual dispatch, PR/push build, or commit message containing `开始构建`.
-- Test project exists but `UnitTest1.cs` is empty placeholder coverage.
+- Test project currently includes `UnitTest1.cs` coverage for legacy privacy/telemetry migration behavior.
 - README mentions `vendors/pythonnet-stub-generator/`; treat it as third-party if present in future snapshots.
 - CodeQL workflow (`codeQL.yml`) runs on push, PR, and weekly schedule; C# scans use manual build mode with .NET SDK `10.0.x`.
 - `SecRandom.Core` is plugin-facing per `docs/namespaces.md`; keep its public contracts stable.

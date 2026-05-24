@@ -9,8 +9,8 @@
 
 namespace SecRandom.Langs.SettingsPages.General.Backup {
     using System;
-    
-    
+
+
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -22,15 +22,15 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -44,7 +44,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -58,7 +58,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 创建时间.
         /// </summary>
@@ -67,7 +67,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("C_Backups_DateTime", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 文件名.
         /// </summary>
@@ -76,7 +76,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("C_Backups_FileName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 操作.
         /// </summary>
@@ -85,7 +85,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("C_Backups_Operations", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 删除.
         /// </summary>
@@ -94,7 +94,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("C_Backups_Operations_Delete", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 恢复.
         /// </summary>
@@ -103,7 +103,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("C_Backups_Operations_Restore", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 大小.
         /// </summary>
@@ -112,7 +112,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("C_Backups_Size", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 刷新备份.
         /// </summary>
@@ -121,7 +121,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("C_RefreshBackups", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 自动备份.
         /// </summary>
@@ -130,7 +130,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_AutoBackup", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 是否启用自动备份.
         /// </summary>
@@ -139,7 +139,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_AutoBackup_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 自动备份间隔.
         /// </summary>
@@ -148,7 +148,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_AutoBackup_IntervalDays", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 设置自动备份间隔（天）.
         /// </summary>
@@ -157,7 +157,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_AutoBackup_IntervalDays_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 立即备份.
         /// </summary>
@@ -166,7 +166,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_AutoBackup_ManualBackup", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 立即创建一份全量备份.
         /// </summary>
@@ -175,7 +175,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_AutoBackup_ManualBackup_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 自动备份上限.
         /// </summary>
@@ -184,7 +184,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_AutoBackup_MaxCount", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 设置自动备份最多保留数量（个），0为不限制.
         /// </summary>
@@ -193,7 +193,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_AutoBackup_MaxCount_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 备份占用大小.
         /// </summary>
@@ -202,7 +202,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_AutoBackup_Usage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 备份文件夹占用大小.
         /// </summary>
@@ -211,7 +211,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_AutoBackup_Usage_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 占用大小.
         /// </summary>
@@ -220,7 +220,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_AutoBackup_Usage_R", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 查看备份文件.
         /// </summary>
@@ -229,7 +229,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_AutoBackup_ViewFolder", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 打开备份文件夹.
         /// </summary>
@@ -238,7 +238,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_AutoBackup_ViewFolder_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 备份内容.
         /// </summary>
@@ -247,7 +247,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 音频资源.
         /// </summary>
@@ -256,7 +256,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_Audio", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 音频资源文件（audio）.
         /// </summary>
@@ -265,7 +265,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_Audio_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 配置文件.
         /// </summary>
@@ -274,7 +274,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_Config", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 软件设置与配置文件（config）.
         /// </summary>
@@ -283,7 +283,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_Config_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to CSES 联动.
         /// </summary>
@@ -292,7 +292,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_Cses", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to CSES 相关联动数据（CSES）.
         /// </summary>
@@ -301,7 +301,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_Cses_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 选择需要包含在备份文件中的数据.
         /// </summary>
@@ -310,7 +310,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 历史记录.
         /// </summary>
@@ -319,7 +319,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_History", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 抽取历史记录数据（history）.
         /// </summary>
@@ -328,7 +328,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_History_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 图片资源.
         /// </summary>
@@ -337,7 +337,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_Images", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 学生/奖品图片资源（images）.
         /// </summary>
@@ -346,7 +346,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_Images_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 名单数据.
         /// </summary>
@@ -355,7 +355,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_List", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 点名/抽奖名单等数据（list）.
         /// </summary>
@@ -364,7 +364,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_List_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 运行日志.
         /// </summary>
@@ -373,7 +373,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_Logs", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 程序运行日志，可能包含敏感信息（logs）.
         /// </summary>
@@ -382,7 +382,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_Logs_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 主题资源.
         /// </summary>
@@ -391,7 +391,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_Themes", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 已安装的主题资源（theme）.
         /// </summary>
@@ -400,7 +400,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
                 return ResourceManager.GetString("S_Includes_Themes_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 恢复备份.
         /// </summary>

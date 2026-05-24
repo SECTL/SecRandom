@@ -9,8 +9,8 @@
 
 namespace SecRandom.Langs.ProfileSettings {
     using System;
-    
-    
+
+
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -22,15 +22,15 @@ namespace SecRandom.Langs.ProfileSettings {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -44,7 +44,7 @@ namespace SecRandom.Langs.ProfileSettings {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -58,7 +58,7 @@ namespace SecRandom.Langs.ProfileSettings {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 帮助.
         /// </summary>
@@ -67,7 +67,7 @@ namespace SecRandom.Langs.ProfileSettings {
                 return ResourceManager.GetString("Command_Help", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 打开“编辑档案&quot;的文档.
         /// </summary>
@@ -76,7 +76,7 @@ namespace SecRandom.Langs.ProfileSettings {
                 return ResourceManager.GetString("Command_Help_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 保存.
         /// </summary>
@@ -85,7 +85,7 @@ namespace SecRandom.Langs.ProfileSettings {
                 return ResourceManager.GetString("Command_Save", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 保存当前全部档案.
         /// </summary>
@@ -94,7 +94,7 @@ namespace SecRandom.Langs.ProfileSettings {
                 return ResourceManager.GetString("Command_Save_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 已保存。.
         /// </summary>
@@ -103,7 +103,7 @@ namespace SecRandom.Langs.ProfileSettings {
                 return ResourceManager.GetString("Message_SavedProfile", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 历史记录.
         /// </summary>
@@ -112,7 +112,7 @@ namespace SecRandom.Langs.ProfileSettings {
                 return ResourceManager.GetString("Page_History", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 奖项.
         /// </summary>
@@ -121,7 +121,7 @@ namespace SecRandom.Langs.ProfileSettings {
                 return ResourceManager.GetString("Page_Prizes", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 学生.
         /// </summary>

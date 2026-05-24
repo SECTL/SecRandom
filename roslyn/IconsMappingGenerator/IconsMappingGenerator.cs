@@ -103,7 +103,7 @@ public class IconsMappingGenerator : IIncrementalGenerator
                             /// <summary>
                             /// {{className}} 常量池
                             /// </summary>
-                            public static class {{className}} 
+                            public static class {{className}}
                             {
                         """);
 
@@ -113,7 +113,7 @@ public class IconsMappingGenerator : IIncrementalGenerator
                                     /// {{key}}
                                     /// </summary>
                                     public const string {{name}} = "\u{{codePoint:X4}}";
-                                    
+
                             """);
 
         sb.AppendLine("""

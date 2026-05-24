@@ -9,8 +9,8 @@
 
 namespace SecRandom.Langs.SettingsPages.General.Basic {
     using System;
-    
-    
+
+
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -22,15 +22,15 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -44,7 +44,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -58,7 +58,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 版本公告.
         /// </summary>
@@ -67,7 +67,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("C_VersionNotice", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 不再显示.
         /// </summary>
@@ -76,7 +76,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("C_VersionNoticeHide", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 当前处于 Avalonia 重构阶段，暂不新增功能，重心放在性能优化与问题修复。
         ///敬请期待基于 Avalonia 架构的 v3 版本！
@@ -87,7 +87,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("C_VersionNoticeText", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 关闭置顶.
         /// </summary>
@@ -96,7 +96,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("O_MainWindowTopmostMode_None", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 置顶.
         /// </summary>
@@ -105,7 +105,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("O_MainWindowTopmostMode_Topmost", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to UIAccess 置顶.
         /// </summary>
@@ -114,34 +114,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("O_MainWindowTopmostMode_UiAccess", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 匿名上报.
-        /// </summary>
-        public static string O_TelemetryMode_Anonymous {
-            get {
-                return ResourceManager.GetString("O_TelemetryMode_Anonymous", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 完整上报.
-        /// </summary>
-        public static string O_TelemetryMode_Full {
-            get {
-                return ResourceManager.GetString("O_TelemetryMode_Full", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 停止上报.
-        /// </summary>
-        public static string O_TelemetryMode_Off {
-            get {
-                return ResourceManager.GetString("O_TelemetryMode_Off", resourceCulture);
-            }
-        }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 行为.
         /// </summary>
@@ -150,7 +123,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 自动保存窗口大小.
         /// </summary>
@@ -159,7 +132,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_AutoSaveWindowSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 是否自动保存窗口大小.
         /// </summary>
@@ -168,7 +141,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_AutoSaveWindowSize_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 开机自启.
         /// </summary>
@@ -177,7 +150,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_Autostart", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 设置软件是否随系统启动自动运行.
         /// </summary>
@@ -186,7 +159,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_Autostart_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 后台驻留.
         /// </summary>
@@ -195,7 +168,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_BackgroundResident", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 关闭所有窗口后是否仍在后台常驻.
         /// </summary>
@@ -204,7 +177,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_BackgroundResident_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 显示语言.
         /// </summary>
@@ -213,7 +186,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_Language", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 切换软件界面语言（重启软件后生效）.
         /// </summary>
@@ -222,7 +195,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_Language_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 主窗口置顶模式.
         /// </summary>
@@ -231,7 +204,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_MainWindowTopmostMode", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 选择主窗口置顶方式（UIAccess 置顶需以管理员运行）.
         /// </summary>
@@ -240,7 +213,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_MainWindowTopmostMode_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 启动显示主窗口.
         /// </summary>
@@ -249,7 +222,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_ShowStartupWindow", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 设置软件启动时是否自动显示主窗口.
         /// </summary>
@@ -258,7 +231,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_ShowStartupWindow_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to URL 协议注册 &amp; IPC 服务.
         /// </summary>
@@ -267,7 +240,7 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_UrlProtocol", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 注册自定义 URL 协议 (secrandom://)，并启用 IPC 通信，支持链接启动与外部联动.
         /// </summary>
@@ -276,50 +249,6 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_UrlProtocol_D", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 遥测.
-        /// </summary>
-        public static string S_Telemetry {
-            get {
-                return ResourceManager.GetString("S_Telemetry", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 启用遥测.
-        /// </summary>
-        public static string S_Telemetry_Enabled {
-            get {
-                return ResourceManager.GetString("S_Telemetry_Enabled", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 开启后上报在线状态数据以帮助改进软件.
-        /// </summary>
-        public static string S_Telemetry_Enabled_D {
-            get {
-                return ResourceManager.GetString("S_Telemetry_Enabled_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 在线状态.
-        /// </summary>
-        public static string S_Telemetry_Mode {
-            get {
-                return ResourceManager.GetString("S_Telemetry_Mode", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 完整上报含位置信息，匿名上报仅计入在线人数不报位置，停止则不上报.
-        /// </summary>
-        public static string S_Telemetry_Mode_D {
-            get {
-                return ResourceManager.GetString("S_Telemetry_Mode_D", resourceCulture);
-            }
-        }
+
     }
 }

@@ -74,30 +74,6 @@ bug 报 GitHub Issue 或 SECTL QQ组织群 - 833875216</value>
     <data name="S_Behavior_UrlProtocol_D" xml:space="preserve">
         <value>注册自定义 URL 协议 (secrandom://)，并启用 IPC 通信，支持链接启动与外部联动</value>
     </data>
-    <data name="S_Telemetry" xml:space="preserve">
-        <value>遥测</value>
-    </data>
-    <data name="S_Telemetry_Enabled" xml:space="preserve">
-        <value>启用遥测</value>
-    </data>
-    <data name="S_Telemetry_Enabled_D" xml:space="preserve">
-        <value>开启后上报在线状态数据以帮助改进软件</value>
-    </data>
-    <data name="S_Telemetry_Mode" xml:space="preserve">
-        <value>在线状态</value>
-    </data>
-    <data name="S_Telemetry_Mode_D" xml:space="preserve">
-        <value>完整上报含位置信息，匿名上报仅计入在线人数不报位置，停止则不上报</value>
-    </data>
-    <data name="O_TelemetryMode_Full" xml:space="preserve">
-        <value>完整上报</value>
-    </data>
-    <data name="O_TelemetryMode_Anonymous" xml:space="preserve">
-        <value>匿名上报</value>
-    </data>
-    <data name="O_TelemetryMode_Off" xml:space="preserve">
-        <value>停止上报</value>
-    </data>
     <data name="O_MainWindowTopmostMode_None" xml:space="preserve">
         <value>关闭置顶</value>
     </data>

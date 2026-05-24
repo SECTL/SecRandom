@@ -9,8 +9,8 @@
 
 namespace SecRandom.Langs.SettingsPages.About {
     using System;
-    
-    
+
+
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -22,15 +22,15 @@ namespace SecRandom.Langs.SettingsPages.About {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -44,7 +44,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -58,7 +58,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 复制用户信息.
         /// </summary>
@@ -67,7 +67,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("C_CopyUserInformation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 组织主页.
         /// </summary>
@@ -76,7 +76,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("C_OrgHome", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 项目主页.
         /// </summary>
@@ -85,7 +85,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("C_ProjectHome", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 鸣谢.
         /// </summary>
@@ -94,7 +94,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_Ack", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 贡献人员.
         /// </summary>
@@ -103,7 +103,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_Ack_Contributors", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 在线人数.
         /// </summary>
@@ -112,7 +112,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_Ack_OnlineUsers", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 感谢各位用户的支持，您的使用就是对我们最大的鼓励.
         /// </summary>
@@ -121,7 +121,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_Ack_OnlineUsers_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 应用信息.
         /// </summary>
@@ -130,7 +130,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_App", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 应用协议.
         /// </summary>
@@ -139,7 +139,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_App_License", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 常用链接.
         /// </summary>
@@ -148,7 +148,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_App_UsefulLinks", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 应用作者.
         /// </summary>
@@ -157,7 +157,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_Author", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 哔哩哔哩.
         /// </summary>
@@ -166,7 +166,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_Author_Bilibili", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 访问 黎泽懿_Aionflux 的哔哩哔哩账号.
         /// </summary>
@@ -175,7 +175,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_Author_BiliBili_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SecRandom 主开发者.
         /// </summary>
@@ -184,7 +184,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_Author_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 捐赠支持.
         /// </summary>
@@ -193,7 +193,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_Author_Donate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 访问 黎泽懿_Aionflux 的爱发电账号，支持项目发展，感谢您的捐赠.
         /// </summary>
@@ -202,7 +202,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_Author_Donate_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SECTL 思拓创联.
         /// </summary>
@@ -211,7 +211,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_Author_Org", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SecRandom 所属组织.
         /// </summary>
@@ -220,7 +220,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_Author_Org_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 黎泽懿_Aionflux.
         /// </summary>
@@ -229,7 +229,7 @@ namespace SecRandom.Langs.SettingsPages.About {
                 return ResourceManager.GetString("S_Author_R", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 用户信息.
         /// </summary>

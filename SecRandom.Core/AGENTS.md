@@ -68,6 +68,7 @@ SecRandom.Core/
   exceptions at public boundary.
 - Config handlers derive from `ConfigHandlerBase<TModel>`; config model defaults should be safe without existing data
   files.
+- `MainConfigModel.General` is the canonical general-settings subtree. Legacy root `Basic` / `Backup` bridges may remain temporarily for backward-compatible callers and JSON migration, but new general config splits should be nested under `Models/SubConfigs/General/`. Privacy settings belong under `General.PrivacySettings`; keep Sentry upload (`SentryTelemetryEnabled`) separate from online status reporting (`OnlineStatusMode`).
 - Controls should keep `.axaml` and `.axaml.cs` side by side and expose reusable Avalonia properties/templates.
 - Shared styles are modular; add new broad styles under `Styles/` and include from `StylesBase.axaml`.
 - Fluent icon names come from `Assets/FluentSystemIcons-Resizable.json` and are exposed through generated `sr:Fi` enum values plus `FluentIcons.*` string constants; prefer `{sr:FluentIconSource {sr:Fi NameRegular}}` in XAML and `FluentIcons.NameRegular` in attributes/code instead of raw glyphs.
