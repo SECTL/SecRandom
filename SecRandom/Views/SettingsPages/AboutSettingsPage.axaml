@@ -7,8 +7,10 @@
              xmlns:system="clr-namespace:System;assembly=System.Runtime"
              xmlns:lc="clr-namespace:SecRandom.Langs.Common"
              xmlns:lsa="clr-namespace:SecRandom.Langs.SettingsPages.About"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.SettingsPages.AboutSettingsPage">
+             x:Class="SecRandom.Views.SettingsPages.AboutSettingsPage"
+             x:DataType="local:AboutSettingsPage">
     <sr:StickyScrollViewer CollapsedHeight="58">
         <sr:StickyScrollViewer.HeaderContent>
             <Grid>
@@ -178,7 +180,10 @@
                                            Description="{x:Static lsa:Resources.S_Ack_OnlineUsers_D}"
                                            IconSource="{sr:FluentIconSource &#xECAB;}">
                     <fa:FASettingsExpanderItem.Footer>
-                        <TextBlock VerticalAlignment="Center" Text="{x:Static lc:Resources.C_ToBeWritten}" />
+                        <TextBlock VerticalAlignment="Center">
+                            <Run Text="{Binding OnlineUsersCount}" />
+                            人
+                        </TextBlock>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
 

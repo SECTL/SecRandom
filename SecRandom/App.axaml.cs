@@ -353,8 +353,8 @@ public partial class App : Application
         {
             var telemetry = IAppHost.GetService<TelemetryRuntimeService>();
             await telemetry.InitializeAsync().ConfigureAwait(false);
-            await SendSentryTestEventAsync(telemetry).ConfigureAwait(false);
-            Dispatcher.UIThread.Post(() => throw new InvalidOperationException("SENTRY_TEST_FAKE_ERROR_UNHANDLED"));
+            // await SendSentryTestEventAsync(telemetry).ConfigureAwait(false);
+            // Dispatcher.UIThread.Post(() => throw new InvalidOperationException("SENTRY_TEST_FAKE_ERROR_UNHANDLED"));
         }
         catch (Exception ex)
         {

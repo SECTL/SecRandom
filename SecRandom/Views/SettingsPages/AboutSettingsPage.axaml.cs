@@ -1,18 +1,28 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using FluentAvalonia.UI.Controls;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
+using SecRandom.Services;
 
 namespace SecRandom.Views.SettingsPages;
 
 [PageInfo("settings.about", "\uE9E4", location: PageLocation.Bottom, hidePageTitle: true)]
 public partial class AboutSettingsPage : UserControl
 {
+    private OnlineStatusService OnlineStatusService { get; } = IAppHost.Host!.Services
+        .GetServices<IHostedService>().OfType<OnlineStatusService>().First();
+    public int OnlineUsersCount => OnlineStatusService.CachedOnlineCount;
+    
     public AboutSettingsPage()
     {
+        DataContext = this;
         InitializeComponent();
     }
 
