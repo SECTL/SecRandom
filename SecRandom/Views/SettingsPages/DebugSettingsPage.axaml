@@ -7,6 +7,10 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.DebugSettingsPage">
     <UserControl.Resources>
+        <!-- ReSharper disable once Xaml.RedundantResource -->
+        <StackPanel x:Key="DrawerTest" Margin="16" Width="300">
+            <TextBlock>Drawer 测试</TextBlock>
+        </StackPanel>
     </UserControl.Resources>
 
     <ScrollViewer>
