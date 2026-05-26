@@ -1,0 +1,184 @@
+﻿name: Build & Publish Multi-Platform
+
+on:
+  push:
+    branches:
+      - master
+      - dev/v3
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "发布标签（例如 1.0.0.0）"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build_desktop:
+    name: Build_Desktop_${{ matrix.os }}_${{ matrix.arch }}_${{ matrix.build_type }}
+    runs-on: ${{ matrix.os == 'linux' && 'ubuntu-24.04' || (matrix.os == 'macos' && 'macos-15' || 'windows-2022') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows, linux, macos]
+        arch: [x64, x86, arm64]
+        build_type: [full, selfContained]
+        exclude:
+          - os: linux
+            arch: x86
+          - os: macos
+            arch: x86
+          - os: linux
+            build_type: full
+          - os: macos
+            build_type: full
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        shell: pwsh
+        env:
+          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+        run: dotnet restore SecRandom.Desktop/SecRandom.Desktop.csproj -r $env:RID
+
+      - name: Publish Desktop
+        shell: pwsh
+        env:
+          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+          SELF_CONTAINED: ${{ matrix.build_type == 'selfContained' }}
+          MODE: ${{ matrix.build_type }}
+        run: |
+          $outDir = "bin/$env:RID-$env:MODE"
+          dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj `
+            -c Release `
+            -r $env:RID `
+            --self-contained $env:SELF_CONTAINED `
+            -p:PublishTrimmed=false `
+            -p:UseAppHost=true `
+            --no-restore `
+            -o $outDir
+
+      - name: Pack Zip
+        shell: pwsh
+        env:
+          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+          MODE: ${{ matrix.build_type }}
+        run: |
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          $source = "bin/$env:RID-$env:MODE/*"
+          $target = "dist/SecRandom_desktop_$env:RID`_$env:MODE.zip"
+          Compress-Archive -Path $source -DestinationPath $target -Force
+
+      - name: Get Latest Tag
+        id: get_tag
+        if: ${{ github.event_name != 'workflow_dispatch' && matrix.os == 'windows' }}
+        shell: pwsh
+        run: |
+          $latestTag = git describe --tags --abbrev=0
+          echo "LATEST_TAG=$latestTag" >> $env:GITHUB_OUTPUT
+          echo "Latest tag: $latestTag"
+
+      - name: Install Inno Setup Chinese Language
+        if: ${{ matrix.os == 'windows' }}
+        run: |
+          $langUrl = "https://raw.githubusercontent.com/kira-96/Inno-Setup-Chinese-Simplified-Translation/main/ChineseSimplified.isl"
+          $langPath = "C:\Program Files (x86)\Inno Setup 6\Languages\ChineseSimplified.isl"
+          $langDir = "C:\Program Files (x86)\Inno Setup 6\Languages"
+          
+          if (!(Test-Path $langDir)) {
+            New-Item -ItemType Directory -Path $langDir -Force
+          }
+
+          Invoke-WebRequest -Uri $langUrl -OutFile $langPath
+          echo "Downloaded Chinese Language: $langPath"
+
+      - name: Build Setup
+        if: ${{ matrix.os == 'windows' }}
+        shell: pwsh
+        env:
+          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
+          ARCH: ${{ matrix.arch }}
+          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+          MODE: ${{ matrix.build_type }}
+        run: |
+          $outDir = "bin/$env:RID-$env:MODE"
+          $issContent = Get-Content -Path "Setup.iss" -Raw
+          $updatedContent = $issContent -replace 'APP_VERSION', $env:VERSION
+          $updatedContent = $updatedContent -replace 'APP_OUTDIR', $outDir
+          Set-Content -Path "Setup.iss" -Value $updatedContent -NoNewline
+          New-Item -ItemType Directory -Path "SetupOutput" -Force | Out-Null
+
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" Setup.iss `
+            /F"SecRandom_setup_$env:ARCH-$env:MODE" `
+            /O"SetupOutput"
+
+      - name: Upload Desktop Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop_${{ matrix.os }}_${{ matrix.arch }}_${{ matrix.build_type }}
+          path: dist/*.zip
+
+      - name: Upload Setup Artifact
+        if: ${{ matrix.os == 'windows' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: setup_${{ matrix.os }}_${{ matrix.arch }}_${{ matrix.build_type }}
+          path: SetupOutput/*.exe
+
+  publish:
+    name: Publish_Release
+    runs-on: windows-2022
+    needs: [build_desktop]
+    if: ${{ always() && success('build_desktop') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
+    permissions:
+      contents: write
+    concurrency:
+      group: publish-public
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.release_tag }}
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./out_artifacts
+
+      - name: Combine Artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path ./out -Force | Out-Null
+          Get-ChildItem ./out_artifacts -Recurse -File -Include *.zip,*.apk,*.exe | ForEach-Object {
+            Copy-Item $_.FullName ./out -Force
+          }
+          Write-Host "Combined files:"
+          Get-ChildItem ./out -File | Select-Object Name, Length
+
+      - name: Generate Release Note
+        env:
+          tagName: ${{ github.event.inputs.release_tag }}
+          repoName: ${{ github.repository }}
+        run: pwsh -ep bypass ./scripts/gen-release-note.ps1
+
+      - name: Upload APP to release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "./out/*.zip,./out/*.exe"
+          draft: true
+          bodyFile: ./release-note.md
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.event.inputs.release_tag }}
