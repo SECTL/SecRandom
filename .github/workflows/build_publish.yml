@@ -83,12 +83,11 @@ jobs:
 
       - name: Get Latest Tag
         id: get_tag
-        if: ${{ github.event_name != 'workflow_dispatch' && matrix.os == 'windows' }}
+        if: ${{ github.event_name != 'workflow_dispatch' }}
         shell: pwsh
         run: |
           $latestTag = git describe --tags --abbrev=0
           echo "LATEST_TAG=$latestTag" >> $env:GITHUB_OUTPUT
-          echo "version_no_v=${version_no_v}" >> "$GITHUB_OUTPUT"
           echo "Latest tag: $latestTag"
 
       - name: Install Inno Setup Chinese Language
@@ -128,13 +127,15 @@ jobs:
       - name: Build Linux deb
         if: ${{ matrix.os == 'linux' }}
         env:
+          ARCH: ${{ matrix.arch }}
+          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
           RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
           MODE: ${{ matrix.build_type }}
         shell: bash
         run: |
           set -euo pipefail
 
-          version_no_v="${{ steps.get_tag.outputs.version_no_v }}"
+          version_no_v="${VERSION#v}"
           mkdir -p dist
 
           deb_arch="amd64"
@@ -189,13 +190,15 @@ jobs:
       - name: Build macOS pkg
         if: ${{ matrix.os == 'macos' }}
         env:
+          ARCH: ${{ matrix.arch }}
+          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
           RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
           MODE: ${{ matrix.build_type }}
         shell: bash
         run: |
           set -euo pipefail
 
-          version_no_v="${{ steps.get_tag.outputs.version_no_v }}"
+          version_no_v="${VERSION#v}"
           mkdir -p dist
 
           work="$(pwd)/macpkg"
