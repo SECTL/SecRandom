@@ -37,13 +37,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
 
@@ -125,17 +125,19 @@ jobs:
             /O"SetupOutput"
 
       - name: Upload Desktop Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: desktop_${{ matrix.os }}_${{ matrix.arch }}_${{ matrix.build_type }}
           path: dist/*.zip
+          archive: false
 
       - name: Upload Setup Artifact
         if: ${{ matrix.os == 'windows' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: setup_${{ matrix.os }}_${{ matrix.arch }}_${{ matrix.build_type }}
           path: SetupOutput/*.exe
+          archive: false
 
   publish:
     name: Publish_Release
@@ -148,13 +150,13 @@ jobs:
       group: publish-public
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.event.inputs.release_tag }}
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: ./out_artifacts
 
