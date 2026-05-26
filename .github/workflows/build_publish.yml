@@ -88,6 +88,7 @@ jobs:
         run: |
           $latestTag = git describe --tags --abbrev=0
           echo "LATEST_TAG=$latestTag" >> $env:GITHUB_OUTPUT
+          echo "version_no_v=${version_no_v}" >> "$GITHUB_OUTPUT"
           echo "Latest tag: $latestTag"
 
       - name: Install Inno Setup Chinese Language
@@ -123,6 +124,130 @@ jobs:
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" Setup.iss `
             /F"SecRandom_setup_$env:ARCH-$env:MODE" `
             /O"SetupOutput"
+          
+      - name: Build Linux deb
+        if: ${{ matrix.os == 'linux' }}
+        env:
+          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+          MODE: ${{ matrix.build_type }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version_no_v="${{ steps.get_tag.outputs.version_no_v }}"
+          mkdir -p dist
+
+          deb_arch="amd64"
+          case "${{ matrix.arch }}" in
+            x64) deb_arch="amd64" ;;
+            arm64) deb_arch="arm64" ;;
+          esac
+
+          pkgroot="$(pwd)/pkgroot"
+          rm -rf "$pkgroot"
+          mkdir -p "$pkgroot/DEBIAN"
+          mkdir -p "$pkgroot/usr/lib/secrandom"
+          mkdir -p "$pkgroot/usr/bin"
+          mkdir -p "$pkgroot/usr/share/applications"
+          mkdir -p "$pkgroot/usr/share/icons/hicolor/256x256/apps"
+
+          cp -a "bin/${RID}-${MODE}/." "$pkgroot/usr/lib/secrandom/"
+          chmod +x "$pkgroot/usr/lib/secrandom/SecRandom.Desktop" || true
+
+          cat > "$pkgroot/usr/bin/secrandom" << 'EOF'
+          #!/bin/sh
+          exec /usr/lib/secrandom/SecRandom.Desktop "$@"
+          EOF
+          chmod +x "$pkgroot/usr/bin/secrandom"
+
+          cat > "$pkgroot/usr/share/applications/secrandom.desktop" << 'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=SecRandom
+          Exec=secrandom
+          Icon=secrandom
+          Categories=Utility;
+          Terminal=false
+          EOF
+
+          if [ -f "resources/secrandom-icon-paper.png" ]; then
+            cp "resources/secrandom-icon-paper.png" "$pkgroot/usr/share/icons/hicolor/256x256/apps/secrandom.png"
+          fi
+
+          cat > "$pkgroot/DEBIAN/control" << EOF
+          Package: secrandom
+          Version: ${version_no_v}
+          Section: utils
+          Priority: optional
+          Architecture: ${deb_arch}
+          Maintainer: SECTL
+          Description: SecRandom
+          EOF
+
+          dpkg-deb --build "$pkgroot" "dist/SecRandom_deb_${ARCH}-${MODE}.deb"
+
+      - name: Build macOS pkg
+        if: ${{ matrix.os == 'macos' }}
+        env:
+          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+          MODE: ${{ matrix.build_type }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version_no_v="${{ steps.get_tag.outputs.version_no_v }}"
+          mkdir -p dist
+
+          work="$(pwd)/macpkg"
+          rm -rf "$work"
+          mkdir -p "$work/bundle/SecRandom.app/Contents/MacOS"
+          mkdir -p "$work/bundle/SecRandom.app/Contents/Resources"
+
+          cp -a "bin/${RID}-${MODE}/." "$work/bundle/SecRandom.app/Contents/MacOS/"
+          chmod +x "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.Desktop" || true
+
+          cat > "$work/bundle/SecRandom.app/Contents/Info.plist" << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>SecRandom</string>
+            <key>CFBundleDisplayName</key><string>SecRandom</string>
+            <key>CFBundleIdentifier</key><string>top.sectl.secrandom</string>
+            <key>CFBundleVersion</key><string>${version_no_v}</string>
+            <key>CFBundleShortVersionString</key><string>${version_no_v}</string>
+            <key>CFBundleExecutable</key><string>SecRandom.Desktop</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>LSMinimumSystemVersion</key><string>11.0</string>
+            <key>CFBundleIconFile</key><string>AppIcon</string>
+          </dict>
+          </plist>
+          EOF
+
+          icon_png="resources/secrandom-icon-paper.png"
+          if [ -f "$icon_png" ]; then
+            iconset="$work/AppIcon.iconset"
+            mkdir -p "$iconset"
+            for size in 16 32 64 128 256 512; do
+              sips -z "$size" "$size" "$icon_png" --out "$iconset/icon_${size}x${size}.png" >/dev/null
+            done
+            for size in 16 32 128 256 512; do
+              double=$((size*2))
+              sips -z "$double" "$double" "$icon_png" --out "$iconset/icon_${size}x${size}@2x.png" >/dev/null
+            done
+            iconutil -c icns "$iconset" -o "$work/bundle/SecRandom.app/Contents/Resources/AppIcon.icns"
+          fi
+
+          pkgroot="$work/pkgroot"
+          mkdir -p "$pkgroot/Applications"
+          cp -a "$work/bundle/SecRandom.app" "$pkgroot/Applications/"
+
+          pkgbuild \
+            --root "$pkgroot" \
+            --identifier "top.sectl.secrandom" \
+            --version "$version_no_v" \
+            --install-location "/" \
+            "dist/SecRandom_pkg_${ARCH}-${MODE}.pkg"
 
       - name: Upload Desktop Artifact
         uses: actions/upload-artifact@v7
@@ -137,6 +262,22 @@ jobs:
         with:
           name: setup_${{ matrix.os }}_${{ matrix.arch }}_${{ matrix.build_type }}
           path: SetupOutput/*.exe
+          archive: false
+
+      - name: Upload deb Artifact
+        if: ${{ matrix.os == 'linux' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: deb_${{ matrix.os }}_${{ matrix.arch }}_${{ matrix.build_type }}
+          path: dist/*.deb
+          archive: false
+
+      - name: Upload pkg Artifact
+        if: ${{ matrix.os == 'macos' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: pkg_${{ matrix.os }}_${{ matrix.arch }}_${{ matrix.build_type }}
+          path: dist/*.pkg
           archive: false
 
   publish:
@@ -179,7 +320,7 @@ jobs:
       - name: Upload APP to release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "./out/*.zip,./out/*.exe"
+          artifacts: "./out/*.zip,./out/*.exe,./out/*.deb,./out/*.pkg"
           draft: true
           bodyFile: ./release-note.md
           token: ${{ secrets.GITHUB_TOKEN }}
