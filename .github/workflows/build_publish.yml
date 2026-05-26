@@ -1,4 +1,4 @@
-﻿name: Build & Publish Multi-Platform
+﻿name: Build & Publish
 
 on:
   push:
