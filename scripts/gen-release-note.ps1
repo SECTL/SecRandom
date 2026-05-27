@@ -20,23 +20,33 @@ if (-not $files) {
     throw "No files found in $outDir"
 }
 
-$md5Summary = @"
-> [!important]
-> 下载时请核对文件 MD5。
+$downloadSummary = @"
+**下载链接**
 
 | 文件名 | GitHub | SECTL高速 |
 | --- | --- | --- |
 "@
 
+foreach ($file in $files) {
+    $gh = "https://github.com/${repo}/releases/download/${tag}/${file}"
+    $stk = "https://stk.sectl.top/SecRandom/${version}/${file}"
+    $downloadSummary += "`n| ${file} | [下载](${gh}) | [下载](${stk}) |"
+}
+
+$md5Summary = @"
+> [!important]
+> 下载时请核对文件 MD5。
+
+| 文件名 | MD5 |
+| --- | --- |
+"@
+
 $hashes = [ordered]@{}
 foreach ($file in $files) {
     $hash = (Get-FileHash $file.FullName -Algorithm MD5).Hash
-    
-    $gh = "https://github.com/${repo}/releases/download/${tag}/${file}"
-    $stk = "https://stk.sectl.top/SecRandom/${version}/${file}"
-    
-    $md5Summary += "`n| ${file} | [下载](${gh}) | [下载](${stk}) |"
     $hashes[$file.Name] = $hash
+
+    $md5Summary += "`n| $($file.Name) | ``$hash`` |"
 }
 
 $json = ConvertTo-Json $hashes -Compress
@@ -48,7 +58,7 @@ $changelog = if (Test-Path $changelogPath) {
     "## $tag`n`n- 发布说明待补充。"
 }
 
-$fullContent = "$changelog`n`n$md5Summary"
+$fullContent = "$changelog`n`n$downloadSummary`n`n$md5Summary"
 Set-Content -Path $releaseNotePath -Value $fullContent -Encoding utf8
 
-Write-Host "Release Note generated: $releaseNotePath"
+Write-Host "Release Note generated"
