@@ -24,16 +24,11 @@ jobs:
       matrix:
         os: [windows, linux, macos]
         arch: [x64, x86, arm64]
-        build_type: [full, selfContained]
         exclude:
           - os: linux
             arch: x86
           - os: macos
             arch: x86
-          - os: linux
-            build_type: full
-          - os: macos
-            build_type: full
 
     steps:
       - name: Checkout
@@ -57,28 +52,25 @@ jobs:
         shell: pwsh
         env:
           RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
-          SELF_CONTAINED: ${{ matrix.build_type == 'selfContained' }}
-          MODE: ${{ matrix.build_type }}
         run: |
-          $outDir = "bin/$env:RID-$env:MODE"
+          $outDir = "bin/$env:RID"
           dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj `
             -c Release `
             -r $env:RID `
-            --self-contained $env:SELF_CONTAINED `
+            --self-contained `
             -p:PublishTrimmed=false `
             -p:UseAppHost=true `
             --no-restore `
             -o $outDir
 
-      - name: Pack Zip
+      - name: Pack Portable Zip
         shell: pwsh
         env:
           RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
-          MODE: ${{ matrix.build_type }}
         run: |
           New-Item -ItemType Directory -Path dist -Force | Out-Null
-          $source = "bin/$env:RID-$env:MODE/*"
-          $target = "dist/SecRandom_desktop_$env:RID`_$env:MODE.zip"
+          $source = "bin/$env:RID/*"
+          $target = "dist/SecRandom_$env:RID_portable.zip"
           Compress-Archive -Path $source -DestinationPath $target -Force
 
       - name: Get Latest Tag
@@ -104,16 +96,15 @@ jobs:
           Invoke-WebRequest -Uri $langUrl -OutFile $langPath
           echo "Downloaded Chinese Language: $langPath"
 
-      - name: Build Setup
+      - name: Build Windows Setup
         if: ${{ matrix.os == 'windows' }}
         shell: pwsh
         env:
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
           ARCH: ${{ matrix.arch }}
           RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
-          MODE: ${{ matrix.build_type }}
         run: |
-          $outDir = "bin/$env:RID-$env:MODE"
+          $outDir = "bin/$env:RID"
           $issContent = Get-Content -Path "Setup.iss" -Raw
           $updatedContent = $issContent -replace 'APP_VERSION', $env:VERSION
           $updatedContent = $updatedContent -replace 'APP_OUTDIR', $outDir
@@ -121,16 +112,15 @@ jobs:
           New-Item -ItemType Directory -Path "SetupOutput" -Force | Out-Null
 
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" Setup.iss `
-            /F"SecRandom_setup_$env:ARCH-$env:MODE" `
+            /F"SecRandom_$env:RID`_setup" `
             /O"SetupOutput"
           
-      - name: Build Linux deb
+      - name: Build Linux Deb
         if: ${{ matrix.os == 'linux' }}
         env:
           ARCH: ${{ matrix.arch }}
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
           RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
-          MODE: ${{ matrix.build_type }}
         shell: bash
         run: |
           set -euo pipefail
@@ -152,7 +142,7 @@ jobs:
           mkdir -p "$pkgroot/usr/share/applications"
           mkdir -p "$pkgroot/usr/share/icons/hicolor/256x256/apps"
 
-          cp -a "bin/${RID}-${MODE}/." "$pkgroot/usr/lib/secrandom/"
+          cp -a "bin/${RID}/." "$pkgroot/usr/lib/secrandom/"
           chmod +x "$pkgroot/usr/lib/secrandom/SecRandom.Desktop" || true
 
           cat > "$pkgroot/usr/bin/secrandom" << 'EOF'
@@ -185,15 +175,14 @@ jobs:
           Description: SecRandom
           EOF
 
-          dpkg-deb --build "$pkgroot" "dist/SecRandom_deb_${ARCH}-${MODE}.deb"
+          dpkg-deb --build "$pkgroot" "dist/SecRandom_${RID}_deb.deb"
 
-      - name: Build macOS pkg
+      - name: Build macOS Pkg
         if: ${{ matrix.os == 'macos' }}
         env:
           ARCH: ${{ matrix.arch }}
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
           RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
-          MODE: ${{ matrix.build_type }}
         shell: bash
         run: |
           set -euo pipefail
@@ -206,7 +195,7 @@ jobs:
           mkdir -p "$work/bundle/SecRandom.app/Contents/MacOS"
           mkdir -p "$work/bundle/SecRandom.app/Contents/Resources"
 
-          cp -a "bin/${RID}-${MODE}/." "$work/bundle/SecRandom.app/Contents/MacOS/"
+          cp -a "bin/${RID}/." "$work/bundle/SecRandom.app/Contents/MacOS/"
           chmod +x "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.Desktop" || true
 
           cat > "$work/bundle/SecRandom.app/Contents/Info.plist" << EOF
@@ -250,12 +239,12 @@ jobs:
             --identifier "top.sectl.secrandom" \
             --version "$version_no_v" \
             --install-location "/" \
-            "dist/SecRandom_pkg_${ARCH}-${MODE}.pkg"
+            "dist/SecRandom_${RID}_pkg.pkg"
 
-      - name: Upload Desktop Artifact
+      - name: Upload Portable Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: desktop_${{ matrix.os }}_${{ matrix.arch }}_${{ matrix.build_type }}
+          name: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}_portable
           path: dist/*.zip
           archive: false
 
@@ -263,7 +252,7 @@ jobs:
         if: ${{ matrix.os == 'windows' }}
         uses: actions/upload-artifact@v7
         with:
-          name: setup_${{ matrix.os }}_${{ matrix.arch }}_${{ matrix.build_type }}
+          name: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}_setup
           path: SetupOutput/*.exe
           archive: false
 
@@ -271,7 +260,7 @@ jobs:
         if: ${{ matrix.os == 'linux' }}
         uses: actions/upload-artifact@v7
         with:
-          name: deb_${{ matrix.os }}_${{ matrix.arch }}_${{ matrix.build_type }}
+          name: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}_deb
           path: dist/*.deb
           archive: false
 
@@ -279,7 +268,7 @@ jobs:
         if: ${{ matrix.os == 'macos' }}
         uses: actions/upload-artifact@v7
         with:
-          name: pkg_${{ matrix.os }}_${{ matrix.arch }}_${{ matrix.build_type }}
+          name: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}_pkg
           path: dist/*.pkg
           archive: false
 
