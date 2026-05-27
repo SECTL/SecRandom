@@ -70,7 +70,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Path dist -Force | Out-Null
           $source = "bin/$env:RID/*"
-          $target = "dist/SecRandom_$env:RID_portable.zip"
+          $target = "dist/SecRandom_$env:RID`_portable.zip"
           Compress-Archive -Path $source -DestinationPath $target -Force
 
       - name: Get Latest Tag
