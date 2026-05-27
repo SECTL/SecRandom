@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   build_desktop:
-    name: Build_Desktop_${{ matrix.os }}_${{ matrix.arch }}_${{ matrix.build_type }}
+    name: Build_${{ matrix.os }}_${{ matrix.arch }}
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-24.04' || (matrix.os == 'macos' && 'macos-15' || 'windows-2022') }}
     strategy:
       fail-fast: false
