@@ -115,7 +115,7 @@ jobs:
             /F"SecRandom_$env:RID`_setup" `
             /O"SetupOutput"
           
-      - name: Build Linux Deb
+      - name: Build Linux deb
         if: ${{ matrix.os == 'linux' }}
         env:
           ARCH: ${{ matrix.arch }}
@@ -177,7 +177,7 @@ jobs:
 
           dpkg-deb --build "$pkgroot" "dist/SecRandom_${RID}_deb.deb"
 
-      - name: Build macOS Pkg
+      - name: Build macOS pkg
         if: ${{ matrix.os == 'macos' }}
         env:
           ARCH: ${{ matrix.arch }}
@@ -246,7 +246,6 @@ jobs:
         with:
           name: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}_portable
           path: dist/*.zip
-          archive: false
 
       - name: Upload Setup Artifact
         if: ${{ matrix.os == 'windows' }}
@@ -254,7 +253,6 @@ jobs:
         with:
           name: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}_setup
           path: SetupOutput/*.exe
-          archive: false
 
       - name: Upload deb Artifact
         if: ${{ matrix.os == 'linux' }}
@@ -262,7 +260,6 @@ jobs:
         with:
           name: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}_deb
           path: dist/*.deb
-          archive: false
 
       - name: Upload pkg Artifact
         if: ${{ matrix.os == 'macos' }}
@@ -270,7 +267,6 @@ jobs:
         with:
           name: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}_pkg
           path: dist/*.pkg
-          archive: false
 
   publish:
     name: Publish_Release
@@ -297,7 +293,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path ./out -Force | Out-Null
-          Get-ChildItem ./out_artifacts -Recurse -File -Include *.zip,*.apk,*.exe | ForEach-Object {
+          Get-ChildItem ./out_artifacts -Recurse -File -Include *.zip,*.exe,*pkg,*deb | ForEach-Object {
             Copy-Item $_.FullName ./out -Force
           }
           Write-Host "Combined files:"

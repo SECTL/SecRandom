@@ -28,9 +28,9 @@ $downloadSummary = @"
 "@
 
 foreach ($file in $files) {
-    $gh = "https://github.com/${repo}/releases/download/${tag}/${file}"
-    $stk = "https://stk.sectl.top/SecRandom/${version}/${file}"
-    $downloadSummary += "`n| ${file} | [下载](${gh}) | [下载](${stk}) |"
+    $gh = "https://github.com/${repo}/releases/download/${tag}/${file.Name}"
+    $stk = "https://stk.sectl.top/SecRandom/${tag}/${file.Name}"
+    $downloadSummary += "`n| ${file.Name} | [下载](${gh}) | [下载](${stk}) |"
 }
 
 $md5Summary = @"
@@ -55,7 +55,7 @@ $md5Summary += "`n`n<!-- SECRANDOM_PKG_MD5 $json -->"
 $changelog = if (Test-Path $changelogPath) {
     Get-Content $changelogPath -Raw
 } else {
-    "## $tag`n`n- 发布说明待补充。"
+    "- 发布说明待补充。`n---`n"
 }
 
 $fullContent = "$changelog`n`n$downloadSummary`n`n$md5Summary"
