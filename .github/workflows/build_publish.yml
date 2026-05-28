@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "发布标签（例如 1.0.0.0）"
+        description: "发布标签（例如 v2.3.100）"
         required: true
         type: string
 
