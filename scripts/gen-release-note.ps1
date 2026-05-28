@@ -7,7 +7,7 @@ if ([string]::IsNullOrWhiteSpace($tag)) {
     throw "Environment variable 'tagName' is required."
 }
 
-$changelogPath = "./CHANGELOG/v3/${tag}.md"
+$changelogPath = "./CHANGELOG/v3/${tag}/CHANGELOG.md"
 $releaseNotePath = "./release-note.md"
 $outDir = "./out"
 
