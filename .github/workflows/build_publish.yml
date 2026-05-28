@@ -293,7 +293,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path ./out -Force | Out-Null
-          Get-ChildItem ./out_artifacts -Recurse -File -Include *.zip,*.exe,*pkg,*deb | ForEach-Object {
+          Get-ChildItem ./out_artifacts -Recurse -File -Include *.zip,*.exe,*.deb,*.pkg | ForEach-Object {
             Copy-Item $_.FullName ./out -Force
           }
           Write-Host "Combined files:"
