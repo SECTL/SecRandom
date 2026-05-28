@@ -308,6 +308,7 @@ jobs:
       - name: Upload APP to release
         uses: ncipollo/release-action@v1
         with:
+          name: SecRandom ${{ github.event.inputs.release_tag }}
           artifacts: "./out/*.zip,./out/*.exe,./out/*.deb,./out/*.pkg"
           draft: true
           bodyFile: ./release-note.md

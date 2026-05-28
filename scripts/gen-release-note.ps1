@@ -28,9 +28,9 @@ $downloadSummary = @"
 "@
 
 foreach ($file in $files) {
-    $gh = "https://github.com/${repo}/releases/download/${tag}/${file.Name}"
-    $stk = "https://stk.sectl.top/SecRandom/${tag}/${file.Name}"
-    $downloadSummary += "`n| ${file.Name} | [下载](${gh}) | [下载](${stk}) |"
+    $gh = "https://github.com/${repo}/releases/download/${tag}/$($file.Name)"
+    $stk = "https://stk.sectl.top/SecRandom/${tag}/$($file.Name)"
+    $downloadSummary += "`n| $($file.Name) | [下载](${gh}) | [下载](${stk}) |"
 }
 
 $md5Summary = @"
