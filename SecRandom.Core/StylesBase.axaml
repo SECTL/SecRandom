@@ -10,7 +10,6 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <MergeResourceInclude Source="/Styles/MultiComboBox.axaml" />
-                <MergeResourceInclude Source="/Styles/WindowDecorations.axaml" />
                 <MergeResourceInclude Source="/Controls/DevelopmentBuildAdorner.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
