@@ -13,34 +13,294 @@
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
             <sr:IconText Text="{x:Static lp:Resources.Section_Draw}" Glyph="{sr:Fi FlashRegular}" Margin="0 0 0 4" />
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_DrawMode}" Description="{x:Static lp:Resources.S_DrawMode_D}" IconSource="{sr:FluentIconSource {sr:Fi FlashRegular}}"><fa:FASettingsExpander.Footer><ComboBox SelectedIndex="{Binding Settings.DrawMode}"><ComboBoxItem Content="{x:Static lp:Resources.O_Repeat}" /><ComboBoxItem Content="{x:Static lp:Resources.O_NoRepeat}" /><ComboBoxItem Content="{x:Static lp:Resources.O_HalfRepeat}" /></ComboBox></fa:FASettingsExpander.Footer></fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_ClearRecord}" Description="{x:Static lp:Resources.S_ClearRecord_D}" IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}"><fa:FASettingsExpander.Footer><ComboBox SelectedIndex="{Binding Settings.ClearRecord}"><ComboBoxItem Content="{x:Static lp:Resources.O_Restarted}" /><ComboBoxItem Content="{x:Static lp:Resources.O_Cleared}" /></ComboBox></fa:FASettingsExpander.Footer></fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_HalfRepeat}" Description="{x:Static lp:Resources.S_HalfRepeat_D}" IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}"><fa:FASettingsExpander.Footer><NumericUpDown Value="{Binding Settings.HalfRepeat}" Minimum="0" Maximum="100" /></fa:FASettingsExpander.Footer></fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_LotteryDrawType}" Description="{x:Static lp:Resources.S_LotteryDrawType_D}" IconSource="{sr:FluentIconSource {sr:Fi FlashRegular}}"><fa:FASettingsExpander.Footer><ComboBox SelectedIndex="{Binding Settings.DrawType}"><ComboBoxItem Content="{x:Static lp:Resources.O_Pan}" /><ComboBoxItem Content="{x:Static lp:Resources.O_Count}" /></ComboBox></fa:FASettingsExpander.Footer></fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_DefaultPool}" Description="{x:Static lp:Resources.S_DefaultPool_D}" IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}"><fa:FASettingsExpander.Footer><ComboBox ItemsSource="{Binding PrizeListNames}" SelectedItem="{Binding Settings.DefaultPool}" MinWidth="220" /></fa:FASettingsExpander.Footer></fa:FASettingsExpander>
+            
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_DrawMode}"
+                                   Description="{x:Static lp:Resources.S_DrawMode_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi FlashRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.DrawMode}">
+                        <ComboBoxItem Content="{x:Static lp:Resources.O_Repeat}" />
+                        <ComboBoxItem Content="{x:Static lp:Resources.O_NoRepeat}" />
+                        <ComboBoxItem Content="{x:Static lp:Resources.O_HalfRepeat}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+            
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_ClearRecord}"
+                                   Description="{x:Static lp:Resources.S_ClearRecord_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.ClearRecord}">
+                        <ComboBoxItem Content="{x:Static lp:Resources.O_Restarted}" />
+                        <ComboBoxItem Content="{x:Static lp:Resources.O_Cleared}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+            
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_HalfRepeat}"
+                                   Description="{x:Static lp:Resources.S_HalfRepeat_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <NumericUpDown Value="{Binding Settings.HalfRepeat}" Minimum="0" Maximum="100" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+            
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_LotteryDrawType}"
+                                   Description="{x:Static lp:Resources.S_LotteryDrawType_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi FlashRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.DrawType}">
+                        <ComboBoxItem Content="{x:Static lp:Resources.O_Pan}" />
+                        <ComboBoxItem Content="{x:Static lp:Resources.O_Count}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+            
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_DefaultPool}"
+                                   Description="{x:Static lp:Resources.S_DefaultPool_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox ItemsSource="{Binding PrizeListNames}" SelectedItem="{Binding Settings.DefaultPool}"
+                              MinWidth="220" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Display}" Description="{x:Static lp:Resources.Section_Display}" IsExpanded="{Binding Settings.OverrideDisplaySettings, Mode=TwoWay}" IconSource="{sr:FluentIconSource {sr:Fi TextFontRegular}}">
-                <fa:FASettingsExpander.Footer><ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}" OffContent="{x:Static lp:Resources.C_EnableOverride}" IsChecked="{Binding Settings.OverrideDisplaySettings}" /></fa:FASettingsExpander.Footer>
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_FontSource}" Description="{x:Static lp:Resources.S_FontSource_D}"><fa:FASettingsExpanderItem.Footer><ComboBox SelectedIndex="{Binding Settings.UseGlobalFont}"><ComboBoxItem Content="{x:Static lp:Resources.O_FollowGlobal}" /><ComboBoxItem Content="{x:Static lp:Resources.O_Custom}" /></ComboBox></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_CustomFont}" Description="{x:Static lp:Resources.S_CustomFont_D}"><fa:FASettingsExpanderItem.Footer><ComboBox ItemsSource="{Binding FontFamilyNames}" SelectedItem="{Binding Settings.CustomFont}" MinWidth="180" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_FontSize}" Description="{x:Static lp:Resources.S_FontSize_D}"><fa:FASettingsExpanderItem.Footer><NumericUpDown Value="{Binding Settings.FontSize}" Minimum="1" Maximum="300" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_DisplayFormat}" Description="{x:Static lp:Resources.S_DisplayFormat_D}"><fa:FASettingsExpanderItem.Footer><ComboBox SelectedIndex="{Binding Settings.DisplayFormat}"><ComboBoxItem Content="{x:Static lp:Resources.O_Both}" /><ComboBoxItem Content="{x:Static lp:Resources.O_Name}" /><ComboBoxItem Content="{x:Static lp:Resources.O_Id}" /></ComboBox></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_DisplayStyle}" Description="{x:Static lp:Resources.S_DisplayStyle_D}"><fa:FASettingsExpanderItem.Footer><ComboBox SelectedIndex="{Binding Settings.DisplayStyle}"><ComboBoxItem Content="{x:Static lp:Resources.O_Default}" /><ComboBoxItem Content="{x:Static lp:Resources.O_Card}" /></ComboBox></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_LotteryShowRandom}" Description="{x:Static lp:Resources.S_LotteryShowRandom_D}"><fa:FASettingsExpanderItem.Footer><ComboBox SelectedIndex="{Binding Settings.LotteryShowRandom}"><ComboBoxItem Content="{x:Static lp:Resources.O_PrizeBreakGroupHyphenName}" /><ComboBoxItem Content="{x:Static lp:Resources.O_PrizeBreakGroupBreakName}" /><ComboBoxItem Content="{x:Static lp:Resources.O_PrizeHyphenGroupHyphenName}" /><ComboBoxItem Content="{x:Static lp:Resources.O_PrizeBreakName}" /><ComboBoxItem Content="{x:Static lp:Resources.O_PrizeHyphenName}" /><ComboBoxItem Content="{x:Static lp:Resources.O_PrizeBreakGroup}" /><ComboBoxItem Content="{x:Static lp:Resources.O_PrizeHyphenGroup}" /></ComboBox></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ShowTags}" Description="{x:Static lp:Resources.S_ShowTags_D}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.ShowTags}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ShowWeightTransparency}" Description="{x:Static lp:Resources.S_ShowWeightTransparency_D}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.ShowWeightTransparency}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText Text="{x:Static lp:Resources.Section_Overridable}" Glyph="{sr:Fi LayerRegular}" Margin="0 0 0 4" />
+            
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Display}"
+                                   Description="{x:Static lp:Resources.Section_Display}"
+                                   IsExpanded="{Binding Settings.OverrideDisplaySettings, Mode=OneWay}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}"
+                                  OffContent="{x:Static lp:Resources.C_EnableOverride}"
+                                  IsChecked="{Binding Settings.OverrideDisplaySettings}" />
+                </fa:FASettingsExpander.Footer>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_FontSource}"
+                                           Description="{x:Static lp:Resources.S_FontSource_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ComboBox SelectedIndex="{Binding Settings.UseGlobalFont}">
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_FollowGlobal}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_Custom}" />
+                        </ComboBox>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_CustomFont}"
+                                           Description="{x:Static lp:Resources.S_CustomFont_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <sr:FontComboBox Value="{Binding Settings.CustomFont}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_FontSize}"
+                                           Description="{x:Static lp:Resources.S_FontSize_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <NumericUpDown Value="{Binding Settings.FontSize}" Minimum="1" Maximum="300" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_DisplayFormat}"
+                                           Description="{x:Static lp:Resources.S_DisplayFormat_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ComboBox SelectedIndex="{Binding Settings.DisplayFormat}">
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_Both}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_Name}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_Id}" />
+                        </ComboBox>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_DisplayStyle}"
+                                           Description="{x:Static lp:Resources.S_DisplayStyle_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ComboBox SelectedIndex="{Binding Settings.DisplayStyle}">
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_Default}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_Card}" />
+                        </ComboBox>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_LotteryShowRandom}"
+                                           Description="{x:Static lp:Resources.S_LotteryShowRandom_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ComboBox SelectedIndex="{Binding Settings.LotteryShowRandom}">
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeBreakGroupHyphenName}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeBreakGroupBreakName}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeHyphenGroupHyphenName}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeBreakName}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeHyphenName}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeBreakGroup}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeHyphenGroup}" />
+                        </ComboBox>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ShowTags}"
+                                           Description="{x:Static lp:Resources.S_ShowTags_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.ShowTags}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ShowWeightTransparency}"
+                                           Description="{x:Static lp:Resources.S_ShowWeightTransparency_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.ShowWeightTransparency}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Reminder}" Description="{x:Static lp:Resources.Section_Reminder}" IsExpanded="{Binding Settings.OverrideReminderSettings, Mode=TwoWay}" IconSource="{sr:FluentIconSource {sr:Fi TextFontRegular}}"><fa:FASettingsExpander.Footer><ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}" OffContent="{x:Static lp:Resources.C_EnableOverride}" IsChecked="{Binding Settings.OverrideReminderSettings}" /></fa:FASettingsExpander.Footer><fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ReminderText}" Description="{x:Static lp:Resources.S_ReminderText_D}"><fa:FASettingsExpanderItem.Footer><TextBox Text="{Binding Settings.ReminderText}" MinWidth="180" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem><fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ReminderFontSize}" Description="{x:Static lp:Resources.S_ReminderFontSize_D}"><fa:FASettingsExpanderItem.Footer><NumericUpDown Value="{Binding Settings.ReminderFontSize}" Minimum="10" Maximum="500" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem><fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ReminderTextColor}" Description="{x:Static lp:Resources.S_ReminderTextColor_D}"><fa:FASettingsExpanderItem.Footer><ColorPicker Color="{Binding Settings.ReminderTextColor}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem><fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ReminderTextOpacity}" Description="{x:Static lp:Resources.S_ReminderTextOpacity_D}"><fa:FASettingsExpanderItem.Footer><NumericUpDown Value="{Binding Settings.ReminderTextOpacity}" Minimum="0" Maximum="100" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem></fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Animation}" Description="{x:Static lp:Resources.Section_Animation}" IsExpanded="{Binding Settings.OverrideAnimationSettings, Mode=TwoWay}" IconSource="{sr:FluentIconSource {sr:Fi FlashRegular}}">
-                <fa:FASettingsExpander.Footer><ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}" OffContent="{x:Static lp:Resources.C_EnableOverride}" IsChecked="{Binding Settings.OverrideAnimationSettings}" /></fa:FASettingsExpander.Footer>
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_Animation}" Description="{x:Static lp:Resources.S_Animation_D}"><fa:FASettingsExpanderItem.Footer><ComboBox SelectedIndex="{Binding Settings.Animation}"><ComboBoxItem Content="{x:Static lp:Resources.O_ManualStop}" /><ComboBoxItem Content="{x:Static lp:Resources.O_AutoPlay}" /><ComboBoxItem Content="{x:Static lp:Resources.O_NoAnimation}" /></ComboBox></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationInterval}" Description="{x:Static lp:Resources.S_AnimationInterval_D}"><fa:FASettingsExpanderItem.Footer><NumericUpDown Value="{Binding Settings.AnimationInterval}" Minimum="1" Maximum="10000" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AutoplayCount}" Description="{x:Static lp:Resources.S_AutoplayCount_D}"><fa:FASettingsExpanderItem.Footer><NumericUpDown Value="{Binding Settings.AutoplayCount}" Minimum="1" Maximum="999" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultFlowAnimationStyle}" Description="{x:Static lp:Resources.S_ResultFlowAnimationStyle_D}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.ResultFlowAnimationStyle}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultFlowAnimationDuration}" Description="{x:Static lp:Resources.S_ResultFlowAnimationDuration_D}"><fa:FASettingsExpanderItem.Footer><NumericUpDown Value="{Binding Settings.ResultFlowAnimationDuration}" Minimum="1" Maximum="10000" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
+            
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Reminder}"
+                                   Description="{x:Static lp:Resources.Section_Reminder}"
+                                   IsExpanded="{Binding Settings.OverrideReminderSettings, Mode=OneWay}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}"
+                                  OffContent="{x:Static lp:Resources.C_EnableOverride}"
+                                  IsChecked="{Binding Settings.OverrideReminderSettings}" />
+                </fa:FASettingsExpander.Footer>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ReminderText}"
+                                           Description="{x:Static lp:Resources.S_ReminderText_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <TextBox Text="{Binding Settings.ReminderText}" MinWidth="180" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ReminderFontSize}"
+                                           Description="{x:Static lp:Resources.S_ReminderFontSize_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <NumericUpDown Value="{Binding Settings.ReminderFontSize}" Minimum="10" Maximum="500" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ReminderTextColor}"
+                                           Description="{x:Static lp:Resources.S_ReminderTextColor_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ColorPicker Color="{Binding Settings.ReminderTextColor}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ReminderTextOpacity}"
+                                           Description="{x:Static lp:Resources.S_ReminderTextOpacity_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <NumericUpDown Value="{Binding Settings.ReminderTextOpacity}" Minimum="0" Maximum="100" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Color}" Description="{x:Static lp:Resources.Section_Color}" IsExpanded="{Binding Settings.OverrideColorSettings, Mode=TwoWay}" IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}"><fa:FASettingsExpander.Footer><ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}" OffContent="{x:Static lp:Resources.C_EnableOverride}" IsChecked="{Binding Settings.OverrideColorSettings}" /></fa:FASettingsExpander.Footer><fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ColorTheme}" Description="{x:Static lp:Resources.S_ColorTheme_D}"><fa:FASettingsExpanderItem.Footer><ComboBox SelectedIndex="{Binding Settings.AnimationColorTheme}"><ComboBoxItem Content="{x:Static lp:Resources.O_NoColor}" /><ComboBoxItem Content="{x:Static lp:Resources.O_RandomColor}" /><ComboBoxItem Content="{x:Static lp:Resources.O_FixedColor}" /></ComboBox></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem><fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_FixedColor}" Description="{x:Static lp:Resources.S_FixedColor_D}"><fa:FASettingsExpanderItem.Footer><ColorPicker Color="{Binding Settings.AnimationFixedColor}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem></fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_StudentImage}" Description="{x:Static lp:Resources.Section_StudentImage}" IsExpanded="{Binding Settings.OverrideStudentImageSettings, Mode=TwoWay}" IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}"><fa:FASettingsExpander.Footer><ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}" OffContent="{x:Static lp:Resources.C_EnableOverride}" IsChecked="{Binding Settings.OverrideStudentImageSettings}" /></fa:FASettingsExpander.Footer><fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_StudentImage}" Description="{x:Static lp:Resources.S_StudentImage_D}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.StudentImage}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem><fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_StudentImagePosition}" Description="{x:Static lp:Resources.S_StudentImagePosition_D}"><fa:FASettingsExpanderItem.Footer><ComboBox SelectedIndex="{Binding Settings.StudentImagePosition}"><ComboBoxItem Content="{x:Static lp:Resources.O_Left}" /><ComboBoxItem Content="{x:Static lp:Resources.O_Top}" /><ComboBoxItem Content="{x:Static lp:Resources.O_Right}" /><ComboBoxItem Content="{x:Static lp:Resources.O_Bottom}" /></ComboBox></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem></fa:FASettingsExpander>
+            
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Animation}"
+                                   Description="{x:Static lp:Resources.Section_Animation}"
+                                   IsExpanded="{Binding Settings.OverrideAnimationSettings, Mode=TwoWay}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi FlashRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}"
+                                  OffContent="{x:Static lp:Resources.C_EnableOverride}"
+                                  IsChecked="{Binding Settings.OverrideAnimationSettings}" />
+                </fa:FASettingsExpander.Footer>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_Animation}"
+                                           Description="{x:Static lp:Resources.S_Animation_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ComboBox SelectedIndex="{Binding Settings.Animation}">
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_ManualStop}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_AutoPlay}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_NoAnimation}" />
+                        </ComboBox>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationInterval}"
+                                           Description="{x:Static lp:Resources.S_AnimationInterval_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <NumericUpDown Value="{Binding Settings.AnimationInterval}" Minimum="1" Maximum="10000" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AutoplayCount}"
+                                           Description="{x:Static lp:Resources.S_AutoplayCount_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <NumericUpDown Value="{Binding Settings.AutoplayCount}" Minimum="1" Maximum="999" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultFlowAnimationStyle}"
+                                           Description="{x:Static lp:Resources.S_ResultFlowAnimationStyle_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.ResultFlowAnimationStyle}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultFlowAnimationDuration}"
+                                           Description="{x:Static lp:Resources.S_ResultFlowAnimationDuration_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <NumericUpDown Value="{Binding Settings.ResultFlowAnimationDuration}" Minimum="1"
+                                       Maximum="10000" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+            
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Color}"
+                                   Description="{x:Static lp:Resources.Section_Color}"
+                                   IsExpanded="{Binding Settings.OverrideColorSettings, Mode=OneWay}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}"
+                                  OffContent="{x:Static lp:Resources.C_EnableOverride}"
+                                  IsChecked="{Binding Settings.OverrideColorSettings}" />
+                </fa:FASettingsExpander.Footer>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ColorTheme}"
+                                           Description="{x:Static lp:Resources.S_ColorTheme_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ComboBox SelectedIndex="{Binding Settings.AnimationColorTheme}">
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_NoColor}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_RandomColor}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_FixedColor}" />
+                        </ComboBox>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_FixedColor}"
+                                           Description="{x:Static lp:Resources.S_FixedColor_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ColorPicker Color="{Binding Settings.AnimationFixedColor}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+            
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_StudentImage}"
+                                   Description="{x:Static lp:Resources.Section_StudentImage}"
+                                   IsExpanded="{Binding Settings.OverrideStudentImageSettings, Mode=TwoWay}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}"
+                                  OffContent="{x:Static lp:Resources.C_EnableOverride}"
+                                  IsChecked="{Binding Settings.OverrideStudentImageSettings}" />
+                </fa:FASettingsExpander.Footer>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_StudentImage}"
+                                           Description="{x:Static lp:Resources.S_StudentImage_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.StudentImage}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_StudentImagePosition}"
+                                           Description="{x:Static lp:Resources.S_StudentImagePosition_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ComboBox SelectedIndex="{Binding Settings.StudentImagePosition}">
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_Left}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_Top}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_Right}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_Bottom}" />
+                        </ComboBox>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

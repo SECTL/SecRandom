@@ -238,6 +238,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        IAppHost.GetService<MainConfigHandler>().Save();
         DataContext = null;
     }
 

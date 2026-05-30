@@ -301,7 +301,8 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         var result = await new FAContentDialog
         {
             Title = LR.M_DuplicateTitle,
-            Content = string.Format(LR.M_DuplicateContent, duplicatedNames.Count, string.Join('\n', duplicatedNames.Take(10))),
+            Content = string.Format(LR.M_DuplicateContent, duplicatedNames.Count,
+                string.Join('\n', duplicatedNames.Take(10))),
             PrimaryButtonText = LR.M_DuplicatePrimary,
             CloseButtonText = LR.M_DuplicateClose,
             DefaultButton = FAContentDialogButton.Primary

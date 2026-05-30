@@ -186,6 +186,8 @@ public partial class App : Application
                     Langs.Common.Resources.Settings_Personalized, "settings.personalized", FluentIcons.ColorRegular));
                 services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
 
+                services.AddSettingsPageSeparator();
+                
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_RosterManagement, "settings.listManagement", FluentIcons.PeopleListRegular));
                 services.AddSettingsPage<RollCallListSettingsPage>(Langs.SettingsPages.ListManagement.RollCallList
@@ -463,13 +465,13 @@ public partial class App : Application
 
         // 主题色
         fluentAvaloniaTheme?.CustomAccentColor = settings.ThemeColor;
-        Resources[@"SystemAccentColor"] = settings.ThemeColor;
-        Resources[@"SystemAccentColorLight1"] = settings.ThemeColor;
-        Resources[@"SystemAccentColorLight2"] = settings.ThemeColor;
-        Resources[@"SystemAccentColorLight3"] = settings.ThemeColor;
-        Resources[@"SystemAccentColorDark1"] = settings.ThemeColor;
-        Resources[@"SystemAccentColorDark2"] = settings.ThemeColor;
-        Resources[@"SystemAccentColorDark3"] = settings.ThemeColor;
+        // Resources[@"SystemAccentColor"] = settings.ThemeColor;
+        // Resources[@"SystemAccentColorLight1"] = settings.ThemeColor;
+        // Resources[@"SystemAccentColorLight2"] = settings.ThemeColor;
+        // Resources[@"SystemAccentColorLight3"] = settings.ThemeColor;
+        // Resources[@"SystemAccentColorDark1"] = settings.ThemeColor;
+        // Resources[@"SystemAccentColorDark2"] = settings.ThemeColor;
+        // Resources[@"SystemAccentColorDark3"] = settings.ThemeColor;
 
         // 字体@
         Resources[@"ContentControlThemeFontFamily"] = Resources[@"AppFontFamily"] = new FontFamily(fontFamily);

@@ -24,4 +24,7 @@
             PublicKeyToken=b77a5c561934e089
         </value>
     </resheader>
+    <data name="O_DefaultFontFamily" xml:space="preserve">
+        <value>MiSans (默认)</value>
+    </data>
 </root>

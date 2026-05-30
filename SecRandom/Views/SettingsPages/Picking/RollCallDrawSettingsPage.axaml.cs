@@ -32,7 +32,6 @@ public partial class RollCallDrawSettingsPage : UserControl
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public RollCallSettingsConfig Settings { get; }
     public ObservableCollection<string> StudentListNames { get; } = [];
-    public List<string> FontFamilyNames { get; } = [..FontManager.Current.SystemFonts.Select(font => font.Name), GlobalConstants.DefaultFontFamily];
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
 

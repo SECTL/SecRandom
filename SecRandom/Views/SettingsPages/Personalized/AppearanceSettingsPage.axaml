@@ -1,5 +1,4 @@
-﻿
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -8,15 +7,10 @@
              xmlns:lspa="clr-namespace:SecRandom.Langs.SettingsPages.Personalized.Appearance"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:secRandom="clr-namespace:SecRandom"
-             xmlns:converters="clr-namespace:SecRandom.Converters"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.Personalized.AppearanceSettingsPage"
              x:DataType="local:AppearanceSettingsPage"
              Unloaded="OnUnloaded">
-    <UserControl.Resources>
-        <converters:StringToFontFamilyConverter x:Key="StringToFontFamilyConverter" />
-    </UserControl.Resources>
-
     <ScrollViewer>
         <StackPanel Classes="page-container">
             <sr:IconText x:Name="S_Theme"
@@ -57,44 +51,7 @@
                                    Description="{x:Static lspa:Resources.S_Font_FontFamily_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi TextFontRegular}}">
                 <fa:FASettingsExpander.Footer>
-                    <ComboBox x:Name="FontComboBox"
-                              HorizontalAlignment="Left" MaxDropDownHeight="360"
-                              ItemsSource="{Binding FontFamilies}"
-                              SelectedValue="{Binding Settings.Font, Converter={StaticResource StringToFontFamilyConverter}}">
-                        <ComboBox.Styles>
-                            <Style Selector="ComboBoxItem">
-                                <Setter Property="MinHeight" Value="32" />
-                                <Setter Property="VerticalContentAlignment" Value="Center" />
-                            </Style>
-
-                            <Style Selector="#FontComboBox /template/ Popup#PART_Popup">
-                                <Setter Property="Width" Value="280" />
-                                <Setter Property="Placement" Value="BottomEdgeAlignedRight" />
-                            </Style>
-                        </ComboBox.Styles>
-
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock FontFamily="{Binding}" FontWeight="Normal"
-                                           ToolTip.Tip="{Binding Name}"
-                                           Height="20" MaxWidth="240"
-                                           TextWrapping="NoWrap"
-                                           TextTrimming="CharacterEllipsis"
-                                           VerticalAlignment="Center"
-                                           Classes.DefaultFont="{Binding Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static secRandom:App.DefaultFontFamily}}">
-                                    <TextBlock.Styles>
-                                        <Style Selector="TextBlock">
-                                            <Style Selector="^.DefaultFont">
-                                                <Setter Property="Text"
-                                                        Value="{x:Static lspa:Resources.O_FontFamily_Default}" />
-                                            </Style>
-                                            <Setter Property="Text" Value="{Binding}" />
-                                        </Style>
-                                    </TextBlock.Styles>
-                                </TextBlock>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
+                    <sr:FontComboBox Value="{Binding Settings.Font}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

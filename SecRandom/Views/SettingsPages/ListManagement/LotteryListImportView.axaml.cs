@@ -71,31 +71,46 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
     public string? IdColumn
     {
         get => _idColumn;
-        set { if (SetField(ref _idColumn, value)) RefreshPreview(); }
+        set
+        {
+            if (SetField(ref _idColumn, value)) RefreshPreview();
+        }
     }
 
     public string? NameColumn
     {
         get => _nameColumn;
-        set { if (SetField(ref _nameColumn, value)) RefreshPreview(); }
+        set
+        {
+            if (SetField(ref _nameColumn, value)) RefreshPreview();
+        }
     }
 
     public string? WeightColumn
     {
         get => _weightColumn;
-        set { if (SetField(ref _weightColumn, value)) RefreshPreview(); }
+        set
+        {
+            if (SetField(ref _weightColumn, value)) RefreshPreview();
+        }
     }
 
     public string? CountColumn
     {
         get => _countColumn;
-        set { if (SetField(ref _countColumn, value)) RefreshPreview(); }
+        set
+        {
+            if (SetField(ref _countColumn, value)) RefreshPreview();
+        }
     }
 
     public string? TagsColumn
     {
         get => _tagsColumn;
-        set { if (SetField(ref _tagsColumn, value)) RefreshPreview(); }
+        set
+        {
+            if (SetField(ref _tagsColumn, value)) RefreshPreview();
+        }
     }
 
     event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
@@ -282,7 +297,8 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
         var result = await new FAContentDialog
         {
             Title = LR.M_DuplicateTitle,
-            Content = string.Format(LR.M_DuplicateContent, duplicatedNames.Count, string.Join('\n', duplicatedNames.Take(10))),
+            Content = string.Format(LR.M_DuplicateContent, duplicatedNames.Count,
+                string.Join('\n', duplicatedNames.Take(10))),
             PrimaryButtonText = LR.M_DuplicatePrimary,
             CloseButtonText = LR.M_DuplicateClose,
             DefaultButton = FAContentDialogButton.Primary
@@ -321,17 +337,23 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
 
     private static string GetColumnValue(IReadOnlyDictionary<string, string> row, string? column)
     {
-        return IsSelectedColumn(column) && column != null ? row.GetValueOrDefault(column, string.Empty).Trim() : string.Empty;
+        return IsSelectedColumn(column) && column != null
+            ? row.GetValueOrDefault(column, string.Empty).Trim()
+            : string.Empty;
     }
 
     private static int ParseInt(string value, int fallback)
     {
-        return int.TryParse(value, NumberStyles.Integer, CultureInfo.CurrentCulture, out var result) ? result : fallback;
+        return int.TryParse(value, NumberStyles.Integer, CultureInfo.CurrentCulture, out var result)
+            ? result
+            : fallback;
     }
 
     private static double ParseDouble(string value, double fallback)
     {
-        return double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out var result) ? result : fallback;
+        return double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out var result)
+            ? result
+            : fallback;
     }
 
     private static string ConvertCell(object? value)

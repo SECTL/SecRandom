@@ -27,7 +27,6 @@ public partial class DefaultDrawSettingsPage : UserControl
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public DefaultDrawSettingsConfig Settings { get; }
-    public List<string> FontFamilyNames { get; } = [..FontManager.Current.SystemFonts.Select(font => font.Name), GlobalConstants.DefaultFontFamily];
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
 

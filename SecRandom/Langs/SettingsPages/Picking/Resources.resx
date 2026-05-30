@@ -113,4 +113,7 @@
   <data name="O_PrizeHyphenName" xml:space="preserve"><value>奖品-姓名</value></data>
   <data name="O_PrizeBreakGroup" xml:space="preserve"><value>奖品/小组</value></data>
   <data name="O_PrizeHyphenGroup" xml:space="preserve"><value>奖品-小组</value></data>
+  <data name="Section_Overridable" xml:space="preserve">
+    <value>可覆盖的设置</value>
+  </data>
 </root>

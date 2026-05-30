@@ -35,7 +35,8 @@
                             <Button Content="{x:Static lr:Resources.C_AddList}" Click="AddListButton_OnClick" />
                             <Button Content="{x:Static lr:Resources.C_RenameList}" Click="RenameListButton_OnClick" />
                             <Button Content="{x:Static lr:Resources.C_Refresh}" Click="RefreshButton_OnClick" />
-                            <Button Classes="accent" Content="{x:Static lr:Resources.C_ImportList}" Click="ImportButton_OnClick" />
+                            <Button Classes="accent" Content="{x:Static lr:Resources.C_ImportList}"
+                                    Click="ImportButton_OnClick" />
                         </StackPanel>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>

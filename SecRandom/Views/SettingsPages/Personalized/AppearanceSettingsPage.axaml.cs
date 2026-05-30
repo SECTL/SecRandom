@@ -1,8 +1,6 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Media;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Icons;
@@ -25,8 +23,6 @@ public partial class AppearanceSettingsPage : UserControl
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public AppearanceSettingsConfig Settings { get; }
-
-    public List<FontFamily> FontFamilies { get; } = [..FontManager.Current.SystemFonts, App.DefaultFontFamily];
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {

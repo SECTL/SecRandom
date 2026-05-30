@@ -1,0 +1,45 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:lc="clr-namespace:SecRandom.Core.Langs.Common"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SecRandom.Core.Controls.FontComboBox">
+    <ComboBox x:Name="FontSelector"
+              HorizontalAlignment="Left" MaxDropDownHeight="360"
+              ItemsSource="{Binding $parent[sr:FontComboBox].FontFamilies}">
+        <ComboBox.Styles>
+            <Style Selector="ComboBoxItem">
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+
+            <Style Selector="#FontSelector /template/ Popup#PART_Popup">
+                <Setter Property="Width" Value="280" />
+                <Setter Property="Placement" Value="BottomEdgeAlignedRight" />
+            </Style>
+        </ComboBox.Styles>
+
+        <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="FontFamily">
+                <TextBlock FontFamily="{Binding}" FontWeight="Normal"
+                           ToolTip.Tip="{Binding Name}"
+                           Height="20" MaxWidth="240"
+                           TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis"
+                           VerticalAlignment="Center"
+                           Classes.DefaultFont="{Binding Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static sr:GlobalConstants.DefaultAvaFontFamily}}">
+                    <TextBlock.Styles>
+                        <Style Selector="TextBlock">
+                            <Style Selector="^.DefaultFont">
+                                <Setter Property="Text" Value="{x:Static lc:Resources.O_DefaultFontFamily}" />
+                            </Style>
+                            <Setter Property="Text" Value="{Binding Name}" />
+                        </Style>
+                    </TextBlock.Styles>
+                </TextBlock>
+            </DataTemplate>
+        </ComboBox.ItemTemplate>
+    </ComboBox>
+</UserControl>

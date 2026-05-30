@@ -70,7 +70,7 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         StudentListNames.Clear();
 
         foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("data", "list", "roll_call_list"), "*.json")
-                      .OrderBy(Path.GetFileName))
+                     .OrderBy(Path.GetFileName))
             StudentListNames.Add(Path.GetFileNameWithoutExtension(file));
 
         if (StudentListNames.Count == 0)

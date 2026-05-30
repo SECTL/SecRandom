@@ -17,6 +17,4 @@ public partial class App
         && Environment.OSVersion.Version >= new Version(10, 0, 22000, 0)
         && AvaloniaUnsafeAccessorHelpers.GetActiveWin32CompositionMode() ==
         AvaloniaUnsafeAccessorHelpers.Win32CompositionMode.WinUIComposition;
-
-    public static FontFamily DefaultFontFamily { get; } = new(@"avares://SecRandom/Assets/Fonts/MiSans/#MiSans");
 }
