@@ -112,7 +112,7 @@ THE QUICK BROWN FOX JUMPS OVER A LAZY DOG
 点名 闪抽 抽奖 人脸抽 1234567890 +-*/</value>
     </data>
     <data name="O_ThemeColorMode_System" xml:space="preserve">
-        <value>跟随系统</value>
+        <value />
     </data>
     <data name="O_ThemeColorMode_Custom" xml:space="preserve">
         <value>自定义</value>

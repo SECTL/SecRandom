@@ -81,4 +81,7 @@
     <data name="C_MoreOptions_ImportAllData_D" xml:space="preserve">
         <value>启动软件时从备份文件恢复全部数据</value>
     </data>
+    <data name="M_PageNotFound" xml:space="preserve">
+        <value>页面 {0} 未找到</value>
+    </data>
 </root>

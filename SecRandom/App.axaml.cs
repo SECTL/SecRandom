@@ -437,7 +437,7 @@ public partial class App : Application
         Dispatcher.UIThread.Post(() => _desktopLifetime?.Shutdown());
     }
 
-    private static void InitializeLanguages(CultureInfo cultureInfo)
+    public static void InitializeLanguages(CultureInfo cultureInfo)
     {
         CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
         CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;

@@ -238,7 +238,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
-        IAppHost.GetService<MainConfigHandler>().Save();
+        IAppHost.TryGetService<MainConfigHandler>()?.Save();
         DataContext = null;
     }
 
@@ -378,7 +378,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         var page = IAppHost.Host!.Services.GetKeyedService<UserControl>(info.Id);
         if (page == null)
             // 如果页面未注册，返回一个占位符控件
-            return new TextBlock { Text = $"页面 {info.Id} 未找到" };
+            return new TextBlock { Text = string.Format(Langs.SettingsView.Resources.M_PageNotFound, info.Id) };
 
         return page;
     }
