@@ -9,8 +9,8 @@
 
 namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
     using System;
-
-
+    
+    
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -22,15 +22,15 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
-
+        
         private static global::System.Resources.ResourceManager resourceMan;
-
+        
         private static global::System.Globalization.CultureInfo resourceCulture;
-
+        
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-
+        
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -44,7 +44,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return resourceMan;
             }
         }
-
+        
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -58,7 +58,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 resourceCulture = value;
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 字体预览.
         /// </summary>
@@ -67,7 +67,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("C_Font_Preview", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 树梢树枝树根根 亲山亲水有亲人
         ///第一小组 张三 第二小组 李四 第三小组 王五 第四小组 赵六
@@ -80,7 +80,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("C_Font_Preview_Text", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to MiSans (默认).
         /// </summary>
@@ -89,7 +89,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("O_FontFamily_Default", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 极粗.
         /// </summary>
@@ -98,7 +98,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("O_FontWeight_Black", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 粗体.
         /// </summary>
@@ -107,7 +107,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("O_FontWeight_Bold", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 特粗.
         /// </summary>
@@ -116,7 +116,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("O_FontWeight_ExtraBold", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 特细.
         /// </summary>
@@ -125,7 +125,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("O_FontWeight_ExtraLight", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 细体.
         /// </summary>
@@ -134,7 +134,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("O_FontWeight_Light", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 中等.
         /// </summary>
@@ -143,7 +143,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("O_FontWeight_Medium", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 常规.
         /// </summary>
@@ -152,7 +152,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("O_FontWeight_Regular", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 半粗.
         /// </summary>
@@ -161,7 +161,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("O_FontWeight_SemiBold", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 极细.
         /// </summary>
@@ -170,7 +170,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("O_FontWeight_Thin", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 跟随系统.
         /// </summary>
@@ -179,7 +179,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("O_Theme_Auto", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 深色.
         /// </summary>
@@ -188,7 +188,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("O_Theme_Dark", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 浅色.
         /// </summary>
@@ -197,7 +197,25 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("O_Theme_Light", resourceCulture);
             }
         }
-
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 自定义.
+        /// </summary>
+        public static string O_ThemeColorMode_Custom {
+            get {
+                return ResourceManager.GetString("O_ThemeColorMode_Custom", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 跟随系统.
+        /// </summary>
+        public static string O_ThemeColorMode_System {
+            get {
+                return ResourceManager.GetString("O_ThemeColorMode_System", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to 字体.
         /// </summary>
@@ -206,7 +224,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("S_Font", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 字体家族.
         /// </summary>
@@ -215,7 +233,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("S_Font_FontFamily", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 设置软件界面显示字体家族.
         /// </summary>
@@ -224,7 +242,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("S_Font_FontFamily_D", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 字体粗细.
         /// </summary>
@@ -233,7 +251,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("S_Font_FontWeight", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 设置软件界面字体粗细.
         /// </summary>
@@ -242,7 +260,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("S_Font_FontWeight_D", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 主题.
         /// </summary>
@@ -251,7 +269,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("S_Theme", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 主题模式.
         /// </summary>
@@ -260,7 +278,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("S_Theme_Theme", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 选择软件界面主题样式.
         /// </summary>
@@ -269,7 +287,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("S_Theme_Theme_D", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 主题颜色.
         /// </summary>
@@ -278,7 +296,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
                 return ResourceManager.GetString("S_Theme_ThemeColor", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to 设置软件界面主题色彩.
         /// </summary>

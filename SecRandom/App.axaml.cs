@@ -464,14 +464,16 @@ public partial class App : Application
         fluentAvaloniaTheme?.PreferSystemTheme = settings.Theme == ThemeMode.Auto;
 
         // 主题色
-        fluentAvaloniaTheme?.CustomAccentColor = settings.ThemeColor;
-        // Resources[@"SystemAccentColor"] = settings.ThemeColor;
-        // Resources[@"SystemAccentColorLight1"] = settings.ThemeColor;
-        // Resources[@"SystemAccentColorLight2"] = settings.ThemeColor;
-        // Resources[@"SystemAccentColorLight3"] = settings.ThemeColor;
-        // Resources[@"SystemAccentColorDark1"] = settings.ThemeColor;
-        // Resources[@"SystemAccentColorDark2"] = settings.ThemeColor;
-        // Resources[@"SystemAccentColorDark3"] = settings.ThemeColor;
+        if (settings.ThemeColorMode == ThemeColorMode.System)
+        {
+            fluentAvaloniaTheme?.PreferUserAccentColor = true;
+            fluentAvaloniaTheme?.CustomAccentColor = null;
+        }
+        else
+        {
+            fluentAvaloniaTheme?.PreferUserAccentColor = false;
+            fluentAvaloniaTheme?.CustomAccentColor = settings.ThemeColor;
+        }
 
         // 字体@
         Resources[@"ContentControlThemeFontFamily"] = Resources[@"AppFontFamily"] = new FontFamily(fontFamily);

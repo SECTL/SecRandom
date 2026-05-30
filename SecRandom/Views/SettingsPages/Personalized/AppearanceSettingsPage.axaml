@@ -7,6 +7,7 @@
              xmlns:lspa="clr-namespace:SecRandom.Langs.SettingsPages.Personalized.Appearance"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:secRandom="clr-namespace:SecRandom"
+             xmlns:enums="clr-namespace:SecRandom.Core.Enums.Configs;assembly=SecRandom.Core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.Personalized.AppearanceSettingsPage"
              x:DataType="local:AppearanceSettingsPage"
@@ -36,7 +37,17 @@
                                    Description="{x:Static lspa:Resources.S_Theme_ThemeColor_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
                 <fa:FASettingsExpander.Footer>
-                    <ColorPicker Color="{Binding Settings.ThemeColor}" />
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <ColorPicker Color="{Binding Settings.ThemeColor}"
+                                     VerticalAlignment="Center"
+                                     IsVisible="{Binding Settings.ThemeColorMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:ThemeColorMode.Custom}}" />
+                        
+                        <ComboBox SelectedIndex="{Binding Settings.ThemeColorMode}"
+                                  VerticalAlignment="Center">
+                            <ComboBoxItem Content="{x:Static lspa:Resources.O_ThemeColorMode_System}" />
+                            <ComboBoxItem Content="{x:Static lspa:Resources.O_ThemeColorMode_Custom}" />
+                        </ComboBox>
+                    </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

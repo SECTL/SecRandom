@@ -9,5 +9,6 @@ public partial class AppearanceSettingsConfig : ObservableObject
     [ObservableProperty] private ThemeMode _theme = ThemeMode.Auto;
     [ObservableProperty] private string _font = GlobalConstants.DefaultFontFamily;
     [ObservableProperty] private FontWeightMode _fontWeight = FontWeightMode.Regular;
+    [ObservableProperty] private ThemeColorMode _themeColorMode = ThemeColorMode.System;
     [ObservableProperty] private Color _themeColor = Color.Parse(GlobalConstants.DefaultThemeColor);
 }
