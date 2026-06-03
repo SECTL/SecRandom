@@ -132,6 +132,8 @@ SecRandom 代码仓库目前具有以下分支：
 
 ### 提交
 
+**请务必在提交前使用`uv run pre-commit run --all-files`检查并自动规范代码格式，否则您的代码将无法通过Checks**
+
 在本代码仓库提交时，请尽量遵守 [约定式提交](https://www.conventionalcommits.org/zh-hans/v1.0.0/) 规范。
 
 ### 合并更改
