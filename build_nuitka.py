@@ -185,7 +185,11 @@ def main():
     print("Nuitka 打包 SecRandom")
     print("=" * 60)
 
-    if not os.environ.get("CI") and sys.platform == "win32" and not check_compiler_env():
+    if (
+        not os.environ.get("CI")
+        and sys.platform == "win32"
+        and not check_compiler_env()
+    ):
         sys.exit(1)
 
     _print_packaging_summary()
@@ -219,6 +223,7 @@ def main():
     except Exception as e:
         print(f"\n错误: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

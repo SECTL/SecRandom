@@ -377,7 +377,8 @@ def export_history_table_data(
         config = NotificationConfig(
             title=get_any_position_value_async(
                 "notification", i18n_domain, "export", "title", "success", "name"
-            ) or "",
+            )
+            or "",
             content=(
                 get_any_position_value_async(
                     "notification", i18n_domain, "export", "content", "success", "name"
@@ -394,7 +395,8 @@ def export_history_table_data(
         config = NotificationConfig(
             title=get_any_position_value_async(
                 "notification", i18n_domain, "export", "title", "failure", "name"
-            ) or "",
+            )
+            or "",
             content=(
                 get_any_position_value_async(
                     "notification", i18n_domain, "export", "content", "error", "name"

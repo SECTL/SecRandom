@@ -212,7 +212,9 @@ def resolve_onnx_model_path(
     raise FileNotFoundError(str(path))
 
 
-def _normalize_input_size(input_size: Optional[Tuple[int, int]]) -> Tuple[int, int] | None:
+def _normalize_input_size(
+    input_size: Optional[Tuple[int, int]],
+) -> Tuple[int, int] | None:
     """将设置项里的输入尺寸归一化，非法值按未配置处理。"""
     try:
         if input_size is not None:
