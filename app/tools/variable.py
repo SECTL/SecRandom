@@ -332,7 +332,7 @@ SETTINGS_DEFAULT_PAGE_DELAY_MS = 100  # 设置窗口默认页面加载延迟（�
 
 # -------------------- Sentry 监控配置 --------------------
 SENTRY_DSN = "https://f48074b49e319f7b952583c283046259@o4510289605296128.ingest.de.sentry.io/4510681366659152"
-SENTRY_TRACES_SAMPLE_RATE = 1.0
+SENTRY_TRACES_SAMPLE_RATE = 0.0
 
 # -------------------- PostHog 监控配置 --------------------
 POSTHOG_API_KEY = "phc_qfnIqkvJzsFUOC3AyFlJW5sKPI8kxgJjf8rmQSfsv1U"

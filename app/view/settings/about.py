@@ -253,15 +253,8 @@ class about_info(GroupHeaderCardWidget):
         return "-"
 
     def _fetch_online_count(self):
-        def on_result(result):
-            if result.get("success"):
-                online_data = result.get("online", {})
-                count = online_data.get("online_count", 0)
-                self.online_count_label.setText(str(count) if count > 0 else "-")
-            else:
-                self.online_count_label.setText("-")
-
-        get_online_stats_async(on_result)
+        count = get_cached_online_count()
+        self.online_count_label.setText(str(count) if count > 0 else "-")
 
     def _update_online_count(self):
         self._fetch_online_count()
