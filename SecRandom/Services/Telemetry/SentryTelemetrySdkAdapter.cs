@@ -111,20 +111,46 @@ public sealed class SentryTelemetrySdkAdapter : ITelemetrySdkAdapter
         return ValueTask.CompletedTask;
     }
 
+    /// <summary>
+    /// 配置 Sentry SDK 选项。
+    /// </summary>
     private static void ConfigureOptions(SentryOptions options, TelemetryPolicySnapshot policy)
     {
         options.Dsn = Dsn;
         options.Release = GlobalConstants.VersionLong;
         options.Environment = GlobalConstants.IsDevelopment ? "development" : "production";
         options.Debug = GlobalConstants.IsDevelopment;
+
+        // 桌面应用启用全局模式，跨线程共享同一作用域
         options.IsGlobalModeEnabled = true;
+        // 启用会话追踪以支持 Release Health
         options.AutoSessionTracking = true;
+        // 启用 Sentry 结构化日志（Logs 产品需要）
+        options.EnableLogs = true;
+
+        // 桌面客户端不向第三方 HTTP 服务传播 Sentry trace headers
+        options.TracePropagationTargets.Clear();
+
+        // 根据隐私策略决定是否发送 PII 数据
         options.SendDefaultPii = policy.SendDefaultPii;
-        options.EnableLogs = policy.EnableLogs;
+
         options.TracesSampleRate = policy.TracesSampleRate;
         options.ProfilesSampleRate = policy.ProfilesSampleRate;
+
+        // SDK 关闭超时，确保事件在应用退出前发送
         options.ShutdownTimeout = TimeSpan.FromSeconds(5);
 
+        // 清理事件敏感数据：移除服务器名称和用户标识
+        options.SetBeforeSend((sentryEvent, hint) =>
+        {
+            sentryEvent.ServerName = null;
+#pragma warning disable CS8625 // SentryUser 属性 setter 支持 null，但属性类型标记为非可空
+            sentryEvent.User = null;
+#pragma warning restore CS8625
+            return sentryEvent;
+        });
+
+        // 加载性能分析集成（需 Sentry.Profiling 包）
         if (policy.EnableProfiles)
             options.AddProfilingIntegration(ProfilingStartupTimeout);
     }

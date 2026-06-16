@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Sentry;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
 
@@ -141,6 +142,27 @@ public sealed class TelemetryRuntimeService : IDisposable, IAsyncDisposable
             return Task.CompletedTask;
 
         return _sdkAdapter.CaptureExceptionAsync(exception, DefaultFlushTimeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// 启动性能追踪事务，仅在遥测已启用且追踪已开启时执行。
+    /// </summary>
+    public ISpan? StartTransaction(string name, string operation)
+    {
+        TelemetryPolicySnapshot policy;
+
+        lock (_gate)
+        {
+            if (_disposed || !_isInitialized || _isShutdown)
+                return null;
+
+            policy = _currentPolicy;
+        }
+
+        if (!policy.ShouldUploadTelemetry || !policy.EnableTraces)
+            return null;
+
+        return SentrySdk.StartTransaction(name, operation);
     }
 
     public Task FlushAsync(TimeSpan timeout, CancellationToken cancellationToken = default)

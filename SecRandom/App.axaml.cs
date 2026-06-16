@@ -19,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
+using Sentry;
 using SecRandom.Controls.AttachedSettings;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
@@ -131,7 +132,8 @@ public partial class App : Application
                     {
                         // SDK 生命周期由 TelemetryRuntimeService 按隐私开关统一控制，日志 Provider 只复用已初始化的 SDK。
                         options.InitializeSdk = false;
-                        options.MinimumEventLevel = LogLevel.Error;
+                        // Sentry Structured Logs 默认关闭；日志 Provider 与 SDK 初始化选项都需要启用。
+                        options.EnableLogs = true;
                     });
 #if DEBUG
                     builder.SetMinimumLevel(LogLevel.Trace);
@@ -229,10 +231,8 @@ public partial class App : Application
 
         IAppHost.GetService<IProfileService>();
 
-        ObserveTask(InitializeRuntimeServicesAsync(), "Runtime service initialization failed.");
-
-        // 启动服务主机
-        ObserveTask(IAppHost.Host.StartAsync(), "Host startup failed.");
+        // 先初始化遥测，再启动 Host，确保 HostedService 启动时的日志能被捕获。
+        ObserveTask(StartRuntimeServicesAsync(), "Runtime service startup failed.");
 
         // RESOURCES TEST
         var isVisible = false;
@@ -349,6 +349,9 @@ public partial class App : Application
         }
     }
 
+    /// <summary>
+    /// 初始化遥测运行时服务，由 <see cref="StartRuntimeServicesAsync"/> 在 Host 启动前调用。
+    /// </summary>
     private static async Task InitializeRuntimeServicesAsync()
     {
         try
@@ -363,6 +366,15 @@ public partial class App : Application
             IAppHost.TryGetService<ILogger<App>>()?
                 .LogError(ex, "Telemetry initialization failed.");
         }
+    }
+
+    /// <summary>
+    /// 按顺序启动遥测和 Host，确保 SDK 在 HostedService 启动前就绪。
+    /// </summary>
+    private static async Task StartRuntimeServicesAsync()
+    {
+        await InitializeRuntimeServicesAsync().ConfigureAwait(false);
+        await IAppHost.Host!.StartAsync().ConfigureAwait(false);
     }
 
     private static void ObserveTask(Task task, string failureMessage)
@@ -484,46 +496,74 @@ public partial class App : Application
 
     public static void ShowMainWindow()
     {
-        if (_mainWindow is { IsVisible: true })
-        {
-            _mainWindow.Activate();
-            return;
-        }
+        TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
+        using var transaction = telemetry?.StartTransaction("ui.main_window", "ui.navigation");
 
-        if (_mainWindow is not { IsLoaded: true })
+        try
         {
-            _mainWindow = new MainWindow
+            if (_mainWindow is { IsVisible: true })
             {
-                Content = IAppHost.GetService<MainView>(),
-                Title = @"SecRandom"
-            };
-            _mainWindow.Closed += (_, _) => _mainWindow = null;
-        }
+                _mainWindow.Activate();
+                transaction?.Finish(SpanStatus.Ok);
+                return;
+            }
 
-        _mainWindow.Show();
-        _mainWindow.Activate();
+            if (_mainWindow is not { IsLoaded: true })
+            {
+                _mainWindow = new MainWindow
+                {
+                    Content = IAppHost.GetService<MainView>(),
+                    Title = @"SecRandom"
+                };
+                _mainWindow.Closed += (_, _) => _mainWindow = null;
+            }
+
+            _mainWindow.Show();
+            _mainWindow.Activate();
+            transaction?.Finish(SpanStatus.Ok);
+        }
+        catch (Exception ex)
+        {
+            transaction?.Finish(ex, SpanStatus.InternalError);
+            IAppHost.TryGetService<ILogger<App>>()?.LogError(ex, "Failed to show main window.");
+            throw;
+        }
     }
 
     public static void ShowSettingsWindow()
     {
-        if (_settingsWindow is { IsVisible: true })
-        {
-            _settingsWindow.Activate();
-            return;
-        }
+        TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
+        using var transaction = telemetry?.StartTransaction("ui.settings_window", "ui.navigation");
 
-        if (_settingsWindow is not { IsLoaded: true })
+        try
         {
-            _settingsWindow = new MainWindow
+            if (_settingsWindow is { IsVisible: true })
             {
-                Content = IAppHost.GetService<SettingsView>(),
-                Title = @"SecRandom"
-            };
-            _settingsWindow.Closed += (_, _) => _settingsWindow = null;
-        }
+                _settingsWindow.Activate();
+                transaction?.Finish(SpanStatus.Ok);
+                return;
+            }
 
-        _settingsWindow.Show();
-        _settingsWindow.Activate();
+            if (_settingsWindow is not { IsLoaded: true })
+            {
+                _settingsWindow = new MainWindow
+                {
+                    Content = IAppHost.GetService<SettingsView>(),
+                    Title = @"SecRandom"
+                };
+                _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+            }
+
+            _settingsWindow.Show();
+            _settingsWindow.Activate();
+            transaction?.Finish(SpanStatus.Ok);
+        }
+        catch (Exception ex)
+        {
+            transaction?.Finish(ex, SpanStatus.InternalError);
+            IAppHost.TryGetService<ILogger<App>>()?.LogError(ex, "Failed to show settings window.");
+            throw;
+        }
     }
 
     private void ShowProfileSettingsWindow()
