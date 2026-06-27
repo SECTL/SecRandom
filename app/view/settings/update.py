@@ -252,19 +252,6 @@ class update(QWidget):
             )
         )
 
-        # 更新源选择
-        self.update_source_combo = ComboBox()
-        self.update_source_combo.addItems(
-            get_content_combo_name_async("update", "update_source")
-        )
-        update_source = readme_settings("update", "update_source")
-        self.update_source_combo.setCurrentIndex(update_source)
-        self.update_source_combo.currentIndexChanged.connect(
-            lambda: update_settings(
-                "update", "update_source", self.update_source_combo.currentIndex()
-            )
-        )
-
         # 添加设置项到卡片
         self.update_settings_card.addGroup(
             get_theme_icon("ic_fluent_arrow_repeat_all_20_filled"),
@@ -278,12 +265,6 @@ class update(QWidget):
             get_content_name_async("update", "update_channel"),
             get_content_description_async("update", "update_channel"),
             self.update_channel_combo,
-        )
-        self.update_settings_card.addGroup(
-            get_theme_icon("ic_fluent_cloud_arrow_down_20_filled"),
-            get_content_name_async("update", "update_source"),
-            get_content_description_async("update", "update_source"),
-            self.update_source_combo,
         )
 
     def force_check_for_updates(self):
@@ -318,6 +299,17 @@ class update(QWidget):
                     if mode == "force":
                         compare_result = compare_versions("v0.0.0", latest_version)
                     else:
+                        if not is_auto_update_version_allowed(latest_version):
+                            logger.info(
+                                f"检测到跨主版本更新，设置页普通检查不提供自动更新: current={VERSION}, latest={latest_version}"
+                            )
+                            status_text = get_content_name_async(
+                                "update", "already_latest_version"
+                            )
+                            self.download_install_button.setVisible(False)
+                            update_status_manager.set_latest_version()
+                            is_success = True
+                            return
                         compare_result = compare_versions(VERSION, latest_version)
 
                     if compare_result == 1:
@@ -439,17 +431,24 @@ class update(QWidget):
             latest_version = latest_version_info["version"]
             latest_version_no = latest_version_info["version_no"]
 
+        if not is_auto_update_version_allowed(latest_version):
+            logger.info(
+                f"检测到跨主版本更新，阻止下载并安装: current={VERSION}, latest={latest_version}"
+            )
+            self.status_label.setText(
+                get_content_name_async("update", "already_latest_version")
+            )
+            self.download_install_button.setVisible(False)
+            update_status_manager.set_latest_version()
+            return
+
         # 获取下载文件夹路径，与update_utils.py保持一致
         download_dir = get_data_path("downloads")
         ensure_dir(download_dir)
 
         # 构建预期的文件名，使用与update_utils.py一致的格式
-        expected_filename = DEFAULT_NAME_FORMAT
-        expected_filename = expected_filename.replace("[version]", latest_version)
-        expected_filename = expected_filename.replace("[system]", SYSTEM)
-        expected_filename = expected_filename.replace("[arch]", ARCH)
-        expected_filename = expected_filename.replace("[struct]", STRUCT)
-        expected_file_path = download_dir / expected_filename
+        expected_file_path = get_path(get_expected_update_file_path(latest_version))
+        expected_filename = expected_file_path.name
 
         # 检查文件是否存在且文件名一致（即版本号、系统、架构均匹配）
         file_exists_and_same_version = False

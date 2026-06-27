@@ -95,8 +95,8 @@ class floating_window_basic_settings(GroupHeaderCardWidget):
             )
         )
         self.startup_display_floating_window_switch.setChecked(
-            readme_settings_async(
-                "floating_window_management", "startup_display_floating_window"
+            get_bool_setting(
+                "floating_window_management", "startup_display_floating_window", True
             )
         )
         self.startup_display_floating_window_switch.checkedChanged.connect(

@@ -71,6 +71,19 @@ def _get_expanded_pool(
     return expanded_pool
 
 
+def _filter_candidates_by_max_count(
+    candidates: List[Dict[str, Any]],
+    student_counts: Dict[str, int],
+    max_allowed_count: int,
+) -> List[Dict[str, Any]]:
+    """按最大允许抽取次数过滤候选人。"""
+    return [
+        student
+        for student in candidates
+        if student_counts.get(_get_student_name(student), 0) <= max_allowed_count
+    ]
+
+
 # ==================================================
 # 平均值 + 差值保护的公平抽取功能
 # ==================================================
@@ -157,39 +170,22 @@ def apply_avg_gap_protection(
             f"当前平均值: {avg:.2f}, 最小次数: {min_count}, 最大次数: {max_count}"
         )
 
-        # Step 3: 初始候选池（≤平均值）
-        pool_initial = []
-        for student in candidates:
-            student_name = _get_student_name(student)
-            if student_counts.get(student_name, 0) <= avg:
-                pool_initial.append(student)
+        # Step 3: 初始候选池从最低次数开始，避免保护高于平均值的人
+        pool_initial = _filter_candidates_by_max_count(
+            candidates, student_counts, min_count
+        )
 
         # Step 4: 最大差距保护检查
+        max_allowed_count = max_count
         if max_count - min_count > gap_threshold:
             logger.debug("检测到差距超过阈值，执行差距保护")
-
-            # 临时排除所有 count == max_count 的人
-            filtered_candidates = []
-            filtered_counts = []
-            for student in candidates:
-                student_name = _get_student_name(student)
-                count = student_counts.get(student_name, 0)
-                if count < max_count:
-                    filtered_candidates.append(student)
-                    filtered_counts.append(count)
-
-            if filtered_candidates:
-                # 重新计算剩余人的平均值
-                new_avg = sum(filtered_counts) / len(filtered_counts)
-                logger.debug(f"排除极值后，新平均值: {new_avg:.2f}")
-
-                # 更新 pool_initial 为剩余人中 ≤ 新平均值 的人
-                pool_initial = []
-                for student in filtered_candidates:
-                    student_name = _get_student_name(student)
-                    count = student_counts.get(student_name, 0)
-                    if count <= new_avg:
-                        pool_initial.append(student)
+            max_allowed_count = min(min_count + gap_threshold, max_count)
+            pool_initial = _filter_candidates_by_max_count(
+                candidates, student_counts, min_count
+            )
+            logger.debug(
+                f"差距保护上限: {max_allowed_count}, 最低次数候选人数: {len(pool_initial)}"
+            )
 
         logger.debug(f"初始候选池人数: {len(pool_initial)}")
 
@@ -202,20 +198,24 @@ def apply_avg_gap_protection(
                 f"候选池人数({len(pool_initial)})低于所需大小({required_size})，执行扩展"
             )
 
-            # 向上的一个总抽取次数 - 先尝试使用整数平均值+1作为新的阈值
-            avg_int = int(avg) if avg.is_integer() else int(avg) + 1
-            new_threshold = avg_int
+            new_threshold = min_count
 
             logger.debug(f"当前平均次数: {avg:.2f}, 初始扩展阈值: {new_threshold}")
 
             # 扩展候选池
             expanded_pool = _get_expanded_pool(
-                candidates, student_counts, required_size, new_threshold, max_count
+                candidates,
+                student_counts,
+                required_size,
+                new_threshold,
+                max_allowed_count,
             )
 
-            # 如果还是不足，就使用所有候选学生
+            # 如果在保护上限内仍不足，才降级使用所有候选学生
             if len(expanded_pool) < required_size:
-                logger.debug(f"扩大到最大阈值({max_count})后仍不足，使用所有候选学生")
+                logger.debug(
+                    f"扩大到保护上限({max_allowed_count})后仍不足，使用所有候选学生"
+                )
                 expanded_pool = candidates.copy()
 
             # 按次数从小到大排序

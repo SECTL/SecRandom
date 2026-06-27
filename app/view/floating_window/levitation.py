@@ -19,6 +19,7 @@ from app.tools.settings_access import (
     readme_settings_async,
     update_settings,
     get_settings_signals,
+    get_bool_setting,
 )
 from app.tools.path_utils import *
 from app.tools.variable import EXIT_CODE_RESTART, DEFAULT_ICON_CODEPOINT
@@ -26,7 +27,10 @@ from app.Language.obtain_language import (
     get_content_name_async,
     get_content_combo_name_async,
 )
-from app.common.extraction.extract import _is_non_class_time
+from app.common.extraction.extract import (
+    _is_non_class_time,
+    get_next_linkage_check_delay_ms,
+)
 from app.common.safety.verify_ops import require_and_run
 from app.common.data.list import get_class_name_list, get_group_list, get_gender_list
 
@@ -531,6 +535,7 @@ class LevitationWindow(QWidget):
                     self.arrow_button.setIconSize(self._storage_icon_size)
         except Exception:
             pass
+        self._apply_content_theme_style()
 
     def _is_floating_window_dark(self) -> bool:
         idx = int(getattr(self, "_floating_window_theme", 0) or 0)
@@ -677,6 +682,23 @@ class LevitationWindow(QWidget):
         dark = self._is_floating_window_dark()
         return "rgba(255,255,255,230)" if dark else "rgba(0,0,0,200)"
 
+    def _apply_content_theme_style(self) -> None:
+        """同步浮窗内容文字色，避免启动主题刷新后被全局主题覆盖。"""
+        text_color = self._text_color()
+        text_style = f"background: transparent; border: none; color: {text_color};"
+
+        try:
+            if self._container is None:
+                return
+            for label in self._container.findChildren(QLabel):
+                if label.text():
+                    label.setStyleSheet(text_style)
+            for button in self._container.findChildren(QPushButton):
+                if button.text():
+                    button.setStyleSheet(text_style)
+        except Exception:
+            pass
+
     def _init_settings(self):
         """初始化设置配置"""
         # 基础显示设置
@@ -780,15 +802,24 @@ class LevitationWindow(QWidget):
 
         # 定时检查器（默认 30 秒）
         self._class_hide_timer = QTimer(self)
-        self._class_hide_timer.setInterval(30 * 1000)
+        self._class_hide_timer.setSingleShot(True)
         self._class_hide_timer.timeout.connect(self._check_class_end_hide)
         self._apply_class_hide_timer_state()
+
+    def _schedule_next_class_end_hide_check(self):
+        try:
+            data_source = readme_settings_async("linkage_settings", "data_source", 0)
+            delay_ms = get_next_linkage_check_delay_ms(data_source)
+            self._class_hide_timer.start(delay_ms)
+        except Exception:
+            self._class_hide_timer.start(120 * 1000)
+            pass
 
     def _apply_class_hide_timer_state(self):
         try:
             if bool(getattr(self, "_hide_on_class_end_enabled", False)):
                 if not self._class_hide_timer.isActive():
-                    self._class_hide_timer.start()
+                    self._schedule_next_class_end_hide_check()
                 QTimer.singleShot(0, self._check_class_end_hide)
             else:
                 if hasattr(self, "_class_hide_timer") and self._class_hide_timer:
@@ -810,7 +841,10 @@ class LevitationWindow(QWidget):
             except Exception:
                 is_non_class = False
             self._apply_class_hidden(bool(is_non_class))
+            self._schedule_next_class_end_hide_check()
         except Exception:
+            if bool(getattr(self, "_hide_on_class_end_enabled", False)):
+                self._class_hide_timer.start(120 * 1000)
             pass
 
     def _apply_class_hidden(self, hidden: bool):
@@ -870,8 +904,7 @@ class LevitationWindow(QWidget):
 
     def _get_bool_setting(self, section: str, key: str, default: bool = False) -> bool:
         """获取布尔类型设置"""
-        result = readme_settings_async(section, key)
-        return bool(result) if result is not None else default
+        return get_bool_setting(section, key, default)
 
     def _get_int_setting(self, section: str, key: str, default: int = 0) -> int:
         """获取整数类型设置"""
@@ -1182,13 +1215,11 @@ class LevitationWindow(QWidget):
         self._container.adjustSize()
         self.adjustSize()
         self._install_drag_filters()
+        self._apply_content_theme_style()
 
     def _apply_window(self):
         self.setWindowOpacity(self._opacity)
-        if self._visible_on_start:
-            self.show()
-        else:
-            self.hide()
+        self.hide()
 
     def _apply_focus_mode(self):
         """应用无焦点模式设置"""
@@ -1197,6 +1228,7 @@ class LevitationWindow(QWidget):
     def showEvent(self, event):
         """重写showEvent，当浮窗显示时检测边缘"""
         super().showEvent(event)
+        self._apply_theme_style()
         if not bool(getattr(self, "_suppress_visibility_tracking", False)):
             self._user_requested_visible = True
             if bool(getattr(self, "_retracted", False)):
@@ -2972,11 +3004,16 @@ class LevitationWindow(QWidget):
     def _on_setting_changed(self, first, second, value):
         if first == "floating_window_management":
             if second == "startup_display_floating_window":
-                if bool(value):
+                visible = self._get_bool_setting(
+                    "floating_window_management",
+                    "startup_display_floating_window",
+                    False,
+                )
+                if visible:
                     self.show()
                 else:
                     self.hide()
-                self.visibilityChanged.emit(bool(value))
+                self.visibilityChanged.emit(visible)
             elif second == "extend_quick_draw_component":
                 self._extend_quick_draw_component = bool(value)
                 panel = getattr(self, "_quick_draw_extend_panel", None)
@@ -3118,6 +3155,13 @@ class LevitationWindow(QWidget):
                 except Exception:
                     self._hide_on_class_end_enabled = False
                 self._apply_class_hide_timer_state()
+            elif second in {
+                "data_source",
+                "instant_draw_disable",
+                "pre_class_enable_time",
+                "post_class_disable_delay",
+            }:
+                QTimer.singleShot(0, self._check_class_end_hide)
             # 其他 linkage 设置目前不在此处处理
             return
         elif first == "float_position":

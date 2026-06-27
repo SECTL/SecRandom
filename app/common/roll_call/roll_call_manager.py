@@ -83,6 +83,7 @@ class RollCallManager(QObject):
         self.current_group_index = 0
         self.current_gender_index = 0
         self.half_repeat = 0
+        self.current_draw_type = None
         self._precomputed_result = None
         self._precompute_key = None
         self._precompute_running = False
@@ -118,6 +119,7 @@ class RollCallManager(QObject):
             context.group_index,
             context.gender_index,
             context.half_repeat,
+            read_roll_call_setting(context.class_name, "draw_type"),
         )
 
         animation = read_roll_call_setting(context.class_name, "animation")
@@ -188,6 +190,7 @@ class RollCallManager(QObject):
         group_index,
         gender_index,
         half_repeat,
+        draw_type=None,
     ):
         """
         加载学生数据
@@ -202,6 +205,7 @@ class RollCallManager(QObject):
             self.current_group_index = group_index
             self.current_gender_index = gender_index
             self.half_repeat = half_repeat
+            self.current_draw_type = draw_type
 
             record_key = f"{class_name}_{gender_filter}_{group_filter}"
             if record_key in RollCallUtils._drawn_record_cache:
@@ -298,6 +302,9 @@ class RollCallManager(QObject):
             self.current_gender_filter,
             count,
             self.half_repeat,
+            self.current_draw_type
+            if self.current_draw_type is not None
+            else read_roll_call_setting(self.current_class_name, "draw_type"),
         )
         return result
 
@@ -326,6 +333,7 @@ class RollCallManager(QObject):
             self.current_group_index,
             self.current_gender_index,
             self.half_repeat,
+            self.current_draw_type,
             count,
         )
 
@@ -349,6 +357,9 @@ class RollCallManager(QObject):
         gender_index = self.current_gender_index
         gender_filter = self.current_gender_filter
         half_repeat = self.half_repeat
+        draw_type = self.current_draw_type
+        if draw_type is None:
+            draw_type = read_roll_call_setting(class_name, "draw_type")
         draw_count = count
 
         class _Signals(QObject):
@@ -377,6 +388,7 @@ class RollCallManager(QObject):
                 gender_filter,
                 draw_count,
                 half_repeat,
+                draw_type,
             )
 
         signals = _Signals()
@@ -891,6 +903,7 @@ def do_reset_count(widget):
         context.group_index,
         context.gender_index,
         context.half_repeat,
+        read_roll_call_setting(context.class_name, "draw_type"),
     )
     widget.manager.reset_records_with_notification(parent=widget)
 

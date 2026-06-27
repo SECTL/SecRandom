@@ -2,7 +2,11 @@
 # 导入模块
 # ==================================================
 import asyncio
+import shutil
+import sys
+import threading
 import time
+import zipfile
 from typing import Any, Tuple, Callable, Optional
 import aiohttp
 from loguru import logger
@@ -49,6 +53,84 @@ def _run_async_func(async_func: Any, *args: Any, **kwargs: Any) -> Any:
         return None
 
 
+def _build_software_api_url(path: str) -> str:
+    return f"{SECTL_API_BASE_URL.rstrip('/')}/{path.lstrip('/')}"
+
+
+_DISTRIBUTION_CACHE_LOCK = threading.Lock()
+_DISTRIBUTION_CACHE = {"initialized": False, "fetched_at": 0.0, "data": None}
+_DISTRIBUTION_CACHE_TTL_SECONDS = 6 * 60 * 60
+
+
+def _get_cached_distribution_data() -> dict | None:
+    with _DISTRIBUTION_CACHE_LOCK:
+        if not _DISTRIBUTION_CACHE["initialized"]:
+            return None
+        if (
+            time.time() - float(_DISTRIBUTION_CACHE["fetched_at"] or 0.0)
+            > _DISTRIBUTION_CACHE_TTL_SECONDS
+        ):
+            return None
+        data = _DISTRIBUTION_CACHE.get("data")
+        return data if isinstance(data, dict) else None
+
+
+def _set_cached_distribution_data(data: dict | None) -> None:
+    with _DISTRIBUTION_CACHE_LOCK:
+        _DISTRIBUTION_CACHE["initialized"] = True
+        _DISTRIBUTION_CACHE["fetched_at"] = time.time()
+        _DISTRIBUTION_CACHE["data"] = data if isinstance(data, dict) else None
+
+
+async def _fetch_json(
+    url: str, *, params: dict | None = None, timeout: float = 10.0
+) -> dict | None:
+    headers = {
+        "Accept": "application/json",
+        "User-Agent": f"SecRandom/{SPECIAL_VERSION}",
+    }
+    try:
+        client_timeout = aiohttp.ClientTimeout(
+            total=float(timeout),
+            connect=min(5.0, float(timeout)),
+            sock_read=min(5.0, float(timeout)),
+        )
+        async with aiohttp.ClientSession(
+            timeout=client_timeout, headers=headers
+        ) as session:
+            async with session.get(url, params=params) as response:
+                response.raise_for_status()
+                data = await response.json(content_type=None)
+                return data if isinstance(data, dict) else None
+    except Exception as e:
+        logger.warning(f"请求 JSON 失败: {url}, error={e}")
+        return None
+
+
+async def _fetch_text(
+    url: str, *, params: dict | None = None, timeout: float = 10.0
+) -> str | None:
+    headers = {
+        "Accept": "text/plain, application/x-yaml, application/yaml, */*",
+        "User-Agent": f"SecRandom/{SPECIAL_VERSION}",
+    }
+    try:
+        client_timeout = aiohttp.ClientTimeout(
+            total=float(timeout),
+            connect=min(5.0, float(timeout)),
+            sock_read=min(5.0, float(timeout)),
+        )
+        async with aiohttp.ClientSession(
+            timeout=client_timeout, headers=headers
+        ) as session:
+            async with session.get(url, params=params) as response:
+                response.raise_for_status()
+                return await response.text()
+    except Exception as e:
+        logger.warning(f"请求文本失败: {url}, error={e}")
+        return None
+
+
 def check_exe_integrity(exe_path: str) -> bool:
     """检查EXE安装程序的完整性
 
@@ -88,6 +170,29 @@ def check_exe_integrity(exe_path: str) -> bool:
         return False
 
 
+def check_zip_integrity(zip_path: str) -> bool:
+    """检查 ZIP 更新包是否完整。"""
+    try:
+        zip_file = get_path(zip_path)
+        if not zip_file.exists() or zip_file.stat().st_size == 0:
+            logger.error(f"ZIP 更新包不存在或为空: {zip_path}")
+            return False
+
+        with zipfile.ZipFile(str(zip_file), "r") as archive:
+            bad_file = archive.testzip()
+            if bad_file is not None:
+                logger.error(f"ZIP 更新包损坏，首个异常文件: {bad_file}")
+                return False
+            if not archive.namelist():
+                logger.error(f"ZIP 更新包为空: {zip_path}")
+                return False
+
+        return True
+    except Exception as e:
+        logger.exception(f"检查 ZIP 更新包完整性失败: {e}")
+        return False
+
+
 def check_update_file_integrity(file_path: str, file_type: str = None) -> bool:
     """检查更新文件的完整性（仅支持 EXE）
 
@@ -104,17 +209,23 @@ def check_update_file_integrity(file_path: str, file_type: str = None) -> bool:
             file_ext = get_path(file_path).suffix.lower()
             if file_ext == ".exe":
                 file_type = "exe"
+            elif file_ext == ".zip":
+                file_type = "zip"
             else:
                 logger.exception(
-                    f"不支持的更新文件类型: {file_ext}，仅支持 EXE 安装程序"
+                    f"不支持的更新文件类型: {file_ext}，仅支持 EXE 安装程序和 ZIP 更新包"
                 )
                 return False
 
         # 根据文件类型调用相应的检查函数
         if file_type == "exe":
             return check_exe_integrity(file_path)
+        elif file_type == "zip":
+            return check_zip_integrity(file_path)
         else:
-            logger.exception(f"不支持的文件类型: {file_type}，仅支持 EXE 安装程序")
+            logger.exception(
+                f"不支持的文件类型: {file_type}，仅支持 EXE 安装程序和 ZIP 更新包"
+            )
             return False
     except Exception as e:
         logger.exception(f"检查更新文件完整性失败: {e}")
@@ -144,21 +255,26 @@ async def run_installer_and_exit(exe_path: str) -> bool:
             logger.exception(f"安装程序不完整或已损坏: {exe_path}")
             return False
 
-        # 使用 subprocess 启动安装程序
-        import subprocess
-
+        # 使用 ShellExecuteW 以管理员权限启动静默安装器。
         # Windows 系统
         if os.name == "nt":
             logger.info("Windows 系统，启动安装程序")
 
             # 使用 start 命令启动安装程序，不等待安装完成
             # 使用 DETACHED_PROCESS 标志创建新进程
-            DETACHED_PROCESS = 0x00000008
-            subprocess.Popen(
-                [exe_path],
-                creationflags=DETACHED_PROCESS,
-                close_fds=True,
+            import ctypes
+
+            rc = ctypes.windll.shell32.ShellExecuteW(
+                None,
+                "runas",
+                str(get_path(exe_path).resolve()),
+                "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART",
+                None,
+                1,
             )
+            if rc <= 32:
+                logger.error(f"ShellExecuteW 启动安装程序失败: {rc}")
+                return False
         else:
             logger.warning("非 Windows 系统，不支持运行 EXE 安装程序")
             return False
@@ -166,13 +282,127 @@ async def run_installer_and_exit(exe_path: str) -> bool:
         logger.info("安装程序已启动，准备退出应用程序")
 
         # 退出应用程序
-        import sys
+        try:
+            from PySide6.QtWidgets import QApplication
 
-        sys.exit(0)
+            app = QApplication.instance()
+            if app is not None:
+                app.quit()
+        except Exception as quit_error:
+            logger.debug(f"请求 Qt 应用退出失败: {quit_error}")
 
-        return True
+        import os as _os
+
+        _os._exit(0)
     except Exception as e:
         logger.exception(f"运行安装程序失败: {e}")
+        return False
+
+
+def _quote_powershell(value: str) -> str:
+    return "'" + value.replace("'", "''") + "'"
+
+
+def _find_zip_payload_root(extract_dir) -> str:
+    entries = [item for item in extract_dir.iterdir() if item.name not in {"__MACOSX"}]
+    if len(entries) == 1 and entries[0].is_dir():
+        return str(entries[0])
+    return str(extract_dir)
+
+
+def _write_zip_update_script(zip_path: str) -> str:
+    update_dir = get_data_path("TEMP", "zip_update")
+    if update_dir.exists():
+        shutil.rmtree(update_dir, ignore_errors=True)
+    ensure_dir(update_dir)
+
+    extract_dir = update_dir / "payload"
+    ensure_dir(extract_dir)
+    with zipfile.ZipFile(str(get_path(zip_path)), "r") as archive:
+        archive.extractall(str(extract_dir))
+
+    payload_root = _find_zip_payload_root(extract_dir)
+    app_root = str(get_app_root().resolve())
+    executable = str(get_path(sys.executable).resolve())
+    script_path = update_dir / "apply_zip_update.ps1"
+    current_pid = os.getpid()
+
+    script = f"""
+$ErrorActionPreference = 'Stop'
+$CurrentPid = {current_pid}
+$PayloadRoot = {_quote_powershell(payload_root)}
+$AppRoot = {_quote_powershell(app_root)}
+$Executable = {_quote_powershell(executable)}
+
+try {{
+    Wait-Process -Id $CurrentPid -Timeout 60 -ErrorAction SilentlyContinue
+}} catch {{}}
+
+Start-Sleep -Milliseconds 800
+
+$SkipNames = @('config', 'data', 'logs')
+Get-ChildItem -LiteralPath $PayloadRoot -Force | ForEach-Object {{
+    if ($SkipNames -contains $_.Name) {{
+        return
+    }}
+    $target = Join-Path $AppRoot $_.Name
+    if (Test-Path -LiteralPath $target) {{
+        Remove-Item -LiteralPath $target -Recurse -Force
+    }}
+    Move-Item -LiteralPath $_.FullName -Destination $target -Force
+}}
+
+if (Test-Path -LiteralPath $Executable) {{
+    Start-Process -FilePath $Executable -WorkingDirectory $AppRoot
+}}
+"""
+    script_path.write_text(script, encoding="utf-8-sig")
+    return str(script_path)
+
+
+async def run_zip_update_and_exit(zip_path: str) -> bool:
+    """启动外部脚本应用 ZIP 更新包并退出当前进程。"""
+    try:
+        if os.name != "nt":
+            logger.warning("非 Windows 系统，暂不支持 ZIP 自动更新")
+            return False
+        if not check_zip_integrity(zip_path):
+            logger.error(f"ZIP 更新包校验失败: {zip_path}")
+            return False
+
+        script_path = _write_zip_update_script(zip_path)
+        import ctypes
+
+        params = (
+            "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden "
+            f"-File {_quote_powershell(script_path)}"
+        )
+        rc = ctypes.windll.shell32.ShellExecuteW(
+            None,
+            "open",
+            "powershell.exe",
+            params,
+            None,
+            0,
+        )
+        if rc <= 32:
+            logger.error(f"启动 ZIP 更新脚本失败: {rc}")
+            return False
+
+        try:
+            from PySide6.QtWidgets import QApplication
+
+            app = QApplication.instance()
+            if app is not None:
+                app.quit()
+        except Exception as quit_error:
+            logger.debug(f"请求 Qt 应用退出失败: {quit_error}")
+
+        import os as _os
+
+        _os._exit(0)
+    except Exception as e:
+        logger.exception(f"运行 ZIP 自动更新失败: {e}")
         return False
 
 
@@ -636,6 +866,43 @@ def compare_versions(current_version: str, latest_version: str) -> int:
         return -1
 
 
+def get_major_version(version_str: str) -> int | None:
+    """获取版本号中的主版本号。"""
+    try:
+        if not version_str:
+            return None
+
+        normalized_version = version_str.strip().lstrip("vV")
+        main_parts, _ = parse_version(normalized_version)
+        if not main_parts:
+            return None
+        return main_parts[0]
+    except Exception as e:
+        logger.warning(f"获取主版本号失败: version={version_str}, error={e}")
+        return None
+
+
+def is_same_major_version(current_version: str, target_version: str) -> bool:
+    """判断两个版本是否属于同一主版本。"""
+    current_major = get_major_version(current_version)
+    target_major = get_major_version(target_version)
+    if current_major is None or target_major is None:
+        logger.warning(
+            f"无法判断主版本是否一致: current={current_version}, target={target_version}"
+        )
+        return False
+    return current_major == target_major
+
+
+def is_auto_update_version_allowed(target_version: str) -> bool:
+    """自动更新只允许在当前主版本内升级。"""
+    if is_same_major_version(VERSION, target_version):
+        return True
+
+    logger.info(f"跳过跨主版本自动更新: current={VERSION}, target={target_version}")
+    return False
+
+
 def get_update_download_url(
     version: str, system: str = SYSTEM, arch: str = ARCH, struct: str = STRUCT
 ) -> str:
@@ -923,12 +1190,14 @@ async def install_update_async(file_path: str) -> bool:
         file_ext = get_path(file_path).suffix.lower()
 
         # 只支持 exe 安装程序
-        if file_ext != ".exe":
-            logger.exception(f"不支持的更新文件类型: {file_ext}，仅支持 EXE 安装程序")
+        if file_ext not in {".exe", ".zip"}:
+            logger.exception(
+                f"不支持的更新文件类型: {file_ext}，仅支持 EXE 安装程序和 ZIP 更新包"
+            )
             return False
 
         # 检查安装程序完整性
-        if not check_exe_integrity(file_path):
+        if not check_update_file_integrity(file_path):
             logger.exception(f"安装程序不完整或已损坏: {file_path}")
             # 删除损坏的文件
             try:
@@ -940,7 +1209,9 @@ async def install_update_async(file_path: str) -> bool:
 
         # 运行安装程序并退出应用程序
         logger.info("准备运行 EXE 安装程序")
-        return await run_installer_and_exit(file_path)
+        if file_ext == ".exe":
+            return await run_installer_and_exit(file_path)
+        return await run_zip_update_and_exit(file_path)
     except Exception as e:
         logger.exception(f"安装更新文件失败: {e}")
         return False
@@ -1246,6 +1517,15 @@ class UpdateCheckThread(QThread):
             latest_version = latest_version_info["version"]
             latest_version_no = latest_version_info["version_no"]
 
+            if not is_auto_update_version_allowed(latest_version):
+                logger.info(
+                    f"检测到跨主版本更新，跳过自动更新流程: current={VERSION}, latest={latest_version}"
+                )
+                safe_call_update_interface("set_latest_version")
+                update_status_manager.set_latest_version()
+                safe_call_update_interface("update_last_check_time")
+                return
+
             # 比较版本号
             compare_result = compare_versions(VERSION, latest_version)
 
@@ -1254,12 +1534,7 @@ class UpdateCheckThread(QThread):
             ensure_dir(download_dir)
 
             # 构建预期的文件名
-            expected_filename = DEFAULT_NAME_FORMAT
-            expected_filename = expected_filename.replace("[version]", latest_version)
-            expected_filename = expected_filename.replace("[system]", SYSTEM)
-            expected_filename = expected_filename.replace("[arch]", ARCH)
-            expected_filename = expected_filename.replace("[struct]", STRUCT)
-            expected_file_path = download_dir / expected_filename
+            expected_file_path = get_path(get_expected_update_file_path(latest_version))
 
             # 检查是否有已下载的更新文件（模式3：自动安装）
             if (
@@ -1431,6 +1706,13 @@ class UpdateCheckThread(QThread):
                         update_status_manager.set_download_complete_with_size(
                             file_path, file_size_str
                         )
+                        if auto_update_mode == 3:
+                            logger.debug(f"自动更新模式 3，开始自动安装: {file_path}")
+                            success = install_update(file_path)
+                            if success:
+                                logger.debug("自动安装更新成功")
+                            else:
+                                logger.warning("自动安装更新失败")
                     elif update_status_manager.download_cancelled:
                         # 下载被取消
                         logger.info("自动下载更新已被用户取消")
@@ -1481,3 +1763,717 @@ def check_for_updates_on_startup(settings_window=None):
     update_check_thread = UpdateCheckThread(settings_window)
     update_check_thread.start()
     return update_check_thread
+
+
+# ruff: noqa: F811
+# ==================================================
+# SECTL 软件分发接口更新实现
+# ==================================================
+
+
+def _normalize_project_locator() -> dict[str, str]:
+    return {
+        "projectId": "",
+        "projectSlug": "SecRandom",
+        "projectName": "SecRandom",
+        "repo": "SECTL/SecRandom",
+    }
+
+
+def _extract_distribution_package(distribution: dict | None, version: str) -> dict:
+    if not isinstance(distribution, dict):
+        return {}
+
+    packages = distribution.get("packages")
+    if isinstance(packages, list) and packages:
+        for package in packages:
+            if (
+                isinstance(package, dict)
+                and str(package.get("version_tag") or "") == version
+            ):
+                return package
+        for package in packages:
+            if isinstance(package, dict):
+                return package
+
+    latest = distribution.get("latest")
+    if isinstance(latest, dict):
+        package = latest.get("package")
+        if isinstance(package, dict):
+            return package
+
+    return {}
+
+
+def _extract_version_from_distribution(
+    distribution: dict | None,
+) -> tuple[str | None, int | None]:
+    if not isinstance(distribution, dict):
+        return None, None
+
+    latest = distribution.get("latest")
+    if isinstance(latest, dict):
+        tag = latest.get("tag") or latest.get("name")
+        if tag:
+            version_no = latest.get("version_no")
+            return str(tag), int(version_no) if str(version_no).isdigit() else None
+
+    project = distribution.get("project")
+    if isinstance(project, dict):
+        cached = project.get("cached_latest_version")
+        if cached:
+            return str(cached), None
+
+    tag = distribution.get("tag")
+    if tag:
+        return str(tag), None
+
+    return None, None
+
+
+async def get_distribution_info_async(force_refresh: bool = False) -> dict | None:
+    cached = None if force_refresh else _get_cached_distribution_data()
+    if cached is not None:
+        return cached
+
+    url = _build_software_api_url("api/software/distribution")
+    payload = _normalize_project_locator()
+    data = await _fetch_json(url, params=payload, timeout=10.0)
+    _set_cached_distribution_data(data)
+    return data
+
+
+async def get_latest_version_via_sectl_async(channel: int | None = None) -> dict | None:
+    if channel is None:
+        channel = readme_settings("update", "update_channel")
+
+    distribution = await get_distribution_info_async(force_refresh=False)
+    if not distribution:
+        return None
+
+    version, version_no = _extract_version_from_distribution(distribution)
+    if not version:
+        return None
+
+    if version == "Disable":
+        return {"version": VERSION, "version_no": 0}
+
+    if version_no is None:
+        channel_name = CHANNEL_MAP.get(channel, "release")
+        latest = (
+            distribution.get("latest", {}) if isinstance(distribution, dict) else {}
+        )
+        latest_no = (
+            distribution.get("latest_no", {}) if isinstance(distribution, dict) else {}
+        )
+        if isinstance(latest, dict):
+            version = str(latest.get(channel_name, latest.get("release", version)))
+        if isinstance(latest_no, dict):
+            version_no = latest_no.get(channel_name, latest_no.get("release", 0))
+
+    return {"version": version, "version_no": int(version_no or 0)}
+
+
+def get_latest_version_via_sectl(channel: int | None = None) -> dict | None:
+    return _run_async_func(get_latest_version_via_sectl_async, channel)
+
+
+async def get_update_download_url_via_sectl_async(
+    version: str, system: str = SYSTEM, arch: str = ARCH, struct: str = STRUCT
+) -> str:
+    distribution = await get_distribution_info_async(force_refresh=False)
+    package = _extract_distribution_package(distribution, version)
+
+    package_id = (
+        str(package.get("$id") or package.get("packageId") or "").strip()
+        if package
+        else ""
+    )
+    if package_id:
+        return (
+            f"{SECTL_API_BASE_URL.rstrip('/')}/api/software/download"
+            f"?packageId={package_id}&source=server"
+        )
+
+    project = _normalize_project_locator()
+    file_name = f"SecRandom_{version.lstrip('v')}_{system.lower()}_{arch}_{struct}.exe"
+    return (
+        f"{SECTL_API_BASE_URL.rstrip('/')}/api/software/download"
+        f"?projectSlug={project['projectSlug']}&tag={version}&fileName={file_name}&source=server"
+    )
+
+
+def get_update_download_url_via_sectl(
+    version: str, system: str = SYSTEM, arch: str = ARCH, struct: str = STRUCT
+) -> str:
+    return _run_async_func(
+        get_update_download_url_via_sectl_async, version, system, arch, struct
+    )
+
+
+async def download_update_via_sectl_async(
+    version: str,
+    progress_callback: Optional[Callable] = None,
+    timeout: int = 300,
+    cancel_check: Optional[Callable[[], bool]] = None,
+) -> Optional[str]:
+    distribution = await get_distribution_info_async(force_refresh=False)
+    package = _extract_distribution_package(distribution, version)
+
+    download_dir = get_data_path("downloads")
+    ensure_dir(download_dir)
+
+    name_format = None
+    if isinstance(distribution, dict):
+        name_format = distribution.get("name_format")
+    if not isinstance(name_format, str) or not name_format.strip():
+        name_format = DEFAULT_NAME_FORMAT
+
+    file_name = _render_update_filename(
+        name_format,
+        version=version,
+        arch=str(package.get("arch", ARCH)) if isinstance(package, dict) else ARCH,
+        system=str(package.get("system", SYSTEM))
+        if isinstance(package, dict)
+        else SYSTEM,
+        struct=str(package.get("struct", STRUCT))
+        if isinstance(package, dict)
+        else STRUCT,
+    )
+
+    file_path = download_dir / file_name
+    if file_path.exists() and check_update_file_integrity(str(file_path)):
+        return str(file_path)
+
+    package_id = (
+        str(package.get("$id") or package.get("packageId") or "").strip()
+        if package
+        else ""
+    )
+    if package_id:
+        download_url = (
+            f"{SECTL_API_BASE_URL.rstrip('/')}/api/software/download"
+            f"?packageId={package_id}&source=server"
+        )
+    else:
+        project = _normalize_project_locator()
+        download_url = (
+            f"{SECTL_API_BASE_URL.rstrip('/')}/api/software/download"
+            f"?projectSlug={project['projectSlug']}&tag={version}&fileName={file_name}&source=server"
+        )
+
+    client_timeout = aiohttp.ClientTimeout(
+        total=timeout,
+        connect=30,
+        sock_read=60,
+        sock_connect=30,
+    )
+    try:
+        async with aiohttp.ClientSession(timeout=client_timeout) as session:
+            async with session.get(
+                download_url,
+                allow_redirects=True,
+                headers={"User-Agent": "SecRandom Update Client"},
+            ) as response:
+                response.raise_for_status()
+                total_size = int(response.headers.get("Content-Length", 0))
+                downloaded_size = 0
+                with open(file_path, "wb") as f:
+                    async for chunk in response.content.iter_chunked(32768):
+                        if cancel_check and cancel_check():
+                            if file_path.exists():
+                                file_path.unlink()
+                            return None
+                        if not chunk:
+                            continue
+                        f.write(chunk)
+                        downloaded_size += len(chunk)
+                        if progress_callback:
+                            progress_callback(downloaded_size, total_size)
+
+        if not check_update_file_integrity(str(file_path)):
+            if file_path.exists():
+                file_path.unlink()
+            return None
+        return str(file_path)
+    except Exception as e:
+        logger.warning(f"SECTL 分发下载失败: {e}")
+        if file_path.exists():
+            try:
+                file_path.unlink()
+            except Exception:
+                pass
+        return None
+
+
+def get_latest_version(channel: int | None = None) -> dict | None:  # type: ignore[override]
+    return _run_async_func(get_latest_version_via_sectl_async, channel)
+
+
+def get_update_download_url(
+    version: str, system: str = SYSTEM, arch: str = ARCH, struct: str = STRUCT
+) -> str:  # type: ignore[override]
+    return _run_async_func(
+        get_update_download_url_via_sectl_async, version, system, arch, struct
+    )
+
+
+def download_update(
+    version: str,
+    arch: str = ARCH,
+    progress_callback: Optional[Callable] = None,
+    timeout: int = 300,
+    cancel_check: Optional[Callable[[], bool]] = None,
+) -> Optional[str]:  # type: ignore[override]
+    return _run_async_func(
+        download_update_via_sectl_async,
+        version,
+        progress_callback,
+        timeout,
+        cancel_check,
+    )
+
+
+async def get_latest_version_async(channel: int | None = None) -> dict | None:  # type: ignore[override]
+    return await get_latest_version_via_sectl_async(channel)
+
+
+async def get_update_download_url_async(
+    version: str, system: str = SYSTEM, arch: str = ARCH, struct: str = STRUCT
+) -> str:  # type: ignore[override]
+    return await get_update_download_url_via_sectl_async(version, system, arch, struct)
+
+
+async def download_update_async(
+    version: str,
+    progress_callback: Optional[Callable] = None,
+    timeout: int = 300,
+    cancel_check: Optional[Callable[[], bool]] = None,
+) -> Optional[str]:  # type: ignore[override]
+    return await download_update_via_sectl_async(
+        version,
+        progress_callback=progress_callback,
+        timeout=timeout,
+        cancel_check=cancel_check,
+    )
+
+
+# ==================================================
+# SECTL 分发最终入口覆盖
+# ==================================================
+
+
+def _clean_query(params: dict[str, str]) -> dict[str, str]:
+    return {key: value for key, value in params.items() if value}
+
+
+def _package_value(package: dict | None, *names: str) -> str:
+    if not isinstance(package, dict):
+        return ""
+    for name in names:
+        value = package.get(name)
+        if value is not None and str(value).strip():
+            return str(value).strip()
+    return ""
+
+
+def _value_matches(value: str, expected: str) -> bool:
+    if not value:
+        return True
+    normalized = value.strip().lower()
+    expected = expected.strip().lower()
+    aliases = {
+        "windows": {"windows", "win", "win32", "win64"},
+        "macos": {"macos", "mac", "darwin", "osx"},
+        "linux": {"linux"},
+        "x64": {"x64", "amd64", "x86_64"},
+        "x86": {"x86", "i386", "i686"},
+        "arm64": {"arm64", "aarch64"},
+    }
+    return normalized in aliases.get(expected, {expected})
+
+
+def _package_matches_project(package: dict) -> bool:
+    project_slug = _package_value(package, "project_slug", "projectSlug").lower()
+    project_id = _package_value(package, "project_id", "projectId").lower()
+    repo = _package_value(package, "repo", "github_repo").lower()
+    return (
+        project_slug in {"", "secrandom"}
+        and project_id in {"", "secrandom"}
+        and repo in {"", "sectl/secrandom"}
+    )
+
+
+def _package_struct_score(package: dict) -> int:
+    file_name = _package_value(package, "file_name", "fileName", "name").lower()
+    if not file_name:
+        return 100
+
+    if STRUCT == "exe":
+        if file_name.endswith(".exe"):
+            return 0 if "setup" in file_name else 1
+        if file_name.endswith(".zip"):
+            return 10
+    elif STRUCT == "zip":
+        if file_name.endswith(".zip"):
+            return 0
+    elif STRUCT == "deb":
+        if file_name.endswith(".deb"):
+            return 0
+        if file_name.endswith(".appimage"):
+            return 5
+    elif STRUCT == "dmg" and file_name.endswith(".dmg"):
+        return 0
+
+    return 50
+
+
+def _iter_distribution_packages(distribution: dict | None) -> list[dict]:
+    if not isinstance(distribution, dict):
+        return []
+    packages = distribution.get("packages") or distribution.get("server_packages")
+    if isinstance(packages, list):
+        return [item for item in packages if isinstance(item, dict)]
+    return []
+
+
+def _select_distribution_package(distribution: dict | None, version: str) -> dict:
+    packages = _iter_distribution_packages(distribution)
+    if packages:
+        packages = [
+            package for package in packages if _package_matches_project(package)
+        ]
+        version_matched = [
+            package
+            for package in packages
+            if _package_value(package, "version_tag", "tag", "version") == version
+        ]
+        candidates = version_matched or packages
+        platform_matched = [
+            package
+            for package in candidates
+            if _value_matches(
+                _package_value(package, "os", "system", "platform"), SYSTEM
+            )
+            and _value_matches(_package_value(package, "arch", "architecture"), ARCH)
+        ]
+        return sorted(platform_matched or candidates, key=_package_struct_score)[0]
+
+    if isinstance(distribution, dict):
+        latest = distribution.get("latest")
+        if isinstance(latest, dict) and isinstance(latest.get("package"), dict):
+            return latest["package"]
+    return {}
+
+
+def _distribution_version(distribution: dict | None) -> tuple[str | None, int | None]:
+    if not isinstance(distribution, dict):
+        return None, None
+
+    latest = distribution.get("latest")
+    if isinstance(latest, dict):
+        tag = latest.get("tag") or latest.get("name")
+        if tag:
+            version_no = latest.get("version_no")
+            try:
+                version_no = int(version_no)
+            except (TypeError, ValueError):
+                version_no = None
+            return str(tag), version_no
+
+    project = distribution.get("project")
+    if isinstance(project, dict) and project.get("cached_latest_version"):
+        return str(project["cached_latest_version"]), None
+
+    if distribution.get("tag"):
+        return str(distribution["tag"]), None
+    return None, None
+
+
+def _latest_tag_version(payload: dict | None) -> tuple[str | None, int | None]:
+    if not isinstance(payload, dict):
+        return None, None
+    latest = payload.get("latest")
+    if isinstance(latest, dict):
+        tag = latest.get("tag") or latest.get("name")
+        if tag:
+            return str(tag), None
+    if payload.get("tag"):
+        return str(payload["tag"]), None
+    project = payload.get("project")
+    if isinstance(project, dict) and project.get("cached_latest_version"):
+        return str(project["cached_latest_version"]), None
+    return None, None
+
+
+def _default_update_file_name(version: str) -> str:
+    if SYSTEM == "windows":
+        return f"SecRandom_{version.lstrip('v')}_windows_{ARCH}_setup.exe"
+    return _render_update_filename(
+        DEFAULT_NAME_FORMAT,
+        version=version,
+        arch=ARCH,
+        system=SYSTEM,
+        struct=STRUCT,
+    )
+
+
+def _update_file_name(version: str, package: dict | None) -> str:
+    return _package_value(
+        package, "file_name", "fileName", "name"
+    ) or _default_update_file_name(version)
+
+
+def get_expected_update_file_path(version: str) -> str:
+    distribution = _get_cached_distribution_data()
+    package = _select_distribution_package(distribution, version)
+    file_name = _update_file_name(version, package)
+    download_dir = get_data_path("downloads")
+    ensure_dir(download_dir)
+    return str(download_dir / file_name)
+
+
+def _build_query_url(base_url: str, params: dict[str, str]) -> str:
+    from urllib.parse import urlencode
+
+    return f"{base_url}?{urlencode(_clean_query(params))}"
+
+
+def _sectl_update_download_url(
+    version: str, file_name: str, package: dict | None, source: str
+) -> str:
+    base_url = f"{SECTL_API_BASE_URL.rstrip('/')}/api/software/download"
+    package_id = _package_value(package, "$id", "packageId", "id")
+    if package_id:
+        return _build_query_url(base_url, {"packageId": package_id, "source": source})
+    os_name = {"windows": "Windows", "macos": "macOS", "linux": "Linux"}.get(
+        SYSTEM, SYSTEM
+    )
+    return _build_query_url(
+        base_url,
+        {
+            "projectSlug": "SecRandom",
+            "tag": version,
+            "fileName": file_name,
+            "os": os_name,
+            "arch": ARCH,
+            "source": source,
+        },
+    )
+
+
+def _github_release_asset_url(version: str, file_name: str) -> str:
+    from urllib.parse import quote
+
+    return f"{GITHUB_WEB}/releases/download/{quote(version)}/{quote(file_name)}"
+
+
+def _update_download_candidates(
+    version: str, file_name: str, package: dict | None
+) -> list[tuple[str, str]]:
+    github_url = _package_value(package, "github_asset_url", "browser_download_url")
+    if not github_url:
+        github_url = _github_release_asset_url(version, file_name)
+
+    candidates = [
+        (
+            "SECTL server",
+            _sectl_update_download_url(version, file_name, package, "server"),
+        ),
+        (
+            "SECTL GitHub",
+            _sectl_update_download_url(version, file_name, package, "github"),
+        ),
+        ("GitHub", github_url),
+    ]
+    for source in sorted(UPDATE_SOURCES, key=lambda item: item.get("priority", 99)):
+        source_url = str(source.get("url") or "").rstrip("/")
+        if not source_url or source_url == "https://github.com":
+            continue
+        candidates.append(
+            (str(source.get("name") or source_url), f"{source_url}/{github_url}")
+        )
+
+    seen = set()
+    unique_candidates = []
+    for name, url in candidates:
+        if url in seen:
+            continue
+        seen.add(url)
+        unique_candidates.append((name, url))
+    return unique_candidates
+
+
+async def _download_update_candidate(
+    url: str,
+    file_path,
+    progress_callback: Optional[Callable],
+    timeout: int,
+    cancel_check: Optional[Callable[[], bool]],
+) -> bool:
+    client_timeout = aiohttp.ClientTimeout(
+        total=timeout,
+        connect=30,
+        sock_read=60,
+        sock_connect=30,
+    )
+    async with aiohttp.ClientSession(timeout=client_timeout) as session:
+        async with session.get(
+            url,
+            allow_redirects=True,
+            headers={"User-Agent": "SecRandom Update Client"},
+        ) as response:
+            response.raise_for_status()
+            total_size = int(response.headers.get("Content-Length", 0))
+            downloaded_size = 0
+            with open(file_path, "wb") as file:
+                async for chunk in response.content.iter_chunked(32768):
+                    if cancel_check and cancel_check():
+                        if file_path.exists():
+                            file_path.unlink()
+                        return False
+                    if not chunk:
+                        continue
+                    file.write(chunk)
+                    downloaded_size += len(chunk)
+                    if progress_callback:
+                        progress_callback(downloaded_size, total_size)
+    return True
+
+
+async def get_distribution_info_async(force_refresh: bool = False) -> dict | None:  # type: ignore[override]
+    cached = None if force_refresh else _get_cached_distribution_data()
+    if cached is not None:
+        return cached
+
+    url = _build_software_api_url("api/software/distribution")
+    data = await _fetch_json(
+        url, params={"platformId": SECTL_PLATFORM_ID}, timeout=10.0
+    )
+    if not data or not _iter_distribution_packages(data):
+        data = await _fetch_json(url, timeout=10.0)
+    _set_cached_distribution_data(data)
+    return data
+
+
+async def get_latest_version_via_sectl_async(channel: int | None = None) -> dict | None:  # type: ignore[override]
+    distribution = await get_distribution_info_async(force_refresh=False)
+    version, version_no = _distribution_version(distribution)
+    if not version:
+        latest_tag = await _fetch_json(
+            _build_software_api_url("api/software/latest-tag"),
+            params={"projectSlug": "SecRandom"},
+            timeout=10.0,
+        )
+        version, version_no = _latest_tag_version(latest_tag)
+    if not version:
+        return None
+    if version == "Disable":
+        return {"version": VERSION, "version_no": 0}
+    return {"version": version, "version_no": int(version_no or 0)}
+
+
+async def get_update_download_url_via_sectl_async(
+    version: str, system: str = SYSTEM, arch: str = ARCH, struct: str = STRUCT
+) -> str:  # type: ignore[override]
+    distribution = await get_distribution_info_async(force_refresh=False)
+    package = _select_distribution_package(distribution, version)
+    file_name = _update_file_name(version, package)
+    return _sectl_update_download_url(version, file_name, package, "server")
+
+
+async def download_update_via_sectl_async(
+    version: str,
+    progress_callback: Optional[Callable] = None,
+    timeout: int = 300,
+    cancel_check: Optional[Callable[[], bool]] = None,
+) -> Optional[str]:  # type: ignore[override]
+    distribution = await get_distribution_info_async(force_refresh=False)
+    package = _select_distribution_package(distribution, version)
+    file_name = _update_file_name(version, package)
+
+    download_dir = get_data_path("downloads")
+    ensure_dir(download_dir)
+    file_path = download_dir / file_name
+    if file_path.exists() and check_update_file_integrity(str(file_path)):
+        return str(file_path)
+
+    for source_name, url in _update_download_candidates(version, file_name, package):
+        try:
+            logger.debug(f"尝试从 {source_name} 下载更新: {url}")
+            if file_path.exists():
+                file_path.unlink()
+            completed = await _download_update_candidate(
+                url,
+                file_path,
+                progress_callback,
+                timeout,
+                cancel_check,
+            )
+            if not completed:
+                return None
+            if check_update_file_integrity(str(file_path)):
+                logger.debug(f"更新文件下载成功: {file_path}")
+                return str(file_path)
+            logger.warning(f"下载的更新文件校验失败: {file_path}")
+        except Exception as e:
+            logger.warning(f"从 {source_name} 下载更新失败: {e}")
+        if file_path.exists():
+            try:
+                file_path.unlink()
+            except Exception:
+                pass
+
+    return None
+
+
+def get_latest_version(channel: int | None = None) -> dict | None:  # type: ignore[override]
+    return _run_async_func(get_latest_version_via_sectl_async, channel)
+
+
+def get_update_download_url(
+    version: str, system: str = SYSTEM, arch: str = ARCH, struct: str = STRUCT
+) -> str:  # type: ignore[override]
+    return _run_async_func(
+        get_update_download_url_via_sectl_async, version, system, arch, struct
+    )
+
+
+def download_update(
+    version: str,
+    arch: str = ARCH,
+    progress_callback: Optional[Callable] = None,
+    timeout: int = 300,
+    cancel_check: Optional[Callable[[], bool]] = None,
+) -> Optional[str]:  # type: ignore[override]
+    return _run_async_func(
+        download_update_via_sectl_async,
+        version,
+        progress_callback,
+        timeout,
+        cancel_check,
+    )
+
+
+async def get_latest_version_async(channel: int | None = None) -> dict | None:  # type: ignore[override]
+    return await get_latest_version_via_sectl_async(channel)
+
+
+async def get_update_download_url_async(
+    version: str, system: str = SYSTEM, arch: str = ARCH, struct: str = STRUCT
+) -> str:  # type: ignore[override]
+    return await get_update_download_url_via_sectl_async(version, system, arch, struct)
+
+
+async def download_update_async(
+    version: str,
+    progress_callback: Optional[Callable] = None,
+    timeout: int = 300,
+    cancel_check: Optional[Callable[[], bool]] = None,
+) -> Optional[str]:  # type: ignore[override]
+    return await download_update_via_sectl_async(
+        version,
+        progress_callback=progress_callback,
+        timeout=timeout,
+        cancel_check=cancel_check,
+    )

@@ -12,7 +12,6 @@ from app.common.shortcut import ShortcutManager
 from app.tools.variable import (
     MINIMUM_WINDOW_SIZE,
     APP_INIT_DELAY,
-    PRE_CLASS_RESET_INTERVAL_MS,
     RESIZE_TIMER_DELAY_MS,
     MAXIMIZE_RESTORE_DELAY_MS,
     EXIT_CODE_RESTART,
@@ -41,6 +40,7 @@ from app.page_building.main_window_page import (
 from app.view.tray.tray import Tray
 from app.view.floating_window.levitation import LevitationWindow
 from app.common.IPC_URL.url_command_handler import URLCommandHandler
+from app.common.extraction.extract import get_next_pre_class_reset_check_delay_ms
 from app.page_building.window_template import BackgroundLayer
 from app.page_building.another_window import create_countdown_timer_window
 
@@ -97,6 +97,7 @@ class MainWindow(FluentWindow):
         )
 
         self.pre_class_reset_timer = QTimer(self)
+        self.pre_class_reset_timer.setSingleShot(True)
         self.pre_class_reset_timer.timeout.connect(self._check_pre_class_reset)
 
         QTimer.singleShot(1000, self._init_pre_class_reset)
@@ -1118,9 +1119,37 @@ class MainWindow(FluentWindow):
                 self._perform_pre_class_reset()
                 self.pre_class_reset_performed = True
                 self.pre_class_reset_timer.stop()
+                return
+
+            self._schedule_next_pre_class_reset_check(data_source, pre_class_reset_time)
 
         except Exception as e:
             logger.exception(f"检测课前重置时出错: {e}")
+
+            self.pre_class_reset_timer.start(600 * 1000)
+
+    def _schedule_next_pre_class_reset_check(
+        self, data_source=None, pre_class_reset_time=None
+    ):
+        """根据下一节课时间安排下一次课前重置检查。"""
+        try:
+            if data_source is None:
+                data_source = readme_settings_async(
+                    "linkage_settings", "data_source", 0
+                )
+            if pre_class_reset_time is None:
+                pre_class_reset_time = readme_settings_async(
+                    "linkage_settings", "pre_class_reset_time", 120
+                )
+
+            delay_ms = get_next_pre_class_reset_check_delay_ms(
+                data_source,
+                pre_class_reset_time,
+            )
+            self.pre_class_reset_timer.start(delay_ms)
+        except Exception as e:
+            logger.warning(f"安排下一次课前重置检查失败: {e}")
+            self.pre_class_reset_timer.start(600 * 1000)
 
     def _get_on_class_left_time(self, data_source):
         """根据数据源获取距离上课时间
@@ -1202,7 +1231,7 @@ class MainWindow(FluentWindow):
                 return
 
             if not self.pre_class_reset_timer.isActive():
-                self.pre_class_reset_timer.start(PRE_CLASS_RESET_INTERVAL_MS)
+                self._schedule_next_pre_class_reset_check(data_source)
                 if data_source == 2:
                     logger.debug("课前重置定时器已启动（ClassIsland模式）")
                 else:

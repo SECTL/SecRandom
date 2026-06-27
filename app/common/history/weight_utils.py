@@ -9,12 +9,22 @@ from app.tools.settings_access import (
     get_bool_setting,
     get_float_setting,
     get_int_setting,
+    readme_settings_async,
 )
 from app.Language.obtain_language import get_content_combo_name_async
 from app.common.history.file_utils import load_history_data
 from app.common.history.history_reader import filter_roll_call_history_by_subject
 
 system_random = SystemRandom()
+
+
+def _has_setting(first_level_key: str, second_level_key: str) -> bool:
+    return readme_settings_async(first_level_key, second_level_key, None) is not None
+
+
+def _get_student_key(student: dict):
+    """获取与历史记录一致的学生键，优先使用姓名。"""
+    return student.get("name") or student.get("id", "")
 
 
 # ==================================================
@@ -69,6 +79,11 @@ def format_weight_for_display(weights_data: list, weight_key: str = "weight") ->
 
 def _load_weight_settings() -> dict:
     """加载权重设置"""
+    shield_group = (
+        "fair_draw_settings"
+        if _has_setting("fair_draw_settings", "shield_enabled")
+        else "advanced_settings"
+    )
     return {
         "fair_draw_enabled": get_bool_setting("fair_draw_settings", "fair_draw"),
         "fair_draw_group_enabled": get_bool_setting(
@@ -98,9 +113,9 @@ def _load_weight_settings() -> dict:
         "cold_start_rounds": get_int_setting(
             "fair_draw_settings", "cold_start_rounds", 10
         ),
-        "shield_enabled": get_bool_setting("advanced_settings", "shield_enabled"),
-        "shield_time": get_int_setting("advanced_settings", "shield_time", 0),
-        "shield_time_unit": get_int_setting("advanced_settings", "shield_time_unit", 0),
+        "shield_enabled": get_bool_setting(shield_group, "shield_enabled"),
+        "shield_time": get_int_setting(shield_group, "shield_time", 0),
+        "shield_time_unit": get_int_setting(shield_group, "shield_time_unit", 0),
     }
 
 
@@ -110,8 +125,8 @@ def _process_history_for_weights(students_data: list, history_data: dict) -> dic
 
     # 初始化
     for student in students_data:
-        student_id = student.get("id", student.get("name", ""))
-        weight_data[student_id] = {
+        student_key = _get_student_key(student)
+        weight_data[student_key] = {
             "total_count": 0,
             "group_count": 0,
             "gender_count": 0,
@@ -125,13 +140,10 @@ def _process_history_for_weights(students_data: list, history_data: dict) -> dic
         if isinstance(students_history, dict):
             for student_name, student_info in students_history.items():
                 if student_name in weight_data and isinstance(student_info, dict):
-                    weight_data[student_name]["total_count"] = student_info.get(
-                        "total_count", 0
-                    )
-                    weight_data[student_name]["rounds_missed"] = student_info.get(
-                        "rounds_missed", 0
-                    )
-                    weight_data[student_name]["last_drawn_time"] = student_info.get(
+                    current_data = weight_data[student_name]
+                    current_data["total_count"] = student_info.get("total_count", 0)
+                    current_data["rounds_missed"] = student_info.get("rounds_missed", 0)
+                    current_data["last_drawn_time"] = student_info.get(
                         "last_drawn_time", ""
                     )
 
@@ -149,11 +161,11 @@ def _process_history_for_weights(students_data: list, history_data: dict) -> dic
                             if isinstance(record, dict):
                                 draw_group = record.get("draw_group", "")
                                 if draw_group and draw_group != all_group_opt:
-                                    weight_data[student_name]["group_count"] += 1
+                                    current_data["group_count"] += 1
 
                                 draw_gender = record.get("draw_gender", "")
                                 if draw_gender and draw_gender != all_gender_opt:
-                                    weight_data[student_name]["gender_count"] += 1
+                                    current_data["gender_count"] += 1
 
     return weight_data
 
@@ -289,11 +301,11 @@ def calculate_weight(students_data: list, class_name: str, subject: str = "") ->
 
     # 为每个学生计算权重
     for student in students_data:
-        student_id = student.get("id", student.get("name", ""))
-        if student_id not in weight_data:
+        student_key = _get_student_key(student)
+        if student_key not in weight_data:
             continue
 
-        s_data = weight_data[student_id]
+        s_data = weight_data[student_key]
 
         # 1. 频率因子
         frequency_penalty = _calculate_frequency_factor(
@@ -367,15 +379,16 @@ def calculate_weight(students_data: list, class_name: str, subject: str = "") ->
             ]
         )
 
+        min_weight = settings["min_weight"]
         if is_shielded:
-            total_weight = settings["min_weight"] / 10
-
-        total_weight = max(
-            settings["min_weight"] / 10, min(settings["max_weight"], total_weight)
-        )
+            total_weight = 0.0
+        else:
+            total_weight = max(min_weight, min(settings["max_weight"], total_weight))
         total_weight = round(total_weight, 2)
 
         student["next_weight"] = total_weight
+        student["weight"] = total_weight
+        student["is_drawable"] = not is_shielded
         student["weight_details"] = {
             "base_weight": settings["base_weight"],
             "frequency_penalty": frequency_penalty,

@@ -45,8 +45,11 @@ class PathManager:
         """初始化路径管理器"""
         self._app_root = self._get_app_root()
         self._runtime_root = self._get_runtime_root()
+        self._legacy_runtime_root = self._get_legacy_runtime_root()
         logger.debug(f"应用程序根目录: {self._app_root}")
         logger.debug(f"应用程序运行数据目录: {self._runtime_root}")
+        if self._legacy_runtime_root != self._runtime_root:
+            logger.debug(f"旧版运行数据目录: {self._legacy_runtime_root}")
 
     def _get_app_root(self) -> Path:
         """获取应用程序根目录
@@ -62,10 +65,15 @@ class PathManager:
             return Path(__file__).parent.parent.parent
 
     def _get_runtime_root(self) -> Path:
-        """获取运行时可写根目录。"""
-        if not getattr(sys, "frozen", False):
-            return self._app_root
+        """获取运行时数据根目录。
 
+        SecRandom 的名单、音频、历史记录等运行数据应保存在程序目录中，
+        不能因为打包运行就重定向到系统用户数据目录。
+        """
+        return self._app_root
+
+    def _get_legacy_runtime_root(self) -> Path:
+        """获取曾经误用的系统用户数据目录，用于将数据恢复回程序目录。"""
         app_name = APPLY_NAME or "SecRandom"
 
         if sys.platform.startswith(("win", "cygwin", "msys")):
@@ -122,14 +130,19 @@ class PathManager:
         return base_path.joinpath(*normalized.split("/"))
 
     def _migrate_legacy_mutable_path(self, relative_path: str, runtime_path: Path):
-        """将旧版打包目录中的可变数据迁移到运行时目录。"""
+        """将曾经误写到系统用户数据目录的可变数据恢复到程序目录。"""
         if not getattr(sys, "frozen", False):
+            return
+
+        if self._legacy_runtime_root == self._runtime_root:
             return
 
         if runtime_path.exists():
             return
 
-        legacy_path = self._build_relative_path(self._app_root, relative_path)
+        legacy_path = self._build_relative_path(
+            self._legacy_runtime_root, relative_path
+        )
         if legacy_path == runtime_path or not legacy_path.exists():
             return
 
@@ -142,11 +155,11 @@ class PathManager:
                 shutil.copy2(legacy_path, runtime_path)
 
             logger.info(
-                f"已将旧版可变数据迁移到运行目录: {legacy_path} -> {runtime_path}"
+                f"已将误写到系统目录的可变数据恢复到程序目录: {legacy_path} -> {runtime_path}"
             )
         except Exception as e:
             logger.warning(
-                f"迁移旧版可变数据失败: {legacy_path} -> {runtime_path}, 错误: {e}"
+                f"恢复系统目录中的可变数据失败: {legacy_path} -> {runtime_path}, 错误: {e}"
             )
 
     def get_absolute_path(self, relative_path: Union[str, Path]) -> Path:

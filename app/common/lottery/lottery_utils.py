@@ -2,6 +2,7 @@
 # 抽奖工具类
 # ==================================================
 from random import SystemRandom
+from loguru import logger
 
 from app.common.data.list import (
     get_group_list,
@@ -21,6 +22,7 @@ from app.tools.config import (
 from app.tools.settings_access import readme_settings_async
 from app.tools.list_specific_settings_access import (
     read_lottery_setting,
+    read_roll_call_setting,
     get_safe_font_size_list_specific,
 )
 
@@ -31,6 +33,27 @@ system_random = SystemRandom()
 
 class LotteryUtils:
     """抽奖工具类，提供通用的抽奖相关功能"""
+
+    @staticmethod
+    def _prefer_drawable_candidates(candidates, weights, required_count):
+        """优先排除仍处于屏蔽期的候选人，人数不足时才降级补回。"""
+        drawable_pairs = [
+            (candidate, weights[index] if index < len(weights) else 1.0)
+            for index, candidate in enumerate(candidates)
+            if candidate.get("is_drawable", True)
+        ]
+
+        if len(drawable_pairs) >= required_count:
+            filtered_candidates, filtered_weights = zip(*drawable_pairs, strict=True)
+            return list(filtered_candidates), list(filtered_weights)
+
+        shielded_count = len(candidates) - len(drawable_pairs)
+        if shielded_count > 0:
+            logger.warning(
+                f"抽奖分配学生可抽取候选人不足，临时补回 {shielded_count} 个屏蔽期候选人"
+            )
+
+        return list(candidates), list(weights)
 
     @staticmethod
     def _get_prize_draw_type(pool_name: str | None = None) -> int:
@@ -188,7 +211,7 @@ class LotteryUtils:
             if not students_dict_list:
                 return {"reset_required": True}
 
-            draw_type = readme_settings_async("roll_call_settings", "draw_type")
+            draw_type = read_roll_call_setting(class_name, "draw_type")
             unique_draw = min(draw_count, len(students_dict_list))
             selected_groups = RollCallUtils.draw_random_groups(
                 students_dict_list, unique_draw, draw_type
@@ -241,12 +264,12 @@ class LotteryUtils:
             # 注意：这里我们返回一个特殊的标记，让调用者处理
             return {"reset_required": True}
 
-        draw_type = readme_settings_async("roll_call_settings", "draw_type")
+        draw_type = read_roll_call_setting(class_name, "draw_type")
         if draw_type == 1:
             students_with_weight = calculate_weight(students_dict_list, class_name)
             weights = []
             for student in students_with_weight:
-                weights.append(student.get("weight", 1.0))
+                weights.append(student.get("next_weight", student.get("weight", 1.0)))
         else:
             students_with_weight = students_dict_list
             weights = [1.0] * len(students_dict_list)
@@ -265,8 +288,21 @@ class LotteryUtils:
                 students_with_weight, behind_scenes_weights, class_name, pool_name
             )
 
-            # 使用内幕设置的权重
-            weights = behind_scenes_weights
+            # 公平权重与内幕权重相乘，避免任一机制覆盖另一方
+            weights = [
+                (
+                    student.get("next_weight", student.get("weight", 1.0))
+                    if draw_type == 1
+                    else 1.0
+                )
+                * (behind_scenes_weights[i] if i < len(behind_scenes_weights) else 1.0)
+                for i, student in enumerate(students_with_weight)
+            ]
+
+        if draw_type == 1:
+            students_with_weight, weights = LotteryUtils._prefer_drawable_candidates(
+                students_with_weight, weights, current_count
+            )
 
         draw_count = int(current_count or 0)
         if draw_count <= 0:

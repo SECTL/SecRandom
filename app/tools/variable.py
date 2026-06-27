@@ -9,8 +9,8 @@ from datetime import datetime
 
 # -------------------- 软件基本信息 --------------------
 APPLY_NAME = "SecRandom"  # 软件名称
-VERSION = "v0.0.0"  # 软件当前版本
-NEXT_VERSION = "v2.3.10"  # 软件下一个版本
+VERSION = "v2.0.0"  # 软件当前版本
+NEXT_VERSION = "v2.3.100"  # 软件下一个版本
 CODENAME = "Shiroko"  # 软件代号
 SPECIAL_VERSION = VERSION if VERSION != "v0.0.0" else NEXT_VERSION
 

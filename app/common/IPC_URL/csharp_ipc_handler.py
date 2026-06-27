@@ -389,6 +389,24 @@ if CSHARP_AVAILABLE:
             except Exception:
                 return 0
 
+        def get_current_time_point_left_time(self) -> int:
+            try:
+                if not self.is_running or not self.is_connected:
+                    return 0
+
+                lessonSc = GeneratedIpcFactory.CreateIpcProxy[IPublicLessonsService](
+                    self.ipc_client.Provider, self.ipc_client.PeerProxy
+                )
+
+                current_item = lessonSc.CurrentTimeLayoutItem
+                if not current_item:
+                    return 0
+
+                left = current_item.EndTime - DateTime.Now.TimeOfDay
+                return max(0, int(left.TotalSeconds))
+            except Exception:
+                return 0
+
         def _on_class_test(self):
             lessonSc = GeneratedIpcFactory.CreateIpcProxy[IPublicLessonsService](
                 self.ipc_client.Provider, self.ipc_client.PeerProxy
@@ -645,6 +663,9 @@ else:
             return {}
 
         def get_elapsed_since_previous_time_point_end_seconds(self) -> int:
+            return 0
+
+        def get_current_time_point_left_time(self) -> int:
             return 0
 
         def _on_class_test(self):

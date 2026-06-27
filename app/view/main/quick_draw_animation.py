@@ -211,6 +211,7 @@ class QuickDrawAnimation(QObject):
         )
         current_count = read_quick_draw_setting(class_name, "draw_count")
         half_repeat = read_quick_draw_setting(class_name, "half_repeat")
+        draw_type = read_quick_draw_setting(class_name, "draw_type")
 
         # 加载数据到管理器
         self.roll_call_widget.manager.load_data(
@@ -220,6 +221,7 @@ class QuickDrawAnimation(QObject):
             group_index,
             gender_index,
             half_repeat,
+            draw_type,
         )
 
         animation_music = read_quick_draw_setting(class_name, "animation_music")

@@ -15,6 +15,187 @@ from app.tools.path_utils import *
 from app.tools.settings_access import readme_settings_async
 
 
+LINKAGE_MIN_CHECK_DELAY_MS = 1000
+LINKAGE_FALLBACK_CHECK_DELAY_MS = 120 * 1000
+LINKAGE_MAX_CHECK_DELAY_MS = 24 * 60 * 60 * 1000
+
+
+def _coerce_int(value, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _seconds_to_delay_ms(seconds: int, fallback_seconds: int = 120) -> int:
+    seconds = _coerce_int(seconds, 0)
+    if seconds <= 0:
+        seconds = fallback_seconds
+    delay_ms = seconds * 1000
+    return max(
+        LINKAGE_MIN_CHECK_DELAY_MS,
+        min(delay_ms, LINKAGE_MAX_CHECK_DELAY_MS),
+    )
+
+
+def _iter_class_time_ranges(max_days: int = 7):
+    current_day_of_week = _get_current_day_of_week()
+
+    for day_offset in range(max(1, max_days)):
+        day_of_week = ((current_day_of_week - 1 + day_offset) % 7) + 1
+        class_times = _get_class_times_by_day(day_of_week)
+        if not class_times or not isinstance(class_times, dict):
+            continue
+
+        time_ranges = []
+        for range_name, time_range in class_times.items():
+            try:
+                start_end = time_range.split("-")
+                if len(start_end) != 2:
+                    continue
+                start_seconds = _parse_time_string_to_seconds(start_end[0])
+                end_seconds = _parse_time_string_to_seconds(start_end[1])
+                time_ranges.append((start_seconds, end_seconds, range_name))
+            except Exception as e:
+                logger.error(f"解析时间段失败: {range_name} = {time_range}, 错误: {e}")
+                continue
+
+        for start_seconds, end_seconds, range_name in sorted(
+            time_ranges, key=lambda item: item[0]
+        ):
+            yield day_offset, start_seconds, end_seconds, range_name
+
+
+def get_next_cses_class_start_seconds(max_days: int = 7) -> int:
+    """获取距离下一节 CSES 课程开始的秒数。"""
+    current_total_seconds = _get_current_time_in_seconds()
+
+    for day_offset, start_seconds, _, _ in _iter_class_time_ranges(max_days):
+        target_seconds = day_offset * 24 * 60 * 60 + start_seconds
+        seconds_left = target_seconds - current_total_seconds
+        if seconds_left > 0:
+            return seconds_left
+
+    return 0
+
+
+def get_next_cses_linkage_check_delay_ms(fallback_seconds: int = 120) -> int:
+    """按 CSES 课程边界计算下一次联动状态检查时间。"""
+    current_total_seconds = _get_current_time_in_seconds()
+    pre_class_enable_time = _coerce_int(
+        readme_settings_async("linkage_settings", "pre_class_enable_time", 0), 0
+    )
+    post_class_disable_delay = _coerce_int(
+        readme_settings_async("linkage_settings", "post_class_disable_delay", 0), 0
+    )
+
+    candidates = []
+    for day_offset, start_seconds, end_seconds, _ in _iter_class_time_ranges(7):
+        day_base_seconds = day_offset * 24 * 60 * 60
+        start_left = day_base_seconds + start_seconds - current_total_seconds
+        end_left = day_base_seconds + end_seconds - current_total_seconds
+
+        if pre_class_enable_time > 0:
+            candidates.append(start_left - pre_class_enable_time)
+        candidates.append(start_left)
+        candidates.append(end_left + max(0, post_class_disable_delay))
+
+    future_candidates = [seconds for seconds in candidates if seconds > 0]
+    if not future_candidates:
+        return _seconds_to_delay_ms(0, fallback_seconds)
+
+    return _seconds_to_delay_ms(min(future_candidates), fallback_seconds)
+
+
+def get_next_linkage_check_delay_ms(
+    data_source: int | None = None,
+    fallback_seconds: int = 120,
+) -> int:
+    """计算下一次联动状态检查延迟，优先在课程边界触发。"""
+    if data_source is None:
+        data_source = readme_settings_async("linkage_settings", "data_source", 0)
+    data_source = _coerce_int(data_source, 0)
+
+    if data_source == 1:
+        return get_next_cses_linkage_check_delay_ms(fallback_seconds)
+
+    if data_source == 2:
+        try:
+            ipc_handler = CSharpIPCHandler.instance()
+            if not ipc_handler.is_running or not ipc_handler.is_connected:
+                return _seconds_to_delay_ms(0, fallback_seconds)
+
+            candidates = []
+            on_class_left_time = _coerce_int(ipc_handler.get_on_class_left_time(), 0)
+            pre_class_enable_time = _coerce_int(
+                readme_settings_async("linkage_settings", "pre_class_enable_time", 0),
+                0,
+            )
+            if on_class_left_time > 0:
+                if pre_class_enable_time > 0:
+                    candidates.append(on_class_left_time - pre_class_enable_time)
+                candidates.append(on_class_left_time)
+
+            current_time_point_left_time = _coerce_int(
+                ipc_handler.get_current_time_point_left_time(),
+                0,
+            )
+            if current_time_point_left_time > 0:
+                candidates.append(current_time_point_left_time)
+
+            post_class_disable_delay = _coerce_int(
+                readme_settings_async(
+                    "linkage_settings", "post_class_disable_delay", 0
+                ),
+                0,
+            )
+            if post_class_disable_delay > 0:
+                elapsed_seconds = _coerce_int(
+                    ipc_handler.get_elapsed_since_previous_time_point_end_seconds(),
+                    0,
+                )
+                if 0 < elapsed_seconds < post_class_disable_delay:
+                    candidates.append(post_class_disable_delay - elapsed_seconds)
+
+            future_candidates = [seconds for seconds in candidates if seconds > 0]
+            if future_candidates:
+                return _seconds_to_delay_ms(min(future_candidates), fallback_seconds)
+        except Exception as e:
+            logger.warning(f"计算 ClassIsland 联动检查时间失败: {e}")
+
+    return _seconds_to_delay_ms(0, fallback_seconds)
+
+
+def get_next_pre_class_reset_check_delay_ms(
+    data_source: int,
+    pre_class_reset_time: int,
+    fallback_seconds: int = 600,
+) -> int:
+    """计算下一次课前重置检查延迟，尽量在重置窗口开始时触发。"""
+    data_source = _coerce_int(data_source, 0)
+    pre_class_reset_time = max(1, _coerce_int(pre_class_reset_time, 120))
+
+    seconds_to_class = 0
+    if data_source == 1:
+        seconds_to_class = get_next_cses_class_start_seconds(7)
+    elif data_source == 2:
+        try:
+            seconds_to_class = _coerce_int(
+                CSharpIPCHandler.instance().get_on_class_left_time(), 0
+            )
+        except Exception as e:
+            logger.warning(f"计算 ClassIsland 课前重置检查时间失败: {e}")
+
+    if seconds_to_class <= 0:
+        return _seconds_to_delay_ms(0, fallback_seconds)
+    if seconds_to_class <= pre_class_reset_time:
+        return LINKAGE_MIN_CHECK_DELAY_MS
+
+    return _seconds_to_delay_ms(
+        seconds_to_class - pre_class_reset_time, fallback_seconds
+    )
+
+
 def _get_break_assignment_class_info() -> Dict:
     try:
         data_source = readme_settings_async("linkage_settings", "data_source")

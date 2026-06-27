@@ -2,6 +2,7 @@
 # 点名工具类
 # ==================================================
 from random import SystemRandom
+from loguru import logger
 
 from app.common.data.list import get_group_list, get_student_list, filter_students_data
 from app.common.history import calculate_weight
@@ -278,6 +279,27 @@ class RollCallUtils:
         return selected_candidates, selected_candidates_dict
 
     @staticmethod
+    def _prefer_drawable_candidates(candidates, weights, required_count):
+        """优先排除仍处于屏蔽期的候选人，人数不足时才降级补回。"""
+        drawable_pairs = [
+            (candidate, weights[index] if index < len(weights) else 1.0)
+            for index, candidate in enumerate(candidates)
+            if candidate.get("is_drawable", True)
+        ]
+
+        if len(drawable_pairs) >= required_count:
+            filtered_candidates, filtered_weights = zip(*drawable_pairs, strict=True)
+            return list(filtered_candidates), list(filtered_weights)
+
+        shielded_count = len(candidates) - len(drawable_pairs)
+        if shielded_count > 0:
+            logger.warning(
+                f"可抽取候选人不足，临时补回 {shielded_count} 个屏蔽期候选人以完成抽取"
+            )
+
+        return list(candidates), list(weights)
+
+    @staticmethod
     def draw_random_students(
         class_name,
         group_index,
@@ -286,6 +308,7 @@ class RollCallUtils:
         gender_filter,
         current_count,
         half_repeat,
+        draw_type=None,
     ):
         """
         抽取随机学生
@@ -305,7 +328,8 @@ class RollCallUtils:
 
         # 3. 如果是小组模式，直接抽取小组
         if group_index == 1:
-            draw_type = read_roll_call_setting(class_name, "draw_type")
+            if draw_type is None:
+                draw_type = read_roll_call_setting(class_name, "draw_type")
             selected_groups = RollCallUtils.draw_random_groups(
                 students_dict_list, current_count, draw_type
             )
@@ -379,7 +403,8 @@ class RollCallUtils:
             }
 
         # 8. 计算最终权重
-        draw_type = read_roll_call_setting(class_name, "draw_type")
+        if draw_type is None:
+            draw_type = read_roll_call_setting(class_name, "draw_type")
         weights = []
         if draw_type == 1:
             students_with_weight = calculate_weight(
@@ -387,12 +412,15 @@ class RollCallUtils:
             )
             # 重新对齐权重列表（students_with_weight 和 behind_scenes_weights 应该是一一对应的）
             for i, student in enumerate(students_with_weight):
-                base_weight = student.get("weight", 1.0)
+                base_weight = student.get("next_weight", student.get("weight", 1.0))
                 bs_weight = (
                     behind_scenes_weights[i] if i < len(behind_scenes_weights) else 1.0
                 )
                 weights.append(base_weight * bs_weight)
             candidates = students_with_weight
+            candidates, weights = RollCallUtils._prefer_drawable_candidates(
+                candidates, weights, current_count
+            )
         else:
             candidates = students_dict_list
             weights = behind_scenes_weights

@@ -826,39 +826,6 @@ def create_backup_manager_window():
 
 
 # ==================================================
-# 智能分析窗口
-# ==================================================
-class analysis_window_template(PageTemplate):
-    def __init__(self, parent=None):
-        def factory(parent):
-            from app.view.another_window.analysis_window import AnalysisWindow
-
-            return AnalysisWindow(parent=parent)
-
-        factory.__name__ = "AnalysisWindow"
-        super().__init__(content_widget_class=factory, parent=parent)
-
-
-def create_analysis_window():
-    window, _ = _create_reusable_window(
-        "best_config_analysis",
-        ("best_config", "analysis_window_title"),
-        analysis_window_template,
-        680,
-        540,
-        parent=None,
-    )
-    try:
-        if hasattr(window, "enable_close_guard"):
-            window.enable_close_guard(True)
-        else:
-            window.setProperty("srCloseGuard", True)
-    except Exception:
-        pass
-    return
-
-
-# ==================================================
 # 点名独立名单配置窗口
 # ==================================================
 class roll_call_list_specific_settings_window_template(PageTemplate):
