@@ -2,10 +2,271 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:SecRandom.ViewModels"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:langs="using:SecRandom.Langs.MainPages.RollCall"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.MainPages.RollCallPage">
-    <StackPanel Classes="page-container">
-        <TextBlock Text="{x:Static langs:Resources.Welcome}" />
-    </StackPanel>
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="720"
+             x:Class="SecRandom.Views.MainPages.RollCallPage"
+             x:DataType="vm:RollCallPageViewModel"
+             Unloaded="OnUnloaded">
+    <UserControl.Resources>
+        <DataTemplate x:Key="RollCallControlPanelTemplate"
+                      DataType="vm:RollCallPageViewModel">
+            <StackPanel Classes="roll-control-stack" Spacing="0">
+                <Button Classes="roll-wide"
+                        Content="{x:Static langs:Resources.C_Reset}"
+                        IsVisible="{Binding MoreSettings.RollCallResetButton}"
+                        Command="{Binding ResetDrawHistoryCommand}" />
+
+                <Grid Classes="roll-count-row"
+                      ColumnDefinitions="45,*,45"
+                      IsVisible="{Binding MoreSettings.RollCallQuantityControl}">
+                    <Button Grid.Column="0"
+                            Classes="roll-compact"
+                            Content="-"
+                            IsEnabled="{Binding CanDecreaseCount}"
+                            Command="{Binding DecreaseCountCommand}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding DrawCount}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="28"
+                               FontWeight="SemiBold" />
+                    <Button Grid.Column="2"
+                            Classes="roll-compact"
+                            Content="+"
+                            IsEnabled="{Binding CanIncreaseCount}"
+                            Command="{Binding IncreaseCountCommand}" />
+                </Grid>
+
+                <Button Classes="roll-wide accent"
+                        Content="{x:Static langs:Resources.C_Start}"
+                        IsVisible="{Binding MoreSettings.RollCallStartButton}"
+                        IsEnabled="{Binding CanStartDraw}"
+                        Command="{Binding StartDrawCommand}" />
+
+                <ComboBox Classes="roll-selector"
+                          IsVisible="{Binding MoreSettings.RollCallListSelector}"
+                          ItemsSource="{Binding StudentListNames}"
+                          SelectedItem="{Binding SelectedStudentListName}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       TextAlignment="Center" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <ComboBox Classes="roll-selector"
+                          IsVisible="{Binding MoreSettings.RollCallRangeSelector}"
+                          ItemsSource="{Binding GroupOptions}"
+                          SelectedItem="{Binding SelectedGroup}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       TextAlignment="Center" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <ComboBox Classes="roll-selector"
+                          IsVisible="{Binding MoreSettings.RollCallGenderSelector}"
+                          ItemsSource="{Binding GenderOptions}"
+                          SelectedItem="{Binding SelectedGender}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       TextAlignment="Center" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <Button Classes="roll-wide"
+                        Content="{x:Static langs:Resources.C_ShowRemainingList}"
+                        FontSize="18"
+                        IsVisible="{Binding MoreSettings.RollCallRemainingButton}"
+                        Click="RemainingListButton_OnClick" />
+
+                <TextBlock Text="{Binding CountSummary}"
+                           IsVisible="{Binding MoreSettings.RollCallQuantityLabel}"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Margin="0 8 0 0" />
+
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="RollCallRemainingItemTemplate"
+                      DataType="vm:RollCallRemainingItem">
+            <Border Padding="0 8"
+                    BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                    BorderThickness="0 0 0 1">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="0"
+                               Text="{Binding DisplayText}"
+                               FontWeight="SemiBold" />
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="1"
+                               Text="{Binding Gender}"
+                               Opacity="0.68" />
+                    <TextBlock Grid.Row="1"
+                               Grid.ColumnSpan="2"
+                               Text="{Binding Group}"
+                               Opacity="0.58"
+                               FontSize="12" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="Border.roll-control-panel">
+            <Setter Property="Width" Value="236" />
+            <Setter Property="MinWidth" Value="200" />
+            <Setter Property="MaxWidth" Value="260" />
+            <Setter Property="Margin" Value="12 0 28 28" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+        </Style>
+
+        <Style Selector="StackPanel.roll-control-stack">
+            <Setter Property="Width" Value="236" />
+            <Setter Property="MinWidth" Value="200" />
+            <Setter Property="MaxWidth" Value="260" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+        </Style>
+
+        <Style Selector="Grid.roll-count-row">
+            <Setter Property="Width" Value="236" />
+            <Setter Property="MinWidth" Value="200" />
+            <Setter Property="MaxWidth" Value="260" />
+            <Setter Property="Height" Value="45" />
+            <Setter Property="Margin" Value="0 4" />
+        </Style>
+
+        <Style Selector="Button.roll-wide">
+            <Setter Property="Width" Value="236" />
+            <Setter Property="MinWidth" Value="200" />
+            <Setter Property="MaxWidth" Value="260" />
+            <Setter Property="Height" Value="45" />
+            <Setter Property="Margin" Value="0 4" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="Button.roll-compact">
+            <Setter Property="Width" Value="45" />
+            <Setter Property="MinWidth" Value="45" />
+            <Setter Property="MaxWidth" Value="45" />
+            <Setter Property="Height" Value="45" />
+            <Setter Property="MinHeight" Value="45" />
+            <Setter Property="MaxHeight" Value="45" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
+        <Style Selector="ComboBox.roll-selector">
+            <Setter Property="Width" Value="236" />
+            <Setter Property="MinWidth" Value="200" />
+            <Setter Property="MaxWidth" Value="260" />
+            <Setter Property="Height" Value="45" />
+            <Setter Property="Margin" Value="0 4" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBlock.result-name">
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="MaxWidth" Value="860" />
+        </Style>
+
+        <Style Selector="Border.result-card">
+            <Setter Property="MinWidth" Value="180" />
+            <Setter Property="MinHeight" Value="96" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="22 16" />
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="Auto,*,Auto"
+          RowDefinitions="*"
+          MinHeight="560">
+        <Border Grid.Column="0"
+                Classes="roll-control-panel"
+                HorizontalAlignment="Left"
+                IsVisible="{Binding IsControlPanelOnLeft}">
+            <ContentControl Content="{Binding}"
+                            ContentTemplate="{StaticResource RollCallControlPanelTemplate}" />
+        </Border>
+
+        <Grid Grid.Column="1">
+            <Grid Grid.Row="0">
+                <TextBlock Classes="result-name"
+                           IsVisible="{Binding !IsResultVisible}"
+                           Text="{Binding ResultText}"
+                           Foreground="{Binding ReminderBrush}"
+                           FontSize="{Binding ReminderFontSize}"
+                           FontFamily="{Binding ResultFontFamily}"
+                           FontWeight="SemiBold" />
+
+                <ItemsControl IsVisible="{Binding IsResultVisible}"
+                              ItemsSource="{Binding ResultItems}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"
+                                       HorizontalAlignment="Center" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RollCallResultItem">
+                            <Border Classes="result-card" Margin="8">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{Binding DisplayText}"
+                                               Classes="result-name"
+                                               FontSize="{Binding $parent[UserControl].DataContext.ResultFontSize}"
+                                               FontFamily="{Binding $parent[UserControl].DataContext.ResultFontFamily}"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding Tags}"
+                                               IsVisible="{Binding !!Tags}"
+                                               HorizontalAlignment="Center"
+                                               Opacity="0.72"
+                                               FontSize="13" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </Grid>
+
+        <Border Grid.Column="2"
+                Classes="roll-control-panel"
+                IsVisible="{Binding IsControlPanelOnRight}">
+            <ContentControl Content="{Binding}"
+                            ContentTemplate="{StaticResource RollCallControlPanelTemplate}" />
+        </Border>
+
+    </Grid>
 </UserControl>

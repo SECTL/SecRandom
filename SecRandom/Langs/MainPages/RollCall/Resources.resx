@@ -1,31 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <root>
-    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
-                id="root"
-                xmlns="">
-        <xsd:element name="root" msdata:IsDataSet="true">
-
-        </xsd:element>
-    </xsd:schema>
-    <resheader name="resmimetype">
-        <value>text/microsoft-resx</value>
-    </resheader>
-    <resheader name="version">
-        <value>1.3</value>
-    </resheader>
-    <resheader name="reader">
-        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
-            PublicKeyToken=b77a5c561934e089
-        </value>
-    </resheader>
-    <resheader name="writer">
-        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
-            PublicKeyToken=b77a5c561934e089
-        </value>
-    </resheader>
-
-    <data name="Welcome" xml:space="preserve">
-        <value>欢迎来到 Avalonia！点名</value>
-    </data>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true" />
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="C_Reset" xml:space="preserve">
+    <value>重置</value>
+  </data>
+  <data name="C_Start" xml:space="preserve">
+    <value>开始</value>
+  </data>
+  <data name="C_ShowRemainingList" xml:space="preserve">
+    <value>查看剩余名单</value>
+  </data>
+  <data name="C_RemainingListTitle" xml:space="preserve">
+    <value>剩余名单</value>
+  </data>
+  <data name="C_Close" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="C_ListSettings" xml:space="preserve">
+    <value>名单设置</value>
+  </data>
+  <data name="C_RollCallSettings" xml:space="preserve">
+    <value>点名设置</value>
+  </data>
+  <data name="O_AllGroups" xml:space="preserve">
+    <value>抽取全部学生</value>
+  </data>
+  <data name="O_AllGenders" xml:space="preserve">
+    <value>抽取全部性别</value>
+  </data>
+  <data name="M_Ready" xml:space="preserve">
+    <value>准备就绪</value>
+  </data>
+  <data name="M_ResetDone" xml:space="preserve">
+    <value>已重置点名记录</value>
+  </data>
+  <data name="M_NoStudents" xml:space="preserve">
+    <value>当前筛选条件下没有学生</value>
+  </data>
+  <data name="M_NoRemainingStudents" xml:space="preserve">
+    <value>当前筛选条件下没有剩余学生</value>
+  </data>
+  <data name="M_DrawnCountFormat" xml:space="preserve">
+    <value>已抽中 {0} 人</value>
+  </data>
+  <data name="M_CountSummaryFormat" xml:space="preserve">
+    <value>总人数: {0} | 剩余人数: {1}</value>
+  </data>
+  <data name="M_NoCandidates" xml:space="preserve">
+    <value>没有可抽取的学生</value>
+  </data>
+  <data name="M_NoEligibleCandidates" xml:space="preserve">
+    <value>没有符合权重条件的学生</value>
+  </data>
+  <data name="M_RepeatLimitExhausted" xml:space="preserve">
+    <value>剩余学生不足，请重置记录或调整筛选</value>
+  </data>
+  <data name="M_InvalidWeight" xml:space="preserve">
+    <value>权重设置无效</value>
+  </data>
+  <data name="M_DrawFailed" xml:space="preserve">
+    <value>抽取失败</value>
+  </data>
+  <data name="M_ResultSeparator" xml:space="preserve">
+    <value>、</value>
+  </data>
 </root>

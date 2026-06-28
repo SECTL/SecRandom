@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true" />
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Page_Title" xml:space="preserve">
+    <value>语音设置</value>
+  </data>
+  <data name="S_Playback" xml:space="preserve">
+    <value>语音播报</value>
+  </data>
+  <data name="S_Playback_Enable" xml:space="preserve">
+    <value>启用语音播报</value>
+  </data>
+  <data name="S_Playback_Enable_D" xml:space="preserve">
+    <value>抽取完成后自动播报结果。</value>
+  </data>
+  <data name="S_Playback_Engine" xml:space="preserve">
+    <value>语音引擎</value>
+  </data>
+  <data name="S_Playback_Engine_D" xml:space="preserve">
+    <value>选择用于播报的语音引擎。</value>
+  </data>
+  <data name="O_VoiceEngine_System" xml:space="preserve">
+    <value>系统语音</value>
+  </data>
+  <data name="O_VoiceEngine_EdgeTts" xml:space="preserve">
+    <value>Edge TTS</value>
+  </data>
+  <data name="S_Playback_EdgeTtsVoice" xml:space="preserve">
+    <value>Edge TTS 音色</value>
+  </data>
+  <data name="S_Playback_EdgeTtsVoice_D" xml:space="preserve">
+    <value>Edge TTS 使用的 voice 名称。</value>
+  </data>
+  <data name="S_Playback_Volume" xml:space="preserve">
+    <value>语音音量</value>
+  </data>
+  <data name="S_Playback_Volume_D" xml:space="preserve">
+    <value>设置播报音量。</value>
+  </data>
+  <data name="S_Playback_SpeechRate" xml:space="preserve">
+    <value>语速</value>
+  </data>
+  <data name="S_Playback_SpeechRate_D" xml:space="preserve">
+    <value>设置播报速度百分比。</value>
+  </data>
+  <data name="S_Content" xml:space="preserve">
+    <value>播报内容</value>
+  </data>
+  <data name="S_Content_SpecificAnnouncements" xml:space="preserve">
+    <value>启用自定义播报字段</value>
+  </data>
+  <data name="S_Content_SpecificAnnouncements_D" xml:space="preserve">
+    <value>控制播报时是否按字段组合结果。</value>
+  </data>
+  <data name="S_Content_AnnounceId" xml:space="preserve">
+    <value>播报编号</value>
+  </data>
+  <data name="S_Content_AnnounceId_D" xml:space="preserve">
+    <value>结果中包含编号。</value>
+  </data>
+  <data name="S_Content_AnnounceName" xml:space="preserve">
+    <value>播报姓名</value>
+  </data>
+  <data name="S_Content_AnnounceName_D" xml:space="preserve">
+    <value>结果中包含姓名。</value>
+  </data>
+  <data name="S_Content_Suffix" xml:space="preserve">
+    <value>播报后缀</value>
+  </data>
+  <data name="S_Content_Prefix" xml:space="preserve">
+    <value>播报前缀</value>
+  </data>
+  <data name="S_SystemVolume_Control_D" xml:space="preserve">
+    <value>播报前自动调整系统音量。</value>
+  </data>
+  <data name="S_Content_Prefix_D" xml:space="preserve">
+    <value>在播报内容前添加自定义文本。</value>
+  </data>
+  <data name="S_SystemVolume_Control" xml:space="preserve">
+    <value>启用系统音量控制</value>
+  </data>
+  <data name="S_SystemVolume_Size" xml:space="preserve">
+    <value>系统音量大小</value>
+  </data>
+  <data name="S_SystemVolume_Size_D" xml:space="preserve">
+    <value>设置语音播报时使用的系统音量。</value>
+  </data>
+  <data name="S_Playback_WaitComplete_D" xml:space="preserve">
+    <value>等待当前语音播报完成后再允许下一次抽取。</value>
+  </data>
+  <data name="S_Playback_WaitComplete" xml:space="preserve">
+    <value>等待播报完成</value>
+  </data>
+  <data name="S_SystemVolume" xml:space="preserve">
+    <value>系统音量</value>
+  </data>
+  <data name="S_Content_Suffix_D" xml:space="preserve">
+    <value>在播报内容后添加自定义文本。</value>
+  </data>
+</root>
