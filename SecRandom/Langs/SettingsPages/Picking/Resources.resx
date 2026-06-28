@@ -116,4 +116,46 @@
   <data name="Section_Overridable" xml:space="preserve">
     <value>可覆盖的设置</value>
   </data>
+  <data name="Section_Music" xml:space="preserve">
+    <value>音乐设置</value>
+  </data>
+  <data name="S_AnimationMusic" xml:space="preserve">
+    <value>动画音乐</value>
+  </data>
+  <data name="S_AnimationMusic_D" xml:space="preserve">
+    <value>抽取动画播放时使用的音乐文件路径。</value>
+  </data>
+  <data name="S_ResultMusic" xml:space="preserve">
+    <value>结果音乐</value>
+  </data>
+  <data name="S_ResultMusic_D" xml:space="preserve">
+    <value>抽取结果出现时使用的音乐文件路径。</value>
+  </data>
+  <data name="S_MusicVolume" xml:space="preserve">
+    <value>音乐音量</value>
+  </data>
+  <data name="S_MusicVolume_D" xml:space="preserve">
+    <value>依次设置动画音乐和结果音乐的音量。</value>
+  </data>
+  <data name="S_MusicFadeInOut" xml:space="preserve">
+    <value>音乐淡入淡出</value>
+  </data>
+  <data name="S_MusicFadeInOut_D" xml:space="preserve">
+    <value>依次设置动画音乐淡入、动画音乐淡出、结果音乐淡入和结果音乐淡出时间（毫秒）。</value>
+  </data>
+  <data name="Section_LotteryImage" xml:space="preserve">
+    <value>奖品图片设置</value>
+  </data>
+  <data name="S_LotteryImage" xml:space="preserve">
+    <value>显示奖品图片</value>
+  </data>
+  <data name="S_LotteryImage_D" xml:space="preserve">
+    <value>在抽奖结果中显示奖品图片。</value>
+  </data>
+  <data name="S_LotteryImagePosition" xml:space="preserve">
+    <value>奖品图片位置</value>
+  </data>
+  <data name="S_LotteryImagePosition_D" xml:space="preserve">
+    <value>奖品图片相对文字的位置。</value>
+  </data>
 </root>

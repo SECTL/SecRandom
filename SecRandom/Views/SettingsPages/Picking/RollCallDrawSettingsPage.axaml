@@ -28,7 +28,7 @@
             
             <fa:FASettingsExpander Header="{x:Static lp:Resources.S_ClearRecord}"
                                    Description="{x:Static lp:Resources.S_ClearRecord_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextClearFormattingRegular}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.ClearRecord}">
                         <ComboBoxItem Content="{x:Static lp:Resources.O_Restarted}" />
@@ -39,7 +39,7 @@
             
             <fa:FASettingsExpander Header="{x:Static lp:Resources.S_HalfRepeat}"
                                    Description="{x:Static lp:Resources.S_HalfRepeat_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ClipboardBulletListRegular}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.HalfRepeat}" Minimum="0" Maximum="100" />
                 </fa:FASettingsExpander.Footer>
@@ -58,7 +58,7 @@
             
             <fa:FASettingsExpander Header="{x:Static lp:Resources.S_DefaultClass}"
                                    Description="{x:Static lp:Resources.S_DefaultClass_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleListRegular}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox ItemsSource="{Binding StudentListNames}" SelectedItem="{Binding Settings.DefaultClass}"
                               MinWidth="220" />
@@ -271,7 +271,7 @@
             <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_StudentImage}"
                                    Description="{x:Static lp:Resources.Section_StudentImage}"
                                    IsExpanded="{Binding Settings.OverrideStudentImageSettings, Mode=OneWay}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ImageRegular}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}"
                                   OffContent="{x:Static lp:Resources.C_EnableOverride}"
@@ -294,6 +294,53 @@
                             <ComboBoxItem Content="{x:Static lp:Resources.O_Right}" />
                             <ComboBoxItem Content="{x:Static lp:Resources.O_Bottom}" />
                         </ComboBox>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Music}"
+                                   Description="{x:Static lp:Resources.Section_Music}"
+                                   IsExpanded="{Binding Settings.OverrideMusicSettings, Mode=OneWay}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi Speaker2Regular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}"
+                                  OffContent="{x:Static lp:Resources.C_EnableOverride}"
+                                  IsChecked="{Binding Settings.OverrideMusicSettings}" />
+                </fa:FASettingsExpander.Footer>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationMusic}"
+                                           Description="{x:Static lp:Resources.S_AnimationMusic_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <TextBox Text="{Binding Settings.AnimationMusic}" MinWidth="260" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultMusic}"
+                                           Description="{x:Static lp:Resources.S_ResultMusic_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <TextBox Text="{Binding Settings.ResultMusic}" MinWidth="260" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_MusicVolume}"
+                                           Description="{x:Static lp:Resources.S_MusicVolume_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <NumericUpDown Value="{Binding Settings.AnimationMusicVolume}" Minimum="0" Maximum="100" />
+                            <NumericUpDown Value="{Binding Settings.ResultMusicVolume}" Minimum="0" Maximum="100" />
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_MusicFadeInOut}"
+                                           Description="{x:Static lp:Resources.S_MusicFadeInOut_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <NumericUpDown Value="{Binding Settings.AnimationMusicFadeIn}" Minimum="0" Maximum="10000" />
+                            <NumericUpDown Value="{Binding Settings.AnimationMusicFadeOut}" Minimum="0" Maximum="10000" />
+                            <NumericUpDown Value="{Binding Settings.ResultMusicFadeIn}" Minimum="0" Maximum="10000" />
+                            <NumericUpDown Value="{Binding Settings.ResultMusicFadeOut}" Minimum="0" Maximum="10000" />
+                        </StackPanel>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>

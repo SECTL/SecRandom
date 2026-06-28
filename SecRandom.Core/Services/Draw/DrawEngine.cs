@@ -1,6 +1,8 @@
-﻿using SecRandom.Core.Abstraction;
+using Microsoft.Extensions.Logging;
+using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Interfaces;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
@@ -19,6 +21,13 @@ public partial class DrawEngine
 
     private readonly MainConfigHandler _configHandler = IAppHost.GetService<MainConfigHandler>();
     private readonly IProfileService _profileService = IAppHost.GetService<IProfileService>();
+    private readonly ILogger<DrawEngine> _logger = IAppHost.GetService<ILogger<DrawEngine>>();
+    private readonly IRandomSource _randomSource;
+
+    public DrawEngine(IRandomSource? randomSource = null)
+    {
+        _randomSource = randomSource ?? new CryptoRandomSource();
+    }
 
     private MainConfigModel ConfigData => _configHandler.Data;
     private StudentHistory StudentHistory => _profileService.CurrentStudentHistory ?? new StudentHistory();
@@ -30,11 +39,14 @@ public partial class DrawEngine
     {
         var hasBaseCandidates = false;
         var repeatThreshold = GetRollCallRepeatThreshold();
+        var historyCache = BuildStudentHistoryCache(StudentList.Students);
+        _logger.LogInformation("开始点名抽取：请求数量={Count}，抽取模式={DrawMode}，抽取类型={DrawType}.",
+            count, ConfigData.RollCallSettings.DrawMode, ConfigData.RollCallSettings.DrawType);
+
         try
         {
             hasBaseCandidates = StudentList.Students.Any(filter);
 
-            //先添加半重复的条件
             bool Filter1(Student student)
             {
                 if (!filter(student))
@@ -43,45 +55,45 @@ public partial class DrawEngine
                 if (repeatThreshold <= 0)
                     return true;
 
-                return GetStudentDrawCount(student) < repeatThreshold;
+                return historyCache.GetValueOrDefault(student)?.TotalCount < repeatThreshold;
             }
 
-            //先筛选出符合条件的学生
-            var usable = FilterStudents(Filter1, count);
-
-
+            var usable = FilterStudents(Filter1, count, historyCache);
             var weightedCandidates = ConfigData.RollCallSettings.DrawType switch
             {
-                DrawType.Fair => CalculateStudentWeight(usable),
-                DrawType.Random => usable
-                    .Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 })
-                    .ToList(),
-                _ => usable
-                    .Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 })
-                    .ToList()
+                DrawType.Fair => CalculateStudentWeight(usable, historyCache),
+                DrawType.Random => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList(),
+                _ => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList()
             };
-            return DrawWithBehindSceneWeights(weightedCandidates, count);
+
+            var result = DrawWithBehindSceneWeights(weightedCandidates, count);
+            LogDrawResult("点名抽取", result.Status, count, usable.Count, result.Result.Count);
+            return result;
         }
         catch (RepeatLimitExhaustedException)
         {
-            return new DrawResult<Student>
-            {
-                Status = DrawStatus.RepeatLimitExhausted
-            };
+            _logger.LogWarning("点名抽取失败：重复限制耗尽。请求数量={Count}，存在基础候选={HasBaseCandidates}，重复阈值={RepeatThreshold}.",
+                count, hasBaseCandidates, repeatThreshold);
+            return new DrawResult<Student> { Status = DrawStatus.RepeatLimitExhausted };
         }
         catch (CandidateNotFoundException)
         {
             if (hasBaseCandidates && repeatThreshold > 0)
-                return new DrawResult<Student>
-                {
-                    Status = DrawStatus.RepeatLimitExhausted
-                };
-
-            return new DrawResult<Student>
             {
-                Status = DrawStatus.NoCandidates
-            };
+                _logger.LogWarning("点名抽取失败：基础筛选有候选，但重复限制后无可用候选。请求数量={Count}，重复阈值={RepeatThreshold}.",
+                    count, repeatThreshold);
+                return new DrawResult<Student> { Status = DrawStatus.RepeatLimitExhausted };
+            }
+
+            _logger.LogWarning("点名抽取失败：未找到候选学生。请求数量={Count}.", count);
+            return new DrawResult<Student> { Status = DrawStatus.NoCandidates };
         }
+    }
+
+    public DrawResult<Student> DrawStudent(int count, IReadOnlyCollection<Student> candidates)
+    {
+        var candidateSet = candidates as HashSet<Student> ?? candidates.ToHashSet();
+        return DrawStudent(count, candidate => candidateSet.Contains(candidate));
     }
 
     private int GetRollCallRepeatThreshold()
@@ -108,56 +120,52 @@ public partial class DrawEngine
 
     public DrawResult<Prize> DrawPrize(int count, Func<Prize, bool> filter)
     {
+        var historyCache = BuildPrizeHistoryCache(PrizeList.Prizes);
+        _logger.LogInformation("开始奖品抽取：请求数量={Count}，抽取模式={DrawMode}，抽取类型={DrawType}.",
+            count, ConfigData.LotterySettings.DrawMode, ConfigData.LotterySettings.DrawType);
+
         try
         {
-            var usable = FilterPrizes(filter, count);
-            var weightedCandidates = BuildPrizeCandidates(usable);
+            var usable = FilterPrizes(filter, count, historyCache);
+            var weightedCandidates = BuildPrizeCandidates(usable, historyCache);
 
             if (count > weightedCandidates.Count)
                 throw new RepeatLimitExhaustedException();
 
-            return DrawWithBehindSceneWeights(weightedCandidates, count);
+            var result = DrawWithBehindSceneWeights(weightedCandidates, count);
+            LogDrawResult("奖品抽取", result.Status, count, usable.Count, result.Result.Count);
+            return result;
         }
         catch (RepeatLimitExhaustedException)
         {
-            return new DrawResult<Prize>
-            {
-                Status = DrawStatus.RepeatLimitExhausted
-            };
+            _logger.LogWarning("奖品抽取失败：重复限制或奖品剩余数量耗尽。请求数量={Count}.", count);
+            return new DrawResult<Prize> { Status = DrawStatus.RepeatLimitExhausted };
         }
         catch (CandidateNotFoundException)
         {
-            return new DrawResult<Prize>
-            {
-                Status = DrawStatus.NoCandidates
-            };
+            _logger.LogWarning("奖品抽取失败：未找到候选奖品。请求数量={Count}.", count);
+            return new DrawResult<Prize> { Status = DrawStatus.NoCandidates };
         }
     }
 
-    private List<WeightedCandidate<Prize>> BuildPrizeCandidates(List<Prize> prizes)
+    private List<WeightedCandidate<Prize>> BuildPrizeCandidates(
+        List<Prize> prizes,
+        IReadOnlyDictionary<Prize, History> historyCache)
     {
         if (ConfigData.LotterySettings.DrawType == LotteryDrawType.Count)
         {
             List<WeightedCandidate<Prize>> result = [];
             foreach (var prize in prizes)
             {
-                var remainingCount = Math.Max(0, prize.Count - GetPrizeDrawCount(prize));
+                var remainingCount = Math.Max(0, prize.Count - (historyCache.GetValueOrDefault(prize)?.TotalCount ?? 0));
                 for (var i = 0; i < remainingCount; i++)
-                    result.Add(new WeightedCandidate<Prize>
-                    {
-                        Candidate = prize,
-                        Weight = prize.Weight
-                    });
+                    result.Add(new WeightedCandidate<Prize> { Candidate = prize, Weight = prize.Weight });
             }
 
             return result;
         }
 
-        return prizes.Select(p => new WeightedCandidate<Prize>
-        {
-            Candidate = p,
-            Weight = p.Weight
-        }).ToList();
+        return prizes.Select(p => new WeightedCandidate<Prize> { Candidate = p, Weight = p.Weight }).ToList();
     }
 
     private DrawResult<TCandidate> DrawWithBehindSceneWeights<TCandidate>(
@@ -165,7 +173,7 @@ public partial class DrawEngine
         int count)
         where TCandidate : IAttachableSettingsObject
     {
-        var drawEngine = new WeightedDrawEngine<TCandidate>(new CryptoRandomSource());
+        var drawEngine = new WeightedDrawEngine<TCandidate>(_randomSource);
         List<WeightedCandidate<TCandidate>> guaranteedCandidates = [];
         List<WeightedCandidate<TCandidate>> effectiveCandidates = [];
         HashSet<TCandidate> guaranteedCandidateSet = [];
@@ -186,7 +194,8 @@ public partial class DrawEngine
                 continue;
             }
 
-            if (settings.Probability >= 1000)
+            var probability = Math.Clamp(settings.Probability, 0, 100);
+            if (probability >= 100)
             {
                 guaranteedCandidateSet.Add(candidate.Candidate);
                 guaranteedCandidates.Add(new WeightedCandidate<TCandidate>
@@ -197,37 +206,26 @@ public partial class DrawEngine
                 continue;
             }
 
-            if (settings.Probability <= 0)
+            if (probability <= 0)
                 continue;
 
             effectiveCandidates.Add(new WeightedCandidate<TCandidate>
             {
                 Candidate = candidate.Candidate,
-                Weight = candidate.Weight * settings.Probability
+                Weight = candidate.Weight * (probability / 100.0)
             });
         }
 
         if (guaranteedCandidates.Count >= count)
-            return drawEngine.Draw(new DrawRequest<TCandidate>
-            {
-                Candidates = guaranteedCandidates,
-                Count = count
-            });
+            return drawEngine.Draw(new DrawRequest<TCandidate> { Candidates = guaranteedCandidates, Count = count });
 
         var result = guaranteedCandidates.Select(c => c.Candidate).ToList();
         var remainingCount = count - result.Count;
         if (remainingCount <= 0)
-            return new DrawResult<TCandidate>
-            {
-                Result = result,
-                Status = DrawStatus.Success
-            };
+            return new DrawResult<TCandidate> { Result = result, Status = DrawStatus.Success };
 
         if (effectiveCandidates.Count < remainingCount)
-            return new DrawResult<TCandidate>
-            {
-                Status = DrawStatus.NoEligibleCandidates
-            };
+            return new DrawResult<TCandidate> { Status = DrawStatus.NoEligibleCandidates };
 
         var restResult = drawEngine.Draw(new DrawRequest<TCandidate>
         {
@@ -239,15 +237,30 @@ public partial class DrawEngine
             return new DrawResult<TCandidate> { Status = restResult.Status };
 
         result.AddRange(restResult.Result);
-        return new DrawResult<TCandidate>
+        return new DrawResult<TCandidate> { Result = result, Status = DrawStatus.Success };
+    }
+
+    private void LogDrawResult(
+        string operation,
+        DrawStatus status,
+        int requestedCount,
+        int candidateCount,
+        int resultCount)
+    {
+        if (status == DrawStatus.Success)
         {
-            Result = result,
-            Status = DrawStatus.Success
-        };
+            _logger.LogInformation("{Operation}完成：请求数量={RequestedCount}，候选数量={CandidateCount}，结果数量={ResultCount}.",
+                operation, requestedCount, candidateCount, resultCount);
+            return;
+        }
+
+        _logger.LogWarning("{Operation}未成功：状态={Status}，请求数量={RequestedCount}，候选数量={CandidateCount}.",
+            operation, status, requestedCount, candidateCount);
     }
 
     private static BehindSceneAttachedSettings? GetBehindSceneSettings(IAttachableSettingsObject candidate)
     {
         return candidate.GetAttachedObject<BehindSceneAttachedSettings>(BehindSceneAttachedSettingsId);
     }
+
 }

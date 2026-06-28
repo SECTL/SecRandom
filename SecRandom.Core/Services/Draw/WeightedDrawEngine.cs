@@ -1,4 +1,4 @@
-﻿using SecRandom.Core.Interfaces;
+using SecRandom.Core.Interfaces;
 using SecRandom.Core.Models.Draw;
 
 namespace SecRandom.Core.Services.Draw;
@@ -7,51 +7,31 @@ public class WeightedDrawEngine<TCandidate>
 {
     private readonly IRandomSource _random;
 
-    public WeightedDrawEngine(IRandomSource random)
+    public WeightedDrawEngine(IRandomSource? random = null)
     {
-        _random = random;
+        _random = random ?? new CryptoRandomSource();
     }
 
     public DrawResult<TCandidate> Draw(DrawRequest<TCandidate> request)
     {
         if (request.Count <= 0)
-            return new DrawResult<TCandidate>
-            {
-                Status = DrawStatus.Failure
-            };
+            return new DrawResult<TCandidate> { Status = DrawStatus.Failure };
 
         if (request.Candidates.Count == 0)
-            return new DrawResult<TCandidate>
-            {
-                Status = DrawStatus.NoCandidates
-            };
+            return new DrawResult<TCandidate> { Status = DrawStatus.NoCandidates };
 
         if (request.Count > request.Candidates.Count)
-            return new DrawResult<TCandidate>
-            {
-                Status = DrawStatus.Failure
-            };
+            return new DrawResult<TCandidate> { Status = DrawStatus.Failure };
 
         if (request.Candidates.Any(c => c.Weight < 0 || double.IsNaN(c.Weight) || double.IsInfinity(c.Weight)))
-            return new DrawResult<TCandidate>
-            {
-                Status = DrawStatus.InvalidWeight
-            };
+            return new DrawResult<TCandidate> { Status = DrawStatus.InvalidWeight };
 
         if (request.Count > request.Candidates.Count(c => c.Weight > 0))
-            return new DrawResult<TCandidate>
-            {
-                Status = DrawStatus.NoEligibleCandidates
-            };
+            return new DrawResult<TCandidate> { Status = DrawStatus.NoEligibleCandidates };
 
-        // 获取总权重
         var totalW = request.Candidates.Sum(c => c.Weight);
-
         if (totalW <= 0)
-            return new DrawResult<TCandidate>
-            {
-                Status = DrawStatus.NoEligibleCandidates
-            };
+            return new DrawResult<TCandidate> { Status = DrawStatus.NoEligibleCandidates };
 
         var candidates = request.Candidates.ToList();
         List<TCandidate> res = [];

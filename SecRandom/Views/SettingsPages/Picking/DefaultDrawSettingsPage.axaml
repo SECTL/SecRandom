@@ -158,7 +158,7 @@
             
             <fa:FASettingsExpander Header="{x:Static lp:Resources.S_ReminderTextOpacity}"
                                    Description="{x:Static lp:Resources.S_ReminderTextOpacity_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi SlidePlayRegular}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.ReminderTextOpacity}" Minimum="0" Maximum="100" />
                 </fa:FASettingsExpander.Footer>
@@ -197,7 +197,7 @@
             
             <fa:FASettingsExpander Header="{x:Static lp:Resources.S_ResultFlowAnimationStyle}"
                                    Description="{x:Static lp:Resources.S_ResultFlowAnimationStyle_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimelineRegular}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.ResultFlowAnimationStyle}" />
                 </fa:FASettingsExpander.Footer>
@@ -205,7 +205,7 @@
             
             <fa:FASettingsExpander Header="{x:Static lp:Resources.S_ResultFlowAnimationDuration}"
                                    Description="{x:Static lp:Resources.S_ResultFlowAnimationDuration_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimerRegular}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.ResultFlowAnimationDuration}" Minimum="1" Maximum="10000" />
                 </fa:FASettingsExpander.Footer>
@@ -235,12 +235,12 @@
             </fa:FASettingsExpander>
 
             <Separator Margin="0 12 0 4" />
-            <sr:IconText Text="{x:Static lp:Resources.Section_StudentImage}" Glyph="{sr:Fi SettingsRegular}"
+            <sr:IconText Text="{x:Static lp:Resources.Section_StudentImage}" Glyph="{sr:Fi ImageRegular}"
                          Margin="0 0 0 4" />
             
             <fa:FASettingsExpander Header="{x:Static lp:Resources.S_StudentImage}"
                                    Description="{x:Static lp:Resources.S_StudentImage_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ImageRegular}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.StudentImage}" />
                 </fa:FASettingsExpander.Footer>
@@ -248,7 +248,7 @@
             
             <fa:FASettingsExpander Header="{x:Static lp:Resources.S_StudentImagePosition}"
                                    Description="{x:Static lp:Resources.S_StudentImagePosition_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi SettingsRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PositionToBackRegular}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.StudentImagePosition}">
                         <ComboBoxItem Content="{x:Static lp:Resources.O_Left}" />
@@ -256,6 +256,50 @@
                         <ComboBoxItem Content="{x:Static lp:Resources.O_Right}" />
                         <ComboBoxItem Content="{x:Static lp:Resources.O_Bottom}" />
                     </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText Text="{x:Static lp:Resources.Section_Music}" Glyph="{sr:Fi Speaker2Regular}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_AnimationMusic}"
+                                   Description="{x:Static lp:Resources.S_AnimationMusic_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi MusicNote2Regular}}">
+                <fa:FASettingsExpander.Footer>
+                    <TextBox Text="{Binding Settings.AnimationMusic}" MinWidth="260" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_ResultMusic}"
+                                   Description="{x:Static lp:Resources.S_ResultMusic_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi MusicNote2Regular}}">
+                <fa:FASettingsExpander.Footer>
+                    <TextBox Text="{Binding Settings.ResultMusic}" MinWidth="260" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_MusicVolume}"
+                                   Description="{x:Static lp:Resources.S_MusicVolume_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi Speaker2Regular}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <NumericUpDown Value="{Binding Settings.AnimationMusicVolume}" Minimum="0" Maximum="100" />
+                        <NumericUpDown Value="{Binding Settings.ResultMusicVolume}" Minimum="0" Maximum="100" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_MusicFadeInOut}"
+                                   Description="{x:Static lp:Resources.S_MusicFadeInOut_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi SlidePlayRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <NumericUpDown Value="{Binding Settings.AnimationMusicFadeIn}" Minimum="0" Maximum="10000" />
+                        <NumericUpDown Value="{Binding Settings.AnimationMusicFadeOut}" Minimum="0" Maximum="10000" />
+                        <NumericUpDown Value="{Binding Settings.ResultMusicFadeIn}" Minimum="0" Maximum="10000" />
+                        <NumericUpDown Value="{Binding Settings.ResultMusicFadeOut}" Minimum="0" Maximum="10000" />
+                    </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
         </StackPanel>

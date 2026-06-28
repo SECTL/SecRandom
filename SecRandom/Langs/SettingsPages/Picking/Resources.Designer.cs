@@ -1048,5 +1048,131 @@ namespace SecRandom.Langs.SettingsPages.Picking {
                 return ResourceManager.GetString("Section_StudentImage", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 音乐设置.
+        /// </summary>
+        public static string Section_Music {
+            get {
+                return ResourceManager.GetString("Section_Music", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 动画音乐.
+        /// </summary>
+        public static string S_AnimationMusic {
+            get {
+                return ResourceManager.GetString("S_AnimationMusic", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 抽取动画播放时使用的音乐文件路径。.
+        /// </summary>
+        public static string S_AnimationMusic_D {
+            get {
+                return ResourceManager.GetString("S_AnimationMusic_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 结果音乐.
+        /// </summary>
+        public static string S_ResultMusic {
+            get {
+                return ResourceManager.GetString("S_ResultMusic", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 抽取结果出现时使用的音乐文件路径。.
+        /// </summary>
+        public static string S_ResultMusic_D {
+            get {
+                return ResourceManager.GetString("S_ResultMusic_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 音乐音量.
+        /// </summary>
+        public static string S_MusicVolume {
+            get {
+                return ResourceManager.GetString("S_MusicVolume", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 依次设置动画音乐和结果音乐的音量。.
+        /// </summary>
+        public static string S_MusicVolume_D {
+            get {
+                return ResourceManager.GetString("S_MusicVolume_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 音乐淡入淡出.
+        /// </summary>
+        public static string S_MusicFadeInOut {
+            get {
+                return ResourceManager.GetString("S_MusicFadeInOut", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 依次设置动画音乐淡入、动画音乐淡出、结果音乐淡入和结果音乐淡出时间（毫秒）。.
+        /// </summary>
+        public static string S_MusicFadeInOut_D {
+            get {
+                return ResourceManager.GetString("S_MusicFadeInOut_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 奖品图片设置.
+        /// </summary>
+        public static string Section_LotteryImage {
+            get {
+                return ResourceManager.GetString("Section_LotteryImage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 显示奖品图片.
+        /// </summary>
+        public static string S_LotteryImage {
+            get {
+                return ResourceManager.GetString("S_LotteryImage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 在抽奖结果中显示奖品图片。.
+        /// </summary>
+        public static string S_LotteryImage_D {
+            get {
+                return ResourceManager.GetString("S_LotteryImage_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 奖品图片位置.
+        /// </summary>
+        public static string S_LotteryImagePosition {
+            get {
+                return ResourceManager.GetString("S_LotteryImagePosition", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 奖品图片相对文字的位置。.
+        /// </summary>
+        public static string S_LotteryImagePosition_D {
+            get {
+                return ResourceManager.GetString("S_LotteryImagePosition_D", resourceCulture);
+            }
+        }
     }
 }
