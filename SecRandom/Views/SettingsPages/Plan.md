@@ -16,9 +16,6 @@
 - 个性化设置 Personalized
     - 外观 Appearance `alpha1`
     - 浮窗 FloatingWindow `alpha1`
-    - 侧边栏 Sidebar `alpha2`
-    - 页面 Pages `alpha2`
-    - 托盘 Tray `alpha2`
     - 主题 Theme `alpha3`
 
 
@@ -34,7 +31,6 @@
 
 
 - 抽取设置 Picking `alpha1`
-    - 公平抽取 FairPick
     - 默认抽取设置 Default
     - 点名抽取设置 RollCall
     - 闪抽抽取设置 QuickDraw

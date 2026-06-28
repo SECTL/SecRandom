@@ -32,6 +32,7 @@ SecRandom.Core/
 ├── Extensions/Registry/  # DI/page registration helpers
 ├── Enums/                 # Draw settings types, page location, config model trees
 ├── Models/               # Page info, draw models, subconfig models
+├── Plugins/              # Stable public plugin contracts, runtime context, page registration DTOs
 ├── GlobalConstants.cs     # Version/platform/development constants
 └── Langs/                # Core common localization resources
 ```
@@ -41,15 +42,17 @@ SecRandom.Core/
 | Task                       | Location                                                                         | Notes                                                                   |
 |----------------------------|----------------------------------------------------------------------------------|-------------------------------------------------------------------------|
 | Service access             | `Abstraction/IAppHost.cs`                                                        | Static Host holder and service helpers.                                 |
-| Profile contract           | `Abstraction/Services/IProfileService.cs`                                        | Current profile/list/history boundary.                                  |
+| Profile contract           | `Abstraction/Services/IProfileService.cs`                                        | Current profile/list/history boundary, including active student-profile switching. |
 | Page metadata              | `Attributes/PageInfoAttribute.cs`, `Models/PageInfo.cs`                          | Used by registration extensions.                                        |
 | Page registration          | `Extensions/Registry/`                                                           | `AddMainPage`, `AddSettingsPage`, group/separator helpers.              |
+| Plugin contracts           | `Plugins/`                                                                       | Manifest, `PluginInfo`, runtime context, page registration DTOs, and restricted draw invocation contracts. |
 | Navigation registry        | `Services/PagesRegistryService.cs`                                               | Static main/settings/group collections.                                 |
 | Attached-settings registry | `Services/AttachedSettingsRegistryService.cs`                                    | Static attached-settings control collections.                           |
-| Draw algorithm             | `Services/Draw/DrawEngine*.cs`, `WeightedDrawEngine.cs`, `CryptoRandomSource.cs` | Fairness, filters, weighted sampling.                                   |
+| Draw algorithm             | `Services/Draw/DrawEngine*.cs`, `WeightedDrawEngine.cs`, `CryptoRandomSource.cs` | Fairness, filters, weighted sampling; history lookup uses `RecordId`.    |
 | Camera draw engine         | `Services/Camera/CameraDrawEngine*.cs`                                           | Face detection, camera discovery, draw loop, config-change reactions.   |
 | Config handlers            | `Services/Config/`                                                               | `MainConfigHandler` and `ProfileConfigs` wrap config model persistence. |
-| Config schema              | `Enums/Configs/`, `Models/SubConfigs/`                                           | Many settings model types live here.                                    |
+| Logging providers          | `Services/Logging/`                                                              | Console/file logging; file logs live under `data/logs`, current log path is exposed by `FileLoggerProvider` for viewer/diagnostics. |
+| Config schema              | `Enums/Configs/`, `Models/SubConfigs/`                                           | Many settings model types live here, including v2-parity models for floating window, notification, security, linkage, voice, theme/background, history, update, and more settings. |
 | Shared controls            | `Controls/*.axaml(.cs)`                                                          | Reusable app controls; keep templates and code-behind paired.           |
 | Shared styles              | `StylesBase.axaml`, `Styles/*.axaml`                                             | Imported by `SecRandom/Styles.axaml`.                                   |
 | Constants/helpers          | `GlobalConstants.cs`, `Helpers/`                                                 | Keep cross-cutting values here only when Core consumers need them.      |
@@ -57,7 +60,12 @@ SecRandom.Core/
 ## CONVENTIONS
 
 - Core is plugin-facing per `docs/namespaces.md`; avoid app-only dependencies and unstable public contracts.
+- Plugin-facing contracts belong under `SecRandom.Core/Plugins`; keep them DTO/interface based and avoid app-layer service types.
+- `PluginInfo` exposes plugin manifest, installed plugin directory, and private config directory. Plugins should persist their own config under `data/configs/plugins/<plugin-id>`.
+- Plugin page registration uses runtime `Type` registration through `AddPluginMainPage` / `AddPluginSettingsPage`; plugin page IDs must start with `plugin.<plugin-id>.`.
+- Plugin draw access must remain invocation-only through `IPluginDrawInvoker`; never add `DrawEngine`, `WeightedDrawEngine<T>`, `IRandomSource`, writable history, or draw config to plugin contracts.
 - `IAppHost.GetService<T>()` is used in Core services like `DrawEngine`; Host is built by app layer.
+- `IProfileService.LoadStudentProfile(name)` switches the app-layer active point-call student list and matching history; callers should use it instead of constructing profile configs directly when changing the active roll-call list.
 - Registration helpers are responsible for both keyed DI and `PagesRegistryService` metadata.
 - `DrawEngine` is partial: keep filtering in `DrawEngine.Filter.cs`, weight math in `DrawEngine.WeightCalculator.cs`,
   orchestration in `DrawEngine.cs`.
@@ -66,11 +74,18 @@ SecRandom.Core/
   device discovery/utilities in `CameraDrawEngine.Helpers.cs`.
 - Weighted drawing validates count, candidates, and weights before sampling; preserve explicit `DrawStatus` returns over
   exceptions at public boundary.
+- Draw fairness/repeat history for students and prizes must use `ProfileRecordIdentity`/`RecordId` first. Legacy `Id`/`Name` history fallback is only for backward compatibility and must stay ambiguity-safe.
 - Config handlers derive from `ConfigHandlerBase<TModel>`; config model defaults should be safe without existing data
   files.
+- File logging should keep user-facing log messages in Chinese for app events. Avoid logging student/prize names or full config payloads; prefer counts, status, file names, and operation names.
+- V2-parity settings models that are shared by app settings pages but not yet backed by services live directly under `Models/SubConfigs/` and hang off `MainConfigModel` until their runtime service boundaries settle.
+- Attached settings models under `Models/AttachedSettings/` may target students and prizes. `SpecificAnnouncementAttachedSettings` stores per-record TTS alias, prefix, and suffix; app-layer controls/services render and consume it.
+- Attached-settings presenter behavior separates editing from activation: the expander content should remain openable/editable even when `IsAttachSettingsEnabled` is false, while the switch only controls whether the saved settings take effect.
 - `MainConfigModel.General` is the canonical general-settings subtree. Legacy root `Basic` / `Backup` bridges may remain temporarily for backward-compatible callers and JSON migration, but new general config splits should be nested under `Models/SubConfigs/General/`. Privacy settings belong under `General.PrivacySettings`; keep Sentry upload (`SentryTelemetryEnabled`) separate from online status reporting (`OnlineStatusMode`).
 - Controls should keep `.axaml` and `.axaml.cs` side by side and expose reusable Avalonia properties/templates.
 - Shared styles are modular; add new broad styles under `Styles/` and include from `StylesBase.axaml`.
+- `u:MultiComboBox` uses a shared maximum width cap in `Styles/MultiComboBox.axaml` so selected tags do not stretch the control indefinitely; override locally only when a page really needs a wider selection box.
+- Ursa `MultiComboBox` settings should use `ItemsSource`/`SelectedItems` with plain data objects for selectable options; do not put visual controls like `TextBlock` or shapes into selectable item content, because Ursa stores item `DataContext` in `SelectedItems` and visual content can surface as type names in selected tags.
 - Fluent icon names come from `Assets/FluentSystemIcons-Resizable.json` and are exposed through generated `sr:Fi` enum values plus `FluentIcons.*` string constants; prefer `{sr:FluentIconSource {sr:Fi NameRegular}}` in XAML and `FluentIcons.NameRegular` in attributes/code instead of raw glyphs.
 - Comments should explain public-contract constraints, draw fairness reasoning, or platform quirks; avoid restating
   obvious property wiring.
@@ -80,5 +95,6 @@ SecRandom.Core/
 - Do not put app-window or desktop-launcher behavior in Core.
 - Do not bypass draw status handling with uncaught exceptions for normal no-candidate/repeat-limit outcomes.
 - Do not add page registration logic outside `Extensions/Registry/` unless changing the navigation architecture.
+- Do not expand plugin contracts by leaking app-layer services, raw DI/Host access, or fair-draw internals.
 - Do not break `SecRandom.Shared` contract assumptions from Core models/services.
 - Do not duplicate app-only localization; Core has only common/shared resources.

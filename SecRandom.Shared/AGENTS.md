@@ -30,7 +30,7 @@ SecRandom.Shared/
 | Task                         | Location                                                                     | Notes                                                                                  |
 |------------------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
 | Config base path/model       | `Abstraction/`                                                               | `ConfigBase` and `ProfileConfigBase` used by Core handlers.                            |
-| Profile data contracts       | `Models/Profile/`                                                            | Student/prize lists and histories.                                                     |
+| Profile data contracts       | `Models/Profile/`                                                            | Student/prize lists, hidden stable item identity, and histories.                       |
 | Attached settings contracts  | `Interfaces/IAttachedSettings.cs`, `Interfaces/IAttachableSettingsObject.cs` | Used by Core draw/attached-settings logic.                                             |
 | Serialization helpers        | `Extensions/`                                                                | Shared extension methods; keep dependency-light.                                       |
 | IPC/shared model boundary    | `Models/`                                                                    | `docs/namespaces.md` says Shared is for IPC/core shared models.                        |
@@ -42,6 +42,8 @@ SecRandom.Shared/
 - Keep this project UI-free and Avalonia-free; it targets `net8.0` while app/Core target `net10.0`.
 - Shared models are data contracts used across projects; avoid Host, logging, windows, or app service dependencies.
 - Profile models may be observable/serializable contract types; keep property defaults safe for missing JSON.
+- `Student` and `Prize` include hidden persisted `RecordId` values used as stable history/fairness identities. Keep visible `Id` optional; it is display/import metadata, not a required identity.
+- `ProfileRecordIdentity` is the boundary helper for filling missing/duplicate `RecordId` values and resolving legacy `Id`/`Name` history keys without ambiguous fallback.
 - `Student` and `Prize` include persisted optional metadata fields such as `Tags`; keep new fields backward-compatible with empty defaults.
 - Attached settings objects use `Guid` keys and `Dictionary<Guid, object?>`; coordinate changes with Core draw/settings
   consumers.
@@ -58,4 +60,5 @@ SecRandom.Shared/
 - Do not add Avalonia/FluentAvalonia dependencies here.
 - Do not hide persistence side effects inside Shared models; persistence belongs in Core/app config services.
 - Do not change shared contract shapes casually; Core draw/profile/config code may deserialize persisted data into them.
+- Do not make visible student/prize `Id` mandatory again; lists must support records with empty IDs.
 - Do not add platform-specific path logic outside `Utils` / config abstractions.

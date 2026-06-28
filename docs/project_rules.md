@@ -20,6 +20,8 @@
 - 本地化必须按“每页一个文件夹”拆分，不要混在一起。
 - 文件路径统一用 `Utils.GetFilePath(...)`（数据落在 `AppContext.BaseDirectory/data/...`）。
 - 不要在页面里随意 `new` 可复用服务；需要复用/单例/可测试的服务必须进 Host。
+- 插件只能使用 `SecRandom.Core/Plugins` 中的稳定契约；运行时加载、启用状态和管理 UI 放在 `SecRandom/Services/Plugins`。
+- 公平抽取不能开放算法接口给插件；插件只能通过 `IPluginDrawInvoker` 发起宿主抽取调用，不能拿到 `DrawEngine`、权重计算、随机源、历史写入或抽取配置。
 
 ## Host/依赖注入（怎么写才符合本项目）
 
@@ -61,6 +63,15 @@ services.AddSettingsPage<LotteryTablePreviewPage>(
 - 主界面：`main.xxx`
 - 设置页：`settings.xxx`
 - 设置子页：`settings.group.xxx`
+- 插件页：`plugin.<plugin-id>.main.xxx` 或 `plugin.<plugin-id>.settings.xxx`，不能占用内置 `main.*` / `settings.*`。
+
+## 插件系统
+
+- 插件清单放在 `data/plugins/<plugin-id>/plugin.json`，插件私有数据放在 `data/plugins/<plugin-id>/data/`。
+- 插件启用/禁用默认需要重启；设置页应调用 `SettingsView.RequestRestartApp()`。
+- 插件日志必须接入原有 `ILogger` / `FileLoggerProvider`，分类前缀固定为 `SecRandom.Plugin[<plugin-id>].`。
+- 插件详情页只能按自己的分类前缀筛选日志，不能展示其他插件或宿主日志。
+- 不要向插件暴露 `IAppHost.Host`、完整 `IServiceProvider`、可写 `MainConfigHandler`、可写 `IProfileService`、shell/process 能力、遥测/在线状态服务或任意文件系统访问。
 
 ## 本地化（必须）
 
