@@ -1,0 +1,346 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Plugins"
+             xmlns:lp="clr-namespace:SecRandom.Langs.SettingsPages.Plugins.Overview"
+             xmlns:mdxaml="https://github.com/whistyun/Markdown.Avalonia"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d"
+             x:Class="SecRandom.Views.SettingsPages.Plugins.PluginOverviewSettingsPage"
+             x:DataType="local:PluginOverviewSettingsPage"
+             Loaded="OnLoaded">
+    <Grid Classes="page-container animated-intro"
+          Margin="8"
+          RowDefinitions="Auto,*"
+          RowSpacing="8"
+          MinHeight="620">
+        <Grid ColumnDefinitions="Auto,*"
+              VerticalAlignment="Center">
+            <TextBlock VerticalAlignment="Center"
+                       FontSize="18"
+                       FontWeight="SemiBold"
+                       Text="{Binding VisiblePluginCountText}" />
+        </Grid>
+
+        <Border Grid.Row="1"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="3"
+                ClipToBounds="True"
+                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+            <Grid ColumnDefinitions="430,*">
+                <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                        BorderThickness="0 0 1 0"
+                        Padding="12">
+                    <Grid RowDefinitions="Auto,Auto,*"
+                          RowSpacing="8">
+                        <TextBox PlaceholderText="{x:Static lp:Resources.C_SearchPlugin}"
+                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <Grid Grid.Row="1"
+                              ColumnDefinitions="*,Auto,Auto"
+                              ColumnSpacing="8"
+                              VerticalAlignment="Center">
+                            <ListBox Theme="{StaticResource ChipListBoxTheme}"
+                                     ItemsSource="{Binding FilterChips}"
+                                     SelectedItem="{Binding SelectedFilterChip}"
+                                     SelectionMode="Single"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="local:PluginFilterChip">
+                                        <TextBlock FontWeight="SemiBold"
+                                                   Text="{Binding Text}" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <Button Grid.Column="1"
+                                    Theme="{StaticResource TransparentButton}"
+                                    ToolTip.Tip="{x:Static lp:Resources.C_RefreshCatalog}"
+                                    IsEnabled="{Binding !IsCatalogBusy}"
+                                    Click="RefreshCatalogButton_OnClick">
+                                <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseRegular}" />
+                            </Button>
+
+                            <Button Grid.Column="2"
+                                    Theme="{StaticResource TransparentButton}"
+                                    ToolTip.Tip="{x:Static lp:Resources.C_MoreOptions}">
+                                <sr:FluentIcon Glyph="{sr:Fi MoreHorizontalRegular}" />
+
+                                <Button.Flyout>
+                                    <MenuFlyout>
+                                        <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseRegular}}"
+                                                  Header="{x:Static lp:Resources.C_RefreshCatalog}"
+                                                  Click="RefreshCatalogButton_OnClick" />
+                                        <MenuItem Icon="{sr:FluentIcon {sr:Fi AppsSettingsRegular}}"
+                                                  Header="{x:Static lp:Resources.C_ManagePluginSources}"
+                                                  Click="OpenCatalogSourcesButton_OnClick" />
+                                        <Separator />
+                                        <MenuItem Icon="{sr:FluentIcon {sr:Fi AddRegular}}"
+                                                  Header="{x:Static lp:Resources.C_ImportPlugin}"
+                                                  Click="ImportPluginButton_OnClick" />
+                                        <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenRegular}}"
+                                                  Header="{x:Static lp:Resources.C_OpenPluginsFolder}"
+                                                  Click="OpenPluginsFolderButton_OnClick" />
+                                    </MenuFlyout>
+                                </Button.Flyout>
+                            </Button>
+                        </Grid>
+
+                        <Grid Grid.Row="2">
+                            <ListBox ItemsSource="{Binding PluginList}"
+                                     SelectedItem="{Binding SelectedItem}"
+                                     Background="Transparent"
+                                     Padding="0"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="local:PluginOverviewItem">
+                                        <Border Padding="10 8"
+                                                Margin="0 0 0 4"
+                                                CornerRadius="4"
+                                                Background="Transparent">
+                                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                                  RowDefinitions="Auto,Auto"
+                                                  ColumnSpacing="10">
+                                                <Border Grid.RowSpan="2"
+                                                        Width="46"
+                                                        Height="46"
+                                                        CornerRadius="5"
+                                                        Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                                        VerticalAlignment="Center">
+                                                    <sr:FluentIcon Glyph="{sr:Fi PlugConnectedRegular}"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center" />
+                                                </Border>
+
+                                                <TextBlock Grid.Column="1"
+                                                           FontSize="15"
+                                                           FontWeight="SemiBold"
+                                                           Text="{Binding Name}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Grid.Row="1"
+                                                           Grid.Column="1"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                           Text="{Binding ListSubtitle}"
+                                                           TextTrimming="CharacterEllipsis" />
+
+                                                <StackPanel Grid.Column="2"
+                                                            Grid.RowSpan="2"
+                                                            HorizontalAlignment="Right"
+                                                            VerticalAlignment="Top"
+                                                            Spacing="3">
+                                                    <StackPanel Orientation="Horizontal"
+                                                                HorizontalAlignment="Right"
+                                                                Spacing="6"
+                                                                IsVisible="{Binding HasStats}">
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Spacing="2">
+                                                            <sr:FluentIcon Glyph="{sr:Fi ArrowDownloadRegular}"
+                                                                           FontSize="13"
+                                                                           VerticalAlignment="Center" />
+                                                            <TextBlock Text="{Binding DownloadsText}"
+                                                                       FontSize="12"
+                                                                       VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Spacing="2">
+                                                            <sr:FluentIcon Glyph="{sr:Fi StarRegular}"
+                                                                           FontSize="13"
+                                                                           VerticalAlignment="Center" />
+                                                            <TextBlock Text="{Binding StarsText}"
+                                                                       FontSize="12"
+                                                                       VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                    <TextBlock HorizontalAlignment="Right"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                               Text="{Binding Version}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="8"
+                                        IsVisible="{Binding IsPluginListEmpty}">
+                                <sr:FluentIcon Glyph="{sr:Fi PlugConnectedRegular}"
+                                               FontSize="32"
+                                               HorizontalAlignment="Center"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock HorizontalAlignment="Center"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Text="{x:Static lp:Resources.C_OverviewEmptyTitle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="1"
+                        Padding="18 16">
+                    <Grid>
+                        <Grid RowDefinitions="Auto,Auto,*"
+                              RowSpacing="12"
+                              IsVisible="{Binding HasSelectedPlugin}">
+                            <Grid RowDefinitions="Auto,Auto"
+                                  RowSpacing="10">
+                                <Grid ColumnDefinitions="Auto,*"
+                                      ColumnSpacing="12">
+                                <Border Width="58"
+                                        Height="58"
+                                        CornerRadius="8"
+                                        Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                                    <sr:FluentIcon Glyph="{sr:Fi PlugConnectedRegular}"
+                                                                   FontSize="28"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center" />
+                                </Border>
+
+                                <StackPanel Grid.Column="1"
+                                            Spacing="5"
+                                            VerticalAlignment="Center">
+                                    <TextBlock FontSize="22"
+                                               FontWeight="SemiBold"
+                                               Text="{Binding SelectedPluginTitle}"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                               Text="{Binding SelectedPluginMetaLine}"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="10"
+                                                IsVisible="{Binding SelectedItem.HasStats}">
+                                        <StackPanel Orientation="Horizontal"
+                                                    Spacing="3">
+                                            <sr:FluentIcon Glyph="{sr:Fi ArrowDownloadRegular}"
+                                                           FontSize="14"
+                                                           VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding SelectedItem.DownloadsText}"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal"
+                                                    Spacing="3">
+                                            <sr:FluentIcon Glyph="{sr:Fi StarRegular}"
+                                                           FontSize="14"
+                                                           VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding SelectedItem.StarsText}"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                                </Grid>
+
+                                <Grid Grid.Row="1"
+                                      ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="12"
+                                      VerticalAlignment="Center">
+                                    <WrapPanel VerticalAlignment="Center">
+                                        <Border Padding="8 3"
+                                                CornerRadius="3"
+                                                Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                                            <StackPanel Orientation="Horizontal"
+                                                        Spacing="6">
+                                                <TextBlock FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                           Text="{x:Static lp:Resources.S_Status}" />
+                                                <TextBlock FontWeight="SemiBold"
+                                                           Text="{Binding SelectedPluginStatus}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </WrapPanel>
+
+                                    <StackPanel Grid.Column="1"
+                                                Orientation="Horizontal"
+                                                Spacing="6"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Center">
+                                    <Button Content="{x:Static lp:Resources.C_Install}"
+                                            Classes="accent"
+                                            IsEnabled="{Binding CanInstallSelectedPlugin}"
+                                            IsVisible="{Binding CanInstallSelectedPlugin}"
+                                            Click="InstallSelectedCatalogPluginButton_OnClick" />
+                                    <ToggleSwitch IsChecked="{Binding IsSelectedPluginEnabled}"
+                                                  IsEnabled="{Binding CanToggleSelectedPlugin}" />
+                                    <Button Theme="{StaticResource TransparentButton}"
+                                            ToolTip.Tip="{x:Static lp:Resources.C_OpenSelectedFolder}"
+                                            IsEnabled="{Binding CanOpenSelectedFolder}"
+                                            Click="OpenSelectedFolderButton_OnClick">
+                                        <sr:FluentIcon Glyph="{sr:Fi FolderOpenRegular}" />
+                                    </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Grid>
+
+                            <Grid Grid.Row="1"
+                                  ColumnDefinitions="*,*,*"
+                                  ColumnSpacing="18"
+                                  IsVisible="{Binding HasSelectedPluginError}">
+                                <TextBlock Grid.ColumnSpan="3"
+                                           Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                           Text="{Binding SelectedPluginError}"
+                                           TextWrapping="Wrap" />
+                            </Grid>
+
+                            <Border Grid.Row="2"
+                                    BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                                    BorderThickness="0 1 0 0"
+                                    Padding="0 12 0 0"
+                                    TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+                                <mdxaml:MarkdownScrollViewer Markdown="{Binding SelectedPluginReadme}">
+                                    <mdxaml:MarkdownScrollViewer.Styles>
+                                        <Style Selector="TextBlock">
+                                            <Setter Property="Foreground"
+                                                    Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                        </Style>
+                                        <Style Selector="TextBlock.h1">
+                                            <Setter Property="Foreground"
+                                                    Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                        </Style>
+                                        <Style Selector="TextBlock.h2">
+                                            <Setter Property="Foreground"
+                                                    Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                        </Style>
+                                        <Style Selector="TextBlock.h3">
+                                            <Setter Property="Foreground"
+                                                    Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                        </Style>
+                                        <Style Selector="SelectableTextBlock">
+                                            <Setter Property="Foreground"
+                                                    Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                        </Style>
+                                    </mdxaml:MarkdownScrollViewer.Styles>
+                                </mdxaml:MarkdownScrollViewer>
+                            </Border>
+                        </Grid>
+
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="8"
+                                    IsVisible="{Binding HasNoSelectedPlugin}">
+                            <sr:FluentIcon Glyph="{sr:Fi PlugConnectedRegular}"
+                                           FontSize="36"
+                                           HorizontalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock FontSize="19"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       Text="{x:Static lp:Resources.C_NoPluginSelected}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"
+                                       MaxWidth="300"
+                                       Text="{x:Static lp:Resources.C_NoPluginSelectedHint}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

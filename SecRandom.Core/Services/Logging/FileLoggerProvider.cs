@@ -16,14 +16,24 @@ public class FileLoggerProvider : ILoggerProvider
     private readonly StreamWriter? _logWriter;
 
     private bool _canWrite = true;
+    public static string LogDirectory => Utils.GetDirectoryPath("logs");
+    public static int RetentionDays => LogRetentionDays;
+    public string? CurrentLogFilePath { get; }
+
+#if DEBUG
+    internal LogLevel MinimumLevel { get; } = LogLevel.Trace;
+#else
+    internal LogLevel MinimumLevel { get; } = LogLevel.Information;
+#endif
 
     public FileLoggerProvider()
     {
         try
         {
-            var logs = Directory.GetFiles(Utils.GetDirectoryPath("logs"));
+            var logs = Directory.GetFiles(LogDirectory);
             var currentLogFile = GetLogFileName();
-            _logStream = File.Open(Path.Combine(Utils.GetDirectoryPath("logs"), currentLogFile), FileMode.Create,
+            CurrentLogFilePath = Path.Combine(LogDirectory, currentLogFile);
+            _logStream = File.Open(CurrentLogFilePath, FileMode.Create,
                 FileAccess.ReadWrite, FileShare.Read);
             _logWriter = new StreamWriter(_logStream)
             {
@@ -48,6 +58,11 @@ public class FileLoggerProvider : ILoggerProvider
     public ILogger CreateLogger(string categoryName)
     {
         return _loggers.GetOrAdd(categoryName, new FileLogger(this, categoryName));
+    }
+
+    internal bool IsEnabled(LogLevel logLevel)
+    {
+        return logLevel != LogLevel.None && logLevel >= MinimumLevel;
     }
 
     public static string GetLogFileName()
@@ -93,7 +108,7 @@ public class FileLoggerProvider : ILoggerProvider
 
     private static List<string?> GetLogs()
     {
-        return Directory.GetFiles(Utils.GetDirectoryPath("logs")).Select(Path.GetFileName).ToList();
+        return Directory.GetFiles(LogDirectory).Select(Path.GetFileName).ToList();
     }
 
     internal void WriteLog(string log)

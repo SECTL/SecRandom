@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Models;
+using SecRandom.Core.Plugins;
 using SecRandom.Core.Services;
 
 namespace SecRandom.Core.Extensions.Registry;
@@ -25,6 +26,20 @@ public static class PagesRegistryExtensions
         where T : UserControl
     {
         return services.AddPageTo<T>(PagesRegistryService.SettingsItems, name);
+    }
+
+    public static IServiceCollection AddPluginMainPage(this IServiceCollection services,
+        PluginPageRegistration registration)
+    {
+        registration.Validate();
+        return services.AddPluginPageTo(PagesRegistryService.MainItems, registration);
+    }
+
+    public static IServiceCollection AddPluginSettingsPage(this IServiceCollection services,
+        PluginPageRegistration registration)
+    {
+        registration.Validate();
+        return services.AddPluginPageTo(PagesRegistryService.SettingsItems, registration);
     }
 
     public static IServiceCollection AddSettingsPageSeparator(this IServiceCollection services,
@@ -55,6 +70,31 @@ public static class PagesRegistryExtensions
         info.Name = name;
         info.SettingsPageType = typeof(T);
         services.AddKeyedTransient<UserControl, T>(info.Id);
+        list.Add(info);
+        return services;
+    }
+
+    private static IServiceCollection AddPluginPageTo(this IServiceCollection services, IList<PageInfo> list,
+        PluginPageRegistration registration)
+    {
+        if (list.FirstOrDefault(x => x.Id == registration.PageId) != null)
+            throw new ArgumentException($"此设置页面id {registration.PageId} 已经被占用。");
+
+        var info = new PageInfo(
+            registration.PageId,
+            registration.IconGlyph,
+            registration.GroupId,
+            registration.Location,
+            registration.IsHide,
+            registration.UseFullWidth,
+            registration.HidePageTitle)
+        {
+            Name = registration.Name,
+            SettingsPageType = registration.PageType
+        };
+
+        services.AddKeyedTransient(typeof(UserControl), registration.PageId, (provider, _) =>
+            (UserControl)ActivatorUtilities.CreateInstance(provider, registration.PageType));
         list.Add(info);
         return services;
     }

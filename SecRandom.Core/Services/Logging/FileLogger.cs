@@ -24,7 +24,7 @@ public class FileLogger(FileLoggerProvider provider, string categoryName) : ILog
 
     public bool IsEnabled(LogLevel logLevel)
     {
-        return false;
+        return Provider.IsEnabled(logLevel);
     }
 
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull

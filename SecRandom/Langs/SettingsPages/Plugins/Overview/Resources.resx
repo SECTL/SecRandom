@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+              id="root"
+              xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true">
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+      PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+      PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Page_Title" xml:space="preserve">
+    <value>插件概览</value>
+  </data>
+  <data name="C_ImportPlugin" xml:space="preserve">
+    <value>导入插件</value>
+  </data>
+  <data name="C_Refresh" xml:space="preserve">
+    <value>刷新</value>
+  </data>
+  <data name="C_OpenPluginsFolder" xml:space="preserve">
+    <value>打开插件目录</value>
+  </data>
+  <data name="C_MoreOptions" xml:space="preserve">
+    <value>更多选项</value>
+  </data>
+  <data name="C_SearchPlugin" xml:space="preserve">
+    <value>搜索插件</value>
+  </data>
+  <data name="C_NoPluginSelected" xml:space="preserve">
+    <value>未选择插件</value>
+  </data>
+  <data name="C_OverviewEmptyTitle" xml:space="preserve">
+    <value>还没有发现插件</value>
+  </data>
+  <data name="C_OverviewEmptyHint" xml:space="preserve">
+    <value>可以先导入本地插件，或者刷新已安装内容。</value>
+  </data>
+  <data name="C_ImportHint" xml:space="preserve">
+    <value>选择包含 plugin.json 的本地插件目录导入到应用插件目录。</value>
+  </data>
+  <data name="C_Importing" xml:space="preserve">
+    <value>正在导入...</value>
+  </data>
+  <data name="C_FilterAll" xml:space="preserve">
+    <value>全部</value>
+  </data>
+  <data name="C_FilterMarket" xml:space="preserve">
+    <value>市场</value>
+  </data>
+  <data name="C_FilterInstalled" xml:space="preserve">
+    <value>已安装</value>
+  </data>
+  <data name="C_FilterNotInstalled" xml:space="preserve">
+    <value>未安装</value>
+  </data>
+  <data name="C_FilterEnabled" xml:space="preserve">
+    <value>已启用</value>
+  </data>
+  <data name="C_FilterDisabled" xml:space="preserve">
+    <value>已禁用</value>
+  </data>
+  <data name="C_FilterPending" xml:space="preserve">
+    <value>待重启</value>
+  </data>
+  <data name="C_FilterError" xml:space="preserve">
+    <value>错误</value>
+  </data>
+  <data name="C_LocalImport" xml:space="preserve">
+    <value>本地插件</value>
+  </data>
+  <data name="C_OpenSelectedFolder" xml:space="preserve">
+    <value>打开当前插件目录</value>
+  </data>
+  <data name="C_SourceUrl" xml:space="preserve">
+    <value>插件源 URL</value>
+  </data>
+  <data name="C_SourceMirrorUrl" xml:space="preserve">
+    <value>镜像 URL（可选）</value>
+  </data>
+  <data name="C_AddSource" xml:space="preserve">
+    <value>添加源</value>
+  </data>
+  <data name="C_RefreshCatalog" xml:space="preserve">
+    <value>刷新插件源</value>
+  </data>
+  <data name="C_CatalogSources" xml:space="preserve">
+    <value>镜像源</value>
+  </data>
+  <data name="C_ManagePluginSources" xml:space="preserve">
+    <value>管理插件源</value>
+  </data>
+  <data name="C_BuiltInPluginSource" xml:space="preserve">
+    <value>内置插件源</value>
+  </data>
+  <data name="C_BuiltInPluginSourceMirror" xml:space="preserve">
+    <value>内置镜像源</value>
+  </data>
+  <data name="C_IgnoreTlsCertificateErrors" xml:space="preserve">
+    <value>忽略 SSL/TLS 证书错误</value>
+  </data>
+  <data name="C_CustomPluginSource" xml:space="preserve">
+    <value>自定义插件源</value>
+  </data>
+  <data name="C_Add" xml:space="preserve">
+    <value>添加</value>
+  </data>
+  <data name="C_Delete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="C_SourceUrlColumn" xml:space="preserve">
+    <value>Url</value>
+  </data>
+  <data name="C_SourceMirrorColumn" xml:space="preserve">
+    <value>镜像</value>
+  </data>
+  <data name="C_UpdateSource" xml:space="preserve">
+    <value>保存源</value>
+  </data>
+  <data name="C_Catalog" xml:space="preserve">
+    <value>插件源</value>
+  </data>
+  <data name="C_CatalogEmpty" xml:space="preserve">
+    <value>暂无插件</value>
+  </data>
+  <data name="C_Install" xml:space="preserve">
+    <value>安装</value>
+  </data>
+  <data name="C_Enable" xml:space="preserve">
+    <value>启用</value>
+  </data>
+  <data name="C_Disable" xml:space="preserve">
+    <value>禁用</value>
+  </data>
+  <data name="C_NoPluginSelectedHint" xml:space="preserve">
+    <value>从左侧选择一个插件查看状态和运行信息。</value>
+  </data>
+  <data name="C_InstalledPluginCount" xml:space="preserve">
+    <value>已安装插件：{0}</value>
+  </data>
+  <data name="C_VisiblePluginCount" xml:space="preserve">
+    <value>{0} 个可见</value>
+  </data>
+  <data name="C_PluginCount" xml:space="preserve">
+    <value>{0} 个插件</value>
+  </data>
+  <data name="C_NoDescription" xml:space="preserve">
+    <value>此插件没有提供描述。</value>
+  </data>
+  <data name="C_Unknown" xml:space="preserve">
+    <value>未知</value>
+  </data>
+  <data name="C_None" xml:space="preserve">
+    <value>无</value>
+  </data>
+  <data name="S_Status" xml:space="preserve">
+    <value>状态</value>
+  </data>
+  <data name="S_Directory" xml:space="preserve">
+    <value>目录</value>
+  </data>
+  <data name="S_Error" xml:space="preserve">
+    <value>错误</value>
+  </data>
+  <data name="S_Author" xml:space="preserve">
+    <value>作者</value>
+  </data>
+  <data name="S_ApiVersion" xml:space="preserve">
+    <value>API 版本</value>
+  </data>
+  <data name="S_MinimumHostVersion" xml:space="preserve">
+    <value>最低宿主版本</value>
+  </data>
+  <data name="S_Description" xml:space="preserve">
+    <value>说明</value>
+  </data>
+  <data name="S_StatusDiscovered" xml:space="preserve">
+    <value>已发现</value>
+  </data>
+  <data name="S_StatusNotEnabled" xml:space="preserve">
+    <value>未启用</value>
+  </data>
+  <data name="S_StatusDisabled" xml:space="preserve">
+    <value>已禁用</value>
+  </data>
+  <data name="S_StatusLoaded" xml:space="preserve">
+    <value>已加载</value>
+  </data>
+  <data name="S_StatusLoadFailed" xml:space="preserve">
+    <value>加载失败</value>
+  </data>
+  <data name="S_StatusIncompatible" xml:space="preserve">
+    <value>不兼容</value>
+  </data>
+  <data name="S_StatusPendingRestart" xml:space="preserve">
+    <value>待重启</value>
+  </data>
+  <data name="S_StatusAvailable" xml:space="preserve">
+    <value>可安装</value>
+  </data>
+  <data name="M_SelectPluginFolderTitle" xml:space="preserve">
+    <value>选择插件目录</value>
+  </data>
+  <data name="M_SelectPluginPackageTitle" xml:space="preserve">
+    <value>选择 SecRandom 插件包</value>
+  </data>
+  <data name="M_SecRandomPluginPackageFileType" xml:space="preserve">
+    <value>SecRandom 插件包</value>
+  </data>
+  <data name="M_InvalidPluginFolder" xml:space="preserve">
+    <value>所选目录缺少有效的 plugin.json，或不符合插件结构。</value>
+  </data>
+  <data name="M_InvalidPluginPackage" xml:space="preserve">
+    <value>所选 .srpx 文件不是有效的 SecRandom 插件包。</value>
+  </data>
+  <data name="M_PluginImported" xml:space="preserve">
+    <value>插件已导入。</value>
+  </data>
+  <data name="M_PluginImportExists" xml:space="preserve">
+    <value>已存在同 ID 插件，请先处理或删除现有版本。</value>
+  </data>
+  <data name="M_PluginImportFailed" xml:space="preserve">
+    <value>插件导入失败：{0}</value>
+  </data>
+  <data name="M_PluginImportNeedsRestart" xml:space="preserve">
+    <value>插件导入后需要重启应用以完成加载。</value>
+  </data>
+  <data name="M_CatalogRefreshFailed" xml:space="preserve">
+    <value>插件源刷新失败：{0}</value>
+  </data>
+  <data name="M_SourceAddFailed" xml:space="preserve">
+    <value>插件源添加失败：{0}</value>
+  </data>
+</root>
