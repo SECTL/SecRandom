@@ -208,7 +208,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Appearance {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to 跟随系统.
         /// </summary>
         public static string O_ThemeColorMode_System {
             get {

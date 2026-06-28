@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -30,9 +30,11 @@ using SecRandom.Core.Extensions.Registry;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Services;
 using SecRandom.Services.Config;
+using SecRandom.Services.Plugins;
 using SecRandom.Services.Telemetry;
 using SecRandom.ViewModels;
 using SecRandom.Views;
@@ -42,6 +44,7 @@ using SecRandom.Views.SettingsPages.General;
 using SecRandom.Views.SettingsPages.ListManagement;
 using SecRandom.Views.SettingsPages.Personalized;
 using SecRandom.Views.SettingsPages.Picking;
+using SecRandom.Views.SettingsPages.Plugins;
 
 namespace SecRandom;
 
@@ -62,23 +65,24 @@ public partial class App : Application
     public override void Initialize()
     {
         // 初始化语言
-        try
+        var mainConfig = new MainConfigModel();
+        var settings = ProfileEncryptionCodec.LoadJsonFile(
+            mainConfig.ConfigFilePath,
+            mainConfig,
+            "SecRandom.MainConfig.v1",
+            root => root.TryGetProperty("general", out _)
+                    || root.TryGetProperty("appearance", out _)
+                    || root.TryGetProperty("basic", out _)
+                    || root.TryGetProperty("backup", out _)
+                    || root.TryGetProperty("float_position", out _));
+        var culture = settings.Basic.Language switch
         {
-            var content = File.ReadAllText(new MainConfigModel().ConfigFilePath);
-            var settings = JsonSerializer.Deserialize<MainConfigModel>(content, ConfigServiceBase.JsonOptions);
-            var culture = settings?.Basic.Language switch
-            {
-                LanguageMode.ChineseSimplified => @"zh-Hans",
-                LanguageMode.English => @"en-US",
-                LanguageMode.Japanese => @"ja-JP",
-                _ => @"zh-Hans"
-            };
-            InitializeLanguages(new CultureInfo(culture));
-        }
-        catch (FileNotFoundException)
-        {
-            InitializeLanguages(new CultureInfo("zh-Hans"));
-        }
+            LanguageMode.ChineseSimplified => @"zh-Hans",
+            LanguageMode.English => @"en-US",
+            LanguageMode.Japanese => @"ja-JP",
+            _ => @"zh-Hans"
+        };
+        InitializeLanguages(new CultureInfo(culture));
 
         // 初始化 Avalonia App
         AvaloniaXamlLoader.Load(this);
@@ -123,6 +127,8 @@ public partial class App : Application
             .UseContentRoot(AppContext.BaseDirectory)
             .ConfigureServices(services =>
             {
+                var pluginStateStore = new PluginStateStore();
+
                 // 日志
                 services.AddLogging(builder =>
                 {
@@ -145,10 +151,18 @@ public partial class App : Application
                 // 配置
                 services.AddSingleton<ConfigServiceBase, DesktopConfigService>();
                 services.AddSingleton<MainConfigHandler>();
+                services.AddSingleton<EncryptedProfileJsonStore>();
+                services.AddSingleton<EncryptedProfileHistoryStore>();
 
                 // 服务
                 services.AddSingleton<IProfileService, ProfileService>();
                 services.AddSingleton<SettingsSearchService>();
+                services.AddSingleton(pluginStateStore);
+                services.AddSingleton<PluginSelectionState>();
+                services.AddSingleton<IPluginManager, PluginManagerService>();
+                services.AddSingleton<IPluginCatalogService, PluginCatalogService>();
+                services.AddHostedService<PluginCatalogHostedService>();
+                services.AddHostedService<PluginHostedService>();
                 services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
                 services.AddSingleton<TelemetryRuntimeService>();
                 services.AddHostedService<OnlineStatusService>();
@@ -174,6 +188,8 @@ public partial class App : Application
                 services.AddMainPage<CameraPreviewTestPage>("摄像头测试");
 #endif
 
+                PluginManagerService.ConfigureEnabledPlugins(services, pluginStateStore);
+
                 // 设置界面 Views
                 services.AddSettingsPage<HomeSettingsPage>(Langs.Common.Resources.Settings_Home);
                 services.AddSettingsPageSeparator();
@@ -181,15 +197,29 @@ public partial class App : Application
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_General, "settings.general", FluentIcons.SettingsRegular));
                 services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
+                services.AddSettingsPage<SecuritySettingsPage>(Langs.Common.Resources.Settings_Security);
                 services.AddSettingsPage<PrivacySettingsPage>(Langs.SettingsPages.General.Privacy.Resources.Page_Title);
                 services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
 
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_Personalized, "settings.personalized", FluentIcons.ColorRegular));
                 services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
+                services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources.Settings_FloatingWindow);
+                services.AddSettingsPage<ThemeManagementSettingsPage>(Langs.Common.Resources.Settings_Theme);
 
                 services.AddSettingsPageSeparator();
-                
+                services.AddSettingsPage<LinkageSettingsPage>(Langs.Common.Resources.Settings_Linkage);
+
+                services.AddGroup(new PageGroupInfo(
+                    Langs.Common.Resources.Settings_Notification, "settings.notification", FluentIcons.CommentNoteRegular));
+                services.AddSettingsPage<VoiceSettingsPage>(Langs.Common.Resources.Settings_Voice);
+                services.AddSettingsPage<DefaultNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
+                services.AddSettingsPage<RollCallNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
+                services.AddSettingsPage<QuickDrawNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
+                services.AddSettingsPage<LotteryNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
+
+                services.AddSettingsPageSeparator();
+
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_RosterManagement, "settings.listManagement", FluentIcons.PeopleListRegular));
                 services.AddSettingsPage<RollCallListSettingsPage>(Langs.SettingsPages.ListManagement.RollCallList
@@ -203,8 +233,19 @@ public partial class App : Application
                 services.AddSettingsPage<RollCallDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_RollCall);
                 services.AddSettingsPage<QuickDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
                 services.AddSettingsPage<LotteryDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_Lottery);
+                services.AddSettingsPage<FaceDetectorSettingsPage>(Langs.Common.Resources.Settings_FaceDetector);
+
+                services.AddSettingsPageSeparator();
+                services.AddSettingsPage<HistoryManagementSettingsPage>(Langs.Common.Resources.Feat_History);
+                services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
+                services.AddSettingsPage<LogViewerSettingsPage>(Langs.SettingsPages.LogViewer.Resources.Page_Title);
+                services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
 
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
+
+                services.AddGroup(new PageGroupInfo(
+                    Langs.Common.Resources.Settings_Plugin, "settings.plugin", FluentIcons.AppsListRegular));
+                services.AddSettingsPage<PluginOverviewSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources.Page_Title);
 
 #if DEBUG
                 services.AddSettingsPageSeparator(PageLocation.Bottom);
@@ -216,6 +257,8 @@ public partial class App : Application
                 // 就像 services.AddTransient<SomeViewModel>(); 一样，谢谢你！
                 // ViewModel 一定要继承 SecRandom.ViewModels.ViewModelBase，里面有 Config 可以直接拿来用。
                 services.AddTransient<ViewModelBase>();
+                services.AddTransient<RollCallPageViewModel>();
+                services.AddTransient<DrawEngine>();
             })
             .Build();
 
