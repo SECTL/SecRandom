@@ -16,8 +16,8 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Config;
-using SecRandom.Services;
 using SecRandom.Shared;
+using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.RollCallList.Resources;
 
@@ -30,10 +30,6 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
     private readonly ILogger<RollCallListSettingsPage> _logger =
         IAppHost.GetService<ILogger<RollCallListSettingsPage>>();
-    private readonly EncryptedProfileJsonStore _profileJsonStore =
-        IAppHost.GetService<EncryptedProfileJsonStore>();
-    private readonly EncryptedProfileHistoryStore _profileHistoryStore =
-        IAppHost.GetService<EncryptedProfileHistoryStore>();
 
     public RollCallListSettingsPage()
     {
@@ -175,8 +171,8 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
 
         SaveSelectedStudentList();
 
-        _profileJsonStore.Rename(SelectedStudentListConfig.Data, newName);
-        _profileHistoryStore.Rename(new StudentHistory(oldName), newName);
+        RenameProfileFile(new StudentList(oldName), new StudentList(newName));
+        RenameProfileFile(new StudentHistory(oldName), new StudentHistory(newName));
 
         var service = IAppHost.GetService<IProfileService>();
         if (service.StudentListConfig?.Name == oldName)
@@ -206,7 +202,8 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
             return;
 
         SelectedStudentListConfig = null;
-        _profileJsonStore.Delete(new StudentList(deleteName));
+        DeleteProfileFile(new StudentList(deleteName));
+        DeleteProfileFile(new StudentHistory(deleteName));
 
         var nextName = StudentListNames.FirstOrDefault(name => name != deleteName) ?? string.Empty;
         RefreshStudentLists(nextName);
@@ -321,6 +318,31 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
     private static string GetStudentListPath(string listName)
     {
         return Utils.GetFilePath("data", "list", "roll_call_list", $"{listName}.json");
+    }
+
+    private static void RenameProfileFile(ProfileConfigBase oldConfig, ProfileConfigBase newConfig)
+    {
+        var oldPath = oldConfig.ConfigFilePath;
+        var newPath = newConfig.ConfigFilePath;
+
+        if (string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase) || !File.Exists(oldPath))
+            return;
+
+        var directory = Path.GetDirectoryName(newPath);
+        if (!string.IsNullOrWhiteSpace(directory))
+            Directory.CreateDirectory(directory);
+
+        if (File.Exists(newPath))
+            File.Delete(newPath);
+
+        File.Move(oldPath, newPath);
+    }
+
+    private static void DeleteProfileFile(ProfileConfigBase config)
+    {
+        var path = config.ConfigFilePath;
+        if (File.Exists(path))
+            File.Delete(path);
     }
 
     private async void OnStudentsImported(IReadOnlyList<Student> students)

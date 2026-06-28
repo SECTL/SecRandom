@@ -1,38 +1,19 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
-using SecRandom.Core.Services.Config;
-using SecRandom.Core.Models;
 using SecRandom.Shared.Abstraction;
-using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Services.Config;
 
 public class DesktopConfigService(ILogger<DesktopConfigService> logger) : ConfigServiceBase
 {
     private ILogger<DesktopConfigService> Logger { get; } = logger;
-    private EncryptedProfileHistoryStore? _historyStore;
-    private EncryptedProfileJsonStore? _profileJsonStore;
-
-    private EncryptedProfileHistoryStore HistoryStore =>
-        _historyStore ??= IAppHost.GetService<EncryptedProfileHistoryStore>();
-
-    private EncryptedProfileJsonStore ProfileJsonStore =>
-        _profileJsonStore ??= IAppHost.GetService<EncryptedProfileJsonStore>();
 
     public override bool IsConfigExists<T>(T fallback)
     {
-        if (fallback is StudentList studentList)
-            return ProfileJsonStore.Exists(studentList);
-        if (fallback is PrizeList prizeList)
-            return ProfileJsonStore.Exists(prizeList);
-        if (fallback is StudentHistory studentHistory)
-            return HistoryStore.Exists(studentHistory);
-        if (fallback is PrizeHistory prizeHistory)
-            return HistoryStore.Exists(prizeHistory);
-
         var filePath = fallback.ConfigFilePath;
         Logger.LogInformation("Checking config file existence: {Path}", filePath);
 
@@ -41,97 +22,88 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
 
     public override T LoadConfig<T>(T fallback)
     {
-        if (fallback is StudentList studentList)
-            return (T)(object)ProfileJsonStore.Load(studentList);
-        if (fallback is PrizeList prizeList)
-            return (T)(object)ProfileJsonStore.Load(prizeList);
-        if (fallback is StudentHistory studentHistory)
-            return (T)HistoryStore.Load(studentHistory);
-        if (fallback is PrizeHistory prizeHistory)
-            return (T)HistoryStore.Load(prizeHistory);
-
         var filePath = fallback.ConfigFilePath;
         Logger.LogInformation("Loading config file: {Path}", filePath);
-        return ProfileEncryptionCodec.LoadJsonFile(filePath, fallback, GetPurpose(typeof(T)), IsLegacyConfigCandidate);
+
+        if (!File.Exists(filePath))
+        {
+            SaveConfig(fallback);
+            return fallback;
+        }
+
+        try
+        {
+            var json = File.ReadAllText(filePath);
+            if (!IsPlainJsonObject(json))
+                return fallback;
+
+            var loaded = JsonSerializer.Deserialize<T>(json, JsonOptions) ?? fallback;
+            ApplyProfileName(loaded, fallback);
+            return loaded;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Unable to load config file, using fallback without rewriting: {Path}", filePath);
+            return fallback;
+        }
     }
 
     public override void SaveConfig<T>(T config)
     {
-        if (config is StudentList studentList)
-        {
-            ProfileJsonStore.Save(studentList);
-            return;
-        }
-
-        if (config is PrizeList prizeList)
-        {
-            ProfileJsonStore.Save(prizeList);
-            return;
-        }
-
-        if (config is StudentHistory studentHistory)
-        {
-            HistoryStore.Save(studentHistory);
-            return;
-        }
-
-        if (config is PrizeHistory prizeHistory)
-        {
-            HistoryStore.Save(prizeHistory);
-            return;
-        }
-
         var filePath = config.ConfigFilePath;
         Logger.LogInformation("Saving config file: {Path}", filePath);
-        ProfileEncryptionCodec.SaveJsonFile(filePath, config, GetPurpose(config.GetType()));
+
+        EnsureDirectory(filePath);
+        var json = JsonSerializer.Serialize(config, JsonOptions);
+        File.WriteAllText(filePath, json);
     }
 
     public override void DeleteConfig<T>(T config)
     {
-        if (config is StudentList studentList)
-        {
-            ProfileJsonStore.Delete(studentList);
-            return;
-        }
-
-        if (config is PrizeList prizeList)
-        {
-            ProfileJsonStore.Delete(prizeList);
-            return;
-        }
-
-        if (config is StudentHistory studentHistory)
-        {
-            HistoryStore.Delete(studentHistory);
-            return;
-        }
-
-        if (config is PrizeHistory prizeHistory)
-        {
-            HistoryStore.Delete(prizeHistory);
-            return;
-        }
-
         var filePath = config.ConfigFilePath;
         Logger.LogInformation("Deleting config file: {Path}", filePath);
 
-        if (!File.Exists(filePath)) return;
-        File.Delete(filePath);
+        if (File.Exists(filePath))
+            File.Delete(filePath);
     }
 
-    private static string GetPurpose(Type configType)
+    private static bool IsPlainJsonObject(string json)
     {
-        return configType == typeof(MainConfigModel)
-            ? "SecRandom.MainConfig.v1"
-            : $"SecRandom.Config.{configType.FullName ?? configType.Name}.v1";
+        if (string.IsNullOrWhiteSpace(json))
+            return false;
+
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            var root = document.RootElement;
+            return root.ValueKind == JsonValueKind.Object &&
+                   root.EnumerateObject().Any() &&
+                   !IsEncryptedEnvelope(root);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
-    private static bool IsLegacyConfigCandidate(System.Text.Json.JsonElement root)
+    private static bool IsEncryptedEnvelope(JsonElement root)
     {
-        return root.TryGetProperty("general", out _)
-               || root.TryGetProperty("appearance", out _)
-               || root.TryGetProperty("basic", out _)
-               || root.TryGetProperty("backup", out _)
-               || root.TryGetProperty("float_position", out _);
+        return root.TryGetProperty("version", out _) &&
+               root.TryGetProperty("nonce", out _) &&
+               root.TryGetProperty("tag", out _) &&
+               root.TryGetProperty("ciphertext", out _);
+    }
+
+    private static void ApplyProfileName<T>(T loaded, T fallback) where T : ConfigBase
+    {
+        if (loaded is ProfileConfigBase loadedProfile && fallback is ProfileConfigBase fallbackProfile)
+            loadedProfile.Name = fallbackProfile.Name;
+    }
+
+    private static void EnsureDirectory(string path)
+    {
+        var directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrWhiteSpace(directory))
+            Directory.CreateDirectory(directory);
     }
 }

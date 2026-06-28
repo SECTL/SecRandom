@@ -81,7 +81,7 @@ SecRandom/
 - Each page has its own folder under `Langs/`.
 - Privacy settings localization lives under `Langs/SettingsPages/General/Privacy/` and follows the same base `.resx` + designer registration pattern as other settings pages.
 - List management pages currently include roll-call lists (`data/list/roll_call_list`) and lottery prize pools (`data/list/lottery_list`). Student/prize number columns are optional; import must only require the name column.
-- Roll-call and lottery list files are stored as encrypted JSON envelopes on disk; keep their `.json` paths stable and use `DesktopConfigService` plus the encrypted profile store helpers instead of direct file serialization.
+- Roll-call and lottery list/history files are stored as plain JSON on disk; keep their `.json` paths stable and use `DesktopConfigService` instead of direct serialization.
 - Required files for a localized resource set: `Resources.resx` and `Resources.Designer.cs`; culture files such as
   `Resources.en-US.resx` / `Resources.ja-JP.resx` are optional and must keep exact on-disk casing.
 - Register only base `.resx` and designer in `SecRandom.csproj` using existing `EmbeddedResource` / `Compile` pattern.

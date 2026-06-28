@@ -16,8 +16,8 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Config;
-using SecRandom.Services;
 using SecRandom.Shared;
+using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.LotteryList.Resources;
 
@@ -30,10 +30,6 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
     private readonly ILogger<LotteryListSettingsPage> _logger =
         IAppHost.GetService<ILogger<LotteryListSettingsPage>>();
-    private readonly EncryptedProfileJsonStore _profileJsonStore =
-        IAppHost.GetService<EncryptedProfileJsonStore>();
-    private readonly EncryptedProfileHistoryStore _profileHistoryStore =
-        IAppHost.GetService<EncryptedProfileHistoryStore>();
 
     public LotteryListSettingsPage()
     {
@@ -168,8 +164,8 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
 
         SaveSelectedPrizeList();
 
-        _profileJsonStore.Rename(SelectedPrizeListConfig.Data, newName);
-        _profileHistoryStore.Rename(new PrizeHistory(oldName), newName);
+        RenameProfileFile(new PrizeList(oldName), new PrizeList(newName));
+        RenameProfileFile(new PrizeHistory(oldName), new PrizeHistory(newName));
 
         var service = IAppHost.GetService<IProfileService>();
         if (service.PrizeListConfig?.Name == oldName)
@@ -199,7 +195,8 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
             return;
 
         SelectedPrizeListConfig = null;
-        _profileJsonStore.Delete(new PrizeList(deleteName));
+        DeleteProfileFile(new PrizeList(deleteName));
+        DeleteProfileFile(new PrizeHistory(deleteName));
 
         var nextName = PrizeListNames.FirstOrDefault(name => name != deleteName) ?? string.Empty;
         RefreshPrizeLists(nextName);
@@ -314,6 +311,31 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
     private static string GetPrizeListPath(string listName)
     {
         return Utils.GetFilePath("data", "list", "lottery_list", $"{listName}.json");
+    }
+
+    private static void RenameProfileFile(ProfileConfigBase oldConfig, ProfileConfigBase newConfig)
+    {
+        var oldPath = oldConfig.ConfigFilePath;
+        var newPath = newConfig.ConfigFilePath;
+
+        if (string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase) || !File.Exists(oldPath))
+            return;
+
+        var directory = Path.GetDirectoryName(newPath);
+        if (!string.IsNullOrWhiteSpace(directory))
+            Directory.CreateDirectory(directory);
+
+        if (File.Exists(newPath))
+            File.Delete(newPath);
+
+        File.Move(oldPath, newPath);
+    }
+
+    private static void DeleteProfileFile(ProfileConfigBase config)
+    {
+        var path = config.ConfigFilePath;
+        if (File.Exists(path))
+            File.Delete(path);
     }
 
     private async void OnPrizesImported(IReadOnlyList<Prize> prizes)

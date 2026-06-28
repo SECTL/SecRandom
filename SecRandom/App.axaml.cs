@@ -66,15 +66,7 @@ public partial class App : Application
     {
         // 初始化语言
         var mainConfig = new MainConfigModel();
-        var settings = ProfileEncryptionCodec.LoadJsonFile(
-            mainConfig.ConfigFilePath,
-            mainConfig,
-            "SecRandom.MainConfig.v1",
-            root => root.TryGetProperty("general", out _)
-                    || root.TryGetProperty("appearance", out _)
-                    || root.TryGetProperty("basic", out _)
-                    || root.TryGetProperty("backup", out _)
-                    || root.TryGetProperty("float_position", out _));
+        var settings = LoadStartupSettings(mainConfig);
         var culture = settings.Basic.Language switch
         {
             LanguageMode.ChineseSimplified => @"zh-Hans",
@@ -151,8 +143,6 @@ public partial class App : Application
                 // 配置
                 services.AddSingleton<ConfigServiceBase, DesktopConfigService>();
                 services.AddSingleton<MainConfigHandler>();
-                services.AddSingleton<EncryptedProfileJsonStore>();
-                services.AddSingleton<EncryptedProfileHistoryStore>();
 
                 // 服务
                 services.AddSingleton<IProfileService, ProfileService>();
@@ -281,6 +271,23 @@ public partial class App : Application
         var isVisible = false;
         if (GlobalConstants.IsDevelopment && isVisible)
             IAppHost.GetService<SettingsSearchService>().LogTestInformation();
+    }
+
+    private static MainConfigModel LoadStartupSettings(MainConfigModel fallback)
+    {
+        if (!File.Exists(fallback.ConfigFilePath))
+            return fallback;
+
+        try
+        {
+            return JsonSerializer.Deserialize<MainConfigModel>(
+                File.ReadAllText(fallback.ConfigFilePath),
+                ConfigServiceBase.JsonOptions) ?? fallback;
+        }
+        catch
+        {
+            return fallback;
+        }
     }
 
     public void InitializeApp()
