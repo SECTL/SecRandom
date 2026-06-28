@@ -31,6 +31,7 @@
 
     <x:Double x:Key="ComboBoxArrowThemeFontSize">21</x:Double>
     <x:Double x:Key="ComboBoxThemeMinWidth">64</x:Double>
+    <x:Double x:Key="ComboBoxThemeMaxWidth">420</x:Double>
     <x:Double x:Key="ComboBoxPopupThemeMinWidth">80</x:Double>
     <x:Double x:Key="ComboBoxPopupThemeTouchMinWidth">240</x:Double>
     <x:Double x:Key="ComboBoxItemPillHeight">16</x:Double>
@@ -73,6 +74,7 @@
     <ControlTheme TargetType="u:MultiComboBox" x:Key="{x:Type u:MultiComboBox}">
         <Setter Property="Focusable" Value="True" />
         <Setter Property="Padding" Value="{DynamicResource ComboBoxPadding}" />
+        <Setter Property="MaxWidth" Value="{DynamicResource ComboBoxThemeMaxWidth}" />
         <Setter Property="MaxDropDownHeight" Value="504" />
         <Setter Property="Foreground" Value="{DynamicResource ComboBoxForeground}" />
         <Setter Property="Background" Value="{DynamicResource ComboBoxBackground}" />
@@ -298,19 +300,14 @@
                     Margin="5,2,5,2"
                     TemplatedControl.IsTemplateFocusTarget="True">
                     <Grid x:Name="RootGrid">
-                        <CheckBox Name="CheckBox" HorizontalAlignment="Stretch"
-                                  IsChecked="{TemplateBinding IsSelected, Mode=TwoWay}">
-                            <ContentPresenter Name="ContentPresenter"
-                                              Content="{TemplateBinding Content}"
-                                              ContentTemplate="{TemplateBinding ContentTemplate}"
-                                              Foreground="{TemplateBinding Foreground}"
-                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                              Background="{x:Null}"
-                                              BorderBrush="{x:Null}"
-                                              CornerRadius="{TemplateBinding CornerRadius}"
-                                              BorderThickness="0" />
-                        </CheckBox>
+                        <CheckBox Name="CheckBox"
+                                  HorizontalAlignment="Stretch"
+                                  Content="{TemplateBinding Content}"
+                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                  Foreground="{TemplateBinding Foreground}"
+                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                  IsChecked="{TemplateBinding IsSelected, Mode=TwoWay}" />
                     </Grid>
                 </Border>
             </ControlTemplate>

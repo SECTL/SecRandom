@@ -27,4 +27,13 @@
     <data name="O_DefaultFontFamily" xml:space="preserve">
         <value>MiSans (默认)</value>
     </data>
+    <data name="C_AttachedSettingsEnableTip" xml:space="preserve">
+        <value>是否在此处启用特定的设置</value>
+    </data>
+    <data name="C_AttachedSettings" xml:space="preserve">
+        <value>附加设置</value>
+    </data>
+    <data name="C_AttachedSettingsButtonTip" xml:space="preserve">
+        <value>打开附加设置</value>
+    </data>
 </root>

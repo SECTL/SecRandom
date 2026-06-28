@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <root>
     <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
@@ -24,10 +24,16 @@
             PublicKeyToken=b77a5c561934e089
         </value>
     </resheader>
-    <data name="C_Probability" xml:space="preserve">
-        <value>概率</value>
+    <data name="O_DefaultFontFamily" xml:space="preserve">
+        <value>MiSans (Default)</value>
     </data>
-    <data name="C_ProbabilityDescription" xml:space="preserve">
-        <value>默认值为 0，权重范围为 0-100；0 为不参与，100 为必中。</value>
+    <data name="C_AttachedSettingsEnableTip" xml:space="preserve">
+        <value>Enable custom settings here</value>
+    </data>
+    <data name="C_AttachedSettings" xml:space="preserve">
+        <value>Attached Settings</value>
+    </data>
+    <data name="C_AttachedSettingsButtonTip" xml:space="preserve">
+        <value>Open attached settings</value>
     </data>
 </root>

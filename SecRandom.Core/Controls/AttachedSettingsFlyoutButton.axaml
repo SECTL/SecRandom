@@ -1,0 +1,41 @@
+<Button xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:lr="clr-namespace:SecRandom.Core.Langs.Common"
+        xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+        mc:Ignorable="d" d:DesignWidth="40" d:DesignHeight="40"
+        x:Class="SecRandom.Core.Controls.AttachedSettingsFlyoutButton"
+        x:Name="RootButton"
+        Padding="8,4"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center"
+        ToolTip.Tip="{x:Static lr:Resources.C_AttachedSettingsButtonTip}">
+    <Button.Resources>
+        <ControlTheme x:Key="AttachedSettingsFlyoutPresenterTheme"
+                      TargetType="FlyoutPresenter"
+                      BasedOn="{StaticResource {x:Type FlyoutPresenter}}">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+        </ControlTheme>
+    </Button.Resources>
+
+    <sr:FluentIcon Glyph="&#xEF2B;" />
+
+    <Button.Flyout>
+        <Flyout FlyoutPresenterTheme="{StaticResource AttachedSettingsFlyoutPresenterTheme}">
+            <Border MinWidth="260"
+                    Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                    CornerRadius="6"
+                    Padding="12">
+                <StackPanel Spacing="8">
+                    <sr:IconText Glyph="&#xEF2B;"
+                                 Text="{x:Static lr:Resources.C_AttachedSettings}" />
+
+                    <ItemsControl x:Name="AttachedSettingsItemsControl" />
+                </StackPanel>
+            </Border>
+        </Flyout>
+    </Button.Flyout>
+</Button>

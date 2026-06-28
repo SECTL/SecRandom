@@ -67,5 +67,32 @@ namespace SecRandom.Core.Langs.Common {
                 return ResourceManager.GetString("O_DefaultFontFamily", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 是否在此处启用特定的设置.
+        /// </summary>
+        public static string C_AttachedSettingsEnableTip {
+            get {
+                return ResourceManager.GetString("C_AttachedSettingsEnableTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 附加设置.
+        /// </summary>
+        public static string C_AttachedSettings {
+            get {
+                return ResourceManager.GetString("C_AttachedSettings", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 打开附加设置.
+        /// </summary>
+        public static string C_AttachedSettingsButtonTip {
+            get {
+                return ResourceManager.GetString("C_AttachedSettingsButtonTip", resourceCulture);
+            }
+        }
     }
 }

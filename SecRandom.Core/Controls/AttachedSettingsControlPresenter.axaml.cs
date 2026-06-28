@@ -1,4 +1,5 @@
-﻿using Avalonia;
+using System.ComponentModel;
+using Avalonia;
 using Avalonia.Controls;
 using SecRandom.Core.Abstraction.Controls;
 using SecRandom.Core.Attributes;
@@ -8,8 +9,16 @@ using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Controls;
 
-public partial class AttachedSettingsControlPresenter : UserControl
+public partial class AttachedSettingsControlPresenter : UserControl, INotifyPropertyChanged
 {
+    private const double ExpandedMaxHeight = 420;
+    private INotifyPropertyChanged? _settingsPropertyChanged;
+    private double _expandedContentMaxHeight;
+    private double _expandedContentOpacity;
+    private event PropertyChangedEventHandler? NotifyPropertyChanged;
+
+    public event EventHandler? SettingsChanged;
+
     public static readonly StyledProperty<AttachedSettingsControlInfo> ControlInfoProperty =
         AvaloniaProperty.Register<AttachedSettingsControlPresenter, AttachedSettingsControlInfo>(
             nameof(ControlInfo));
@@ -29,6 +38,32 @@ public partial class AttachedSettingsControlPresenter : UserControl
     public AttachedSettingsControlPresenter()
     {
         InitializeComponent();
+    }
+
+    public double ExpandedContentMaxHeight
+    {
+        get => _expandedContentMaxHeight;
+        private set
+        {
+            if (Math.Abs(_expandedContentMaxHeight - value) < double.Epsilon)
+                return;
+
+            _expandedContentMaxHeight = value;
+            OnPropertyChanged(nameof(ExpandedContentMaxHeight));
+        }
+    }
+
+    public double ExpandedContentOpacity
+    {
+        get => _expandedContentOpacity;
+        private set
+        {
+            if (Math.Abs(_expandedContentOpacity - value) < double.Epsilon)
+                return;
+
+            _expandedContentOpacity = value;
+            OnPropertyChanged(nameof(ExpandedContentOpacity));
+        }
     }
 
     public AttachedSettingsControlInfo ControlInfo
@@ -57,15 +92,22 @@ public partial class AttachedSettingsControlPresenter : UserControl
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs e)
     {
-        if (e.Property == TargetObjectProperty || e.Property == ControlInfoProperty) UpdateContent();
+        if (e.Property == TargetObjectProperty || e.Property == ControlInfoProperty)
+            UpdateContent();
 
         base.OnPropertyChanged(e);
     }
 
     private void UpdateContent()
     {
-        if (TargetObject == null || ControlInfo == null) return;
+        if (TargetObject == null || ControlInfo == null)
+            return;
 
+        if (_settingsPropertyChanged != null)
+        {
+            _settingsPropertyChanged.PropertyChanged -= AssociatedAttachedSettings_OnPropertyChanged;
+            _settingsPropertyChanged = null;
+        }
 
         TargetObject.AttachedObjects.TryGetValue(ControlInfo.Guid, out var settings);
         var control = AttachedSettingsControlBase.GetInstance(ControlInfo, ref settings);
@@ -81,15 +123,49 @@ public partial class AttachedSettingsControlPresenter : UserControl
         ContentObject = control;
         MainContentPresenter.Content = ContentObject;
         AssociatedAttachedSettings = settings as IAttachedSettings;
-        UpdateSourceSettings(AssociatedAttachedSettings);
+        if (AssociatedAttachedSettings is INotifyPropertyChanged propertyChanged)
+        {
+            _settingsPropertyChanged = propertyChanged;
+            _settingsPropertyChanged.PropertyChanged += AssociatedAttachedSettings_OnPropertyChanged;
+        }
+
+        UpdateExpandedContentState();
+        UpdateSourceSettings(AssociatedAttachedSettings, false);
     }
 
-    private void UpdateSourceSettings(IAttachedSettings? settings)
+    private void AssociatedAttachedSettings_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (settings?.IsAttachSettingsEnabled != true && ControlInfo.HasEnabledState)
-            // 在附加设置没有启用，且控件有附加设置启用状态的情况下不回写设置信息，以降低档案文件大小。
-            return;
+        if (e.PropertyName is null or nameof(IAttachedSettings.IsAttachSettingsEnabled))
+            UpdateExpandedContentState();
 
-        TargetObject.AttachedObjects[ControlInfo.Guid] = settings;
+        UpdateSourceSettings(AssociatedAttachedSettings, true);
+    }
+
+    private void UpdateExpandedContentState()
+    {
+        ExpandedContentMaxHeight = ExpandedMaxHeight;
+        ExpandedContentOpacity = 1;
+    }
+
+    private void UpdateSourceSettings(IAttachedSettings? settings, bool notifyChanged)
+    {
+        if (settings == null)
+            TargetObject.AttachedObjects.Remove(ControlInfo.Guid);
+        else
+            TargetObject.AttachedObjects[ControlInfo.Guid] = settings;
+
+        if (notifyChanged)
+            SettingsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
+    {
+        add => NotifyPropertyChanged += value;
+        remove => NotifyPropertyChanged -= value;
+    }
+
+    private void OnPropertyChanged(string propertyName)
+    {
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

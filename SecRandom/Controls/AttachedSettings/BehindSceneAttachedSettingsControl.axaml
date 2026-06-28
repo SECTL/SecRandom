@@ -8,9 +8,18 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Controls.AttachedSettings.BehindSceneAttachedSettingsControl"
              x:Name="RootControl">
-    <sr:Field Label="{x:Static la:Resources.C_Probability}"
-              DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=local:BehindSceneAttachedSettingsControl}}">
-        <NumericUpDown Value="{Binding Settings.Probability}"
-                       Increment="0.5" />
-    </sr:Field>
+    <StackPanel Spacing="6"
+                DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=local:BehindSceneAttachedSettingsControl}}">
+        <sr:Field Label="{x:Static la:Resources.C_Probability}">
+            <NumericUpDown Value="{Binding ProbabilityValue, Mode=TwoWay}"
+                           Minimum="0"
+                           Maximum="100"
+                           Increment="1" />
+        </sr:Field>
+
+        <TextBlock Text="{x:Static la:Resources.C_ProbabilityDescription}"
+                   TextWrapping="Wrap"
+                   FontSize="12"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+    </StackPanel>
 </UserControl>

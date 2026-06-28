@@ -4,11 +4,11 @@
         xmlns:styling="clr-namespace:FluentAvalonia.Styling;assembly=FluentAvalonia"
         xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
         xmlns:system="clr-namespace:System;assembly=System.Runtime"
-        xmlns:windowing="clr-namespace:FluentAvalonia.UI.Windowing;assembly=FluentAvalonia"
         xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia">
     <Styles.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <MergeResourceInclude Source="/Styles/ChipListBox.axaml" />
                 <MergeResourceInclude Source="/Styles/MultiComboBox.axaml" />
                 <MergeResourceInclude Source="/Controls/DevelopmentBuildAdorner.axaml" />
             </ResourceDictionary.MergedDictionaries>
@@ -69,11 +69,6 @@
         <Setter Property="Margin" Value="12 12 18 12" />
         <Setter Property="MaxWidth" Value="{StaticResource PageContainerWidth}" />
         <Setter Property="Spacing" Value="4" />
-    </Style>
-
-    <Style Selector="windowing|FAAppSplashScreen">
-        <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorBase}" />
-        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimary}" />
     </Style>
 
     <Style Selector="asyncImageLoader|AdvancedImage">

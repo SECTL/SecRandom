@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <root>
     <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
@@ -25,9 +25,9 @@
         </value>
     </resheader>
     <data name="C_Probability" xml:space="preserve">
-        <value>概率</value>
+        <value>Probability</value>
     </data>
     <data name="C_ProbabilityDescription" xml:space="preserve">
-        <value>默认值为 0，权重范围为 0-100；0 为不参与，100 为必中。</value>
+        <value>The default is 0. The weight range is 0-100; 0 excludes this item, and 100 guarantees it.</value>
     </data>
 </root>

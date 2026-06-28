@@ -67,5 +67,14 @@ namespace SecRandom.Langs.AttachedSettings {
                 return ResourceManager.GetString("C_Probability", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 默认值为 0，权重范围为 0-100；0 为不参与，100 为必中。.
+        /// </summary>
+        public static string C_ProbabilityDescription {
+            get {
+                return ResourceManager.GetString("C_ProbabilityDescription", resourceCulture);
+            }
+        }
     }
 }

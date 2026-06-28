@@ -2,18 +2,18 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lr="clr-namespace:SecRandom.Core.Langs.Common"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Core.Controls.AttachedSettingsControlPresenter">
     <Grid
         DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=sr:AttachedSettingsControlPresenter}}">
-        <Expander Classes="compact stretch-header" HorizontalContentAlignment="Stretch"
-                  IsExpanded="{Binding AssociatedAttachedSettings.IsAttachSettingsEnabled, Mode=OneWay}">
+        <Expander Classes="compact stretch-header" HorizontalContentAlignment="Stretch">
             <Expander.Header>
                 <DockPanel HorizontalAlignment="Stretch">
                     <ToggleSwitch DockPanel.Dock="Right"
                                   IsChecked="{Binding AssociatedAttachedSettings.IsAttachSettingsEnabled}"
-                                  ToolTip.Tip="是否在此处启用特定的设置"
+                                  ToolTip.Tip="{x:Static lr:Resources.C_AttachedSettingsEnableTip}"
                                   OnContent="" OffContent="" Margin="0,-8,0,-4"
                                   VerticalAlignment="Center"
                                   IsEnabled="{Binding ControlInfo.HasEnabledState, Mode=OneWay}" />
@@ -25,8 +25,21 @@
                 </DockPanel>
             </Expander.Header>
 
-            <ContentPresenter x:Name="MainContentPresenter"
-                              IsEnabled="{Binding AssociatedAttachedSettings.IsAttachSettingsEnabled, Mode=OneWay}" />
+            <Border ClipToBounds="True"
+                    MaxHeight="{Binding ExpandedContentMaxHeight}"
+                    Opacity="{Binding ExpandedContentOpacity}">
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="MaxHeight"
+                                          Duration="0:0:0.18"
+                                          Easing="0,0 0,1" />
+                        <DoubleTransition Property="Opacity"
+                                          Duration="0:0:0.12" />
+                    </Transitions>
+                </Border.Transitions>
+
+                <ContentPresenter x:Name="MainContentPresenter" />
+            </Border>
         </Expander>
     </Grid>
 </UserControl>
