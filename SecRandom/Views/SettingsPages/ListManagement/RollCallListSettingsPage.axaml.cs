@@ -9,12 +9,14 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using FluentAvalonia.UI.Controls;
+using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Config;
+using SecRandom.Services;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.RollCallList.Resources;
@@ -26,6 +28,12 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
 {
     private string _selectedStudentListName = string.Empty;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
+    private readonly ILogger<RollCallListSettingsPage> _logger =
+        IAppHost.GetService<ILogger<RollCallListSettingsPage>>();
+    private readonly EncryptedProfileJsonStore _profileJsonStore =
+        IAppHost.GetService<EncryptedProfileJsonStore>();
+    private readonly EncryptedProfileHistoryStore _profileHistoryStore =
+        IAppHost.GetService<EncryptedProfileHistoryStore>();
 
     public RollCallListSettingsPage()
     {
@@ -98,12 +106,24 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
     {
         SelectedStudentListConfig?.Save();
 
-        var service = IAppHost.GetService<IProfileService>();
-        if (service.StudentListConfig?.Name == SelectedStudentListName)
-            service.StudentListConfig.Reload();
+        var service = IAppHost.TryGetService<IProfileService>();
+        if (service?.StudentListConfig?.Name == SelectedStudentListName)
+            service.LoadStudentProfile(SelectedStudentListName, saveCurrent: false);
+
+        var config = IAppHost.TryGetService<MainConfigHandler>();
+        if (config != null && config.Data.RollCallSettings.DefaultClass != SelectedStudentListName)
+        {
+            config.Data.RollCallSettings.DefaultClass = SelectedStudentListName;
+            config.Save();
+        }
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
+    {
+        SaveSelectedStudentList();
+    }
+
+    private void AttachedSettings_OnSettingsChanged(object? sender, EventArgs e)
     {
         SaveSelectedStudentList();
     }
@@ -132,6 +152,7 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         var config = new StudentListConfig(listName);
         config.Save();
         RefreshStudentLists(listName);
+        _logger.LogInformation("已创建点名名单：名单={ListName}。", listName);
         this.ShowSuccessToast(string.Format(LR.M_AddListSuccess, listName));
     }
 
@@ -154,16 +175,48 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
 
         SaveSelectedStudentList();
 
-        var oldPath = GetStudentListPath(oldName);
-        var newPath = GetStudentListPath(newName);
-        File.Move(oldPath, newPath);
+        _profileJsonStore.Rename(SelectedStudentListConfig.Data, newName);
+        _profileHistoryStore.Rename(new StudentHistory(oldName), newName);
 
         var service = IAppHost.GetService<IProfileService>();
         if (service.StudentListConfig?.Name == oldName)
-            service.StudentListConfig.Reload();
+            service.LoadStudentProfile(newName, saveCurrent: false);
 
         RefreshStudentLists(newName);
+        _logger.LogInformation("已重命名点名名单：原名单={OldListName}，新名单={NewListName}。", oldName, newName);
         this.ShowSuccessToast(string.Format(LR.M_RenameListSuccess, newName));
+    }
+
+    private async void DeleteListButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(SelectedStudentListName) || SelectedStudentListConfig == null)
+        {
+            this.ShowWarningToast(LR.M_SelectListFirst);
+            return;
+        }
+
+        if (StudentListNames.Count <= 1)
+        {
+            this.ShowWarningToast(LR.M_KeepOneList);
+            return;
+        }
+
+        var deleteName = SelectedStudentListName;
+        if (!await ConfirmDeleteAsync(deleteName))
+            return;
+
+        SelectedStudentListConfig = null;
+        _profileJsonStore.Delete(new StudentList(deleteName));
+
+        var nextName = StudentListNames.FirstOrDefault(name => name != deleteName) ?? string.Empty;
+        RefreshStudentLists(nextName);
+
+        var service = IAppHost.GetService<IProfileService>();
+        if (service.StudentListConfig?.Name == deleteName)
+            service.LoadStudentProfile(nextName, saveCurrent: false);
+
+        _logger.LogInformation("已删除点名名单：名单={ListName}。", deleteName);
+        this.ShowSuccessToast(string.Format(LR.M_DeleteListSuccess, deleteName));
     }
 
     private void ImportButton_OnClick(object? sender, RoutedEventArgs e)
@@ -176,6 +229,7 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
 
         var view = new RollCallListImportView(SelectedStudentListName, OnStudentsImported);
         SettingsView.Current?.OpenDrawer(view);
+        _logger.LogInformation("打开点名名单导入面板：目标名单={ListName}。", SelectedStudentListName);
     }
 
     private async Task<bool> ConfirmOverwriteAsync(int currentCount, int importCount)
@@ -187,6 +241,20 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
             PrimaryButtonText = LR.M_OverwritePrimary,
             CloseButtonText = LR.C_Cancel,
             DefaultButton = FAContentDialogButton.Primary
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+
+        return result == FAContentDialogResult.Primary;
+    }
+
+    private async Task<bool> ConfirmDeleteAsync(string listName)
+    {
+        var result = await new FAContentDialog
+        {
+            Title = LR.M_DeleteListTitle,
+            Content = string.Format(LR.M_DeleteListContent, listName),
+            PrimaryButtonText = LR.M_DeleteListPrimary,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Close
         }.ShowAsync(TopLevel.GetTopLevel(this));
 
         return result == FAContentDialogResult.Primary;
@@ -269,8 +337,10 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
             SelectedStudentListConfig.Data.Students.Add(student);
 
         SaveSelectedStudentList();
+        IAppHost.TryGetService<IProfileService>()?.LoadStudentProfile(SelectedStudentListName, saveCurrent: false);
         OnPropertyChanged(nameof(SelectedStudentList));
         SettingsView.Current?.CloseDrawer();
+        _logger.LogInformation("已导入点名名单：目标名单={ListName}，导入数量={Count}。", SelectedStudentListName, students.Count);
         this.ShowSuccessToast(string.Format(LR.M_ImportSuccess, students.Count, SelectedStudentListName));
     }
 

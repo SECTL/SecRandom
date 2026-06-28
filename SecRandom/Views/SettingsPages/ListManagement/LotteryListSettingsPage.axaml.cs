@@ -9,12 +9,14 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using FluentAvalonia.UI.Controls;
+using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Config;
+using SecRandom.Services;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.LotteryList.Resources;
@@ -26,6 +28,12 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
 {
     private string _selectedPrizeListName = string.Empty;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
+    private readonly ILogger<LotteryListSettingsPage> _logger =
+        IAppHost.GetService<ILogger<LotteryListSettingsPage>>();
+    private readonly EncryptedProfileJsonStore _profileJsonStore =
+        IAppHost.GetService<EncryptedProfileJsonStore>();
+    private readonly EncryptedProfileHistoryStore _profileHistoryStore =
+        IAppHost.GetService<EncryptedProfileHistoryStore>();
 
     public LotteryListSettingsPage()
     {
@@ -97,12 +105,24 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
     {
         SelectedPrizeListConfig?.Save();
 
-        var service = IAppHost.GetService<IProfileService>();
-        if (service.PrizeListConfig?.Name == SelectedPrizeListName)
-            service.PrizeListConfig.Reload();
+        var service = IAppHost.TryGetService<IProfileService>();
+        if (service?.PrizeListConfig?.Name == SelectedPrizeListName)
+            service.LoadPrizeProfile(SelectedPrizeListName, saveCurrent: false);
+
+        var config = IAppHost.TryGetService<MainConfigHandler>();
+        if (config != null && config.Data.QuickDrawSettings.DefaultClass != SelectedPrizeListName)
+        {
+            config.Data.QuickDrawSettings.DefaultClass = SelectedPrizeListName;
+            config.Save();
+        }
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
+    {
+        SaveSelectedPrizeList();
+    }
+
+    private void AttachedSettings_OnSettingsChanged(object? sender, EventArgs e)
     {
         SaveSelectedPrizeList();
     }
@@ -128,6 +148,7 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         var config = new PrizeListConfig(listName);
         config.Save();
         RefreshPrizeLists(listName);
+        _logger.LogInformation("已创建奖品池：奖品池={ListName}。", listName);
         this.ShowSuccessToast(string.Format(LR.M_AddListSuccess, listName));
     }
 
@@ -147,14 +168,48 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
 
         SaveSelectedPrizeList();
 
-        File.Move(GetPrizeListPath(oldName), GetPrizeListPath(newName));
+        _profileJsonStore.Rename(SelectedPrizeListConfig.Data, newName);
+        _profileHistoryStore.Rename(new PrizeHistory(oldName), newName);
 
         var service = IAppHost.GetService<IProfileService>();
         if (service.PrizeListConfig?.Name == oldName)
-            service.PrizeListConfig.Reload();
+            service.LoadPrizeProfile(newName, saveCurrent: false);
 
         RefreshPrizeLists(newName);
+        _logger.LogInformation("已重命名奖品池：原奖品池={OldListName}，新奖品池={NewListName}。", oldName, newName);
         this.ShowSuccessToast(string.Format(LR.M_RenameListSuccess, newName));
+    }
+
+    private async void DeleteListButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(SelectedPrizeListName) || SelectedPrizeListConfig == null)
+        {
+            this.ShowWarningToast(LR.M_SelectListFirst);
+            return;
+        }
+
+        if (PrizeListNames.Count <= 1)
+        {
+            this.ShowWarningToast(LR.M_KeepOneList);
+            return;
+        }
+
+        var deleteName = SelectedPrizeListName;
+        if (!await ConfirmDeleteAsync(deleteName))
+            return;
+
+        SelectedPrizeListConfig = null;
+        _profileJsonStore.Delete(new PrizeList(deleteName));
+
+        var nextName = PrizeListNames.FirstOrDefault(name => name != deleteName) ?? string.Empty;
+        RefreshPrizeLists(nextName);
+
+        var service = IAppHost.GetService<IProfileService>();
+        if (service.PrizeListConfig?.Name == deleteName)
+            service.LoadPrizeProfile(nextName, saveCurrent: false);
+
+        _logger.LogInformation("已删除奖品池：奖品池={ListName}。", deleteName);
+        this.ShowSuccessToast(string.Format(LR.M_DeleteListSuccess, deleteName));
     }
 
     private void ImportButton_OnClick(object? sender, RoutedEventArgs e)
@@ -167,6 +222,7 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
 
         var view = new LotteryListImportView(SelectedPrizeListName, OnPrizesImported);
         SettingsView.Current?.OpenDrawer(view);
+        _logger.LogInformation("打开奖品池导入面板：目标奖品池={ListName}。", SelectedPrizeListName);
     }
 
     private async Task<bool> ConfirmOverwriteAsync(int currentCount, int importCount)
@@ -178,6 +234,20 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
             PrimaryButtonText = LR.M_OverwritePrimary,
             CloseButtonText = LR.C_Cancel,
             DefaultButton = FAContentDialogButton.Primary
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+
+        return result == FAContentDialogResult.Primary;
+    }
+
+    private async Task<bool> ConfirmDeleteAsync(string listName)
+    {
+        var result = await new FAContentDialog
+        {
+            Title = LR.M_DeleteListTitle,
+            Content = string.Format(LR.M_DeleteListContent, listName),
+            PrimaryButtonText = LR.M_DeleteListPrimary,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Close
         }.ShowAsync(TopLevel.GetTopLevel(this));
 
         return result == FAContentDialogResult.Primary;
@@ -260,8 +330,10 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
             SelectedPrizeListConfig.Data.Prizes.Add(prize);
 
         SaveSelectedPrizeList();
+        IAppHost.TryGetService<IProfileService>()?.LoadPrizeProfile(SelectedPrizeListName, saveCurrent: false);
         OnPropertyChanged(nameof(SelectedPrizeList));
         SettingsView.Current?.CloseDrawer();
+        _logger.LogInformation("已导入奖品池：目标奖品池={ListName}，导入数量={Count}。", SelectedPrizeListName, prizes.Count);
         this.ShowSuccessToast(string.Format(LR.M_ImportSuccess, prizes.Count, SelectedPrizeListName));
     }
 

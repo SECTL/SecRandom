@@ -51,14 +51,17 @@
     <data name="C_RenameList" xml:space="preserve">
         <value>重命名</value>
     </data>
+    <data name="C_DeleteList" xml:space="preserve">
+        <value>删除奖池</value>
+    </data>
     <data name="C_Exists" xml:space="preserve">
         <value>存在</value>
     </data>
     <data name="C_PrizeId" xml:space="preserve">
-        <value>ID</value>
+        <value>ID/编号</value>
     </data>
     <data name="C_Name" xml:space="preserve">
-        <value>奖品名称</value>
+        <value>奖品名称 *</value>
     </data>
     <data name="C_Weight" xml:space="preserve">
         <value>权重</value>
@@ -91,13 +94,13 @@
         <value>列映射</value>
     </data>
     <data name="C_ColumnMapping_D" xml:space="preserve">
-        <value>ID 和奖品名称是必选项；权重、数量、标签可留空。</value>
+        <value>奖品名称是必选项；ID/编号、权重、数量、标签可留空。</value>
     </data>
     <data name="C_PrizeIdColumn" xml:space="preserve">
-        <value>ID 列</value>
+        <value>ID/编号列</value>
     </data>
     <data name="C_NameColumn" xml:space="preserve">
-        <value>奖品名称列</value>
+        <value>奖品名称列 *</value>
     </data>
     <data name="C_WeightColumn" xml:space="preserve">
         <value>权重列</value>
@@ -136,7 +139,7 @@
         <value>已读取 {0} 行数据。</value>
     </data>
     <data name="M_SelectRequiredColumns" xml:space="preserve">
-        <value>请选择 ID 列和奖品名称列。</value>
+        <value>请选择奖品名称列。</value>
     </data>
     <data name="M_DuplicateTitle" xml:space="preserve">
         <value>发现重复奖品名称</value>
@@ -145,9 +148,12 @@
         <value>以下 {0} 个奖品名称重复：
 {1}
 
-是否自动重命名后继续导入？</value>
+可以保留重名并继续导入，系统会用内部标识区分记录。</value>
     </data>
     <data name="M_DuplicatePrimary" xml:space="preserve">
+        <value>保留重名导入</value>
+    </data>
+    <data name="M_DuplicateSecondary" xml:space="preserve">
         <value>自动重命名</value>
     </data>
     <data name="M_DuplicateClose" xml:space="preserve">
@@ -197,6 +203,21 @@
     </data>
     <data name="M_RenameListSuccess" xml:space="preserve">
         <value>已重命名为“{0}”。</value>
+    </data>
+    <data name="M_DeleteListTitle" xml:space="preserve">
+        <value>删除当前奖池？</value>
+    </data>
+    <data name="M_DeleteListContent" xml:space="preserve">
+        <value>将删除奖池“{0}”。此操作不可撤销。</value>
+    </data>
+    <data name="M_DeleteListPrimary" xml:space="preserve">
+        <value>删除</value>
+    </data>
+    <data name="M_DeleteListSuccess" xml:space="preserve">
+        <value>已删除奖池“{0}”。</value>
+    </data>
+    <data name="M_KeepOneList" xml:space="preserve">
+        <value>至少需要保留一个奖池。</value>
     </data>
     <data name="K_IdColumns" xml:space="preserve">
         <value>ID|id|编号|序号|奖品ID|prize id|prize_id|no</value>

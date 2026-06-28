@@ -5,6 +5,8 @@
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.ListManagement"
              xmlns:lr="clr-namespace:SecRandom.Langs.SettingsPages.ListManagement.LotteryList"
+             xmlns:corelr="clr-namespace:SecRandom.Core.Langs.Common;assembly=SecRandom.Core"
+             xmlns:services="clr-namespace:SecRandom.Core.Services;assembly=SecRandom.Core"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="560"
              x:Class="SecRandom.Views.SettingsPages.ListManagement.LotteryListSettingsPage"
@@ -32,9 +34,10 @@
                 <fa:FASettingsExpanderItem>
                     <fa:FASettingsExpanderItem.Footer>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button Content="{x:Static lr:Resources.C_AddList}" Click="AddListButton_OnClick" />
-                            <Button Content="{x:Static lr:Resources.C_RenameList}" Click="RenameListButton_OnClick" />
                             <Button Content="{x:Static lr:Resources.C_Refresh}" Click="RefreshButton_OnClick" />
+                            <Button Content="{x:Static lr:Resources.C_DeleteList}" Click="DeleteListButton_OnClick" />
+                            <Button Content="{x:Static lr:Resources.C_RenameList}" Click="RenameListButton_OnClick" />
+                            <Button Content="{x:Static lr:Resources.C_AddList}" Click="AddListButton_OnClick" />
                             <Button Classes="accent" Content="{x:Static lr:Resources.C_ImportList}"
                                     Click="ImportButton_OnClick" />
                         </StackPanel>
@@ -55,12 +58,22 @@
                           SelectionMode="Single"
                           ItemsSource="{Binding SelectedPrizeList.Prizes}">
                     <DataGrid.Columns>
-                        <DataGridCheckBoxColumn Header="{x:Static lr:Resources.C_Exists}" Binding="{Binding Exists}" />
-                        <DataGridTextColumn Header="{x:Static lr:Resources.C_PrizeId}" Binding="{Binding Id}" />
-                        <DataGridTextColumn Width="2*" Header="{x:Static lr:Resources.C_Name}" Binding="{Binding Name}" />
-                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Weight}" Binding="{Binding Weight}" />
-                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Count}" Binding="{Binding Count}" />
-                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Tags}" Binding="{Binding Tags}" />
+                        <DataGridCheckBoxColumn Width="0.55*" Header="{x:Static lr:Resources.C_Exists}" Binding="{Binding Exists}" />
+                        <DataGridTextColumn Width="1.1*" Header="{x:Static lr:Resources.C_PrizeId}" Binding="{Binding Id}" />
+                        <DataGridTextColumn Width="1.35*" Header="{x:Static lr:Resources.C_Name}" Binding="{Binding Name}" />
+                        <DataGridTextColumn Width="0.9*" Header="{x:Static lr:Resources.C_Weight}" Binding="{Binding Weight}" />
+                        <DataGridTextColumn Width="0.9*" Header="{x:Static lr:Resources.C_Count}" Binding="{Binding Count}" />
+                        <DataGridTextColumn Width="1.2*" Header="{x:Static lr:Resources.C_Tags}" Binding="{Binding Tags}" />
+                        <DataGridTemplateColumn Width="120" Header="{x:Static corelr:Resources.C_AttachedSettings}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <sr:AttachedSettingsFlyoutButton
+                                        TargetObject="{Binding}"
+                                        ControlInfos="{x:Static services:AttachedSettingsRegistryService.PrizeAttachedSettingsControls}"
+                                        SettingsChanged="AttachedSettings_OnSettingsChanged" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>

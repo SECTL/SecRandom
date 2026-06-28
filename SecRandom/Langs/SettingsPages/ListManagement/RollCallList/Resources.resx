@@ -51,14 +51,17 @@
     <data name="C_RenameList" xml:space="preserve">
         <value>重命名</value>
     </data>
+    <data name="C_DeleteList" xml:space="preserve">
+        <value>删除名单</value>
+    </data>
     <data name="C_Exists" xml:space="preserve">
         <value>存在</value>
     </data>
     <data name="C_StudentId" xml:space="preserve">
-        <value>学号</value>
+        <value>学号/编号</value>
     </data>
     <data name="C_Name" xml:space="preserve">
-        <value>姓名</value>
+        <value>姓名 *</value>
     </data>
     <data name="C_Gender" xml:space="preserve">
         <value>性别</value>
@@ -91,13 +94,13 @@
         <value>列映射</value>
     </data>
     <data name="C_ColumnMapping_D" xml:space="preserve">
-        <value>学号和姓名是必选项；性别、小组、标签可留空。</value>
+        <value>姓名是必选项；学号/编号、性别、小组、标签可留空。</value>
     </data>
     <data name="C_StudentIdColumn" xml:space="preserve">
-        <value>学号列</value>
+        <value>学号/编号列</value>
     </data>
     <data name="C_NameColumn" xml:space="preserve">
-        <value>姓名列</value>
+        <value>姓名列 *</value>
     </data>
     <data name="C_GenderColumn" xml:space="preserve">
         <value>性别列</value>
@@ -136,7 +139,7 @@
         <value>已读取 {0} 行数据。标签列当前仅用于预览，暂不写入学生模型。</value>
     </data>
     <data name="M_SelectRequiredColumns" xml:space="preserve">
-        <value>请选择学号列和姓名列。</value>
+        <value>请选择姓名列。</value>
     </data>
     <data name="M_DuplicateTitle" xml:space="preserve">
         <value>发现重复姓名</value>
@@ -145,9 +148,12 @@
         <value>以下 {0} 个姓名重复：
 {1}
 
-是否自动重命名后继续导入？</value>
+可以保留重名并继续导入，系统会用内部标识区分记录。</value>
     </data>
     <data name="M_DuplicatePrimary" xml:space="preserve">
+        <value>保留重名导入</value>
+    </data>
+    <data name="M_DuplicateSecondary" xml:space="preserve">
         <value>自动重命名</value>
     </data>
     <data name="M_DuplicateClose" xml:space="preserve">
@@ -197,6 +203,21 @@
     </data>
     <data name="M_RenameListSuccess" xml:space="preserve">
         <value>已重命名为“{0}”。</value>
+    </data>
+    <data name="M_DeleteListTitle" xml:space="preserve">
+        <value>删除当前名单？</value>
+    </data>
+    <data name="M_DeleteListContent" xml:space="preserve">
+        <value>将删除名单“{0}”。此操作不可撤销。</value>
+    </data>
+    <data name="M_DeleteListPrimary" xml:space="preserve">
+        <value>删除</value>
+    </data>
+    <data name="M_DeleteListSuccess" xml:space="preserve">
+        <value>已删除名单“{0}”。</value>
+    </data>
+    <data name="M_KeepOneList" xml:space="preserve">
+        <value>至少需要保留一个名单。</value>
     </data>
     <data name="K_IdColumns" xml:space="preserve">
         <value>学号|学籍号|学生ID|student id|student_id|student number|student no|roll no|roll number|学员编号|编号|座号|座位号|sid|id|no</value>

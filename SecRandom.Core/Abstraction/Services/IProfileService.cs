@@ -17,5 +17,8 @@ public interface IProfileService
     public PrizeListConfig? PrizeListConfig { get; }
     public PrizeHistoryConfig? PrizeHistoryConfig { get; }
 
+    public void LoadStudentProfile(string name, bool saveCurrent = true);
+    public void LoadPrizeProfile(string name, bool saveCurrent = true);
+
     public void SaveProfile();
 }

@@ -11,6 +11,8 @@ using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Controls;
 using MiniExcelLibs;
+using Microsoft.Extensions.Logging;
+using SecRandom.Core.Abstraction;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.RollCallList.Resources;
 
@@ -29,6 +31,8 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
     private string _statusText = LR.M_SelectFileFirst;
     private string? _tagsColumn;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
+    private readonly ILogger<RollCallListImportView> _logger =
+        IAppHost.GetService<ILogger<RollCallListImportView>>();
 
     public RollCallListImportView()
         : this(string.Empty, _ => { })
@@ -153,6 +157,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         }
         catch (Exception ex)
         {
+            _logger.LogWarning(ex, "加载点名名单导入文件失败：文件={FileName}。", file.Name);
             StatusText = string.Format(LR.M_LoadFailed, ex.Message);
             CanImport = false;
         }
@@ -175,6 +180,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         RebuildColumnOptions(rows.FirstOrDefault()?.Keys ?? Enumerable.Empty<string>());
         AutoMapColumns();
         RefreshPreview();
+        _logger.LogInformation("已加载点名名单导入文件：文件={FileName}，行数={RowCount}。", file.Name, rows.Count);
     }
 
     private static async Task<string> CopyToTemporaryFileAsync(IStorageFile file)
@@ -199,7 +205,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
             OptionalColumnOptions.Add(column);
         }
 
-        IdColumn = RequiredColumnOptions.FirstOrDefault();
+        IdColumn = LR.C_NoneColumn;
         NameColumn = RequiredColumnOptions.Skip(1).FirstOrDefault() ?? RequiredColumnOptions.FirstOrDefault();
         GenderColumn = LR.C_NoneColumn;
         GroupColumn = LR.C_NoneColumn;
@@ -208,7 +214,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
 
     private void AutoMapColumns()
     {
-        IdColumn = FindBestColumn(GetKeywords(LR.K_IdColumns)) ?? IdColumn;
+        IdColumn = FindBestColumn(GetKeywords(LR.K_IdColumns)) ?? LR.C_NoneColumn;
         NameColumn = FindBestColumn(GetKeywords(LR.K_NameColumns)) ?? NameColumn;
         GenderColumn = FindBestColumn(GetKeywords(LR.K_GenderColumns))
                        ?? LR.C_NoneColumn;
@@ -252,7 +258,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         foreach (var row in _rows.Take(3))
             PreviewRows.Add(CreatePreviewRow(row));
 
-        CanImport = _rows.Count > 0 && IsSelectedColumn(IdColumn) && IsSelectedColumn(NameColumn);
+        CanImport = _rows.Count > 0 && IsSelectedColumn(NameColumn);
         StatusText = _rows.Count == 0
             ? LR.M_SelectFileFirst
             : CanImport
@@ -291,9 +297,16 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
             .ToList();
 
         if (duplicatedNames.Count > 0)
+        {
+            _logger.LogWarning("点名名单导入发现重复姓名：重复姓名数量={DuplicateNameCount}，有效行数={Count}。",
+                duplicatedNames.Count, students.Count);
             _ = ConfirmDuplicateNamesAsync(students, duplicatedNames);
+        }
         else
+        {
+            _logger.LogInformation("提交点名名单导入：有效行数={Count}。", students.Count);
             _importHandler(students);
+        }
     }
 
     private async Task ConfirmDuplicateNamesAsync(List<Student> students, IReadOnlyList<string> duplicatedNames)
@@ -304,15 +317,24 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
             Content = string.Format(LR.M_DuplicateContent, duplicatedNames.Count,
                 string.Join('\n', duplicatedNames.Take(10))),
             PrimaryButtonText = LR.M_DuplicatePrimary,
+            SecondaryButtonText = LR.M_DuplicateSecondary,
             CloseButtonText = LR.M_DuplicateClose,
             DefaultButton = FAContentDialogButton.Primary
         }.ShowAsync(TopLevel.GetTopLevel(this));
 
-        if (result != FAContentDialogResult.Primary)
+        if (result == FAContentDialogResult.Primary)
+        {
+            _logger.LogInformation("点名名单导入保留重复姓名：有效行数={Count}。", students.Count);
+            _importHandler(students);
             return;
+        }
 
-        RenameDuplicatedStudents(students);
-        _importHandler(students);
+        if (result == FAContentDialogResult.Secondary)
+        {
+            RenameDuplicatedStudents(students);
+            _logger.LogInformation("点名名单导入已自动处理重复姓名：有效行数={Count}。", students.Count);
+            _importHandler(students);
+        }
     }
 
     private static void RenameDuplicatedStudents(IEnumerable<Student> students)

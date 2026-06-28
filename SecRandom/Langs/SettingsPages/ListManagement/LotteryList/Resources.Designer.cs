@@ -31,6 +31,7 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.LotteryList {
         public static string C_Count => ResourceManager.GetString("C_Count", resourceCulture);
         public static string C_CountColumn => ResourceManager.GetString("C_CountColumn", resourceCulture);
         public static string C_DefaultListName => ResourceManager.GetString("C_DefaultListName", resourceCulture);
+        public static string C_DeleteList => ResourceManager.GetString("C_DeleteList", resourceCulture);
         public static string C_Exists => ResourceManager.GetString("C_Exists", resourceCulture);
         public static string C_FilePickerTitle => ResourceManager.GetString("C_FilePickerTitle", resourceCulture);
         public static string C_FilePickerTypeName => ResourceManager.GetString("C_FilePickerTypeName", resourceCulture);
@@ -64,9 +65,15 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.LotteryList {
         public static string M_DuplicateClose => ResourceManager.GetString("M_DuplicateClose", resourceCulture);
         public static string M_DuplicateContent => ResourceManager.GetString("M_DuplicateContent", resourceCulture);
         public static string M_DuplicatePrimary => ResourceManager.GetString("M_DuplicatePrimary", resourceCulture);
+        public static string M_DuplicateSecondary => ResourceManager.GetString("M_DuplicateSecondary", resourceCulture);
         public static string M_DuplicateTitle => ResourceManager.GetString("M_DuplicateTitle", resourceCulture);
+        public static string M_DeleteListContent => ResourceManager.GetString("M_DeleteListContent", resourceCulture);
+        public static string M_DeleteListPrimary => ResourceManager.GetString("M_DeleteListPrimary", resourceCulture);
+        public static string M_DeleteListSuccess => ResourceManager.GetString("M_DeleteListSuccess", resourceCulture);
+        public static string M_DeleteListTitle => ResourceManager.GetString("M_DeleteListTitle", resourceCulture);
         public static string M_FileLoaded => ResourceManager.GetString("M_FileLoaded", resourceCulture);
         public static string M_ImportSuccess => ResourceManager.GetString("M_ImportSuccess", resourceCulture);
+        public static string M_KeepOneList => ResourceManager.GetString("M_KeepOneList", resourceCulture);
         public static string M_ListNameDialogPrimary_Add => ResourceManager.GetString("M_ListNameDialogPrimary_Add", resourceCulture);
         public static string M_ListNameDialogPrimary_Rename => ResourceManager.GetString("M_ListNameDialogPrimary_Rename", resourceCulture);
         public static string M_ListNameDialogTitle_Add => ResourceManager.GetString("M_ListNameDialogTitle_Add", resourceCulture);

@@ -39,7 +39,7 @@
 
                     <sr:Field Label="{x:Static lr:Resources.C_StudentIdColumn}">
                         <ComboBox MaxWidth="360"
-                                  ItemsSource="{Binding RequiredColumnOptions}"
+                                  ItemsSource="{Binding OptionalColumnOptions}"
                                   SelectedItem="{Binding IdColumn, Mode=TwoWay}" />
                     </sr:Field>
                     <sr:Field Label="{x:Static lr:Resources.C_NameColumn}">

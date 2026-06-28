@@ -11,6 +11,7 @@ public class ProfileConfigHandlerBase<T> : ConfigHandlerBase<T> where T : Profil
     {
         Name = name;
         Data.Name = name;
+        SaveIfProfileDataNormalized();
     }
 
     public string Name { get; }
@@ -19,6 +20,20 @@ public class ProfileConfigHandlerBase<T> : ConfigHandlerBase<T> where T : Profil
     {
         base.Reload();
         Data.Name = Name;
+        SaveIfProfileDataNormalized();
+    }
+
+    private void SaveIfProfileDataNormalized()
+    {
+        var changed = Data switch
+        {
+            StudentList studentList => ProfileRecordIdentity.Normalize(studentList),
+            PrizeList prizeList => ProfileRecordIdentity.Normalize(prizeList),
+            _ => false
+        };
+
+        if (changed)
+            Save();
     }
 }
 
