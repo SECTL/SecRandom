@@ -28,6 +28,7 @@ public partial class MainConfigModel : ConfigBase
 
     // 个性化
     [ObservableProperty] private AppearanceSettingsConfig _appearance = new();
+    [ObservableProperty] private ThemeManagementSettingsConfig _themeManagementSettings = new();
 
     // 抽取设置
     [ObservableProperty] private FairDrawSettingsConfig _fairDrawSettings = new();
@@ -36,6 +37,15 @@ public partial class MainConfigModel : ConfigBase
     [ObservableProperty] private QuickDrawSettingsConfig _quickDrawSettings = new();
     [ObservableProperty] private LotterySettingsConfig _lotterySettings = new();
     [ObservableProperty] private FaceDetectorSettingsConfig _faceDetectorSettings = new();
+
+    [ObservableProperty] private FloatingWindowSettingsConfig _floatingWindowSettings = new();
+    [ObservableProperty] private NotificationSettingsConfig _notificationSettings = new();
+    [ObservableProperty] private SecuritySettingsConfig _securitySettings = new();
+    [ObservableProperty] private LinkageSettingsConfig _linkageSettings = new();
+    [ObservableProperty] private VoiceSettingsConfig _voiceSettings = new();
+    [ObservableProperty] private HistoryManagementSettingsConfig _historyManagementSettings = new();
+    [ObservableProperty] private UpdateSettingsConfig _updateSettings = new();
+    [ObservableProperty] private MoreSettingsConfig _moreSettings = new();
 
     [JsonIgnore] public override string ConfigFilePath => Utils.GetFilePath("config", "settings.json");
 

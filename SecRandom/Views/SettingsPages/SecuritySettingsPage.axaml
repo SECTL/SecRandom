@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
+             xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Security"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SecRandom.Views.SettingsPages.SecuritySettingsPage"
+             x:DataType="local:SecuritySettingsPage"
+             Unloaded="OnUnloaded">
+    <ScrollViewer>
+        <StackPanel Classes="page-container animated-intro">
+            <sr:IconText x:Name="S_Verification"
+                         Text="{x:Static lsp:Resources.S_Verification}"
+                         Glyph="{sr:Fi ShieldKeyholeRegular}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_Verification_Password"
+                                   Header="{x:Static lsp:Resources.S_Verification_Password}"
+                                   Description="{x:Static lsp:Resources.S_Verification_Password_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PasswordRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.PasswordEnabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Verification_Totp"
+                                   Header="{x:Static lsp:Resources.S_Verification_Totp}"
+                                   Description="{x:Static lsp:Resources.S_Verification_Totp_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ShieldKeyholeRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.TotpEnabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Verification_UsbBinding"
+                                   Header="{x:Static lsp:Resources.S_Verification_UsbBinding}"
+                                   Description="{x:Static lsp:Resources.S_Verification_UsbBinding_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi UsbStickRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.UsbBindingEnabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText x:Name="S_Protection"
+                         Text="{x:Static lsp:Resources.S_Protection}"
+                         Glyph="{sr:Fi ShieldRegular}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_Protection_SensitiveOperations"
+                                   Header="{x:Static lsp:Resources.S_Protection_SensitiveOperations}"
+                                   Description="{x:Static lsp:Resources.S_Protection_SensitiveOperations_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ShieldRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.VerifyBeforeSensitiveOperations}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Protection_LinkageOperations"
+                                   Header="{x:Static lsp:Resources.S_Protection_LinkageOperations}"
+                                   Description="{x:Static lsp:Resources.S_Protection_LinkageOperations_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LinkRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.VerifyBeforeLinkageOperations}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

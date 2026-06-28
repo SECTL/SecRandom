@@ -95,9 +95,10 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         var settingsControl = pageRoot?.FindControl<Control>(settings.Id);
         _logger.LogInformation("设置控件: {Control}", settingsControl);
 
+        Control? categoryControl = null;
         if (!settings.IsCategory)
         {
-            var categoryControl = pageRoot?.FindControl<Control>(settings.CategoryId);
+            categoryControl = pageRoot?.FindControl<Control>(settings.CategoryId);
             _logger.LogInformation("分类控件: {Control}", categoryControl);
 
             if (categoryControl is FASettingsExpander settingsExpander) settingsExpander.IsExpanded = true;
@@ -105,10 +106,11 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
 
         Dispatcher.UIThread.Post(() =>
         {
-            settingsControl?.BringIntoView();
-            settingsControl?.Focus();
+            var targetControl = settingsControl ?? categoryControl;
+            targetControl?.BringIntoView();
+            targetControl?.Focus();
 
-            HighlightControl(settingsControl, TimeSpan.FromSeconds(3));
+            HighlightControl(targetControl, TimeSpan.FromSeconds(3));
         }, DispatcherPriority.Render);
     }
 
@@ -291,6 +293,11 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     private void ButtonRestartApp_OnClick(object? sender, RoutedEventArgs e)
     {
         _ = ShowRestartDialog();
+    }
+
+    private void LogViewerMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        SelectNavigationItemById("settings.logs");
     }
 
     #endregion

@@ -7,6 +7,7 @@
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.General"
              xmlns:lc="clr-namespace:SecRandom.Langs.Common"
              xmlns:lsb="clr-namespace:SecRandom.Langs.SettingsPages.General.Backup"
+             xmlns:u="https://irihi.tech/ursa"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.General.BackupSettingsPage"
              x:DataType="local:BackupSettingsPage">
@@ -15,7 +16,7 @@
             <fa:FASettingsExpander x:Name="S_AutoBackup"
                                    Header="{x:Static lsb:Resources.S_AutoBackup}"
                                    Description="{x:Static lsb:Resources.S_AutoBackup_D}"
-                                   IconSource="{sr:FluentIconSource &#xE083;}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi SaveRegular}}"
                                    IsExpanded="True">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.AutoBackupEnabled}" />
@@ -42,14 +43,15 @@
                 <fa:FASettingsExpanderItem x:Name="S_AutoBackup_ViewFolder"
                                            Content="{x:Static lsb:Resources.S_AutoBackup_ViewFolder}"
                                            Description="{x:Static lsb:Resources.S_AutoBackup_ViewFolder_D}"
-                                           IconSource="{sr:FluentIconSource &#xE88D;}"
-                                           IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}" />
+                                           IconSource="{sr:FluentIconSource {sr:Fi DatabaseWindowRegular}}"
+                                           IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}"
+                                           Click="ViewBackupFolder_OnClick" />
 
                 <fa:FASettingsExpanderItem x:Name="S_AutoBackup_Usage"
                                            Content="{x:Static lsb:Resources.S_AutoBackup_Usage_R}"
                                            Description="{x:Static lsb:Resources.S_AutoBackup_Usage_D}">
                     <fa:FASettingsExpanderItem.Footer>
-                        <TextBlock Text="{x:Static lc:Resources.C_ToBeWritten}"
+                        <TextBlock Text="{Binding BackupUsageText}"
                                    VerticalAlignment="Center" />
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
@@ -57,84 +59,29 @@
                 <fa:FASettingsExpanderItem x:Name="S_AutoBackup_ManualBackup"
                                            Content="{x:Static lsb:Resources.S_AutoBackup_ManualBackup}"
                                            Description="{x:Static lsb:Resources.S_AutoBackup_ManualBackup_D}"
-                                           IsClickEnabled="True" />
+                                           IsClickEnabled="True"
+                                           Click="ManualBackup_OnClick" />
             </fa:FASettingsExpander>
 
             <fa:FASettingsExpander x:Name="S_Includes"
                                    Header="{x:Static lsb:Resources.S_Includes}"
                                    Description="{x:Static lsb:Resources.S_Includes_D}"
-                                   IconSource="{sr:FluentIconSource &#xE601;}">
-                <fa:FASettingsExpanderItem x:Name="S_Includes_Config"
-                                           Content="{x:Static lsb:Resources.S_Includes_Config}"
-                                           Description="{x:Static lsb:Resources.S_Includes_Config_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeConfig}" />
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
-                <fa:FASettingsExpanderItem x:Name="S_Includes_List"
-                                           Content="{x:Static lsb:Resources.S_Includes_List}"
-                                           Description="{x:Static lsb:Resources.S_Includes_List_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeList}" />
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
-                <fa:FASettingsExpanderItem x:Name="S_Includes_History"
-                                           Content="{x:Static lsb:Resources.S_Includes_History}"
-                                           Description="{x:Static lsb:Resources.S_Includes_History_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeHistory}" />
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
-                <fa:FASettingsExpanderItem x:Name="S_Includes_Audio"
-                                           Content="{x:Static lsb:Resources.S_Includes_Audio}"
-                                           Description="{x:Static lsb:Resources.S_Includes_Audio_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeAudio}" />
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
-                <fa:FASettingsExpanderItem x:Name="S_Includes_Cses"
-                                           Content="{x:Static lsb:Resources.S_Includes_Cses}"
-                                           Description="{x:Static lsb:Resources.S_Includes_Cses_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeCses}" />
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
-                <fa:FASettingsExpanderItem x:Name="S_Includes_Images"
-                                           Content="{x:Static lsb:Resources.S_Includes_Images}"
-                                           Description="{x:Static lsb:Resources.S_Includes_Images_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeImages}" />
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
-                <fa:FASettingsExpanderItem x:Name="S_Includes_Themes"
-                                           Content="{x:Static lsb:Resources.S_Includes_Themes}"
-                                           Description="{x:Static lsb:Resources.S_Includes_Themes_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeThemes}" />
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
-                <fa:FASettingsExpanderItem x:Name="S_Includes_Logs"
-                                           Content="{x:Static lsb:Resources.S_Includes_Logs}"
-                                           Description="{x:Static lsb:Resources.S_Includes_Logs_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.IncludeLogs}" />
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
+                                   IconSource="{sr:FluentIconSource {sr:Fi DatabaseArrowDownRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <u:MultiComboBox MinWidth="260"
+                                     ItemsSource="{Binding IncludeOptions}"
+                                     SelectedItems="{Binding SelectedIncludeOptions}"
+                                     SelectionChanged="MultiSelect_OnSelectionChanged" />
+                </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_RestoreBackup"
                          Text="{x:Static lsb:Resources.S_RestoreBackup}"
-                         Glyph="&#xE0BD;" Margin="0 0 0 4" />
+                         Glyph="{sr:Fi DatabaseArrowDownRegular}" Margin="0 0 0 4" />
 
-            <Button Content="{x:Static lsb:Resources.C_RefreshBackups}" />
+            <Button Content="{x:Static lsb:Resources.C_RefreshBackups}"
+                    Click="RefreshBackups_OnClick" />
 
             <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                     BorderThickness="1 1 1 0"
@@ -163,13 +110,17 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
-                                        <Button Theme="{StaticResource TransparentButton}">
+                                        <Button Theme="{StaticResource TransparentButton}"
+                                                Click="RestoreBackup_OnClick"
+                                                CommandParameter="{Binding}">
                                             <sr:IconText
                                                 Glyph="&#xE0BD;"
                                                 Text="{x:Static lsb:Resources.C_Backups_Operations_Restore}" />
                                         </Button>
 
-                                        <Button Theme="{StaticResource TransparentButton}" Foreground="Red">
+                                        <Button Theme="{StaticResource TransparentButton}" Foreground="Red"
+                                                Click="DeleteBackup_OnClick"
+                                                CommandParameter="{Binding}">
                                             <sr:IconText
                                                 Glyph="&#xE61D;"
                                                 Text="{x:Static lsb:Resources.C_Backups_Operations_Delete}" />

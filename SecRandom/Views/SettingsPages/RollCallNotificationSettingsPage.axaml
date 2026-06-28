@@ -1,0 +1,8 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
+             x:Class="SecRandom.Views.SettingsPages.RollCallNotificationSettingsPage">
+    <ScrollViewer>
+        <local:NotificationChannelSettingsContent />
+    </ScrollViewer>
+</UserControl>

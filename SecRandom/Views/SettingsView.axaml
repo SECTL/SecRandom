@@ -77,7 +77,8 @@
                             <MenuFlyout>
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DocumentRegular}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_LogViewer}"
-                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_LogViewer_D}" />
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_LogViewer_D}"
+                                          Click="LogViewerMenuItem_OnClick" />
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseArrowDownRegular}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData}"
                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData_D}" />

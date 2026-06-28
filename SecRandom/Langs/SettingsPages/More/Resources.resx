@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true" />
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Page_Title" xml:space="preserve">
+    <value>更多设置</value>
+  </data>
+  <data name="S_Music" xml:space="preserve">
+    <value>音乐</value>
+  </data>
+  <data name="S_Music_BackgroundLoop" xml:space="preserve">
+    <value>背景音乐循环</value>
+  </data>
+  <data name="S_Music_BackgroundLoop_D" xml:space="preserve">
+    <value>抽取动画音乐播放时循环背景音乐。</value>
+  </data>
+  <data name="S_PageManagement" xml:space="preserve">
+    <value>页面管理</value>
+  </data>
+  <data name="S_RollCallPanelPosition" xml:space="preserve">
+    <value>点名控制面板位置</value>
+  </data>
+  <data name="S_RollCallPanelPosition_D" xml:space="preserve">
+    <value>设置点名页控制面板显示在主内容左侧或右侧。</value>
+  </data>
+  <data name="O_Right" xml:space="preserve">
+    <value>右侧</value>
+  </data>
+  <data name="O_Left" xml:space="preserve">
+    <value>左侧</value>
+  </data>
+  <data name="S_RollCallControls" xml:space="preserve">
+    <value>点名页面控件</value>
+  </data>
+  <data name="S_RollCallControls_D" xml:space="preserve">
+    <value>控制点名页侧边控制面板中的控件显示。</value>
+  </data>
+  <data name="S_RollCallResetButton" xml:space="preserve">
+    <value>重置按钮</value>
+  </data>
+  <data name="S_RollCallQuantityControl" xml:space="preserve">
+    <value>人数调节</value>
+  </data>
+  <data name="S_RollCallStartButton" xml:space="preserve">
+    <value>开始按钮</value>
+  </data>
+  <data name="S_RollCallListSelector" xml:space="preserve">
+    <value>名单选择</value>
+  </data>
+  <data name="S_RollCallRangeSelector" xml:space="preserve">
+    <value>范围选择</value>
+  </data>
+  <data name="S_RollCallGenderSelector" xml:space="preserve">
+    <value>性别选择</value>
+  </data>
+  <data name="S_RollCallRemainingButton" xml:space="preserve">
+    <value>剩余名单按钮</value>
+  </data>
+  <data name="S_RollCallQuantityLabel" xml:space="preserve">
+    <value>人数统计</value>
+  </data>
+  <data name="S_Shortcut" xml:space="preserve">
+    <value>快捷键</value>
+  </data>
+  <data name="S_Shortcut_Enable" xml:space="preserve">
+    <value>启用快捷键</value>
+  </data>
+  <data name="S_Shortcut_Enable_D" xml:space="preserve">
+    <value>启用全局快捷键响应。</value>
+  </data>
+  <data name="S_Shortcut_OpenRollCallPage" xml:space="preserve">
+    <value>打开点名页</value>
+  </data>
+  <data name="S_Shortcut_OpenRollCallPage_D" xml:space="preserve">
+    <value>设置打开点名页的快捷键。</value>
+  </data>
+  <data name="S_Shortcut_QuickDraw" xml:space="preserve">
+    <value>执行闪抽</value>
+  </data>
+  <data name="S_Shortcut_QuickDraw_D" xml:space="preserve">
+    <value>设置执行快速抽取的快捷键。</value>
+  </data>
+  <data name="S_Shortcut_OpenLotteryPage" xml:space="preserve">
+    <value>打开抽奖页</value>
+  </data>
+  <data name="S_Shortcut_OpenLotteryPage_D" xml:space="preserve">
+    <value>设置打开抽奖页的快捷键。</value>
+  </data>
+  <data name="C_ShortcutExampleRollCall" xml:space="preserve">
+    <value>例如 Ctrl+Alt+R</value>
+  </data>
+  <data name="C_ShortcutExampleQuickDraw" xml:space="preserve">
+    <value>例如 Ctrl+Alt+Q</value>
+  </data>
+  <data name="C_ShortcutExampleLottery" xml:space="preserve">
+    <value>例如 Ctrl+Alt+L</value>
+  </data>
+</root>

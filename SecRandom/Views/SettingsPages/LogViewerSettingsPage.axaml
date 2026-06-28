@@ -1,0 +1,125 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
+             xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.LogViewer"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="960" d:DesignHeight="560"
+             x:Class="SecRandom.Views.SettingsPages.LogViewerSettingsPage"
+             x:DataType="local:LogViewerSettingsPage"
+             Loaded="OnLoaded">
+    <Grid RowDefinitions="Auto * Auto 220" Margin="18 12 18 18" RowSpacing="10">
+        <Grid Grid.Row="0" ColumnDefinitions="360 Auto * Auto Auto Auto" ColumnSpacing="8">
+            <ComboBox Grid.Column="0"
+                      MinWidth="260"
+                      MaxWidth="380"
+                      ItemsSource="{Binding LogFiles}"
+                      SelectedItem="{Binding SelectedLogFile}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding DisplayName}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <ComboBox Grid.Column="1"
+                      Width="140"
+                      ItemsSource="{Binding LevelFilters}"
+                      SelectedItem="{Binding SelectedLevelFilter}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding DisplayName}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <TextBox Grid.Column="2"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     PlaceholderText="{x:Static lsp:Resources.C_SearchWatermark}" />
+
+            <Button Grid.Column="3"
+                    Theme="{StaticResource TransparentButton}"
+                    ToolTip.Tip="{x:Static lsp:Resources.C_Refresh}"
+                    Click="RefreshButton_OnClick">
+                <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseRegular}" />
+            </Button>
+
+            <Button Grid.Column="4"
+                    Theme="{StaticResource TransparentButton}"
+                    ToolTip.Tip="{x:Static lsp:Resources.C_OpenFolder}"
+                    Click="OpenFolderButton_OnClick">
+                <sr:FluentIcon Glyph="{sr:Fi FolderOpenRegular}" />
+            </Button>
+
+            <Button Grid.Column="5"
+                    Theme="{StaticResource TransparentButton}"
+                    ToolTip.Tip="{x:Static lsp:Resources.C_DeleteSelected}"
+                    IsEnabled="{Binding CanDeleteSelectedLogFile}"
+                    Click="DeleteButton_OnClick">
+                <sr:FluentIcon Glyph="{sr:Fi DeleteRegular}" />
+            </Button>
+        </Grid>
+
+        <Border Grid.Row="1"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4"
+                ClipToBounds="True">
+            <DataGrid AutoGenerateColumns="False"
+                      CanUserSortColumns="False"
+                      CanUserResizeColumns="True"
+                      GridLinesVisibility="Horizontal"
+                      IsReadOnly="True"
+                      SelectionMode="Single"
+                      ItemsSource="{Binding FilteredEntries}"
+                      SelectedItem="{Binding SelectedEntry}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Width="190"
+                                        Header="{x:Static lsp:Resources.C_ColumnTime}"
+                                        Binding="{Binding TimeText}" />
+                    <DataGridTextColumn Width="130"
+                                        Header="{x:Static lsp:Resources.C_ColumnLevel}"
+                                        Binding="{Binding LevelText}" />
+                    <DataGridTextColumn Width="220"
+                                        Header="{x:Static lsp:Resources.C_ColumnCategory}"
+                                        Binding="{Binding ShortCategory}" />
+                    <DataGridTextColumn Width="*"
+                                        Header="{x:Static lsp:Resources.C_ColumnMessage}"
+                                        Binding="{Binding Preview}" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <Grid Grid.Row="2" ColumnDefinitions="* Auto" ColumnSpacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <TextBlock Text="{Binding EntryCountText}"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="{Binding SelectedFileInfoText}"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+
+            <Button Grid.Column="1"
+                    Theme="{StaticResource TransparentButton}"
+                    ToolTip.Tip="{x:Static lsp:Resources.C_CopySelected}"
+                    IsEnabled="{Binding HasSelectedEntry}"
+                    Click="CopyButton_OnClick">
+                <sr:FluentIcon Glyph="{sr:Fi ClipboardRegular}" />
+            </Button>
+        </Grid>
+
+        <Border Grid.Row="3"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4"
+                Padding="12">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto">
+                <SelectableTextBlock Text="{Binding SelectedEntryText}"
+                                     FontFamily="Consolas, Cascadia Mono, Menlo, monospace"
+                                     FontSize="12"
+                                     TextWrapping="NoWrap" />
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

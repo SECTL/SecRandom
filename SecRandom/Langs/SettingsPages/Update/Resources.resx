@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true" />
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Page_Title" xml:space="preserve">
+    <value>更新设置</value>
+  </data>
+  <data name="S_Strategy" xml:space="preserve">
+    <value>更新策略</value>
+  </data>
+  <data name="S_Strategy_AutoUpdateMode" xml:space="preserve">
+    <value>自动更新模式</value>
+  </data>
+  <data name="S_Strategy_AutoUpdateMode_D" xml:space="preserve">
+    <value>控制程序检查与提示更新的频率。</value>
+  </data>
+  <data name="O_AutoUpdateMode_Off" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="O_AutoUpdateMode_Daily" xml:space="preserve">
+    <value>每天</value>
+  </data>
+  <data name="O_AutoUpdateMode_Weekly" xml:space="preserve">
+    <value>每周</value>
+  </data>
+  <data name="O_AutoUpdateMode_Manual" xml:space="preserve">
+    <value>手动检查</value>
+  </data>
+  <data name="S_Strategy_Channel" xml:space="preserve">
+    <value>更新通道</value>
+  </data>
+  <data name="S_Strategy_Channel_D" xml:space="preserve">
+    <value>选择稳定版或预览版更新。</value>
+  </data>
+  <data name="O_UpdateChannel_Stable" xml:space="preserve">
+    <value>稳定版</value>
+  </data>
+  <data name="O_UpdateChannel_Preview" xml:space="preserve">
+    <value>预览版</value>
+  </data>
+  <data name="S_Strategy_Source" xml:space="preserve">
+    <value>更新来源</value>
+  </data>
+  <data name="S_Strategy_Source_D" xml:space="preserve">
+    <value>选择用于检查更新的下载来源。</value>
+  </data>
+  <data name="O_UpdateSource_OfficialMirror" xml:space="preserve">
+    <value>官方镜像</value>
+  </data>
+  <data name="O_UpdateSource_GitHub" xml:space="preserve">
+    <value>GitHub</value>
+  </data>
+  <data name="M_UpdateServicePlaceholder_Title" xml:space="preserve">
+    <value>更新服务尚未接入</value>
+  </data>
+  <data name="M_UpdateServicePlaceholder_Message" xml:space="preserve">
+    <value>此页面先保留 v2 的设置入口和配置项，后续可接入真实更新检查服务。</value>
+  </data>
+  <data name="S_Strategy_LastCheckTime" xml:space="preserve">
+    <value>上次检查时间</value>
+  </data>
+  <data name="S_Strategy_LastCheckTime_D" xml:space="preserve">
+    <value>显示最近一次检查更新的时间。</value>
+  </data>
+</root>

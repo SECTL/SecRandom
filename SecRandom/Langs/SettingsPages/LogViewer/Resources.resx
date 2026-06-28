@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+                id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true" />
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="Page_Title" xml:space="preserve">
+        <value>查看日志</value>
+    </data>
+    <data name="C_SearchWatermark" xml:space="preserve">
+        <value>搜索日志内容...</value>
+    </data>
+    <data name="O_Level_All" xml:space="preserve">
+        <value>全部级别</value>
+    </data>
+    <data name="O_Level_Trace" xml:space="preserve">
+        <value>跟踪</value>
+    </data>
+    <data name="O_Level_Debug" xml:space="preserve">
+        <value>调试</value>
+    </data>
+    <data name="O_Level_Information" xml:space="preserve">
+        <value>信息</value>
+    </data>
+    <data name="O_Level_Warning" xml:space="preserve">
+        <value>警告</value>
+    </data>
+    <data name="O_Level_Error" xml:space="preserve">
+        <value>错误</value>
+    </data>
+    <data name="O_Level_Critical" xml:space="preserve">
+        <value>严重</value>
+    </data>
+    <data name="C_Refresh" xml:space="preserve">
+        <value>刷新</value>
+    </data>
+    <data name="C_OpenFolder" xml:space="preserve">
+        <value>打开日志目录</value>
+    </data>
+    <data name="C_DeleteSelected" xml:space="preserve">
+        <value>删除选中的日志文件</value>
+    </data>
+    <data name="C_CopySelected" xml:space="preserve">
+        <value>复制选中的日志内容</value>
+    </data>
+    <data name="C_ColumnTime" xml:space="preserve">
+        <value>时间</value>
+    </data>
+    <data name="C_ColumnLevel" xml:space="preserve">
+        <value>级别</value>
+    </data>
+    <data name="C_ColumnCategory" xml:space="preserve">
+        <value>分类</value>
+    </data>
+    <data name="C_ColumnMessage" xml:space="preserve">
+        <value>消息</value>
+    </data>
+    <data name="C_EntryCount" xml:space="preserve">
+        <value>显示 {0} / {1} 条</value>
+    </data>
+    <data name="C_FileInfo" xml:space="preserve">
+        <value>大小 {0}，修改于 {1}</value>
+    </data>
+    <data name="C_CurrentFileName" xml:space="preserve">
+        <value>{0}（当前）</value>
+    </data>
+    <data name="C_Cancel" xml:space="preserve">
+        <value>取消</value>
+    </data>
+    <data name="M_SelectEntry" xml:space="preserve">
+        <value>选择一条日志以查看详情。</value>
+    </data>
+    <data name="M_Copied" xml:space="preserve">
+        <value>已复制日志内容</value>
+    </data>
+    <data name="M_LoadFailed" xml:space="preserve">
+        <value>读取日志失败：{0}</value>
+    </data>
+    <data name="M_DeleteTitle" xml:space="preserve">
+        <value>删除日志文件</value>
+    </data>
+    <data name="M_DeleteContent" xml:space="preserve">
+        <value>确定要删除日志文件“{0}”吗？此操作无法撤销。</value>
+    </data>
+    <data name="M_DeletePrimary" xml:space="preserve">
+        <value>删除</value>
+    </data>
+    <data name="M_DeleteSuccess" xml:space="preserve">
+        <value>已删除日志文件：{0}</value>
+    </data>
+    <data name="M_DeleteFailed" xml:space="preserve">
+        <value>删除日志失败：{0}</value>
+    </data>
+</root>

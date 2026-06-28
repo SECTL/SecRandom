@@ -123,6 +123,159 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 取消.
+        /// </summary>
+        public static string C_Cancel {
+            get {
+                return ResourceManager.GetString("C_Cancel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 关闭.
+        /// </summary>
+        public static string C_Close {
+            get {
+                return ResourceManager.GetString("C_Close", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 已创建备份：{0}.
+        /// </summary>
+        public static string M_BackupCreated {
+            get {
+                return ResourceManager.GetString("M_BackupCreated", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 备份失败.
+        /// </summary>
+        public static string M_BackupFailed {
+            get {
+                return ResourceManager.GetString("M_BackupFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 备份文件不存在，请刷新后重试.
+        /// </summary>
+        public static string M_BackupFileMissing {
+            get {
+                return ResourceManager.GetString("M_BackupFileMissing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 确定要删除备份“{0}”吗？此操作无法撤销。.
+        /// </summary>
+        public static string M_DeleteContent {
+            get {
+                return ResourceManager.GetString("M_DeleteContent", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 删除备份失败.
+        /// </summary>
+        public static string M_DeleteFailed {
+            get {
+                return ResourceManager.GetString("M_DeleteFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 删除.
+        /// </summary>
+        public static string M_DeletePrimary {
+            get {
+                return ResourceManager.GetString("M_DeletePrimary", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 已删除备份.
+        /// </summary>
+        public static string M_DeleteSuccess {
+            get {
+                return ResourceManager.GetString("M_DeleteSuccess", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 删除备份.
+        /// </summary>
+        public static string M_DeleteTitle {
+            get {
+                return ResourceManager.GetString("M_DeleteTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 备份文件包含非法路径，已取消恢复.
+        /// </summary>
+        public static string M_InvalidBackupFile {
+            get {
+                return ResourceManager.GetString("M_InvalidBackupFile", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 请至少选择一项备份内容.
+        /// </summary>
+        public static string M_NoBackupContentSelected {
+            get {
+                return ResourceManager.GetString("M_NoBackupContentSelected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 恢复“{0}”会覆盖当前对应数据。恢复前会自动创建一份当前数据快照，恢复完成后需要重启应用。.
+        /// </summary>
+        public static string M_RestoreContent {
+            get {
+                return ResourceManager.GetString("M_RestoreContent", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 恢复备份失败.
+        /// </summary>
+        public static string M_RestoreFailed {
+            get {
+                return ResourceManager.GetString("M_RestoreFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 恢复.
+        /// </summary>
+        public static string M_RestorePrimary {
+            get {
+                return ResourceManager.GetString("M_RestorePrimary", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 备份已恢复，请重启应用后生效.
+        /// </summary>
+        public static string M_RestoreSuccess {
+            get {
+                return ResourceManager.GetString("M_RestoreSuccess", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 恢复备份.
+        /// </summary>
+        public static string M_RestoreTitle {
+            get {
+                return ResourceManager.GetString("M_RestoreTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 自动备份.
         /// </summary>
         public static string S_AutoBackup {

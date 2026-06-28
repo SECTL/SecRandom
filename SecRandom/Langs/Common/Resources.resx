@@ -130,4 +130,154 @@
     <data name="Settings_Appearance" xml:space="preserve">
         <value>外观</value>
     </data>
+    <data name="Settings_FairPick" xml:space="preserve">
+        <value>公平抽取设置</value>
+    </data>
+    <data name="Settings_FaceDetector" xml:space="preserve">
+        <value>人脸抽取设置</value>
+    </data>
+    <data name="Settings_VoiceMusic" xml:space="preserve">
+        <value>语音与音乐</value>
+    </data>
+    <data name="Settings_DefaultNotification" xml:space="preserve">
+        <value>默认提醒设置</value>
+    </data>
+    <data name="Settings_Plugin" xml:space="preserve">
+        <value>插件</value>
+    </data>
+    <data name="Settings_Music" xml:space="preserve">
+        <value>音乐</value>
+    </data>
+    <data name="Settings_BackgroundMusicLoop" xml:space="preserve">
+        <value>背景音乐循环</value>
+    </data>
+    <data name="Settings_BackgroundMusicLoop_D" xml:space="preserve">
+        <value>控制抽取页面的背景音乐是否循环播放</value>
+    </data>
+    <data name="Settings_EnableShortcut" xml:space="preserve">
+        <value>启用快捷键</value>
+    </data>
+    <data name="Settings_EnableShortcut_D" xml:space="preserve">
+        <value>允许通过键盘快捷键打开页面或执行抽取</value>
+    </data>
+    <data name="Settings_OpenRollCallPageShortcut" xml:space="preserve">
+        <value>打开点名页面</value>
+    </data>
+    <data name="Settings_OpenRollCallPageShortcut_D" xml:space="preserve">
+        <value>设置打开点名页面的快捷键</value>
+    </data>
+    <data name="Settings_QuickDrawShortcut" xml:space="preserve">
+        <value>执行闪抽</value>
+    </data>
+    <data name="Settings_QuickDrawShortcut_D" xml:space="preserve">
+        <value>设置执行闪抽的快捷键</value>
+    </data>
+    <data name="Settings_OpenLotteryPageShortcut" xml:space="preserve">
+        <value>打开抽奖页面</value>
+    </data>
+    <data name="Settings_OpenLotteryPageShortcut_D" xml:space="preserve">
+        <value>设置打开抽奖页面的快捷键</value>
+    </data>
+    <data name="Settings_ShortcutExampleRollCall" xml:space="preserve">
+        <value>Ctrl+Alt+R</value>
+    </data>
+    <data name="Settings_ShortcutExampleQuickDraw" xml:space="preserve">
+        <value>Ctrl+Alt+Q</value>
+    </data>
+    <data name="Settings_ShortcutExampleLottery" xml:space="preserve">
+        <value>Ctrl+Alt+L</value>
+    </data>
+    <data name="Settings_FairPick_ByTotal" xml:space="preserve">
+        <value>按总抽取次数公平抽取</value>
+    </data>
+    <data name="Settings_FairPick_ByTotal_D" xml:space="preserve">
+        <value>根据历史抽取次数调整候选权重</value>
+    </data>
+    <data name="Settings_FairPick_ByGroup" xml:space="preserve">
+        <value>按小组公平抽取</value>
+    </data>
+    <data name="Settings_FairPick_ByGender" xml:space="preserve">
+        <value>按性别公平抽取</value>
+    </data>
+    <data name="Settings_FairPick_ByTime" xml:space="preserve">
+        <value>按时间公平抽取</value>
+    </data>
+    <data name="Settings_FairPick_Weights" xml:space="preserve">
+        <value>高级权重设置</value>
+    </data>
+    <data name="Settings_FairPick_Protection" xml:space="preserve">
+        <value>抽取保护设置</value>
+    </data>
+    <data name="Settings_FairPick_GapProtection" xml:space="preserve">
+        <value>平均间隔保护</value>
+    </data>
+    <data name="Settings_FairPick_GapThreshold" xml:space="preserve">
+        <value>差值阈值</value>
+    </data>
+    <data name="Settings_FairPick_GapThreshold_D" xml:space="preserve">
+        <value>允许的最大抽取次数差距</value>
+    </data>
+    <data name="Settings_FairPick_Shield" xml:space="preserve">
+        <value>抽取后屏蔽</value>
+    </data>
+    <data name="Settings_FaceDetector_CameraSource" xml:space="preserve">
+        <value>摄像头来源</value>
+    </data>
+    <data name="Settings_FaceDetector_CameraSource_D" xml:space="preserve">
+        <value>指定人脸抽取使用的摄像头设备</value>
+    </data>
+    <data name="Settings_FaceDetector_PreviewMode" xml:space="preserve">
+        <value>预览模式</value>
+    </data>
+    <data name="Settings_FaceDetector_PreviewMode_D" xml:space="preserve">
+        <value>控制摄像头预览显示时机</value>
+    </data>
+    <data name="Settings_FaceDetector_PreviewMode_Pick" xml:space="preserve">
+        <value>抽取时显示</value>
+    </data>
+    <data name="Settings_FaceDetector_PreviewMode_Always" xml:space="preserve">
+        <value>始终显示</value>
+    </data>
+    <data name="Settings_FaceDetector_PreviewMode_Hidden" xml:space="preserve">
+        <value>隐藏</value>
+    </data>
+    <data name="Settings_FaceDetector_Duration" xml:space="preserve">
+        <value>抽取时长</value>
+    </data>
+    <data name="Settings_FaceDetector_Duration_D" xml:space="preserve">
+        <value>人脸抽取动画持续的秒数</value>
+    </data>
+    <data name="Settings_FaceDetector_ProcessAudio" xml:space="preserve">
+        <value>播放过程音效</value>
+    </data>
+    <data name="Settings_FaceDetector_ProcessAudio_D" xml:space="preserve">
+        <value>人脸抽取过程中播放音频提示</value>
+    </data>
+    <data name="Settings_FaceDetector_ResultAudio" xml:space="preserve">
+        <value>播放结果音效</value>
+    </data>
+    <data name="Settings_FaceDetector_ResultAudio_D" xml:space="preserve">
+        <value>人脸抽取结束时播放音频提示</value>
+    </data>
+    <data name="Settings_FaceDetector_FrameColor" xml:space="preserve">
+        <value>抽取框颜色</value>
+    </data>
+    <data name="Settings_FaceDetector_FrameColor_D" xml:space="preserve">
+        <value>人脸抽取框使用的高亮颜色</value>
+    </data>
+    <data name="Settings_FairPick_ColdStart" xml:space="preserve">
+        <value>冷启动保护</value>
+    </data>
+    <data name="Settings_FaceDetector_DetectorType" xml:space="preserve">
+        <value>检测模型</value>
+    </data>
+    <data name="Settings_FaceDetector_DetectorType_D" xml:space="preserve">
+        <value>指定人脸检测模型文件名称</value>
+    </data>
+    <data name="Settings_FaceDetector_ModelInputSize" xml:space="preserve">
+        <value>模型输入尺寸</value>
+    </data>
+    <data name="Settings_FaceDetector_ModelInputSize_D" xml:space="preserve">
+        <value>设置检测模型输入宽度和高度</value>
+    </data>
 </root>

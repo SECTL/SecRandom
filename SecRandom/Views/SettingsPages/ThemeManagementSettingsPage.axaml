@@ -1,0 +1,312 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
+             xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.ThemeManagement"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SecRandom.Views.SettingsPages.ThemeManagementSettingsPage"
+             x:DataType="local:ThemeManagementSettingsPage"
+             Unloaded="OnUnloaded">
+    <ScrollViewer>
+        <StackPanel Classes="page-container animated-intro">
+            <sr:IconText x:Name="S_MainWindowBackground"
+                         Text="{x:Static lsp:Resources.S_MainWindowBackground}"
+                         Glyph="{sr:Fi LayerRegular}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_MainWindowBackground_Mode"
+                                   Header="{x:Static lsp:Resources.S_MainWindowBackground_Mode}"
+                                   Description="{x:Static lsp:Resources.S_MainWindowBackground_Mode_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LayerRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.MainWindowBackgroundMode}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_BackgroundMode_System}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_BackgroundMode_Solid}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_BackgroundMode_Gradient}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_BackgroundMode_Image}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_MainWindowBackground_Color"
+                                   Header="{x:Static lsp:Resources.S_MainWindowBackground_Color}"
+                                   Description="{x:Static lsp:Resources.S_MainWindowBackground_Color_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ColorPicker Color="{Binding Settings.MainWindowBackgroundColor}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_MainWindowBackground_Gradient"
+                                   Header="{x:Static lsp:Resources.S_MainWindowBackground_Gradient}"
+                                   Description="{x:Static lsp:Resources.S_MainWindowBackground_Gradient_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <ColorPicker Color="{Binding Settings.MainWindowGradientStart}" />
+                        <ColorPicker Color="{Binding Settings.MainWindowGradientEnd}" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_MainWindowBackground_GradientDirection"
+                                   Header="{x:Static lsp:Resources.S_Background_GradientDirection}"
+                                   Description="{x:Static lsp:Resources.S_Background_GradientDirection_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowTrendingRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.MainWindowGradientDirection}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_TopToBottom}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_BottomToTop}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_LeftToRight}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_RightToLeft}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_TopLeftToBottomRight}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_BottomRightToTopLeft}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_TopRightToBottomLeft}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_BottomLeftToTopRight}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_MainWindowBackground_Image"
+                                   Header="{x:Static lsp:Resources.S_MainWindowBackground_Image}"
+                                   Description="{x:Static lsp:Resources.S_MainWindowBackground_Image_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ImageRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBox Text="{Binding Settings.MainWindowBackgroundImage}" MinWidth="260" />
+                        <Button Content="{x:Static lsp:Resources.C_SelectImage}"
+                                Click="SelectMainWindowBackgroundImageButton_OnClick" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_MainWindowBackground_Brightness"
+                                   Header="{x:Static lsp:Resources.S_MainWindowBackground_Brightness}"
+                                   Description="{x:Static lsp:Resources.S_MainWindowBackground_Brightness_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <NumericUpDown Value="{Binding Settings.MainWindowBackgroundBrightness}" Minimum="0" Maximum="100" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_MainWindowBackground_Blur"
+                                   Header="{x:Static lsp:Resources.S_MainWindowBackground_Blur}"
+                                   Description="{x:Static lsp:Resources.S_MainWindowBackground_Blur_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi BlurRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.MainWindowBackgroundBlurEnable}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_MainWindowBackground_BlurRadius"
+                                   Header="{x:Static lsp:Resources.S_MainWindowBackground_BlurRadius}"
+                                   Description="{x:Static lsp:Resources.S_MainWindowBackground_BlurRadius_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ResizeRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <NumericUpDown Value="{Binding Settings.MainWindowBackgroundBlurRadius}" Minimum="0" Maximum="100" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText x:Name="S_SettingsWindowBackground"
+                         Text="{x:Static lsp:Resources.S_SettingsWindowBackground}"
+                         Glyph="{sr:Fi LayerRegular}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_SettingsWindowBackground_Mode"
+                                   Header="{x:Static lsp:Resources.S_SettingsWindowBackground_Mode}"
+                                   Description="{x:Static lsp:Resources.S_SettingsWindowBackground_Mode_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LayerRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.SettingsWindowBackgroundMode}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_BackgroundMode_System}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_BackgroundMode_Solid}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_BackgroundMode_Gradient}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_BackgroundMode_Image}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_SettingsWindowBackground_Color"
+                                   Header="{x:Static lsp:Resources.S_SettingsWindowBackground_Color}"
+                                   Description="{x:Static lsp:Resources.S_SettingsWindowBackground_Color_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ColorPicker Color="{Binding Settings.SettingsWindowBackgroundColor}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_SettingsWindowBackground_Gradient"
+                                   Header="{x:Static lsp:Resources.S_SettingsWindowBackground_Gradient}"
+                                   Description="{x:Static lsp:Resources.S_SettingsWindowBackground_Gradient_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <ColorPicker Color="{Binding Settings.SettingsWindowGradientStart}" />
+                        <ColorPicker Color="{Binding Settings.SettingsWindowGradientEnd}" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_SettingsWindowBackground_GradientDirection"
+                                   Header="{x:Static lsp:Resources.S_Background_GradientDirection}"
+                                   Description="{x:Static lsp:Resources.S_Background_GradientDirection_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowTrendingRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.SettingsWindowGradientDirection}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_TopToBottom}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_BottomToTop}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_LeftToRight}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_RightToLeft}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_TopLeftToBottomRight}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_BottomRightToTopLeft}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_TopRightToBottomLeft}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_BottomLeftToTopRight}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_SettingsWindowBackground_Image"
+                                   Header="{x:Static lsp:Resources.S_SettingsWindowBackground_Image}"
+                                   Description="{x:Static lsp:Resources.S_SettingsWindowBackground_Image_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ImageRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBox Text="{Binding Settings.SettingsWindowBackgroundImage}" MinWidth="260" />
+                        <Button Content="{x:Static lsp:Resources.C_SelectImage}"
+                                Click="SelectSettingsWindowBackgroundImageButton_OnClick" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_SettingsWindowBackground_Brightness"
+                                   Header="{x:Static lsp:Resources.S_SettingsWindowBackground_Brightness}"
+                                   Description="{x:Static lsp:Resources.S_SettingsWindowBackground_Brightness_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <NumericUpDown Value="{Binding Settings.SettingsWindowBackgroundBrightness}" Minimum="0" Maximum="100" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_SettingsWindowBackground_Blur"
+                                   Header="{x:Static lsp:Resources.S_SettingsWindowBackground_Blur}"
+                                   Description="{x:Static lsp:Resources.S_SettingsWindowBackground_Blur_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi BlurRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.SettingsWindowBackgroundBlurEnable}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_SettingsWindowBackground_BlurRadius"
+                                   Header="{x:Static lsp:Resources.S_SettingsWindowBackground_BlurRadius}"
+                                   Description="{x:Static lsp:Resources.S_SettingsWindowBackground_BlurRadius_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ResizeRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <NumericUpDown Value="{Binding Settings.SettingsWindowBackgroundBlurRadius}" Minimum="0" Maximum="100" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText x:Name="S_NotificationFloatingWindowBackground"
+                         Text="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground}"
+                         Glyph="{sr:Fi LayerRegular}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_NotificationFloatingWindowBackground_Mode"
+                                   Header="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground_Mode}"
+                                   Description="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground_Mode_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LayerRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.NotificationFloatingWindowBackgroundMode}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_BackgroundMode_System}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_BackgroundMode_Solid}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_BackgroundMode_Gradient}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_BackgroundMode_Image}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_NotificationFloatingWindowBackground_Color"
+                                   Header="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground_Color}"
+                                   Description="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground_Color_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ColorPicker Color="{Binding Settings.NotificationFloatingWindowBackgroundColor}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_NotificationFloatingWindowBackground_Gradient"
+                                   Header="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground_Gradient}"
+                                   Description="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground_Gradient_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <ColorPicker Color="{Binding Settings.NotificationFloatingWindowGradientStart}" />
+                        <ColorPicker Color="{Binding Settings.NotificationFloatingWindowGradientEnd}" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_NotificationFloatingWindowBackground_GradientDirection"
+                                   Header="{x:Static lsp:Resources.S_Background_GradientDirection}"
+                                   Description="{x:Static lsp:Resources.S_Background_GradientDirection_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowTrendingRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.NotificationFloatingWindowGradientDirection}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_TopToBottom}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_BottomToTop}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_LeftToRight}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_RightToLeft}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_TopLeftToBottomRight}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_BottomRightToTopLeft}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_TopRightToBottomLeft}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_GradientDirection_BottomLeftToTopRight}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_NotificationFloatingWindowBackground_Image"
+                                   Header="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground_Image}"
+                                   Description="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground_Image_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ImageRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBox Text="{Binding Settings.NotificationFloatingWindowBackgroundImage}" MinWidth="260" />
+                        <Button Content="{x:Static lsp:Resources.C_SelectImage}"
+                                Click="SelectNotificationFloatingWindowBackgroundImageButton_OnClick" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_NotificationFloatingWindowBackground_Brightness"
+                                   Header="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground_Brightness}"
+                                   Description="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground_Brightness_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <NumericUpDown Value="{Binding Settings.NotificationFloatingWindowBackgroundBrightness}" Minimum="0" Maximum="100" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_NotificationFloatingWindowBackground_Blur"
+                                   Header="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground_Blur}"
+                                   Description="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground_Blur_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi BlurRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.NotificationFloatingWindowBackgroundBlurEnable}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_NotificationFloatingWindowBackground_BlurRadius"
+                                   Header="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground_BlurRadius}"
+                                   Description="{x:Static lsp:Resources.S_NotificationFloatingWindowBackground_BlurRadius_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ResizeRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <NumericUpDown Value="{Binding Settings.NotificationFloatingWindowBackgroundBlurRadius}" Minimum="0" Maximum="100" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -373,5 +373,539 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Settings_Voice", resourceCulture);
             }
         }
+
+        public static string Settings_DefaultNotification {
+            get {
+                return ResourceManager.GetString("Settings_DefaultNotification", resourceCulture);
+            }
+        }
+
+        public static string Settings_BackgroundMusicLoop {
+            get {
+                return ResourceManager.GetString("Settings_BackgroundMusicLoop", resourceCulture);
+            }
+        }
+
+        public static string Settings_BackgroundMusicLoop_D {
+            get {
+                return ResourceManager.GetString("Settings_BackgroundMusicLoop_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_EnableShortcut {
+            get {
+                return ResourceManager.GetString("Settings_EnableShortcut", resourceCulture);
+            }
+        }
+
+        public static string Settings_EnableShortcut_D {
+            get {
+                return ResourceManager.GetString("Settings_EnableShortcut_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_CameraSource {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_CameraSource", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_CameraSource_D {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_CameraSource_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_Duration {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_Duration", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_Duration_D {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_Duration_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_FrameColor {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_FrameColor", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_FrameColor_D {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_FrameColor_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_PreviewMode {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_PreviewMode", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_PreviewMode_D {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_PreviewMode_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_PreviewMode_Always {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_PreviewMode_Always", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_PreviewMode_Hidden {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_PreviewMode_Hidden", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_PreviewMode_Pick {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_PreviewMode_Pick", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_ProcessAudio {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_ProcessAudio", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_ProcessAudio_D {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_ProcessAudio_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_ResultAudio {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_ResultAudio", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_ResultAudio_D {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_ResultAudio_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick {
+            get {
+                return ResourceManager.GetString("Settings_FairPick", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_BaseWeight {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_BaseWeight", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_BaseWeight_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_BaseWeight_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_ByGender {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ByGender", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_ByGender_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ByGender_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_ByGroup {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ByGroup", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_ByGroup_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ByGroup_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_ByTime {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ByTime", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_ByTime_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ByTime_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_ByTotal {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ByTotal", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_ByTotal_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ByTotal_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_FrequencyWeight {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_FrequencyWeight", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_FrequencyWeight_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_FrequencyWeight_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_GapProtection {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_GapProtection", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_GapProtection_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_GapProtection_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_GapThreshold {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_GapThreshold", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_GapThreshold_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_GapThreshold_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_MinMaxWeight {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_MinMaxWeight", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_MinMaxWeight_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_MinMaxWeight_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_Protection {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_Protection", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_Shield {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_Shield", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_Shield_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_Shield_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FairPick_Weights {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_Weights", resourceCulture);
+            }
+        }
+
+        public static string Settings_Music {
+            get {
+                return ResourceManager.GetString("Settings_Music", resourceCulture);
+            }
+        }
+
+        public static string Settings_OpenLotteryPageShortcut {
+            get {
+                return ResourceManager.GetString("Settings_OpenLotteryPageShortcut", resourceCulture);
+            }
+        }
+
+        public static string Settings_OpenLotteryPageShortcut_D {
+            get {
+                return ResourceManager.GetString("Settings_OpenLotteryPageShortcut_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_OpenRollCallPageShortcut {
+            get {
+                return ResourceManager.GetString("Settings_OpenRollCallPageShortcut", resourceCulture);
+            }
+        }
+
+        public static string Settings_OpenRollCallPageShortcut_D {
+            get {
+                return ResourceManager.GetString("Settings_OpenRollCallPageShortcut_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_Plugin {
+            get {
+                return ResourceManager.GetString("Settings_Plugin", resourceCulture);
+            }
+        }
+
+        public static string Settings_QuickDrawShortcut {
+            get {
+                return ResourceManager.GetString("Settings_QuickDrawShortcut", resourceCulture);
+            }
+        }
+
+        public static string Settings_QuickDrawShortcut_D {
+            get {
+                return ResourceManager.GetString("Settings_QuickDrawShortcut_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_ShortcutExampleLottery {
+            get {
+                return ResourceManager.GetString("Settings_ShortcutExampleLottery", resourceCulture);
+            }
+        }
+
+        public static string Settings_ShortcutExampleQuickDraw {
+            get {
+                return ResourceManager.GetString("Settings_ShortcutExampleQuickDraw", resourceCulture);
+            }
+        }
+
+        public static string Settings_ShortcutExampleRollCall {
+            get {
+                return ResourceManager.GetString("Settings_ShortcutExampleRollCall", resourceCulture);
+            }
+        }
+
+        public static string Settings_VoiceMusic {
+            get {
+                return ResourceManager.GetString("Settings_VoiceMusic", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 频率函数.
+        /// </summary>
+        public static string Settings_FairPick_FrequencyFunction {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_FrequencyFunction", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 选择历史抽取次数如何影响候选权重.
+        /// </summary>
+        public static string Settings_FairPick_FrequencyFunction_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_FrequencyFunction_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 线性.
+        /// </summary>
+        public static string Settings_FairPick_FrequencyFunction_Linear {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_FrequencyFunction_Linear", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 平方根.
+        /// </summary>
+        public static string Settings_FairPick_FrequencyFunction_SquareRoot {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_FrequencyFunction_SquareRoot", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 指数.
+        /// </summary>
+        public static string Settings_FairPick_FrequencyFunction_Index {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_FrequencyFunction_Index", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 小组/性别/时间权重.
+        /// </summary>
+        public static string Settings_FairPick_GroupGenderTimeWeight {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_GroupGenderTimeWeight", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 依次设置小组平衡、性别平衡和时间因素在总权重中的占比.
+        /// </summary>
+        public static string Settings_FairPick_GroupGenderTimeWeight_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_GroupGenderTimeWeight_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 最小候选池大小.
+        /// </summary>
+        public static string Settings_FairPick_MinPoolSize {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_MinPoolSize", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 候选数量低于该值时减少保护策略对抽取池的影响.
+        /// </summary>
+        public static string Settings_FairPick_MinPoolSize_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_MinPoolSize_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 冷启动保护.
+        /// </summary>
+        public static string Settings_FairPick_ColdStart {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ColdStart", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 在历史记录较少时降低频率权重带来的突变.
+        /// </summary>
+        public static string Settings_FairPick_ColdStart_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ColdStart_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 冷启动轮数.
+        /// </summary>
+        public static string Settings_FairPick_ColdStartRounds {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ColdStartRounds", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 总抽取次数达到该值前应用冷启动保护.
+        /// </summary>
+        public static string Settings_FairPick_ColdStartRounds_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ColdStartRounds_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 屏蔽时间.
+        /// </summary>
+        public static string Settings_FairPick_ShieldTime {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ShieldTime", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 抽中后在指定时间范围内降低再次被抽中的权重.
+        /// </summary>
+        public static string Settings_FairPick_ShieldTime_D {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ShieldTime_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 秒.
+        /// </summary>
+        public static string Settings_FairPick_ShieldTimeUnit_Seconds {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ShieldTimeUnit_Seconds", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 分钟.
+        /// </summary>
+        public static string Settings_FairPick_ShieldTimeUnit_Minutes {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ShieldTimeUnit_Minutes", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 小时.
+        /// </summary>
+        public static string Settings_FairPick_ShieldTimeUnit_Hours {
+            get {
+                return ResourceManager.GetString("Settings_FairPick_ShieldTimeUnit_Hours", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 检测模型.
+        /// </summary>
+        public static string Settings_FaceDetector_DetectorType {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_DetectorType", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 指定人脸检测模型文件名称.
+        /// </summary>
+        public static string Settings_FaceDetector_DetectorType_D {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_DetectorType_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 模型输入尺寸.
+        /// </summary>
+        public static string Settings_FaceDetector_ModelInputSize {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_ModelInputSize", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 设置检测模型输入宽度和高度.
+        /// </summary>
+        public static string Settings_FaceDetector_ModelInputSize_D {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_ModelInputSize_D", resourceCulture);
+            }
+        }
     }
 }

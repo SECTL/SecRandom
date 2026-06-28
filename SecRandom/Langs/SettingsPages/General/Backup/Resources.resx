@@ -141,4 +141,55 @@
     <data name="C_Backups_Operations_Delete" xml:space="preserve">
         <value>删除</value>
     </data>
+    <data name="C_Cancel" xml:space="preserve">
+        <value>取消</value>
+    </data>
+    <data name="C_Close" xml:space="preserve">
+        <value>关闭</value>
+    </data>
+    <data name="M_BackupCreated" xml:space="preserve">
+        <value>已创建备份：{0}</value>
+    </data>
+    <data name="M_BackupFailed" xml:space="preserve">
+        <value>备份失败</value>
+    </data>
+    <data name="M_BackupFileMissing" xml:space="preserve">
+        <value>备份文件不存在，请刷新后重试</value>
+    </data>
+    <data name="M_DeleteContent" xml:space="preserve">
+        <value>确定要删除备份“{0}”吗？此操作无法撤销。</value>
+    </data>
+    <data name="M_DeleteFailed" xml:space="preserve">
+        <value>删除备份失败</value>
+    </data>
+    <data name="M_DeletePrimary" xml:space="preserve">
+        <value>删除</value>
+    </data>
+    <data name="M_DeleteSuccess" xml:space="preserve">
+        <value>已删除备份</value>
+    </data>
+    <data name="M_DeleteTitle" xml:space="preserve">
+        <value>删除备份</value>
+    </data>
+    <data name="M_InvalidBackupFile" xml:space="preserve">
+        <value>备份文件包含非法路径，已取消恢复</value>
+    </data>
+    <data name="M_NoBackupContentSelected" xml:space="preserve">
+        <value>请至少选择一项备份内容</value>
+    </data>
+    <data name="M_RestoreContent" xml:space="preserve">
+        <value>恢复“{0}”会覆盖当前对应数据。恢复前会自动创建一份当前数据快照，恢复完成后需要重启应用。</value>
+    </data>
+    <data name="M_RestoreFailed" xml:space="preserve">
+        <value>恢复备份失败</value>
+    </data>
+    <data name="M_RestorePrimary" xml:space="preserve">
+        <value>恢复</value>
+    </data>
+    <data name="M_RestoreSuccess" xml:space="preserve">
+        <value>备份已恢复，请重启应用后生效</value>
+    </data>
+    <data name="M_RestoreTitle" xml:space="preserve">
+        <value>恢复备份</value>
+    </data>
 </root>

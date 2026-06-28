@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true" />
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page_Title" xml:space="preserve">
+    <value>历史记录管理</value>
+  </data>
+  <data name="S_History" xml:space="preserve">
+    <value>历史记录</value>
+  </data>
+  <data name="S_History_ShowRollCall" xml:space="preserve">
+    <value>显示点名历史</value>
+  </data>
+  <data name="S_History_ShowRollCall_D" xml:space="preserve">
+    <value>在历史页中显示点名记录。</value>
+  </data>
+  <data name="S_History_ShowLottery" xml:space="preserve">
+    <value>显示抽奖历史</value>
+  </data>
+  <data name="S_History_ShowLottery_D" xml:space="preserve">
+    <value>在历史页中显示抽奖记录。</value>
+  </data>
+  <data name="S_History_SelectWeight" xml:space="preserve">
+    <value>显示权重信息</value>
+  </data>
+  <data name="S_History_SelectWeight_D" xml:space="preserve">
+    <value>查看历史记录时显示参与抽取的权重信息。</value>
+  </data>
+  <data name="S_Filter" xml:space="preserve">
+    <value>筛选</value>
+  </data>
+  <data name="S_Filter_SelectedClassName" xml:space="preserve">
+    <value>默认班级筛选</value>
+  </data>
+  <data name="S_Filter_SelectedClassName_D" xml:space="preserve">
+    <value>进入历史页时默认选择的班级。</value>
+  </data>
+  <data name="S_Filter_SelectedPoolName" xml:space="preserve">
+    <value>默认奖池筛选</value>
+  </data>
+  <data name="S_Filter_SelectedPoolName_D" xml:space="preserve">
+    <value>进入历史页时默认选择的奖池。</value>
+  </data>
+</root>
