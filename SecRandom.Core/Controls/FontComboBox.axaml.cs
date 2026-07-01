@@ -16,9 +16,8 @@ public partial class FontComboBox : UserControl
         set => SetValue(ValueProperty, value);
     }
     
-    public List<FontFamily> FontFamilies { get; } = BuildFontFamilies(
-        FontManager.Current.SystemFonts,
-        fontFamily => FontManager.Current.TryGetGlyphTypeface(new Typeface(fontFamily), out _));
+    public List<FontFamily> FontFamilies { get; } =
+        [..FontManager.Current.SystemFonts, GlobalConstants.DefaultAvaFontFamily];
     
     public FontComboBox()
     {
@@ -47,43 +46,6 @@ public partial class FontComboBox : UserControl
             {
                 Value = newValue;
             }
-        }
-    }
-
-    private static List<FontFamily> BuildFontFamilies(
-        IEnumerable<FontFamily> systemFonts,
-        Func<FontFamily, bool> canUseFontFamily)
-    {
-        var fontFamilies = new List<FontFamily>();
-        foreach (var fontFamily in systemFonts)
-        {
-            if (CanUseFontFamily(fontFamily, canUseFontFamily))
-            {
-                fontFamilies.Add(fontFamily);
-            }
-        }
-
-        fontFamilies.Add(GlobalConstants.DefaultAvaFontFamily);
-        return fontFamilies;
-    }
-
-    private static bool CanUseFontFamily(FontFamily fontFamily, Func<FontFamily, bool> canUseFontFamily)
-    {
-        try
-        {
-            return canUseFontFamily(fontFamily);
-        }
-        catch (FormatException)
-        {
-            return false;
-        }
-        catch (ArgumentException)
-        {
-            return false;
-        }
-        catch (InvalidOperationException)
-        {
-            return false;
         }
     }
 }

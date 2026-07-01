@@ -303,5 +303,9 @@
         <PackageReference Include="Sentry.Profiling" Version="6.5.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Views\SettingsPages\Notification\" />
+    </ItemGroup>
+
     <Import Project="..\Global.props" />
 </Project>
