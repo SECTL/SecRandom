@@ -157,6 +157,7 @@ public partial class App : Application
                 services.AddSingleton<TelemetryRuntimeService>();
                 services.AddHostedService<OnlineStatusService>();
                 services.AddHostedService<TaskBarIconService>();
+                services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
 
                 // 窗口
                 services.AddTransient<MainView>();
