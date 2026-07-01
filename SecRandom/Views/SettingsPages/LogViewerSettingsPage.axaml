@@ -116,7 +116,6 @@
             <ScrollViewer HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Auto">
                 <SelectableTextBlock Text="{Binding SelectedEntryText}"
-                                     FontFamily="Consolas, Cascadia Mono, Menlo, monospace"
                                      FontSize="12"
                                      TextWrapping="NoWrap" />
             </ScrollViewer>

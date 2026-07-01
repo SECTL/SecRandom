@@ -7,7 +7,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.ViewModels;
 using LR = SecRandom.Langs.SettingsPages.Notification.Resources;
 
-namespace SecRandom.Views.SettingsPages;
+namespace SecRandom.Views.SettingsPages.Notification;
 
 public abstract class NotificationChannelSettingsPageBase : UserControl
 {

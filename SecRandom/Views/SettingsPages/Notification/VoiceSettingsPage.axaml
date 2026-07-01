@@ -7,9 +7,10 @@
              xmlns:lc="clr-namespace:SecRandom.Langs.Common"
              xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Voice"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:notification="clr-namespace:SecRandom.Views.SettingsPages.Notification"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.SettingsPages.VoiceSettingsPage"
-             x:DataType="local:VoiceSettingsPage"
+             x:Class="SecRandom.Views.SettingsPages.Notification.VoiceSettingsPage"
+             x:DataType="notification:VoiceSettingsPage"
              Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">

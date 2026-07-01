@@ -7,9 +7,10 @@
              xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.FloatingWindow"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:personalized="clr-namespace:SecRandom.Views.SettingsPages.Personalized"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.SettingsPages.FloatingWindowSettingsPage"
-             x:DataType="local:FloatingWindowSettingsPage"
+             x:Class="SecRandom.Views.SettingsPages.Personalized.FloatingWindowSettingsPage"
+             x:DataType="personalized:FloatingWindowSettingsPage"
              Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">

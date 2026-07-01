@@ -8,7 +8,7 @@ using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.ViewModels;
 
-namespace SecRandom.Views.SettingsPages;
+namespace SecRandom.Views.SettingsPages.Notification;
 
 [PageInfo("settings.notification.legacy", FluentIcons.CommentNoteRegular)]
 public partial class NotificationSettingsPage : UserControl

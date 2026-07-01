@@ -12,7 +12,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.ViewModels;
 using LR = SecRandom.Langs.SettingsPages.ThemeManagement.Resources;
 
-namespace SecRandom.Views.SettingsPages;
+namespace SecRandom.Views.SettingsPages.Personalized;
 
 [PageInfo("settings.personalized.theme", FluentIcons.PaintBrushRegular, "settings.personalized")]
 public partial class ThemeManagementSettingsPage : UserControl

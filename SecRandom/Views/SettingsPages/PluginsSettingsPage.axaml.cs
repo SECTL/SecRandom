@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -19,10 +20,10 @@ using SecRandom.Core.Plugins;
 using SecRandom.Services.Plugins;
 using LR = SecRandom.Langs.SettingsPages.Plugins.Overview.Resources;
 
-namespace SecRandom.Views.SettingsPages.Plugins;
+namespace SecRandom.Views.SettingsPages;
 
-[PageInfo("settings.plugin.overview", FluentIcons.AppsListRegular, groupId: "settings.plugin", useFullWidth: true, hidePageTitle: true)]
-public partial class PluginOverviewSettingsPage : UserControl, INotifyPropertyChanged
+[PageInfo("settings.plugin", FluentIcons.AppsListRegular, useFullWidth: true, hidePageTitle: true)]
+public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
 {
     private readonly IPluginManager _pluginManager = IAppHost.GetService<IPluginManager>();
     private readonly IPluginCatalogService _pluginCatalog = IAppHost.GetService<IPluginCatalogService>();
@@ -38,7 +39,7 @@ public partial class PluginOverviewSettingsPage : UserControl, INotifyPropertyCh
     private bool _isCatalogBusy;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
 
-    public PluginOverviewSettingsPage()
+    public PluginsSettingsPage()
     {
         DataContext = this;
         InitializeComponent();
@@ -413,7 +414,11 @@ public partial class PluginOverviewSettingsPage : UserControl, INotifyPropertyCh
 
     private void OpenPluginsFolderButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        SettingsView.Current?.OpenDrawer(PluginDirectory);
+        Process.Start(new ProcessStartInfo()
+        {
+            FileName = Path.Combine(PluginDirectory),
+            UseShellExecute = true
+        });
     }
 
     private void OpenSelectedFolderButton_OnClick(object? sender, RoutedEventArgs e)
@@ -421,7 +426,11 @@ public partial class PluginOverviewSettingsPage : UserControl, INotifyPropertyCh
         if (SelectedItem?.InstalledPlugin == null)
             return;
 
-        SettingsView.Current?.OpenDrawer(SelectedItem.InstalledPlugin.DirectoryPath);
+        Process.Start(new ProcessStartInfo()
+        {
+            FileName = Path.Combine(SelectedItem.InstalledPlugin.DirectoryPath),
+            UseShellExecute = true
+        });
     }
 
     private void EnableSelectedButton_OnClick(object? sender, RoutedEventArgs e)

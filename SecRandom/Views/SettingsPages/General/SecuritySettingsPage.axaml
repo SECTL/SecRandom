@@ -6,9 +6,10 @@
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
              xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Security"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:general="clr-namespace:SecRandom.Views.SettingsPages.General"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.SettingsPages.SecuritySettingsPage"
-             x:DataType="local:SecuritySettingsPage"
+             x:Class="SecRandom.Views.SettingsPages.General.SecuritySettingsPage"
+             x:DataType="general:SecuritySettingsPage"
              Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">

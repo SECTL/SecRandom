@@ -70,7 +70,8 @@
 
                     <Button Theme="{StaticResource TransparentButton}"
                             ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions}"
-                            VerticalAlignment="Center" HorizontalAlignment="Right">
+                            VerticalAlignment="Center" HorizontalAlignment="Right"
+                            Margin="0 0 4 0">
                         <sr:FluentIcon Glyph="{sr:Fi MoreHorizontalRegular}" />
 
                         <Button.Flyout>

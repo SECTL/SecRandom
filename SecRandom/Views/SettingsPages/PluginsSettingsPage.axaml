@@ -2,13 +2,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Plugins"
              xmlns:lp="clr-namespace:SecRandom.Langs.SettingsPages.Plugins.Overview"
              xmlns:mdxaml="https://github.com/whistyun/Markdown.Avalonia"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
              mc:Ignorable="d"
-             x:Class="SecRandom.Views.SettingsPages.Plugins.PluginOverviewSettingsPage"
-             x:DataType="local:PluginOverviewSettingsPage"
+             x:Class="SecRandom.Views.SettingsPages.PluginsSettingsPage"
+             x:DataType="local:PluginsSettingsPage"
              Loaded="OnLoaded">
     <Grid Classes="page-container animated-intro"
           Margin="8"
@@ -71,9 +71,6 @@
 
                                 <Button.Flyout>
                                     <MenuFlyout>
-                                        <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseRegular}}"
-                                                  Header="{x:Static lp:Resources.C_RefreshCatalog}"
-                                                  Click="RefreshCatalogButton_OnClick" />
                                         <MenuItem Icon="{sr:FluentIcon {sr:Fi AppsSettingsRegular}}"
                                                   Header="{x:Static lp:Resources.C_ManagePluginSources}"
                                                   Click="OpenCatalogSourcesButton_OnClick" />

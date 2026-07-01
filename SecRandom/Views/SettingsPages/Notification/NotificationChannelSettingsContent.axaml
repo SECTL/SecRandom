@@ -4,8 +4,9 @@
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
              xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Notification"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-             x:Class="SecRandom.Views.SettingsPages.NotificationChannelSettingsContent"
-             x:DataType="local:NotificationChannelSettingsPageBase">
+             xmlns:notification="clr-namespace:SecRandom.Views.SettingsPages.Notification"
+             x:Class="SecRandom.Views.SettingsPages.Notification.NotificationChannelSettingsContent"
+             x:DataType="notification:NotificationChannelSettingsPageBase">
     <StackPanel Classes="page-container animated-intro">
         <sr:IconText Text="{Binding ChannelTitle}"
                      Glyph="{sr:Fi CommentNoteRegular}"

@@ -292,6 +292,61 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
+
+        <Compile Update="Views\SettingsPages\Notification\DefaultNotificationSettingsPage.axaml.cs">
+          <DependentUpon>DefaultNotificationSettingsPage.axaml</DependentUpon>
+          <SubType>Code</SubType>
+        </Compile>
+
+        <Compile Update="Views\SettingsPages\Notification\LotteryNotificationSettingsPage.axaml.cs">
+          <DependentUpon>LotteryNotificationSettingsPage.axaml</DependentUpon>
+          <SubType>Code</SubType>
+        </Compile>
+
+        <Compile Update="Views\SettingsPages\Notification\NotificationChannelSettingsContent.axaml.cs">
+          <DependentUpon>NotificationChannelSettingsContent.axaml</DependentUpon>
+          <SubType>Code</SubType>
+        </Compile>
+
+        <Compile Update="Views\SettingsPages\Notification\NotificationSettingsPage.axaml.cs">
+          <DependentUpon>NotificationSettingsPage.axaml</DependentUpon>
+          <SubType>Code</SubType>
+        </Compile>
+
+        <Compile Update="Views\SettingsPages\Notification\RollCallNotificationSettingsPage.axaml.cs">
+          <DependentUpon>RollCallNotificationSettingsPage.axaml</DependentUpon>
+          <SubType>Code</SubType>
+        </Compile>
+
+        <Compile Update="Views\SettingsPages\Notification\VoiceSettingsPage.axaml.cs">
+          <DependentUpon>VoiceSettingsPage.axaml</DependentUpon>
+          <SubType>Code</SubType>
+        </Compile>
+
+        <Compile Update="Views\SettingsPages\Notification\QuickDrawNotificationSettingsPage.axaml.cs">
+          <DependentUpon>QuickDrawNotificationSettingsPage.axaml</DependentUpon>
+          <SubType>Code</SubType>
+        </Compile>
+
+        <Compile Update="Views\SettingsPages\PluginsSettingsPage.axaml.cs">
+          <DependentUpon>PluginOverviewSettingsPage.axaml</DependentUpon>
+          <SubType>Code</SubType>
+        </Compile>
+
+        <Compile Update="Views\SettingsPages\General\SecuritySettingsPage.axaml.cs">
+          <DependentUpon>SecuritySettingsPage.axaml</DependentUpon>
+          <SubType>Code</SubType>
+        </Compile>
+
+        <Compile Update="Views\SettingsPages\Personalized\ThemeManagementSettingsPage.axaml.cs">
+          <DependentUpon>ThemeManagementSettingsPage.axaml</DependentUpon>
+          <SubType>Code</SubType>
+        </Compile>
+
+        <Compile Update="Views\SettingsPages\Personalized\FloatingWindowSettingsPage.axaml.cs">
+          <DependentUpon>FloatingWindowSettingsPage.axaml</DependentUpon>
+          <SubType>Code</SubType>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>
@@ -304,7 +359,17 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Views\SettingsPages\Notification\" />
+      <AdditionalFiles Include="Views\SettingsPages\General\SecuritySettingsPage.axaml" />
+      <AdditionalFiles Include="Views\SettingsPages\Notification\DefaultNotificationSettingsPage.axaml" />
+      <AdditionalFiles Include="Views\SettingsPages\Notification\LotteryNotificationSettingsPage.axaml" />
+      <AdditionalFiles Include="Views\SettingsPages\Notification\NotificationChannelSettingsContent.axaml" />
+      <AdditionalFiles Include="Views\SettingsPages\Notification\NotificationSettingsPage.axaml" />
+      <AdditionalFiles Include="Views\SettingsPages\Notification\QuickDrawNotificationSettingsPage.axaml" />
+      <AdditionalFiles Include="Views\SettingsPages\Notification\RollCallNotificationSettingsPage.axaml" />
+      <AdditionalFiles Include="Views\SettingsPages\Notification\VoiceSettingsPage.axaml" />
+      <AdditionalFiles Include="Views\SettingsPages\Personalized\FloatingWindowSettingsPage.axaml" />
+      <AdditionalFiles Include="Views\SettingsPages\Personalized\ThemeManagementSettingsPage.axaml" />
+      <AdditionalFiles Include="Views\SettingsPages\PluginOverviewSettingsPage.axaml" />
     </ItemGroup>
 
     <Import Project="..\Global.props" />

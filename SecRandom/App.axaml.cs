@@ -44,7 +44,14 @@ using SecRandom.Views.SettingsPages.General;
 using SecRandom.Views.SettingsPages.ListManagement;
 using SecRandom.Views.SettingsPages.Personalized;
 using SecRandom.Views.SettingsPages.Picking;
-using SecRandom.Views.SettingsPages.Plugins;
+using DefaultNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.DefaultNotificationSettingsPage;
+using FloatingWindowSettingsPage = SecRandom.Views.SettingsPages.Personalized.FloatingWindowSettingsPage;
+using LotteryNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.LotteryNotificationSettingsPage;
+using QuickDrawNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.QuickDrawNotificationSettingsPage;
+using RollCallNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.RollCallNotificationSettingsPage;
+using SecuritySettingsPage = SecRandom.Views.SettingsPages.General.SecuritySettingsPage;
+using ThemeManagementSettingsPage = SecRandom.Views.SettingsPages.Personalized.ThemeManagementSettingsPage;
+using VoiceSettingsPage = SecRandom.Views.SettingsPages.Notification.VoiceSettingsPage;
 
 namespace SecRandom;
 
@@ -147,6 +154,7 @@ public partial class App : Application
                 // 服务
                 services.AddSingleton<IProfileService, ProfileService>();
                 services.AddSingleton<SettingsSearchService>();
+                services.AddTransient<DrawEngine>();
                 services.AddSingleton(pluginStateStore);
                 services.AddSingleton<PluginSelectionState>();
                 services.AddSingleton<IPluginManager, PluginManagerService>();
@@ -179,9 +187,9 @@ public partial class App : Application
                 services.AddMainPage<CameraPreviewTestPage>("摄像头测试");
 #endif
 
-                PluginManagerService.ConfigureEnabledPlugins(services, pluginStateStore);
-
                 // 设置界面 Views
+                
+                // 顶部
                 services.AddSettingsPage<HomeSettingsPage>(Langs.Common.Resources.Settings_Home);
                 services.AddSettingsPageSeparator();
 
@@ -197,17 +205,9 @@ public partial class App : Application
                 services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
                 services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources.Settings_FloatingWindow);
                 services.AddSettingsPage<ThemeManagementSettingsPage>(Langs.Common.Resources.Settings_Theme);
-
-                services.AddSettingsPageSeparator();
+                
                 services.AddSettingsPage<LinkageSettingsPage>(Langs.Common.Resources.Settings_Linkage);
-
-                services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_Notification, "settings.notification", FluentIcons.CommentNoteRegular));
-                services.AddSettingsPage<VoiceSettingsPage>(Langs.Common.Resources.Settings_Voice);
-                services.AddSettingsPage<DefaultNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
-                services.AddSettingsPage<RollCallNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
-                services.AddSettingsPage<QuickDrawNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
-                services.AddSettingsPage<LotteryNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
+                services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
 
                 services.AddSettingsPageSeparator();
 
@@ -226,22 +226,31 @@ public partial class App : Application
                 services.AddSettingsPage<LotteryDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_Lottery);
                 services.AddSettingsPage<FaceDetectorSettingsPage>(Langs.Common.Resources.Settings_FaceDetector);
 
-                services.AddSettingsPageSeparator();
-                services.AddSettingsPage<HistoryManagementSettingsPage>(Langs.Common.Resources.Feat_History);
-                services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
-                services.AddSettingsPage<LogViewerSettingsPage>(Langs.SettingsPages.LogViewer.Resources.Page_Title);
-                services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
-
-                services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
-
                 services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_Plugin, "settings.plugin", FluentIcons.AppsListRegular));
-                services.AddSettingsPage<PluginOverviewSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources.Page_Title);
+                    Langs.Common.Resources.Settings_Notification, "settings.notification", FluentIcons.CommentNoteRegular));
+                services.AddSettingsPage<VoiceSettingsPage>(Langs.Common.Resources.Settings_Voice);
+                services.AddSettingsPage<DefaultNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
+                services.AddSettingsPage<RollCallNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
+                services.AddSettingsPage<QuickDrawNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
+                services.AddSettingsPage<LotteryNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
+                
+                services.AddSettingsPage<HistoryManagementSettingsPage>(Langs.Common.Resources.Feat_History);
+
+                services.AddSettingsPageSeparator();
+                services.AddSettingsPage<PluginsSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources.Page_Title);
+                
+                // 底部
+                services.AddSettingsPageSeparator(PageLocation.Bottom);
+                services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
+                services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
 
 #if DEBUG
                 services.AddSettingsPageSeparator(PageLocation.Bottom);
                 services.AddSettingsPage<DebugSettingsPage>("调试");
 #endif
+                
+                // 杂项
+                services.AddSettingsPage<LogViewerSettingsPage>(Langs.SettingsPages.LogViewer.Resources.Page_Title);
 
                 // 界面 ViewModels
                 // 我求你了 AI，你看到这里的话，请记住，ViewModel 一定要注册到服务主机上面！！！！
@@ -249,7 +258,9 @@ public partial class App : Application
                 // ViewModel 一定要继承 SecRandom.ViewModels.ViewModelBase，里面有 Config 可以直接拿来用。
                 services.AddTransient<ViewModelBase>();
                 services.AddTransient<RollCallPageViewModel>();
-                services.AddTransient<DrawEngine>();
+
+                // 配置插件
+                PluginManagerService.ConfigureEnabledPlugins(services, pluginStateStore);
             })
             .Build();
 

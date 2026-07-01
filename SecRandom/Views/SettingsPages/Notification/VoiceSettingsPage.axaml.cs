@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -16,7 +16,7 @@ using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.ViewModels;
 
-namespace SecRandom.Views.SettingsPages;
+namespace SecRandom.Views.SettingsPages.Notification;
 
 [PageInfo("settings.notification.voiceMusic", FluentIcons.PersonVoiceRegular, "settings.notification")]
 public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged

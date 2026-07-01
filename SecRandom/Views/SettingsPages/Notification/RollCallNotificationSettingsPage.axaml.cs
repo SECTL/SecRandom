@@ -3,7 +3,7 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using LR = SecRandom.Langs.SettingsPages.Notification.Resources;
 
-namespace SecRandom.Views.SettingsPages;
+namespace SecRandom.Views.SettingsPages.Notification;
 
 [PageInfo("settings.notification.rollCall", FluentIcons.PersonRegular, "settings.notification")]
 public partial class RollCallNotificationSettingsPage : NotificationChannelSettingsPageBase

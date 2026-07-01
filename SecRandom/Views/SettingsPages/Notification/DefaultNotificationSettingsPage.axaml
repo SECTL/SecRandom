@@ -1,0 +1,9 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
+             xmlns:notification="clr-namespace:SecRandom.Views.SettingsPages.Notification"
+             x:Class="SecRandom.Views.SettingsPages.Notification.DefaultNotificationSettingsPage">
+    <ScrollViewer>
+        <notification:NotificationChannelSettingsContent />
+    </ScrollViewer>
+</UserControl>

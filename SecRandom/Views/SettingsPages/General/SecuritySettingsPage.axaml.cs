@@ -8,7 +8,7 @@ using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.ViewModels;
 
-namespace SecRandom.Views.SettingsPages;
+namespace SecRandom.Views.SettingsPages.General;
 
 [PageInfo("settings.general.security", FluentIcons.ShieldKeyholeRegular, "settings.general")]
 public partial class SecuritySettingsPage : UserControl

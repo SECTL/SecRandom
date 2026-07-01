@@ -6,9 +6,10 @@
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
              xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Notification"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:notification="clr-namespace:SecRandom.Views.SettingsPages.Notification"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.SettingsPages.NotificationSettingsPage"
-             x:DataType="local:NotificationSettingsPage"
+             x:Class="SecRandom.Views.SettingsPages.Notification.NotificationSettingsPage"
+             x:DataType="notification:NotificationSettingsPage"
              Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
