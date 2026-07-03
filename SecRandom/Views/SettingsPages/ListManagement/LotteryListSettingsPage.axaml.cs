@@ -136,7 +136,7 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
     private async void AddListButton_OnClick(object? sender, RoutedEventArgs e)
     {
         var listName = await ShowListNameDialogAsync(LR.M_ListNameDialogTitle_Add, LR.M_ListNameDialogPrimary_Add,
-            CreateDefaultListName());
+            GetNewListName());
         if (listName == null || !ValidateNewListName(listName))
             return;
 
@@ -294,7 +294,7 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         return true;
     }
 
-    private string CreateDefaultListName()
+    private string GetNewListName()
     {
         var defaultName = LR.C_DefaultListName;
         var candidateName = defaultName;

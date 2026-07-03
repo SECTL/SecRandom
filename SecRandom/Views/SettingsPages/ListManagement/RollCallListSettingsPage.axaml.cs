@@ -137,7 +137,7 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
     private async void AddListButton_OnClick(object? sender, RoutedEventArgs e)
     {
         var listName = await ShowListNameDialogAsync(LR.M_ListNameDialogTitle_Add, LR.M_ListNameDialogPrimary_Add,
-            CreateDefaultListName());
+            GetNewListName());
         if (listName == null)
             return;
 
@@ -301,7 +301,7 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         return true;
     }
 
-    private string CreateDefaultListName()
+    private string GetNewListName()
     {
         var defaultName = LR.C_DefaultListName;
         var candidateName = defaultName;
