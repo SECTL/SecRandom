@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -33,7 +33,7 @@ public partial class ProfileSettingsViewModel : ViewModelBase
     public void RefreshLists()
     {
         StudentLists.AddRange(
-            from i in Directory.GetFiles(Utils.GetDirectoryPath("data", "list", "roll_call_list"))
+            from i in Directory.GetFiles(Utils.GetDirectoryPath("list", "roll_call_list"))
             where i.EndsWith(".json")
             orderby i
             select Path.GetFileName(i).Replace(".json", ""));

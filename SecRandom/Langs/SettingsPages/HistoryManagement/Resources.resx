@@ -46,4 +46,43 @@
   <data name="S_Filter_SelectedPoolName_D" xml:space="preserve">
     <value>进入历史页时默认选择的奖池。</value>
   </data>
+  <data name="S_ClearHistory" xml:space="preserve">
+    <value>清除历史记录</value>
+  </data>
+  <data name="S_ClearHistory_RollCall" xml:space="preserve">
+    <value>清除点名历史</value>
+  </data>
+  <data name="S_ClearHistory_RollCall_D" xml:space="preserve">
+    <value>删除选定班级的全部点名历史记录，此操作不可撤销。</value>
+  </data>
+  <data name="S_ClearHistory_Lottery" xml:space="preserve">
+    <value>清除抽奖历史</value>
+  </data>
+  <data name="S_ClearHistory_Lottery_D" xml:space="preserve">
+    <value>删除选定奖池的全部抽奖历史记录，此操作不可撤销。</value>
+  </data>
+  <data name="C_Clear" xml:space="preserve">
+    <value>清除</value>
+  </data>
+  <data name="C_Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="C_Close" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="M_ClearConfirm_Title" xml:space="preserve">
+    <value>确认清除历史记录</value>
+  </data>
+  <data name="M_ClearConfirm_Content" xml:space="preserve">
+    <value>确认清除“{0}”的全部历史记录？此操作不可撤销。</value>
+  </data>
+  <data name="M_ClearSuccess" xml:space="preserve">
+    <value>已成功清除“{0}”的历史记录。</value>
+  </data>
+  <data name="M_ClearFailed" xml:space="preserve">
+    <value>清除失败：{0}</value>
+  </data>
+  <data name="M_SelectFirst" xml:space="preserve">
+    <value>请先选择要清除历史记录的项目。</value>
+  </data>
 </root>

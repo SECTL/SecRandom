@@ -113,6 +113,24 @@ namespace SecRandom.Langs.Common {
             }
         }
 
+        public static string Feat_RollCallHistory {
+            get {
+                return ResourceManager.GetString("Feat_RollCallHistory", resourceCulture);
+            }
+        }
+
+        public static string Feat_LotteryHistory {
+            get {
+                return ResourceManager.GetString("Feat_LotteryHistory", resourceCulture);
+            }
+        }
+
+        public static string Settings_HistoryManagement {
+            get {
+                return ResourceManager.GetString("Settings_HistoryManagement", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 抽奖.
         /// </summary>

@@ -1,0 +1,77 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:SecRandom.ViewModels"
+             xmlns:conv="using:SecRandom.Converters"
+             xmlns:langs="using:SecRandom.Langs.MainPages.History"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
+             x:Class="SecRandom.Views.SettingsPages.History.RollCallHistorySettingsPage"
+             x:DataType="vm:RollCallHistoryViewModel"
+             Unloaded="OnUnloaded">
+    <UserControl.Resources>
+        <conv:HistoryModeNameConverter x:Key="ModeNameConverter" />
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="Auto,*" Margin="12 0 18 12" RowSpacing="8">
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+            <ComboBox MinWidth="200"
+                      PlaceholderText="{x:Static langs:Resources.C_SelectClass}"
+                      ItemsSource="{Binding ClassNames}"
+                      SelectedItem="{Binding SelectedClassName, Mode=TwoWay}" />
+            <ComboBox MinWidth="160"
+                      PlaceholderText="{x:Static langs:Resources.C_SelectMode}"
+                      ItemsSource="{Binding ModeOptions}"
+                      SelectedItem="{Binding SelectedMode, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Converter={StaticResource ModeNameConverter}}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Content="{x:Static langs:Resources.C_Refresh}"
+                    Command="{Binding RefreshCommand}" />
+        </StackPanel>
+
+        <Border Grid.Row="1"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="1" CornerRadius="4" ClipToBounds="True">
+            <DataGrid x:Name="HistoryGrid"
+                      AutoGenerateColumns="False"
+                      CanUserSortColumns="True"
+                      CanUserResizeColumns="True"
+                      GridLinesVisibility="Horizontal"
+                      IsReadOnly="True"
+                      SelectionMode="Single"
+                      ItemsSource="{Binding Rows}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Width="1.6*"
+                                        Header="{x:Static langs:Resources.H_DrawTime}"
+                                        Binding="{Binding DrawTime}" />
+                    <DataGridTextColumn Width="1.4*"
+                                        Header="{x:Static langs:Resources.H_Name}"
+                                        Binding="{Binding Name}" />
+                    <DataGridTextColumn Width="*"
+                                        Header="{x:Static langs:Resources.H_DrawMode}"
+                                        Binding="{Binding DrawMethod}" />
+                    <DataGridTextColumn Width="*"
+                                        Header="{x:Static langs:Resources.H_DrawNumbers}"
+                                        Binding="{Binding DrawNumbers}" />
+                    <DataGridTextColumn Width="*"
+                                        Header="{x:Static langs:Resources.H_GenderLimit}"
+                                        Binding="{Binding Gender}" />
+                    <DataGridTextColumn Width="*"
+                                        Header="{x:Static langs:Resources.H_GroupLimit}"
+                                        Binding="{Binding Group}" />
+                    <DataGridTextColumn Width="*"
+                                        Header="{x:Static langs:Resources.H_TotalCountRollCall}"
+                                        Binding="{Binding TotalCount}" />
+                    <DataGridTextColumn Width="*"
+                                        Header="{x:Static langs:Resources.H_Weight}"
+                                        Binding="{Binding Weight}" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>

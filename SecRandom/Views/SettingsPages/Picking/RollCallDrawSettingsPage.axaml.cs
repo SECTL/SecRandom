@@ -48,7 +48,7 @@ public partial class RollCallDrawSettingsPage : UserControl
     private void RefreshStudentLists()
     {
         StudentListNames.Clear();
-        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("data", "list", "roll_call_list"), "*.json")
+        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "roll_call_list"), "*.json")
                      .OrderBy(Path.GetFileName))
             StudentListNames.Add(Path.GetFileNameWithoutExtension(file));
     }

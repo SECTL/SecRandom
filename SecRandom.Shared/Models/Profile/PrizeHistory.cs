@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.ComponentModels;
@@ -23,7 +23,7 @@ public partial class PrizeHistory : ProfileConfigBase
 
     [JsonIgnore]
     public override string ConfigFilePath =>
-        Utils.GetFilePath("data", "history", "lottery_history", $"{Name}.json");
+        Utils.GetFilePath("history", "lottery_history", $"{Name}.json");
 
     public ObservableDictionary<string, History> Prizes { get; set; } = [];
     public ObservableDictionary<string, int> GroupStats { get; set; } = [];

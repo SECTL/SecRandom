@@ -44,6 +44,7 @@ using SecRandom.Views;
 using SecRandom.Views.MainPages;
 using SecRandom.Views.SettingsPages;
 using SecRandom.Views.SettingsPages.General;
+using SecRandom.Views.SettingsPages.History;
 using SecRandom.Views.SettingsPages.ListManagement;
 using SecRandom.Views.SettingsPages.Personalized;
 using SecRandom.Views.SettingsPages.Picking;
@@ -272,6 +273,7 @@ public partial class App : Application
 
                 // 界面 Views
                 services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
+                services.AddMainPage<HistoryPage>(Langs.Common.Resources.Feat_History);
 #if DEBUG
                 services.AddMainPage<CameraPreviewTestPage>("摄像头测试");
 #endif
@@ -323,7 +325,11 @@ public partial class App : Application
                 services.AddSettingsPage<QuickDrawNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
                 services.AddSettingsPage<LotteryNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
                 
-                services.AddSettingsPage<HistoryManagementSettingsPage>(Langs.Common.Resources.Feat_History);
+                services.AddGroup(new PageGroupInfo(
+                    Langs.Common.Resources.Feat_History, "settings.history", FluentIcons.HistoryRegular));
+                services.AddSettingsPage<HistoryManagementSettingsPage>(Langs.Common.Resources.Settings_HistoryManagement);
+                services.AddSettingsPage<RollCallHistorySettingsPage>(Langs.Common.Resources.Feat_RollCallHistory);
+                services.AddSettingsPage<LotteryHistorySettingsPage>(Langs.Common.Resources.Feat_LotteryHistory);
 
                 services.AddSettingsPageSeparator();
                 services.AddSettingsPage<PluginsSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources.Page_Title);
@@ -347,6 +353,8 @@ public partial class App : Application
                 // ViewModel 一定要继承 SecRandom.ViewModels.ViewModelBase，里面有 Config 可以直接拿来用。
                 services.AddTransient<ViewModelBase>();
                 services.AddTransient<RollCallPageViewModel>();
+                services.AddTransient<RollCallHistoryViewModel>();
+                services.AddTransient<LotteryHistoryViewModel>();
 
                 // 配置插件
                 PluginManagerService.ConfigureEnabledPlugins(services, pluginStateStore);

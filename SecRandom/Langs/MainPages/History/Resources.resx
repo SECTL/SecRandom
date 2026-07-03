@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true" />
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Page_Title" xml:space="preserve">
+    <value>历史记录</value>
+  </data>
+  <data name="Tab_RollCall" xml:space="preserve">
+    <value>点名历史</value>
+  </data>
+  <data name="Tab_Lottery" xml:space="preserve">
+    <value>抽奖历史</value>
+  </data>
+  <data name="C_SelectClass" xml:space="preserve">
+    <value>选择班级</value>
+  </data>
+  <data name="C_SelectPool" xml:space="preserve">
+    <value>选择奖池</value>
+  </data>
+  <data name="C_SelectMode" xml:space="preserve">
+    <value>查看模式</value>
+  </data>
+  <data name="C_Refresh" xml:space="preserve">
+    <value>刷新</value>
+  </data>
+  <data name="C_ModeOverview" xml:space="preserve">
+    <value>全部记录</value>
+  </data>
+  <data name="C_ModeRecords" xml:space="preserve">
+    <value>按时间查看</value>
+  </data>
+  <data name="C_MethodRandom" xml:space="preserve">
+    <value>随机抽取</value>
+  </data>
+  <data name="C_MethodWeight" xml:space="preserve">
+    <value>公平抽取</value>
+  </data>
+  <data name="C_NoData" xml:space="preserve">
+    <value>暂无历史记录</value>
+  </data>
+  <data name="H_Name" xml:space="preserve">
+    <value>姓名</value>
+  </data>
+  <data name="H_PrizeName" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="H_TotalCountRollCall" xml:space="preserve">
+    <value>点名次数</value>
+  </data>
+  <data name="H_TotalCountLottery" xml:space="preserve">
+    <value>中奖次数</value>
+  </data>
+  <data name="H_DrawTime" xml:space="preserve">
+    <value>点名时间</value>
+  </data>
+  <data name="H_LotteryTime" xml:space="preserve">
+    <value>抽奖时间</value>
+  </data>
+  <data name="H_DrawMode" xml:space="preserve">
+    <value>点名模式</value>
+  </data>
+  <data name="H_DrawNumbers" xml:space="preserve">
+    <value>点名人数</value>
+  </data>
+  <data name="H_LotteryNumbers" xml:space="preserve">
+    <value>抽取数量</value>
+  </data>
+  <data name="H_GenderLimit" xml:space="preserve">
+    <value>性别限制</value>
+  </data>
+  <data name="H_GroupLimit" xml:space="preserve">
+    <value>小组限制</value>
+  </data>
+  <data name="H_Weight" xml:space="preserve">
+    <value>权重</value>
+  </data>
+</root>

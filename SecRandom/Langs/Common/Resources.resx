@@ -85,6 +85,15 @@
     <data name="Feat_History" xml:space="preserve">
         <value>历史记录</value>
     </data>
+    <data name="Feat_RollCallHistory" xml:space="preserve">
+        <value>点名历史</value>
+    </data>
+    <data name="Feat_LotteryHistory" xml:space="preserve">
+        <value>抽奖历史</value>
+    </data>
+    <data name="Settings_HistoryManagement" xml:space="preserve">
+        <value>历史记录管理</value>
+    </data>
     <data name="Settings_Update" xml:space="preserve">
         <value>更新设置</value>
     </data>

@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.Interfaces;
@@ -20,7 +20,7 @@ public class PrizeList : ProfileConfigBase, IAttachableSettingsObject
 
     [JsonIgnore]
     public override string ConfigFilePath =>
-        Utils.GetFilePath("data", "list", "lottery_list", $"{Name}.json");
+        Utils.GetFilePath("list", "lottery_list", $"{Name}.json");
 
     public ObservableCollection<Prize> Prizes { get; set; } = [];
 

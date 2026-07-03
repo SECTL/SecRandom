@@ -45,26 +45,34 @@
             </fa:FASettingsExpander>
 
             <Separator Margin="0 12 0 4" />
-            <sr:IconText x:Name="S_Filter"
-                         Text="{x:Static lsp:Resources.S_Filter}"
-                         Glyph="{sr:Fi FilterRegular}"
+            <sr:IconText x:Name="S_ClearHistory"
+                         Text="{x:Static lsp:Resources.S_ClearHistory}"
+                         Glyph="{sr:Fi DeleteRegular}"
                          Margin="0 0 0 4" />
 
-            <fa:FASettingsExpander x:Name="S_Filter_SelectedClassName"
-                                   Header="{x:Static lsp:Resources.S_Filter_SelectedClassName}"
-                                   Description="{x:Static lsp:Resources.S_Filter_SelectedClassName_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleListRegular}}">
+            <fa:FASettingsExpander x:Name="S_ClearHistory_RollCall"
+                                   Header="{x:Static lsp:Resources.S_ClearHistory_RollCall}"
+                                   Description="{x:Static lsp:Resources.S_ClearHistory_RollCall_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PersonRegular}}">
                 <fa:FASettingsExpander.Footer>
-                    <TextBox Text="{Binding Settings.SelectedClassName}" MinWidth="220" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ComboBox x:Name="RollCallClassCombo" MinWidth="180" />
+                        <Button Content="{x:Static lsp:Resources.C_Clear}"
+                                Click="ClearRollCallHistory_OnClick" />
+                    </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander x:Name="S_Filter_SelectedPoolName"
-                                   Header="{x:Static lsp:Resources.S_Filter_SelectedPoolName}"
-                                   Description="{x:Static lsp:Resources.S_Filter_SelectedPoolName_D}"
+            <fa:FASettingsExpander x:Name="S_ClearHistory_Lottery"
+                                   Header="{x:Static lsp:Resources.S_ClearHistory_Lottery}"
+                                   Description="{x:Static lsp:Resources.S_ClearHistory_Lottery_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi LotteryRegular}}">
                 <fa:FASettingsExpander.Footer>
-                    <TextBox Text="{Binding Settings.SelectedPoolName}" MinWidth="220" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ComboBox x:Name="LotteryPoolCombo" MinWidth="180" />
+                        <Button Content="{x:Static lsp:Resources.C_Clear}"
+                                Click="ClearLotteryHistory_OnClick" />
+                    </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
         </StackPanel>

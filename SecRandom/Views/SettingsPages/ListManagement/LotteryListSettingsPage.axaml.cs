@@ -72,7 +72,7 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
     {
         PrizeListNames.Clear();
 
-        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("data", "list", "lottery_list"), "*.json")
+        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "lottery_list"), "*.json")
                      .OrderBy(Path.GetFileName))
             PrizeListNames.Add(Path.GetFileNameWithoutExtension(file));
 
@@ -310,7 +310,7 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
 
     private static string GetPrizeListPath(string listName)
     {
-        return Utils.GetFilePath("data", "list", "lottery_list", $"{listName}.json");
+        return Utils.GetFilePath("list", "lottery_list", $"{listName}.json");
     }
 
     private static void RenameProfileFile(ProfileConfigBase oldConfig, ProfileConfigBase newConfig)

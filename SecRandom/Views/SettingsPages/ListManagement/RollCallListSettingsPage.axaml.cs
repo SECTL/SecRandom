@@ -73,7 +73,7 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
     {
         StudentListNames.Clear();
 
-        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("data", "list", "roll_call_list"), "*.json")
+        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "roll_call_list"), "*.json")
                      .OrderBy(Path.GetFileName))
             StudentListNames.Add(Path.GetFileNameWithoutExtension(file));
 
@@ -317,7 +317,7 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
 
     private static string GetStudentListPath(string listName)
     {
-        return Utils.GetFilePath("data", "list", "roll_call_list", $"{listName}.json");
+        return Utils.GetFilePath("list", "roll_call_list", $"{listName}.json");
     }
 
     private static void RenameProfileFile(ProfileConfigBase oldConfig, ProfileConfigBase newConfig)

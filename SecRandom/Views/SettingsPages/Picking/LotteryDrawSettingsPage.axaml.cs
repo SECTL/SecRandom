@@ -48,7 +48,7 @@ public partial class LotteryDrawSettingsPage : UserControl
     private void RefreshPrizeLists()
     {
         PrizeListNames.Clear();
-        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("data", "list", "lottery_list"), "*.json")
+        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "lottery_list"), "*.json")
                      .OrderBy(Path.GetFileName))
             PrizeListNames.Add(Path.GetFileNameWithoutExtension(file));
     }

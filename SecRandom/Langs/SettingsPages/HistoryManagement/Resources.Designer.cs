@@ -160,5 +160,83 @@ namespace SecRandom.Langs.SettingsPages.HistoryManagement {
                 return ResourceManager.GetString("S_History_ShowRollCall_D", resourceCulture);
             }
         }
+
+        public static string S_ClearHistory {
+            get {
+                return ResourceManager.GetString("S_ClearHistory", resourceCulture);
+            }
+        }
+
+        public static string S_ClearHistory_RollCall {
+            get {
+                return ResourceManager.GetString("S_ClearHistory_RollCall", resourceCulture);
+            }
+        }
+
+        public static string S_ClearHistory_RollCall_D {
+            get {
+                return ResourceManager.GetString("S_ClearHistory_RollCall_D", resourceCulture);
+            }
+        }
+
+        public static string S_ClearHistory_Lottery {
+            get {
+                return ResourceManager.GetString("S_ClearHistory_Lottery", resourceCulture);
+            }
+        }
+
+        public static string S_ClearHistory_Lottery_D {
+            get {
+                return ResourceManager.GetString("S_ClearHistory_Lottery_D", resourceCulture);
+            }
+        }
+
+        public static string C_Clear {
+            get {
+                return ResourceManager.GetString("C_Clear", resourceCulture);
+            }
+        }
+
+        public static string C_Cancel {
+            get {
+                return ResourceManager.GetString("C_Cancel", resourceCulture);
+            }
+        }
+
+        public static string C_Close {
+            get {
+                return ResourceManager.GetString("C_Close", resourceCulture);
+            }
+        }
+
+        public static string M_ClearConfirm_Title {
+            get {
+                return ResourceManager.GetString("M_ClearConfirm_Title", resourceCulture);
+            }
+        }
+
+        public static string M_ClearConfirm_Content {
+            get {
+                return ResourceManager.GetString("M_ClearConfirm_Content", resourceCulture);
+            }
+        }
+
+        public static string M_ClearSuccess {
+            get {
+                return ResourceManager.GetString("M_ClearSuccess", resourceCulture);
+            }
+        }
+
+        public static string M_ClearFailed {
+            get {
+                return ResourceManager.GetString("M_ClearFailed", resourceCulture);
+            }
+        }
+
+        public static string M_SelectFirst {
+            get {
+                return ResourceManager.GetString("M_SelectFirst", resourceCulture);
+            }
+        }
     }
 }

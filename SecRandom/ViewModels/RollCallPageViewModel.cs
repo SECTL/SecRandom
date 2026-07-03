@@ -238,7 +238,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             var previousName = SelectedStudentListName;
             StudentListNames.Clear();
 
-            var directory = Utils.GetDirectoryPath("data", "list", "roll_call_list");
+            var directory = Utils.GetDirectoryPath("list", "roll_call_list");
             foreach (var file in Directory.GetFiles(directory, "*.json").OrderBy(Path.GetFileName))
                 StudentListNames.Add(Path.GetFileNameWithoutExtension(file));
 
@@ -282,7 +282,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     private FileSystemWatcher CreateStudentListWatcher()
     {
-        var watcher = new FileSystemWatcher(Utils.GetDirectoryPath("data", "list", "roll_call_list"), "*.json")
+        var watcher = new FileSystemWatcher(Utils.GetDirectoryPath("list", "roll_call_list"), "*.json")
         {
             NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.CreationTime
         };
