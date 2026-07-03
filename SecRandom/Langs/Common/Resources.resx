@@ -280,4 +280,20 @@
     <data name="Settings_FaceDetector_ModelInputSize_D" xml:space="preserve">
         <value>设置检测模型输入宽度和高度</value>
     </data>
+
+    <data name="MultiInstance_Title" xml:space="preserve">
+        <value>应用程序已在运行</value>
+    </data>
+    <data name="MultiInstance_Message" xml:space="preserve">
+        <value>SecRandom 已经有一个实例正在运行。</value>
+    </data>
+    <data name="MultiInstance_OpenExisting" xml:space="preserve">
+        <value>打开已有实例主界面</value>
+    </data>
+    <data name="MultiInstance_Restart" xml:space="preserve">
+        <value>重启实例</value>
+    </data>
+    <data name="MultiInstance_Cancel" xml:space="preserve">
+        <value>取消</value>
+    </data>
 </root>

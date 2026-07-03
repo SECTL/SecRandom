@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -32,6 +32,9 @@ using SecRandom.Core.Models;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services.Logging;
+using SecRandom.Core.Services.SingleInstance;
+using SecRandom.Dialogs;
+using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.AppearanceSettingsConfig;
 using SecRandom.Services;
 using SecRandom.Services.Config;
 using SecRandom.Services.Plugins;
@@ -86,6 +89,9 @@ public partial class App : Application
         // 初始化 Avalonia App
         AvaloniaXamlLoader.Load(this);
 
+        // 在 XAML 资源加载完成后立即应用外观设置（早于 BuildHost，确保重复实例对话框也能跟随主题）
+        ApplyStartupAppearance(settings.Appearance);
+
 #if DEBUG
         // 附加开发者工具
         this.AttachDeveloperTools();
@@ -94,11 +100,24 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        // 启动服务主机
-        BuildHost();
-
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            // ===== 多实例检测（仅 Desktop Lifetime）=====
+            if (!SingleInstanceService.Instance.TryAcquire())
+            {
+                // 已有实例在运行：创建临时宿主窗口显示对话框，跳过 BuildHost
+                _desktopLifetime = desktop;
+                desktop.MainWindow = CreateDuplicateInstanceDialogHost(desktop);
+                base.OnFrameworkInitializationCompleted();
+                return;
+            }
+
+            // 正常启动：注册 IPC 命令处理，再构建主机
+            SingleInstanceService.Instance.CommandReceived += OnIpcCommandReceived;
+
+            // 启动服务主机
+            BuildHost();
+
             _desktopLifetime = desktop;
             _floatingWindow = new FloatingWindow();
             _floatingWindow.Closed += (_, _) => _floatingWindow = null;
@@ -115,6 +134,76 @@ public partial class App : Application
         Dispatcher.UIThread.UnhandledException += App_OnDispatcherUnhandledException;
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>
+    ///     创建多实例对话框宿主窗口。
+    ///     宿主窗口本身不可见；对话框在 <see cref="Window.Opened"/> 异步事件中弹出，
+    ///     避免在同步的 <see cref="OnFrameworkInitializationCompleted"/> 中阻塞 UI 线程。
+    /// </summary>
+    private static Window CreateDuplicateInstanceDialogHost(
+        IClassicDesktopStyleApplicationLifetime _)
+    {
+        var host = new Window
+        {
+            SizeToContent = SizeToContent.Manual,
+            WindowState = WindowState.Maximized,
+            ShowInTaskbar = false,
+            CanResize = false,
+            WindowDecorations = WindowDecorations.None,
+            Background = null,
+            TransparencyLevelHint = new[] { WindowTransparencyLevel.Transparent }
+        };
+
+        // Opened 事件在 Dispatcher 事件循环内异步运行，不会死锁 UI 线程
+        host.Opened += async (_, _) =>
+        {
+            var action = await DuplicateInstanceDialog.ShowAsync(host);
+
+            switch (action)
+            {
+                case DuplicateInstanceAction.OpenExisting:
+                    // 通知第一个实例激活主界面
+                    await SingleInstanceService.SendCommandAsync(SingleInstanceCommand.ShowMainWindow);
+                    break;
+
+                case DuplicateInstanceAction.Restart:
+                    // 通知第一个实例重启，稍作等待以确保对方有时间响应
+                    await SingleInstanceService.SendCommandAsync(SingleInstanceCommand.Restart);
+                    await Task.Delay(300);
+                    break;
+
+                case DuplicateInstanceAction.Cancel:
+                default:
+                    break;
+            }
+
+            // 所有分支最终都退出当前（重复）实例
+            host.Close();
+            RequestDesktopShutdown();
+        };
+
+        return host;
+    }
+
+    /// <summary>
+    ///     处理来自后续实例的 IPC 命令（第一个实例专用）。
+    ///     回调来自后台线程，需通过 <see cref="Dispatcher"/> 切换到 UI 线程。
+    /// </summary>
+    private void OnIpcCommandReceived(string command)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            switch (command)
+            {
+                case SingleInstanceCommand.ShowMainWindow:
+                    ShowMainWindow();
+                    break;
+                case SingleInstanceCommand.Restart:
+                    Restart();
+                    break;
+            }
+        });
     }
 
     private void BuildHost()
@@ -357,6 +446,9 @@ public partial class App : Application
 
         IAppHost.Host = null;
 
+        // 释放单实例 Mutex 及 IPC 管道
+        SingleInstanceService.Instance.Dispose();
+
         if (requestLifetimeShutdown)
             RequestDesktopShutdown();
     }
@@ -376,6 +468,9 @@ public partial class App : Application
 
         var path = Environment.ProcessPath;
         if (path == null) return;
+
+        // 释放 Mutex，让新进程能够正常获取
+        SingleInstanceService.Instance.Dispose();
 
         var executablePath = path.Replace(@".dll", GlobalConstants.PlatformExecutableExtension);
         var startInfo = new ProcessStartInfo(executablePath)
@@ -515,6 +610,37 @@ public partial class App : Application
     {
         CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
         CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+    }
+
+    /// <summary>
+    ///     在 XAML 资源加载完成后立即应用外观设置（主题色、主题模式），
+    ///     无需 DI，可在 BuildHost 之前调用，确保重复实例对话框也能跟随用户主题。
+    /// </summary>
+    private void ApplyStartupAppearance(AppearanceSettingsConfig settings)
+    {
+        RequestedThemeVariant = settings.Theme switch
+        {
+            ThemeMode.Auto => ThemeVariant.Default,
+            ThemeMode.Light => ThemeVariant.Light,
+            ThemeMode.Dark => ThemeVariant.Dark,
+            _ => ThemeVariant.Default
+        };
+
+        var fluentAvaloniaTheme = this.FindResource(@"FluentAvaloniaTheme") as FluentAvaloniaTheme;
+        if (fluentAvaloniaTheme is null) return;
+
+        fluentAvaloniaTheme.PreferSystemTheme = settings.Theme == ThemeMode.Auto;
+
+        if (settings.ThemeColorMode == ThemeColorMode.System)
+        {
+            fluentAvaloniaTheme.PreferUserAccentColor = true;
+            fluentAvaloniaTheme.CustomAccentColor = null;
+        }
+        else
+        {
+            fluentAvaloniaTheme.PreferUserAccentColor = false;
+            fluentAvaloniaTheme.CustomAccentColor = settings.ThemeColor;
+        }
     }
 
     public void RefreshPersonalizedSettings()

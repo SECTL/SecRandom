@@ -130,4 +130,20 @@
     <data name="Settings_Appearance" xml:space="preserve">
         <value>Appearance</value>
     </data>
+
+    <data name="MultiInstance_Title" xml:space="preserve">
+        <value>Application Already Running</value>
+    </data>
+    <data name="MultiInstance_Message" xml:space="preserve">
+        <value>Another instance of SecRandom is already running.</value>
+    </data>
+    <data name="MultiInstance_OpenExisting" xml:space="preserve">
+        <value>Show Running Instance</value>
+    </data>
+    <data name="MultiInstance_Restart" xml:space="preserve">
+        <value>Restart</value>
+    </data>
+    <data name="MultiInstance_Cancel" xml:space="preserve">
+        <value>Cancel</value>
+    </data>
 </root>
