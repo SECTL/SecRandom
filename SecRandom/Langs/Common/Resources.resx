@@ -116,7 +116,7 @@
         <value>(等待编写)</value>
     </data>
     <data name="Menu_OpenProfileSettings" xml:space="preserve">
-        <value>编辑档案 (debug)</value>
+        <value>编辑档案</value>
     </data>
     <data name="AttachedSettings_BehindScene" xml:space="preserve">
         <value>内幕设置</value>
