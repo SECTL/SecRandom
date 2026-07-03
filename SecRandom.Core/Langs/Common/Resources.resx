@@ -36,4 +36,7 @@
     <data name="C_AttachedSettingsButtonTip" xml:space="preserve">
         <value>打开附加设置</value>
     </data>
+    <data name="M_Nothing" xml:space="preserve">
+        <value>这里还什么都没有喵～</value>
+    </data>
 </root>

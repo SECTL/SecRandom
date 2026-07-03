@@ -94,5 +94,14 @@ namespace SecRandom.Core.Langs.Common {
                 return ResourceManager.GetString("C_AttachedSettingsButtonTip", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 这里还什么都没有喵～.
+        /// </summary>
+        public static string M_Nothing {
+            get {
+                return ResourceManager.GetString("M_Nothing", resourceCulture);
+            }
+        }
     }
 }

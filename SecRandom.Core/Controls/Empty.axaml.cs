@@ -16,7 +16,7 @@ public class Empty : TemplatedControl
         });
 
     public static readonly StyledProperty<string> TextProperty = AvaloniaProperty.Register<Empty, string>(
-        nameof(Text), "Nothing~");
+        nameof(Text), Langs.Common.Resources.M_Nothing);
 
     public static readonly StyledProperty<double> IconHeightProperty = AvaloniaProperty.Register<Empty, double>(
         nameof(IconHeight), 64.0);
