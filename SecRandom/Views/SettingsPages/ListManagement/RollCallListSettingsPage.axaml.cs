@@ -303,16 +303,17 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
 
     private string CreateDefaultListName()
     {
-        var baseName = LR.C_DefaultListName;
-        if (!File.Exists(GetStudentListPath(baseName)))
-            return baseName;
+        var defaultName = LR.C_DefaultListName;
+        var candidateName = defaultName;
+        var suffix = 2;
 
-        for (var i = 2;; i++)
+        while (File.Exists(GetStudentListPath(candidateName)))
         {
-            var name = $"{baseName} {i}";
-            if (!File.Exists(GetStudentListPath(name)))
-                return name;
+            candidateName = $"{defaultName} {suffix}";
+            suffix++;
         }
+
+        return candidateName;
     }
 
     private static string GetStudentListPath(string listName)

@@ -296,16 +296,17 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
 
     private string CreateDefaultListName()
     {
-        var baseName = LR.C_DefaultListName;
-        if (!File.Exists(GetPrizeListPath(baseName)))
-            return baseName;
+        var defaultName = LR.C_DefaultListName;
+        var candidateName = defaultName;
+        var suffix = 2;
 
-        for (var i = 2;; i++)
+        while (File.Exists(GetPrizeListPath(candidateName)))
         {
-            var name = $"{baseName} {i}";
-            if (!File.Exists(GetPrizeListPath(name)))
-                return name;
+            candidateName = $"{defaultName} {suffix}";
+            suffix++;
         }
+
+        return candidateName;
     }
 
     private static string GetPrizeListPath(string listName)
