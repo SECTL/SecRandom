@@ -32,6 +32,33 @@ namespace SecRandom.Langs.ProfileSettings.Students {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 添加学生.
+        /// </summary>
+        public static string Command_AddStudent {
+            get {
+                return ResourceManager.GetString("Command_AddStudent", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 删除名单.
+        /// </summary>
+        public static string Command_DeleteList {
+            get {
+                return ResourceManager.GetString("Command_DeleteList", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 删除学生.
+        /// </summary>
+        public static string Command_DeleteStudent {
+            get {
+                return ResourceManager.GetString("Command_DeleteStudent", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
@@ -92,6 +119,114 @@ namespace SecRandom.Langs.ProfileSettings.Students {
         public static string Command_DuplicateList_D {
             get {
                 return ResourceManager.GetString("Command_DuplicateList_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 导入学生.
+        /// </summary>
+        public static string Command_ImportStudents {
+            get {
+                return ResourceManager.GetString("Command_ImportStudents", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 性别.
+        /// </summary>
+        public static string Column_Gender {
+            get {
+                return ResourceManager.GetString("Column_Gender", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 分组.
+        /// </summary>
+        public static string Column_Group {
+            get {
+                return ResourceManager.GetString("Column_Group", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 编号.
+        /// </summary>
+        public static string Column_Id {
+            get {
+                return ResourceManager.GetString("Column_Id", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 姓名.
+        /// </summary>
+        public static string Column_Name {
+            get {
+                return ResourceManager.GetString("Column_Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 启用.
+        /// </summary>
+        public static string Column_Exists {
+            get {
+                return ResourceManager.GetString("Column_Exists", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 性别.
+        /// </summary>
+        public static string Field_Gender {
+            get {
+                return ResourceManager.GetString("Field_Gender", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 分组.
+        /// </summary>
+        public static string Field_Group {
+            get {
+                return ResourceManager.GetString("Field_Group", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 编号.
+        /// </summary>
+        public static string Field_Id {
+            get {
+                return ResourceManager.GetString("Field_Id", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 姓名.
+        /// </summary>
+        public static string Field_Name {
+            get {
+                return ResourceManager.GetString("Field_Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 启用.
+        /// </summary>
+        public static string Field_Exists {
+            get {
+                return ResourceManager.GetString("Field_Exists", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 附加设置.
+        /// </summary>
+        public static string Section_AttachedSettings {
+            get {
+                return ResourceManager.GetString("Section_AttachedSettings", resourceCulture);
             }
         }
     }

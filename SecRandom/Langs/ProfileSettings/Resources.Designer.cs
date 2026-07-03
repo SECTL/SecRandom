@@ -32,6 +32,15 @@ namespace SecRandom.Langs.ProfileSettings {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to SecRandom.
+        /// </summary>
+        public static string C_AppName {
+            get {
+                return ResourceManager.GetString("C_AppName", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
@@ -101,6 +110,15 @@ namespace SecRandom.Langs.ProfileSettings {
         public static string Message_SavedProfile {
             get {
                 return ResourceManager.GetString("Message_SavedProfile", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 即将推出.
+        /// </summary>
+        public static string M_ComingSoon {
+            get {
+                return ResourceManager.GetString("M_ComingSoon", resourceCulture);
             }
         }
 

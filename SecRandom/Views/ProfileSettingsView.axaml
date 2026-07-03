@@ -23,7 +23,7 @@
                        VerticalAlignment="Center"
                        IsHitTestVisible="False" />
 
-                <TextBlock Text="SecRandom"
+                <TextBlock Text="{x:Static lp:Resources.C_AppName}"
                            FontSize="12"
                            VerticalAlignment="Center"
                            IsHitTestVisible="False" />
@@ -109,20 +109,20 @@
                                                  Classes="hide-popup-indicator">
                                     <fa:FACommandBar.PrimaryCommands>
                                         <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xE00D;}"
-                                                               Label="add"
-                                                               Click="CreateStudentButton_OnClick" />
+                                                                Label="{x:Static lps:Resources.Command_AddStudent}"
+                                                                Click="CreateStudentButton_OnClick" />
 
-                                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xE61D;}"
-                                                               Label="delete"
-                                                               IsEnabled="{Binding ViewModel.SelectedStudent, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                         <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xE61D;}"
+                                                                Label="{x:Static lps:Resources.Command_DeleteStudent}"
+                                                                IsEnabled="{Binding ViewModel.SelectedStudent, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
-                                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xEFDD;}"
-                                                               Label="import" />
+                                         <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xEFDD;}"
+                                                                Label="{x:Static lps:Resources.Command_ImportStudents}" />
 
                                         <fa:FACommandBarSeparator />
 
-                                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xe61d;}"
-                                                               Label="delete list" />
+                                         <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xe61d;}"
+                                                                Label="{x:Static lps:Resources.Command_DeleteList}" />
                                     </fa:FACommandBar.PrimaryCommands>
                                 </fa:FACommandBar>
 
@@ -143,19 +143,19 @@
                                               ItemsSource="{Binding ViewModel.SelectedStudentList.Students}"
                                               SelectedItem="{Binding ViewModel.SelectedStudent, Mode=TwoWay}">
                                         <DataGrid.Columns>
-                                            <DataGridCheckBoxColumn Header="exists"
+                                            <DataGridCheckBoxColumn Header="{x:Static lps:Resources.Column_Exists}"
                                                                     Binding="{Binding Exists}" />
 
-                                            <DataGridTextColumn Header="id"
+                                            <DataGridTextColumn Header="{x:Static lps:Resources.Column_Id}"
                                                                 Binding="{Binding Id}" />
 
-                                            <DataGridTextColumn Header="name"
+                                            <DataGridTextColumn Header="{x:Static lps:Resources.Column_Name}"
                                                                 Binding="{Binding Name}" />
 
-                                            <DataGridTextColumn Header="group"
+                                            <DataGridTextColumn Header="{x:Static lps:Resources.Column_Group}"
                                                                 Binding="{Binding Group}" />
 
-                                            <DataGridTextColumn Header="gender"
+                                            <DataGridTextColumn Header="{x:Static lps:Resources.Column_Gender}"
                                                                 Binding="{Binding Gender}" />
                                         </DataGrid.Columns>
                                     </DataGrid>
@@ -169,27 +169,27 @@
                                             <StackPanel Margin="8" Spacing="4"
                                                         DataContext="{Binding ViewModel.SelectedStudent}">
                                                 <CheckBox IsChecked="{Binding Exists}"
-                                                          Content="exists" />
+                                                          Content="{x:Static lps:Resources.Field_Exists}" />
 
-                                                <sr:Field Label="id">
+                                                <sr:Field Label="{x:Static lps:Resources.Field_Id}">
                                                     <TextBox Text="{Binding Id}" />
                                                 </sr:Field>
 
-                                                <sr:Field Label="name">
+                                                <sr:Field Label="{x:Static lps:Resources.Field_Name}">
                                                     <TextBox Text="{Binding Name}" />
                                                 </sr:Field>
 
-                                                <sr:Field Label="group">
+                                                <sr:Field Label="{x:Static lps:Resources.Field_Group}">
                                                     <TextBox Text="{Binding Group}" />
                                                 </sr:Field>
 
-                                                <sr:Field Label="gender">
+                                                <sr:Field Label="{x:Static lps:Resources.Field_Gender}">
                                                     <TextBox Text="{Binding Gender}" />
                                                 </sr:Field>
 
                                                 <Separator Margin="0 4" />
 
-                                                <sr:IconText Glyph="&#xEF2B;" Text="attached settings" />
+                                                <sr:IconText Glyph="&#xEF2B;" Text="{x:Static lps:Resources.Section_AttachedSettings}" />
 
                                                 <ItemsControl
                                                     ItemsSource="{x:Static services:AttachedSettingsRegistryService.StudentAttachedSettingsControls}">
@@ -211,10 +211,10 @@
                     </Grid>
 
                     <!-- Prizes -->
-                    <TextBlock Margin="8" Text="Coming Soon~" />
+                    <TextBlock Margin="8" Text="{x:Static lp:Resources.M_ComingSoon}" />
 
                     <!-- History -->
-                    <TextBlock Margin="8" Text="Coming Soon~" />
+                    <TextBlock Margin="8" Text="{x:Static lp:Resources.M_ComingSoon}" />
                 </Carousel>
             </sr:DrawerHost>
         </Border>

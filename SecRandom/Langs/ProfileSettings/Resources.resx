@@ -48,4 +48,10 @@
     <data name="Message_SavedProfile" xml:space="preserve">
         <value>已保存。</value>
     </data>
+    <data name="C_AppName" xml:space="preserve">
+        <value>SecRandom</value>
+    </data>
+    <data name="M_ComingSoon" xml:space="preserve">
+        <value>即将推出</value>
+    </data>
 </root>

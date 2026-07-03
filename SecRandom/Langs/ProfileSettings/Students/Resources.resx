@@ -36,4 +36,49 @@
     <data name="Command_DuplicateList_D" xml:space="preserve">
         <value>复制一个当前选中的名单的副本。</value>
     </data>
+    <data name="Command_AddStudent" xml:space="preserve">
+        <value>添加学生</value>
+    </data>
+    <data name="Command_DeleteStudent" xml:space="preserve">
+        <value>删除学生</value>
+    </data>
+    <data name="Command_ImportStudents" xml:space="preserve">
+        <value>导入学生</value>
+    </data>
+    <data name="Command_DeleteList" xml:space="preserve">
+        <value>删除名单</value>
+    </data>
+    <data name="Column_Exists" xml:space="preserve">
+        <value>启用</value>
+    </data>
+    <data name="Column_Id" xml:space="preserve">
+        <value>编号</value>
+    </data>
+    <data name="Column_Name" xml:space="preserve">
+        <value>姓名</value>
+    </data>
+    <data name="Column_Group" xml:space="preserve">
+        <value>分组</value>
+    </data>
+    <data name="Column_Gender" xml:space="preserve">
+        <value>性别</value>
+    </data>
+    <data name="Field_Exists" xml:space="preserve">
+        <value>启用</value>
+    </data>
+    <data name="Field_Id" xml:space="preserve">
+        <value>编号</value>
+    </data>
+    <data name="Field_Name" xml:space="preserve">
+        <value>姓名</value>
+    </data>
+    <data name="Field_Group" xml:space="preserve">
+        <value>分组</value>
+    </data>
+    <data name="Field_Gender" xml:space="preserve">
+        <value>性别</value>
+    </data>
+    <data name="Section_AttachedSettings" xml:space="preserve">
+        <value>附加设置</value>
+    </data>
 </root>
