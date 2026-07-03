@@ -83,7 +83,8 @@
                                 <fa:FACommandBar.PrimaryCommands>
                                     <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xe00d;}"
                                                            Label="{x:Static lps:Resources.Command_CreateList}"
-                                                           ToolTip.Tip="{x:Static lps:Resources.Command_CreateList_D}" />
+                                                           ToolTip.Tip="{x:Static lps:Resources.Command_CreateList_D}"
+                                                           Click="Command_CreateList_OnClick" />
 
                                     <fa:FACommandBarSeparator />
 

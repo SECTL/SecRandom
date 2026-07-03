@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+﻿using System.IO;
+using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -9,8 +10,10 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Services.Config;
+using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
 using SecRandom.ViewModels;
+using StudentListResources = SecRandom.Langs.SettingsPages.ListManagement.RollCallList.Resources;
 
 namespace SecRandom.Views;
 
@@ -94,6 +97,24 @@ public partial class ProfileSettingsView : UserControl
         this.ShowSuccessToast(Langs.ProfileSettings.Resources.Message_SavedProfile);
     }
 
+    private void Command_CreateList_OnClick(object? sender, RoutedEventArgs e)
+    {
+        // 创建新名单前先保存当前名单，避免左侧切换后丢掉右侧表格的修改。
+        SaveSelectedStudentListConfig();
+
+        // 这里只创建名单 JSON，不创建历史文件；历史仍由后续点名流程按需处理。
+        var listName = GetNewStudentListName();
+        var studentListConfig = new StudentListConfig(listName);
+        studentListConfig.Save();
+
+        // 把新名单加入左侧列表并立即选中，让用户可以直接编辑或添加学生。
+        ViewModel.StudentLists.Add(listName);
+        ViewModel.SelectedStudentListName = listName;
+        ViewModel.SelectedStudentListConfig = studentListConfig;
+        ViewModel.SelectedStudentList = studentListConfig.Data;
+        ViewModel.SelectedStudent = null;
+    }
+
     private void StudentListBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         SaveSelectedStudentListConfig();
@@ -104,5 +125,25 @@ public partial class ProfileSettingsView : UserControl
     private void CreateStudentButton_OnClick(object? sender, RoutedEventArgs e)
     {
         ViewModel.SelectedStudentList?.Students.Add(new Student());
+    }
+
+    private static string GetNewStudentListName()
+    {
+        var defaultName = StudentListResources.C_DefaultListName;
+        var candidateName = defaultName;
+        var suffix = 2;
+
+        while (File.Exists(GetStudentListPath(candidateName)))
+        {
+            candidateName = $"{defaultName} {suffix}";
+            suffix++;
+        }
+
+        return candidateName;
+    }
+
+    private static string GetStudentListPath(string listName)
+    {
+        return Utils.GetFilePath("list", "roll_call_list", $"{listName}.json");
     }
 }
