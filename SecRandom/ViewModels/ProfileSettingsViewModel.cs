@@ -32,6 +32,8 @@ public partial class ProfileSettingsViewModel : ViewModelBase
 
     public void RefreshLists()
     {
+        StudentLists.Clear();
+
         StudentLists.AddRange(
             from i in Directory.GetFiles(Utils.GetDirectoryPath("list", "roll_call_list"))
             where i.EndsWith(".json")
