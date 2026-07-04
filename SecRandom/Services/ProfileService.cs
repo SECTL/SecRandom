@@ -119,6 +119,80 @@ public class ProfileService : IProfileService
         }
     }
 
+    public void RecordStudentHistory(
+        IReadOnlyList<Student> students,
+        DateTime now,
+        int requestedCount,
+        string drawGroup = "",
+        string drawGender = "",
+        int drawMethod = 0,
+        IReadOnlyDictionary<Student, double>? weights = null)
+    {
+        var history = CurrentStudentHistory;
+        if (history is null || students.Count == 0)
+            return;
+
+        history.TotalRounds++;
+        history.TotalStats += students.Count;
+        var allStudents = CurrentStudentList?.Students ?? [];
+        var uniqueLegacyKeys = ProfileRecordIdentity.BuildUniqueStudentLegacyKeySet(allStudents);
+        HashSet<string> drawnKeys = [];
+
+        foreach (var student in students)
+        {
+            var key = ProfileRecordIdentity.EnsureRecordId(student);
+            drawnKeys.Add(key);
+
+            var item = ProfileRecordIdentity.GetStudentHistory(history, student, uniqueLegacyKeys.Contains);
+            if (item is null)
+            {
+                item = new History();
+                history.Students[key] = item;
+            }
+
+            item.TotalCount++;
+            item.LastDrawnTime = now;
+            item.RoundsMissed = 0;
+            item.Histories.Add(new HistoryItem
+            {
+                RecordId = key,
+                RecordNumber = student.Id,
+                RecordName = student.Name,
+                RecordGender = student.Gender,
+                RecordGroup = student.Group,
+                DrawTime = now,
+                DrawNumbers = requestedCount,
+                DrawGroup = drawGroup,
+                DrawGender = drawGender,
+                DrawMethod = drawMethod,
+                Weight = weights?.GetValueOrDefault(student, 1) ?? 1
+            });
+
+            if (!string.IsNullOrWhiteSpace(student.Group))
+                history.GroupStats[student.Group] = history.GroupStats.GetValueOrDefault(student.Group) + 1;
+            if (!string.IsNullOrWhiteSpace(student.Gender))
+                history.GenderStatus[student.Gender] = history.GenderStatus.GetValueOrDefault(student.Gender) + 1;
+        }
+
+        foreach (var student in allStudents)
+        {
+            var key = ProfileRecordIdentity.EnsureRecordId(student);
+            if (drawnKeys.Contains(key))
+                continue;
+
+            var existing = ProfileRecordIdentity.GetStudentHistory(history, student, uniqueLegacyKeys.Contains);
+            if (existing is not null)
+                existing.RoundsMissed++;
+        }
+
+        StudentHistoryConfig?.Save();
+
+        _logger.LogInformation(
+            "已记录点名历史：学生名单={StudentListName}，抽取数量={StudentCount}。",
+            StudentListConfig?.Name,
+            students.Count);
+    }
+
     public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount)
     {
         var history = CurrentPrizeHistory;
@@ -171,13 +245,44 @@ public class ProfileService : IProfileService
                 existing.RoundsMissed++;
         }
 
-        PrizeListConfig?.Save();
         PrizeHistoryConfig?.Save();
 
         _logger.LogInformation(
             "已记录抽奖历史：奖品池={PrizeListName}，抽取数量={PrizeCount}。",
             PrizeListConfig?.Name,
             prizes.Count);
+    }
+
+    public void ClearCurrentStudentHistory()
+    {
+        var history = CurrentStudentHistory;
+        if (history is null)
+            return;
+
+        history.TotalRounds = 0;
+        history.TotalStats = 0;
+        history.Students.Clear();
+        history.GroupStats.Clear();
+        history.GenderStatus.Clear();
+        StudentHistoryConfig?.Save();
+
+        _logger.LogInformation("已清空当前点名历史：学生名单={StudentListName}。", StudentHistoryConfig?.Name);
+    }
+
+    public void ClearCurrentPrizeHistory()
+    {
+        var history = CurrentPrizeHistory;
+        if (history is null)
+            return;
+
+        history.TotalRounds = 0;
+        history.TotalStats = 0;
+        history.Prizes.Clear();
+        history.GroupStats.Clear();
+        history.GenderStatus.Clear();
+        PrizeHistoryConfig?.Save();
+
+        _logger.LogInformation("已清空当前抽奖历史：奖品池={PrizeListName}。", PrizeHistoryConfig?.Name);
     }
 
     private static string ResolveProfileName(string rootA, string rootB, string preferredName)

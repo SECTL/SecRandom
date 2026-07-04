@@ -267,6 +267,7 @@ public partial class App : Application
 
                 // 服务
                 services.AddSingleton<IProfileService, ProfileService>();
+                services.AddSingleton<IDrawTemporaryRecordService, DrawTemporaryRecordService>();
                 services.AddSingleton<SettingsSearchService>();
                 services.AddTransient<DrawEngine>();
                 services.AddSingleton(pluginStateStore);
@@ -280,6 +281,7 @@ public partial class App : Application
                 services.AddHostedService<OnlineStatusService>();
                 services.AddHostedService<TaskBarIconService>();
                 services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
+                services.AddSingleton<DrawAudioService>();
 
                 // 窗口
                 services.AddTransient<MainView>();
@@ -294,9 +296,12 @@ public partial class App : Application
                 // 附加设置
                 services.AddAttachedSettingsControl<BehindSceneAttachedSettingsControl>(Langs.Common.Resources
                     .AttachedSettings_BehindScene);
+                services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
 
                 // 界面 Views
                 services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
+                services.AddMainPage<QuickDrawPage>(Langs.Common.Resources.Feat_QuickDraw);
+                services.AddMainPage<LotteryPage>(Langs.Common.Resources.Feat_Lottery);
                 services.AddMainPage<HistoryPage>(Langs.Common.Resources.Feat_History);
 #if DEBUG
                 services.AddMainPage<CameraPreviewTestPage>("摄像头测试");
@@ -337,6 +342,7 @@ public partial class App : Application
                     Langs.Common.Resources.Settings_Draw, "settings.picking", FluentIcons.SettingsRegular));
                 services.AddSettingsPage<DefaultDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_Default);
                 services.AddSettingsPage<RollCallDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_RollCall);
+                services.AddSettingsPage<QuickDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
                 services.AddSettingsPage<LotteryDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_Lottery);
                 services.AddSettingsPage<FaceDetectorSettingsPage>(Langs.Common.Resources.Settings_FaceDetector);
 
@@ -376,6 +382,8 @@ public partial class App : Application
                 // ViewModel 一定要继承 SecRandom.ViewModels.ViewModelBase，里面有 Config 可以直接拿来用。
                 services.AddTransient<ViewModelBase>();
                 services.AddTransient<RollCallPageViewModel>();
+                services.AddTransient<QuickDrawPageViewModel>();
+                services.AddTransient<LotteryPageViewModel>();
                 services.AddTransient<RollCallHistoryViewModel>();
                 services.AddTransient<LotteryHistoryViewModel>();
 

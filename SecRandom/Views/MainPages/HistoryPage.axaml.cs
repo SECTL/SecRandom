@@ -5,7 +5,7 @@ using SecRandom.Core.Icons;
 
 namespace SecRandom.Views.MainPages;
 
-[PageInfo("main.history", FluentIcons.HistoryRegular, location: PageLocation.Bottom, hidePageTitle: true)]
+[PageInfo("main.history", FluentIcons.HistoryFilled, location: PageLocation.Bottom, hidePageTitle: true)]
 public partial class HistoryPage : UserControl
 {
     public HistoryPage()

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Interfaces;
 using SecRandom.Core.Models;
@@ -37,11 +38,17 @@ public partial class DrawEngine
 
     public DrawResult<Student> DrawStudent(int count, Func<Student, bool> filter)
     {
+        return DrawStudent(count, filter, DrawSettingsType.RollCall);
+    }
+
+    public DrawResult<Student> DrawStudent(int count, Func<Student, bool> filter, DrawSettingsType drawSettingsType)
+    {
         var hasBaseCandidates = false;
-        var repeatThreshold = GetRollCallRepeatThreshold();
+        var repeatThreshold = GetStudentRepeatThreshold(drawSettingsType);
+        var drawType = GetStudentDrawType(drawSettingsType);
         var historyCache = BuildStudentHistoryCache(StudentList.Students);
-        _logger.LogInformation("开始点名抽取：请求数量={Count}，抽取模式={DrawMode}，抽取类型={DrawType}.",
-            count, ConfigData.RollCallSettings.DrawMode, ConfigData.RollCallSettings.DrawType);
+        _logger.LogInformation("开始学生抽取：请求数量={Count}，设置类型={SettingsType}，重复阈值={RepeatThreshold}，抽取类型={DrawType}.",
+            count, drawSettingsType, repeatThreshold, drawType);
 
         try
         {
@@ -59,7 +66,7 @@ public partial class DrawEngine
             }
 
             var usable = FilterStudents(Filter1, count, historyCache);
-            var weightedCandidates = ConfigData.RollCallSettings.DrawType switch
+            var weightedCandidates = drawType switch
             {
                 DrawType.Fair => CalculateStudentWeight(usable, historyCache),
                 DrawType.Random => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList(),
@@ -67,7 +74,7 @@ public partial class DrawEngine
             };
 
             var result = DrawWithBehindSceneWeights(weightedCandidates, count);
-            LogDrawResult("点名抽取", result.Status, count, usable.Count, result.Result.Count);
+            LogDrawResult("学生抽取", result.Status, count, usable.Count, result.Result.Count);
             return result;
         }
         catch (RepeatLimitExhaustedException)
@@ -96,14 +103,63 @@ public partial class DrawEngine
         return DrawStudent(count, candidate => candidateSet.Contains(candidate));
     }
 
-    private int GetRollCallRepeatThreshold()
+    public DrawResult<Student> DrawStudent(
+        int count,
+        IReadOnlyCollection<Student> candidates,
+        DrawSettingsType drawSettingsType)
     {
-        return ConfigData.RollCallSettings.DrawMode switch
+        var candidateSet = candidates as HashSet<Student> ?? candidates.ToHashSet();
+        return DrawStudent(count, candidate => candidateSet.Contains(candidate), drawSettingsType);
+    }
+
+    public DrawResult<Student> DrawPreparedStudents(
+        int count,
+        IReadOnlyCollection<Student> candidates,
+        DrawSettingsType drawSettingsType)
+    {
+        var usable = candidates.Where(student => student.Exists).ToList();
+        if (usable.Count == 0)
+            return new DrawResult<Student> { Status = DrawStatus.NoCandidates };
+        if (count > usable.Count)
+            return new DrawResult<Student> { Status = DrawStatus.RepeatLimitExhausted };
+
+        var drawType = GetStudentDrawType(drawSettingsType);
+        var historyCache = BuildStudentHistoryCache(usable);
+        var weightedCandidates = drawType switch
+        {
+            DrawType.Fair => CalculateStudentWeight(usable, historyCache),
+            DrawType.Random => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList(),
+            _ => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList()
+        };
+
+        return DrawWithBehindSceneWeights(weightedCandidates, count);
+    }
+
+    private int GetStudentRepeatThreshold(DrawSettingsType drawSettingsType)
+    {
+        var (drawMode, halfRepeat) = drawSettingsType switch
+        {
+            DrawSettingsType.RollCall => (ConfigData.RollCallSettings.DrawMode, ConfigData.RollCallSettings.HalfRepeat),
+            DrawSettingsType.QuickDraw => (ConfigData.QuickDrawSettings.DrawMode, ConfigData.QuickDrawSettings.HalfRepeat),
+            _ => (ConfigData.RollCallSettings.DrawMode, ConfigData.RollCallSettings.HalfRepeat)
+        };
+
+        return drawMode switch
         {
             DrawMode.Repeat => 0,
             DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, ConfigData.RollCallSettings.HalfRepeat),
+            DrawMode.HalfRepeat => Math.Max(1, halfRepeat),
             _ => 1
+        };
+    }
+
+    private DrawType GetStudentDrawType(DrawSettingsType drawSettingsType)
+    {
+        return drawSettingsType switch
+        {
+            DrawSettingsType.RollCall => ConfigData.RollCallSettings.DrawType,
+            DrawSettingsType.QuickDraw => ConfigData.QuickDrawSettings.DrawType,
+            _ => ConfigData.RollCallSettings.DrawType
         };
     }
 

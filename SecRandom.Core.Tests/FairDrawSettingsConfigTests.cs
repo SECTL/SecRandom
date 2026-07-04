@@ -185,7 +185,10 @@ public class FairDrawSettingsConfigTests
         public PrizeHistoryConfig? PrizeHistoryConfig => null;
         public void LoadStudentProfile(string name, bool saveCurrent = true) { }
         public void LoadPrizeProfile(string name, bool saveCurrent = true) { }
+        public void RecordStudentHistory(IReadOnlyList<Student> students, DateTime now, int requestedCount, string drawGroup = "", string drawGender = "", int drawMethod = 0, IReadOnlyDictionary<Student, double>? weights = null) { }
         public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount) { }
+        public void ClearCurrentStudentHistory() { }
+        public void ClearCurrentPrizeHistory() { }
         public void SaveProfile() { }
     }
 }

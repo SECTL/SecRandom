@@ -122,6 +122,12 @@ public partial class FloatingWindow : Window
             Label = Langs.Common.Resources.Feat_QuickDraw
         };
 
+        b.Click += (sender, args) =>
+        {
+            App.ShowMainWindow();
+            MainView.Current?.SelectNavigationItemById("main.quickDraw");
+        };
+
         return b;
     }
 
@@ -131,6 +137,12 @@ public partial class FloatingWindow : Window
         {
             IconSource = new FluentIconSource("\uE8EC"),
             Label = Langs.Common.Resources.Feat_Lottery
+        };
+
+        b.Click += (sender, args) =>
+        {
+            App.ShowMainWindow();
+            MainView.Current?.SelectNavigationItemById("main.lottery");
         };
 
         return b;

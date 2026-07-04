@@ -47,7 +47,7 @@ Nested instruction files:
 | Run/build/test | `SecRandom.sln`, `.github/workflows/Build.yml` | Use solution commands; no Makefile/CMake. |
 | Desktop startup | `SecRandom.Desktop/Program.cs` | Process entry → Avalonia lifetime. |
 | App composition / DI | `SecRandom/App.axaml.cs` | `BuildHost()` is the registration source of truth. |
-| Main navigation | `SecRandom/Views/MainView.axaml.cs` | Default page `main.rollCall`; keyed DI page factory. |
+| Main navigation | `SecRandom/Views/MainView.axaml.cs` | Default page `main.rollCall`; keyed DI page factory. Built-in draw pages include `main.rollCall`, `main.quickDraw`, and `main.lottery`. |
 | Settings navigation | `SecRandom/Views/SettingsView.axaml.cs` | Default page `settings.home`; has back stack + restart dialog. General group now includes `settings.general.basic`, `settings.general.privacy`, and `settings.general.backup`. |
 | Page registration helpers | `SecRandom.Core/Extensions/Registry/` | `AddMainPage`, `AddSettingsPage`, plugin page registration, groups, separators. |
 | Plugin contracts | `SecRandom.Core/Plugins/` | Public plugin API surface: manifest, runtime context, page registration, plugin catalog DTOs, and draw invocation DTOs. |
@@ -96,7 +96,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - ViewModels must be registered in `SecRandom/App.axaml.cs` `BuildHost()`; reusable services also go through Host.
 - Resolve shared services via `IAppHost.GetService<T>()` / `TryGetService<T>()` unless constructor injection is already the local style.
 - Navigation pages need `[PageInfo(...)]` plus `services.AddMainPage<T>()` or `services.AddSettingsPage<T>()` in `BuildHost()`.
-- Built-in main navigation entries may use `PageLocation.Bottom` for bottom-pinned sidebar items; the roll-call page (`main.rollCall`) is bottom-pinned and full-width/title-hidden.
+- Built-in main navigation entries may use `PageLocation.Bottom` for bottom-pinned sidebar items; the roll-call (`main.rollCall`), quick-draw (`main.quickDraw`), and lottery (`main.lottery`) pages are bottom-pinned and full-width/title-hidden.
 - Page IDs: `main.xxx`, `settings.xxx`, `settings.group.xxx`.
 - Plugin pages are runtime-registered through `AddPluginMainPage` / `AddPluginSettingsPage`; their IDs must start with `plugin.<plugin-id>.` and must not occupy built-in `main.*` or `settings.*` IDs.
 - Plugin contracts live under `SecRandom.Core/Plugins`; plugin runtime/loading state lives under `SecRandom/Services/Plugins` and is registered from `BuildHost()`.

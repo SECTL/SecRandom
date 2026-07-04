@@ -15,6 +15,7 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Extensions;
+using SecRandom.Core.Icons;
 using SecRandom.Core.Services;
 using SecRandom.ViewModels;
 
@@ -110,7 +111,7 @@ public partial class MainView : UserControl, IFANavigationPageFactory
                 .Where(info => info.Location == PageLocation.Bottom)
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
 
-        var settingsPageInfo = new PageInfo("settings", "\uef26", null, PageLocation.Bottom)
+        var settingsPageInfo = new PageInfo("settings", FluentIcons.SettingsFilled, null, PageLocation.Bottom)
         {
             Name = Langs.Common.Resources.Feat_Settings
         };

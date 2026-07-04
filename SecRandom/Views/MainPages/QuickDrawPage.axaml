@@ -1,0 +1,65 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:SecRandom.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="640"
+             x:Class="SecRandom.Views.MainPages.QuickDrawPage"
+             x:DataType="vm:QuickDrawPageViewModel">
+    <Grid RowDefinitions="Auto,*" Margin="28" RowSpacing="20">
+        <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+            <ComboBox ItemsSource="{Binding StudentListNames}" SelectedItem="{Binding SelectedStudentListName}" MinWidth="220" />
+            <Button Content="闪抽" Command="{Binding StartDrawCommand}" IsEnabled="{Binding CanStartDraw}" />
+            <Button Content="清空历史" Command="{Binding ClearHistoryCommand}" />
+        </StackPanel>
+
+        <Grid Grid.Row="1">
+            <TextBlock Text="{Binding StatusText}"
+                       IsVisible="{Binding !IsResultVisible}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="36"
+                       FontWeight="SemiBold" />
+
+            <ItemsControl x:Name="ResultPresenter"
+                          ItemsSource="{Binding ResultItems}"
+                          IsVisible="{Binding IsResultVisible}"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:QuickDrawResultItem">
+                        <Border Margin="8" Padding="22 16" MinWidth="180" MinHeight="96"
+                                CornerRadius="8" BorderThickness="1"
+                                BorderBrush="{Binding AccentBrush}"
+                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                Opacity="{Binding Opacity}">
+                            <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                <Grid Width="72" Height="72" IsVisible="{Binding IsImageEnabled}">
+                                    <Ellipse Fill="{Binding AccentBrush}" Opacity="0.18" />
+                                    <Image Source="{Binding Image}" Stretch="UniformToFill" IsVisible="{Binding IsImageVisible}" />
+                                    <TextBlock Text="{Binding Initial}" IsVisible="{Binding IsPlaceholderVisible}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               FontSize="30" FontWeight="SemiBold" Foreground="{Binding TextBrush}" />
+                                </Grid>
+                                <TextBlock Text="{Binding DisplayText}"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           Foreground="{Binding TextBrush}"
+                                           FontSize="{Binding $parent[UserControl].DataContext.ResultFontSize}"
+                                           FontFamily="{Binding $parent[UserControl].DataContext.ResultFontFamily}"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding Tags}" IsVisible="{Binding IsTagsVisible}" Opacity="0.72" FontSize="13" />
+                                <TextBlock Text="{Binding WeightText}" IsVisible="{Binding IsWeightVisible}" Opacity="0.62" FontSize="12" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:local="clr-namespace:SecRandom.Controls.AttachedSettings"
+             mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="160"
+             x:Class="SecRandom.Controls.AttachedSettings.DrawImageAttachedSettingsControl">
+    <StackPanel Spacing="8"
+                DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=local:DrawImageAttachedSettingsControl}}">
+        <sr:Field Label="展示图片">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <TextBox Grid.Column="0"
+                         Text="{Binding ImagePath, Mode=TwoWay}"
+                         PlaceholderText="选择图片文件路径" />
+                <Button Grid.Column="1"
+                        Content="浏览"
+                        Click="BrowseImage_OnClick" />
+            </Grid>
+        </sr:Field>
+
+        <TextBlock Text="启用后，抽取结果会优先显示这里配置的图片；留空时使用占位头像。"
+                   TextWrapping="Wrap"
+                   FontSize="12"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+    </StackPanel>
+</UserControl>

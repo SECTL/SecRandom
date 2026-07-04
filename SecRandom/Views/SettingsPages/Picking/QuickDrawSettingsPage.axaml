@@ -171,6 +171,20 @@
                         <NumericUpDown Value="{Binding Settings.AutoplayCount}" Minimum="1" Maximum="999" />
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultFlowAnimationStyle}"
+                                           Description="{x:Static lp:Resources.S_ResultFlowAnimationStyle_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.ResultFlowAnimationStyle}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultFlowAnimationDuration}"
+                                           Description="{x:Static lp:Resources.S_ResultFlowAnimationDuration_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <NumericUpDown Value="{Binding Settings.ResultFlowAnimationDuration}" Minimum="0" Maximum="10000" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
             
             <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Color}"
