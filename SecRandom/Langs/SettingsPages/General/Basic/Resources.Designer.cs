@@ -97,6 +97,30 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
             }
         }
 
+        public static string O_CrashRecoveryMode_None {
+            get {
+                return ResourceManager.GetString("O_CrashRecoveryMode_None", resourceCulture);
+            }
+        }
+
+        public static string O_CrashRecoveryMode_PromptAndRestart {
+            get {
+                return ResourceManager.GetString("O_CrashRecoveryMode_PromptAndRestart", resourceCulture);
+            }
+        }
+
+        public static string O_CrashRecoveryMode_PromptThenRestart {
+            get {
+                return ResourceManager.GetString("O_CrashRecoveryMode_PromptThenRestart", resourceCulture);
+            }
+        }
+
+        public static string O_CrashRecoveryMode_RestartOnly {
+            get {
+                return ResourceManager.GetString("O_CrashRecoveryMode_RestartOnly", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 置顶.
         /// </summary>
@@ -175,6 +199,18 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
         public static string S_Behavior_BackgroundResident_D {
             get {
                 return ResourceManager.GetString("S_Behavior_BackgroundResident_D", resourceCulture);
+            }
+        }
+
+        public static string S_Behavior_CrashRecovery {
+            get {
+                return ResourceManager.GetString("S_Behavior_CrashRecovery", resourceCulture);
+            }
+        }
+
+        public static string S_Behavior_CrashRecovery_D {
+            get {
+                return ResourceManager.GetString("S_Behavior_CrashRecovery_D", resourceCulture);
             }
         }
 

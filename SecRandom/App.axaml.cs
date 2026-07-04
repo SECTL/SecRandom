@@ -37,6 +37,7 @@ using SecRandom.Dialogs;
 using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.AppearanceSettingsConfig;
 using SecRandom.Services;
 using SecRandom.Services.Config;
+using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Plugins;
 using SecRandom.Services.Telemetry;
 using SecRandom.ViewModels;
@@ -103,11 +104,19 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            _desktopLifetime = desktop;
+
+            if (CrashRecoveryRuntime.StartupPromptOptions is { } promptOptions)
+            {
+                desktop.MainWindow = ShowCrashRecoveryPromptOnly(promptOptions);
+                base.OnFrameworkInitializationCompleted();
+                return;
+            }
+
             // ===== 多实例检测（仅 Desktop Lifetime）=====
             if (!SingleInstanceService.Instance.TryAcquire())
             {
                 // 已有实例在运行：创建临时宿主窗口显示对话框，跳过 BuildHost
-                _desktopLifetime = desktop;
                 desktop.MainWindow = CreateDuplicateInstanceDialogHost(desktop);
                 base.OnFrameworkInitializationCompleted();
                 return;
@@ -205,6 +214,20 @@ public partial class App : Application
                     break;
             }
         });
+    }
+
+    private static Window ShowCrashRecoveryPromptOnly(CrashRecoveryPromptOptions promptOptions)
+    {
+        CrashRecoveryWindow window = new(promptOptions, RestartFromCrashRecoveryPrompt);
+        window.Closed += (_, _) => RequestDesktopShutdown();
+        return window;
+    }
+
+    private static bool RestartFromCrashRecoveryPrompt()
+    {
+        return CrashRecoveryRuntime.TryRestartCurrentApp(
+            CrashRecoveryRuntime.CreateRestartStartInfos([]),
+            RequestDesktopShutdown);
     }
 
     private void BuildHost()
@@ -464,6 +487,18 @@ public partial class App : Application
 
     public async void Restart()
     {
+        var startInfos = CrashRecoveryRuntime.CreateRestartStartInfos([]);
+
+        TrySaveConfigForCrashRecovery();
+        SingleInstanceService.Instance.Dispose();
+
+        if (!CrashRecoveryRuntime.TryRestartCurrentApp(startInfos, static () => { }))
+        {
+            IAppHost.TryGetService<ILogger<App>>()?
+                .LogError("Application restart launch phase failed.");
+            return;
+        }
+
         try
         {
             await StopAsync(requestLifetimeShutdown: false).ConfigureAwait(false);
@@ -475,30 +510,62 @@ public partial class App : Application
             return;
         }
 
-        var path = Environment.ProcessPath;
-        if (path == null) return;
-
-        // 释放 Mutex，让新进程能够正常获取
-        SingleInstanceService.Instance.Dispose();
-
-        var executablePath = path.Replace(@".dll", GlobalConstants.PlatformExecutableExtension);
-        var startInfo = new ProcessStartInfo(executablePath)
-        {
-            UseShellExecute = true
-        };
-        Process.Start(startInfo);
         RequestDesktopShutdown();
     }
 
     private void App_OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        var configHandler = IAppHost.GetService<MainConfigHandler>();
-        configHandler.Save();
-
-        var logger = IAppHost.GetService<ILogger<App>>();
-        logger.LogCritical(e.Exception, "Unhandled application exception.");
-
+        TrySaveConfigForCrashRecovery();
+        TryLogCritical(e.Exception);
         ObserveTask(CaptureUnhandledExceptionAsync(e.Exception), "Unhandled exception telemetry capture failed.");
+
+        e.Handled = DispatcherCrashRecovery.TryRecover(
+            e.Exception,
+            CrashRecoveryRuntime.TryCreateCurrentProcessPromptOptions,
+            ShowCrashRecoveryPrompt,
+            CrashRecoveryRuntime.TryHandlePromptDisplayFailure,
+            CrashRecoveryRuntime.TryHandleFatalException,
+            RequestDesktopShutdown);
+    }
+
+    private static bool ShowCrashRecoveryPrompt(CrashRecoveryPromptOptions promptOptions)
+    {
+        CrashRecoveryWindow window = new(promptOptions, RestartFromCrashRecoveryCurrentApp);
+        window.Closed += (_, _) => RequestDesktopShutdown();
+        window.Show();
+        return true;
+    }
+
+    private static bool RestartFromCrashRecoveryCurrentApp()
+    {
+        Current.Restart();
+        return true;
+    }
+
+    private static void TrySaveConfigForCrashRecovery()
+    {
+        try
+        {
+            IAppHost.TryGetService<MainConfigHandler>()?.Save();
+            IAppHost.TryGetService<IProfileService>()?.SaveProfile();
+        }
+        catch (Exception ex)
+        {
+            IAppHost.TryGetService<ILogger<App>>()?
+                .LogError(ex, "Crash-recovery persistence failed.");
+        }
+    }
+
+    private static void TryLogCritical(Exception exception)
+    {
+        try
+        {
+            IAppHost.TryGetService<ILogger<App>>()?
+                .LogCritical(exception, "Unhandled application exception.");
+        }
+        catch
+        {
+        }
     }
 
     private void CurrentDomainOnProcessExit(object? sender, EventArgs e)

@@ -89,4 +89,22 @@ bug 报 GitHub Issue 或 SECTL QQ组织群 - 833875216</value>
     <data name="S_Behavior_Language_D" xml:space="preserve">
         <value>切换软件界面语言（重启软件后生效）</value>
     </data>
+    <data name="S_Behavior_CrashRecovery" xml:space="preserve">
+        <value>崩溃恢复</value>
+    </data>
+    <data name="S_Behavior_CrashRecovery_D" xml:space="preserve">
+        <value>选择程序崩溃后的恢复方式</value>
+    </data>
+    <data name="O_CrashRecoveryMode_None" xml:space="preserve">
+        <value>关闭</value>
+    </data>
+    <data name="O_CrashRecoveryMode_RestartOnly" xml:space="preserve">
+        <value>仅自动重启</value>
+    </data>
+    <data name="O_CrashRecoveryMode_PromptThenRestart" xml:space="preserve">
+        <value>显示恢复页</value>
+    </data>
+    <data name="O_CrashRecoveryMode_PromptAndRestart" xml:space="preserve">
+        <value>显示恢复页并自动重启</value>
+    </data>
 </root>

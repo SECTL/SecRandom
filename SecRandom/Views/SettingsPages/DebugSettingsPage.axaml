@@ -16,11 +16,21 @@
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
             <fa:FASettingsExpander IconSource="{sr:FluentIconSource &#xE06F;}"
-                                   Header="UI 功能测试" IsExpanded="True">
+                                    Header="UI 功能测试" IsExpanded="True">
                 <fa:FASettingsExpanderItem Content="发送 Toast" IsClickEnabled="True"
-                                           Click="SendToast_OnClick" />
+                                            Click="SendToast_OnClick" />
                 <fa:FASettingsExpanderItem Content="打开 Drawer" IsClickEnabled="True"
-                                           Click="OpenDrawer_Test" />
+                                            Click="OpenDrawer_Test" />
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncRegular}}"
+                                    Header="崩溃恢复测试" IsExpanded="True">
+                <fa:FASettingsExpanderItem Content="显示崩溃恢复页" IsClickEnabled="True"
+                                            Click="ShowCrashRecoveryWindow_OnClick" />
+                <fa:FASettingsExpanderItem Content="触发 UI 线程异常" IsClickEnabled="True"
+                                            Click="ThrowDispatcherException_OnClick" />
+                <fa:FASettingsExpanderItem Content="重启程序" IsClickEnabled="True"
+                                            Click="RestartProgram_OnClick" />
             </fa:FASettingsExpander>
         </StackPanel>
     </ScrollViewer>

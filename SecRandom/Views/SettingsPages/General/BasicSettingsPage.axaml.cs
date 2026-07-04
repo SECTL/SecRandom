@@ -7,6 +7,7 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.General;
+using SecRandom.Core.Services.Config;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages.General;
@@ -21,14 +22,18 @@ public partial class BasicSettingsPage : UserControl
         InitializeComponent();
 
         Settings.PropertyChanged += SettingsOnPropertyChanged;
+        CrashRecoverySettings.PropertyChanged += CrashRecoverySettingsOnPropertyChanged;
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public BasicSettingsConfig Settings { get; }
+    public CrashRecoverySettingsConfig CrashRecoverySettings => ViewModel.Config.General.CrashRecovery;
+    private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
+        CrashRecoverySettings.PropertyChanged -= CrashRecoverySettingsOnPropertyChanged;
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -47,6 +52,11 @@ public partial class BasicSettingsPage : UserControl
             
             SettingsView.Current?.RequestRestartApp();
         }
+    }
+
+    private void CrashRecoverySettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        ConfigHandler.Save();
     }
 
     private void HideVersionNoticeButton_OnClick(object? sender, RoutedEventArgs e)

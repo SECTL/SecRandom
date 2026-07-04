@@ -37,6 +37,7 @@ SecRandom/
 | Main app window flow         | `App.ShowMainWindow()`, `Views/MainView.axaml.cs`                       | `FloatingWindow` is desktop main window; main view opens separately.                                                     |
 | Settings flow                | `App.ShowSettingsWindow()`, `Views/SettingsView.axaml.cs`               | Settings has navigation history and restart prompt.                                                                      |
 | Profile settings window      | `App.ShowProfileSettingsWindow()`, `Views/ProfileSettingsView.axaml.cs` | Profile list/history management window.                                                                                  |
+| Crash recovery               | `Services/CrashRecovery/`, `Views/CrashRecoveryWindow.axaml(.cs)`, `Langs/CrashRecovery/` | Desktop fatal/dispatcher crash restart, crash report prompt, and feedback issue helpers.                                  |
 | Add main page                | `Views/MainPages/`, `BuildHost()`                                       | `[PageInfo]` + `AddMainPage<T>()`.                                                                                       |
 | Add settings page            | `Views/SettingsPages/`, `Langs/SettingsPages/`, `App.axaml.cs`          | `[PageInfo]` + localization folder + `AddSettingsPage<T>()`; update title/resource wiring if language refresh is needed. General pages currently include `Basic`, `Privacy`, and `Backup`; v2-parity root entries include floating window, notification, security, linkage, voice, theme/background, history, update, logs, and more settings. |
 | Log viewer                   | `Views/SettingsPages/LogViewerSettingsPage.axaml(.cs)`                 | Hidden settings page `settings.logs`; opened from the settings more-options menu. Reads `.log` and `.log.gz` files from `data/logs`. |
@@ -52,6 +53,7 @@ SecRandom/
 
 - `BuildHost()` registers logging, config, services, windows/views, ViewModels, attached settings controls, and
   navigation pages.
+- Crash recovery startup prompt handling runs before single-instance acquisition; normal app restart must release `SingleInstanceService` before launching the replacement process.
 - Telemetry runtime policy belongs in app-layer services and should live-apply `MainConfigHandler.Data.General.PrivacySettings.SentryTelemetryEnabled`; do not move SDK-specific wiring into Core or Shared. The concrete Sentry adapter stays under `SecRandom/Services/Telemetry/SentryTelemetrySdkAdapter.cs`.
 - Background app services such as `OnlineStatusService` are registered through Host and must honor `PrivacySettings.OnlineStatusMode` before doing network work.
 - `IVoiceAnnouncementService` is app-layer because Edge TTS playback and Windows SAPI/MCI integration are platform/runtime concerns. Per-record TTS alias/prefix/suffix belongs in attached settings on `Student`/`Prize`, not in a standalone settings page.
@@ -79,6 +81,7 @@ SecRandom/
 ## LOCALIZATION
 
 - Each page has its own folder under `Langs/`.
+- Crash recovery has an app-level localization folder at `Langs/CrashRecovery/` because the prompt is a top-level window, not a settings page.
 - Privacy settings localization lives under `Langs/SettingsPages/General/Privacy/` and follows the same base `.resx` + designer registration pattern as other settings pages.
 - List management pages currently include roll-call lists (`data/list/roll_call_list`) and lottery prize pools (`data/list/lottery_list`). Student/prize number columns are optional; import must only require the name column.
 - Roll-call and lottery list/history files are stored as plain JSON on disk; keep their `.json` paths stable and use `DesktopConfigService` instead of direct serialization.

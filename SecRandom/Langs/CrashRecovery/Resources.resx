@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+                id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true" />
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <data name="Title" xml:space="preserve">
+        <value>SecRandom 崩溃恢复</value>
+    </data>
+    <data name="Description" xml:space="preserve">
+        <value>SecRandom 遇到了未处理的错误。下面是本次崩溃报告，可复制后反馈问题，或重新启动程序。</value>
+    </data>
+    <data name="C_CopyReport" xml:space="preserve">
+        <value>复制报告</value>
+    </data>
+    <data name="C_CopyDone" xml:space="preserve">
+        <value>已复制</value>
+    </data>
+    <data name="C_CopyFailed" xml:space="preserve">
+        <value>复制失败</value>
+    </data>
+    <data name="C_ReportIssue" xml:space="preserve">
+        <value>反馈问题</value>
+    </data>
+    <data name="C_ReportFailed" xml:space="preserve">
+        <value>打开失败</value>
+    </data>
+    <data name="C_Restart" xml:space="preserve">
+        <value>重新启动</value>
+    </data>
+    <data name="C_RestartCountdown" xml:space="preserve">
+        <value>{0} 秒后重启</value>
+    </data>
+    <data name="C_Close" xml:space="preserve">
+        <value>关闭</value>
+    </data>
+    <data name="NoStackTrace" xml:space="preserve">
+        <value>无堆栈信息</value>
+    </data>
+    <data name="ReportUnavailable" xml:space="preserve">
+        <value>无法读取崩溃报告：{0}</value>
+    </data>
+    <data name="FeedbackTitle" xml:space="preserve">
+        <value>SecRandom 崩溃报告</value>
+    </data>
+    <data name="FeedbackBody" xml:space="preserve">
+        <value>## 崩溃报告
+
+```text
+{0}
+```</value>
+    </data>
+</root>
