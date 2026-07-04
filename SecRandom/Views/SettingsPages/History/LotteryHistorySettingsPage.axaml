@@ -23,10 +23,11 @@
             <ComboBox MinWidth="160"
                       PlaceholderText="{x:Static langs:Resources.C_SelectMode}"
                       ItemsSource="{Binding ModeOptions}"
-                      SelectedItem="{Binding SelectedMode, Mode=TwoWay}">
+                      SelectedValue="{Binding SelectedMode, Mode=TwoWay}"
+                      SelectedValueBinding="{Binding Key}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding Converter={StaticResource ModeNameConverter}}" />
+                        <TextBlock Text="{Binding DisplayName}" />
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
@@ -40,30 +41,46 @@
             <DataGrid x:Name="HistoryGrid"
                       AutoGenerateColumns="False"
                       CanUserSortColumns="True"
+                      CanUserReorderColumns="True"
                       CanUserResizeColumns="True"
                       GridLinesVisibility="Horizontal"
                       HeadersVisibility="Column"
                       IsReadOnly="True"
                       SelectionMode="Single"
                       ItemsSource="{Binding Rows}">
+                <DataGrid.Styles>
+                    <Style Selector="DataGridColumnHeader">
+                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                    </Style>
+                    <Style Selector="DataGridCell TextBlock">
+                        <Setter Property="HorizontalAlignment" Value="Center" />
+                        <Setter Property="TextAlignment" Value="Center" />
+                    </Style>
+                </DataGrid.Styles>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Width="2*" IsVisible="False"
+                    <DataGridTextColumn Width="180" MinWidth="170" IsVisible="False"
                                         Header="{x:Static langs:Resources.H_LotteryTime}"
+                                        SortMemberPath="SortTime"
                                         Binding="{Binding DrawTime}" />
                     <DataGridTextColumn Width="*" IsVisible="True"
                                         Header="{x:Static langs:Resources.H_Serial}"
+                                        SortMemberPath="IdSortValue"
                                         Binding="{Binding Id}" />
                     <DataGridTextColumn Width="1.5*" IsVisible="True"
                                         Header="{x:Static langs:Resources.H_PrizeName}"
+                                        SortMemberPath="Name"
                                         Binding="{Binding Name}" />
                     <DataGridTextColumn Width="*" IsVisible="False"
                                         Header="{x:Static langs:Resources.H_LotteryNumbers}"
+                                        SortMemberPath="DrawNumbers"
                                         Binding="{Binding DrawNumbers}" />
                     <DataGridTextColumn Width="*" IsVisible="True"
                                         Header="{x:Static langs:Resources.H_TotalCountLottery}"
+                                        SortMemberPath="TotalCount"
                                         Binding="{Binding TotalCount}" />
                     <DataGridTextColumn Width="*" IsVisible="True"
                                         Header="{x:Static langs:Resources.H_Weight}"
+                                        SortMemberPath="WeightSortValue"
                                         Binding="{Binding Weight}" />
                 </DataGrid.Columns>
             </DataGrid>

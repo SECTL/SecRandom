@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Logging;
@@ -116,6 +117,67 @@ public class ProfileService : IProfileService
             _logger.LogError(ex, "保存档案失败。");
             throw;
         }
+    }
+
+    public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount)
+    {
+        var history = CurrentPrizeHistory;
+        if (history is null || prizes.Count == 0)
+            return;
+
+        history.TotalRounds++;
+        history.TotalStats += prizes.Count;
+        var allPrizes = CurrentPrizeList?.Prizes ?? [];
+        var uniqueLegacyKeys = ProfileRecordIdentity.BuildUniquePrizeLegacyKeySet(allPrizes);
+
+        HashSet<string> drawnKeys = [];
+        foreach (var prize in prizes)
+        {
+            var key = ProfileRecordIdentity.EnsureRecordId(prize);
+            drawnKeys.Add(key);
+
+            var item = ProfileRecordIdentity.GetPrizeHistory(history, prize, uniqueLegacyKeys.Contains);
+            if (item is null)
+            {
+                item = new History();
+                history.Prizes[key] = item;
+            }
+
+            item.TotalCount++;
+            item.LastDrawnTime = now;
+            item.RoundsMissed = 0;
+            item.Histories.Add(new HistoryItem
+            {
+                RecordId = key,
+                RecordNumber = prize.Id,
+                RecordName = prize.Name,
+                DrawTime = now,
+                DrawNumbers = requestedCount,
+                DrawGroup = string.Empty,
+                DrawGender = string.Empty,
+                DrawMethod = 0,
+                Weight = prize.Weight
+            });
+        }
+
+        foreach (var prize in allPrizes)
+        {
+            var key = ProfileRecordIdentity.EnsureRecordId(prize);
+            if (drawnKeys.Contains(key))
+                continue;
+
+            var existing = ProfileRecordIdentity.GetPrizeHistory(history, prize, uniqueLegacyKeys.Contains);
+            if (existing is not null)
+                existing.RoundsMissed++;
+        }
+
+        PrizeListConfig?.Save();
+        PrizeHistoryConfig?.Save();
+
+        _logger.LogInformation(
+            "已记录抽奖历史：奖品池={PrizeListName}，抽取数量={PrizeCount}。",
+            PrizeListConfig?.Name,
+            prizes.Count);
     }
 
     private static string ResolveProfileName(string rootA, string rootB, string preferredName)

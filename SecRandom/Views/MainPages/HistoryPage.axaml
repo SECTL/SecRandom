@@ -2,20 +2,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:local="clr-namespace:SecRandom.Views.MainPages"
-             xmlns:conv="using:SecRandom.Converters"
+             xmlns:history="using:SecRandom.Views.SettingsPages.History"
              xmlns:langs="using:SecRandom.Langs.MainPages.History"
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
-             x:Class="SecRandom.Views.MainPages.HistoryPage"
-             x:DataType="local:HistoryPage"
-             Unloaded="OnUnloaded">
-    <UserControl.Resources>
-        <conv:HistoryModeNameConverter x:Key="ModeNameConverter" />
-    </UserControl.Resources>
+             x:Class="SecRandom.Views.MainPages.HistoryPage">
 
     <Grid RowDefinitions="Auto,*" Margin="12" RowSpacing="12">
-
-        <!-- 顶部 TabStrip（居中，tab split 主题） -->
         <TabStrip x:Name="HistoryTabStrip"
                   Grid.Row="0"
                   HorizontalAlignment="Center"
@@ -25,123 +17,11 @@
             <TabStripItem Content="{x:Static langs:Resources.Tab_Lottery}" />
         </TabStrip>
 
-        <!-- 内容区：Carousel 提供切换动画 -->
         <Carousel Grid.Row="1"
                   Classes="animated"
                   SelectedIndex="{Binding #HistoryTabStrip.SelectedIndex}">
-
-            <!-- 点名历史 -->
-            <Grid RowDefinitions="Auto,*" RowSpacing="8">
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
-                    <ComboBox MinWidth="200"
-                              PlaceholderText="{x:Static langs:Resources.C_SelectClass}"
-                              ItemsSource="{Binding RollCallVM.ClassNames}"
-                              SelectedItem="{Binding RollCallVM.SelectedClassName, Mode=TwoWay}" />
-                    <ComboBox MinWidth="160"
-                              PlaceholderText="{x:Static langs:Resources.C_SelectMode}"
-                              ItemsSource="{Binding RollCallVM.ModeOptions}"
-                              SelectedItem="{Binding RollCallVM.SelectedMode, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Converter={StaticResource ModeNameConverter}}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                    <Button Content="{x:Static langs:Resources.C_Refresh}"
-                            Command="{Binding RollCallVM.RefreshCommand}" />
-                </StackPanel>
-
-                <Border Grid.Row="1"
-                        BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                        BorderThickness="1" CornerRadius="4" ClipToBounds="True">
-                    <DataGrid x:Name="RollCallGrid"
-                              AutoGenerateColumns="False"
-                              CanUserSortColumns="True"
-                              CanUserResizeColumns="True"
-                              GridLinesVisibility="Horizontal"
-                              IsReadOnly="True"
-                              SelectionMode="Single"
-                              ItemsSource="{Binding RollCallVM.Rows}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Width="2*" IsVisible="False"
-                                                Header="{x:Static langs:Resources.H_DrawTime}"
-                                                Binding="{Binding DrawTime}" />
-                            <DataGridTextColumn Width="1.5*" IsVisible="True"
-                                                Header="{x:Static langs:Resources.H_Name}"
-                                                Binding="{Binding Name}" />
-                            <DataGridTextColumn Width="1.2*" IsVisible="False"
-                                                Header="{x:Static langs:Resources.H_DrawMode}"
-                                                Binding="{Binding DrawMethod}" />
-                            <DataGridTextColumn Width="*" IsVisible="False"
-                                                Header="{x:Static langs:Resources.H_DrawNumbers}"
-                                                Binding="{Binding DrawNumbers}" />
-                            <DataGridTextColumn Width="*" IsVisible="False"
-                                                Header="{x:Static langs:Resources.H_GenderLimit}"
-                                                Binding="{Binding Gender}" />
-                            <DataGridTextColumn Width="*" IsVisible="False"
-                                                Header="{x:Static langs:Resources.H_GroupLimit}"
-                                                Binding="{Binding Group}" />
-                            <DataGridTextColumn Width="*" IsVisible="True"
-                                                Header="{x:Static langs:Resources.H_TotalCountRollCall}"
-                                                Binding="{Binding TotalCount}" />
-                            <DataGridTextColumn Width="*" IsVisible="False"
-                                                Header="{x:Static langs:Resources.H_Weight}"
-                                                Binding="{Binding Weight}" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Border>
-            </Grid>
-
-            <!-- 抽奖历史 -->
-            <Grid RowDefinitions="Auto,*" RowSpacing="8">
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
-                    <ComboBox MinWidth="200"
-                              PlaceholderText="{x:Static langs:Resources.C_SelectPool}"
-                              ItemsSource="{Binding LotteryVM.PoolNames}"
-                              SelectedItem="{Binding LotteryVM.SelectedPoolName, Mode=TwoWay}" />
-                    <ComboBox MinWidth="160"
-                              PlaceholderText="{x:Static langs:Resources.C_SelectMode}"
-                              ItemsSource="{Binding LotteryVM.ModeOptions}"
-                              SelectedItem="{Binding LotteryVM.SelectedMode, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Converter={StaticResource ModeNameConverter}}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                    <Button Content="{x:Static langs:Resources.C_Refresh}"
-                            Command="{Binding LotteryVM.RefreshCommand}" />
-                </StackPanel>
-
-                <Border Grid.Row="1"
-                        BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                        BorderThickness="1" CornerRadius="4" ClipToBounds="True">
-                    <DataGrid x:Name="LotteryGrid"
-                              AutoGenerateColumns="False"
-                              CanUserSortColumns="True"
-                              CanUserResizeColumns="True"
-                              GridLinesVisibility="Horizontal"
-                              IsReadOnly="True"
-                              SelectionMode="Single"
-                              ItemsSource="{Binding LotteryVM.Rows}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Width="2*" IsVisible="False"
-                                                Header="{x:Static langs:Resources.H_LotteryTime}"
-                                                Binding="{Binding DrawTime}" />
-                            <DataGridTextColumn Width="1.5*" IsVisible="True"
-                                                Header="{x:Static langs:Resources.H_PrizeName}"
-                                                Binding="{Binding Name}" />
-                            <DataGridTextColumn Width="*" IsVisible="False"
-                                                Header="{x:Static langs:Resources.H_LotteryNumbers}"
-                                                Binding="{Binding DrawNumbers}" />
-                            <DataGridTextColumn Width="*" IsVisible="True"
-                                                Header="{x:Static langs:Resources.H_TotalCountLottery}"
-                                                Binding="{Binding TotalCount}" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Border>
-            </Grid>
-
+            <history:RollCallHistorySettingsPage />
+            <history:LotteryHistorySettingsPage />
         </Carousel>
     </Grid>
 </UserControl>

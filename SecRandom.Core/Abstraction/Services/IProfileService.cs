@@ -1,4 +1,6 @@
-﻿using SecRandom.Core.Services.Config;
+﻿using System;
+using System.Collections.Generic;
+using SecRandom.Core.Services.Config;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Abstraction.Services;
@@ -19,6 +21,8 @@ public interface IProfileService
 
     public void LoadStudentProfile(string name, bool saveCurrent = true);
     public void LoadPrizeProfile(string name, bool saveCurrent = true);
+
+    public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount);
 
     public void SaveProfile();
 }

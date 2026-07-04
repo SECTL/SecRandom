@@ -52,6 +52,16 @@ public static class ProfileRecordIdentity
             yield return key;
     }
 
+    public static HashSet<string> BuildUniqueStudentLegacyKeySet(IEnumerable<Student> students)
+    {
+        return BuildUniqueLegacyKeySet(students.Select(GetLegacyStudentHistoryKeys));
+    }
+
+    public static HashSet<string> BuildUniquePrizeLegacyKeySet(IEnumerable<Prize> prizes)
+    {
+        return BuildUniqueLegacyKeySet(prizes.Select(GetLegacyPrizeHistoryKeys));
+    }
+
     public static History? GetStudentHistory(
         StudentHistory history,
         Student student,
@@ -129,7 +139,19 @@ public static class ProfileRecordIdentity
         {
             if (yielded.Add(key))
                 yield return key;
-        }
+            }
+    }
+
+    private static HashSet<string> BuildUniqueLegacyKeySet(IEnumerable<IEnumerable<string>> keySets)
+    {
+        Dictionary<string, int> counts = new(StringComparer.Ordinal);
+        foreach (var key in keySets.SelectMany(keys => keys))
+            counts[key] = counts.GetValueOrDefault(key) + 1;
+
+        return counts
+            .Where(pair => pair.Value == 1)
+            .Select(pair => pair.Key)
+            .ToHashSet(StringComparer.Ordinal);
     }
 
     private static Guid CreateRecordId()

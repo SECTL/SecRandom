@@ -55,7 +55,7 @@ public partial class DrawEngine
                 if (repeatThreshold <= 0)
                     return true;
 
-                return historyCache.GetValueOrDefault(student)?.TotalCount < repeatThreshold;
+                return (historyCache.GetValueOrDefault(student)?.TotalCount ?? 0) < repeatThreshold;
             }
 
             var usable = FilterStudents(Filter1, count, historyCache);

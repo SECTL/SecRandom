@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Plugins;
 using SecRandom.Core.Services.Draw;
@@ -32,7 +34,11 @@ public sealed class PluginDrawInvoker(string pluginId, ILogger logger) : IPlugin
     public Task<PluginDrawResult> DrawPrizesAsync(PluginPrizeDrawRequest request)
     {
         var engine = new DrawEngine();
-        var result = engine.DrawPrize(Math.Max(1, request.Count), _ => true);
+        var requestedCount = Math.Max(1, request.Count);
+        var result = engine.DrawPrize(requestedCount, _ => true);
+        if (result.IsSuccess && result.Result.Count > 0)
+            IAppHost.GetService<IProfileService>().RecordPrizeHistory(result.Result, DateTime.Now, requestedCount);
+
         logger.LogInformation(
             "Plugin draw invoked: plugin={PluginId}, type=prize, count={Count}, status={Status}, resultCount={ResultCount}.",
             pluginId,

@@ -161,7 +161,6 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private void ResetDrawHistory()
     {
-        ClearDrawHistory();
         ResultItems.Clear();
         IsResultVisible = false;
         ResultText = ReminderSettings.ReminderText;
@@ -424,7 +423,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         if (threshold <= 0 || CurrentStudentHistory is null)
             return false;
 
-        var history = ProfileRecordIdentity.GetStudentHistory(CurrentStudentHistory, student, _ => true);
+        var uniqueLegacyKeys = ProfileRecordIdentity.BuildUniqueStudentLegacyKeySet(GetVisibleStudents());
+        var history = ProfileRecordIdentity.GetStudentHistory(CurrentStudentHistory, student, uniqueLegacyKeys.Contains);
         return (history?.TotalCount ?? 0) >= threshold;
     }
 
@@ -436,11 +436,14 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
         history.TotalRounds++;
         history.TotalStats += students.Count;
+        var uniqueLegacyKeys = ProfileRecordIdentity.BuildUniqueStudentLegacyKeySet(GetVisibleStudents());
+        var weightSnapshot = BuildWeightSnapshot(students);
 
         foreach (var student in students)
         {
             var key = ProfileRecordIdentity.EnsureRecordId(student);
-            if (!history.Students.TryGetValue(key, out var item))
+            var item = ProfileRecordIdentity.GetStudentHistory(history, student, uniqueLegacyKeys.Contains);
+            if (item is null)
             {
                 item = new History();
                 history.Students[key] = item;
@@ -451,12 +454,17 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             item.RoundsMissed = 0;
             item.Histories.Add(new HistoryItem
             {
+                RecordId = key,
+                RecordNumber = student.Id,
+                RecordName = student.Name,
+                RecordGender = student.Gender,
+                RecordGroup = student.Group,
                 DrawTime = now,
                 DrawNumbers = requestedCount,
                 DrawGroup = SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup,
                 DrawGender = SelectedGender == AllGendersOption ? string.Empty : SelectedGender,
                 DrawMethod = (int)Config.RollCallSettings.DrawType,
-                Weight = 1
+                Weight = weightSnapshot.GetValueOrDefault(student, 1)
             });
 
             if (!string.IsNullOrWhiteSpace(student.Group))
@@ -467,10 +475,20 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
         foreach (var student in GetVisibleStudents().Except(students))
         {
-            var existing = ProfileRecordIdentity.GetStudentHistory(history, student, _ => true);
+            var existing = ProfileRecordIdentity.GetStudentHistory(history, student, uniqueLegacyKeys.Contains);
             if (existing is not null)
                 existing.RoundsMissed++;
         }
+    }
+
+    private Dictionary<Student, double> BuildWeightSnapshot(IReadOnlyCollection<Student> drawnStudents)
+    {
+        if (Config.RollCallSettings.DrawType != DrawType.Fair)
+            return drawnStudents.ToDictionary(student => student, _ => 1.0);
+
+        return _drawEngine.CalculateStudentWeight(GetVisibleStudents().ToList())
+            .Where(candidate => drawnStudents.Contains(candidate.Candidate))
+            .ToDictionary(candidate => candidate.Candidate, candidate => candidate.Weight);
     }
 
     private RollCallResultItem CreateResultItem(Student student)
@@ -550,18 +568,6 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         };
     }
 
-    private void ClearDrawHistory()
-    {
-        if (CurrentStudentHistory is null)
-            return;
-
-        CurrentStudentHistory.Students.Clear();
-        CurrentStudentHistory.GroupStats.Clear();
-        CurrentStudentHistory.GenderStatus.Clear();
-        CurrentStudentHistory.TotalRounds = 0;
-        CurrentStudentHistory.TotalStats = 0;
-        _profileService.SaveProfile();
-    }
 }
 
 public sealed record RollCallResultItem(

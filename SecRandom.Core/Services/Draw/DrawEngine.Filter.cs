@@ -179,25 +179,11 @@ public partial class DrawEngine
 
     private HashSet<string> BuildUniqueStudentLegacyKeySet()
     {
-        HashSet<string> keys = [];
-        foreach (var student in StudentList.Students)
-        {
-            foreach (var key in ProfileRecordIdentity.GetLegacyStudentHistoryKeys(student))
-                keys.Add(key);
-        }
-
-        return keys;
+        return ProfileRecordIdentity.BuildUniqueStudentLegacyKeySet(StudentList.Students);
     }
 
     private HashSet<string> BuildUniquePrizeLegacyKeySet()
     {
-        HashSet<string> keys = [];
-        foreach (var prize in PrizeList.Prizes)
-        {
-            foreach (var key in ProfileRecordIdentity.GetLegacyPrizeHistoryKeys(prize))
-                keys.Add(key);
-        }
-
-        return keys;
+        return ProfileRecordIdentity.BuildUniquePrizeLegacyKeySet(PrizeList.Prizes);
     }
 }

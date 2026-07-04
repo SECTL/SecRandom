@@ -33,17 +33,16 @@ public partial class RollCallHistorySettingsPage : UserControl
     private void ViewModelOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(RollCallHistoryViewModel.SelectedMode)
-                           or nameof(RollCallHistoryViewModel.ShowWeight))
+                           or nameof(RollCallHistoryViewModel.HasWeightRows))
             UpdateColumns();
     }
 
     private void UpdateColumns()
     {
         var cols = HistoryGrid.Columns;
-        if (cols.Count < 9) return;
+        if (cols.Count < 11) return;
 
         var mode       = ViewModel.SelectedMode;
-        var showWeight = ViewModel.ShowWeight;
         var isOverview = mode == HistoryMode.Overview;
         var isRecords  = mode == HistoryMode.Records;
         var isPersonal = !isOverview && !isRecords;
@@ -51,14 +50,13 @@ public partial class RollCallHistorySettingsPage : UserControl
         cols[0].IsVisible = isRecords || isPersonal;  // 点名时间
         cols[1].IsVisible = isOverview || isRecords;  // 学号
         cols[2].IsVisible = isOverview || isRecords;  // 姓名
-        cols[3].IsVisible = true;                      // 性别 / 性别限制
-        cols[4].IsVisible = true;                      // 小组 / 小组限制
+        cols[3].IsVisible = true;                     // 学生性别
+        cols[4].IsVisible = true;                     // 学生小组
         cols[5].IsVisible = isOverview;               // 点名次数
         cols[6].IsVisible = isPersonal;               // 点名模式
         cols[7].IsVisible = isPersonal;               // 点名人数
-        cols[8].IsVisible = showWeight;               // 权重
-
-        cols[3].Header = isPersonal ? (object)SR.H_GenderLimit : SR.H_Gender;
-        cols[4].Header = isPersonal ? (object)SR.H_GroupLimit  : SR.H_Group;
+        cols[8].IsVisible = isRecords || isPersonal;  // 选择性别
+        cols[9].IsVisible = isRecords || isPersonal;  // 选择小组
+        cols[10].IsVisible = ViewModel.HasWeightRows; // 权重
     }
 }

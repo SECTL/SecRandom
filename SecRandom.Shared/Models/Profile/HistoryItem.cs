@@ -4,6 +4,12 @@ namespace SecRandom.Shared.Models.Profile;
 
 public partial class HistoryItem : ObservableRecipient
 {
+    [ObservableProperty] private string _recordId = string.Empty;
+    [ObservableProperty] private string _recordNumber = string.Empty;
+    [ObservableProperty] private string _recordName = string.Empty;
+    [ObservableProperty] private string _recordGender = string.Empty;
+    [ObservableProperty] private string _recordGroup = string.Empty;
+
     [ObservableProperty] private string _drawGender = string.Empty;
     [ObservableProperty] private string _drawGroup = string.Empty;
 
