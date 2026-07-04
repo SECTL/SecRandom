@@ -36,6 +36,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private readonly MainConfigHandler _configHandler;
     private readonly ILogger<RollCallPageViewModel> _logger;
     private readonly FileSystemWatcher _studentListWatcher;
+    private List<Student> _lastResultStudents = [];
     private bool _isRefreshingLists;
     private bool _isStudentListRefreshQueued;
 
@@ -161,6 +162,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private void ResetDrawHistory()
     {
+        _lastResultStudents.Clear();
         ResultItems.Clear();
         IsResultVisible = false;
         ResultText = ReminderSettings.ReminderText;
@@ -199,11 +201,10 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         _profileService.SaveProfile();
 
         ResultItems.Clear();
-        foreach (var student in result.Result.Select(CreateResultItem))
-            ResultItems.Add(student);
+        _lastResultStudents = result.Result.ToList();
+        RefreshResultItems();
 
         IsResultVisible = ResultItems.Count > 0;
-        ResultText = string.Join(SR.M_ResultSeparator, ResultItems.Select(item => item.DisplayText));
         StatusText = string.Format(SR.M_DrawnCountFormat, ResultItems.Count);
         RefreshCounts();
         OnPropertyChanged(nameof(ResultText));
@@ -322,6 +323,9 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             OnPropertyChanged(nameof(IsControlPanelOnRight));
         }
 
+        if (IsResultVisible)
+            RefreshResultItems();
+
         if (!IsResultVisible)
             ResultText = ReminderSettings.ReminderText;
 
@@ -331,6 +335,15 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(ResultFontFamily));
         OnPropertyChanged(nameof(ResultText));
         RefreshCounts();
+    }
+
+    private void RefreshResultItems()
+    {
+        ResultItems.Clear();
+        foreach (var student in _lastResultStudents.Select(CreateResultItem))
+            ResultItems.Add(student);
+
+        ResultText = string.Join(SR.M_ResultSeparator, ResultItems.Select(item => item.DisplayText));
     }
 
     private void RefreshFilterOptions()
@@ -499,7 +512,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             student.Id,
             student.Group,
             student.Gender,
-            student.Tags);
+            student.Tags,
+            DisplaySettings.ShowTags && !string.IsNullOrWhiteSpace(student.Tags));
     }
 
     private RollCallRemainingItem CreateRemainingItem(Student student)
@@ -576,7 +590,8 @@ public sealed record RollCallResultItem(
     string Id,
     string Group,
     string Gender,
-    string Tags);
+    string Tags,
+    bool IsTagsVisible);
 
 public sealed record RollCallRemainingItem(
     string DisplayText,

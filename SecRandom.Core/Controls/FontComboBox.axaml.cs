@@ -17,7 +17,7 @@ public partial class FontComboBox : UserControl
     }
     
     public List<FontFamily> FontFamilies { get; } =
-        [..FontManager.Current.SystemFonts, GlobalConstants.DefaultAvaFontFamily];
+        BuildFontFamilies(FontManager.Current.SystemFonts, CanValidateFontFamily);
     
     public FontComboBox()
     {
@@ -47,5 +47,32 @@ public partial class FontComboBox : UserControl
                 Value = newValue;
             }
         }
+    }
+
+    private static List<FontFamily> BuildFontFamilies(
+        IEnumerable<FontFamily> fontFamilies,
+        Func<FontFamily, bool> canValidateFontFamily)
+    {
+        var result = new List<FontFamily>();
+        foreach (var fontFamily in fontFamilies)
+        {
+            try
+            {
+                if (canValidateFontFamily(fontFamily))
+                    result.Add(fontFamily);
+            }
+            catch (FormatException)
+            {
+            }
+        }
+
+        result.Add(GlobalConstants.DefaultAvaFontFamily);
+        return result;
+    }
+
+    private static bool CanValidateFontFamily(FontFamily fontFamily)
+    {
+        _ = fontFamily.Name;
+        return true;
     }
 }

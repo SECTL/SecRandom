@@ -1,4 +1,4 @@
-﻿using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Draw.Exceptions;
 using SecRandom.Shared.Models.Profile;
 
@@ -6,24 +6,23 @@ namespace SecRandom.Core.Services.Draw;
 
 public partial class DrawEngine
 {
-    private const int FairGapThreshold = 1;
-    private const int FairMinPoolSize = 5;
-
     private List<Student> FilterStudents(
         Func<Student, bool> filter,
         int drawCount,
         IReadOnlyDictionary<Student, History>? historyCacheOverride = null)
     {
-        //先过滤班级，小组，性别
         var filteredList = StudentList.Students.Where(filter).ToList();
         var historyCache = historyCacheOverride ?? BuildStudentHistoryCache(filteredList);
 
-        //？没人了？
         if (filteredList.Count == 0)
             throw new CandidateNotFoundException();
 
         if (drawCount > filteredList.Count)
             throw new RepeatLimitExhaustedException();
+
+        var fairSettings = ConfigData.FairDrawSettings;
+        if (!fairSettings.EnableAvgGapProtection)
+            return filteredList;
 
         var countByStudent = filteredList.ToDictionary(
             s => s,
@@ -37,7 +36,7 @@ public partial class DrawEngine
             .Where(s => countByStudent[s] <= avg)
             .ToList();
 
-        if (maxDrawCount - minDrawCount > FairGapThreshold)
+        if (maxDrawCount - minDrawCount > Math.Max(0, fairSettings.GapThreshold))
         {
             var filteredWithoutMax = filteredList
                 .Where(s => countByStudent[s] < maxDrawCount)
@@ -52,7 +51,7 @@ public partial class DrawEngine
             }
         }
 
-        var requiredSize = Math.Max(drawCount, FairMinPoolSize);
+        var requiredSize = Math.Max(drawCount, Math.Max(1, fairSettings.MinPoolSize));
         if (pool.Count < requiredSize)
         {
             var threshold = (int)Math.Ceiling(avg);

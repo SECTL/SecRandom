@@ -106,9 +106,9 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
             service.LoadPrizeProfile(SelectedPrizeListName, saveCurrent: false);
 
         var config = IAppHost.TryGetService<MainConfigHandler>();
-        if (config != null && config.Data.QuickDrawSettings.DefaultClass != SelectedPrizeListName)
+        if (config != null && config.Data.LotterySettings.DefaultPool != SelectedPrizeListName)
         {
-            config.Data.QuickDrawSettings.DefaultClass = SelectedPrizeListName;
+            config.Data.LotterySettings.DefaultPool = SelectedPrizeListName;
             config.Save();
         }
     }

@@ -19,7 +19,7 @@ public class ProfileService : IProfileService
     public ProfileService()
     {
         var studentListName = ResolveProfileName("list", "roll_call_list", Config.Data.RollCallSettings.DefaultClass);
-        var prizeListName = ResolveProfileName("list", "lottery_list", Config.Data.QuickDrawSettings.DefaultClass);
+        var prizeListName = ResolveProfileName("list", "lottery_list", Config.Data.LotterySettings.DefaultPool);
 
         StudentListConfig = new StudentListConfig(studentListName);
         StudentHistoryConfig = new StudentHistoryConfig(studentListName);

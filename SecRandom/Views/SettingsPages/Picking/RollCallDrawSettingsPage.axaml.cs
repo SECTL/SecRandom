@@ -1,14 +1,12 @@
-using System.ComponentModel;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Media;
-using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
@@ -20,12 +18,15 @@ namespace SecRandom.Views.SettingsPages.Picking;
 [PageInfo("settings.picking.rollCall", FluentIcons.PersonRegular, "settings.picking")]
 public partial class RollCallDrawSettingsPage : UserControl
 {
+    private bool _normalizingSettings;
+
     public RollCallDrawSettingsPage()
     {
         Settings = ViewModel.Config.RollCallSettings;
         RefreshStudentLists();
         DataContext = this;
         InitializeComponent();
+        NormalizeDrawSettings();
         Settings.PropertyChanged += SettingsOnPropertyChanged;
     }
 
@@ -42,6 +43,7 @@ public partial class RollCallDrawSettingsPage : UserControl
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        NormalizeDrawSettings();
         ConfigHandler.Save();
     }
 
@@ -51,5 +53,27 @@ public partial class RollCallDrawSettingsPage : UserControl
         foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "roll_call_list"), "*.json")
                      .OrderBy(Path.GetFileName))
             StudentListNames.Add(Path.GetFileNameWithoutExtension(file));
+    }
+
+    private void NormalizeDrawSettings()
+    {
+        if (_normalizingSettings)
+            return;
+
+        _normalizingSettings = true;
+        try
+        {
+            Settings.HalfRepeat = Settings.DrawMode switch
+            {
+                DrawMode.Repeat => 0,
+                DrawMode.NoRepeat => 1,
+                DrawMode.HalfRepeat => System.Math.Clamp(Settings.HalfRepeat, 2, 100),
+                _ => Settings.HalfRepeat
+            };
+        }
+        finally
+        {
+            _normalizingSettings = false;
+        }
     }
 }

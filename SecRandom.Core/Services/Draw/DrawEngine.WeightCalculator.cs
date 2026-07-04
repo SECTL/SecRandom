@@ -1,3 +1,4 @@
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Shared.Models.Profile;
 
@@ -5,19 +6,6 @@ namespace SecRandom.Core.Services.Draw;
 
 public partial class DrawEngine
 {
-    private const double FairBaseWeight = 1.0;
-    private const double FairFrequencyWeight = 1.0;
-    private const double FairGroupWeight = 0.8;
-    private const double FairGenderWeight = 0.8;
-    private const double FairTimeWeight = 0.5;
-    private const double FairMinWeight = 0.5;
-    private const double FairMaxWeight = 5.0;
-    private const int FairColdStartRounds = 10;
-    private const bool FairGroupEnabled = true;
-    private const bool FairGenderEnabled = true;
-    private const bool FairTimeEnabled = true;
-    private const bool FairColdStartEnabled = true;
-
     /*
      * 算法来源：
      * https://github.com/SECTL/SecRandom/tree/v2.3.7/app/common/roll_call/roll_call_utils.py L280-L412
@@ -30,89 +18,66 @@ public partial class DrawEngine
         if (candidates.Count == 0)
             return [];
 
+        var fairSettings = ConfigData.FairDrawSettings;
+        var baseWeight = SanitizeFinite(fairSettings.BaseWeight, 1.0);
         var historyCache = historyCacheOverride ?? BuildStudentHistoryCache(candidates);
         var maxStudentDrawCount = historyCache.Values.Select(history => history.TotalCount).DefaultIfEmpty(0).Max();
 
-        if (!ConfigData.FairDrawSettings.FairDraw)
-            return candidates.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = FairBaseWeight }).ToList();
+        if (!fairSettings.FairDraw)
+            return candidates.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = baseWeight }).ToList();
 
         List<WeightedCandidate<Student>> calculatedStudentWeight = [];
 
         foreach (var candidate in candidates)
         {
             var currentCount = historyCache.GetValueOrDefault(candidate)?.TotalCount ?? 0;
+            var lastDrawnTime = historyCache.TryGetValue(candidate, out var history)
+                ? history.LastDrawnTime
+                : DateTime.MinValue;
 
-            var freqencyIndex = Math.Sqrt((maxStudentDrawCount + 1.0) / (currentCount + 1.0));
+            var frequencyIndex = CalculateFrequencyIndex(
+                fairSettings.FrequencyFunction,
+                currentCount,
+                maxStudentDrawCount);
 
-            if (FairColdStartEnabled &&
-                StudentHistory.TotalStats < FairColdStartRounds)
-                freqencyIndex = Math.Max(0.8 + 0.2 * freqencyIndex, freqencyIndex);
+            if (fairSettings.ColdStartEnabled &&
+                StudentHistory.TotalStats < Math.Max(1, fairSettings.ColdStartRounds))
+                frequencyIndex = Math.Min(0.8 + frequencyIndex * 0.2, frequencyIndex);
 
-            freqencyIndex *= FairFrequencyWeight;
+            frequencyIndex *= SanitizeFinite(fairSettings.FrequencyWeight, 1.0);
 
-            var groupIndex = 0.0;
-            if (FairGroupEnabled)
-            {
-                var effectiveGroupCount = StudentHistory.GroupStats.Count;
-                var effectiveGroupMaxDrawCount = StudentHistory.GroupStats.Values.DefaultIfEmpty(0).Max();
-                var currentGroupDrawCount = StudentHistory.GroupStats.GetValueOrDefault(candidate.Group);
-                if (effectiveGroupCount > 3)
-                {
-                    groupIndex = 1.0 / (0.2 * currentGroupDrawCount + 1.0) * FairGroupWeight;
-                }
-                else
-                {
-                    if (effectiveGroupMaxDrawCount == 0)
-                        groupIndex = 0.2 * FairGroupWeight;
-                    else if (currentGroupDrawCount == 0)
-                        groupIndex = 0.5 * FairGroupWeight;
-                    else
-                        groupIndex = FairGroupWeight * (1.0 - currentGroupDrawCount * 1.0 / effectiveGroupMaxDrawCount);
-                }
-            }
+            var groupIndex = CalculateBalanceIndex(
+                fairSettings.FairDrawGroup,
+                candidate.Group,
+                StudentHistory.GroupStats,
+                fairSettings.GroupWeight);
 
-            var genderIndex = 0.0;
-            if (FairGenderEnabled)
-            {
-                var effectiveGenderCount = StudentHistory.GenderStatus.Count;
-                var effectiveGenderMaxDrawCount = StudentHistory.GenderStatus.Values.DefaultIfEmpty(0).Max();
-                var currentGenderDrawCount = StudentHistory.GenderStatus.GetValueOrDefault(candidate.Gender);
-                if (effectiveGenderCount > 3)
-                {
-                    genderIndex = 1.0 / (0.2 * currentGenderDrawCount + 1.0) * FairGenderWeight;
-                }
-                else
-                {
-                    if (effectiveGenderMaxDrawCount == 0)
-                        genderIndex = 0.2 * FairGenderWeight;
-                    else if (currentGenderDrawCount == 0)
-                        genderIndex = 0.5 * FairGenderWeight;
-                    else
-                        genderIndex = FairGenderWeight * (1.0 - currentGenderDrawCount * 1.0 / effectiveGenderMaxDrawCount);
-                }
-            }
+            var genderIndex = CalculateBalanceIndex(
+                fairSettings.FairDrawGender,
+                candidate.Gender,
+                StudentHistory.GenderStatus,
+                fairSettings.GenderWeight);
 
             var timeIndex = 0.0;
-            if (FairTimeEnabled)
-            {
-                var lastDrawnTime = historyCache.TryGetValue(candidate, out var history)
-                    ? history.LastDrawnTime
-                    : DateTime.MinValue;
-                if (lastDrawnTime != DateTime.MinValue)
-                    timeIndex = Math.Min(1, (DateTime.Now - lastDrawnTime).Days / 30.0) * FairTimeWeight;
-            }
+            if (fairSettings.FairDrawTime && lastDrawnTime != DateTime.MinValue)
+                timeIndex = Math.Min(1, (DateTime.Now - lastDrawnTime).Days / 30.0) *
+                            SanitizeFinite(fairSettings.TimeWeight, 0.5);
 
-            var totalIndex = FairBaseWeight + freqencyIndex + groupIndex + genderIndex + timeIndex;
+            var totalIndex = baseWeight + frequencyIndex + groupIndex + genderIndex + timeIndex;
+            if (IsStudentShielded(lastDrawnTime))
+                totalIndex = 0;
+
             calculatedStudentWeight.Add(new WeightedCandidate<Student> { Candidate = candidate, Weight = totalIndex });
         }
 
-        calculatedStudentWeight = calculatedStudentWeight.Select(ws => new WeightedCandidate<Student>
+        var minWeight = Math.Max(0, SanitizeFinite(fairSettings.MinWeight, 0.5));
+        var maxWeight = Math.Max(minWeight, SanitizeFinite(fairSettings.MaxWeight, 5.0));
+
+        return calculatedStudentWeight.Select(ws => new WeightedCandidate<Student>
         {
             Candidate = ws.Candidate,
-            Weight = Math.Round(Math.Max(FairMinWeight / 10.0, Math.Min(FairMaxWeight, ws.Weight)), 2)
+            Weight = Math.Round(ws.Weight <= 0 ? 0 : Math.Max(minWeight, Math.Min(maxWeight, ws.Weight)), 2)
         }).ToList();
-
-        return calculatedStudentWeight;
     }
 
     private DateTime GetStudentLastDrawnTime(Student student)
@@ -122,4 +87,66 @@ public partial class DrawEngine
             : DateTime.MinValue;
     }
 
+    private static double CalculateFrequencyIndex(
+        FrequencyFunctionMode functionMode,
+        int currentCount,
+        int maxCount)
+    {
+        return functionMode switch
+        {
+            FrequencyFunctionMode.Linear => (maxCount - currentCount + 1.0) / (maxCount + 1.0),
+            FrequencyFunctionMode.Index => maxCount == 0
+                ? 1.0
+                : Math.Exp((maxCount - currentCount) * 1.0 / maxCount),
+            FrequencyFunctionMode.SquareRoot => Math.Sqrt(maxCount + 1.0) / Math.Sqrt(currentCount + 1.0),
+            _ => Math.Sqrt(maxCount + 1.0) / Math.Sqrt(currentCount + 1.0)
+        };
+    }
+
+    private double CalculateBalanceIndex(
+        bool enabled,
+        string key,
+        IReadOnlyDictionary<string, int> stats,
+        double configuredWeight)
+    {
+        if (!enabled)
+            return 0.0;
+
+        var weight = SanitizeFinite(configuredWeight, 0.8);
+        var effectiveCount = stats.Count;
+        var effectiveMaxDrawCount = stats.Values.DefaultIfEmpty(0).Max();
+        var currentDrawCount = stats.GetValueOrDefault(key);
+        if (effectiveCount > 3)
+            return 1.0 / (0.2 * currentDrawCount + 1.0) * weight;
+
+        if (effectiveMaxDrawCount == 0)
+            return 0.2 * weight;
+
+        if (currentDrawCount == 0)
+            return 0.5 * weight;
+
+        return weight * (1.0 - currentDrawCount * 1.0 / effectiveMaxDrawCount);
+    }
+
+    private bool IsStudentShielded(DateTime lastDrawnTime)
+    {
+        var fairSettings = ConfigData.FairDrawSettings;
+        if (!fairSettings.ShieldEnabled || fairSettings.ShieldTime <= 0 || lastDrawnTime == DateTime.MinValue)
+            return false;
+
+        var shieldDuration = fairSettings.ShieldTimeUnit switch
+        {
+            ShieldTimeUnit.Seconds => TimeSpan.FromSeconds(fairSettings.ShieldTime),
+            ShieldTimeUnit.Minutes => TimeSpan.FromMinutes(fairSettings.ShieldTime),
+            ShieldTimeUnit.Hours => TimeSpan.FromHours(fairSettings.ShieldTime),
+            _ => TimeSpan.FromMinutes(fairSettings.ShieldTime)
+        };
+
+        return DateTime.Now - lastDrawnTime < shieldDuration;
+    }
+
+    private static double SanitizeFinite(double value, double fallback)
+    {
+        return double.IsNaN(value) || double.IsInfinity(value) ? fallback : value;
+    }
 }

@@ -337,7 +337,6 @@ public partial class App : Application
                     Langs.Common.Resources.Settings_Draw, "settings.picking", FluentIcons.SettingsRegular));
                 services.AddSettingsPage<DefaultDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_Default);
                 services.AddSettingsPage<RollCallDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_RollCall);
-                services.AddSettingsPage<QuickDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
                 services.AddSettingsPage<LotteryDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_Lottery);
                 services.AddSettingsPage<FaceDetectorSettingsPage>(Langs.Common.Resources.Settings_FaceDetector);
 

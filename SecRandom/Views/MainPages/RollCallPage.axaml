@@ -248,11 +248,11 @@
                                                FontSize="{Binding $parent[UserControl].DataContext.ResultFontSize}"
                                                FontFamily="{Binding $parent[UserControl].DataContext.ResultFontFamily}"
                                                FontWeight="SemiBold" />
-                                    <TextBlock Text="{Binding Tags}"
-                                               IsVisible="{Binding !!Tags}"
-                                               HorizontalAlignment="Center"
-                                               Opacity="0.72"
-                                               FontSize="13" />
+                                     <TextBlock Text="{Binding Tags}"
+                                                IsVisible="{Binding IsTagsVisible}"
+                                                HorizontalAlignment="Center"
+                                                Opacity="0.72"
+                                                FontSize="13" />
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
