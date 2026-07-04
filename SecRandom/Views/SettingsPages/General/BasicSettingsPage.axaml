@@ -93,11 +93,25 @@
             </fa:FASettingsExpander>
 
             <fa:FASettingsExpander x:Name="S_Behavior_UrlProtocol"
-                                   Header="{x:Static lsb:Resources.S_Behavior_UrlProtocol}"
-                                   Description="{x:Static lsb:Resources.S_Behavior_UrlProtocol_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi LinkRegular}}">
+                                    Header="{x:Static lsb:Resources.S_Behavior_UrlProtocol}"
+                                    Description="{x:Static lsb:Resources.S_Behavior_UrlProtocol_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi LinkRegular}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.UrlProtocol}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Behavior_CrashRecovery"
+                                    Header="{x:Static lsb:Resources.S_Behavior_CrashRecovery}"
+                                    Description="{x:Static lsb:Resources.S_Behavior_CrashRecovery_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding CrashRecoverySettings.Mode}">
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_CrashRecoveryMode_None}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_CrashRecoveryMode_RestartOnly}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_CrashRecoveryMode_PromptThenRestart}" />
+                        <ComboBoxItem Content="{x:Static lsb:Resources.O_CrashRecoveryMode_PromptAndRestart}" />
+                    </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

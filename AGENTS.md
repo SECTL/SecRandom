@@ -52,6 +52,7 @@ Nested instruction files:
 | Page registration helpers | `SecRandom.Core/Extensions/Registry/` | `AddMainPage`, `AddSettingsPage`, plugin page registration, groups, separators. |
 | Plugin contracts | `SecRandom.Core/Plugins/` | Public plugin API surface: manifest, runtime context, page registration, plugin catalog DTOs, and draw invocation DTOs. |
 | Plugin runtime | `SecRandom/Services/Plugins/` | App-layer plugin discovery, enable state, runtime startup, original-log integration, and restricted draw invoker. |
+| Crash recovery | `SecRandom/Services/CrashRecovery/`, `SecRandom/Views/CrashRecoveryWindow.axaml.cs` | Fatal/dispatcher crash report prompt, guarded auto-restart, and shared desktop relaunch logic. |
 | Page registry state | `SecRandom.Core/Services/PagesRegistryService.cs` | Main/settings/group collections. |
 | Fair draw logic | `SecRandom.Core/Services/Draw/` | Partial `DrawEngine`, weighted draw, filters, crypto RNG. |
 | Camera draw logic | `SecRandom.Core/Services/Camera/` | `CameraDrawEngine` partial: face detection, camera discovery, camera-based draw loop. |
@@ -81,6 +82,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 | `ProfileService` | app service | `SecRandom/Services/ProfileService.cs` | Current profile runtime state, active student-list/history switching, and persistence. |
 | `IProfileService` | service contract | `SecRandom.Core/Abstraction/Services/IProfileService.cs` | Current lists/history + student profile switch + profile save boundary. |
 | `SettingsSearchService` | app service | `SecRandom/Services/SettingsSearchService.cs` | Indexes settings pages via reflected localization resources. |
+| `CrashRecoveryRuntime` | app service helper | `SecRandom/Services/CrashRecovery/CrashRecoveryRuntime.cs` | Reads crash recovery mode, writes bounded crash reports, and builds restart process plans. |
 | `AttachedSettingsRegistryService` | registry | `SecRandom.Core/Services/AttachedSettingsRegistryService.cs` | Static collections for attached-settings controls. |
 | `ViewModelBase` | base VM | `SecRandom/ViewModels/ViewModelBase.cs` | Base VM exposing `MainConfig`; inherits `ObservableRecipient`. |
 | `GlobalConstants` | constants | `SecRandom.Core/GlobalConstants.cs` | Version, platform, and development-mode constants. |
@@ -90,6 +92,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - General settings now live under `MainConfigModel.General`; `MainConfigModel.Basic` / `Backup` remain compatibility bridges for existing callers while new config splits belong under `SecRandom.Core/Models/SubConfigs/General/`.
 - Point-call students and lottery prizes use `RecordId` as the internal stable identity for history/fairness. The visible `Id` field is optional display metadata only and must not be required by import, draw, or history logic.
 - Privacy settings split Sentry upload from online status reporting: `SentryTelemetryEnabled` only controls `SecRandom/Services/Telemetry/`, while `OnlineStatusMode` only controls `SecRandom/Services/OnlineStatusService.cs`.
+- Crash recovery mode lives under `MainConfigModel.General.CrashRecovery`; prompt startup handling must run before single-instance acquisition, while normal restart must release the single-instance service before relaunch.
 - ViewModels must be registered in `SecRandom/App.axaml.cs` `BuildHost()`; reusable services also go through Host.
 - Resolve shared services via `IAppHost.GetService<T>()` / `TryGetService<T>()` unless constructor injection is already the local style.
 - Navigation pages need `[PageInfo(...)]` plus `services.AddMainPage<T>()` or `services.AddSettingsPage<T>()` in `BuildHost()`.

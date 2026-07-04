@@ -1,6 +1,7 @@
 ﻿using System;
 using Avalonia;
 using Avalonia.Media;
+using SecRandom.Services.CrashRecovery;
 
 namespace SecRandom.Desktop;
 
@@ -12,8 +13,29 @@ internal sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        BuildAvaloniaApp()
-            .StartWithClassicDesktopLifetime(args);
+        CrashRecoveryRuntime.SetStartupArguments(args);
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
+
+        try
+        {
+            BuildAvaloniaApp()
+                .StartWithClassicDesktopLifetime(CrashRecoveryPromptOptions.RemoveCrashRecoveryArguments(args));
+        }
+        catch (Exception exception)
+        {
+            if (!CrashRecoveryRuntime.TryHandleFatalException(exception))
+                throw;
+        }
+        finally
+        {
+            AppDomain.CurrentDomain.UnhandledException -= CurrentDomainOnUnhandledException;
+        }
+    }
+
+    private static void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception exception)
+            CrashRecoveryRuntime.TryHandleFatalException(exception);
     }
 
     // Avalonia configuration, don't remove; also used by visual designer.
