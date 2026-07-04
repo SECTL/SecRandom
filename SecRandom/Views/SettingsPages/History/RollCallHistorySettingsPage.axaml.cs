@@ -6,6 +6,7 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Icons;
 using SecRandom.Models;
 using SecRandom.ViewModels;
+using SR = SecRandom.Langs.MainPages.History.Resources;
 
 namespace SecRandom.Views.SettingsPages.History;
 
@@ -39,7 +40,7 @@ public partial class RollCallHistorySettingsPage : UserControl
     private void UpdateColumns()
     {
         var cols = HistoryGrid.Columns;
-        if (cols.Count < 8) return;
+        if (cols.Count < 9) return;
 
         var mode       = ViewModel.SelectedMode;
         var showWeight = ViewModel.ShowWeight;
@@ -48,12 +49,16 @@ public partial class RollCallHistorySettingsPage : UserControl
         var isPersonal = !isOverview && !isRecords;
 
         cols[0].IsVisible = isRecords || isPersonal;  // 点名时间
-        cols[1].IsVisible = isOverview || isRecords;  // 姓名
-        cols[2].IsVisible = isPersonal;               // 点名模式
-        cols[3].IsVisible = isPersonal;               // 点名人数
-        cols[4].IsVisible = isPersonal;               // 性别限制
-        cols[5].IsVisible = isPersonal;               // 小组限制
-        cols[6].IsVisible = isOverview;               // 点名次数
-        cols[7].IsVisible = showWeight;               // 权重
+        cols[1].IsVisible = isOverview || isRecords;  // 学号
+        cols[2].IsVisible = isOverview || isRecords;  // 姓名
+        cols[3].IsVisible = true;                      // 性别 / 性别限制
+        cols[4].IsVisible = true;                      // 小组 / 小组限制
+        cols[5].IsVisible = isOverview;               // 点名次数
+        cols[6].IsVisible = isPersonal;               // 点名模式
+        cols[7].IsVisible = isPersonal;               // 点名人数
+        cols[8].IsVisible = showWeight;               // 权重
+
+        cols[3].Header = isPersonal ? (object)SR.H_GenderLimit : SR.H_Gender;
+        cols[4].Header = isPersonal ? (object)SR.H_GroupLimit  : SR.H_Group;
     }
 }

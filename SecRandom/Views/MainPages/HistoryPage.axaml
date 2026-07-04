@@ -63,28 +63,28 @@
                               SelectionMode="Single"
                               ItemsSource="{Binding RollCallVM.Rows}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Width="1.6*"
+                            <DataGridTextColumn Width="2*" IsVisible="False"
                                                 Header="{x:Static langs:Resources.H_DrawTime}"
                                                 Binding="{Binding DrawTime}" />
-                            <DataGridTextColumn Width="1.4*"
+                            <DataGridTextColumn Width="1.5*" IsVisible="True"
                                                 Header="{x:Static langs:Resources.H_Name}"
                                                 Binding="{Binding Name}" />
-                            <DataGridTextColumn Width="*"
+                            <DataGridTextColumn Width="1.2*" IsVisible="False"
                                                 Header="{x:Static langs:Resources.H_DrawMode}"
                                                 Binding="{Binding DrawMethod}" />
-                            <DataGridTextColumn Width="*"
+                            <DataGridTextColumn Width="*" IsVisible="False"
                                                 Header="{x:Static langs:Resources.H_DrawNumbers}"
                                                 Binding="{Binding DrawNumbers}" />
-                            <DataGridTextColumn Width="*"
+                            <DataGridTextColumn Width="*" IsVisible="False"
                                                 Header="{x:Static langs:Resources.H_GenderLimit}"
                                                 Binding="{Binding Gender}" />
-                            <DataGridTextColumn Width="*"
+                            <DataGridTextColumn Width="*" IsVisible="False"
                                                 Header="{x:Static langs:Resources.H_GroupLimit}"
                                                 Binding="{Binding Group}" />
-                            <DataGridTextColumn Width="*"
+                            <DataGridTextColumn Width="*" IsVisible="True"
                                                 Header="{x:Static langs:Resources.H_TotalCountRollCall}"
                                                 Binding="{Binding TotalCount}" />
-                            <DataGridTextColumn Width="*"
+                            <DataGridTextColumn Width="*" IsVisible="False"
                                                 Header="{x:Static langs:Resources.H_Weight}"
                                                 Binding="{Binding Weight}" />
                         </DataGrid.Columns>
@@ -125,16 +125,16 @@
                               SelectionMode="Single"
                               ItemsSource="{Binding LotteryVM.Rows}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Width="1.6*"
+                            <DataGridTextColumn Width="2*" IsVisible="False"
                                                 Header="{x:Static langs:Resources.H_LotteryTime}"
                                                 Binding="{Binding DrawTime}" />
-                            <DataGridTextColumn Width="1.6*"
+                            <DataGridTextColumn Width="1.5*" IsVisible="True"
                                                 Header="{x:Static langs:Resources.H_PrizeName}"
                                                 Binding="{Binding Name}" />
-                            <DataGridTextColumn Width="*"
+                            <DataGridTextColumn Width="*" IsVisible="False"
                                                 Header="{x:Static langs:Resources.H_LotteryNumbers}"
                                                 Binding="{Binding DrawNumbers}" />
-                            <DataGridTextColumn Width="*"
+                            <DataGridTextColumn Width="*" IsVisible="True"
                                                 Header="{x:Static langs:Resources.H_TotalCountLottery}"
                                                 Binding="{Binding TotalCount}" />
                         </DataGrid.Columns>

@@ -22,6 +22,9 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
         IAppHost.GetService<ILogger<RollCallHistoryViewModel>>();
 
     private StudentHistory? _history;
+    private Dictionary<string, string> _studentIdMap     = [];  // name → id
+    private Dictionary<string, string> _studentGenderMap = [];  // name → gender
+    private Dictionary<string, string> _studentGroupMap  = [];  // name → group
 
     [ObservableProperty] private string? _selectedClassName;
     [ObservableProperty] private string _selectedMode = HistoryMode.Overview;
@@ -67,6 +70,9 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
     {
         Rows.Clear();
         _history = null;
+        _studentIdMap     = [];
+        _studentGenderMap = [];
+        _studentGroupMap  = [];
 
         if (string.IsNullOrWhiteSpace(SelectedClassName))
         {
@@ -81,6 +87,22 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "读取点名历史失败：班级={ClassName}。", SelectedClassName);
+        }
+
+        try
+        {
+            var list = new StudentListConfig(SelectedClassName).Data;
+            _studentIdMap = list.Students
+                .Where(s => !string.IsNullOrEmpty(s.Id))
+                .ToDictionary(s => s.Name, s => s.Id, StringComparer.Ordinal);
+            _studentGenderMap = list.Students
+                .ToDictionary(s => s.Name, s => s.Gender, StringComparer.Ordinal);
+            _studentGroupMap = list.Students
+                .ToDictionary(s => s.Name, s => s.Group, StringComparer.Ordinal);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "读取学生列表失败，学号列将为空：班级={ClassName}。", SelectedClassName);
         }
 
         RebuildModeOptions();
@@ -113,39 +135,45 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
         if (mode == HistoryMode.Overview)
         {
             foreach (var (name, h) in students)
+            {
                 Rows.Add(new HistoryDisplayRow
                 {
-                    Name = name,
+                    Id         = _studentIdMap.GetValueOrDefault(name, string.Empty),
+                    Name       = name,
+                    Gender     = _studentGenderMap.GetValueOrDefault(name, string.Empty),
+                    Group      = _studentGroupMap.GetValueOrDefault(name, string.Empty),
                     TotalCount = h.TotalCount,
-                    Weight = FormatLatestWeight(h)
+                    Weight     = FormatLatestWeight(h)
                 });
+            }
         }
         else if (mode == HistoryMode.Records)
         {
             foreach (var (name, h) in students)
                 foreach (var item in h.Histories)
-                    Rows.Add(BuildEventRow(name, item));
+                    Rows.Add(BuildEventRow(name, item, _studentIdMap.GetValueOrDefault(name, string.Empty)));
             SortByTimeDesc(Rows);
         }
         else if (students.TryGetValue(mode, out var target))
         {
             foreach (var item in target.Histories)
-                Rows.Add(BuildEventRow(mode, item));
+                Rows.Add(BuildEventRow(mode, item, _studentIdMap.GetValueOrDefault(mode, string.Empty)));
             SortByTimeDesc(Rows);
         }
     }
 
-    private static HistoryDisplayRow BuildEventRow(string name, HistoryItem item) =>
+    private static HistoryDisplayRow BuildEventRow(string name, HistoryItem item, string id = "") =>
         new()
         {
-            Name = name,
-            Gender = item.DrawGender,
-            Group = item.DrawGroup,
-            DrawTime = item.DrawTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture),
+            Id         = id,
+            Name       = name,
+            Gender     = item.DrawGender,
+            Group      = item.DrawGroup,
+            DrawTime   = item.DrawTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture),
             DrawMethod = item.DrawMethod == 0 ? SR.C_MethodRandom : SR.C_MethodWeight,
             DrawNumbers = item.DrawNumbers,
-            Weight = item.Weight.ToString("0.##", CultureInfo.CurrentCulture),
-            SortTime = item.DrawTime
+            Weight     = item.Weight.ToString("0.##", CultureInfo.CurrentCulture),
+            SortTime   = item.DrawTime
         };
 
     private static string FormatLatestWeight(History h) =>
