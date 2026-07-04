@@ -358,9 +358,10 @@
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1" />
         <PackageReference Include="ClassIsland.Markdown.Avalonia" Version="12.0.0" />
         <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.25.1" />
-        <PackageReference Include="Sentry" Version="6.5.0" />
-        <PackageReference Include="Sentry.Extensions.Logging" Version="6.5.0" />
-        <PackageReference Include="Sentry.Profiling" Version="6.5.0" />
+        <PackageReference Include="Sentry" Version="6.6.0" />
+        <PackageReference Include="Sentry.AspNetCore" Version="6.6.0" />
+        <PackageReference Include="Sentry.Extensions.Logging" Version="6.6.0" />
+        <PackageReference Include="Sentry.Profiling" Version="6.6.0" />
     </ItemGroup>
 
     <ItemGroup>
