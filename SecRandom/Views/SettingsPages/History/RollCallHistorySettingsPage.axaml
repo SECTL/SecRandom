@@ -42,32 +42,36 @@
                       CanUserSortColumns="True"
                       CanUserResizeColumns="True"
                       GridLinesVisibility="Horizontal"
+                      HeadersVisibility="Column"
                       IsReadOnly="True"
                       SelectionMode="Single"
                       ItemsSource="{Binding Rows}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Width="1.6*"
+                    <DataGridTextColumn Width="2*" IsVisible="False"
                                         Header="{x:Static langs:Resources.H_DrawTime}"
                                         Binding="{Binding DrawTime}" />
-                    <DataGridTextColumn Width="1.4*"
+                    <DataGridTextColumn Width="*" IsVisible="True"
+                                        Header="{x:Static langs:Resources.H_StudentId}"
+                                        Binding="{Binding Id}" />
+                    <DataGridTextColumn Width="1.5*" IsVisible="True"
                                         Header="{x:Static langs:Resources.H_Name}"
                                         Binding="{Binding Name}" />
-                    <DataGridTextColumn Width="*"
-                                        Header="{x:Static langs:Resources.H_DrawMode}"
-                                        Binding="{Binding DrawMethod}" />
-                    <DataGridTextColumn Width="*"
-                                        Header="{x:Static langs:Resources.H_DrawNumbers}"
-                                        Binding="{Binding DrawNumbers}" />
-                    <DataGridTextColumn Width="*"
-                                        Header="{x:Static langs:Resources.H_GenderLimit}"
+                    <DataGridTextColumn Width="*" IsVisible="True"
+                                        Header="{x:Static langs:Resources.H_Gender}"
                                         Binding="{Binding Gender}" />
-                    <DataGridTextColumn Width="*"
-                                        Header="{x:Static langs:Resources.H_GroupLimit}"
+                    <DataGridTextColumn Width="*" IsVisible="True"
+                                        Header="{x:Static langs:Resources.H_Group}"
                                         Binding="{Binding Group}" />
-                    <DataGridTextColumn Width="*"
+                    <DataGridTextColumn Width="*" IsVisible="True"
                                         Header="{x:Static langs:Resources.H_TotalCountRollCall}"
                                         Binding="{Binding TotalCount}" />
-                    <DataGridTextColumn Width="*"
+                    <DataGridTextColumn Width="1.2*" IsVisible="False"
+                                        Header="{x:Static langs:Resources.H_DrawMode}"
+                                        Binding="{Binding DrawMethod}" />
+                    <DataGridTextColumn Width="*" IsVisible="False"
+                                        Header="{x:Static langs:Resources.H_DrawNumbers}"
+                                        Binding="{Binding DrawNumbers}" />
+                    <DataGridTextColumn Width="*" IsVisible="False"
                                         Header="{x:Static langs:Resources.H_Weight}"
                                         Binding="{Binding Weight}" />
                 </DataGrid.Columns>

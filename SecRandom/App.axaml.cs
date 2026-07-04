@@ -250,6 +250,7 @@ public partial class App : Application
                     {
                         // SDK 生命周期由 TelemetryRuntimeService 按隐私开关统一控制，日志 Provider 只复用已初始化的 SDK。
                         options.InitializeSdk = false;
+                        options.MinimumEventLevel = LogLevel.Error;
                         // Sentry Structured Logs 默认关闭；日志 Provider 与 SDK 初始化选项都需要启用。
                         options.EnableLogs = true;
                     });

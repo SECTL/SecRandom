@@ -20,6 +20,7 @@ public partial class HistoryPage : UserControl
         InitializeComponent();
 
         RollCallVM.PropertyChanged += OnRollCallVMChanged;
+        LotteryVM.PropertyChanged  += OnLotteryVMChanged;
         UpdateRollCallColumns();
         UpdateLotteryColumns();
     }
@@ -40,6 +41,12 @@ public partial class HistoryPage : UserControl
             UpdateRollCallColumns();
     }
 
+    private void OnLotteryVMChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(LotteryHistoryViewModel.SelectedMode))
+            UpdateLotteryColumns();
+    }
+
     private void UpdateRollCallColumns()
     {
         var cols = RollCallGrid.Columns;
@@ -51,19 +58,19 @@ public partial class HistoryPage : UserControl
         var isRecords  = mode == HistoryMode.Records;
         var isPersonal = !isOverview && !isRecords;
 
-        cols[0].IsVisible = isRecords || isPersonal;         // 点名时间
-        cols[1].IsVisible = isOverview || isRecords;         // 姓名
-        cols[2].IsVisible = isRecords || isPersonal;         // 点名模式
-        cols[3].IsVisible = isRecords || isPersonal;         // 点名人数
-        cols[4].IsVisible = isRecords || isPersonal;         // 性别限制
-        cols[5].IsVisible = isRecords || isPersonal;         // 小组限制
-        cols[6].IsVisible = isOverview;                      // 点名次数
-        cols[7].IsVisible = showWeight;                      // 权重
+        cols[0].IsVisible = isRecords || isPersonal; // 点名时间
+        cols[1].IsVisible = isOverview || isRecords; // 姓名
+        cols[2].IsVisible = isPersonal;              // 点名模式
+        cols[3].IsVisible = isPersonal;              // 点名人数
+        cols[4].IsVisible = isPersonal;              // 性别限制
+        cols[5].IsVisible = isPersonal;              // 小组限制
+        cols[6].IsVisible = isOverview;              // 点名次数
+        cols[7].IsVisible = showWeight;              // 权重
     }
 
     private void UpdateLotteryColumns()
     {
-        var cols       = LotteryGrid.Columns;
+        var cols = LotteryGrid.Columns;
         if (cols.Count < 4) return;
 
         var mode       = LotteryVM.SelectedMode;
@@ -71,9 +78,9 @@ public partial class HistoryPage : UserControl
         var isRecords  = mode == HistoryMode.Records;
         var isPersonal = !isOverview && !isRecords;
 
-        cols[0].IsVisible = isRecords || isPersonal;  // 抽奖时间
-        cols[1].IsVisible = isOverview || isRecords;  // 名称
-        cols[2].IsVisible = isRecords || isPersonal;  // 抽取数量
-        cols[3].IsVisible = isOverview;               // 中奖次数
+        cols[0].IsVisible = isRecords || isPersonal; // 抽奖时间
+        cols[1].IsVisible = isOverview || isRecords; // 名称
+        cols[2].IsVisible = isPersonal;              // 抽取数量
+        cols[3].IsVisible = isOverview;              // 中奖次数
     }
 }

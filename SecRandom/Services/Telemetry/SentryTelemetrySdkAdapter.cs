@@ -9,7 +9,7 @@ namespace SecRandom.Services.Telemetry;
 
 public sealed class SentryTelemetrySdkAdapter : ITelemetrySdkAdapter
 {
-    private const string Dsn = "https://94f3a9ea4d85aac3b03f6575c23befe9@o4510289605296128.ingest.de.sentry.io/4511439509454928";
+    private const string Dsn = "https://7614b2b2fd46a451e7cb3ed670279e75@o4510689230192640.ingest.us.sentry.io/4511675887910912";
     private static readonly TimeSpan ProfilingStartupTimeout = TimeSpan.FromMilliseconds(500);
 
     private readonly object _gate = new();
@@ -119,7 +119,7 @@ public sealed class SentryTelemetrySdkAdapter : ITelemetrySdkAdapter
         options.Dsn = Dsn;
         options.Release = GlobalConstants.VersionLong;
         options.Environment = GlobalConstants.IsDevelopment ? "development" : "production";
-        options.Debug = GlobalConstants.IsDevelopment;
+        options.Debug = true;
 
         // 桌面应用启用全局模式，跨线程共享同一作用域
         options.IsGlobalModeEnabled = true;

@@ -78,6 +78,18 @@
   <data name="H_LotteryNumbers" xml:space="preserve">
     <value>抽取数量</value>
   </data>
+  <data name="H_StudentId" xml:space="preserve">
+    <value>学号</value>
+  </data>
+  <data name="H_Serial" xml:space="preserve">
+    <value>序号</value>
+  </data>
+  <data name="H_Gender" xml:space="preserve">
+    <value>性别</value>
+  </data>
+  <data name="H_Group" xml:space="preserve">
+    <value>小组</value>
+  </data>
   <data name="H_GenderLimit" xml:space="preserve">
     <value>性别限制</value>
   </data>

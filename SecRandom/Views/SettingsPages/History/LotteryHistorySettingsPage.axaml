@@ -42,22 +42,29 @@
                       CanUserSortColumns="True"
                       CanUserResizeColumns="True"
                       GridLinesVisibility="Horizontal"
+                      HeadersVisibility="Column"
                       IsReadOnly="True"
                       SelectionMode="Single"
                       ItemsSource="{Binding Rows}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Width="1.6*"
+                    <DataGridTextColumn Width="2*" IsVisible="False"
                                         Header="{x:Static langs:Resources.H_LotteryTime}"
                                         Binding="{Binding DrawTime}" />
-                    <DataGridTextColumn Width="1.6*"
+                    <DataGridTextColumn Width="*" IsVisible="True"
+                                        Header="{x:Static langs:Resources.H_Serial}"
+                                        Binding="{Binding Id}" />
+                    <DataGridTextColumn Width="1.5*" IsVisible="True"
                                         Header="{x:Static langs:Resources.H_PrizeName}"
                                         Binding="{Binding Name}" />
-                    <DataGridTextColumn Width="*"
+                    <DataGridTextColumn Width="*" IsVisible="False"
                                         Header="{x:Static langs:Resources.H_LotteryNumbers}"
                                         Binding="{Binding DrawNumbers}" />
-                    <DataGridTextColumn Width="*"
+                    <DataGridTextColumn Width="*" IsVisible="True"
                                         Header="{x:Static langs:Resources.H_TotalCountLottery}"
                                         Binding="{Binding TotalCount}" />
+                    <DataGridTextColumn Width="*" IsVisible="True"
+                                        Header="{x:Static langs:Resources.H_Weight}"
+                                        Binding="{Binding Weight}" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>

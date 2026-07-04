@@ -22,6 +22,7 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
         IAppHost.GetService<ILogger<LotteryHistoryViewModel>>();
 
     private PrizeHistory? _history;
+    private Dictionary<string, string> _prizeIdMap = [];  // name → id
 
     [ObservableProperty] private string? _selectedPoolName;
     [ObservableProperty] private string _selectedMode = HistoryMode.Overview;
@@ -66,6 +67,7 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
     {
         Rows.Clear();
         _history = null;
+        _prizeIdMap = [];
 
         if (string.IsNullOrWhiteSpace(SelectedPoolName))
         {
@@ -80,6 +82,18 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "读取抽奖历史失败：奖池={PoolName}。", SelectedPoolName);
+        }
+
+        try
+        {
+            var list = new PrizeListConfig(SelectedPoolName).Data;
+            _prizeIdMap = list.Prizes
+                .Where(p => !string.IsNullOrEmpty(p.Id))
+                .ToDictionary(p => p.Name, p => p.Id, StringComparer.Ordinal);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "读取奖品列表失败，序号列将为空：奖池={PoolName}。", SelectedPoolName);
         }
 
         RebuildModeOptions();
@@ -112,30 +126,40 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
         if (mode == HistoryMode.Overview)
         {
             foreach (var (name, h) in prizes)
-                Rows.Add(new HistoryDisplayRow { Name = name, TotalCount = h.TotalCount });
+                Rows.Add(new HistoryDisplayRow
+                {
+                    Id         = _prizeIdMap.GetValueOrDefault(name, string.Empty),
+                    Name       = name,
+                    TotalCount = h.TotalCount,
+                    Weight     = h.Histories.LastOrDefault() is { } last
+                                     ? last.Weight.ToString("0.##", CultureInfo.CurrentCulture)
+                                     : string.Empty
+                });
         }
         else if (mode == HistoryMode.Records)
         {
             foreach (var (name, h) in prizes)
                 foreach (var item in h.Histories)
-                    Rows.Add(BuildEventRow(name, item));
+                    Rows.Add(BuildEventRow(name, item, _prizeIdMap.GetValueOrDefault(name, string.Empty)));
             SortByTimeDesc(Rows);
         }
         else if (prizes.TryGetValue(mode, out var target))
         {
             foreach (var item in target.Histories)
-                Rows.Add(BuildEventRow(mode, item));
+                Rows.Add(BuildEventRow(mode, item, _prizeIdMap.GetValueOrDefault(mode, string.Empty)));
             SortByTimeDesc(Rows);
         }
     }
 
-    private static HistoryDisplayRow BuildEventRow(string name, HistoryItem item) =>
+    private static HistoryDisplayRow BuildEventRow(string name, HistoryItem item, string id = "") =>
         new()
         {
-            Name = name,
-            DrawTime = item.DrawTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture),
+            Id          = id,
+            Name        = name,
+            DrawTime    = item.DrawTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture),
             DrawNumbers = item.DrawNumbers,
-            SortTime = item.DrawTime
+            Weight      = item.Weight.ToString("0.##", CultureInfo.CurrentCulture),
+            SortTime    = item.DrawTime
         };
 
     private static void SortByTimeDesc(ObservableCollection<HistoryDisplayRow> rows)

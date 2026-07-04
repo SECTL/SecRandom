@@ -38,16 +38,18 @@ public partial class LotteryHistorySettingsPage : UserControl
     private void UpdateColumns()
     {
         var cols = HistoryGrid.Columns;
-        if (cols.Count < 4) return;
+        if (cols.Count < 6) return;
 
-        var mode = ViewModel.SelectedMode;
+        var mode       = ViewModel.SelectedMode;
         var isOverview = mode == HistoryMode.Overview;
         var isRecords  = mode == HistoryMode.Records;
         var isPersonal = !isOverview && !isRecords;
 
         cols[0].IsVisible = isRecords || isPersonal;  // 抽奖时间
-        cols[1].IsVisible = isOverview || isRecords;  // 名称
-        cols[2].IsVisible = isRecords || isPersonal;  // 抽取数量
-        cols[3].IsVisible = isOverview;               // 中奖次数
+        cols[1].IsVisible = isOverview || isRecords;  // 序号
+        cols[2].IsVisible = isOverview || isRecords;  // 名称
+        cols[3].IsVisible = isPersonal;               // 抽取数量
+        cols[4].IsVisible = isOverview;               // 中奖次数
+        cols[5].IsVisible = true;                      // 权重（所有模式）
     }
 }
