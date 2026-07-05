@@ -2,11 +2,7 @@ namespace SecRandom.Core.Enums.Configs;
 
 public enum DrawAnimationStyleMode
 {
+    DirectRotate,
     FadeFloat,
-    FlipRoll,
-    SpotlightSweep,
-    Fireworks,
-    ShuffleDeck,
-    WheelFreeze,
-    DirectRotate
+    HorizontalShake
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -26,20 +27,23 @@ using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.ViewModels.MainPages;
 
-public sealed partial class QuickDrawPageViewModel : ViewModelBase
+public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 {
     private readonly DrawEngine _drawEngine;
     private readonly IProfileService _profileService;
     private readonly MainConfigHandler _configHandler;
     private readonly DrawAudioService _drawAudioService;
     private readonly ILogger<QuickDrawPageViewModel> _logger;
+    private bool _isDrawCommandRunning;
     private bool _isCoolingDown;
+    private CancellationTokenSource? _previewCts;
 
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
     [ObservableProperty] private string _statusText = "准备闪抽";
     [ObservableProperty] private bool _isResultVisible;
     [ObservableProperty] private int _previewAnimationRevision;
     [ObservableProperty] private int _resultAnimationRevision;
+    [ObservableProperty] private bool _isDrawing;
 
     public QuickDrawPageViewModel(
         MainConfigHandler configHandler,
@@ -60,7 +64,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase
     public ObservableCollection<string> StudentListNames { get; } = [];
     public ObservableCollection<QuickDrawResultItem> ResultItems { get; } = [];
     public int DrawCount => Math.Clamp(Config.QuickDrawSettings.DrawCount, 1, 100);
-    public bool CanStartDraw => !_isCoolingDown && (_profileService.CurrentStudentList?.Students.Any(s => s.Exists) ?? false);
+    public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && !_isCoolingDown && (_profileService.CurrentStudentList?.Students.Any(s => s.Exists) ?? false));
+    public string DrawButtonText => IsDrawing ? "停止" : "闪抽";
     public double ResultFontSize => DisplaySettings.FontSize;
     public FontFamily ResultFontFamily => BuildResultFontFamily();
     public bool AnimationEnabled => AnimationSettings.AnimationEnabled;
@@ -94,9 +99,21 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanStartDraw));
     }
 
-    [RelayCommand]
+    partial void OnIsDrawingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanStartDraw));
+        OnPropertyChanged(nameof(DrawButtonText));
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task StartDrawAsync()
     {
+        if (IsDrawing)
+        {
+            StopPreview();
+            return;
+        }
+
         if (_isCoolingDown)
             return;
 
@@ -110,26 +127,34 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase
         }
 
         var count = Math.Clamp(DrawCount, 1, candidates.Count);
-        await ShowPreviewAsync(candidates, count).ConfigureAwait(true);
-
-        var result = _drawEngine.DrawStudent(count, candidates, DrawSettingsType.QuickDraw);
-        if (!result.IsSuccess)
+        SetDrawCommandRunning(true);
+        try
         {
-            StatusText = "闪抽失败：" + result.Status;
-            return;
+            await ShowPreviewAsync(candidates, count).ConfigureAwait(true);
+
+            var result = _drawEngine.DrawStudent(count, candidates, DrawSettingsType.QuickDraw);
+            if (!result.IsSuccess)
+            {
+                StatusText = "闪抽失败：" + result.Status;
+                return;
+            }
+
+            var drawn = result.Result.ToList();
+            var weights = BuildWeightSnapshot(drawn);
+            _profileService.RecordStudentHistory(drawn, DateTime.Now, count, drawMethod: (int)Config.QuickDrawSettings.DrawType, weights: weights);
+            ReplaceResults(drawn);
+            IsResultVisible = true;
+            TriggerResultAnimation();
+            StatusText = $"已抽取 {ResultItems.Count} 人";
+            await _drawAudioService.PlayAsync(MusicSettings.ResultMusic, MusicSettings.ResultMusicVolume,
+                MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut).ConfigureAwait(false);
+
+            StartCooldown();
         }
-
-        var drawn = result.Result.ToList();
-        var weights = BuildWeightSnapshot(drawn);
-        _profileService.RecordStudentHistory(drawn, DateTime.Now, count, drawMethod: (int)Config.QuickDrawSettings.DrawType, weights: weights);
-        ReplaceResults(drawn);
-        IsResultVisible = true;
-        TriggerResultAnimation();
-        StatusText = $"已抽取 {ResultItems.Count} 人";
-        await _drawAudioService.PlayAsync(MusicSettings.ResultMusic, MusicSettings.ResultMusicVolume,
-            MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut).ConfigureAwait(false);
-
-        StartCooldown();
+        finally
+        {
+            SetDrawCommandRunning(false);
+        }
     }
 
     [RelayCommand]
@@ -162,17 +187,56 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase
         await _drawAudioService.PlayAsync(MusicSettings.AnimationMusic, MusicSettings.AnimationMusicVolume,
             MusicSettings.AnimationMusicFadeIn, MusicSettings.AnimationMusicFadeOut).ConfigureAwait(true);
 
-        var iterations = AnimationSettings.Animation == AnimationMode.AutoPlay
-            ? Math.Clamp(AnimationSettings.AutoplayCount, 1, 999)
-            : 1;
+        var previewCts = new CancellationTokenSource();
+        _previewCts = previewCts;
+        var token = previewCts.Token;
+
+        var manualStop = AnimationSettings.Animation == AnimationMode.ManualStop;
+        var iterations = manualStop
+            ? int.MaxValue
+            : Math.Clamp(AnimationSettings.AutoplayCount, 1, 999);
         var delay = PreviewAnimationDuration;
-        for (var i = 0; i < iterations; i++)
+
+        IsDrawing = true;
+        try
         {
-            ReplaceResults(candidates.OrderBy(_ => Random.Shared.Next()).Take(count).ToList());
-            IsResultVisible = true;
-            TriggerPreviewAnimation();
-            await Task.Delay(delay).ConfigureAwait(true);
+            for (var i = 0; i < iterations && !token.IsCancellationRequested; i++)
+            {
+                ReplaceResults(candidates.OrderBy(_ => Random.Shared.Next()).Take(count).ToList());
+                IsResultVisible = true;
+                TriggerPreviewAnimation();
+                try
+                {
+                    await Task.Delay(delay, token).ConfigureAwait(true);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
         }
+        finally
+        {
+            if (ReferenceEquals(_previewCts, previewCts))
+                _previewCts = null;
+
+            previewCts.Dispose();
+            IsDrawing = false;
+        }
+    }
+
+    private void StopPreview()
+    {
+        _previewCts?.Cancel();
+    }
+
+    private void SetDrawCommandRunning(bool value)
+    {
+        if (_isDrawCommandRunning == value)
+            return;
+
+        _isDrawCommandRunning = value;
+        OnPropertyChanged(nameof(CanStartDraw));
     }
 
     private void TriggerPreviewAnimation()
@@ -290,6 +354,11 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase
         await Task.Delay(Math.Clamp(Config.QuickDrawSettings.DisableAfterClick, 0, 60) * 1000).ConfigureAwait(true);
         _isCoolingDown = false;
         OnPropertyChanged(nameof(CanStartDraw));
+    }
+
+    public void Dispose()
+    {
+        StopPreview();
     }
 }
 

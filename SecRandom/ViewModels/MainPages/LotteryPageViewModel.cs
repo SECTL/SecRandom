@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -34,6 +35,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly MainConfigHandler _configHandler;
     private readonly DrawAudioService _drawAudioService;
     private readonly ILogger<LotteryPageViewModel> _logger;
+    private bool _isDrawCommandRunning;
 
     [ObservableProperty] private string _selectedPrizeListName = string.Empty;
     [ObservableProperty] private int _drawCount = 1;
@@ -41,7 +43,9 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _isResultVisible;
     [ObservableProperty] private int _previewAnimationRevision;
     [ObservableProperty] private int _resultAnimationRevision;
+    [ObservableProperty] private bool _isDrawing;
     private List<Prize> _lastResultPrizes = [];
+    private CancellationTokenSource? _previewCts;
 
     public LotteryPageViewModel(
         MainConfigHandler configHandler,
@@ -66,7 +70,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     public ObservableCollection<string> PrizeListNames { get; } = [];
     public ObservableCollection<LotteryResultItem> ResultItems { get; } = [];
     public ObservableCollection<LotteryRemainingItem> RemainingItems { get; } = [];
-    public bool CanStartDraw => TotalCount > 0 && RemainingCount > 0;
+    public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0 && RemainingCount > 0);
+    public string DrawButtonText => IsDrawing ? "停止" : "抽奖";
     public bool CanDecreaseCount => DrawCount > 1;
     public bool CanIncreaseCount => DrawCount < MaximumDrawCount;
     public int TotalCount { get; private set; }
@@ -116,6 +121,12 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(CanIncreaseCount));
     }
 
+    partial void OnIsDrawingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanStartDraw));
+        OnPropertyChanged(nameof(DrawButtonText));
+    }
+
     [RelayCommand]
     private void IncreaseCount()
     {
@@ -128,9 +139,15 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         DrawCount--;
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task StartDrawAsync()
     {
+        if (IsDrawing)
+        {
+            StopPreview();
+            return;
+        }
+
         if (!CanStartDraw)
         {
             StatusText = TotalCount == 0 ? "没有可抽取的奖品" : "没有剩余奖品";
@@ -139,25 +156,33 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
         var prizes = (_profileService.CurrentPrizeList?.Prizes ?? []).Where(p => p.Exists).ToList();
         var count = Math.Clamp(DrawCount, 1, Math.Max(1, RemainingCount > 0 ? RemainingCount : prizes.Count));
-        await ShowPreviewAsync(prizes, count).ConfigureAwait(true);
-
-        var result = _drawEngine.DrawPrize(count, _ => true);
-        if (!result.IsSuccess)
+        SetDrawCommandRunning(true);
+        try
         {
-            StatusText = "抽奖失败：" + result.Status;
-            return;
-        }
+            await ShowPreviewAsync(prizes, count).ConfigureAwait(true);
 
-        var drawn = result.Result.ToList();
-        _profileService.RecordPrizeHistory(drawn, DateTime.Now, count);
-        _lastResultPrizes = drawn;
-        ReplaceResults(drawn);
-        IsResultVisible = true;
-        TriggerResultAnimation();
-        StatusText = $"已抽取 {ResultItems.Count} 个奖品";
-        RefreshCounts();
-        await _drawAudioService.PlayAsync(MusicSettings.ResultMusic, MusicSettings.ResultMusicVolume,
-            MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut).ConfigureAwait(false);
+            var result = _drawEngine.DrawPrize(count, _ => true);
+            if (!result.IsSuccess)
+            {
+                StatusText = "抽奖失败：" + result.Status;
+                return;
+            }
+
+            var drawn = result.Result.ToList();
+            _profileService.RecordPrizeHistory(drawn, DateTime.Now, count);
+            _lastResultPrizes = drawn;
+            ReplaceResults(drawn);
+            IsResultVisible = true;
+            TriggerResultAnimation();
+            StatusText = $"已抽取 {ResultItems.Count} 个奖品";
+            RefreshCounts();
+            await _drawAudioService.PlayAsync(MusicSettings.ResultMusic, MusicSettings.ResultMusicVolume,
+                MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut).ConfigureAwait(false);
+        }
+        finally
+        {
+            SetDrawCommandRunning(false);
+        }
     }
 
     [RelayCommand]
@@ -290,17 +315,56 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         await _drawAudioService.PlayAsync(MusicSettings.AnimationMusic, MusicSettings.AnimationMusicVolume,
             MusicSettings.AnimationMusicFadeIn, MusicSettings.AnimationMusicFadeOut).ConfigureAwait(true);
 
+        var previewCts = new CancellationTokenSource();
+        _previewCts = previewCts;
+        var token = previewCts.Token;
+        var isManualStop = AnimationSettings.Animation == AnimationMode.ManualStop;
         var iterations = AnimationSettings.Animation == AnimationMode.AutoPlay
             ? Math.Clamp(AnimationSettings.AutoplayCount, 1, 999)
             : 1;
         var delay = PreviewAnimationDuration;
-        for (var i = 0; i < iterations; i++)
+
+        IsDrawing = true;
+        try
         {
-            ReplaceResults(prizes.OrderBy(_ => Random.Shared.Next()).Take(count).ToList());
-            IsResultVisible = true;
-            TriggerPreviewAnimation();
-            await Task.Delay(delay).ConfigureAwait(true);
+            for (var i = 0; isManualStop ? !token.IsCancellationRequested : i < iterations; i++)
+            {
+                ReplaceResults(prizes.OrderBy(_ => Random.Shared.Next()).Take(count).ToList());
+                IsResultVisible = true;
+                TriggerPreviewAnimation();
+                StatusText = "抽奖中…";
+                try
+                {
+                    await Task.Delay(delay, token).ConfigureAwait(true);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
         }
+        finally
+        {
+            if (ReferenceEquals(_previewCts, previewCts))
+                _previewCts = null;
+
+            previewCts.Dispose();
+            IsDrawing = false;
+        }
+    }
+
+    private void StopPreview()
+    {
+        _previewCts?.Cancel();
+    }
+
+    private void SetDrawCommandRunning(bool value)
+    {
+        if (_isDrawCommandRunning == value)
+            return;
+
+        _isDrawCommandRunning = value;
+        OnPropertyChanged(nameof(CanStartDraw));
     }
 
     private void TriggerPreviewAnimation()
@@ -370,6 +434,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
     public void Dispose()
     {
+        StopPreview();
         Config.LotterySettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.DefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged -= SettingsOnPropertyChanged;

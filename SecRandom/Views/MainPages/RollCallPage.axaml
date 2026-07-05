@@ -40,7 +40,7 @@
                 </Grid>
 
                 <Button Classes="roll-wide accent"
-                        Content="{x:Static langs:Resources.C_Start}"
+                        Content="{Binding DrawButtonText}"
                         IsVisible="{Binding MoreSettings.RollCallStartButton}"
                         IsEnabled="{Binding CanStartDraw}"
                         Command="{Binding StartDrawCommand}" />

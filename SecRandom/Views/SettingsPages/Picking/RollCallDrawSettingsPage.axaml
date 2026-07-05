@@ -5,6 +5,7 @@
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              xmlns:lp="clr-namespace:SecRandom.Langs.SettingsPages.Picking"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Picking"
+             xmlns:enums="clr-namespace:SecRandom.Core.Enums.Configs;assembly=SecRandom.Core"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.Picking.RollCallDrawSettingsPage"
@@ -89,7 +90,8 @@
                 </fa:FASettingsExpanderItem>
 
                 <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_CustomFont}"
-                                           Description="{x:Static lp:Resources.S_CustomFont_D}">
+                                           Description="{x:Static lp:Resources.S_CustomFont_D}"
+                                           IsVisible="{Binding Settings.UseGlobalFont, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:UseGlobalFontMode.Custom}}">
                     <fa:FASettingsExpanderItem.Footer>
                         <sr:FontComboBox Value="{Binding Settings.CustomFont}" />
                     </fa:FASettingsExpanderItem.Footer>
@@ -119,17 +121,6 @@
                         <ComboBox SelectedIndex="{Binding Settings.DisplayStyle}">
                             <ComboBoxItem Content="{x:Static lp:Resources.O_Default}" />
                             <ComboBoxItem Content="{x:Static lp:Resources.O_Card}" />
-                        </ComboBox>
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ShowRandom}"
-                                           Description="{x:Static lp:Resources.S_ShowRandom_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ComboBox SelectedIndex="{Binding Settings.ShowRandom}">
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_None}" />
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_BreakLine}" />
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_Hyphen}" />
                         </ComboBox>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
@@ -173,13 +164,9 @@
                 <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationStyle}" Description="{x:Static lp:Resources.S_AnimationStyle_D}">
                     <fa:FASettingsExpanderItem.Footer>
                         <ComboBox SelectedIndex="{Binding Settings.AnimationStyle}" MinWidth="180">
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationFadeFloat}" />
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationFlipRoll}" />
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationSpotlightSweep}" />
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationFireworks}" />
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationShuffleDeck}" />
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationWheelFreeze}" />
                             <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationDirectRotate}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationFadeFloat}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationHorizontalShake}" />
                         </ComboBox>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>

@@ -54,15 +54,15 @@ public class FairDrawSettingsConfigTests
         {
             DefaultDrawSettings = new DefaultDrawSettingsConfig
             {
-                AnimationStyle = DrawAnimationStyleMode.WheelFreeze
+                AnimationStyle = DrawAnimationStyleMode.DirectRotate
             },
             RollCallSettings = new RollCallSettingsConfig
             {
-                AnimationStyle = DrawAnimationStyleMode.Fireworks
+                AnimationStyle = DrawAnimationStyleMode.FadeFloat
             },
             LotterySettings = new LotterySettingsConfig
             {
-                AnimationStyle = DrawAnimationStyleMode.ShuffleDeck
+                AnimationStyle = DrawAnimationStyleMode.HorizontalShake
             }
         };
 
@@ -71,9 +71,9 @@ public class FairDrawSettingsConfigTests
 
         Assert.Contains("animation_style", json);
         Assert.NotNull(restored);
-        Assert.Equal(DrawAnimationStyleMode.WheelFreeze, restored.DefaultDrawSettings.AnimationStyle);
-        Assert.Equal(DrawAnimationStyleMode.Fireworks, restored.RollCallSettings.AnimationStyle);
-        Assert.Equal(DrawAnimationStyleMode.ShuffleDeck, restored.LotterySettings.AnimationStyle);
+        Assert.Equal(DrawAnimationStyleMode.DirectRotate, restored.DefaultDrawSettings.AnimationStyle);
+        Assert.Equal(DrawAnimationStyleMode.FadeFloat, restored.RollCallSettings.AnimationStyle);
+        Assert.Equal(DrawAnimationStyleMode.HorizontalShake, restored.LotterySettings.AnimationStyle);
     }
 
     [Fact]

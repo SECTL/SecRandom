@@ -30,6 +30,7 @@ public partial class QuickDrawPage : UserControl
     {
         _isUnloaded = true;
         ViewModel.PropertyChanged -= ViewModel_OnPropertyChanged;
+        ViewModel.Dispose();
     }
 
     private void ViewModel_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)

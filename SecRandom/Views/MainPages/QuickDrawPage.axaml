@@ -9,7 +9,7 @@
     <Grid RowDefinitions="Auto,*" Margin="28" RowSpacing="20">
         <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
             <ComboBox ItemsSource="{Binding StudentListNames}" SelectedItem="{Binding SelectedStudentListName}" MinWidth="220" />
-            <Button Content="闪抽" Command="{Binding StartDrawCommand}" IsEnabled="{Binding CanStartDraw}" />
+            <Button Content="{Binding DrawButtonText}" Command="{Binding StartDrawCommand}" IsEnabled="{Binding CanStartDraw}" />
             <Button Content="清空历史" Command="{Binding ClearHistoryCommand}" />
         </StackPanel>
 

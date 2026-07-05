@@ -6,6 +6,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -50,6 +51,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private int _studentIdPadWidth;
     private bool _isRefreshingLists;
     private bool _isStudentListRefreshQueued;
+    private bool _isDrawCommandRunning;
+    private CancellationTokenSource? _previewCts;
 
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
     [ObservableProperty] private string _selectedGroup = AllGroupsOption;
@@ -59,6 +62,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _isResultVisible;
     [ObservableProperty] private int _previewAnimationRevision;
     [ObservableProperty] private int _resultAnimationRevision;
+    [ObservableProperty] private bool _isDrawing;
 
     public RollCallPageViewModel(
         MainConfigHandler configHandler,
@@ -105,7 +109,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     public bool IsControlPanelOnRight => !IsControlPanelOnLeft;
     public bool CanDecreaseCount => DrawCount > 1;
     public bool CanIncreaseCount => DrawCount < MaximumDrawCount;
-    public bool CanStartDraw => TotalCount > 0 && RemainingCount > 0;
+    public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0 && RemainingCount > 0);
+    public string DrawButtonText => IsDrawing ? SR.C_Stop : SR.C_Start;
     public int TotalCount { get; private set; }
     public int RemainingCount { get; private set; }
     public int MaximumDrawCount => Math.Max(1, Math.Max(TotalCount, RemainingCount));
@@ -183,6 +188,12 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(CanIncreaseCount));
     }
 
+    partial void OnIsDrawingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanStartDraw));
+        OnPropertyChanged(nameof(DrawButtonText));
+    }
+
     [RelayCommand]
     private void IncreaseCount()
     {
@@ -208,9 +219,15 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(ResultText));
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task StartDrawAsync()
     {
+        if (IsDrawing)
+        {
+            StopPreview();
+            return;
+        }
+
         RefreshCounts();
         if (!CanStartDraw)
         {
@@ -226,41 +243,49 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         }
 
         var count = Math.Clamp(DrawCount, 1, candidates.Count);
-        await ShowPreviewAsync(candidates, count).ConfigureAwait(true);
-
-        var result = _drawEngine.DrawPreparedStudents(count, candidates, DrawSettingsType.RollCall);
-        if (!result.IsSuccess)
+        SetDrawCommandRunning(true);
+        try
         {
-            StatusText = ToStatusMessage(result.Status);
-            return;
+            await ShowPreviewAsync(candidates, count).ConfigureAwait(true);
+
+            var result = _drawEngine.DrawPreparedStudents(count, candidates, DrawSettingsType.RollCall);
+            if (!result.IsSuccess)
+            {
+                StatusText = ToStatusMessage(result.Status);
+                return;
+            }
+
+            var now = DateTime.Now;
+            var drawnStudents = result.Result.ToList();
+            var weightSnapshot = BuildWeightSnapshot(drawnStudents);
+            _profileService.RecordStudentHistory(
+                drawnStudents,
+                now,
+                count,
+                SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup,
+                SelectedGender == AllGendersOption ? string.Empty : SelectedGender,
+                (int)Config.RollCallSettings.DrawType,
+                weightSnapshot);
+            _temporaryRecordService.RecordStudents(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope, drawnStudents);
+
+            ResultItems.Clear();
+            _lastResultStudents = drawnStudents;
+            RefreshResultItems();
+
+            IsResultVisible = ResultItems.Count > 0;
+            TriggerResultAnimation();
+            await PlayResultMusicAsync().ConfigureAwait(false);
+            StatusText = string.Format(SR.M_DrawnCountFormat, ResultItems.Count);
+            RefreshCounts();
+            OnPropertyChanged(nameof(ResultText));
+
+            if (_voiceAnnouncementService is not null)
+                await _voiceAnnouncementService.SpeakStudentsAsync(result.Result).ConfigureAwait(false);
         }
-
-        var now = DateTime.Now;
-        var drawnStudents = result.Result.ToList();
-        var weightSnapshot = BuildWeightSnapshot(drawnStudents);
-        _profileService.RecordStudentHistory(
-            drawnStudents,
-            now,
-            count,
-            SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup,
-            SelectedGender == AllGendersOption ? string.Empty : SelectedGender,
-            (int)Config.RollCallSettings.DrawType,
-            weightSnapshot);
-        _temporaryRecordService.RecordStudents(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope, drawnStudents);
-
-        ResultItems.Clear();
-        _lastResultStudents = drawnStudents;
-        RefreshResultItems();
-
-        IsResultVisible = ResultItems.Count > 0;
-        TriggerResultAnimation();
-        await PlayResultMusicAsync().ConfigureAwait(false);
-        StatusText = string.Format(SR.M_DrawnCountFormat, ResultItems.Count);
-        RefreshCounts();
-        OnPropertyChanged(nameof(ResultText));
-
-        if (_voiceAnnouncementService is not null)
-            await _voiceAnnouncementService.SpeakStudentsAsync(result.Result).ConfigureAwait(false);
+        finally
+        {
+            SetDrawCommandRunning(false);
+        }
     }
 
     [RelayCommand]
@@ -319,6 +344,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     public void Dispose()
     {
+        StopPreview();
         StudentListNames.CollectionChanged -= StudentListNamesOnCollectionChanged;
         Config.RollCallSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.DefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
@@ -413,23 +439,61 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
         await PlayAnimationMusicAsync().ConfigureAwait(true);
 
-        var iterations = AnimationSettings.Animation == AnimationMode.AutoPlay
-            ? Math.Clamp(AnimationSettings.AutoplayCount, 1, 999)
-            : 1;
+        var previewCts = new CancellationTokenSource();
+        _previewCts = previewCts;
+        var token = previewCts.Token;
+        var isManualStop = AnimationSettings.Animation == AnimationMode.ManualStop;
+        var iterations = isManualStop
+            ? int.MaxValue
+            : Math.Clamp(AnimationSettings.AutoplayCount, 1, 999);
         var delay = PreviewAnimationDuration;
 
-        for (var i = 0; i < iterations; i++)
+        IsDrawing = true;
+        try
         {
-            _lastResultStudents = candidates
-                .OrderBy(_ => Random.Shared.Next())
-                .Take(count)
-                .ToList();
-            RefreshResultItems();
-            IsResultVisible = true;
-            TriggerPreviewAnimation();
-            StatusText = SR.M_Ready;
-            await Task.Delay(delay).ConfigureAwait(true);
+            for (var i = 0; i < iterations && !token.IsCancellationRequested; i++)
+            {
+                _lastResultStudents = candidates
+                    .OrderBy(_ => Random.Shared.Next())
+                    .Take(count)
+                    .ToList();
+                RefreshResultItems();
+                IsResultVisible = true;
+                TriggerPreviewAnimation();
+                StatusText = isManualStop ? "抽取中..." : SR.M_Ready;
+
+                try
+                {
+                    await Task.Delay(delay, token).ConfigureAwait(true);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
         }
+        finally
+        {
+            if (ReferenceEquals(_previewCts, previewCts))
+                _previewCts = null;
+
+            previewCts.Dispose();
+            IsDrawing = false;
+        }
+    }
+
+    private void StopPreview()
+    {
+        _previewCts?.Cancel();
+    }
+
+    private void SetDrawCommandRunning(bool value)
+    {
+        if (_isDrawCommandRunning == value)
+            return;
+
+        _isDrawCommandRunning = value;
+        OnPropertyChanged(nameof(CanStartDraw));
     }
 
     private void TriggerPreviewAnimation()

@@ -1,6 +1,7 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Core.Enums.Configs;
+using System;
 using System.Text.Json.Serialization;
 
 namespace SecRandom.Core.Models.SubConfigs.Picking;
@@ -12,7 +13,6 @@ public partial class DrawSettingsConfigBase : ObservableObject
     [ObservableProperty] private int _fontSize = 50;
     [ObservableProperty] private DisplayFormatMode _displayFormat = DisplayFormatMode.Both;
     [ObservableProperty] private DisplayStyleMode _displayStyle = DisplayStyleMode.Default;
-    [ObservableProperty] private ShowRandomMode _showRandom = ShowRandomMode.None;
     [ObservableProperty] private bool _showTags = false;
     [ObservableProperty] private bool _showWeightTransparency = false;
     [ObservableProperty] private string _reminderText = "别紧张";
@@ -34,6 +34,12 @@ public partial class DrawSettingsConfigBase : ObservableObject
     {
         get => AnimationStyle;
         set => AnimationStyle = value;
+    }
+
+    partial void OnAnimationStyleChanged(DrawAnimationStyleMode value)
+    {
+        if (!Enum.IsDefined(typeof(DrawAnimationStyleMode), value))
+            AnimationStyle = DrawAnimationStyleMode.DirectRotate;
     }
 
     [ObservableProperty] private AnimationColorThemeMode _animationColorTheme = AnimationColorThemeMode.None;

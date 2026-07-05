@@ -43,8 +43,6 @@
   <data name="S_DisplayFormat_D" xml:space="preserve"><value>控制结果中显示姓名、编号或两者</value></data>
   <data name="S_DisplayStyle" xml:space="preserve"><value>显示样式</value></data>
   <data name="S_DisplayStyle_D" xml:space="preserve"><value>控制抽取结果的整体样式</value></data>
-  <data name="S_ShowRandom" xml:space="preserve"><value>随机过程显示</value></data>
-  <data name="S_ShowRandom_D" xml:space="preserve"><value>抽取过程中候选结果的展示方式</value></data>
   <data name="S_LotteryShowRandom" xml:space="preserve"><value>抽奖过程显示</value></data>
   <data name="S_LotteryShowRandom_D" xml:space="preserve"><value>抽奖过程中候选结果的展示格式</value></data>
   <data name="S_ShowTags" xml:space="preserve"><value>显示标签</value></data>
@@ -95,19 +93,14 @@
   <data name="O_Id" xml:space="preserve"><value>仅编号</value></data>
   <data name="O_Default" xml:space="preserve"><value>默认</value></data>
   <data name="O_Card" xml:space="preserve"><value>卡片</value></data>
-  <data name="O_None" xml:space="preserve"><value>不显示</value></data>
-  <data name="O_BreakLine" xml:space="preserve"><value>换行</value></data>
-  <data name="O_Hyphen" xml:space="preserve"><value>短横线</value></data>
   <data name="O_ManualStop" xml:space="preserve"><value>手动停止</value></data>
   <data name="O_AutoPlay" xml:space="preserve"><value>自动播放</value></data>
   <data name="O_NoAnimation" xml:space="preserve"><value>无动画</value></data>
-  <data name="O_AnimationFadeFloat" xml:space="preserve"><value>淡入上浮</value></data>
-  <data name="O_AnimationFlipRoll" xml:space="preserve"><value>翻牌滚动</value></data>
-  <data name="O_AnimationSpotlightSweep" xml:space="preserve"><value>聚光扫过</value></data>
-  <data name="O_AnimationFireworks" xml:space="preserve"><value>烟花庆祝</value></data>
-  <data name="O_AnimationShuffleDeck" xml:space="preserve"><value>奖池洗牌</value></data>
-  <data name="O_AnimationWheelFreeze" xml:space="preserve"><value>轮盘定格</value></data>
   <data name="O_AnimationDirectRotate" xml:space="preserve"><value>直接轮换</value></data>
+  <data name="O_AnimationFadeFloat" xml:space="preserve"><value>淡入上浮</value></data>
+  <data name="O_AnimationHorizontalShake" xml:space="preserve"><value>左右晃动</value></data>
+
+
   <data name="O_NoColor" xml:space="preserve"><value>无</value></data>
   <data name="O_RandomColor" xml:space="preserve"><value>随机</value></data>
   <data name="O_FixedColor" xml:space="preserve"><value>固定颜色</value></data>
