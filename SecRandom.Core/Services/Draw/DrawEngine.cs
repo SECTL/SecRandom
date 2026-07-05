@@ -204,6 +204,57 @@ public partial class DrawEngine
         }
     }
 
+    public DrawResult<Prize> DrawPrizeWithTemporaryCounts(
+        int count,
+        Func<Prize, bool> filter,
+        IReadOnlyDictionary<string, int> temporaryCounts)
+    {
+        var historyCache = BuildPrizeTemporaryHistoryCache(PrizeList.Prizes, temporaryCounts);
+        _logger.LogInformation("开始奖品抽取：请求数量={Count}，抽取模式={DrawMode}，抽取类型={DrawType}，使用临时记录。",
+            count, ConfigData.LotterySettings.DrawMode, ConfigData.LotterySettings.DrawType);
+
+        try
+        {
+            var usable = FilterPrizes(filter, count, historyCache);
+            var weightedCandidates = BuildPrizeCandidates(usable, historyCache);
+
+            if (count > weightedCandidates.Count)
+                throw new RepeatLimitExhaustedException();
+
+            var result = DrawWithBehindSceneWeights(weightedCandidates, count);
+            LogDrawResult("奖品抽取", result.Status, count, usable.Count, result.Result.Count);
+            return result;
+        }
+        catch (RepeatLimitExhaustedException)
+        {
+            _logger.LogWarning("奖品抽取失败：临时重复限制或奖品剩余数量耗尽。请求数量={Count}.", count);
+            return new DrawResult<Prize> { Status = DrawStatus.RepeatLimitExhausted };
+        }
+        catch (CandidateNotFoundException)
+        {
+            _logger.LogWarning("奖品抽取失败：未找到候选奖品。请求数量={Count}.", count);
+            return new DrawResult<Prize> { Status = DrawStatus.NoCandidates };
+        }
+    }
+
+    private static Dictionary<Prize, History> BuildPrizeTemporaryHistoryCache(
+        IEnumerable<Prize> prizes,
+        IReadOnlyDictionary<string, int> temporaryCounts)
+    {
+        Dictionary<Prize, History> result = [];
+        foreach (var prize in prizes)
+        {
+            var recordId = ProfileRecordIdentity.EnsureRecordId(prize);
+            var count = temporaryCounts.GetValueOrDefault(recordId);
+            if (count <= 0)
+                continue;
+
+            result[prize] = new History { TotalCount = count };
+        }
+
+        return result;
+    }
+
     private List<WeightedCandidate<Prize>> BuildPrizeCandidates(
         List<Prize> prizes,
         IReadOnlyDictionary<Prize, History> historyCache)

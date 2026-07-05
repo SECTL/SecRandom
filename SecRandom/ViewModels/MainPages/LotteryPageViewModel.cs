@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -8,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -16,6 +18,8 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.AttachedSettings;
+using SecRandom.Core.Models.Draw;
+using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
@@ -25,68 +29,104 @@ using SecRandom.ViewModels;
 using SecRandom.Shared;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Models.Profile;
+using SR = SecRandom.Langs.MainPages.Lottery.Resources;
 
 namespace SecRandom.ViewModels.MainPages;
 
 public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 {
+    private static string NoStudentOption => SR.O_NoStudentAssignment;
+    private static string AllGroupsOption => SR.O_AllGroups;
+    private static string AllGendersOption => SR.O_AllGenders;
+
     private readonly DrawEngine _drawEngine;
     private readonly IProfileService _profileService;
+    private readonly IDrawTemporaryRecordService _temporaryRecordService;
     private readonly MainConfigHandler _configHandler;
     private readonly DrawAudioService _drawAudioService;
+    private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
     private readonly ILogger<LotteryPageViewModel> _logger;
+    private readonly FileSystemWatcher _prizeListWatcher;
+    private readonly FileSystemWatcher _studentListWatcher;
     private bool _isDrawCommandRunning;
+    private bool _isRefreshingLists;
+    private bool _isPrizeListRefreshQueued;
+    private bool _isStudentListRefreshQueued;
 
     [ObservableProperty] private string _selectedPrizeListName = string.Empty;
+    [ObservableProperty] private string _selectedStudentListName = NoStudentOption;
+    [ObservableProperty] private string _selectedGroup = AllGroupsOption;
+    [ObservableProperty] private string _selectedGender = AllGendersOption;
     [ObservableProperty] private int _drawCount = 1;
-    [ObservableProperty] private string _statusText = "准备抽奖";
+    [ObservableProperty] private string _statusText = SR.M_Ready;
     [ObservableProperty] private bool _isResultVisible;
     [ObservableProperty] private int _previewAnimationRevision;
     [ObservableProperty] private int _resultAnimationRevision;
     [ObservableProperty] private bool _isDrawing;
-    private List<Prize> _lastResultPrizes = [];
+    private List<LotteryDisplayPrize> _lastResultPrizes = [];
     private CancellationTokenSource? _previewCts;
 
     public LotteryPageViewModel(
         MainConfigHandler configHandler,
         DrawEngine drawEngine,
         IProfileService profileService,
+        IDrawTemporaryRecordService temporaryRecordService,
         DrawAudioService drawAudioService,
-        ILogger<LotteryPageViewModel> logger)
+        ILogger<LotteryPageViewModel> logger,
+        IVoiceAnnouncementService? voiceAnnouncementService = null)
         : base(configHandler)
     {
         _configHandler = configHandler;
         _drawEngine = drawEngine;
         _profileService = profileService;
+        _temporaryRecordService = temporaryRecordService;
         _drawAudioService = drawAudioService;
+        _voiceAnnouncementService = voiceAnnouncementService;
         _logger = logger;
+        _prizeListWatcher = CreatePrizeListWatcher();
+        _studentListWatcher = CreateStudentListWatcher();
+        PrizeListNames.CollectionChanged += PrizeListNamesOnCollectionChanged;
+        StudentListNames.CollectionChanged += StudentListNamesOnCollectionChanged;
         Config.LotterySettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.DefaultDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
+        Config.MoreSettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged += SettingsOnPropertyChanged;
         RefreshPrizeLists();
+        RefreshStudentLists();
         RefreshCounts();
     }
 
     public ObservableCollection<string> PrizeListNames { get; } = [];
+    public ObservableCollection<string> StudentListNames { get; } = [NoStudentOption];
+    public ObservableCollection<string> GroupOptions { get; } = [AllGroupsOption];
+    public ObservableCollection<string> GenderOptions { get; } = [AllGendersOption];
     public ObservableCollection<LotteryResultItem> ResultItems { get; } = [];
     public ObservableCollection<LotteryRemainingItem> RemainingItems { get; } = [];
+    public MoreSettingsConfig MoreSettings => Config.MoreSettings;
+    public bool IsControlPanelOnLeft => MoreSettings.LotteryControlPanelPosition == RollCallControlPanelPosition.Left;
+    public bool IsControlPanelOnRight => !IsControlPanelOnLeft;
+    public bool IsStudentAssignmentEnabled => SelectedStudentListName != NoStudentOption;
+    public bool IsGroupSelectorVisible => MoreSettings.LotteryRangeSelector && IsStudentAssignmentEnabled;
+    public bool IsGenderSelectorVisible => MoreSettings.LotteryGenderSelector && IsStudentAssignmentEnabled;
     public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0 && RemainingCount > 0);
-    public string DrawButtonText => IsDrawing ? "停止" : "抽奖";
+    public string DrawButtonText => IsDrawing ? SR.C_Stop : SR.C_Start;
     public bool CanDecreaseCount => DrawCount > 1;
     public bool CanIncreaseCount => DrawCount < MaximumDrawCount;
     public int TotalCount { get; private set; }
     public int RemainingCount { get; private set; }
     public int MaximumDrawCount => Math.Max(1, RemainingCount > 0 ? RemainingCount : TotalCount);
-    public string CountSummary => $"总数 {TotalCount} / 剩余 {RemainingCount}";
+    public string CountSummary => string.Format(SR.M_CountSummaryFormat, TotalCount, RemainingCount);
     public string ReminderText => DisplaySettings.ReminderText;
     public double ReminderFontSize => DisplaySettings.ReminderFontSize;
     public IBrush ReminderBrush => BuildReminderBrush();
     public double ResultFontSize => DisplaySettings.FontSize;
     public FontFamily ResultFontFamily => BuildResultFontFamily();
-    public bool AnimationEnabled => AnimationSettings.AnimationEnabled;
+    public bool AnimationEnabled => AnimationSettings.Animation != AnimationMode.NoAnimation;
     public DrawAnimationStyleMode AnimationStyle => AnimationSettings.AnimationStyle;
-    public int AnimationDuration => Math.Clamp(AnimationSettings.AnimationDuration, 80, 10000);
-    public int PreviewAnimationDuration => Math.Clamp(AnimationSettings.AnimationInterval, 1, 10000);
+    public int AnimationDuration => 250;
+    public int PreviewAnimationDuration => AnimationSettings.Animation == AnimationMode.AutoPlay
+        ? Math.Clamp(AnimationSettings.AnimationInterval, 1, 10000)
+        : 80;
 
     private DrawSettingsConfigBase DisplaySettings =>
         Config.GetOverrideDrawSettings(DrawSettingsType.Lottery, OverridableDrawSettingsType.Display);
@@ -96,6 +136,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         Config.GetOverrideDrawSettings(DrawSettingsType.Lottery, OverridableDrawSettingsType.Color);
     private DrawSettingsConfigBase MusicSettings =>
         Config.GetOverrideDrawSettings(DrawSettingsType.Lottery, OverridableDrawSettingsType.Music);
+    private string CurrentGroupScope => SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup;
+    private string CurrentGenderScope => SelectedGender == AllGendersOption ? string.Empty : SelectedGender;
 
     partial void OnSelectedPrizeListNameChanged(string value)
     {
@@ -103,8 +145,34 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             return;
 
         _profileService.LoadPrizeProfile(value);
+        EnsureRestartPrizeRecordsCleared(value);
         Config.LotterySettings.DefaultPool = value;
         _configHandler.Save();
+        RefreshCounts();
+    }
+
+    partial void OnSelectedStudentListNameChanged(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value) && value != NoStudentOption)
+        {
+            _profileService.LoadStudentProfile(value);
+            EnsureRestartStudentRecordsCleared(value);
+        }
+
+        RefreshFilterOptions();
+        OnPropertyChanged(nameof(IsStudentAssignmentEnabled));
+        OnPropertyChanged(nameof(IsGroupSelectorVisible));
+        OnPropertyChanged(nameof(IsGenderSelectorVisible));
+        RefreshCounts();
+    }
+
+    partial void OnSelectedGroupChanged(string value)
+    {
+        RefreshCounts();
+    }
+
+    partial void OnSelectedGenderChanged(string value)
+    {
         RefreshCounts();
     }
 
@@ -148,36 +216,69 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             return;
         }
 
+        RefreshCounts();
         if (!CanStartDraw)
         {
-            StatusText = TotalCount == 0 ? "没有可抽取的奖品" : "没有剩余奖品";
+            StatusText = TotalCount == 0 ? SR.M_NoPrizes : SR.M_NoRemainingPrizes;
             return;
         }
 
         var prizes = (_profileService.CurrentPrizeList?.Prizes ?? []).Where(p => p.Exists).ToList();
+        if (prizes.Count == 0)
+        {
+            StatusText = SR.M_NoPrizes;
+            return;
+        }
+
         var count = Math.Clamp(DrawCount, 1, Math.Max(1, RemainingCount > 0 ? RemainingCount : prizes.Count));
         SetDrawCommandRunning(true);
         try
         {
             await ShowPreviewAsync(prizes, count).ConfigureAwait(true);
 
-            var result = _drawEngine.DrawPrize(count, _ => true);
+            var result = _drawEngine.DrawPrizeWithTemporaryCounts(
+                count,
+                _ => true,
+                _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName));
             if (!result.IsSuccess)
             {
-                StatusText = "抽奖失败：" + result.Status;
+                StatusText = ToStatusMessage(result.Status);
                 return;
             }
 
             var drawn = result.Result.ToList();
+            var assignedStudents = DrawAssignedStudents(drawn.Count);
+            if (assignedStudents is null)
+                return;
+
             _profileService.RecordPrizeHistory(drawn, DateTime.Now, count);
-            _lastResultPrizes = drawn;
-            ReplaceResults(drawn);
+            _temporaryRecordService.RecordPrizes(SelectedPrizeListName, drawn);
+            if (assignedStudents.Count > 0)
+            {
+                _profileService.RecordStudentHistory(
+                    assignedStudents,
+                    DateTime.Now,
+                    assignedStudents.Count,
+                    SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup,
+                    SelectedGender == AllGendersOption ? string.Empty : SelectedGender,
+                    (int)Config.RollCallSettings.DrawType);
+                _temporaryRecordService.RecordStudents(
+                    SelectedStudentListName,
+                    CurrentGenderScope,
+                    CurrentGroupScope,
+                    assignedStudents);
+            }
+
+            _lastResultPrizes = BuildDisplayPrizes(drawn, assignedStudents);
+            ReplaceResults(_lastResultPrizes);
             IsResultVisible = true;
             TriggerResultAnimation();
-            StatusText = $"已抽取 {ResultItems.Count} 个奖品";
+            StatusText = string.Format(SR.M_DrawnCountFormat, ResultItems.Count);
             RefreshCounts();
             await _drawAudioService.PlayAsync(MusicSettings.ResultMusic, MusicSettings.ResultMusicVolume,
                 MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut).ConfigureAwait(false);
+            if (_voiceAnnouncementService is not null)
+                await _voiceAnnouncementService.SpeakPrizesAsync(drawn).ConfigureAwait(false);
         }
         finally
         {
@@ -190,22 +291,141 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     {
         _lastResultPrizes.Clear();
         ResultItems.Clear();
+        _temporaryRecordService.ClearPrizeList(SelectedPrizeListName);
+        if (IsStudentAssignmentEnabled)
+            _temporaryRecordService.ClearStudentScope(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
         IsResultVisible = false;
-        StatusText = "准备抽奖";
+        StatusText = SR.M_ResetDone;
         RefreshCounts();
     }
 
-    private void RefreshPrizeLists()
+    public void RefreshPrizeLists()
     {
-        PrizeListNames.Clear();
-        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "lottery_list"), "*.json")
-                     .OrderBy(Path.GetFileName))
-            PrizeListNames.Add(Path.GetFileNameWithoutExtension(file));
+        if (_isRefreshingLists)
+            return;
 
-        var defaultPool = Config.LotterySettings.DefaultPool;
-        SelectedPrizeListName = PrizeListNames.Contains(defaultPool)
-            ? defaultPool
-            : PrizeListNames.FirstOrDefault() ?? string.Empty;
+        _isRefreshingLists = true;
+        try
+        {
+            var previousName = SelectedPrizeListName;
+            PrizeListNames.Clear();
+            foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "lottery_list"), "*.json")
+                         .OrderBy(Path.GetFileName))
+                PrizeListNames.Add(Path.GetFileNameWithoutExtension(file));
+
+            if (PrizeListNames.Count == 0)
+            {
+                var config = new PrizeListConfig("default");
+                config.Save();
+                PrizeListNames.Add(config.Name);
+            }
+
+            var defaultPool = Config.LotterySettings.DefaultPool;
+            var currentName = _profileService.PrizeListConfig?.Name ?? string.Empty;
+            SelectedPrizeListName = PrizeListNames.Contains(previousName)
+                ? previousName
+                : PrizeListNames.Contains(defaultPool)
+                    ? defaultPool
+                    : PrizeListNames.Contains(currentName)
+                        ? currentName
+                        : PrizeListNames.FirstOrDefault() ?? string.Empty;
+        }
+        finally
+        {
+            _isRefreshingLists = false;
+        }
+    }
+
+    public void RefreshStudentLists()
+    {
+        var previousName = SelectedStudentListName;
+        StudentListNames.Clear();
+        StudentListNames.Add(NoStudentOption);
+
+        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "roll_call_list"), "*.json")
+                     .OrderBy(Path.GetFileName))
+            StudentListNames.Add(Path.GetFileNameWithoutExtension(file));
+
+        SelectedStudentListName = StudentListNames.Contains(previousName) ? previousName : NoStudentOption;
+        RefreshFilterOptions();
+    }
+
+    private void PrizeListNamesOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(PrizeListNames));
+    }
+
+    private void StudentListNamesOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(StudentListNames));
+    }
+
+    private FileSystemWatcher CreatePrizeListWatcher()
+    {
+        var watcher = new FileSystemWatcher(Utils.GetDirectoryPath("list", "lottery_list"), "*.json")
+        {
+            NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.CreationTime
+        };
+
+        watcher.Created += PrizeListFiles_OnChanged;
+        watcher.Deleted += PrizeListFiles_OnChanged;
+        watcher.Renamed += PrizeListFiles_OnChanged;
+        watcher.Changed += PrizeListFiles_OnChanged;
+        watcher.EnableRaisingEvents = true;
+        return watcher;
+    }
+
+    private void PrizeListFiles_OnChanged(object? sender, FileSystemEventArgs e)
+    {
+        QueuePrizeListRefresh();
+    }
+
+    private void QueuePrizeListRefresh()
+    {
+        if (_isPrizeListRefreshQueued)
+            return;
+
+        _isPrizeListRefreshQueued = true;
+        Dispatcher.UIThread.Post(() =>
+        {
+            _isPrizeListRefreshQueued = false;
+            RefreshPrizeLists();
+            RefreshCounts();
+        });
+    }
+
+    private FileSystemWatcher CreateStudentListWatcher()
+    {
+        var watcher = new FileSystemWatcher(Utils.GetDirectoryPath("list", "roll_call_list"), "*.json")
+        {
+            NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.CreationTime
+        };
+
+        watcher.Created += StudentListFiles_OnChanged;
+        watcher.Deleted += StudentListFiles_OnChanged;
+        watcher.Renamed += StudentListFiles_OnChanged;
+        watcher.Changed += StudentListFiles_OnChanged;
+        watcher.EnableRaisingEvents = true;
+        return watcher;
+    }
+
+    private void StudentListFiles_OnChanged(object? sender, FileSystemEventArgs e)
+    {
+        QueueStudentListRefresh();
+    }
+
+    private void QueueStudentListRefresh()
+    {
+        if (_isStudentListRefreshQueued)
+            return;
+
+        _isStudentListRefreshQueued = true;
+        Dispatcher.UIThread.Post(() =>
+        {
+            _isStudentListRefreshQueued = false;
+            RefreshStudentLists();
+            RefreshCounts();
+        });
     }
 
     public void RefreshRemainingList()
@@ -235,9 +455,9 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private void RefreshRemainingList(IEnumerable<Prize>? source)
     {
         var prizes = (source ?? GetCurrentPrizes()).ToList();
-        var historyCache = BuildPrizeHistoryCache(prizes);
+        var temporaryCounts = _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName);
         RemainingItems.Clear();
-        foreach (var item in prizes.Select(prize => CreateRemainingItem(prize, historyCache)))
+        foreach (var item in prizes.Select(prize => CreateRemainingItem(prize, temporaryCounts)))
             RemainingItems.Add(item);
     }
 
@@ -248,9 +468,9 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
     private int CalculateRemainingCount(IReadOnlyCollection<Prize> prizes)
     {
-        var historyCache = BuildPrizeHistoryCache(prizes);
+        var temporaryCounts = _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName);
         if (Config.LotterySettings.DrawType == LotteryDrawType.Count)
-            return prizes.Sum(prize => Math.Max(0, prize.Count - (historyCache.GetValueOrDefault(prize)?.TotalCount ?? 0)));
+            return prizes.Sum(prize => Math.Max(0, prize.Count - GetTemporaryPrizeCount(prize, temporaryCounts)));
 
         var threshold = Config.LotterySettings.DrawMode switch
         {
@@ -262,38 +482,23 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
         return threshold <= 0
             ? prizes.Count
-            : prizes.Count(prize => (historyCache.GetValueOrDefault(prize)?.TotalCount ?? 0) < threshold);
+            : prizes.Count(prize => GetTemporaryPrizeCount(prize, temporaryCounts) < threshold);
     }
 
-    private Dictionary<Prize, History> BuildPrizeHistoryCache(IEnumerable<Prize> prizes)
+    private LotteryRemainingItem CreateRemainingItem(Prize prize, IReadOnlyDictionary<string, int> temporaryCounts)
     {
-        var history = _profileService.CurrentPrizeHistory;
-        if (history is null)
-            return [];
-
-        var prizeList = prizes.ToList();
-        var uniqueLegacyKeys = ProfileRecordIdentity.BuildUniquePrizeLegacyKeySet(prizeList);
-        Dictionary<Prize, History> result = [];
-        foreach (var prize in prizeList)
-        {
-            var item = ProfileRecordIdentity.GetPrizeHistory(history, prize, uniqueLegacyKeys.Contains);
-            if (item is not null)
-                result[prize] = item;
-        }
-
-        return result;
-    }
-
-    private LotteryRemainingItem CreateRemainingItem(Prize prize, IReadOnlyDictionary<Prize, History> historyCache)
-    {
-        var history = historyCache.GetValueOrDefault(prize);
-        var drawn = history?.TotalCount ?? 0;
+        var drawn = GetTemporaryPrizeCount(prize, temporaryCounts);
         var remaining = Config.LotterySettings.DrawType == LotteryDrawType.Count
             ? Math.Max(0, prize.Count - drawn)
             : Config.LotterySettings.DrawMode == DrawMode.Repeat
                 ? Math.Max(1, drawn + 1)
                 : Math.Max(0, GetLotteryRepeatThreshold() - drawn);
         return new LotteryRemainingItem(FormatPrize(prize), prize.Tags, remaining, drawn);
+    }
+
+    private static int GetTemporaryPrizeCount(Prize prize, IReadOnlyDictionary<string, int> temporaryCounts)
+    {
+        return temporaryCounts.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(prize));
     }
 
     private int GetLotteryRepeatThreshold()
@@ -329,10 +534,12 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         {
             for (var i = 0; isManualStop ? !token.IsCancellationRequested : i < iterations; i++)
             {
-                ReplaceResults(prizes.OrderBy(_ => Random.Shared.Next()).Take(count).ToList());
+                ReplaceResults(BuildDisplayPrizes(
+                    prizes.OrderBy(_ => Random.Shared.Next()).Take(count).ToList(),
+                    GetRandomAssignedStudents(count)));
                 IsResultVisible = true;
                 TriggerPreviewAnimation();
-                StatusText = "抽奖中…";
+                StatusText = SR.M_Drawing;
                 try
                 {
                     await Task.Delay(delay, token).ConfigureAwait(true);
@@ -372,7 +579,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         PreviewAnimationRevision++;
     }
 
-    private void ReplaceResults(IReadOnlyList<Prize> prizes)
+    private void ReplaceResults(IReadOnlyList<LotteryDisplayPrize> prizes)
     {
         ResultItems.Clear();
         foreach (var prize in prizes)
@@ -384,13 +591,14 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         ResultAnimationRevision++;
     }
 
-    private LotteryResultItem CreateResultItem(Prize prize)
+    private LotteryResultItem CreateResultItem(LotteryDisplayPrize item)
     {
+        var prize = item.Prize;
         var accentBrush = ResolveAccentBrush();
         return new LotteryResultItem(
-            FormatPrize(prize),
-            prize.Tags,
-            DisplaySettings.ShowTags && !string.IsNullOrWhiteSpace(prize.Tags),
+            item.DisplayText,
+            item.Tags,
+            DisplaySettings.ShowTags && !string.IsNullOrWhiteSpace(item.Tags),
             DisplaySettings.DisplayStyle == DisplayStyleMode.Card,
             accentBrush,
             DrawColorHelper.ResolveTextBrush(accentBrush, Config.Appearance.Theme),
@@ -399,6 +607,123 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             BuildImage(prize),
             Config.LotterySettings.LotteryImage,
             BuildInitial(prize));
+    }
+
+    private List<LotteryDisplayPrize> BuildDisplayPrizes(IReadOnlyList<Prize> prizes, IReadOnlyList<Student> assignedStudents)
+    {
+        List<LotteryDisplayPrize> result = [];
+        for (var i = 0; i < prizes.Count; i++)
+        {
+            var prize = prizes[i];
+            var student = i < assignedStudents.Count ? assignedStudents[i] : null;
+            result.Add(student is null
+                ? new LotteryDisplayPrize(prize, FormatPrize(prize), prize.Tags)
+                : new LotteryDisplayPrize(prize, FormatAssignedPrize(prize, student), prize.Tags));
+        }
+
+        return result;
+    }
+
+    private List<Student>? DrawAssignedStudents(int count)
+    {
+        if (!IsStudentAssignmentEnabled)
+            return [];
+
+        var candidates = GetStudentCandidates().ToList();
+        if (count <= 0)
+            return [];
+
+        if (candidates.Count == 0)
+        {
+            StatusText = SR.M_NoStudents;
+            return null;
+        }
+
+        if (count > candidates.Count)
+        {
+            StatusText = SR.M_NoRemainingStudents;
+            return null;
+        }
+
+        var result = _drawEngine.DrawPreparedStudents(count, candidates, DrawSettingsType.RollCall);
+        if (!result.IsSuccess)
+        {
+            StatusText = result.Status switch
+            {
+                DrawStatus.NoCandidates => SR.M_NoStudents,
+                DrawStatus.NoEligibleCandidates or DrawStatus.RepeatLimitExhausted => SR.M_NoRemainingStudents,
+                _ => ToStatusMessage(result.Status)
+            };
+            return null;
+        }
+
+        return result.Result.ToList();
+    }
+
+    private List<Student> GetRandomAssignedStudents(int count)
+    {
+        var candidates = GetStudentCandidates().ToList();
+        if (count <= 0 || candidates.Count == 0)
+            return [];
+
+        return candidates.OrderBy(_ => Random.Shared.Next()).Take(Math.Min(count, candidates.Count)).ToList();
+    }
+
+    private IEnumerable<Student> GetStudentCandidates()
+    {
+        if (!IsStudentAssignmentEnabled)
+            return [];
+
+        return (_profileService.CurrentStudentList?.Students ?? [])
+            .Where(student => student.Exists)
+            .Where(student => SelectedGroup == AllGroupsOption || student.Group == SelectedGroup)
+            .Where(student => SelectedGender == AllGendersOption || student.Gender == SelectedGender)
+            .Where(student => !HasReachedStudentRepeatLimit(student));
+    }
+
+    private bool HasReachedStudentRepeatLimit(Student student)
+    {
+        var threshold = Config.RollCallSettings.DrawMode switch
+        {
+            DrawMode.Repeat => 0,
+            DrawMode.NoRepeat => 1,
+            DrawMode.HalfRepeat => Math.Max(1, Config.RollCallSettings.HalfRepeat),
+            _ => 1
+        };
+
+        if (threshold <= 0)
+            return false;
+
+        var recordId = ProfileRecordIdentity.EnsureRecordId(student);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
+        return counts.GetValueOrDefault(recordId) >= threshold;
+    }
+
+    private void EnsureRestartPrizeRecordsCleared(string listName)
+    {
+        if (Config.LotterySettings.ClearRecord == ClearRecordMode.Restarted)
+            _temporaryRecordService.ClearPrizeListOnce(listName);
+    }
+
+    private void EnsureRestartStudentRecordsCleared(string listName)
+    {
+        if (Config.RollCallSettings.ClearRecord == ClearRecordMode.Restarted)
+            _temporaryRecordService.ClearStudentListOnce(listName);
+    }
+
+    private void RefreshFilterOptions()
+    {
+        var students = (_profileService.CurrentStudentList?.Students ?? [])
+            .Where(student => student.Exists)
+            .ToList();
+
+        ReplaceOptions(GroupOptions, AllGroupsOption, students.Select(student => student.Group));
+        ReplaceOptions(GenderOptions, AllGendersOption, students.Select(student => student.Gender));
+
+        if (!GroupOptions.Contains(SelectedGroup))
+            SelectedGroup = AllGroupsOption;
+        if (!GenderOptions.Contains(SelectedGender))
+            SelectedGender = AllGendersOption;
     }
 
     private string FormatPrize(Prize prize)
@@ -416,8 +741,31 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         };
     }
 
+    private string FormatAssignedPrize(Prize prize, Student student)
+    {
+        return Config.LotterySettings.LotteryShowRandom switch
+        {
+            LotteryShowRandomMode.PrizeHyphenName => JoinInline(prize.Name, student.Name),
+            LotteryShowRandomMode.PrizeBreakName => JoinLines(prize.Name, student.Name),
+            LotteryShowRandomMode.PrizeHyphenGroupHyphenName => JoinInline(prize.Name, student.Group, student.Name),
+            LotteryShowRandomMode.PrizeBreakGroupHyphenName => JoinLines(prize.Name, JoinInline(student.Group, student.Name)),
+            LotteryShowRandomMode.PrizeBreakGroupBreakName => JoinLines(prize.Name, student.Group, student.Name),
+            LotteryShowRandomMode.PrizeBreakGroup => JoinLines(prize.Name, student.Group),
+            LotteryShowRandomMode.PrizeHyphenGroup => JoinInline(prize.Name, student.Group),
+            _ => JoinLines(prize.Name, student.Name)
+        };
+    }
+
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (sender == Config.MoreSettings)
+        {
+            OnPropertyChanged(nameof(IsControlPanelOnLeft));
+            OnPropertyChanged(nameof(IsControlPanelOnRight));
+            OnPropertyChanged(nameof(IsGroupSelectorVisible));
+            OnPropertyChanged(nameof(IsGenderSelectorVisible));
+        }
+
         if (_lastResultPrizes.Count > 0)
             ReplaceResults(_lastResultPrizes);
 
@@ -435,9 +783,14 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     public void Dispose()
     {
         StopPreview();
+        PrizeListNames.CollectionChanged -= PrizeListNamesOnCollectionChanged;
+        StudentListNames.CollectionChanged -= StudentListNamesOnCollectionChanged;
         Config.LotterySettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.DefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.MoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged -= SettingsOnPropertyChanged;
+        _prizeListWatcher.Dispose();
+        _studentListWatcher.Dispose();
     }
 
     private IBrush BuildReminderBrush()
@@ -456,6 +809,18 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private static string JoinLines(params string[] values)
     {
         return string.Join("\n", values.Select(value => value.Trim()).Where(value => !string.IsNullOrWhiteSpace(value)));
+    }
+
+    private static void ReplaceOptions(ObservableCollection<string> target, string firstOption, IEnumerable<string> values)
+    {
+        target.Clear();
+        target.Add(firstOption);
+        foreach (var value in values
+                     .Select(value => value.Trim())
+                     .Where(value => !string.IsNullOrWhiteSpace(value))
+                     .Distinct(StringComparer.CurrentCulture)
+                     .OrderBy(value => value, StringComparer.CurrentCulture))
+            target.Add(value);
     }
 
     private IBrush? ResolveAccentBrush()
@@ -491,7 +856,22 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         var text = string.IsNullOrWhiteSpace(prize.Name) ? prize.Id : prize.Name;
         return string.IsNullOrWhiteSpace(text) ? "?" : text.Trim()[0].ToString();
     }
+
+    private string ToStatusMessage(DrawStatus status)
+    {
+        _logger.LogWarning("Lottery draw failed with status {Status}.", status);
+        return status switch
+        {
+            DrawStatus.NoCandidates => SR.M_NoCandidates,
+            DrawStatus.NoEligibleCandidates => SR.M_NoEligibleCandidates,
+            DrawStatus.RepeatLimitExhausted => SR.M_RepeatLimitExhausted,
+            DrawStatus.InvalidWeight => SR.M_InvalidWeight,
+            _ => SR.M_DrawFailed
+        };
+    }
 }
+
+public sealed record LotteryDisplayPrize(Prize Prize, string DisplayText, string Tags);
 
 public sealed record LotteryResultItem(
     string DisplayText,
@@ -513,5 +893,5 @@ public sealed record LotteryResultItem(
 public sealed record LotteryRemainingItem(string DisplayText, string Tags, int Remaining, int DrawnCount)
 {
     public bool IsTagsVisible => !string.IsNullOrWhiteSpace(Tags);
-    public string CountText => $"剩余 {Remaining} / 已抽 {DrawnCount}";
+    public string CountText => string.Format(SR.M_RemainingCountFormat, Remaining, DrawnCount);
 }

@@ -80,6 +80,7 @@ SecRandom/
 - Plugin enable/disable changes require `SettingsView.RequestRestartApp()`; the persisted restart flag is cleared on the next app startup after the change is applied.
 - Plugin logs are not separate files. They write through the existing `ILogger` pipeline with category prefix `SecRandom.Plugin[<plugin-id>].`; plugin detail UI must only show entries for the selected plugin.
 - Plugin draw access is invocation-only through `IPluginDrawInvoker`; do not pass `DrawEngine`, mutable profile history, draw config, or random sources into plugin contexts.
+- Picking `ClearRecord` is about app-layer temporary draw records, not persistent profile histories. RollCall and QuickDraw share student temporary records; Lottery uses prize temporary records.
 - ViewModels must be registered in Host and inherit `ViewModelBase`; `ViewModelBase` exposes `Config`.
 - Keep shell/profile/base ViewModels in `ViewModels/`; page-specific main ViewModels belong in `ViewModels/MainPages/`, and history settings page ViewModels belong in `ViewModels/SettingsPages/History/`.
 - Use `IAppHost.GetService<T>()` for existing service resolution patterns in views and services.
@@ -87,7 +88,7 @@ SecRandom/
 - Main default page: `main.rollCall`; settings default page: `settings.home`.
 - The roll-call main page is bottom-pinned in the main window sidebar (`PageLocation.Bottom`), full-width, and title-hidden. Keep its page chrome controlled by `MoreSettings`.
 - Lottery main page ID is `main.lottery`; quick draw is not registered as a main navigation page, but its settings page remains `settings.picking.quickDraw`.
-- More settings includes roll-call page management options for the control panel side and per-control visibility; wire the roll-call page through `MainConfigModel.MoreSettings` instead of duplicating local UI flags.
+- More settings includes roll-call and lottery page management options for the control panel side and per-control visibility; wire built-in draw pages through `MainConfigModel.MoreSettings` instead of duplicating local UI flags.
 - Page IDs follow root rules: `main.xxx`, `settings.xxx`, `settings.group.xxx`.
 - V2-parity settings pages currently use root IDs such as `settings.personalized.floatingWindow`, `settings.notification`, `settings.general.security`, `settings.linkage`, `settings.notification.voiceMusic`, `settings.personalized.theme`, `settings.history`, `settings.update`, and `settings.more`; register them in `BuildHost()` instead of manually editing navigation UI. Hidden pages like `settings.logs` still need Host registration even though they are not shown in the sidebar.
 - The log viewer page ID is `settings.logs`; keep it hidden from the settings sidebar and route the settings more-options “查看日志” command through navigation instead of opening a separate window.

@@ -31,6 +31,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 {
     private readonly DrawEngine _drawEngine;
     private readonly IProfileService _profileService;
+    private readonly IDrawTemporaryRecordService _temporaryRecordService;
     private readonly MainConfigHandler _configHandler;
     private readonly DrawAudioService _drawAudioService;
     private readonly ILogger<QuickDrawPageViewModel> _logger;
@@ -49,6 +50,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         MainConfigHandler configHandler,
         DrawEngine drawEngine,
         IProfileService profileService,
+        IDrawTemporaryRecordService temporaryRecordService,
         DrawAudioService drawAudioService,
         ILogger<QuickDrawPageViewModel> logger)
         : base(configHandler)
@@ -56,6 +58,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         _configHandler = configHandler;
         _drawEngine = drawEngine;
         _profileService = profileService;
+        _temporaryRecordService = temporaryRecordService;
         _drawAudioService = drawAudioService;
         _logger = logger;
         RefreshStudentLists();
@@ -64,14 +67,16 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     public ObservableCollection<string> StudentListNames { get; } = [];
     public ObservableCollection<QuickDrawResultItem> ResultItems { get; } = [];
     public int DrawCount => Math.Clamp(Config.QuickDrawSettings.DrawCount, 1, 100);
-    public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && !_isCoolingDown && (_profileService.CurrentStudentList?.Students.Any(s => s.Exists) ?? false));
+    public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && !_isCoolingDown && GetEligibleCandidates().Any());
     public string DrawButtonText => IsDrawing ? "停止" : "闪抽";
     public double ResultFontSize => DisplaySettings.FontSize;
     public FontFamily ResultFontFamily => BuildResultFontFamily();
-    public bool AnimationEnabled => AnimationSettings.AnimationEnabled;
+    public bool AnimationEnabled => AnimationSettings.Animation != AnimationMode.NoAnimation;
     public DrawAnimationStyleMode AnimationStyle => AnimationSettings.AnimationStyle;
-    public int AnimationDuration => Math.Clamp(AnimationSettings.AnimationDuration, 80, 10000);
-    public int PreviewAnimationDuration => Math.Clamp(AnimationSettings.AnimationInterval, 1, 10000);
+    public int AnimationDuration => 250;
+    public int PreviewAnimationDuration => AnimationSettings.Animation == AnimationMode.AutoPlay
+        ? Math.Clamp(AnimationSettings.AnimationInterval, 1, 10000)
+        : 80;
 
     private DrawSettingsConfigBase DisplaySettings =>
         Config.GetOverrideDrawSettings(DrawSettingsType.QuickDraw, OverridableDrawSettingsType.Display);
@@ -94,6 +99,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             return;
 
         _profileService.LoadStudentProfile(value);
+        EnsureRestartTemporaryRecordsCleared(value);
         Config.QuickDrawSettings.DefaultClass = value;
         _configHandler.Save();
         OnPropertyChanged(nameof(CanStartDraw));
@@ -117,9 +123,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (_isCoolingDown)
             return;
 
-        var candidates = (_profileService.CurrentStudentList?.Students ?? [])
-            .Where(student => student.Exists)
-            .ToList();
+        var candidates = GetEligibleCandidates().ToList();
         if (candidates.Count == 0)
         {
             StatusText = "没有可抽取的学生";
@@ -132,7 +136,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         {
             await ShowPreviewAsync(candidates, count).ConfigureAwait(true);
 
-            var result = _drawEngine.DrawStudent(count, candidates, DrawSettingsType.QuickDraw);
+            var result = _drawEngine.DrawPreparedStudents(count, candidates, DrawSettingsType.QuickDraw);
             if (!result.IsSuccess)
             {
                 StatusText = "闪抽失败：" + result.Status;
@@ -142,6 +146,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             var drawn = result.Result.ToList();
             var weights = BuildWeightSnapshot(drawn);
             _profileService.RecordStudentHistory(drawn, DateTime.Now, count, drawMethod: (int)Config.QuickDrawSettings.DrawType, weights: weights);
+            _temporaryRecordService.RecordStudents(SelectedStudentListName, string.Empty, string.Empty, drawn);
             ReplaceResults(drawn);
             IsResultVisible = true;
             TriggerResultAnimation();
@@ -160,10 +165,11 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private void ClearHistory()
     {
-        _profileService.ClearCurrentStudentHistory();
+        _temporaryRecordService.ClearStudentScope(SelectedStudentListName, string.Empty, string.Empty);
         ResultItems.Clear();
         IsResultVisible = false;
-        StatusText = "已清空当前名单历史";
+        StatusText = "已清空当前名单抽取记录";
+        OnPropertyChanged(nameof(CanStartDraw));
     }
 
     private void RefreshStudentLists()
@@ -177,6 +183,37 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         SelectedStudentListName = StudentListNames.Contains(defaultClass)
             ? defaultClass
             : StudentListNames.FirstOrDefault() ?? string.Empty;
+    }
+
+    private void EnsureRestartTemporaryRecordsCleared(string listName)
+    {
+        if (Config.RollCallSettings.ClearRecord == ClearRecordMode.Restarted)
+            _temporaryRecordService.ClearStudentListOnce(listName);
+    }
+
+    private IEnumerable<Student> GetEligibleCandidates()
+    {
+        return (_profileService.CurrentStudentList?.Students ?? [])
+            .Where(student => student.Exists)
+            .Where(student => !HasReachedRepeatLimit(student));
+    }
+
+    private bool HasReachedRepeatLimit(Student student)
+    {
+        var threshold = Config.QuickDrawSettings.DrawMode switch
+        {
+            DrawMode.Repeat => 0,
+            DrawMode.NoRepeat => 1,
+            DrawMode.HalfRepeat => Math.Max(1, Config.QuickDrawSettings.HalfRepeat),
+            _ => 1
+        };
+
+        if (threshold <= 0)
+            return false;
+
+        var recordId = ProfileRecordIdentity.EnsureRecordId(student);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, string.Empty, string.Empty);
+        return counts.GetValueOrDefault(recordId) >= threshold;
     }
 
     private async Task ShowPreviewAsync(IReadOnlyList<Student> candidates, int count)

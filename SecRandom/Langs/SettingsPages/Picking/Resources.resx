@@ -18,7 +18,7 @@
   <data name="S_DrawMode" xml:space="preserve"><value>抽取模式</value></data>
   <data name="S_DrawMode_D" xml:space="preserve"><value>控制重复抽取记录的处理方式</value></data>
   <data name="S_HalfRepeat" xml:space="preserve"><value>半重复阈值</value></data>
-  <data name="S_HalfRepeat_D" xml:space="preserve"><value>抽中次数达到该值前不会再次进入候选池</value></data>
+  <data name="S_HalfRepeat_D" xml:space="preserve"><value>抽中次数达到该值后不会再次进入候选池</value></data>
   <data name="S_ClearRecord" xml:space="preserve"><value>清除记录</value></data>
   <data name="S_ClearRecord_D" xml:space="preserve"><value>控制抽取记录何时清除</value></data>
   <data name="S_DrawType" xml:space="preserve"><value>抽取方式</value></data>
@@ -63,12 +63,8 @@
   <data name="S_AnimationInterval_D" xml:space="preserve"><value>抽取动画每次切换的间隔（毫秒）</value></data>
   <data name="S_AutoplayCount" xml:space="preserve"><value>自动播放次数</value></data>
   <data name="S_AutoplayCount_D" xml:space="preserve"><value>自动播放模式下滚动候选结果的次数</value></data>
-  <data name="S_AnimationEnabled" xml:space="preserve"><value>启用动画</value></data>
-  <data name="S_AnimationEnabled_D" xml:space="preserve"><value>控制抽取过程和最终定格时是否播放动画</value></data>
   <data name="S_AnimationStyle" xml:space="preserve"><value>动画样式</value></data>
   <data name="S_AnimationStyle_D" xml:space="preserve"><value>设置抽取过程和最终定格时使用的统一动画效果</value></data>
-  <data name="S_AnimationDuration" xml:space="preserve"><value>动画时长</value></data>
-  <data name="S_AnimationDuration_D" xml:space="preserve"><value>抽取动画和最终定格动画持续时间（毫秒）</value></data>
   <data name="S_ColorTheme" xml:space="preserve"><value>颜色主题</value></data>
   <data name="S_ColorTheme_D" xml:space="preserve"><value>设置抽取动画和结果颜色来源</value></data>
   <data name="S_FixedColor" xml:space="preserve"><value>固定颜色</value></data>

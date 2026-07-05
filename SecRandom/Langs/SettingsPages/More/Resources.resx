@@ -72,6 +72,45 @@
   <data name="S_RollCallQuantityLabel" xml:space="preserve">
     <value>人数统计</value>
   </data>
+  <data name="S_LotteryPanelPosition" xml:space="preserve">
+    <value>抽奖控制面板位置</value>
+  </data>
+  <data name="S_LotteryPanelPosition_D" xml:space="preserve">
+    <value>设置抽奖页控制面板显示在主内容左侧或右侧。</value>
+  </data>
+  <data name="S_LotteryControls" xml:space="preserve">
+    <value>抽奖页面控件</value>
+  </data>
+  <data name="S_LotteryControls_D" xml:space="preserve">
+    <value>控制抽奖页侧边控制面板中的控件显示。</value>
+  </data>
+  <data name="S_LotteryResetButton" xml:space="preserve">
+    <value>重置按钮</value>
+  </data>
+  <data name="S_LotteryQuantityControl" xml:space="preserve">
+    <value>数量调节</value>
+  </data>
+  <data name="S_LotteryStartButton" xml:space="preserve">
+    <value>开始按钮</value>
+  </data>
+  <data name="S_LotteryListSelector" xml:space="preserve">
+    <value>奖池选择</value>
+  </data>
+  <data name="S_LotteryStudentListSelector" xml:space="preserve">
+    <value>学生名单选择</value>
+  </data>
+  <data name="S_LotteryRangeSelector" xml:space="preserve">
+    <value>范围选择</value>
+  </data>
+  <data name="S_LotteryGenderSelector" xml:space="preserve">
+    <value>性别选择</value>
+  </data>
+  <data name="S_LotteryRemainingButton" xml:space="preserve">
+    <value>剩余名单按钮</value>
+  </data>
+  <data name="S_LotteryQuantityLabel" xml:space="preserve">
+    <value>奖数统计</value>
+  </data>
   <data name="S_Shortcut" xml:space="preserve">
     <value>快捷键</value>
   </data>

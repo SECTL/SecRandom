@@ -11,10 +11,11 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Icons;
 using SecRandom.Helpers;
 using SecRandom.ViewModels.MainPages;
+using SR = SecRandom.Langs.MainPages.Lottery.Resources;
 
 namespace SecRandom.Views.MainPages;
 
-[PageInfo("main.lottery", FluentIcons.LotteryFilled, location: PageLocation.Bottom, useFullWidth: true, hidePageTitle: true)]
+[PageInfo("main.lottery", FluentIcons.GiftFilled, location: PageLocation.Bottom, useFullWidth: true, hidePageTitle: true)]
 public partial class LotteryPage : UserControl
 {
     private bool _isUnloaded;
@@ -27,7 +28,6 @@ public partial class LotteryPage : UserControl
         InitializeComponent();
         _resultPresenter = this.FindControl<ItemsControl>("ResultPresenter");
         ViewModel.PropertyChanged += ViewModel_OnPropertyChanged;
-        Unloaded += OnUnloaded;
     }
 
     public LotteryPageViewModel ViewModel { get; }
@@ -100,9 +100,9 @@ public partial class LotteryPage : UserControl
 
         await new FAContentDialog
         {
-            Title = "剩余奖项",
+            Title = SR.C_RemainingListTitle,
             Content = list,
-            CloseButtonText = "关闭",
+            CloseButtonText = SR.C_Close,
             DefaultButton = FAContentDialogButton.Close
         }.ShowAsync(TopLevel.GetTopLevel(this));
     }

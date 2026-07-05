@@ -121,10 +121,12 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     public double ReminderFontSize => ReminderSettings.ReminderFontSize;
     public FontFamily ResultFontFamily => BuildResultFontFamily();
     public bool IsResultCardStyle => DisplaySettings.DisplayStyle == DisplayStyleMode.Card;
-    public bool AnimationEnabled => AnimationSettings.AnimationEnabled;
+    public bool AnimationEnabled => AnimationSettings.Animation != AnimationMode.NoAnimation;
     public DrawAnimationStyleMode AnimationStyle => AnimationSettings.AnimationStyle;
-    public int AnimationDuration => Math.Clamp(AnimationSettings.AnimationDuration, 80, 10000);
-    public int PreviewAnimationDuration => Math.Clamp(AnimationSettings.AnimationInterval, 1, 10000);
+    public int AnimationDuration => 250;
+    public int PreviewAnimationDuration => AnimationSettings.Animation == AnimationMode.AutoPlay
+        ? Math.Clamp(AnimationSettings.AnimationInterval, 1, 10000)
+        : 80;
 
     private DrawSettingsConfigBase DisplaySettings =>
         Config.GetOverrideDrawSettings(DrawSettingsType.RollCall, OverridableDrawSettingsType.Display);
@@ -154,6 +156,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         if (!string.IsNullOrWhiteSpace(value))
         {
             _profileService.LoadStudentProfile(value);
+            EnsureRestartTemporaryRecordsCleared(value);
             if (Config.RollCallSettings.DefaultClass != value)
             {
                 Config.RollCallSettings.DefaultClass = value;
@@ -548,6 +551,12 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
                      .ThenBy(student => student.Name)
                      .Select(CreateRemainingItem))
             RemainingItems.Add(item);
+    }
+
+    private void EnsureRestartTemporaryRecordsCleared(string listName)
+    {
+        if (Config.RollCallSettings.ClearRecord == ClearRecordMode.Restarted)
+            _temporaryRecordService.ClearStudentListOnce(listName);
     }
 
     private IEnumerable<Student> GetVisibleStudents()

@@ -91,6 +91,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - `docs/project_rules.md` overrides inference when adding features.
 - General settings now live under `MainConfigModel.General`; `MainConfigModel.Basic` / `Backup` remain compatibility bridges for existing callers while new config splits belong under `SecRandom.Core/Models/SubConfigs/General/`.
 - Point-call students and lottery prizes use `RecordId` as the internal stable identity for history/fairness. The visible `Id` field is optional display metadata only and must not be required by import, draw, or history logic.
+- Picking `ClearRecord` controls temporary draw records only; do not clear persistent profile histories from that setting. RollCall and QuickDraw share the same student temporary record store, while Lottery uses prize temporary records.
 - Privacy settings split Sentry upload from online status reporting: `SentryTelemetryEnabled` only controls `SecRandom/Services/Telemetry/`, while `OnlineStatusMode` only controls `SecRandom/Services/OnlineStatusService.cs`.
 - Crash recovery mode lives under `MainConfigModel.General.CrashRecovery`; prompt startup handling must run before single-instance acquisition, while normal restart must release the single-instance service before relaunch.
 - ViewModels must be registered in `SecRandom/App.axaml.cs` `BuildHost()`; reusable services also go through Host.
@@ -113,7 +114,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - `Global.props` carries the main MSBuild behavior: unsafe enabled, Windows targeting enabled, SourceLink, full debug symbols, shared `AssemblyInfo.cs`, and default exclusion of project-local `artifacts/` / `publish/` output trees from SDK item globbing.
 - `Directory.Build.props` only pins `AvaloniaVersion`.
 - Standalone verification scripts live under `scripts/`; keep them self-contained and write outputs under `artifacts/`.
-- More settings owns point-call page chrome options such as the roll-call control panel position and control visibility; do not hard-code those controls outside the page/config binding.
+- More settings owns built-in draw page chrome options such as roll-call/lottery control panel position and control visibility; do not hard-code those controls outside the page/config binding.
 
 ## COMMENT STYLE
 - Keep comments that explain non-obvious project constraints, platform quirks, or AI-prone rules.

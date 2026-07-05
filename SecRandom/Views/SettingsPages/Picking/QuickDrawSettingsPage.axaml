@@ -6,6 +6,7 @@
              xmlns:lp="clr-namespace:SecRandom.Langs.SettingsPages.Picking"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Picking"
              xmlns:enums="clr-namespace:SecRandom.Core.Enums.Configs;assembly=SecRandom.Core"
+             xmlns:converters="clr-namespace:SecRandom.Core.Converters;assembly=SecRandom.Core"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.Picking.QuickDrawSettingsPage"
@@ -28,13 +29,14 @@
             </fa:FASettingsExpander>
             
             <fa:FASettingsExpander Header="{x:Static lp:Resources.S_HalfRepeat}"
-                                   Description="{x:Static lp:Resources.S_HalfRepeat_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ClipboardBulletListRegular}}">
+                                    Description="{x:Static lp:Resources.S_HalfRepeat_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi ClipboardBulletListRegular}}"
+                                    IsVisible="{Binding Settings.DrawMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:DrawMode.HalfRepeat}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.HalfRepeat}" Minimum="0" Maximum="100" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
-            
+
             <fa:FASettingsExpander Header="{x:Static lp:Resources.S_DrawType}"
                                    Description="{x:Static lp:Resources.S_DrawType_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi FlashRegular}}">
@@ -150,28 +152,24 @@
                 </fa:FASettingsExpanderItem>
                 
                 <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationInterval}"
-                                           Description="{x:Static lp:Resources.S_AnimationInterval_D}">
+                                           Description="{x:Static lp:Resources.S_AnimationInterval_D}"
+                                           IsVisible="{Binding Settings.Animation, Converter={x:Static converters:AnimationModeConverters.IsAnimated}}">
                     <fa:FASettingsExpanderItem.Footer>
                         <NumericUpDown Value="{Binding Settings.AnimationInterval}" Minimum="1" Maximum="10000" />
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
                 
                 <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AutoplayCount}"
-                                           Description="{x:Static lp:Resources.S_AutoplayCount_D}">
+                                           Description="{x:Static lp:Resources.S_AutoplayCount_D}"
+                                           IsVisible="{Binding Settings.Animation, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:AnimationMode.AutoPlay}}">
                     <fa:FASettingsExpanderItem.Footer>
                         <NumericUpDown Value="{Binding Settings.AutoplayCount}" Minimum="1" Maximum="999" />
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationEnabled}"
-                                           Description="{x:Static lp:Resources.S_AnimationEnabled_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.AnimationEnabled}" />
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
                 <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationStyle}"
-                                           Description="{x:Static lp:Resources.S_AnimationStyle_D}">
+                                           Description="{x:Static lp:Resources.S_AnimationStyle_D}"
+                                           IsVisible="{Binding Settings.Animation, Converter={x:Static converters:AnimationModeConverters.IsAnimated}}">
                     <fa:FASettingsExpanderItem.Footer>
                         <ComboBox SelectedIndex="{Binding Settings.AnimationStyle}" MinWidth="180">
                             <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationDirectRotate}" />
@@ -181,12 +179,6 @@
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationDuration}"
-                                           Description="{x:Static lp:Resources.S_AnimationDuration_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <NumericUpDown Value="{Binding Settings.AnimationDuration}" Minimum="0" Maximum="10000" />
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
             
             <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Color}"
@@ -211,7 +203,8 @@
                 </fa:FASettingsExpanderItem>
                 
                 <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_FixedColor}"
-                                           Description="{x:Static lp:Resources.S_FixedColor_D}">
+                                           Description="{x:Static lp:Resources.S_FixedColor_D}"
+                                           IsVisible="{Binding Settings.AnimationColorTheme, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:AnimationColorThemeMode.Fixed}}">
                     <fa:FASettingsExpanderItem.Footer>
                         <ColorPicker Color="{Binding Settings.AnimationFixedColor}" />
                     </fa:FASettingsExpanderItem.Footer>

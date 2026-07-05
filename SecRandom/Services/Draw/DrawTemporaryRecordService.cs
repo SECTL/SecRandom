@@ -12,6 +12,11 @@ namespace SecRandom.Services.Draw;
 
 public sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordService> logger) : IDrawTemporaryRecordService
 {
+    private const string PrizeScopeKey = "prizes";
+
+    private readonly HashSet<string> _clearedStudentLists = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _clearedPrizeLists = new(StringComparer.OrdinalIgnoreCase);
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true
@@ -72,6 +77,68 @@ public sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordServic
             File.Delete(path);
     }
 
+    public void ClearStudentListOnce(string listName)
+    {
+        var key = NormalizeFileComponent(listName);
+        if (!_clearedStudentLists.Add(key))
+            return;
+
+        ClearStudentList(listName);
+    }
+
+    public IReadOnlyDictionary<string, int> GetPrizeCounts(string listName)
+    {
+        var state = LoadPrizeState(listName);
+        return state.Scopes.TryGetValue(PrizeScopeKey, out var scope)
+            ? scope.Records.ToDictionary(pair => pair.Key, pair => pair.Value.Count)
+            : new Dictionary<string, int>();
+    }
+
+    public void RecordPrizes(string listName, IEnumerable<Prize> prizes)
+    {
+        var state = LoadPrizeState(listName);
+        if (!state.Scopes.TryGetValue(PrizeScopeKey, out var scope))
+        {
+            scope = new TemporaryRecordScope();
+            state.Scopes[PrizeScopeKey] = scope;
+        }
+
+        var now = DateTimeOffset.Now;
+        foreach (var prize in prizes)
+        {
+            var recordId = ProfileRecordIdentity.EnsureRecordId(prize);
+            if (!scope.Records.TryGetValue(recordId, out var record))
+            {
+                record = new TemporaryRecordItem();
+                scope.Records[recordId] = record;
+            }
+
+            record.Name = prize.Name;
+            record.Id = prize.Id;
+            record.Count++;
+            record.LastDrawnTime = now;
+        }
+
+        state.UpdatedAt = now;
+        SavePrizeState(listName, state);
+    }
+
+    public void ClearPrizeList(string listName)
+    {
+        var path = GetPrizePath(listName);
+        if (File.Exists(path))
+            File.Delete(path);
+    }
+
+    public void ClearPrizeListOnce(string listName)
+    {
+        var key = NormalizeFileComponent(listName);
+        if (!_clearedPrizeLists.Add(key))
+            return;
+
+        ClearPrizeList(listName);
+    }
+
     public void ClearAll()
     {
         var directory = Utils.GetDirectoryPath("TEMP");
@@ -79,7 +146,8 @@ public sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordServic
             return;
 
         foreach (var file in Directory.GetFiles(directory, "roll_call_record_*.json")
-                     .Concat(Directory.GetFiles(directory, "roll_call_record__*.json")))
+                     .Concat(Directory.GetFiles(directory, "roll_call_record__*.json"))
+                     .Concat(Directory.GetFiles(directory, "lottery_record_*.json")))
             File.Delete(file);
     }
 
@@ -108,9 +176,39 @@ public sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordServic
         File.WriteAllText(path, JsonSerializer.Serialize(state, JsonOptions));
     }
 
+    private TemporaryRecordState LoadPrizeState(string listName)
+    {
+        var path = GetPrizePath(listName);
+        if (!File.Exists(path))
+            return new TemporaryRecordState { ListName = listName };
+
+        try
+        {
+            return JsonSerializer.Deserialize<TemporaryRecordState>(File.ReadAllText(path), JsonOptions)
+                   ?? new TemporaryRecordState { ListName = listName };
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "读取临时抽奖记录失败，将使用空记录：{Path}", path);
+            return new TemporaryRecordState { ListName = listName };
+        }
+    }
+
+    private static void SavePrizeState(string listName, TemporaryRecordState state)
+    {
+        var path = GetPrizePath(listName);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, JsonSerializer.Serialize(state, JsonOptions));
+    }
+
     private static string GetStudentPath(string listName)
     {
         return Utils.GetFilePath("TEMP", $"roll_call_record_{NormalizeFileComponent(listName)}.json");
+    }
+
+    private static string GetPrizePath(string listName)
+    {
+        return Utils.GetFilePath("TEMP", $"lottery_record_{NormalizeFileComponent(listName)}.json");
     }
 
     private static string BuildScopeKey(string gender, string group)

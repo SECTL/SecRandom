@@ -3,19 +3,23 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SecRandom.ViewModels.MainPages"
+             xmlns:langs="using:SecRandom.Langs.MainPages.Lottery"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="720"
              x:Class="SecRandom.Views.MainPages.LotteryPage"
-             x:DataType="vm:LotteryPageViewModel">
+             x:DataType="vm:LotteryPageViewModel"
+             Unloaded="OnUnloaded">
     <UserControl.Resources>
         <DataTemplate x:Key="LotteryControlPanelTemplate"
                       DataType="vm:LotteryPageViewModel">
             <StackPanel Classes="roll-control-stack" Spacing="0">
                 <Button Classes="roll-wide"
-                        Content="重置"
+                        Content="{x:Static langs:Resources.C_Reset}"
+                        IsVisible="{Binding MoreSettings.LotteryResetButton}"
                         Command="{Binding ResetDisplayCommand}" />
 
                 <Grid Classes="roll-count-row"
-                      ColumnDefinitions="45,*,45">
+                      ColumnDefinitions="45,*,45"
+                      IsVisible="{Binding MoreSettings.LotteryQuantityControl}">
                     <Button Grid.Column="0"
                             Classes="roll-compact"
                             Content="-"
@@ -36,10 +40,12 @@
 
                 <Button Classes="roll-wide accent"
                         Content="{Binding DrawButtonText}"
+                        IsVisible="{Binding MoreSettings.LotteryStartButton}"
                         IsEnabled="{Binding CanStartDraw}"
                         Command="{Binding StartDrawCommand}" />
 
                 <ComboBox Classes="roll-selector"
+                          IsVisible="{Binding MoreSettings.LotteryListSelector}"
                           ItemsSource="{Binding PrizeListNames}"
                           SelectedItem="{Binding SelectedPrizeListName}">
                     <ComboBox.ItemTemplate>
@@ -52,12 +58,56 @@
                     </ComboBox.ItemTemplate>
                 </ComboBox>
 
+                <ComboBox Classes="roll-selector"
+                          IsVisible="{Binding MoreSettings.LotteryStudentListSelector}"
+                          ItemsSource="{Binding StudentListNames}"
+                          SelectedItem="{Binding SelectedStudentListName}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       TextAlignment="Center" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <ComboBox Classes="roll-selector"
+                          IsVisible="{Binding IsGroupSelectorVisible}"
+                          ItemsSource="{Binding GroupOptions}"
+                          SelectedItem="{Binding SelectedGroup}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       TextAlignment="Center" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <ComboBox Classes="roll-selector"
+                          IsVisible="{Binding IsGenderSelectorVisible}"
+                          ItemsSource="{Binding GenderOptions}"
+                          SelectedItem="{Binding SelectedGender}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       TextAlignment="Center" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
                 <Button Classes="roll-wide"
-                        Content="剩余奖品"
+                        Content="{x:Static langs:Resources.C_ShowRemainingList}"
                         FontSize="18"
+                        IsVisible="{Binding MoreSettings.LotteryRemainingButton}"
                         Click="RemainingListButton_OnClick" />
 
                 <TextBlock Text="{Binding CountSummary}"
+                           IsVisible="{Binding MoreSettings.LotteryQuantityLabel}"
                            HorizontalAlignment="Center"
                            TextAlignment="Center"
                            FontSize="16"
@@ -169,10 +219,18 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid ColumnDefinitions="*,Auto"
+    <Grid ColumnDefinitions="Auto,*,Auto"
           RowDefinitions="*"
           MinHeight="560">
-        <Grid Grid.Column="0"
+        <Border Grid.Column="0"
+                Classes="roll-control-panel"
+                HorizontalAlignment="Left"
+                IsVisible="{Binding IsControlPanelOnLeft}">
+            <ContentControl Content="{Binding}"
+                            ContentTemplate="{StaticResource LotteryControlPanelTemplate}" />
+        </Border>
+
+        <Grid Grid.Column="1"
               Margin="28 0 12 28">
             <TextBlock Classes="result-name"
                        IsVisible="{Binding !IsResultVisible}"
@@ -216,14 +274,14 @@
                                                        FontWeight="SemiBold"
                                                        Foreground="{Binding TextBrush}" />
                                         </Grid>
-                                        <TextBlock Text="{Binding DisplayText}"
-                                                   Classes="result-name"
-                                                   Foreground="{Binding TextBrush}"
-                                                   FontSize="{Binding $parent[UserControl].DataContext.ResultFontSize}"
-                                                   FontFamily="{Binding $parent[UserControl].DataContext.ResultFontFamily}"
-                                                   FontWeight="SemiBold" />
-                                        <TextBlock Text="{Binding Tags}"
-                                                   IsVisible="{Binding IsTagsVisible}"
+                                         <TextBlock Text="{Binding DisplayText}"
+                                                    Classes="result-name"
+                                                    Foreground="{Binding TextBrush}"
+                                                    FontSize="{Binding $parent[UserControl].DataContext.ResultFontSize}"
+                                                    FontFamily="{Binding $parent[UserControl].DataContext.ResultFontFamily}"
+                                                    FontWeight="SemiBold" />
+                                         <TextBlock Text="{Binding Tags}"
+                                                    IsVisible="{Binding IsTagsVisible}"
                                                    HorizontalAlignment="Center"
                                                    Opacity="0.72"
                                                    FontSize="13" />
@@ -250,14 +308,14 @@
                                                    FontWeight="SemiBold"
                                                    Foreground="{Binding TextBrush}" />
                                     </Grid>
-                                    <TextBlock Text="{Binding DisplayText}"
-                                               Classes="result-name"
-                                               Foreground="{Binding TextBrush}"
-                                               FontSize="{Binding $parent[UserControl].DataContext.ResultFontSize}"
-                                               FontFamily="{Binding $parent[UserControl].DataContext.ResultFontFamily}"
-                                               FontWeight="SemiBold" />
-                                    <TextBlock Text="{Binding Tags}"
-                                               IsVisible="{Binding IsTagsVisible}"
+                                     <TextBlock Text="{Binding DisplayText}"
+                                                Classes="result-name"
+                                                Foreground="{Binding TextBrush}"
+                                                FontSize="{Binding $parent[UserControl].DataContext.ResultFontSize}"
+                                                FontFamily="{Binding $parent[UserControl].DataContext.ResultFontFamily}"
+                                                FontWeight="SemiBold" />
+                                     <TextBlock Text="{Binding Tags}"
+                                                IsVisible="{Binding IsTagsVisible}"
                                                HorizontalAlignment="Center"
                                                Opacity="0.72"
                                                FontSize="13" />
@@ -274,8 +332,9 @@
             </ScrollViewer>
         </Grid>
 
-        <Border Grid.Column="1"
-                Classes="roll-control-panel">
+        <Border Grid.Column="2"
+                Classes="roll-control-panel"
+                IsVisible="{Binding IsControlPanelOnRight}">
             <ContentControl Content="{Binding}"
                             ContentTemplate="{StaticResource LotteryControlPanelTemplate}" />
         </Border>

@@ -43,8 +43,8 @@
             </fa:FASettingsExpander>
 
             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_RollCallControls}"
-                                   Description="{x:Static lsp:Resources.S_RollCallControls_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi AppsListRegular}}">
+                                    Description="{x:Static lsp:Resources.S_RollCallControls_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi AppsListRegular}}">
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_RollCallResetButton}">
                     <fa:FASettingsExpanderItem.Footer>
                         <ToggleSwitch IsChecked="{Binding Settings.RollCallResetButton}" />
@@ -90,6 +90,75 @@
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_RollCallQuantityLabel}">
                     <fa:FASettingsExpanderItem.Footer>
                         <ToggleSwitch IsChecked="{Binding Settings.RollCallQuantityLabel}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_LotteryPanelPosition}"
+                                    Description="{x:Static lsp:Resources.S_LotteryPanelPosition_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi GiftRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.LotteryControlPanelPosition}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_Right}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_Left}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_LotteryControls}"
+                                    Description="{x:Static lsp:Resources.S_LotteryControls_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi AppsListRegular}}">
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryResetButton}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.LotteryResetButton}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryQuantityControl}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.LotteryQuantityControl}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryStartButton}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.LotteryStartButton}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryListSelector}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.LotteryListSelector}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryStudentListSelector}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.LotteryStudentListSelector}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryRangeSelector}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.LotteryRangeSelector}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryGenderSelector}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.LotteryGenderSelector}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryRemainingButton}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.LotteryRemainingButton}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryQuantityLabel}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.LotteryQuantityLabel}" />
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>

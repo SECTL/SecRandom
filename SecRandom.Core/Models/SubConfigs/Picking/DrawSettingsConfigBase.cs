@@ -24,10 +24,6 @@ public partial class DrawSettingsConfigBase : ObservableObject
     [ObservableProperty] private int _animationInterval = 80;
     [ObservableProperty] private int _autoplayCount = 5;
     [ObservableProperty] private DrawAnimationStyleMode _animationStyle = DrawAnimationStyleMode.DirectRotate;
-    [property: JsonPropertyName("result_flow_animation_style")]
-    [ObservableProperty] private bool _animationEnabled = true;
-    [property: JsonPropertyName("result_flow_animation_duration")]
-    [ObservableProperty] private int _animationDuration = 250;
 
     [JsonPropertyName("result_flow_animation_mode")]
     public DrawAnimationStyleMode LegacyResultFlowAnimationMode

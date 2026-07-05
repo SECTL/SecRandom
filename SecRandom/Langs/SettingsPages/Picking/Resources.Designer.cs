@@ -744,7 +744,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽中次数达到该值前不会再次进入候选池.
+        ///   Looks up a localized string similar to 抽中次数达到该值后不会再次进入候选池.
         /// </summary>
         public static string S_HalfRepeat_D {
             get {
@@ -861,24 +861,6 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 动画时长.
-        /// </summary>
-        public static string S_AnimationDuration {
-            get {
-                return ResourceManager.GetString("S_AnimationDuration", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 抽取动画和最终定格动画持续时间（毫秒）.
-        /// </summary>
-        public static string S_AnimationDuration_D {
-            get {
-                return ResourceManager.GetString("S_AnimationDuration_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 动画样式.
         /// </summary>
         public static string S_AnimationStyle {
@@ -893,24 +875,6 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         public static string S_AnimationStyle_D {
             get {
                 return ResourceManager.GetString("S_AnimationStyle_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 启用动画.
-        /// </summary>
-        public static string S_AnimationEnabled {
-            get {
-                return ResourceManager.GetString("S_AnimationEnabled", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 控制抽取过程和最终定格时是否播放动画.
-        /// </summary>
-        public static string S_AnimationEnabled_D {
-            get {
-                return ResourceManager.GetString("S_AnimationEnabled_D", resourceCulture);
             }
         }
         
