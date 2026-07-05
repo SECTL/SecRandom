@@ -65,10 +65,12 @@
   <data name="S_AnimationInterval_D" xml:space="preserve"><value>抽取动画每次切换的间隔（毫秒）</value></data>
   <data name="S_AutoplayCount" xml:space="preserve"><value>自动播放次数</value></data>
   <data name="S_AutoplayCount_D" xml:space="preserve"><value>自动播放模式下滚动候选结果的次数</value></data>
-  <data name="S_ResultFlowAnimationStyle" xml:space="preserve"><value>结果流动动画</value></data>
-  <data name="S_ResultFlowAnimationStyle_D" xml:space="preserve"><value>控制结果布局出现动画</value></data>
-  <data name="S_ResultFlowAnimationDuration" xml:space="preserve"><value>流动动画时长</value></data>
-  <data name="S_ResultFlowAnimationDuration_D" xml:space="preserve"><value>结果布局动画持续时间（毫秒）</value></data>
+  <data name="S_AnimationEnabled" xml:space="preserve"><value>启用动画</value></data>
+  <data name="S_AnimationEnabled_D" xml:space="preserve"><value>控制抽取过程和最终定格时是否播放动画</value></data>
+  <data name="S_AnimationStyle" xml:space="preserve"><value>动画样式</value></data>
+  <data name="S_AnimationStyle_D" xml:space="preserve"><value>设置抽取过程和最终定格时使用的统一动画效果</value></data>
+  <data name="S_AnimationDuration" xml:space="preserve"><value>动画时长</value></data>
+  <data name="S_AnimationDuration_D" xml:space="preserve"><value>抽取动画和最终定格动画持续时间（毫秒）</value></data>
   <data name="S_ColorTheme" xml:space="preserve"><value>颜色主题</value></data>
   <data name="S_ColorTheme_D" xml:space="preserve"><value>设置抽取动画和结果颜色来源</value></data>
   <data name="S_FixedColor" xml:space="preserve"><value>固定颜色</value></data>
@@ -99,6 +101,13 @@
   <data name="O_ManualStop" xml:space="preserve"><value>手动停止</value></data>
   <data name="O_AutoPlay" xml:space="preserve"><value>自动播放</value></data>
   <data name="O_NoAnimation" xml:space="preserve"><value>无动画</value></data>
+  <data name="O_AnimationFadeFloat" xml:space="preserve"><value>淡入上浮</value></data>
+  <data name="O_AnimationFlipRoll" xml:space="preserve"><value>翻牌滚动</value></data>
+  <data name="O_AnimationSpotlightSweep" xml:space="preserve"><value>聚光扫过</value></data>
+  <data name="O_AnimationFireworks" xml:space="preserve"><value>烟花庆祝</value></data>
+  <data name="O_AnimationShuffleDeck" xml:space="preserve"><value>奖池洗牌</value></data>
+  <data name="O_AnimationWheelFreeze" xml:space="preserve"><value>轮盘定格</value></data>
+  <data name="O_AnimationDirectRotate" xml:space="preserve"><value>直接轮换</value></data>
   <data name="O_NoColor" xml:space="preserve"><value>无</value></data>
   <data name="O_RandomColor" xml:space="preserve"><value>随机</value></data>
   <data name="O_FixedColor" xml:space="preserve"><value>固定颜色</value></data>

@@ -47,7 +47,7 @@ Nested instruction files:
 | Run/build/test | `SecRandom.sln`, `.github/workflows/Build.yml` | Use solution commands; no Makefile/CMake. |
 | Desktop startup | `SecRandom.Desktop/Program.cs` | Process entry → Avalonia lifetime. |
 | App composition / DI | `SecRandom/App.axaml.cs` | `BuildHost()` is the registration source of truth. |
-| Main navigation | `SecRandom/Views/MainView.axaml.cs` | Default page `main.rollCall`; keyed DI page factory. Built-in draw pages include `main.rollCall`, `main.quickDraw`, and `main.lottery`. |
+| Main navigation | `SecRandom/Views/MainView.axaml.cs` | Default page `main.rollCall`; keyed DI page factory. Built-in draw pages include `main.rollCall` and `main.lottery`; quick draw opens from the floating window instead of the main sidebar. |
 | Settings navigation | `SecRandom/Views/SettingsView.axaml.cs` | Default page `settings.home`; has back stack + restart dialog. General group now includes `settings.general.basic`, `settings.general.privacy`, and `settings.general.backup`. |
 | Page registration helpers | `SecRandom.Core/Extensions/Registry/` | `AddMainPage`, `AddSettingsPage`, plugin page registration, groups, separators. |
 | Plugin contracts | `SecRandom.Core/Plugins/` | Public plugin API surface: manifest, runtime context, page registration, plugin catalog DTOs, and draw invocation DTOs. |
@@ -79,9 +79,9 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 | `WeightedDrawEngine<T>` | algorithm | `SecRandom.Core/Services/Draw/WeightedDrawEngine.cs` | Validates weights and samples without replacement. |
 | `CameraDrawEngine` | domain service | `SecRandom.Core/Services/Camera/CameraDrawEngine*.cs` | Camera-based face detection, device discovery, and draw loop. |
 | `MainConfigHandler` | config handler | `SecRandom.Core/Services/Config/MainConfigHandler.cs` | Main config wrapper over `ConfigHandlerBase<MainConfigModel>`; persists the canonical `General` subtree and still loads legacy root `basic`/`backup` JSON. |
-| `ProfileService` | app service | `SecRandom/Services/ProfileService.cs` | Current profile runtime state, active student-list/history switching, and persistence. |
+| `ProfileService` | app service | `SecRandom/Services/Profiles/ProfileService.cs` | Current profile runtime state, active student-list/history switching, and persistence. |
 | `IProfileService` | service contract | `SecRandom.Core/Abstraction/Services/IProfileService.cs` | Current lists/history + student profile switch + profile save boundary. |
-| `SettingsSearchService` | app service | `SecRandom/Services/SettingsSearchService.cs` | Indexes settings pages via reflected localization resources. |
+| `SettingsSearchService` | app service | `SecRandom/Services/Settings/SettingsSearchService.cs` | Indexes settings pages via reflected localization resources. |
 | `CrashRecoveryRuntime` | app service helper | `SecRandom/Services/CrashRecovery/CrashRecoveryRuntime.cs` | Reads crash recovery mode, writes bounded crash reports, and builds restart process plans. |
 | `AttachedSettingsRegistryService` | registry | `SecRandom.Core/Services/AttachedSettingsRegistryService.cs` | Static collections for attached-settings controls. |
 | `ViewModelBase` | base VM | `SecRandom/ViewModels/ViewModelBase.cs` | Base VM exposing `MainConfig`; inherits `ObservableRecipient`. |
@@ -96,8 +96,9 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - ViewModels must be registered in `SecRandom/App.axaml.cs` `BuildHost()`; reusable services also go through Host.
 - Resolve shared services via `IAppHost.GetService<T>()` / `TryGetService<T>()` unless constructor injection is already the local style.
 - Navigation pages need `[PageInfo(...)]` plus `services.AddMainPage<T>()` or `services.AddSettingsPage<T>()` in `BuildHost()`.
-- Built-in main navigation entries may use `PageLocation.Bottom` for bottom-pinned sidebar items; the roll-call (`main.rollCall`), quick-draw (`main.quickDraw`), and lottery (`main.lottery`) pages are bottom-pinned and full-width/title-hidden.
+- Built-in main navigation entries may use `PageLocation.Bottom` for bottom-pinned sidebar items; the roll-call (`main.rollCall`) and lottery (`main.lottery`) pages are bottom-pinned and full-width/title-hidden. Quick draw is no longer a main navigation page and opens from the floating window.
 - Page IDs: `main.xxx`, `settings.xxx`, `settings.group.xxx`.
+- Picking animation style is unified: settings expose it as `AnimationStyle` / “动画样式”, and RollCall, QuickDraw, and Lottery use the same style for both rolling preview/process animation and final result reveal. Do not split process/result animation style settings.
 - Plugin pages are runtime-registered through `AddPluginMainPage` / `AddPluginSettingsPage`; their IDs must start with `plugin.<plugin-id>.` and must not occupy built-in `main.*` or `settings.*` IDs.
 - Plugin contracts live under `SecRandom.Core/Plugins`; plugin runtime/loading state lives under `SecRandom/Services/Plugins` and is registered from `BuildHost()`.
 - Plugin logs must use the original logging pipeline. Plugin categories use `SecRandom.Plugin[<plugin-id>].*`; plugin detail views may only filter their own category prefix.

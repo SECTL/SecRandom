@@ -115,7 +115,7 @@ protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 2. 导航表: PagesRegistryService.SettingsItems.Add(pageInfo)
 
 **页面ID约定**:
-- 主页面: main.rollCall, main.quickDraw
+- 主页面: main.rollCall, main.lottery, main.history；闪抽从浮窗入口打开，不注册为主导航页。
 - 设置页面: settings.home, settings.general.basic
 - 插件页面: plugin.{plugin-id}.{page-name}
 

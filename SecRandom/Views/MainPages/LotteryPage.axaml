@@ -2,64 +2,282 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:SecRandom.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="640"
+             xmlns:vm="using:SecRandom.ViewModels.MainPages"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="720"
              x:Class="SecRandom.Views.MainPages.LotteryPage"
              x:DataType="vm:LotteryPageViewModel">
-    <Grid RowDefinitions="Auto,*" Margin="28" RowSpacing="20">
-        <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
-            <ComboBox ItemsSource="{Binding PrizeListNames}" SelectedItem="{Binding SelectedPrizeListName}" MinWidth="220" />
-            <NumericUpDown Value="{Binding DrawCount}" Minimum="1" Maximum="100" Width="100" />
-            <Button Content="抽奖" Command="{Binding StartDrawCommand}" IsEnabled="{Binding CanStartDraw}" />
-            <Button Content="清空历史" Command="{Binding ClearHistoryCommand}" />
-        </StackPanel>
+    <UserControl.Resources>
+        <DataTemplate x:Key="LotteryControlPanelTemplate"
+                      DataType="vm:LotteryPageViewModel">
+            <StackPanel Classes="roll-control-stack" Spacing="0">
+                <Button Classes="roll-wide"
+                        Content="重置"
+                        Command="{Binding ResetDisplayCommand}" />
 
-        <Grid Grid.Row="1">
-            <TextBlock Text="{Binding StatusText}"
+                <Grid Classes="roll-count-row"
+                      ColumnDefinitions="45,*,45">
+                    <Button Grid.Column="0"
+                            Classes="roll-compact"
+                            Content="-"
+                            IsEnabled="{Binding CanDecreaseCount}"
+                            Command="{Binding DecreaseCountCommand}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding DrawCount}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="28"
+                               FontWeight="SemiBold" />
+                    <Button Grid.Column="2"
+                            Classes="roll-compact"
+                            Content="+"
+                            IsEnabled="{Binding CanIncreaseCount}"
+                            Command="{Binding IncreaseCountCommand}" />
+                </Grid>
+
+                <Button Classes="roll-wide accent"
+                        Content="抽奖"
+                        IsEnabled="{Binding CanStartDraw}"
+                        Command="{Binding StartDrawCommand}" />
+
+                <ComboBox Classes="roll-selector"
+                          ItemsSource="{Binding PrizeListNames}"
+                          SelectedItem="{Binding SelectedPrizeListName}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       TextAlignment="Center" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <Button Classes="roll-wide"
+                        Content="剩余奖品"
+                        FontSize="18"
+                        Click="RemainingListButton_OnClick" />
+
+                <TextBlock Text="{Binding CountSummary}"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Margin="0 8 0 0" />
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="LotteryRemainingItemTemplate"
+                      DataType="vm:LotteryRemainingItem">
+            <Border Padding="0 8"
+                    BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                    BorderThickness="0 0 0 1">
+                <Grid RowDefinitions="Auto,Auto,Auto">
+                    <TextBlock Text="{Binding DisplayText}"
+                               TextWrapping="Wrap"
+                               FontWeight="SemiBold" />
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding Tags}"
+                               IsVisible="{Binding IsTagsVisible}"
+                               Opacity="0.58"
+                               FontSize="12" />
+                    <TextBlock Grid.Row="2"
+                               Text="{Binding CountText}"
+                               Opacity="0.68"
+                               FontSize="12" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="Border.roll-control-panel">
+            <Setter Property="Width" Value="236" />
+            <Setter Property="MinWidth" Value="200" />
+            <Setter Property="MaxWidth" Value="260" />
+            <Setter Property="Margin" Value="12 0 28 28" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+        </Style>
+
+        <Style Selector="StackPanel.roll-control-stack">
+            <Setter Property="Width" Value="236" />
+            <Setter Property="MinWidth" Value="200" />
+            <Setter Property="MaxWidth" Value="260" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+        </Style>
+
+        <Style Selector="Grid.roll-count-row">
+            <Setter Property="Width" Value="236" />
+            <Setter Property="MinWidth" Value="200" />
+            <Setter Property="MaxWidth" Value="260" />
+            <Setter Property="Height" Value="45" />
+            <Setter Property="Margin" Value="0 4" />
+        </Style>
+
+        <Style Selector="Button.roll-wide">
+            <Setter Property="Width" Value="236" />
+            <Setter Property="MinWidth" Value="200" />
+            <Setter Property="MaxWidth" Value="260" />
+            <Setter Property="Height" Value="45" />
+            <Setter Property="Margin" Value="0 4" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="Button.roll-compact">
+            <Setter Property="Width" Value="45" />
+            <Setter Property="MinWidth" Value="45" />
+            <Setter Property="MaxWidth" Value="45" />
+            <Setter Property="Height" Value="45" />
+            <Setter Property="MinHeight" Value="45" />
+            <Setter Property="MaxHeight" Value="45" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
+        <Style Selector="ComboBox.roll-selector">
+            <Setter Property="Width" Value="236" />
+            <Setter Property="MinWidth" Value="200" />
+            <Setter Property="MaxWidth" Value="260" />
+            <Setter Property="Height" Value="45" />
+            <Setter Property="Margin" Value="0 4" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBlock.result-name">
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="MaxWidth" Value="860" />
+        </Style>
+
+        <Style Selector="Border.result-card">
+            <Setter Property="MinWidth" Value="180" />
+            <Setter Property="MinHeight" Value="96" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="22 16" />
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="*,Auto"
+          RowDefinitions="*"
+          MinHeight="560">
+        <Grid Grid.Column="0"
+              Margin="28 0 12 28">
+            <TextBlock Classes="result-name"
                        IsVisible="{Binding !IsResultVisible}"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       FontSize="36"
+                       Text="{Binding ReminderText}"
+                       Foreground="{Binding ReminderBrush}"
+                       FontSize="{Binding ReminderFontSize}"
+                       FontFamily="{Binding ResultFontFamily}"
                        FontWeight="SemiBold" />
 
-            <ItemsControl x:Name="ResultPresenter"
-                          ItemsSource="{Binding ResultItems}"
-                          IsVisible="{Binding IsResultVisible}"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:LotteryResultItem">
-                        <Border Margin="8" Padding="22 16" MinWidth="180" MinHeight="96"
-                                CornerRadius="8" BorderThickness="1"
-                                BorderBrush="{Binding AccentBrush}"
-                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
-                            <StackPanel Spacing="6" HorizontalAlignment="Center">
-                                <Grid Width="72" Height="72" IsVisible="{Binding IsImageEnabled}">
-                                    <Ellipse Fill="{Binding AccentBrush}" Opacity="0.18" />
-                                    <Image Source="{Binding Image}" Stretch="UniformToFill" IsVisible="{Binding IsImageVisible}" />
-                                    <TextBlock Text="{Binding Initial}" IsVisible="{Binding IsPlaceholderVisible}"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                                               FontSize="30" FontWeight="SemiBold" Foreground="{Binding TextBrush}" />
-                                </Grid>
-                                <TextBlock Text="{Binding DisplayText}"
-                                           TextAlignment="Center"
-                                           TextWrapping="Wrap"
-                                           Foreground="{Binding TextBrush}"
-                                           FontSize="{Binding $parent[UserControl].DataContext.ResultFontSize}"
-                                           FontFamily="{Binding $parent[UserControl].DataContext.ResultFontFamily}"
-                                           FontWeight="SemiBold" />
-                                <TextBlock Text="{Binding Tags}" IsVisible="{Binding IsTagsVisible}" Opacity="0.72" FontSize="13" />
-                                <TextBlock Text="{Binding WeightText}" IsVisible="{Binding IsWeightVisible}" Opacity="0.62" FontSize="12" />
-                            </StackPanel>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <ScrollViewer IsVisible="{Binding IsResultVisible}"
+                          HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Auto">
+                <ItemsControl x:Name="ResultPresenter"
+                              ItemsSource="{Binding ResultItems}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"
+                                       HorizontalAlignment="Center" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LotteryResultItem">
+                            <Grid Classes="result-animation-item" Margin="8">
+                                <Border Classes="result-card"
+                                        IsVisible="{Binding IsCardStyle}"
+                                        BorderBrush="{Binding AccentBrush}">
+                                    <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                        <Grid Width="72" Height="72" IsVisible="{Binding IsImageEnabled}">
+                                            <Ellipse Fill="{Binding AccentBrush}" Opacity="0.18" />
+                                            <Image Source="{Binding Image}"
+                                                   Stretch="UniformToFill"
+                                                   ClipToBounds="True"
+                                                   IsVisible="{Binding IsImageVisible}" />
+                                            <TextBlock Text="{Binding Initial}"
+                                                       IsVisible="{Binding IsPlaceholderVisible}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       FontSize="30"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{Binding TextBrush}" />
+                                        </Grid>
+                                        <TextBlock Text="{Binding DisplayText}"
+                                                   Classes="result-name"
+                                                   Foreground="{Binding TextBrush}"
+                                                   FontSize="{Binding $parent[UserControl].DataContext.ResultFontSize}"
+                                                   FontFamily="{Binding $parent[UserControl].DataContext.ResultFontFamily}"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Tags}"
+                                                   IsVisible="{Binding IsTagsVisible}"
+                                                   HorizontalAlignment="Center"
+                                                   Opacity="0.72"
+                                                   FontSize="13" />
+                                        <TextBlock Text="{Binding WeightText}"
+                                                   IsVisible="{Binding IsWeightVisible}"
+                                                   HorizontalAlignment="Center"
+                                                   Opacity="0.62"
+                                                   FontSize="12" />
+                                    </StackPanel>
+                                </Border>
+
+                                <StackPanel IsVisible="{Binding !IsCardStyle}" Spacing="6" HorizontalAlignment="Center">
+                                    <Grid Width="72" Height="72" IsVisible="{Binding IsImageEnabled}">
+                                        <Ellipse Fill="{Binding AccentBrush}" Opacity="0.18" />
+                                        <Image Source="{Binding Image}"
+                                               Stretch="UniformToFill"
+                                               ClipToBounds="True"
+                                               IsVisible="{Binding IsImageVisible}" />
+                                        <TextBlock Text="{Binding Initial}"
+                                                   IsVisible="{Binding IsPlaceholderVisible}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="30"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{Binding TextBrush}" />
+                                    </Grid>
+                                    <TextBlock Text="{Binding DisplayText}"
+                                               Classes="result-name"
+                                               Foreground="{Binding TextBrush}"
+                                               FontSize="{Binding $parent[UserControl].DataContext.ResultFontSize}"
+                                               FontFamily="{Binding $parent[UserControl].DataContext.ResultFontFamily}"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding Tags}"
+                                               IsVisible="{Binding IsTagsVisible}"
+                                               HorizontalAlignment="Center"
+                                               Opacity="0.72"
+                                               FontSize="13" />
+                                    <TextBlock Text="{Binding WeightText}"
+                                               IsVisible="{Binding IsWeightVisible}"
+                                               HorizontalAlignment="Center"
+                                               Opacity="0.62"
+                                               FontSize="12" />
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
         </Grid>
+
+        <Border Grid.Column="1"
+                Classes="roll-control-panel">
+            <ContentControl Content="{Binding}"
+                            ContentTemplate="{StaticResource LotteryControlPanelTemplate}" />
+        </Border>
     </Grid>
 </UserControl>

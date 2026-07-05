@@ -5,7 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Attributes;
 using SecRandom.Models;
-using SecRandom.Services;
+using SecRandom.Services.Settings;
 
 namespace SecRandom.ViewModels;
 

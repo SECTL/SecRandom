@@ -1,6 +1,7 @@
-﻿using Avalonia.Media;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Core.Enums.Configs;
+using System.Text.Json.Serialization;
 
 namespace SecRandom.Core.Models.SubConfigs.Picking;
 
@@ -22,8 +23,18 @@ public partial class DrawSettingsConfigBase : ObservableObject
     [ObservableProperty] private AnimationMode _animation = AnimationMode.AutoPlay;
     [ObservableProperty] private int _animationInterval = 80;
     [ObservableProperty] private int _autoplayCount = 5;
-    [ObservableProperty] private bool _resultFlowAnimationStyle = false;
-    [ObservableProperty] private int _resultFlowAnimationDuration = 250;
+    [ObservableProperty] private DrawAnimationStyleMode _animationStyle = DrawAnimationStyleMode.DirectRotate;
+    [property: JsonPropertyName("result_flow_animation_style")]
+    [ObservableProperty] private bool _animationEnabled = true;
+    [property: JsonPropertyName("result_flow_animation_duration")]
+    [ObservableProperty] private int _animationDuration = 250;
+
+    [JsonPropertyName("result_flow_animation_mode")]
+    public DrawAnimationStyleMode LegacyResultFlowAnimationMode
+    {
+        get => AnimationStyle;
+        set => AnimationStyle = value;
+    }
 
     [ObservableProperty] private AnimationColorThemeMode _animationColorTheme = AnimationColorThemeMode.None;
     [ObservableProperty] private Color _animationFixedColor = Color.Parse(GlobalConstants.DefaultThemeColor);

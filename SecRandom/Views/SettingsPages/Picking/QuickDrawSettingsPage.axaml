@@ -172,17 +172,32 @@
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultFlowAnimationStyle}"
-                                           Description="{x:Static lp:Resources.S_ResultFlowAnimationStyle_D}">
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationEnabled}"
+                                           Description="{x:Static lp:Resources.S_AnimationEnabled_D}">
                     <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.ResultFlowAnimationStyle}" />
+                        <ToggleSwitch IsChecked="{Binding Settings.AnimationEnabled}" />
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultFlowAnimationDuration}"
-                                           Description="{x:Static lp:Resources.S_ResultFlowAnimationDuration_D}">
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationStyle}"
+                                           Description="{x:Static lp:Resources.S_AnimationStyle_D}">
                     <fa:FASettingsExpanderItem.Footer>
-                        <NumericUpDown Value="{Binding Settings.ResultFlowAnimationDuration}" Minimum="0" Maximum="10000" />
+                        <ComboBox SelectedIndex="{Binding Settings.AnimationStyle}" MinWidth="180">
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationFadeFloat}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationFlipRoll}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationSpotlightSweep}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationFireworks}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationShuffleDeck}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationWheelFreeze}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationDirectRotate}" />
+                        </ComboBox>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationDuration}"
+                                           Description="{x:Static lp:Resources.S_AnimationDuration_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <NumericUpDown Value="{Binding Settings.AnimationDuration}" Minimum="0" Maximum="10000" />
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>

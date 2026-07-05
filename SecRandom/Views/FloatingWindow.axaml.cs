@@ -124,8 +124,7 @@ public partial class FloatingWindow : Window
 
         b.Click += (sender, args) =>
         {
-            App.ShowMainWindow();
-            MainView.Current?.SelectNavigationItemById("main.quickDraw");
+            App.ShowQuickDrawWindow();
         };
 
         return b;

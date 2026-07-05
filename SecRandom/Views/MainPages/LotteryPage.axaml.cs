@@ -1,12 +1,16 @@
+using System.Threading.Tasks;
 using System.ComponentModel;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
+using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Icons;
 using SecRandom.Helpers;
-using SecRandom.ViewModels;
+using SecRandom.ViewModels.MainPages;
 
 namespace SecRandom.Views.MainPages;
 
@@ -14,12 +18,14 @@ namespace SecRandom.Views.MainPages;
 public partial class LotteryPage : UserControl
 {
     private bool _isUnloaded;
+    private readonly ItemsControl? _resultPresenter;
 
     public LotteryPage()
     {
         ViewModel = IAppHost.GetService<LotteryPageViewModel>();
         DataContext = ViewModel;
         InitializeComponent();
+        _resultPresenter = this.FindControl<ItemsControl>("ResultPresenter");
         ViewModel.PropertyChanged += ViewModel_OnPropertyChanged;
         Unloaded += OnUnloaded;
     }
@@ -30,31 +36,74 @@ public partial class LotteryPage : UserControl
     {
         _isUnloaded = true;
         ViewModel.PropertyChanged -= ViewModel_OnPropertyChanged;
+        ViewModel.Dispose();
+        DataContext = null;
     }
 
-    private async void ViewModel_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void ViewModel_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_isUnloaded)
+            return;
+
+        Dispatcher.UIThread.Post(async () => await RunResultAnimationAsync(e.PropertyName), DispatcherPriority.Render);
+    }
+
+    private async Task RunResultAnimationAsync(string? propertyName)
     {
         if (_isUnloaded)
             return;
 
         try
         {
-            if (e.PropertyName == nameof(LotteryPageViewModel.PreviewAnimationRevision))
+            if (propertyName == nameof(LotteryPageViewModel.PreviewAnimationRevision))
             {
-                await DrawResultAnimationHelper.PreviewSwapAsync(
-                    ResultPresenter,
+                await WaitForResultPresenterLayoutAsync();
+                await DrawAnimationHelper.PreviewAsync(
+                    _resultPresenter,
+                    ViewModel.AnimationStyle,
                     ViewModel.PreviewAnimationDuration);
             }
-            else if (e.PropertyName == nameof(LotteryPageViewModel.ResultAnimationRevision))
+            else if (propertyName == nameof(LotteryPageViewModel.ResultAnimationRevision))
             {
-                await DrawResultAnimationHelper.RevealAsync(
-                    ResultPresenter,
-                    ViewModel.ResultFlowAnimationEnabled,
-                    ViewModel.ResultFlowAnimationDuration);
+                await WaitForResultPresenterLayoutAsync();
+                await DrawAnimationHelper.RevealAsync(
+                    _resultPresenter,
+                    ViewModel.AnimationEnabled,
+                    ViewModel.AnimationStyle,
+                    ViewModel.AnimationDuration);
             }
         }
         catch
         {
+            // Result animation must never crash a completed draw.
         }
+    }
+
+    private static async Task WaitForResultPresenterLayoutAsync()
+    {
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+        await Task.Delay(16);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+    }
+
+    private async void RemainingListButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        ViewModel.RefreshRemainingList();
+
+        var list = new ListBox
+        {
+            ItemsSource = ViewModel.RemainingItems,
+            ItemTemplate = this.FindResource("LotteryRemainingItemTemplate") as IDataTemplate,
+            MinWidth = 420,
+            MaxHeight = 520
+        };
+
+        await new FAContentDialog
+        {
+            Title = "剩余奖项",
+            Content = list,
+            CloseButtonText = "关闭",
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(TopLevel.GetTopLevel(this));
     }
 }

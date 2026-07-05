@@ -48,6 +48,35 @@ public class FairDrawSettingsConfigTests
     }
 
     [Fact]
+    public void MainConfigModel_RoundTripsAnimationStyle()
+    {
+        var config = new MainConfigModel
+        {
+            DefaultDrawSettings = new DefaultDrawSettingsConfig
+            {
+                AnimationStyle = DrawAnimationStyleMode.WheelFreeze
+            },
+            RollCallSettings = new RollCallSettingsConfig
+            {
+                AnimationStyle = DrawAnimationStyleMode.Fireworks
+            },
+            LotterySettings = new LotterySettingsConfig
+            {
+                AnimationStyle = DrawAnimationStyleMode.ShuffleDeck
+            }
+        };
+
+        var json = JsonSerializer.Serialize(config, ConfigServiceBase.JsonOptions);
+        var restored = JsonSerializer.Deserialize<MainConfigModel>(json, ConfigServiceBase.JsonOptions);
+
+        Assert.Contains("animation_style", json);
+        Assert.NotNull(restored);
+        Assert.Equal(DrawAnimationStyleMode.WheelFreeze, restored.DefaultDrawSettings.AnimationStyle);
+        Assert.Equal(DrawAnimationStyleMode.Fireworks, restored.RollCallSettings.AnimationStyle);
+        Assert.Equal(DrawAnimationStyleMode.ShuffleDeck, restored.LotterySettings.AnimationStyle);
+    }
+
+    [Fact]
     public void CalculateStudentWeight_FairDrawDisabledUsesBaseWeight()
     {
         var first = new Student { Name = "A" };

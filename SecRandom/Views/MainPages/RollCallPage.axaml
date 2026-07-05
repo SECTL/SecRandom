@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:SecRandom.ViewModels"
+             xmlns:vm="using:SecRandom.ViewModels.MainPages"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:langs="using:SecRandom.Langs.MainPages.RollCall"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="720"
@@ -242,7 +242,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:RollCallResultItem">
-                            <Grid Margin="8">
+                            <Grid Classes="result-animation-item" Margin="8">
                                 <Border Classes="result-card"
                                         IsVisible="{Binding IsCardStyle}"
                                         BorderBrush="{Binding AccentBrush}"

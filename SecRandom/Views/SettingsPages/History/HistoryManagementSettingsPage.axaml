@@ -1,0 +1,80 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.History"
+             xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.HistoryManagement"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+              x:Class="SecRandom.Views.SettingsPages.History.HistoryManagementSettingsPage"
+             x:DataType="local:HistoryManagementSettingsPage"
+             Unloaded="OnUnloaded">
+    <ScrollViewer>
+        <StackPanel Classes="page-container animated-intro">
+            <sr:IconText x:Name="S_History"
+                         Text="{x:Static lsp:Resources.S_History}"
+                         Glyph="{sr:Fi HistoryRegular}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_History_ShowRollCall"
+                                   Header="{x:Static lsp:Resources.S_History_ShowRollCall}"
+                                   Description="{x:Static lsp:Resources.S_History_ShowRollCall_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PersonRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.ShowRollCallHistory}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_History_ShowLottery"
+                                   Header="{x:Static lsp:Resources.S_History_ShowLottery}"
+                                   Description="{x:Static lsp:Resources.S_History_ShowLottery_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.ShowLotteryHistory}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_History_SelectWeight"
+                                   Header="{x:Static lsp:Resources.S_History_SelectWeight}"
+                                   Description="{x:Static lsp:Resources.S_History_SelectWeight_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TopSpeedRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.SelectWeight}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText x:Name="S_ClearHistory"
+                         Text="{x:Static lsp:Resources.S_ClearHistory}"
+                         Glyph="{sr:Fi DeleteRegular}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_ClearHistory_RollCall"
+                                   Header="{x:Static lsp:Resources.S_ClearHistory_RollCall}"
+                                   Description="{x:Static lsp:Resources.S_ClearHistory_RollCall_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PersonRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ComboBox x:Name="RollCallClassCombo" MinWidth="180" />
+                        <Button Content="{x:Static lsp:Resources.C_Clear}"
+                                Click="ClearRollCallHistory_OnClick" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_ClearHistory_Lottery"
+                                   Header="{x:Static lsp:Resources.S_ClearHistory_Lottery}"
+                                   Description="{x:Static lsp:Resources.S_ClearHistory_Lottery_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ComboBox x:Name="LotteryPoolCombo" MinWidth="180" />
+                        <Button Content="{x:Static lsp:Resources.C_Clear}"
+                                Click="ClearLotteryHistory_OnClick" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

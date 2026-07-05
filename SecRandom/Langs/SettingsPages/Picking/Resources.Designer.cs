@@ -240,6 +240,69 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 淡入上浮.
+        /// </summary>
+        public static string O_AnimationFadeFloat {
+            get {
+                return ResourceManager.GetString("O_AnimationFadeFloat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 直接轮换.
+        /// </summary>
+        public static string O_AnimationDirectRotate {
+            get {
+                return ResourceManager.GetString("O_AnimationDirectRotate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 烟花庆祝.
+        /// </summary>
+        public static string O_AnimationFireworks {
+            get {
+                return ResourceManager.GetString("O_AnimationFireworks", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 翻牌滚动.
+        /// </summary>
+        public static string O_AnimationFlipRoll {
+            get {
+                return ResourceManager.GetString("O_AnimationFlipRoll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 奖池洗牌.
+        /// </summary>
+        public static string O_AnimationShuffleDeck {
+            get {
+                return ResourceManager.GetString("O_AnimationShuffleDeck", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 聚光扫过.
+        /// </summary>
+        public static string O_AnimationSpotlightSweep {
+            get {
+                return ResourceManager.GetString("O_AnimationSpotlightSweep", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 轮盘定格.
+        /// </summary>
+        public static string O_AnimationWheelFreeze {
+            get {
+                return ResourceManager.GetString("O_AnimationWheelFreeze", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 无.
         /// </summary>
         public static string O_NoColor {
@@ -861,38 +924,56 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 流动动画时长.
+        ///   Looks up a localized string similar to 动画时长.
         /// </summary>
-        public static string S_ResultFlowAnimationDuration {
+        public static string S_AnimationDuration {
             get {
-                return ResourceManager.GetString("S_ResultFlowAnimationDuration", resourceCulture);
+                return ResourceManager.GetString("S_AnimationDuration", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 结果布局动画持续时间（毫秒）.
+        ///   Looks up a localized string similar to 抽取动画和最终定格动画持续时间（毫秒）.
         /// </summary>
-        public static string S_ResultFlowAnimationDuration_D {
+        public static string S_AnimationDuration_D {
             get {
-                return ResourceManager.GetString("S_ResultFlowAnimationDuration_D", resourceCulture);
+                return ResourceManager.GetString("S_AnimationDuration_D", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 结果流动动画.
+        ///   Looks up a localized string similar to 动画样式.
         /// </summary>
-        public static string S_ResultFlowAnimationStyle {
+        public static string S_AnimationStyle {
             get {
-                return ResourceManager.GetString("S_ResultFlowAnimationStyle", resourceCulture);
+                return ResourceManager.GetString("S_AnimationStyle", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 控制结果布局出现动画.
+        ///   Looks up a localized string similar to 设置抽取过程和最终定格时使用的统一动画效果.
         /// </summary>
-        public static string S_ResultFlowAnimationStyle_D {
+        public static string S_AnimationStyle_D {
             get {
-                return ResourceManager.GetString("S_ResultFlowAnimationStyle_D", resourceCulture);
+                return ResourceManager.GetString("S_AnimationStyle_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 启用动画.
+        /// </summary>
+        public static string S_AnimationEnabled {
+            get {
+                return ResourceManager.GetString("S_AnimationEnabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 控制抽取过程和最终定格时是否播放动画.
+        /// </summary>
+        public static string S_AnimationEnabled_D {
+            get {
+                return ResourceManager.GetString("S_AnimationEnabled_D", resourceCulture);
             }
         }
         

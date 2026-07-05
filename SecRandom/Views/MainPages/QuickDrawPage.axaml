@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:SecRandom.ViewModels"
+             xmlns:vm="using:SecRandom.ViewModels.MainPages"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="640"
              x:Class="SecRandom.Views.MainPages.QuickDrawPage"
              x:DataType="vm:QuickDrawPageViewModel">
@@ -33,7 +33,7 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:QuickDrawResultItem">
-                        <Border Margin="8" Padding="22 16" MinWidth="180" MinHeight="96"
+                        <Border Classes="result-animation-item" Margin="8" Padding="22 16" MinWidth="180" MinHeight="96"
                                 CornerRadius="8" BorderThickness="1"
                                 BorderBrush="{Binding AccentBrush}"
                                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"

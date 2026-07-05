@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Update"
+             xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Update"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+              x:Class="SecRandom.Views.SettingsPages.Update.UpdateSettingsPage"
+             x:DataType="local:UpdateSettingsPage"
+             Unloaded="OnUnloaded">
+    <ScrollViewer>
+        <StackPanel Classes="page-container animated-intro">
+            <sr:IconText x:Name="S_Strategy"
+                         Text="{x:Static lsp:Resources.S_Strategy}"
+                         Glyph="{sr:Fi ArrowSyncRegular}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_Strategy_AutoUpdateMode"
+                                   Header="{x:Static lsp:Resources.S_Strategy_AutoUpdateMode}"
+                                   Description="{x:Static lsp:Resources.S_Strategy_AutoUpdateMode_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.AutoUpdateMode}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_AutoUpdateMode_Off}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_AutoUpdateMode_Daily}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_AutoUpdateMode_Weekly}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_AutoUpdateMode_Manual}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Strategy_Channel"
+                                   Header="{x:Static lsp:Resources.S_Strategy_Channel}"
+                                   Description="{x:Static lsp:Resources.S_Strategy_Channel_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi CloudRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.UpdateChannel}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateChannel_Stable}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateChannel_Preview}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Strategy_Source"
+                                   Header="{x:Static lsp:Resources.S_Strategy_Source}"
+                                   Description="{x:Static lsp:Resources.S_Strategy_Source_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi GlobeRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.UpdateSource}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_GitHub}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_OfficialMirror}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FAInfoBar Title="{x:Static lsp:Resources.M_UpdateServicePlaceholder_Title}"
+                          Message="{x:Static lsp:Resources.M_UpdateServicePlaceholder_Message}"
+                          Severity="Informational"
+                          IsClosable="False" />
+
+            <fa:FASettingsExpander x:Name="S_Strategy_LastCheckTime"
+                                   Header="{x:Static lsp:Resources.S_Strategy_LastCheckTime}"
+                                   Description="{x:Static lsp:Resources.S_Strategy_LastCheckTime_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <TextBlock Text="{Binding Settings.LastCheckTime}" VerticalAlignment="Center" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -5,7 +5,7 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Icons;
 using SecRandom.Models;
-using SecRandom.ViewModels;
+using SecRandom.ViewModels.SettingsPages.History;
 using SR = SecRandom.Langs.MainPages.History.Resources;
 
 namespace SecRandom.Views.SettingsPages.History;

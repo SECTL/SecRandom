@@ -14,14 +14,19 @@ Settings navigation subtree: top-level settings pages, grouped settings pages, a
 ```
 SecRandom/Views/SettingsPages/
 |-- HomeSettingsPage.axaml(.cs)           # Top-level landing page
-|-- PluginSettingsPage.axaml(.cs)         # Top-level plugin placeholder, settings.plugin
-|-- LogViewerSettingsPage.axaml(.cs)      # Hidden log viewer, settings.logs
-|-- AboutSettingsPage.axaml(.cs)          # Bottom-nav about page; opens external links
 |-- DebugSettingsPage.axaml(.cs)          # DEBUG-only bottom page
 |-- General/                              # settings.general.*: basic/security/backup/privacy
 |-- ListManagement/                       # settings.listManagement.*: roll-call/lottery list entries
-|-- Personalized/                         # settings.personalized.*: appearance
-`-- Picking/                              # settings.picking.* draw setting pages, including face-detector
+|-- Personalized/                         # settings.personalized.*: appearance/floatingWindow/theme
+|-- Picking/                              # settings.picking.*: draw settings + face detector
+|-- Notification/                         # settings.notification.*: voice and per-draw notification channels
+|-- History/                              # settings.history.*: management + roll-call/lottery history pages
+|-- About/                                # settings.about: about page with external links
+|-- Linkage/                              # settings.linkage: linkage settings
+|-- More/                                 # settings.more: more settings
+|-- Update/                               # settings.update: update settings
+|-- LogViewer/                            # settings.logs: hidden log viewer
+`-- Plugins/Overview/                     # settings.plugin: plugin management overview
 ```
 
 ## WHERE TO LOOK
@@ -33,16 +38,18 @@ SecRandom/Views/SettingsPages/
 | General settings behavior | `General/BasicSettingsPage.axaml(.cs)` | Language change triggers `SettingsView.Current?.RequestRestartApp()`. |
 | Privacy settings behavior | `General/PrivacySettingsPage.axaml(.cs)` | Binds to `MainConfigModel.General.PrivacySettings`; Sentry telemetry changes apply live through `TelemetryRuntimeService`, and online status changes apply live through `OnlineStatusService`. |
 | Backup settings UI | `General/BackupSettingsPage.axaml(.cs)` | Lists real backup ZIPs under app data, creates/deletes backups, and restores selected data with a pre-restore snapshot plus restart prompt. |
-| Security settings | `SecuritySettingsPage.axaml(.cs)` | Page ID `settings.general.security`; currently remains at subtree root but belongs to the General navigation group. |
-| List management settings | `ListManagement/RollCallListSettingsPage.axaml(.cs)`, `ListManagement/LotteryListSettingsPage.axaml(.cs)` | Point-call list and lottery prize-pool viewing/import; separate table entries are intentionally not registered. |
-| Draw settings | `Picking/DefaultDrawSettingsPage.axaml(.cs)`, `Picking/RollCallDrawSettingsPage.axaml(.cs)`, `Picking/QuickDrawSettingsPage.axaml(.cs)`, `Picking/LotteryDrawSettingsPage.axaml(.cs)`, `Picking/FaceDetectorSettingsPage.axaml(.cs)` | Default, roll-call, quick-draw, and lottery draw settings are registered; visible display/animation/color/image/music settings must have a corresponding runtime effect on the built-in draw pages. |
+| Security settings | `General/SecuritySettingsPage.axaml(.cs)` | Page ID `settings.general.security`; belongs to the General navigation group. |
+| List management settings | `ListManagement/RollCallListSettingsPage.axaml(.cs)`, `ListManagement/LotteryListSettingsPage.axaml(.cs)` | Point-call list and lottery prize-pool viewing/import. |
+| Draw settings | `Picking/DefaultDrawSettingsPage.axaml(.cs)` etc. | Default, roll-call, quick-draw, and lottery draw settings are registered; visible effects must reflect on built-in draw pages. |
 | Personalized appearance settings | `Personalized/AppearanceSettingsPage.axaml(.cs)` | Mutations call `App.Current.RefreshPersonalizedSettings()`. |
-| Linkage settings | `LinkageSettingsPage.axaml(.cs)` | Top-level `settings.linkage` entry between Personalized and ListManagement groups. |
-| Notification settings | `VoiceSettingsPage.axaml(.cs)`, `DefaultNotificationSettingsPage.axaml(.cs)`, `RollCallNotificationSettingsPage.axaml(.cs)`, `QuickDrawNotificationSettingsPage.axaml(.cs)`, `LotteryNotificationSettingsPage.axaml(.cs)` | Voice/music and notification channel entries live under `settings.notification`; channel pages share `NotificationChannelSettingsContent`. Specific announcements are edited from list-page attached settings, not a standalone settings page. |
-| Plugin settings | `Plugins/PluginOverviewSettingsPage.axaml(.cs)` | `settings.plugin` is an expandable sidebar group with a single compact management page rather than a marketplace. Plugin overview should keep one direct local-import action that copies a selected plugin directory into the app plugin store. |
-| Log viewer | `LogViewerSettingsPage.axaml(.cs)` | Hidden page `settings.logs`; opened from the settings shell more-options menu. Reads `.log` and `.log.gz` from `data/logs`, supports filtering/search/copy/delete non-current logs. |
-| Legacy v2-parity pages | `NotificationSettingsPage`, `HistoryManagementSettingsPage`, `MoreSettingsPage` | Kept on disk for compatibility/reference; whether they appear in navigation depends on Host registration. |
-| About / external links | `AboutSettingsPage.axaml(.cs)` | Platform-specific `Process.Start` flow for URLs. |
+| Linkage settings | `Linkage/LinkageSettingsPage.axaml(.cs)` | Top-level `settings.linkage` entry. |
+| More settings | `More/MoreSettingsPage.axaml(.cs)` | `settings.more` top-level entry. |
+| Update settings | `Update/UpdateSettingsPage.axaml(.cs)` | `settings.update` bottom-nav entry. |
+| Notification settings | `Notification/VoiceSettingsPage.axaml(.cs)` etc. | Voice/music and notification channel entries under `settings.notification`. |
+| History management | `History/HistoryManagementSettingsPage.axaml(.cs)` | Clears roll-call/lottery history files; `settings.history.management`. |
+| Plugin settings | `Plugins/Overview/PluginsSettingsPage.axaml(.cs)` | `settings.plugin` group; single compact management page. |
+| Log viewer | `LogViewer/LogViewerSettingsPage.axaml(.cs)` | Hidden page `settings.logs`; opened from the settings shell more-options menu. |
+| About / external links | `About/AboutSettingsPage.axaml(.cs)` | `settings.about` bottom-nav; `Process.Start` for external URLs. |
 | Shell navigation semantics | `../SettingsView.axaml.cs` | Default page `settings.home`, history stack, generated menu. |
 | Localization pairing | `../../Langs/SettingsPages/` | Page folders mirror settings-page domains, except DEBUG-only pages. |
 
@@ -50,7 +57,7 @@ SecRandom/Views/SettingsPages/
 
 - Every non-debug settings page needs `[PageInfo]`, Host registration, and a matching localization folder under `SecRandom/Langs/SettingsPages/` when user-facing text is localized.
 - Privacy page localization lives under `General/Privacy/` and is registered like other settings pages with only `Resources.resx` + `Resources.Designer.cs` in the project file.
-- Page IDs here follow `settings.xxx` or `settings.group.xxx`; grouped Plan.md pages use `settings.general.*`, `settings.personalized.*`, `settings.listManagement.*`, `settings.picking.*`, and `settings.notification.*`.
+- Page IDs here follow `settings.xxx` or `settings.group.xxx`; historical grouping notes live in `docs/settings-pages-plan.md`.
 - Group membership is owned by the `groupId` in `[PageInfo(...)]` and by `services.AddGroup(...)` in `BuildHost()`; do not handwire grouping in the page.
 - Pages usually resolve `ViewModelBase` via `IAppHost.GetService<ViewModelBase>()`, set `DataContext = this`, and expose `Settings` from `ViewModel.Config.*`.
 - V2-parity settings pages should keep the same `ScrollViewer` + `StackPanel.page-container animated-intro` + `FASettingsExpander` rhythm as existing settings pages.

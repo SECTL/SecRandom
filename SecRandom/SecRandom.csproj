@@ -344,8 +344,8 @@
           <SubType>Code</SubType>
         </Compile>
 
-        <Compile Update="Views\SettingsPages\PluginsSettingsPage.axaml.cs">
-          <DependentUpon>PluginOverviewSettingsPage.axaml</DependentUpon>
+        <Compile Update="Views\SettingsPages\Plugins\Overview\PluginsSettingsPage.axaml.cs">
+          <DependentUpon>PluginsSettingsPage.axaml</DependentUpon>
           <SubType>Code</SubType>
         </Compile>
 
@@ -386,7 +386,7 @@
       <AdditionalFiles Include="Views\SettingsPages\Notification\VoiceSettingsPage.axaml" />
       <AdditionalFiles Include="Views\SettingsPages\Personalized\FloatingWindowSettingsPage.axaml" />
       <AdditionalFiles Include="Views\SettingsPages\Personalized\ThemeManagementSettingsPage.axaml" />
-      <AdditionalFiles Include="Views\SettingsPages\PluginOverviewSettingsPage.axaml" />
+      <AdditionalFiles Include="Views\SettingsPages\Plugins\Overview\PluginsSettingsPage.axaml" />
     </ItemGroup>
 
     <Import Project="..\Global.props" />

@@ -1,25 +1,25 @@
+using System.Threading.Tasks;
 using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
-using SecRandom.Core.Attributes;
-using SecRandom.Core.Enums;
-using SecRandom.Core.Icons;
 using SecRandom.Helpers;
-using SecRandom.ViewModels;
+using SecRandom.ViewModels.MainPages;
 
 namespace SecRandom.Views.MainPages;
 
-[PageInfo("main.quickDraw", FluentIcons.FlashFilled, location: PageLocation.Bottom, useFullWidth: true, hidePageTitle: true)]
 public partial class QuickDrawPage : UserControl
 {
     private bool _isUnloaded;
+    private readonly ItemsControl? _resultPresenter;
 
     public QuickDrawPage()
     {
         ViewModel = IAppHost.GetService<QuickDrawPageViewModel>();
         DataContext = ViewModel;
         InitializeComponent();
+        _resultPresenter = this.FindControl<ItemsControl>("ResultPresenter");
         ViewModel.PropertyChanged += ViewModel_OnPropertyChanged;
         Unloaded += OnUnloaded;
     }
@@ -32,29 +32,48 @@ public partial class QuickDrawPage : UserControl
         ViewModel.PropertyChanged -= ViewModel_OnPropertyChanged;
     }
 
-    private async void ViewModel_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void ViewModel_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_isUnloaded)
+            return;
+
+        Dispatcher.UIThread.Post(async () => await RunResultAnimationAsync(e.PropertyName), DispatcherPriority.Render);
+    }
+
+    private async Task RunResultAnimationAsync(string? propertyName)
     {
         if (_isUnloaded)
             return;
 
         try
         {
-            if (e.PropertyName == nameof(QuickDrawPageViewModel.PreviewAnimationRevision))
+            if (propertyName == nameof(QuickDrawPageViewModel.PreviewAnimationRevision))
             {
-                await DrawResultAnimationHelper.PreviewSwapAsync(
-                    ResultPresenter,
+                await WaitForResultPresenterLayoutAsync();
+                await DrawAnimationHelper.PreviewAsync(
+                    _resultPresenter,
+                    ViewModel.AnimationStyle,
                     ViewModel.PreviewAnimationDuration);
             }
-            else if (e.PropertyName == nameof(QuickDrawPageViewModel.ResultAnimationRevision))
+            else if (propertyName == nameof(QuickDrawPageViewModel.ResultAnimationRevision))
             {
-                await DrawResultAnimationHelper.RevealAsync(
-                    ResultPresenter,
-                    ViewModel.ResultFlowAnimationEnabled,
-                    ViewModel.ResultFlowAnimationDuration);
+                await WaitForResultPresenterLayoutAsync();
+                await DrawAnimationHelper.RevealAsync(
+                    _resultPresenter,
+                    ViewModel.AnimationEnabled,
+                    ViewModel.AnimationStyle,
+                    ViewModel.AnimationDuration);
             }
         }
         catch
         {
         }
+    }
+
+    private static async Task WaitForResultPresenterLayoutAsync()
+    {
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+        await Task.Delay(16);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
     }
 }

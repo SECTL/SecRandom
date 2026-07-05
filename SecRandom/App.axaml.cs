@@ -38,17 +38,30 @@ using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.A
 using SecRandom.Services;
 using SecRandom.Services.Config;
 using SecRandom.Services.CrashRecovery;
+using SecRandom.Services.Desktop;
+using SecRandom.Services.Draw;
 using SecRandom.Services.Plugins;
+using SecRandom.Services.Profiles;
+using SecRandom.Services.Settings;
 using SecRandom.Services.Telemetry;
+using SecRandom.Services.Voice;
 using SecRandom.ViewModels;
+using SecRandom.ViewModels.MainPages;
+using SecRandom.ViewModels.SettingsPages.History;
 using SecRandom.Views;
 using SecRandom.Views.MainPages;
 using SecRandom.Views.SettingsPages;
+using SecRandom.Views.SettingsPages.About;
 using SecRandom.Views.SettingsPages.General;
 using SecRandom.Views.SettingsPages.History;
+using SecRandom.Views.SettingsPages.Linkage;
 using SecRandom.Views.SettingsPages.ListManagement;
+using SecRandom.Views.SettingsPages.LogViewer;
+using SecRandom.Views.SettingsPages.More;
 using SecRandom.Views.SettingsPages.Personalized;
 using SecRandom.Views.SettingsPages.Picking;
+using SecRandom.Views.SettingsPages.Plugins.Overview;
+using SecRandom.Views.SettingsPages.Update;
 using DefaultNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.DefaultNotificationSettingsPage;
 using FloatingWindowSettingsPage = SecRandom.Views.SettingsPages.Personalized.FloatingWindowSettingsPage;
 using LotteryNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.LotteryNotificationSettingsPage;
@@ -63,6 +76,7 @@ namespace SecRandom;
 public partial class App : Application
 {
     private static FloatingWindow? _floatingWindow;
+    private static MainWindow? _quickDrawWindow;
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
     private static MainWindow? _profileSettingsWindow;
@@ -300,7 +314,6 @@ public partial class App : Application
 
                 // 界面 Views
                 services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
-                services.AddMainPage<QuickDrawPage>(Langs.Common.Resources.Feat_QuickDraw);
                 services.AddMainPage<LotteryPage>(Langs.Common.Resources.Feat_Lottery);
                 services.AddMainPage<HistoryPage>(Langs.Common.Resources.Feat_History);
 #if DEBUG
@@ -833,6 +846,42 @@ public partial class App : Application
         {
             transaction?.Finish(ex, SpanStatus.InternalError);
             IAppHost.TryGetService<ILogger<App>>()?.LogError(ex, "Failed to show settings window.");
+            throw;
+        }
+    }
+
+    public static void ShowQuickDrawWindow()
+    {
+        TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
+        using var transaction = telemetry?.StartTransaction("ui.quick_draw_window", "ui.navigation");
+
+        try
+        {
+            if (_quickDrawWindow is { IsVisible: true })
+            {
+                _quickDrawWindow.Activate();
+                transaction?.Finish(SpanStatus.Ok);
+                return;
+            }
+
+            if (_quickDrawWindow is not { IsLoaded: true })
+            {
+                _quickDrawWindow = new MainWindow
+                {
+                    Content = IAppHost.GetService<QuickDrawPage>(),
+                    Title = @"SecRandom"
+                };
+                _quickDrawWindow.Closed += (_, _) => _quickDrawWindow = null;
+            }
+
+            _quickDrawWindow.Show();
+            _quickDrawWindow.Activate();
+            transaction?.Finish(SpanStatus.Ok);
+        }
+        catch (Exception ex)
+        {
+            transaction?.Finish(ex, SpanStatus.InternalError);
+            IAppHost.TryGetService<ILogger<App>>()?.LogError(ex, "Failed to show quick draw window.");
             throw;
         }
     }
