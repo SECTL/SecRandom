@@ -12,8 +12,6 @@ public partial class FloatingWindowSettingsConfig : ObservableObject
     [ObservableProperty] private bool _showQuickDrawButton = true;
     [ObservableProperty] private bool _showLotteryButton = false;
     [ObservableProperty] private bool _showFaceDrawButton = false;
-    [ObservableProperty] private bool _showTimerButton = false;
-    [ObservableProperty] private bool _extendQuickDrawComponent = false;
     [ObservableProperty] private int _floatingWindowPlacement = 1;
     [ObservableProperty] private int _floatingWindowDisplayStyle = 0;
     [ObservableProperty] private int _floatingWindowTheme = 0;
@@ -21,7 +19,7 @@ public partial class FloatingWindowSettingsConfig : ObservableObject
     [ObservableProperty] private int _stickToEdgeRecoverSeconds = 3;
     [ObservableProperty] private int _stickToEdgeDisplayStyle = 1;
     [ObservableProperty] private bool _draggable = true;
-    [ObservableProperty] private int _floatingWindowSize = 3;
+    [ObservableProperty] private int _floatingWindowSize = 48;
     [ObservableProperty] private int _longPressDuration = 500;
     [ObservableProperty] private bool _doNotStealFocus = true;
     [ObservableProperty] private bool _hideOnForeground = false;

@@ -90,24 +90,6 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 扩展闪抽组件.
-        /// </summary>
-        public static string S_Buttons_ExtendQuickDraw {
-            get {
-                return ResourceManager.GetString("S_Buttons_ExtendQuickDraw", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 在悬浮窗中显示扩展的快速抽取组件。.
-        /// </summary>
-        public static string S_Buttons_ExtendQuickDraw_D {
-            get {
-                return ResourceManager.GetString("S_Buttons_ExtendQuickDraw_D", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to 人脸抽取按钮.
         /// </summary>
         public static string S_Buttons_FaceDraw {
@@ -176,24 +158,6 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
         public static string S_Buttons_RollCall_D {
             get {
                 return ResourceManager.GetString("S_Buttons_RollCall_D", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 计时器按钮.
-        /// </summary>
-        public static string S_Buttons_Timer {
-            get {
-                return ResourceManager.GetString("S_Buttons_Timer", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 在悬浮窗中显示计时器入口。.
-        /// </summary>
-        public static string S_Buttons_Timer_D {
-            get {
-                return ResourceManager.GetString("S_Buttons_Timer_D", resourceCulture);
             }
         }
 

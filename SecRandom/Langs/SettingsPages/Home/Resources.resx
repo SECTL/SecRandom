@@ -51,6 +51,21 @@
   <data name="C_PoolCount" xml:space="preserve">
     <value>奖池数量</value>
   </data>
+  <data name="C_Name" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="C_StudentCount" xml:space="preserve">
+    <value>学生数</value>
+  </data>
+  <data name="C_PrizeCount" xml:space="preserve">
+    <value>奖品数</value>
+  </data>
+  <data name="C_LastDrawn" xml:space="preserve">
+    <value>最近抽取</value>
+  </data>
+  <data name="C_HistorySummary" xml:space="preserve">
+    <value>历史汇总</value>
+  </data>
   <data name="M_NoRollCallLists" xml:space="preserve">
     <value>尚未创建学生名单。</value>
   </data>

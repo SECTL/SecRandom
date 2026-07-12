@@ -168,15 +168,6 @@ namespace SecRandom.Langs.Common {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 计时器.
-        /// </summary>
-        public static string Feat_Timer {
-            get {
-                return ResourceManager.GetString("Feat_Timer", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to 退出程序.
         /// </summary>
         public static string Menu_ExitProgram {

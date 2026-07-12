@@ -100,9 +100,6 @@
     <data name="Feat_QuickDraw" xml:space="preserve">
         <value>Quick Draw</value>
     </data>
-    <data name="Feat_Timer" xml:space="preserve">
-        <value>Timer</value>
-    </data>
     <data name="Menu_OpenSettings" xml:space="preserve">
         <value>Open Settings</value>
     </data>

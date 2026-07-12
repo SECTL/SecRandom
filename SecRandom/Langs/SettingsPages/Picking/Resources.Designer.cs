@@ -589,7 +589,25 @@ namespace SecRandom.Langs.SettingsPages.Picking {
                 return ResourceManager.GetString("S_DisableAfterClick_D", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to 自动关闭时间.
+        /// </summary>
+        public static string S_AutoCloseTime {
+            get {
+                return ResourceManager.GetString("S_AutoCloseTime", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 抽取完成后自动关闭闪抽浮窗的秒数，设为 0 则不自动关闭.
+        /// </summary>
+        public static string S_AutoCloseTime_D {
+            get {
+                return ResourceManager.GetString("S_AutoCloseTime_D", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 显示格式.
         /// </summary>

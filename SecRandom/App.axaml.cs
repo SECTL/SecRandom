@@ -78,7 +78,7 @@ namespace SecRandom;
 public partial class App : Application
 {
     private static FloatingWindow? _floatingWindow;
-    private static MainWindow? _quickDrawWindow;
+    private static Window? _quickDrawWindow;
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
     private static MainWindow? _profileSettingsWindow;
@@ -314,6 +314,7 @@ public partial class App : Application
 
                 services.AddTransient<ProfileSettingsView>();
                 services.AddTransient<ProfileSettingsViewModel>();
+                services.AddTransient<QuickDrawPage>();
 
                 // 附加设置
                 services.AddAttachedSettingsControl<BehindSceneAttachedSettingsControl>(Langs.Common.Resources
@@ -909,22 +910,35 @@ public partial class App : Application
             if (_quickDrawWindow is { IsVisible: true })
             {
                 _quickDrawWindow.Activate();
+                (_quickDrawWindow.Content as QuickDrawPage)?.StartDraw();
                 transaction?.Finish(SpanStatus.Ok);
                 return;
             }
 
             if (_quickDrawWindow is not { IsLoaded: true })
             {
-                _quickDrawWindow = new MainWindow
+                _quickDrawWindow = new Window
                 {
                     Content = IAppHost.GetService<QuickDrawPage>(),
-                    Title = @"SecRandom"
+                    Title = @"SecRandom",
+                    Width = 460,
+                    Height = 320,
+                    Topmost = true,
+                    WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                    WindowDecorations = WindowDecorations.None,
+                    CanMinimize = false,
+                    CanMaximize = false,
+                    CanResize = false,
+                    ShowInTaskbar = false,
+                    Background = Brushes.Transparent,
+                    TransparencyLevelHint = [WindowTransparencyLevel.Transparent]
                 };
                 _quickDrawWindow.Closed += (_, _) => _quickDrawWindow = null;
             }
 
             _quickDrawWindow.Show();
             _quickDrawWindow.Activate();
+            (_quickDrawWindow.Content as QuickDrawPage)?.StartDraw();
             transaction?.Finish(SpanStatus.Ok);
         }
         catch (Exception ex)

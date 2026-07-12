@@ -75,12 +75,6 @@
   <data name="S_Buttons_FaceDraw_D" xml:space="preserve">
     <value>在悬浮窗中显示摄像头抽取入口。</value>
   </data>
-  <data name="S_Buttons_Timer" xml:space="preserve">
-    <value>计时器</value>
-  </data>
-  <data name="S_Buttons_Timer_D" xml:space="preserve">
-    <value>在悬浮窗中显示计时器入口。</value>
-  </data>
   <data name="S_Interaction" xml:space="preserve">
     <value>交互与贴边</value>
   </data>
@@ -102,9 +96,6 @@
   <data name="S_Interaction_DoNotStealFocus_D" xml:space="preserve">
     <value>点击悬浮窗时尽量不抢占当前窗口焦点。</value>
   </data>
-  <data name="S_Buttons_ExtendQuickDraw" xml:space="preserve">
-    <value>扩展闪抽组件</value>
-  </data>
   <data name="S_Interaction_HideOnForegroundProcessNames_D" xml:space="preserve">
     <value>使用英文分号 ; 分隔，命中进程名时隐藏悬浮窗，例如 WeChat.exe。</value>
   </data>
@@ -125,9 +116,6 @@
   </data>
   <data name="S_Interaction_HideOnForeground" xml:space="preserve">
     <value>前台窗口隐藏悬浮窗</value>
-  </data>
-  <data name="S_Buttons_ExtendQuickDraw_D" xml:space="preserve">
-    <value>在悬浮窗中显示扩展的快速抽取组件。</value>
   </data>
   <data name="S_Interaction_StickToEdgeRecoverSeconds_D" xml:space="preserve">
     <value>设置悬浮窗贴边后自动收纳的时间（秒）。</value>

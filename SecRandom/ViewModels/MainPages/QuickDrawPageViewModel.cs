@@ -104,8 +104,6 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
         _profileService.LoadStudentProfile(value);
         EnsureRestartTemporaryRecordsCleared(value);
-        Config.QuickDrawSettings.DefaultClass = value;
-        _configHandler.Save();
         OnPropertyChanged(nameof(CanStartDraw));
     }
 
@@ -128,6 +126,9 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             return;
 
         if (!await _securityService.AuthorizeAsync(SecurityOperation.QuickDrawStart, () => Task.CompletedTask))
+            return;
+
+        if (!TryLoadDefaultStudentList())
             return;
 
         var candidates = GetEligibleCandidates().ToList();
@@ -191,7 +192,28 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         var defaultClass = Config.QuickDrawSettings.DefaultClass;
         SelectedStudentListName = StudentListNames.Contains(defaultClass)
             ? defaultClass
-            : StudentListNames.FirstOrDefault() ?? string.Empty;
+            : string.Empty;
+    }
+
+    private bool TryLoadDefaultStudentList()
+    {
+        var defaultClass = Config.QuickDrawSettings.DefaultClass.Trim();
+        if (string.IsNullOrWhiteSpace(defaultClass))
+        {
+            StatusText = "请先在闪抽设置中选择默认抽取名单";
+            return false;
+        }
+
+        if (!StudentListNames.Contains(defaultClass))
+        {
+            StatusText = "默认抽取名单不存在，请在闪抽设置中重新选择";
+            return false;
+        }
+
+        if (SelectedStudentListName != defaultClass)
+            SelectedStudentListName = defaultClass;
+
+        return true;
     }
 
     private void EnsureRestartTemporaryRecordsCleared(string listName)

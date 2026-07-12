@@ -47,7 +47,12 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
             {
                 var list = new StudentListConfig(name).Data;
                 var history = new StudentHistoryConfig(name).Data;
-                return new HomeProfileCard(name, list.Students.Count(student => student.Exists), history.TotalRounds, history.TotalStats);
+                return new HomeProfileCard(
+                    name,
+                    list.Students.Count(student => student.Exists),
+                    history.TotalRounds,
+                    history.TotalStats,
+                    FormatLastDrawnTime(history.Students.Values.Select(item => item.LastDrawnTime)));
             })
             .ToList();
 
@@ -68,7 +73,12 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
             {
                 var list = new PrizeListConfig(name).Data;
                 var history = new PrizeHistoryConfig(name).Data;
-                return new HomeProfileCard(name, list.Prizes.Count(prize => prize.Exists), history.TotalRounds, history.TotalStats);
+                return new HomeProfileCard(
+                    name,
+                    list.Prizes.Count(prize => prize.Exists),
+                    history.TotalRounds,
+                    history.TotalStats,
+                    FormatLastDrawnTime(history.Prizes.Values.Select(item => item.LastDrawnTime)));
             })
             .ToList();
 
@@ -89,10 +99,30 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .OrderBy(name => name, StringComparer.Ordinal)!;
     }
+
+    private static string FormatLastDrawnTime(IEnumerable<DateTime> times)
+    {
+        var lastDrawnTime = times.DefaultIfEmpty(DateTime.MinValue).Max();
+        if (lastDrawnTime == DateTime.MinValue)
+            return "暂无记录";
+
+        var elapsed = DateTime.Now - lastDrawnTime;
+        if (elapsed < TimeSpan.FromMinutes(1))
+            return "刚刚";
+        if (elapsed < TimeSpan.FromHours(1))
+            return $"{(int)elapsed.TotalMinutes} 分钟前";
+        if (lastDrawnTime.Date == DateTime.Today)
+            return $"今天 {lastDrawnTime:HH:mm}";
+        if (lastDrawnTime.Date == DateTime.Today.AddDays(-1))
+            return $"昨天 {lastDrawnTime:HH:mm}";
+
+        return lastDrawnTime.ToString("yyyy-MM-dd HH:mm");
+    }
 }
 
 public record HomeProfileCard(
     string Name,
     int RecordCount,
     int TotalRounds,
-    int TotalDrawnCount);
+    int TotalDrawnCount,
+    string LastDrawnTime);

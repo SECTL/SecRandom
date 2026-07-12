@@ -33,6 +33,8 @@
   <data name="S_DrawCount_D" xml:space="preserve"><value>每次闪抽抽取的人数</value></data>
   <data name="S_DisableAfterClick" xml:space="preserve"><value>点击后禁用时间</value></data>
   <data name="S_DisableAfterClick_D" xml:space="preserve"><value>点击一次闪抽后禁用按钮的秒数</value></data>
+  <data name="S_AutoCloseTime" xml:space="preserve"><value>自动关闭时间</value></data>
+  <data name="S_AutoCloseTime_D" xml:space="preserve"><value>抽取完成后自动关闭闪抽浮窗的秒数，设为 0 则不自动关闭</value></data>
   <data name="S_FontSource" xml:space="preserve"><value>字体来源</value></data>
   <data name="S_FontSource_D" xml:space="preserve"><value>跟随全局字体或为抽取结果单独指定字体</value></data>
   <data name="S_CustomFont" xml:space="preserve"><value>自定义字体</value></data>

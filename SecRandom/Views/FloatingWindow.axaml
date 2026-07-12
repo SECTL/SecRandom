@@ -1,8 +1,9 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:views="clr-namespace:SecRandom.Views"
+         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+         xmlns:views="clr-namespace:SecRandom.Views"
+         xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="SecRandom.Views.FloatingWindow"
         x:DataType="views:FloatingWindow"
@@ -20,17 +21,17 @@
         SizeToContent="WidthAndHeight"
         Loaded="OnLoaded">
     <Grid>
-        <Border Background="{DynamicResource SolidBackgroundFillColorQuarternaryBrush}"
+        <Border x:Name="WindowBorder"
+                Background="{DynamicResource SolidBackgroundFillColorQuarternaryBrush}"
                 Opacity="0.8"
                 BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
                 BorderThickness="2"
                 CornerRadius="8" ClipToBounds="True" />
         <!-- Opacity="{Binding ViewModel.Config.FloatingWindowSettings.FloatingWindowOpacity}" -->
 
-        <StackPanel x:Name="RootStackPanel"
-                    Orientation="Vertical"
-                    VerticalAlignment="Center"
-                    HorizontalAlignment="Center"
-                    Margin="4" />
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="4">
+            <sr:TouchDragThumb x:Name="DragThumb" Orientation="Horizontal" Height="24" />
+            <WrapPanel x:Name="ButtonsPanel" HorizontalAlignment="Center" />
+        </StackPanel>
     </Grid>
 </Window>

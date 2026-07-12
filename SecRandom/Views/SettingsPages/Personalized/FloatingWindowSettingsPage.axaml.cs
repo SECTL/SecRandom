@@ -18,9 +18,12 @@ namespace SecRandom.Views.SettingsPages.Personalized;
 [PageInfo("settings.personalized.floatingWindow", FluentIcons.WindowAppsRegular, "settings.personalized")]
 public partial class FloatingWindowSettingsPage : UserControl
 {
+    private bool _synchronizingSelections;
+
     public FloatingWindowSettingsPage()
     {
         Settings = ViewModel.Config.FloatingWindowSettings;
+        var migratedSize = NormalizeFloatingWindowSize();
         ButtonOptions =
         [
             new(LR.S_Buttons_RollCall, () => Settings.ShowRollCallButton,
@@ -30,11 +33,7 @@ public partial class FloatingWindowSettingsPage : UserControl
             new(LR.S_Buttons_Lottery, () => Settings.ShowLotteryButton,
                 value => Settings.ShowLotteryButton = value),
             new(LR.S_Buttons_FaceDraw, () => Settings.ShowFaceDrawButton,
-                value => Settings.ShowFaceDrawButton = value),
-            new(LR.S_Buttons_Timer, () => Settings.ShowTimerButton,
-                value => Settings.ShowTimerButton = value),
-            new(LR.S_Buttons_ExtendQuickDraw, () => Settings.ExtendQuickDrawComponent,
-                value => Settings.ExtendQuickDrawComponent = value)
+                value => Settings.ShowFaceDrawButton = value)
         ];
         InteractionOptions =
         [
@@ -52,6 +51,8 @@ public partial class FloatingWindowSettingsPage : UserControl
         DataContext = this;
         InitializeComponent();
         Settings.PropertyChanged += SettingsOnPropertyChanged;
+        if (migratedSize)
+            ConfigHandler.Save();
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
@@ -71,6 +72,8 @@ public partial class FloatingWindowSettingsPage : UserControl
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         ConfigHandler.Save();
+        SynchronizeSelectedOptions(ButtonOptions, SelectedButtonOptions);
+        SynchronizeSelectedOptions(InteractionOptions, SelectedInteractionOptions);
     }
 
     private static AvaloniaList<MultiSelectSettingOption> BuildSelectedOptions(
@@ -79,8 +82,49 @@ public partial class FloatingWindowSettingsPage : UserControl
         return new AvaloniaList<MultiSelectSettingOption>(options.Where(option => option.IsSelected));
     }
 
+    private bool NormalizeFloatingWindowSize()
+    {
+        var size = Settings.FloatingWindowSize <= 6
+            ? Settings.FloatingWindowSize switch
+            {
+                0 => 28,
+                1 => 32,
+                2 => 40,
+                3 => 48,
+                4 => 56,
+                5 => 64,
+                _ => 72
+            }
+            : System.Math.Clamp(Settings.FloatingWindowSize, 28, 72);
+
+        if (size == Settings.FloatingWindowSize)
+            return false;
+
+        Settings.FloatingWindowSize = size;
+        return true;
+    }
+
+    private void SynchronizeSelectedOptions(
+        IEnumerable<MultiSelectSettingOption> options,
+        AvaloniaList<MultiSelectSettingOption> selectedOptions)
+    {
+        _synchronizingSelections = true;
+        try
+        {
+            selectedOptions.Clear();
+            selectedOptions.AddRange(options.Where(option => option.IsSelected));
+        }
+        finally
+        {
+            _synchronizingSelections = false;
+        }
+    }
+
     private void MultiSelect_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
+        if (_synchronizingSelections)
+            return;
+
         foreach (var option in e.AddedItems.OfType<MultiSelectSettingOption>())
         {
             option.SetSelected(true);

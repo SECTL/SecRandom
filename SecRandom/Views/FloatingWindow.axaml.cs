@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -7,11 +7,10 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Avalonia.Threading;
 using Avalonia.VisualTree;
-using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Controls;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.ViewModels;
 
@@ -32,78 +31,71 @@ public partial class FloatingWindow : Window
         Closing += OnClosing;
         AddHandler(PointerPressedEvent, OnPointerPressed, handledEventsToo: true);
         AddHandler(PointerReleasedEvent, OnPointerReleased, handledEventsToo: true);
-
-        // ViewModel.Config.FloatingWindowSettings.PropertyChanged += (sender, args) =>
-        // {
-        //     OnLoaded(this, new RoutedEventArgs());
-        // };
-        //
-        // ViewModel.Config.FloatingWindowSettings.FloatingWindowButtonControl.CollectionChanged += (sender, args) =>
-        // {
-        //     CheckIsVisibleValidate();
-        //     RefreshItems();
-        // };
-
-        CheckIsVisibleValidate();
+        ViewModel.Config.FloatingWindowSettings.PropertyChanged += FloatingWindowSettings_OnPropertyChanged;
         RefreshItems();
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public bool CanClose { get; set; } = false;
 
-    private void CheckIsVisibleValidate()
-    {
-        // var settings = ViewModel.Config.FloatingWindowSettings;
-        // if (!settings.FloatingWindowButtonControl.Any())
-        // {
-        //     _ = MakeIsVisibleValidate();
-        // }
-    }
-
-    private async Task MakeIsVisibleValidate()
-    {
-        await Task.Delay(1);
-        Dispatcher.UIThread.Invoke(() =>
-        {
-            // ViewModel.Config.FloatingWindowSettings.FloatingWindowButtonControl.Add("roll_call");
-        });
-    }
-
     public void RefreshItems()
     {
-        RootStackPanel.Children.Clear();
-        RootStackPanel.Children.Add(new TouchDragThumb { Orientation = Orientation.Horizontal, Height = 24 });
-
-        foreach (var controlName in
-                 (List<string>)["roll_call"]) // ViewModel.Config.FloatingWindowSettings.FloatingWindowButtonControl
+        var settings = ViewModel.Config.FloatingWindowSettings;
+        ApplyWindowSettings(settings);
+        ButtonsPanel.Children.Clear();
+        foreach (var controlName in GetVisibleButtonNames(settings))
         {
             var control = controlName switch
             {
-                "roll_call" => GetRollCallButton(),
-                "quick_draw" => GetQuickDrawButton(),
-                "lottery" => GetLotteryButton(),
-                "face_draw" => GetFaceDrawButton(),
-                "timer" => GetTimerButton(),
+                "roll_call" => GetRollCallButton(settings),
+                "quick_draw" => GetQuickDrawButton(settings),
+                "lottery" => GetLotteryButton(settings),
+                "face_draw" => GetFaceDrawButton(settings),
                 _ => null
             };
 
-            if (control == null)
-            {
-                RootStackPanel.Children.Add(new TextBlock { Text = controlName });
-                continue;
-            }
-
-            RootStackPanel.Children.Add(control);
+            if (control != null)
+                ButtonsPanel.Children.Add(control);
         }
     }
 
-    private static FACommandBarButton GetRollCallButton()
+    private void ApplyWindowSettings(FloatingWindowSettingsConfig settings)
     {
-        var b = new FACommandBarButton
-        {
-            IconSource = new FluentIconSource("\uECAA"),
-            Label = Langs.Common.Resources.Feat_RollCall
-        };
+        var size = GetButtonSize(settings.FloatingWindowSize);
+        WindowBorder.Opacity = System.Math.Clamp(settings.FloatingWindowOpacity, 20, 100) / 100.0;
+        Topmost = settings.FloatingWindowTopmostMode is TopmostMode.Topmost or TopmostMode.UiAccess;
+        DragThumb.IsEnabled = settings.Draggable;
+        ButtonsPanel.Orientation = settings.FloatingWindowPlacement == 1
+            ? Orientation.Vertical
+            : Orientation.Horizontal;
+        ButtonsPanel.Width = settings.FloatingWindowPlacement == 0
+            ? size * 5
+            : double.NaN;
+    }
+
+    private static int GetButtonSize(int value)
+    {
+        return value <= 6
+            ? value switch { 0 => 28, 1 => 32, 2 => 40, 3 => 48, 4 => 56, 5 => 64, _ => 72 }
+            : System.Math.Clamp(value, 28, 72);
+    }
+
+    private static IEnumerable<string> GetVisibleButtonNames(FloatingWindowSettingsConfig settings)
+    {
+        if (settings.ShowRollCallButton) yield return "roll_call";
+        if (settings.ShowQuickDrawButton) yield return "quick_draw";
+        if (settings.ShowLotteryButton) yield return "lottery";
+        if (settings.ShowFaceDrawButton) yield return "face_draw";
+    }
+
+    private void FloatingWindowSettings_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        RefreshItems();
+    }
+
+    private static Button GetRollCallButton(FloatingWindowSettingsConfig settings)
+    {
+        var b = CreateButton("\uECAA", Langs.Common.Resources.Feat_RollCall, settings);
 
         b.Click += (sender, args) =>
         {
@@ -114,13 +106,9 @@ public partial class FloatingWindow : Window
         return b;
     }
 
-    private static FACommandBarButton GetQuickDrawButton()
+    private static Button GetQuickDrawButton(FloatingWindowSettingsConfig settings)
     {
-        var b = new FACommandBarButton
-        {
-            IconSource = new FluentIconSource("\uE84E"),
-            Label = Langs.Common.Resources.Feat_QuickDraw
-        };
+        var b = CreateButton("\uE84E", Langs.Common.Resources.Feat_QuickDraw, settings);
 
         b.Click += (sender, args) =>
         {
@@ -130,13 +118,9 @@ public partial class FloatingWindow : Window
         return b;
     }
 
-    private static FACommandBarButton GetLotteryButton()
+    private static Button GetLotteryButton(FloatingWindowSettingsConfig settings)
     {
-        var b = new FACommandBarButton
-        {
-            IconSource = new FluentIconSource("\uE8EC"),
-            Label = Langs.Common.Resources.Feat_Lottery
-        };
+        var b = CreateButton("\uE8EC", Langs.Common.Resources.Feat_Lottery, settings);
 
         b.Click += (sender, args) =>
         {
@@ -147,31 +131,66 @@ public partial class FloatingWindow : Window
         return b;
     }
 
-    private static FACommandBarButton GetFaceDrawButton()
+    private static Button GetFaceDrawButton(FloatingWindowSettingsConfig settings)
     {
-        var b = new FACommandBarButton
-        {
-            IconSource = new FluentIconSource("\uF3EE"),
-            Label = Langs.Common.Resources.Feat_FaceDraw
-        };
-
-        return b;
+        return CreateButton("\uF3EE", Langs.Common.Resources.Feat_FaceDraw, settings);
     }
 
-    private static FACommandBarButton GetTimerButton()
+    private static Button CreateButton(
+        string icon,
+        string label,
+        FloatingWindowSettingsConfig settings)
     {
-        var b = new FACommandBarButton
+        var size = GetButtonSize(settings.FloatingWindowSize);
+        var displayStyle = settings.FloatingWindowDisplayStyle;
+        var button = new Button
         {
-            IconSource = new FluentIconSource("\uF360"),
-            Label = Langs.Common.Resources.Feat_Timer
+            Height = size,
+            MinWidth = displayStyle switch
+            {
+                1 => size,
+                2 => size * 1.8,
+                _ => size * 2.4
+            },
+            Margin = new Thickness(2),
+            Padding = new Thickness(System.Math.Max(4, size * 0.15))
         };
 
-        return b;
+        ToolTip.SetTip(button, label);
+        button.Content = displayStyle switch
+        {
+            1 => new FluentIcon(icon, size * 0.55),
+            2 => new TextBlock
+            {
+                Text = label,
+                FontSize = System.Math.Max(12, size * 0.38),
+                VerticalAlignment = VerticalAlignment.Center
+            },
+            _ => new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = System.Math.Max(4, size * 0.12),
+                VerticalAlignment = VerticalAlignment.Center,
+                Children =
+                {
+                    new FluentIcon(icon, size * 0.45),
+                    new TextBlock
+                    {
+                        Text = label,
+                        FontSize = System.Math.Max(12, size * 0.34),
+                        VerticalAlignment = VerticalAlignment.Center
+                    }
+                }
+            }
+        };
+
+        return button;
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
         if (!CanClose) e.Cancel = true;
+        else ViewModel.Config.FloatingWindowSettings.PropertyChanged -= FloatingWindowSettings_OnPropertyChanged;
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
@@ -183,7 +202,8 @@ public partial class FloatingWindow : Window
     {
         base.OnPointerPressed(e);
 
-        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        if (ViewModel.Config.FloatingWindowSettings.Draggable
+            && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
             var source = e.Source as Control;
 
@@ -197,7 +217,7 @@ public partial class FloatingWindow : Window
     {
         while (visual != null)
         {
-            if (visual is Button or FACommandBarButton)
+            if (visual is Button)
                 return true;
             visual = visual.GetVisualParent();
         }
