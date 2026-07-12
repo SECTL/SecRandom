@@ -17,6 +17,7 @@ public class FluentIcon : FAFontIcon
     public FluentIcon(string glyph, double size) : this(glyph)
     {
         Width = Height = size;
+        FontSize = size;
     }
 
     public object ProvideValue()

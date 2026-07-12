@@ -95,7 +95,7 @@ public partial class FloatingWindowSettingsPage : UserControl
                 5 => 64,
                 _ => 72
             }
-            : System.Math.Clamp(Settings.FloatingWindowSize, 28, 72);
+            : System.Math.Clamp(Settings.FloatingWindowSize, 32, 160);
 
         if (size == Settings.FloatingWindowSize)
             return false;

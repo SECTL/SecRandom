@@ -645,24 +645,6 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 抽取人数.
-        /// </summary>
-        public static string S_DrawCount {
-            get {
-                return ResourceManager.GetString("S_DrawCount", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 每次闪抽抽取的人数.
-        /// </summary>
-        public static string S_DrawCount_D {
-            get {
-                return ResourceManager.GetString("S_DrawCount_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 抽取模式.
         /// </summary>
         public static string S_DrawMode {

@@ -70,7 +70,6 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
     public ObservableCollection<string> StudentListNames { get; } = [];
     public ObservableCollection<QuickDrawResultItem> ResultItems { get; } = [];
-    public int DrawCount => Math.Clamp(Config.QuickDrawSettings.DrawCount, 1, 100);
     public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && !_isCoolingDown && GetEligibleCandidates().Any());
     public string DrawButtonText => IsDrawing ? "停止" : "闪抽";
     public double ResultFontSize => DisplaySettings.FontSize;
@@ -138,7 +137,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        var count = Math.Clamp(DrawCount, 1, candidates.Count);
+        const int count = 1;
         SetDrawCommandRunning(true);
         try
         {

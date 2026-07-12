@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -7,6 +8,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Controls;
@@ -18,6 +20,11 @@ namespace SecRandom.Views;
 
 public partial class FloatingWindow : Window
 {
+    private bool _isMovingWindow;
+    private bool _isDocked;
+    private bool _isDockedOnLeft;
+    private int _dockRevision;
+
     public FloatingWindow()
     {
         DataContext = this;
@@ -69,15 +76,20 @@ public partial class FloatingWindow : Window
             ? Orientation.Vertical
             : Orientation.Horizontal;
         ButtonsPanel.Width = settings.FloatingWindowPlacement == 0
-            ? size * 5
+            ? (size + 4) * 2
             : double.NaN;
+
+        if (!settings.StickToEdge && _isDocked)
+            RestoreFromDock();
+        else if (_isDocked)
+            UpdateDockButton();
     }
 
     private static int GetButtonSize(int value)
     {
         return value <= 6
             ? value switch { 0 => 28, 1 => 32, 2 => 40, 3 => 48, 4 => 56, 5 => 64, _ => 72 }
-            : System.Math.Clamp(value, 28, 72);
+            : System.Math.Clamp(value, 32, 160);
     }
 
     private static IEnumerable<string> GetVisibleButtonNames(FloatingWindowSettingsConfig settings)
@@ -146,39 +158,41 @@ public partial class FloatingWindow : Window
         var button = new Button
         {
             Height = size,
-            MinWidth = displayStyle switch
-            {
-                1 => size,
-                2 => size * 1.8,
-                _ => size * 2.4
-            },
+            Width = size,
             Margin = new Thickness(2),
-            Padding = new Thickness(System.Math.Max(4, size * 0.15))
+            Padding = new Thickness(System.Math.Max(2, size * 0.08)),
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center
         };
 
         ToolTip.SetTip(button, label);
         button.Content = displayStyle switch
         {
-            1 => new FluentIcon(icon, size * 0.55),
+            1 => new FluentIcon(icon, size * 0.70),
             2 => new TextBlock
             {
                 Text = label,
-                FontSize = System.Math.Max(12, size * 0.38),
+                FontSize = System.Math.Max(10, size * 0.28),
+                TextAlignment = TextAlignment.Center,
+                TextWrapping = TextWrapping.Wrap,
                 VerticalAlignment = VerticalAlignment.Center
             },
             _ => new StackPanel
             {
-                Orientation = Orientation.Horizontal,
-                Spacing = System.Math.Max(4, size * 0.12),
+                Orientation = Orientation.Vertical,
+                Spacing = System.Math.Max(1, size * 0.04),
+                HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 Children =
                 {
-                    new FluentIcon(icon, size * 0.45),
+                    new FluentIcon(icon, size * 0.50),
                     new TextBlock
                     {
                         Text = label,
-                        FontSize = System.Math.Max(12, size * 0.34),
-                        VerticalAlignment = VerticalAlignment.Center
+                        FontSize = System.Math.Max(9, size * 0.22),
+                        TextAlignment = TextAlignment.Center,
+                        TextWrapping = TextWrapping.Wrap,
+                        HorizontalAlignment = HorizontalAlignment.Center
                     }
                 }
             }
@@ -209,6 +223,7 @@ public partial class FloatingWindow : Window
 
             if (IsChildOfButton(source)) return;
 
+            _isMovingWindow = true;
             BeginMoveDrag(e);
         }
     }
@@ -229,6 +244,114 @@ public partial class FloatingWindow : Window
     {
         base.OnPointerReleased(e);
 
+        if (!_isMovingWindow)
+            return;
+
+        _isMovingWindow = false;
+        if (ViewModel.Config.FloatingWindowSettings.StickToEdge)
+            SnapToNearestEdge();
+
+        SavePosition();
+    }
+
+    private void SnapToNearestEdge()
+    {
+        var workingArea = Screens.ScreenFromPoint(Position)?.WorkingArea ?? Screens.Primary?.WorkingArea;
+        if (workingArea is null)
+            return;
+
+        var scale = RenderScaling;
+        var width = Math.Max(1, (int)Math.Ceiling(Bounds.Width * scale));
+        var height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * scale));
+        _isDockedOnLeft = Position.X + width / 2 < workingArea.Value.Center.X;
+        MoveToDockedEdge(workingArea.Value, width, height);
+        ScheduleDock();
+    }
+
+    private void MoveToDockedEdge(PixelRect workingArea, int width, int height)
+    {
+        var x = _isDockedOnLeft
+            ? workingArea.X
+            : workingArea.Right - width;
+        var y = Math.Clamp(Position.Y, workingArea.Y, workingArea.Bottom - height);
+        Position = new PixelPoint(x, y);
+    }
+
+    private void RepositionDockedWindow(bool restoring = false)
+    {
+        if (!_isDocked && !restoring)
+            return;
+
+        var workingArea = Screens.ScreenFromPoint(Position)?.WorkingArea ?? Screens.Primary?.WorkingArea;
+        if (workingArea is null)
+            return;
+
+        var scale = RenderScaling;
+        MoveToDockedEdge(
+            workingArea.Value,
+            Math.Max(1, (int)Math.Ceiling(Bounds.Width * scale)),
+            Math.Max(1, (int)Math.Ceiling(Bounds.Height * scale)));
+    }
+
+    private void ScheduleDock()
+    {
+        var seconds = Math.Clamp(ViewModel.Config.FloatingWindowSettings.StickToEdgeRecoverSeconds, 0, 60);
+        var dockRevision = ++_dockRevision;
+        if (seconds == 0)
+            return;
+
+        DispatcherTimer.RunOnce(() =>
+        {
+            if (dockRevision == _dockRevision && ViewModel.Config.FloatingWindowSettings.StickToEdge)
+                CollapseToDock();
+        }, TimeSpan.FromSeconds(seconds));
+    }
+
+    private void CollapseToDock()
+    {
+        _isDocked = true;
+        ButtonsPanel.IsVisible = false;
+        DragThumb.IsVisible = false;
+        UpdateDockButton();
+        Dispatcher.UIThread.Post(RepositionDockedWindow, DispatcherPriority.Layout);
+    }
+
+    private void UpdateDockButton()
+    {
+        var style = ViewModel.Config.FloatingWindowSettings.StickToEdgeDisplayStyle;
+        var glyph = _isDockedOnLeft ? ">" : "<";
+        DockButton.Content = style switch
+        {
+            0 => new FluentIcon("\uE8A7", 20),
+            1 => "SecRandom",
+            _ => glyph
+        };
+        DockButton.Width = style == 1 ? 88 : 36;
+        DockButton.Height = 36;
+        DockButton.IsVisible = _isDocked;
+    }
+
+    private void DockButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        RestoreFromDock();
+    }
+
+    private void RestoreFromDock()
+    {
+        ++_dockRevision;
+        _isDocked = false;
+        DockButton.IsVisible = false;
+        DragThumb.IsVisible = true;
+        ButtonsPanel.IsVisible = true;
+        Dispatcher.UIThread.Post(() =>
+        {
+            RepositionDockedWindow(restoring: true);
+            SavePosition();
+        }, DispatcherPriority.Layout);
+    }
+
+    private void SavePosition()
+    {
         ViewModel.Config.FloatPosition = new FloatPositionConfig { X = Position.X, Y = Position.Y };
     }
 }

@@ -910,7 +910,6 @@ public partial class App : Application
             if (_quickDrawWindow is { IsVisible: true })
             {
                 _quickDrawWindow.Activate();
-                (_quickDrawWindow.Content as QuickDrawPage)?.StartDraw();
                 transaction?.Finish(SpanStatus.Ok);
                 return;
             }

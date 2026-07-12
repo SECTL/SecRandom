@@ -32,6 +32,7 @@
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="4">
             <sr:TouchDragThumb x:Name="DragThumb" Orientation="Horizontal" Height="24" />
             <WrapPanel x:Name="ButtonsPanel" HorizontalAlignment="Center" />
+            <Button x:Name="DockButton" IsVisible="False" Click="DockButton_OnClick" />
         </StackPanel>
     </Grid>
 </Window>

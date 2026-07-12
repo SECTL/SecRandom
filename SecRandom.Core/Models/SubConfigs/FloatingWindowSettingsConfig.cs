@@ -19,7 +19,7 @@ public partial class FloatingWindowSettingsConfig : ObservableObject
     [ObservableProperty] private int _stickToEdgeRecoverSeconds = 3;
     [ObservableProperty] private int _stickToEdgeDisplayStyle = 1;
     [ObservableProperty] private bool _draggable = true;
-    [ObservableProperty] private int _floatingWindowSize = 48;
+    [ObservableProperty] private int _floatingWindowSize = 56;
     [ObservableProperty] private int _longPressDuration = 500;
     [ObservableProperty] private bool _doNotStealFocus = true;
     [ObservableProperty] private bool _hideOnForeground = false;

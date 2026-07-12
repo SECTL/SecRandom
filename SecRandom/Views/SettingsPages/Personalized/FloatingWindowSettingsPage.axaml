@@ -99,8 +99,8 @@
                                    Description="{x:Static lsp:Resources.S_Buttons_Size_D}"
                 IconSource="{sr:FluentIconSource {sr:Fi ResizeLargeRegular}}">
                 <fa:FASettingsExpander.Footer>
-                    <Grid ColumnDefinitions="220,Auto" ColumnSpacing="12">
-                        <Slider Minimum="28" Maximum="72" TickFrequency="4" IsSnapToTickEnabled="True"
+                    <Grid ColumnDefinitions="260,Auto" ColumnSpacing="12">
+                        <Slider Minimum="32" Maximum="160" TickFrequency="8" IsSnapToTickEnabled="True"
                                 Value="{Binding Settings.FloatingWindowSize}" />
                         <TextBlock Grid.Column="1" Text="{Binding Settings.FloatingWindowSize, StringFormat={}{0}px}"
                                    VerticalAlignment="Center" MinWidth="40" TextAlignment="Right" />
