@@ -19,7 +19,7 @@
     <value>悬浮窗管理</value>
   </data>
   <data name="S_Display" xml:space="preserve">
-    <value>基本设置</value>
+    <value>窗口显示</value>
   </data>
   <data name="S_Display_StartupDisplay" xml:space="preserve">
     <value>启动时显示悬浮窗</value>
@@ -31,7 +31,7 @@
     <value>悬浮窗不透明度</value>
   </data>
   <data name="S_Display_Opacity_D" xml:space="preserve">
-    <value>调整悬浮窗整体不透明度。</value>
+    <value>同时应用到主悬浮窗和闪抽浮窗。</value>
   </data>
   <data name="S_Display_TopmostMode" xml:space="preserve">
     <value>悬浮窗置顶模式</value>
@@ -76,19 +76,19 @@
     <value>在悬浮窗中显示摄像头抽取入口。</value>
   </data>
   <data name="S_Interaction" xml:space="preserve">
-    <value>交互与贴边</value>
+    <value>移动与贴边</value>
   </data>
   <data name="S_Interaction_StickToEdge" xml:space="preserve">
     <value>贴边功能</value>
   </data>
   <data name="S_Interaction_StickToEdge_D" xml:space="preserve">
-    <value>控制悬浮窗是否自动贴近屏幕边缘。</value>
+    <value>拖动松开后自动吸附到当前屏幕最近的左侧或右侧边缘。</value>
   </data>
   <data name="S_Interaction_Draggable" xml:space="preserve">
     <value>可拖动</value>
   </data>
   <data name="S_Interaction_Draggable_D" xml:space="preserve">
-    <value>允许拖动悬浮窗位置。</value>
+    <value>关闭后主悬浮窗和收纳手柄都不能拖动。</value>
   </data>
   <data name="S_Interaction_DoNotStealFocus" xml:space="preserve">
     <value>无焦点模式</value>
@@ -109,7 +109,7 @@
     <value>当前前台窗口标题或进程名命中规则时自动隐藏悬浮窗。</value>
   </data>
   <data name="S_Interaction_StickToEdgeRecoverSeconds" xml:space="preserve">
-    <value>吸附恢复时间</value>
+    <value>自动收纳延迟</value>
   </data>
   <data name="S_Interaction_LongPressDuration_D" xml:space="preserve">
     <value>触发长按操作需要持续的毫秒数。</value>
@@ -118,7 +118,7 @@
     <value>前台窗口隐藏悬浮窗</value>
   </data>
   <data name="S_Interaction_StickToEdgeRecoverSeconds_D" xml:space="preserve">
-    <value>设置悬浮窗贴边后自动收纳的时间（秒）。</value>
+    <value>贴边后等待指定秒数再收纳；设为 0 时保持展开。</value>
   </data>
   <data name="S_Interaction_HideOnForegroundWindowTitles_D" xml:space="preserve">
     <value>使用英文分号 ; 分隔，标题包含匹配文本时隐藏悬浮窗。</value>
@@ -130,13 +130,13 @@
     <value>悬浮窗控件</value>
   </data>
   <data name="S_Buttons_EnabledItems_D" xml:space="preserve">
-    <value>选择悬浮窗中显示的入口和扩展控件。</value>
+    <value>选择主悬浮窗中显示的功能入口。</value>
   </data>
   <data name="S_Buttons_Placement" xml:space="preserve">
     <value>控件排列</value>
   </data>
   <data name="S_Buttons_Placement_D" xml:space="preserve">
-    <value>选择悬浮窗按钮的排列方式。</value>
+    <value>矩形为双列网格，纵向和横向按单列排列。</value>
   </data>
   <data name="O_Placement_Rectangle" xml:space="preserve">
     <value>矩形</value>
@@ -166,7 +166,7 @@
     <value>控件尺寸</value>
   </data>
   <data name="S_Buttons_Size_D" xml:space="preserve">
-    <value>调整悬浮窗控件的整体尺寸。</value>
+    <value>调整每个正方形控件的边长，图标和文字会同步缩放。</value>
   </data>
   <data name="O_Size_XXS" xml:space="preserve">
     <value>极小</value>
@@ -190,10 +190,19 @@
     <value>极大</value>
   </data>
   <data name="S_Interaction_StickToEdgeDisplayStyle" xml:space="preserve">
-    <value>贴边显示样式</value>
+    <value>收纳手柄样式</value>
   </data>
   <data name="S_Interaction_StickToEdgeDisplayStyle_D" xml:space="preserve">
-    <value>选择悬浮窗贴边收纳后的显示方式。</value>
+    <value>选择收纳后边缘手柄显示点名图标、“抽”字或方向箭头。</value>
+  </data>
+  <data name="S_Dock" xml:space="preserve">
+    <value>贴边收纳</value>
+  </data>
+  <data name="S_Dock_Size" xml:space="preserve">
+    <value>收纳手柄尺寸</value>
+  </data>
+  <data name="S_Dock_Size_D" xml:space="preserve">
+    <value>调整贴边收纳后边缘手柄的正方形边长。</value>
   </data>
   <data name="O_StickDisplay_Icon" xml:space="preserve">
     <value>图标</value>

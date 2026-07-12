@@ -2,8 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-         xmlns:views="clr-namespace:SecRandom.Views"
-         xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+          xmlns:views="clr-namespace:SecRandom.Views"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="SecRandom.Views.FloatingWindow"
         x:DataType="views:FloatingWindow"
@@ -30,8 +29,9 @@
         <!-- Opacity="{Binding ViewModel.Config.FloatingWindowSettings.FloatingWindowOpacity}" -->
 
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="4">
-            <sr:TouchDragThumb x:Name="DragThumb" Orientation="Horizontal" Height="24" />
-            <WrapPanel x:Name="ButtonsPanel" HorizontalAlignment="Center" />
+            <StackPanel x:Name="ExpandedContent">
+                <WrapPanel x:Name="ButtonsPanel" HorizontalAlignment="Center" />
+            </StackPanel>
             <Button x:Name="DockButton" IsVisible="False" Click="DockButton_OnClick" />
         </StackPanel>
     </Grid>

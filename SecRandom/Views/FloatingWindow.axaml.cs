@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -8,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using SecRandom.Core.Abstraction;
@@ -21,9 +23,23 @@ namespace SecRandom.Views;
 public partial class FloatingWindow : Window
 {
     private bool _isMovingWindow;
+    private bool _isPendingWindowDrag;
     private bool _isDocked;
     private bool _isDockedOnLeft;
     private int _dockRevision;
+    private int _snapAnimationRevision;
+    private bool _isMovingDockHandle;
+    private bool _dockHandleWasDragged;
+    private PixelPoint _dockDragStartScreenPoint;
+    private PixelPoint _dockDragStartPosition;
+    private PixelPoint _windowDragStartScreenPoint;
+    private PixelPoint _windowDragStartPosition;
+    private Screen? _windowDragScreen;
+    private PixelRect? _dockWorkingArea;
+    private int _dockTransitionRevision;
+    private int _expandedWindowWidth;
+    private int _expandedWindowHeight;
+    private int _dockAnchorCenterY;
 
     public FloatingWindow()
     {
@@ -36,8 +52,9 @@ public partial class FloatingWindow : Window
         RenderOptions.SetEdgeMode(this, EdgeMode.Antialias);
 
         Closing += OnClosing;
-        AddHandler(PointerPressedEvent, OnPointerPressed, handledEventsToo: true);
-        AddHandler(PointerReleasedEvent, OnPointerReleased, handledEventsToo: true);
+        AddHandler(PointerPressedEvent, OnPointerPressed, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(PointerMovedEvent, OnPointerMoved, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(PointerReleasedEvent, OnPointerReleased, RoutingStrategies.Tunnel, handledEventsToo: true);
         ViewModel.Config.FloatingWindowSettings.PropertyChanged += FloatingWindowSettings_OnPropertyChanged;
         RefreshItems();
     }
@@ -71,7 +88,6 @@ public partial class FloatingWindow : Window
         var size = GetButtonSize(settings.FloatingWindowSize);
         WindowBorder.Opacity = System.Math.Clamp(settings.FloatingWindowOpacity, 20, 100) / 100.0;
         Topmost = settings.FloatingWindowTopmostMode is TopmostMode.Topmost or TopmostMode.UiAccess;
-        DragThumb.IsEnabled = settings.Draggable;
         ButtonsPanel.Orientation = settings.FloatingWindowPlacement == 1
             ? Orientation.Vertical
             : Orientation.Horizontal;
@@ -82,7 +98,10 @@ public partial class FloatingWindow : Window
         if (!settings.StickToEdge && _isDocked)
             RestoreFromDock();
         else if (_isDocked)
+        {
             UpdateDockButton();
+            Dispatcher.UIThread.Post(() => RepositionDockedWindow(), DispatcherPriority.Render);
+        }
     }
 
     private static int GetButtonSize(int value)
@@ -168,7 +187,7 @@ public partial class FloatingWindow : Window
         ToolTip.SetTip(button, label);
         button.Content = displayStyle switch
         {
-            1 => new FluentIcon(icon, size * 0.70),
+            1 => new FluentIcon(icon, size * 0.64),
             2 => new TextBlock
             {
                 Text = label,
@@ -185,7 +204,7 @@ public partial class FloatingWindow : Window
                 VerticalAlignment = VerticalAlignment.Center,
                 Children =
                 {
-                    new FluentIcon(icon, size * 0.50),
+                    new FluentIcon(icon, size * 0.46),
                     new TextBlock
                     {
                         Text = label,
@@ -210,6 +229,38 @@ public partial class FloatingWindow : Window
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
+        Dispatcher.UIThread.Post(RestoreStartupPositionAndScheduleDock, DispatcherPriority.Render);
+    }
+
+    private async void RestoreStartupPositionAndScheduleDock()
+    {
+        var width = Math.Max(1, (int)Math.Ceiling(Bounds.Width * RenderScaling));
+        var height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * RenderScaling));
+        if (IsFullyVisibleOnAnyScreen(Position, width, height))
+        {
+            ScheduleDockIfAtEdge();
+            return;
+        }
+
+        var workingArea = GetScreenForWindow(Position, width, height)?.WorkingArea;
+        if (workingArea is null)
+            return;
+
+        _isDockedOnLeft = Position.X + width / 2 <= workingArea.Value.Center.X;
+        _dockWorkingArea = workingArea.Value;
+        _dockAnchorCenterY = Math.Clamp(
+            Position.Y + height / 2,
+            workingArea.Value.Y + height / 2,
+            Math.Max(workingArea.Value.Y + height / 2, workingArea.Value.Bottom - height / 2));
+        Opacity = 0;
+        _isDocked = true;
+        ExpandedContent.IsVisible = false;
+        DockButton.Opacity = 1;
+        UpdateDockButton();
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+        RepositionDockedWindow();
+        Opacity = 1;
+        SavePosition();
     }
 
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -221,50 +272,157 @@ public partial class FloatingWindow : Window
         {
             var source = e.Source as Control;
 
-            if (IsChildOfButton(source)) return;
+            if (_isDocked && IsDockButtonChild(source))
+            {
+                ++_dockRevision;
+                _isMovingDockHandle = true;
+                _dockHandleWasDragged = false;
+                _dockDragStartScreenPoint = Position + ToPixelPoint(e.GetPosition(this));
+                _dockDragStartPosition = Position;
+                e.Pointer.Capture(this);
+                return;
+            }
 
-            _isMovingWindow = true;
-            BeginMoveDrag(e);
+            ++_dockRevision;
+            ++_snapAnimationRevision;
+            _isPendingWindowDrag = true;
+            _isMovingWindow = false;
+            _windowDragStartScreenPoint = Position + ToPixelPoint(e.GetPosition(this));
+            _windowDragStartPosition = Position;
+            _windowDragScreen = GetScreenForWindow(Position);
         }
     }
 
-    private static bool IsChildOfButton(Visual? visual)
+    private void OnPointerMoved(object? sender, PointerEventArgs e)
     {
-        while (visual != null)
+        if (_isMovingDockHandle)
         {
-            if (visual is Button)
-                return true;
-            visual = visual.GetVisualParent();
+            MoveDockHandle(e);
+            return;
         }
 
-        return false;
+        if (!_isPendingWindowDrag)
+            return;
+
+        var pointerPosition = Position + ToPixelPoint(e.GetPosition(this));
+        var deltaX = pointerPosition.X - _windowDragStartScreenPoint.X;
+        var deltaY = pointerPosition.Y - _windowDragStartScreenPoint.Y;
+        if (!_isMovingWindow && Math.Abs(deltaX) < 4 && Math.Abs(deltaY) < 4)
+            return;
+
+        _isMovingWindow = true;
+        e.Pointer.Capture(this);
+        e.Handled = true;
+        Position = ConstrainDragPosition(
+            new PixelPoint(
+                _windowDragStartPosition.X + deltaX,
+                _windowDragStartPosition.Y + deltaY),
+            pointerPosition);
+    }
+
+    private void MoveDockHandle(PointerEventArgs e)
+    {
+        var workingArea = GetScreenForWindow(Position)?.WorkingArea;
+        if (workingArea is null)
+            return;
+
+        var pointerPosition = Position + ToPixelPoint(e.GetPosition(this));
+        var deltaY = pointerPosition.Y - _dockDragStartScreenPoint.Y;
+        _dockHandleWasDragged |= Math.Abs(deltaY) > 2;
+        var height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * RenderScaling));
+        var y = Math.Clamp(
+            _dockDragStartPosition.Y + deltaY,
+            workingArea.Value.Y,
+            Math.Max(workingArea.Value.Y, workingArea.Value.Bottom - height));
+        Position = new PixelPoint(_dockDragStartPosition.X, y);
+        _dockAnchorCenterY = y + height / 2;
     }
 
     private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
 
+        if (_isMovingDockHandle)
+        {
+            _isMovingDockHandle = false;
+            e.Pointer.Capture(null);
+            if (_dockHandleWasDragged)
+                SavePosition();
+            else
+                RestoreFromDock();
+
+            e.Handled = true;
+            return;
+        }
+
+        if (!_isPendingWindowDrag)
+            return;
+
+        _isPendingWindowDrag = false;
         if (!_isMovingWindow)
             return;
 
         _isMovingWindow = false;
+        e.Pointer.Capture(null);
+        e.Handled = true;
         if (ViewModel.Config.FloatingWindowSettings.StickToEdge)
-            SnapToNearestEdge();
-
-        SavePosition();
+            _ = SnapToNearestEdgeAsync();
+        else
+            SavePosition();
     }
 
-    private void SnapToNearestEdge()
+    private async Task SnapToNearestEdgeAsync()
     {
-        var workingArea = Screens.ScreenFromPoint(Position)?.WorkingArea ?? Screens.Primary?.WorkingArea;
+        var width = Math.Max(1, (int)Math.Ceiling(Bounds.Width * RenderScaling));
+        var height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * RenderScaling));
+        var workingArea = GetScreenForWindow(Position, width, height)?.WorkingArea;
         if (workingArea is null)
+        {
+            SavePosition();
+            return;
+        }
+
+        const int snapDistance = 36;
+        var distanceToLeft = Math.Abs(Position.X - workingArea.Value.X);
+        var distanceToRight = Math.Abs(workingArea.Value.Right - (Position.X + width));
+        if (Math.Min(distanceToLeft, distanceToRight) > snapDistance)
+        {
+            SavePosition();
+            return;
+        }
+
+        _isDockedOnLeft = distanceToLeft <= distanceToRight;
+        _dockWorkingArea = workingArea.Value;
+        var targetX = _isDockedOnLeft
+            ? workingArea.Value.X
+            : workingArea.Value.Right - width;
+        var targetY = Math.Clamp(
+            Position.Y,
+            workingArea.Value.Y,
+            Math.Max(workingArea.Value.Y, workingArea.Value.Bottom - height));
+        var start = Position;
+        var animationRevision = ++_snapAnimationRevision;
+
+        const int durationMilliseconds = 180;
+        const int frameMilliseconds = 15;
+        for (var elapsed = 0; elapsed < durationMilliseconds; elapsed += frameMilliseconds)
+        {
+            await Task.Delay(frameMilliseconds);
+            if (animationRevision != _snapAnimationRevision)
+                return;
+
+            var progress = Math.Min(1.0, (elapsed + frameMilliseconds) / (double)durationMilliseconds);
+            var eased = 1 - Math.Pow(1 - progress, 3);
+            Position = new PixelPoint(
+                (int)Math.Round(start.X + (targetX - start.X) * eased),
+                (int)Math.Round(start.Y + (targetY - start.Y) * eased));
+        }
+
+        if (animationRevision != _snapAnimationRevision)
             return;
 
-        var scale = RenderScaling;
-        var width = Math.Max(1, (int)Math.Ceiling(Bounds.Width * scale));
-        var height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * scale));
-        _isDockedOnLeft = Position.X + width / 2 < workingArea.Value.Center.X;
-        MoveToDockedEdge(workingArea.Value, width, height);
+        Position = new PixelPoint(targetX, targetY);
+        SavePosition();
         ScheduleDock();
     }
 
@@ -273,7 +431,10 @@ public partial class FloatingWindow : Window
         var x = _isDockedOnLeft
             ? workingArea.X
             : workingArea.Right - width;
-        var y = Math.Clamp(Position.Y, workingArea.Y, workingArea.Bottom - height);
+        var y = Math.Clamp(
+            _dockAnchorCenterY - height / 2,
+            workingArea.Y,
+            Math.Max(workingArea.Y, workingArea.Bottom - height));
         Position = new PixelPoint(x, y);
     }
 
@@ -282,15 +443,16 @@ public partial class FloatingWindow : Window
         if (!_isDocked && !restoring)
             return;
 
-        var workingArea = Screens.ScreenFromPoint(Position)?.WorkingArea ?? Screens.Primary?.WorkingArea;
+        var width = Math.Max(1, (int)Math.Ceiling(Bounds.Width * RenderScaling));
+        var height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * RenderScaling));
+        var workingArea = _dockWorkingArea ?? GetScreenForWindow(Position, width, height)?.WorkingArea;
         if (workingArea is null)
             return;
 
-        var scale = RenderScaling;
         MoveToDockedEdge(
             workingArea.Value,
-            Math.Max(1, (int)Math.Ceiling(Bounds.Width * scale)),
-            Math.Max(1, (int)Math.Ceiling(Bounds.Height * scale)));
+            width,
+            height);
     }
 
     private void ScheduleDock()
@@ -302,32 +464,99 @@ public partial class FloatingWindow : Window
 
         DispatcherTimer.RunOnce(() =>
         {
-            if (dockRevision == _dockRevision && ViewModel.Config.FloatingWindowSettings.StickToEdge)
-                CollapseToDock();
+            if (dockRevision == _dockRevision
+                && !_isDocked
+                && ViewModel.Config.FloatingWindowSettings.StickToEdge)
+                _ = CollapseToDockAsync();
         }, TimeSpan.FromSeconds(seconds));
     }
 
-    private void CollapseToDock()
+    private void ScheduleDockIfAtEdge()
     {
+        if (_isDocked || !ViewModel.Config.FloatingWindowSettings.StickToEdge)
+            return;
+
+        var width = Math.Max(1, (int)Math.Ceiling(Bounds.Width * RenderScaling));
+        var height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * RenderScaling));
+        var workingArea = GetScreenForWindow(Position, width, height)?.WorkingArea;
+        if (workingArea is null)
+            return;
+
+        const int snapDistance = 36;
+        var distanceToLeft = Math.Abs(Position.X - workingArea.Value.X);
+        var distanceToRight = Math.Abs(workingArea.Value.Right - (Position.X + width));
+        if (Math.Min(distanceToLeft, distanceToRight) > snapDistance)
+            return;
+
+        _isDockedOnLeft = distanceToLeft <= distanceToRight;
+        _dockWorkingArea = workingArea.Value;
+        ScheduleDock();
+    }
+
+    private async Task CollapseToDockAsync()
+    {
+        if (_isDocked || !ViewModel.Config.FloatingWindowSettings.StickToEdge)
+            return;
+
+        var transitionRevision = ++_dockTransitionRevision;
+        CaptureExpandedWindowSize();
         _isDocked = true;
-        ButtonsPanel.IsVisible = false;
-        DragThumb.IsVisible = false;
+        await AnimateControlAsync(
+            ExpandedContent,
+            1,
+            0,
+            1,
+            0.9,
+            GetDockTransformOrigin(),
+            transitionRevision);
+        if (transitionRevision != _dockTransitionRevision)
+            return;
+
+        Opacity = 0;
+        ExpandedContent.IsVisible = false;
+        DockButton.Opacity = 0;
         UpdateDockButton();
-        Dispatcher.UIThread.Post(RepositionDockedWindow, DispatcherPriority.Layout);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+        RepositionDockedWindow();
+        Opacity = 1;
+        await AnimateControlAsync(
+            DockButton,
+            0,
+            1,
+            0.85,
+            1,
+            GetDockTransformOrigin(),
+            transitionRevision);
+        if (transitionRevision == _dockTransitionRevision)
+            SavePosition();
     }
 
     private void UpdateDockButton()
     {
         var style = ViewModel.Config.FloatingWindowSettings.StickToEdgeDisplayStyle;
+        var size = Math.Clamp(ViewModel.Config.FloatingWindowSettings.DockedWindowSize, 28, 96);
         var glyph = _isDockedOnLeft ? ">" : "<";
         DockButton.Content = style switch
         {
-            0 => new FluentIcon("\uE8A7", 20),
-            1 => "SecRandom",
-            _ => glyph
+            0 => new FluentIcon("\uECAA", size * 0.62),
+            1 => new TextBlock
+            {
+                Text = "抽",
+                FontSize = Math.Max(12, size * 0.42),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            },
+            _ => new TextBlock
+            {
+                Text = glyph,
+                FontSize = Math.Max(14, size * 0.52),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            }
         };
-        DockButton.Width = style == 1 ? 88 : 36;
-        DockButton.Height = 36;
+        DockButton.Width = size;
+        DockButton.Height = size;
+        DockButton.Padding = new Thickness(Math.Max(2, size * 0.08));
         DockButton.IsVisible = _isDocked;
     }
 
@@ -336,18 +565,263 @@ public partial class FloatingWindow : Window
         RestoreFromDock();
     }
 
-    private void RestoreFromDock()
+    private static bool IsDockButtonChild(Visual? visual)
+    {
+        while (visual != null)
+        {
+            if (visual is Button { Name: "DockButton" })
+                return true;
+            visual = visual.GetVisualParent();
+        }
+
+        return false;
+    }
+
+    private PixelPoint ToPixelPoint(Point point)
+    {
+        return new PixelPoint(
+            (int)Math.Round(point.X * RenderScaling),
+            (int)Math.Round(point.Y * RenderScaling));
+    }
+
+    private async void RestoreFromDock()
     {
         ++_dockRevision;
+        var transitionRevision = ++_dockTransitionRevision;
         _isDocked = false;
+        await AnimateControlAsync(
+            DockButton,
+            DockButton.Opacity,
+            0,
+            1,
+            0.85,
+            GetDockTransformOrigin(),
+            transitionRevision);
+        if (transitionRevision != _dockTransitionRevision)
+            return;
+
         DockButton.IsVisible = false;
-        DragThumb.IsVisible = true;
-        ButtonsPanel.IsVisible = true;
-        Dispatcher.UIThread.Post(() =>
+        Opacity = 0;
+        PositionExpandedWindowAtDockAnchor();
+        ExpandedContent.Opacity = 0;
+        ExpandedContent.IsVisible = true;
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+        PositionExpandedWindowAtDockAnchor(useCurrentSize: true);
+        Opacity = 1;
+        await AnimateControlAsync(
+            ExpandedContent,
+            0,
+            1,
+            0.9,
+            1,
+            GetDockTransformOrigin(),
+            transitionRevision);
+        if (transitionRevision != _dockTransitionRevision)
+            return;
+
+        SavePosition();
+        ScheduleDock();
+    }
+
+    private void CaptureExpandedWindowSize()
+    {
+        _expandedWindowWidth = Math.Max(1, (int)Math.Ceiling(Bounds.Width * RenderScaling));
+        _expandedWindowHeight = Math.Max(1, (int)Math.Ceiling(Bounds.Height * RenderScaling));
+        _dockAnchorCenterY = Position.Y + _expandedWindowHeight / 2;
+    }
+
+    private RelativePoint GetDockTransformOrigin()
+    {
+        return new RelativePoint(_isDockedOnLeft ? 0 : 1, 0.5, RelativeUnit.Relative);
+    }
+
+    private void PositionExpandedWindowAtDockAnchor(bool useCurrentSize = false)
+    {
+        var width = useCurrentSize
+            ? Math.Max(1, (int)Math.Ceiling(Bounds.Width * RenderScaling))
+            : _expandedWindowWidth;
+        var height = useCurrentSize
+            ? Math.Max(1, (int)Math.Ceiling(Bounds.Height * RenderScaling))
+            : _expandedWindowHeight;
+        if (width <= 1 || height <= 1)
+            return;
+
+        var workingArea = _dockWorkingArea ?? GetScreenForWindow(Position, width, height)?.WorkingArea;
+        if (workingArea is null)
+            return;
+
+        var x = _isDockedOnLeft ? workingArea.Value.X : workingArea.Value.Right - width;
+        var y = Math.Clamp(
+            _dockAnchorCenterY - height / 2,
+            workingArea.Value.Y,
+            Math.Max(workingArea.Value.Y, workingArea.Value.Bottom - height));
+        Position = new PixelPoint(x, y);
+    }
+
+    private PixelPoint ConstrainDragPosition(PixelPoint requestedPosition, PixelPoint pointerPosition)
+    {
+        var width = Math.Max(1, (int)Math.Ceiling(Bounds.Width * RenderScaling));
+        var height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * RenderScaling));
+        var sourceScreen = _windowDragScreen ?? GetScreenForWindow(Position, width, height);
+        if (sourceScreen is null)
+            return requestedPosition;
+
+        var targetScreen = GetScreenAt(pointerPosition);
+        if (targetScreen is not null
+            && !ReferenceEquals(sourceScreen, targetScreen)
+            && TryConstrainAcrossAdjacentScreens(
+                requestedPosition,
+                width,
+                height,
+                sourceScreen.Bounds,
+                targetScreen.Bounds,
+                sourceScreen.WorkingArea,
+                targetScreen.WorkingArea,
+                out var constrainedPosition))
         {
-            RepositionDockedWindow(restoring: true);
-            SavePosition();
-        }, DispatcherPriority.Layout);
+            if (IsWithinWorkingArea(constrainedPosition, width, height, targetScreen.WorkingArea))
+                _windowDragScreen = targetScreen;
+
+            return constrainedPosition;
+        }
+
+        return ClampToWorkingArea(requestedPosition, width, height, sourceScreen.WorkingArea);
+    }
+
+    private Screen? GetScreenForWindow(PixelPoint position, int? width = null, int? height = null)
+    {
+        var center = new PixelPoint(
+            position.X + (width ?? Math.Max(1, (int)Math.Ceiling(Bounds.Width * RenderScaling))) / 2,
+            position.Y + (height ?? Math.Max(1, (int)Math.Ceiling(Bounds.Height * RenderScaling))) / 2);
+        return GetScreenAt(center)
+            ?? GetScreenAt(position)
+            ?? Screens.ScreenFromPoint(center)
+            ?? Screens.Primary;
+    }
+
+    private Screen? GetScreenAt(PixelPoint point)
+    {
+        foreach (var screen in Screens.All)
+        {
+            var area = screen.Bounds;
+            if (point.X >= area.X
+                && point.X < area.Right
+                && point.Y >= area.Y
+                && point.Y < area.Bottom)
+                return screen;
+        }
+
+        return null;
+    }
+
+    private static bool TryConstrainAcrossAdjacentScreens(
+        PixelPoint requestedPosition,
+        int width,
+        int height,
+        PixelRect sourceBounds,
+        PixelRect targetBounds,
+        PixelRect sourceWorkingArea,
+        PixelRect targetWorkingArea,
+        out PixelPoint constrainedPosition)
+    {
+        if (sourceBounds.Right == targetBounds.X || targetBounds.Right == sourceBounds.X)
+        {
+            var top = Math.Max(sourceWorkingArea.Y, targetWorkingArea.Y);
+            var bottom = Math.Min(sourceWorkingArea.Bottom, targetWorkingArea.Bottom);
+            if (bottom - top < height)
+            {
+                constrainedPosition = default;
+                return false;
+            }
+
+            constrainedPosition = new PixelPoint(
+                Math.Clamp(
+                    requestedPosition.X,
+                    Math.Min(sourceWorkingArea.X, targetWorkingArea.X),
+                    Math.Max(sourceWorkingArea.Right, targetWorkingArea.Right) - width),
+                Math.Clamp(requestedPosition.Y, top, bottom - height));
+            return true;
+        }
+
+        if (sourceBounds.Bottom == targetBounds.Y || targetBounds.Bottom == sourceBounds.Y)
+        {
+            var left = Math.Max(sourceWorkingArea.X, targetWorkingArea.X);
+            var right = Math.Min(sourceWorkingArea.Right, targetWorkingArea.Right);
+            if (right - left < width)
+            {
+                constrainedPosition = default;
+                return false;
+            }
+
+            constrainedPosition = new PixelPoint(
+                Math.Clamp(requestedPosition.X, left, right - width),
+                Math.Clamp(
+                    requestedPosition.Y,
+                    Math.Min(sourceWorkingArea.Y, targetWorkingArea.Y),
+                    Math.Max(sourceWorkingArea.Bottom, targetWorkingArea.Bottom) - height));
+            return true;
+        }
+
+        constrainedPosition = default;
+        return false;
+    }
+
+    private static bool IsWithinWorkingArea(PixelPoint position, int width, int height, PixelRect workingArea)
+    {
+        return position.X >= workingArea.X
+            && position.X + width <= workingArea.Right
+            && position.Y >= workingArea.Y
+            && position.Y + height <= workingArea.Bottom;
+    }
+
+    private bool IsFullyVisibleOnAnyScreen(PixelPoint position, int width, int height)
+    {
+        foreach (var screen in Screens.All)
+        {
+            if (IsWithinWorkingArea(position, width, height, screen.WorkingArea))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static PixelPoint ClampToWorkingArea(PixelPoint position, int width, int height, PixelRect workingArea)
+    {
+        return new PixelPoint(
+            Math.Clamp(position.X, workingArea.X, Math.Max(workingArea.X, workingArea.Right - width)),
+            Math.Clamp(position.Y, workingArea.Y, Math.Max(workingArea.Y, workingArea.Bottom - height)));
+    }
+
+    private static async Task AnimateControlAsync(
+        Control control,
+        double fromOpacity,
+        double toOpacity,
+        double fromScale,
+        double toScale,
+        RelativePoint transformOrigin,
+        int transitionRevision)
+    {
+        control.RenderTransformOrigin = transformOrigin;
+        var scaleTransform = new ScaleTransform(fromScale, fromScale);
+        control.RenderTransform = scaleTransform;
+        control.Opacity = fromOpacity;
+
+        const int durationMilliseconds = 150;
+        const int frameMilliseconds = 15;
+        for (var elapsed = 0; elapsed < durationMilliseconds; elapsed += frameMilliseconds)
+        {
+            await Task.Delay(frameMilliseconds);
+            var progress = Math.Min(1.0, (elapsed + frameMilliseconds) / (double)durationMilliseconds);
+            var eased = 1 - Math.Pow(1 - progress, 3);
+            control.Opacity = fromOpacity + (toOpacity - fromOpacity) * eased;
+            var scale = fromScale + (toScale - fromScale) * eased;
+            scaleTransform.ScaleX = scale;
+            scaleTransform.ScaleY = scale;
+        }
+
+        control.Opacity = toOpacity;
+        scaleTransform.ScaleX = toScale;
+        scaleTransform.ScaleY = toScale;
     }
 
     private void SavePosition()

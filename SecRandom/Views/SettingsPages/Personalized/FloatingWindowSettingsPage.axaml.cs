@@ -23,7 +23,7 @@ public partial class FloatingWindowSettingsPage : UserControl
     public FloatingWindowSettingsPage()
     {
         Settings = ViewModel.Config.FloatingWindowSettings;
-        var migratedSize = NormalizeFloatingWindowSize();
+        var migratedSize = NormalizeFloatingWindowSize() | NormalizeDockedWindowSize();
         ButtonOptions =
         [
             new(LR.S_Buttons_RollCall, () => Settings.ShowRollCallButton,
@@ -35,19 +35,7 @@ public partial class FloatingWindowSettingsPage : UserControl
             new(LR.S_Buttons_FaceDraw, () => Settings.ShowFaceDrawButton,
                 value => Settings.ShowFaceDrawButton = value)
         ];
-        InteractionOptions =
-        [
-            new(LR.S_Interaction_StickToEdge, () => Settings.StickToEdge,
-                value => Settings.StickToEdge = value),
-            new(LR.S_Interaction_Draggable, () => Settings.Draggable,
-                value => Settings.Draggable = value),
-            new(LR.S_Interaction_DoNotStealFocus, () => Settings.DoNotStealFocus,
-                value => Settings.DoNotStealFocus = value),
-            new(LR.S_Interaction_HideOnForeground, () => Settings.HideOnForeground,
-                value => Settings.HideOnForeground = value)
-        ];
         SelectedButtonOptions = BuildSelectedOptions(ButtonOptions);
-        SelectedInteractionOptions = BuildSelectedOptions(InteractionOptions);
         DataContext = this;
         InitializeComponent();
         Settings.PropertyChanged += SettingsOnPropertyChanged;
@@ -59,8 +47,6 @@ public partial class FloatingWindowSettingsPage : UserControl
     public FloatingWindowSettingsConfig Settings { get; }
     public AvaloniaList<MultiSelectSettingOption> ButtonOptions { get; }
     public AvaloniaList<MultiSelectSettingOption> SelectedButtonOptions { get; }
-    public AvaloniaList<MultiSelectSettingOption> InteractionOptions { get; }
-    public AvaloniaList<MultiSelectSettingOption> SelectedInteractionOptions { get; }
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
 
@@ -73,7 +59,6 @@ public partial class FloatingWindowSettingsPage : UserControl
     {
         ConfigHandler.Save();
         SynchronizeSelectedOptions(ButtonOptions, SelectedButtonOptions);
-        SynchronizeSelectedOptions(InteractionOptions, SelectedInteractionOptions);
     }
 
     private static AvaloniaList<MultiSelectSettingOption> BuildSelectedOptions(
@@ -101,6 +86,16 @@ public partial class FloatingWindowSettingsPage : UserControl
             return false;
 
         Settings.FloatingWindowSize = size;
+        return true;
+    }
+
+    private bool NormalizeDockedWindowSize()
+    {
+        var size = System.Math.Clamp(Settings.DockedWindowSize, 28, 96);
+        if (size == Settings.DockedWindowSize)
+            return false;
+
+        Settings.DockedWindowSize = size;
         return true;
     }
 

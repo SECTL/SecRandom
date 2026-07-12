@@ -171,6 +171,33 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 贴边收纳.
+        /// </summary>
+        public static string S_Dock {
+            get {
+                return ResourceManager.GetString("S_Dock", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 收纳手柄尺寸.
+        /// </summary>
+        public static string S_Dock_Size {
+            get {
+                return ResourceManager.GetString("S_Dock_Size", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 调整贴边收纳后边缘手柄的正方形边长。.
+        /// </summary>
+        public static string S_Dock_Size_D {
+            get {
+                return ResourceManager.GetString("S_Dock_Size_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 悬浮窗透明度.
         /// </summary>
         public static string S_Display_Opacity {
