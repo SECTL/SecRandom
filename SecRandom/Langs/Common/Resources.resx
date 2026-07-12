@@ -28,6 +28,21 @@
     <data name="Feat_Settings" xml:space="preserve">
         <value>设置</value>
     </data>
+    <data name="Menu_ToggleMainWindow" xml:space="preserve">
+        <value>显隐主窗口</value>
+    </data>
+    <data name="Menu_ToggleFloatingWindow" xml:space="preserve">
+        <value>显隐浮窗</value>
+    </data>
+    <data name="Menu_ShowMainWindow" xml:space="preserve">
+        <value>显示主窗口</value>
+    </data>
+    <data name="Menu_ShowFloatingWindow" xml:space="preserve">
+        <value>显示浮窗</value>
+    </data>
+    <data name="Menu_HideFloatingWindow" xml:space="preserve">
+        <value>隐藏浮窗</value>
+    </data>
     <data name="Feat_RollCall" xml:space="preserve">
         <value>点名</value>
     </data>
@@ -131,7 +146,7 @@
         <value>通用设置</value>
     </data>
     <data name="Settings_Home" xml:space="preserve">
-        <value>主页</value>
+        <value>概览</value>
     </data>
     <data name="Settings_Personalized" xml:space="preserve">
         <value>个性化设置</value>

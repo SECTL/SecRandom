@@ -30,6 +30,7 @@ SecRandom/
 │   ├── Plugins/         # Plugin runtime: manager, catalog, invoker, state
 │   ├── Profiles/        # ProfileService
 │   ├── Settings/        # SettingsSearchService
+│   ├── Security/        # Credential store, verification prompts, factor/operation authorization
 │   ├── Telemetry/       # SentryTelemetrySdkAdapter, TelemetryRuntimeService
 │   ├── Voice/           # VoiceAnnouncementService
 │   └── OnlineStatusService.cs  # Root-level status reporter
@@ -65,6 +66,7 @@ SecRandom/
 | Taskbar icon                 | `Services/Desktop/TaskBarIconService.cs`                                | App taskbar icon lifecycle; hosted service registered in `BuildHost()`.                                                 |
 | Telemetry runtime seam       | `Services/Telemetry/`                                                   | App-layer-only Sentry policy/runtime lifecycle boundary; reads and live-applies `PrivacySettings.SentryTelemetryEnabled`.  |
 | Online status reporting      | `Services/OnlineStatusService.cs`                                       | Host-managed SECTL online status reporter; reads `PrivacySettings.OnlineStatusMode`.                                      |
+| Security authorization       | `Services/Security/`                                                     | Separate credential storage, password/TOTP/USB factors, lockout state, and operation authorization gateway.               |
 
 ## CONVENTIONS
 
@@ -73,6 +75,7 @@ SecRandom/
 - Crash recovery startup prompt handling runs before single-instance acquisition; normal app restart must release `SingleInstanceService` before launching the replacement process.
 - Telemetry runtime policy belongs in app-layer services and should live-apply `MainConfigHandler.Data.General.PrivacySettings.SentryTelemetryEnabled`; do not move SDK-specific wiring into Core or Shared. The concrete Sentry adapter stays under `SecRandom/Services/Telemetry/SentryTelemetrySdkAdapter.cs`.
 - Background app services such as `OnlineStatusService` are registered through Host and must honor `PrivacySettings.OnlineStatusMode` before doing network work.
+- Security services are Host singletons. Keep secrets out of normal config and route protected window, tray, draw, linkage, and plugin operations through `ISecurityService` instead of duplicating checks in UI event handlers.
 - `IVoiceAnnouncementService` is app-layer because Edge TTS playback and Windows SAPI/MCI integration are platform/runtime concerns. Per-record TTS alias/prefix/suffix belongs in attached settings on `Student`/`Prize`, not in a standalone settings page.
 - Plugin runtime services are app-layer only and are registered in `BuildHost()`. Enabled plugin pages must be configured before Host build so keyed navigation can instantiate them.
 - `.srpx` plugin files are ZIP packages containing exactly one `plugin.json`; import extracts to a temporary directory, validates the manifest, then copies into `data/plugins/<plugin-id>`.
@@ -85,7 +88,7 @@ SecRandom/
 - Keep shell/profile/base ViewModels in `ViewModels/`; page-specific main ViewModels belong in `ViewModels/MainPages/`, and history settings page ViewModels belong in `ViewModels/SettingsPages/History/`.
 - Use `IAppHost.GetService<T>()` for existing service resolution patterns in views and services.
 - Views usually set `DataContext = this` and expose a `ViewModel` property.
-- Main default page: `main.rollCall`; settings default page: `settings.home`.
+- Main default page: `main.rollCall`; settings default page: `settings.overview`, which separates aggregate roll-call list statistics from aggregate lottery-pool statistics.
 - The roll-call main page is bottom-pinned in the main window sidebar (`PageLocation.Bottom`), full-width, and title-hidden. Keep its page chrome controlled by `MoreSettings`.
 - Lottery main page ID is `main.lottery`; quick draw is not registered as a main navigation page, but its settings page remains `settings.picking.quickDraw`.
 - More settings includes roll-call and lottery page management options for the control panel side and per-control visibility; wire built-in draw pages through `MainConfigModel.MoreSettings` instead of duplicating local UI flags.

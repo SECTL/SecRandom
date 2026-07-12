@@ -48,7 +48,7 @@ Nested instruction files:
 | Desktop startup | `SecRandom.Desktop/Program.cs` | Process entry → Avalonia lifetime. |
 | App composition / DI | `SecRandom/App.axaml.cs` | `BuildHost()` is the registration source of truth. |
 | Main navigation | `SecRandom/Views/MainView.axaml.cs` | Default page `main.rollCall`; keyed DI page factory. Built-in draw pages include `main.rollCall` and `main.lottery`; quick draw opens from the floating window instead of the main sidebar. |
-| Settings navigation | `SecRandom/Views/SettingsView.axaml.cs` | Default page `settings.home`; has back stack + restart dialog. General group now includes `settings.general.basic`, `settings.general.privacy`, and `settings.general.backup`. |
+| Settings navigation | `SecRandom/Views/SettingsView.axaml.cs` | Default page `settings.overview`; has back stack + restart dialog. General group now includes `settings.general.basic`, `settings.general.privacy`, and `settings.general.backup`. |
 | Page registration helpers | `SecRandom.Core/Extensions/Registry/` | `AddMainPage`, `AddSettingsPage`, plugin page registration, groups, separators. |
 | Plugin contracts | `SecRandom.Core/Plugins/` | Public plugin API surface: manifest, runtime context, page registration, plugin catalog DTOs, and draw invocation DTOs. |
 | Plugin runtime | `SecRandom/Services/Plugins/` | App-layer plugin discovery, enable state, runtime startup, original-log integration, and restricted draw invoker. |
@@ -83,6 +83,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 | `IProfileService` | service contract | `SecRandom.Core/Abstraction/Services/IProfileService.cs` | Current lists/history + student profile switch + profile save boundary. |
 | `SettingsSearchService` | app service | `SecRandom/Services/Settings/SettingsSearchService.cs` | Indexes settings pages via reflected localization resources. |
 | `CrashRecoveryRuntime` | app service helper | `SecRandom/Services/CrashRecovery/CrashRecoveryRuntime.cs` | Reads crash recovery mode, writes bounded crash reports, and builds restart process plans. |
+| `ISecurityService` | app service contract | `SecRandom/Services/Security/` | Owns credential verification, lockout policy, selected-factor authorization, and protected-operation gating. |
 | `AttachedSettingsRegistryService` | registry | `SecRandom.Core/Services/AttachedSettingsRegistryService.cs` | Static collections for attached-settings controls. |
 | `ViewModelBase` | base VM | `SecRandom/ViewModels/ViewModelBase.cs` | Base VM exposing `MainConfig`; inherits `ObservableRecipient`. |
 | `GlobalConstants` | constants | `SecRandom.Core/GlobalConstants.cs` | Version, platform, and development-mode constants. |
@@ -94,6 +95,8 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - Picking `ClearRecord` controls temporary draw records only; do not clear persistent profile histories from that setting. RollCall and QuickDraw share the same student temporary record store, while Lottery uses prize temporary records.
 - Privacy settings split Sentry upload from online status reporting: `SentryTelemetryEnabled` only controls `SecRandom/Services/Telemetry/`, while `OnlineStatusMode` only controls `SecRandom/Services/OnlineStatusService.cs`.
 - Crash recovery mode lives under `MainConfigModel.General.CrashRecovery`; prompt startup handling must run before single-instance acquisition, while normal restart must release the single-instance service before relaunch.
+- Security credentials must never be stored in `MainConfigModel` or `settings.json`. Keep passwords, TOTP seeds, USB binding tokens, and lockout state in `SecRandom/Services/Security`'s separate credential store; ordinary settings only select factors and protected operations.
+- Security authorization always flows through `ISecurityService`; do not add direct validation checks to tray handlers, windows, ViewModels, plugins, or linkage code. Passwords require at least 6 characters, with no artificial character-class rule.
 - ViewModels must be registered in `SecRandom/App.axaml.cs` `BuildHost()`; reusable services also go through Host.
 - Resolve shared services via `IAppHost.GetService<T>()` / `TryGetService<T>()` unless constructor injection is already the local style.
 - Navigation pages need `[PageInfo(...)]` plus `services.AddMainPage<T>()` or `services.AddSettingsPage<T>()` in `BuildHost()`.

@@ -15,6 +15,7 @@ using SecRandom.Core;
 using SecRandom.Core.Plugins;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Shared;
+using SecRandom.Services.Security;
 
 namespace SecRandom.Services.Plugins;
 
@@ -277,7 +278,7 @@ public sealed class PluginManagerService : IPluginManager
             {
                 var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
                 var pluginLogger = loggerFactory.CreateLogger(GetPluginLogCategoryPrefix(descriptor.Id) + "Runtime");
-                var drawInvoker = new PluginDrawInvoker(descriptor.Id, pluginLogger);
+                var drawInvoker = new PluginDrawInvoker(descriptor.Id, pluginLogger, provider.GetRequiredService<ISecurityService>());
                 var dataDirectory = pluginInfo.ConfigDirectory;
                 var runtimeContext = new PluginRuntimeContext(descriptor.Manifest, pluginInfo, pluginLogger, drawInvoker, dataDirectory);
                 return new LoadedPluginRegistration(plugin, runtimeContext);

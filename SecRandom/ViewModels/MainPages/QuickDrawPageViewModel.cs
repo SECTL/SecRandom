@@ -20,6 +20,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using SecRandom.Services.Draw;
+using SecRandom.Services.Security;
 using SecRandom.ViewModels;
 using SecRandom.Shared;
 using SecRandom.Shared.Extensions;
@@ -35,6 +36,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private readonly MainConfigHandler _configHandler;
     private readonly DrawAudioService _drawAudioService;
     private readonly ILogger<QuickDrawPageViewModel> _logger;
+    private readonly ISecurityService _securityService;
     private bool _isDrawCommandRunning;
     private bool _isCoolingDown;
     private CancellationTokenSource? _previewCts;
@@ -52,7 +54,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         IProfileService profileService,
         IDrawTemporaryRecordService temporaryRecordService,
         DrawAudioService drawAudioService,
-        ILogger<QuickDrawPageViewModel> logger)
+        ILogger<QuickDrawPageViewModel> logger,
+        ISecurityService securityService)
         : base(configHandler)
     {
         _configHandler = configHandler;
@@ -61,6 +64,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         _temporaryRecordService = temporaryRecordService;
         _drawAudioService = drawAudioService;
         _logger = logger;
+        _securityService = securityService;
         RefreshStudentLists();
     }
 
@@ -123,6 +127,9 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (_isCoolingDown)
             return;
 
+        if (!await _securityService.AuthorizeAsync(SecurityOperation.QuickDrawStart, () => Task.CompletedTask))
+            return;
+
         var candidates = GetEligibleCandidates().ToList();
         if (candidates.Count == 0)
         {
@@ -163,8 +170,10 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     }
 
     [RelayCommand]
-    private void ClearHistory()
+    private async Task ClearHistoryAsync()
     {
+        if (!await _securityService.AuthorizeAsync(SecurityOperation.QuickDrawReset, () => Task.CompletedTask))
+            return;
         _temporaryRecordService.ClearStudentScope(SelectedStudentListName, string.Empty, string.Empty);
         ResultItems.Clear();
         IsResultVisible = false;

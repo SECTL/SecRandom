@@ -1,0 +1,73 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using SecRandom.Core.Enums.Configs;
+
+namespace SecRandom.Services.Security;
+
+public enum SecurityVerificationFailure
+{
+    None,
+    NotRequired,
+    NotConfigured,
+    LockedOut,
+    InvalidCredentials,
+    FactorUnavailable,
+    Cancelled
+}
+
+public sealed record SecurityVerificationRequest(
+    IReadOnlyList<SecurityFactor> RequiredFactors,
+    bool RequireAllSelectedFactors,
+    TimeSpan? LockoutRemaining);
+
+public sealed record SecurityVerificationResponse(string Password, string TotpCode, bool UsbPresent, bool Cancelled = false);
+
+public sealed record SecurityVerificationResult(
+    bool IsAuthorized,
+    SecurityVerificationFailure Failure,
+    TimeSpan? LockoutRemaining = null)
+{
+    public static SecurityVerificationResult Allowed { get; } = new(true, SecurityVerificationFailure.None);
+}
+
+public sealed record SecuritySettingsUiState(
+    bool HasPassword,
+    bool HasTotp,
+    bool HasUsbBinding,
+    bool SecurityEnabled,
+    bool CanConfigureAdditionalFactors,
+    bool CanEditFactorSelection,
+    bool CanEditProtectedOperations,
+    TimeSpan? LockoutRemaining);
+
+public enum SecurityFactor
+{
+    Password,
+    Totp,
+    Usb
+}
+
+public interface ISecurityVerificationPrompt
+{
+    Task<SecurityVerificationResponse> RequestAsync(SecurityVerificationRequest request, CancellationToken cancellationToken = default);
+}
+
+public interface ISecurityService
+{
+    SecuritySettingsUiState GetUiState();
+    bool RequiresVerification(SecurityOperation operation);
+    Task<SecurityVerificationResult> VerifyAsync(SecurityVerificationResponse response, CancellationToken cancellationToken = default);
+    Task<bool> AuthorizeAsync(SecurityOperation operation, Func<Task> action, CancellationToken cancellationToken = default);
+    Task<bool> SetPasswordAsync(string password, string? currentPassword = null, CancellationToken cancellationToken = default);
+    Task<bool> RemovePasswordAsync(string currentPassword, CancellationToken cancellationToken = default);
+    Task<string?> BeginTotpSetupAsync(CancellationToken cancellationToken = default);
+    Task<bool> ConfirmTotpAsync(string secret, string code, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<UsbBindingInfo>> GetUsbBindingsAsync(CancellationToken cancellationToken = default);
+    Task<bool> BindUsbAsync(string rootPath, CancellationToken cancellationToken = default);
+    Task<bool> UnbindUsbAsync(string bindingId, CancellationToken cancellationToken = default);
+    bool TryUpdateSettings(Action update);
+}
+
+public sealed record UsbBindingInfo(string Id, string DisplayName, bool IsPresent);

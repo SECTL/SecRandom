@@ -13,7 +13,7 @@ Settings navigation subtree: top-level settings pages, grouped settings pages, a
 
 ```
 SecRandom/Views/SettingsPages/
-|-- HomeSettingsPage.axaml(.cs)           # Top-level landing page
+|-- HomeSettingsPage.axaml(.cs)           # Top-level student-history overview
 |-- DebugSettingsPage.axaml(.cs)          # DEBUG-only bottom page
 |-- General/                              # settings.general.*: basic/security/backup/privacy
 |-- ListManagement/                       # settings.listManagement.*: roll-call/lottery list entries
@@ -34,7 +34,7 @@ SecRandom/Views/SettingsPages/
 | Task | Location | Notes |
 |------|----------|-------|
 | Register settings page | `SecRandom/App.axaml.cs` | `BuildHost()` plus `[PageInfo(...)]` are both required. |
-| Top-level settings landing | `HomeSettingsPage.axaml(.cs)` | Page ID `settings.home`; no group. |
+| Top-level settings overview | `HomeSettingsPage.axaml(.cs)` | Page ID `settings.overview`; no group; separately summarizes all roll-call lists and lottery pools. |
 | General settings behavior | `General/BasicSettingsPage.axaml(.cs)` | Language change triggers `SettingsView.Current?.RequestRestartApp()`. |
 | Privacy settings behavior | `General/PrivacySettingsPage.axaml(.cs)` | Binds to `MainConfigModel.General.PrivacySettings`; Sentry telemetry changes apply live through `TelemetryRuntimeService`, and online status changes apply live through `OnlineStatusService`. |
 | Backup settings UI | `General/BackupSettingsPage.axaml(.cs)` | Lists real backup ZIPs under app data, creates/deletes backups, and restores selected data with a pre-restore snapshot plus restart prompt. |
@@ -50,7 +50,7 @@ SecRandom/Views/SettingsPages/
 | Plugin settings | `Plugins/Overview/PluginsSettingsPage.axaml(.cs)` | `settings.plugin` group; single compact management page. |
 | Log viewer | `LogViewer/LogViewerSettingsPage.axaml(.cs)` | Hidden page `settings.logs`; opened from the settings shell more-options menu. |
 | About / external links | `About/AboutSettingsPage.axaml(.cs)` | `settings.about` bottom-nav; `Process.Start` for external URLs. |
-| Shell navigation semantics | `../SettingsView.axaml.cs` | Default page `settings.home`, history stack, generated menu. |
+| Shell navigation semantics | `../SettingsView.axaml.cs` | Default page `settings.overview`, history stack, generated menu. |
 | Localization pairing | `../../Langs/SettingsPages/` | Page folders mirror settings-page domains, except DEBUG-only pages. |
 
 ## CONVENTIONS
@@ -60,6 +60,7 @@ SecRandom/Views/SettingsPages/
 - Page IDs here follow `settings.xxx` or `settings.group.xxx`; historical grouping notes live in `docs/settings-pages-plan.md`.
 - Group membership is owned by the `groupId` in `[PageInfo(...)]` and by `services.AddGroup(...)` in `BuildHost()`; do not handwire grouping in the page.
 - Pages usually resolve `ViewModelBase` via `IAppHost.GetService<ViewModelBase>()`, set `DataContext = this`, and expose `Settings` from `ViewModel.Config.*`.
+- Security settings must display credential state before factor selection. Password, TOTP, and USB setup are command-driven; selected factors use the shared Ursa `MultiComboBox` pattern with plain option data, and protected-operation controls are driven by `ISecurityService` state.
 - V2-parity settings pages should keep the same `ScrollViewer` + `StackPanel.page-container animated-intro` + `FASettingsExpander` rhythm as existing settings pages.
 - Voice/music owns the global TTS engine, voice, volume, and content switches. Per-student/per-prize specific announcement controls belong in list management attached settings for both roll-call and lottery records.
 - If a settings change needs a restart, request it through `SettingsView.Current?.RequestRestartApp()` instead of restarting directly.

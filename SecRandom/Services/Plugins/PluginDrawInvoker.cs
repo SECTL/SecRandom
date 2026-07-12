@@ -6,51 +6,48 @@ using SecRandom.Core.Abstraction.Services;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Plugins;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Enums.Configs;
+using SecRandom.Services.Security;
 
 namespace SecRandom.Services.Plugins;
 
-public sealed class PluginDrawInvoker(string pluginId, ILogger logger) : IPluginDrawInvoker
+public sealed class PluginDrawInvoker(string pluginId, ILogger logger, ISecurityService securityService) : IPluginDrawInvoker
 {
-    public Task<PluginDrawResult> DrawStudentsAsync(PluginStudentDrawRequest request)
+    public async Task<PluginDrawResult> DrawStudentsAsync(PluginStudentDrawRequest request)
     {
-        var engine = new DrawEngine();
-        var result = engine.DrawStudent(Math.Max(1, request.Count), student => MatchesTags(student.Tags, request));
-        logger.LogInformation(
-            "Plugin draw invoked: plugin={PluginId}, type=student, count={Count}, includeTags={IncludeTags}, excludeTags={ExcludeTags}, status={Status}, resultCount={ResultCount}.",
-            pluginId,
-            request.Count,
-            string.Join(",", request.IncludeTags),
-            string.Join(",", request.ExcludeTags),
-            result.Status,
-            result.Result.Count);
-
-        return Task.FromResult(new PluginDrawResult
+        PluginDrawResult? response = null;
+        await securityService.AuthorizeAsync(SecurityOperation.RollCallStart, () =>
         {
-            Status = result.Status.ToString(),
-            ResultCount = result.Result.Count
+            var engine = new DrawEngine();
+            var result = engine.DrawStudent(Math.Max(1, request.Count), student => MatchesTags(student.Tags, request));
+            logger.LogInformation(
+                "Plugin draw invoked: plugin={PluginId}, type=student, count={Count}, includeTags={IncludeTags}, excludeTags={ExcludeTags}, status={Status}, resultCount={ResultCount}.",
+                pluginId, request.Count, string.Join(",", request.IncludeTags), string.Join(",", request.ExcludeTags), result.Status, result.Result.Count);
+            response = new PluginDrawResult { Status = result.Status.ToString(), ResultCount = result.Result.Count };
+            return Task.CompletedTask;
         });
+
+        return response ?? new PluginDrawResult { Status = "AuthorizationRequired", ResultCount = 0 };
     }
 
-    public Task<PluginDrawResult> DrawPrizesAsync(PluginPrizeDrawRequest request)
+    public async Task<PluginDrawResult> DrawPrizesAsync(PluginPrizeDrawRequest request)
     {
-        var engine = new DrawEngine();
-        var requestedCount = Math.Max(1, request.Count);
-        var result = engine.DrawPrize(requestedCount, _ => true);
-        if (result.IsSuccess && result.Result.Count > 0)
-            IAppHost.GetService<IProfileService>().RecordPrizeHistory(result.Result, DateTime.Now, requestedCount);
-
-        logger.LogInformation(
-            "Plugin draw invoked: plugin={PluginId}, type=prize, count={Count}, status={Status}, resultCount={ResultCount}.",
-            pluginId,
-            request.Count,
-            result.Status,
-            result.Result.Count);
-
-        return Task.FromResult(new PluginDrawResult
+        PluginDrawResult? response = null;
+        await securityService.AuthorizeAsync(SecurityOperation.LotteryStart, () =>
         {
-            Status = result.Status.ToString(),
-            ResultCount = result.Result.Count
+            var engine = new DrawEngine();
+            var requestedCount = Math.Max(1, request.Count);
+            var result = engine.DrawPrize(requestedCount, _ => true);
+            if (result.IsSuccess && result.Result.Count > 0)
+                IAppHost.GetService<IProfileService>().RecordPrizeHistory(result.Result, DateTime.Now, requestedCount);
+            logger.LogInformation(
+                "Plugin draw invoked: plugin={PluginId}, type=prize, count={Count}, status={Status}, resultCount={ResultCount}.",
+                pluginId, request.Count, result.Status, result.Result.Count);
+            response = new PluginDrawResult { Status = result.Status.ToString(), ResultCount = result.Result.Count };
+            return Task.CompletedTask;
         });
+
+        return response ?? new PluginDrawResult { Status = "AuthorizationRequired", ResultCount = 0 };
     }
 
     private static bool MatchesTags(string tags, PluginStudentDrawRequest request)

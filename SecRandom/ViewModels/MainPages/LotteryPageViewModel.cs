@@ -25,6 +25,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using SecRandom.Services.Draw;
+using SecRandom.Services.Security;
 using SecRandom.ViewModels;
 using SecRandom.Shared;
 using SecRandom.Shared.Extensions;
@@ -46,6 +47,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly DrawAudioService _drawAudioService;
     private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
     private readonly ILogger<LotteryPageViewModel> _logger;
+    private readonly ISecurityService _securityService;
     private readonly FileSystemWatcher _prizeListWatcher;
     private readonly FileSystemWatcher _studentListWatcher;
     private bool _isDrawCommandRunning;
@@ -73,6 +75,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         IDrawTemporaryRecordService temporaryRecordService,
         DrawAudioService drawAudioService,
         ILogger<LotteryPageViewModel> logger,
+        ISecurityService securityService,
         IVoiceAnnouncementService? voiceAnnouncementService = null)
         : base(configHandler)
     {
@@ -83,6 +86,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         _drawAudioService = drawAudioService;
         _voiceAnnouncementService = voiceAnnouncementService;
         _logger = logger;
+        _securityService = securityService;
         _prizeListWatcher = CreatePrizeListWatcher();
         _studentListWatcher = CreateStudentListWatcher();
         PrizeListNames.CollectionChanged += PrizeListNamesOnCollectionChanged;
@@ -216,6 +220,9 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             return;
         }
 
+        if (!await _securityService.AuthorizeAsync(SecurityOperation.LotteryStart, () => Task.CompletedTask))
+            return;
+
         RefreshCounts();
         if (!CanStartDraw)
         {
@@ -287,8 +294,10 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     }
 
     [RelayCommand]
-    private void ResetDisplay()
+    private async Task ResetDisplayAsync()
     {
+        if (!await _securityService.AuthorizeAsync(SecurityOperation.LotteryReset, () => Task.CompletedTask))
+            return;
         _lastResultPrizes.Clear();
         ResultItems.Clear();
         _temporaryRecordService.ClearPrizeList(SelectedPrizeListName);

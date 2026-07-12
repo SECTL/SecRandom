@@ -43,10 +43,12 @@ using SecRandom.Services.Draw;
 using SecRandom.Services.Plugins;
 using SecRandom.Services.Profiles;
 using SecRandom.Services.Settings;
+using SecRandom.Services.Security;
 using SecRandom.Services.Telemetry;
 using SecRandom.Services.Voice;
 using SecRandom.ViewModels;
 using SecRandom.ViewModels.MainPages;
+using SecRandom.ViewModels.SettingsPages;
 using SecRandom.ViewModels.SettingsPages.History;
 using SecRandom.Views;
 using SecRandom.Views.MainPages;
@@ -80,6 +82,7 @@ public partial class App : Application
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
     private static MainWindow? _profileSettingsWindow;
+    private NativeMenuItem? _floatingWindowMenuItem;
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     private readonly object _shutdownGate = new();
     private bool _isStopping;
@@ -144,6 +147,7 @@ public partial class App : Application
 
             _desktopLifetime = desktop;
             _floatingWindow = new FloatingWindow();
+            _floatingWindow.Opened += (_, _) => RefreshTrayWindowMenuItems();
             _floatingWindow.Closed += (_, _) => _floatingWindow = null;
             desktop.MainWindow = _floatingWindow;
         }
@@ -296,6 +300,10 @@ public partial class App : Application
                 services.AddHostedService<TaskBarIconService>();
                 services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
                 services.AddSingleton<DrawAudioService>();
+                services.AddSingleton<ICredentialKeyProtector, CredentialKeyProtector>();
+                services.AddSingleton<SecurityCredentialStore>();
+                services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
+                services.AddSingleton<ISecurityService, SecurityService>();
 
                 // 窗口
                 services.AddTransient<MainView>();
@@ -398,6 +406,7 @@ public partial class App : Application
                 services.AddTransient<QuickDrawPageViewModel>();
                 services.AddTransient<LotteryPageViewModel>();
                 services.AddTransient<RollCallHistoryViewModel>();
+                services.AddTransient<HomeSettingsPageViewModel>();
                 services.AddTransient<LotteryHistoryViewModel>();
 
                 // 配置插件
@@ -447,7 +456,10 @@ public partial class App : Application
     {
         var taskBarIconService = IAppHost.Host!.Services
             .GetServices<IHostedService>().OfType<TaskBarIconService>().First();
-        taskBarIconService.MainTaskBarIcon.Menu = this.FindResource(@"AppMenu") as NativeMenu;
+        var menu = this.FindResource(@"AppMenu") as NativeMenu;
+        taskBarIconService.MainTaskBarIcon.Menu = menu;
+        _floatingWindowMenuItem = menu?.Items.ElementAtOrDefault(3) as NativeMenuItem;
+        RefreshTrayWindowMenuItems();
         taskBarIconService.MainTaskBarIcon.IsVisible = true;
         taskBarIconService.MainTaskBarIcon.Clicked += MainTaskBarIconOnClicked;
 
@@ -787,7 +799,7 @@ public partial class App : Application
         {
             if (_mainWindow is { IsVisible: true })
             {
-                _mainWindow.Activate();
+                RestoreAndActivate(_mainWindow);
                 transaction?.Finish(SpanStatus.Ok);
                 return;
             }
@@ -802,8 +814,7 @@ public partial class App : Application
                 _mainWindow.Closed += (_, _) => _mainWindow = null;
             }
 
-            _mainWindow.Show();
-            _mainWindow.Activate();
+            RestoreAndActivate(_mainWindow);
             transaction?.Finish(SpanStatus.Ok);
         }
         catch (Exception ex)
@@ -814,7 +825,46 @@ public partial class App : Application
         }
     }
 
+    public static void ToggleMainWindow()
+    {
+        ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeAsync(
+            SecurityOperation.ToggleMainWindow,
+            () =>
+            {
+                ShowMainWindow();
+                return Task.CompletedTask;
+            }), "Main window authorization failed.");
+    }
+
+    public static void ToggleFloatingWindow()
+    {
+        ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeAsync(
+            SecurityOperation.ToggleFloatingWindow,
+            () =>
+            {
+                if (_floatingWindow is { IsVisible: true })
+                    _floatingWindow.Hide();
+                else if (_floatingWindow is not null)
+                {
+                    RestoreAndActivate(_floatingWindow);
+                }
+                Current.RefreshTrayWindowMenuItems();
+                return Task.CompletedTask;
+            }), "Floating window authorization failed.");
+    }
+
     public static void ShowSettingsWindow()
+    {
+        ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeAsync(
+            SecurityOperation.OpenSettings,
+            () =>
+            {
+                ShowSettingsWindowCore();
+                return Task.CompletedTask;
+            }), "Settings window authorization failed.");
+    }
+
+    private static void ShowSettingsWindowCore()
     {
         TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
         using var transaction = telemetry?.StartTransaction("ui.settings_window", "ui.navigation");
@@ -823,7 +873,7 @@ public partial class App : Application
         {
             if (_settingsWindow is { IsVisible: true })
             {
-                _settingsWindow.Activate();
+                RestoreAndActivate(_settingsWindow);
                 transaction?.Finish(SpanStatus.Ok);
                 return;
             }
@@ -838,8 +888,7 @@ public partial class App : Application
                 _settingsWindow.Closed += (_, _) => _settingsWindow = null;
             }
 
-            _settingsWindow.Show();
-            _settingsWindow.Activate();
+            RestoreAndActivate(_settingsWindow);
             transaction?.Finish(SpanStatus.Ok);
         }
         catch (Exception ex)
@@ -946,7 +995,28 @@ public partial class App : Application
 
     private void MenuItemOpenMainWindow_OnClick(object? sender, EventArgs e)
     {
-        ShowMainWindow();
+        ToggleMainWindow();
+    }
+
+    private void MenuItemToggleFloatingWindow_OnClick(object? sender, EventArgs e)
+    {
+        ToggleFloatingWindow();
+    }
+
+    private static void RestoreAndActivate(Window window)
+    {
+        if (window.WindowState == WindowState.Minimized)
+            window.WindowState = WindowState.Normal;
+        window.Show();
+        window.Activate();
+    }
+
+    private void RefreshTrayWindowMenuItems()
+    {
+        if (_floatingWindowMenuItem is not null)
+            _floatingWindowMenuItem.Header = _floatingWindow is { IsVisible: true }
+                ? SecRandom.Langs.Common.Resources.Menu_HideFloatingWindow
+                : SecRandom.Langs.Common.Resources.Menu_ShowFloatingWindow;
     }
 
     private void MenuItemOpenSettings_OnClick(object? sender, EventArgs e)
@@ -961,12 +1031,24 @@ public partial class App : Application
 
     private void MenuItemRestartProgram_OnClick(object? sender, EventArgs e)
     {
-        Restart();
+        ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeAsync(
+            SecurityOperation.RestartApplication,
+            () =>
+            {
+                Restart();
+                return Task.CompletedTask;
+            }), "Restart authorization failed.");
     }
 
     private void MenuItemExitProgram_OnClick(object? sender, EventArgs e)
     {
-        Stop();
+        ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeAsync(
+            SecurityOperation.ExitApplication,
+            () =>
+            {
+                Stop();
+                return Task.CompletedTask;
+            }), "Exit authorization failed.");
     }
 
     #endregion

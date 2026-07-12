@@ -163,10 +163,10 @@
                                 </Style>
                             </WrapPanel.Styles>
 
-                            <HyperlinkButton Click="UriNavigationCommands_OnClick"
-                                             CommandParameter="https://sectl.top">
-                                <TextBlock Text="{x:Static lsa:Resources.C_OrgHome}" />
-                            </HyperlinkButton>
+                             <HyperlinkButton Click="UriNavigationCommands_OnClick"
+                                              CommandParameter="https://sectl.cn">
+                                 <TextBlock Text="{x:Static lsa:Resources.C_OrgHome}" />
+                             </HyperlinkButton>
                         </WrapPanel>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
@@ -191,22 +191,6 @@
                                            Footer="{x:Static lc:Resources.C_ToBeWritten}"
                                            IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}" />
             </fa:FASettingsExpander>
-
-            <Expander x:Name="S_UserInformation" IsExpanded="True">
-                <Expander.Header>
-                    <Grid ColumnDefinitions="* Auto" Margin="0 0 -12 0">
-                        <TextBlock Grid.Column="0" VerticalAlignment="Center"
-                                   Text="{x:Static lsa:Resources.S_UserInformation}" />
-
-                        <Button Grid.Column="1" Theme="{StaticResource TransparentButton}"
-                                ToolTip.Tip="{x:Static lsa:Resources.C_CopyUserInformation}">
-                            <sr:FluentIcon Glyph="&#xE58B;" />
-                        </Button>
-                    </Grid>
-                </Expander.Header>
-
-                <TextBlock>111</TextBlock>
-            </Expander>
         </StackPanel>
     </sr:StickyScrollViewer>
 </UserControl>

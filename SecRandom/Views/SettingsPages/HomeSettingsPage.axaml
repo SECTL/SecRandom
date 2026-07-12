@@ -1,12 +1,161 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+              xmlns:langs="clr-namespace:SecRandom.Langs.SettingsPages.Home"
+             xmlns:vm="using:SecRandom.ViewModels.SettingsPages"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.SettingsPages.HomeSettingsPage">
+             x:Class="SecRandom.Views.SettingsPages.HomeSettingsPage"
+             x:DataType="vm:HomeSettingsPageViewModel"
+             Loaded="OnLoaded">
+    <UserControl.Styles>
+        <Style Selector="Border.overview-summary-card">
+            <Setter Property="Width" Value="170" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Margin" Value="0 0 12 12" />
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style Selector="Border.overview-profile-card">
+            <Setter Property="Width" Value="210" />
+            <Setter Property="MinHeight" Value="116" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="Margin" Value="0 0 12 12" />
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+    </UserControl.Styles>
     <ScrollViewer>
-        <StackPanel Classes="page-container">
-            <TextBlock>Welcome to Avalonia!</TextBlock>
+        <StackPanel Classes="page-container animated-intro" HorizontalAlignment="Center">
+            <TextBlock Text="{x:Static langs:Resources.C_RollCall}" FontSize="18" FontWeight="SemiBold"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="{x:Static langs:Resources.C_RollCall_Description}"
+                       Margin="0 4 0 8"
+                       HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+            <WrapPanel HorizontalAlignment="Center">
+                <Border Classes="overview-summary-card">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{x:Static langs:Resources.C_ListCount}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding RollCallListCount}" FontSize="24" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Classes="overview-summary-card">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{x:Static langs:Resources.C_TotalRounds}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding RollCallTotalRounds}" FontSize="24" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Classes="overview-summary-card">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{x:Static langs:Resources.C_TotalDrawnCount}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding RollCallTotalDrawnCount}" FontSize="24" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+
+            <ItemsControl ItemsSource="{Binding RollCallLists}" IsVisible="{Binding HasRollCallLists}"
+                          HorizontalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:HomeProfileCard">
+                        <Border Classes="overview-profile-card">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding RecordCount, StringFormat={}{0} 名学生}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <Grid ColumnDefinitions="*,*" Margin="0 4 0 0">
+                                    <StackPanel>
+                                        <TextBlock Text="{x:Static langs:Resources.C_TotalRounds}" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        <TextBlock Text="{Binding TotalRounds}" FontSize="18" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{x:Static langs:Resources.C_TotalDrawnCount}" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        <TextBlock Text="{Binding TotalDrawnCount}" FontSize="18" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Text="{x:Static langs:Resources.M_NoRollCallLists}"
+                       IsVisible="{Binding HasNoRollCallLists}"
+                       Margin="0 12"
+                       HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+            <TextBlock Text="{x:Static langs:Resources.C_Lottery}" FontSize="18" FontWeight="SemiBold" Margin="0 20 0 0"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="{x:Static langs:Resources.C_Lottery_Description}"
+                       Margin="0 4 0 8"
+                       HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+            <WrapPanel HorizontalAlignment="Center">
+                <Border Classes="overview-summary-card">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{x:Static langs:Resources.C_PoolCount}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding LotteryPoolCount}" FontSize="24" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Classes="overview-summary-card">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{x:Static langs:Resources.C_TotalRounds}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding LotteryTotalRounds}" FontSize="24" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Classes="overview-summary-card">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{x:Static langs:Resources.C_TotalDrawnCount}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding LotteryTotalDrawnCount}" FontSize="24" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+
+            <ItemsControl ItemsSource="{Binding LotteryPools}" IsVisible="{Binding HasLotteryPools}"
+                          HorizontalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:HomeProfileCard">
+                        <Border Classes="overview-profile-card">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding RecordCount, StringFormat={}{0} 个奖品}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <Grid ColumnDefinitions="*,*" Margin="0 4 0 0">
+                                    <StackPanel>
+                                        <TextBlock Text="{x:Static langs:Resources.C_TotalRounds}" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        <TextBlock Text="{Binding TotalRounds}" FontSize="18" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{x:Static langs:Resources.C_TotalDrawnCount}" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        <TextBlock Text="{Binding TotalDrawnCount}" FontSize="18" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Text="{x:Static langs:Resources.M_NoLotteryPools}"
+                       IsVisible="{Binding HasNoLotteryPools}"
+                       Margin="0 12"
+                       HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
         </StackPanel>
     </ScrollViewer>
 </UserControl>

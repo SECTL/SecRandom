@@ -26,6 +26,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using SecRandom.Services.Draw;
+using SecRandom.Services.Security;
 using SecRandom.ViewModels;
 using SecRandom.Shared;
 using SecRandom.Shared.Extensions;
@@ -46,6 +47,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private readonly DrawAudioService? _drawAudioService;
     private readonly MainConfigHandler _configHandler;
     private readonly ILogger<RollCallPageViewModel> _logger;
+    private readonly ISecurityService _securityService;
     private readonly FileSystemWatcher _studentListWatcher;
     private List<Student> _lastResultStudents = [];
     private int _studentIdPadWidth;
@@ -70,6 +72,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         IProfileService profileService,
         IDrawTemporaryRecordService temporaryRecordService,
         ILogger<RollCallPageViewModel> logger,
+        ISecurityService securityService,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         DrawAudioService? drawAudioService = null)
         : base(configHandler)
@@ -79,6 +82,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         _profileService = profileService;
         _temporaryRecordService = temporaryRecordService;
         _logger = logger;
+        _securityService = securityService;
         _voiceAnnouncementService = voiceAnnouncementService;
         _drawAudioService = drawAudioService;
 
@@ -210,8 +214,10 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     }
 
     [RelayCommand]
-    private void ResetDrawHistory()
+    private async Task ResetDrawHistoryAsync()
     {
+        if (!await _securityService.AuthorizeAsync(SecurityOperation.RollCallReset, () => Task.CompletedTask))
+            return;
         _lastResultStudents.Clear();
         ResultItems.Clear();
         _temporaryRecordService.ClearStudentScope(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
@@ -230,6 +236,9 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             StopPreview();
             return;
         }
+
+        if (!await _securityService.AuthorizeAsync(SecurityOperation.RollCallStart, () => Task.CompletedTask))
+            return;
 
         RefreshCounts();
         if (!CanStartDraw)

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true" />
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Page_Title" xml:space="preserve">
+    <value>概览</value>
+  </data>
+  <data name="Page_Description" xml:space="preserve">
+    <value>查看点名名单与抽奖奖池的累计统计。</value>
+  </data>
+  <data name="S_Overview" xml:space="preserve">
+    <value>概览</value>
+  </data>
+  <data name="S_Overview_D" xml:space="preserve">
+    <value>查看点名名单与抽奖奖池的累计统计。</value>
+  </data>
+  <data name="C_RollCall" xml:space="preserve">
+    <value>点名</value>
+  </data>
+  <data name="C_RollCall_Description" xml:space="preserve">
+    <value>汇总所有学生名单的点名历史。</value>
+  </data>
+  <data name="C_ListCount" xml:space="preserve">
+    <value>名单数量</value>
+  </data>
+  <data name="C_TotalRounds" xml:space="preserve">
+    <value>累计轮次</value>
+  </data>
+  <data name="C_TotalDrawnCount" xml:space="preserve">
+    <value>累计点名人次</value>
+  </data>
+  <data name="C_Lottery" xml:space="preserve">
+    <value>抽奖</value>
+  </data>
+  <data name="C_Lottery_Description" xml:space="preserve">
+    <value>汇总所有奖品池的抽奖历史。</value>
+  </data>
+  <data name="C_PoolCount" xml:space="preserve">
+    <value>奖池数量</value>
+  </data>
+  <data name="M_NoRollCallLists" xml:space="preserve">
+    <value>尚未创建学生名单。</value>
+  </data>
+  <data name="M_NoLotteryPools" xml:space="preserve">
+    <value>尚未创建奖品池。</value>
+  </data>
+</root>

@@ -28,6 +28,21 @@
     <data name="Feat_Settings" xml:space="preserve">
         <value>Settings</value>
     </data>
+    <data name="Menu_ToggleMainWindow" xml:space="preserve">
+        <value>Show/Hide Main Window</value>
+    </data>
+    <data name="Menu_ToggleFloatingWindow" xml:space="preserve">
+        <value>Show/Hide Floating Window</value>
+    </data>
+    <data name="Menu_ShowMainWindow" xml:space="preserve">
+        <value>Show Main Window</value>
+    </data>
+    <data name="Menu_ShowFloatingWindow" xml:space="preserve">
+        <value>Show Floating Window</value>
+    </data>
+    <data name="Menu_HideFloatingWindow" xml:space="preserve">
+        <value>Hide Floating Window</value>
+    </data>
     <data name="Feat_RollCall" xml:space="preserve">
         <value>Roll Call</value>
     </data>
@@ -122,7 +137,7 @@
         <value>General Settings</value>
     </data>
     <data name="Settings_Home" xml:space="preserve">
-        <value>Home</value>
+        <value>Overview</value>
     </data>
     <data name="Settings_Personalized" xml:space="preserve">
         <value>Personalized Settings</value>
