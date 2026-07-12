@@ -9,7 +9,7 @@ using SecRandom.ViewModels.SettingsPages.History;
 
 namespace SecRandom.Views.SettingsPages.History;
 
-[PageInfo("settings.history.lottery", FluentIcons.LotteryRegular, "settings.history")]
+[PageInfo("settings.history.lottery", FluentIcons.LotteryFilled, "settings.history")]
 public partial class LotteryHistorySettingsPage : UserControl
 {
     public LotteryHistorySettingsPage()

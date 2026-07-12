@@ -87,6 +87,7 @@ public partial class App : Application
     private readonly object _shutdownGate = new();
     private bool _isStopping;
     public new static App Current => (Application.Current as App)!;
+    internal bool IsStopping => _isStopping;
 
     public event EventHandler? AppStarted;
     public event EventHandler? AppStopping;
@@ -119,6 +120,7 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        var startupProtocolUri = ProtocolActivation.ConsumeStartupUri();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             _desktopLifetime = desktop;
@@ -134,7 +136,7 @@ public partial class App : Application
             if (!SingleInstanceService.Instance.TryAcquire())
             {
                 // 已有实例在运行：创建临时宿主窗口显示对话框，跳过 BuildHost
-                desktop.MainWindow = CreateDuplicateInstanceDialogHost(desktop);
+                desktop.MainWindow = CreateDuplicateInstanceDialogHost(desktop, startupProtocolUri);
                 base.OnFrameworkInitializationCompleted();
                 return;
             }
@@ -157,6 +159,8 @@ public partial class App : Application
         }
 
         InitializeApp();
+        if (startupProtocolUri is not null)
+            Dispatcher.UIThread.Post(() => HandleProtocolUri(startupProtocolUri), DispatcherPriority.Render);
 
         AppDomain.CurrentDomain.ProcessExit += CurrentDomainOnProcessExit;
         Dispatcher.UIThread.UnhandledException += App_OnDispatcherUnhandledException;
@@ -170,7 +174,8 @@ public partial class App : Application
     ///     避免在同步的 <see cref="OnFrameworkInitializationCompleted"/> 中阻塞 UI 线程。
     /// </summary>
     private static Window CreateDuplicateInstanceDialogHost(
-        IClassicDesktopStyleApplicationLifetime _)
+        IClassicDesktopStyleApplicationLifetime _,
+        string? startupProtocolUri = null)
     {
         var host = new Window
         {
@@ -186,6 +191,14 @@ public partial class App : Application
         // Opened 事件在 Dispatcher 事件循环内异步运行，不会死锁 UI 线程
         host.Opened += async (_, _) =>
         {
+            if (startupProtocolUri is not null)
+            {
+                await SingleInstanceService.SendCommandAsync(SingleInstanceCommand.UrlPrefix + startupProtocolUri);
+                host.Close();
+                RequestDesktopShutdown();
+                return;
+            }
+
             var action = await DuplicateInstanceDialog.ShowAsync(host);
 
             switch (action)
@@ -230,8 +243,35 @@ public partial class App : Application
                 case SingleInstanceCommand.Restart:
                     Restart();
                     break;
+                default:
+                    if (command.StartsWith(SingleInstanceCommand.UrlPrefix, StringComparison.Ordinal))
+                        HandleProtocolUri(command[SingleInstanceCommand.UrlPrefix.Length..]);
+                    break;
             }
         });
+    }
+
+    private void HandleProtocolUri(string value)
+    {
+        if (!IAppHost.GetService<MainConfigHandler>().Data.General.Basic.UrlProtocol
+            || !Uri.TryCreate(value, UriKind.Absolute, out var uri)
+            || !string.Equals(uri.Scheme, "secrandom", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var command = string.Concat(uri.Host, uri.AbsolutePath).Trim('/').ToLowerInvariant();
+        switch (command)
+        {
+            case "window/main":
+                ToggleMainWindow();
+                break;
+            case "window/settings":
+            case "settings":
+                ShowSettingsWindow();
+                break;
+            case "window/float":
+                ToggleFloatingWindow();
+                break;
+        }
     }
 
     private static Window ShowCrashRecoveryPromptOnly(CrashRecoveryPromptOptions promptOptions)
@@ -298,6 +338,7 @@ public partial class App : Application
                 services.AddSingleton<TelemetryRuntimeService>();
                 services.AddHostedService<OnlineStatusService>();
                 services.AddHostedService<TaskBarIconService>();
+                services.AddSingleton<DesktopIntegrationService>();
                 services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
                 services.AddSingleton<DrawAudioService>();
                 services.AddSingleton<ICredentialKeyProtector, CredentialKeyProtector>();
@@ -336,14 +377,14 @@ public partial class App : Application
                 services.AddSettingsPageSeparator();
 
                 services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_General, "settings.general", FluentIcons.SettingsRegular));
+                    Langs.Common.Resources.Settings_General, "settings.general", FluentIcons.SettingsFilled));
                 services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
                 services.AddSettingsPage<SecuritySettingsPage>(Langs.Common.Resources.Settings_Security);
                 services.AddSettingsPage<PrivacySettingsPage>(Langs.SettingsPages.General.Privacy.Resources.Page_Title);
                 services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
 
                 services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_Personalized, "settings.personalized", FluentIcons.ColorRegular));
+                    Langs.Common.Resources.Settings_Personalized, "settings.personalized", FluentIcons.ColorFilled));
                 services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
                 services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources.Settings_FloatingWindow);
                 services.AddSettingsPage<ThemeManagementSettingsPage>(Langs.Common.Resources.Settings_Theme);
@@ -354,14 +395,14 @@ public partial class App : Application
                 services.AddSettingsPageSeparator();
 
                 services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_RosterManagement, "settings.listManagement", FluentIcons.PeopleListRegular));
+                    Langs.Common.Resources.Settings_RosterManagement, "settings.listManagement", FluentIcons.PeopleListFilled));
                 services.AddSettingsPage<RollCallListSettingsPage>(Langs.SettingsPages.ListManagement.RollCallList
                     .Resources.Page_Title);
                 services.AddSettingsPage<LotteryListSettingsPage>(Langs.SettingsPages.ListManagement.LotteryList
                     .Resources.Page_Title);
 
                 services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_Draw, "settings.picking", FluentIcons.SettingsRegular));
+                    Langs.Common.Resources.Settings_Draw, "settings.picking", FluentIcons.SettingsFilled));
                 services.AddSettingsPage<DefaultDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_Default);
                 services.AddSettingsPage<RollCallDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_RollCall);
                 services.AddSettingsPage<QuickDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
@@ -369,7 +410,7 @@ public partial class App : Application
                 services.AddSettingsPage<FaceDetectorSettingsPage>(Langs.Common.Resources.Settings_FaceDetector);
 
                 services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_Notification, "settings.notification", FluentIcons.CommentNoteRegular));
+                    Langs.Common.Resources.Settings_Notification, "settings.notification", FluentIcons.CommentNoteFilled));
                 services.AddSettingsPage<VoiceSettingsPage>(Langs.Common.Resources.Settings_Voice);
                 services.AddSettingsPage<DefaultNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
                 services.AddSettingsPage<RollCallNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
@@ -377,7 +418,7 @@ public partial class App : Application
                 services.AddSettingsPage<LotteryNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
                 
                 services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Feat_History, "settings.history", FluentIcons.HistoryRegular));
+                    Langs.Common.Resources.Feat_History, "settings.history", FluentIcons.HistoryFilled));
                 services.AddSettingsPage<HistoryManagementSettingsPage>(Langs.Common.Resources.Settings_HistoryManagement);
                 services.AddSettingsPage<RollCallHistorySettingsPage>(Langs.Common.Resources.Feat_RollCallHistory);
                 services.AddSettingsPage<LotteryHistorySettingsPage>(Langs.Common.Resources.Feat_LotteryHistory);
@@ -463,6 +504,10 @@ public partial class App : Application
         RefreshTrayWindowMenuItems();
         taskBarIconService.MainTaskBarIcon.IsVisible = true;
         taskBarIconService.MainTaskBarIcon.Clicked += MainTaskBarIconOnClicked;
+        IAppHost.GetService<DesktopIntegrationService>().EnsureConfiguredIntegrations();
+
+        if (IAppHost.GetService<MainConfigHandler>().Data.General.Basic.ShowStartupWindow)
+            Dispatcher.UIThread.Post(ShowMainWindow, DispatcherPriority.Render);
 
         AppStarted?.Invoke(this, EventArgs.Empty);
     }
@@ -807,7 +852,7 @@ public partial class App : Application
 
             if (_mainWindow is not { IsLoaded: true })
             {
-                _mainWindow = new MainWindow
+                _mainWindow = new MainWindow(usesPrimarySettings: true)
                 {
                     Content = IAppHost.GetService<MainView>(),
                     Title = @"SecRandom"
@@ -835,6 +880,17 @@ public partial class App : Application
                 ShowMainWindow();
                 return Task.CompletedTask;
             }), "Main window authorization failed.");
+    }
+
+    internal static void RequestExitFromMainWindow()
+    {
+        ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeAsync(
+            SecurityOperation.ExitApplication,
+            () =>
+            {
+                Current.Stop();
+                return Task.CompletedTask;
+            }), "Main window exit authorization failed.");
     }
 
     public static void ToggleFloatingWindow()

@@ -30,9 +30,6 @@
   <data name="C_RollCall" xml:space="preserve">
     <value>点名</value>
   </data>
-  <data name="C_RollCall_Description" xml:space="preserve">
-    <value>汇总所有学生名单的点名历史。</value>
-  </data>
   <data name="C_ListCount" xml:space="preserve">
     <value>名单数量</value>
   </data>
@@ -44,9 +41,6 @@
   </data>
   <data name="C_Lottery" xml:space="preserve">
     <value>抽奖</value>
-  </data>
-  <data name="C_Lottery_Description" xml:space="preserve">
-    <value>汇总所有奖品池的抽奖历史。</value>
   </data>
   <data name="C_PoolCount" xml:space="preserve">
     <value>奖池数量</value>

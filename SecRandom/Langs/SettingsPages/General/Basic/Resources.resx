@@ -35,6 +35,9 @@ bug 报 GitHub Issue 或 SECTL QQ组织群 - 833875216</value>
     <data name="C_VersionNoticeHide" xml:space="preserve">
         <value>不再显示</value>
     </data>
+    <data name="M_DesktopIntegrationFailed" xml:space="preserve">
+        <value>无法应用“{0}”设置：{1}</value>
+    </data>
     <data name="S_Behavior" xml:space="preserve">
         <value>行为</value>
     </data>

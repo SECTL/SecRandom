@@ -10,7 +10,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages.More;
 
-[PageInfo("settings.more", FluentIcons.MoreHorizontalRegular)]
+[PageInfo("settings.more", FluentIcons.MoreHorizontalFilled)]
 public partial class MoreSettingsPage : UserControl
 {
     public MoreSettingsPage()

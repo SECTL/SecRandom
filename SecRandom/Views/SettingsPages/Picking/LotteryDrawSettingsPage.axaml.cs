@@ -15,7 +15,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages.Picking;
 
-[PageInfo("settings.picking.lottery", FluentIcons.LotteryRegular, "settings.picking")]
+[PageInfo("settings.picking.lottery", FluentIcons.LotteryFilled, "settings.picking")]
 public partial class LotteryDrawSettingsPage : UserControl
 {
     private bool _normalizingSettings;

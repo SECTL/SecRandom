@@ -25,7 +25,7 @@ using LR = SecRandom.Langs.SettingsPages.LogViewer.Resources;
 
 namespace SecRandom.Views.SettingsPages.LogViewer;
 
-[PageInfo("settings.logs", FluentIcons.DocumentRegular, location: PageLocation.Bottom, isHide: true, useFullWidth: true)]
+[PageInfo("settings.logs", FluentIcons.DocumentFilled, location: PageLocation.Bottom, isHide: true, useFullWidth: true)]
 public partial class LogViewerSettingsPage : UserControl, INotifyPropertyChanged
 {
     private const int MaxLoadedLines = 2000;

@@ -15,7 +15,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages.Picking;
 
-[PageInfo("settings.picking.rollCall", FluentIcons.PersonRegular, "settings.picking")]
+[PageInfo("settings.picking.rollCall", FluentIcons.PersonFilled, "settings.picking")]
 public partial class RollCallDrawSettingsPage : UserControl
 {
     private bool _normalizingSettings;

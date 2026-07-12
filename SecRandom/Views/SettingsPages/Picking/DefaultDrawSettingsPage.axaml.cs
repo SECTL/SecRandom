@@ -10,7 +10,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages.Picking;
 
-[PageInfo("settings.picking.default", FluentIcons.DocumentBulletListCubeRegular, "settings.picking")]
+[PageInfo("settings.picking.default", FluentIcons.DocumentBulletListCubeFilled, "settings.picking")]
 public partial class DefaultDrawSettingsPage : UserControl
 {
     public DefaultDrawSettingsPage()

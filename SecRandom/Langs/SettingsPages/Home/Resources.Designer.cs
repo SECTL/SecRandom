@@ -38,12 +38,10 @@ namespace SecRandom.Langs.SettingsPages.Home {
         public static string C_LastDrawn => ResourceManager.GetString("C_LastDrawn", resourceCulture);
         public static string C_HistorySummary => ResourceManager.GetString("C_HistorySummary", resourceCulture);
         public static string C_Lottery => ResourceManager.GetString("C_Lottery", resourceCulture);
-        public static string C_Lottery_Description => ResourceManager.GetString("C_Lottery_Description", resourceCulture);
         public static string C_Name => ResourceManager.GetString("C_Name", resourceCulture);
         public static string C_PoolCount => ResourceManager.GetString("C_PoolCount", resourceCulture);
         public static string C_PrizeCount => ResourceManager.GetString("C_PrizeCount", resourceCulture);
         public static string C_RollCall => ResourceManager.GetString("C_RollCall", resourceCulture);
-        public static string C_RollCall_Description => ResourceManager.GetString("C_RollCall_Description", resourceCulture);
         public static string C_StudentCount => ResourceManager.GetString("C_StudentCount", resourceCulture);
         public static string C_TotalDrawnCount => ResourceManager.GetString("C_TotalDrawnCount", resourceCulture);
         public static string C_TotalRounds => ResourceManager.GetString("C_TotalRounds", resourceCulture);

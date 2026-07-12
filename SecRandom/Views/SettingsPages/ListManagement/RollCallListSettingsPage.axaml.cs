@@ -23,7 +23,7 @@ using LR = SecRandom.Langs.SettingsPages.ListManagement.RollCallList.Resources;
 
 namespace SecRandom.Views.SettingsPages.ListManagement;
 
-[PageInfo("settings.listManagement.rollCallList", FluentIcons.PeopleListRegular, "settings.listManagement")]
+[PageInfo("settings.listManagement.rollCallList", FluentIcons.PeopleListFilled, "settings.listManagement")]
 public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChanged
 {
     private string _selectedStudentListName = string.Empty;

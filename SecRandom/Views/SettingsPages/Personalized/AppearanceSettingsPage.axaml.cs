@@ -9,7 +9,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages.Personalized;
 
-[PageInfo("settings.personalized.appearance", FluentIcons.LayerDiagonalSparkleRegular, "settings.personalized")]
+[PageInfo("settings.personalized.appearance", FluentIcons.LayerDiagonalSparkleFilled, "settings.personalized")]
 public partial class AppearanceSettingsPage : UserControl
 {
     public AppearanceSettingsPage()

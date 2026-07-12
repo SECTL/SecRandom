@@ -5,7 +5,7 @@ using LR = SecRandom.Langs.SettingsPages.Notification.Resources;
 
 namespace SecRandom.Views.SettingsPages.Notification;
 
-[PageInfo("settings.notification.lottery", FluentIcons.LotteryRegular, "settings.notification")]
+[PageInfo("settings.notification.lottery", FluentIcons.LotteryFilled, "settings.notification")]
 public partial class LotteryNotificationSettingsPage : NotificationChannelSettingsPageBase
 {
     public LotteryNotificationSettingsPage()

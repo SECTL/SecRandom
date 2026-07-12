@@ -23,7 +23,7 @@ using LR = SecRandom.Langs.SettingsPages.ListManagement.LotteryList.Resources;
 
 namespace SecRandom.Views.SettingsPages.ListManagement;
 
-[PageInfo("settings.listManagement.lotteryList", FluentIcons.LotteryRegular, "settings.listManagement")]
+[PageInfo("settings.listManagement.lotteryList", FluentIcons.LotteryFilled, "settings.listManagement")]
 public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChanged
 {
     private string _selectedPrizeListName = string.Empty;

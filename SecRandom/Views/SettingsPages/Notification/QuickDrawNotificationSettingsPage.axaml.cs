@@ -5,7 +5,7 @@ using LR = SecRandom.Langs.SettingsPages.Notification.Resources;
 
 namespace SecRandom.Views.SettingsPages.Notification;
 
-[PageInfo("settings.notification.quickDraw", FluentIcons.FlashRegular, "settings.notification")]
+[PageInfo("settings.notification.quickDraw", FluentIcons.FlashFilled, "settings.notification")]
 public partial class QuickDrawNotificationSettingsPage : NotificationChannelSettingsPageBase
 {
     public QuickDrawNotificationSettingsPage()

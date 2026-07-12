@@ -15,7 +15,7 @@ using LR = SecRandom.Langs.SettingsPages.FloatingWindow.Resources;
 
 namespace SecRandom.Views.SettingsPages.Personalized;
 
-[PageInfo("settings.personalized.floatingWindow", FluentIcons.WindowAppsRegular, "settings.personalized")]
+[PageInfo("settings.personalized.floatingWindow", FluentIcons.WindowAppsFilled, "settings.personalized")]
 public partial class FloatingWindowSettingsPage : UserControl
 {
     private bool _synchronizingSelections;

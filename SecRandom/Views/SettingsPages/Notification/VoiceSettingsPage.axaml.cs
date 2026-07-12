@@ -18,7 +18,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages.Notification;
 
-[PageInfo("settings.notification.voiceMusic", FluentIcons.PersonVoiceRegular, "settings.notification")]
+[PageInfo("settings.notification.voiceMusic", FluentIcons.PersonVoiceFilled, "settings.notification")]
 public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
 {
     private VoiceOption? _selectedSystemTtsVoice;

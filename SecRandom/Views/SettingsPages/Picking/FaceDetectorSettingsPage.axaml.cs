@@ -10,7 +10,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages.Picking;
 
-[PageInfo("settings.picking.faceDetector", FluentIcons.VideoPersonSparkleRegular, "settings.picking")]
+[PageInfo("settings.picking.faceDetector", FluentIcons.VideoPersonSparkleFilled, "settings.picking")]
 public partial class FaceDetectorSettingsPage : UserControl
 {
     public FaceDetectorSettingsPage()

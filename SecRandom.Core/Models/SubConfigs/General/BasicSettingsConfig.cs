@@ -14,6 +14,11 @@ public partial class BasicSettingsConfig : ObservableObject
     [ObservableProperty] private bool _backgroundResident = true;
     [ObservableProperty] private bool _urlProtocol = false;
 
+    // Stored separately from the user-facing switches so a disabled size setting retains its last size.
+    [ObservableProperty] private double _mainWindowWidth = 1200;
+    [ObservableProperty] private double _mainWindowHeight = 800;
+    [ObservableProperty] private bool _mainWindowMaximized;
+
     [JsonIgnore] public bool? LegacyTelemetryEnabled { get; private set; }
     [JsonIgnore] public TelemetryMode? LegacyTelemetryMode { get; private set; }
 

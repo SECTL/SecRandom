@@ -18,7 +18,7 @@ using SR = SecRandom.Langs.SettingsPages.Security.Resources;
 
 namespace SecRandom.Views.SettingsPages.General;
 
-[PageInfo("settings.general.security", FluentIcons.ShieldKeyholeRegular, "settings.general")]
+[PageInfo("settings.general.security", FluentIcons.ShieldKeyholeFilled, "settings.general")]
 public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
 {
     private readonly ISecurityService _securityService = IAppHost.GetService<ISecurityService>();

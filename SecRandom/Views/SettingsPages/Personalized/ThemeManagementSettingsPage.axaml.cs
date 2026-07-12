@@ -14,7 +14,7 @@ using LR = SecRandom.Langs.SettingsPages.ThemeManagement.Resources;
 
 namespace SecRandom.Views.SettingsPages.Personalized;
 
-[PageInfo("settings.personalized.theme", FluentIcons.PaintBrushRegular, "settings.personalized")]
+[PageInfo("settings.personalized.theme", FluentIcons.PaintBrushFilled, "settings.personalized")]
 public partial class ThemeManagementSettingsPage : UserControl
 {
     public ThemeManagementSettingsPage()

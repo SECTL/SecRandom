@@ -60,6 +60,7 @@ SecRandom/Views/SettingsPages/
 - Page IDs here follow `settings.xxx` or `settings.group.xxx`; historical grouping notes live in `docs/settings-pages-plan.md`.
 - Group membership is owned by the `groupId` in `[PageInfo(...)]` and by `services.AddGroup(...)` in `BuildHost()`; do not handwire grouping in the page.
 - Pages usually resolve `ViewModelBase` via `IAppHost.GetService<ViewModelBase>()`, set `DataContext = this`, and expose `Settings` from `ViewModel.Config.*`.
+- Basic-settings platform switches must route through `DesktopIntegrationService`; do not manipulate registry keys, XDG desktop files, or macOS launch services from the settings page. Revert a switch when the platform operation fails.
 - Security settings must display credential state before factor selection. Password, TOTP, and USB setup are command-driven; selected factors use the shared Ursa `MultiComboBox` pattern with plain option data, and protected-operation controls are driven by `ISecurityService` state.
 - V2-parity settings pages should keep the same `ScrollViewer` + `StackPanel.page-container animated-intro` + `FASettingsExpander` rhythm as existing settings pages.
 - Voice/music owns the global TTS engine, voice, volume, and content switches. Per-student/per-prize specific announcement controls belong in list management attached settings for both roll-call and lottery records.

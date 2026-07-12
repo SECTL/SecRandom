@@ -11,7 +11,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages.Update;
 
-[PageInfo("settings.update", FluentIcons.ArrowSyncRegular, location: PageLocation.Bottom)]
+[PageInfo("settings.update", FluentIcons.ArrowSyncFilled, location: PageLocation.Bottom)]
 public partial class UpdateSettingsPage : UserControl
 {
     public UpdateSettingsPage()

@@ -10,7 +10,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages.Notification;
 
-[PageInfo("settings.notification.legacy", FluentIcons.CommentNoteRegular)]
+[PageInfo("settings.notification.legacy", FluentIcons.CommentNoteFilled)]
 public partial class NotificationSettingsPage : UserControl
 {
     public NotificationSettingsPage()

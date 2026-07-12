@@ -7,7 +7,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages.General;
 
-[PageInfo("settings.general.privacy", FluentIcons.EyeRegular, "settings.general")]
+[PageInfo("settings.general.privacy", FluentIcons.EyeFilled, "settings.general")]
 public partial class PrivacySettingsPage : UserControl
 {
     public PrivacySettingsPage()

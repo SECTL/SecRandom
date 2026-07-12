@@ -2,6 +2,7 @@
 using Avalonia;
 using Avalonia.Media;
 using SecRandom.Services.CrashRecovery;
+using SecRandom.Services.Desktop;
 
 namespace SecRandom.Desktop;
 
@@ -13,6 +14,7 @@ internal sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        ProtocolActivation.SetStartupArguments(args);
         CrashRecoveryRuntime.SetStartupArguments(args);
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 

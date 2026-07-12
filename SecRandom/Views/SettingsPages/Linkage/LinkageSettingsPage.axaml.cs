@@ -10,7 +10,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages.Linkage;
 
-[PageInfo("settings.linkage", FluentIcons.CalendarLtrRegular)]
+[PageInfo("settings.linkage", FluentIcons.CalendarLtrFilled)]
 public partial class LinkageSettingsPage : UserControl
 {
     public LinkageSettingsPage()

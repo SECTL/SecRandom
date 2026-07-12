@@ -5,7 +5,7 @@ using LR = SecRandom.Langs.SettingsPages.Notification.Resources;
 
 namespace SecRandom.Views.SettingsPages.Notification;
 
-[PageInfo("settings.notification.rollCall", FluentIcons.PersonRegular, "settings.notification")]
+[PageInfo("settings.notification.rollCall", FluentIcons.PersonFilled, "settings.notification")]
 public partial class RollCallNotificationSettingsPage : NotificationChannelSettingsPageBase
 {
     public RollCallNotificationSettingsPage()

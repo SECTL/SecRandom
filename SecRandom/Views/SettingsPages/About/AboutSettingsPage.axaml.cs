@@ -9,11 +9,12 @@ using Microsoft.Extensions.Hosting;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
+using SecRandom.Core.Icons;
 using SecRandom.Services;
 
 namespace SecRandom.Views.SettingsPages.About;
 
-[PageInfo("settings.about", "\uE9E4", location: PageLocation.Bottom, hidePageTitle: true)]
+[PageInfo("settings.about", FluentIcons.InfoFilled, location: PageLocation.Bottom, hidePageTitle: true)]
 public partial class AboutSettingsPage : UserControl
 {
     private OnlineStatusService OnlineStatusService { get; } = IAppHost.Host!.Services

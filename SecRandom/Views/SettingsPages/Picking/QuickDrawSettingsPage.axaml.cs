@@ -15,7 +15,7 @@ using SecRandom.ViewModels;
 
 namespace SecRandom.Views.SettingsPages.Picking;
 
-[PageInfo("settings.picking.quickDraw", FluentIcons.FlashRegular, "settings.picking")]
+[PageInfo("settings.picking.quickDraw", FluentIcons.FlashFilled, "settings.picking")]
 public partial class QuickDrawSettingsPage : UserControl
 {
     private bool _normalizingSettings;

@@ -89,6 +89,15 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 无法应用“{0}”设置：{1}.
+        /// </summary>
+        public static string M_DesktopIntegrationFailed {
+            get {
+                return ResourceManager.GetString("M_DesktopIntegrationFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 关闭置顶.
         /// </summary>
         public static string O_MainWindowTopmostMode_None {

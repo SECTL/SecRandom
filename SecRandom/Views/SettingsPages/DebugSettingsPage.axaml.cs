@@ -6,11 +6,12 @@ using Avalonia.Threading;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Helpers.UI;
+using SecRandom.Core.Icons;
 using SecRandom.Services.CrashRecovery;
 
 namespace SecRandom.Views.SettingsPages;
 
-[PageInfo("settings.debug", "\uE2C8", location: PageLocation.Bottom)]
+[PageInfo("settings.debug", FluentIcons.BugFilled, location: PageLocation.Bottom)]
 public partial class DebugSettingsPage : UserControl
 {
     public DebugSettingsPage()

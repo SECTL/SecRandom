@@ -10,7 +10,7 @@ using SR = SecRandom.Langs.MainPages.History.Resources;
 
 namespace SecRandom.Views.SettingsPages.History;
 
-[PageInfo("settings.history.rollCall", FluentIcons.PersonRegular, "settings.history")]
+[PageInfo("settings.history.rollCall", FluentIcons.PersonFilled, "settings.history")]
 public partial class RollCallHistorySettingsPage : UserControl
 {
     public RollCallHistorySettingsPage()

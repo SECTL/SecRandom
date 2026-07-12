@@ -5,7 +5,7 @@ using LR = SecRandom.Langs.SettingsPages.Notification.Resources;
 
 namespace SecRandom.Views.SettingsPages.Notification;
 
-[PageInfo("settings.notification.default", FluentIcons.CommentNoteRegular, "settings.notification")]
+[PageInfo("settings.notification.default", FluentIcons.CommentNoteFilled, "settings.notification")]
 public partial class DefaultNotificationSettingsPage : NotificationChannelSettingsPageBase
 {
     public DefaultNotificationSettingsPage()

@@ -32,10 +32,7 @@
             <Border Classes="overview-section">
                 <StackPanel Spacing="16">
                     <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Spacing="3">
-                            <TextBlock Text="{x:Static langs:Resources.C_RollCall}" FontSize="20" FontWeight="SemiBold" />
-                            <TextBlock Text="{x:Static langs:Resources.C_RollCall_Description}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        </StackPanel>
+                        <TextBlock Text="{x:Static langs:Resources.C_RollCall}" FontSize="20" FontWeight="SemiBold" />
                         <TextBlock Grid.Column="1" Text="{x:Static langs:Resources.C_HistorySummary}" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     </Grid>
                     <Grid ColumnDefinitions="*,*,*">
@@ -52,10 +49,7 @@
             <Border Classes="overview-section">
                 <StackPanel Spacing="16">
                     <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Spacing="3">
-                            <TextBlock Text="{x:Static langs:Resources.C_Lottery}" FontSize="20" FontWeight="SemiBold" />
-                            <TextBlock Text="{x:Static langs:Resources.C_Lottery_Description}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        </StackPanel>
+                        <TextBlock Text="{x:Static langs:Resources.C_Lottery}" FontSize="20" FontWeight="SemiBold" />
                         <TextBlock Grid.Column="1" Text="{x:Static langs:Resources.C_HistorySummary}" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     </Grid>
                     <Grid ColumnDefinitions="*,*,*">
