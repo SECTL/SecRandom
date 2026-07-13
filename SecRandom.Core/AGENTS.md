@@ -28,6 +28,7 @@ SecRandom.Core/
 ├── Services/Draw/        # Fair/random draw engine and filters
 ├── Services/Camera/      # Camera-based face detection and draw loop
 ├── Services/Config/      # Config handlers over Shared config models
+├── Services/Ipc/         # Strict URL/IPC request parsing and normalization
 ├── Services/Logging/     # Console/file logging providers/formatters
 ├── Extensions/Registry/  # DI/page registration helpers
 ├── Enums/                 # Draw settings types, page location, config model trees
@@ -51,6 +52,7 @@ SecRandom.Core/
 | Draw algorithm             | `Services/Draw/DrawEngine*.cs`, `WeightedDrawEngine.cs`, `CryptoRandomSource.cs` | Fairness, filters, weighted sampling; history lookup uses `RecordId`.    |
 | Camera draw engine         | `Services/Camera/CameraDrawEngine*.cs`                                           | Face detection, camera discovery, draw loop, config-change reactions.   |
 | Config handlers            | `Services/Config/`                                                               | `MainConfigHandler` and `ProfileConfigs` wrap config model persistence. |
+| Protocol parsing           | `Services/Ipc/ProtocolRequestParser.cs`                                          | Bounded route/query parser shared by URL and IPC routing. |
 | Logging providers          | `Services/Logging/`                                                              | Console/file logging; file logs live under `data/logs`, current log path is exposed by `FileLoggerProvider` for viewer/diagnostics. |
 | Config schema              | `Enums/Configs/`, `Models/SubConfigs/`                                           | Many settings model types live here, including v2-parity models for floating window, notification, security, linkage, voice, theme/background, history, update, and more settings. |
 | Shared controls            | `Controls/*.axaml(.cs)`                                                          | Reusable app controls; keep templates and code-behind paired.           |
@@ -77,6 +79,7 @@ SecRandom.Core/
 - Draw fairness/repeat history for students and prizes must use `ProfileRecordIdentity`/`RecordId` first. Legacy `Id`/`Name` history fallback is only for backward compatibility and must stay ambiguity-safe.
 - Config handlers derive from `ConfigHandlerBase<TModel>`; config model defaults should be safe without existing data
   files.
+- IPC parser code is UI-free and must reject ambiguous routes, malformed percent escapes, control characters, oversized frames, and unsupported schemes. Keep route execution in the app layer.
 - File logging should keep user-facing log messages in Chinese for app events. Avoid logging student/prize names or full config payloads; prefer counts, status, file names, and operation names.
 - V2-parity settings models that are shared by app settings pages but not yet backed by services live directly under `Models/SubConfigs/` and hang off `MainConfigModel` until their runtime service boundaries settle. `MoreSettingsConfig` also owns built-in draw page chrome toggles such as roll-call/lottery control panel placement and visibility.
 - Attached settings models under `Models/AttachedSettings/` may target students and prizes. `SpecificAnnouncementAttachedSettings` stores per-record TTS alias, prefix, and suffix; app-layer controls/services render and consume it.

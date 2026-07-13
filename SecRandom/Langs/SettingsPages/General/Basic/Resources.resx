@@ -63,7 +63,7 @@ bug 报 GitHub Issue 或 SECTL QQ组织群 - 833875216</value>
         <value>主窗口置顶模式</value>
     </data>
     <data name="S_Behavior_MainWindowTopmostMode_D" xml:space="preserve">
-        <value>选择主窗口置顶方式（UIAccess 置顶需以管理员运行）</value>
+        <value>选择主窗口置顶方式（UIAccess 需由 Windows 以该权限启动，否则回退为普通置顶）</value>
     </data>
     <data name="S_Behavior_BackgroundResident" xml:space="preserve">
         <value>后台驻留</value>

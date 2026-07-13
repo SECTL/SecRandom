@@ -56,6 +56,11 @@
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
+        <EmbeddedResource Update="Langs\SettingsPages\General\Verification\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
         <EmbeddedResource Update="Langs\SettingsPages\General\Backup\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -200,6 +205,12 @@
         </Compile>
 
         <Compile Update="Langs\SettingsPages\General\Privacy\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+
+        <Compile Update="Langs\SettingsPages\General\Verification\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>
@@ -397,6 +408,7 @@
         <PackageReference Include="Sentry.Profiling" Version="6.6.0" />
         <PackageReference Include="QRCoder" Version="1.7.0" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
     </ItemGroup>
 
     <ItemGroup>

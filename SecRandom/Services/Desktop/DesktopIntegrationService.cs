@@ -5,8 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Security;
+using System.Security.Principal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.CrashRecovery;
@@ -24,8 +26,31 @@ public sealed class DesktopIntegrationService(
 
     private BasicSettingsConfig Settings => configHandler.Data.General.Basic;
 
+    public bool IsUiAccessAvailable()
+    {
+        if (!OperatingSystem.IsWindows())
+            return false;
+
+        try
+        {
+            return HasUiAccessToken();
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Unable to inspect the Windows UIAccess token.");
+            return false;
+        }
+    }
+
     public void EnsureConfiguredIntegrations()
     {
+        if (Settings.MainWindowTopmostMode == TopmostMode.UiAccess && !IsUiAccessAvailable())
+        {
+            Settings.MainWindowTopmostMode = TopmostMode.Topmost;
+            configHandler.Save();
+            logger.LogWarning("Configured UIAccess topmost mode is unavailable; falling back to ordinary topmost.");
+        }
+
         if (Settings.Autostart && !TrySetAutostart(true, out var autostartError))
         {
             Settings.Autostart = false;
@@ -59,6 +84,8 @@ public sealed class DesktopIntegrationService(
         }
         catch (Exception ex)
         {
+            if (enabled)
+                TryRemoveAutostartArtifacts();
             logger.LogWarning(ex, "Unable to {Action} autostart.", enabled ? "enable" : "disable");
             error = ex.Message;
             return false;
@@ -83,6 +110,8 @@ public sealed class DesktopIntegrationService(
         }
         catch (Exception ex)
         {
+            if (enabled)
+                TryRemoveUrlProtocolArtifacts();
             logger.LogWarning(ex, "Unable to {Action} the URL protocol.", enabled ? "enable" : "disable");
             error = ex.Message;
             return false;
@@ -98,6 +127,20 @@ public sealed class DesktopIntegrationService(
             key.SetValue(ApplicationName, CreateWindowsCommandLine([]), RegistryValueKind.String);
         else
             key.DeleteValue(ApplicationName, throwOnMissingValue: false);
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static bool HasUiAccessToken()
+    {
+        const int tokenUiAccess = 26;
+        using var identity = WindowsIdentity.GetCurrent();
+        return GetTokenInformation(
+                   identity.AccessToken.DangerousGetHandle(),
+                   tokenUiAccess,
+                   out var isUiAccess,
+                   sizeof(int),
+                   out _)
+               && isUiAccess != 0;
     }
 
     private static void SetLinuxAutostart(bool enabled)
@@ -126,7 +169,8 @@ public sealed class DesktopIntegrationService(
         var path = Path.Combine(GetMacLaunchAgentsDirectory(), "cn.sectl.secrandom.plist");
         if (!enabled)
         {
-            RunCommand("launchctl", ["unload", path], allowFailure: true);
+            if (File.Exists(path) && !RunCommand("launchctl", ["unload", path], allowFailure: false))
+                throw new InvalidOperationException("launchctl could not unload the user launch agent.");
             DeleteFileIfExists(path);
             return;
         }
@@ -134,7 +178,10 @@ public sealed class DesktopIntegrationService(
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, CreateLaunchAgentPlist(GetLaunchArguments([])));
         if (!RunCommand("launchctl", ["load", path], allowFailure: true))
+        {
+            DeleteFileIfExists(path);
             throw new InvalidOperationException("launchctl could not load the user launch agent.");
+        }
     }
 
     [SupportedOSPlatform("windows")]
@@ -169,6 +216,7 @@ public sealed class DesktopIntegrationService(
         var path = Path.Combine(applicationsDirectory, desktopFileName);
         if (!enabled)
         {
+            RemoveLinuxProtocolAssociations(desktopFileName);
             DeleteFileIfExists(path);
             RunCommand("update-desktop-database", [applicationsDirectory], allowFailure: true);
             return;
@@ -186,7 +234,10 @@ public sealed class DesktopIntegrationService(
         ]) + '\n');
 
         if (!RunCommand("xdg-mime", ["default", desktopFileName, "x-scheme-handler/secrandom"], allowFailure: true))
+        {
+            DeleteFileIfExists(path);
             throw new InvalidOperationException("xdg-mime could not register the secrandom URL handler.");
+        }
 
         RunCommand("update-desktop-database", [applicationsDirectory], allowFailure: true);
     }
@@ -197,9 +248,10 @@ public sealed class DesktopIntegrationService(
         var bundlePath = Path.Combine(GetMacApplicationSupportDirectory(), "SecRandom URL Handler.app");
         if (!enabled)
         {
-            RunCommand(GetMacLsRegisterPath(), ["-u", bundlePath], allowFailure: true);
-            if (Directory.Exists(bundlePath))
-                Directory.Delete(bundlePath, recursive: true);
+            if (Directory.Exists(bundlePath)
+                && !RunCommand(GetMacLsRegisterPath(), ["-u", bundlePath], allowFailure: false))
+                throw new InvalidOperationException("LaunchServices could not unregister the secrandom URL handler.");
+            DeleteDirectoryIfExists(bundlePath);
             return;
         }
 
@@ -215,7 +267,10 @@ public sealed class DesktopIntegrationService(
             UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
 
         if (!RunCommand(GetMacLsRegisterPath(), ["-f", bundlePath], allowFailure: true))
+        {
+            DeleteDirectoryIfExists(bundlePath);
             throw new InvalidOperationException("LaunchServices could not register the secrandom URL handler.");
+        }
     }
 
     private static IReadOnlyList<string> GetLaunchArguments(IEnumerable<string> arguments)
@@ -284,6 +339,95 @@ public sealed class DesktopIntegrationService(
             File.Delete(path);
     }
 
+    private static void DeleteDirectoryIfExists(string path)
+    {
+        if (Directory.Exists(path))
+            Directory.Delete(path, recursive: true);
+    }
+
+    private static void RemoveLinuxProtocolAssociations(string desktopFileName)
+    {
+        var scheme = "x-scheme-handler/secrandom";
+        var mimeAppsPaths = new[]
+        {
+            Path.Combine(GetXdgConfigHome(), "mimeapps.list"),
+            Path.Combine(GetXdgDataHome(), "applications", "mimeapps.list")
+        };
+
+        foreach (var path in mimeAppsPaths)
+        {
+            if (!File.Exists(path))
+                continue;
+
+            var lines = File.ReadAllLines(path);
+            var updatedLines = new List<string>(lines.Length);
+            var changed = false;
+            foreach (var line in lines)
+            {
+                if (!line.StartsWith($"{scheme}=", StringComparison.Ordinal))
+                {
+                    updatedLines.Add(line);
+                    continue;
+                }
+
+                var remainingHandlers = line[(scheme.Length + 1)..]
+                    .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                    .Where(handler => !string.Equals(handler, desktopFileName, StringComparison.Ordinal))
+                    .ToArray();
+                if (remainingHandlers.Length == 0)
+                {
+                    changed = true;
+                    continue;
+                }
+
+                var updatedLine = $"{scheme}={string.Join(';', remainingHandlers)};";
+                updatedLines.Add(updatedLine);
+                changed |= !string.Equals(line, updatedLine, StringComparison.Ordinal);
+            }
+
+            if (changed)
+                File.WriteAllLines(path, updatedLines);
+        }
+    }
+
+    private static void TryRemoveAutostartArtifacts()
+    {
+        try
+        {
+            if (OperatingSystem.IsWindows())
+                SetWindowsAutostart(false);
+            else if (OperatingSystem.IsLinux())
+                SetLinuxAutostart(false);
+            else if (OperatingSystem.IsMacOS())
+                DeleteFileIfExists(Path.Combine(GetMacLaunchAgentsDirectory(), "cn.sectl.secrandom.plist"));
+        }
+        catch
+        {
+            // The original failure is reported to the caller; cleanup remains best effort.
+        }
+    }
+
+    private static void TryRemoveUrlProtocolArtifacts()
+    {
+        try
+        {
+            if (OperatingSystem.IsWindows())
+                SetWindowsUrlProtocol(false);
+            else if (OperatingSystem.IsLinux())
+            {
+                const string desktopFileName = "secrandom-url-handler.desktop";
+                RemoveLinuxProtocolAssociations(desktopFileName);
+                DeleteFileIfExists(Path.Combine(GetXdgDataHome(), "applications", desktopFileName));
+            }
+            else if (OperatingSystem.IsMacOS())
+                DeleteDirectoryIfExists(Path.Combine(GetMacApplicationSupportDirectory(), "SecRandom URL Handler.app"));
+        }
+        catch
+        {
+            // The original failure is reported to the caller; cleanup remains best effort.
+        }
+    }
+
     private static string GetXdgConfigHome()
     {
         return Environment.GetEnvironmentVariable("XDG_CONFIG_HOME")
@@ -348,4 +492,13 @@ public sealed class DesktopIntegrationService(
         result.Append('\\', backslashes * 2);
         return result.Append('"').ToString();
     }
+
+    [System.Runtime.InteropServices.DllImport("advapi32.dll", SetLastError = true)]
+    [SupportedOSPlatform("windows")]
+    private static extern bool GetTokenInformation(
+        IntPtr tokenHandle,
+        int tokenInformationClass,
+        out int tokenInformation,
+        int tokenInformationLength,
+        out int returnLength);
 }

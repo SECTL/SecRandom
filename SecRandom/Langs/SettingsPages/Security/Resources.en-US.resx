@@ -58,6 +58,7 @@
   <data name="C_UsbPathPlaceholder" xml:space="preserve"><value>For example, E:\ or /media/user/drive</value></data>
   <data name="C_SelectUsb" xml:space="preserve"><value>Select USB Drive</value></data>
   <data name="C_SelectedUsb" xml:space="preserve"><value>Selected Location</value></data>
+  <data name="C_AllowSettingsPreview" xml:space="preserve"><value>Allow Read-Only Settings Preview</value></data>
   <data name="M_PasswordDialogTitle" xml:space="preserve"><value>Manage Security Password</value></data>
   <data name="M_SetPasswordDialogTitle" xml:space="preserve"><value>Set Security Password</value></data>
   <data name="M_TotpDialogTitle" xml:space="preserve"><value>Set TOTP Code</value></data>
@@ -66,6 +67,7 @@
   <data name="M_TotpCode" xml:space="preserve"><value>Verification Code</value></data>
   <data name="C_Copy" xml:space="preserve"><value>Copy</value></data>
   <data name="M_Copied" xml:space="preserve"><value>Copied.</value></data>
+  <data name="C_Preview" xml:space="preserve"><value>Preview</value></data>
   <data name="M_UsbDialogTitle" xml:space="preserve"><value>Manage USB Binding</value></data>
   <data name="M_UsbSetupDescription" xml:space="preserve"><value>Select the root folder of a mounted USB drive. SecRandom.safety.key will be created there.</value></data>
   <data name="M_UsbShortDescription" xml:space="preserve"><value>Select the USB drive used for verification.</value></data>

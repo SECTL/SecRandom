@@ -134,6 +134,7 @@ public class ProfileService : IProfileService
 
         history.TotalRounds++;
         history.TotalStats += students.Count;
+        var drawRoundId = Guid.NewGuid().ToString("N");
         var allStudents = CurrentStudentList?.Students ?? [];
         var uniqueLegacyKeys = ProfileRecordIdentity.BuildUniqueStudentLegacyKeySet(allStudents);
         HashSet<string> drawnKeys = [];
@@ -161,6 +162,7 @@ public class ProfileService : IProfileService
                 RecordGender = student.Gender,
                 RecordGroup = student.Group,
                 DrawTime = now,
+                DrawRoundId = drawRoundId,
                 DrawNumbers = requestedCount,
                 DrawGroup = drawGroup,
                 DrawGender = drawGender,
@@ -201,6 +203,7 @@ public class ProfileService : IProfileService
 
         history.TotalRounds++;
         history.TotalStats += prizes.Count;
+        var drawRoundId = Guid.NewGuid().ToString("N");
         var allPrizes = CurrentPrizeList?.Prizes ?? [];
         var uniqueLegacyKeys = ProfileRecordIdentity.BuildUniquePrizeLegacyKeySet(allPrizes);
 
@@ -226,6 +229,7 @@ public class ProfileService : IProfileService
                 RecordNumber = prize.Id,
                 RecordName = prize.Name,
                 DrawTime = now,
+                DrawRoundId = drawRoundId,
                 DrawNumbers = requestedCount,
                 DrawGroup = string.Empty,
                 DrawGender = string.Empty,

@@ -19,6 +19,7 @@ namespace SecRandom.Views.MainPages;
 public partial class LotteryPage : UserControl
 {
     private bool _isUnloaded;
+    private bool _isViewModelSubscribed;
     private readonly ItemsControl? _resultPresenter;
 
     public LotteryPage()
@@ -27,17 +28,36 @@ public partial class LotteryPage : UserControl
         DataContext = ViewModel;
         InitializeComponent();
         _resultPresenter = this.FindControl<ItemsControl>("ResultPresenter");
-        ViewModel.PropertyChanged += ViewModel_OnPropertyChanged;
+        AttachViewModel();
     }
 
     public LotteryPageViewModel ViewModel { get; }
 
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        _isUnloaded = false;
+        AttachViewModel();
+    }
+
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
         _isUnloaded = true;
-        ViewModel.PropertyChanged -= ViewModel_OnPropertyChanged;
-        ViewModel.Dispose();
+        if (_isViewModelSubscribed)
+        {
+            ViewModel.PropertyChanged -= ViewModel_OnPropertyChanged;
+            _isViewModelSubscribed = false;
+        }
         DataContext = null;
+    }
+
+    private void AttachViewModel()
+    {
+        DataContext = ViewModel;
+        if (_isViewModelSubscribed)
+            return;
+
+        ViewModel.PropertyChanged += ViewModel_OnPropertyChanged;
+        _isViewModelSubscribed = true;
     }
 
     private void ViewModel_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)

@@ -84,6 +84,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 | `SettingsSearchService` | app service | `SecRandom/Services/Settings/SettingsSearchService.cs` | Indexes settings pages via reflected localization resources. |
 | `CrashRecoveryRuntime` | app service helper | `SecRandom/Services/CrashRecovery/CrashRecoveryRuntime.cs` | Reads crash recovery mode, writes bounded crash reports, and builds restart process plans. |
 | `ISecurityService` | app service contract | `SecRandom/Services/Security/` | Owns credential verification, lockout policy, selected-factor authorization, and protected-operation gating. |
+| `ProtocolCommandRouter` | app service | `SecRandom/Services/Ipc/ProtocolCommandRouter.cs` | Normalizes URL/IPC routes, routes protected commands, and returns structured IPC results. |
 | `AttachedSettingsRegistryService` | registry | `SecRandom.Core/Services/AttachedSettingsRegistryService.cs` | Static collections for attached-settings controls. |
 | `ViewModelBase` | base VM | `SecRandom/ViewModels/ViewModelBase.cs` | Base VM exposing `MainConfig`; inherits `ObservableRecipient`. |
 | `GlobalConstants` | constants | `SecRandom.Core/GlobalConstants.cs` | Version, platform, and development-mode constants. |
@@ -91,13 +92,16 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 ## CONVENTIONS
 - `docs/project_rules.md` overrides inference when adding features.
 - General settings now live under `MainConfigModel.General`; `MainConfigModel.Basic` / `Backup` remain compatibility bridges for existing callers while new config splits belong under `SecRandom.Core/Models/SubConfigs/General/`.
-- Basic settings are functional runtime controls: `ShowStartupWindow`, geometry persistence, topmost mode, and background residency apply only to the primary `MainWindow`. Cross-platform autostart and `secrandom://` protocol registration belong to app-layer `DesktopIntegrationService`, which must use user-level Windows/Linux/macOS mechanisms and not silently persist a failed integration request.
+- Basic settings are functional runtime controls: `ShowStartupWindow`, primary-window topmost mode, and background residency apply only to the primary `MainWindow`; `AutoSaveWindowSize` preserves independent geometry/maximized state for the primary and settings windows. Cross-platform autostart and `secrandom://` protocol registration belong to app-layer `DesktopIntegrationService`, which must use user-level Windows/Linux/macOS mechanisms and not silently persist a failed integration request.
 - Point-call students and lottery prizes use `RecordId` as the internal stable identity for history/fairness. The visible `Id` field is optional display metadata only and must not be required by import, draw, or history logic.
 - Picking `ClearRecord` controls temporary draw records only; do not clear persistent profile histories from that setting. RollCall and QuickDraw share the same student temporary record store, while Lottery uses prize temporary records.
 - Privacy settings split Sentry upload from online status reporting: `SentryTelemetryEnabled` only controls `SecRandom/Services/Telemetry/`, while `OnlineStatusMode` only controls `SecRandom/Services/OnlineStatusService.cs`.
 - Crash recovery mode lives under `MainConfigModel.General.CrashRecovery`; prompt startup handling must run before single-instance acquisition, while normal restart must release the single-instance service before relaunch.
 - Security credentials must never be stored in `MainConfigModel` or `settings.json`. Keep passwords, TOTP seeds, USB binding tokens, and lockout state in `SecRandom/Services/Security`'s separate credential store; ordinary settings only select factors and protected operations.
 - Security authorization always flows through `ISecurityService`; do not add direct validation checks to tray handlers, windows, ViewModels, plugins, or linkage code. Passwords require at least 6 characters, with no artificial character-class rule.
+- Full IPC/URL compatibility is app-layer routed through `ProtocolCommandRouter`: structured current-user named-pipe IPC is additive to legacy `ShowMainWindow`/`Restart`/`Url:` delivery, and all external mutations must use `ISecurityService`. `data/*` queries must use non-mutating profile snapshots, never active-profile loading APIs.
+- `HistoryItem.DrawRoundId` identifies every record committed by one logical draw. Populate it for new history writes; IPC history projections group by it and must never expose internal `RecordId`.
+- Settings preview is a security-prompt outcome, not URL authorization bypass. When enabled, it freezes page content while preserving settings navigation and must not mutate configuration.
 - ViewModels must be registered in `SecRandom/App.axaml.cs` `BuildHost()`; reusable services also go through Host.
 - Resolve shared services via `IAppHost.GetService<T>()` / `TryGetService<T>()` unless constructor injection is already the local style.
 - Navigation pages need `[PageInfo(...)]` plus `services.AddMainPage<T>()` or `services.AddSettingsPage<T>()` in `BuildHost()`.

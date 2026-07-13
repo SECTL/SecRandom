@@ -27,8 +27,9 @@ SecRandom/
 │   ├── CrashRecovery/   # Crash detection, recovery prompt, restart guard
 │   ├── Desktop/         # TaskBarIconService
 │   ├── Draw/            # DrawAudioService, DrawTemporaryRecordService
+│   ├── Ipc/             # ProtocolCommandRouter for URL/IPC command routing
 │   ├── Plugins/         # Plugin runtime: manager, catalog, invoker, state
-│   ├── Profiles/        # ProfileService
+│   ├── Profiles/        # Active ProfileService plus non-mutating ProfileQueryService snapshots
 │   ├── Settings/        # SettingsSearchService
 │   ├── Security/        # Credential store, verification prompts, factor/operation authorization
 │   ├── Telemetry/       # SentryTelemetrySdkAdapter, TelemetryRuntimeService
@@ -67,6 +68,7 @@ SecRandom/
 | Telemetry runtime seam       | `Services/Telemetry/`                                                   | App-layer-only Sentry policy/runtime lifecycle boundary; reads and live-applies `PrivacySettings.SentryTelemetryEnabled`.  |
 | Online status reporting      | `Services/OnlineStatusService.cs`                                       | Host-managed SECTL online status reporter; reads `PrivacySettings.OnlineStatusMode`.                                      |
 | Security authorization       | `Services/Security/`                                                     | Separate credential storage, password/TOTP/USB factors, lockout state, and operation authorization gateway.               |
+| URL/IPC automation           | `Services/Ipc/ProtocolCommandRouter.cs`, `Core/Services/SingleInstance/` | URL activation and duplex structured IPC share one protected command router; legacy plaintext activation remains supported. |
 
 ## CONVENTIONS
 
@@ -76,6 +78,9 @@ SecRandom/
 - Telemetry runtime policy belongs in app-layer services and should live-apply `MainConfigHandler.Data.General.PrivacySettings.SentryTelemetryEnabled`; do not move SDK-specific wiring into Core or Shared. The concrete Sentry adapter stays under `SecRandom/Services/Telemetry/SentryTelemetrySdkAdapter.cs`.
 - Background app services such as `OnlineStatusService` are registered through Host and must honor `PrivacySettings.OnlineStatusMode` before doing network work.
 - Security services are Host singletons. Keep secrets out of normal config and route protected window, tray, draw, linkage, and plugin operations through `ISecurityService` instead of duplicating checks in UI event handlers.
+- `ProtocolCommandRouter` is a Host singleton and is the only app-layer URL/IPC command dispatcher. Keep IPC request handling on the UI dispatcher for UI mutations; `data/*` must use `IProfileQueryService` snapshots and never switch an active profile.
+- Roll-call, lottery, and quick-draw ViewModels are shared draw sessions for UI and IPC. Their protocol methods reuse nonvisual core paths after router authorization; do not resolve a detached transient ViewModel for IPC.
+- `SettingsView` read-only preview is entered only by the security verification prompt when `AllowSettingsPreview` is enabled. Freeze the page content host, not settings navigation, and exit preview on normal authorized navigation.
 - `IVoiceAnnouncementService` is app-layer because Edge TTS playback and Windows SAPI/MCI integration are platform/runtime concerns. Per-record TTS alias/prefix/suffix belongs in attached settings on `Student`/`Prize`, not in a standalone settings page.
 - Plugin runtime services are app-layer only and are registered in `BuildHost()`. Enabled plugin pages must be configured before Host build so keyed navigation can instantiate them.
 - `.srpx` plugin files are ZIP packages containing exactly one `plugin.json`; import extracts to a temporary directory, validates the manifest, then copies into `data/plugins/<plugin-id>`.
@@ -94,7 +99,7 @@ SecRandom/
 - More settings includes roll-call and lottery page management options for the control panel side and per-control visibility; wire built-in draw pages through `MainConfigModel.MoreSettings` instead of duplicating local UI flags.
 - Floating window settings are live-applied to an open `FloatingWindow`: button selection, layout, display style, size, opacity, topmost mode, and dragging must not require reopening the window.
 - Floating window edge docking uses `StickToEdge`: on drag release it snaps only when near the current display's horizontal work-area edge. Dragging stays in valid display work areas and can cross only to physically adjacent displays. At startup, a saved position that does not fully fit a current display work area is restored directly as a docked handle at an available display edge. `StickToEdgeRecoverSeconds` controls auto-collapse (`0` disables collapse); the collapsed handle and restoration transition remain anchored at the docked left/right side center.
-- Basic settings are active behavior: the primary `MainWindow` alone consumes startup visibility, geometry persistence, topmost mode, and background-resident close behavior. `DesktopIntegrationService` owns user-level autostart and `secrandom://` registration for Windows, Linux, and macOS; a failed registration must leave its setting disabled rather than persisting a false success.
+- Basic settings are active behavior: the primary `MainWindow` alone consumes startup visibility, topmost mode, and background-resident close behavior; `AutoSaveWindowSize` preserves separate geometry/maximized state for the primary and settings windows. `DesktopIntegrationService` owns user-level autostart and `secrandom://` registration for Windows, Linux, and macOS; a failed registration must leave its setting disabled rather than persisting a false success.
 - Page IDs follow root rules: `main.xxx`, `settings.xxx`, `settings.group.xxx`.
 - V2-parity settings pages currently use root IDs such as `settings.personalized.floatingWindow`, `settings.notification`, `settings.general.security`, `settings.linkage`, `settings.notification.voiceMusic`, `settings.personalized.theme`, `settings.history`, `settings.update`, and `settings.more`; register them in `BuildHost()` instead of manually editing navigation UI. Hidden pages like `settings.logs` still need Host registration even though they are not shown in the sidebar.
 - The log viewer page ID is `settings.logs`; keep it hidden from the settings sidebar and route the settings more-options “查看日志” command through navigation instead of opening a separate window.

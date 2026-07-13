@@ -18,6 +18,9 @@ public partial class BasicSettingsConfig : ObservableObject
     [ObservableProperty] private double _mainWindowWidth = 1200;
     [ObservableProperty] private double _mainWindowHeight = 800;
     [ObservableProperty] private bool _mainWindowMaximized;
+    [ObservableProperty] private double _settingsWindowWidth = 1000;
+    [ObservableProperty] private double _settingsWindowHeight = 720;
+    [ObservableProperty] private bool _settingsWindowMaximized;
 
     [JsonIgnore] public bool? LegacyTelemetryEnabled { get; private set; }
     [JsonIgnore] public TelemetryMode? LegacyTelemetryMode { get; private set; }

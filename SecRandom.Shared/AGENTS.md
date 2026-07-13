@@ -33,7 +33,7 @@ SecRandom.Shared/
 | Profile data contracts       | `Models/Profile/`                                                            | Student/prize lists, hidden stable item identity, and histories.                       |
 | Attached settings contracts  | `Interfaces/IAttachedSettings.cs`, `Interfaces/IAttachableSettingsObject.cs` | Used by Core draw/attached-settings logic.                                             |
 | Serialization helpers        | `Extensions/`                                                                | Shared extension methods; keep dependency-light.                                       |
-| IPC/shared model boundary    | `Models/`                                                                    | `docs/namespaces.md` says Shared is for IPC/core shared models.                        |
+| IPC/shared model boundary    | `Models/Ipc/`                                                                | Structured URL-request and response DTOs shared by Core transport and app routing.     |
 | File/data path helper        | `Utils.cs`                                                                   | Central path helper used by config conventions.                                        |
 | Observable collection helper | `ComponentModels/ObservableDictionary.cs`                                    | Use carefully with persistence; dictionary mutation may not trigger outer config save. |
 
@@ -45,6 +45,8 @@ SecRandom.Shared/
 - `Student` and `Prize` include hidden persisted `RecordId` values used as stable history/fairness identities. Keep visible `Id` optional; it is display/import metadata, not a required identity.
 - `ProfileRecordIdentity` is the boundary helper for filling missing/duplicate `RecordId` values and resolving legacy `Id`/`Name` history keys without ambiguous fallback.
 - `Student` and `Prize` include persisted optional metadata fields such as `Tags`; keep new fields backward-compatible with empty defaults.
+- IPC DTOs under `Models/Ipc/` are serialization-only contracts. Keep them free of UI/runtime services and do not emit internal `RecordId` values in external projections.
+- `HistoryItem.DrawRoundId` is an additive persisted field. New multi-record draws share one value so IPC history can group a logical draw; empty legacy values require conservative fallback grouping.
 - Attached settings objects use `Guid` keys and `Dictionary<Guid, object?>`; coordinate changes with Core draw/settings
   consumers.
 - Prefer small extension methods and plain contracts here; richer behavior belongs in `SecRandom.Core`.

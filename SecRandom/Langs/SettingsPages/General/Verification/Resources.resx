@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page_Title" xml:space="preserve"><value>抽取验证</value></data>
+  <data name="S_Verification" xml:space="preserve"><value>可验证抽取</value></data>
+  <data name="C_WitnessNoticeTitle" xml:space="preserve"><value>服务器见证</value></data>
+  <data name="M_WitnessModeNotice" xml:space="preserve"><value>每次抽取都会先请求服务器见证并保存独立证明。服务暂时不可用时，程序会自动保存本地可重放证明，并在顶部状态条说明结果。</value></data>
+  <data name="S_ProofFolder" xml:space="preserve"><value>抽取证明文件</value></data>
+  <data name="S_ProofFolder_D" xml:space="preserve"><value>证明会按日期自动保存；打开文件夹后可将 .srproof.json 文件上传到验证网站。</value></data>
+  <data name="C_OpenProofFolder" xml:space="preserve"><value>打开证明文件夹</value></data>
+  <data name="C_StatusTitle" xml:space="preserve"><value>抽取验证</value></data>
+  <data name="M_ServerWitnessedProof" xml:space="preserve"><value>服务器见证有效，证明文件已保存。</value></data>
+  <data name="M_LocalFallbackProof" xml:space="preserve"><value>服务器暂不可用，已自动保存本地可重放证明。</value></data>
+</root>

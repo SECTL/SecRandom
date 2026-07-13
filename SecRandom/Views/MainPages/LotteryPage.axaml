@@ -5,9 +5,10 @@
              xmlns:vm="using:SecRandom.ViewModels.MainPages"
              xmlns:langs="using:SecRandom.Langs.MainPages.Lottery"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="720"
-             x:Class="SecRandom.Views.MainPages.LotteryPage"
-             x:DataType="vm:LotteryPageViewModel"
-             Unloaded="OnUnloaded">
+              x:Class="SecRandom.Views.MainPages.LotteryPage"
+              x:DataType="vm:LotteryPageViewModel"
+              Loaded="OnLoaded"
+              Unloaded="OnUnloaded">
     <UserControl.Resources>
         <DataTemplate x:Key="LotteryControlPanelTemplate"
                       DataType="vm:LotteryPageViewModel">

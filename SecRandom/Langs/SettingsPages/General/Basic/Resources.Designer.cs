@@ -98,6 +98,15 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 当前进程未获得 Windows UIAccess 权限，已回退为普通置顶。.
+        /// </summary>
+        public static string M_UiAccessTopmostFallback {
+            get {
+                return ResourceManager.GetString("M_UiAccessTopmostFallback", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 关闭置顶.
         /// </summary>
         public static string O_MainWindowTopmostMode_None {

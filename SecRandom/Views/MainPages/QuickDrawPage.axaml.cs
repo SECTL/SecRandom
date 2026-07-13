@@ -44,7 +44,6 @@ public partial class QuickDrawPage : UserControl
         _isUnloaded = true;
         ViewModel.PropertyChanged -= ViewModel_OnPropertyChanged;
         ViewModel.Config.FloatingWindowSettings.PropertyChanged -= FloatingWindowSettings_OnPropertyChanged;
-        ViewModel.Dispose();
     }
 
     private void FloatingWindowSettings_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)

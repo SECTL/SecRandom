@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -31,8 +32,10 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Models;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Services.Verification;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Services.SingleInstance;
+using SecRandom.Shared.Models.Ipc;
 using SecRandom.Dialogs;
 using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.AppearanceSettingsConfig;
 using SecRandom.Services;
@@ -42,9 +45,11 @@ using SecRandom.Services.Desktop;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Plugins;
 using SecRandom.Services.Profiles;
+using SecRandom.Services.Ipc;
 using SecRandom.Services.Settings;
 using SecRandom.Services.Security;
 using SecRandom.Services.Telemetry;
+using SecRandom.Services.Verification;
 using SecRandom.Services.Voice;
 using SecRandom.ViewModels;
 using SecRandom.ViewModels.MainPages;
@@ -143,6 +148,7 @@ public partial class App : Application
 
             // 正常启动：注册 IPC 命令处理，再构建主机
             SingleInstanceService.Instance.CommandReceived += OnIpcCommandReceived;
+            SingleInstanceService.Instance.RequestReceived += OnIpcRequestReceived;
 
             // 启动服务主机
             BuildHost();
@@ -193,10 +199,13 @@ public partial class App : Application
         {
             if (startupProtocolUri is not null)
             {
-                await SingleInstanceService.SendCommandAsync(SingleInstanceCommand.UrlPrefix + startupProtocolUri);
-                host.Close();
-                RequestDesktopShutdown();
-                return;
+                var sent = await SingleInstanceService.SendCommandAsync(SingleInstanceCommand.UrlPrefix + startupProtocolUri);
+                if (sent)
+                {
+                    host.Close();
+                    RequestDesktopShutdown();
+                    return;
+                }
             }
 
             var action = await DuplicateInstanceDialog.ShowAsync(host);
@@ -204,8 +213,10 @@ public partial class App : Application
             switch (action)
             {
                 case DuplicateInstanceAction.OpenExisting:
-                    // 通知第一个实例激活主界面
-                    await SingleInstanceService.SendCommandAsync(SingleInstanceCommand.ShowMainWindow);
+                    // 协议启动首发失败后仍优先重试原始命令，避免丢失 URL 激活。
+                    await SingleInstanceService.SendCommandAsync(startupProtocolUri is null
+                        ? SingleInstanceCommand.ShowMainWindow
+                        : SingleInstanceCommand.UrlPrefix + startupProtocolUri);
                     break;
 
                 case DuplicateInstanceAction.Restart:
@@ -238,10 +249,22 @@ public partial class App : Application
             switch (command)
             {
                 case SingleInstanceCommand.ShowMainWindow:
-                    ShowMainWindow();
+                    ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeAsync(
+                        SecurityOperation.ToggleMainWindow,
+                        () =>
+                        {
+                            ShowMainWindow();
+                            return Task.CompletedTask;
+                        }), "Legacy main-window authorization failed.");
                     break;
                 case SingleInstanceCommand.Restart:
-                    Restart();
+                    ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeAsync(
+                        SecurityOperation.RestartApplication,
+                        () =>
+                        {
+                            Restart();
+                            return Task.CompletedTask;
+                        }), "Legacy restart authorization failed.");
                     break;
                 default:
                     if (command.StartsWith(SingleInstanceCommand.UrlPrefix, StringComparison.Ordinal))
@@ -251,27 +274,14 @@ public partial class App : Application
         });
     }
 
+    private Task<IpcResponseEnvelope> OnIpcRequestReceived(IpcRequestEnvelope request, CancellationToken cancellationToken)
+    {
+        return IAppHost.GetService<ProtocolCommandRouter>().HandleIpcAsync(request, cancellationToken);
+    }
+
     private void HandleProtocolUri(string value)
     {
-        if (!IAppHost.GetService<MainConfigHandler>().Data.General.Basic.UrlProtocol
-            || !Uri.TryCreate(value, UriKind.Absolute, out var uri)
-            || !string.Equals(uri.Scheme, "secrandom", StringComparison.OrdinalIgnoreCase))
-            return;
-
-        var command = string.Concat(uri.Host, uri.AbsolutePath).Trim('/').ToLowerInvariant();
-        switch (command)
-        {
-            case "window/main":
-                ToggleMainWindow();
-                break;
-            case "window/settings":
-            case "settings":
-                ShowSettingsWindow();
-                break;
-            case "window/float":
-                ToggleFloatingWindow();
-                break;
-        }
+        ObserveTask(IAppHost.GetService<ProtocolCommandRouter>().HandleUrlAsync(value), "Protocol URL handling failed.");
     }
 
     private static Window ShowCrashRecoveryPromptOnly(CrashRecoveryPromptOptions promptOptions)
@@ -325,7 +335,12 @@ public partial class App : Application
 
                 // 服务
                 services.AddSingleton<IProfileService, ProfileService>();
+                services.AddSingleton<IProfileQueryService, ProfileQueryService>();
                 services.AddSingleton<IDrawTemporaryRecordService, DrawTemporaryRecordService>();
+                services.AddSingleton<DrawProofExportService>();
+                services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
+                services.AddHttpClient<IWitnessClient, WitnessClient>(client => client.Timeout = TimeSpan.FromSeconds(3));
+                services.AddTransient<VerificationDrawCoordinator>();
                 services.AddSingleton<SettingsSearchService>();
                 services.AddTransient<DrawEngine>();
                 services.AddSingleton(pluginStateStore);
@@ -339,6 +354,7 @@ public partial class App : Application
                 services.AddHostedService<OnlineStatusService>();
                 services.AddHostedService<TaskBarIconService>();
                 services.AddSingleton<DesktopIntegrationService>();
+                services.AddSingleton<ProtocolCommandRouter>();
                 services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
                 services.AddSingleton<DrawAudioService>();
                 services.AddSingleton<ICredentialKeyProtector, CredentialKeyProtector>();
@@ -381,6 +397,7 @@ public partial class App : Application
                 services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
                 services.AddSettingsPage<SecuritySettingsPage>(Langs.Common.Resources.Settings_Security);
                 services.AddSettingsPage<PrivacySettingsPage>(Langs.SettingsPages.General.Privacy.Resources.Page_Title);
+                services.AddSettingsPage<VerificationSettingsPage>(Langs.SettingsPages.General.Verification.Resources.Page_Title);
                 services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
 
                 services.AddGroup(new PageGroupInfo(
@@ -444,9 +461,10 @@ public partial class App : Application
                 // 就像 services.AddTransient<SomeViewModel>(); 一样，谢谢你！
                 // ViewModel 一定要继承 SecRandom.ViewModels.ViewModelBase，里面有 Config 可以直接拿来用。
                 services.AddTransient<ViewModelBase>();
-                services.AddTransient<RollCallPageViewModel>();
-                services.AddTransient<QuickDrawPageViewModel>();
-                services.AddTransient<LotteryPageViewModel>();
+                // Draw sessions are shared by UI and IPC. They must outlive a page navigation.
+                services.AddSingleton<RollCallPageViewModel>();
+                services.AddSingleton<QuickDrawPageViewModel>();
+                services.AddSingleton<LotteryPageViewModel>();
                 services.AddTransient<RollCallHistoryViewModel>();
                 services.AddTransient<HomeSettingsPageViewModel>();
                 services.AddTransient<LotteryHistoryViewModel>();
@@ -852,7 +870,7 @@ public partial class App : Application
 
             if (_mainWindow is not { IsLoaded: true })
             {
-                _mainWindow = new MainWindow(usesPrimarySettings: true)
+                _mainWindow = new MainWindow(MainWindowSettingsScope.Primary)
                 {
                     Content = IAppHost.GetService<MainView>(),
                     Title = @"SecRandom"
@@ -871,15 +889,37 @@ public partial class App : Application
         }
     }
 
-    public static void ToggleMainWindow()
+    public static void ToggleMainWindow(string? pageId = null)
     {
         ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeAsync(
             SecurityOperation.ToggleMainWindow,
             () =>
             {
                 ShowMainWindow();
+                if (!string.IsNullOrWhiteSpace(pageId))
+                    MainView.Current?.SelectNavigationItemById(pageId);
                 return Task.CompletedTask;
             }), "Main window authorization failed.");
+    }
+
+    public static void SetMainWindowVisibility(string action, string? pageId = null)
+    {
+        var shouldShow = action switch
+        {
+            "show" => true,
+            "hide" => false,
+            _ => _mainWindow is not { IsVisible: true }
+        };
+        if (shouldShow)
+        {
+            ShowMainWindow();
+            if (!string.IsNullOrWhiteSpace(pageId))
+                MainView.Current?.SelectNavigationItemById(pageId);
+        }
+        else
+        {
+            _mainWindow?.Hide();
+        }
     }
 
     internal static void RequestExitFromMainWindow()
@@ -910,15 +950,58 @@ public partial class App : Application
             }), "Floating window authorization failed.");
     }
 
+    public static void SetFloatingWindowVisibility(string action)
+    {
+        var shouldShow = action switch
+        {
+            "show" => true,
+            "hide" => false,
+            _ => _floatingWindow is not { IsVisible: true }
+        };
+        if (shouldShow && _floatingWindow is not null)
+            RestoreAndActivate(_floatingWindow);
+        else if (!shouldShow)
+            _floatingWindow?.Hide();
+        Current.RefreshTrayWindowMenuItems();
+    }
+
     public static void ShowSettingsWindow()
     {
-        ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeAsync(
-            SecurityOperation.OpenSettings,
+        ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeSettingsAsync(
             () =>
             {
                 ShowSettingsWindowCore();
+                SettingsView.Current?.ExitPreview();
+                return Task.CompletedTask;
+            },
+            () =>
+            {
+                ShowSettingsWindowCore();
+                SettingsView.Current?.NavigateToPreviewPage("settings.general.basic");
                 return Task.CompletedTask;
             }), "Settings window authorization failed.");
+    }
+
+    public static void SetSettingsWindowVisibility(string action, string pageId, bool preview)
+    {
+        var shouldShow = action switch
+        {
+            "show" => true,
+            "hide" => false,
+            _ => _settingsWindow is not { IsVisible: true }
+        };
+        if (shouldShow)
+        {
+            ShowSettingsWindowCore();
+            if (preview)
+                SettingsView.Current?.NavigateToPreviewPage(pageId);
+            else
+                SettingsView.Current?.NavigateToPage(pageId);
+        }
+        else
+        {
+            _settingsWindow?.Hide();
+        }
     }
 
     private static void ShowSettingsWindowCore()
@@ -937,7 +1020,7 @@ public partial class App : Application
 
             if (_settingsWindow is not { IsLoaded: true })
             {
-                _settingsWindow = new MainWindow
+                _settingsWindow = new MainWindow(MainWindowSettingsScope.Settings)
                 {
                     Content = IAppHost.GetService<SettingsView>(),
                     Title = @"SecRandom"
@@ -1075,7 +1158,12 @@ public partial class App : Application
     private static void RestoreAndActivate(Window window)
     {
         if (window.WindowState == WindowState.Minimized)
-            window.WindowState = WindowState.Normal;
+        {
+            if (window is MainWindow mainWindow)
+                mainWindow.RestoreFromMinimized();
+            else
+                window.WindowState = WindowState.Normal;
+        }
         window.Show();
         window.Activate();
     }

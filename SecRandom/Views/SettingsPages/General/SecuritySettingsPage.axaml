@@ -7,9 +7,10 @@
              xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Security"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d"
-             x:Class="SecRandom.Views.SettingsPages.General.SecuritySettingsPage"
-             x:DataType="local:SecuritySettingsPage"
-             Unloaded="OnUnloaded">
+              x:Class="SecRandom.Views.SettingsPages.General.SecuritySettingsPage"
+              x:DataType="local:SecuritySettingsPage"
+              Loaded="OnLoaded"
+              Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
             <sr:IconText Text="{x:Static lsp:Resources.S_Credentials}" Glyph="{sr:Fi ShieldKeyholeRegular}" Margin="0 0 0 4" />
@@ -40,6 +41,7 @@
             <sr:IconText Text="{x:Static lsp:Resources.S_Protection}" Glyph="{sr:Fi LockClosedRegular}" Margin="0 0 0 4" />
             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_WindowOperations}" Description="{x:Static lsp:Resources.S_WindowOperations_D}" IconSource="{sr:FluentIconSource {sr:Fi WindowRegular}}">
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_OpenSettings}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.ProtectOpenSettings}" IsEnabled="{Binding CanEditProtectedOperations}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_AllowSettingsPreview}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.AllowSettingsPreview}" IsEnabled="{Binding CanEditProtectedOperations}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_ToggleMainWindow}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.ProtectToggleMainWindow}" IsEnabled="{Binding CanEditProtectedOperations}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_ToggleFloatingWindow}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.ProtectToggleFloatingWindow}" IsEnabled="{Binding CanEditProtectedOperations}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_Restart}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.ProtectRestart}" IsEnabled="{Binding CanEditProtectedOperations}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>

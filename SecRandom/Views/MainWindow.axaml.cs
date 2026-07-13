@@ -16,19 +16,22 @@ namespace SecRandom.Views;
 
 public partial class MainWindow : FAAppWindow
 {
-    private readonly bool _usesPrimarySettings;
+    private readonly MainWindowSettingsScope _settingsScope;
     private readonly BasicSettingsConfig? _settings;
     private readonly MainConfigHandler? _configHandler;
     private bool _hasBeenShown;
     private bool _windowSizeSavePending;
+    private double _lastNormalWindowWidth;
+    private double _lastNormalWindowHeight;
+    private WindowState _lastNonMinimizedWindowState = WindowState.Normal;
 
-    public MainWindow() : this(false)
+    public MainWindow() : this(MainWindowSettingsScope.None)
     {
     }
 
-    public MainWindow(bool usesPrimarySettings)
+    internal MainWindow(MainWindowSettingsScope settingsScope)
     {
-        _usesPrimarySettings = usesPrimarySettings;
+        _settingsScope = settingsScope;
         InitializeComponent();
 
         TitleBar.Height = 48;
@@ -39,7 +42,7 @@ public partial class MainWindow : FAAppWindow
         TitleBar.ButtonPressedBackgroundColor = Color.FromArgb(52, 0, 0, 0);
         TitleBar.ButtonInactiveForegroundColor = Colors.Gray;
 
-        if (!_usesPrimarySettings)
+        if (!UsesStoredWindowSettings)
             return;
 
         _configHandler = IAppHost.GetService<MainConfigHandler>();
@@ -48,7 +51,7 @@ public partial class MainWindow : FAAppWindow
         PropertyChanged += MainWindowOnPropertyChanged;
         Closing += MainWindowOnClosing;
         Closed += MainWindowOnClosed;
-        RestorePrimaryWindowSettings();
+        RestoreWindowSettings();
     }
 
     private void InitializeComponent()
@@ -64,40 +67,79 @@ public partial class MainWindow : FAAppWindow
             Background = Brushes.Transparent;
         }
 
+        if (WindowState != WindowState.Maximized)
+        {
+            _lastNormalWindowWidth = Math.Max(MinWidth, Bounds.Width);
+            _lastNormalWindowHeight = Math.Max(MinHeight, Bounds.Height);
+        }
+        else
+        {
+            _lastNonMinimizedWindowState = WindowState.Maximized;
+        }
+
         _hasBeenShown = true;
     }
 
-    private void RestorePrimaryWindowSettings()
+    private bool UsesStoredWindowSettings => _settingsScope != MainWindowSettingsScope.None;
+    private bool UsesPrimaryWindowSettings => _settingsScope == MainWindowSettingsScope.Primary;
+
+    private void RestoreWindowSettings()
     {
         if (_settings is null)
             return;
 
-        Topmost = _settings.MainWindowTopmostMode is TopmostMode.Topmost or TopmostMode.UiAccess;
+        if (UsesPrimaryWindowSettings)
+            Topmost = _settings.MainWindowTopmostMode is TopmostMode.Topmost or TopmostMode.UiAccess;
         if (!_settings.AutoSaveWindowSize)
             return;
 
-        Width = Math.Max(MinWidth, _settings.MainWindowWidth);
-        Height = Math.Max(MinHeight, _settings.MainWindowHeight);
-        if (_settings.MainWindowMaximized)
+        _lastNormalWindowWidth = GetUsableDimension(
+            GetStoredWindowWidth(),
+            MinWidth,
+            UsesPrimaryWindowSettings ? 1200 : 1000);
+        _lastNormalWindowHeight = GetUsableDimension(
+            GetStoredWindowHeight(),
+            MinHeight,
+            UsesPrimaryWindowSettings ? 800 : 720);
+        Width = _lastNormalWindowWidth;
+        Height = _lastNormalWindowHeight;
+        if (GetStoredWindowMaximized())
+        {
+            _lastNonMinimizedWindowState = WindowState.Maximized;
             WindowState = WindowState.Maximized;
+        }
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(BasicSettingsConfig.MainWindowTopmostMode))
+        if (UsesPrimaryWindowSettings
+            && e.PropertyName == nameof(BasicSettingsConfig.MainWindowTopmostMode))
             Topmost = _settings!.MainWindowTopmostMode is TopmostMode.Topmost or TopmostMode.UiAccess;
         else if (e.PropertyName == nameof(BasicSettingsConfig.AutoSaveWindowSize)
                  && _settings!.AutoSaveWindowSize)
-            SavePrimaryWindowSize();
+            SaveWindowSize();
     }
 
     private void MainWindowOnPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
-        if (!_usesPrimarySettings || !_hasBeenShown || _settings?.AutoSaveWindowSize != true)
+        if (!UsesStoredWindowSettings || !_hasBeenShown)
             return;
 
-        if (e.Property == BoundsProperty || e.Property == WindowStateProperty)
-            QueueWindowSizeSave();
+        if (e.Property == BoundsProperty && WindowState == WindowState.Normal)
+        {
+            _lastNormalWindowWidth = Math.Max(MinWidth, Bounds.Width);
+            _lastNormalWindowHeight = Math.Max(MinHeight, Bounds.Height);
+            if (_settings?.AutoSaveWindowSize == true)
+                QueueWindowSizeSave();
+        }
+        else if (e.Property == WindowStateProperty)
+        {
+            if (WindowState != WindowState.Minimized)
+                _lastNonMinimizedWindowState = WindowState;
+
+            if (WindowState != WindowState.Minimized && _settings?.AutoSaveWindowSize == true)
+                QueueWindowSizeSave();
+        }
     }
 
     private void QueueWindowSizeSave()
@@ -109,31 +151,62 @@ public partial class MainWindow : FAAppWindow
         DispatcherTimer.RunOnce(() =>
         {
             _windowSizeSavePending = false;
-            SavePrimaryWindowSize();
+            SaveWindowSize();
         }, TimeSpan.FromMilliseconds(300));
     }
 
-    private void SavePrimaryWindowSize()
+    private void SaveWindowSize()
     {
         if (_settings?.AutoSaveWindowSize != true || !IsVisible)
             return;
 
-        _settings.MainWindowMaximized = WindowState == WindowState.Maximized;
-        if (WindowState != WindowState.Maximized)
+        if (_lastNormalWindowWidth <= 0 || _lastNormalWindowHeight <= 0)
         {
-            _settings.MainWindowWidth = Math.Max(MinWidth, Bounds.Width);
-            _settings.MainWindowHeight = Math.Max(MinHeight, Bounds.Height);
+            _lastNormalWindowWidth = GetUsableDimension(
+                GetStoredWindowWidth(),
+                MinWidth,
+                UsesPrimaryWindowSettings ? 1200 : 1000);
+            _lastNormalWindowHeight = GetUsableDimension(
+                GetStoredWindowHeight(),
+                MinHeight,
+                UsesPrimaryWindowSettings ? 800 : 720);
+        }
+
+        var stateToSave = WindowState == WindowState.Minimized
+            ? _lastNonMinimizedWindowState
+            : WindowState;
+        SetStoredWindowMaximized(stateToSave == WindowState.Maximized);
+        if (stateToSave == WindowState.Maximized)
+        {
+            SetStoredWindowWidth(_lastNormalWindowWidth);
+            SetStoredWindowHeight(_lastNormalWindowHeight);
+        }
+        else if (WindowState == WindowState.Normal)
+        {
+            _lastNormalWindowWidth = Math.Max(MinWidth, Bounds.Width);
+            _lastNormalWindowHeight = Math.Max(MinHeight, Bounds.Height);
+            SetStoredWindowWidth(_lastNormalWindowWidth);
+            SetStoredWindowHeight(_lastNormalWindowHeight);
         }
 
         _configHandler!.Save();
     }
 
+    internal void RestoreFromMinimized()
+    {
+        if (WindowState == WindowState.Minimized)
+            WindowState = _lastNonMinimizedWindowState;
+    }
+
     private void MainWindowOnClosing(object? sender, WindowClosingEventArgs e)
     {
-        if (!_usesPrimarySettings)
+        if (!UsesStoredWindowSettings)
             return;
 
-        SavePrimaryWindowSize();
+        SaveWindowSize();
+        if (!UsesPrimaryWindowSettings)
+            return;
+
         if (_settings?.BackgroundResident == true && !App.Current.IsStopping)
         {
             e.Cancel = true;
@@ -151,8 +224,62 @@ public partial class MainWindow : FAAppWindow
         if (_settings is not null)
             _settings.PropertyChanged -= SettingsOnPropertyChanged;
 
-        PropertyChanged -= MainWindowOnPropertyChanged;
-        Closing -= MainWindowOnClosing;
-        Closed -= MainWindowOnClosed;
+        if (UsesStoredWindowSettings)
+        {
+            PropertyChanged -= MainWindowOnPropertyChanged;
+            Closing -= MainWindowOnClosing;
+            Closed -= MainWindowOnClosed;
+        }
     }
+
+    private double GetStoredWindowWidth()
+    {
+        return UsesPrimaryWindowSettings ? _settings!.MainWindowWidth : _settings!.SettingsWindowWidth;
+    }
+
+    private double GetStoredWindowHeight()
+    {
+        return UsesPrimaryWindowSettings ? _settings!.MainWindowHeight : _settings!.SettingsWindowHeight;
+    }
+
+    private bool GetStoredWindowMaximized()
+    {
+        return UsesPrimaryWindowSettings ? _settings!.MainWindowMaximized : _settings!.SettingsWindowMaximized;
+    }
+
+    private void SetStoredWindowWidth(double value)
+    {
+        if (UsesPrimaryWindowSettings)
+            _settings!.MainWindowWidth = value;
+        else
+            _settings!.SettingsWindowWidth = value;
+    }
+
+    private void SetStoredWindowHeight(double value)
+    {
+        if (UsesPrimaryWindowSettings)
+            _settings!.MainWindowHeight = value;
+        else
+            _settings!.SettingsWindowHeight = value;
+    }
+
+    private void SetStoredWindowMaximized(bool value)
+    {
+        if (UsesPrimaryWindowSettings)
+            _settings!.MainWindowMaximized = value;
+        else
+            _settings!.SettingsWindowMaximized = value;
+    }
+
+    private static double GetUsableDimension(double value, double minimum, double fallback)
+    {
+        return double.IsFinite(value) && value >= minimum ? value : Math.Max(minimum, fallback);
+    }
+}
+
+internal enum MainWindowSettingsScope
+{
+    None,
+    Primary,
+    Settings
 }

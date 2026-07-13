@@ -26,6 +26,7 @@ using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Security;
+using SecRandom.Services.Verification;
 using SecRandom.ViewModels;
 using SecRandom.Shared;
 using SecRandom.Shared.Extensions;
@@ -48,6 +49,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
     private readonly ILogger<LotteryPageViewModel> _logger;
     private readonly ISecurityService _securityService;
+    private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly FileSystemWatcher _prizeListWatcher;
     private readonly FileSystemWatcher _studentListWatcher;
     private bool _isDrawCommandRunning;
@@ -76,6 +78,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         DrawAudioService drawAudioService,
         ILogger<LotteryPageViewModel> logger,
         ISecurityService securityService,
+        VerificationDrawCoordinator verificationDrawCoordinator,
         IVoiceAnnouncementService? voiceAnnouncementService = null)
         : base(configHandler)
     {
@@ -87,6 +90,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         _voiceAnnouncementService = voiceAnnouncementService;
         _logger = logger;
         _securityService = securityService;
+        _verificationDrawCoordinator = verificationDrawCoordinator;
         _prizeListWatcher = CreatePrizeListWatcher();
         _studentListWatcher = CreateStudentListWatcher();
         PrizeListNames.CollectionChanged += PrizeListNamesOnCollectionChanged;
@@ -222,6 +226,13 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
         if (!await _securityService.AuthorizeAsync(SecurityOperation.LotteryStart, () => Task.CompletedTask))
             return;
+        await StartDrawCoreAsync();
+    }
+
+    private async Task StartDrawCoreAsync()
+    {
+        if (IsDrawing)
+            return;
 
         RefreshCounts();
         if (!CanStartDraw)
@@ -241,20 +252,32 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         SetDrawCommandRunning(true);
         try
         {
+            var verificationDrawTask = _verificationDrawCoordinator.DrawPrizesAsync(
+                count,
+                _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName),
+                prizes,
+                cancellationToken: default);
             await ShowPreviewAsync(prizes, count).ConfigureAwait(true);
 
-            var result = _drawEngine.DrawPrizeWithTemporaryCounts(
-                count,
-                _ => true,
-                _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName));
-            if (!result.IsSuccess)
+            List<Prize> drawn;
+            Guid? prizeProofId;
+            try
             {
-                StatusText = ToStatusMessage(result.Status);
+                var proofOutcome = await verificationDrawTask.ConfigureAwait(true);
+                drawn = proofOutcome.Winners.ToList();
+                prizeProofId = proofOutcome.Proof.ProofId;
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "可验证奖品抽取失败。");
+                _lastResultPrizes.Clear();
+                ResultItems.Clear();
+                IsResultVisible = false;
+                StatusText = SR.M_DrawFailed;
                 return;
             }
 
-            var drawn = result.Result.ToList();
-            var assignedStudents = DrawAssignedStudents(drawn.Count);
+            var assignedStudents = await DrawAssignedStudentsAsync(drawn.Count, prizeProofId).ConfigureAwait(true);
             if (assignedStudents is null)
                 return;
 
@@ -298,6 +321,11 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     {
         if (!await _securityService.AuthorizeAsync(SecurityOperation.LotteryReset, () => Task.CompletedTask))
             return;
+        ResetDisplayCore();
+    }
+
+    private void ResetDisplayCore()
+    {
         _lastResultPrizes.Clear();
         ResultItems.Clear();
         _temporaryRecordService.ClearPrizeList(SelectedPrizeListName);
@@ -307,6 +335,14 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         StatusText = SR.M_ResetDone;
         RefreshCounts();
     }
+
+    public Task StartProtocolDrawAsync() => StartDrawCoreAsync();
+    public Task ResetProtocolDrawAsync()
+    {
+        ResetDisplayCore();
+        return Task.CompletedTask;
+    }
+    public void StopProtocolDraw() => StopPreview();
 
     public void RefreshPrizeLists()
     {
@@ -633,7 +669,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         return result;
     }
 
-    private List<Student>? DrawAssignedStudents(int count)
+    private async Task<List<Student>?> DrawAssignedStudentsAsync(int count, Guid? parentProofId)
     {
         if (!IsStudentAssignmentEnabled)
             return [];
@@ -654,19 +690,20 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             return null;
         }
 
-        var result = _drawEngine.DrawPreparedStudents(count, candidates, DrawSettingsType.RollCall);
-        if (!result.IsSuccess)
+        try
         {
-            StatusText = result.Status switch
-            {
-                DrawStatus.NoCandidates => SR.M_NoStudents,
-                DrawStatus.NoEligibleCandidates or DrawStatus.RepeatLimitExhausted => SR.M_NoRemainingStudents,
-                _ => ToStatusMessage(result.Status)
-            };
+            return (await _verificationDrawCoordinator.DrawStudentsAsync(
+                count,
+                candidates,
+                DrawSettingsType.RollCall,
+                parentProofId).ConfigureAwait(true)).Winners.ToList();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "可验证获奖学生分配失败。");
+            StatusText = SR.M_DrawFailed;
             return null;
         }
-
-        return result.Result.ToList();
     }
 
     private List<Student> GetRandomAssignedStudents(int count)

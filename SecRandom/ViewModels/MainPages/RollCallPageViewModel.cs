@@ -27,6 +27,7 @@ using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Security;
+using SecRandom.Services.Verification;
 using SecRandom.ViewModels;
 using SecRandom.Shared;
 using SecRandom.Shared.Extensions;
@@ -48,6 +49,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private readonly MainConfigHandler _configHandler;
     private readonly ILogger<RollCallPageViewModel> _logger;
     private readonly ISecurityService _securityService;
+    private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly FileSystemWatcher _studentListWatcher;
     private List<Student> _lastResultStudents = [];
     private int _studentIdPadWidth;
@@ -73,6 +75,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         IDrawTemporaryRecordService temporaryRecordService,
         ILogger<RollCallPageViewModel> logger,
         ISecurityService securityService,
+        VerificationDrawCoordinator verificationDrawCoordinator,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         DrawAudioService? drawAudioService = null)
         : base(configHandler)
@@ -83,6 +86,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         _temporaryRecordService = temporaryRecordService;
         _logger = logger;
         _securityService = securityService;
+        _verificationDrawCoordinator = verificationDrawCoordinator;
         _voiceAnnouncementService = voiceAnnouncementService;
         _drawAudioService = drawAudioService;
 
@@ -218,6 +222,11 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     {
         if (!await _securityService.AuthorizeAsync(SecurityOperation.RollCallReset, () => Task.CompletedTask))
             return;
+        ResetDrawHistoryCore();
+    }
+
+    private void ResetDrawHistoryCore()
+    {
         _lastResultStudents.Clear();
         ResultItems.Clear();
         _temporaryRecordService.ClearStudentScope(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
@@ -239,6 +248,13 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
         if (!await _securityService.AuthorizeAsync(SecurityOperation.RollCallStart, () => Task.CompletedTask))
             return;
+        await StartDrawCoreAsync();
+    }
+
+    private async Task StartDrawCoreAsync()
+    {
+        if (IsDrawing)
+            return;
 
         RefreshCounts();
         if (!CanStartDraw)
@@ -258,17 +274,27 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         SetDrawCommandRunning(true);
         try
         {
+            var verificationDrawTask = _verificationDrawCoordinator.DrawStudentsAsync(
+                count,
+                candidates,
+                DrawSettingsType.RollCall,
+                cancellationToken: default);
             await ShowPreviewAsync(candidates, count).ConfigureAwait(true);
 
-            var result = _drawEngine.DrawPreparedStudents(count, candidates, DrawSettingsType.RollCall);
-            if (!result.IsSuccess)
+            var now = DateTime.Now;
+            List<Student> drawnStudents;
+            try
             {
-                StatusText = ToStatusMessage(result.Status);
+                drawnStudents = (await verificationDrawTask.ConfigureAwait(true)).Winners.ToList();
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "可验证点名抽取失败。");
+                ClearUncommittedPreview();
+                StatusText = SR.M_DrawFailed;
                 return;
             }
 
-            var now = DateTime.Now;
-            var drawnStudents = result.Result.ToList();
             var weightSnapshot = BuildWeightSnapshot(drawnStudents);
             _profileService.RecordStudentHistory(
                 drawnStudents,
@@ -292,13 +318,21 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             OnPropertyChanged(nameof(ResultText));
 
             if (_voiceAnnouncementService is not null)
-                await _voiceAnnouncementService.SpeakStudentsAsync(result.Result).ConfigureAwait(false);
+                await _voiceAnnouncementService.SpeakStudentsAsync(drawnStudents).ConfigureAwait(false);
         }
         finally
         {
             SetDrawCommandRunning(false);
         }
     }
+
+    public Task StartProtocolDrawAsync() => StartDrawCoreAsync();
+    public Task ResetProtocolDrawAsync()
+    {
+        ResetDrawHistoryCore();
+        return Task.CompletedTask;
+    }
+    public void StopProtocolDraw() => StopPreview();
 
     [RelayCommand]
     private void OpenRollCallSettings()
@@ -497,6 +531,15 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private void StopPreview()
     {
         _previewCts?.Cancel();
+    }
+
+    private void ClearUncommittedPreview()
+    {
+        _lastResultStudents.Clear();
+        ResultItems.Clear();
+        IsResultVisible = false;
+        ResultText = ReminderSettings.ReminderText;
+        OnPropertyChanged(nameof(ResultText));
     }
 
     private void SetDrawCommandRunning(bool value)

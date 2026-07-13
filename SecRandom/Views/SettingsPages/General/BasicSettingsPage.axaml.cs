@@ -18,16 +18,14 @@ namespace SecRandom.Views.SettingsPages.General;
 [PageInfo("settings.general.basic", FluentIcons.WrenchSettingsFilled, "settings.general")]
 public partial class BasicSettingsPage : UserControl
 {
-    private bool _isRevertingDesktopIntegration;
+    private bool _isApplyingProgrammaticChange;
+    private bool _isSubscribed;
 
     public BasicSettingsPage()
     {
         Settings = ViewModel.Config.Basic;
         DataContext = this;
         InitializeComponent();
-
-        Settings.PropertyChanged += SettingsOnPropertyChanged;
-        CrashRecoverySettings.PropertyChanged += CrashRecoverySettingsOnPropertyChanged;
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
@@ -36,15 +34,29 @@ public partial class BasicSettingsPage : UserControl
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private DesktopIntegrationService DesktopIntegration { get; } = IAppHost.GetService<DesktopIntegrationService>();
 
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        if (_isSubscribed)
+            return;
+
+        Settings.PropertyChanged += SettingsOnPropertyChanged;
+        CrashRecoverySettings.PropertyChanged += CrashRecoverySettingsOnPropertyChanged;
+        _isSubscribed = true;
+    }
+
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        if (!_isSubscribed)
+            return;
+
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
         CrashRecoverySettings.PropertyChanged -= CrashRecoverySettingsOnPropertyChanged;
+        _isSubscribed = false;
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_isRevertingDesktopIntegration)
+        if (_isApplyingProgrammaticChange)
             return;
 
         if (e.PropertyName == nameof(Settings.Language))
@@ -83,17 +95,29 @@ public partial class BasicSettingsPage : UserControl
             return;
         }
 
+        if (e.PropertyName == nameof(Settings.MainWindowTopmostMode)
+            && Settings.MainWindowTopmostMode == TopmostMode.UiAccess
+            && !DesktopIntegration.IsUiAccessAvailable())
+        {
+            _isApplyingProgrammaticChange = true;
+            Settings.MainWindowTopmostMode = TopmostMode.Topmost;
+            _isApplyingProgrammaticChange = false;
+            ConfigHandler.Save();
+            this.ShowWarningToast(LR.M_UiAccessTopmostFallback);
+            return;
+        }
+
         ConfigHandler.Save();
     }
 
     private void RevertDesktopIntegration(string propertyName, bool value, string title, string error)
     {
-        _isRevertingDesktopIntegration = true;
+        _isApplyingProgrammaticChange = true;
         if (propertyName == nameof(Settings.Autostart))
             Settings.Autostart = value;
         else
             Settings.UrlProtocol = value;
-        _isRevertingDesktopIntegration = false;
+        _isApplyingProgrammaticChange = false;
 
         ConfigHandler.Save();
         this.ShowErrorToast(string.Format(CultureInfo.CurrentCulture, LR.M_DesktopIntegrationFailed, title, error));

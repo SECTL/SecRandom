@@ -25,6 +25,7 @@ internal sealed class SecurityService(
     private static readonly TimeSpan LockoutDuration = TimeSpan.FromSeconds(30);
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
     private readonly object _gate = new();
+    private readonly SemaphoreSlim _authorizationGate = new(1, 1);
 
     private SecuritySettingsConfig Settings => configHandler.Data.SecuritySettings;
 
@@ -84,21 +85,84 @@ internal sealed class SecurityService(
             return true;
         }
 
-        var credentials = credentialStore.Load();
-        var request = new SecurityVerificationRequest(
-            GetRequiredFactors(credentials),
-            Settings.RequireAllSelectedFactors,
-            GetLockoutRemaining(credentials));
-        var response = await prompt.RequestAsync(request, cancellationToken);
-        var result = await VerifyAsync(response, cancellationToken);
-        if (!result.IsAuthorized)
+        await _authorizationGate.WaitAsync(cancellationToken);
+        try
         {
-            logger.LogInformation("Security authorization rejected for {Operation}: {Failure}", operation, result.Failure);
-            return false;
+            if (!RequiresVerification(operation))
+            {
+                await action();
+                return true;
+            }
+
+            var credentials = credentialStore.Load();
+            var request = new SecurityVerificationRequest(
+                GetRequiredFactors(credentials),
+                Settings.RequireAllSelectedFactors,
+                GetLockoutRemaining(credentials));
+            var response = await prompt.RequestAsync(request, cancellationToken);
+            var result = await VerifyAsync(response, cancellationToken);
+            if (!result.IsAuthorized)
+            {
+                logger.LogInformation("Security authorization rejected for {Operation}: {Failure}", operation, result.Failure);
+                return false;
+            }
+
+            await action();
+            return true;
+        }
+        finally
+        {
+            _authorizationGate.Release();
+        }
+    }
+
+    public async Task<SecurityAuthorizationResult> AuthorizeSettingsAsync(
+        Func<Task> action,
+        Func<Task> previewAction,
+        CancellationToken cancellationToken = default)
+    {
+        if (!RequiresVerification(SecurityOperation.OpenSettings))
+        {
+            await action();
+            return new SecurityAuthorizationResult(true);
         }
 
-        await action();
-        return true;
+        await _authorizationGate.WaitAsync(cancellationToken);
+        try
+        {
+            if (!RequiresVerification(SecurityOperation.OpenSettings))
+            {
+                await action();
+                return new SecurityAuthorizationResult(true);
+            }
+
+            var credentials = credentialStore.Load();
+            var request = new SecurityVerificationRequest(
+                GetRequiredFactors(credentials),
+                Settings.RequireAllSelectedFactors,
+                GetLockoutRemaining(credentials),
+                Settings.AllowSettingsPreview);
+            var response = await prompt.RequestAsync(request, cancellationToken);
+            if (response.PreviewRequested && request.AllowPreview)
+            {
+                await previewAction();
+                return new SecurityAuthorizationResult(false, true);
+            }
+
+            var result = await VerifyAsync(response, cancellationToken);
+            if (!result.IsAuthorized)
+            {
+                logger.LogInformation("Security settings authorization rejected: {Failure}", result.Failure);
+                return new SecurityAuthorizationResult(false);
+            }
+
+            await action();
+            return new SecurityAuthorizationResult(true);
+        }
+        finally
+        {
+            _authorizationGate.Release();
+        }
     }
 
     public Task<SecurityVerificationResult> VerifyAsync(
@@ -107,6 +171,8 @@ internal sealed class SecurityService(
     {
         lock (_gate)
         {
+            if (response.PreviewRequested)
+                return Task.FromResult(new SecurityVerificationResult(false, SecurityVerificationFailure.PreviewRequested));
             if (response.Cancelled)
                 return Task.FromResult(new SecurityVerificationResult(false, SecurityVerificationFailure.Cancelled));
 

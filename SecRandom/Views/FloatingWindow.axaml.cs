@@ -37,6 +37,7 @@ public partial class FloatingWindow : Window
     private Screen? _windowDragScreen;
     private PixelRect? _dockWorkingArea;
     private int _dockTransitionRevision;
+    private bool _isDockTransitioning;
     private int _expandedWindowWidth;
     private int _expandedWindowHeight;
     private int _dockAnchorCenterY;
@@ -130,8 +131,7 @@ public partial class FloatingWindow : Window
 
         b.Click += (sender, args) =>
         {
-            App.ShowMainWindow();
-            MainView.Current?.SelectNavigationItemById("main.rollCall");
+            App.ToggleMainWindow("main.rollCall");
         };
 
         return b;
@@ -155,8 +155,7 @@ public partial class FloatingWindow : Window
 
         b.Click += (sender, args) =>
         {
-            App.ShowMainWindow();
-            MainView.Current?.SelectNavigationItemById("main.lottery");
+            App.ToggleMainWindow("main.lottery");
         };
 
         return b;
@@ -495,40 +494,48 @@ public partial class FloatingWindow : Window
 
     private async Task CollapseToDockAsync()
     {
-        if (_isDocked || !ViewModel.Config.FloatingWindowSettings.StickToEdge)
+        if (_isDocked || _isDockTransitioning || !ViewModel.Config.FloatingWindowSettings.StickToEdge)
             return;
 
-        var transitionRevision = ++_dockTransitionRevision;
-        CaptureExpandedWindowSize();
-        _isDocked = true;
-        await AnimateControlAsync(
-            ExpandedContent,
-            1,
-            0,
-            1,
-            0.9,
-            GetDockTransformOrigin(),
-            transitionRevision);
-        if (transitionRevision != _dockTransitionRevision)
-            return;
+        _isDockTransitioning = true;
+        try
+        {
+            var transitionRevision = ++_dockTransitionRevision;
+            CaptureExpandedWindowSize();
+            _isDocked = true;
+            await AnimateControlAsync(
+                ExpandedContent,
+                1,
+                0,
+                1,
+                0.9,
+                GetDockTransformOrigin(),
+                transitionRevision);
+            if (transitionRevision != _dockTransitionRevision)
+                return;
 
-        Opacity = 0;
-        ExpandedContent.IsVisible = false;
-        DockButton.Opacity = 0;
-        UpdateDockButton();
-        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
-        RepositionDockedWindow();
-        Opacity = 1;
-        await AnimateControlAsync(
-            DockButton,
-            0,
-            1,
-            0.85,
-            1,
-            GetDockTransformOrigin(),
-            transitionRevision);
-        if (transitionRevision == _dockTransitionRevision)
-            SavePosition();
+            Opacity = 0;
+            ExpandedContent.IsVisible = false;
+            DockButton.Opacity = 0;
+            UpdateDockButton();
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+            RepositionDockedWindow();
+            Opacity = 1;
+            await AnimateControlAsync(
+                DockButton,
+                0,
+                1,
+                0.85,
+                1,
+                GetDockTransformOrigin(),
+                transitionRevision);
+            if (transitionRevision == _dockTransitionRevision)
+                SavePosition();
+        }
+        finally
+        {
+            _isDockTransitioning = false;
+        }
     }
 
     private void UpdateDockButton()
@@ -586,41 +593,52 @@ public partial class FloatingWindow : Window
 
     private async void RestoreFromDock()
     {
+        if (!_isDocked || _isDockTransitioning)
+            return;
+
+        _isDockTransitioning = true;
         ++_dockRevision;
-        var transitionRevision = ++_dockTransitionRevision;
-        _isDocked = false;
-        await AnimateControlAsync(
-            DockButton,
-            DockButton.Opacity,
-            0,
-            1,
-            0.85,
-            GetDockTransformOrigin(),
-            transitionRevision);
-        if (transitionRevision != _dockTransitionRevision)
-            return;
+        try
+        {
+            var transitionRevision = ++_dockTransitionRevision;
+            _isDocked = false;
+            await AnimateControlAsync(
+                DockButton,
+                DockButton.Opacity,
+                0,
+                1,
+                0.85,
+                GetDockTransformOrigin(),
+                transitionRevision);
+            if (transitionRevision != _dockTransitionRevision)
+                return;
 
-        DockButton.IsVisible = false;
-        Opacity = 0;
-        PositionExpandedWindowAtDockAnchor();
-        ExpandedContent.Opacity = 0;
-        ExpandedContent.IsVisible = true;
-        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
-        PositionExpandedWindowAtDockAnchor(useCurrentSize: true);
-        Opacity = 1;
-        await AnimateControlAsync(
-            ExpandedContent,
-            0,
-            1,
-            0.9,
-            1,
-            GetDockTransformOrigin(),
-            transitionRevision);
-        if (transitionRevision != _dockTransitionRevision)
-            return;
+            DockButton.IsVisible = false;
+            Opacity = 0;
+            PositionExpandedWindowAtDockAnchor();
+            ExpandedContent.Opacity = 0;
+            ExpandedContent.IsVisible = true;
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+            PositionExpandedWindowAtDockAnchor(useCurrentSize: true);
+            Opacity = 1;
+            await AnimateControlAsync(
+                ExpandedContent,
+                0,
+                1,
+                0.9,
+                1,
+                GetDockTransformOrigin(),
+                transitionRevision);
+            if (transitionRevision != _dockTransitionRevision)
+                return;
 
-        SavePosition();
-        ScheduleDock();
+            SavePosition();
+            ScheduleDock();
+        }
+        finally
+        {
+            _isDockTransitioning = false;
+        }
     }
 
     private void CaptureExpandedWindowSize()

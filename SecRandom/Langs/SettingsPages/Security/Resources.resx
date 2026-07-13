@@ -69,6 +69,7 @@
   <data name="C_SetTotp" xml:space="preserve"><value>设置 TOTP</value></data>
   <data name="C_ResetTotp" xml:space="preserve"><value>重置 TOTP</value></data>
   <data name="C_OpenSettings" xml:space="preserve"><value>打开设置</value></data>
+  <data name="C_AllowSettingsPreview" xml:space="preserve"><value>允许只读预览设置</value></data>
   <data name="C_ToggleMainWindow" xml:space="preserve"><value>显隐主窗口</value></data>
   <data name="C_ToggleFloatingWindow" xml:space="preserve"><value>显隐浮窗</value></data>
   <data name="C_Restart" xml:space="preserve"><value>重启应用</value></data>
@@ -86,6 +87,7 @@
   <data name="C_Save" xml:space="preserve"><value>保存</value></data>
   <data name="C_Cancel" xml:space="preserve"><value>取消</value></data>
   <data name="C_Verify" xml:space="preserve"><value>验证</value></data>
+  <data name="C_Preview" xml:space="preserve"><value>预览</value></data>
   <data name="C_VerifyAndSave" xml:space="preserve"><value>验证并保存</value></data>
   <data name="C_Bind" xml:space="preserve"><value>绑定</value></data>
   <data name="C_UnbindSelected" xml:space="preserve"><value>解绑所选</value></data>

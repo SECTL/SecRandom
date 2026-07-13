@@ -21,6 +21,7 @@ using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Security;
+using SecRandom.Services.Verification;
 using SecRandom.ViewModels;
 using SecRandom.Shared;
 using SecRandom.Shared.Extensions;
@@ -37,6 +38,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private readonly DrawAudioService _drawAudioService;
     private readonly ILogger<QuickDrawPageViewModel> _logger;
     private readonly ISecurityService _securityService;
+    private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private bool _isDrawCommandRunning;
     private bool _isCoolingDown;
     private CancellationTokenSource? _previewCts;
@@ -47,6 +49,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private int _previewAnimationRevision;
     [ObservableProperty] private int _resultAnimationRevision;
     [ObservableProperty] private bool _isDrawing;
+    [ObservableProperty] private Student? _lastDrawnStudent;
 
     public QuickDrawPageViewModel(
         MainConfigHandler configHandler,
@@ -55,7 +58,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         IDrawTemporaryRecordService temporaryRecordService,
         DrawAudioService drawAudioService,
         ILogger<QuickDrawPageViewModel> logger,
-        ISecurityService securityService)
+        ISecurityService securityService,
+        VerificationDrawCoordinator verificationDrawCoordinator)
         : base(configHandler)
     {
         _configHandler = configHandler;
@@ -65,6 +69,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         _drawAudioService = drawAudioService;
         _logger = logger;
         _securityService = securityService;
+        _verificationDrawCoordinator = verificationDrawCoordinator;
         RefreshStudentLists();
     }
 
@@ -126,6 +131,16 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
         if (!await _securityService.AuthorizeAsync(SecurityOperation.QuickDrawStart, () => Task.CompletedTask))
             return;
+        await StartDrawCoreAsync();
+    }
+
+    private async Task StartDrawCoreAsync(bool skipPreview = false)
+    {
+        if (IsDrawing)
+            return;
+
+        if (_isCoolingDown)
+            return;
 
         if (!TryLoadDefaultStudentList())
             return;
@@ -141,19 +156,33 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         SetDrawCommandRunning(true);
         try
         {
-            await ShowPreviewAsync(candidates, count).ConfigureAwait(true);
+            var verificationDrawTask = _verificationDrawCoordinator.DrawStudentsAsync(
+                count,
+                candidates,
+                DrawSettingsType.QuickDraw,
+                cancellationToken: default);
+            if (!skipPreview)
+                await ShowPreviewAsync(candidates, count).ConfigureAwait(true);
 
-            var result = _drawEngine.DrawPreparedStudents(count, candidates, DrawSettingsType.QuickDraw);
-            if (!result.IsSuccess)
+            List<Student> drawn;
+            try
             {
-                StatusText = "闪抽失败：" + result.Status;
+                drawn = (await verificationDrawTask.ConfigureAwait(true)).Winners.ToList();
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "可验证闪抽失败。");
+                ResultItems.Clear();
+                LastDrawnStudent = null;
+                IsResultVisible = false;
+                StatusText = "闪抽失败";
                 return;
             }
 
-            var drawn = result.Result.ToList();
             var weights = BuildWeightSnapshot(drawn);
             _profileService.RecordStudentHistory(drawn, DateTime.Now, count, drawMethod: (int)Config.QuickDrawSettings.DrawType, weights: weights);
             _temporaryRecordService.RecordStudents(SelectedStudentListName, string.Empty, string.Empty, drawn);
+            LastDrawnStudent = drawn[0];
             ReplaceResults(drawn);
             IsResultVisible = true;
             TriggerResultAnimation();
@@ -174,11 +203,28 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     {
         if (!await _securityService.AuthorizeAsync(SecurityOperation.QuickDrawReset, () => Task.CompletedTask))
             return;
+        ClearHistoryCore();
+    }
+
+    private void ClearHistoryCore()
+    {
         _temporaryRecordService.ClearStudentScope(SelectedStudentListName, string.Empty, string.Empty);
         ResultItems.Clear();
+        LastDrawnStudent = null;
         IsResultVisible = false;
         StatusText = "已清空当前名单抽取记录";
         OnPropertyChanged(nameof(CanStartDraw));
+    }
+
+    public async Task StartProtocolDrawAsync()
+    {
+        LastDrawnStudent = null;
+        await StartDrawCoreAsync(skipPreview: true);
+    }
+    public Task ResetProtocolDrawAsync()
+    {
+        ClearHistoryCore();
+        return Task.CompletedTask;
     }
 
     private void RefreshStudentLists()

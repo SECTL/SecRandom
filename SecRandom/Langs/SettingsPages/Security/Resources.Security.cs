@@ -27,6 +27,7 @@ public partial class Resources
     public static string C_SetTotp => Text(nameof(C_SetTotp));
     public static string C_ResetTotp => Text(nameof(C_ResetTotp));
     public static string C_OpenSettings => Text(nameof(C_OpenSettings));
+    public static string C_AllowSettingsPreview => Text(nameof(C_AllowSettingsPreview));
     public static string C_ToggleMainWindow => Text(nameof(C_ToggleMainWindow));
     public static string C_ToggleFloatingWindow => Text(nameof(C_ToggleFloatingWindow));
     public static string C_Restart => Text(nameof(C_Restart));
@@ -44,6 +45,7 @@ public partial class Resources
     public static string C_Save => Text(nameof(C_Save));
     public static string C_Cancel => Text(nameof(C_Cancel));
     public static string C_Verify => Text(nameof(C_Verify));
+    public static string C_Preview => Text(nameof(C_Preview));
     public static string C_VerifyAndSave => Text(nameof(C_VerifyAndSave));
     public static string C_Bind => Text(nameof(C_Bind));
     public static string C_UnbindSelected => Text(nameof(C_UnbindSelected));

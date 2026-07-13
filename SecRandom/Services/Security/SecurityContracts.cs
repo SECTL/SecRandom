@@ -14,15 +14,22 @@ public enum SecurityVerificationFailure
     LockedOut,
     InvalidCredentials,
     FactorUnavailable,
-    Cancelled
+    Cancelled,
+    PreviewRequested
 }
 
 public sealed record SecurityVerificationRequest(
     IReadOnlyList<SecurityFactor> RequiredFactors,
     bool RequireAllSelectedFactors,
-    TimeSpan? LockoutRemaining);
+    TimeSpan? LockoutRemaining,
+    bool AllowPreview = false);
 
-public sealed record SecurityVerificationResponse(string Password, string TotpCode, bool UsbPresent, bool Cancelled = false);
+public sealed record SecurityVerificationResponse(
+    string Password,
+    string TotpCode,
+    bool UsbPresent,
+    bool Cancelled = false,
+    bool PreviewRequested = false);
 
 public sealed record SecurityVerificationResult(
     bool IsAuthorized,
@@ -31,6 +38,8 @@ public sealed record SecurityVerificationResult(
 {
     public static SecurityVerificationResult Allowed { get; } = new(true, SecurityVerificationFailure.None);
 }
+
+public sealed record SecurityAuthorizationResult(bool IsAuthorized, bool PreviewOpened = false);
 
 public sealed record SecuritySettingsUiState(
     bool HasPassword,
@@ -60,6 +69,10 @@ public interface ISecurityService
     bool RequiresVerification(SecurityOperation operation);
     Task<SecurityVerificationResult> VerifyAsync(SecurityVerificationResponse response, CancellationToken cancellationToken = default);
     Task<bool> AuthorizeAsync(SecurityOperation operation, Func<Task> action, CancellationToken cancellationToken = default);
+    Task<SecurityAuthorizationResult> AuthorizeSettingsAsync(
+        Func<Task> action,
+        Func<Task> previewAction,
+        CancellationToken cancellationToken = default);
     Task<bool> SetPasswordAsync(string password, string? currentPassword = null, CancellationToken cancellationToken = default);
     Task<bool> RemovePasswordAsync(string currentPassword, CancellationToken cancellationToken = default);
     Task<string?> BeginTotpSetupAsync(CancellationToken cancellationToken = default);

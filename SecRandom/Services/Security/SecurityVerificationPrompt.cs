@@ -12,7 +12,7 @@ public sealed class SecurityVerificationPrompt : ISecurityVerificationPrompt
         CancellationToken cancellationToken = default)
     {
         if (_activeWindow is not null)
-            return await _activeWindow.Completion;
+            return new SecurityVerificationResponse(string.Empty, string.Empty, false, Cancelled: true);
 
         var window = new SecurityVerificationWindow(request);
         _activeWindow = window;

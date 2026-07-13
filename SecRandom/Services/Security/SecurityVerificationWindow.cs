@@ -60,6 +60,12 @@ internal sealed class SecurityVerificationWindow : Window
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8 };
         var cancel = new Button { Content = SR.C_Cancel };
         cancel.Click += (_, _) => Complete(new SecurityVerificationResponse(string.Empty, string.Empty, false, true));
+        if (request.AllowPreview)
+        {
+            var preview = new Button { Content = SR.C_Preview };
+            preview.Click += (_, _) => Complete(new SecurityVerificationResponse(string.Empty, string.Empty, false, PreviewRequested: true));
+            buttons.Children.Add(preview);
+        }
         var confirm = new Button { Content = SR.C_Verify };
         confirm.Click += (_, _) => Complete(new SecurityVerificationResponse(_password.Text ?? string.Empty, _totp.Text ?? string.Empty, _usb.IsChecked == true));
         buttons.Children.Add(cancel);

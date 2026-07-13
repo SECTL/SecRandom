@@ -39,6 +39,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     private Action? _highlightCleanup;
     private bool _isAdornerAdded;
     private bool _isShowingRestartDialog;
+    private bool _isPreviewMode;
 
     public SettingsView()
     {
@@ -342,6 +343,35 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         var info = PagesRegistryService.SettingsItems.FirstOrDefault(info => info.Id == id);
 
         if (info != null) CoreNavigate(info, isBack);
+    }
+
+    public void NavigateToPage(string id)
+    {
+        ExitPreview();
+        var info = PagesRegistryService.SettingsItems.FirstOrDefault(item => item.Id == id);
+        if (info is not null)
+            CoreNavigate(info, isBack: true);
+    }
+
+    public void NavigateToPreviewPage(string id)
+    {
+        _isPreviewMode = true;
+        var info = PagesRegistryService.SettingsItems.FirstOrDefault(item => item.Id == id);
+        if (info is not null)
+            CoreNavigate(info, isBack: true);
+        UpdatePreviewState();
+    }
+
+    private void UpdatePreviewState()
+    {
+        NavigationFrame.IsEnabled = !_isPreviewMode;
+        NavigationFrame.IsHitTestVisible = !_isPreviewMode;
+    }
+
+    public void ExitPreview()
+    {
+        _isPreviewMode = false;
+        UpdatePreviewState();
     }
 
     private void TogglePaneButton_OnClick(object? sender, RoutedEventArgs e)

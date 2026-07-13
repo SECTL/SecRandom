@@ -23,6 +23,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
 {
     private readonly ISecurityService _securityService = IAppHost.GetService<ISecurityService>();
     private bool _refreshing;
+    private bool _isSettingsSubscribed;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
 
     public SecuritySettingsPage()
@@ -37,7 +38,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
         SelectedFactorOptions = new AvaloniaList<MultiSelectSettingOption>(FactorOptions.Where(option => option.IsSelected));
         DataContext = this;
         InitializeComponent();
-        Settings.PropertyChanged += SettingsOnPropertyChanged;
+        SubscribeSettings();
         RefreshSecurityState();
     }
 
@@ -57,9 +58,28 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
     event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged { add => NotifyPropertyChanged += value; remove => NotifyPropertyChanged -= value; }
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
 
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        SubscribeSettings();
+        RefreshSecurityState();
+    }
+
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        if (!_isSettingsSubscribed)
+            return;
+
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
+        _isSettingsSubscribed = false;
+    }
+
+    private void SubscribeSettings()
+    {
+        if (_isSettingsSubscribed)
+            return;
+
+        Settings.PropertyChanged += SettingsOnPropertyChanged;
+        _isSettingsSubscribed = true;
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
