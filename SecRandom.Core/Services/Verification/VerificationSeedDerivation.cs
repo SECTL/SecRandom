@@ -9,24 +9,24 @@ public static class VerificationSeedDerivation
 
     public static byte[] DeriveOnline(
         ReadOnlySpan<byte> inputHash,
-        string challengeId,
+        string ticketId,
         ReadOnlySpan<byte> clientNonce,
         ReadOnlySpan<byte> serverNonce)
     {
         if (inputHash.Length != 32 || clientNonce.Length != 32 || serverNonce.Length != 32)
             throw new ArgumentException("Verification seed inputs must be 32 bytes.");
-        if (string.IsNullOrWhiteSpace(challengeId))
-            throw new ArgumentException("Challenge ID is required.", nameof(challengeId));
+        if (string.IsNullOrWhiteSpace(ticketId))
+            throw new ArgumentException("Ticket ID is required.", nameof(ticketId));
 
-        var challengeBytes = Encoding.ASCII.GetBytes(challengeId);
-        var material = new byte[DomainSeparator.Length + inputHash.Length + challengeBytes.Length + clientNonce.Length + serverNonce.Length];
+        var ticketBytes = Encoding.ASCII.GetBytes(ticketId);
+        var material = new byte[DomainSeparator.Length + inputHash.Length + ticketBytes.Length + clientNonce.Length + serverNonce.Length];
         var offset = 0;
         DomainSeparator.CopyTo(material, offset);
         offset += DomainSeparator.Length;
         inputHash.CopyTo(material.AsSpan(offset));
         offset += inputHash.Length;
-        challengeBytes.CopyTo(material, offset);
-        offset += challengeBytes.Length;
+        ticketBytes.CopyTo(material, offset);
+        offset += ticketBytes.Length;
         clientNonce.CopyTo(material.AsSpan(offset));
         offset += clientNonce.Length;
         serverNonce.CopyTo(material.AsSpan(offset));

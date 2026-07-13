@@ -340,6 +340,8 @@ public partial class App : Application
                 services.AddSingleton<DrawProofExportService>();
                 services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
                 services.AddHttpClient<IWitnessClient, WitnessClient>(client => client.Timeout = TimeSpan.FromSeconds(3));
+                services.AddSingleton<WitnessTicketCache>();
+                services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<WitnessTicketCache>());
                 services.AddTransient<VerificationDrawCoordinator>();
                 services.AddSingleton<SettingsSearchService>();
                 services.AddTransient<DrawEngine>();

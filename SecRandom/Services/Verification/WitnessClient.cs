@@ -54,15 +54,34 @@ public sealed class WitnessClient(
         return (ticket, envelope.Token);
     }
 
+    public async Task<(WitnessTicket Ticket, string Token)> CreateTicketAsync(CancellationToken cancellationToken)
+    {
+        var request = new
+        {
+            subject = new { type = "offline-user-id", id = configHandler.Data.General.Basic.OfflineUserId.ToString("D") },
+            clientVersion = GlobalConstants.Version
+        };
+
+        using var response = await httpClient.PostAsJsonAsync(new Uri(new Uri(WitnessServiceUrl), "v1/tickets"), request, JsonOptions, cancellationToken)
+            .ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        var envelope = await response.Content.ReadFromJsonAsync<WitnessTicketResponse>(JsonOptions, cancellationToken)
+            .ConfigureAwait(false) ?? throw new InvalidDataException("Witness service returned an empty ticket response.");
+        var ticket = VerifyToken<WitnessTicket>(envelope.Token);
+        if (ticket.SubjectId != request.subject.id || ticket.ExpiresAtUtc <= DateTimeOffset.UtcNow)
+            throw new InvalidDataException("Witness ticket is not bound to this installation.");
+        return (ticket, envelope.Token);
+    }
+
     public async Task<string> FinalizeAsync(
-        string challengeToken,
+        string ticketToken,
         byte[] clientNonce,
         DrawProof proof,
         CancellationToken cancellationToken)
     {
         var request = new
         {
-            challenge = challengeToken,
+            ticket = ticketToken,
             clientNonce = ToBase64Url(clientNonce),
             proof
         };

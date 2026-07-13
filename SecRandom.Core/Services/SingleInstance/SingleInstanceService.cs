@@ -25,6 +25,7 @@ public sealed class SingleInstanceService : IDisposable
     private const string MutexName = $"SecRandom_SingleInstance_{AppId}";
     public const string IpcPipeName = $"SecRandom_IPC_{AppId}";
     private static readonly TimeSpan FrameReadTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan ResponseReadTimeout = TimeSpan.FromSeconds(30);
     private const int MaxConcurrentConnections = 8;
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
 
@@ -136,7 +137,9 @@ public sealed class SingleInstanceService : IDisposable
             using var reader = new StreamReader(client, StrictUtf8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
             await writer.WriteLineAsync(JsonSerializer.Serialize(request, IpcJsonOptions)).ConfigureAwait(false);
             await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-            var responseLine = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+            using var responseCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            responseCts.CancelAfter(ResponseReadTimeout);
+            var responseLine = await reader.ReadLineAsync(responseCts.Token).ConfigureAwait(false);
             var response = string.IsNullOrWhiteSpace(responseLine)
                 ? null
                 : JsonSerializer.Deserialize<IpcResponseEnvelope>(responseLine, IpcJsonOptions);
@@ -245,9 +248,31 @@ public sealed class SingleInstanceService : IDisposable
         await using var writer = new StreamWriter(server, StrictUtf8, leaveOpen: true);
         using var frameCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         frameCts.CancelAfter(FrameReadTimeout);
-        var frame = await ReadRequestLineAsync(reader, frameCts.Token).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(frame))
+        string? frame;
+        try
+        {
+            frame = await ReadRequestLineAsync(reader, frameCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            await WriteResponseAsync(writer,
+                IpcResponseEnvelope.TransportFailure("unknown", "timeout", "IPC 请求超时。")).ConfigureAwait(false);
             return;
+        }
+
+        if (frame is null)
+        {
+            await WriteResponseAsync(writer,
+                IpcResponseEnvelope.TransportFailure("unknown", "invalid_request", "IPC 请求超出长度限制。")).ConfigureAwait(false);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(frame))
+        {
+            await WriteResponseAsync(writer,
+                IpcResponseEnvelope.TransportFailure("unknown", "invalid_request", "IPC 请求格式无效。")).ConfigureAwait(false);
+            return;
+        }
 
         if (frame[0] != '{')
         {
@@ -267,7 +292,7 @@ public sealed class SingleInstanceService : IDisposable
             return;
         }
 
-        if (request is null || request.Version != 1 || !string.Equals(request.Type, "url", StringComparison.OrdinalIgnoreCase)
+        if (request is null || request.Version is not (0 or 1) || !string.Equals(request.Type, "url", StringComparison.OrdinalIgnoreCase)
             || string.IsNullOrWhiteSpace(request.Payload?.Url))
         {
             await WriteResponseAsync(writer,

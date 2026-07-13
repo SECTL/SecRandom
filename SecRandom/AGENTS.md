@@ -38,7 +38,7 @@ SecRandom/
 ├── Models/              # App-local view/support models
 ├── Helpers/             # App-local helpers
 ├── Converters/          # App-local Avalonia converters
-├── Langs/               # Per-page resx localization + generated designers
+├── Langs/               # Per-page resx plus app-level IPC response localization
 ├── Assets/              # Avalonia resources, icons, MiSans font, banners
 ├── Controls/            # App-specific controls; shared controls belong in Core
 └── Styles.axaml         # Includes Core style bundle
@@ -114,6 +114,7 @@ SecRandom/
 - Each page has its own folder under `Langs/`.
 - Crash recovery has an app-level localization folder at `Langs/CrashRecovery/` because the prompt is a top-level window, not a settings page.
 - Privacy settings localization lives under `Langs/SettingsPages/General/Privacy/` and follows the same base `.resx` + designer registration pattern as other settings pages.
+- IPC response localization lives under `Langs/Ipc/`; it supplies human-readable response messages while protocol `code` values remain invariant for automation clients.
 - List management pages currently include roll-call lists (`data/list/roll_call_list`) and lottery prize pools (`data/list/lottery_list`). Student/prize number columns are optional; import must only require the name column.
 - Roll-call and lottery list/history files are stored as plain JSON on disk; keep their `.json` paths stable and use `DesktopConfigService` instead of direct serialization.
 - Required files for a localized resource set: `Resources.resx` and `Resources.Designer.cs`; culture files such as

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="M_Disabled" xml:space="preserve"><value>URL 协议未启用。</value></data>
+  <data name="M_DataOnlyIpc" xml:space="preserve"><value>数据查询仅支持 IPC。</value></data>
+  <data name="M_UnsupportedCommand" xml:space="preserve"><value>不支持的协议命令。</value></data>
+  <data name="M_InvalidMainPage" xml:space="preserve"><value>主窗口页面参数无效。</value></data>
+  <data name="M_InvalidSettingsPage" xml:space="preserve"><value>设置页面参数无效。</value></data>
+  <data name="M_InvalidWindowAction" xml:space="preserve"><value>窗口动作参数无效。</value></data>
+  <data name="M_MainWindowRequested" xml:space="preserve"><value>已请求主窗口操作</value></data>
+  <data name="M_SettingsHidden" xml:space="preserve"><value>设置窗口已隐藏</value></data>
+  <data name="M_SettingsPreviewOpened" xml:space="preserve"><value>已打开只读设置预览</value></data>
+  <data name="M_SettingsRequested" xml:space="preserve"><value>已请求设置窗口操作</value></data>
+  <data name="M_FloatPageUnsupported" xml:space="preserve"><value>浮窗不支持页面参数。</value></data>
+  <data name="M_FloatingRequested" xml:space="preserve"><value>已请求浮窗操作</value></data>
+  <data name="M_MainToggled" xml:space="preserve"><value>主窗口显示状态已切换</value></data>
+  <data name="M_FloatingToggled" xml:space="preserve"><value>浮窗显示状态已切换</value></data>
+  <data name="M_Restarting" xml:space="preserve"><value>程序正在重启</value></data>
+  <data name="M_Exiting" xml:space="preserve"><value>程序正在退出</value></data>
+  <data name="M_RollCallStarted" xml:space="preserve"><value>点名已开始</value></data>
+  <data name="M_RollCallStopped" xml:space="preserve"><value>点名已停止</value></data>
+  <data name="M_RollCallReset" xml:space="preserve"><value>点名已重置</value></data>
+  <data name="M_QuickDrawSucceeded" xml:space="preserve"><value>点名成功</value></data>
+  <data name="M_LotteryStarted" xml:space="preserve"><value>抽奖已开始</value></data>
+  <data name="M_LotteryStopped" xml:space="preserve"><value>抽奖已停止</value></data>
+  <data name="M_LotteryReset" xml:space="preserve"><value>抽奖已重置</value></data>
+  <data name="M_RollCallCountSet" xml:space="preserve"><value>点名人数已设置</value></data>
+  <data name="M_RollCallGroupSet" xml:space="preserve"><value>点名分组已设置</value></data>
+  <data name="M_RollCallGenderSet" xml:space="preserve"><value>点名性别筛选已设置</value></data>
+  <data name="M_StudentListSet" xml:space="preserve"><value>学生名单已设置</value></data>
+  <data name="M_LotteryCountSet" xml:space="preserve"><value>抽奖人数已设置</value></data>
+  <data name="M_PoolSet" xml:space="preserve"><value>奖池已设置</value></data>
+  <data name="M_LotteryGroupSet" xml:space="preserve"><value>抽奖分组已设置</value></data>
+  <data name="M_LotteryGenderSet" xml:space="preserve"><value>抽奖性别筛选已设置</value></data>
+  <data name="M_UnsupportedRollCall" xml:space="preserve"><value>不支持的点名命令。</value></data>
+  <data name="M_UnsupportedLottery" xml:space="preserve"><value>不支持的抽奖命令。</value></data>
+  <data name="M_MissingProfileName" xml:space="preserve"><value>缺少名单或奖池名称。</value></data>
+  <data name="M_UnsupportedData" xml:space="preserve"><value>不支持的数据查询命令。</value></data>
+  <data name="M_RollCallListNotFound" xml:space="preserve"><value>未找到点名名单。</value></data>
+  <data name="M_PrizePoolNotFound" xml:space="preserve"><value>未找到抽奖奖池。</value></data>
+  <data name="M_RollCallHistoryNotFound" xml:space="preserve"><value>未找到点名历史。</value></data>
+  <data name="M_PrizeHistoryNotFound" xml:space="preserve"><value>未找到抽奖历史。</value></data>
+  <data name="M_RollCallListLoaded" xml:space="preserve"><value>点名名单获取成功</value></data>
+  <data name="M_PrizePoolLoaded" xml:space="preserve"><value>抽奖名单获取成功</value></data>
+  <data name="M_RollCallHistoryLoaded" xml:space="preserve"><value>点名历史获取成功</value></data>
+  <data name="M_PrizeHistoryLoaded" xml:space="preserve"><value>抽奖历史获取成功</value></data>
+  <data name="M_AuthorizationDenied" xml:space="preserve"><value>操作未获授权。</value></data>
+  <data name="M_InvalidStartState" xml:space="preserve"><value>当前状态无法开始抽取。</value></data>
+  <data name="M_NoQuickDrawResult" xml:space="preserve"><value>未产生闪抽结果。</value></data>
+  <data name="M_NoEligibleRecordsFormat" xml:space="preserve"><value>{0}没有可抽取的记录。</value></data>
+  <data name="M_InvalidParameterFormat" xml:space="preserve"><value>{0}参数无效。</value></data>
+  <data name="M_InvalidStudentList" xml:space="preserve"><value>学生名单参数无效。</value></data>
+  <data name="M_InvalidPool" xml:space="preserve"><value>奖池参数无效。</value></data>
+  <data name="M_AssignmentUnavailable" xml:space="preserve"><value>抽奖未启用学生分配名单。</value></data>
+  <data name="L_RollCallCount" xml:space="preserve"><value>点名人数</value></data>
+  <data name="L_RollCallGroup" xml:space="preserve"><value>点名分组</value></data>
+  <data name="L_RollCallGender" xml:space="preserve"><value>点名性别筛选</value></data>
+  <data name="L_LotteryCount" xml:space="preserve"><value>抽奖人数</value></data>
+  <data name="L_LotteryGroup" xml:space="preserve"><value>抽奖分组</value></data>
+  <data name="L_LotteryGender" xml:space="preserve"><value>抽奖性别筛选</value></data>
+</root>

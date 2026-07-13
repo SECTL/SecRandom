@@ -13,6 +13,7 @@ using SecRandom.Shared.Models.Profile;
 using SecRandom.Services.Security;
 using SecRandom.Services.Profiles;
 using SecRandom.ViewModels.MainPages;
+using LR = SecRandom.Langs.Ipc.Resources;
 
 namespace SecRandom.Services.Ipc;
 
@@ -58,14 +59,14 @@ public sealed class ProtocolCommandRouter(
     private async Task<IpcResponseEnvelope> HandleAsync(string value, bool isUrlActivation, CancellationToken cancellationToken)
     {
         if (isUrlActivation && !configHandler.Data.General.Basic.UrlProtocol)
-            return Failure("url", "protocol_disabled", "URL 协议未启用。");
+            return Failure("url", "protocol_disabled", LR.M_Disabled);
         if (!ProtocolRequestParser.TryParse(value, isUrlActivation, out var request, out var failure))
             return Failure("url", failure!.Code, failure.Message);
 
         if (request!.Route.StartsWith("data/", StringComparison.Ordinal))
         {
             if (isUrlActivation)
-                return Success("数据查询仅支持 IPC。");
+                return Success(LR.M_DataOnlyIpc);
             return await Task.Run(() => HandleDataQuery(request.Route, request.Query), cancellationToken).ConfigureAwait(false);
         }
 
@@ -80,28 +81,28 @@ public sealed class ProtocolCommandRouter(
         {
             "window/main" => await HandleMainWindowAsync(request.Query, cancellationToken),
             "window/settings" => await HandleSettingsWindowAsync(request.Query, cancellationToken),
-            "settings" => await HandleSettingsWindowAsync(request.Query, cancellationToken),
-            "settings/basic" => await HandleSettingsWindowAsync(WithPage(request.Query, "basicSettingsInterface"), cancellationToken),
-            "settings/list" => await HandleSettingsWindowAsync(WithPage(request.Query, "listManagementInterface"), cancellationToken),
-            "settings/extraction" => await HandleSettingsWindowAsync(WithPage(request.Query, "extractionSettingsInterface"), cancellationToken),
-            "settings/floating" => await HandleSettingsWindowAsync(WithPage(request.Query, "floatingWindowManagementInterface"), cancellationToken),
-            "settings/notification" => await HandleSettingsWindowAsync(WithPage(request.Query, "notificationSettingsInterface"), cancellationToken),
-            "settings/safety" => await HandleSettingsWindowAsync(WithPage(request.Query, "safetySettingsInterface"), cancellationToken),
-            "settings/custom" => await HandleSettingsWindowAsync(WithPage(request.Query, "customSettingsInterface"), cancellationToken),
-            "settings/voice" => await HandleSettingsWindowAsync(WithPage(request.Query, "voiceSettingsInterface"), cancellationToken),
-            "settings/history" => await HandleSettingsWindowAsync(WithPage(request.Query, "historyInterface"), cancellationToken),
-            "settings/more" => await HandleSettingsWindowAsync(WithPage(request.Query, "moreSettingsInterface"), cancellationToken),
-            "settings/update" => await HandleSettingsWindowAsync(WithPage(request.Query, "updateInterface"), cancellationToken),
-            "settings/about" => await HandleSettingsWindowAsync(WithPage(request.Query, "aboutInterface"), cancellationToken),
+            "settings" => await HandleSettingsWindowAsync(WithLegacySettingsPage(request.Query, "basicSettingsInterface"), cancellationToken),
+            "settings/basic" => await HandleSettingsWindowAsync(WithLegacySettingsPage(request.Query, "basicSettingsInterface"), cancellationToken),
+            "settings/list" => await HandleSettingsWindowAsync(WithLegacySettingsPage(request.Query, "listManagementInterface"), cancellationToken),
+            "settings/extraction" => await HandleSettingsWindowAsync(WithLegacySettingsPage(request.Query, "extractionSettingsInterface"), cancellationToken),
+            "settings/floating" => await HandleSettingsWindowAsync(WithLegacySettingsPage(request.Query, "floatingWindowManagementInterface"), cancellationToken),
+            "settings/notification" => await HandleSettingsWindowAsync(WithLegacySettingsPage(request.Query, "notificationSettingsInterface"), cancellationToken),
+            "settings/safety" => await HandleSettingsWindowAsync(WithLegacySettingsPage(request.Query, "safetySettingsInterface"), cancellationToken),
+            "settings/custom" => await HandleSettingsWindowAsync(WithLegacySettingsPage(request.Query, "customSettingsInterface"), cancellationToken),
+            "settings/voice" => await HandleSettingsWindowAsync(WithLegacySettingsPage(request.Query, "voiceSettingsInterface"), cancellationToken),
+            "settings/history" => await HandleSettingsWindowAsync(WithLegacySettingsPage(request.Query, "historyInterface"), cancellationToken),
+            "settings/more" => await HandleSettingsWindowAsync(WithLegacySettingsPage(request.Query, "moreSettingsInterface"), cancellationToken),
+            "settings/update" => await HandleSettingsWindowAsync(WithLegacySettingsPage(request.Query, "updateInterface"), cancellationToken),
+            "settings/about" => await HandleSettingsWindowAsync(WithLegacySettingsPage(request.Query, "aboutInterface"), cancellationToken),
             "window/float" => await HandleFloatingWindowAsync(request.Query, cancellationToken),
-            "tray/toggle" => await RunAuthorizedAsync(SecurityOperation.ToggleMainWindow, () => { App.SetMainWindowVisibility("toggle"); return Task.CompletedTask; }, "主窗口显示状态已切换", cancellationToken),
+            "tray/toggle" => await RunAuthorizedAsync(SecurityOperation.ToggleMainWindow, () => { App.SetMainWindowVisibility("toggle"); return Task.CompletedTask; }, LR.M_MainToggled, cancellationToken),
             "tray/settings" => await HandleSettingsWindowAsync([new ProtocolQueryItem("action", "show")], cancellationToken),
-            "tray/float" => await RunAuthorizedAsync(SecurityOperation.ToggleFloatingWindow, () => { App.SetFloatingWindowVisibility("toggle"); return Task.CompletedTask; }, "浮窗显示状态已切换", cancellationToken),
-            "tray/restart" => await RunAuthorizedAsync(SecurityOperation.RestartApplication, () => { App.Current.Restart(); return Task.CompletedTask; }, "程序正在重启", cancellationToken),
-            "tray/exit" => await RunAuthorizedAsync(SecurityOperation.ExitApplication, () => { App.Current.Stop(); return Task.CompletedTask; }, "程序正在退出", cancellationToken),
+            "tray/float" => await RunAuthorizedAsync(SecurityOperation.ToggleFloatingWindow, () => { App.SetFloatingWindowVisibility("toggle"); return Task.CompletedTask; }, LR.M_FloatingToggled, cancellationToken),
+            "tray/restart" => await RunAuthorizedAsync(SecurityOperation.RestartApplication, () => { App.Current.Restart(); return Task.CompletedTask; }, LR.M_Restarting, cancellationToken),
+            "tray/exit" => await RunAuthorizedAsync(SecurityOperation.ExitApplication, () => { App.Current.Stop(); return Task.CompletedTask; }, LR.M_Exiting, cancellationToken),
             _ when route.StartsWith("roll_call/", StringComparison.Ordinal) => await HandleRollCallAsync(route, request.Query, cancellationToken),
             _ when route.StartsWith("lottery/", StringComparison.Ordinal) => await HandleLotteryAsync(route, request.Query, cancellationToken),
-            _ => Failure("url", "invalid_command", "不支持的协议命令。")
+            _ => Failure("url", "invalid_command", LR.M_UnsupportedCommand)
         };
     }
 
@@ -109,30 +110,30 @@ public sealed class ProtocolCommandRouter(
     {
         var page = ProtocolRequestParser.GetLast(query, "page", "page_name", "name", "value");
         if (page is not null && !MainPages.TryGetValue(page, out page))
-            return Failure("url", "invalid_parameter", "主窗口页面参数无效。");
+            return Failure("url", "invalid_parameter", LR.M_InvalidMainPage);
         var action = ParseAction(query, page is null ? "toggle" : "show");
-        if (action is null) return Failure("url", "invalid_parameter", "窗口动作参数无效。");
+        if (action is null) return Failure("url", "invalid_parameter", LR.M_InvalidWindowAction);
         return await RunAuthorizedAsync(SecurityOperation.ToggleMainWindow, () =>
         {
             App.SetMainWindowVisibility(action, page);
             return Task.CompletedTask;
-        }, "已请求主窗口操作", token);
+        }, LR.M_MainWindowRequested, token);
     }
 
     private async Task<IpcResponseEnvelope> HandleSettingsWindowAsync(IReadOnlyList<ProtocolQueryItem> query, CancellationToken token)
     {
         var page = ProtocolRequestParser.GetLast(query, "page", "page_name", "name", "value");
         if (page is not null && !SettingsPages.TryGetValue(page, out page))
-            return Failure("url", "invalid_parameter", "设置页面参数无效。");
+            return Failure("url", "invalid_parameter", LR.M_InvalidSettingsPage);
         var action = ParseAction(query, "toggle");
-        if (action is null) return Failure("url", "invalid_parameter", "窗口动作参数无效。");
+        if (action is null) return Failure("url", "invalid_parameter", LR.M_InvalidWindowAction);
         if (action == "hide")
         {
             return await RunAuthorizedAsync(SecurityOperation.OpenSettings, () =>
             {
                 App.SetSettingsWindowVisibility(action, page ?? "settings.general.basic", false);
                 return Task.CompletedTask;
-            }, "设置窗口已隐藏", token);
+            }, LR.M_SettingsHidden, token);
         }
 
         var pageId = page ?? "settings.general.basic";
@@ -148,24 +149,24 @@ public sealed class ProtocolCommandRouter(
                 return Task.CompletedTask;
             }, token);
         return authorization.PreviewOpened
-            ? Success("已打开只读设置预览", new { preview = true })
+            ? Success(LR.M_SettingsPreviewOpened, new { preview = true })
             : authorization.IsAuthorized
-                ? Success("已请求设置窗口操作")
-                : Failure("url", "authorization_denied", "操作未获授权。", true);
+                ? Success(LR.M_SettingsRequested)
+                : Failure("url", "authorization_denied", LR.M_AuthorizationDenied, true);
     }
 
     private async Task<IpcResponseEnvelope> HandleFloatingWindowAsync(IReadOnlyList<ProtocolQueryItem> query, CancellationToken token)
     {
         if (ProtocolRequestParser.GetLast(query, "page", "page_name", "name", "value") is not null)
-            return Failure("url", "invalid_parameter", "浮窗不支持页面参数。", true);
+            return Failure("url", "invalid_parameter", LR.M_FloatPageUnsupported, true);
         var action = ParseAction(query, "toggle");
         return action is null
-            ? Failure("url", "invalid_parameter", "窗口动作参数无效。")
+            ? Failure("url", "invalid_parameter", LR.M_InvalidWindowAction)
             : await RunAuthorizedAsync(SecurityOperation.ToggleFloatingWindow, () =>
             {
                 App.SetFloatingWindowVisibility(action);
                 return Task.CompletedTask;
-            }, "已请求浮窗操作", token);
+            }, LR.M_FloatingRequested, token);
     }
 
     private async Task<IpcResponseEnvelope> HandleRollCallAsync(string route, IReadOnlyList<ProtocolQueryItem> query, CancellationToken token)
@@ -176,24 +177,24 @@ public sealed class ProtocolCommandRouter(
                 SecurityOperation.RollCallStart,
                 () => !rollCall.IsDrawing && rollCall.CanStartDraw,
                 rollCall.StartProtocolDrawAsync,
-                "点名已开始",
+                LR.M_RollCallStarted,
                 token);
             case "roll_call/stop": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () =>
             {
                 rollCall.StopProtocolDraw();
                 return Task.CompletedTask;
-            }, "点名已停止", token);
-            case "roll_call/reset": return await RunAuthorizedAsync(SecurityOperation.RollCallReset, rollCall.ResetProtocolDrawAsync, "点名已重置", token);
+            }, LR.M_RollCallStopped, token);
+            case "roll_call/reset": return await RunAuthorizedAsync(SecurityOperation.RollCallReset, rollCall.ResetProtocolDrawAsync, LR.M_RollCallReset, token);
             case "roll_call/quick_draw": return await HandleQuickDrawAsync(token);
             case "roll_call/set_count": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetCount(
-                query, "点名人数", rollCall.TotalCount, rollCall.RemainingCount, rollCall.MaximumDrawCount, value => rollCall.DrawCount = value), "点名人数已设置", token);
+                query, LR.L_RollCallCount, rollCall.TotalCount, rollCall.RemainingCount, rollCall.MaximumDrawCount, value => rollCall.DrawCount = value), LR.M_RollCallCountSet, token);
             case "roll_call/set_group": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetGroup(
-                query, "点名分组", rollCall.GroupOptions, value => rollCall.SelectedGroup = value), "点名分组已设置", token);
+                query, LR.L_RollCallGroup, rollCall.GroupOptions, value => rollCall.SelectedGroup = value), LR.M_RollCallGroupSet, token);
             case "roll_call/set_gender": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetGender(
-                query, "点名性别筛选", rollCall.GenderOptions, value => rollCall.SelectedGender = value), "点名性别筛选已设置", token);
+                query, LR.L_RollCallGender, rollCall.GenderOptions, value => rollCall.SelectedGender = value), LR.M_RollCallGenderSet, token);
             case "roll_call/set_list": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetStudentList(
-                query, rollCall.StudentListNames, value => rollCall.SelectedStudentListName = value), "学生名单已设置", token);
-            default: return Failure("url", "invalid_command", "不支持的点名命令。", true);
+                query, rollCall.StudentListNames, value => rollCall.SelectedStudentListName = value), LR.M_StudentListSet, token);
+            default: return Failure("url", "invalid_command", LR.M_UnsupportedRollCall, true);
         }
     }
 
@@ -205,36 +206,36 @@ public sealed class ProtocolCommandRouter(
                 SecurityOperation.LotteryStart,
                 () => !lottery.IsDrawing && lottery.CanStartDraw,
                 lottery.StartProtocolDrawAsync,
-                "抽奖已开始",
+                LR.M_LotteryStarted,
                 token);
             case "lottery/stop": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () =>
             {
                 lottery.StopProtocolDraw();
                 return Task.CompletedTask;
-            }, "抽奖已停止", token);
-            case "lottery/reset": return await RunAuthorizedAsync(SecurityOperation.LotteryReset, lottery.ResetProtocolDrawAsync, "抽奖已重置", token);
+            }, LR.M_LotteryStopped, token);
+            case "lottery/reset": return await RunAuthorizedAsync(SecurityOperation.LotteryReset, lottery.ResetProtocolDrawAsync, LR.M_LotteryReset, token);
             case "lottery/set_count": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetCount(
-                query, "抽奖人数", lottery.TotalCount, lottery.RemainingCount, lottery.MaximumDrawCount, value => lottery.DrawCount = value), "抽奖人数已设置", token);
-            case "lottery/set_pool": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetPrizePool(query), "奖池已设置", token);
+                query, LR.L_LotteryCount, lottery.TotalCount, lottery.RemainingCount, lottery.MaximumDrawCount, value => lottery.DrawCount = value), LR.M_LotteryCountSet, token);
+            case "lottery/set_pool": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetPrizePool(query), LR.M_PoolSet, token);
             case "lottery/set_list": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetStudentList(
-                query, lottery.StudentListNames, value => lottery.SelectedStudentListName = value), "学生名单已设置", token);
-            case "lottery/set_group": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetLotteryGroup(query), "抽奖分组已设置", token);
-            case "lottery/set_gender": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetLotteryGender(query), "抽奖性别筛选已设置", token);
-            default: return Failure("url", "invalid_command", "不支持的抽奖命令。", true);
+                query, lottery.StudentListNames, value => lottery.SelectedStudentListName = value), LR.M_StudentListSet, token);
+            case "lottery/set_group": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetLotteryGroup(query), LR.M_LotteryGroupSet, token);
+            case "lottery/set_gender": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetLotteryGender(query), LR.M_LotteryGenderSet, token);
+            default: return Failure("url", "invalid_command", LR.M_UnsupportedLottery, true);
         }
     }
 
     private IpcResponseEnvelope HandleDataQuery(string route, IReadOnlyList<ProtocolQueryItem> query)
     {
         var name = ProtocolRequestParser.GetLast(query, "class_name", "classname", "class", "pool_name", "poolname", "pool", "name", "list_name");
-        if (string.IsNullOrWhiteSpace(name)) return Failure("url", "missing_parameter", "缺少名单或奖池名称。", true);
+        if (string.IsNullOrWhiteSpace(name)) return Failure("url", "missing_parameter", LR.M_MissingProfileName, true);
         return route switch
         {
             "data/roll_call_list" => LoadStudents(name),
             "data/lottery_list" => LoadPrizes(name),
             "data/roll_call_history" => LoadStudentHistory(name),
             "data/lottery_history" => LoadPrizeHistory(name),
-            _ => Failure("url", "invalid_command", "不支持的数据查询命令。", true)
+            _ => Failure("url", "invalid_command", LR.M_UnsupportedData, true)
         };
     }
 
@@ -242,40 +243,40 @@ public sealed class ProtocolCommandRouter(
     {
         var list = profileQuery.LoadStudentList(name);
         if (list is null)
-            return Failure("url", "not_found", "未找到点名名单。", true);
+            return Failure("url", "not_found", LR.M_RollCallListNotFound, true);
         var data = list.Students.Where(student => student.Exists)
             .Select(student => new IpcRecordDto(student.Id, student.Name, student.Gender)).ToList();
-        return Success("点名名单获取成功", data);
+        return Success(LR.M_RollCallListLoaded, data);
     }
 
     private IpcResponseEnvelope LoadPrizes(string name)
     {
         var list = profileQuery.LoadPrizeList(name);
         if (list is null)
-            return Failure("url", "not_found", "未找到抽奖奖池。", true);
+            return Failure("url", "not_found", LR.M_PrizePoolNotFound, true);
         var data = list.Prizes.Where(prize => prize.Exists)
             .Select(prize => new IpcRecordDto(prize.Id, prize.Name, string.Empty)).ToList();
-        return Success("抽奖名单获取成功", data);
+        return Success(LR.M_PrizePoolLoaded, data);
     }
 
     private IpcResponseEnvelope LoadStudentHistory(string name)
     {
         var history = profileQuery.LoadStudentHistory(name);
         if (history is null)
-            return Failure("url", "not_found", "未找到点名历史。", true);
+            return Failure("url", "not_found", LR.M_RollCallHistoryNotFound, true);
         var data = history.Students.Values.SelectMany(item => item.Histories)
             .GroupBy(item => string.IsNullOrWhiteSpace(item.DrawRoundId) ? $"legacy:{item.DrawTime:O}:{item.DrawNumbers}:{item.DrawMethod}" : item.DrawRoundId)
             .OrderByDescending(group => group.Max(item => item.DrawTime))
             .ThenByDescending(group => group.Key)
             .Select(group => new IpcHistoryEntryDto(group.Max(item => item.DrawTime).ToString("O"), group.Select(item => new IpcHistoryRecordDto(item.RecordNumber, item.RecordName)).ToList())).ToList() ?? [];
-        return Success("点名历史获取成功", data);
+        return Success(LR.M_RollCallHistoryLoaded, data);
     }
 
     private IpcResponseEnvelope LoadPrizeHistory(string name)
     {
         var history = profileQuery.LoadPrizeHistory(name);
         if (history is null)
-            return Failure("url", "not_found", "未找到抽奖历史。", true);
+            return Failure("url", "not_found", LR.M_PrizeHistoryNotFound, true);
         var data = history.Prizes.Values.SelectMany(item => item.Histories)
             .GroupBy(item => string.IsNullOrWhiteSpace(item.DrawRoundId) ? $"legacy:{item.DrawTime:O}:{item.DrawNumbers}" : item.DrawRoundId)
             .OrderByDescending(group => group.Max(item => item.DrawTime))
@@ -284,7 +285,7 @@ public sealed class ProtocolCommandRouter(
                 group.Max(item => item.DrawTime).ToString("O"),
                 null,
                 group.Select(item => new IpcHistoryRecordDto(item.RecordNumber, item.RecordName)).ToList())).ToList() ?? [];
-        return Success("抽奖历史获取成功", data);
+        return Success(LR.M_PrizeHistoryLoaded, data);
     }
 
     private static Task SetCount(
@@ -296,10 +297,10 @@ public sealed class ProtocolCommandRouter(
         Action<int> setCount)
     {
         if (totalCount < 1 || remainingCount < 1)
-            throw new ProtocolCommandException("invalid_state", $"{label}没有可抽取的记录。");
+            throw new ProtocolCommandException("invalid_state", string.Format(LR.M_NoEligibleRecordsFormat, label));
         if (!int.TryParse(ProtocolRequestParser.GetLast(query, "count", "draw_count", "value"), out var count)
             || count < 1 || count > maximumDrawCount)
-            throw new ProtocolCommandException("invalid_parameter", $"{label}参数无效。");
+            throw new ProtocolCommandException("invalid_parameter", string.Format(LR.M_InvalidParameterFormat, label));
         setCount(count);
         return Task.CompletedTask;
     }
@@ -317,7 +318,7 @@ public sealed class ProtocolCommandRouter(
             values,
             "all");
         if (group is null)
-            throw new ProtocolCommandException("invalid_parameter", $"{label}参数无效。");
+            throw new ProtocolCommandException("invalid_parameter", string.Format(LR.M_InvalidParameterFormat, label));
         setGroup(group);
         return Task.CompletedTask;
     }
@@ -340,7 +341,7 @@ public sealed class ProtocolCommandRouter(
             _ => ResolveOption(value, ProtocolRequestParser.GetLast(query, "gender_index", "index"), values, null)
         };
         if (gender is null)
-            throw new ProtocolCommandException("invalid_parameter", $"{label}参数无效。");
+            throw new ProtocolCommandException("invalid_parameter", string.Format(LR.M_InvalidParameterFormat, label));
         setGender(gender);
         return Task.CompletedTask;
     }
@@ -354,7 +355,7 @@ public sealed class ProtocolCommandRouter(
         var values = options.ToArray();
         var selected = ResolveOption(name, ProtocolRequestParser.GetLast(query, "list_index", "index"), values, null);
         if (selected is null)
-            throw new ProtocolCommandException("invalid_parameter", "学生名单参数无效。");
+            throw new ProtocolCommandException("invalid_parameter", LR.M_InvalidStudentList);
         setStudentList(selected);
         return Task.CompletedTask;
     }
@@ -364,7 +365,7 @@ public sealed class ProtocolCommandRouter(
         var name = ProtocolRequestParser.GetLast(query, "pool_name", "poolname", "pool", "name", "text", "value");
         var selected = ResolveOption(name, ProtocolRequestParser.GetLast(query, "pool_index", "index"), lottery.PrizeListNames.ToArray(), null);
         if (selected is null)
-            throw new ProtocolCommandException("invalid_parameter", "奖池参数无效。");
+            throw new ProtocolCommandException("invalid_parameter", LR.M_InvalidPool);
         lottery.SelectedPrizeListName = selected;
         return Task.CompletedTask;
     }
@@ -372,15 +373,15 @@ public sealed class ProtocolCommandRouter(
     private Task SetLotteryGroup(IReadOnlyList<ProtocolQueryItem> query)
     {
         if (!lottery.IsStudentAssignmentEnabled)
-            throw new ProtocolCommandException("invalid_state", "抽奖未启用学生分配名单。");
-        return SetGroup(query, "抽奖分组", lottery.GroupOptions, value => lottery.SelectedGroup = value);
+            throw new ProtocolCommandException("invalid_state", LR.M_AssignmentUnavailable);
+        return SetGroup(query, LR.L_LotteryGroup, lottery.GroupOptions, value => lottery.SelectedGroup = value);
     }
 
     private Task SetLotteryGender(IReadOnlyList<ProtocolQueryItem> query)
     {
         if (!lottery.IsStudentAssignmentEnabled)
-            throw new ProtocolCommandException("invalid_state", "抽奖未启用学生分配名单。");
-        return SetGender(query, "抽奖性别筛选", lottery.GenderOptions, value => lottery.SelectedGender = value);
+            throw new ProtocolCommandException("invalid_state", LR.M_AssignmentUnavailable);
+        return SetGender(query, LR.L_LotteryGender, lottery.GenderOptions, value => lottery.SelectedGender = value);
     }
 
     private async Task<IpcResponseEnvelope> RunAuthorizedAsync(SecurityOperation operation, Func<Task> action, string message, CancellationToken token)
@@ -388,7 +389,7 @@ public sealed class ProtocolCommandRouter(
         try
         {
             var allowed = await security.AuthorizeAsync(operation, action, token).ConfigureAwait(true);
-            return allowed ? Success(message) : Failure("url", "authorization_denied", "操作未获授权。", true);
+            return allowed ? Success(message) : Failure("url", "authorization_denied", LR.M_AuthorizationDenied, true);
         }
         catch (ProtocolCommandException exception)
         {
@@ -404,7 +405,7 @@ public sealed class ProtocolCommandRouter(
         CancellationToken token)
     {
         if (!canStart())
-            return Failure("url", "invalid_state", "当前状态无法开始抽取。", true);
+            return Failure("url", "invalid_state", LR.M_InvalidStartState, true);
 
         Task? drawTask = null;
         var allowed = await security.AuthorizeAsync(operation, () =>
@@ -413,7 +414,7 @@ public sealed class ProtocolCommandRouter(
             return Task.CompletedTask;
         }, token).ConfigureAwait(true);
         if (!allowed)
-            return Failure("url", "authorization_denied", "操作未获授权。", true);
+            return Failure("url", "authorization_denied", LR.M_AuthorizationDenied, true);
 
         _ = drawTask?.ContinueWith(_ => { }, TaskContinuationOptions.OnlyOnFaulted);
         return Success(message, new { state = "running" });
@@ -423,12 +424,12 @@ public sealed class ProtocolCommandRouter(
     {
         var allowed = await security.AuthorizeAsync(SecurityOperation.QuickDrawStart, quickDraw.StartProtocolDrawAsync, token).ConfigureAwait(true);
         if (!allowed)
-            return Failure("url", "authorization_denied", "操作未获授权。", true);
+            return Failure("url", "authorization_denied", LR.M_AuthorizationDenied, true);
 
         var student = quickDraw.LastDrawnStudent;
         return student is null
-            ? Failure("url", "invalid_state", "未产生闪抽结果。", true)
-            : Success("点名成功", new IpcRecordDto(student.Id, student.Name, student.Gender));
+            ? Failure("url", "invalid_state", LR.M_NoQuickDrawResult, true)
+            : Success(LR.M_QuickDrawSucceeded, new IpcRecordDto(student.Id, student.Name, student.Gender));
     }
 
     private static string? ParseAction(IReadOnlyList<ProtocolQueryItem> query, string defaultAction)
@@ -455,9 +456,12 @@ public sealed class ProtocolCommandRouter(
             : null;
     }
 
-    private static IReadOnlyList<ProtocolQueryItem> WithPage(IReadOnlyList<ProtocolQueryItem> query, string page)
+    private static IReadOnlyList<ProtocolQueryItem> WithLegacySettingsPage(IReadOnlyList<ProtocolQueryItem> query, string page)
     {
-        return [.. query, new ProtocolQueryItem("page", page)];
+        var action = ProtocolRequestParser.GetLast(query, "action", "mode", "op", "do", "visible");
+        return action is null
+            ? [.. query, new ProtocolQueryItem("action", "show"), new ProtocolQueryItem("page", page)]
+            : [.. query, new ProtocolQueryItem("page", page)];
     }
 
     private static IpcResponseEnvelope Success(string message, object? data = null) => new(true, "url", new IpcBusinessResult("success", message, Data: data));

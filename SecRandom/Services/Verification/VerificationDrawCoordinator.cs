@@ -20,11 +20,10 @@ public sealed class VerificationDrawCoordinator(
     DrawEngine drawEngine,
     IVerificationKernel kernel,
     IWitnessClient witnessClient,
+    WitnessTicketCache ticketCache,
     DrawProofExportService proofExporter,
     ILogger<VerificationDrawCoordinator> logger)
 {
-    private static readonly TimeSpan OnlineWitnessBudget = TimeSpan.FromMilliseconds(350);
-
     public bool IsEnabled => true;
 
     public Task<VerificationDrawOutcome<Student>> DrawStudentsAsync(
@@ -57,38 +56,28 @@ public sealed class VerificationDrawCoordinator(
     {
         var recordLookup = records.ToDictionary(GetRecordId);
         var inputHash = VerificationWireCodec.ComputeInputHash(input);
-        try
+        if (ticketCache.TryTake(out var lease))
         {
+            try
+            {
             var clientNonce = RandomNumberGenerator.GetBytes(32);
-            using var witnessCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            // Never make the visible draw wait on a slow network round trip.
-            witnessCancellation.CancelAfter(OnlineWitnessBudget);
-            var (ticket, challengeToken) = await witnessClient.CreateChallengeAsync(inputHash, clientNonce, witnessCancellation.Token)
-                .ConfigureAwait(false);
             var seed = VerificationSeedDerivation.DeriveOnline(
                 inputHash,
-                ticket.ChallengeId,
+                lease.Ticket.TicketId,
                 clientNonce,
-                WitnessClient.FromBase64Url(ticket.ServerNonce));
+                WitnessClient.FromBase64Url(lease.Ticket.ServerNonce));
             var result = kernel.Draw(input, seed);
             var pendingProof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OnlineWitnessed, parentProofId,
-                new DrawProofWitness { Challenge = challengeToken, KeyId = ticket.KeyId });
-            var localProof = pendingProof with
-            {
-                Mode = VerificationProofMode.OfflineReproducible,
-                Witness = null
-            };
+                new DrawProofWitness { Challenge = lease.Token, KeyId = lease.Ticket.KeyId });
+            var localProof = pendingProof with { Mode = VerificationProofMode.OfflineReproducible, Witness = null };
             var outcome = Complete(records, recordLookup, result, localProof);
-            _ = FinalizeWitnessAsync(challengeToken, clientNonce, pendingProof);
+            _ = FinalizeWitnessAsync(lease, clientNonce, pendingProof);
             return outcome;
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception exception)
-        {
-            logger.LogWarning(exception, "联网见证抽取失败，已重新生成本地可重放证明。");
+            }
+            catch (Exception exception)
+            {
+                logger.LogWarning(exception, "服务器见证票据无效，已重新生成本地可重放证明。");
+            }
         }
 
         var offlineSeed = RandomNumberGenerator.GetBytes(32);
@@ -97,36 +86,26 @@ public sealed class VerificationDrawCoordinator(
         return Complete(records, recordLookup, offlineResult, offlineProof);
     }
 
-    private async Task FinalizeWitnessAsync(
-        string challengeToken,
-        byte[] clientNonce,
-        DrawProof pendingProof)
+    private async Task FinalizeWitnessAsync(TicketLease lease, byte[] clientNonce, DrawProof pendingProof)
     {
         try
         {
             using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            var receipt = await witnessClient.FinalizeAsync(challengeToken, clientNonce, pendingProof, cancellation.Token)
+            var receipt = await witnessClient.FinalizeAsync(lease.Token, clientNonce, pendingProof, cancellation.Token)
                 .ConfigureAwait(false);
-            var witnessedProof = pendingProof with
+            proofExporter.Save(pendingProof with
             {
                 Witness = new DrawProofWitness
                 {
-                    Challenge = pendingProof.Witness!.Challenge,
+                    Challenge = lease.Token,
                     Receipt = receipt,
-                    KeyId = pendingProof.Witness.KeyId
+                    KeyId = lease.Ticket.KeyId
                 }
-            };
-
-            // Save replaces the local fallback at the same proof path once the server signs it.
-            proofExporter.Save(witnessedProof);
-        }
-        catch (OperationCanceledException)
-        {
-            logger.LogInformation("服务器见证回执超时；保留本地可重放证明。ProofId={ProofId}", pendingProof.ProofId);
+            });
         }
         catch (Exception exception)
         {
-            logger.LogWarning(exception, "服务器见证回执失败；保留本地可重放证明。ProofId={ProofId}", pendingProof.ProofId);
+            logger.LogWarning(exception, "服务器见证票据结算失败；保留本地可重放证明。ProofId={ProofId}", pendingProof.ProofId);
         }
     }
 

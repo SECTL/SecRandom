@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="M_Disabled" xml:space="preserve"><value>URL protocol is disabled.</value></data>
+  <data name="M_DataOnlyIpc" xml:space="preserve"><value>Data queries are only available through IPC.</value></data>
+  <data name="M_UnsupportedCommand" xml:space="preserve"><value>Unsupported protocol command.</value></data>
+  <data name="M_InvalidMainPage" xml:space="preserve"><value>Invalid main-window page parameter.</value></data>
+  <data name="M_InvalidSettingsPage" xml:space="preserve"><value>Invalid settings-page parameter.</value></data>
+  <data name="M_InvalidWindowAction" xml:space="preserve"><value>Invalid window action parameter.</value></data>
+  <data name="M_MainWindowRequested" xml:space="preserve"><value>Main-window operation requested</value></data>
+  <data name="M_SettingsHidden" xml:space="preserve"><value>Settings window hidden</value></data>
+  <data name="M_SettingsPreviewOpened" xml:space="preserve"><value>Read-only settings preview opened</value></data>
+  <data name="M_SettingsRequested" xml:space="preserve"><value>Settings-window operation requested</value></data>
+  <data name="M_FloatPageUnsupported" xml:space="preserve"><value>The floating window does not support page parameters.</value></data>
+  <data name="M_FloatingRequested" xml:space="preserve"><value>Floating-window operation requested</value></data>
+  <data name="M_MainToggled" xml:space="preserve"><value>Main-window visibility toggled</value></data>
+  <data name="M_FloatingToggled" xml:space="preserve"><value>Floating-window visibility toggled</value></data>
+  <data name="M_Restarting" xml:space="preserve"><value>Application is restarting</value></data>
+  <data name="M_Exiting" xml:space="preserve"><value>Application is exiting</value></data>
+  <data name="M_RollCallStarted" xml:space="preserve"><value>Roll call started</value></data>
+  <data name="M_RollCallStopped" xml:space="preserve"><value>Roll call stopped</value></data>
+  <data name="M_RollCallReset" xml:space="preserve"><value>Roll call reset</value></data>
+  <data name="M_QuickDrawSucceeded" xml:space="preserve"><value>Roll call succeeded</value></data>
+  <data name="M_LotteryStarted" xml:space="preserve"><value>Lottery started</value></data>
+  <data name="M_LotteryStopped" xml:space="preserve"><value>Lottery stopped</value></data>
+  <data name="M_LotteryReset" xml:space="preserve"><value>Lottery reset</value></data>
+  <data name="M_RollCallCountSet" xml:space="preserve"><value>Roll-call count set</value></data>
+  <data name="M_RollCallGroupSet" xml:space="preserve"><value>Roll-call group set</value></data>
+  <data name="M_RollCallGenderSet" xml:space="preserve"><value>Roll-call gender filter set</value></data>
+  <data name="M_StudentListSet" xml:space="preserve"><value>Student list set</value></data>
+  <data name="M_LotteryCountSet" xml:space="preserve"><value>Lottery count set</value></data>
+  <data name="M_PoolSet" xml:space="preserve"><value>Prize pool set</value></data>
+  <data name="M_LotteryGroupSet" xml:space="preserve"><value>Lottery group set</value></data>
+  <data name="M_LotteryGenderSet" xml:space="preserve"><value>Lottery gender filter set</value></data>
+  <data name="M_UnsupportedRollCall" xml:space="preserve"><value>Unsupported roll-call command.</value></data>
+  <data name="M_UnsupportedLottery" xml:space="preserve"><value>Unsupported lottery command.</value></data>
+  <data name="M_MissingProfileName" xml:space="preserve"><value>Missing list or prize-pool name.</value></data>
+  <data name="M_UnsupportedData" xml:space="preserve"><value>Unsupported data-query command.</value></data>
+  <data name="M_RollCallListNotFound" xml:space="preserve"><value>Roll-call list not found.</value></data>
+  <data name="M_PrizePoolNotFound" xml:space="preserve"><value>Prize pool not found.</value></data>
+  <data name="M_RollCallHistoryNotFound" xml:space="preserve"><value>Roll-call history not found.</value></data>
+  <data name="M_PrizeHistoryNotFound" xml:space="preserve"><value>Lottery history not found.</value></data>
+  <data name="M_RollCallListLoaded" xml:space="preserve"><value>Roll-call list loaded</value></data>
+  <data name="M_PrizePoolLoaded" xml:space="preserve"><value>Prize pool loaded</value></data>
+  <data name="M_RollCallHistoryLoaded" xml:space="preserve"><value>Roll-call history loaded</value></data>
+  <data name="M_PrizeHistoryLoaded" xml:space="preserve"><value>Lottery history loaded</value></data>
+  <data name="M_AuthorizationDenied" xml:space="preserve"><value>Operation is not authorized.</value></data>
+  <data name="M_InvalidStartState" xml:space="preserve"><value>The current state cannot start a draw.</value></data>
+  <data name="M_NoQuickDrawResult" xml:space="preserve"><value>No quick-draw result was produced.</value></data>
+  <data name="M_NoEligibleRecordsFormat" xml:space="preserve"><value>{0} has no eligible records.</value></data>
+  <data name="M_InvalidParameterFormat" xml:space="preserve"><value>Invalid {0} parameter.</value></data>
+  <data name="M_InvalidStudentList" xml:space="preserve"><value>Invalid student-list parameter.</value></data>
+  <data name="M_InvalidPool" xml:space="preserve"><value>Invalid prize-pool parameter.</value></data>
+  <data name="M_AssignmentUnavailable" xml:space="preserve"><value>Lottery student assignment is not enabled.</value></data>
+  <data name="L_RollCallCount" xml:space="preserve"><value>roll-call count</value></data>
+  <data name="L_RollCallGroup" xml:space="preserve"><value>roll-call group</value></data>
+  <data name="L_RollCallGender" xml:space="preserve"><value>roll-call gender filter</value></data>
+  <data name="L_LotteryCount" xml:space="preserve"><value>lottery count</value></data>
+  <data name="L_LotteryGroup" xml:space="preserve"><value>lottery group</value></data>
+  <data name="L_LotteryGender" xml:space="preserve"><value>lottery gender filter</value></data>
+</root>

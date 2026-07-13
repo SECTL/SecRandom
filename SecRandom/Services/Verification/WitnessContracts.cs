@@ -24,6 +24,21 @@ public sealed class WitnessChallengeResponse
     public string KeyId { get; init; } = string.Empty;
 }
 
+public sealed class WitnessTicket
+{
+    public string TicketId { get; init; } = string.Empty;
+    public string ServerNonce { get; init; } = string.Empty;
+    public string SubjectId { get; init; } = string.Empty;
+    public DateTimeOffset ExpiresAtUtc { get; init; }
+    public string KeyId { get; init; } = string.Empty;
+}
+
+public sealed class WitnessTicketResponse
+{
+    public string Token { get; init; } = string.Empty;
+    public string KeyId { get; init; } = string.Empty;
+}
+
 public sealed class WitnessReceipt
 {
     public Guid ProofId { get; init; }
@@ -48,8 +63,10 @@ public interface IWitnessClient
         byte[] clientNonce,
         CancellationToken cancellationToken);
 
+    Task<(WitnessTicket Ticket, string Token)> CreateTicketAsync(CancellationToken cancellationToken);
+
     Task<string> FinalizeAsync(
-        string challengeToken,
+        string ticketToken,
         byte[] clientNonce,
         DrawProof proof,
         CancellationToken cancellationToken);
