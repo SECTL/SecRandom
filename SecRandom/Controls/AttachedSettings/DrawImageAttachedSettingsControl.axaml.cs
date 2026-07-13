@@ -6,12 +6,13 @@ using SecRandom.Core;
 using SecRandom.Core.Abstraction.Controls;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
+using SecRandom.Core.Icons;
 using SecRandom.Core.Models.AttachedSettings;
 
 namespace SecRandom.Controls.AttachedSettings;
 
 [AttachedSettingsUsage(AttachedSettingsTargets.Student | AttachedSettingsTargets.Prize)]
-[AttachedSettingsControlInfo(GlobalConstants.DrawImageAttachedSettings, "\uE91B")]
+[AttachedSettingsControlInfo(GlobalConstants.DrawImageAttachedSettings, FluentIcons.GlobeSearchFilled)]
 public partial class DrawImageAttachedSettingsControl : AttachedSettingsControlBase<DrawImageAttachedSettings>,
     INotifyPropertyChanged
 {

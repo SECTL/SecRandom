@@ -32,6 +32,7 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
     private const string BackupDirectoryName = "backup";
 
     private string _backupUsageText = FormatSize(0);
+    private bool _isSubscribed;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
     private readonly ILogger<BackupSettingsPage> _logger =
         IAppHost.GetService<ILogger<BackupSettingsPage>>();
@@ -48,6 +49,8 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
                 value => Settings.IncludeList = value),
             new(LR.S_Includes_History, () => Settings.IncludeHistory,
                 value => Settings.IncludeHistory = value),
+            new(LR.S_Includes_Proofs, () => Settings.IncludeProofs,
+                value => Settings.IncludeProofs = value),
             new(LR.S_Includes_Audio, () => Settings.IncludeAudio,
                 value => Settings.IncludeAudio = value),
             new(LR.S_Includes_Cses, () => Settings.IncludeCses,
@@ -62,6 +65,7 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         SelectedIncludeOptions = BuildSelectedOptions(IncludeOptions);
         DataContext = this;
         InitializeComponent();
+        SubscribeSettings();
         RefreshBackups();
     }
 
@@ -89,6 +93,37 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
     {
         add => NotifyPropertyChanged += value;
         remove => NotifyPropertyChanged -= value;
+    }
+
+    private SecRandom.Core.Services.Config.MainConfigHandler ConfigHandler { get; } =
+        IAppHost.GetService<SecRandom.Core.Services.Config.MainConfigHandler>();
+
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        SubscribeSettings();
+    }
+
+    private void OnUnloaded(object? sender, RoutedEventArgs e)
+    {
+        if (!_isSubscribed)
+            return;
+
+        Settings.PropertyChanged -= SettingsOnPropertyChanged;
+        _isSubscribed = false;
+    }
+
+    private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        ConfigHandler.Save();
+    }
+
+    private void SubscribeSettings()
+    {
+        if (_isSubscribed)
+            return;
+
+        Settings.PropertyChanged += SettingsOnPropertyChanged;
+        _isSubscribed = true;
     }
 
     private void RefreshBackups()
@@ -136,6 +171,8 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         {
             option.SetSelected(false);
         }
+
+        ConfigHandler.Save();
     }
 
     private async void ManualBackup_OnClick(object? sender, RoutedEventArgs e)
@@ -258,11 +295,16 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         if (Settings.IncludeConfig) yield return "config/settings.json";
         if (Settings.IncludeList) yield return "list";
         if (Settings.IncludeHistory) yield return "history";
+        if (Settings.IncludeProofs) yield return "proofs";
 
         if (Settings.IncludeAudio) yield return "audio";
         if (Settings.IncludeCses) yield return "CSES";
         if (Settings.IncludeImages) yield return "images";
-        if (Settings.IncludeThemes) yield return "theme";
+        if (Settings.IncludeThemes)
+        {
+            yield return "theme";
+            yield return "themes";
+        }
         if (Settings.IncludeLogs) yield return "logs";
     }
 

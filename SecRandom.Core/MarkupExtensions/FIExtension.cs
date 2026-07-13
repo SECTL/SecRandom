@@ -3,7 +3,7 @@ using SecRandom.Core.Icons;
 namespace SecRandom.Core.MarkupExtensions;
 
 /// <summary>
-///     XAML 标记扩展，用法：<c>{ci:FI AccessTimeRegular}</c>
+///     XAML 标记扩展，用法：<c>{ci:FI AccessTimeFilled}</c>
 /// </summary>
 public class FiExtension
 {

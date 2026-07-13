@@ -598,11 +598,12 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         var source = candidates?.ToList() ?? GetCandidates().ToList();
         RemainingItems.Clear();
         foreach (var item in source
-                     .Where(student => !HasReachedRepeatLimit(student))
-                     .OrderBy(student => student.Group)
-                     .ThenBy(student => student.Gender)
-                     .ThenBy(student => student.Name)
-                     .Select(CreateRemainingItem))
+                      .Where(student => !HasReachedRepeatLimit(student))
+                      .OrderBy(student => string.IsNullOrWhiteSpace(student.Id))
+                      .ThenBy(student => int.TryParse(student.Id, out _) ? 0 : 1)
+                      .ThenBy(student => int.TryParse(student.Id, out var id) ? id : int.MaxValue)
+                      .ThenBy(student => string.IsNullOrWhiteSpace(student.Id) ? student.Name.Trim() : student.Id.Trim(), StringComparer.CurrentCultureIgnoreCase)
+                      .Select(CreateRemainingItem))
             RemainingItems.Add(item);
     }
 
@@ -698,6 +699,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     {
         return new RollCallRemainingItem(
             FormatStudent(student),
+            student.Id,
+            student.Name,
             student.Group,
             student.Gender,
             student.Tags);
@@ -875,6 +878,11 @@ public sealed record RollCallResultItem(
 
 public sealed record RollCallRemainingItem(
     string DisplayText,
+    string Id,
+    string Name,
     string Group,
     string Gender,
-    string Tags);
+    string Tags)
+{
+    public bool IsTagsVisible => !string.IsNullOrWhiteSpace(Tags);
+}

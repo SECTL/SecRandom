@@ -12,29 +12,45 @@
              Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
-            <sr:IconText Text="{x:Static lc:Resources.Settings_FaceDetector}"
-                         Glyph="{sr:Fi VideoPersonSparkleRegular}"
-                         Margin="0 0 0 4" />
-
-            <fa:FASettingsExpander Header="{x:Static lc:Resources.Settings_FaceDetector_DetectorType}"
-                                   Description="{x:Static lc:Resources.Settings_FaceDetector_DetectorType_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi BoxRegular}}">
-                <fa:FASettingsExpander.Footer>
-                    <TextBox Text="{Binding Settings.DetectorType}" MinWidth="220" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
+            <TextBlock Text="{x:Static lc:Resources.Settings_FaceDetector_CameraGroup}"
+                       Classes="subtitle" />
             <fa:FASettingsExpander Header="{x:Static lc:Resources.Settings_FaceDetector_CameraSource}"
                                    Description="{x:Static lc:Resources.Settings_FaceDetector_CameraSource_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi CameraRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi CameraFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <TextBox Text="{Binding Settings.CameraSource}" MinWidth="220" />
+                    <ComboBox x:Name="CameraComboBox"
+                              MinWidth="220"
+                              SelectionChanged="CameraComboBox_OnSelectionChanged" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+            <fa:FASettingsExpander Header="{x:Static lc:Resources.Settings_FaceDetector_Resolution}"
+                                   Description="{x:Static lc:Resources.Settings_FaceDetector_Resolution_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ResizeFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox x:Name="ResolutionComboBox"
+                              MinWidth="220"
+                              SelectionChanged="ResolutionComboBox_OnSelectionChanged" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <TextBlock Text="{x:Static lc:Resources.Settings_FaceDetector_DetectionGroup}"
+                       Classes="subtitle" />
+            <fa:FASettingsExpander Header="{x:Static lc:Resources.Settings_FaceDetector_DetectorMode}"
+                                   Description="{x:Static lc:Resources.Settings_FaceDetector_DetectorMode_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi VideoPersonSparkleFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.DetectorMode}" MinWidth="220">
+                        <ComboBoxItem Content="{x:Static lc:Resources.Settings_FaceDetector_DetectorMode_Lightweight}" />
+                        <ComboBoxItem Content="{x:Static lc:Resources.Settings_FaceDetector_DetectorMode_Enhanced}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <TextBlock Text="{x:Static lc:Resources.Settings_FaceDetector_PickingGroup}"
+                       Classes="subtitle" />
             <fa:FASettingsExpander Header="{x:Static lc:Resources.Settings_FaceDetector_PreviewMode}"
                                    Description="{x:Static lc:Resources.Settings_FaceDetector_PreviewMode_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi VideoPersonSparkleRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi VideoPersonSparkleFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.CameraPreviewMode}">
                         <ComboBoxItem Content="{x:Static lc:Resources.Settings_FaceDetector_PreviewMode_Pick}" />
@@ -43,45 +59,30 @@
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
-
             <fa:FASettingsExpander Header="{x:Static lc:Resources.Settings_FaceDetector_Duration}"
                                    Description="{x:Static lc:Resources.Settings_FaceDetector_Duration_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TimerRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimerFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.PickingDurationSeconds}" Minimum="1" Maximum="60" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander Header="{x:Static lc:Resources.Settings_FaceDetector_ModelInputSize}"
-                                   Description="{x:Static lc:Resources.Settings_FaceDetector_ModelInputSize_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ResizeRegular}}">
-                <fa:FASettingsExpander.Footer>
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <NumericUpDown Value="{Binding Settings.ModelInputWidth}" Minimum="32" Maximum="4096" />
-                        <NumericUpDown Value="{Binding Settings.ModelInputHeight}" Minimum="32" Maximum="4096" />
-                    </StackPanel>
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
             <fa:FASettingsExpander Header="{x:Static lc:Resources.Settings_FaceDetector_ProcessAudio}"
                                    Description="{x:Static lc:Resources.Settings_FaceDetector_ProcessAudio_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi Speaker2Regular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.PlayProcessAudio}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
-
             <fa:FASettingsExpander Header="{x:Static lc:Resources.Settings_FaceDetector_ResultAudio}"
                                    Description="{x:Static lc:Resources.Settings_FaceDetector_ResultAudio_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi Speaker2Regular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.PlayResultAudio}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
-
             <fa:FASettingsExpander Header="{x:Static lc:Resources.Settings_FaceDetector_FrameColor}"
                                    Description="{x:Static lc:Resources.Settings_FaceDetector_FrameColor_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ColorPicker Color="{Binding Settings.PickerFrameColor}" />
                 </fa:FASettingsExpander.Footer>

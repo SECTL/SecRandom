@@ -22,7 +22,7 @@
 
             <fa:FASettingsExpander Header="{x:Static lr:Resources.S_CurrentList}"
                                    Description="{x:Static lr:Resources.S_CurrentList_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleListRegular}}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleListFilled}}"
                                    IsExpanded="True">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox MinWidth="220"

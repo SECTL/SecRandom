@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -28,13 +28,13 @@
 
             <sr:IconText x:Name="S_Behavior"
                          Text="{x:Static lsb:Resources.S_Behavior}"
-                         Glyph="{sr:Fi FlashRegular}"
+                         Glyph="{sr:Fi FlashFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Behavior_Language"
                                    Header="{x:Static lsb:Resources.S_Behavior_Language}"
                                    Description="{x:Static lsb:Resources.S_Behavior_Language_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi LocalLanguageRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi LocalLanguageFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.Language}">
                         <ComboBoxItem Content="简体中文" />
@@ -47,7 +47,7 @@
             <fa:FASettingsExpander x:Name="S_Behavior_Autostart"
                                    Header="{x:Static lsb:Resources.S_Behavior_Autostart}"
                                    Description="{x:Static lsb:Resources.S_Behavior_Autostart_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.Autostart}" />
                 </fa:FASettingsExpander.Footer>
@@ -56,7 +56,7 @@
             <fa:FASettingsExpander x:Name="S_Behavior_ShowStartupWindow"
                                    Header="{x:Static lsb:Resources.S_Behavior_ShowStartupWindow}"
                                    Description="{x:Static lsb:Resources.S_Behavior_ShowStartupWindow_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.ShowStartupWindow}" />
                 </fa:FASettingsExpander.Footer>
@@ -65,7 +65,7 @@
             <fa:FASettingsExpander x:Name="S_Behavior_AutoSaveWindowSize"
                                    Header="{x:Static lsb:Resources.S_Behavior_AutoSaveWindowSize}"
                                    Description="{x:Static lsb:Resources.S_Behavior_AutoSaveWindowSize_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi SaveRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi SaveFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.AutoSaveWindowSize}" />
                 </fa:FASettingsExpander.Footer>
@@ -74,7 +74,7 @@
             <fa:FASettingsExpander x:Name="S_Behavior_MainWindowTopmostMode"
                                    Header="{x:Static lsb:Resources.S_Behavior_MainWindowTopmostMode}"
                                    Description="{x:Static lsb:Resources.S_Behavior_MainWindowTopmostMode_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PinRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PinFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.MainWindowTopmostMode}">
                         <ComboBoxItem Content="{x:Static lsb:Resources.O_MainWindowTopmostMode_None}" />
@@ -88,7 +88,7 @@
             <fa:FASettingsExpander x:Name="S_Behavior_BackgroundResident"
                                    Header="{x:Static lsb:Resources.S_Behavior_BackgroundResident}"
                                    Description="{x:Static lsb:Resources.S_Behavior_BackgroundResident_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ResizeRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ResizeFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.BackgroundResident}" />
                 </fa:FASettingsExpander.Footer>
@@ -97,7 +97,7 @@
             <fa:FASettingsExpander x:Name="S_Behavior_UrlProtocol"
                                     Header="{x:Static lsb:Resources.S_Behavior_UrlProtocol}"
                                     Description="{x:Static lsb:Resources.S_Behavior_UrlProtocol_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi LinkRegular}}">
+                                    IconSource="{sr:FluentIconSource {sr:Fi LinkFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.UrlProtocol}" />
                 </fa:FASettingsExpander.Footer>
@@ -106,7 +106,7 @@
             <fa:FASettingsExpander x:Name="S_Behavior_CrashRecovery"
                                     Header="{x:Static lsb:Resources.S_Behavior_CrashRecovery}"
                                     Description="{x:Static lsb:Resources.S_Behavior_CrashRecovery_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncRegular}}">
+                                    IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding CrashRecoverySettings.Mode}">
                         <ComboBoxItem Content="{x:Static lsb:Resources.O_CrashRecoveryMode_None}" />

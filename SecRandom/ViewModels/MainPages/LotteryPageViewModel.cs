@@ -503,7 +503,12 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         var prizes = (source ?? GetCurrentPrizes()).ToList();
         var temporaryCounts = _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName);
         RemainingItems.Clear();
-        foreach (var item in prizes.Select(prize => CreateRemainingItem(prize, temporaryCounts)))
+        foreach (var item in prizes
+                     .OrderBy(prize => string.IsNullOrWhiteSpace(prize.Id))
+                     .ThenBy(prize => int.TryParse(prize.Id, out _) ? 0 : 1)
+                     .ThenBy(prize => int.TryParse(prize.Id, out var id) ? id : int.MaxValue)
+                     .ThenBy(prize => string.IsNullOrWhiteSpace(prize.Id) ? prize.Name.Trim() : prize.Id.Trim(), StringComparer.CurrentCultureIgnoreCase)
+                     .Select(prize => CreateRemainingItem(prize, temporaryCounts)))
             RemainingItems.Add(item);
     }
 
@@ -539,7 +544,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             : Config.LotterySettings.DrawMode == DrawMode.Repeat
                 ? Math.Max(1, drawn + 1)
                 : Math.Max(0, GetLotteryRepeatThreshold() - drawn);
-        return new LotteryRemainingItem(FormatPrize(prize), prize.Tags, remaining, drawn);
+        return new LotteryRemainingItem(FormatPrize(prize), prize.Id, prize.Name, prize.Tags, remaining, drawn);
     }
 
     private static int GetTemporaryPrizeCount(Prize prize, IReadOnlyDictionary<string, int> temporaryCounts)
@@ -937,7 +942,7 @@ public sealed record LotteryResultItem(
     public bool IsPlaceholderVisible => IsImageEnabled && Image is null;
 }
 
-public sealed record LotteryRemainingItem(string DisplayText, string Tags, int Remaining, int DrawnCount)
+public sealed record LotteryRemainingItem(string DisplayText, string Id, string Name, string Tags, int Remaining, int DrawnCount)
 {
     public bool IsTagsVisible => !string.IsNullOrWhiteSpace(Tags);
     public string CountText => string.Format(SR.M_RemainingCountFormat, Remaining, DrawnCount);

@@ -9,6 +9,7 @@ public enum ArchiveKind
 {
     AllData,
     ManualBackup,
+    AutomaticBackup,
     PreImportSettings,
     PreImportAllData,
     Diagnostic

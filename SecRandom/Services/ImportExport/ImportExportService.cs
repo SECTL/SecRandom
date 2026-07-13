@@ -44,6 +44,7 @@ public sealed class ImportExportService(
 
     private readonly string _dataDirectory = Path.Combine(AppContext.BaseDirectory, "data");
     private readonly string _backupDirectory = Path.Combine(AppContext.BaseDirectory, "data", "backup");
+    private readonly object _archiveOperationLock = new();
 
     public Task<string> ExportDiagnosticAsync(string destinationPath, bool includeExtendedData = false,
         CancellationToken cancellationToken = default)
@@ -158,22 +159,25 @@ public sealed class ImportExportService(
     {
         return Task.Run(() =>
         {
-            var inspection = InspectSettings(sourcePath, cancellationToken);
-            if (inspection.Format == ArchiveFormat.Unknown)
-                throw new InvalidDataException("不支持的设置文件格式。");
+            lock (_archiveOperationLock)
+            {
+                var inspection = InspectSettings(sourcePath, cancellationToken);
+                if (inspection.Format == ArchiveFormat.Unknown)
+                    throw new InvalidDataException("不支持的设置文件格式。");
 
-            var warnings = new List<string>(inspection.Warnings);
-            var candidate = ReadSettingsCandidate(sourcePath, inspection.Format, warnings);
-            ValidateSettingsCandidate(candidate);
+                var warnings = new List<string>(inspection.Warnings);
+                var candidate = ReadSettingsCandidate(sourcePath, inspection.Format, warnings);
+                ValidateSettingsCandidate(candidate);
 
-            SaveCurrentState();
-            var snapshot = CreateArchive(CreateBackupPath("pre_import_settings"), ArchiveKind.PreImportSettings,
-                ["config/settings.json"], cancellationToken);
+                SaveCurrentState();
+                var snapshot = CreateArchive(CreateBackupPath("pre_import_settings"), ArchiveKind.PreImportSettings,
+                    ["config/settings.json"], cancellationToken);
 
-            AtomicWriteSettings(candidate);
-            configHandler.Reload();
-            SynchronizeDesktopIntegrations(warnings);
-            return new ImportResult(snapshot, 1, warnings, []);
+                AtomicWriteSettings(candidate);
+                configHandler.Reload();
+                SynchronizeDesktopIntegrations(warnings);
+                return new ImportResult(snapshot, 1, warnings, []);
+            }
         }, cancellationToken);
     }
 
@@ -189,6 +193,30 @@ public sealed class ImportExportService(
         return CreateArchive(CreateBackupPath("manual"), ArchiveKind.ManualBackup, roots, CancellationToken.None);
     }
 
+    public string CreateAutomaticBackup(CancellationToken cancellationToken = default)
+    {
+        var backup = configHandler.Data.General.Backup;
+        var roots = new List<string>();
+        if (backup.IncludeConfig) roots.Add("config/settings.json");
+        if (backup.IncludeList) roots.Add("list");
+        if (backup.IncludeHistory) roots.Add("history");
+        if (backup.IncludeProofs) roots.Add("proofs");
+        if (backup.IncludeAudio) roots.Add("audio");
+        if (backup.IncludeCses) roots.Add("CSES");
+        if (backup.IncludeImages) roots.Add("images");
+        if (backup.IncludeThemes)
+        {
+            roots.Add("theme");
+            roots.Add("themes");
+        }
+        if (backup.IncludeLogs) roots.Add("logs");
+
+        if (roots.Count == 0)
+            throw new InvalidOperationException("请至少选择一项备份内容。");
+
+        return CreateArchive(CreateBackupPath("auto"), ArchiveKind.AutomaticBackup, roots, cancellationToken);
+    }
+
     public Task<ImportResult> RestoreBackupAsync(string sourcePath, CancellationToken cancellationToken = default)
     {
         return Task.Run(() => ImportArchive(sourcePath, createSnapshot: true, cancellationToken), cancellationToken);
@@ -196,47 +224,50 @@ public sealed class ImportExportService(
 
     private ImportResult ImportArchive(string sourcePath, bool createSnapshot, CancellationToken cancellationToken)
     {
-        var inspection = InspectArchive(sourcePath, cancellationToken);
-        if (inspection.Kind == ArchiveKind.Diagnostic)
-            throw new InvalidDataException("诊断数据不能导入。");
-        if (inspection.Format == ArchiveFormat.Unknown)
-            throw new InvalidDataException("不支持的备份文件格式。");
-
-        SaveCurrentState();
-        var snapshot = string.Empty;
-        if (createSnapshot)
-            snapshot = CreateArchive(CreateBackupPath("pre_import_all_data"), ArchiveKind.PreImportAllData,
-                AllDataRoots, cancellationToken);
-
-        var staging = Path.Combine(_dataDirectory, ".import-staging", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(staging);
-        try
+        lock (_archiveOperationLock)
         {
-            var warnings = new List<string>(inspection.Warnings);
-            var preserved = new List<string>();
-            var importedFiles = inspection.Format == ArchiveFormat.V2
-                ? MigrateV2Archive(sourcePath, staging, warnings, preserved, cancellationToken)
-                : ExtractCurrentArchive(sourcePath, staging, inspection.Format, cancellationToken);
+            var inspection = InspectArchive(sourcePath, cancellationToken);
+            if (inspection.Kind == ArchiveKind.Diagnostic)
+                throw new InvalidDataException("诊断数据不能导入。");
+            if (inspection.Format == ArchiveFormat.Unknown)
+                throw new InvalidDataException("不支持的备份文件格式。");
 
-            ValidateCandidate(staging);
-            var rootsToCommit = inspection.Kind == ArchiveKind.AllData
-                ? AllDataRoots
-                : [.. inspection.Roots, "legacy/v2-history"];
-            CommitCandidate(staging, rootsToCommit, inspection.Kind == ArchiveKind.AllData, warnings);
-            configHandler.Reload();
-            ReloadCurrentProfiles();
-            pluginManager.Refresh();
-            SynchronizeDesktopIntegrations(warnings);
-            return new ImportResult(snapshot, importedFiles, warnings, preserved);
-        }
-        catch
-        {
-            logger.LogWarning("导入未完成，当前数据保持不变。来源文件={FileName}", Path.GetFileName(sourcePath));
-            throw;
-        }
-        finally
-        {
-            TryDeleteDirectory(staging);
+            SaveCurrentState();
+            var snapshot = string.Empty;
+            if (createSnapshot)
+                snapshot = CreateArchive(CreateBackupPath("pre_import_all_data"), ArchiveKind.PreImportAllData,
+                    AllDataRoots, cancellationToken);
+
+            var staging = Path.Combine(_dataDirectory, ".import-staging", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(staging);
+            try
+            {
+                var warnings = new List<string>(inspection.Warnings);
+                var preserved = new List<string>();
+                var importedFiles = inspection.Format == ArchiveFormat.V2
+                    ? MigrateV2Archive(sourcePath, staging, warnings, preserved, cancellationToken)
+                    : ExtractCurrentArchive(sourcePath, staging, inspection.Format, cancellationToken);
+
+                ValidateCandidate(staging);
+                var rootsToCommit = inspection.Kind == ArchiveKind.AllData
+                    ? AllDataRoots
+                    : [.. inspection.Roots, "legacy/v2-history"];
+                CommitCandidate(staging, rootsToCommit, inspection.Kind == ArchiveKind.AllData, warnings);
+                configHandler.Reload();
+                ReloadCurrentProfiles();
+                pluginManager.Refresh();
+                SynchronizeDesktopIntegrations(warnings);
+                return new ImportResult(snapshot, importedFiles, warnings, preserved);
+            }
+            catch
+            {
+                logger.LogWarning("导入未完成，当前数据保持不变。来源文件={FileName}", Path.GetFileName(sourcePath));
+                throw;
+            }
+            finally
+            {
+                TryDeleteDirectory(staging);
+            }
         }
     }
 
@@ -300,21 +331,39 @@ public sealed class ImportExportService(
 
     private string CreateArchive(string destinationPath, ArchiveKind kind, IEnumerable<string> roots, CancellationToken cancellationToken)
     {
-        SaveCurrentState();
-        EnsureParents(destinationPath);
-        using var archive = ZipFile.Open(destinationPath, ZipArchiveMode.Create);
-        var files = new List<ArchiveFileEntry>();
-        foreach (var root in roots.Distinct(StringComparer.OrdinalIgnoreCase))
+        lock (_archiveOperationLock)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            AddRootToArchive(archive, root, files, cancellationToken);
+            var temporaryPath = destinationPath + $".{Guid.NewGuid():N}.tmp";
+            try
+            {
+                SaveCurrentState();
+                EnsureParents(temporaryPath);
+                var files = new List<ArchiveFileEntry>();
+                using (var archive = ZipFile.Open(temporaryPath, ZipArchiveMode.Create))
+                {
+                    foreach (var root in roots.Distinct(StringComparer.OrdinalIgnoreCase))
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        AddRootToArchive(archive, root, files, cancellationToken);
+                    }
+                    WriteManifest(archive, kind, files);
+                }
+
+                InspectArchive(temporaryPath, cancellationToken);
+                File.Move(temporaryPath, destinationPath);
+                if (Path.GetDirectoryName(Path.GetFullPath(destinationPath))?.Equals(
+                        Path.GetFullPath(_backupDirectory), StringComparison.OrdinalIgnoreCase) == true)
+                    TrimBackups();
+                logger.LogInformation("已创建数据归档：类型={Kind}，文件={FileName}，文件数={Count}", kind, Path.GetFileName(destinationPath), files.Count);
+                return destinationPath;
+            }
+            catch
+            {
+                TryDeletePath(temporaryPath);
+                throw;
+            }
         }
-        WriteManifest(archive, kind, files);
-        if (Path.GetDirectoryName(Path.GetFullPath(destinationPath))?.Equals(
-                Path.GetFullPath(_backupDirectory), StringComparison.OrdinalIgnoreCase) == true)
-            TrimBackups();
-        logger.LogInformation("已创建数据归档：类型={Kind}，文件={FileName}，文件数={Count}", kind, Path.GetFileName(destinationPath), files.Count);
-        return destinationPath;
     }
 
     private void AddRootToArchive(ZipArchive archive, string root, List<ArchiveFileEntry> files, CancellationToken cancellationToken)
@@ -881,7 +930,8 @@ public sealed class ImportExportService(
     {
         var maximum = configHandler.Data.General.Backup.AutoBackupMaxCount;
         if (maximum <= 0 || !Directory.Exists(_backupDirectory)) return;
-        foreach (var file in new DirectoryInfo(_backupDirectory).EnumerateFiles("*.zip").OrderByDescending(file => file.CreationTimeUtc).Skip(maximum))
+        foreach (var file in new DirectoryInfo(_backupDirectory).EnumerateFiles("SecRandom_auto_*.zip")
+                     .OrderByDescending(file => file.LastWriteTimeUtc).ThenByDescending(file => file.Name).Skip(maximum))
             file.Delete();
     }
 

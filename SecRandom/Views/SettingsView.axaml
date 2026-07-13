@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -54,7 +54,7 @@
                                  SelectedItem="{Binding ViewModel.SelectedSettings}"
                                  KeyUp="SearchBox_OnKeyUp">
                     <AutoCompleteBox.InnerRightContent>
-                        <sr:FluentIcon Glyph="&#xEEF3;" Margin="6"
+                         <sr:FluentIcon Glyph="{sr:Fi SearchFilled}" Margin="6"
                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     </AutoCompleteBox.InnerRightContent>
                 </AutoCompleteBox>
@@ -65,41 +65,41 @@
                             IsVisible="{Binding ViewModel.IsRequestedRestart}"
                             ToolTip.Tip="{x:Static ls:Resources.M_NeedsRestarting_Tooltip}"
                             Click="ButtonRestartApp_OnClick">
-                        <sr:IconText Glyph="&#xE0BD;" Text="{x:Static ls:Resources.M_NeedsRestarting}" />
+                         <sr:IconText Glyph="{sr:Fi ArrowCounterclockwiseFilled}" Text="{x:Static ls:Resources.M_NeedsRestarting}" />
                     </Button>
 
                     <Button Theme="{StaticResource TransparentButton}"
                             ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions}"
                             VerticalAlignment="Center" HorizontalAlignment="Right"
                             Margin="0 0 4 0">
-                        <sr:FluentIcon Glyph="{sr:Fi MoreHorizontalRegular}" />
+                        <sr:FluentIcon Glyph="{sr:Fi MoreHorizontalFilled}" />
 
                         <Button.Flyout>
                             <MenuFlyout>
-                                <MenuItem Icon="{sr:FluentIcon {sr:Fi DocumentRegular}}"
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi DocumentFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_LogViewer}"
                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_LogViewer_D}"
                                           Click="LogViewerMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseArrowDownRegular}}"
+                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseArrowDownFilled}}"
                                            Header="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData}"
                                            ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData_D}"
                                            Click="ExportDiagnosticDataMenuItem_OnClick" />
 
                                 <Separator />
 
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsRegular}}"
+                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsFilled}}"
                                            Header="{x:Static ls:Resources.C_MoreOptions_ExportSettings}"
                                            ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportSettings_D}"
                                            Click="ExportSettingsMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsRegular}}"
+                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsFilled}}"
                                            Header="{x:Static ls:Resources.C_MoreOptions_ImportSettings}"
                                            ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportSettings_D}"
                                            Click="ImportSettingsMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowRegular}}"
+                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowFilled}}"
                                            Header="{x:Static ls:Resources.C_MoreOptions_ExportAllData}"
                                            ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportAllData_D}"
                                            Click="ExportAllDataMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowRegular}}"
+                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowFilled}}"
                                            Header="{x:Static ls:Resources.C_MoreOptions_ImportAllData}"
                                            ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportAllData_D}"
                                            Click="ImportAllDataMenuItem_OnClick" />

@@ -28,7 +28,6 @@ public partial class MainConfigModel : ConfigBase
 
     // 个性化
     [ObservableProperty] private AppearanceSettingsConfig _appearance = new();
-    [ObservableProperty] private ThemeManagementSettingsConfig _themeManagementSettings = new();
 
     // 抽取设置
     [ObservableProperty] private FairDrawSettingsConfig _fairDrawSettings = new();

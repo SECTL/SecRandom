@@ -51,6 +51,9 @@
     <data name="S_Includes_History" xml:space="preserve">
         <value>历史记录</value>
     </data>
+    <data name="S_Includes_Proofs" xml:space="preserve">
+        <value>抽取证明文件</value>
+    </data>
     <data name="S_Includes_Audio" xml:space="preserve">
         <value>音频资源</value>
     </data>
@@ -80,6 +83,9 @@
     </data>
     <data name="S_Includes_History_D" xml:space="preserve">
         <value>抽取历史记录数据（history）</value>
+    </data>
+    <data name="S_Includes_Proofs_D" xml:space="preserve">
+        <value>可复现和核验抽取结果的证明文件（proofs）</value>
     </data>
     <data name="S_Includes_Images_D" xml:space="preserve">
         <value>学生/奖品图片资源（images）</value>

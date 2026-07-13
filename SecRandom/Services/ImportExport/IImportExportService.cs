@@ -15,5 +15,6 @@ public interface IImportExportService
     Task<ImportResult> ImportSettingsAsync(string sourcePath, CancellationToken cancellationToken = default);
     Task<ImportResult> ImportAllDataAsync(string sourcePath, CancellationToken cancellationToken = default);
     string CreateManualBackup(IReadOnlyCollection<string> roots);
+    string CreateAutomaticBackup(CancellationToken cancellationToken = default);
     Task<ImportResult> RestoreBackupAsync(string sourcePath, CancellationToken cancellationToken = default);
 }

@@ -14,13 +14,13 @@
         <StackPanel Classes="page-container animated-intro">
             <sr:IconText x:Name="S_Music"
                          Text="{x:Static lsp:Resources.S_Music}"
-                         Glyph="{sr:Fi MusicNote2Regular}"
+                         Glyph="{sr:Fi MusicNote2Filled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Music_BackgroundLoop"
                                    Header="{x:Static lsp:Resources.S_Music_BackgroundLoop}"
                                    Description="{x:Static lsp:Resources.S_Music_BackgroundLoop_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi MusicNote2Regular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi MusicNote2Filled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.BackgroundMusicLoop}" />
                 </fa:FASettingsExpander.Footer>
@@ -28,12 +28,12 @@
 
             <Separator Margin="0 12 0 4" />
             <sr:IconText Text="{x:Static lsp:Resources.S_PageManagement}"
-                         Glyph="{sr:Fi PanelRightRegular}"
+                         Glyph="{sr:Fi PanelRightFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_RollCallPanelPosition}"
                                    Description="{x:Static lsp:Resources.S_RollCallPanelPosition_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PanelRightRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PanelRightFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.RollCallControlPanelPosition}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_Right}" />
@@ -44,7 +44,7 @@
 
             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_RollCallControls}"
                                     Description="{x:Static lsp:Resources.S_RollCallControls_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi AppsListRegular}}">
+                                    IconSource="{sr:FluentIconSource {sr:Fi AppsListFilled}}">
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_RollCallResetButton}">
                     <fa:FASettingsExpanderItem.Footer>
                         <ToggleSwitch IsChecked="{Binding Settings.RollCallResetButton}" />
@@ -96,7 +96,7 @@
 
             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_LotteryPanelPosition}"
                                     Description="{x:Static lsp:Resources.S_LotteryPanelPosition_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi GiftRegular}}">
+                                    IconSource="{sr:FluentIconSource {sr:Fi GiftFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.LotteryControlPanelPosition}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_Right}" />
@@ -107,7 +107,7 @@
 
             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_LotteryControls}"
                                     Description="{x:Static lsp:Resources.S_LotteryControls_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi AppsListRegular}}">
+                                    IconSource="{sr:FluentIconSource {sr:Fi AppsListFilled}}">
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryResetButton}">
                     <fa:FASettingsExpanderItem.Footer>
                         <ToggleSwitch IsChecked="{Binding Settings.LotteryResetButton}" />
@@ -166,13 +166,13 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_Shortcut"
                          Text="{x:Static lsp:Resources.S_Shortcut}"
-                         Glyph="{sr:Fi FlashRegular}"
+                         Glyph="{sr:Fi FlashFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Shortcut_Enable"
                                    Header="{x:Static lsp:Resources.S_Shortcut_Enable}"
                                    Description="{x:Static lsp:Resources.S_Shortcut_Enable_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi FlashRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.EnableShortcut}" />
                 </fa:FASettingsExpander.Footer>
@@ -181,7 +181,7 @@
             <fa:FASettingsExpander x:Name="S_Shortcut_OpenRollCallPage"
                                    Header="{x:Static lsp:Resources.S_Shortcut_OpenRollCallPage}"
                                    Description="{x:Static lsp:Resources.S_Shortcut_OpenRollCallPage_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PersonRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PersonFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <TextBox Text="{Binding Settings.OpenRollCallPageShortcut}"
                              MinWidth="160"
@@ -192,7 +192,7 @@
             <fa:FASettingsExpander x:Name="S_Shortcut_QuickDraw"
                                    Header="{x:Static lsp:Resources.S_Shortcut_QuickDraw}"
                                    Description="{x:Static lsp:Resources.S_Shortcut_QuickDraw_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi FlashRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <TextBox Text="{Binding Settings.QuickDrawShortcut}"
                              MinWidth="160"
@@ -203,7 +203,7 @@
             <fa:FASettingsExpander x:Name="S_Shortcut_OpenLotteryPage"
                                    Header="{x:Static lsp:Resources.S_Shortcut_OpenLotteryPage}"
                                    Description="{x:Static lsp:Resources.S_Shortcut_OpenLotteryPage_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <TextBox Text="{Binding Settings.OpenLotteryPageShortcut}"
                              MinWidth="160"

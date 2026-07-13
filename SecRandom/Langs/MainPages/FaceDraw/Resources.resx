@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true" />
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="C_Start" xml:space="preserve"><value>开始抽取</value></data>
+  <data name="C_Stop" xml:space="preserve"><value>停止</value></data>
+  <data name="M_Connecting" xml:space="preserve"><value>正在连接摄像头...</value></data>
+  <data name="M_Starting" xml:space="preserve"><value>正在启动摄像头预览</value></data>
+  <data name="M_Stopped" xml:space="preserve"><value>预览已停止</value></data>
+  <data name="M_Ready" xml:space="preserve"><value>检测正常</value></data>
+  <data name="M_Recognizing" xml:space="preserve"><value>正在识别画面中的人脸</value></data>
+  <data name="M_NoFace" xml:space="preserve"><value>未识别到人脸，请调整距离或光线后重试</value></data>
+  <data name="M_DetectorUnavailable" xml:space="preserve"><value>检测器暂时不可用，仍继续显示画面</value></data>
+  <data name="M_Picking" xml:space="preserve"><value>正在抽取...</value></data>
+  <data name="M_FaceCountEmpty" xml:space="preserve"><value>识别到 0 人</value></data>
+  <data name="M_FaceCountFormat" xml:space="preserve"><value>识别到 {0} 人</value></data>
+  <data name="M_PickedFormat" xml:space="preserve"><value>已抽取 {0} 人</value></data>
+</root>

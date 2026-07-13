@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -16,13 +16,13 @@
         <StackPanel Classes="page-container">
             <sr:IconText x:Name="S_Theme"
                          Text="{x:Static lspa:Resources.S_Theme}"
-                         Glyph="{sr:Fi ColorRegular}"
+                         Glyph="{sr:Fi ColorFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Theme_Theme"
                                    Header="{x:Static lspa:Resources.S_Theme_Theme}"
                                    Description="{x:Static lspa:Resources.S_Theme_Theme_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi DarkThemeRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi DarkThemeFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.Theme}">
                         <ComboBoxItem Content="{x:Static lspa:Resources.O_Theme_Light}" />
@@ -35,7 +35,7 @@
             <fa:FASettingsExpander x:Name="S_Theme_ThemeColor"
                                    Header="{x:Static lspa:Resources.S_Theme_ThemeColor}"
                                    Description="{x:Static lspa:Resources.S_Theme_ThemeColor_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="4">
                         <ColorPicker Color="{Binding Settings.ThemeColor}"
@@ -54,13 +54,13 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_Font"
                          Text="{x:Static lspa:Resources.S_Font}"
-                         Glyph="{sr:Fi TextFontRegular}"
+                         Glyph="{sr:Fi TextFontFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Font_FontFamily"
                                    Header="{x:Static lspa:Resources.S_Font_FontFamily}"
                                    Description="{x:Static lspa:Resources.S_Font_FontFamily_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <sr:FontComboBox Value="{Binding Settings.Font}" />
                 </fa:FASettingsExpander.Footer>
@@ -69,7 +69,7 @@
             <fa:FASettingsExpander x:Name="S_Font_FontWeight"
                                    Header="{x:Static lspa:Resources.S_Font_FontWeight}"
                                    Description="{x:Static lspa:Resources.S_Font_FontWeight_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TextBoldRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextBoldFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.FontWeight}">
                         <ComboBoxItem Content="{x:Static lspa:Resources.O_FontWeight_Thin}" />

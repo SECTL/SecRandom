@@ -106,24 +106,38 @@
         </DataTemplate>
 
         <DataTemplate x:Key="RollCallRemainingItemTemplate"
-                      DataType="vm:RollCallRemainingItem">
-            <Border Padding="0 8"
-                    BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
-                    BorderThickness="0 0 0 1">
-                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                       DataType="vm:RollCallRemainingItem">
+            <Border Width="220"
+                    MinHeight="96"
+                    Margin="0 12 12 0"
+                    Padding="12"
+                    CornerRadius="6"
+                    BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                    BorderThickness="1"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
                     <TextBlock Grid.Row="0"
-                               Grid.Column="0"
-                               Text="{Binding DisplayText}"
-                               FontWeight="SemiBold" />
+                                Grid.Column="0"
+                                Text="{Binding DisplayText}"
+                                TextTrimming="CharacterEllipsis"
+                                FontWeight="SemiBold" />
                     <TextBlock Grid.Row="0"
-                               Grid.Column="1"
+                                Grid.Column="1"
                                Text="{Binding Gender}"
                                Opacity="0.68" />
                     <TextBlock Grid.Row="1"
+                                Grid.ColumnSpan="2"
+                                Text="{Binding Group}"
+                                Opacity="0.58"
+                                FontSize="12"
+                                TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Row="2"
                                Grid.ColumnSpan="2"
-                               Text="{Binding Group}"
+                               Text="{Binding Tags}"
+                               IsVisible="{Binding IsTagsVisible}"
                                Opacity="0.58"
-                               FontSize="12" />
+                               FontSize="12"
+                               TextTrimming="CharacterEllipsis" />
                 </Grid>
             </Border>
         </DataTemplate>

@@ -100,7 +100,8 @@ public partial class BasicSettingsPage : UserControl
         ConfigHandler.Save();
 
         if (e.PropertyName == nameof(Settings.MainWindowTopmostMode)
-            && DesktopIntegration.IsUiAccessRequested() != DesktopIntegration.IsUiAccessAvailable())
+            && Settings.MainWindowTopmostMode == TopmostMode.UiAccess
+            && !DesktopIntegration.IsUiAccessAvailable())
             SettingsView.Current?.RequestRestartApp();
     }
 

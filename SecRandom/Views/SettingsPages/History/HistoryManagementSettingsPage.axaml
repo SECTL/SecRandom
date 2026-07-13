@@ -14,13 +14,13 @@
         <StackPanel Classes="page-container animated-intro">
             <sr:IconText x:Name="S_History"
                          Text="{x:Static lsp:Resources.S_History}"
-                         Glyph="{sr:Fi HistoryRegular}"
+                         Glyph="{sr:Fi HistoryFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_History_ShowRollCall"
                                    Header="{x:Static lsp:Resources.S_History_ShowRollCall}"
                                    Description="{x:Static lsp:Resources.S_History_ShowRollCall_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PersonRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PersonFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.ShowRollCallHistory}" />
                 </fa:FASettingsExpander.Footer>
@@ -29,7 +29,7 @@
             <fa:FASettingsExpander x:Name="S_History_ShowLottery"
                                    Header="{x:Static lsp:Resources.S_History_ShowLottery}"
                                    Description="{x:Static lsp:Resources.S_History_ShowLottery_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.ShowLotteryHistory}" />
                 </fa:FASettingsExpander.Footer>
@@ -38,7 +38,7 @@
             <fa:FASettingsExpander x:Name="S_History_SelectWeight"
                                    Header="{x:Static lsp:Resources.S_History_SelectWeight}"
                                    Description="{x:Static lsp:Resources.S_History_SelectWeight_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TopSpeedRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TopSpeedFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.SelectWeight}" />
                 </fa:FASettingsExpander.Footer>
@@ -47,13 +47,13 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_ClearHistory"
                          Text="{x:Static lsp:Resources.S_ClearHistory}"
-                         Glyph="{sr:Fi DeleteRegular}"
+                         Glyph="{sr:Fi DeleteFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_ClearHistory_RollCall"
                                    Header="{x:Static lsp:Resources.S_ClearHistory_RollCall}"
                                    Description="{x:Static lsp:Resources.S_ClearHistory_RollCall_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PersonRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PersonFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <ComboBox x:Name="RollCallClassCombo" MinWidth="180" />
@@ -66,7 +66,7 @@
             <fa:FASettingsExpander x:Name="S_ClearHistory_Lottery"
                                    Header="{x:Static lsp:Resources.S_ClearHistory_Lottery}"
                                    Description="{x:Static lsp:Resources.S_ClearHistory_Lottery_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <ComboBox x:Name="LotteryPoolCombo" MinWidth="180" />

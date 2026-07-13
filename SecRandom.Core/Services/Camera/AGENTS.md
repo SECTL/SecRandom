@@ -29,6 +29,7 @@ Camera preview and face-detection subtree: device discovery, preview loop, detec
 - Device lookup is currently by descriptor identity string stored in `CameraSource`; preserve that contract when changing selection logic.
 - Detector model files are expected under `data/cv_models/` via `Utils.GetFilePath(...)`, with upward fallback search from `AppContext.BaseDirectory`.
 - Model validation must keep the Git LFS pointer guard; tiny placeholder files are treated as invalid detector payloads.
+- The enhanced DAMO-YOLO head model uses `images` NCHW `[1,3,640,640]`: direct-resize BGR camera frames to RGB float pixels in the original `0-255` range, then parse its `num_dets`/`det_boxes`/`det_scores` end-to-end outputs. Do not normalize these inputs by `1/255` or letterbox them.
 - Public preview flow favors logging and `DetectionState`/frame events over crashing the app for transient camera/detector failures.
 
 ## ANTI-PATTERNS

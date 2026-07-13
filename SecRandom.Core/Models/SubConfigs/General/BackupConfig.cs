@@ -11,6 +11,7 @@ public partial class BackupConfig : ObservableObject
     [ObservableProperty] private bool _includeConfig = true;
     [ObservableProperty] private bool _includeList = true;
     [ObservableProperty] private bool _includeHistory = true;
+    [ObservableProperty] private bool _includeProofs = true;
     [ObservableProperty] private bool _includeAudio = false;
     [ObservableProperty] private bool _includeCses = true;
     [ObservableProperty] private bool _includeImages = true;

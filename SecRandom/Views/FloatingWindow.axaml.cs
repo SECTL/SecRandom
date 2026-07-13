@@ -15,6 +15,7 @@ using Avalonia.VisualTree;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.ViewModels;
 
@@ -127,7 +128,7 @@ public partial class FloatingWindow : Window
 
     private static Button GetRollCallButton(FloatingWindowSettingsConfig settings)
     {
-        var b = CreateButton("\uECAA", Langs.Common.Resources.Feat_RollCall, settings);
+        var b = CreateButton(FluentIcons.PeopleFilled, Langs.Common.Resources.Feat_RollCall, settings);
 
         b.Click += (sender, args) =>
         {
@@ -139,7 +140,7 @@ public partial class FloatingWindow : Window
 
     private static Button GetQuickDrawButton(FloatingWindowSettingsConfig settings)
     {
-        var b = CreateButton("\uE84E", Langs.Common.Resources.Feat_QuickDraw, settings);
+        var b = CreateButton(FluentIcons.FlashFilled, Langs.Common.Resources.Feat_QuickDraw, settings);
 
         b.Click += (sender, args) =>
         {
@@ -151,7 +152,7 @@ public partial class FloatingWindow : Window
 
     private static Button GetLotteryButton(FloatingWindowSettingsConfig settings)
     {
-        var b = CreateButton("\uE8EC", Langs.Common.Resources.Feat_Lottery, settings);
+        var b = CreateButton(FluentIcons.GiftFilled, Langs.Common.Resources.Feat_Lottery, settings);
 
         b.Click += (sender, args) =>
         {
@@ -163,7 +164,7 @@ public partial class FloatingWindow : Window
 
     private static Button GetFaceDrawButton(FloatingWindowSettingsConfig settings)
     {
-        return CreateButton("\uF3EE", Langs.Common.Resources.Feat_FaceDraw, settings);
+        return CreateButton(FluentIcons.VideoPersonFilled, Langs.Common.Resources.Feat_FaceDraw, settings);
     }
 
     private static Button CreateButton(
@@ -245,6 +246,7 @@ public partial class FloatingWindow : Window
         if (workingArea is null)
             return;
 
+        CaptureExpandedWindowSize();
         _isDockedOnLeft = Position.X + width / 2 <= workingArea.Value.Center.X;
         _dockWorkingArea = workingArea.Value;
         _dockAnchorCenterY = Math.Clamp(
@@ -282,7 +284,6 @@ public partial class FloatingWindow : Window
                 return;
             }
 
-            ++_dockRevision;
             ++_snapAnimationRevision;
             _isPendingWindowDrag = true;
             _isMovingWindow = false;
@@ -309,7 +310,12 @@ public partial class FloatingWindow : Window
         if (!_isMovingWindow && Math.Abs(deltaX) < 4 && Math.Abs(deltaY) < 4)
             return;
 
-        _isMovingWindow = true;
+        if (!_isMovingWindow)
+        {
+            _isMovingWindow = true;
+            ++_dockRevision;
+        }
+
         e.Pointer.Capture(this);
         e.Handled = true;
         Position = ConstrainDragPosition(
@@ -545,7 +551,7 @@ public partial class FloatingWindow : Window
         var glyph = _isDockedOnLeft ? ">" : "<";
         DockButton.Content = style switch
         {
-            0 => new FluentIcon("\uECAA", size * 0.62),
+            0 => new FluentIcon(FluentIcons.PeopleFilled, size * 0.62),
             1 => new TextBlock
             {
                 Text = "抽",
@@ -598,6 +604,7 @@ public partial class FloatingWindow : Window
 
         _isDockTransitioning = true;
         ++_dockRevision;
+        var shouldScheduleDock = false;
         try
         {
             var transitionRevision = ++_dockTransitionRevision;
@@ -633,12 +640,15 @@ public partial class FloatingWindow : Window
                 return;
 
             SavePosition();
-            ScheduleDock();
+            shouldScheduleDock = true;
         }
         finally
         {
             _isDockTransitioning = false;
         }
+
+        if (shouldScheduleDock)
+            ScheduleDock();
     }
 
     private void CaptureExpandedWindowSize()
@@ -844,6 +854,27 @@ public partial class FloatingWindow : Window
 
     private void SavePosition()
     {
+        if (_isDocked && _expandedWindowWidth > 0 && _expandedWindowHeight > 0)
+        {
+            var workingArea = _dockWorkingArea
+                ?? GetScreenForWindow(Position)?.WorkingArea;
+            if (workingArea is not null)
+            {
+                // Persist the expanded bounds so reopening does not interpret a small handle as a full window.
+                ViewModel.Config.FloatPosition = new FloatPositionConfig
+                {
+                    X = _isDockedOnLeft
+                        ? workingArea.Value.X
+                        : workingArea.Value.Right - _expandedWindowWidth,
+                    Y = Math.Clamp(
+                        _dockAnchorCenterY - _expandedWindowHeight / 2,
+                        workingArea.Value.Y,
+                        Math.Max(workingArea.Value.Y, workingArea.Value.Bottom - _expandedWindowHeight))
+                };
+                return;
+            }
+        }
+
         ViewModel.Config.FloatPosition = new FloatPositionConfig { X = Position.X, Y = Position.Y };
     }
 }

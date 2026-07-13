@@ -15,13 +15,13 @@
         <StackPanel Classes="page-container animated-intro">
             <sr:IconText x:Name="S_RollCall"
                          Text="{x:Static lsp:Resources.S_RollCall}"
-                         Glyph="{sr:Fi PersonRegular}"
+                         Glyph="{sr:Fi PersonFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_RollCall_Enabled"
                                    Header="{x:Static lsp:Resources.S_RollCall_Enabled}"
                                    Description="{x:Static lsp:Resources.S_RollCall_Enabled_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PersonRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PersonFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.RollCall.Enabled}" />
                 </fa:FASettingsExpander.Footer>
@@ -30,7 +30,7 @@
             <fa:FASettingsExpander x:Name="S_RollCall_Animation"
                                    Header="{x:Static lsp:Resources.S_RollCall_Animation}"
                                    Description="{x:Static lsp:Resources.S_RollCall_Animation_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi FlashRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.RollCall.Animation}" />
                 </fa:FASettingsExpander.Footer>
@@ -39,7 +39,7 @@
             <fa:FASettingsExpander x:Name="S_RollCall_AutoCloseTime"
                                    Header="{x:Static lsp:Resources.S_RollCall_AutoCloseTime}"
                                    Description="{x:Static lsp:Resources.S_RollCall_AutoCloseTime_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TimerRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimerFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.RollCall.AutoCloseTime}" Minimum="1" Maximum="60" />
                 </fa:FASettingsExpander.Footer>
@@ -48,7 +48,7 @@
             <fa:FASettingsExpander x:Name="S_RollCall_WindowPosition"
                                    Header="{x:Static lsp:Resources.S_RollCall_WindowPosition}"
                                    Description="{x:Static lsp:Resources.S_RollCall_WindowPosition_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.RollCall.WindowPosition}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_WindowPosition_Center}" />
@@ -63,7 +63,7 @@
             <fa:FASettingsExpander x:Name="S_RollCall_Offset"
                                    Header="{x:Static lsp:Resources.S_RollCall_Offset}"
                                    Description="{x:Static lsp:Resources.S_RollCall_Offset_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PositionToBackRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PositionToBackFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="4">
                         <NumericUpDown Value="{Binding Settings.RollCall.HorizontalOffset}" Minimum="-2000" Maximum="2000" />
@@ -75,7 +75,7 @@
             <fa:FASettingsExpander x:Name="S_RollCall_Transparency"
                                    Header="{x:Static lsp:Resources.S_RollCall_Transparency}"
                                    Description="{x:Static lsp:Resources.S_RollCall_Transparency_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.RollCall.Transparency}" Minimum="20" Maximum="100" />
                 </fa:FASettingsExpander.Footer>
@@ -84,7 +84,7 @@
             <fa:FASettingsExpander x:Name="S_RollCall_DisplayDuration"
                                    Header="{x:Static lsp:Resources.S_RollCall_DisplayDuration}"
                                    Description="{x:Static lsp:Resources.S_RollCall_DisplayDuration_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TimePickerRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimePickerFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.RollCall.DisplayDuration}" Minimum="1" Maximum="60" />
                 </fa:FASettingsExpander.Footer>
@@ -93,7 +93,7 @@
             <fa:FASettingsExpander x:Name="S_RollCall_UseMainWindowWhenExceedThreshold"
                                    Header="{x:Static lsp:Resources.S_RollCall_UseMainWindowWhenExceedThreshold}"
                                    Description="{x:Static lsp:Resources.S_RollCall_UseMainWindowWhenExceedThreshold_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.RollCall.UseMainWindowWhenExceedThreshold}" />
                 </fa:FASettingsExpander.Footer>
@@ -102,7 +102,7 @@
             <fa:FASettingsExpander x:Name="S_RollCall_MainWindowDisplayThreshold"
                                    Header="{x:Static lsp:Resources.S_RollCall_MainWindowDisplayThreshold}"
                                    Description="{x:Static lsp:Resources.S_RollCall_MainWindowDisplayThreshold_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.RollCall.MainWindowDisplayThreshold}" Minimum="1" Maximum="100" />
                 </fa:FASettingsExpander.Footer>
@@ -111,13 +111,13 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_QuickDraw"
                          Text="{x:Static lsp:Resources.S_QuickDraw}"
-                         Glyph="{sr:Fi FlashRegular}"
+                         Glyph="{sr:Fi FlashFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_QuickDraw_Enabled"
                                    Header="{x:Static lsp:Resources.S_QuickDraw_Enabled}"
                                    Description="{x:Static lsp:Resources.S_QuickDraw_Enabled_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi FlashRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.QuickDraw.Enabled}" />
                 </fa:FASettingsExpander.Footer>
@@ -126,7 +126,7 @@
             <fa:FASettingsExpander x:Name="S_QuickDraw_AutoCloseTime"
                                    Header="{x:Static lsp:Resources.S_QuickDraw_AutoCloseTime}"
                                    Description="{x:Static lsp:Resources.S_QuickDraw_AutoCloseTime_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TimerRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimerFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.QuickDraw.AutoCloseTime}" Minimum="1" Maximum="60" />
                 </fa:FASettingsExpander.Footer>
@@ -135,7 +135,7 @@
             <fa:FASettingsExpander x:Name="S_QuickDraw_Animation"
                                    Header="{x:Static lsp:Resources.S_QuickDraw_Animation}"
                                    Description="{x:Static lsp:Resources.S_QuickDraw_Animation_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi FlashRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.QuickDraw.Animation}" />
                 </fa:FASettingsExpander.Footer>
@@ -144,7 +144,7 @@
             <fa:FASettingsExpander x:Name="S_QuickDraw_WindowPosition"
                                    Header="{x:Static lsp:Resources.S_QuickDraw_WindowPosition}"
                                    Description="{x:Static lsp:Resources.S_QuickDraw_WindowPosition_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.QuickDraw.WindowPosition}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_WindowPosition_Center}" />
@@ -159,7 +159,7 @@
             <fa:FASettingsExpander x:Name="S_QuickDraw_Offset"
                                    Header="{x:Static lsp:Resources.S_QuickDraw_Offset}"
                                    Description="{x:Static lsp:Resources.S_QuickDraw_Offset_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PositionToBackRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PositionToBackFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="4">
                         <NumericUpDown Value="{Binding Settings.QuickDraw.HorizontalOffset}" Minimum="-2000" Maximum="2000" />
@@ -171,7 +171,7 @@
             <fa:FASettingsExpander x:Name="S_QuickDraw_Transparency"
                                    Header="{x:Static lsp:Resources.S_QuickDraw_Transparency}"
                                    Description="{x:Static lsp:Resources.S_QuickDraw_Transparency_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.QuickDraw.Transparency}" Minimum="20" Maximum="100" />
                 </fa:FASettingsExpander.Footer>
@@ -180,7 +180,7 @@
             <fa:FASettingsExpander x:Name="S_QuickDraw_DisplayDuration"
                                    Header="{x:Static lsp:Resources.S_QuickDraw_DisplayDuration}"
                                    Description="{x:Static lsp:Resources.S_QuickDraw_DisplayDuration_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TimePickerRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimePickerFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.QuickDraw.DisplayDuration}" Minimum="1" Maximum="60" />
                 </fa:FASettingsExpander.Footer>
@@ -189,7 +189,7 @@
             <fa:FASettingsExpander x:Name="S_QuickDraw_UseMainWindowWhenExceedThreshold"
                                    Header="{x:Static lsp:Resources.S_QuickDraw_UseMainWindowWhenExceedThreshold}"
                                    Description="{x:Static lsp:Resources.S_QuickDraw_UseMainWindowWhenExceedThreshold_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.QuickDraw.UseMainWindowWhenExceedThreshold}" />
                 </fa:FASettingsExpander.Footer>
@@ -198,7 +198,7 @@
             <fa:FASettingsExpander x:Name="S_QuickDraw_MainWindowDisplayThreshold"
                                    Header="{x:Static lsp:Resources.S_QuickDraw_MainWindowDisplayThreshold}"
                                    Description="{x:Static lsp:Resources.S_QuickDraw_MainWindowDisplayThreshold_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.QuickDraw.MainWindowDisplayThreshold}" Minimum="1" Maximum="100" />
                 </fa:FASettingsExpander.Footer>
@@ -207,13 +207,13 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_Lottery"
                          Text="{x:Static lsp:Resources.S_Lottery}"
-                         Glyph="{sr:Fi LotteryRegular}"
+                         Glyph="{sr:Fi LotteryFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Lottery_Enabled"
                                    Header="{x:Static lsp:Resources.S_Lottery_Enabled}"
                                    Description="{x:Static lsp:Resources.S_Lottery_Enabled_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.Lottery.Enabled}" />
                 </fa:FASettingsExpander.Footer>
@@ -222,7 +222,7 @@
             <fa:FASettingsExpander x:Name="S_Lottery_AutoCloseTime"
                                    Header="{x:Static lsp:Resources.S_Lottery_AutoCloseTime}"
                                    Description="{x:Static lsp:Resources.S_Lottery_AutoCloseTime_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TimerRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimerFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.Lottery.AutoCloseTime}" Minimum="1" Maximum="60" />
                 </fa:FASettingsExpander.Footer>
@@ -231,7 +231,7 @@
             <fa:FASettingsExpander x:Name="S_Lottery_Animation"
                                    Header="{x:Static lsp:Resources.S_Lottery_Animation}"
                                    Description="{x:Static lsp:Resources.S_Lottery_Animation_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi FlashRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.Lottery.Animation}" />
                 </fa:FASettingsExpander.Footer>
@@ -240,7 +240,7 @@
             <fa:FASettingsExpander x:Name="S_Lottery_WindowPosition"
                                    Header="{x:Static lsp:Resources.S_Lottery_WindowPosition}"
                                    Description="{x:Static lsp:Resources.S_Lottery_WindowPosition_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.Lottery.WindowPosition}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_WindowPosition_Center}" />
@@ -255,7 +255,7 @@
             <fa:FASettingsExpander x:Name="S_Lottery_Offset"
                                    Header="{x:Static lsp:Resources.S_Lottery_Offset}"
                                    Description="{x:Static lsp:Resources.S_Lottery_Offset_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PositionToBackRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PositionToBackFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="4">
                         <NumericUpDown Value="{Binding Settings.Lottery.HorizontalOffset}" Minimum="-2000" Maximum="2000" />
@@ -267,7 +267,7 @@
             <fa:FASettingsExpander x:Name="S_Lottery_Transparency"
                                    Header="{x:Static lsp:Resources.S_Lottery_Transparency}"
                                    Description="{x:Static lsp:Resources.S_Lottery_Transparency_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.Lottery.Transparency}" Minimum="20" Maximum="100" />
                 </fa:FASettingsExpander.Footer>
@@ -276,7 +276,7 @@
             <fa:FASettingsExpander x:Name="S_Lottery_DisplayDuration"
                                    Header="{x:Static lsp:Resources.S_Lottery_DisplayDuration}"
                                    Description="{x:Static lsp:Resources.S_Lottery_DisplayDuration_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TimePickerRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimePickerFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.Lottery.DisplayDuration}" Minimum="1" Maximum="60" />
                 </fa:FASettingsExpander.Footer>
@@ -285,7 +285,7 @@
             <fa:FASettingsExpander x:Name="S_Lottery_UseMainWindowWhenExceedThreshold"
                                    Header="{x:Static lsp:Resources.S_Lottery_UseMainWindowWhenExceedThreshold}"
                                    Description="{x:Static lsp:Resources.S_Lottery_UseMainWindowWhenExceedThreshold_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.Lottery.UseMainWindowWhenExceedThreshold}" />
                 </fa:FASettingsExpander.Footer>
@@ -294,7 +294,7 @@
             <fa:FASettingsExpander x:Name="S_Lottery_MainWindowDisplayThreshold"
                                    Header="{x:Static lsp:Resources.S_Lottery_MainWindowDisplayThreshold}"
                                    Description="{x:Static lsp:Resources.S_Lottery_MainWindowDisplayThreshold_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.Lottery.MainWindowDisplayThreshold}" Minimum="1" Maximum="100" />
                 </fa:FASettingsExpander.Footer>

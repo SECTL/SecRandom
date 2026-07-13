@@ -1,11 +1,12 @@
 ﻿using SecRandom.Core.Enums;
+using SecRandom.Core.Icons;
 
 namespace SecRandom.Core.Attributes;
 
 [AttributeUsage(AttributeTargets.Class)]
 public class AttachedSettingsControlInfo(
     string guid,
-    string iconGlyph = "\uef27",
+    string iconGlyph = FluentIcons.SettingsFilled,
     bool hasEnabledState = true) : Attribute
 {
     public Guid Guid { get; } = Guid.Parse(guid);

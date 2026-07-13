@@ -28,16 +28,16 @@
         <Setter Property="VerticalAlignment" Value="Stretch" />
 
         <Style Selector="^[Orientation=Horizontal] /template/ sr|FluentIcon#FluentIcon">
-            <Setter Property="Glyph" Value="&#xee44;" />
+            <Setter Property="Glyph" Value="{sr:Fi ReOrderDotsHorizontalFilled}" />
         </Style>
         <Style Selector="^[Orientation=Vertical] /template/ sr|FluentIcon#FluentIcon">
-            <Setter Property="Glyph" Value="&#xee46;" />
+            <Setter Property="Glyph" Value="{sr:Fi ReOrderDotsVerticalFilled}" />
         </Style>
         <Style Selector="^[Orientation=Horizontal][IsCompact=True] /template/ sr|FluentIcon#FluentIcon">
-            <Setter Property="Glyph" Value="&#xee43;" />
+            <Setter Property="Glyph" Value="{sr:Fi ReOrderFilled}" />
         </Style>
         <Style Selector="^[Orientation=Vertical][IsCompact=True] /template/ sr|FluentIcon#FluentIcon">
-            <Setter Property="Glyph" Value="&#xee49;" />
+            <Setter Property="Glyph" Value="{sr:Fi ReOrderVerticalFilled}" />
         </Style>
         <Style Selector="^[IsVisible=True]">
             <Setter Property="Opacity" Value="1" />

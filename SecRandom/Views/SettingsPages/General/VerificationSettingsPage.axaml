@@ -22,7 +22,7 @@
 
             <fa:FASettingsExpander Header="{x:Static lv:Resources.S_ProofFolder}"
                                     Description="{x:Static lv:Resources.S_ProofFolder_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi FolderOpenRegular}}">
+                                    IconSource="{sr:FluentIconSource {sr:Fi FolderOpenFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button Content="{x:Static lv:Resources.C_OpenProofFolder}"
@@ -35,7 +35,7 @@
 
             <fa:FASettingsExpander Header="{x:Static lv:Resources.S_LocalProofRetention}"
                                     Description="{x:Static lv:Resources.S_LocalProofRetention_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi HistoryRegular}}">
+                                    IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding SelectedRetentionIndex}">
                         <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_7}" />

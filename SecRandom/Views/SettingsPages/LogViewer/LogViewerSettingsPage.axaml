@@ -42,14 +42,14 @@
                     Theme="{StaticResource TransparentButton}"
                     ToolTip.Tip="{x:Static lsp:Resources.C_Refresh}"
                     Click="RefreshButton_OnClick">
-                <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseRegular}" />
+                <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseFilled}" />
             </Button>
 
             <Button Grid.Column="4"
                     Theme="{StaticResource TransparentButton}"
                     ToolTip.Tip="{x:Static lsp:Resources.C_OpenFolder}"
                     Click="OpenFolderButton_OnClick">
-                <sr:FluentIcon Glyph="{sr:Fi FolderOpenRegular}" />
+                <sr:FluentIcon Glyph="{sr:Fi FolderOpenFilled}" />
             </Button>
 
             <Button Grid.Column="5"
@@ -57,7 +57,7 @@
                     ToolTip.Tip="{x:Static lsp:Resources.C_DeleteSelected}"
                     IsEnabled="{Binding CanDeleteSelectedLogFile}"
                     Click="DeleteButton_OnClick">
-                <sr:FluentIcon Glyph="{sr:Fi DeleteRegular}" />
+                <sr:FluentIcon Glyph="{sr:Fi DeleteFilled}" />
             </Button>
         </Grid>
 
@@ -104,7 +104,7 @@
                     ToolTip.Tip="{x:Static lsp:Resources.C_CopySelected}"
                     IsEnabled="{Binding HasSelectedEntry}"
                     Click="CopyButton_OnClick">
-                <sr:FluentIcon Glyph="{sr:Fi ClipboardRegular}" />
+                <sr:FluentIcon Glyph="{sr:Fi ClipboardFilled}" />
             </Button>
         </Grid>
 

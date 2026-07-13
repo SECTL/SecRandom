@@ -54,7 +54,7 @@ SecRandom.Core/
 | Config handlers            | `Services/Config/`                                                               | `MainConfigHandler` and `ProfileConfigs` wrap config model persistence. |
 | Protocol parsing           | `Services/Ipc/ProtocolRequestParser.cs`                                          | Bounded route/query parser shared by URL and IPC routing. |
 | Logging providers          | `Services/Logging/`                                                              | Console/file logging; file logs live under `data/logs`, current log path is exposed by `FileLoggerProvider` for viewer/diagnostics. |
-| Config schema              | `Enums/Configs/`, `Models/SubConfigs/`                                           | Many settings model types live here, including v2-parity models for floating window, notification, security, linkage, voice, theme/background, history, update, and more settings. |
+| Config schema              | `Enums/Configs/`, `Models/SubConfigs/`                                           | Many settings model types live here, including v2-parity models for floating window, notification, security, linkage, voice, history, update, and more settings. |
 | Shared controls            | `Controls/*.axaml(.cs)`                                                          | Reusable app controls; keep templates and code-behind paired.           |
 | Shared styles              | `StylesBase.axaml`, `Styles/*.axaml`                                             | Imported by `SecRandom/Styles.axaml`.                                   |
 | Constants/helpers          | `GlobalConstants.cs`, `Helpers/`                                                 | Keep cross-cutting values here only when Core consumers need them.      |
@@ -89,7 +89,8 @@ SecRandom.Core/
 - Shared styles are modular; add new broad styles under `Styles/` and include from `StylesBase.axaml`.
 - `u:MultiComboBox` uses a shared maximum width cap in `Styles/MultiComboBox.axaml` so selected tags do not stretch the control indefinitely; override locally only when a page really needs a wider selection box.
 - Ursa `MultiComboBox` settings should use `ItemsSource`/`SelectedItems` with plain data objects for selectable options; do not put visual controls like `TextBlock` or shapes into selectable item content, because Ursa stores item `DataContext` in `SelectedItems` and visual content can surface as type names in selected tags.
-- Fluent icon names come from `Assets/FluentSystemIcons-Resizable.json` and are exposed through generated `sr:Fi` enum values plus `FluentIcons.*` string constants; prefer `{sr:FluentIconSource {sr:Fi NameRegular}}` in XAML and `FluentIcons.NameRegular` in attributes/code instead of raw glyphs.
+- Fluent icon names come from `Assets/FluentSystemIcons-Resizable.json` and are exposed through generated `sr:Fi` enum values plus `FluentIcons.*` string constants; application-owned Core controls and styles should use `Filled` variants through `{sr:FluentIconSource {sr:Fi NameFilled}}`, `FluentIcon`, or `FluentIcons.NameFilled` instead of raw glyphs.
+- Raw Fluent glyph migrations must reverse-map the code point through `Assets/FluentSystemIcons-Resizable.json` before selecting a Filled replacement. Do not modify the font, mapping JSON, or source generator for ordinary style migration; framework-owned template glyphs may remain when they use a different framework font.
 - Comments should explain public-contract constraints, draw fairness reasoning, or platform quirks; avoid restating
   obvious property wiring.
 

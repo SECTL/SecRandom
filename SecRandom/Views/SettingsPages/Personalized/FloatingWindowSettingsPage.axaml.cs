@@ -22,6 +22,7 @@ namespace SecRandom.Views.SettingsPages.Personalized;
 [PageInfo("settings.personalized.floatingWindow", FluentIcons.WindowAppsFilled, "settings.personalized")]
 public partial class FloatingWindowSettingsPage : UserControl
 {
+    private bool _isSettingsSubscribed;
     private bool _synchronizingSelections;
 
     public FloatingWindowSettingsPage()
@@ -42,7 +43,7 @@ public partial class FloatingWindowSettingsPage : UserControl
         SelectedButtonOptions = BuildSelectedOptions(ButtonOptions);
         DataContext = this;
         InitializeComponent();
-        Settings.PropertyChanged += SettingsOnPropertyChanged;
+        SubscribeSettings();
         if (migratedSize)
             ConfigHandler.Save();
     }
@@ -56,16 +57,35 @@ public partial class FloatingWindowSettingsPage : UserControl
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private DesktopIntegrationService DesktopIntegration { get; } = IAppHost.GetService<DesktopIntegrationService>();
 
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        SubscribeSettings();
+    }
+
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        if (!_isSettingsSubscribed)
+            return;
+
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
+        _isSettingsSubscribed = false;
+    }
+
+    private void SubscribeSettings()
+    {
+        if (_isSettingsSubscribed)
+            return;
+
+        Settings.PropertyChanged += SettingsOnPropertyChanged;
+        _isSettingsSubscribed = true;
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         ConfigHandler.Save();
         if (e.PropertyName == nameof(Settings.FloatingWindowTopmostMode)
-            && DesktopIntegration.IsUiAccessRequested() != DesktopIntegration.IsUiAccessAvailable())
+            && Settings.FloatingWindowTopmostMode == TopmostMode.UiAccess
+            && !DesktopIntegration.IsUiAccessAvailable())
             SettingsView.Current?.RequestRestartApp();
         SynchronizeSelectedOptions(ButtonOptions, SelectedButtonOptions);
     }
@@ -138,5 +158,7 @@ public partial class FloatingWindowSettingsPage : UserControl
         {
             option.SetSelected(false);
         }
+
+        ConfigHandler.Save();
     }
 }

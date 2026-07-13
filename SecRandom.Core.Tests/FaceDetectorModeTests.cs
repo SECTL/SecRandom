@@ -22,7 +22,7 @@ public class FaceDetectorModeTests
     }
 
     [Fact]
-    public void CameraPreviewTestPage_UsesOnlySupportedDetectorModes()
+    public void CameraPreviewTestPage_LeavesDetectorModeConfigurationToSettings()
     {
         var repositoryRoot = FindRepositoryRoot();
         var xamlPath = Path.Combine(repositoryRoot, "SecRandom", "Views", "MainPages", "CameraPreviewTestPage.axaml");
@@ -30,10 +30,12 @@ public class FaceDetectorModeTests
         var xaml = File.ReadAllText(xamlPath);
         var codeBehind = File.ReadAllText(codeBehindPath);
 
-        Assert.Contains("x:Name=\"DetectorModeComboBox\"", xaml);
-        Assert.Contains("FaceDetectorMode.Lightweight", codeBehind);
-        Assert.Contains("FaceDetectorMode.Enhanced", codeBehind);
-        Assert.Contains("DetectorMode = mode", codeBehind);
+        Assert.DoesNotContain("x:Name=\"DetectorModeComboBox\"", xaml);
+        Assert.DoesNotContain("FaceDetectorMode.Lightweight", codeBehind);
+        Assert.DoesNotContain("FaceDetectorMode.Enhanced", codeBehind);
+        Assert.DoesNotContain("DetectorMode = mode", codeBehind);
+        Assert.Contains("CameraPreviewMode.Recognize", codeBehind);
+        Assert.Contains("StartPickButton_OnClick", codeBehind);
         Assert.DoesNotContain("ModelComboBox", xaml);
         Assert.DoesNotContain("DetectorType =", codeBehind);
         Assert.DoesNotContain("ListDetectorModels", codeBehind);
@@ -117,8 +119,8 @@ public class FaceDetectorModeTests
     {
         var settingsJson = new[]
         {
-            "\"detector_mode\": \"Enhanced\", \"detector_type\": \"face_detection_yunet_2023mar_int8bq.onnx\"",
-            "\"detector_type\": \"face_detection_yunet_2023mar_int8bq.onnx\", \"detector_mode\": \"Enhanced\""
+            "\"detector_mode\": 1, \"detector_type\": \"face_detection_yunet_2023mar_int8bq.onnx\"",
+            "\"detector_type\": \"face_detection_yunet_2023mar_int8bq.onnx\", \"detector_mode\": 1"
         };
 
         foreach (var settings in settingsJson)
@@ -138,6 +140,24 @@ public class FaceDetectorModeTests
             Assert.Equal(FaceDetectorModeResolver.DamoyoloModelFileName,
                 savedDocument.RootElement.GetProperty("face_detector_settings").GetProperty("detector_type").GetString());
         }
+    }
+
+    [Fact]
+    public void MainConfigModel_UsesLightweightModeForInvalidNumericDetectorMode()
+    {
+        const string json = """
+                            {
+                              "face_detector_settings": {
+                                "detector_mode": 99
+                              }
+                            }
+                            """;
+
+        var config = JsonSerializer.Deserialize<MainConfigModel>(json, ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(config);
+        Assert.Equal(FaceDetectorMode.Lightweight, config.FaceDetectorSettings.DetectorMode);
+        Assert.Equal(FaceDetectorModeResolver.YuNetModelFileName, config.FaceDetectorSettings.DetectorType);
     }
 
     [Fact]

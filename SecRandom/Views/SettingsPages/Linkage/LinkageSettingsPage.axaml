@@ -14,13 +14,13 @@
         <StackPanel Classes="page-container animated-intro">
             <sr:IconText x:Name="S_External"
                          Text="{x:Static lsp:Resources.S_External}"
-                         Glyph="{sr:Fi LinkRegular}"
+                         Glyph="{sr:Fi LinkFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_External_VerificationRequired"
                                    Header="{x:Static lsp:Resources.S_External_VerificationRequired}"
                                    Description="{x:Static lsp:Resources.S_External_VerificationRequired_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi LinkRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi LinkFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.VerificationRequired}" />
                 </fa:FASettingsExpander.Footer>
@@ -29,7 +29,7 @@
             <fa:FASettingsExpander x:Name="S_External_InstantDrawDisable"
                                    Header="{x:Static lsp:Resources.S_External_InstantDrawDisable}"
                                    Description="{x:Static lsp:Resources.S_External_InstantDrawDisable_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi FlashRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.InstantDrawDisable}" />
                 </fa:FASettingsExpander.Footer>
@@ -38,7 +38,7 @@
             <fa:FASettingsExpander x:Name="S_External_DataSource"
                                    Header="{x:Static lsp:Resources.S_External_DataSource}"
                                    Description="{x:Static lsp:Resources.S_External_DataSource_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi DatabaseRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi DatabaseFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.DataSource}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_DataSource_Off}" />
@@ -51,13 +51,13 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_ClassTime"
                          Text="{x:Static lsp:Resources.S_ClassTime}"
-                         Glyph="{sr:Fi ArrowSyncRegular}"
+                         Glyph="{sr:Fi ArrowSyncFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_ClassTime_HideFloatingWindow"
                                    Header="{x:Static lsp:Resources.S_ClassTime_HideFloatingWindow}"
                                    Description="{x:Static lsp:Resources.S_ClassTime_HideFloatingWindow_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.HideFloatingWindowOnClassEnd}" />
                 </fa:FASettingsExpander.Footer>
@@ -66,7 +66,7 @@
             <fa:FASettingsExpander x:Name="S_ClassTime_PreClassReset"
                                    Header="{x:Static lsp:Resources.S_ClassTime_PreClassReset}"
                                    Description="{x:Static lsp:Resources.S_ClassTime_PreClassReset_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.PreClassResetEnabled}" />
                 </fa:FASettingsExpander.Footer>
@@ -75,7 +75,7 @@
             <fa:FASettingsExpander x:Name="S_ClassTime_PreClassResetTime"
                                    Header="{x:Static lsp:Resources.S_ClassTime_PreClassResetTime}"
                                    Description="{x:Static lsp:Resources.S_ClassTime_PreClassResetTime_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TimePickerRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimePickerFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.PreClassResetTime}" Minimum="0" Maximum="3600" />
                 </fa:FASettingsExpander.Footer>
@@ -84,7 +84,7 @@
             <fa:FASettingsExpander x:Name="S_ClassTime_PreClassEnableTime"
                                    Header="{x:Static lsp:Resources.S_ClassTime_PreClassEnableTime}"
                                    Description="{x:Static lsp:Resources.S_ClassTime_PreClassEnableTime_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi CalendarLtrRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi CalendarLtrFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.PreClassEnableTime}" Minimum="0" Maximum="3600" />
                 </fa:FASettingsExpander.Footer>
@@ -93,7 +93,7 @@
             <fa:FASettingsExpander x:Name="S_ClassTime_PostClassDisableDelay"
                                    Header="{x:Static lsp:Resources.S_ClassTime_PostClassDisableDelay}"
                                    Description="{x:Static lsp:Resources.S_ClassTime_PostClassDisableDelay_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TimerRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimerFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.PostClassDisableDelay}" Minimum="0" Maximum="3600" />
                 </fa:FASettingsExpander.Footer>
@@ -102,13 +102,13 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_SubjectHistory"
                          Text="{x:Static lsp:Resources.S_SubjectHistory}"
-                         Glyph="{sr:Fi PeopleListRegular}"
+                         Glyph="{sr:Fi PeopleListFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_SubjectHistory_Filter"
                                    Header="{x:Static lsp:Resources.S_SubjectHistory_Filter}"
                                    Description="{x:Static lsp:Resources.S_SubjectHistory_Filter_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleListRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleListFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.SubjectHistoryFilterEnabled}" />
                 </fa:FASettingsExpander.Footer>
@@ -117,7 +117,7 @@
             <fa:FASettingsExpander x:Name="S_SubjectHistory_BreakAssignment"
                                    Header="{x:Static lsp:Resources.S_SubjectHistory_BreakAssignment}"
                                    Description="{x:Static lsp:Resources.S_SubjectHistory_BreakAssignment_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleListRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleListFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.SubjectHistoryBreakAssignment}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_BreakAssignment_Break}" />

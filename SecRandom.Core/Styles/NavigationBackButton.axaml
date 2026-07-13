@@ -1,6 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:sr="clr-namespace:SecRandom.Core">
+        xmlns:sr="clr-namespace:SecRandom.Core"
+        xmlns:icons="clr-namespace:SecRandom.Core.Icons">
     <Design.PreviewWith>
         <Border Padding="20">
             <!-- Add Controls for Previewer Here -->
@@ -30,7 +31,7 @@
                                      HorizontalAlignment="Center"
                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
                                 <TextBlock Name="Icon"
-                                           Text="&#xe109;"
+                                            Text="{x:Static icons:FluentIcons.ArrowLeftFilled}"
                                            Margin="0 0 0 0"
                                            FontFamily="{x:Static sr:GlobalConstants.FluentIconsFontFamily}"
                                            FontSize="{TemplateBinding FontSize}"

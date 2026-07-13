@@ -136,14 +136,14 @@
                 <fa:FASettingsExpanderItem x:Name="S_Author_Bilibili"
                                            Content="{x:Static lsa:Resources.S_Author_Bilibili}"
                                            Description="{x:Static lsa:Resources.S_Author_BiliBili_D}"
-                                           IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}"
+                                            IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
                                            Click="UriNavigationCommands_OnClick"
                                            CommandParameter="https://space.bilibili.com/520571577" />
 
                 <fa:FASettingsExpanderItem x:Name="S_Author_Donate"
                                            Content="{x:Static lsa:Resources.S_Author_Donate}"
                                            Description="{x:Static lsa:Resources.S_Author_Donate_D}"
-                                           IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}"
+                                            IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
                                            Click="UriNavigationCommands_OnClick"
                                            CommandParameter="https://afdian.com/a/lzy0983" />
 
@@ -174,11 +174,11 @@
 
             <fa:FASettingsExpander x:Name="S_Ack"
                                    Header="{x:Static lsa:Resources.S_Ack}"
-                                   IconSource="{sr:FluentIconSource &#xE971;}" IsExpanded="True">
+                                    IconSource="{sr:FluentIconSource {sr:Fi HeartFilled}}" IsExpanded="True">
                 <fa:FASettingsExpanderItem x:Name="S_Ack_OnlineUsers"
                                            Content="{x:Static lsa:Resources.S_Ack_OnlineUsers}"
                                            Description="{x:Static lsa:Resources.S_Ack_OnlineUsers_D}"
-                                           IconSource="{sr:FluentIconSource &#xECAB;}">
+                                            IconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}">
                     <fa:FASettingsExpanderItem.Footer>
                         <TextBlock VerticalAlignment="Center">
                             <Run Text="{Binding OnlineUsersCount}" />
@@ -189,7 +189,7 @@
 
                 <fa:FASettingsExpanderItem Content="{x:Static lsa:Resources.S_Ack_Contributors}"
                                            Footer="{x:Static lc:Resources.C_ToBeWritten}"
-                                           IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}" />
+                                            IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}" />
             </fa:FASettingsExpander>
         </StackPanel>
     </sr:StickyScrollViewer>

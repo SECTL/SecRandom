@@ -15,10 +15,10 @@ public partial class CameraDrawEngine
     private const float YuNetConfidenceThreshold = 0.85f;
     private const float UltralightConfidenceThreshold = 0.70f;
     private const float UltralightNmsThreshold = 0.40f;
-    private const float DamoyoloConfidenceThreshold = 0.30f;
+    private const float DamoyoloConfidenceThreshold = 0.05f;
     private const int DamoyoloInputWidth = 640;
     private const int DamoyoloInputHeight = 640;
-    private const bool DamoyoloUseLetterbox = false;
+    private const float DamoyoloInputScale = 1.0f;
 
     private readonly object _detectorLock = new();
     private DetectorBackend _activeBackend;
@@ -283,28 +283,24 @@ public partial class CameraDrawEngine
         if (_damoyoloSession == null || string.IsNullOrWhiteSpace(_damoyoloInputName))
             return [];
 
-        var inputSize = new Size(DamoyoloInputWidth, DamoyoloInputHeight);
-        var preprocess = DamoyoloUseLetterbox
-            ? CreateLetterboxTensorFromMat(
-                frameBgr,
-                inputSize,
-                1.0f / 255.0f,
-                0.0f,
-                0.0f,
-                0.0f,
-                true)
-            : CreateDirectResizeTensorFromMat(
-                frameBgr,
-                inputSize,
-                1.0f / 255.0f,
-                0.0f,
-                0.0f,
-                0.0f,
-                true);
+        var preprocess = CreateDamoyoloTensorFromMat(frameBgr);
 
         var outputs = RunOrt(_damoyoloSession, _damoyoloInputName, preprocess.Tensor);
         LogDamoyoloOutputSummary(outputs);
         return ParseDamoyoloOutputs(outputs, frameBgr.Width, frameBgr.Height, preprocess);
+    }
+
+    private static TensorPreprocessResult CreateDamoyoloTensorFromMat(Mat frameBgr)
+    {
+        // ModelScope DAMO-YOLO expects direct-resized RGB pixels in the original 0-255 range.
+        return CreateDirectResizeTensorFromMat(
+            frameBgr,
+            new Size(DamoyoloInputWidth, DamoyoloInputHeight),
+            DamoyoloInputScale,
+            0.0f,
+            0.0f,
+            0.0f,
+            true);
     }
 
     private static Mat ResizeForDetector(Mat frameBgr, Size inputSize)

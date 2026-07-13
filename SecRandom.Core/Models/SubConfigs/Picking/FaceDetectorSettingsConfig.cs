@@ -16,23 +16,48 @@ public partial class FaceDetectorSettingsConfig : ObservableObject
     [ObservableProperty] private bool _playResultAudio = true;
     [ObservableProperty] private Color _pickerFrameColor = Color.Parse(GlobalConstants.DefaultThemeColor);
 
-    [ObservableProperty] private FaceDetectorMode _detectorMode = FaceDetectorMode.Lightweight;
-    [ObservableProperty] private string _detectorType = FaceDetectorModeResolver.YuNetModelFileName;
+    private FaceDetectorMode _detectorMode = FaceDetectorMode.Lightweight;
+    private string _detectorType = FaceDetectorModeResolver.YuNetModelFileName;
+    private bool _hasDeclaredDetectorMode;
     [ObservableProperty] private int _modelInputWidth = 640;
     [ObservableProperty] private int _modelInputHeight = 480;
 
     [JsonIgnore] internal bool DetectorTypeWasNormalized { get; private set; }
 
-    partial void OnDetectorModeChanged(FaceDetectorMode value)
+    public FaceDetectorMode DetectorMode
     {
-        DetectorType = FaceDetectorModeResolver.GetModelFileName(value);
+        get => _detectorMode;
+        set
+        {
+            _hasDeclaredDetectorMode = true;
+            var mode = value == FaceDetectorMode.Enhanced
+                ? FaceDetectorMode.Enhanced
+                : FaceDetectorMode.Lightweight;
+            var canonicalModelName = FaceDetectorModeResolver.GetModelFileName(mode);
+            DetectorTypeWasNormalized |= !string.Equals(_detectorType, canonicalModelName, StringComparison.Ordinal);
+            SetProperty(ref _detectorMode, mode);
+            SetProperty(ref _detectorType, canonicalModelName);
+        }
     }
 
-    partial void OnDetectorTypeChanged(string value)
+    public string DetectorType
     {
-        DetectorMode = FaceDetectorModeResolver.ResolveMode(value);
-        var canonicalModelName = FaceDetectorModeResolver.GetModelFileName(DetectorMode);
-        DetectorTypeWasNormalized |= !string.Equals(value, canonicalModelName, StringComparison.Ordinal);
-        DetectorType = canonicalModelName;
+        get => _detectorType;
+        set
+        {
+            if (_hasDeclaredDetectorMode)
+            {
+                var declaredModelName = FaceDetectorModeResolver.GetModelFileName(_detectorMode);
+                DetectorTypeWasNormalized |= !string.Equals(value, declaredModelName, StringComparison.Ordinal);
+                SetProperty(ref _detectorType, declaredModelName);
+                return;
+            }
+
+            var mode = FaceDetectorModeResolver.ResolveMode(value);
+            var canonicalModelName = FaceDetectorModeResolver.GetModelFileName(mode);
+            SetProperty(ref _detectorMode, mode);
+            SetProperty(ref _detectorType, canonicalModelName);
+            DetectorTypeWasNormalized |= !string.Equals(value, canonicalModelName, StringComparison.Ordinal);
+        }
     }
 }

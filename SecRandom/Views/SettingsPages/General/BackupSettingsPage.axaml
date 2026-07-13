@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -9,14 +9,16 @@
              xmlns:lsb="clr-namespace:SecRandom.Langs.SettingsPages.General.Backup"
              xmlns:u="https://irihi.tech/ursa"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.SettingsPages.General.BackupSettingsPage"
+              x:Class="SecRandom.Views.SettingsPages.General.BackupSettingsPage"
+              Loaded="OnLoaded"
+              Unloaded="OnUnloaded"
              x:DataType="local:BackupSettingsPage">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
             <fa:FASettingsExpander x:Name="S_AutoBackup"
                                    Header="{x:Static lsb:Resources.S_AutoBackup}"
                                    Description="{x:Static lsb:Resources.S_AutoBackup_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi SaveRegular}}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi SaveFilled}}"
                                    IsExpanded="True">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.AutoBackupEnabled}" />
@@ -27,7 +29,7 @@
                                            Description="{x:Static lsb:Resources.S_AutoBackup_IntervalDays_D}">
                     <fa:FASettingsExpanderItem.Footer>
                         <NumericUpDown Value="{Binding Settings.AutoBackupIntervalDays}"
-                                       Increment="1" FormatString="0" MinWidth="150" />
+                                        Increment="1" Minimum="1" FormatString="0" MinWidth="150" />
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
 
@@ -36,15 +38,15 @@
                                            Description="{x:Static lsb:Resources.S_AutoBackup_MaxCount_D}">
                     <fa:FASettingsExpanderItem.Footer>
                         <NumericUpDown Value="{Binding Settings.AutoBackupMaxCount}"
-                                       Increment="1" FormatString="0" MinWidth="150" />
+                                        Increment="1" Minimum="0" FormatString="0" MinWidth="150" />
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
 
                 <fa:FASettingsExpanderItem x:Name="S_AutoBackup_ViewFolder"
                                            Content="{x:Static lsb:Resources.S_AutoBackup_ViewFolder}"
                                            Description="{x:Static lsb:Resources.S_AutoBackup_ViewFolder_D}"
-                                           IconSource="{sr:FluentIconSource {sr:Fi DatabaseWindowRegular}}"
-                                           IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource &#xEC2E;}"
+                                           IconSource="{sr:FluentIconSource {sr:Fi DatabaseWindowFilled}}"
+                                            IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}"
                                            Click="ViewBackupFolder_OnClick" />
 
                 <fa:FASettingsExpanderItem x:Name="S_AutoBackup_Usage"
@@ -66,7 +68,7 @@
             <fa:FASettingsExpander x:Name="S_Includes"
                                    Header="{x:Static lsb:Resources.S_Includes}"
                                    Description="{x:Static lsb:Resources.S_Includes_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi DatabaseArrowDownRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi DatabaseArrowDownFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <u:MultiComboBox MinWidth="260"
                                      ItemsSource="{Binding IncludeOptions}"
@@ -78,7 +80,7 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_RestoreBackup"
                          Text="{x:Static lsb:Resources.S_RestoreBackup}"
-                         Glyph="{sr:Fi DatabaseArrowDownRegular}" Margin="0 0 0 4" />
+                         Glyph="{sr:Fi DatabaseArrowDownFilled}" Margin="0 0 0 4" />
 
             <Button Content="{x:Static lsb:Resources.C_RefreshBackups}"
                     Click="RefreshBackups_OnClick" />
@@ -114,7 +116,7 @@
                                                 Click="RestoreBackup_OnClick"
                                                 CommandParameter="{Binding}">
                                             <sr:IconText
-                                                Glyph="&#xE0BD;"
+                                                 Glyph="{sr:Fi ArrowCounterclockwiseFilled}"
                                                 Text="{x:Static lsb:Resources.C_Backups_Operations_Restore}" />
                                         </Button>
 
@@ -122,7 +124,7 @@
                                                 Click="DeleteBackup_OnClick"
                                                 CommandParameter="{Binding}">
                                             <sr:IconText
-                                                Glyph="&#xE61D;"
+                                                 Glyph="{sr:Fi DeleteFilled}"
                                                 Text="{x:Static lsb:Resources.C_Backups_Operations_Delete}" />
                                         </Button>
                                     </StackPanel>

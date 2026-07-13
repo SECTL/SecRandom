@@ -82,9 +82,6 @@
     <data name="Settings_Voice" xml:space="preserve">
         <value>Voice Settings</value>
     </data>
-    <data name="Settings_Theme" xml:space="preserve">
-        <value>Theme Management</value>
-    </data>
     <data name="Feat_History" xml:space="preserve">
         <value>History</value>
     </data>

@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -15,7 +15,7 @@
 
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
-            <fa:FASettingsExpander IconSource="{sr:FluentIconSource &#xE06F;}"
+             <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi AppsFilled}}"
                                     Header="UI 功能测试" IsExpanded="True">
                 <fa:FASettingsExpanderItem Content="发送 Toast" IsClickEnabled="True"
                                             Click="SendToast_OnClick" />
@@ -23,7 +23,7 @@
                                             Click="OpenDrawer_Test" />
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncRegular}}"
+            <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}"
                                     Header="崩溃恢复测试" IsExpanded="True">
                 <fa:FASettingsExpanderItem Content="显示崩溃恢复页" IsClickEnabled="True"
                                             Click="ShowCrashRecoveryWindow_OnClick" />

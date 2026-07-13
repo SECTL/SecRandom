@@ -1,127 +1,52 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:pages="using:SecRandom.Views.MainPages"
+              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+              xmlns:pages="using:SecRandom.Views.MainPages"
+              xmlns:faceDraw="clr-namespace:SecRandom.Langs.MainPages.FaceDraw"
              mc:Ignorable="d" d:DesignWidth="960" d:DesignHeight="640"
              x:Class="SecRandom.Views.MainPages.CameraPreviewTestPage"
              Loaded="OnLoaded"
              Unloaded="OnUnloaded">
-    <Grid Margin="12" RowDefinitions="Auto,Auto,*" RowSpacing="12">
+    <Grid Margin="20" RowDefinitions="*,Auto" RowSpacing="12">
         <Border Grid.Row="0"
-                CornerRadius="18"
-                Padding="16"
-                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1">
-            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="10">
-                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
-                    <TextBlock Text="摄像头检测测试"
-                               FontSize="22"
-                               FontWeight="SemiBold" />
-                    <TextBlock x:Name="StatusTextBlock"
-                               Text="准备启动摄像头预览"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                </StackPanel>
-
-                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="8"
-                            VerticalAlignment="Center">
-                    <Button x:Name="StartStopButton"
-                            Content="开始预览"
-                            MinWidth="104"
-                            Click="StartStopButton_OnClick" />
-                    <Button x:Name="ModeButton"
-                            Content="切换到抽取（0 人）"
-                            MinWidth="150"
-                            Click="ModeButton_OnClick" />
-                </StackPanel>
-
-                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12">
-                    <Border CornerRadius="999" Padding="10 5" Background="{DynamicResource SystemFillColorAccentBrush}">
-                        <TextBlock x:Name="ModeTextBlock" Text="预览模式" Foreground="White" FontWeight="SemiBold" />
-                    </Border>
-                    <TextBlock x:Name="FaceCountTextBlock" Text="检测到 0 人" VerticalAlignment="Center" />
-                    <TextBlock x:Name="FrameInfoTextBlock" Text="等待帧数据" VerticalAlignment="Center"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <Border Grid.Row="1"
-                CornerRadius="18"
-                Padding="16"
-                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1">
-            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
-                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="6">
-                    <TextBlock Text="摄像头" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <ComboBox x:Name="CameraComboBox"
-                              MinHeight="36"
-                              HorizontalAlignment="Stretch"
-                              SelectionChanged="CameraComboBox_OnSelectionChanged" />
-                </StackPanel>
-
-                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="6">
-                    <TextBlock Text="分辨率" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <ComboBox x:Name="ResolutionComboBox"
-                              MinHeight="36"
-                              HorizontalAlignment="Stretch"
-                              SelectionChanged="ResolutionComboBox_OnSelectionChanged" />
-                </StackPanel>
-
-                <StackPanel Grid.Row="0" Grid.Column="2" Spacing="6">
-                    <TextBlock Text="检测模型" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <ComboBox x:Name="ModelComboBox"
-                              MinHeight="36"
-                              HorizontalAlignment="Stretch"
-                              SelectionChanged="ModelComboBox_OnSelectionChanged" />
-                </StackPanel>
-
-                <StackPanel Grid.Row="1" Grid.Column="0" Spacing="6">
-                    <TextBlock Text="模型输入宽度" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <NumericUpDown x:Name="InputWidthBox"
-                                   Minimum="160"
-                                   Maximum="1920"
-                                   Increment="20"
-                                   ValueChanged="InputSizeBox_OnValueChanged" />
-                </StackPanel>
-
-                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="6">
-                    <TextBlock Text="模型输入高度" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <NumericUpDown x:Name="InputHeightBox"
-                                   Minimum="120"
-                                   Maximum="1080"
-                                   Increment="20"
-                                   ValueChanged="InputSizeBox_OnValueChanged" />
-                </StackPanel>
-
-                <StackPanel Grid.Row="1" Grid.Column="2" Spacing="6">
-                    <TextBlock Text="抽取时长（秒）" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <NumericUpDown x:Name="PickingSecondsBox"
-                                   Minimum="1"
-                                   Maximum="30"
-                                   Increment="1"
-                                   ValueChanged="PickingSecondsBox_OnValueChanged" />
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <Border Grid.Row="2"
-                CornerRadius="22"
+                CornerRadius="8"
                 ClipToBounds="True"
-                Background="#101418"
-                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1">
+                Background="#101418">
             <Grid>
                 <pages:CameraPreviewSurface x:Name="PreviewSurface" />
                 <TextBlock x:Name="EmptyPreviewTextBlock"
-                           Text="未收到摄像头画面"
+                            Text="{x:Static faceDraw:Resources.M_Connecting}"
                            Foreground="#99FFFFFF"
                            FontSize="18"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center" />
+                <Border HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Margin="16"
+                        Padding="10 6"
+                        CornerRadius="6"
+                        Background="#99000000">
+                    <TextBlock x:Name="StatusTextBlock" Text="{x:Static faceDraw:Resources.M_Starting}" Foreground="White" />
+                </Border>
             </Grid>
         </Border>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+            <TextBlock x:Name="RecognizedCountPanel"
+                       Text="{x:Static faceDraw:Resources.M_FaceCountEmpty}"
+                       FontSize="16"
+                       VerticalAlignment="Center" />
+            <StackPanel x:Name="PickCountPanel"
+                        Grid.Column="1"
+                        Orientation="Horizontal"
+                        Spacing="8">
+                <Button x:Name="DecreasePickCountButton" Content="-" Width="45" Height="45" Click="DecreasePickCountButton_OnClick" />
+                <TextBlock x:Name="PickCountTextBlock" Text="1" Width="48" FontSize="20"
+                           TextAlignment="Center" VerticalAlignment="Center" />
+                <Button x:Name="IncreasePickCountButton" Content="+" Width="45" Height="45" Click="IncreasePickCountButton_OnClick" />
+                <Button x:Name="StartPickButton" Content="{x:Static faceDraw:Resources.C_Start}" Width="180" Height="45" Click="StartPickButton_OnClick" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

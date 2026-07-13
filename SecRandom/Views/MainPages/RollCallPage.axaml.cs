@@ -107,25 +107,18 @@ public partial class RollCallPage : UserControl
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
     }
 
-    private async void RemainingListButton_OnClick(object? sender, RoutedEventArgs e)
+    private void RemainingListButton_OnClick(object? sender, RoutedEventArgs e)
     {
         ViewModel.RefreshRemainingList();
-
-        var list = new ListBox
-        {
-            ItemsSource = ViewModel.RemainingItems,
-            ItemTemplate = this.FindResource("RollCallRemainingItemTemplate") as IDataTemplate,
-            MinWidth = 360,
-            MaxHeight = 520
-        };
-
-        await new FAContentDialog
-        {
-            Title = SR.C_RemainingListTitle,
-            Content = list,
-            CloseButtonText = SR.C_Close,
-            DefaultButton = FAContentDialogButton.Close
-        }.ShowAsync(TopLevel.GetTopLevel(this));
+        var window = new RemainingListWindow(
+            SR.C_RemainingListTitle,
+            ViewModel.RemainingItems,
+            this.FindResource("RollCallRemainingItemTemplate") as IDataTemplate);
+        var owner = TopLevel.GetTopLevel(this) as Window;
+        if (owner is null)
+            window.Show();
+        else
+            window.Show(owner);
     }
 
     private void InitializeComponent()

@@ -39,24 +39,24 @@
                              SelectedItem="{Binding ViewModel.SelectedPageItem}">
             <fa:FANavigationView.MenuItems>
                 <fa:FANavigationViewItem Content="{x:Static lp:Resources.Page_Students}"
-                                         IconSource="{sr:FluentIconSource &#xECAB;}" />
+                                          IconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}" />
 
                 <fa:FANavigationViewItem Content="{x:Static lp:Resources.Page_Prizes}"
-                                         IconSource="{sr:FluentIconSource &#xE27E;}" />
+                                          IconSource="{sr:FluentIconSource {sr:Fi BoxFilled}}" />
 
                 <fa:FANavigationViewItem Content="{x:Static lp:Resources.Page_History}"
-                                         IconSource="{sr:FluentIconSource &#xE5ED;}" />
+                                          IconSource="{sr:FluentIconSource {sr:Fi DataUsageFilled}}" />
             </fa:FANavigationView.MenuItems>
 
             <fa:FANavigationView.PaneFooter>
                 <fa:FACommandBar HorizontalAlignment="Right" DefaultLabelPosition="Right">
                     <fa:FACommandBar.PrimaryCommands>
-                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xEEB5;}"
+                         <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi SaveFilled}}"
                                                Label="{x:Static lp:Resources.Command_Save}"
                                                ToolTip.Tip="{x:Static lp:Resources.Command_Save_D}"
                                                Click="SaveProfileButton_OnClick" />
 
-                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xEE2F;}"
+                         <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi QuestionFilled}}"
                                                Label="{x:Static lp:Resources.Command_Help}"
                                                ToolTip.Tip="{x:Static lp:Resources.Command_Help_D}" />
                     </fa:FACommandBar.PrimaryCommands>
@@ -81,14 +81,14 @@
                         <Grid Grid.Column="0" RowDefinitions="Auto, *">
                             <fa:FACommandBar Grid.Row="0" DefaultLabelPosition="Right">
                                 <fa:FACommandBar.PrimaryCommands>
-                                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xe00d;}"
+                                     <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi AddFilled}}"
                                                            Label="{x:Static lps:Resources.Command_CreateList}"
                                                            ToolTip.Tip="{x:Static lps:Resources.Command_CreateList_D}"
                                                            Click="Command_CreateList_OnClick" />
 
                                     <fa:FACommandBarSeparator />
 
-                                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xe58d;}"
+                                     <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi CopyAddFilled}}"
                                                            Label="{x:Static lps:Resources.Command_DuplicateList}"
                                                            ToolTip.Tip="{x:Static lps:Resources.Command_DuplicateList_D}" />
                                 </fa:FACommandBar.PrimaryCommands>
@@ -109,20 +109,20 @@
                                 <fa:FACommandBar Grid.Row="0" DefaultLabelPosition="Right"
                                                  Classes="hide-popup-indicator">
                                     <fa:FACommandBar.PrimaryCommands>
-                                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xE00D;}"
+                                         <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi AddFilled}}"
                                                                 Label="{x:Static lps:Resources.Command_AddStudent}"
                                                                 Click="CreateStudentButton_OnClick" />
 
-                                         <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xE61D;}"
+                                         <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi DeleteFilled}}"
                                                                 Label="{x:Static lps:Resources.Command_DeleteStudent}"
                                                                 IsEnabled="{Binding ViewModel.SelectedStudent, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
-                                         <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xEFDD;}"
+                                         <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi SlideTextEditFilled}}"
                                                                 Label="{x:Static lps:Resources.Command_ImportStudents}" />
 
                                         <fa:FACommandBarSeparator />
 
-                                         <fa:FACommandBarButton IconSource="{sr:FluentIconSource &#xe61d;}"
+                                          <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi DeleteFilled}}"
                                                                 Label="{x:Static lps:Resources.Command_DeleteList}" />
                                     </fa:FACommandBar.PrimaryCommands>
                                 </fa:FACommandBar>
@@ -190,7 +190,7 @@
 
                                                 <Separator Margin="0 4" />
 
-                                                <sr:IconText Glyph="&#xEF2B;" Text="{x:Static lps:Resources.Section_AttachedSettings}" />
+                                                 <sr:IconText Glyph="{sr:Fi SettingsCogMultipleFilled}" Text="{x:Static lps:Resources.Section_AttachedSettings}" />
 
                                                 <ItemsControl
                                                     ItemsSource="{x:Static services:AttachedSettingsRegistryService.StudentAttachedSettingsControls}">

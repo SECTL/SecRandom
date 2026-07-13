@@ -9,8 +9,9 @@ using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
-using FluentAvalonia.UI.Controls;
 using QRCoder;
+using SecRandom.Core.Controls;
+using SecRandom.Core.Icons;
 using SR = SecRandom.Langs.SettingsPages.Security.Resources;
 
 namespace SecRandom.Services.Security;
@@ -110,7 +111,7 @@ internal sealed class TotpSetupWindow : Window
         });
         var copy = new Button
         {
-            Content = new FAFontIcon { Glyph = "\uE8C8" }
+            Content = new FluentIcon(FluentIcons.CopyFilled)
         };
         ToolTip.SetTip(copy, SR.C_Copy);
         copy.Click += async (_, _) =>

@@ -142,15 +142,7 @@ internal static class UiAccessStartup
 
                 if (!bootstrap.WaitForExit(BootstrapTimeoutMilliseconds))
                 {
-                    try
-                    {
-                        bootstrap.Kill(entireProcessTree: true);
-                        bootstrap.WaitForExit();
-                    }
-                    catch
-                    {
-                    }
-
+                    WriteDiagnostic("Bootstrap timed out; keeping the original process alive.");
                     return false;
                 }
 
@@ -183,17 +175,12 @@ internal static class UiAccessStartup
             if (uiAccessToken is null)
                 return false;
 
-            foreach (var startInfo in CrashRecoveryRuntime.CreateRestartStartInfos(appArguments))
-            {
-                if (!TryCreateProcessAsUser(uiAccessToken, startInfo))
-                    continue;
+            if (!TryCreateProcessAsUser(uiAccessToken))
+                return false;
 
-                WriteDiagnostic("UIAccess replacement created.");
-                return true;
-            }
+            WriteDiagnostic("UIAccess replacement created from the original command line.");
+            return true;
         }
-
-        return false;
     }
 
     private static bool HasUiAccessToken()
@@ -347,14 +334,19 @@ internal static class UiAccessStartup
         return null;
     }
 
-    private static bool TryCreateProcessAsUser(SafeAccessTokenHandle token, ProcessStartInfo startInfo)
+    private static bool TryCreateProcessAsUser(SafeAccessTokenHandle token)
     {
         var startupInfo = new StartupInfo { Size = (uint)Marshal.SizeOf<StartupInfo>() };
         GetStartupInfo(ref startupInfo);
-        var commandLine = CreateCommandLine(startInfo);
-        var workingDirectory = string.IsNullOrWhiteSpace(startInfo.WorkingDirectory)
-            ? Environment.CurrentDirectory
-            : startInfo.WorkingDirectory;
+        var commandLinePointer = GetCommandLine();
+        var commandLineText = Marshal.PtrToStringUni(commandLinePointer);
+        if (string.IsNullOrEmpty(commandLineText))
+        {
+            WriteDiagnostic($"GetCommandLineW failed: {Marshal.GetLastWin32Error()}.");
+            return false;
+        }
+
+        var commandLine = new StringBuilder(commandLineText);
 
         if (!CreateProcessAsUser(
                 token,
@@ -365,11 +357,11 @@ internal static class UiAccessStartup
                 false,
                 0,
                 nint.Zero,
-                workingDirectory,
+                null,
                 ref startupInfo,
                 out var processInformation))
         {
-            WriteDiagnostic($"CreateProcessAsUserW failed: {Marshal.GetLastWin32Error()}. File: {startInfo.FileName}");
+            WriteDiagnostic($"CreateProcessAsUserW failed: {Marshal.GetLastWin32Error()}.");
             return false;
         }
 
@@ -388,42 +380,6 @@ internal static class UiAccessStartup
         catch
         {
         }
-    }
-
-    private static StringBuilder CreateCommandLine(ProcessStartInfo startInfo)
-    {
-        var commandLine = new StringBuilder(QuoteWindowsArgument(startInfo.FileName));
-        foreach (var argument in startInfo.ArgumentList)
-            commandLine.Append(' ').Append(QuoteWindowsArgument(argument));
-
-        if (!string.IsNullOrWhiteSpace(startInfo.Arguments))
-            commandLine.Append(' ').Append(startInfo.Arguments);
-
-        return commandLine;
-    }
-
-    private static string QuoteWindowsArgument(string argument)
-    {
-        if (argument.Length > 0 && argument.All(character => !char.IsWhiteSpace(character) && character != '"'))
-            return argument;
-
-        var result = new StringBuilder("\"");
-        var backslashes = 0;
-        foreach (var character in argument)
-        {
-            if (character == '\\')
-            {
-                backslashes++;
-                continue;
-            }
-
-            result.Append('\\', character == '"' ? backslashes * 2 + 1 : backslashes);
-            result.Append(character);
-            backslashes = 0;
-        }
-
-        result.Append('\\', backslashes * 2);
-        return result.Append('"').ToString();
     }
 
     [DllImport("advapi32.dll", SetLastError = true)]
@@ -496,7 +452,7 @@ internal static class UiAccessStartup
         [MarshalAs(UnmanagedType.Bool)] bool inheritHandles,
         uint creationFlags,
         nint environment,
-        string currentDirectory,
+        string? currentDirectory,
         ref StartupInfo startupInfo,
         out ProcessInformation processInformation);
 
@@ -521,8 +477,11 @@ internal static class UiAccessStartup
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool CloseHandle(nint handle);
 
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, EntryPoint = "GetStartupInfoW")]
     private static extern void GetStartupInfo(ref StartupInfo startupInfo);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, EntryPoint = "GetCommandLineW")]
+    private static extern nint GetCommandLine();
 
     [StructLayout(LayoutKind.Sequential)]
     private struct Luid
@@ -567,9 +526,9 @@ internal static class UiAccessStartup
     private struct StartupInfo
     {
         public uint Size;
-        public string? Reserved;
-        public string? Desktop;
-        public string? Title;
+        public nint Reserved;
+        public nint Desktop;
+        public nint Title;
         public uint X;
         public uint Y;
         public uint XSize;

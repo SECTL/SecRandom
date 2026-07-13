@@ -14,13 +14,13 @@
         <StackPanel Classes="page-container animated-intro">
             <sr:IconText x:Name="S_Strategy"
                          Text="{x:Static lsp:Resources.S_Strategy}"
-                         Glyph="{sr:Fi ArrowSyncRegular}"
+                         Glyph="{sr:Fi ArrowSyncFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Strategy_AutoUpdateMode"
                                    Header="{x:Static lsp:Resources.S_Strategy_AutoUpdateMode}"
                                    Description="{x:Static lsp:Resources.S_Strategy_AutoUpdateMode_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.AutoUpdateMode}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_AutoUpdateMode_Off}" />
@@ -34,7 +34,7 @@
             <fa:FASettingsExpander x:Name="S_Strategy_Channel"
                                    Header="{x:Static lsp:Resources.S_Strategy_Channel}"
                                    Description="{x:Static lsp:Resources.S_Strategy_Channel_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi CloudRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi CloudFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.UpdateChannel}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateChannel_Stable}" />
@@ -46,7 +46,7 @@
             <fa:FASettingsExpander x:Name="S_Strategy_Source"
                                    Header="{x:Static lsp:Resources.S_Strategy_Source}"
                                    Description="{x:Static lsp:Resources.S_Strategy_Source_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi GlobeRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi GlobeFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.UpdateSource}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_GitHub}" />
@@ -63,7 +63,7 @@
             <fa:FASettingsExpander x:Name="S_Strategy_LastCheckTime"
                                    Header="{x:Static lsp:Resources.S_Strategy_LastCheckTime}"
                                    Description="{x:Static lsp:Resources.S_Strategy_LastCheckTime_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <TextBlock Text="{Binding Settings.LastCheckTime}" VerticalAlignment="Center" />
                 </fa:FASettingsExpander.Footer>

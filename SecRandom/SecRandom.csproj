@@ -36,6 +36,11 @@
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
+        <EmbeddedResource Update="Langs\MainPages\FaceDraw\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
         <EmbeddedResource Update="Langs\MainPages\History\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -141,11 +146,6 @@
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
-        <EmbeddedResource Update="Langs\SettingsPages\ThemeManagement\Resources.resx">
-            <Generator>PublicResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-
         <EmbeddedResource Update="Langs\SettingsPages\HistoryManagement\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -192,6 +192,12 @@
         </Compile>
 
         <Compile Update="Langs\MainPages\Lottery\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+
+        <Compile Update="Langs\MainPages\FaceDraw\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>
@@ -317,12 +323,6 @@
             <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
 
-        <Compile Update="Langs\SettingsPages\ThemeManagement\Resources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Resources.resx</DependentUpon>
-        </Compile>
-
         <Compile Update="Langs\SettingsPages\HistoryManagement\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
@@ -398,11 +398,6 @@
           <SubType>Code</SubType>
         </Compile>
 
-        <Compile Update="Views\SettingsPages\Personalized\ThemeManagementSettingsPage.axaml.cs">
-          <DependentUpon>ThemeManagementSettingsPage.axaml</DependentUpon>
-          <SubType>Code</SubType>
-        </Compile>
-
         <Compile Update="Views\SettingsPages\Personalized\FloatingWindowSettingsPage.axaml.cs">
           <DependentUpon>FloatingWindowSettingsPage.axaml</DependentUpon>
           <SubType>Code</SubType>
@@ -432,7 +427,6 @@
       <AdditionalFiles Include="Views\SettingsPages\Notification\RollCallNotificationSettingsPage.axaml" />
       <AdditionalFiles Include="Views\SettingsPages\Notification\VoiceSettingsPage.axaml" />
       <AdditionalFiles Include="Views\SettingsPages\Personalized\FloatingWindowSettingsPage.axaml" />
-      <AdditionalFiles Include="Views\SettingsPages\Personalized\ThemeManagementSettingsPage.axaml" />
       <AdditionalFiles Include="Views\SettingsPages\Plugins\Overview\PluginsSettingsPage.axaml" />
     </ItemGroup>
 

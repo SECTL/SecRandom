@@ -357,15 +357,6 @@ namespace SecRandom.Langs.Common {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 主题管理.
-        /// </summary>
-        public static string Settings_Theme {
-            get {
-                return ResourceManager.GetString("Settings_Theme", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to 更新设置.
         /// </summary>
         public static string Settings_Update {
@@ -428,6 +419,60 @@ namespace SecRandom.Langs.Common {
         public static string Settings_FaceDetector_CameraSource_D {
             get {
                 return ResourceManager.GetString("Settings_FaceDetector_CameraSource_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_CameraGroup {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_CameraGroup", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_Resolution {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_Resolution", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_Resolution_D {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_Resolution_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_DetectionGroup {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_DetectionGroup", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_DetectorMode {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_DetectorMode", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_DetectorMode_D {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_DetectorMode_D", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_DetectorMode_Lightweight {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_DetectorMode_Lightweight", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_DetectorMode_Enhanced {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_DetectorMode_Enhanced", resourceCulture);
+            }
+        }
+
+        public static string Settings_FaceDetector_PickingGroup {
+            get {
+                return ResourceManager.GetString("Settings_FaceDetector_PickingGroup", resourceCulture);
             }
         }
 

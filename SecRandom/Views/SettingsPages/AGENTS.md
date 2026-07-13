@@ -17,7 +17,7 @@ SecRandom/Views/SettingsPages/
 |-- DebugSettingsPage.axaml(.cs)          # DEBUG-only bottom page
 |-- General/                              # settings.general.*: basic/security/backup/privacy
 |-- ListManagement/                       # settings.listManagement.*: roll-call/lottery list entries
-|-- Personalized/                         # settings.personalized.*: appearance/floatingWindow/theme
+|-- Personalized/                         # settings.personalized.*: appearance/floatingWindow
 |-- Picking/                              # settings.picking.*: draw settings + face detector
 |-- Notification/                         # settings.notification.*: voice and per-draw notification channels
 |-- History/                              # settings.history.*: management + roll-call/lottery history pages
@@ -62,6 +62,7 @@ SecRandom/Views/SettingsPages/
 - Pages usually resolve `ViewModelBase` via `IAppHost.GetService<ViewModelBase>()`, set `DataContext = this`, and expose `Settings` from `ViewModel.Config.*`.
 - Basic-settings platform switches must route through `DesktopIntegrationService`; do not manipulate registry keys, XDG desktop files, or macOS launch services from the settings page. Revert a switch when the platform operation fails.
 - Security settings must display credential state before factor selection. Password, TOTP, and USB setup are command-driven; selected factors use the shared Ursa `MultiComboBox` pattern with plain option data, and protected-operation controls are driven by `ISecurityService` state.
+- Settings pages using Ursa `MultiComboBox` must subscribe to the backing settings model on construction and every `Loaded` event, unsubscribe on `Unloaded`, and save at the selection mutation boundary. Follow `SecuritySettingsPage` for lifecycle and plain option-data binding.
 - V2-parity settings pages should keep the same `ScrollViewer` + `StackPanel.page-container animated-intro` + `FASettingsExpander` rhythm as existing settings pages.
 - Voice/music owns the global TTS engine, voice, volume, and content switches. Per-student/per-prize specific announcement controls belong in list management attached settings for both roll-call and lottery records.
 - If a settings change needs a restart, request it through `SettingsView.Current?.RequestRestartApp()` instead of restarting directly. Selecting UIAccess topmost in basic or floating-window settings persists the mode and uses this restart flow so the desktop launcher can run the `killtimer0/uiaccess`-style token preparation before UI initialization.

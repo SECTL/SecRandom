@@ -16,13 +16,13 @@
         <StackPanel Classes="page-container animated-intro">
             <sr:IconText x:Name="S_Playback"
                          Text="{x:Static lsp:Resources.S_Playback}"
-                         Glyph="{sr:Fi PersonVoiceRegular}"
+                         Glyph="{sr:Fi PersonVoiceFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Playback_Enable"
                                    Header="{x:Static lsp:Resources.S_Playback_Enable}"
                                    Description="{x:Static lsp:Resources.S_Playback_Enable_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi Speaker2Regular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.VoiceEnable}" />
                 </fa:FASettingsExpander.Footer>
@@ -31,7 +31,7 @@
             <fa:FASettingsExpander x:Name="S_Playback_Engine"
                                    Header="{x:Static lsp:Resources.S_Playback_Engine}"
                                    Description="{x:Static lsp:Resources.S_Playback_Engine_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PersonVoiceRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PersonVoiceFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox MinWidth="220"
                               ItemsSource="{Binding VoiceEngineOptions}"
@@ -42,7 +42,7 @@
             <fa:FASettingsExpander x:Name="S_Playback_Voice"
                                    Header="音色"
                                    Description="根据当前语音引擎显示可用音色。"
-                                   IconSource="{sr:FluentIconSource {sr:Fi MicRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi MicFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox MinWidth="300"
                               IsEnabled="{Binding !IsLoadingCurrentVoices}"
@@ -64,7 +64,7 @@
 
             <fa:FASettingsExpander Header="语音操作"
                                    Description="刷新可用音色，或按当前设置试听播报。"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PersonVoiceRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PersonVoiceFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button Content="刷新音色" Click="RefreshVoicesButton_OnClick" />
@@ -76,7 +76,7 @@
             <fa:FASettingsExpander x:Name="S_Playback_Volume"
                                    Header="{x:Static lsp:Resources.S_Playback_Volume}"
                                    Description="{x:Static lsp:Resources.S_Playback_Volume_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi Speaker2Regular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.VolumeSize}" Minimum="0" Maximum="100" />
                 </fa:FASettingsExpander.Footer>
@@ -85,7 +85,7 @@
             <fa:FASettingsExpander x:Name="S_Playback_SpeechRate"
                                    Header="{x:Static lsp:Resources.S_Playback_SpeechRate}"
                                    Description="{x:Static lsp:Resources.S_Playback_SpeechRate_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TopSpeedRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TopSpeedFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.SpeechRate}" Minimum="50" Maximum="200" />
                 </fa:FASettingsExpander.Footer>
@@ -94,7 +94,7 @@
             <fa:FASettingsExpander x:Name="S_Playback_WaitComplete"
                                    Header="{x:Static lsp:Resources.S_Playback_WaitComplete}"
                                    Description="{x:Static lsp:Resources.S_Playback_WaitComplete_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TimerRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimerFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.VoiceWaitComplete}" />
                 </fa:FASettingsExpander.Footer>
@@ -103,13 +103,13 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_SystemVolume"
                          Text="{x:Static lsp:Resources.S_SystemVolume}"
-                         Glyph="{sr:Fi Speaker2Regular}"
+                         Glyph="{sr:Fi Speaker2Filled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_SystemVolume_Control"
                                    Header="{x:Static lsp:Resources.S_SystemVolume_Control}"
                                    Description="{x:Static lsp:Resources.S_SystemVolume_Control_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi SpeakerOffRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi SpeakerOffFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.SystemVolumeControl}" />
                 </fa:FASettingsExpander.Footer>
@@ -118,7 +118,7 @@
             <fa:FASettingsExpander x:Name="S_SystemVolume_Size"
                                    Header="{x:Static lsp:Resources.S_SystemVolume_Size}"
                                    Description="{x:Static lsp:Resources.S_SystemVolume_Size_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi Speaker2Regular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.SystemVolumeSize}" Minimum="0" Maximum="100" />
                 </fa:FASettingsExpander.Footer>
@@ -127,13 +127,13 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_Music"
                          Text="{x:Static lc:Resources.Settings_Music}"
-                         Glyph="{sr:Fi MusicNote2Regular}"
+                         Glyph="{sr:Fi MusicNote2Filled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Music_BackgroundLoop"
                                    Header="{x:Static lc:Resources.Settings_BackgroundMusicLoop}"
                                    Description="{x:Static lc:Resources.Settings_BackgroundMusicLoop_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi MusicNote2Regular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi MusicNote2Filled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding MoreSettings.BackgroundMusicLoop}" />
                 </fa:FASettingsExpander.Footer>
@@ -142,13 +142,13 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_Content"
                          Text="{x:Static lsp:Resources.S_Content}"
-                         Glyph="{sr:Fi TextFontRegular}"
+                         Glyph="{sr:Fi TextFontFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Content_SpecificAnnouncements"
                                    Header="{x:Static lsp:Resources.S_Content_SpecificAnnouncements}"
                                    Description="{x:Static lsp:Resources.S_Content_SpecificAnnouncements_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.SpecificAnnouncementsEnabled}" />
                 </fa:FASettingsExpander.Footer>
@@ -157,7 +157,7 @@
             <fa:FASettingsExpander x:Name="S_Content_AnnounceId"
                                    Header="{x:Static lsp:Resources.S_Content_AnnounceId}"
                                    Description="{x:Static lsp:Resources.S_Content_AnnounceId_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.AnnounceId}" />
                 </fa:FASettingsExpander.Footer>
@@ -166,7 +166,7 @@
             <fa:FASettingsExpander x:Name="S_Content_AnnounceName"
                                    Header="{x:Static lsp:Resources.S_Content_AnnounceName}"
                                    Description="{x:Static lsp:Resources.S_Content_AnnounceName_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.AnnounceName}" />
                 </fa:FASettingsExpander.Footer>
@@ -175,7 +175,7 @@
             <fa:FASettingsExpander x:Name="S_Content_Prefix"
                                    Header="{x:Static lsp:Resources.S_Content_Prefix}"
                                    Description="{x:Static lsp:Resources.S_Content_Prefix_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <TextBox Text="{Binding Settings.AnnouncementPrefix}" MinWidth="220" />
                 </fa:FASettingsExpander.Footer>
@@ -184,7 +184,7 @@
             <fa:FASettingsExpander x:Name="S_Content_Suffix"
                                    Header="{x:Static lsp:Resources.S_Content_Suffix}"
                                    Description="{x:Static lsp:Resources.S_Content_Suffix_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <TextBox Text="{Binding Settings.AnnouncementSuffix}" MinWidth="220" />
                 </fa:FASettingsExpander.Footer>

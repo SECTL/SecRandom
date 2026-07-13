@@ -472,7 +472,7 @@
                             Margin="4,0,0,0"
                             Command="{TemplateBinding Command}"
                             CommandParameter="{TemplateBinding}">
-                            <sr:FluentIcon Glyph="&#xE670;" Margin="-4" />
+                             <sr:FluentIcon Glyph="{sr:Fi DismissFilled}" Margin="-4" />
                         </Button>
                     </StackPanel>
                 </Border>

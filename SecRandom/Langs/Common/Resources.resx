@@ -91,9 +91,6 @@
     <data name="Settings_Voice" xml:space="preserve">
         <value>语音设置</value>
     </data>
-    <data name="Settings_Theme" xml:space="preserve">
-        <value>主题管理</value>
-    </data>
     <data name="Feat_History" xml:space="preserve">
         <value>历史记录</value>
     </data>
@@ -246,6 +243,33 @@
     </data>
     <data name="Settings_FaceDetector_CameraSource_D" xml:space="preserve">
         <value>指定人脸抽取使用的摄像头设备</value>
+    </data>
+    <data name="Settings_FaceDetector_CameraGroup" xml:space="preserve">
+        <value>摄像头</value>
+    </data>
+    <data name="Settings_FaceDetector_Resolution" xml:space="preserve">
+        <value>分辨率</value>
+    </data>
+    <data name="Settings_FaceDetector_Resolution_D" xml:space="preserve">
+        <value>仅显示所选摄像头支持的分辨率</value>
+    </data>
+    <data name="Settings_FaceDetector_DetectionGroup" xml:space="preserve">
+        <value>人脸检测</value>
+    </data>
+    <data name="Settings_FaceDetector_DetectorMode" xml:space="preserve">
+        <value>检测模式</value>
+    </data>
+    <data name="Settings_FaceDetector_DetectorMode_D" xml:space="preserve">
+        <value>轻量 YuNet 为默认模式且更适合 CPU；增强 DAMO-YOLO 检测更强，但会占用更多 CPU 资源。</value>
+    </data>
+    <data name="Settings_FaceDetector_DetectorMode_Lightweight" xml:space="preserve">
+        <value>轻量 YuNet</value>
+    </data>
+    <data name="Settings_FaceDetector_DetectorMode_Enhanced" xml:space="preserve">
+        <value>增强 DAMO-YOLO</value>
+    </data>
+    <data name="Settings_FaceDetector_PickingGroup" xml:space="preserve">
+        <value>抽取</value>
     </data>
     <data name="Settings_FaceDetector_PreviewMode" xml:space="preserve">
         <value>预览模式</value>

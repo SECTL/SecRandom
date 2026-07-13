@@ -47,7 +47,7 @@ Nested instruction files:
 | Run/build/test | `SecRandom.sln`, `.github/workflows/Build.yml` | Use solution commands; no Makefile/CMake. |
 | Desktop startup | `SecRandom.Desktop/Program.cs` | Process entry → Avalonia lifetime. |
 | App composition / DI | `SecRandom/App.axaml.cs` | `BuildHost()` is the registration source of truth. |
-| Main navigation | `SecRandom/Views/MainView.axaml.cs` | Default page `main.rollCall`; keyed DI page factory. Built-in draw pages include `main.rollCall` and `main.lottery`; quick draw opens from the floating window instead of the main sidebar. |
+| Main navigation | `SecRandom/Views/MainView.axaml.cs` | Default page `main.rollCall`; keyed DI page factory. Built-in draw pages include `main.rollCall`, `main.lottery`, and `main.faceDraw` (camera preview, face count, and picking mode); face draw is bottom-pinned directly after lottery. Quick draw opens from the floating window instead of the main sidebar. |
 | Settings navigation | `SecRandom/Views/SettingsView.axaml.cs` | Default page `settings.overview`; has back stack + restart dialog. General group now includes `settings.general.basic`, `settings.general.privacy`, and `settings.general.backup`. |
 | Page registration helpers | `SecRandom.Core/Extensions/Registry/` | `AddMainPage`, `AddSettingsPage`, plugin page registration, groups, separators. |
 | Plugin contracts | `SecRandom.Core/Plugins/` | Public plugin API surface: manifest, runtime context, page registration, plugin catalog DTOs, and draw invocation DTOs. |
@@ -109,7 +109,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - ViewModels must be registered in `SecRandom/App.axaml.cs` `BuildHost()`; reusable services also go through Host.
 - Resolve shared services via `IAppHost.GetService<T>()` / `TryGetService<T>()` unless constructor injection is already the local style.
 - Navigation pages need `[PageInfo(...)]` plus `services.AddMainPage<T>()` or `services.AddSettingsPage<T>()` in `BuildHost()`.
-- Built-in main navigation entries may use `PageLocation.Bottom` for bottom-pinned sidebar items; the roll-call (`main.rollCall`) and lottery (`main.lottery`) pages are bottom-pinned and full-width/title-hidden. Quick draw is no longer a main navigation page and opens from the floating window.
+- Built-in main navigation entries may use `PageLocation.Bottom` for bottom-pinned sidebar items; the roll-call (`main.rollCall`), lottery (`main.lottery`), and face-draw (`main.faceDraw`) pages are bottom-pinned and full-width/title-hidden. Face draw uses `VideoPersonSparkleFilled` and follows lottery in the sidebar; it provides camera preview, face count, and picking-mode UI only, without identity recognition or student matching. Quick draw is no longer a main navigation page and opens from the floating window.
 - Page IDs: `main.xxx`, `settings.xxx`, `settings.group.xxx`.
 - Picking animation style is unified: settings expose it as `AnimationStyle` / “动画样式”, and RollCall, QuickDraw, and Lottery use the same style for both rolling preview/process animation and final result reveal. Do not split process/result animation style settings.
 - Plugin pages are runtime-registered through `AddPluginMainPage` / `AddPluginSettingsPage`; their IDs must start with `plugin.<plugin-id>.` and must not occupy built-in `main.*` or `settings.*` IDs.
@@ -127,6 +127,9 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - `Directory.Build.props` only pins `AvaloniaVersion`.
 - Standalone verification scripts live under `scripts/`; keep them self-contained and write outputs under `artifacts/`.
 - More settings owns built-in draw page chrome options such as roll-call/lottery control panel position and control visibility; do not hard-code those controls outside the page/config binding.
+- Application-owned Fluent System Icons use the `Filled` variant by default across navigation, settings, buttons, menus, floating windows, and empty states. Use the closest semantic `Filled` icon when no same-name variant exists.
+- New application icon references must use `FluentIcon`, `FluentIconSource`, `sr:Fi`, or `FluentIcons.*`; do not add raw Fluent Unicode glyphs. When migrating a raw glyph, reverse-map its code point through `SecRandom.Core/Assets/FluentSystemIcons-Resizable.json` before choosing the Filled replacement.
+- Brand images, author/organization images, window icons, and taskbar icons are separate resources and are not part of Fluent glyph style migration. FluentAvalonia template glyphs remain framework-owned unless an application-owned style explicitly overrides them.
 
 ## COMMENT STYLE
 - Keep comments that explain non-obvious project constraints, platform quirks, or AI-prone rules.

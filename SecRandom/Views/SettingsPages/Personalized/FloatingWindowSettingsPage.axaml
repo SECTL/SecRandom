@@ -9,20 +9,21 @@
              xmlns:u="https://irihi.tech/ursa"
              xmlns:personalized="clr-namespace:SecRandom.Views.SettingsPages.Personalized"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.SettingsPages.Personalized.FloatingWindowSettingsPage"
-             x:DataType="personalized:FloatingWindowSettingsPage"
-             Unloaded="OnUnloaded">
+              x:Class="SecRandom.Views.SettingsPages.Personalized.FloatingWindowSettingsPage"
+              x:DataType="personalized:FloatingWindowSettingsPage"
+              Loaded="OnLoaded"
+              Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
             <sr:IconText x:Name="S_Display"
                          Text="{x:Static lsp:Resources.S_Display}"
-                         Glyph="{sr:Fi WindowRegular}"
+                         Glyph="{sr:Fi WindowFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Display_StartupDisplay"
                                    Header="{x:Static lsp:Resources.S_Display_StartupDisplay}"
                                    Description="{x:Static lsp:Resources.S_Display_StartupDisplay_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.StartupDisplayFloatingWindow}" />
                 </fa:FASettingsExpander.Footer>
@@ -31,7 +32,7 @@
             <fa:FASettingsExpander x:Name="S_Display_Opacity"
                                    Header="{x:Static lsp:Resources.S_Display_Opacity}"
                                    Description="{x:Static lsp:Resources.S_Display_Opacity_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ColorRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.FloatingWindowOpacity}" Minimum="20" Maximum="100" />
                 </fa:FASettingsExpander.Footer>
@@ -40,7 +41,7 @@
             <fa:FASettingsExpander x:Name="S_Display_TopmostMode"
                                    Header="{x:Static lsp:Resources.S_Display_TopmostMode}"
                                    Description="{x:Static lsp:Resources.S_Display_TopmostMode_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PinRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PinFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.FloatingWindowTopmostMode}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_TopmostMode_None}" />
@@ -54,13 +55,13 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_Buttons"
                          Text="{x:Static lsp:Resources.S_Buttons}"
-                         Glyph="{sr:Fi FlashRegular}"
+                         Glyph="{sr:Fi FlashFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Buttons_EnabledItems"
                                    Header="{x:Static lsp:Resources.S_Buttons_EnabledItems}"
                                    Description="{x:Static lsp:Resources.S_Buttons_EnabledItems_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PersonRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PersonFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <u:MultiComboBox MinWidth="260"
                                      ItemsSource="{Binding ButtonOptions}"
@@ -72,7 +73,7 @@
             <fa:FASettingsExpander x:Name="S_Buttons_Placement"
                                    Header="{x:Static lsp:Resources.S_Buttons_Placement}"
                                    Description="{x:Static lsp:Resources.S_Buttons_Placement_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi GridRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi GridFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.FloatingWindowPlacement}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_Placement_Rectangle}" />
@@ -85,7 +86,7 @@
             <fa:FASettingsExpander x:Name="S_Buttons_DisplayStyle"
                                    Header="{x:Static lsp:Resources.S_Buttons_DisplayStyle}"
                                    Description="{x:Static lsp:Resources.S_Buttons_DisplayStyle_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TextBulletListSquareRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextBulletListSquareFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.FloatingWindowDisplayStyle}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_DisplayStyle_IconText}" />
@@ -98,7 +99,7 @@
             <fa:FASettingsExpander x:Name="S_Buttons_Size"
                                    Header="{x:Static lsp:Resources.S_Buttons_Size}"
                                    Description="{x:Static lsp:Resources.S_Buttons_Size_D}"
-                IconSource="{sr:FluentIconSource {sr:Fi ResizeLargeRegular}}">
+                IconSource="{sr:FluentIconSource {sr:Fi ResizeLargeFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <Grid ColumnDefinitions="260,Auto" ColumnSpacing="12">
                         <Slider Minimum="32" Maximum="160" TickFrequency="8" IsSnapToTickEnabled="True"
@@ -112,13 +113,13 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_Interaction"
                          Text="{x:Static lsp:Resources.S_Interaction}"
-                         Glyph="{sr:Fi GestureRegular}"
+                         Glyph="{sr:Fi GestureFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Interaction_Draggable"
                                    Header="{x:Static lsp:Resources.S_Interaction_Draggable}"
                                    Description="{x:Static lsp:Resources.S_Interaction_Draggable_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi GestureRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi GestureFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.Draggable}" />
                 </fa:FASettingsExpander.Footer>
@@ -127,7 +128,7 @@
             <fa:FASettingsExpander x:Name="S_Interaction_StickToEdge"
                                    Header="{x:Static lsp:Resources.S_Interaction_StickToEdge}"
                                    Description="{x:Static lsp:Resources.S_Interaction_StickToEdge_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi DockRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi DockFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.StickToEdge}" />
                 </fa:FASettingsExpander.Footer>
@@ -136,13 +137,13 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_Dock"
                          Text="{x:Static lsp:Resources.S_Dock}"
-                         Glyph="{sr:Fi DockRegular}"
+                         Glyph="{sr:Fi DockFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Interaction_StickToEdgeRecoverSeconds"
                                    Header="{x:Static lsp:Resources.S_Interaction_StickToEdgeRecoverSeconds}"
                                    Description="{x:Static lsp:Resources.S_Interaction_StickToEdgeRecoverSeconds_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TimerRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimerFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.StickToEdgeRecoverSeconds}" Minimum="0" Maximum="60" />
                 </fa:FASettingsExpander.Footer>
@@ -151,7 +152,7 @@
             <fa:FASettingsExpander x:Name="S_Dock_Size"
                                    Header="{x:Static lsp:Resources.S_Dock_Size}"
                                    Description="{x:Static lsp:Resources.S_Dock_Size_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ResizeLargeRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ResizeLargeFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <Grid ColumnDefinitions="260,Auto" ColumnSpacing="12">
                         <Slider Minimum="28" Maximum="96" TickFrequency="4" IsSnapToTickEnabled="True"
@@ -165,7 +166,7 @@
             <fa:FASettingsExpander x:Name="S_Interaction_StickToEdgeDisplayStyle"
                                    Header="{x:Static lsp:Resources.S_Interaction_StickToEdgeDisplayStyle}"
                                    Description="{x:Static lsp:Resources.S_Interaction_StickToEdgeDisplayStyle_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi DockRegular}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi DockFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.StickToEdgeDisplayStyle}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_StickDisplay_Icon}" />

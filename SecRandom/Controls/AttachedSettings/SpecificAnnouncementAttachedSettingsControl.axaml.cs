@@ -3,12 +3,13 @@ using SecRandom.Core;
 using SecRandom.Core.Abstraction.Controls;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
+using SecRandom.Core.Icons;
 using SecRandom.Core.Models.AttachedSettings;
 
 namespace SecRandom.Controls.AttachedSettings;
 
 [AttachedSettingsUsage(AttachedSettingsTargets.Student | AttachedSettingsTargets.Prize)]
-[AttachedSettingsControlInfo(GlobalConstants.SpecificAnnouncementAttachedSettings, "\uE9F9")]
+[AttachedSettingsControlInfo(GlobalConstants.SpecificAnnouncementAttachedSettings, FluentIcons.IotFilled)]
 public partial class SpecificAnnouncementAttachedSettingsControl :
     AttachedSettingsControlBase<SpecificAnnouncementAttachedSettings>,
     INotifyPropertyChanged

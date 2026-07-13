@@ -77,7 +77,7 @@
                 <Grid x:Name="Root"
                       Classes.empty="{TemplateBinding CurrentImage, Converter={x:Static ObjectConverters.IsNull}, Mode=OneWay}">
                     <sr:FluentIcon VerticalAlignment="Center" HorizontalAlignment="Center"
-                                   Glyph="&#xE9CC;"
+                                   Glyph="{sr:Fi ImageOffFilled}"
                                    IsVisible="False" IsHitTestVisible="False"
                                    x:Name="FluentIconError"
                                    FontSize="18"

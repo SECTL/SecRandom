@@ -13,33 +13,33 @@
               Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
-            <sr:IconText Text="{x:Static lsp:Resources.S_Credentials}" Glyph="{sr:Fi ShieldKeyholeRegular}" Margin="0 0 0 4" />
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Enabled}" Description="{x:Static lsp:Resources.S_Enabled_D}" IconSource="{sr:FluentIconSource {sr:Fi ShieldKeyholeRegular}}">
+            <sr:IconText Text="{x:Static lsp:Resources.S_Credentials}" Glyph="{sr:Fi ShieldKeyholeFilled}" Margin="0 0 0 4" />
+            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Enabled}" Description="{x:Static lsp:Resources.S_Enabled_D}" IconSource="{sr:FluentIconSource {sr:Fi ShieldKeyholeFilled}}">
                 <fa:FASettingsExpander.Footer><ToggleSwitch IsChecked="{Binding Settings.SecurityEnabled}" IsEnabled="{Binding CanEnableSecurity}" /></fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Password}" Description="{x:Static lsp:Resources.S_Password_D}" IconSource="{sr:FluentIconSource {sr:Fi PasswordRegular}}">
+            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Password}" Description="{x:Static lsp:Resources.S_Password_D}" IconSource="{sr:FluentIconSource {sr:Fi PasswordFilled}}">
                 <fa:FASettingsExpander.Footer><Button Content="{Binding PasswordButtonText}" Click="ManagePassword_OnClick" /></fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Totp}" Description="{x:Static lsp:Resources.S_Totp_D}" IconSource="{sr:FluentIconSource {sr:Fi ShieldKeyholeRegular}}">
+            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Totp}" Description="{x:Static lsp:Resources.S_Totp_D}" IconSource="{sr:FluentIconSource {sr:Fi ShieldKeyholeFilled}}">
                 <fa:FASettingsExpander.Footer><Button Content="{Binding TotpButtonText}" IsEnabled="{Binding CanConfigureAdditionalFactors}" Click="ManageTotp_OnClick" /></fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Usb}" Description="{x:Static lsp:Resources.S_Usb_D}" IconSource="{sr:FluentIconSource {sr:Fi UsbStickRegular}}">
+            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Usb}" Description="{x:Static lsp:Resources.S_Usb_D}" IconSource="{sr:FluentIconSource {sr:Fi UsbStickFilled}}">
                 <fa:FASettingsExpander.Footer><Button Content="{x:Static lsp:Resources.C_ManageBindings}" IsEnabled="{Binding CanConfigureAdditionalFactors}" Click="ManageUsb_OnClick" /></fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
             <Separator Margin="0 12 0 4" />
-            <sr:IconText Text="{x:Static lsp:Resources.S_Factors}" Glyph="{sr:Fi PasswordRegular}" Margin="0 0 0 4" />
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Factors}" Description="{x:Static lsp:Resources.S_Factors_D}" IconSource="{sr:FluentIconSource {sr:Fi PasswordRegular}}">
+            <sr:IconText Text="{x:Static lsp:Resources.S_Factors}" Glyph="{sr:Fi PasswordFilled}" Margin="0 0 0 4" />
+            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Factors}" Description="{x:Static lsp:Resources.S_Factors_D}" IconSource="{sr:FluentIconSource {sr:Fi PasswordFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <u:MultiComboBox MinWidth="260" ItemsSource="{Binding FactorOptions}" SelectedItems="{Binding SelectedFactorOptions}" SelectionChanged="FactorSelection_OnSelectionChanged" IsEnabled="{Binding CanEditFactorSelection}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_RequireAll}" Description="{x:Static lsp:Resources.S_RequireAll_D}" IconSource="{sr:FluentIconSource {sr:Fi ShieldKeyholeRegular}}">
+            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_RequireAll}" Description="{x:Static lsp:Resources.S_RequireAll_D}" IconSource="{sr:FluentIconSource {sr:Fi ShieldKeyholeFilled}}">
                 <fa:FASettingsExpander.Footer><ToggleSwitch IsChecked="{Binding Settings.RequireAllSelectedFactors}" IsEnabled="{Binding CanEditFactorSelection}" /></fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
             <Separator Margin="0 12 0 4" />
-            <sr:IconText Text="{x:Static lsp:Resources.S_Protection}" Glyph="{sr:Fi LockClosedRegular}" Margin="0 0 0 4" />
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_WindowOperations}" Description="{x:Static lsp:Resources.S_WindowOperations_D}" IconSource="{sr:FluentIconSource {sr:Fi WindowRegular}}">
+            <sr:IconText Text="{x:Static lsp:Resources.S_Protection}" Glyph="{sr:Fi LockClosedFilled}" Margin="0 0 0 4" />
+            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_WindowOperations}" Description="{x:Static lsp:Resources.S_WindowOperations_D}" IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_OpenSettings}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.ProtectOpenSettings}" IsEnabled="{Binding CanEditProtectedOperations}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_AllowSettingsPreview}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.AllowSettingsPreview}" IsEnabled="{Binding CanEditProtectedOperations}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_ToggleMainWindow}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.ProtectToggleMainWindow}" IsEnabled="{Binding CanEditProtectedOperations}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
@@ -47,7 +47,7 @@
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_Restart}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.ProtectRestart}" IsEnabled="{Binding CanEditProtectedOperations}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_Exit}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.ProtectExit}" IsEnabled="{Binding CanEditProtectedOperations}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_DrawOperations}" Description="{x:Static lsp:Resources.S_DrawOperations_D}" IconSource="{sr:FluentIconSource {sr:Fi PeopleRegular}}">
+            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_DrawOperations}" Description="{x:Static lsp:Resources.S_DrawOperations_D}" IconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}">
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_RollCallStart}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.ProtectRollCallStart}" IsEnabled="{Binding CanEditProtectedOperations}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_RollCallReset}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.ProtectRollCallReset}" IsEnabled="{Binding CanEditProtectedOperations}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_QuickDrawStart}"><fa:FASettingsExpanderItem.Footer><ToggleSwitch IsChecked="{Binding Settings.ProtectQuickDrawStart}" IsEnabled="{Binding CanEditProtectedOperations}" /></fa:FASettingsExpanderItem.Footer></fa:FASettingsExpanderItem>

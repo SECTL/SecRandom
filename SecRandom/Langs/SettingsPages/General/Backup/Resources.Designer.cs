@@ -483,6 +483,24 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 抽取证明文件.
+        /// </summary>
+        public static string S_Includes_Proofs {
+            get {
+                return ResourceManager.GetString("S_Includes_Proofs", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 可复现和核验抽取结果的证明文件（proofs）.
+        /// </summary>
+        public static string S_Includes_Proofs_D {
+            get {
+                return ResourceManager.GetString("S_Includes_Proofs_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 图片资源.
         /// </summary>
         public static string S_Includes_Images {

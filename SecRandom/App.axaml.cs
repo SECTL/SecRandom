@@ -30,6 +30,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Extensions.Registry;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models;
+using SecRandom.Core.Services.Camera;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services.Verification;
@@ -76,7 +77,6 @@ using LotteryNotificationSettingsPage = SecRandom.Views.SettingsPages.Notificati
 using QuickDrawNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.QuickDrawNotificationSettingsPage;
 using RollCallNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.RollCallNotificationSettingsPage;
 using SecuritySettingsPage = SecRandom.Views.SettingsPages.General.SecuritySettingsPage;
-using ThemeManagementSettingsPage = SecRandom.Views.SettingsPages.Personalized.ThemeManagementSettingsPage;
 using VoiceSettingsPage = SecRandom.Views.SettingsPages.Notification.VoiceSettingsPage;
 
 namespace SecRandom;
@@ -346,7 +346,9 @@ public partial class App : Application
                 services.AddTransient<VerificationDrawCoordinator>();
                 services.AddSingleton<SettingsSearchService>();
                 services.AddSingleton<IImportExportService, Services.ImportExport.ImportExportService>();
+                services.AddHostedService<AutomaticBackupService>();
                 services.AddTransient<DrawEngine>();
+                services.AddSingleton<CameraDrawEngine>();
                 services.AddSingleton(pluginStateStore);
                 services.AddSingleton<PluginSelectionState>();
                 services.AddSingleton<IPluginManager, PluginManagerService>();
@@ -385,10 +387,8 @@ public partial class App : Application
                 // 界面 Views
                 services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
                 services.AddMainPage<LotteryPage>(Langs.Common.Resources.Feat_Lottery);
+                services.AddMainPage<CameraPreviewTestPage>("人脸抽取");
                 services.AddMainPage<HistoryPage>(Langs.Common.Resources.Feat_History);
-#if DEBUG
-                services.AddMainPage<CameraPreviewTestPage>("摄像头测试");
-#endif
 
                 // 设置界面 Views
                 
@@ -408,7 +408,6 @@ public partial class App : Application
                     Langs.Common.Resources.Settings_Personalized, "settings.personalized", FluentIcons.ColorFilled));
                 services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
                 services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources.Settings_FloatingWindow);
-                services.AddSettingsPage<ThemeManagementSettingsPage>(Langs.Common.Resources.Settings_Theme);
                 
                 services.AddSettingsPage<LinkageSettingsPage>(Langs.Common.Resources.Settings_Linkage);
                 services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
@@ -1076,7 +1075,16 @@ public partial class App : Application
                     Background = Brushes.Transparent,
                     TransparencyLevelHint = [WindowTransparencyLevel.Transparent]
                 };
-                _quickDrawWindow.Opened += (_, _) => ApplyQuickDrawWindowBounds(_quickDrawWindow);
+                _quickDrawWindow.Opened += (_, _) =>
+                {
+                    ApplyQuickDrawWindowBounds(_quickDrawWindow);
+                    Dispatcher.UIThread.Post(
+                        () => CenterQuickDrawWindow(_quickDrawWindow),
+                        DispatcherPriority.Render);
+                };
+                _quickDrawWindow.SizeChanged += (_, _) => Dispatcher.UIThread.Post(
+                    () => CenterQuickDrawWindow(_quickDrawWindow),
+                    DispatcherPriority.Render);
                 _quickDrawWindow.PositionChanged += (_, _) => ApplyQuickDrawWindowBounds(_quickDrawWindow);
                 _quickDrawWindow.ScalingChanged += (_, _) => ApplyQuickDrawWindowBounds(_quickDrawWindow);
                 _quickDrawWindow.Closed += (_, _) => _quickDrawWindow = null;
@@ -1108,6 +1116,27 @@ public partial class App : Application
         var scale = window.RenderScaling;
         window.MaxWidth = Math.Max(window.MinWidth, screen.WorkingArea.Width / scale - edgePadding);
         window.MaxHeight = Math.Max(window.MinHeight, screen.WorkingArea.Height / scale - edgePadding);
+    }
+
+    private static void CenterQuickDrawWindow(Window? window)
+    {
+        if (window is null)
+            return;
+
+        var screen = window.Screens.ScreenFromWindow(window);
+        if (screen is null)
+            return;
+
+        var scale = window.RenderScaling;
+        var width = (int)Math.Round(window.Bounds.Width * scale);
+        var height = (int)Math.Round(window.Bounds.Height * scale);
+        if (width <= 0 || height <= 0)
+            return;
+
+        var area = screen.WorkingArea;
+        window.Position = new PixelPoint(
+            area.X + (area.Width - width) / 2,
+            area.Y + (area.Height - height) / 2);
     }
 
     private void ShowProfileSettingsWindow()

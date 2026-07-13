@@ -22,7 +22,7 @@
 
             <fa:FASettingsExpander Header="{x:Static lr:Resources.S_CurrentList}"
                                    Description="{x:Static lr:Resources.S_CurrentList_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryRegular}}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryFilled}}"
                                    IsExpanded="True">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox MinWidth="220"
