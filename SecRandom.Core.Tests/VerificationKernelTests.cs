@@ -41,6 +41,26 @@ public sealed class VerificationKernelTests
     }
 
     [Fact]
+    public void Draw_AlwaysSelectsGuaranteedCandidateForSingleDraw()
+    {
+        var guaranteed = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+        var input = new VerificationDrawInput
+        {
+            Kind = VerificationDrawKind.Student,
+            Count = 1,
+            Candidates =
+            [
+                new VerificationCandidate(guaranteed, 0, 1_000_000, true),
+                new VerificationCandidate(Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), 0, long.MaxValue, false)
+            ]
+        };
+
+        var result = new ManagedVerificationKernel().Draw(input, RandomNumberGenerator.GetBytes(32));
+
+        Assert.Equal(guaranteed, result.Winners[0].RecordId);
+    }
+
+    [Fact]
     public void Draw_RejectsPoolWithNoEligibleWeight()
     {
         var input = new VerificationDrawInput

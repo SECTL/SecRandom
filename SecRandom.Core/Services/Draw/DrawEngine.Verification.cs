@@ -35,7 +35,7 @@ public partial class DrawEngine
             Kind = VerificationDrawKind.Student,
             Count = count,
             Candidates = frozen,
-            AuditPayload = CreateAuditPayload("student", count, frozen, historyCache)
+            AuditPayload = CreateAuditPayload("student", count, frozen, weighted, historyCache)
         };
     }
 
@@ -58,7 +58,7 @@ public partial class DrawEngine
             Kind = VerificationDrawKind.Prize,
             Count = count,
             Candidates = frozen,
-            AuditPayload = CreateAuditPayload("prize", count, frozen, historyCache)
+            AuditPayload = CreateAuditPayload("prize", count, frozen, weighted, historyCache)
         };
     }
 
@@ -77,12 +77,12 @@ public partial class DrawEngine
 
             var settings = GetBehindSceneSettings(weighted.Candidate);
             var probability = settings is { IsAttachSettingsEnabled: true }
-                ? Math.Clamp(settings.Probability, 0, 100)
-                : 100;
+                ? Math.Clamp(settings.Probability, 0d, 100d)
+                : 100d;
             if (probability <= 0)
                 continue;
 
-            var guaranteed = settings is { IsAttachSettingsEnabled: true } && probability >= 100;
+            var guaranteed = settings is { IsAttachSettingsEnabled: true } && probability >= 100d;
             if (guaranteed && !guaranteedRecordIds.Add(recordId))
                 continue;
 
@@ -135,10 +135,20 @@ public partial class DrawEngine
         string operation,
         int count,
         IReadOnlyList<VerificationCandidate> candidates,
+        IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates,
         IReadOnlyDictionary<TCandidate, History> historyCache)
         where TCandidate : IAttachableSettingsObject
     {
         var historyByRecordId = historyCache.ToDictionary(pair => GetRecordId(pair.Key), pair => pair.Value);
+        Dictionary<Guid, double?> internalSettingsByRecordId = [];
+        foreach (var weighted in weightedCandidates)
+        {
+            var recordId = GetRecordId(weighted.Candidate);
+            var settings = GetBehindSceneSettings(weighted.Candidate);
+            internalSettingsByRecordId[recordId] = settings is { IsAttachSettingsEnabled: true }
+                ? Math.Clamp(settings.Probability, 0d, 100d)
+                : null;
+        }
         var ordered = candidates
             .OrderBy(candidate => candidate.RecordId.ToString("N"), StringComparer.Ordinal)
             .ThenBy(candidate => candidate.OccurrenceIndex)
@@ -148,6 +158,8 @@ public partial class DrawEngine
                 candidate.OccurrenceIndex,
                 candidate.WeightMicros,
                 candidate.IsGuaranteed,
+                internalSettingApplied = internalSettingsByRecordId.GetValueOrDefault(candidate.RecordId) is not null,
+                internalProbability = internalSettingsByRecordId.GetValueOrDefault(candidate.RecordId),
                 historyCount = historyByRecordId.GetValueOrDefault(candidate.RecordId)?.TotalCount ?? 0,
                 lastDrawnUtc = historyByRecordId.GetValueOrDefault(candidate.RecordId)?.LastDrawnTime == DateTime.MinValue
                     ? (DateTime?)null
@@ -161,6 +173,8 @@ public partial class DrawEngine
             operation,
             requestedCount = count,
             candidateCount = ordered.Length,
+            internalSettingsApplied = ordered.Any(candidate => candidate.internalSettingApplied),
+            internalCandidateCount = ordered.Count(candidate => candidate.internalSettingApplied),
             candidates = ordered
         });
     }
