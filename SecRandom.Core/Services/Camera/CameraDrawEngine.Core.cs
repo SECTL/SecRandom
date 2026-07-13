@@ -244,7 +244,7 @@ public partial class CameraDrawEngine
                 bgraBuffer.Length
             );
 
-            var (faces, detectionState) = DetectFaces(frameToProcess);
+            var (faces, detectionState) = DetectFacesForPreview(frameToProcess);
 
             var packet = new CameraFramePacket(
                 _currentSessionId,

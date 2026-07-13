@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.ComponentModel;
 using Avalonia.Controls;
@@ -17,6 +18,7 @@ public partial class QuickDrawPage : UserControl
 {
     private bool _isUnloaded;
     private int _autoCloseRevision;
+    private CancellationTokenSource? _autoCloseCts;
     private readonly ItemsControl? _resultPresenter;
 
     public QuickDrawPage()
@@ -42,6 +44,7 @@ public partial class QuickDrawPage : UserControl
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
         _isUnloaded = true;
+        CancelAutoClose();
         ViewModel.PropertyChanged -= ViewModel_OnPropertyChanged;
         ViewModel.Config.FloatingWindowSettings.PropertyChanged -= FloatingWindowSettings_OnPropertyChanged;
     }
@@ -99,6 +102,8 @@ public partial class QuickDrawPage : UserControl
         {
             if (propertyName == nameof(QuickDrawPageViewModel.PreviewAnimationRevision))
             {
+                CancelAutoClose();
+                _autoCloseRevision++;
                 await WaitForResultPresenterLayoutAsync();
                 await DrawAnimationHelper.PreviewAsync(
                     _resultPresenter,
@@ -108,12 +113,17 @@ public partial class QuickDrawPage : UserControl
             else if (propertyName == nameof(QuickDrawPageViewModel.ResultAnimationRevision))
             {
                 var autoCloseRevision = ++_autoCloseRevision;
+                CancelAutoClose();
                 await WaitForResultPresenterLayoutAsync();
+                if (_isUnloaded || autoCloseRevision != _autoCloseRevision)
+                    return;
                 await DrawAnimationHelper.RevealAsync(
                     _resultPresenter,
                     ViewModel.AnimationEnabled,
                     ViewModel.AnimationStyle,
                     ViewModel.AnimationDuration);
+                if (_isUnloaded || autoCloseRevision != _autoCloseRevision)
+                    return;
                 await CloseAfterDelayAsync(autoCloseRevision);
             }
         }
@@ -124,9 +134,11 @@ public partial class QuickDrawPage : UserControl
 
     private static async Task WaitForResultPresenterLayoutAsync()
     {
-        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
-        await Task.Delay(16);
-        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+        for (var i = 0; i < 2; i++)
+        {
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+            await Task.Delay(16);
+        }
     }
 
     private async Task CloseAfterDelayAsync(int autoCloseRevision)
@@ -135,8 +147,28 @@ public partial class QuickDrawPage : UserControl
         if (seconds == 0)
             return;
 
-        await Task.Delay(TimeSpan.FromSeconds(seconds));
-        if (!_isUnloaded && autoCloseRevision == _autoCloseRevision)
-            (TopLevel.GetTopLevel(this) as Window)?.Close();
+        var cts = new CancellationTokenSource();
+        _autoCloseCts = cts;
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(seconds), cts.Token);
+            if (!_isUnloaded && autoCloseRevision == _autoCloseRevision && ReferenceEquals(_autoCloseCts, cts))
+                (TopLevel.GetTopLevel(this) as Window)?.Close();
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            if (ReferenceEquals(_autoCloseCts, cts))
+                _autoCloseCts = null;
+            cts.Dispose();
+        }
+    }
+
+    private void CancelAutoClose()
+    {
+        _autoCloseCts?.Cancel();
+        _autoCloseCts = null;
     }
 }

@@ -24,7 +24,8 @@ public partial class CameraDrawEngine
     private int TargetHeight => ConfigData.ModelInputHeight;
     private string TargetCameraSource => ConfigData.CameraSource;
     private CameraPreviewMode CameraPreviewMode => ConfigData.CameraPreviewMode;
-    private string DetectorModel => ConfigData.DetectorType;
+    private FaceDetectorMode DetectorMode => ConfigData.DetectorMode;
+    private string DetectorModel => FaceDetectorModeResolver.GetModelFileName(DetectorMode);
 
     private string? CurrentCameraResolution =>
         !string.IsNullOrWhiteSpace(TargetCameraSource) &&

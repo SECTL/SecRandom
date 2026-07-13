@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
+using System.Threading;
 using Microsoft.Win32.SafeHandles;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Enums.Configs;
@@ -18,7 +19,11 @@ namespace SecRandom.Desktop;
 internal static class UiAccessStartup
 {
     private const string ElevatedBootstrapArgument = "--secrandom-uiaccess-bootstrap";
+    private const string ReadyEventArgument = "--secrandom-uiaccess-ready-event";
+    private const string ReplacementProcessArgument = "--secrandom-uiaccess-replacement";
     private const int ErrorCancelled = 1223;
+    private const int BootstrapTimeoutMilliseconds = 15000;
+    private const int ReadyEventTimeoutMilliseconds = 10000;
     private const uint TokenAssignPrimary = 0x0001;
     private const uint TokenDuplicate = 0x0002;
     private const uint TokenImpersonate = 0x0004;
@@ -34,6 +39,10 @@ internal static class UiAccessStartup
     private const int TokenPrimary = 1;
     private const int TokenImpersonation = 2;
     private static readonly nint InvalidHandleValue = new(-1);
+    private static readonly string DiagnosticPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "SecRandom",
+        "uiaccess-startup.log");
 
     public static int BootstrapExitCode { get; private set; }
 
@@ -42,8 +51,11 @@ internal static class UiAccessStartup
         if (!OperatingSystem.IsWindows())
             return true;
 
+        WriteDiagnostic("Startup requested.");
         var isBootstrapProcess = arguments.Any(argument =>
             string.Equals(argument, ElevatedBootstrapArgument, StringComparison.Ordinal));
+        var isReplacementProcess = arguments.Any(argument =>
+            string.Equals(argument, ReplacementProcessArgument, StringComparison.Ordinal));
         if (!IsUiAccessRequested())
             return true;
 
@@ -51,14 +63,22 @@ internal static class UiAccessStartup
         try
         {
             if (HasUiAccessToken())
+            {
+                WriteDiagnostic("UIAccess token already present.");
                 return true;
+            }
+
+            // A replacement must not recursively elevate if Windows rejects its UIAccess token.
+            if (isReplacementProcess)
+            {
+                WriteDiagnostic("Replacement has no UIAccess token; using ordinary topmost.");
+                return true;
+            }
 
             if (isBootstrapProcess)
             {
-                if (!TryStartUiAccessProcess(appArguments))
-                    return true;
-
-                BootstrapExitCode = 0;
+                BootstrapExitCode = TryStartUiAccessProcess(appArguments) ? 0 : 1;
+                WriteDiagnostic($"Bootstrap finished with exit code {BootstrapExitCode}.");
                 return false;
             }
 
@@ -75,7 +95,14 @@ internal static class UiAccessStartup
         }
         catch
         {
+            if (isBootstrapProcess)
+            {
+                BootstrapExitCode = 1;
+                return false;
+            }
+
             // The process that cannot prepare UIAccess keeps the regular Topmost fallback.
+            WriteDiagnostic("UIAccess preparation threw; using ordinary topmost.");
             return true;
         }
     }
@@ -87,7 +114,9 @@ internal static class UiAccessStartup
 
     private static bool IsInternalArgument(string argument)
     {
-        return string.Equals(argument, ElevatedBootstrapArgument, StringComparison.Ordinal);
+        return string.Equals(argument, ElevatedBootstrapArgument, StringComparison.Ordinal)
+               || argument.StartsWith($"{ReadyEventArgument}=", StringComparison.Ordinal)
+               || string.Equals(argument, ReplacementProcessArgument, StringComparison.Ordinal);
     }
 
     private static bool IsUiAccessRequested()
@@ -122,7 +151,26 @@ internal static class UiAccessStartup
             startInfo.Verb = "runas";
             try
             {
-                return Process.Start(startInfo) is not null;
+                using var bootstrap = Process.Start(startInfo);
+                if (bootstrap is null)
+                    continue;
+
+                if (!bootstrap.WaitForExit(BootstrapTimeoutMilliseconds))
+                {
+                    try
+                    {
+                        bootstrap.Kill(entireProcessTree: true);
+                        bootstrap.WaitForExit();
+                    }
+                    catch
+                    {
+                    }
+
+                    return false;
+                }
+
+                WriteDiagnostic($"Bootstrap process exited with code {bootstrap.ExitCode}.");
+                return bootstrap.ExitCode == 0;
             }
             catch (Win32Exception exception) when (exception.NativeErrorCode == ErrorCancelled)
             {
@@ -140,17 +188,47 @@ internal static class UiAccessStartup
     private static bool TryStartUiAccessProcess(IReadOnlyList<string> appArguments)
     {
         if (!TryCreateUiAccessToken(out var uiAccessToken))
+        {
+            WriteDiagnostic($"Unable to create UIAccess token: {Marshal.GetLastWin32Error()}.");
             return false;
+        }
 
         using (uiAccessToken)
         {
             if (uiAccessToken is null)
                 return false;
 
-            foreach (var startInfo in CrashRecoveryRuntime.CreateRestartStartInfos(appArguments))
+            var eventName = $"Local\\SecRandom_UIAccessReady_{Guid.NewGuid():N}";
+            using var readyEvent = new EventWaitHandle(false, EventResetMode.ManualReset, eventName);
+            var readyArguments = new List<string>(appArguments.Count + 2);
+            readyArguments.AddRange(appArguments);
+            readyArguments.Add(ReplacementProcessArgument);
+            readyArguments.Add($"{ReadyEventArgument}={eventName}");
+            foreach (var startInfo in CrashRecoveryRuntime.CreateRestartStartInfos(readyArguments))
             {
-                if (TryCreateProcessAsUser(uiAccessToken, startInfo))
+                if (!TryCreateProcessAsUser(uiAccessToken, startInfo, out var childProcess)
+                    || childProcess is null)
+                    continue;
+
+                using (childProcess)
+                {
+                if (readyEvent.WaitOne(ReadyEventTimeoutMilliseconds))
+                {
+                    WriteDiagnostic("UIAccess replacement reported ready.");
                     return true;
+                }
+
+                    try
+                    {
+                        if (!childProcess.HasExited)
+                            childProcess.Kill(entireProcessTree: true);
+                    }
+                    catch
+                    {
+                    }
+
+                    return false;
+                }
             }
         }
 
@@ -189,16 +267,25 @@ internal static class UiAccessStartup
     {
         uiAccessToken = null;
         if (!OpenProcessToken(GetCurrentProcess(), TokenQuery | TokenDuplicate, out var currentToken))
+        {
+            WriteDiagnostic($"OpenProcessToken failed: {Marshal.GetLastWin32Error()}.");
             return false;
+        }
 
         using (currentToken)
         {
             if (!GetTokenInformationUInt(currentToken, TokenSessionId, out var sessionId, sizeof(uint), out _))
+            {
+                WriteDiagnostic($"GetTokenInformation(TokenSessionId) failed: {Marshal.GetLastWin32Error()}.");
                 return false;
+            }
 
             using var winlogonToken = TryDuplicateWinlogonToken(sessionId);
             if (winlogonToken is null || !SetThreadToken(nint.Zero, winlogonToken))
+            {
+                WriteDiagnostic($"Unable to impersonate same-session winlogon: {Marshal.GetLastWin32Error()}.");
                 return false;
+            }
 
             try
             {
@@ -209,12 +296,16 @@ internal static class UiAccessStartup
                         SecurityAnonymous,
                         TokenPrimary,
                         out var token))
+                {
+                    WriteDiagnostic($"DuplicateTokenEx failed: {Marshal.GetLastWin32Error()}.");
                     return false;
+                }
 
                 var uiAccess = 1;
                 if (!SetTokenInformation(token, TokenUiAccess, ref uiAccess, sizeof(int)))
                 {
                     token.Dispose();
+                    WriteDiagnostic($"SetTokenInformation(TokenUIAccess) failed: {Marshal.GetLastWin32Error()}.");
                     return false;
                 }
 
@@ -295,8 +386,12 @@ internal static class UiAccessStartup
         return null;
     }
 
-    private static bool TryCreateProcessAsUser(SafeAccessTokenHandle token, ProcessStartInfo startInfo)
+    private static bool TryCreateProcessAsUser(
+        SafeAccessTokenHandle token,
+        ProcessStartInfo startInfo,
+        out Process? childProcess)
     {
+        childProcess = null;
         var startupInfo = new StartupInfo { Size = (uint)Marshal.SizeOf<StartupInfo>() };
         GetStartupInfo(ref startupInfo);
         var commandLine = CreateCommandLine(startInfo);
@@ -316,11 +411,39 @@ internal static class UiAccessStartup
                 workingDirectory,
                 ref startupInfo,
                 out var processInformation))
+        {
+            WriteDiagnostic($"CreateProcessAsUserW failed: {Marshal.GetLastWin32Error()}. File: {startInfo.FileName}");
             return false;
+        }
 
-        CloseHandle(processInformation.Process);
-        CloseHandle(processInformation.Thread);
-        return true;
+        try
+        {
+            childProcess = Process.GetProcessById((int)processInformation.ProcessId);
+            return !childProcess.HasExited;
+        }
+        catch
+        {
+            childProcess?.Dispose();
+            childProcess = null;
+            return false;
+        }
+        finally
+        {
+            CloseHandle(processInformation.Process);
+            CloseHandle(processInformation.Thread);
+        }
+    }
+
+    private static void WriteDiagnostic(string message)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(DiagnosticPath)!);
+            File.AppendAllText(DiagnosticPath, $"{DateTimeOffset.Now:O} {message}{Environment.NewLine}");
+        }
+        catch
+        {
+        }
     }
 
     private static StringBuilder CreateCommandLine(ProcessStartInfo startInfo)

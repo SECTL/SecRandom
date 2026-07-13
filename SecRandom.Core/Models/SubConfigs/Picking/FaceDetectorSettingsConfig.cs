@@ -15,7 +15,19 @@ public partial class FaceDetectorSettingsConfig : ObservableObject
     [ObservableProperty] private bool _playResultAudio = true;
     [ObservableProperty] private Color _pickerFrameColor = Color.Parse(GlobalConstants.DefaultThemeColor);
 
-    [ObservableProperty] private string _detectorType = "version-RFB-640.onnx";
+    [ObservableProperty] private FaceDetectorMode _detectorMode = FaceDetectorMode.Lightweight;
+    [ObservableProperty] private string _detectorType = FaceDetectorModeResolver.YuNetModelFileName;
     [ObservableProperty] private int _modelInputWidth = 640;
     [ObservableProperty] private int _modelInputHeight = 480;
+
+    partial void OnDetectorModeChanged(FaceDetectorMode value)
+    {
+        DetectorType = FaceDetectorModeResolver.GetModelFileName(value);
+    }
+
+    partial void OnDetectorTypeChanged(string value)
+    {
+        DetectorMode = FaceDetectorModeResolver.ResolveMode(value);
+        DetectorType = FaceDetectorModeResolver.GetModelFileName(DetectorMode);
+    }
 }

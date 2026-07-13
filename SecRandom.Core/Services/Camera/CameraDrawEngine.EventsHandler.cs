@@ -26,6 +26,7 @@ public partial class CameraDrawEngine
                 RequestCameraRestart();
                 break;
             case nameof(FaceDetectorSettingsConfig.DetectorType):
+            case nameof(FaceDetectorSettingsConfig.DetectorMode):
             case nameof(FaceDetectorSettingsConfig.ModelInputHeight):
             case nameof(FaceDetectorSettingsConfig.ModelInputWidth):
                 RequestDetectorReload();

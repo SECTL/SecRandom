@@ -70,6 +70,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         _logger = logger;
         _securityService = securityService;
         _verificationDrawCoordinator = verificationDrawCoordinator;
+        ResultItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ResultFontSize));
         RefreshStudentLists();
     }
 
@@ -77,7 +78,21 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     public ObservableCollection<QuickDrawResultItem> ResultItems { get; } = [];
     public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && !_isCoolingDown && GetEligibleCandidates().Any());
     public string DrawButtonText => IsDrawing ? "停止" : "闪抽";
-    public double ResultFontSize => DisplaySettings.FontSize;
+    public double ResultFontSize
+    {
+        get
+        {
+            var scale = ResultItems.Count switch
+            {
+                <= 1 => 1.24,
+                2 => 1.18,
+                3 => 1.12,
+                4 => 1.06,
+                _ => 1
+            };
+            return Math.Clamp(DisplaySettings.FontSize * scale, 1, 300);
+        }
+    }
     public FontFamily ResultFontFamily => BuildResultFontFamily();
     public bool AnimationEnabled => AnimationSettings.Animation != AnimationMode.NoAnimation;
     public DrawAnimationStyleMode AnimationStyle => AnimationSettings.AnimationStyle;

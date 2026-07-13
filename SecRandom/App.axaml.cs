@@ -134,6 +134,7 @@ public partial class App : Application
             if (CrashRecoveryRuntime.StartupPromptOptions is { } promptOptions)
             {
                 desktop.MainWindow = ShowCrashRecoveryPromptOnly(promptOptions);
+                SignalUiAccessReady();
                 base.OnFrameworkInitializationCompleted();
                 return;
             }
@@ -143,6 +144,7 @@ public partial class App : Application
             {
                 // 已有实例在运行：创建临时宿主窗口显示对话框，跳过 BuildHost
                 desktop.MainWindow = CreateDuplicateInstanceDialogHost(desktop, startupProtocolUri);
+                SignalUiAccessReady();
                 base.OnFrameworkInitializationCompleted();
                 return;
             }
@@ -166,6 +168,7 @@ public partial class App : Application
         }
 
         InitializeApp();
+        SignalUiAccessReady();
         if (startupProtocolUri is not null)
             Dispatcher.UIThread.Post(() => HandleProtocolUri(startupProtocolUri), DispatcherPriority.Render);
 
@@ -173,6 +176,28 @@ public partial class App : Application
         Dispatcher.UIThread.UnhandledException += App_OnDispatcherUnhandledException;
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static void SignalUiAccessReady()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        const string argumentPrefix = "--secrandom-uiaccess-ready-event=";
+        var eventName = Environment.GetCommandLineArgs()
+            .FirstOrDefault(argument => argument.StartsWith(argumentPrefix, StringComparison.Ordinal))?
+            [argumentPrefix.Length..];
+        if (string.IsNullOrWhiteSpace(eventName))
+            return;
+
+        try
+        {
+            using var readyEvent = EventWaitHandle.OpenExisting(eventName);
+            readyEvent.Set();
+        }
+        catch
+        {
+        }
     }
 
     /// <summary>
@@ -1063,8 +1088,9 @@ public partial class App : Application
                 {
                     Content = IAppHost.GetService<QuickDrawPage>(),
                     Title = @"SecRandom",
-                    Width = 460,
-                    Height = 320,
+                    MinWidth = 280,
+                    MinHeight = 160,
+                    SizeToContent = SizeToContent.WidthAndHeight,
                     Topmost = true,
                     WindowStartupLocation = WindowStartupLocation.CenterScreen,
                     WindowDecorations = WindowDecorations.None,
@@ -1075,6 +1101,9 @@ public partial class App : Application
                     Background = Brushes.Transparent,
                     TransparencyLevelHint = [WindowTransparencyLevel.Transparent]
                 };
+                _quickDrawWindow.Opened += (_, _) => ApplyQuickDrawWindowBounds(_quickDrawWindow);
+                _quickDrawWindow.PositionChanged += (_, _) => ApplyQuickDrawWindowBounds(_quickDrawWindow);
+                _quickDrawWindow.ScalingChanged += (_, _) => ApplyQuickDrawWindowBounds(_quickDrawWindow);
                 _quickDrawWindow.Closed += (_, _) => _quickDrawWindow = null;
             }
 
@@ -1089,6 +1118,21 @@ public partial class App : Application
             IAppHost.TryGetService<ILogger<App>>()?.LogError(ex, "Failed to show quick draw window.");
             throw;
         }
+    }
+
+    private static void ApplyQuickDrawWindowBounds(Window? window)
+    {
+        if (window is null)
+            return;
+
+        var screen = window.Screens.ScreenFromWindow(window);
+        if (screen is null)
+            return;
+
+        const double edgePadding = 32;
+        var scale = window.RenderScaling;
+        window.MaxWidth = Math.Max(window.MinWidth, screen.WorkingArea.Width / scale - edgePadding);
+        window.MaxHeight = Math.Max(window.MinHeight, screen.WorkingArea.Height / scale - edgePadding);
     }
 
     private void ShowProfileSettingsWindow()

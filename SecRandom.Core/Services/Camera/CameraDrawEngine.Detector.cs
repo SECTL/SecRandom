@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Camera;
 using SecRandom.Shared;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -29,6 +30,26 @@ public partial class CameraDrawEngine
     private string? _ultralightInputName;
     private InferenceSession? _ultralightSession;
     private FaceDetectorYN? _yunetDetector;
+    private DateTime _lastDetectionUtc = DateTime.MinValue;
+    private IReadOnlyList<FaceBox> _lastDetectedFaces = [];
+    private DetectionState _lastDetectionState = DetectionState.NoFace;
+
+    private (IReadOnlyList<FaceBox> Faces, DetectionState State) DetectFacesForPreview(Mat frameBgr)
+    {
+        var now = DateTime.UtcNow;
+        if (now - _lastDetectionUtc < FaceDetectorModeResolver.GetInferenceInterval(DetectorMode))
+            return (_lastDetectedFaces, _lastDetectionState);
+
+        var result = DetectFaces(frameBgr);
+        _lastDetectionUtc = now;
+        if (result.State != DetectionState.Error)
+        {
+            _lastDetectedFaces = result.Faces;
+            _lastDetectionState = result.State;
+        }
+
+        return result;
+    }
 
     private (IReadOnlyList<FaceBox> Faces, DetectionState State) DetectFaces(Mat frameBgr)
     {
@@ -70,6 +91,9 @@ public partial class CameraDrawEngine
             DisposeDetector();
             _loadedDetectorModel = null;
             _lastDetectionErrorMessage = null;
+            _lastDetectionUtc = DateTime.MinValue;
+            _lastDetectedFaces = [];
+            _lastDetectionState = DetectionState.NoFace;
         }
     }
 
@@ -89,9 +113,7 @@ public partial class CameraDrawEngine
 
     private void EnsureDetectorLoaded()
     {
-        var modelName = string.IsNullOrWhiteSpace(DetectorModel)
-            ? "version-RFB-640.onnx"
-            : DetectorModel.Trim();
+        var modelName = DetectorModel;
 
         var backend = ResolveDetectorBackend(modelName);
         var inputSize = backend == DetectorBackend.Damoyolo
