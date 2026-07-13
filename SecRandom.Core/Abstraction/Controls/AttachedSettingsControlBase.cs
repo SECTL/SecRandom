@@ -10,6 +10,12 @@ namespace SecRandom.Core.Abstraction.Controls;
 
 public abstract class AttachedSettingsControlBase : UserControl
 {
+    private static readonly JsonSerializerOptions AttachedSettingsJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+    };
+
     public static readonly StyledProperty<AttachedSettingsTargets> TargetProperty =
         AvaloniaProperty.Register<AttachedSettingsControlBase, AttachedSettingsTargets>(nameof(Target));
 
@@ -31,7 +37,8 @@ public abstract class AttachedSettingsControlBase : UserControl
         {
             var settingsType = baseType.GetGenericArguments().First();
             var settingsReal = settings ?? Activator.CreateInstance(settingsType);
-            if (settingsReal is JsonElement json) settingsReal = json.Deserialize(settingsType);
+            if (settingsReal is JsonElement json)
+                settingsReal = json.Deserialize(settingsType, AttachedSettingsJsonOptions);
 
             settings = settingsReal;
 

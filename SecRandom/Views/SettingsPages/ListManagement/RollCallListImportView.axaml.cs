@@ -206,7 +206,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         }
 
         IdColumn = LR.C_NoneColumn;
-        NameColumn = RequiredColumnOptions.Skip(1).FirstOrDefault() ?? RequiredColumnOptions.FirstOrDefault();
+        NameColumn = LR.C_NoneColumn;
         GenderColumn = LR.C_NoneColumn;
         GroupColumn = LR.C_NoneColumn;
         TagsColumn = LR.C_NoneColumn;
@@ -258,7 +258,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         foreach (var row in _rows.Take(3))
             PreviewRows.Add(CreatePreviewRow(row));
 
-        CanImport = _rows.Count > 0 && IsSelectedColumn(NameColumn);
+        CanImport = _rows.Count > 0 && (IsSelectedColumn(IdColumn) || IsSelectedColumn(NameColumn));
         StatusText = _rows.Count == 0
             ? LR.M_SelectFileFirst
             : CanImport
@@ -288,10 +288,11 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
                 Tags = string.Join(' ', SplitTags(GetColumnValue(row, TagsColumn))),
                 Exists = true
             })
-            .Where(student => !string.IsNullOrWhiteSpace(student.Name))
+            .Where(student => student.IsCandidate)
             .ToList();
 
-        var duplicatedNames = students.GroupBy(student => student.Name)
+        var duplicatedNames = students.Where(student => !string.IsNullOrWhiteSpace(student.Name))
+            .GroupBy(student => student.Name)
             .Where(group => group.Count() > 1)
             .Select(group => group.Key)
             .ToList();

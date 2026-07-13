@@ -20,7 +20,7 @@ public partial class DrawEngine
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType)
     {
-        var usable = candidates.Where(student => student.Exists).ToList();
+        var usable = candidates.Where(student => student.IsCandidate).ToList();
         if (usable.Count == 0 || count <= 0 || count > usable.Count)
             throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.");
 

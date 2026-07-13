@@ -60,6 +60,7 @@ jobs:
             --self-contained `
             -p:PublishTrimmed=false `
             -p:UseAppHost=true `
+            -p:EnableUiAccess=false `
             --no-restore `
             -o $outDir
 
@@ -103,15 +104,59 @@ jobs:
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
           ARCH: ${{ matrix.arch }}
           RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+          WINDOWS_CODESIGN_PFX_BASE64: ${{ secrets.WINDOWS_CODESIGN_PFX_BASE64 }}
+          WINDOWS_CODESIGN_PFX_PASSWORD: ${{ secrets.WINDOWS_CODESIGN_PFX_PASSWORD }}
+          WINDOWS_CODESIGN_TIMESTAMP_URL: ${{ secrets.WINDOWS_CODESIGN_TIMESTAMP_URL }}
         run: |
           $outDir = "bin/$env:RID"
-          $issContent = Get-Content -Path "Setup.iss" -Raw
-          $updatedContent = $issContent -replace 'APP_VERSION', $env:VERSION
-          $updatedContent = $updatedContent -replace 'APP_OUTDIR', $outDir
-          Set-Content -Path "Setup.iss" -Value $updatedContent -NoNewline
+          $enableUiAccess = if (-not [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_PFX_BASE64) -and -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_PFX_PASSWORD)) { 1 } else { 0 }
+          if ($enableUiAccess -eq 1) {
+            $outDir = "bin/$env:RID-uiaccess"
+            dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj `
+              -c Release `
+              -r $env:RID `
+              --self-contained `
+              -p:PublishTrimmed=false `
+              -p:UseAppHost=true `
+              -p:EnableUiAccess=true `
+              --no-restore `
+              -o $outDir
+
+            $certificatePath = Join-Path $env:RUNNER_TEMP 'secrandom-uiaccess.pfx'
+            try {
+              [IO.File]::WriteAllBytes($certificatePath, [Convert]::FromBase64String($env:WINDOWS_CODESIGN_PFX_BASE64))
+              $signTool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe' |
+                Sort-Object FullName -Descending |
+                Select-Object -First 1 -ExpandProperty FullName
+              if ([string]::IsNullOrWhiteSpace($signTool)) {
+                throw 'signtool.exe was not found on the Windows runner.'
+              }
+
+              $arguments = @('sign', '/fd', 'SHA256', '/f', $certificatePath, '/p', $env:WINDOWS_CODESIGN_PFX_PASSWORD)
+              if (-not [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_TIMESTAMP_URL)) {
+                $arguments += @('/tr', $env:WINDOWS_CODESIGN_TIMESTAMP_URL, '/td', 'SHA256')
+              }
+              $arguments += "$outDir/SecRandom.Desktop.exe"
+              & $signTool @arguments
+              if ($LASTEXITCODE -ne 0) { throw "signtool failed with exit code $LASTEXITCODE." }
+              & $signTool verify /pa /v "$outDir/SecRandom.Desktop.exe"
+              if ($LASTEXITCODE -ne 0) { throw "signtool verification failed with exit code $LASTEXITCODE." }
+            }
+            finally {
+              Remove-Item $certificatePath -Force -ErrorAction SilentlyContinue
+            }
+          }
+          else {
+            Write-Warning "Windows code-signing secrets are unavailable; building the installer without the UIAccess manifest."
+          }
+
           New-Item -ItemType Directory -Path "SetupOutput" -Force | Out-Null
 
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" Setup.iss `
+            /DMyAppVersion=$env:VERSION `
+            /DMyAppOutDir=$outDir `
+            /DBuildArch=$env:ARCH `
+            /DEnableUiAccess=$enableUiAccess `
             /F"SecRandom_$env:RID`_setup" `
             /O"SetupOutput"
           

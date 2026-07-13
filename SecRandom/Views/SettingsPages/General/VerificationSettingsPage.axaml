@@ -11,21 +11,40 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
-            <sr:IconText Text="{x:Static lv:Resources.S_Verification}"
-                         Glyph="{sr:Fi DocumentCheckmarkRegular}"
-                         Margin="0 0 0 4" />
-
             <fa:FAInfoBar Severity="Informational" IsOpen="True" IsClosable="False"
-                           Title="{x:Static lv:Resources.C_WitnessNoticeTitle}">
-                <TextBlock Text="{x:Static lv:Resources.M_WitnessModeNotice}" TextWrapping="Wrap" />
+                           Title="{x:Static lv:Resources.C_WitnessNoticeTitle}"
+                           MinHeight="104"
+                           Padding="16 14">
+                <TextBlock Text="{x:Static lv:Resources.M_WitnessModeNotice}"
+                           TextWrapping="Wrap"
+                           LineHeight="20" />
             </fa:FAInfoBar>
 
             <fa:FASettingsExpander Header="{x:Static lv:Resources.S_ProofFolder}"
                                     Description="{x:Static lv:Resources.S_ProofFolder_D}"
                                     IconSource="{sr:FluentIconSource {sr:Fi FolderOpenRegular}}">
                 <fa:FASettingsExpander.Footer>
-                    <Button Content="{x:Static lv:Resources.C_OpenProofFolder}"
-                            Click="OpenProofFolder_OnClick" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="{x:Static lv:Resources.C_OpenProofFolder}"
+                                Click="OpenProofFolder_OnClick" />
+                        <Button Content="{x:Static lv:Resources.C_OpenVerificationWebsite}"
+                                Click="OpenVerificationWebsite_OnClick" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{x:Static lv:Resources.S_LocalProofRetention}"
+                                    Description="{x:Static lv:Resources.S_LocalProofRetention_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi HistoryRegular}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding SelectedRetentionIndex}">
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_7}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_15}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_30}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_60}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_90}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Retention_Never}" />
+                    </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
         </StackPanel>

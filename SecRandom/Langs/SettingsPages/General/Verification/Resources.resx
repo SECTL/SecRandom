@@ -11,6 +11,15 @@
   <data name="S_ProofFolder" xml:space="preserve"><value>抽取证明文件</value></data>
   <data name="S_ProofFolder_D" xml:space="preserve"><value>证明会按日期自动保存；打开文件夹后可将 .srproof.json 文件上传到验证网站。</value></data>
   <data name="C_OpenProofFolder" xml:space="preserve"><value>打开证明文件夹</value></data>
+  <data name="C_OpenVerificationWebsite" xml:space="preserve"><value>打开验证网站</value></data>
+  <data name="S_LocalProofRetention" xml:space="preserve"><value>本地证明保留期限</value></data>
+  <data name="S_LocalProofRetention_D" xml:space="preserve"><value>只清理本机的 .srproof.json 文件，不影响网站分享链接。将在生成下一份证明时清理过期文件。</value></data>
+  <data name="O_Retention_7" xml:space="preserve"><value>7 天</value></data>
+  <data name="O_Retention_15" xml:space="preserve"><value>15 天</value></data>
+  <data name="O_Retention_30" xml:space="preserve"><value>30 天</value></data>
+  <data name="O_Retention_60" xml:space="preserve"><value>60 天</value></data>
+  <data name="O_Retention_90" xml:space="preserve"><value>90 天</value></data>
+  <data name="O_Retention_Never" xml:space="preserve"><value>不清除</value></data>
   <data name="C_StatusTitle" xml:space="preserve"><value>抽取验证</value></data>
   <data name="M_ServerWitnessedProof" xml:space="preserve"><value>服务器见证有效，证明文件已保存。</value></data>
   <data name="M_LocalFallbackProof" xml:space="preserve"><value>服务器暂不可用，已自动保存本地可重放证明。</value></data>

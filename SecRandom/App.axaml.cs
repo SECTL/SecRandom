@@ -46,6 +46,7 @@ using SecRandom.Services.Draw;
 using SecRandom.Services.Plugins;
 using SecRandom.Services.Profiles;
 using SecRandom.Services.Ipc;
+using SecRandom.Services.ImportExport;
 using SecRandom.Services.Settings;
 using SecRandom.Services.Security;
 using SecRandom.Services.Telemetry;
@@ -344,6 +345,7 @@ public partial class App : Application
                 services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<WitnessTicketCache>());
                 services.AddTransient<VerificationDrawCoordinator>();
                 services.AddSingleton<SettingsSearchService>();
+                services.AddSingleton<IImportExportService, Services.ImportExport.ImportExportService>();
                 services.AddTransient<DrawEngine>();
                 services.AddSingleton(pluginStateStore);
                 services.AddSingleton<PluginSelectionState>();

@@ -722,7 +722,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             return [];
 
         return (_profileService.CurrentStudentList?.Students ?? [])
-            .Where(student => student.Exists)
+            .Where(student => student.IsCandidate)
             .Where(student => SelectedGroup == AllGroupsOption || student.Group == SelectedGroup)
             .Where(student => SelectedGender == AllGendersOption || student.Gender == SelectedGender)
             .Where(student => !HasReachedStudentRepeatLimit(student));
@@ -761,7 +761,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private void RefreshFilterOptions()
     {
         var students = (_profileService.CurrentStudentList?.Students ?? [])
-            .Where(student => student.Exists)
+            .Where(student => student.IsCandidate)
             .ToList();
 
         ReplaceOptions(GroupOptions, AllGroupsOption, students.Select(student => student.Group));

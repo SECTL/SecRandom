@@ -55,7 +55,7 @@
         <value>导出诊断数据</value>
     </data>
     <data name="C_MoreOptions_ExportDiagnosticData_D" xml:space="preserve">
-        <value>退出软件时导出诊断信息，用于排查问题</value>
+        <value>立即导出脱敏的运行时信息和受限日志，用于排查问题</value>
     </data>
     <data name="C_MoreOptions_ExportSettings" xml:space="preserve">
         <value>导出设置</value>
@@ -73,13 +73,73 @@
         <value>导出所有数据</value>
     </data>
     <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve">
-        <value>退出软件时导出全部数据和设置</value>
+        <value>立即导出全部非凭据数据、设置、插件和插件私有配置</value>
     </data>
     <data name="C_MoreOptions_ImportAllData" xml:space="preserve">
         <value>导入所有数据</value>
     </data>
     <data name="C_MoreOptions_ImportAllData_D" xml:space="preserve">
-        <value>启动软件时从备份文件恢复全部数据</value>
+        <value>从当前版本或 v2 备份导入全部数据，导入前自动创建恢复快照</value>
+    </data>
+    <data name="C_ExportSettingsFileTitle" xml:space="preserve">
+        <value>导出设置</value>
+    </data>
+    <data name="C_ExportDiagnosticDataFileTitle" xml:space="preserve">
+        <value>导出诊断数据</value>
+    </data>
+    <data name="C_ImportSettingsFileTitle" xml:space="preserve">
+        <value>导入设置</value>
+    </data>
+    <data name="C_ExportAllDataFileTitle" xml:space="preserve">
+        <value>导出全部数据</value>
+    </data>
+    <data name="C_ImportAllDataFileTitle" xml:space="preserve">
+        <value>导入全部数据</value>
+    </data>
+    <data name="C_JsonFileType" xml:space="preserve">
+        <value>JSON 文件</value>
+    </data>
+    <data name="C_ZipFileType" xml:space="preserve">
+        <value>ZIP 文件</value>
+    </data>
+    <data name="C_Import" xml:space="preserve">
+        <value>导入</value>
+    </data>
+    <data name="C_Cancel" xml:space="preserve">
+        <value>取消</value>
+    </data>
+    <data name="C_DiagnosticStandard" xml:space="preserve">
+        <value>标准诊断包</value>
+    </data>
+    <data name="C_DiagnosticExtended" xml:space="preserve">
+        <value>扩展诊断包</value>
+    </data>
+    <data name="M_DiagnosticExportTitle" xml:space="preserve">
+        <value>导出诊断数据</value>
+    </data>
+    <data name="M_DiagnosticExportContent" xml:space="preserve">
+        <value>标准诊断包包含全部经过脱敏处理的日志和运行时信息。扩展诊断包还包含脱敏设置快照、插件与档案数量摘要及脱敏崩溃报告。两种诊断包均不包含名单、历史原文、插件私有配置或安全凭据。</value>
+    </data>
+    <data name="M_ImportTitle" xml:space="preserve">
+        <value>确认导入</value>
+    </data>
+    <data name="M_ImportSettingsContent" xml:space="preserve">
+        <value>将替换当前所有非凭据设置，包括窗口、启动、主题、抽取和系统集成。确认后会先自动创建设置恢复快照；快照失败时不会导入。密码、TOTP、USB 绑定和锁定状态不会导入。</value>
+    </data>
+    <data name="M_ImportAllDataContent" xml:space="preserve">
+        <value>将替换现有非凭据数据、设置、名单、历史、资源、插件和插件私有配置。确认后会先自动创建完整恢复快照；快照失败时不会导入。v2 历史中无法表达的字段会保留原始副本。安全凭据不会导入。</value>
+    </data>
+    <data name="M_ExportSuccess" xml:space="preserve">
+        <value>已导出：{0}</value>
+    </data>
+    <data name="M_ImportSuccess" xml:space="preserve">
+        <value>导入完成，恢复备份：{0}</value>
+    </data>
+    <data name="M_ExportFailed" xml:space="preserve">
+        <value>导出失败。</value>
+    </data>
+    <data name="M_ImportFailed" xml:space="preserve">
+        <value>导入失败，未完成覆盖。</value>
     </data>
     <data name="M_PageNotFound" xml:space="preserve">
         <value>页面 {0} 未找到</value>

@@ -45,7 +45,8 @@
                     <ComboBox SelectedIndex="{Binding Settings.FloatingWindowTopmostMode}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_TopmostMode_None}" />
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_TopmostMode_Topmost}" />
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_TopmostMode_UIAccess}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_TopmostMode_UIAccess}"
+                                      IsVisible="{Binding IsUiAccessSupported}" />
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>

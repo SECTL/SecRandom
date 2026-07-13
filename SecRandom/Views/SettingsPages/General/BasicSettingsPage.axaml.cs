@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -31,6 +32,7 @@ public partial class BasicSettingsPage : UserControl
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public BasicSettingsConfig Settings { get; }
     public CrashRecoverySettingsConfig CrashRecoverySettings => ViewModel.Config.General.CrashRecovery;
+    public bool IsUiAccessSupported => OperatingSystem.IsWindows();
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private DesktopIntegrationService DesktopIntegration { get; } = IAppHost.GetService<DesktopIntegrationService>();
 
@@ -95,19 +97,11 @@ public partial class BasicSettingsPage : UserControl
             return;
         }
 
-        if (e.PropertyName == nameof(Settings.MainWindowTopmostMode)
-            && Settings.MainWindowTopmostMode == TopmostMode.UiAccess
-            && !DesktopIntegration.IsUiAccessAvailable())
-        {
-            _isApplyingProgrammaticChange = true;
-            Settings.MainWindowTopmostMode = TopmostMode.Topmost;
-            _isApplyingProgrammaticChange = false;
-            ConfigHandler.Save();
-            this.ShowWarningToast(LR.M_UiAccessTopmostFallback);
-            return;
-        }
-
         ConfigHandler.Save();
+
+        if (e.PropertyName == nameof(Settings.MainWindowTopmostMode)
+            && DesktopIntegration.IsUiAccessRequested() != DesktopIntegration.IsUiAccessAvailable())
+            SettingsView.Current?.RequestRestartApp();
     }
 
     private void RevertDesktopIntegration(string propertyName, bool value, string title, string error)

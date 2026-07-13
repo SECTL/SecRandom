@@ -3,12 +3,15 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Verification;
 
 namespace SecRandom.Services.Verification;
 
-public sealed class DrawProofExportService(ILogger<DrawProofExportService> logger)
+public sealed class DrawProofExportService(
+    MainConfigHandler configHandler,
+    ILogger<DrawProofExportService> logger)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -18,6 +21,7 @@ public sealed class DrawProofExportService(ILogger<DrawProofExportService> logge
 
     public string Save(DrawProof proof)
     {
+        RemoveExpiredProofs(configHandler.Data.General.ProofRetention.RetentionDays);
         var timestamp = proof.CreatedAtUtc.UtcDateTime;
         var path = Utils.GetFilePath(
             "proofs",
@@ -31,4 +35,31 @@ public sealed class DrawProofExportService(ILogger<DrawProofExportService> logge
         return path;
     }
 
+    private void RemoveExpiredProofs(int retentionDays)
+    {
+        if (retentionDays <= 0)
+            return;
+
+        var root = Utils.GetDirectoryPath("proofs");
+        if (!Directory.Exists(root))
+            return;
+
+        var cutoff = DateTime.UtcNow.AddDays(-retentionDays);
+        foreach (var path in Directory.EnumerateFiles(root, "*.srproof.json", SearchOption.AllDirectories))
+        {
+            try
+            {
+                if (File.GetLastWriteTimeUtc(path) < cutoff)
+                    File.Delete(path);
+            }
+            catch (IOException exception)
+            {
+                logger.LogDebug(exception, "跳过正在使用的过期证明文件：{Path}。", path);
+            }
+            catch (UnauthorizedAccessException exception)
+            {
+                logger.LogDebug(exception, "无权删除过期证明文件：{Path}。", path);
+            }
+        }
+    }
 }

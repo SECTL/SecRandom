@@ -2,12 +2,24 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 ; Non-commercial use only
 
+#ifndef MyAppName
 #define MyAppName "SecRandom"
+#endif
+#ifndef MyAppVersion
 #define MyAppVersion "APP_VERSION"
+#endif
 #define MyAppPublisher "SECTL Studio"
 #define MyAppExeName "SecRandom.Desktop.exe"
 #define MyAppURL "https://secrandom.sectl.cn/"
+#ifndef MyAppOutDir
 #define MyAppOutDir "APP_OUTDIR"
+#endif
+#ifndef EnableUiAccess
+#define EnableUiAccess 0
+#endif
+#ifndef BuildArch
+#define BuildArch "x64"
+#endif
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -18,8 +30,15 @@ AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppSupportURL={#MyAppURL}
+#if EnableUiAccess == 1
 DefaultDirName={autopf}\SecRandom
+#else
+DefaultDirName={localappdata}\SecRandom
+#endif
 UninstallDisplayIcon={app}\{#MyAppExeName}
+#if BuildArch == "x86"
+ArchitecturesAllowed=x86compatible
+#else
 ; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run
 ; on anything but x64 and Windows 11 on Arm.
 ArchitecturesAllowed=x64compatible
@@ -28,11 +47,17 @@ ArchitecturesAllowed=x64compatible
 ; meaning it should use the native 64-bit Program Files directory and
 ; the 64-bit view of the registry.
 ArchitecturesInstallIn64BitMode=x64compatible
+#endif
 DisableProgramGroupPage=yes
 ; LicenseFile=E:\Projects\Avalonia\SecRandom\LICENSE
-; Remove the following line to run in administrative install mode (install for all users).
+#if EnableUiAccess == 1
+; UIAccess is granted only to signed binaries installed under Program Files.
+PrivilegesRequired=admin
+PrivilegesRequiredOverridesAllowed=none
+#else
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
+#endif
 OutputDir=SetupOutput
 OutputBaseFilename=SecRandom-Setup
 SetupIconFile=SecRandom\Assets\AppLogo.ico

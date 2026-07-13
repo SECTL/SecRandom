@@ -201,7 +201,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
 
     private IEnumerable<Student> GetVisibleStudents()
     {
-        return _studentList?.Students.Where(student => student.Exists) ?? [];
+        return _studentList?.Students.Where(student => student.IsCandidate) ?? [];
     }
 
     private Dictionary<Student, double> BuildPredictedWeightMap()

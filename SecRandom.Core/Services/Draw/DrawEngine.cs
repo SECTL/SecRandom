@@ -52,11 +52,11 @@ public partial class DrawEngine
 
         try
         {
-            hasBaseCandidates = StudentList.Students.Any(filter);
+            hasBaseCandidates = StudentList.Students.Any(student => student.IsCandidate && filter(student));
 
             bool Filter1(Student student)
             {
-                if (!filter(student))
+                if (!student.IsCandidate || !filter(student))
                     return false;
 
                 if (repeatThreshold <= 0)
@@ -117,7 +117,7 @@ public partial class DrawEngine
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType)
     {
-        var usable = candidates.Where(student => student.Exists).ToList();
+        var usable = candidates.Where(student => student.IsCandidate).ToList();
         if (usable.Count == 0)
             return new DrawResult<Student> { Status = DrawStatus.NoCandidates };
         if (count > usable.Count)

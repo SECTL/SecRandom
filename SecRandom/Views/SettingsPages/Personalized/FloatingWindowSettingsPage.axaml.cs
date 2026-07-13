@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -6,11 +7,14 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Models;
+using SecRandom.Services.Desktop;
 using SecRandom.ViewModels;
+using SecRandom.Views;
 using LR = SecRandom.Langs.SettingsPages.FloatingWindow.Resources;
 
 namespace SecRandom.Views.SettingsPages.Personalized;
@@ -47,8 +51,10 @@ public partial class FloatingWindowSettingsPage : UserControl
     public FloatingWindowSettingsConfig Settings { get; }
     public AvaloniaList<MultiSelectSettingOption> ButtonOptions { get; }
     public AvaloniaList<MultiSelectSettingOption> SelectedButtonOptions { get; }
+    public bool IsUiAccessSupported => OperatingSystem.IsWindows();
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
+    private DesktopIntegrationService DesktopIntegration { get; } = IAppHost.GetService<DesktopIntegrationService>();
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
@@ -58,6 +64,9 @@ public partial class FloatingWindowSettingsPage : UserControl
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         ConfigHandler.Save();
+        if (e.PropertyName == nameof(Settings.FloatingWindowTopmostMode)
+            && DesktopIntegration.IsUiAccessRequested() != DesktopIntegration.IsUiAccessAvailable())
+            SettingsView.Current?.RequestRestartApp();
         SynchronizeSelectedOptions(ButtonOptions, SelectedButtonOptions);
     }
 

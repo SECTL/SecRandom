@@ -80,24 +80,29 @@
                                           Header="{x:Static ls:Resources.C_MoreOptions_LogViewer}"
                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_LogViewer_D}"
                                           Click="LogViewerMenuItem_OnClick" />
-                                <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseArrowDownRegular}}"
-                                          Header="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData}"
-                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData_D}" />
+                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseArrowDownRegular}}"
+                                           Header="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData}"
+                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData_D}"
+                                           Click="ExportDiagnosticDataMenuItem_OnClick" />
 
                                 <Separator />
 
-                                <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsRegular}}"
-                                          Header="{x:Static ls:Resources.C_MoreOptions_ExportSettings}"
-                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportSettings_D}" />
-                                <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsRegular}}"
-                                          Header="{x:Static ls:Resources.C_MoreOptions_ImportSettings}"
-                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportSettings_D}" />
-                                <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowRegular}}"
-                                          Header="{x:Static ls:Resources.C_MoreOptions_ExportAllData}"
-                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportAllData_D}" />
-                                <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowRegular}}"
-                                          Header="{x:Static ls:Resources.C_MoreOptions_ImportAllData}"
-                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportAllData_D}" />
+                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsRegular}}"
+                                           Header="{x:Static ls:Resources.C_MoreOptions_ExportSettings}"
+                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportSettings_D}"
+                                           Click="ExportSettingsMenuItem_OnClick" />
+                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsRegular}}"
+                                           Header="{x:Static ls:Resources.C_MoreOptions_ImportSettings}"
+                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportSettings_D}"
+                                           Click="ImportSettingsMenuItem_OnClick" />
+                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowRegular}}"
+                                           Header="{x:Static ls:Resources.C_MoreOptions_ExportAllData}"
+                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportAllData_D}"
+                                           Click="ExportAllDataMenuItem_OnClick" />
+                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowRegular}}"
+                                           Header="{x:Static ls:Resources.C_MoreOptions_ImportAllData}"
+                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportAllData_D}"
+                                           Click="ImportAllDataMenuItem_OnClick" />
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>

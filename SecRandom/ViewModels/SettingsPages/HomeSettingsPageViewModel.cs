@@ -49,7 +49,7 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
                 var history = new StudentHistoryConfig(name).Data;
                 return new HomeProfileCard(
                     name,
-                    list.Students.Count(student => student.Exists),
+                    list.Students.Count(student => student.IsCandidate),
                     history.TotalRounds,
                     history.TotalStats,
                     FormatLastDrawnTime(history.Students.Values.Select(item => item.LastDrawnTime)));

@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -20,6 +19,7 @@ using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Models;
+using SecRandom.Services.ImportExport;
 using SecRandom.Shared;
 using SecRandom.ViewModels;
 using LR = SecRandom.Langs.SettingsPages.General.Backup.Resources;
@@ -31,26 +31,11 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
 {
     private const string BackupDirectoryName = "backup";
 
-    private static readonly string[] KnownRestorePaths =
-    [
-        "config",
-        "data/list",
-        "data/history",
-        "list",
-        "history",
-        "audio",
-        "CSES",
-        "cses",
-        "images",
-        "theme",
-        "themes",
-        "logs"
-    ];
-
     private string _backupUsageText = FormatSize(0);
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
     private readonly ILogger<BackupSettingsPage> _logger =
         IAppHost.GetService<ILogger<BackupSettingsPage>>();
+    private readonly IImportExportService _importExportService = IAppHost.GetService<IImportExportService>();
 
     public BackupSettingsPage()
     {
@@ -157,7 +142,7 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
     {
         try
         {
-            var path = CreateBackup("manual");
+            var path = _importExportService.CreateManualBackup(GetSelectedDataRoots().ToList());
             RefreshBackups();
             _logger.LogInformation("已创建手动备份：文件={FileName}。", Path.GetFileName(path));
             this.ShowSuccessToast(string.Format(LR.M_BackupCreated, Path.GetFileName(path)));
@@ -192,8 +177,7 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
 
         try
         {
-            CreateBackup("pre_restore");
-            RestoreBackup(backup.FilePath);
+            await _importExportService.RestoreBackupAsync(backup.FilePath);
             RefreshBackups();
             SettingsView.Current?.RequestRestartApp();
             _logger.LogInformation("已恢复备份：文件={FileName}。", backup.FileName);
@@ -227,107 +211,6 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         {
             _logger.LogError(ex, "删除备份失败：文件={FileName}。", backup.FileName);
             await ShowErrorDialogAsync(LR.M_DeleteFailed, ex.Message);
-        }
-    }
-
-    private string CreateBackup(string kind)
-    {
-        var backupDirectory = GetBackupDirectory();
-        var backupPath = CreateBackupPath(backupDirectory, kind);
-        var selectedRoots = GetSelectedDataRoots().ToList();
-
-        if (selectedRoots.Count == 0)
-            throw new InvalidOperationException(LR.M_NoBackupContentSelected);
-
-        _logger.LogInformation("开始创建备份：类型={Kind}，文件={FileName}，包含项={Roots}。",
-            kind, Path.GetFileName(backupPath), string.Join(",", selectedRoots));
-
-        using (var archive = ZipFile.Open(backupPath, ZipArchiveMode.Create))
-        {
-            foreach (var root in selectedRoots)
-            {
-                var sourceDirectory = GetDataRelativePath(root);
-                if (!Directory.Exists(sourceDirectory))
-                    continue;
-
-                AddDirectoryToArchive(archive, sourceDirectory, root);
-            }
-        }
-
-        TrimBackups();
-        return backupPath;
-    }
-
-    private static string CreateBackupPath(string backupDirectory, string kind)
-    {
-        var baseName = $"SecRandom_{kind}_{DateTime.Now:yyyyMMdd_HHmmss}";
-        var backupPath = Path.Combine(backupDirectory, $"{baseName}.zip");
-        if (!File.Exists(backupPath))
-            return backupPath;
-
-        for (var i = 2;; i++)
-        {
-            backupPath = Path.Combine(backupDirectory, $"{baseName}_{i}.zip");
-            if (!File.Exists(backupPath))
-                return backupPath;
-        }
-    }
-
-    private void RestoreBackup(string backupPath)
-    {
-        using var archive = ZipFile.OpenRead(backupPath);
-        foreach (var entry in archive.Entries)
-            ValidateEntryDestination(entry);
-
-        var restorePaths = archive.Entries
-            .Select(GetAllowedRestorePath)
-            .Where(path => path != null)
-            .Cast<string>()
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        foreach (var restorePath in restorePaths)
-        {
-            var targetDirectory = GetDataRelativePath(restorePath);
-            if (Directory.Exists(targetDirectory))
-                Directory.Delete(targetDirectory, true);
-        }
-
-        foreach (var entry in archive.Entries)
-        {
-            if (string.IsNullOrWhiteSpace(entry.Name))
-                continue;
-
-            if (GetAllowedRestorePath(entry) == null)
-                continue;
-
-            var destinationPath = GetEntryDestinationPath(entry);
-            Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
-            entry.ExtractToFile(destinationPath, true);
-        }
-    }
-
-    private void TrimBackups()
-    {
-        if (Settings.AutoBackupMaxCount <= 0)
-            return;
-
-        var files = new DirectoryInfo(GetBackupDirectory())
-            .EnumerateFiles("*.zip")
-            .OrderByDescending(file => file.CreationTimeUtc)
-            .Skip(Settings.AutoBackupMaxCount);
-
-        foreach (var file in files)
-            file.Delete();
-    }
-
-    private static void AddDirectoryToArchive(ZipArchive archive, string sourceDirectory, string entryRoot)
-    {
-        foreach (var filePath in Directory.EnumerateFiles(sourceDirectory, "*", SearchOption.AllDirectories))
-        {
-            var relativePath = Path.GetRelativePath(sourceDirectory, filePath);
-            var entryName = Path.Combine(entryRoot, relativePath).Replace(Path.DirectorySeparatorChar, '/');
-            archive.CreateEntryFromFile(filePath, entryName, CompressionLevel.SmallestSize);
         }
     }
 
@@ -372,18 +255,9 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
 
     private IEnumerable<string> GetSelectedDataRoots()
     {
-        if (Settings.IncludeConfig) yield return "config";
-        if (Settings.IncludeList)
-        {
-            yield return "data/list";
-            yield return "list";
-        }
-
-        if (Settings.IncludeHistory)
-        {
-            yield return "data/history";
-            yield return "history";
-        }
+        if (Settings.IncludeConfig) yield return "config/settings.json";
+        if (Settings.IncludeList) yield return "list";
+        if (Settings.IncludeHistory) yield return "history";
 
         if (Settings.IncludeAudio) yield return "audio";
         if (Settings.IncludeCses) yield return "CSES";
@@ -392,66 +266,11 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         if (Settings.IncludeLogs) yield return "logs";
     }
 
-    private static string? GetAllowedRestorePath(ZipArchiveEntry entry)
-    {
-        var parts = entry.FullName
-            .Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries)
-            .ToList();
-
-        if (parts.Count == 0)
-            return null;
-
-        var relativePath = parts.Count >= 2 && parts[0].Equals("data", StringComparison.OrdinalIgnoreCase)
-            ? $"{parts[0]}/{parts[1]}"
-            : parts[0];
-
-        return KnownRestorePaths.Contains(relativePath, StringComparer.OrdinalIgnoreCase) ? relativePath : null;
-    }
-
-    private static void ValidateEntryDestination(ZipArchiveEntry entry)
-    {
-        var restorePath = GetAllowedRestorePath(entry);
-        if (string.IsNullOrWhiteSpace(entry.Name) || restorePath == null)
-            return;
-
-        var destinationPath = GetEntryDestinationPath(entry);
-        if (!destinationPath.StartsWith(GetDirectoryWithSeparator(GetDataRelativePath(restorePath)),
-                StringComparison.OrdinalIgnoreCase))
-            throw new InvalidDataException(LR.M_InvalidBackupFile);
-    }
-
-    private static string GetEntryDestinationPath(ZipArchiveEntry entry)
-    {
-        return Path.GetFullPath(Path.Combine(GetDataDirectory(), entry.FullName));
-    }
-
-    private static string GetDataRelativePath(string relativePath)
-    {
-        return Path.Combine(GetDataDirectory(), relativePath);
-    }
-
     private static string GetBackupDirectory()
     {
         return Utils.GetDirectoryPath(BackupDirectoryName);
     }
 
-    private static string GetDataDirectory()
-    {
-        return Utils.GetDirectoryPath();
-    }
-
-    private static string GetDataDirectoryWithSeparator()
-    {
-        return GetDirectoryWithSeparator(GetDataDirectory());
-    }
-
-    private static string GetDirectoryWithSeparator(string directory)
-    {
-        var fullPath = Path.GetFullPath(directory);
-        return fullPath.EndsWith(Path.DirectorySeparatorChar)
-            ? fullPath
-            : fullPath + Path.DirectorySeparatorChar;
-    }
 
     private static string FormatSize(long bytes)
     {

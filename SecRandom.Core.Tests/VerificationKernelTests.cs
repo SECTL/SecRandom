@@ -84,6 +84,24 @@ public sealed class VerificationKernelTests
     }
 
     [Fact]
+    public void AttachedSettings_PersistedJsonUsesSnakeCaseFieldNames()
+    {
+        var settings = new BehindSceneAttachedSettings
+        {
+            IsAttachSettingsEnabled = true,
+            Probability = 100d
+        };
+
+        var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+        });
+
+        Assert.Contains("\"is_attach_settings_enabled\"", json);
+        Assert.Contains("\"probability\":100", json);
+    }
+
+    [Fact]
     public void Draw_RejectsPoolWithNoEligibleWeight()
     {
         var input = new VerificationDrawInput

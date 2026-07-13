@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
@@ -9,6 +10,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using DynamicData;
@@ -21,9 +23,11 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Extensions;
+using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Models;
+using SecRandom.Services.ImportExport;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
@@ -60,6 +64,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     public static AutoCompleteFilterPredicate<object?> SettingsFilterProperty => SearchFilter;
 
     public SettingsViewModel ViewModel { get; } = IAppHost.GetService<SettingsViewModel>();
+    private IImportExportService ImportExportService { get; } = IAppHost.GetService<IImportExportService>();
 
     #region Misc
 
@@ -299,6 +304,218 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     private void LogViewerMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
         SelectNavigationItemById("settings.logs");
+    }
+
+    private async void ExportDiagnosticDataMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!CanTransferData())
+            return;
+        var includeExtendedData = await ConfirmDiagnosticExportAsync();
+        if (includeExtendedData is null)
+            return;
+        var path = await PickSavePathAsync(
+            GetResource("C_ExportDiagnosticDataFileTitle"),
+            $"SecRandom_diagnostic_{DateTime.UtcNow:yyyyMMdd_HHmmss}.zip",
+            "zip",
+            GetResource("C_ZipFileType"));
+        if (path is null)
+            return;
+
+        try
+        {
+            await ImportExportService.ExportDiagnosticAsync(path, includeExtendedData.Value);
+            this.ShowSuccessToast(string.Format(GetResource("M_ExportSuccess"), Path.GetFileName(path)));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "导出诊断数据失败。");
+            this.ShowErrorToast(GetResource("M_ExportFailed"));
+        }
+    }
+
+    private async void ExportSettingsMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!CanTransferData())
+            return;
+        var path = await PickSavePathAsync(
+            GetResource("C_ExportSettingsFileTitle"),
+            "settings.json",
+            "json",
+            GetResource("C_JsonFileType"));
+        if (path is null)
+            return;
+
+        try
+        {
+            await ImportExportService.ExportSettingsAsync(path);
+            this.ShowSuccessToast(string.Format(GetResource("M_ExportSuccess"), Path.GetFileName(path)));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "导出设置失败。");
+            this.ShowErrorToast(GetResource("M_ExportFailed"));
+        }
+    }
+
+    private async void ImportSettingsMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!CanTransferData())
+            return;
+        var path = await PickOpenPathAsync(
+            GetResource("C_ImportSettingsFileTitle"),
+            "*.json",
+            GetResource("C_JsonFileType"));
+        if (path is null)
+            return;
+
+        try
+        {
+            var inspection = await ImportExportService.InspectSettingsAsync(path);
+            if (!await ConfirmImportAsync(BuildImportConfirmation(GetResource("M_ImportSettingsContent"), inspection)))
+                return;
+            var result = await ImportExportService.ImportSettingsAsync(path);
+            this.ShowSuccessToast(string.Format(GetResource("M_ImportSuccess"), Path.GetFileName(result.SnapshotPath)));
+            RequestRestartApp();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "导入设置失败。");
+            this.ShowErrorToast(GetResource("M_ImportFailed"));
+        }
+    }
+
+    private async void ExportAllDataMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!CanTransferData())
+            return;
+        var path = await PickSavePathAsync(
+            GetResource("C_ExportAllDataFileTitle"),
+            "SecRandom_all_data.zip",
+            "zip",
+            GetResource("C_ZipFileType"));
+        if (path is null)
+            return;
+
+        try
+        {
+            await ImportExportService.ExportAllDataAsync(path);
+            this.ShowSuccessToast(string.Format(GetResource("M_ExportSuccess"), Path.GetFileName(path)));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "导出全部数据失败。");
+            this.ShowErrorToast(GetResource("M_ExportFailed"));
+        }
+    }
+
+    private async void ImportAllDataMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!CanTransferData())
+            return;
+        var path = await PickOpenPathAsync(
+            GetResource("C_ImportAllDataFileTitle"),
+            "*.zip",
+            GetResource("C_ZipFileType"));
+        if (path is null)
+            return;
+
+        try
+        {
+            var inspection = await ImportExportService.InspectAllDataAsync(path);
+            if (!await ConfirmImportAsync(BuildImportConfirmation(GetResource("M_ImportAllDataContent"), inspection)))
+                return;
+            var result = await ImportExportService.ImportAllDataAsync(path);
+            this.ShowSuccessToast(string.Format(GetResource("M_ImportSuccess"), Path.GetFileName(result.SnapshotPath)));
+            RequestRestartApp();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "导入全部数据失败。");
+            this.ShowErrorToast(GetResource("M_ImportFailed"));
+        }
+    }
+
+    private async Task<string?> PickSavePathAsync(string title, string suggestedFileName, string extension, string fileType)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel is null)
+            return null;
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = title,
+            SuggestedFileName = suggestedFileName,
+            DefaultExtension = extension,
+            FileTypeChoices = [new FilePickerFileType(fileType) { Patterns = [$"*.{extension}"] }]
+        });
+        return file?.TryGetLocalPath();
+    }
+
+    private async Task<string?> PickOpenPathAsync(string title, string pattern, string fileType)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel is null)
+            return null;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = title,
+            AllowMultiple = false,
+            FileTypeFilter = [new FilePickerFileType(fileType) { Patterns = [pattern] }]
+        });
+        return files.FirstOrDefault()?.TryGetLocalPath();
+    }
+
+    private async Task<bool> ConfirmImportAsync(string content)
+    {
+        var result = await new FAContentDialog
+        {
+            Title = GetResource("M_ImportTitle"),
+            Content = content,
+            PrimaryButtonText = GetResource("C_Import"),
+            CloseButtonText = GetResource("C_Cancel"),
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+        return result == FAContentDialogResult.Primary;
+    }
+
+    private async Task<bool?> ConfirmDiagnosticExportAsync()
+    {
+        var result = await new FAContentDialog
+        {
+            Title = GetResource("M_DiagnosticExportTitle"),
+            Content = GetResource("M_DiagnosticExportContent"),
+            PrimaryButtonText = GetResource("C_DiagnosticStandard"),
+            SecondaryButtonText = GetResource("C_DiagnosticExtended"),
+            CloseButtonText = GetResource("C_Cancel"),
+            DefaultButton = FAContentDialogButton.Primary
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+
+        return result switch
+        {
+            FAContentDialogResult.Primary => false,
+            FAContentDialogResult.Secondary => true,
+            _ => null
+        };
+    }
+
+    private static string BuildImportConfirmation(string content, ImportInspection inspection)
+    {
+        var warningText = inspection.Warnings.Count == 0 ? string.Empty : $"\n\n{string.Join(Environment.NewLine, inspection.Warnings)}";
+        return $"{content}\n\n来源：{inspection.Format} {inspection.ProducerVersion}\n将处理 {inspection.FileCount} 个文件。导入前会自动创建恢复快照，快照失败将取消导入。安全凭据不会导入。{warningText}";
+    }
+
+    private bool CanTransferData()
+    {
+        if (!_isPreviewMode)
+            return true;
+        this.ShowWarningToast("预览模式下不能导入或导出数据。");
+        return false;
+    }
+
+    private static string GetResource(string key)
+    {
+        return Langs.SettingsView.Resources.ResourceManager.GetString(key) ?? key;
     }
 
     #endregion

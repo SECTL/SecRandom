@@ -37,7 +37,7 @@ SecRandom/Views/SettingsPages/
 | Top-level settings overview | `HomeSettingsPage.axaml(.cs)` | Page ID `settings.overview`; no group; separately summarizes all roll-call lists and lottery pools. |
 | General settings behavior | `General/BasicSettingsPage.axaml(.cs)` | Language change triggers `SettingsView.Current?.RequestRestartApp()`. |
 | Privacy settings behavior | `General/PrivacySettingsPage.axaml(.cs)` | Binds to `MainConfigModel.General.PrivacySettings`; Sentry telemetry changes apply live through `TelemetryRuntimeService`, and online status changes apply live through `OnlineStatusService`. |
-| Backup settings UI | `General/BackupSettingsPage.axaml(.cs)` | Lists real backup ZIPs under app data, creates/deletes backups, and restores selected data with a pre-restore snapshot plus restart prompt. |
+| Backup settings UI | `General/BackupSettingsPage.axaml(.cs)` | Lists real backup ZIPs under app data and delegates create/restore to `IImportExportService`, which validates archives and creates the required pre-restore snapshot. |
 | Security settings | `General/SecuritySettingsPage.axaml(.cs)` | Page ID `settings.general.security`; belongs to the General navigation group. |
 | List management settings | `ListManagement/RollCallListSettingsPage.axaml(.cs)`, `ListManagement/LotteryListSettingsPage.axaml(.cs)` | Point-call list and lottery prize-pool viewing/import. |
 | Draw settings | `Picking/DefaultDrawSettingsPage.axaml(.cs)` etc. | Default, roll-call, quick-draw, and lottery draw settings are registered; visible effects must reflect on built-in draw pages. |
@@ -64,10 +64,11 @@ SecRandom/Views/SettingsPages/
 - Security settings must display credential state before factor selection. Password, TOTP, and USB setup are command-driven; selected factors use the shared Ursa `MultiComboBox` pattern with plain option data, and protected-operation controls are driven by `ISecurityService` state.
 - V2-parity settings pages should keep the same `ScrollViewer` + `StackPanel.page-container animated-intro` + `FASettingsExpander` rhythm as existing settings pages.
 - Voice/music owns the global TTS engine, voice, volume, and content switches. Per-student/per-prize specific announcement controls belong in list management attached settings for both roll-call and lottery records.
-- If a settings change needs a restart, request it through `SettingsView.Current?.RequestRestartApp()` instead of restarting directly.
+- If a settings change needs a restart, request it through `SettingsView.Current?.RequestRestartApp()` instead of restarting directly. Selecting UIAccess topmost in basic or floating-window settings persists the mode and uses this restart flow so the desktop launcher can run the `killtimer0/uiaccess`-style token preparation before UI initialization.
 - If a settings change only needs live UI refresh, follow `AppearanceSettingsPage` and route through `App.Current.RefreshPersonalizedSettings()`.
 - `settings.logs` should stay hidden from the sidebar and reachable from the settings shell more-options menu; keep that menu action as a navigation jump.
 - `settings.plugin` is the visible expandable plugin group in the sidebar. Keep the single-page management layout aligned with settings-page density and avoid marketplace-style presentation.
+- Backup pages and settings-shell import actions must delegate archive/file-system work to `IImportExportService`; do not bypass manifest validation, v2 migration, staging, or mandatory pre-import snapshots.
 - Plugin overview should stay toolbar-first and management-focused, with one local plugin import entry that copies a selected plugin directory into the app plugin store; do not surface promotional copy or a store layout.
 
 ## ANTI-PATTERNS

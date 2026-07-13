@@ -23,7 +23,7 @@ SecRandom-C/
 ├── SecRandom/             # Avalonia app layer: App host, views, viewmodels, app services, localization, assets
 ├── SecRandom.Core/        # Core/domain + reusable UI controls/styles + config/logging/draw services
 ├── SecRandom.Shared/      # Cross-project contracts, base config/model types, IPC/profile models
-├── SecRandom.Desktop/     # Tiny executable launcher; Program.cs only bootstraps Avalonia
+├── SecRandom.Desktop/     # Tiny executable launcher; Program.cs bootstraps Avalonia and UiAccessStartup.cs prepares Windows UIAccess
 ├── SecRandom.Core.Tests/  # xUnit v3 test project; currently covers legacy privacy/telemetry migration
 ├── scripts/               # Standalone tooling and verification scripts, including fairness audits
 ├── docs/                  # Project rules, localization, namespace boundaries
@@ -69,6 +69,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 | Symbol | Type | Location | Role |
 |--------|------|----------|------|
 | `Program.Main` | entry | `SecRandom.Desktop/Program.cs` | Starts Avalonia desktop lifetime. |
+| `UiAccessStartup` | startup helper | `SecRandom.Desktop/UiAccessStartup.cs` | When UIAccess topmost is configured on Windows, elevates a bootstrap process and starts a replacement process with a UIAccess token before Avalonia initializes. |
 | `Program.BuildAvaloniaApp` | entry helper | `SecRandom.Desktop/Program.cs` | Platform detect, MiSans default font, trace logging. |
 | `App` | Avalonia app | `SecRandom/App.axaml.cs`, `App.Consts.cs` | Culture, XAML load, Host/DI, windows, restart/stop, theme/font refresh. |
 | `IAppHost` | static service access | `SecRandom.Core/Abstraction/IAppHost.cs` | Holds Host and exposes `GetService<T>()` / `TryGetService<T>()`. |
@@ -93,7 +94,10 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - `docs/project_rules.md` overrides inference when adding features.
 - General settings now live under `MainConfigModel.General`; `MainConfigModel.Basic` / `Backup` remain compatibility bridges for existing callers while new config splits belong under `SecRandom.Core/Models/SubConfigs/General/`.
 - Basic settings are functional runtime controls: `ShowStartupWindow`, primary-window topmost mode, and background residency apply only to the primary `MainWindow`; `AutoSaveWindowSize` preserves independent geometry/maximized state for the primary and settings windows. Cross-platform autostart and `secrandom://` protocol registration belong to app-layer `DesktopIntegrationService`, which must use user-level Windows/Linux/macOS mechanisms and not silently persist a failed integration request.
+- Selecting `TopmostMode.UiAccess` for the primary or floating window persists the setting and requests a restart. `SecRandom.Desktop/UiAccessStartup` is the Windows-only pre-Avalonia launcher boundary: following `killtimer0/uiaccess`, it elevates a bootstrap process, impersonates same-session `winlogon.exe`, sets `TokenUIAccess` on a duplicate of the bootstrap's current token, and starts the UIAccess replacement before Avalonia initializes. The bootstrap exits only after starting the replacement; denied elevation or preparation failure continues with ordinary topmost and preserves the configured mode for a later retry.
+- Windows UIAccess topmost builds may use `SecRandom.Desktop/app.uiaccess.manifest` when `EnableUiAccess=true`; that manifest requires Authenticode signing and installation under Program Files. Independently, the runtime `UiAccessStartup` token preparation follows `killtimer0/uiaccess` and works from the ordinary manifest after UAC authorization, so debug and portable Windows builds can exercise UIAccess as well. The release workflow enables the manifest only when Windows code-signing secrets are available.
 - Point-call students and lottery prizes use `RecordId` as the internal stable identity for history/fairness. The visible `Id` field is optional display metadata only and must not be required by import, draw, or history logic.
+- A roll-call candidate must be enabled and have a nonblank `Id` or `Name`. Import may map either column and excludes rows where both are blank.
 - Picking `ClearRecord` controls temporary draw records only; do not clear persistent profile histories from that setting. RollCall and QuickDraw share the same student temporary record store, while Lottery uses prize temporary records.
 - Privacy settings split Sentry upload from online status reporting: `SentryTelemetryEnabled` only controls `SecRandom/Services/Telemetry/`, while `OnlineStatusMode` only controls `SecRandom/Services/OnlineStatusService.cs`.
 - Crash recovery mode lives under `MainConfigModel.General.CrashRecovery`; prompt startup handling must run before single-instance acquisition, while normal restart must release the single-instance service before relaunch.

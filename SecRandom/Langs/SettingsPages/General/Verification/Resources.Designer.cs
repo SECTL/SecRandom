@@ -19,6 +19,15 @@ public class Resources
     public static string S_ProofFolder => Get(nameof(S_ProofFolder));
     public static string S_ProofFolder_D => Get(nameof(S_ProofFolder_D));
     public static string C_OpenProofFolder => Get(nameof(C_OpenProofFolder));
+    public static string C_OpenVerificationWebsite => Get(nameof(C_OpenVerificationWebsite));
+    public static string S_LocalProofRetention => Get(nameof(S_LocalProofRetention));
+    public static string S_LocalProofRetention_D => Get(nameof(S_LocalProofRetention_D));
+    public static string O_Retention_7 => Get(nameof(O_Retention_7));
+    public static string O_Retention_15 => Get(nameof(O_Retention_15));
+    public static string O_Retention_30 => Get(nameof(O_Retention_30));
+    public static string O_Retention_60 => Get(nameof(O_Retention_60));
+    public static string O_Retention_90 => Get(nameof(O_Retention_90));
+    public static string O_Retention_Never => Get(nameof(O_Retention_Never));
     public static string C_StatusTitle => Get(nameof(C_StatusTitle));
     public static string M_ServerWitnessedProof => Get(nameof(M_ServerWitnessedProof));
     public static string M_LocalFallbackProof => Get(nameof(M_LocalFallbackProof));

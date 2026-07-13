@@ -9,6 +9,7 @@ public partial class GeneralSettingsConfig : ObservableObject
     [ObservableProperty] private BackupConfig _backup = new();
     [ObservableProperty] private PrivacySettingsConfig _privacySettings = new();
     [ObservableProperty] private CrashRecoverySettingsConfig _crashRecovery = new();
+    [ObservableProperty] private ProofRetentionConfig _proofRetention = new();
 
     public void ApplyLegacyBasic(BasicSettingsConfig? legacyBasic)
     {

@@ -36,6 +36,96 @@
     <data name="C_MoreOptions" xml:space="preserve">
         <value>More Options...</value>
     </data>
+    <data name="C_MoreOptions_ExportDiagnosticData" xml:space="preserve">
+        <value>Export diagnostic data</value>
+    </data>
+    <data name="C_MoreOptions_ExportDiagnosticData_D" xml:space="preserve">
+        <value>Export redacted runtime information and limited logs now.</value>
+    </data>
+    <data name="C_MoreOptions_ExportSettings" xml:space="preserve">
+        <value>Export settings</value>
+    </data>
+    <data name="C_MoreOptions_ExportSettings_D" xml:space="preserve">
+        <value>Export portable non-credential settings.</value>
+    </data>
+    <data name="C_MoreOptions_ImportSettings" xml:space="preserve">
+        <value>Import settings</value>
+    </data>
+    <data name="C_MoreOptions_ImportSettings_D" xml:space="preserve">
+        <value>Replace non-credential settings after creating a recovery snapshot.</value>
+    </data>
+    <data name="C_MoreOptions_ExportAllData" xml:space="preserve">
+        <value>Export all data</value>
+    </data>
+    <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve">
+        <value>Export non-credential data, plugins, and plugin private configuration now.</value>
+    </data>
+    <data name="C_MoreOptions_ImportAllData" xml:space="preserve">
+        <value>Import all data</value>
+    </data>
+    <data name="C_MoreOptions_ImportAllData_D" xml:space="preserve">
+        <value>Import a current-version or v2 archive after creating a recovery snapshot.</value>
+    </data>
+    <data name="C_ExportSettingsFileTitle" xml:space="preserve">
+        <value>Export settings</value>
+    </data>
+    <data name="C_ExportDiagnosticDataFileTitle" xml:space="preserve">
+        <value>Export diagnostic data</value>
+    </data>
+    <data name="C_ImportSettingsFileTitle" xml:space="preserve">
+        <value>Import settings</value>
+    </data>
+    <data name="C_ExportAllDataFileTitle" xml:space="preserve">
+        <value>Export all data</value>
+    </data>
+    <data name="C_ImportAllDataFileTitle" xml:space="preserve">
+        <value>Import all data</value>
+    </data>
+    <data name="C_JsonFileType" xml:space="preserve">
+        <value>JSON files</value>
+    </data>
+    <data name="C_ZipFileType" xml:space="preserve">
+        <value>ZIP files</value>
+    </data>
+    <data name="C_Import" xml:space="preserve">
+        <value>Import</value>
+    </data>
+    <data name="C_Cancel" xml:space="preserve">
+        <value>Cancel</value>
+    </data>
+    <data name="C_DiagnosticStandard" xml:space="preserve">
+        <value>Standard diagnostic package</value>
+    </data>
+    <data name="C_DiagnosticExtended" xml:space="preserve">
+        <value>Extended diagnostic package</value>
+    </data>
+    <data name="M_DiagnosticExportTitle" xml:space="preserve">
+        <value>Export diagnostic data</value>
+    </data>
+    <data name="M_DiagnosticExportContent" xml:space="preserve">
+        <value>The standard package contains all redacted logs and runtime information. The extended package also contains a redacted settings snapshot, plugin and profile counts, and redacted crash reports. Neither package includes profile or history contents, plugin private configuration, or security credentials.</value>
+    </data>
+    <data name="M_ImportTitle" xml:space="preserve">
+        <value>Confirm import</value>
+    </data>
+    <data name="M_ImportSettingsContent" xml:space="preserve">
+        <value>All non-credential settings, including window, startup, theme, draw, and desktop integration settings, will be replaced. A recovery snapshot is created first; import is cancelled if it fails. Passwords, TOTP, USB bindings, and lockout state are not imported.</value>
+    </data>
+    <data name="M_ImportAllDataContent" xml:space="preserve">
+        <value>All non-credential data, settings, profiles, history, resources, plugins, and plugin private configuration will be replaced. A full recovery snapshot is created first; import is cancelled if it fails. Unrepresentable v2 history is retained as raw data. Security credentials are not imported.</value>
+    </data>
+    <data name="M_ExportSuccess" xml:space="preserve">
+        <value>Exported: {0}</value>
+    </data>
+    <data name="M_ImportSuccess" xml:space="preserve">
+        <value>Import complete. Recovery backup: {0}</value>
+    </data>
+    <data name="M_ExportFailed" xml:space="preserve">
+        <value>Export failed.</value>
+    </data>
+    <data name="M_ImportFailed" xml:space="preserve">
+        <value>Import failed before replacement completed.</value>
+    </data>
     <data name="M_PageNotFound" xml:space="preserve">
         <value>Page {0} Not Found</value>
     </data>

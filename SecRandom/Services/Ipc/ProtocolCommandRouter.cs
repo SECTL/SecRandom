@@ -244,7 +244,7 @@ public sealed class ProtocolCommandRouter(
         var list = profileQuery.LoadStudentList(name);
         if (list is null)
             return Failure("url", "not_found", LR.M_RollCallListNotFound, true);
-        var data = list.Students.Where(student => student.Exists)
+        var data = list.Students.Where(student => student.IsCandidate)
             .Select(student => new IpcRecordDto(student.Id, student.Name, student.Gender)).ToList();
         return Success(LR.M_RollCallListLoaded, data);
     }

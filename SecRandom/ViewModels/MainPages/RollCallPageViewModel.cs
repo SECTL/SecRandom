@@ -614,7 +614,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     private IEnumerable<Student> GetVisibleStudents()
     {
-        return CurrentStudentList?.Students.Where(student => student.Exists) ?? [];
+        return CurrentStudentList?.Students.Where(student => student.IsCandidate) ?? [];
     }
 
     private IEnumerable<Student> GetCandidates()
@@ -630,7 +630,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     private bool MatchesSelection(Student student)
     {
-        if (!student.Exists)
+        if (!student.IsCandidate)
             return false;
 
         if (SelectedGroup != AllGroupsOption && student.Group != SelectedGroup)

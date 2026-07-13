@@ -27,6 +27,7 @@ SecRandom/
 │   ├── CrashRecovery/   # Crash detection, recovery prompt, restart guard
 │   ├── Desktop/         # TaskBarIconService
 │   ├── Draw/            # DrawAudioService, DrawTemporaryRecordService
+│   ├── ImportExport/    # Versioned settings/data archives, v2 migration, diagnostics, recovery snapshots
 │   ├── Ipc/             # ProtocolCommandRouter for URL/IPC command routing
 │   ├── Plugins/         # Plugin runtime: manager, catalog, invoker, state
 │   ├── Profiles/        # Active ProfileService plus non-mutating ProfileQueryService snapshots
@@ -59,6 +60,7 @@ SecRandom/
 | Add settings page            | `Views/SettingsPages/`, `Langs/SettingsPages/`, `App.axaml.cs`          | `[PageInfo]` + localization folder + `AddSettingsPage<T>()`; update title/resource wiring if language refresh is needed. General pages currently include `Basic`, `Privacy`, and `Backup`; v2-parity root entries include floating window, notification, security, linkage, voice, theme/background, history, update, logs, and more settings. |
 | Log viewer                   | `Views/SettingsPages/LogViewer/LogViewerSettingsPage.axaml(.cs)`       | Hidden settings page `settings.logs`; opened from the settings more-options menu. Reads `.log` and `.log.gz` files from `data/logs`. |
 | App config JSON              | `Services/Config/DesktopConfigService.cs`                               | Core handlers call into this app-specific storage.                                                                       |
+| Settings/data import-export  | `Services/ImportExport/`, `Views/SettingsView.axaml(.cs)`               | `IImportExportService` owns ZIP/JSON transfer, v2 migration, diagnostics, and mandatory pre-import snapshots; the settings shell owns pickers, preview/confirmation, feedback, and restart requests. |
 | Searchable settings metadata | `Services/Settings/SettingsSearchService.cs`                            | Reflects `Langs.SettingsPages.*` resources and registered settings pages. Matches by `Type.Name` so pages in subdirectories are found correctly. |
 | Plugin runtime               | `Services/Plugins/`                                                     | Imports `.srpx` packages, scans `data/plugins`, stores enable/restart state, starts enabled plugins, filters plugin logs, and exposes restricted host invokers. |
 | Profile persistence          | `Services/Profiles/ProfileService.cs`                                   | Current lists/history, active point-call list/history switching, and `SaveProfile()`; list items carry hidden `RecordId` identity. |
@@ -99,13 +101,16 @@ SecRandom/
 - More settings includes roll-call and lottery page management options for the control panel side and per-control visibility; wire built-in draw pages through `MainConfigModel.MoreSettings` instead of duplicating local UI flags.
 - Floating window settings are live-applied to an open `FloatingWindow`: button selection, layout, display style, size, opacity, topmost mode, and dragging must not require reopening the window.
 - Floating window edge docking uses `StickToEdge`: on drag release it snaps only when near the current display's horizontal work-area edge. Dragging stays in valid display work areas and can cross only to physically adjacent displays. At startup, a saved position that does not fully fit a current display work area is restored directly as a docked handle at an available display edge. `StickToEdgeRecoverSeconds` controls auto-collapse (`0` disables collapse); the collapsed handle and restoration transition remain anchored at the docked left/right side center.
-- Basic settings are active behavior: the primary `MainWindow` alone consumes startup visibility, topmost mode, and background-resident close behavior; `AutoSaveWindowSize` preserves separate geometry/maximized state for the primary and settings windows. `DesktopIntegrationService` owns user-level autostart and `secrandom://` registration for Windows, Linux, and macOS; a failed registration must leave its setting disabled rather than persisting a false success.
+- Basic settings are active behavior: the primary `MainWindow` alone consumes startup visibility, topmost mode, and background-resident close behavior; `AutoSaveWindowSize` preserves separate geometry/maximized state for the primary and settings windows. Selecting UIAccess topmost for either primary or floating windows persists the choice and requests a restart; `SecRandom.Desktop/UiAccessStartup.cs` follows `killtimer0/uiaccess` by setting `TokenUIAccess` on a duplicate of the elevated bootstrap token before Avalonia starts, while UAC cancellation or preparation failure uses ordinary topmost only for that run. `DesktopIntegrationService` owns user-level autostart and `secrandom://` registration for Windows, Linux, and macOS; a failed registration must leave its setting disabled rather than persisting a false success.
+- `TopmostMode.UiAccess` is Windows-only process capability, not a separate window API. Release builds opt into it through the desktop UIAccess manifest, Authenticode-sign `SecRandom.Desktop.exe`, and install under Program Files; ordinary/debug builds retain the normal manifest and `DesktopIntegrationService` falls back to ordinary topmost when the token is absent.
 - Page IDs follow root rules: `main.xxx`, `settings.xxx`, `settings.group.xxx`.
 - V2-parity settings pages currently use root IDs such as `settings.personalized.floatingWindow`, `settings.notification`, `settings.general.security`, `settings.linkage`, `settings.notification.voiceMusic`, `settings.personalized.theme`, `settings.history`, `settings.update`, and `settings.more`; register them in `BuildHost()` instead of manually editing navigation UI. Hidden pages like `settings.logs` still need Host registration even though they are not shown in the sidebar.
 - The log viewer page ID is `settings.logs`; keep it hidden from the settings sidebar and route the settings more-options “查看日志” command through navigation instead of opening a separate window.
 - Toasts are available from views via `this.ShowWarningToast(...)` / `ShowErrorToast(...)`; shell views inject
   `AppToastAdorner` on load.
 - `SettingsView.RequestRestartApp()` is the pattern for settings that require app restart.
+- Settings and all-data imports must create their corresponding recovery ZIP under `data/backup` after user confirmation and before changing live files. A backup failure aborts the import; `data/config/security` credentials, keys, and lockout state are excluded from every export/import.
+- Current archives carry a manifest with paths, lengths, and SHA-256 values. Legacy v2 ZIPs are migrated in app layer: never directly restore v2 profile JSON, generate `RecordId` values, and retain complete raw v2 history under `data/legacy/v2-history` when fields or identity links cannot be represented safely.
 - `Styles.axaml` should stay a thin include of `avares://SecRandom.Core/StylesBase.axaml` unless app-only styling is
   needed.
 
@@ -115,7 +120,7 @@ SecRandom/
 - Crash recovery has an app-level localization folder at `Langs/CrashRecovery/` because the prompt is a top-level window, not a settings page.
 - Privacy settings localization lives under `Langs/SettingsPages/General/Privacy/` and follows the same base `.resx` + designer registration pattern as other settings pages.
 - IPC response localization lives under `Langs/Ipc/`; it supplies human-readable response messages while protocol `code` values remain invariant for automation clients.
-- List management pages currently include roll-call lists (`data/list/roll_call_list`) and lottery prize pools (`data/list/lottery_list`). Student/prize number columns are optional; import must only require the name column.
+- List management pages currently include roll-call lists (`data/list/roll_call_list`) and lottery prize pools (`data/list/lottery_list`). A roll-call import may map student number or name; it requires at least one and excludes rows where both are blank.
 - Roll-call and lottery list/history files are stored as plain JSON on disk; keep their `.json` paths stable and use `DesktopConfigService` instead of direct serialization.
 - Required files for a localized resource set: `Resources.resx` and `Resources.Designer.cs`; culture files such as
   `Resources.en-US.resx` / `Resources.ja-JP.resx` are optional and must keep exact on-disk casing.
@@ -135,7 +140,7 @@ SecRandom/
 - Do not instantiate reusable services directly in pages.
 - Do not expose raw Host, app services, writable profile/config services, shell execution, or broad filesystem access to plugins.
 - Do not assume config dictionary/list mutations auto-save; call save at the mutation boundary or unload.
-- Do not reintroduce required student/prize number columns in list management; `Id` is optional metadata and `RecordId` is the internal identity.
+- Do not require either student number or name in roll-call column mapping; a candidate needs at least one nonblank value, while `RecordId` remains the internal identity.
 - Do not put reusable controls/styles here when they are intended for Core consumers.
 - Debug-only pages (`CameraPreviewTestPage`, `DebugSettingsPage`) intentionally skip localization folders; do not remove
   their `#if DEBUG` guards.

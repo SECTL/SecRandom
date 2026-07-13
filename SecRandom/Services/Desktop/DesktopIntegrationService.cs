@@ -42,13 +42,17 @@ public sealed class DesktopIntegrationService(
         }
     }
 
+    public bool IsUiAccessRequested()
+    {
+        return Settings.MainWindowTopmostMode == TopmostMode.UiAccess
+               || configHandler.Data.FloatingWindowSettings.FloatingWindowTopmostMode == TopmostMode.UiAccess;
+    }
+
     public void EnsureConfiguredIntegrations()
     {
-        if (Settings.MainWindowTopmostMode == TopmostMode.UiAccess && !IsUiAccessAvailable())
+        if (IsUiAccessRequested() && !IsUiAccessAvailable())
         {
-            Settings.MainWindowTopmostMode = TopmostMode.Topmost;
-            configHandler.Save();
-            logger.LogWarning("Configured UIAccess topmost mode is unavailable; falling back to ordinary topmost.");
+            logger.LogWarning("Configured UIAccess topmost mode is unavailable; using ordinary topmost for this session.");
         }
 
         if (Settings.Autostart && !TrySetAutostart(true, out var autostartError))

@@ -271,7 +271,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private IEnumerable<Student> GetEligibleCandidates()
     {
         return (_profileService.CurrentStudentList?.Students ?? [])
-            .Where(student => student.Exists)
+            .Where(student => student.IsCandidate)
             .Where(student => !HasReachedRepeatLimit(student));
     }
 
@@ -375,7 +375,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (Config.QuickDrawSettings.DrawType != DrawType.Fair)
             return drawnStudents.ToDictionary(student => student, _ => 1.0);
 
-        return _drawEngine.CalculateStudentWeight((_profileService.CurrentStudentList?.Students ?? []).Where(s => s.Exists).ToList())
+        return _drawEngine.CalculateStudentWeight((_profileService.CurrentStudentList?.Students ?? []).Where(s => s.IsCandidate).ToList())
             .Where(candidate => drawnStudents.Contains(candidate.Candidate))
             .ToDictionary(candidate => candidate.Candidate, candidate => candidate.Weight);
     }
@@ -416,7 +416,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (Config.QuickDrawSettings.DrawType != DrawType.Fair)
             return 1;
 
-        return _drawEngine.CalculateStudentWeight((_profileService.CurrentStudentList?.Students ?? []).Where(s => s.Exists).ToList())
+        return _drawEngine.CalculateStudentWeight((_profileService.CurrentStudentList?.Students ?? []).Where(s => s.IsCandidate).ToList())
             .FirstOrDefault(candidate => ReferenceEquals(candidate.Candidate, student))?.Weight ?? 1;
     }
 

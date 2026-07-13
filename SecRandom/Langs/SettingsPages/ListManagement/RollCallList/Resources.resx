@@ -61,7 +61,7 @@
         <value>学号/编号</value>
     </data>
     <data name="C_Name" xml:space="preserve">
-        <value>姓名 *</value>
+        <value>姓名</value>
     </data>
     <data name="C_Gender" xml:space="preserve">
         <value>性别</value>
@@ -94,13 +94,13 @@
         <value>列映射</value>
     </data>
     <data name="C_ColumnMapping_D" xml:space="preserve">
-        <value>姓名是必选项；学号/编号、性别、小组、标签可留空。</value>
+        <value>学号/编号和姓名至少选择一项；性别、小组、标签可留空。两项均为空的行不会导入。</value>
     </data>
     <data name="C_StudentIdColumn" xml:space="preserve">
         <value>学号/编号列</value>
     </data>
     <data name="C_NameColumn" xml:space="preserve">
-        <value>姓名列 *</value>
+        <value>姓名列</value>
     </data>
     <data name="C_GenderColumn" xml:space="preserve">
         <value>性别列</value>
@@ -139,7 +139,7 @@
         <value>已读取 {0} 行数据。标签列当前仅用于预览，暂不写入学生模型。</value>
     </data>
     <data name="M_SelectRequiredColumns" xml:space="preserve">
-        <value>请选择姓名列。</value>
+        <value>请至少选择学号/编号列或姓名列。</value>
     </data>
     <data name="M_DuplicateTitle" xml:space="preserve">
         <value>发现重复姓名</value>

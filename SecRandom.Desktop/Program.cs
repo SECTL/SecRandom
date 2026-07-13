@@ -14,6 +14,13 @@ internal sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        if (!UiAccessStartup.ShouldContinue(args))
+        {
+            Environment.ExitCode = UiAccessStartup.BootstrapExitCode;
+            return;
+        }
+
+        args = UiAccessStartup.GetApplicationArguments(args);
         ProtocolActivation.SetStartupArguments(args);
         CrashRecoveryRuntime.SetStartupArguments(args);
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
