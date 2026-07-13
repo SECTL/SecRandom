@@ -7,7 +7,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
-using System.Threading;
 using Microsoft.Win32.SafeHandles;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Enums.Configs;
@@ -19,11 +18,8 @@ namespace SecRandom.Desktop;
 internal static class UiAccessStartup
 {
     private const string ElevatedBootstrapArgument = "--secrandom-uiaccess-bootstrap";
-    private const string ReadyEventArgument = "--secrandom-uiaccess-ready-event";
-    private const string ReplacementProcessArgument = "--secrandom-uiaccess-replacement";
     private const int ErrorCancelled = 1223;
     private const int BootstrapTimeoutMilliseconds = 15000;
-    private const int ReadyEventTimeoutMilliseconds = 10000;
     private const uint TokenAssignPrimary = 0x0001;
     private const uint TokenDuplicate = 0x0002;
     private const uint TokenImpersonate = 0x0004;
@@ -54,8 +50,6 @@ internal static class UiAccessStartup
         WriteDiagnostic("Startup requested.");
         var isBootstrapProcess = arguments.Any(argument =>
             string.Equals(argument, ElevatedBootstrapArgument, StringComparison.Ordinal));
-        var isReplacementProcess = arguments.Any(argument =>
-            string.Equals(argument, ReplacementProcessArgument, StringComparison.Ordinal));
         if (!IsUiAccessRequested())
             return true;
 
@@ -65,13 +59,6 @@ internal static class UiAccessStartup
             if (HasUiAccessToken())
             {
                 WriteDiagnostic("UIAccess token already present.");
-                return true;
-            }
-
-            // A replacement must not recursively elevate if Windows rejects its UIAccess token.
-            if (isReplacementProcess)
-            {
-                WriteDiagnostic("Replacement has no UIAccess token; using ordinary topmost.");
                 return true;
             }
 
@@ -114,9 +101,7 @@ internal static class UiAccessStartup
 
     private static bool IsInternalArgument(string argument)
     {
-        return string.Equals(argument, ElevatedBootstrapArgument, StringComparison.Ordinal)
-               || argument.StartsWith($"{ReadyEventArgument}=", StringComparison.Ordinal)
-               || string.Equals(argument, ReplacementProcessArgument, StringComparison.Ordinal);
+        return string.Equals(argument, ElevatedBootstrapArgument, StringComparison.Ordinal);
     }
 
     private static bool IsUiAccessRequested()
@@ -198,37 +183,13 @@ internal static class UiAccessStartup
             if (uiAccessToken is null)
                 return false;
 
-            var eventName = $"Local\\SecRandom_UIAccessReady_{Guid.NewGuid():N}";
-            using var readyEvent = new EventWaitHandle(false, EventResetMode.ManualReset, eventName);
-            var readyArguments = new List<string>(appArguments.Count + 2);
-            readyArguments.AddRange(appArguments);
-            readyArguments.Add(ReplacementProcessArgument);
-            readyArguments.Add($"{ReadyEventArgument}={eventName}");
-            foreach (var startInfo in CrashRecoveryRuntime.CreateRestartStartInfos(readyArguments))
+            foreach (var startInfo in CrashRecoveryRuntime.CreateRestartStartInfos(appArguments))
             {
-                if (!TryCreateProcessAsUser(uiAccessToken, startInfo, out var childProcess)
-                    || childProcess is null)
+                if (!TryCreateProcessAsUser(uiAccessToken, startInfo))
                     continue;
 
-                using (childProcess)
-                {
-                if (readyEvent.WaitOne(ReadyEventTimeoutMilliseconds))
-                {
-                    WriteDiagnostic("UIAccess replacement reported ready.");
-                    return true;
-                }
-
-                    try
-                    {
-                        if (!childProcess.HasExited)
-                            childProcess.Kill(entireProcessTree: true);
-                    }
-                    catch
-                    {
-                    }
-
-                    return false;
-                }
+                WriteDiagnostic("UIAccess replacement created.");
+                return true;
             }
         }
 
@@ -386,12 +347,8 @@ internal static class UiAccessStartup
         return null;
     }
 
-    private static bool TryCreateProcessAsUser(
-        SafeAccessTokenHandle token,
-        ProcessStartInfo startInfo,
-        out Process? childProcess)
+    private static bool TryCreateProcessAsUser(SafeAccessTokenHandle token, ProcessStartInfo startInfo)
     {
-        childProcess = null;
         var startupInfo = new StartupInfo { Size = (uint)Marshal.SizeOf<StartupInfo>() };
         GetStartupInfo(ref startupInfo);
         var commandLine = CreateCommandLine(startInfo);
@@ -416,22 +373,9 @@ internal static class UiAccessStartup
             return false;
         }
 
-        try
-        {
-            childProcess = Process.GetProcessById((int)processInformation.ProcessId);
-            return !childProcess.HasExited;
-        }
-        catch
-        {
-            childProcess?.Dispose();
-            childProcess = null;
-            return false;
-        }
-        finally
-        {
-            CloseHandle(processInformation.Process);
-            CloseHandle(processInformation.Thread);
-        }
+        CloseHandle(processInformation.Process);
+        CloseHandle(processInformation.Thread);
+        return true;
     }
 
     private static void WriteDiagnostic(string message)

@@ -44,3 +44,5 @@ public class StudentHistoryConfig(string name) : ProfileConfigHandlerBase<Studen
 public class PrizeListConfig(string name) : ProfileConfigHandlerBase<PrizeList>(name);
 
 public class PrizeHistoryConfig(string name) : ProfileConfigHandlerBase<PrizeHistory>(name);
+
+public class SeatingChartConfig(string name) : ProfileConfigHandlerBase<SeatingChartCollection>(name);

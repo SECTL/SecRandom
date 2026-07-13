@@ -1,0 +1,111 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:SecRandom.ViewModels.MainPages"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="720"
+             x:Class="SecRandom.Views.MainPages.SeatingChartPage"
+             x:DataType="vm:SeatingChartPageViewModel"
+             Loaded="OnLoaded">
+    <UserControl.Styles>
+        <Style Selector="Border.seating-panel">
+            <Setter Property="Width" Value="258" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+        <Style Selector="Button.seat-cell">
+            <Setter Property="MinWidth" Value="88" />
+            <Setter Property="MinHeight" Value="58" />
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.seat-cell:selected">
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="Auto,*,250" RowDefinitions="Auto,*" Margin="16" ColumnSpacing="16" RowSpacing="12">
+        <StackPanel Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="8">
+            <ComboBox Width="220" ItemsSource="{Binding Charts}" SelectedItem="{Binding SelectedChart}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Content="新建" Command="{Binding CreateChartCommand}" />
+            <Button Content="删除" Command="{Binding DeleteChartCommand}" IsEnabled="{Binding SelectedChart}" />
+            <Button Content="编辑座位" Command="{Binding ToggleEditingCommand}" />
+            <Button Content="保存" Command="{Binding SaveCommand}" IsVisible="{Binding IsEditing}" />
+            <Button Content="导入 CSPS" Click="ImportCspsButton_OnClick" />
+            <Button Content="导出 CSPS" Click="ExportCspsButton_OnClick" />
+            <Button Content="导入 CSLS" Click="ImportCslsButton_OnClick" />
+            <Button Content="导出 CSLS" Click="ExportCslsButton_OnClick" />
+            <TextBlock Text="{Binding CurrentListName}" VerticalAlignment="Center" Opacity="0.65" Margin="8 0 0 0" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Grid.Column="0" Classes="seating-panel" VerticalAlignment="Top">
+            <StackPanel Spacing="10">
+                <TextBlock Text="座位表抽取" FontSize="20" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding AssignedCount, StringFormat=已入座：{0}}" />
+                <TextBlock Text="{Binding EligibleCount, StringFormat=可抽取：{0}}" />
+                <Grid ColumnDefinitions="40,*,40">
+                    <Button Grid.Column="0" Content="-" Command="{Binding DecreaseCountCommand}" />
+                    <TextBlock Grid.Column="1" Text="{Binding DrawCount}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" />
+                    <Button Grid.Column="2" Content="+" Command="{Binding IncreaseCountCommand}" />
+                </Grid>
+                <Button Content="开始抽取" Classes="accent" Command="{Binding StartDrawCommand}" IsEnabled="{Binding CanStartDraw}" />
+                <Button Content="重置本轮" Command="{Binding ResetDrawCommand}" />
+                <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" Opacity="0.72" />
+                <TextBlock Text="{Binding ResultText}" TextWrapping="Wrap" FontWeight="SemiBold" />
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Grid.Column="1" Padding="16" Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" CornerRadius="8">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <StackPanel HorizontalAlignment="Center" Spacing="14">
+                    <Border Background="{DynamicResource AccentFillColorDefaultBrush}" Padding="24 10" CornerRadius="4" MinWidth="260" IsVisible="{Binding SelectedChart.ShowTeacherDesk}">
+                        <TextBlock Text="讲台" HorizontalAlignment="Center" FontWeight="SemiBold" />
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding Seats}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="{Binding $parent[UserControl].DataContext.Columns}" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:SeatingSeatItem">
+                                <Button Classes="seat-cell" Content="{Binding DisplayText}" Command="{Binding $parent[UserControl].DataContext.SelectSeatCommand}" CommandParameter="{Binding}" IsEnabled="{Binding !IsDisabled}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <Border Grid.Row="1" Grid.Column="2" Classes="seating-panel" IsVisible="{Binding IsEditing}" VerticalAlignment="Stretch">
+            <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="10">
+                <TextBlock Text="编辑座位表" FontSize="18" FontWeight="SemiBold" />
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6">
+                    <Button Content="添加行" Command="{Binding AddRowCommand}" />
+                    <Button Content="添加列" Command="{Binding AddColumnCommand}" />
+                </StackPanel>
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="6">
+                    <Button Content="清空座位" Command="{Binding ClearSelectedSeatCommand}" />
+                    <Button Content="禁用/启用" Command="{Binding ToggleSelectedSeatDisabledCommand}" />
+                </StackPanel>
+                <ListBox Grid.Row="3" ItemsSource="{Binding UnassignedStudents}" SelectedItem="{Binding SelectedStudent}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:SeatingStudentItem">
+                            <Button Content="{Binding DisplayText}" Command="{Binding $parent[UserControl].DataContext.SelectStudentCommand}" CommandParameter="{Binding}" HorizontalContentAlignment="Left" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

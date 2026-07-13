@@ -45,6 +45,7 @@ SecRandom.Shared/
 - `Student` and `Prize` include hidden persisted `RecordId` values used as stable history/fairness identities. Keep visible `Id` optional; it is display/import metadata, not a required identity.
 - `ProfileRecordIdentity` is the boundary helper for filling missing/duplicate `RecordId` values and resolving legacy `Id`/`Name` history keys without ambiguous fallback.
 - `Student` and `Prize` include persisted optional metadata fields such as `Tags`; keep new fields backward-compatible with empty defaults.
+- `SeatingChartCollection` stores multiple layouts for one student-list profile at `data/list/seating_charts/<list>.json`. Seat references are serialized `Student.RecordId` values; visible IDs and names are external-import matching metadata only.
 - IPC DTOs under `Models/Ipc/` are serialization-only contracts. Keep them free of UI/runtime services and do not emit internal `RecordId` values in external projections.
 - `HistoryItem.DrawRoundId` is an additive persisted field. New multi-record draws share one value so IPC history can group a logical draw; empty legacy values require conservative fallback grouping.
 - Attached settings objects use `Guid` keys and `Dictionary<Guid, object?>`; coordinate changes with Core draw/settings

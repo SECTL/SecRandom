@@ -16,11 +16,26 @@
                          Glyph="{sr:Fi VideoPersonSparkleRegular}"
                          Margin="0 0 0 4" />
 
-            <fa:FASettingsExpander Header="{x:Static lc:Resources.Settings_FaceDetector_DetectorType}"
-                                   Description="{x:Static lc:Resources.Settings_FaceDetector_DetectorType_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi BoxRegular}}">
+            <fa:FASettingsExpander Header="{x:Static lc:Resources.Settings_FaceDetector_DetectorMode}"
+                                    Description="{x:Static lc:Resources.Settings_FaceDetector_DetectorMode_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi BoxRegular}}">
                 <fa:FASettingsExpander.Footer>
-                    <TextBox Text="{Binding Settings.DetectorType}" MinWidth="220" />
+                    <ComboBox SelectedIndex="{Binding Settings.DetectorMode}" MinWidth="220">
+                        <ComboBoxItem>
+                            <StackPanel>
+                                <TextBlock Text="{x:Static lc:Resources.Settings_FaceDetector_DetectorMode_Lightweight}" />
+                                <TextBlock Text="{x:Static lc:Resources.Settings_FaceDetector_DetectorMode_Lightweight_D}"
+                                           Opacity="0.7" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </ComboBoxItem>
+                        <ComboBoxItem>
+                            <StackPanel>
+                                <TextBlock Text="{x:Static lc:Resources.Settings_FaceDetector_DetectorMode_Enhanced}" />
+                                <TextBlock Text="{x:Static lc:Resources.Settings_FaceDetector_DetectorMode_Enhanced_D}"
+                                           Opacity="0.7" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </ComboBoxItem>
+                    </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

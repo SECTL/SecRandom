@@ -46,9 +46,10 @@ public partial class CameraDrawEngine
         {
             _lastDetectedFaces = result.Faces;
             _lastDetectionState = result.State;
+            return result;
         }
 
-        return result;
+        return (_lastDetectedFaces, _lastDetectionState);
     }
 
     private (IReadOnlyList<FaceBox> Faces, DetectionState State) DetectFaces(Mat frameBgr)

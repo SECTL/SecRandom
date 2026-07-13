@@ -32,6 +32,7 @@ SecRandom/
 │   ├── Plugins/         # Plugin runtime: manager, catalog, invoker, state
 │   ├── Profiles/        # Active ProfileService plus non-mutating ProfileQueryService snapshots
 │   ├── Settings/        # SettingsSearchService
+│   ├── Seating/         # Seating chart persistence and CSIS interchange
 │   ├── Security/        # Credential store, verification prompts, factor/operation authorization
 │   ├── Telemetry/       # SentryTelemetrySdkAdapter, TelemetryRuntimeService
 │   ├── Voice/           # VoiceAnnouncementService
@@ -50,7 +51,7 @@ SecRandom/
 | Task                         | Location                                                                | Notes                                                                                                                    |
 |------------------------------|-------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Register VM/service/page     | `App.axaml.cs` `BuildHost()`                                            | Strong convention; Host is source of truth.                                                                              |
-| Main app window flow         | `App.ShowMainWindow()`, `App.ShowQuickDrawWindow()`, `Views/MainView.axaml.cs` | `FloatingWindow` is desktop main window; main view opens separately. `QuickDrawPage` is resolved directly from Host for its standalone, draggable, topmost quick-draw window and must stay registered. The quick-draw window sizes to its content, caps itself to the current display work area, and scrolls result content when needed. |
+| Main app window flow         | `App.ShowMainWindow()`, `App.ShowQuickDrawWindow()`, `Views/MainView.axaml.cs` | `FloatingWindow` is desktop main window; main view opens separately. `QuickDrawPage` is resolved directly from Host for its standalone, draggable, topmost quick-draw window and must stay registered. The quick-draw window sizes to its content, caps itself to the current display work area, and scrolls result content when needed. Roll-call and lottery remaining lists open their shared resizable `RemainingListWindow` at `1000x600`. |
 | Settings flow                | `App.ShowSettingsWindow()`, `Views/SettingsView.axaml.cs`               | Settings has navigation history and restart prompt.                                                                      |
 | Profile settings window      | `App.ShowProfileSettingsWindow()`, `Views/ProfileSettingsView.axaml.cs` | Profile list/history management window.                                                                                  |
 | Crash recovery               | `Services/CrashRecovery/`, `Views/CrashRecoveryWindow.axaml(.cs)`, `Langs/CrashRecovery/` | Desktop fatal/dispatcher crash restart, crash report prompt, and feedback issue helpers.                                  |
@@ -64,6 +65,7 @@ SecRandom/
 | Searchable settings metadata | `Services/Settings/SettingsSearchService.cs`                            | Reflects `Langs.SettingsPages.*` resources and registered settings pages. Matches by `Type.Name` so pages in subdirectories are found correctly. |
 | Plugin runtime               | `Services/Plugins/`                                                     | Imports `.srpx` packages, scans `data/plugins`, stores enable/restart state, starts enabled plugins, filters plugin logs, and exposes restricted host invokers. |
 | Profile persistence          | `Services/Profiles/ProfileService.cs`                                   | Current lists/history, active point-call list/history switching, and `SaveProfile()`; list items carry hidden `RecordId` identity. |
+| Seating charts               | `Services/Seating/`                                                      | Per-student-list multi-layout seating data and CSIS API 1 CSLS/CSPS conversion.                                             |
 | Voice announcements          | `Services/Voice/VoiceAnnouncementService.cs`, `Controls/AttachedSettings/SpecificAnnouncementAttachedSettingsControl.axaml(.cs)` | App-layer TTS runtime; voice/music settings choose system or Edge TTS, while per-student/per-prize alias/prefix/suffix live in list-page attached settings. |
 | Draw audio / temp records    | `Services/Draw/DrawAudioService.cs`, `Services/Draw/DrawTemporaryRecordService.cs` | App-layer draw audio playback and session-scoped temporary draw records.                                                |
 | Desktop integration          | `Services/Desktop/`                                                     | Taskbar lifecycle plus cross-platform autostart and `secrandom://` registration.                                         |
@@ -82,6 +84,7 @@ SecRandom/
 - Security services are Host singletons. Keep secrets out of normal config and route protected window, tray, draw, linkage, and plugin operations through `ISecurityService` instead of duplicating checks in UI event handlers.
 - `ProtocolCommandRouter` is a Host singleton and is the only app-layer URL/IPC command dispatcher. Keep IPC request handling on the UI dispatcher for UI mutations; `data/*` must use `IProfileQueryService` snapshots and never switch an active profile.
 - Roll-call, lottery, and quick-draw ViewModels are shared draw sessions for UI and IPC. Their protocol methods reuse nonvisual core paths after router authorization; do not resolve a detached transient ViewModel for IPC.
+- Seating charts stay independent from the `StudentList` model: `SeatingChartService` stores each list's layouts under `data/list/seating_charts`. Seat associations use `RecordId`, while CSIS import can match only unique visible `Id` plus `Name` pairs. `SeatingChartPageViewModel` reuses roll-call security, history, fairness and temporary records while limiting candidates to valid seated students.
 - `SettingsView` read-only preview is entered only by the security verification prompt when `AllowSettingsPreview` is enabled. Freeze the page content host, not settings navigation, and exit preview on normal authorized navigation.
 - `IVoiceAnnouncementService` is app-layer because Edge TTS playback and Windows SAPI/MCI integration are platform/runtime concerns. Per-record TTS alias/prefix/suffix belongs in attached settings on `Student`/`Prize`, not in a standalone settings page.
 - Plugin runtime services are app-layer only and are registered in `BuildHost()`. Enabled plugin pages must be configured before Host build so keyed navigation can instantiate them.
@@ -97,6 +100,7 @@ SecRandom/
 - Views usually set `DataContext = this` and expose a `ViewModel` property.
 - Main default page: `main.rollCall`; settings default page: `settings.overview`, which separates aggregate roll-call list statistics from aggregate lottery-pool statistics.
 - The roll-call main page is bottom-pinned in the main window sidebar (`PageLocation.Bottom`), full-width, and title-hidden. Keep its page chrome controlled by `MoreSettings`.
+- The seat-chart main page ID is `main.seatingChart`, bottom-pinned, full-width and title-hidden. It supports standard CSIS API 1 `CSLS`/`CSPS` import/export including CSPS rotation/deskmate metadata; do not silently accept ESPS ruleset or other extension fields.
 - Lottery main page ID is `main.lottery`; quick draw is not registered as a main navigation page, but its settings page remains `settings.picking.quickDraw`.
 - More settings includes roll-call and lottery page management options for the control panel side and per-control visibility; wire built-in draw pages through `MainConfigModel.MoreSettings` instead of duplicating local UI flags.
 - Floating window settings are live-applied to an open `FloatingWindow`: button selection, layout, display style, size, opacity, topmost mode, and dragging must not require reopening the window.
