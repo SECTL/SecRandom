@@ -316,6 +316,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         }
     }
 
+
     [RelayCommand]
     private async Task ResetDisplayAsync()
     {

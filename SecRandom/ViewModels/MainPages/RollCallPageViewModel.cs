@@ -327,6 +327,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     }
 
     public Task StartProtocolDrawAsync() => StartDrawCoreAsync();
+
     public Task ResetProtocolDrawAsync()
     {
         ResetDrawHistoryCore();

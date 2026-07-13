@@ -152,18 +152,22 @@ public partial class DrawEngine
         var ordered = candidates
             .OrderBy(candidate => candidate.RecordId.ToString("N"), StringComparer.Ordinal)
             .ThenBy(candidate => candidate.OccurrenceIndex)
-            .Select((candidate, index) => new
+            .Select((candidate, index) =>
             {
-                index,
-                candidate.OccurrenceIndex,
-                candidate.WeightMicros,
-                candidate.IsGuaranteed,
-                internalSettingApplied = internalSettingsByRecordId.GetValueOrDefault(candidate.RecordId) is not null,
-                internalProbability = internalSettingsByRecordId.GetValueOrDefault(candidate.RecordId),
-                historyCount = historyByRecordId.GetValueOrDefault(candidate.RecordId)?.TotalCount ?? 0,
-                lastDrawnUtc = historyByRecordId.GetValueOrDefault(candidate.RecordId)?.LastDrawnTime == DateTime.MinValue
-                    ? (DateTime?)null
-                    : historyByRecordId.GetValueOrDefault(candidate.RecordId)!.LastDrawnTime.ToUniversalTime()
+                var history = historyByRecordId.GetValueOrDefault(candidate.RecordId);
+                return new
+                {
+                    index,
+                    candidate.OccurrenceIndex,
+                    candidate.WeightMicros,
+                    candidate.IsGuaranteed,
+                    internalSettingApplied = internalSettingsByRecordId.GetValueOrDefault(candidate.RecordId) is not null,
+                    internalProbability = internalSettingsByRecordId.GetValueOrDefault(candidate.RecordId),
+                    historyCount = history?.TotalCount ?? 0,
+                    lastDrawnUtc = history is null || history.LastDrawnTime == DateTime.MinValue
+                        ? (DateTime?)null
+                        : history.LastDrawnTime.ToUniversalTime()
+                };
             })
             .ToArray();
 

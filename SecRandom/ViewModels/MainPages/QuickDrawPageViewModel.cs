@@ -221,6 +221,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         LastDrawnStudent = null;
         await StartDrawCoreAsync(skipPreview: true);
     }
+
     public Task ResetProtocolDrawAsync()
     {
         ClearHistoryCore();
