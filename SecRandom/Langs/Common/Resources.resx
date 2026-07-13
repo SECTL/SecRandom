@@ -289,23 +289,11 @@
     <data name="Settings_FairPick_ColdStart" xml:space="preserve">
         <value>冷启动保护</value>
     </data>
-    <data name="Settings_FaceDetector_DetectorMode" xml:space="preserve">
-        <value>检测模式</value>
+    <data name="Settings_FaceDetector_DetectorType" xml:space="preserve">
+        <value>检测模型</value>
     </data>
-    <data name="Settings_FaceDetector_DetectorMode_D" xml:space="preserve">
-        <value>选择适合课堂场景的人脸检测模式</value>
-    </data>
-    <data name="Settings_FaceDetector_DetectorMode_Lightweight" xml:space="preserve">
-        <value>轻量模式（YuNet）</value>
-    </data>
-    <data name="Settings_FaceDetector_DetectorMode_Lightweight_D" xml:space="preserve">
-        <value>适合普通设备，资源占用更低</value>
-    </data>
-    <data name="Settings_FaceDetector_DetectorMode_Enhanced" xml:space="preserve">
-        <value>增强模式（DAMO-YOLO）</value>
-    </data>
-    <data name="Settings_FaceDetector_DetectorMode_Enhanced_D" xml:space="preserve">
-        <value>适合较远的课堂人脸，CPU 占用更高</value>
+    <data name="Settings_FaceDetector_DetectorType_D" xml:space="preserve">
+        <value>指定人脸检测模型文件名称</value>
     </data>
     <data name="Settings_FaceDetector_ModelInputSize" xml:space="preserve">
         <value>模型输入尺寸</value>

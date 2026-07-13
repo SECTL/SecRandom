@@ -49,7 +49,6 @@ using SecRandom.Services.Ipc;
 using SecRandom.Services.ImportExport;
 using SecRandom.Services.Settings;
 using SecRandom.Services.Security;
-using SecRandom.Services.Seating;
 using SecRandom.Services.Telemetry;
 using SecRandom.Services.Verification;
 using SecRandom.Services.Voice;
@@ -347,8 +346,6 @@ public partial class App : Application
                 services.AddTransient<VerificationDrawCoordinator>();
                 services.AddSingleton<SettingsSearchService>();
                 services.AddSingleton<IImportExportService, Services.ImportExport.ImportExportService>();
-                services.AddSingleton<SeatingChartService>();
-                services.AddSingleton<CsisInterchangeService>();
                 services.AddTransient<DrawEngine>();
                 services.AddSingleton(pluginStateStore);
                 services.AddSingleton<PluginSelectionState>();
@@ -389,7 +386,6 @@ public partial class App : Application
                 services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
                 services.AddMainPage<LotteryPage>(Langs.Common.Resources.Feat_Lottery);
                 services.AddMainPage<HistoryPage>(Langs.Common.Resources.Feat_History);
-                services.AddMainPage<SeatingChartPage>("座位表抽取");
 #if DEBUG
                 services.AddMainPage<CameraPreviewTestPage>("摄像头测试");
 #endif
@@ -473,7 +469,6 @@ public partial class App : Application
                 services.AddSingleton<RollCallPageViewModel>();
                 services.AddSingleton<QuickDrawPageViewModel>();
                 services.AddSingleton<LotteryPageViewModel>();
-                services.AddSingleton<SeatingChartPageViewModel>();
                 services.AddTransient<RollCallHistoryViewModel>();
                 services.AddTransient<HomeSettingsPageViewModel>();
                 services.AddTransient<LotteryHistoryViewModel>();

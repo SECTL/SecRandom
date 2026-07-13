@@ -22,6 +22,25 @@ public class FaceDetectorModeTests
     }
 
     [Fact]
+    public void CameraPreviewTestPage_UsesOnlySupportedDetectorModes()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var xamlPath = Path.Combine(repositoryRoot, "SecRandom", "Views", "MainPages", "CameraPreviewTestPage.axaml");
+        var codeBehindPath = xamlPath + ".cs";
+        var xaml = File.ReadAllText(xamlPath);
+        var codeBehind = File.ReadAllText(codeBehindPath);
+
+        Assert.Contains("x:Name=\"DetectorModeComboBox\"", xaml);
+        Assert.Contains("FaceDetectorMode.Lightweight", codeBehind);
+        Assert.Contains("FaceDetectorMode.Enhanced", codeBehind);
+        Assert.Contains("DetectorMode = mode", codeBehind);
+        Assert.DoesNotContain("ModelComboBox", xaml);
+        Assert.DoesNotContain("DetectorType =", codeBehind);
+        Assert.DoesNotContain("ListDetectorModels", codeBehind);
+        Assert.DoesNotContain("*.onnx", codeBehind);
+    }
+
+    [Fact]
     public void FaceDetectorSettingsConfig_UsesLightweightYuNetByDefault()
     {
         FaceDetectorSettingsConfig settings = new();
@@ -94,58 +113,12 @@ public class FaceDetectorModeTests
     }
 
     [Fact]
-    public void MainConfigHandler_PersistsCanonicalDetectorTypeFromModernModeOnlyConfig()
-    {
-        var configService = new InMemoryConfigService(
-            """
-            {
-              "face_detector_settings": {
-                "detector_mode": 1
-              }
-            }
-            """);
-
-        _ = new MainConfigHandler(NullLogger<MainConfigHandler>.Instance, configService);
-
-        Assert.NotNull(configService.LastSavedJson);
-        using var savedDocument = JsonDocument.Parse(configService.LastSavedJson);
-        var savedSettings = savedDocument.RootElement.GetProperty("face_detector_settings");
-        Assert.Equal((int)FaceDetectorMode.Enhanced, savedSettings.GetProperty("detector_mode").GetInt32());
-        Assert.Equal(FaceDetectorModeResolver.DamoyoloModelFileName,
-            savedSettings.GetProperty("detector_type").GetString());
-    }
-
-    [Fact]
-    public void MainConfigHandler_NormalizesAndPersistsInvalidNumericDetectorMode()
-    {
-        var configService = new InMemoryConfigService(
-            """
-            {
-              "face_detector_settings": {
-                "detector_mode": 999
-              }
-            }
-            """);
-
-        var handler = new MainConfigHandler(NullLogger<MainConfigHandler>.Instance, configService);
-
-        Assert.Equal(FaceDetectorMode.Lightweight, handler.Data.FaceDetectorSettings.DetectorMode);
-        Assert.Equal(FaceDetectorModeResolver.YuNetModelFileName, handler.Data.FaceDetectorSettings.DetectorType);
-        Assert.NotNull(configService.LastSavedJson);
-        using var savedDocument = JsonDocument.Parse(configService.LastSavedJson);
-        var savedSettings = savedDocument.RootElement.GetProperty("face_detector_settings");
-        Assert.Equal((int)FaceDetectorMode.Lightweight, savedSettings.GetProperty("detector_mode").GetInt32());
-        Assert.Equal(FaceDetectorModeResolver.YuNetModelFileName,
-            savedSettings.GetProperty("detector_type").GetString());
-    }
-
-    [Fact]
     public void MainConfigHandler_PreservesDeclaredDetectorModeWhenLegacyTypeConflictsRegardlessOfJsonOrder()
     {
         var settingsJson = new[]
         {
-            "\"detector_mode\": 1, \"detector_type\": \"face_detection_yunet_2023mar_int8bq.onnx\"",
-            "\"detector_type\": \"face_detection_yunet_2023mar_int8bq.onnx\", \"detector_mode\": 1"
+            "\"detector_mode\": \"Enhanced\", \"detector_type\": \"face_detection_yunet_2023mar_int8bq.onnx\"",
+            "\"detector_type\": \"face_detection_yunet_2023mar_int8bq.onnx\", \"detector_mode\": \"Enhanced\""
         };
 
         foreach (var settings in settingsJson)
@@ -162,66 +135,9 @@ public class FaceDetectorModeTests
             Assert.Equal(FaceDetectorModeResolver.DamoyoloModelFileName, handler.Data.FaceDetectorSettings.DetectorType);
             Assert.NotNull(configService.LastSavedJson);
             using var savedDocument = JsonDocument.Parse(configService.LastSavedJson);
-            Assert.Equal((int)FaceDetectorMode.Enhanced,
-                savedDocument.RootElement.GetProperty("face_detector_settings").GetProperty("detector_mode").GetInt32());
             Assert.Equal(FaceDetectorModeResolver.DamoyoloModelFileName,
                 savedDocument.RootElement.GetProperty("face_detector_settings").GetProperty("detector_type").GetString());
         }
-    }
-
-    [Fact]
-    public void MainConfigHandler_PersistsModernModeWhenLegacyDetectorTypeIsCanonicalDamo()
-    {
-        var configService = new InMemoryConfigService(
-            $$"""
-              {
-                "face_detector_settings": {
-                  "detector_type": "{{FaceDetectorModeResolver.DamoyoloModelFileName}}"
-                }
-              }
-              """);
-
-        var handler = new MainConfigHandler(NullLogger<MainConfigHandler>.Instance, configService);
-
-        Assert.Equal(FaceDetectorMode.Enhanced, handler.Data.FaceDetectorSettings.DetectorMode);
-        Assert.Equal(FaceDetectorModeResolver.DamoyoloModelFileName, handler.Data.FaceDetectorSettings.DetectorType);
-        Assert.NotNull(configService.LastSavedJson);
-        using var savedDocument = JsonDocument.Parse(configService.LastSavedJson);
-        Assert.Equal((int)FaceDetectorMode.Enhanced,
-            savedDocument.RootElement.GetProperty("face_detector_settings").GetProperty("detector_mode").GetInt32());
-        Assert.Equal(FaceDetectorModeResolver.DamoyoloModelFileName,
-            savedDocument.RootElement.GetProperty("face_detector_settings").GetProperty("detector_type").GetString());
-    }
-
-    [Fact]
-    public void MainConfigHandler_ReloadImmediatelyPersistsCanonicalDetectorSettingsFromLegacyConfig()
-    {
-        var configService = new InMemoryConfigService(
-            $$"""
-              {
-                "face_detector_settings": {
-                  "detector_mode": {{(int)FaceDetectorMode.Lightweight}},
-                  "detector_type": "{{FaceDetectorModeResolver.YuNetModelFileName}}"
-                }
-              }
-              """);
-        var handler = new MainConfigHandler(NullLogger<MainConfigHandler>.Instance, configService);
-
-        configService.Json = """
-                             {
-                               "face_detector_settings": {
-                                 "detector_type": "version-RFB-640.onnx"
-                               }
-                             }
-                             """;
-        handler.Reload();
-
-        Assert.NotNull(configService.LastSavedJson);
-        using var savedDocument = JsonDocument.Parse(configService.LastSavedJson);
-        var savedSettings = savedDocument.RootElement.GetProperty("face_detector_settings");
-        Assert.Equal((int)FaceDetectorMode.Lightweight, savedSettings.GetProperty("detector_mode").GetInt32());
-        Assert.Equal(FaceDetectorModeResolver.YuNetModelFileName,
-            savedSettings.GetProperty("detector_type").GetString());
     }
 
     [Fact]
@@ -237,15 +153,13 @@ public class FaceDetectorModeTests
 
     private sealed class InMemoryConfigService(string json) : ConfigServiceBase
     {
-        public string Json { get; set; } = json;
-
         public string? LastSavedJson { get; private set; }
 
         public override bool IsConfigExists<T>(T fallback) => true;
 
         public override T LoadConfig<T>(T fallback)
         {
-            return JsonSerializer.Deserialize<T>(Json, JsonOptions) ?? fallback;
+            return JsonSerializer.Deserialize<T>(json, JsonOptions) ?? fallback;
         }
 
         public override void SaveConfig<T>(T config)

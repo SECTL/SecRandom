@@ -882,56 +882,20 @@ namespace SecRandom.Langs.Common {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 检测模式.
+        ///   Looks up a localized string similar to 检测模型.
         /// </summary>
-        public static string Settings_FaceDetector_DetectorMode {
+        public static string Settings_FaceDetector_DetectorType {
             get {
-                return ResourceManager.GetString("Settings_FaceDetector_DetectorMode", resourceCulture);
+                return ResourceManager.GetString("Settings_FaceDetector_DetectorType", resourceCulture);
             }
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 选择适合课堂场景的人脸检测模式.
+        ///   Looks up a localized string similar to 指定人脸检测模型文件名称.
         /// </summary>
-        public static string Settings_FaceDetector_DetectorMode_D {
+        public static string Settings_FaceDetector_DetectorType_D {
             get {
-                return ResourceManager.GetString("Settings_FaceDetector_DetectorMode_D", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 增强模式（DAMO-YOLO）.
-        /// </summary>
-        public static string Settings_FaceDetector_DetectorMode_Enhanced {
-            get {
-                return ResourceManager.GetString("Settings_FaceDetector_DetectorMode_Enhanced", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 适合较远的课堂人脸，CPU 占用更高.
-        /// </summary>
-        public static string Settings_FaceDetector_DetectorMode_Enhanced_D {
-            get {
-                return ResourceManager.GetString("Settings_FaceDetector_DetectorMode_Enhanced_D", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 轻量模式（YuNet）.
-        /// </summary>
-        public static string Settings_FaceDetector_DetectorMode_Lightweight {
-            get {
-                return ResourceManager.GetString("Settings_FaceDetector_DetectorMode_Lightweight", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 适合普通设备，资源占用更低.
-        /// </summary>
-        public static string Settings_FaceDetector_DetectorMode_Lightweight_D {
-            get {
-                return ResourceManager.GetString("Settings_FaceDetector_DetectorMode_Lightweight_D", resourceCulture);
+                return ResourceManager.GetString("Settings_FaceDetector_DetectorType_D", resourceCulture);
             }
         }
 
