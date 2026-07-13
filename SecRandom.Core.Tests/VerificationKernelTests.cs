@@ -1,6 +1,11 @@
 using System.Security.Cryptography;
+using System.Text.Json;
+using SecRandom.Core;
+using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Verification;
 using SecRandom.Core.Services.Verification;
+using SecRandom.Shared.Extensions;
+using SecRandom.Shared.Models.Profile;
 using SecRandom.Shared.Models.Verification;
 
 namespace SecRandom.Core.Tests;
@@ -58,6 +63,24 @@ public sealed class VerificationKernelTests
         var result = new ManagedVerificationKernel().Draw(input, RandomNumberGenerator.GetBytes(32));
 
         Assert.Equal(guaranteed, result.Winners[0].RecordId);
+    }
+
+    [Fact]
+    public void AttachedSettings_RestoresEnabledHundredPercentRuleFromPersistedJson()
+    {
+        var settingsId = Guid.Parse(GlobalConstants.BehindSceneAttachedSettings);
+        var student = new Student();
+        student.AttachedObjects[settingsId] = JsonSerializer.SerializeToElement(new
+        {
+            is_attach_settings_enabled = true,
+            probability = 100d
+        });
+
+        var settings = student.GetAttachedObject<BehindSceneAttachedSettings>(settingsId);
+
+        Assert.NotNull(settings);
+        Assert.True(settings.IsAttachSettingsEnabled);
+        Assert.Equal(100d, settings.Probability);
     }
 
     [Fact]

@@ -197,9 +197,10 @@
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate
                                                             x:DataType="attributes:AttachedSettingsControlInfo">
-                                                            <sr:AttachedSettingsControlPresenter
-                                                                ControlInfo="{Binding}"
-                                                                TargetObject="{Binding $parent[views:ProfileSettingsView].ViewModel.SelectedStudent}" />
+                                                             <sr:AttachedSettingsControlPresenter
+                                                                 ControlInfo="{Binding}"
+                                                                 TargetObject="{Binding $parent[views:ProfileSettingsView].ViewModel.SelectedStudent}"
+                                                                 SettingsChanged="AttachedSettings_OnSettingsChanged" />
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>

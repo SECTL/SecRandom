@@ -5,10 +5,16 @@ namespace SecRandom.Shared.Extensions;
 
 public static class AttachableSettingsObjectExtensions
 {
+    private static readonly JsonSerializerOptions AttachedSettingsJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+    };
+
     public static T? GetAttachedObject<T>(this IAttachableSettingsObject obj, Guid id)
     {
         obj.AttachedObjects.TryGetValue(id, out var o);
-        if (o is JsonElement o1) return o1.Deserialize<T>();
+        if (o is JsonElement o1) return o1.Deserialize<T>(AttachedSettingsJsonOptions);
 
         return (T?)o;
     }

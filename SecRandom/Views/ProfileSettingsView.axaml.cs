@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
@@ -95,6 +96,11 @@ public partial class ProfileSettingsView : UserControl
     {
         SaveSelectedStudentListConfig();
         this.ShowSuccessToast(Langs.ProfileSettings.Resources.Message_SavedProfile);
+    }
+
+    private void AttachedSettings_OnSettingsChanged(object? sender, EventArgs e)
+    {
+        SaveSelectedStudentListConfig();
     }
 
     private void Command_CreateList_OnClick(object? sender, RoutedEventArgs e)
