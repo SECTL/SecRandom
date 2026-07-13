@@ -76,7 +76,6 @@ public partial class FloatingWindow : Window
                 "roll_call" => GetRollCallButton(settings),
                 "quick_draw" => GetQuickDrawButton(settings),
                 "lottery" => GetLotteryButton(settings),
-                "face_draw" => GetFaceDrawButton(settings),
                 _ => null
             };
 
@@ -118,7 +117,6 @@ public partial class FloatingWindow : Window
         if (settings.ShowRollCallButton) yield return "roll_call";
         if (settings.ShowQuickDrawButton) yield return "quick_draw";
         if (settings.ShowLotteryButton) yield return "lottery";
-        if (settings.ShowFaceDrawButton) yield return "face_draw";
     }
 
     private void FloatingWindowSettings_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -160,11 +158,6 @@ public partial class FloatingWindow : Window
         };
 
         return b;
-    }
-
-    private static Button GetFaceDrawButton(FloatingWindowSettingsConfig settings)
-    {
-        return CreateButton(FluentIcons.VideoPersonFilled, Langs.Common.Resources.Feat_FaceDraw, settings);
     }
 
     private static Button CreateButton(

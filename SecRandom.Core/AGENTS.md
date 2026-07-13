@@ -26,7 +26,6 @@ SecRandom.Core/
 ├── Styles/               # Modular shared style files
 ├── StylesBase.axaml      # Shared style hub imported by app
 ├── Services/Draw/        # Fair/random draw engine and filters
-├── Services/Camera/      # Camera-based face detection and draw loop
 ├── Services/Config/      # Config handlers over Shared config models
 ├── Services/Ipc/         # Strict URL/IPC request parsing and normalization
 ├── Services/Logging/     # Console/file logging providers/formatters
@@ -50,7 +49,6 @@ SecRandom.Core/
 | Navigation registry        | `Services/PagesRegistryService.cs`                                               | Static main/settings/group collections.                                 |
 | Attached-settings registry | `Services/AttachedSettingsRegistryService.cs`                                    | Static attached-settings control collections.                           |
 | Draw algorithm             | `Services/Draw/DrawEngine*.cs`, `WeightedDrawEngine.cs`, `CryptoRandomSource.cs` | Fairness, filters, weighted sampling; history lookup uses `RecordId`.    |
-| Camera draw engine         | `Services/Camera/CameraDrawEngine*.cs`                                           | Face detection, camera discovery, draw loop, config-change reactions.   |
 | Config handlers            | `Services/Config/`                                                               | `MainConfigHandler` and `ProfileConfigs` wrap config model persistence. |
 | Protocol parsing           | `Services/Ipc/ProtocolRequestParser.cs`                                          | Bounded route/query parser shared by URL and IPC routing. |
 | Logging providers          | `Services/Logging/`                                                              | Console/file logging; file logs live under `data/logs`, current log path is exposed by `FileLoggerProvider` for viewer/diagnostics. |
@@ -71,9 +69,6 @@ SecRandom.Core/
 - Registration helpers are responsible for both keyed DI and `PagesRegistryService` metadata.
 - `DrawEngine` is partial: keep filtering in `DrawEngine.Filter.cs`, weight math in `DrawEngine.WeightCalculator.cs`,
   orchestration in `DrawEngine.cs`.
-- `CameraDrawEngine` is partial: keep core state in `CameraDrawEngine.Base.cs`, loop/init in `CameraDrawEngine.Core.cs`,
-  face detection in `CameraDrawEngine.Detector.cs`, config-change reactions in `CameraDrawEngine.EventsHandler.cs`, and
-  device discovery/utilities in `CameraDrawEngine.Helpers.cs`.
 - Weighted drawing validates count, candidates, and weights before sampling; preserve explicit `DrawStatus` returns over
   exceptions at public boundary.
 - Draw fairness/repeat history for students and prizes must use `ProfileRecordIdentity`/`RecordId` first. Legacy `Id`/`Name` history fallback is only for backward compatibility and must stay ambiguity-safe.

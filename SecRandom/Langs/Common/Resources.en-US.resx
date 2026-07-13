@@ -88,9 +88,6 @@
     <data name="Settings_Update" xml:space="preserve">
         <value>Update Settings</value>
     </data>
-    <data name="Feat_FaceDraw" xml:space="preserve">
-        <value>Roll Call</value>
-    </data>
     <data name="Feat_Lottery" xml:space="preserve">
         <value>Lottery</value>
     </data>

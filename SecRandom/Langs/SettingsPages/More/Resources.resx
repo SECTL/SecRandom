@@ -120,6 +120,9 @@
   <data name="S_Shortcut_Enable_D" xml:space="preserve">
     <value>启用全局快捷键响应。</value>
   </data>
+  <data name="S_Shortcut_D" xml:space="preserve">
+    <value>展开后按下所需组合键；Esc 取消输入，Backspace 清空快捷键。</value>
+  </data>
   <data name="S_Shortcut_OpenRollCallPage" xml:space="preserve">
     <value>打开点名页</value>
   </data>
@@ -137,6 +140,36 @@
   </data>
   <data name="S_Shortcut_OpenLotteryPage_D" xml:space="preserve">
     <value>设置打开抽奖页的快捷键。</value>
+  </data>
+  <data name="S_Shortcut_IncreaseRollCallCount" xml:space="preserve">
+    <value>增加点名人数</value>
+  </data>
+  <data name="S_Shortcut_DecreaseRollCallCount" xml:space="preserve">
+    <value>减少点名人数</value>
+  </data>
+  <data name="S_Shortcut_IncreaseLotteryCount" xml:space="preserve">
+    <value>增加抽奖数量</value>
+  </data>
+  <data name="S_Shortcut_DecreaseLotteryCount" xml:space="preserve">
+    <value>减少抽奖数量</value>
+  </data>
+  <data name="S_Shortcut_StartRollCall" xml:space="preserve">
+    <value>开始或停止点名</value>
+  </data>
+  <data name="S_Shortcut_StartLottery" xml:space="preserve">
+    <value>开始或停止抽奖</value>
+  </data>
+  <data name="C_ShortcutCapture" xml:space="preserve">
+    <value>按下快捷键</value>
+  </data>
+  <data name="C_ShortcutClear" xml:space="preserve">
+    <value>清空快捷键</value>
+  </data>
+  <data name="C_ShortcutConflict" xml:space="preserve">
+    <value>冲突</value>
+  </data>
+  <data name="M_ShortcutDuplicated" xml:space="preserve">
+    <value>该快捷键已分配给其他操作。</value>
   </data>
   <data name="C_ShortcutExampleRollCall" xml:space="preserve">
     <value>例如 Ctrl+Alt+R</value>

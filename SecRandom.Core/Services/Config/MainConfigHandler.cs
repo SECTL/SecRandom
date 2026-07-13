@@ -9,7 +9,5 @@ public class MainConfigHandler : ConfigHandlerBase<MainConfigModel>
     public MainConfigHandler(ILogger<MainConfigHandler> logger, ConfigServiceBase configService)
         : base(logger, configService, () => new MainConfigModel())
     {
-        if (Data.FaceDetectorSettings.DetectorTypeWasNormalized)
-            Save();
     }
 }

@@ -29,4 +29,10 @@ public partial class MoreSettingsConfig : ObservableObject
     [ObservableProperty] private string _openRollCallPageShortcut = string.Empty;
     [ObservableProperty] private string _quickDrawShortcut = string.Empty;
     [ObservableProperty] private string _openLotteryPageShortcut = string.Empty;
+    [ObservableProperty] private string _increaseRollCallCountShortcut = string.Empty;
+    [ObservableProperty] private string _decreaseRollCallCountShortcut = string.Empty;
+    [ObservableProperty] private string _increaseLotteryCountShortcut = string.Empty;
+    [ObservableProperty] private string _decreaseLotteryCountShortcut = string.Empty;
+    [ObservableProperty] private string _startRollCallShortcut = string.Empty;
+    [ObservableProperty] private string _startLotteryShortcut = string.Empty;
 }

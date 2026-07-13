@@ -52,9 +52,6 @@
     <data name="Feat_Lottery" xml:space="preserve">
         <value>抽奖</value>
     </data>
-    <data name="Feat_FaceDraw" xml:space="preserve">
-        <value>人脸抽取</value>
-    </data>
     <data name="Settings_About" xml:space="preserve">
         <value>关于 SecRandom</value>
     </data>
@@ -151,9 +148,6 @@
     <data name="Settings_FairPick" xml:space="preserve">
         <value>公平抽取设置</value>
     </data>
-    <data name="Settings_FaceDetector" xml:space="preserve">
-        <value>人脸抽取设置</value>
-    </data>
     <data name="Settings_VoiceMusic" xml:space="preserve">
         <value>语音与音乐</value>
     </data>
@@ -238,92 +232,8 @@
     <data name="Settings_FairPick_Shield" xml:space="preserve">
         <value>抽取后屏蔽</value>
     </data>
-    <data name="Settings_FaceDetector_CameraSource" xml:space="preserve">
-        <value>摄像头来源</value>
-    </data>
-    <data name="Settings_FaceDetector_CameraSource_D" xml:space="preserve">
-        <value>指定人脸抽取使用的摄像头设备</value>
-    </data>
-    <data name="Settings_FaceDetector_CameraGroup" xml:space="preserve">
-        <value>摄像头</value>
-    </data>
-    <data name="Settings_FaceDetector_Resolution" xml:space="preserve">
-        <value>分辨率</value>
-    </data>
-    <data name="Settings_FaceDetector_Resolution_D" xml:space="preserve">
-        <value>仅显示所选摄像头支持的分辨率</value>
-    </data>
-    <data name="Settings_FaceDetector_DetectionGroup" xml:space="preserve">
-        <value>人脸检测</value>
-    </data>
-    <data name="Settings_FaceDetector_DetectorMode" xml:space="preserve">
-        <value>检测模式</value>
-    </data>
-    <data name="Settings_FaceDetector_DetectorMode_D" xml:space="preserve">
-        <value>轻量 YuNet 为默认模式且更适合 CPU；增强 DAMO-YOLO 检测更强，但会占用更多 CPU 资源。</value>
-    </data>
-    <data name="Settings_FaceDetector_DetectorMode_Lightweight" xml:space="preserve">
-        <value>轻量 YuNet</value>
-    </data>
-    <data name="Settings_FaceDetector_DetectorMode_Enhanced" xml:space="preserve">
-        <value>增强 DAMO-YOLO</value>
-    </data>
-    <data name="Settings_FaceDetector_PickingGroup" xml:space="preserve">
-        <value>抽取</value>
-    </data>
-    <data name="Settings_FaceDetector_PreviewMode" xml:space="preserve">
-        <value>预览模式</value>
-    </data>
-    <data name="Settings_FaceDetector_PreviewMode_D" xml:space="preserve">
-        <value>控制摄像头预览显示时机</value>
-    </data>
-    <data name="Settings_FaceDetector_PreviewMode_Pick" xml:space="preserve">
-        <value>抽取时显示</value>
-    </data>
-    <data name="Settings_FaceDetector_PreviewMode_Always" xml:space="preserve">
-        <value>始终显示</value>
-    </data>
-    <data name="Settings_FaceDetector_PreviewMode_Hidden" xml:space="preserve">
-        <value>隐藏</value>
-    </data>
-    <data name="Settings_FaceDetector_Duration" xml:space="preserve">
-        <value>抽取时长</value>
-    </data>
-    <data name="Settings_FaceDetector_Duration_D" xml:space="preserve">
-        <value>人脸抽取动画持续的秒数</value>
-    </data>
-    <data name="Settings_FaceDetector_ProcessAudio" xml:space="preserve">
-        <value>播放过程音效</value>
-    </data>
-    <data name="Settings_FaceDetector_ProcessAudio_D" xml:space="preserve">
-        <value>人脸抽取过程中播放音频提示</value>
-    </data>
-    <data name="Settings_FaceDetector_ResultAudio" xml:space="preserve">
-        <value>播放结果音效</value>
-    </data>
-    <data name="Settings_FaceDetector_ResultAudio_D" xml:space="preserve">
-        <value>人脸抽取结束时播放音频提示</value>
-    </data>
-    <data name="Settings_FaceDetector_FrameColor" xml:space="preserve">
-        <value>抽取框颜色</value>
-    </data>
-    <data name="Settings_FaceDetector_FrameColor_D" xml:space="preserve">
-        <value>人脸抽取框使用的高亮颜色</value>
-    </data>
     <data name="Settings_FairPick_ColdStart" xml:space="preserve">
         <value>冷启动保护</value>
-    </data>
-    <data name="Settings_FaceDetector_DetectorType" xml:space="preserve">
-        <value>检测模型</value>
-    </data>
-    <data name="Settings_FaceDetector_DetectorType_D" xml:space="preserve">
-        <value>指定人脸检测模型文件名称</value>
-    </data>
-    <data name="Settings_FaceDetector_ModelInputSize" xml:space="preserve">
-        <value>模型输入尺寸</value>
-    </data>
-    <data name="Settings_FaceDetector_ModelInputSize_D" xml:space="preserve">
-        <value>设置检测模型输入宽度和高度</value>
     </data>
 
     <data name="MultiInstance_Title" xml:space="preserve">

@@ -90,24 +90,6 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 人脸抽取按钮.
-        /// </summary>
-        public static string S_Buttons_FaceDraw {
-            get {
-                return ResourceManager.GetString("S_Buttons_FaceDraw", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 在悬浮窗中显示摄像头抽取入口。.
-        /// </summary>
-        public static string S_Buttons_FaceDraw_D {
-            get {
-                return ResourceManager.GetString("S_Buttons_FaceDraw_D", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to 抽奖按钮.
         /// </summary>
         public static string S_Buttons_Lottery {

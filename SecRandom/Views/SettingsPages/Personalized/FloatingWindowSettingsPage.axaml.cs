@@ -23,7 +23,6 @@ namespace SecRandom.Views.SettingsPages.Personalized;
 public partial class FloatingWindowSettingsPage : UserControl
 {
     private bool _isSettingsSubscribed;
-    private bool _synchronizingSelections;
 
     public FloatingWindowSettingsPage()
     {
@@ -36,9 +35,7 @@ public partial class FloatingWindowSettingsPage : UserControl
             new(LR.S_Buttons_QuickDraw, () => Settings.ShowQuickDrawButton,
                 value => Settings.ShowQuickDrawButton = value),
             new(LR.S_Buttons_Lottery, () => Settings.ShowLotteryButton,
-                value => Settings.ShowLotteryButton = value),
-            new(LR.S_Buttons_FaceDraw, () => Settings.ShowFaceDrawButton,
-                value => Settings.ShowFaceDrawButton = value)
+                value => Settings.ShowLotteryButton = value)
         ];
         SelectedButtonOptions = BuildSelectedOptions(ButtonOptions);
         DataContext = this;
@@ -87,7 +84,6 @@ public partial class FloatingWindowSettingsPage : UserControl
             && Settings.FloatingWindowTopmostMode == TopmostMode.UiAccess
             && !DesktopIntegration.IsUiAccessAvailable())
             SettingsView.Current?.RequestRestartApp();
-        SynchronizeSelectedOptions(ButtonOptions, SelectedButtonOptions);
     }
 
     private static AvaloniaList<MultiSelectSettingOption> BuildSelectedOptions(
@@ -128,27 +124,8 @@ public partial class FloatingWindowSettingsPage : UserControl
         return true;
     }
 
-    private void SynchronizeSelectedOptions(
-        IEnumerable<MultiSelectSettingOption> options,
-        AvaloniaList<MultiSelectSettingOption> selectedOptions)
-    {
-        _synchronizingSelections = true;
-        try
-        {
-            selectedOptions.Clear();
-            selectedOptions.AddRange(options.Where(option => option.IsSelected));
-        }
-        finally
-        {
-            _synchronizingSelections = false;
-        }
-    }
-
     private void MultiSelect_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (_synchronizingSelections)
-            return;
-
         foreach (var option in e.AddedItems.OfType<MultiSelectSettingOption>())
         {
             option.SetSelected(true);
@@ -158,7 +135,5 @@ public partial class FloatingWindowSettingsPage : UserControl
         {
             option.SetSelected(false);
         }
-
-        ConfigHandler.Save();
     }
 }

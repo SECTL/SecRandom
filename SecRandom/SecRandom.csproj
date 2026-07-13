@@ -36,11 +36,6 @@
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
-        <EmbeddedResource Update="Langs\MainPages\FaceDraw\Resources.resx">
-            <Generator>PublicResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-
         <EmbeddedResource Update="Langs\MainPages\History\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -192,12 +187,6 @@
         </Compile>
 
         <Compile Update="Langs\MainPages\Lottery\Resources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Resources.resx</DependentUpon>
-        </Compile>
-
-        <Compile Update="Langs\MainPages\FaceDraw\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>
@@ -407,7 +396,6 @@
     <ItemGroup>
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1" />
         <PackageReference Include="ClassIsland.Markdown.Avalonia" Version="12.0.0" />
-        <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.25.1" />
         <PackageReference Include="Sentry" Version="6.6.0" />
         <PackageReference Include="Sentry.AspNetCore" Version="6.6.0" />
         <PackageReference Include="Sentry.Extensions.Logging" Version="6.6.0" />

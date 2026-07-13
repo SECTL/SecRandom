@@ -36,7 +36,7 @@ public sealed class ImportExportService(
     private static readonly string[] AllDataRoots =
     [
         "config/settings.json", "list", "history", "TEMP", "proofs", "audio", "CSES", "images", "themes",
-        "theme", "Language", "cv_models", "plugins", "configs/plugins", "logs", "legacy/v2-history"
+        "theme", "Language", "plugins", "configs/plugins", "logs", "legacy/v2-history"
     ];
 
     private static readonly string[] LegacyRoots =
@@ -569,11 +569,23 @@ public sealed class ImportExportService(
 
         if (root.TryGetProperty("backup", out var backup))
             result.General.Backup = JsonSerializer.Deserialize<SecRandom.Core.Models.SubConfigs.General.BackupConfig>(backup.GetRawText(), ConfigServiceBase.JsonOptions) ?? result.General.Backup;
+        if (root.TryGetProperty("shortcut_settings", out var shortcuts))
+        {
+            result.MoreSettings.EnableShortcut = GetBool(shortcuts, "enable_shortcut", result.MoreSettings.EnableShortcut);
+            result.MoreSettings.OpenRollCallPageShortcut = GetString(shortcuts, "open_roll_call_page");
+            result.MoreSettings.QuickDrawShortcut = GetString(shortcuts, "use_quick_draw");
+            result.MoreSettings.OpenLotteryPageShortcut = GetString(shortcuts, "open_lottery_page");
+            result.MoreSettings.IncreaseRollCallCountShortcut = GetString(shortcuts, "increase_roll_call_count");
+            result.MoreSettings.DecreaseRollCallCountShortcut = GetString(shortcuts, "decrease_roll_call_count");
+            result.MoreSettings.IncreaseLotteryCountShortcut = GetString(shortcuts, "increase_lottery_count");
+            result.MoreSettings.DecreaseLotteryCountShortcut = GetString(shortcuts, "decrease_lottery_count");
+            result.MoreSettings.StartRollCallShortcut = GetString(shortcuts, "start_roll_call");
+            result.MoreSettings.StartLotteryShortcut = GetString(shortcuts, "start_lottery");
+        }
         CopyCompatibleSection(root, "roll_call_settings", result.RollCallSettings, warnings);
         CopyCompatibleSection(root, "quick_draw_settings", result.QuickDrawSettings, warnings);
         CopyCompatibleSection(root, "lottery_settings", result.LotterySettings, warnings);
         CopyCompatibleSection(root, "fair_draw_settings", result.FairDrawSettings, warnings);
-        CopyCompatibleSection(root, "face_detector_settings", result.FaceDetectorSettings, warnings);
         warnings.Add("v2 设置已迁移；当前版本不支持的字段已保留为默认值。");
         return result;
     }

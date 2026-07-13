@@ -211,10 +211,20 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         DrawCount++;
     }
 
+    public void IncreaseCountFromShortcut()
+    {
+        IncreaseCount();
+    }
+
     [RelayCommand]
     private void DecreaseCount()
     {
         DrawCount--;
+    }
+
+    public void DecreaseCountFromShortcut()
+    {
+        DecreaseCount();
     }
 
     [RelayCommand]
@@ -327,6 +337,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     }
 
     public Task StartProtocolDrawAsync() => StartDrawCoreAsync();
+
+    public Task ToggleDrawFromShortcutAsync() => StartDrawAsync();
 
     public Task ResetProtocolDrawAsync()
     {

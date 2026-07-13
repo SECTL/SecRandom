@@ -30,7 +30,6 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Extensions.Registry;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models;
-using SecRandom.Core.Services.Camera;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services.Verification;
@@ -348,7 +347,6 @@ public partial class App : Application
                 services.AddSingleton<IImportExportService, Services.ImportExport.ImportExportService>();
                 services.AddHostedService<AutomaticBackupService>();
                 services.AddTransient<DrawEngine>();
-                services.AddSingleton<CameraDrawEngine>();
                 services.AddSingleton(pluginStateStore);
                 services.AddSingleton<PluginSelectionState>();
                 services.AddSingleton<IPluginManager, PluginManagerService>();
@@ -359,6 +357,8 @@ public partial class App : Application
                 services.AddSingleton<TelemetryRuntimeService>();
                 services.AddHostedService<OnlineStatusService>();
                 services.AddHostedService<TaskBarIconService>();
+                services.AddSingleton<GlobalShortcutService>();
+                services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<GlobalShortcutService>());
                 services.AddSingleton<DesktopIntegrationService>();
                 services.AddSingleton<ProtocolCommandRouter>();
                 services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
@@ -387,7 +387,6 @@ public partial class App : Application
                 // 界面 Views
                 services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
                 services.AddMainPage<LotteryPage>(Langs.Common.Resources.Feat_Lottery);
-                services.AddMainPage<CameraPreviewTestPage>("人脸抽取");
                 services.AddMainPage<HistoryPage>(Langs.Common.Resources.Feat_History);
 
                 // 设置界面 Views
@@ -427,7 +426,6 @@ public partial class App : Application
                 services.AddSettingsPage<RollCallDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_RollCall);
                 services.AddSettingsPage<QuickDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
                 services.AddSettingsPage<LotteryDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_Lottery);
-                services.AddSettingsPage<FaceDetectorSettingsPage>(Langs.Common.Resources.Settings_FaceDetector);
 
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_Notification, "settings.notification", FluentIcons.CommentNoteFilled));

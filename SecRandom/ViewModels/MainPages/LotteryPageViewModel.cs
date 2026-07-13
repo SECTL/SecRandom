@@ -209,10 +209,20 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         DrawCount++;
     }
 
+    public void IncreaseCountFromShortcut()
+    {
+        IncreaseCount();
+    }
+
     [RelayCommand]
     private void DecreaseCount()
     {
         DrawCount--;
+    }
+
+    public void DecreaseCountFromShortcut()
+    {
+        DecreaseCount();
     }
 
     [RelayCommand(AllowConcurrentExecutions = true)]
@@ -338,6 +348,9 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     }
 
     public Task StartProtocolDrawAsync() => StartDrawCoreAsync();
+
+    public Task ToggleDrawFromShortcutAsync() => StartDrawAsync();
+
     public Task ResetProtocolDrawAsync()
     {
         ResetDisplayCore();

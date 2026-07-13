@@ -10,7 +10,6 @@ using BasicSettingsConfig = SecRandom.Core.Models.SubConfigs.General.BasicSettin
 using GeneralSettingsConfig = SecRandom.Core.Models.SubConfigs.General.GeneralSettingsConfig;
 using DefaultDrawSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.DefaultDrawSettingsConfig;
 using DrawSettingsConfigBase = SecRandom.Core.Models.SubConfigs.Picking.DrawSettingsConfigBase;
-using FaceDetectorSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.FaceDetectorSettingsConfig;
 using FairDrawSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.FairDrawSettingsConfig;
 using LotterySettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.LotterySettingsConfig;
 using OverridableDrawSettings = SecRandom.Core.Models.SubConfigs.Picking.OverridableDrawSettings;
@@ -35,7 +34,6 @@ public partial class MainConfigModel : ConfigBase
     [ObservableProperty] private RollCallSettingsConfig _rollCallSettings = new();
     [ObservableProperty] private QuickDrawSettingsConfig _quickDrawSettings = new();
     [ObservableProperty] private LotterySettingsConfig _lotterySettings = new();
-    [ObservableProperty] private FaceDetectorSettingsConfig _faceDetectorSettings = new();
 
     [ObservableProperty] private FloatingWindowSettingsConfig _floatingWindowSettings = new();
     [ObservableProperty] private NotificationSettingsConfig _notificationSettings = new();
