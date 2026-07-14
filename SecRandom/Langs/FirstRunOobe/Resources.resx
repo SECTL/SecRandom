@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true" />
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="UserAgreement" xml:space="preserve"><value>SecRandom 用户协议（版本 1）
+
+1. 适用范围与接受。SecRandom 是面向教育活动的随机抽取工具。继续使用本软件，即表示您接受本协议；本协议不排除适用法律赋予您的权利。
+
+2. 允许使用。您可将本软件用于课堂、教学活动及其他合法的内部随机抽取场景，并可自行配置班级、名单、奖品池和外部联动。
+
+3. 用户责任。您应确保导入的数据来源合法、准确且经过授权，并仅处理必要的数据。抽取规则、结果发布及相关后果由实际使用者负责；重要结果应自行核验并备份。
+
+4. 禁止行为。不得利用本软件实施违法歧视、欺骗、规避安全或访问控制的行为；不得将随机结果替代依法或依规需要人工独立判断的决定；修改或分发软件时不得违反 GNU GPLv3。
+
+5. 数据与外部联动。数据默认按本地配置保存。开机启动和 secrandom:// 外部链接均为可选功能，外部命令仍受已启用集成与安全设置约束。
+
+6. 无担保与责任限制。本软件按现状提供。在适用法律允许的范围内，项目方不对软件适用性、持续可用性或抽取结果承担保证责任。
+
+7. 更新与终止。协议文本发生实质变更时会提高协议版本并要求重新确认。您可随时停止使用本软件。
+
+8. 与 GPLv3 的关系。本协议不替代、不限制 GNU GPLv3 对源代码、修改和分发的权利；GNU GPLv3 将另行展示。</value></data>
+  <data name="GplNotice" xml:space="preserve"><value>GNU General Public License v3.0（GPLv3）说明
+
+SecRandom 以 GNU GPLv3 许可发布。GPLv3 允许您运行、研究、修改和再分发软件，但在分发修改版本时需遵守其 copyleft 条款，包括提供对应源代码并以 GPLv3 许可分发。
+
+完整许可证文本以 GNU GPLv3 官方文本为准。本页确认不要求您放弃 GPLv3 赋予的任何权利。</value></data>
+  <data name="C_Title" xml:space="preserve"><value>SecRandom 初始设置</value></data>
+  <data name="C_Intro" xml:space="preserve"><value>先完成必要的许可确认，其余内容可随时在设置中调整。</value></data>
+  <data name="C_WelcomeTitle" xml:space="preserve"><value>欢迎使用 SecRandom</value></data>
+  <data name="C_WelcomeDescription" xml:space="preserve"><value>接下来将用几步完成首次设置。只有许可确认是必需的，名单、抽奖、外观和桌面集成均可跳过，并可随时在设置中修改。</value></data>
+  <data name="C_LegalTitle" xml:space="preserve"><value>用户协议与开源许可</value></data>
+  <data name="C_LegalDescription" xml:space="preserve"><value>继续使用前，请阅读并确认以下两份文本。自定义用户协议不取代 GNU GPLv3 赋予的开源权利。</value></data>
+  <data name="C_AgreementTitle" xml:space="preserve"><value>SecRandom 用户协议</value></data>
+  <data name="C_AgreementAccept" xml:space="preserve"><value>我已阅读并接受 SecRandom 用户协议。</value></data>
+  <data name="C_GplTitle" xml:space="preserve"><value>GNU GPLv3</value></data>
+  <data name="C_GplAccept" xml:space="preserve"><value>我已阅读 GNU GPLv3 许可说明。</value></data>
+  <data name="C_DataTitle" xml:space="preserve"><value>导入或建立班级</value></data>
+  <data name="C_DataDescription" xml:space="preserve"><value>可恢复已有的 SecRandom v3 数据，也可直接建立班级并导入学生表。跳过不会影响后续使用。</value></data>
+  <data name="C_RestoreTitle" xml:space="preserve"><value>恢复已有数据</value></data>
+  <data name="C_RestoreDescription" xml:space="preserve"><value>导入前会检查导出版本，只接受 v3 文件。</value></data>
+  <data name="C_ImportSettings" xml:space="preserve"><value>导入 v3 设置</value></data>
+  <data name="C_ImportAllData" xml:space="preserve"><value>导入 v3 全部数据</value></data>
+  <data name="C_NewClass" xml:space="preserve"><value>新建班级</value></data>
+  <data name="C_DefaultClassName" xml:space="preserve"><value>我的班级</value></data>
+  <data name="C_ClassNamePlaceholder" xml:space="preserve"><value>班级名称</value></data>
+  <data name="C_ImportRoster" xml:space="preserve"><value>导入名单</value></data>
+  <data name="C_LotteryTitle" xml:space="preserve"><value>抽奖功能</value></data>
+  <data name="C_LotteryDescription" xml:space="preserve"><value>关闭后会隐藏抽奖侧栏和浮窗选项，并拒绝抽奖快捷键及外部指令。</value></data>
+  <data name="C_LotteryEnabled" xml:space="preserve"><value>启用抽奖</value></data>
+  <data name="C_PrizeImport" xml:space="preserve"><value>导入奖品池</value></data>
+  <data name="C_DefaultPrizePoolName" xml:space="preserve"><value>我的奖品池</value></data>
+  <data name="C_PrizePoolPlaceholder" xml:space="preserve"><value>奖品池名称</value></data>
+  <data name="C_AppearanceTitle" xml:space="preserve"><value>外观与浮窗</value></data>
+  <data name="C_Theme" xml:space="preserve"><value>主题</value></data>
+  <data name="O_ThemeLight" xml:space="preserve"><value>浅色</value></data>
+  <data name="O_ThemeDark" xml:space="preserve"><value>深色</value></data>
+  <data name="O_ThemeAuto" xml:space="preserve"><value>跟随系统</value></data>
+  <data name="C_ThemeColor" xml:space="preserve"><value>主题色</value></data>
+  <data name="O_SystemColor" xml:space="preserve"><value>系统主题色</value></data>
+  <data name="O_CustomColor" xml:space="preserve"><value>自定义主题色</value></data>
+  <data name="C_Opacity" xml:space="preserve"><value>浮窗透明度</value></data>
+  <data name="C_OpacityDescription" xml:space="preserve"><value>透明度会在完成设置后应用到浮窗。</value></data>
+  <data name="C_DesktopTitle" xml:space="preserve"><value>桌面集成</value></data>
+  <data name="C_DesktopDescription" xml:space="preserve"><value>这些选项会在完成时写入系统。若平台拒绝操作，设置会保持关闭并可稍后重试。</value></data>
+  <data name="C_Autostart" xml:space="preserve"><value>开机启动</value></data>
+  <data name="C_ExternalIntegration" xml:space="preserve"><value>外部链接与联动</value></data>
+  <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>注册 secrandom:// 链接以允许外部程序唤起 SecRandom。</value></data>
+  <data name="C_CompleteTitle" xml:space="preserve"><value>完成设置</value></data>
+  <data name="C_CompleteDescription" xml:space="preserve"><value>已确认许可后，点击完成即可进入 SecRandom。班级、抽奖、外观和桌面集成均可在设置中再次调整。</value></data>
+  <data name="C_CompletedItems" xml:space="preserve"><value>已配置项目</value></data>
+  <data name="C_CompletedClass" xml:space="preserve"><value>点名名单与奖品池可在名单管理中维护。</value></data>
+  <data name="C_CompletedAppearance" xml:space="preserve"><value>抽奖入口、主题和浮窗外观可在设置中修改。</value></data>
+  <data name="C_CompletedIntegration" xml:space="preserve"><value>外部链接开关不会关闭应用内部的单实例通信。</value></data>
+  <data name="C_Previous" xml:space="preserve"><value>上一步</value></data>
+  <data name="C_Next" xml:space="preserve"><value>下一步</value></data>
+  <data name="C_Finish" xml:space="preserve"><value>完成</value></data>
+  <data name="C_ImportSettingsTitle" xml:space="preserve"><value>导入 v3 设置</value></data>
+  <data name="C_ImportAllDataTitle" xml:space="preserve"><value>导入 v3 全部数据</value></data>
+  <data name="C_ImportTitle" xml:space="preserve"><value>确认导入</value></data>
+  <data name="C_Import" xml:space="preserve"><value>导入</value></data>
+  <data name="C_Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="C_Close" xml:space="preserve"><value>关闭</value></data>
+  <data name="C_JsonFileType" xml:space="preserve"><value>JSON 文件</value></data>
+  <data name="C_ZipFileType" xml:space="preserve"><value>ZIP 文件</value></data>
+  <data name="C_ExitTitle" xml:space="preserve"><value>退出初始设置</value></data>
+  <data name="C_ExitDescription" xml:space="preserve"><value>尚未完成许可确认。退出将关闭 SecRandom，不会保存 OOBE 完成状态。</value></data>
+  <data name="C_Exit" xml:space="preserve"><value>退出应用</value></data>
+  <data name="C_ContinueSetup" xml:space="preserve"><value>继续设置</value></data>
+  <data name="M_ImportConfirmation" xml:space="preserve"><value>来源版本：{0}
+将处理 {1} 个文件。导入前会创建恢复快照，安全凭据不会导入。</value></data>
+  <data name="M_UnsupportedImportTitle" xml:space="preserve"><value>不支持的导入文件</value></data>
+  <data name="M_UnsupportedImport" xml:space="preserve"><value>仅支持 SecRandom v3 导出文件。检测到的版本：{0}。
+{1}
+未修改任何数据。</value></data>
+  <data name="M_UnknownVersion" xml:space="preserve"><value>未识别</value></data>
+  <data name="M_UnsupportedImportDetail" xml:space="preserve"><value>该文件不是受支持的 SecRandom v3 导出文件。</value></data>
+  <data name="M_ImportCompleted" xml:space="preserve"><value>导入完成。请继续确认当前版本的协议。</value></data>
+  <data name="M_ImportFailed" xml:space="preserve"><value>导入失败</value></data>
+  <data name="M_AgreementRequired" xml:space="preserve"><value>请先阅读并确认用户协议与 GNU GPLv3。</value></data>
+  <data name="M_CompletionAgreementRequired" xml:space="preserve"><value>完成前需要确认用户协议与 GNU GPLv3。</value></data>
+  <data name="M_DesktopIntegrationFailed" xml:space="preserve"><value>部分桌面集成未能启用，已保留为关闭状态。可在设置中稍后重试。</value></data>
+  <data name="M_StudentsImported" xml:space="preserve"><value>已导入 {0} 名学生，并设为默认班级。</value></data>
+  <data name="M_PrizesImported" xml:space="preserve"><value>已导入 {0} 个奖品，并设为默认奖品池。</value></data>
+  <data name="M_StepProgress" xml:space="preserve"><value>步骤 {0}/{1}</value></data>
+</root>

@@ -29,8 +29,16 @@
 
             <Separator Margin="0 12 0 4" />
             <sr:IconText Text="{x:Static lsp:Resources.S_PageManagement}"
-                         Glyph="{sr:Fi PanelRightFilled}"
-                         Margin="0 0 0 4" />
+                          Glyph="{sr:Fi PanelRightFilled}"
+                          Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_LotteryEnabled}"
+                                     Description="{x:Static lsp:Resources.S_LotteryEnabled_D}"
+                                     IconSource="{sr:FluentIconSource {sr:Fi GiftFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.LotteryEnabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
 
             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_RollCallPanelPosition}"
                                    Description="{x:Static lsp:Resources.S_RollCallPanelPosition_D}"

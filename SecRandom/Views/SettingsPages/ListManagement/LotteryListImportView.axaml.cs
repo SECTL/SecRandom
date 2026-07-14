@@ -21,7 +21,7 @@ namespace SecRandom.Views.SettingsPages.ListManagement;
 
 public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
 {
-    private readonly Action<IReadOnlyList<Prize>> _importHandler;
+    private Action<IReadOnlyList<Prize>> _importHandler;
     private readonly List<Dictionary<string, string>> _rows = [];
     private bool _canImport;
     private string? _countColumn;
@@ -31,6 +31,7 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
     private string _statusText = LR.M_SelectFileFirst;
     private string? _tagsColumn;
     private string? _weightColumn;
+    private string _targetListName = string.Empty;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
     private readonly ILogger<LotteryListImportView> _logger =
         IAppHost.GetService<ILogger<LotteryListImportView>>();
@@ -42,7 +43,7 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
 
     public LotteryListImportView(string targetListName, Action<IReadOnlyList<Prize>> importHandler)
     {
-        TargetListDescription = string.Format(LR.C_TargetList, targetListName);
+        TargetListName = targetListName;
         _importHandler = importHandler;
         DataContext = this;
         InitializeComponent();
@@ -52,7 +53,25 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
     public ObservableCollection<string> OptionalColumnOptions { get; } = [LR.C_NoneColumn];
     public ObservableCollection<ImportPreviewRow> PreviewRows { get; } = [];
 
-    public string TargetListDescription { get; }
+    public string TargetListName
+    {
+        get => _targetListName;
+        set
+        {
+            if (SetField(ref _targetListName, value))
+                NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TargetListDescription)));
+        }
+    }
+
+    public string TargetListDescription => string.Format(LR.C_TargetList, TargetListName);
+
+    public Action<IReadOnlyList<Prize>> ImportHandler
+    {
+        get => _importHandler;
+        set => _importHandler = value;
+    }
+
+    public Action? CloseHandler { get; set; }
 
     public string SelectedFileName
     {
@@ -166,12 +185,27 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
 
     private async Task LoadFileAsync(IStorageFile file)
     {
-        var path = file.TryGetLocalPath() ?? await CopyToTemporaryFileAsync(file);
+        var path = file.TryGetLocalPath();
+        var temporaryPath = false;
+        if (path is null)
+        {
+            path = await CopyToTemporaryFileAsync(file);
+            temporaryPath = true;
+        }
 
-        var rows = MiniExcel.Query(path, useHeaderRow: true)
-            .Cast<IDictionary<string, object?>>()
-            .Select(row => row.ToDictionary(pair => pair.Key, pair => ConvertCell(pair.Value)))
-            .ToList();
+        List<Dictionary<string, string>> rows;
+        try
+        {
+            rows = MiniExcel.Query(path, useHeaderRow: true)
+                .Cast<IDictionary<string, object?>>()
+                .Select(row => row.ToDictionary(pair => pair.Key, pair => ConvertCell(pair.Value)))
+                .ToList();
+        }
+        finally
+        {
+            if (temporaryPath && File.Exists(path))
+                File.Delete(path);
+        }
 
         _rows.Clear();
         _rows.AddRange(rows);
@@ -349,7 +383,10 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
 
     private void CancelButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        SettingsView.Current?.CloseDrawer();
+        if (CloseHandler is not null)
+            CloseHandler();
+        else
+            SettingsView.Current?.CloseDrawer();
     }
 
     private static bool IsSelectedColumn(string? column)

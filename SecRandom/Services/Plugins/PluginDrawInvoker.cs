@@ -11,6 +11,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.Security;
 using SecRandom.Services.Linkage;
+using SecRandom.Services;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Services.Plugins;
@@ -20,7 +21,8 @@ public sealed class PluginDrawInvoker(
     ILogger logger,
     LinkageDrawCoordinator linkageDrawCoordinator,
     IDrawTemporaryRecordService temporaryRecordService,
-    MainConfigHandler configHandler) : IPluginDrawInvoker
+    MainConfigHandler configHandler,
+    FeatureAvailabilityService featureAvailability) : IPluginDrawInvoker
 {
     public async Task<PluginDrawResult> DrawStudentsAsync(PluginStudentDrawRequest request)
     {
@@ -57,9 +59,22 @@ public sealed class PluginDrawInvoker(
 
     public async Task<PluginDrawResult> DrawPrizesAsync(PluginPrizeDrawRequest request)
     {
+        if (!featureAvailability.IsLotteryEnabled)
+        {
+            logger.LogInformation("Plugin draw rejected because lottery is disabled: plugin={PluginId}.", pluginId);
+            return new PluginDrawResult { Status = "FeatureDisabled", ResultCount = 0 };
+        }
+
         PluginDrawResult? response = null;
+        var disabledDuringAuthorization = false;
         await linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.LotteryStart, () =>
         {
+            if (!featureAvailability.IsLotteryEnabled)
+            {
+                disabledDuringAuthorization = true;
+                return Task.CompletedTask;
+            }
+
             var engine = new DrawEngine();
             var profileService = IAppHost.GetService<IProfileService>();
             var prizeListName = profileService.CurrentPrizeList?.Name ?? string.Empty;
@@ -80,6 +95,8 @@ public sealed class PluginDrawInvoker(
             return Task.CompletedTask;
         });
 
+        if (disabledDuringAuthorization)
+            return new PluginDrawResult { Status = "FeatureDisabled", ResultCount = 0 };
         return response ?? new PluginDrawResult { Status = "AuthorizationRequired", ResultCount = 0 };
     }
 

@@ -30,6 +30,12 @@
   <data name="S_PageManagement" xml:space="preserve">
     <value>页面管理</value>
   </data>
+  <data name="S_LotteryEnabled" xml:space="preserve">
+    <value>启用抽奖</value>
+  </data>
+  <data name="S_LotteryEnabled_D" xml:space="preserve">
+    <value>关闭后隐藏抽奖入口，并拒绝抽奖快捷键和外部指令。</value>
+  </data>
   <data name="S_RollCallPanelPosition" xml:space="preserve">
     <value>点名控制面板位置</value>
   </data>

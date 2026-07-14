@@ -1,0 +1,194 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+        xmlns:views="clr-namespace:SecRandom.Views"
+        xmlns:vm="clr-namespace:SecRandom.ViewModels"
+        xmlns:imports="clr-namespace:SecRandom.Views.SettingsPages.ListManagement"
+        xmlns:langs="clr-namespace:SecRandom.Langs.FirstRunOobe"
+        xmlns:enums="clr-namespace:SecRandom.Core.Enums.Configs;assembly=SecRandom.Core"
+        xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+        x:Class="SecRandom.Views.FirstRunOobeWindow"
+        x:DataType="views:FirstRunOobeWindow"
+        mc:Ignorable="d"
+        Title="{x:Static langs:Resources.C_Title}"
+        Width="840" Height="640" MinWidth="680" MinHeight="500"
+        WindowStartupLocation="CenterScreen"
+        Closing="Window_OnClosing">
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Border Grid.Row="0" Padding="32 24 32 20"
+                Background="{DynamicResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+            <Grid RowDefinitions="Auto,Auto" RowSpacing="6">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Image Source="/Assets/AppLogo.png" Width="32" Height="32" />
+                        <TextBlock Text="{x:Static langs:Resources.C_Title}" VerticalAlignment="Center" FontSize="20" FontWeight="SemiBold" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding ViewModel.StepProgress}"
+                               VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </Grid>
+                <TextBlock Grid.Row="1" Text="{x:Static langs:Resources.C_Intro}"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            </Grid>
+        </Border>
+
+        <sr:DrawerHost x:Name="ImportDrawerHost" Grid.Row="1" DrawerPlacement="Right">
+        <Carousel Classes="animated" SelectedIndex="{Binding ViewModel.SelectedStep}">
+            <ScrollViewer>
+                <StackPanel Margin="32" Spacing="16" VerticalAlignment="Center">
+                    <TextBlock Text="{x:Static langs:Resources.C_WelcomeTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
+                    <TextBlock Text="{x:Static langs:Resources.C_WelcomeDescription}"
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer>
+                <StackPanel Margin="32" Spacing="16">
+                    <TextBlock Text="{x:Static langs:Resources.C_LegalTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
+                    <TextBlock Text="{x:Static langs:Resources.C_LegalDescription}"
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <fa:FASettingsExpander Header="{x:Static langs:Resources.C_AgreementTitle}" IsExpanded="False"
+                                           IconSource="{sr:FluentIconSource {sr:Fi DocumentTextFilled}}">
+                        <TextBox Text="{x:Static langs:Resources.UserAgreement}" AcceptsReturn="True" IsReadOnly="True"
+                                 TextWrapping="Wrap" MinHeight="150" MaxHeight="220" />
+                    </fa:FASettingsExpander>
+                    <CheckBox IsChecked="{Binding ViewModel.AcceptedUserAgreement}" Content="{x:Static langs:Resources.C_AgreementAccept}" />
+                    <fa:FASettingsExpander Header="{x:Static langs:Resources.C_GplTitle}" IsExpanded="False"
+                                           IconSource="{sr:FluentIconSource {sr:Fi CodeFilled}}">
+                        <TextBox Text="{x:Static langs:Resources.GplNotice}" AcceptsReturn="True" IsReadOnly="True"
+                                 TextWrapping="Wrap" MinHeight="120" MaxHeight="180" />
+                    </fa:FASettingsExpander>
+                    <CheckBox IsChecked="{Binding ViewModel.AcceptedGpl}" Content="{x:Static langs:Resources.C_GplAccept}" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer>
+                <StackPanel Margin="32" Spacing="16">
+                    <TextBlock Text="{x:Static langs:Resources.C_DataTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
+                    <TextBlock Text="{x:Static langs:Resources.C_DataDescription}"
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="{x:Static langs:Resources.C_RestoreTitle}" FontWeight="SemiBold" />
+                            <TextBlock Text="{x:Static langs:Resources.C_RestoreDescription}" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="{x:Static langs:Resources.C_ImportSettings}" Click="ImportSettings_OnClick" />
+                                <Button Content="{x:Static langs:Resources.C_ImportAllData}" Click="ImportAllData_OnClick" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="{x:Static langs:Resources.C_NewClass}" FontWeight="SemiBold" />
+                            <TextBox Text="{Binding ViewModel.ClassName}" PlaceholderText="{x:Static langs:Resources.C_ClassNamePlaceholder}" />
+                            <Button Classes="accent" Content="{x:Static langs:Resources.C_ImportRoster}" Click="ImportRoster_OnClick" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer>
+                <StackPanel Margin="32" Spacing="16">
+                    <TextBlock Text="{x:Static langs:Resources.C_LotteryTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
+                    <TextBlock Text="{x:Static langs:Resources.C_LotteryDescription}"
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <fa:FASettingsExpander Header="{x:Static langs:Resources.C_LotteryEnabled}" IconSource="{sr:FluentIconSource {sr:Fi GiftFilled}}">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding ViewModel.MoreSettings.LotteryEnabled}" />
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16"
+                            IsVisible="{Binding ViewModel.MoreSettings.LotteryEnabled}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="{x:Static langs:Resources.C_PrizeImport}" FontWeight="SemiBold" />
+                            <TextBox Text="{Binding ViewModel.PrizePoolName}" PlaceholderText="{x:Static langs:Resources.C_PrizePoolPlaceholder}" />
+                            <Button Classes="accent" Content="{x:Static langs:Resources.C_PrizeImport}" Click="ImportPrizePool_OnClick" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer>
+                <StackPanel Margin="32" Spacing="16">
+                    <TextBlock Text="{x:Static langs:Resources.C_AppearanceTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
+                    <fa:FASettingsExpander Header="{x:Static langs:Resources.C_Theme}" IconSource="{sr:FluentIconSource {sr:Fi DarkThemeFilled}}">
+                        <fa:FASettingsExpander.Footer>
+                            <ComboBox SelectedIndex="{Binding ViewModel.Appearance.Theme}" SelectionChanged="Appearance_OnChanged">
+                                <ComboBoxItem Content="{x:Static langs:Resources.O_ThemeLight}" />
+                                <ComboBoxItem Content="{x:Static langs:Resources.O_ThemeDark}" />
+                                <ComboBoxItem Content="{x:Static langs:Resources.O_ThemeAuto}" />
+                            </ComboBox>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ThemeColor}" IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <ColorPicker Color="{Binding ViewModel.Appearance.ThemeColor}"
+                                             IsVisible="{Binding ViewModel.Appearance.ThemeColorMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:ThemeColorMode.Custom}}" />
+                                <ComboBox SelectedIndex="{Binding ViewModel.Appearance.ThemeColorMode}" SelectionChanged="Appearance_OnChanged">
+                                    <ComboBoxItem Content="{x:Static langs:Resources.O_SystemColor}" />
+                                    <ComboBoxItem Content="{x:Static langs:Resources.O_CustomColor}" />
+                                </ComboBox>
+                            </StackPanel>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander Header="{x:Static langs:Resources.C_Opacity}" Description="{x:Static langs:Resources.C_OpacityDescription}"
+                                           IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
+                        <fa:FASettingsExpander.Footer>
+                            <NumericUpDown Value="{Binding ViewModel.FloatingWindow.FloatingWindowOpacity}" Minimum="20" Maximum="100" />
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer>
+                <StackPanel Margin="32" Spacing="16">
+                    <TextBlock Text="{x:Static langs:Resources.C_DesktopTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
+                    <TextBlock Text="{x:Static langs:Resources.C_DesktopDescription}"
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <fa:FASettingsExpander Header="{x:Static langs:Resources.C_Autostart}" IconSource="{sr:FluentIconSource {sr:Fi PowerFilled}}">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding ViewModel.Autostart}" />
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ExternalIntegration}" Description="{x:Static langs:Resources.C_ExternalIntegrationDescription}"
+                                           IconSource="{sr:FluentIconSource {sr:Fi LinkSquareFilled}}">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding ViewModel.ExternalIntegration}" />
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer>
+                <StackPanel Margin="32" Spacing="16">
+                    <TextBlock Text="{x:Static langs:Resources.C_CompleteTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
+                    <TextBlock Text="{x:Static langs:Resources.C_CompleteDescription}"
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <Border Padding="16" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" CornerRadius="6">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{x:Static langs:Resources.C_CompletedItems}" FontWeight="SemiBold" />
+                            <TextBlock Text="{x:Static langs:Resources.C_CompletedClass}" />
+                            <TextBlock Text="{x:Static langs:Resources.C_CompletedAppearance}" />
+                            <TextBlock Text="{x:Static langs:Resources.C_CompletedIntegration}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Carousel>
+        </sr:DrawerHost>
+
+        <Border Grid.Row="2" Padding="24 16" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="{Binding ViewModel.StatusMessage}" TextWrapping="Wrap" VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Button Content="{x:Static langs:Resources.C_Previous}" IsVisible="{Binding ViewModel.HasPrevious}" Click="Previous_OnClick" />
+                    <Button Classes="accent" Content="{Binding ViewModel.NextButtonText}" IsEnabled="{Binding ViewModel.CanContinue}" Click="Next_OnClick" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

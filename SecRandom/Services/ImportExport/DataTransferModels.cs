@@ -18,8 +18,6 @@ public enum ArchiveKind
 public enum ArchiveFormat
 {
     Current,
-    CurrentLegacy,
-    V2,
     Unknown
 }
 
@@ -30,7 +28,10 @@ public sealed record ImportInspection(
     int FileCount,
     long UncompressedBytes,
     IReadOnlyList<string> Roots,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings)
+{
+    public bool IsSupportedV3 => Format == ArchiveFormat.Current;
+}
 
 public sealed record ImportResult(
     string SnapshotPath,

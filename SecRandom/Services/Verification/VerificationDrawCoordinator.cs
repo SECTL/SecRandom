@@ -147,7 +147,7 @@ public sealed class VerificationDrawCoordinator(
         {
             ParentProofId = parentProofId,
             Mode = mode,
-            AlgorithmId = VerificationWireCodec.AlgorithmId,
+            AlgorithmId = VerificationWireCodec.GetAlgorithmId(input.SamplingMode),
             AlgorithmEngineVersion = VerificationWireCodec.AlgorithmEngineVersion,
             InputHash = WitnessClient.ToBase64Url(inputHash),
             Payload = WitnessClient.ToBase64Url(payload),

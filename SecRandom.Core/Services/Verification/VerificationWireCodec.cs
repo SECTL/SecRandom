@@ -12,7 +12,10 @@ public static class VerificationWireCodec
 {
     public const ushort RequestFormatVersion = 2;
     public const ushort ResponseFormatVersion = 1;
-    public const string AlgorithmId = "secrandom-fairdraw-history-balanced-weighted-chacha20/v3";
+    public const string StudentAlgorithmId = "secrandom-fairdraw-history-balanced-weighted-chacha20/v3";
+    public const string InventoryLotteryAlgorithmId = "secrandom-inventory-permutation-chacha20/v3";
+    public const string WeightedLotteryAlgorithmId = "secrandom-lottery-weighted-without-replacement-chacha20/v3";
+    public const string AlgorithmId = StudentAlgorithmId;
     public const string AlgorithmEngineVersion = "3.1.0";
 
     private static readonly byte[] InputMagic = "SRDI"u8.ToArray();
@@ -31,6 +34,14 @@ public static class VerificationWireCodec
         auditHash.CopyTo(commitment, inputHash.Length);
         return SHA256.HashData(commitment);
     }
+
+    public static string GetAlgorithmId(VerificationSamplingMode samplingMode) => samplingMode switch
+    {
+        VerificationSamplingMode.HistoryBalancedWeighted => StudentAlgorithmId,
+        VerificationSamplingMode.InventoryPermutation => InventoryLotteryAlgorithmId,
+        VerificationSamplingMode.WeightedWithoutReplacement => WeightedLotteryAlgorithmId,
+        _ => throw new ArgumentOutOfRangeException(nameof(samplingMode), samplingMode, "Verification sampling mode is unsupported.")
+    };
 
     public static byte[] EncodeDrawRequest(VerificationDrawInput input, ReadOnlySpan<byte> seed)
     {

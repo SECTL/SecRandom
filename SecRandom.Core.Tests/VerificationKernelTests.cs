@@ -17,6 +17,12 @@ public sealed class VerificationKernelTests
     {
         Assert.Equal("secrandom-fairdraw-history-balanced-weighted-chacha20/v3", VerificationWireCodec.AlgorithmId);
         Assert.Equal("3.1.0", VerificationWireCodec.AlgorithmEngineVersion);
+        Assert.Equal(
+            "secrandom-inventory-permutation-chacha20/v3",
+            VerificationWireCodec.GetAlgorithmId(VerificationSamplingMode.InventoryPermutation));
+        Assert.Equal(
+            "secrandom-lottery-weighted-without-replacement-chacha20/v3",
+            VerificationWireCodec.GetAlgorithmId(VerificationSamplingMode.WeightedWithoutReplacement));
     }
 
     [Fact]

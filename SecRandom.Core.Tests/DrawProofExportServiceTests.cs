@@ -1,4 +1,5 @@
 using SecRandom.Services.Verification;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Shared.Models.Verification;
 
 namespace SecRandom.Core.Tests;
@@ -33,6 +34,22 @@ public sealed class DrawProofExportServiceTests
         var fileName = DrawProofExportService.CreateFileName(proof, DrawProofExportContext.ForStudents("默认名单"));
 
         Assert.Contains("默认名单_全部_abcdef12", fileName);
+    }
+
+    [Fact]
+    public void CreateFileName_UsesPrizePoolAndLotteryMode()
+    {
+        DrawProof proof = new()
+        {
+            ProofId = Guid.Parse("abcdef12-1234-1234-1234-123456789abc"),
+            CreatedAtUtc = new DateTimeOffset(2026, 7, 14, 0, 0, 0, TimeSpan.Zero)
+        };
+
+        var fileName = DrawProofExportService.CreateFileName(
+            proof,
+            DrawProofExportContext.ForPrizes("期末奖池", LotteryDrawType.Count));
+
+        Assert.Contains("期末奖池_方式=按剩余数量、状态=启用_abcdef12", fileName);
     }
 
     [Fact]

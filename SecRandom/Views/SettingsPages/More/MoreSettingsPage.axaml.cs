@@ -1,7 +1,9 @@
+using System;
 using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Icons;
@@ -31,14 +33,15 @@ public partial class MoreSettingsPage : UserControl, INotifyPropertyChanged
 
     public MoreSettingsPage()
     {
-        Settings = ViewModel.Config.MoreSettings;
+        Settings = ConfigHandler.Data.MoreSettings;
         DataContext = this;
         InitializeComponent();
         Settings.PropertyChanged += SettingsOnPropertyChanged;
+        ConfigHandler.Reloaded += ConfigHandlerOnReloaded;
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
-    public MoreSettingsConfig Settings { get; }
+    public MoreSettingsConfig Settings { get; private set; }
     public bool IsOpenRollCallPageShortcutConflicted => IsShortcutConflicted(nameof(MoreSettingsConfig.OpenRollCallPageShortcut));
     public bool IsQuickDrawShortcutConflicted => IsShortcutConflicted(nameof(MoreSettingsConfig.QuickDrawShortcut));
     public bool IsOpenLotteryPageShortcutConflicted => IsShortcutConflicted(nameof(MoreSettingsConfig.OpenLotteryPageShortcut));
@@ -60,10 +63,27 @@ public partial class MoreSettingsPage : UserControl, INotifyPropertyChanged
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
+        ConfigHandler.Reloaded -= ConfigHandlerOnReloaded;
+    }
+
+    private void ConfigHandlerOnReloaded(object? sender, EventArgs e)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            Settings.PropertyChanged -= SettingsOnPropertyChanged;
+            Settings = ConfigHandler.Data.MoreSettings;
+            Settings.PropertyChanged += SettingsOnPropertyChanged;
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Settings)));
+            foreach (var propertyName in ShortcutConflictPropertyNames)
+                NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        });
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (!ReferenceEquals(sender, ConfigHandler.Data.MoreSettings))
+            return;
+
         ConfigHandler.Save();
         foreach (var propertyName in ShortcutConflictPropertyNames)
             NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

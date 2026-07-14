@@ -12,6 +12,7 @@ using SecRandom.Shared.Models.Ipc;
 using SecRandom.Shared.Models.Profile;
 using SecRandom.Services.Security;
 using SecRandom.Services.Profiles;
+using SecRandom.Services;
 using SecRandom.ViewModels.MainPages;
 using LR = SecRandom.Langs.Ipc.Resources;
 
@@ -23,7 +24,8 @@ public sealed class ProtocolCommandRouter(
     LotteryPageViewModel lottery,
     QuickDrawPageViewModel quickDraw,
     IProfileQueryService profileQuery,
-    ISecurityService security)
+    ISecurityService security,
+    FeatureAvailabilityService featureAvailability)
 {
     private static readonly Dictionary<string, string> MainPages = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -111,6 +113,8 @@ public sealed class ProtocolCommandRouter(
         var page = ProtocolRequestParser.GetLast(query, "page", "page_name", "name", "value");
         if (page is not null && !MainPages.TryGetValue(page, out page))
             return Failure("url", "invalid_parameter", LR.M_InvalidMainPage);
+        if (page == "main.lottery" && !featureAvailability.IsLotteryEnabled)
+            return Failure("url", "feature_disabled", "抽奖功能已关闭。", true);
         var action = ParseAction(query, page is null ? "toggle" : "show");
         if (action is null) return Failure("url", "invalid_parameter", LR.M_InvalidWindowAction);
         return await RunAuthorizedAsync(SecurityOperation.ToggleMainWindow, () =>
@@ -199,26 +203,29 @@ public sealed class ProtocolCommandRouter(
 
     private async Task<IpcResponseEnvelope> HandleLotteryAsync(string route, IReadOnlyList<ProtocolQueryItem> query, CancellationToken token)
     {
+        if (!featureAvailability.IsLotteryEnabled)
+            return Failure("url", "feature_disabled", "抽奖功能已关闭。", true);
+
         switch (route)
         {
             case "lottery/start": return await StartLinkageAsync(
-                () => !lottery.IsDrawing && lottery.CanStartDraw,
+                () => featureAvailability.IsLotteryEnabled && !lottery.IsDrawing && lottery.CanStartDraw,
                 () => lottery.StartProtocolDrawAsync(protectLinkage: true),
                 LR.M_LotteryStarted,
                 token);
-            case "lottery/stop": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () =>
+            case "lottery/stop": return await RunLotteryAuthorizedAsync(() =>
             {
                 lottery.StopProtocolDraw();
                 return Task.CompletedTask;
             }, LR.M_LotteryStopped, token);
-            case "lottery/reset": return await RunLinkageAsync(() => lottery.ResetProtocolDrawAsync(protectLinkage: true), LR.M_LotteryReset, token);
-            case "lottery/set_count": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetCount(
+            case "lottery/reset": return await RunLotteryLinkageAsync(() => lottery.ResetProtocolDrawAsync(protectLinkage: true), LR.M_LotteryReset, token);
+            case "lottery/set_count": return await RunLotteryAuthorizedAsync(() => SetCount(
                 query, LR.L_LotteryCount, lottery.TotalCount, lottery.RemainingCount, lottery.MaximumDrawCount, value => lottery.DrawCount = value), LR.M_LotteryCountSet, token);
-            case "lottery/set_pool": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetPrizePool(query), LR.M_PoolSet, token);
-            case "lottery/set_list": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetStudentList(
+            case "lottery/set_pool": return await RunLotteryAuthorizedAsync(() => SetPrizePool(query), LR.M_PoolSet, token);
+            case "lottery/set_list": return await RunLotteryAuthorizedAsync(() => SetStudentList(
                 query, lottery.StudentListNames, value => lottery.SelectedStudentListName = value), LR.M_StudentListSet, token);
-            case "lottery/set_group": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetLotteryGroup(query), LR.M_LotteryGroupSet, token);
-            case "lottery/set_gender": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetLotteryGender(query), LR.M_LotteryGenderSet, token);
+            case "lottery/set_group": return await RunLotteryAuthorizedAsync(() => SetLotteryGroup(query), LR.M_LotteryGroupSet, token);
+            case "lottery/set_gender": return await RunLotteryAuthorizedAsync(() => SetLotteryGender(query), LR.M_LotteryGenderSet, token);
             default: return Failure("url", "invalid_command", LR.M_UnsupportedLottery, true);
         }
     }
@@ -409,6 +416,28 @@ public sealed class ProtocolCommandRouter(
             return Failure("url", "authorization_denied", LR.M_AuthorizationDenied, true);
 
         return Success(message, new { state = "running" });
+    }
+
+    private Task<IpcResponseEnvelope> RunLotteryAuthorizedAsync(Func<Task> action, string message, CancellationToken token)
+    {
+        return RunAuthorizedAsync(SecurityOperation.LinkageAction, () =>
+        {
+            if (!featureAvailability.IsLotteryEnabled)
+                throw new ProtocolCommandException("feature_disabled", "抽奖功能已关闭。");
+            return action();
+        }, message, token);
+    }
+
+    private async Task<IpcResponseEnvelope> RunLotteryLinkageAsync(Func<Task<bool>> action, string message, CancellationToken token)
+    {
+        if (!featureAvailability.IsLotteryEnabled)
+            return Failure("url", "feature_disabled", "抽奖功能已关闭。", true);
+        return await RunLinkageAsync(async () =>
+        {
+            if (!featureAvailability.IsLotteryEnabled)
+                return false;
+            return await action().ConfigureAwait(true);
+        }, message, token);
     }
 
     private async Task<IpcResponseEnvelope> HandleQuickDrawAsync(CancellationToken token)

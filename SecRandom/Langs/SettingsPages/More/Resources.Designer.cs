@@ -76,6 +76,24 @@ namespace SecRandom.Langs.SettingsPages.More {
                 return ResourceManager.GetString("C_ShortcutClear", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 启用抽奖.
+        /// </summary>
+        public static string S_LotteryEnabled {
+            get {
+                return ResourceManager.GetString("S_LotteryEnabled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 关闭后隐藏抽奖入口，并拒绝抽奖快捷键和外部指令。.
+        /// </summary>
+        public static string S_LotteryEnabled_D {
+            get {
+                return ResourceManager.GetString("S_LotteryEnabled_D", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to 冲突.

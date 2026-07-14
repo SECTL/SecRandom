@@ -12,13 +12,12 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
-using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Plugins;
 using SecRandom.Services.Linkage;
-using SecRandom.Shared.Models.Profile;
+using SecRandom.Services.Telemetry;
 
 namespace SecRandom.Services.ImportExport;
 
@@ -37,11 +36,8 @@ public sealed class ImportExportService(
     private static readonly string[] AllDataRoots =
     [
         "config/settings.json", "list", "history", "TEMP", "proofs", "audio", "CSES", "images", "themes",
-        "theme", "Language", "plugins", "configs/plugins", "logs", "legacy/v2-history"
+        "theme", "Language", "plugins", "configs/plugins", "logs"
     ];
-
-    private static readonly string[] LegacyRoots =
-    ["config", "list", "history", "Language", "audio", "CSES", "images", "theme", "themes", "logs"];
 
     private readonly string _dataDirectory = Path.Combine(AppContext.BaseDirectory, "data");
     private readonly string _backupDirectory = Path.Combine(AppContext.BaseDirectory, "data", "backup");
@@ -162,23 +158,32 @@ public sealed class ImportExportService(
         {
             lock (_archiveOperationLock)
             {
-                var inspection = InspectSettings(sourcePath, cancellationToken);
-                if (inspection.Format == ArchiveFormat.Unknown)
-                    throw new InvalidDataException("不支持的设置文件格式。");
+                var sourceCopy = CreateImportSourceCopy(sourcePath, cancellationToken);
+                try
+                {
+                    var inspection = InspectSettings(sourceCopy, cancellationToken);
+                    if (!inspection.IsSupportedV3)
+                        throw CreateUnsupportedVersionException(inspection);
 
-                var warnings = new List<string>(inspection.Warnings);
-                var candidate = ReadSettingsCandidate(sourcePath, inspection.Format, warnings);
-                ValidateSettingsCandidate(candidate);
+                    var warnings = new List<string>(inspection.Warnings);
+                    var candidate = ReadSettingsCandidate(sourceCopy);
+                    ValidateSettingsCandidate(candidate);
 
-                SaveCurrentState();
-                var snapshot = CreateArchive(CreateBackupPath("pre_import_settings"), ArchiveKind.PreImportSettings,
-                    ["config/settings.json"], cancellationToken);
+                    SaveCurrentState();
+                    var snapshot = CreateArchive(CreateBackupPath("pre_import_settings"), ArchiveKind.PreImportSettings,
+                        ["config/settings.json"], cancellationToken);
 
-                AtomicWriteSettings(candidate);
-                configHandler.Reload();
-                _ = IAppHost.TryGetService<CourseLinkageService>()?.RefreshAsync();
-                SynchronizeDesktopIntegrations(warnings);
-                return new ImportResult(snapshot, 1, warnings, []);
+                    AtomicWriteSettings(candidate);
+                    ReloadRuntimeConfiguration();
+                    ReloadConfiguredProfiles();
+                    _ = IAppHost.TryGetService<CourseLinkageService>()?.RefreshAsync();
+                    SynchronizeDesktopIntegrations(warnings);
+                    return new ImportResult(snapshot, 1, warnings, []);
+                }
+                finally
+                {
+                    TryDeletePath(sourceCopy);
+                }
             }
         }, cancellationToken);
     }
@@ -228,39 +233,44 @@ public sealed class ImportExportService(
     {
         lock (_archiveOperationLock)
         {
-            var inspection = InspectArchive(sourcePath, cancellationToken);
-            if (inspection.Kind == ArchiveKind.Diagnostic)
-                throw new InvalidDataException("诊断数据不能导入。");
-            if (inspection.Format == ArchiveFormat.Unknown)
-                throw new InvalidDataException("不支持的备份文件格式。");
-
-            SaveCurrentState();
-            var snapshot = string.Empty;
-            if (createSnapshot)
-                snapshot = CreateArchive(CreateBackupPath("pre_import_all_data"), ArchiveKind.PreImportAllData,
-                    AllDataRoots, cancellationToken);
-
-            var staging = Path.Combine(_dataDirectory, ".import-staging", Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(staging);
+            var sourceCopy = CreateImportSourceCopy(sourcePath, cancellationToken);
             try
             {
-                var warnings = new List<string>(inspection.Warnings);
-                var preserved = new List<string>();
-                var importedFiles = inspection.Format == ArchiveFormat.V2
-                    ? MigrateV2Archive(sourcePath, staging, warnings, preserved, cancellationToken)
-                    : ExtractCurrentArchive(sourcePath, staging, inspection.Format, cancellationToken);
+                var inspection = InspectArchive(sourceCopy, cancellationToken);
+                if (inspection.Kind == ArchiveKind.Diagnostic)
+                    throw new InvalidDataException("诊断数据不能导入。");
+                if (!inspection.IsSupportedV3)
+                    throw CreateUnsupportedVersionException(inspection);
 
-                ValidateCandidate(staging);
-                var rootsToCommit = inspection.Kind == ArchiveKind.AllData
-                    ? AllDataRoots
-                    : [.. inspection.Roots, "legacy/v2-history"];
-                CommitCandidate(staging, rootsToCommit, inspection.Kind == ArchiveKind.AllData, warnings);
-                configHandler.Reload();
-                ReloadCurrentProfiles();
-                _ = IAppHost.TryGetService<CourseLinkageService>()?.RefreshAsync();
-                pluginManager.Refresh();
-                SynchronizeDesktopIntegrations(warnings);
-                return new ImportResult(snapshot, importedFiles, warnings, preserved);
+                SaveCurrentState();
+                var snapshot = string.Empty;
+                if (createSnapshot)
+                    snapshot = CreateArchive(CreateBackupPath("pre_import_all_data"), ArchiveKind.PreImportAllData,
+                        AllDataRoots, cancellationToken);
+
+                var staging = Path.Combine(_dataDirectory, ".import-staging", Guid.NewGuid().ToString("N"));
+                Directory.CreateDirectory(staging);
+                try
+                {
+                    var warnings = new List<string>(inspection.Warnings);
+                    var importedFiles = ExtractCurrentArchive(sourceCopy, staging, cancellationToken);
+
+                    ValidateCandidate(staging);
+                    var rootsToCommit = inspection.Kind == ArchiveKind.AllData
+                        ? AllDataRoots
+                        : inspection.Roots;
+                    CommitCandidate(staging, rootsToCommit, inspection.Kind == ArchiveKind.AllData, warnings);
+                    ReloadRuntimeConfiguration();
+                    ReloadConfiguredProfiles();
+                    _ = IAppHost.TryGetService<CourseLinkageService>()?.RefreshAsync();
+                    pluginManager.Refresh();
+                    SynchronizeDesktopIntegrations(warnings);
+                    return new ImportResult(snapshot, importedFiles, warnings, []);
+                }
+                finally
+                {
+                    TryDeleteDirectory(staging);
+                }
             }
             catch
             {
@@ -269,7 +279,7 @@ public sealed class ImportExportService(
             }
             finally
             {
-                TryDeleteDirectory(staging);
+                TryDeletePath(sourceCopy);
             }
         }
     }
@@ -282,17 +292,17 @@ public sealed class ImportExportService(
             return new ImportInspection(ArchiveFormat.Unknown, null, string.Empty, 0, 0, [], ["设置文件根节点必须是对象。"]);
 
         var root = document.RootElement;
-        if (root.TryGetProperty("format", out var format) && format.GetString() == "secrandom-settings" &&
-            root.TryGetProperty("settings", out _))
-            return new ImportInspection(ArchiveFormat.Current, null, root.TryGetProperty("producer_version", out var version) ? version.GetString() ?? string.Empty : string.Empty, 1, new FileInfo(sourcePath).Length, ["config/settings.json"], []);
+        var producerVersion = root.TryGetProperty("producer_version", out var version)
+            ? version.GetString() ?? string.Empty
+            : string.Empty;
+        if (!root.TryGetProperty("format", out var format) || format.GetString() != "secrandom-settings" ||
+            !root.TryGetProperty("schema_version", out var schemaVersion) || !schemaVersion.TryGetInt32(out var schema) || schema != 1 ||
+            !root.TryGetProperty("settings", out _))
+            return new ImportInspection(ArchiveFormat.Unknown, null, producerVersion, 0, 0, [], ["设置文件不是受支持的 SecRandom v3 导出格式。"]);
 
-        if (root.TryGetProperty("basic_settings", out _))
-            return new ImportInspection(ArchiveFormat.V2, null, "v2", 1, new FileInfo(sourcePath).Length, ["config/settings.json"], []);
-
-        if (root.TryGetProperty("general", out _) || root.TryGetProperty("basic", out _))
-            return new ImportInspection(ArchiveFormat.CurrentLegacy, null, string.Empty, 1, new FileInfo(sourcePath).Length, ["config/settings.json"], []);
-
-        return new ImportInspection(ArchiveFormat.Unknown, null, string.Empty, 0, 0, [], ["无法识别设置文件格式。"]);
+        return IsSupportedV3ProducerVersion(producerVersion)
+            ? new ImportInspection(ArchiveFormat.Current, null, producerVersion, 1, new FileInfo(sourcePath).Length, ["config/settings.json"], [])
+            : new ImportInspection(ArchiveFormat.Unknown, null, producerVersion, 0, 0, [], ["仅支持由 SecRandom v3 导出的设置文件。"]);
     }
 
     private ImportInspection InspectArchive(string sourcePath, CancellationToken cancellationToken)
@@ -307,29 +317,30 @@ public sealed class ImportExportService(
                 !Enum.TryParse<ArchiveKind>(manifest.Kind, out var kind))
                 throw new InvalidDataException("备份清单无效。");
             ValidateManifest(archive, manifest);
-            return new ImportInspection(ArchiveFormat.Current, kind, manifest.ProducerVersion, manifest.Files.Count,
-                manifest.Files.Sum(item => item.Length), GetRoots(manifest.Files.Select(item => item.Path)), []);
+            return IsSupportedV3ProducerVersion(manifest.ProducerVersion)
+                ? new ImportInspection(ArchiveFormat.Current, kind, manifest.ProducerVersion, manifest.Files.Count,
+                    manifest.Files.Sum(item => item.Length), GetRoots(manifest.Files.Select(item => item.Path)), [])
+                : new ImportInspection(ArchiveFormat.Unknown, kind, manifest.ProducerVersion, manifest.Files.Count,
+                    manifest.Files.Sum(item => item.Length), [], ["仅支持由 SecRandom v3 导出的数据归档。"]);
         }
 
-        var versionEntry = archive.GetEntry("version.json");
-        if (versionEntry is not null)
-        {
-            using var document = JsonDocument.Parse(ReadEntryText(versionEntry));
-            var root = document.RootElement;
-            var software = root.TryGetProperty("software_name", out var name) ? name.GetString() : null;
-            var version = root.TryGetProperty("version", out var number) ? number.GetString() : null;
-            if (software == "SecRandom" && version?.StartsWith("v2", StringComparison.OrdinalIgnoreCase) == true)
-                return new ImportInspection(ArchiveFormat.V2, ArchiveKind.AllData, version, archive.Entries.Count,
-                    archive.Entries.Sum(item => item.Length), GetRoots(archive.Entries.Select(item => item.FullName)), []);
-        }
+        return new ImportInspection(ArchiveFormat.Unknown, null, string.Empty, 0, 0, [], ["数据归档缺少 SecRandom v3 清单。"]);
+    }
 
-        var legacyEntries = archive.Entries.Where(entry => !string.IsNullOrEmpty(entry.Name)).ToList();
-        if (legacyEntries.Count > 0 && legacyEntries.All(entry => IsAllowedLegacyEntry(entry.FullName)))
-            return new ImportInspection(ArchiveFormat.CurrentLegacy, ArchiveKind.ManualBackup, string.Empty,
-                legacyEntries.Count, legacyEntries.Sum(item => item.Length), GetRoots(legacyEntries.Select(item => item.FullName)),
-                ["该备份没有清单，已按旧版 C# 备份格式处理。"]);
+    private static bool IsSupportedV3ProducerVersion(string producerVersion)
+    {
+        return Version.TryParse(producerVersion.TrimStart('v', 'V'), out var version) && version.Major == 3;
+    }
 
-        return new ImportInspection(ArchiveFormat.Unknown, null, string.Empty, 0, 0, [], ["无法识别备份格式。"]);
+    private static InvalidDataException CreateUnsupportedVersionException(ImportInspection inspection)
+    {
+        var detectedVersion = string.IsNullOrWhiteSpace(inspection.ProducerVersion)
+            ? "未识别"
+            : inspection.ProducerVersion;
+        var detail = inspection.Warnings.FirstOrDefault();
+        return new InvalidDataException(string.IsNullOrWhiteSpace(detail)
+            ? $"仅支持 SecRandom v3 导出文件。检测到的版本：{detectedVersion}。"
+            : $"{detail} 检测到的版本：{detectedVersion}。");
     }
 
     private string CreateArchive(string destinationPath, ArchiveKind kind, IEnumerable<string> roots, CancellationToken cancellationToken)
@@ -404,17 +415,15 @@ public sealed class ImportExportService(
         files.Add(new ArchiveFileEntry { Path = entryPath, Length = length, Sha256 = hash });
     }
 
-    private int ExtractCurrentArchive(string sourcePath, string staging, ArchiveFormat format, CancellationToken cancellationToken)
+    private int ExtractCurrentArchive(string sourcePath, string staging, CancellationToken cancellationToken)
     {
         using var archive = ZipFile.OpenRead(sourcePath);
         var count = 0;
         foreach (var entry in archive.Entries.Where(entry => !string.IsNullOrEmpty(entry.Name)))
         {
-            if (entry.FullName == "manifest.json" || entry.FullName == "version.json")
+            if (entry.FullName == "manifest.json")
                 continue;
-            var path = NormalizeLegacyPath(NormalizePath(entry.FullName));
-            if (format == ArchiveFormat.CurrentLegacy)
-                path = NormalizeLegacyPath(path);
+            var path = NormalizePath(entry.FullName);
             if (!IsManagedPath(path))
                 continue;
             ExtractEntry(entry, Path.Combine(staging, path.Replace('/', Path.DirectorySeparatorChar)), cancellationToken);
@@ -423,346 +432,19 @@ public sealed class ImportExportService(
         return count;
     }
 
-    private int MigrateV2Archive(string sourcePath, string staging, List<string> warnings, List<string> preserved, CancellationToken cancellationToken)
-    {
-        using var archive = ZipFile.OpenRead(sourcePath);
-        var entries = archive.Entries.Where(entry => !string.IsNullOrEmpty(entry.Name)).ToList();
-        var studentMaps = new Dictionary<string, Dictionary<string, Student?>>(StringComparer.OrdinalIgnoreCase);
-        var prizeMaps = new Dictionary<string, Dictionary<string, Prize?>>(StringComparer.OrdinalIgnoreCase);
-        var count = 0;
-
-        foreach (var entry in entries.Where(entry => NormalizePath(entry.FullName).StartsWith("list/", StringComparison.OrdinalIgnoreCase)))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var path = NormalizeLegacyPath(NormalizePath(entry.FullName));
-            if (path.StartsWith("list/roll_call_list/", StringComparison.OrdinalIgnoreCase))
-            {
-                var name = Path.GetFileNameWithoutExtension(path);
-                var list = MigrateV2Students(ReadEntryText(entry), out var map, warnings);
-                studentMaps[name] = map;
-                WriteJson(Path.Combine(staging, "list", "roll_call_list", $"{name}.json"), list);
-                count++;
-            }
-            else if (path.StartsWith("list/lottery_list/", StringComparison.OrdinalIgnoreCase))
-            {
-                var name = Path.GetFileNameWithoutExtension(path);
-                var list = MigrateV2Prizes(ReadEntryText(entry), out var map, warnings);
-                prizeMaps[name] = map;
-                WriteJson(Path.Combine(staging, "list", "lottery_list", $"{name}.json"), list);
-                count++;
-            }
-        }
-
-        foreach (var entry in entries.Where(entry => NormalizePath(entry.FullName).StartsWith("history/", StringComparison.OrdinalIgnoreCase)))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var path = NormalizePath(entry.FullName);
-            var name = Path.GetFileNameWithoutExtension(path);
-            var rawPath = path.StartsWith("history/roll_call_history/", StringComparison.OrdinalIgnoreCase)
-                ? Path.Combine(staging, "legacy", "v2-history", "roll-call", $"{name}.json")
-                : Path.Combine(staging, "legacy", "v2-history", "lottery", $"{name}.json");
-            WriteText(rawPath, ReadEntryText(entry));
-            preserved.Add(Path.Combine("legacy", "v2-history", Path.GetFileName(rawPath)));
-
-            if (path.StartsWith("history/roll_call_history/", StringComparison.OrdinalIgnoreCase) && studentMaps.TryGetValue(name, out var students))
-            {
-                WriteJson(Path.Combine(staging, "history", "roll_call_history", $"{name}.json"), MigrateV2StudentHistory(ReadEntryText(entry), students, warnings));
-                count++;
-            }
-            else if (path.StartsWith("history/lottery_history/", StringComparison.OrdinalIgnoreCase) && prizeMaps.TryGetValue(name, out var prizes))
-            {
-                WriteJson(Path.Combine(staging, "history", "lottery_history", $"{name}.json"), MigrateV2PrizeHistory(ReadEntryText(entry), prizes, warnings));
-                count++;
-            }
-        }
-
-        var settings = entries.FirstOrDefault(entry => NormalizePath(entry.FullName).Equals("config/settings.json", StringComparison.OrdinalIgnoreCase));
-        if (settings is not null)
-        {
-            var candidate = MigrateV2Settings(ReadEntryText(settings), warnings);
-            WriteJson(Path.Combine(staging, "config", "settings.json"), candidate);
-            count++;
-        }
-
-        foreach (var entry in entries)
-        {
-            var path = NormalizePath(entry.FullName);
-            if (path is "version.json" or "config/settings.json" || path.StartsWith("list/", StringComparison.OrdinalIgnoreCase) || path.StartsWith("history/", StringComparison.OrdinalIgnoreCase))
-                continue;
-            var target = NormalizeLegacyPath(path);
-            if (IsManagedPath(target) && !target.StartsWith("config/security/", StringComparison.OrdinalIgnoreCase))
-            {
-                ExtractEntry(entry, Path.Combine(staging, target.Replace('/', Path.DirectorySeparatorChar)), cancellationToken);
-                count++;
-            }
-        }
-
-        WriteJson(Path.Combine(staging, "legacy", "v2-history", "manifest.json"), new
-        {
-            source_version = "v2",
-            migrated_utc = DateTime.UtcNow,
-            preserved_files = preserved,
-            warnings
-        });
-        return count;
-    }
-
-    private MainConfigModel ReadSettingsCandidate(string sourcePath, ArchiveFormat format, List<string> warnings)
+    private MainConfigModel ReadSettingsCandidate(string sourcePath)
     {
         using var document = JsonDocument.Parse(File.ReadAllText(sourcePath));
         var root = document.RootElement;
-        if (format == ArchiveFormat.Current && root.TryGetProperty("settings", out var settings))
+        if (root.TryGetProperty("settings", out var settings))
             return DeserializeSettings(settings.GetRawText());
-        if (format == ArchiveFormat.V2)
-            return MigrateV2Settings(root.GetRawText(), warnings);
-        return DeserializeSettings(root.GetRawText());
+        throw new InvalidDataException("设置文件缺少设置内容。");
     }
 
     private static MainConfigModel DeserializeSettings(string json)
     {
         return JsonSerializer.Deserialize<MainConfigModel>(json, ConfigServiceBase.JsonOptions)
                ?? throw new InvalidDataException("设置文件为空或无法读取。");
-    }
-
-    private MainConfigModel MigrateV2Settings(string json, List<string> warnings)
-    {
-        using var document = JsonDocument.Parse(json);
-        var root = document.RootElement;
-        var result = new MainConfigModel();
-
-        if (root.TryGetProperty("window", out var window))
-        {
-            result.General.Basic.MainWindowWidth = GetDouble(window, "pre_maximized_width", GetDouble(window, "width", result.General.Basic.MainWindowWidth));
-            result.General.Basic.MainWindowHeight = GetDouble(window, "pre_maximized_height", GetDouble(window, "height", result.General.Basic.MainWindowHeight));
-            result.General.Basic.MainWindowMaximized = GetBool(window, "is_maximized", false);
-        }
-        if (root.TryGetProperty("settings", out var settingsWindow))
-        {
-            result.General.Basic.SettingsWindowWidth = GetDouble(settingsWindow, "pre_maximized_width", GetDouble(settingsWindow, "width", result.General.Basic.SettingsWindowWidth));
-            result.General.Basic.SettingsWindowHeight = GetDouble(settingsWindow, "pre_maximized_height", GetDouble(settingsWindow, "height", result.General.Basic.SettingsWindowHeight));
-            result.General.Basic.SettingsWindowMaximized = GetBool(settingsWindow, "is_maximized", false);
-        }
-        if (root.TryGetProperty("float_position", out var floatPosition))
-        {
-            result.FloatPosition.X = GetInt(floatPosition, "x", result.FloatPosition.X);
-            result.FloatPosition.Y = GetInt(floatPosition, "y", result.FloatPosition.Y);
-        }
-        if (root.TryGetProperty("basic_settings", out var basic))
-        {
-            result.General.Basic.Autostart = GetBool(basic, "autostart", result.General.Basic.Autostart);
-            result.General.Basic.ShowStartupWindow = GetBool(basic, "show_startup_window", result.General.Basic.ShowStartupWindow);
-            result.General.Basic.AutoSaveWindowSize = GetBool(basic, "auto_save_window_size", result.General.Basic.AutoSaveWindowSize);
-            result.General.Basic.BackgroundResident = GetBool(basic, "background_resident", result.General.Basic.BackgroundResident);
-            result.General.Basic.UrlProtocol = GetBool(basic, "url_protocol", result.General.Basic.UrlProtocol);
-            result.General.Basic.GuideCompleted = GetBool(basic, "guide_completed", result.General.Basic.GuideCompleted);
-            result.General.Basic.ShowVersionNotice = GetBool(basic, "show_version_notice", result.General.Basic.ShowVersionNotice);
-            result.General.Basic.MainWindowTopmostMode = (TopmostMode)Math.Clamp(
-                GetInt(basic, "main_window_topmost_mode", (int)result.General.Basic.MainWindowTopmostMode),
-                (int)TopmostMode.None,
-                (int)TopmostMode.UiAccess);
-            if (basic.TryGetProperty("language", out var language))
-                result.General.Basic.Language = ParseV2Language(language.GetString());
-            if (basic.TryGetProperty("offline_user_id", out var offline) && Guid.TryParse(offline.GetString(), out var offlineId))
-                result.General.Basic.OfflineUserId = offlineId;
-            if (basic.TryGetProperty("telemetry_enabled", out var enabled))
-                result.General.PrivacySettings.SentryTelemetryEnabled = enabled.GetBoolean();
-            if (basic.TryGetProperty("telemetry_mode", out var telemetryMode))
-                result.General.PrivacySettings.OnlineStatusMode = ParseOnlineStatus(telemetryMode.GetString());
-        }
-
-        if (root.TryGetProperty("backup", out var backup))
-            result.General.Backup = JsonSerializer.Deserialize<SecRandom.Core.Models.SubConfigs.General.BackupConfig>(backup.GetRawText(), ConfigServiceBase.JsonOptions) ?? result.General.Backup;
-        if (root.TryGetProperty("shortcut_settings", out var shortcuts))
-        {
-            result.MoreSettings.EnableShortcut = GetBool(shortcuts, "enable_shortcut", result.MoreSettings.EnableShortcut);
-            result.MoreSettings.OpenRollCallPageShortcut = GetString(shortcuts, "open_roll_call_page");
-            result.MoreSettings.QuickDrawShortcut = GetString(shortcuts, "use_quick_draw");
-            result.MoreSettings.OpenLotteryPageShortcut = GetString(shortcuts, "open_lottery_page");
-            result.MoreSettings.IncreaseRollCallCountShortcut = GetString(shortcuts, "increase_roll_call_count");
-            result.MoreSettings.DecreaseRollCallCountShortcut = GetString(shortcuts, "decrease_roll_call_count");
-            result.MoreSettings.IncreaseLotteryCountShortcut = GetString(shortcuts, "increase_lottery_count");
-            result.MoreSettings.DecreaseLotteryCountShortcut = GetString(shortcuts, "decrease_lottery_count");
-            result.MoreSettings.StartRollCallShortcut = GetString(shortcuts, "start_roll_call");
-            result.MoreSettings.StartLotteryShortcut = GetString(shortcuts, "start_lottery");
-        }
-        CopyCompatibleSection(root, "roll_call_settings", result.RollCallSettings, warnings);
-        CopyCompatibleSection(root, "quick_draw_settings", result.QuickDrawSettings, warnings);
-        CopyCompatibleSection(root, "lottery_settings", result.LotterySettings, warnings);
-        CopyCompatibleSection(root, "fair_draw_settings", result.FairDrawSettings, warnings);
-        if (root.TryGetProperty("linkage_settings", out var linkage))
-        {
-            result.LinkageSettings.VerificationRequired = GetBool(linkage, "verification_required", result.LinkageSettings.VerificationRequired);
-            result.LinkageSettings.InstantDrawDisable = GetBool(linkage, "instant_draw_disable", result.LinkageSettings.InstantDrawDisable);
-            var dataSource = GetInt(linkage, "data_source", (int)result.LinkageSettings.DataSource);
-            result.LinkageSettings.DataSource = Enum.IsDefined((LinkageDataSource)dataSource)
-                ? (LinkageDataSource)dataSource
-                : LinkageDataSource.Off;
-            result.LinkageSettings.HideFloatingWindowOnClassEnd = GetBool(linkage, "hide_floating_window_on_class_end", result.LinkageSettings.HideFloatingWindowOnClassEnd);
-            result.LinkageSettings.PreClassResetEnabled = GetBool(linkage, "pre_class_reset_enabled", result.LinkageSettings.PreClassResetEnabled);
-            result.LinkageSettings.PreClassResetTime = Math.Clamp(
-                GetInt(linkage, "pre_class_reset_time", result.LinkageSettings.PreClassResetTime), 1, 3600);
-            result.LinkageSettings.PreClassEnableTime = Math.Clamp(
-                GetInt(linkage, "pre_class_enable_time", result.LinkageSettings.PreClassEnableTime), 0, 3600);
-            result.LinkageSettings.PostClassDisableDelay = Math.Clamp(
-                GetInt(linkage, "post_class_disable_delay", result.LinkageSettings.PostClassDisableDelay), 0, 3600);
-            result.LinkageSettings.SubjectHistoryFilterEnabled = GetBool(linkage, "subject_history_filter_enabled", result.LinkageSettings.SubjectHistoryFilterEnabled);
-            result.LinkageSettings.SubjectHistoryBreakAssignment = (LinkageBreakAssignment)Math.Clamp(
-                GetInt(linkage, "subject_history_break_assignment", (int)result.LinkageSettings.SubjectHistoryBreakAssignment),
-                (int)LinkageBreakAssignment.Break,
-                (int)LinkageBreakAssignment.NextClass);
-        }
-        warnings.Add("v2 设置已迁移；当前版本不支持的字段已保留为默认值。");
-        return result;
-    }
-
-    private static void CopyCompatibleSection<T>(JsonElement root, string property, T target, List<string> warnings)
-    {
-        if (!root.TryGetProperty(property, out var source))
-            return;
-        try
-        {
-            var converted = JsonSerializer.Deserialize<T>(source.GetRawText(), ConfigServiceBase.JsonOptions);
-            if (converted is null)
-                return;
-            foreach (var sourceProperty in typeof(T).GetProperties().Where(propertyInfo => propertyInfo.CanRead && propertyInfo.CanWrite))
-                sourceProperty.SetValue(target, sourceProperty.GetValue(converted));
-        }
-        catch (JsonException)
-        {
-            warnings.Add($"v2 字段“{property}”包含无法转换的值，已使用默认设置。");
-        }
-    }
-
-    private static StudentList MigrateV2Students(string json, out Dictionary<string, Student?> map, List<string> warnings)
-    {
-        using var document = JsonDocument.Parse(json);
-        var list = new StudentList();
-        map = new Dictionary<string, Student?>(StringComparer.OrdinalIgnoreCase);
-        if (document.RootElement.ValueKind != JsonValueKind.Object)
-            return list;
-        foreach (var item in document.RootElement.EnumerateObject())
-        {
-            var value = item.Value;
-            var student = new Student
-            {
-                Name = item.Name,
-                Id = GetString(value, "id"),
-                Gender = GetString(value, "gender"),
-                Group = GetString(value, "group"),
-                Exists = GetBool(value, "exist", true),
-                Tags = JoinTags(value),
-                RecordId = Guid.NewGuid()
-            };
-            list.Students.Add(student);
-            AddLegacyKeys(map, student.Id, student.Name, student);
-        }
-        return list;
-    }
-
-    private static PrizeList MigrateV2Prizes(string json, out Dictionary<string, Prize?> map, List<string> warnings)
-    {
-        using var document = JsonDocument.Parse(json);
-        var list = new PrizeList();
-        map = new Dictionary<string, Prize?>(StringComparer.OrdinalIgnoreCase);
-        if (document.RootElement.ValueKind != JsonValueKind.Object)
-            return list;
-        foreach (var item in document.RootElement.EnumerateObject())
-        {
-            var value = item.Value;
-            var prize = new Prize
-            {
-                Name = item.Name,
-                Id = GetString(value, "id"),
-                Exists = GetBool(value, "exist", true),
-                Tags = JoinTags(value),
-                Weight = GetDouble(value, "weight", 1),
-                Count = Math.Max(0, GetInt(value, "count", 1)),
-                RecordId = Guid.NewGuid()
-            };
-            list.Prizes.Add(prize);
-            AddLegacyKeys(map, prize.Id, prize.Name, prize);
-        }
-        return list;
-    }
-
-    private static StudentHistory MigrateV2StudentHistory(string json, Dictionary<string, Student?> records, List<string> warnings)
-    {
-        using var document = JsonDocument.Parse(json);
-        var result = new StudentHistory();
-        var root = document.RootElement;
-        result.TotalRounds = GetInt(root, "total_rounds", 0);
-        result.TotalStats = GetInt(root, "total_stats", 0);
-        if (!root.TryGetProperty("students", out var students) || students.ValueKind != JsonValueKind.Object)
-            return result;
-        foreach (var item in students.EnumerateObject())
-        {
-            if (!records.TryGetValue(item.Name, out var student) || student is null)
-            {
-                warnings.Add($"v2 点名历史“{item.Name}”无法唯一关联到名单，已保留原始数据。");
-                continue;
-            }
-            var migratedHistory = MigrateV2History(item.Value, student.RecordId, student.Id, student.Name, student.Gender, student.Group);
-            result.Students[student.RecordId.ToString("D")] = migratedHistory;
-            foreach (var historyItem in migratedHistory.Histories)
-            {
-                if (!string.IsNullOrWhiteSpace(historyItem.RecordGroup))
-                    result.GroupStats[historyItem.RecordGroup] = result.GroupStats.GetValueOrDefault(historyItem.RecordGroup) + 1;
-                if (!string.IsNullOrWhiteSpace(historyItem.RecordGender))
-                    result.GenderStatus[historyItem.RecordGender] = result.GenderStatus.GetValueOrDefault(historyItem.RecordGender) + 1;
-            }
-        }
-        return result;
-    }
-
-    private static PrizeHistory MigrateV2PrizeHistory(string json, Dictionary<string, Prize?> records, List<string> warnings)
-    {
-        using var document = JsonDocument.Parse(json);
-        var result = new PrizeHistory();
-        var root = document.RootElement;
-        result.TotalRounds = GetInt(root, "total_rounds", 0);
-        result.TotalStats = GetInt(root, "total_stats", 0);
-        if (!root.TryGetProperty("lotterys", out var prizes) || prizes.ValueKind != JsonValueKind.Object)
-            return result;
-        foreach (var item in prizes.EnumerateObject())
-        {
-            if (!records.TryGetValue(item.Name, out var prize) || prize is null)
-            {
-                warnings.Add($"v2 抽奖历史“{item.Name}”无法唯一关联到奖品池，已保留原始数据。");
-                continue;
-            }
-            result.Prizes[prize.RecordId.ToString("D")] = MigrateV2History(item.Value, prize.RecordId, prize.Id, prize.Name, string.Empty, string.Empty);
-        }
-        return result;
-    }
-
-    private static History MigrateV2History(JsonElement source, Guid recordId, string number, string name, string gender, string group)
-    {
-        var history = new History
-        {
-            TotalCount = GetInt(source, "total_count", 0),
-            RoundsMissed = GetInt(source, "rounds_missed", 0),
-            LastDrawnTime = ParseV2Date(GetString(source, "last_drawn_time"))
-        };
-        if (!source.TryGetProperty("history", out var items) || items.ValueKind != JsonValueKind.Array)
-            return history;
-        foreach (var item in items.EnumerateArray())
-        {
-            history.Histories.Add(new HistoryItem
-            {
-                RecordId = recordId.ToString("D"),
-                RecordNumber = number,
-                RecordName = name,
-                RecordGender = gender,
-                RecordGroup = group,
-                DrawTime = ParseV2Date(GetString(item, "draw_time")),
-                DrawNumbers = GetInt(item, "draw_people_numbers", GetInt(item, "draw_lottery_numbers", 1)),
-                DrawGroup = GetString(item, "draw_group"),
-                DrawGender = GetString(item, "draw_gender"),
-                DrawMethod = GetInt(item, "draw_method", 0),
-                Weight = GetDouble(item, "weight", 1)
-            });
-        }
-        return history;
     }
 
     private void CommitCandidate(string staging, IReadOnlyList<string> roots, bool replaceMissingRoots, List<string> warnings)
@@ -772,7 +454,7 @@ public sealed class ImportExportService(
         var committed = new List<(string Target, string Previous)>();
         try
         {
-            foreach (var root in roots.Select(NormalizeLegacyPath).Distinct(StringComparer.OrdinalIgnoreCase))
+            foreach (var root in roots.Select(NormalizePath).Distinct(StringComparer.OrdinalIgnoreCase))
             {
                 if (!IsManagedPath(root) || root.StartsWith("logs", StringComparison.OrdinalIgnoreCase))
                     continue;
@@ -838,12 +520,41 @@ public sealed class ImportExportService(
         }
     }
 
-    private void ReloadCurrentProfiles()
+    private void ReloadConfiguredProfiles()
     {
-        if (profileService.StudentListConfig is not null)
-            profileService.LoadStudentProfile(profileService.StudentListConfig.Name, saveCurrent: false);
-        if (profileService.PrizeListConfig is not null)
-            profileService.LoadPrizeProfile(profileService.PrizeListConfig.Name, saveCurrent: false);
+        profileService.LoadStudentProfile(configHandler.Data.RollCallSettings.DefaultClass, saveCurrent: false);
+        profileService.LoadPrizeProfile(configHandler.Data.LotterySettings.DefaultPool, saveCurrent: false);
+    }
+
+    private void ReloadRuntimeConfiguration()
+    {
+        configHandler.Reload();
+        IAppHost.TryGetService<FeatureAvailabilityService>()?.Refresh();
+        IAppHost.TryGetService<GlobalShortcutService>()?.Refresh();
+        IAppHost.TryGetService<ShortcutService>()?.Refresh();
+        _ = IAppHost.TryGetService<TelemetryRuntimeService>()?.RefreshAsync();
+        IAppHost.TryGetService<OnlineStatusService>()?.Refresh();
+    }
+
+    private string CreateImportSourceCopy(string sourcePath, CancellationToken cancellationToken)
+    {
+        if (!File.Exists(sourcePath))
+            throw new FileNotFoundException("找不到导入文件。", sourcePath);
+
+        var sourceCopy = Path.Combine(_dataDirectory, ".import-staging", $"{Guid.NewGuid():N}.source");
+        EnsureParents(sourceCopy);
+        try
+        {
+            using var input = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using var output = new FileStream(sourceCopy, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+            CopyAndHash(input, output, cancellationToken, out _);
+            return sourceCopy;
+        }
+        catch
+        {
+            TryDeletePath(sourceCopy);
+            throw;
+        }
     }
 
     private void AtomicWriteSettings(MainConfigModel model)
@@ -980,24 +691,6 @@ public sealed class ImportExportService(
             file.Delete();
     }
 
-    private static string NormalizeLegacyPath(string path)
-    {
-        path = NormalizePath(path);
-        return path switch
-        {
-            "config" => "config/settings.json",
-            _ when path.StartsWith("config/", StringComparison.OrdinalIgnoreCase) => path,
-            _ when path.StartsWith("data/", StringComparison.OrdinalIgnoreCase) => path[5..],
-            _ => path
-        };
-    }
-
-    private static bool IsAllowedLegacyEntry(string path)
-    {
-        var normalized = NormalizePath(path);
-        return normalized == "version.json" || LegacyRoots.Any(root => normalized.Equals(root, StringComparison.OrdinalIgnoreCase) || normalized.StartsWith(root + "/", StringComparison.OrdinalIgnoreCase));
-    }
-
     private static bool IsManagedPath(string path)
     {
         path = NormalizePath(path);
@@ -1008,13 +701,11 @@ public sealed class ImportExportService(
 
     private static IReadOnlyList<string> GetRoots(IEnumerable<string> paths)
     {
-        return paths.Select(NormalizeLegacyPath).Select(path => path.StartsWith("config/settings.json", StringComparison.OrdinalIgnoreCase)
+        return paths.Select(NormalizePath).Select(path => path.StartsWith("config/settings.json", StringComparison.OrdinalIgnoreCase)
                 ? "config/settings.json"
                 : path.StartsWith("configs/plugins", StringComparison.OrdinalIgnoreCase)
                     ? "configs/plugins"
-                    : path.StartsWith("legacy/v2-history", StringComparison.OrdinalIgnoreCase)
-                        ? "legacy/v2-history"
-                        : path.Split('/')[0])
+                    : path.Split('/')[0])
             .Where(IsManagedPath).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
@@ -1023,9 +714,28 @@ public sealed class ImportExportService(
         if (string.IsNullOrWhiteSpace(path) || Path.IsPathRooted(path) || path.Contains(':') || path.Contains('\0'))
             throw new InvalidDataException("归档包含非法路径。");
         var parts = path.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Any(part => part is "." or ".." || part.Any(char.IsControl)))
+        if (parts.Any(IsUnsafePathComponent))
             throw new InvalidDataException("归档包含非法路径。");
         return string.Join('/', parts);
+    }
+
+    private static bool IsUnsafePathComponent(string part)
+    {
+        return part is "." or ".." || part.EndsWith(' ') || part.EndsWith('.') ||
+               part.Any(character => char.IsControl(character) || "<>:\"|?*".Contains(character)) ||
+               IsReservedDeviceName(part);
+    }
+
+    private static bool IsReservedDeviceName(string part)
+    {
+        var name = part.Split('.', 2)[0];
+        return name.Equals("CON", StringComparison.OrdinalIgnoreCase)
+               || name.Equals("PRN", StringComparison.OrdinalIgnoreCase)
+               || name.Equals("AUX", StringComparison.OrdinalIgnoreCase)
+               || name.Equals("NUL", StringComparison.OrdinalIgnoreCase)
+               || (name.Length == 4 && (name.StartsWith("COM", StringComparison.OrdinalIgnoreCase)
+                                         || name.StartsWith("LPT", StringComparison.OrdinalIgnoreCase))
+                   && name[3] is >= '1' and <= '9');
     }
 
     private static void EnsureParents(string path)
@@ -1065,13 +775,6 @@ public sealed class ImportExportService(
     {
         using var reader = new StreamReader(entry.Open(), Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
         return reader.ReadToEnd();
-    }
-
-    private static void WriteJson(string path, object value) => WriteText(path, JsonSerializer.Serialize(value, ConfigServiceBase.JsonOptions));
-    private static void WriteText(string path, string text)
-    {
-        EnsureParents(path);
-        File.WriteAllText(path, text, Encoding.UTF8);
     }
 
     private int CountFiles(params string[] path)
@@ -1114,32 +817,4 @@ public sealed class ImportExportService(
 
     private static void TryDeleteDirectory(string path) { try { if (Directory.Exists(path)) Directory.Delete(path, true); } catch { } }
     private static void TryDeletePath(string path) { try { if (File.Exists(path)) File.Delete(path); else if (Directory.Exists(path)) Directory.Delete(path, true); } catch { } }
-    private static void AddLegacyKeys<T>(Dictionary<string, T?> map, string id, string name, T value) where T : class
-    {
-        AddLegacyKey(map, id, value);
-        AddLegacyKey(map, name, value);
-    }
-    private static void AddLegacyKey<T>(Dictionary<string, T?> map, string key, T value) where T : class
-    {
-        if (string.IsNullOrWhiteSpace(key)) return;
-        if (map.TryGetValue(key, out var existing))
-        {
-            if (!ReferenceEquals(existing, value)) map[key] = null;
-            return;
-        }
-        map[key] = value;
-    }
-    private static string JoinTags(JsonElement value) => value.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array ? string.Join(' ', tags.EnumerateArray().Select(item => item.GetString()).Where(item => !string.IsNullOrWhiteSpace(item))) : string.Empty;
-    private static string GetString(JsonElement element, string name) => element.TryGetProperty(name, out var value) ? value.ToString() : string.Empty;
-    private static bool GetBool(JsonElement element, string name, bool fallback) => element.TryGetProperty(name, out var value) && value.ValueKind is JsonValueKind.True or JsonValueKind.False ? value.GetBoolean() : fallback;
-    private static int GetInt(JsonElement element, string name, int fallback) => element.TryGetProperty(name, out var value) && value.TryGetInt32(out var result) ? result : fallback;
-    private static double GetDouble(JsonElement element, string name, double fallback) => element.TryGetProperty(name, out var value) && value.TryGetDouble(out var result) ? result : fallback;
-    private static DateTime ParseV2Date(string value) => DateTime.TryParse(value, out var parsed) ? parsed : DateTime.MinValue;
-    private static OnlineStatusMode ParseOnlineStatus(string? value) => value?.ToLowerInvariant() switch { "off" => OnlineStatusMode.Off, "anonymous" => OnlineStatusMode.Anonymous, _ => OnlineStatusMode.Full };
-    private static LanguageMode ParseV2Language(string? value) => value?.ToUpperInvariant() switch
-    {
-        "EN_US" or "ENGLISH" => LanguageMode.English,
-        "JA_JP" or "JAPANESE" => LanguageMode.Japanese,
-        _ => LanguageMode.ChineseSimplified
-    };
 }

@@ -29,6 +29,7 @@ using SecRandom.Services.Linkage;
 using SecRandom.Services.Notification;
 using SecRandom.Services.Security;
 using SecRandom.Services.Verification;
+using SecRandom.Services;
 using SecRandom.ViewModels;
 using SecRandom.Shared;
 using SecRandom.Shared.Extensions;
@@ -54,6 +55,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly NotificationService? _notificationService;
+    private readonly FeatureAvailabilityService _featureAvailability;
     private readonly FileSystemWatcher _prizeListWatcher;
     private readonly FileSystemWatcher _studentListWatcher;
     private bool _isDrawCommandRunning;
@@ -84,6 +86,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         ISecurityService securityService,
         LinkageDrawCoordinator linkageDrawCoordinator,
         VerificationDrawCoordinator verificationDrawCoordinator,
+        FeatureAvailabilityService featureAvailability,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         NotificationService? notificationService = null)
         : base(configHandler)
@@ -98,6 +101,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         _securityService = securityService;
         _linkageDrawCoordinator = linkageDrawCoordinator;
         _verificationDrawCoordinator = verificationDrawCoordinator;
+        _featureAvailability = featureAvailability;
         _notificationService = notificationService;
         _prizeListWatcher = CreatePrizeListWatcher();
         _studentListWatcher = CreateStudentListWatcher();
@@ -236,13 +240,17 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task StartDrawAsync()
     {
+        if (!_featureAvailability.IsLotteryEnabled)
+            return;
+
         if (IsDrawing)
         {
             StopPreview();
             return;
         }
 
-        if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.LotteryStart, () => Task.CompletedTask))
+        if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.LotteryStart, () => Task.CompletedTask) ||
+            !_featureAvailability.IsLotteryEnabled)
             return;
         await StartDrawCoreAsync();
     }
@@ -275,7 +283,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                 count,
                 _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName),
                 prizes,
-                DrawProofExportContext.ForPrizes(SelectedPrizeListName),
+                DrawProofExportContext.ForPrizes(SelectedPrizeListName, Config.LotterySettings.DrawType),
                 cancellationToken: default);
             var previewTask = ShowPreviewAsync(prizes, count, MusicSettings.AnimationMusic);
             List<Prize> drawn;
@@ -360,7 +368,9 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private async Task ResetDisplayAsync()
     {
-        if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.LotteryReset, () => Task.CompletedTask))
+        if (!_featureAvailability.IsLotteryEnabled ||
+            !await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.LotteryReset, () => Task.CompletedTask) ||
+            !_featureAvailability.IsLotteryEnabled)
             return;
         ResetDisplayCore();
     }
@@ -377,24 +387,53 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         RefreshCounts();
     }
 
-    public Task<bool> StartProtocolDrawAsync(bool protectLinkage = false) => _linkageDrawCoordinator.AuthorizeAsync(
-        protectLinkage ? [SecurityOperation.LotteryStart, SecurityOperation.LinkageAction] : [SecurityOperation.LotteryStart],
-        () =>
-        {
-            _ = StartDrawCoreAsync();
-            return Task.CompletedTask;
-        });
+    public async Task<bool> StartProtocolDrawAsync(bool protectLinkage = false)
+    {
+        if (!_featureAvailability.IsLotteryEnabled)
+            return false;
+
+        var started = false;
+        var authorized = await _linkageDrawCoordinator.AuthorizeAsync(
+            protectLinkage ? [SecurityOperation.LotteryStart, SecurityOperation.LinkageAction] : [SecurityOperation.LotteryStart],
+            () =>
+            {
+                if (!_featureAvailability.IsLotteryEnabled)
+                    return Task.CompletedTask;
+
+                started = true;
+                _ = StartDrawCoreAsync();
+                return Task.CompletedTask;
+            });
+        return authorized && started;
+    }
 
     public Task ToggleDrawFromShortcutAsync() => StartDrawAsync();
 
-    public Task<bool> ResetProtocolDrawAsync(bool protectLinkage = false) => _linkageDrawCoordinator.AuthorizeAsync(
-        protectLinkage ? [SecurityOperation.LotteryReset, SecurityOperation.LinkageAction] : [SecurityOperation.LotteryReset],
-        () =>
-        {
-            ResetDisplayCore();
-            return Task.CompletedTask;
-        });
-    public void StopProtocolDraw() => StopPreview();
+    public async Task<bool> ResetProtocolDrawAsync(bool protectLinkage = false)
+    {
+        if (!_featureAvailability.IsLotteryEnabled)
+            return false;
+
+        var reset = false;
+        var authorized = await _linkageDrawCoordinator.AuthorizeAsync(
+            protectLinkage ? [SecurityOperation.LotteryReset, SecurityOperation.LinkageAction] : [SecurityOperation.LotteryReset],
+            () =>
+            {
+                if (!_featureAvailability.IsLotteryEnabled)
+                    return Task.CompletedTask;
+
+                reset = true;
+                ResetDisplayCore();
+                return Task.CompletedTask;
+            });
+        return authorized && reset;
+    }
+
+    public void StopProtocolDraw()
+    {
+        if (_featureAvailability.IsLotteryEnabled)
+            StopPreview();
+    }
 
     public void RefreshPrizeLists()
     {

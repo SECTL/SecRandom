@@ -40,5 +40,6 @@ public partial class BasicSettingsConfig : ObservableObject
     // Hidden Configs
     [ObservableProperty] private Guid _offlineUserId = Guid.NewGuid();
     [ObservableProperty] private bool _guideCompleted = false;
+    [ObservableProperty] private int _acceptedEulaVersion;
     [ObservableProperty] private bool _showVersionNotice = true;
 }

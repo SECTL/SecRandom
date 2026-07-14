@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Verification;
@@ -140,6 +141,10 @@ public sealed record DrawProofExportContext(string ListName, IReadOnlyList<strin
         return new DrawProofExportContext(listName, filters);
     }
 
-    public static DrawProofExportContext ForPrizes(string listName) =>
-        new(listName, ["状态=启用"]);
+    public static DrawProofExportContext ForPrizes(string listName, LotteryDrawType drawType) =>
+        new(listName,
+        [
+            drawType == LotteryDrawType.Count ? "方式=按剩余数量" : "方式=转盘",
+            "状态=启用"
+        ]);
 }

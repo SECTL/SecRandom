@@ -72,6 +72,21 @@ public class BasicSettingsConfigTests
         Assert.True(restored.General.Basic.SettingsWindowMaximized);
     }
 
+    [Fact]
+    public void MainConfig_PersistsVersionedEulaAcceptance()
+    {
+        MainConfigModel config = new();
+        config.General.Basic.GuideCompleted = true;
+        config.General.Basic.AcceptedEulaVersion = 1;
+
+        string json = JsonSerializer.Serialize(config, ConfigServiceBase.JsonOptions);
+        MainConfigModel? restored = JsonSerializer.Deserialize<MainConfigModel>(json, ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(restored);
+        Assert.True(restored.General.Basic.GuideCompleted);
+        Assert.Equal(1, restored.General.Basic.AcceptedEulaVersion);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]

@@ -48,6 +48,7 @@ using SecRandom.Services.Plugins;
 using SecRandom.Services.Profiles;
 using SecRandom.Services.Ipc;
 using SecRandom.Services.ImportExport;
+using SecRandom.Services.FirstRun;
 using SecRandom.Services.Linkage;
 using SecRandom.Services.Music;
 using SecRandom.Services.Settings;
@@ -94,6 +95,7 @@ public partial class App : Application
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     private readonly object _shutdownGate = new();
     private bool _isStopping;
+    private bool _isOobeActive;
     public new static App Current => (Application.Current as App)!;
     internal bool IsStopping => _isStopping;
 
@@ -156,21 +158,49 @@ public partial class App : Application
             // 启动服务主机
             BuildHost();
 
-            _desktopLifetime = desktop;
-            _floatingWindow = new FloatingWindow();
-            _floatingWindow.Opened += (_, _) => RefreshTrayWindowMenuItems();
-            _floatingWindow.Closed += (_, _) => _floatingWindow = null;
-            if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.StartupDisplayFloatingWindow)
+            if (IAppHost.GetService<FirstRunOobeService>().IsRequired())
             {
-                _floatingWindow.Hide();
-                _floatingWindow.SetUserVisibilityIntent(false);
+                _isOobeActive = true;
+                var oobe = new FirstRunOobeWindow();
+                desktop.MainWindow = oobe;
+                oobe.Completed += (_, _) =>
+                {
+                    _isOobeActive = false;
+                    ContinueDesktopStartup(desktop, startupProtocolUri);
+                };
+                oobe.Closed += (_, _) =>
+                {
+                    if (!oobe.IsCompleted)
+                        RequestDesktopShutdown();
+                };
+                oobe.Show();
+                base.OnFrameworkInitializationCompleted();
+                return;
             }
-            desktop.MainWindow = _floatingWindow;
+
+            ContinueDesktopStartup(desktop, startupProtocolUri);
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime)
         {
             throw new PlatformNotSupportedException();
         }
+
+        base.OnFrameworkInitializationCompleted();
+    }
+
+    private void ContinueDesktopStartup(IClassicDesktopStyleApplicationLifetime desktop, string? startupProtocolUri)
+    {
+        _desktopLifetime = desktop;
+        ObserveTask(StartRuntimeServicesAsync(), "Runtime service startup failed.");
+        _floatingWindow = new FloatingWindow();
+        _floatingWindow.Opened += (_, _) => RefreshTrayWindowMenuItems();
+        _floatingWindow.Closed += (_, _) => _floatingWindow = null;
+        if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.StartupDisplayFloatingWindow)
+        {
+            _floatingWindow.Hide();
+            _floatingWindow.SetUserVisibilityIntent(false);
+        }
+        desktop.MainWindow = _floatingWindow;
 
         InitializeApp();
         if (startupProtocolUri is not null)
@@ -178,8 +208,6 @@ public partial class App : Application
 
         AppDomain.CurrentDomain.ProcessExit += CurrentDomainOnProcessExit;
         Dispatcher.UIThread.UnhandledException += App_OnDispatcherUnhandledException;
-
-        base.OnFrameworkInitializationCompleted();
     }
 
     /// <summary>
@@ -254,6 +282,9 @@ public partial class App : Application
     {
         Dispatcher.UIThread.Post(() =>
         {
+            if (_isOobeActive)
+                return;
+
             switch (command)
             {
                 case SingleInstanceCommand.ShowMainWindow:
@@ -284,6 +315,10 @@ public partial class App : Application
 
     private Task<IpcResponseEnvelope> OnIpcRequestReceived(IpcRequestEnvelope request, CancellationToken cancellationToken)
     {
+        if (_isOobeActive)
+            return Task.FromResult(new IpcResponseEnvelope(true, "url",
+                new IpcBusinessResult("error", "初始设置尚未完成。", "oobe_required")));
+
         return IAppHost.GetService<ProtocolCommandRouter>().HandleIpcAsync(request, cancellationToken);
     }
 
@@ -356,6 +391,8 @@ public partial class App : Application
                 services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<WitnessTicketCache>());
                 services.AddTransient<VerificationDrawCoordinator>();
                 services.AddSingleton<SettingsSearchService>();
+                services.AddSingleton<FirstRunOobeService>();
+                services.AddSingleton<OobeDataSetupService>();
                 services.AddSingleton<IImportExportService, Services.ImportExport.ImportExportService>();
                 services.AddHostedService<AutomaticBackupService>();
                 services.AddTransient<DrawEngine>();
@@ -372,6 +409,7 @@ public partial class App : Application
                 services.AddSingleton<GlobalShortcutService>();
                 services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<GlobalShortcutService>());
                 services.AddSingleton<DesktopIntegrationService>();
+                services.AddSingleton<FeatureAvailabilityService>();
                 services.AddSingleton<ProtocolCommandRouter>();
                 services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
                 services.AddSingleton<NotificationService>();
@@ -401,6 +439,7 @@ public partial class App : Application
 
                 services.AddTransient<ProfileSettingsView>();
                 services.AddTransient<ProfileSettingsViewModel>();
+                services.AddSingleton<FirstRunOobeViewModel>();
                 services.AddTransient<QuickDrawPage>();
 
                 // 附加设置
@@ -512,9 +551,6 @@ public partial class App : Application
         RefreshPersonalizedSettings();
 
         IAppHost.GetService<IProfileService>();
-
-        // 先初始化遥测，再启动 Host，确保 HostedService 启动时的日志能被捕获。
-        ObserveTask(StartRuntimeServicesAsync(), "Runtime service startup failed.");
 
         // RESOURCES TEST
         var isVisible = false;
@@ -922,6 +958,9 @@ public partial class App : Application
 
     public static void ToggleMainWindow(string? pageId = null)
     {
+        if (pageId == "main.lottery" && !IAppHost.GetService<FeatureAvailabilityService>().IsLotteryEnabled)
+            return;
+
         ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeAsync(
             SecurityOperation.ToggleMainWindow,
             () =>
@@ -935,6 +974,9 @@ public partial class App : Application
 
     public static void SetMainWindowVisibility(string action, string? pageId = null)
     {
+        if (pageId == "main.lottery" && !IAppHost.GetService<FeatureAvailabilityService>().IsLotteryEnabled)
+            return;
+
         var shouldShow = action switch
         {
             "show" => true,

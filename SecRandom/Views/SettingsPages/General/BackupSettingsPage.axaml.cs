@@ -209,6 +209,23 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
             return;
         }
 
+        try
+        {
+            var inspection = await _importExportService.InspectAllDataAsync(backup.FilePath);
+            if (!inspection.IsSupportedV3)
+            {
+                var version = string.IsNullOrWhiteSpace(inspection.ProducerVersion) ? "未识别" : inspection.ProducerVersion;
+                var detail = inspection.Warnings.FirstOrDefault() ?? "该文件不是受支持的 SecRandom v3 数据归档。";
+                await ShowErrorDialogAsync(LR.M_RestoreFailed, $"仅支持 SecRandom v3 数据归档。检测到的版本：{version}。\n{detail}");
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorDialogAsync(LR.M_RestoreFailed, ex.Message);
+            return;
+        }
+
         if (!await ConfirmRestoreAsync(backup.FileName))
             return;
 
