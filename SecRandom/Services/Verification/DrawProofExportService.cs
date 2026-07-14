@@ -6,8 +6,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
-using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Verification;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Verification;
 
@@ -53,6 +53,8 @@ public sealed class DrawProofExportService(
             .Select(filter => SanitizeFilePart(filter, string.Empty))
             .Where(filter => !string.IsNullOrWhiteSpace(filter))
             .ToArray();
+        if (filters.Contains("状态=启用", StringComparer.Ordinal) && TryGetLotteryModeLabel(proof, out var lotteryMode))
+            filters = [lotteryMode, .. filters];
         var filterText = SanitizeFilePart(
             filters.Length == 0 ? "全部" : string.Join("、", filters),
             "全部");
@@ -125,6 +127,17 @@ public sealed class DrawProofExportService(
 
     private static string Truncate(string value, int maximumLength) =>
         value.Length <= maximumLength ? value : value[..maximumLength];
+
+    private static bool TryGetLotteryModeLabel(DrawProof proof, out string label)
+    {
+        label = proof.AlgorithmId switch
+        {
+            VerificationWireCodec.InventoryLotteryAlgorithmId => "方式=按剩余数量",
+            VerificationWireCodec.WeightedLotteryAlgorithmId => "方式=加权无放回",
+            _ => string.Empty
+        };
+        return !string.IsNullOrEmpty(label);
+    }
 }
 
 public sealed record DrawProofExportContext(string ListName, IReadOnlyList<string> FilterLabels)
@@ -141,10 +154,6 @@ public sealed record DrawProofExportContext(string ListName, IReadOnlyList<strin
         return new DrawProofExportContext(listName, filters);
     }
 
-    public static DrawProofExportContext ForPrizes(string listName, LotteryDrawType drawType) =>
-        new(listName,
-        [
-            drawType == LotteryDrawType.Count ? "方式=按剩余数量" : "方式=转盘",
-            "状态=启用"
-        ]);
+    public static DrawProofExportContext ForPrizes(string listName) =>
+        new(listName, ["状态=启用"]);
 }

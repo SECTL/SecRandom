@@ -283,7 +283,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                 count,
                 _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName),
                 prizes,
-                DrawProofExportContext.ForPrizes(SelectedPrizeListName, Config.LotterySettings.DrawType),
+                DrawProofExportContext.ForPrizes(SelectedPrizeListName),
                 cancellationToken: default);
             var previewTask = ShowPreviewAsync(prizes, count, MusicSettings.AnimationMusic);
             List<Prize> drawn;

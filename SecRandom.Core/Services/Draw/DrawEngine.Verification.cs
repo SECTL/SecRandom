@@ -194,6 +194,7 @@ public partial class DrawEngine
                 return new
                 {
                     index,
+                    recordId = candidate.RecordId,
                     candidate.OccurrenceIndex,
                     candidate.WeightMicros,
                     candidate.IsGuaranteed,
@@ -209,7 +210,7 @@ public partial class DrawEngine
 
         return JsonSerializer.SerializeToUtf8Bytes(new
         {
-            format = "secrandom-anonymous-audit/v1",
+            format = "secrandom-anonymous-audit/v2",
             operation,
             requestedCount = count,
             candidateCount = ordered.Length,
