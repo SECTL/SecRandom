@@ -102,6 +102,47 @@ public sealed class VerificationKernelTests
     }
 
     [Fact]
+    public void AttachedMusicSettings_OverrideOnlyWhenEnabled()
+    {
+        var student = new Student();
+        student.AttachedObjects[Guid.Parse(GlobalConstants.DrawMusicAttachedSettings)] = new DrawMusicAttachedSettings
+        {
+            IsAttachSettingsEnabled = true,
+            AnimationMusic = "animation.mp3",
+            ResultMusic = "result.mp3"
+        };
+
+        Assert.Equal("animation.mp3", DrawMusicAttachedSettingsResolver.GetAnimationMusic(student, "$none"));
+        Assert.Equal("result.mp3", DrawMusicAttachedSettingsResolver.GetResultMusic(student, "$none"));
+
+        student.GetAttachedObject<DrawMusicAttachedSettings>(Guid.Parse(GlobalConstants.DrawMusicAttachedSettings))!
+            .IsAttachSettingsEnabled = false;
+
+        Assert.Equal("$none", DrawMusicAttachedSettingsResolver.GetAnimationMusic(student, "$none"));
+        Assert.Equal("$none", DrawMusicAttachedSettingsResolver.GetResultMusic(student, "$none"));
+    }
+
+    [Fact]
+    public void AttachedMusicSettings_RestoresPersistedTrackSelections()
+    {
+        var settingsId = Guid.Parse(GlobalConstants.DrawMusicAttachedSettings);
+        var prize = new Prize();
+        prize.AttachedObjects[settingsId] = JsonSerializer.SerializeToElement(new
+        {
+            is_attach_settings_enabled = true,
+            animation_music = "animation.mp3",
+            result_music = "result.wav"
+        });
+
+        var settings = prize.GetAttachedObject<DrawMusicAttachedSettings>(settingsId);
+
+        Assert.NotNull(settings);
+        Assert.True(settings.IsAttachSettingsEnabled);
+        Assert.Equal("animation.mp3", settings.AnimationMusic);
+        Assert.Equal("result.wav", settings.ResultMusic);
+    }
+
+    [Fact]
     public void Draw_RejectsPoolWithNoEligibleWeight()
     {
         var input = new VerificationDrawInput

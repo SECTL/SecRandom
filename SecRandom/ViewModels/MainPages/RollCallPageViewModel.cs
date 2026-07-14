@@ -293,24 +293,30 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         try
         {
             var courseName = _linkageDrawCoordinator.GetCourseName();
+            var now = DateTime.Now;
             var verificationDrawTask = _verificationDrawCoordinator.DrawStudentsAsync(
                 count,
                 candidates,
                 DrawSettingsType.RollCall,
+                DrawProofExportContext.ForStudents(SelectedStudentListName, CurrentGroupScope, CurrentGenderScope, courseName),
                 courseName: courseName,
                 cancellationToken: default);
-            await ShowPreviewAsync(candidates, count).ConfigureAwait(true);
-
-            var now = DateTime.Now;
+            var previewTask = ShowPreviewAsync(candidates, count, MusicSettings.AnimationMusic);
             List<Student> drawnStudents;
             try
             {
+                var drawCompletedFirst = await Task.WhenAny(verificationDrawTask, previewTask).ConfigureAwait(true) == verificationDrawTask;
                 drawnStudents = (await verificationDrawTask.ConfigureAwait(true)).Winners.ToList();
+                if (drawCompletedFirst && !previewTask.IsCompleted)
+                    await PlayAnimationMusicAsync(DrawMusicAttachedSettingsResolver.GetAnimationMusic(
+                        drawnStudents.FirstOrDefault(), MusicSettings.AnimationMusic)).ConfigureAwait(true);
+
+                await previewTask.ConfigureAwait(true);
             }
             catch (Exception exception)
             {
                 _logger.LogWarning(exception, "可验证点名抽取失败。");
-                await _drawAudioService.StopAnimationMusicAsync(0, immediate: true).ConfigureAwait(false);
+                StopPreview();
                 ClearUncommittedPreview();
                 StatusText = SR.M_DrawFailed;
                 return;
@@ -334,7 +340,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
             IsResultVisible = ResultItems.Count > 0;
             TriggerResultAnimation();
-            await PlayResultMusicAsync().ConfigureAwait(false);
+            await PlayResultMusicAsync(drawnStudents.FirstOrDefault()).ConfigureAwait(false);
             StatusText = string.Format(SR.M_DrawnCountFormat, ResultItems.Count);
             RefreshCounts();
             OnPropertyChanged(nameof(ResultText));
@@ -518,12 +524,12 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         ResultText = string.Join(SR.M_ResultSeparator, ResultItems.Select(item => item.DisplayText));
     }
 
-    private async Task ShowPreviewAsync(IReadOnlyList<Student> candidates, int count)
+    private async Task ShowPreviewAsync(IReadOnlyList<Student> candidates, int count, string animationMusic)
     {
         if (AnimationSettings.Animation == AnimationMode.NoAnimation)
             return;
 
-        await PlayAnimationMusicAsync().ConfigureAwait(true);
+        await PlayAnimationMusicAsync(animationMusic).ConfigureAwait(true);
 
         var previewCts = new CancellationTokenSource();
         _previewCts = previewCts;
@@ -842,22 +848,22 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private Task PlayAnimationMusicAsync()
+    private Task PlayAnimationMusicAsync(string animationMusic)
     {
         return _drawAudioService?.StartAnimationMusicAsync(
-            MusicSettings.AnimationMusic,
+            animationMusic,
             MusicSettings.AnimationMusicVolume,
             MusicSettings.AnimationMusicFadeIn,
             Config.MoreSettings.BackgroundMusicLoop) ?? Task.CompletedTask;
     }
 
-    private async Task PlayResultMusicAsync()
+    private async Task PlayResultMusicAsync(Student? musicTarget)
     {
         if (_drawAudioService is null)
             return;
 
         await _drawAudioService.TransitionToResultMusicAsync(
-            MusicSettings.ResultMusic,
+            DrawMusicAttachedSettingsResolver.GetResultMusic(musicTarget, MusicSettings.ResultMusic),
             MusicSettings.ResultMusicVolume,
             MusicSettings.ResultMusicFadeIn,
             MusicSettings.ResultMusicFadeOut,

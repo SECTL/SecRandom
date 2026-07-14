@@ -701,7 +701,15 @@ public sealed class ImportExportService(
                 warnings.Add($"v2 点名历史“{item.Name}”无法唯一关联到名单，已保留原始数据。");
                 continue;
             }
-            result.Students[student.RecordId.ToString("N")] = MigrateV2History(item.Value, student.RecordId, student.Id, student.Name, student.Gender, student.Group);
+            var migratedHistory = MigrateV2History(item.Value, student.RecordId, student.Id, student.Name, student.Gender, student.Group);
+            result.Students[student.RecordId.ToString("D")] = migratedHistory;
+            foreach (var historyItem in migratedHistory.Histories)
+            {
+                if (!string.IsNullOrWhiteSpace(historyItem.RecordGroup))
+                    result.GroupStats[historyItem.RecordGroup] = result.GroupStats.GetValueOrDefault(historyItem.RecordGroup) + 1;
+                if (!string.IsNullOrWhiteSpace(historyItem.RecordGender))
+                    result.GenderStatus[historyItem.RecordGender] = result.GenderStatus.GetValueOrDefault(historyItem.RecordGender) + 1;
+            }
         }
         return result;
     }
@@ -722,7 +730,7 @@ public sealed class ImportExportService(
                 warnings.Add($"v2 抽奖历史“{item.Name}”无法唯一关联到奖品池，已保留原始数据。");
                 continue;
             }
-            result.Prizes[prize.RecordId.ToString("N")] = MigrateV2History(item.Value, prize.RecordId, prize.Id, prize.Name, string.Empty, string.Empty);
+            result.Prizes[prize.RecordId.ToString("D")] = MigrateV2History(item.Value, prize.RecordId, prize.Id, prize.Name, string.Empty, string.Empty);
         }
         return result;
     }
@@ -741,7 +749,7 @@ public sealed class ImportExportService(
         {
             history.Histories.Add(new HistoryItem
             {
-                RecordId = recordId.ToString("N"),
+                RecordId = recordId.ToString("D"),
                 RecordNumber = number,
                 RecordName = name,
                 RecordGender = gender,

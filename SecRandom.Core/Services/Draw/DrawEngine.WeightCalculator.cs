@@ -21,7 +21,11 @@ public partial class DrawEngine
 
         var fairSettings = ConfigData.FairDrawSettings;
         var baseWeight = SanitizeFinite(fairSettings.BaseWeight, 1.0);
-        var historyCache = historyCacheOverride ?? BuildStudentHistoryCache(candidates, courseName);
+        var historyCache = historyCacheOverride is null
+            ? BuildStudentHistoryCache(candidates, courseName)
+            : candidates
+                .Where(historyCacheOverride.ContainsKey)
+                .ToDictionary(candidate => candidate, candidate => historyCacheOverride[candidate]);
         IReadOnlyDictionary<string, int> groupStats = string.IsNullOrWhiteSpace(courseName)
             ? StudentHistory.GroupStats
             : BuildCourseBalanceStats(courseName, item => item.RecordGroup);
@@ -96,7 +100,9 @@ public partial class DrawEngine
 
     private Dictionary<string, int> BuildCourseBalanceStats(string courseName, Func<HistoryItem, string> keySelector)
     {
+        HashSet<History> seenHistories = new(ReferenceEqualityComparer.Instance);
         return StudentHistory.Students.Values
+            .Where(seenHistories.Add)
             .SelectMany(history => history.Histories)
             .Where(item => string.Equals(item.CourseName, courseName, StringComparison.Ordinal))
             .Select(keySelector)

@@ -14,6 +14,7 @@ namespace SecRandom.Services.Linkage;
 public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource> logger) : ICourseScheduleSource
 {
     private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan JsonRouteReadyDelay = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(5);
     private readonly SemaphoreSlim _connectionGate = new(1, 1);
     private IpcClient? _client;
@@ -124,6 +125,8 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
             client.JsonIpcProvider.AddNotifyHandler(IpcRoutedNotifyIds.OnAfterSchoolNotifyId, OnClassIslandStateChanged);
             client.JsonIpcProvider.AddNotifyHandler(IpcRoutedNotifyIds.CurrentTimeStateChangedNotifyId, OnClassIslandStateChanged);
             await client.Connect().WaitAsync(ConnectTimeout, cancellationToken).ConfigureAwait(false);
+            // ClassIsland establishes its JSON routed peer asynchronously after the transport connection.
+            await Task.Delay(JsonRouteReadyDelay, cancellationToken).ConfigureAwait(false);
             if (client.PeerProxy is null)
             {
                 ScheduleRetry();

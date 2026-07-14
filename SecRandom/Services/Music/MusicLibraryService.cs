@@ -4,19 +4,27 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core;
+using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
+using SecRandom.Shared.Extensions;
+using SecRandom.Shared.Interfaces;
+using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Services.Music;
 
 public sealed class MusicLibraryService(
     MainConfigHandler configHandler,
     ILogger<MusicLibraryService> logger,
-    string? musicDirectory = null)
+    string? musicDirectory = null,
+    IProfileService? attachedSettingsProfileService = null)
 {
     public const string NoMusicTrackId = "$none";
     public const string RandomTrackId = "$random";
+    private static readonly Guid DrawMusicSettingsId = Guid.Parse(GlobalConstants.DrawMusicAttachedSettings);
     private static readonly HashSet<string> SupportedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         ".mp3", ".wav", ".flac"
@@ -104,22 +112,34 @@ public sealed class MusicLibraryService(
 
     public bool Delete(MusicTrack track)
     {
-        var path = ResolvePath(track.Id);
+        var path = ResolveManagedPath(track.Id);
         if (path is null)
             return false;
 
         try
         {
             File.Delete(path);
-            ClearReferences(track.Id);
-            Refresh();
-            return true;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "删除音乐失败：文件={FileName}。", track.Id);
             return false;
         }
+
+        try
+        {
+            ClearReferences(track.Id);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "清除已删除音乐的引用失败：文件={FileName}。", track.Id);
+        }
+        finally
+        {
+            Refresh();
+        }
+
+        return true;
     }
 
     public string? ResolvePath(string selection)
@@ -132,6 +152,19 @@ public sealed class MusicLibraryService(
 
         var fileName = Path.GetFileName(selection);
         if (!string.Equals(fileName, selection, StringComparison.Ordinal) || !SupportedExtensions.Contains(Path.GetExtension(fileName)))
+            return null;
+
+        var path = Path.Combine(MusicDirectory, fileName);
+        return File.Exists(path) ? path : null;
+    }
+
+    private string? ResolveManagedPath(string trackId)
+    {
+        if (string.IsNullOrWhiteSpace(trackId) || Path.IsPathRooted(trackId))
+            return null;
+
+        var fileName = Path.GetFileName(trackId);
+        if (!string.Equals(fileName, trackId, StringComparison.Ordinal) || !SupportedExtensions.Contains(Path.GetExtension(fileName)))
             return null;
 
         var path = Path.Combine(MusicDirectory, fileName);
@@ -173,6 +206,9 @@ public sealed class MusicLibraryService(
             yield return settings.AnimationMusic;
             yield return settings.ResultMusic;
         }
+
+        foreach (var selection in GetAttachedMusicSelections())
+            yield return selection;
     }
 
     private IEnumerable<DrawSettingsConfigBase> GetAllDrawSettings()
@@ -200,6 +236,7 @@ public sealed class MusicLibraryService(
             }
         }
 
+        changed |= ClearAttachedMusicReferences(trackId);
         if (changed)
             configHandler.Save();
     }
@@ -224,5 +261,245 @@ public sealed class MusicLibraryService(
 
         if (changed)
             configHandler.Save();
+    }
+
+    private IEnumerable<string> GetAttachedMusicSelections()
+    {
+        var profileService = attachedSettingsProfileService;
+        if (profileService is null)
+            yield break;
+
+        foreach (var selection in GetStudentSelections(profileService.CurrentStudentList?.Students))
+            yield return selection;
+        foreach (var selection in GetPrizeSelections(profileService.CurrentPrizeList?.Prizes))
+            yield return selection;
+
+        if (profileService.StudentListConfig is { } studentListConfig)
+        {
+            foreach (var name in GetListNames("roll_call_list"))
+            {
+                if (name == studentListConfig.Name)
+                    continue;
+
+                foreach (var selection in TryGetStudentListSelections(name))
+                    yield return selection;
+            }
+        }
+
+        if (profileService.PrizeListConfig is { } prizeListConfig)
+        {
+            foreach (var name in GetListNames("lottery_list"))
+            {
+                if (name == prizeListConfig.Name)
+                    continue;
+
+                foreach (var selection in TryGetPrizeListSelections(name))
+                    yield return selection;
+            }
+        }
+    }
+
+    private bool ClearAttachedMusicReferences(string trackId)
+    {
+        var profileService = attachedSettingsProfileService;
+        if (profileService is null)
+            return false;
+
+        var changed = ClearStudentReferences(profileService.CurrentStudentList?.Students, trackId);
+        changed |= ClearPrizeReferences(profileService.CurrentPrizeList?.Prizes, trackId);
+        if (changed)
+            profileService.SaveProfile();
+
+        if (profileService.StudentListConfig is { } studentListConfig)
+        {
+            foreach (var name in GetListNames("roll_call_list"))
+            {
+                if (name != studentListConfig.Name)
+                    changed |= TryClearStudentListReferences(trackId, new StudentListConfig(name));
+            }
+        }
+
+        if (profileService.PrizeListConfig is { } prizeListConfig)
+        {
+            foreach (var name in GetListNames("lottery_list"))
+            {
+                if (name != prizeListConfig.Name)
+                    changed |= TryClearPrizeListReferences(trackId, new PrizeListConfig(name));
+            }
+        }
+
+        return changed;
+    }
+
+    private IEnumerable<string> GetListNames(string directoryName)
+    {
+        try
+        {
+            var directory = Utils.GetDirectoryPath("list", directoryName);
+            return Directory.EnumerateFiles(directory, "*.json")
+                .Select(Path.GetFileNameWithoutExtension)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Cast<string>()
+                .ToArray();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "枚举音乐引用名单失败：目录={DirectoryName}。", directoryName);
+            return [];
+        }
+    }
+
+    private bool TryClearStudentListReferences(string trackId, StudentListConfig config)
+    {
+        try
+        {
+            return ClearStudentListReferences(trackId, config);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "清除学生名单音乐引用失败：名单={ListName}。", config.Name);
+            return false;
+        }
+    }
+
+    private bool TryClearPrizeListReferences(string trackId, PrizeListConfig config)
+    {
+        try
+        {
+            return ClearPrizeListReferences(trackId, config);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "清除奖品池音乐引用失败：奖品池={ListName}。", config.Name);
+            return false;
+        }
+    }
+
+    private IEnumerable<string> TryGetStudentListSelections(string name)
+    {
+        try
+        {
+            return GetStudentSelections(new StudentListConfig(name).Data.Students).ToArray();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "读取学生名单音乐引用失败：名单={ListName}。", name);
+            return [];
+        }
+    }
+
+    private IEnumerable<string> TryGetPrizeListSelections(string name)
+    {
+        try
+        {
+            return GetPrizeSelections(new PrizeListConfig(name).Data.Prizes).ToArray();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "读取奖品池音乐引用失败：奖品池={ListName}。", name);
+            return [];
+        }
+    }
+
+    private static IEnumerable<string> GetStudentSelections(IEnumerable<Student>? students)
+    {
+        if (students is null)
+            yield break;
+
+        foreach (var student in students)
+        {
+            var settings = student.GetAttachedObject<DrawMusicAttachedSettings>(DrawMusicSettingsId);
+            if (settings is null)
+                continue;
+
+            yield return settings.AnimationMusic;
+            yield return settings.ResultMusic;
+        }
+    }
+
+    private static IEnumerable<string> GetPrizeSelections(IEnumerable<Prize>? prizes)
+    {
+        if (prizes is null)
+            yield break;
+
+        foreach (var prize in prizes)
+        {
+            var settings = prize.GetAttachedObject<DrawMusicAttachedSettings>(DrawMusicSettingsId);
+            if (settings is null)
+                continue;
+
+            yield return settings.AnimationMusic;
+            yield return settings.ResultMusic;
+        }
+    }
+
+    private static bool ClearStudentReferences(IEnumerable<Student>? students, string trackId)
+    {
+        if (students is null)
+            return false;
+
+        var changed = false;
+        foreach (var student in students)
+            changed |= ClearAttachedMusicReference(student, trackId);
+        return changed;
+    }
+
+    private static bool ClearPrizeReferences(IEnumerable<Prize>? prizes, string trackId)
+    {
+        if (prizes is null)
+            return false;
+
+        var changed = false;
+        foreach (var prize in prizes)
+            changed |= ClearAttachedMusicReference(prize, trackId);
+        return changed;
+    }
+
+    private static bool ClearStudentListReferences(string trackId, StudentListConfig? config)
+    {
+        if (config is null)
+            return false;
+
+        var changed = ClearStudentReferences(config.Data.Students, trackId);
+
+        if (changed)
+            config.Save();
+        return changed;
+    }
+
+    private static bool ClearPrizeListReferences(string trackId, PrizeListConfig? config)
+    {
+        if (config is null)
+            return false;
+
+        var changed = ClearPrizeReferences(config.Data.Prizes, trackId);
+
+        if (changed)
+            config.Save();
+        return changed;
+    }
+
+    private static bool ClearAttachedMusicReference(IAttachableSettingsObject target, string trackId)
+    {
+        var settings = target.GetAttachedObject<DrawMusicAttachedSettings>(DrawMusicSettingsId);
+        if (settings is null)
+            return false;
+
+        var changed = false;
+        if (settings.AnimationMusic == trackId)
+        {
+            settings.AnimationMusic = NoMusicTrackId;
+            changed = true;
+        }
+
+        if (settings.ResultMusic == trackId)
+        {
+            settings.ResultMusic = NoMusicTrackId;
+            changed = true;
+        }
+
+        if (changed)
+            target.WriteAttachedObject(DrawMusicSettingsId, settings);
+        return changed;
     }
 }

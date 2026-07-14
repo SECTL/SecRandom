@@ -275,21 +275,30 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                 count,
                 _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName),
                 prizes,
+                DrawProofExportContext.ForPrizes(SelectedPrizeListName),
                 cancellationToken: default);
-            await ShowPreviewAsync(prizes, count).ConfigureAwait(true);
-
+            var previewTask = ShowPreviewAsync(prizes, count, MusicSettings.AnimationMusic);
             List<Prize> drawn;
             Guid? prizeProofId;
             try
             {
+                var drawCompletedFirst = await Task.WhenAny(verificationDrawTask, previewTask).ConfigureAwait(true) == verificationDrawTask;
                 var proofOutcome = await verificationDrawTask.ConfigureAwait(true);
                 drawn = proofOutcome.Winners.ToList();
                 prizeProofId = proofOutcome.Proof.ProofId;
+                if (drawCompletedFirst && !previewTask.IsCompleted)
+                    await _drawAudioService.StartAnimationMusicAsync(
+                        DrawMusicAttachedSettingsResolver.GetAnimationMusic(drawn.FirstOrDefault(), MusicSettings.AnimationMusic),
+                        MusicSettings.AnimationMusicVolume,
+                        MusicSettings.AnimationMusicFadeIn,
+                        Config.MoreSettings.BackgroundMusicLoop).ConfigureAwait(true);
+
+                await previewTask.ConfigureAwait(true);
             }
             catch (Exception exception)
             {
                 _logger.LogWarning(exception, "可验证奖品抽取失败。");
-                await _drawAudioService.StopAnimationMusicAsync(0, immediate: true).ConfigureAwait(false);
+                StopPreview();
                 _lastResultPrizes.Clear();
                 ResultItems.Clear();
                 IsResultVisible = false;
@@ -329,7 +338,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             TriggerResultAnimation();
             StatusText = string.Format(SR.M_DrawnCountFormat, ResultItems.Count);
             RefreshCounts();
-            await _drawAudioService.TransitionToResultMusicAsync(MusicSettings.ResultMusic,
+            await _drawAudioService.TransitionToResultMusicAsync(
+                DrawMusicAttachedSettingsResolver.GetResultMusic(drawn.FirstOrDefault(), MusicSettings.ResultMusic),
                 MusicSettings.ResultMusicVolume, MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut,
                 MusicSettings.AnimationMusicFadeOut).ConfigureAwait(false);
             if (_notificationService is not null)
@@ -604,12 +614,14 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         };
     }
 
-    private async Task ShowPreviewAsync(IReadOnlyList<Prize> prizes, int count)
+    private async Task ShowPreviewAsync(IReadOnlyList<Prize> prizes, int count, string animationMusic)
     {
         if (Config.LotterySettings.LotteryShowRandom < 0 || AnimationSettings.Animation == AnimationMode.NoAnimation)
             return;
 
-        await _drawAudioService.StartAnimationMusicAsync(MusicSettings.AnimationMusic, MusicSettings.AnimationMusicVolume,
+        await _drawAudioService.StartAnimationMusicAsync(
+            animationMusic,
+            MusicSettings.AnimationMusicVolume,
             MusicSettings.AnimationMusicFadeIn, Config.MoreSettings.BackgroundMusicLoop).ConfigureAwait(true);
 
         var previewCts = new CancellationTokenSource();
@@ -744,6 +756,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                 count,
                 candidates,
                 DrawSettingsType.RollCall,
+                DrawProofExportContext.ForStudents(SelectedStudentListName, CurrentGroupScope, CurrentGenderScope, courseName),
                 parentProofId,
                 courseName).ConfigureAwait(true)).Winners.ToList();
         }

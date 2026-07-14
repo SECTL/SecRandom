@@ -332,6 +332,20 @@ th{background:#f1f5f9}
         public StudentHistoryConfig? StudentHistoryConfig => null;
         public PrizeListConfig? PrizeListConfig => null;
         public PrizeHistoryConfig? PrizeHistoryConfig => null;
+        public void LoadStudentProfile(string name, bool saveCurrent = true) { }
+        public void LoadPrizeProfile(string name, bool saveCurrent = true) { }
+        public void RecordStudentHistory(
+            IReadOnlyList<Student> students,
+            DateTime now,
+            int requestedCount,
+            string drawGroup = "",
+            string drawGender = "",
+            int drawMethod = 0,
+            IReadOnlyDictionary<Student, double>? weights = null,
+            string courseName = "") { }
+        public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount) { }
+        public void ClearCurrentStudentHistory() { }
+        public void ClearCurrentPrizeHistory() { }
         public void SaveProfile() { }
     }
 

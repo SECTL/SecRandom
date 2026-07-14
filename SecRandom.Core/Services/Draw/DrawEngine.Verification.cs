@@ -2,6 +2,7 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Models.Verification;
+using SecRandom.Core.Services.Draw.Exceptions;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Interfaces;
 using SecRandom.Shared.Models.Profile;
@@ -21,13 +22,24 @@ public partial class DrawEngine
         DrawSettingsType drawSettingsType,
         string courseName = "")
     {
-        var usable = candidates.Where(student => student.IsCandidate).ToList();
-        if (usable.Count == 0 || count <= 0 || count > usable.Count)
+        var preparedCandidates = candidates.Where(student => student.IsCandidate).ToList();
+        if (preparedCandidates.Count == 0 || count <= 0 || count > preparedCandidates.Count)
             throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.");
 
-        var historyCache = BuildStudentHistoryCache(usable, courseName);
-        var weighted = GetStudentDrawType(drawSettingsType) == DrawType.Fair
-            ? CalculateStudentWeight(usable, historyCache)
+        var historyCache = BuildStudentHistoryCache(preparedCandidates, courseName);
+        var drawType = GetStudentDrawType(drawSettingsType);
+        List<Student> usable;
+        try
+        {
+            usable = FilterPreparedStudents(preparedCandidates, count, historyCache, drawType == DrawType.Fair);
+        }
+        catch (Exception exception) when (exception is CandidateNotFoundException or RepeatLimitExhaustedException)
+        {
+            throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.", exception);
+        }
+
+        var weighted = drawType == DrawType.Fair
+            ? CalculateStudentWeight(usable, historyCache, courseName)
             : usable.Select(student => new WeightedCandidate<Student> { Candidate = student, Weight = 1.0 }).ToList();
 
         var frozen = FreezeCandidates(weighted);
@@ -36,7 +48,14 @@ public partial class DrawEngine
             Kind = VerificationDrawKind.Student,
             Count = count,
             Candidates = frozen,
-            AuditPayload = CreateAuditPayload("student", count, frozen, weighted, historyCache)
+            AuditPayload = CreateAuditPayload("student", count, frozen, weighted, historyCache, new
+            {
+                fairDraw = drawType == DrawType.Fair,
+                historyScope = string.IsNullOrWhiteSpace(courseName) ? "global" : "course",
+                averageGapProtectionApplied = drawType == DrawType.Fair && ConfigData.FairDrawSettings.EnableAvgGapProtection,
+                candidateCountBeforeAverageGapProtection = preparedCandidates.Count,
+                candidateCountAfterAverageGapProtection = usable.Count
+            })
         };
     }
 
@@ -137,7 +156,8 @@ public partial class DrawEngine
         int count,
         IReadOnlyList<VerificationCandidate> candidates,
         IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates,
-        IReadOnlyDictionary<TCandidate, History> historyCache)
+        IReadOnlyDictionary<TCandidate, History> historyCache,
+        object? fairness = null)
         where TCandidate : IAttachableSettingsObject
     {
         var historyByRecordId = historyCache.ToDictionary(pair => GetRecordId(pair.Key), pair => pair.Value);
@@ -180,6 +200,7 @@ public partial class DrawEngine
             candidateCount = ordered.Length,
             internalSettingsApplied = ordered.Any(candidate => candidate.internalSettingApplied),
             internalCandidateCount = ordered.Count(candidate => candidate.internalSettingApplied),
+            fairness,
             candidates = ordered
         });
     }

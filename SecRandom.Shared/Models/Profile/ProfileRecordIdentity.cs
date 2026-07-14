@@ -70,7 +70,13 @@ public static class ProfileRecordIdentity
         ProfileRecordIdentityDiagnostics.StudentPrimaryLookups++;
         var recordId = EnsureRecordId(student);
         if (history.Students.TryGetValue(recordId, out var historyByRecordId))
+        {
+            MergeCompactRecordIdHistory(history.Students, recordId, historyByRecordId);
             return historyByRecordId;
+        }
+
+        if (TryMigrateCompactRecordIdHistory(history.Students, recordId, out var historyByCompactRecordId))
+            return historyByCompactRecordId;
 
         foreach (var legacyKey in GetLegacyStudentHistoryKeys(student))
         {
@@ -82,6 +88,7 @@ public static class ProfileRecordIdentity
                 continue;
 
             history.Students[recordId] = legacyHistory;
+            history.Students.Remove(legacyKey);
             return legacyHistory;
         }
 
@@ -96,7 +103,13 @@ public static class ProfileRecordIdentity
         ProfileRecordIdentityDiagnostics.PrizePrimaryLookups++;
         var recordId = EnsureRecordId(prize);
         if (history.Prizes.TryGetValue(recordId, out var historyByRecordId))
+        {
+            MergeCompactRecordIdHistory(history.Prizes, recordId, historyByRecordId);
             return historyByRecordId;
+        }
+
+        if (TryMigrateCompactRecordIdHistory(history.Prizes, recordId, out var historyByCompactRecordId))
+            return historyByCompactRecordId;
 
         foreach (var legacyKey in GetLegacyPrizeHistoryKeys(prize))
         {
@@ -108,6 +121,7 @@ public static class ProfileRecordIdentity
                 continue;
 
             history.Prizes[recordId] = legacyHistory;
+            history.Prizes.Remove(legacyKey);
             return legacyHistory;
         }
 
@@ -152,6 +166,53 @@ public static class ProfileRecordIdentity
             .Where(pair => pair.Value == 1)
             .Select(pair => pair.Key)
             .ToHashSet(StringComparer.Ordinal);
+    }
+
+    private static bool TryMigrateCompactRecordIdHistory(
+        IDictionary<string, History> histories,
+        string recordId,
+        out History history)
+    {
+        var compactRecordId = GetCompactRecordId(recordId);
+        if (!histories.TryGetValue(compactRecordId, out var compactHistory))
+        {
+            history = null!;
+            return false;
+        }
+
+        history = compactHistory;
+        histories[recordId] = history;
+        histories.Remove(compactRecordId);
+        return true;
+    }
+
+    private static void MergeCompactRecordIdHistory(
+        IDictionary<string, History> histories,
+        string recordId,
+        History canonicalHistory)
+    {
+        var compactRecordId = GetCompactRecordId(recordId);
+        if (!histories.TryGetValue(compactRecordId, out var compactHistory))
+            return;
+
+        histories.Remove(compactRecordId);
+        if (ReferenceEquals(canonicalHistory, compactHistory))
+            return;
+
+        canonicalHistory.TotalCount += compactHistory.TotalCount;
+        canonicalHistory.RoundsMissed = Math.Max(canonicalHistory.RoundsMissed, compactHistory.RoundsMissed);
+        canonicalHistory.LastDrawnTime = canonicalHistory.LastDrawnTime >= compactHistory.LastDrawnTime
+            ? canonicalHistory.LastDrawnTime
+            : compactHistory.LastDrawnTime;
+        foreach (var item in compactHistory.Histories)
+            canonicalHistory.Histories.Add(item);
+    }
+
+    private static string GetCompactRecordId(string recordId)
+    {
+        return Guid.TryParse(recordId, out var parsedRecordId)
+            ? parsedRecordId.ToString("N")
+            : recordId;
     }
 
     private static Guid CreateRecordId()

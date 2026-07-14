@@ -375,7 +375,10 @@ public partial class App : Application
                 services.AddSingleton<ProtocolCommandRouter>();
                 services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
                 services.AddSingleton<NotificationService>();
-                services.AddSingleton<MusicLibraryService>();
+                services.AddSingleton(serviceProvider => new MusicLibraryService(
+                    serviceProvider.GetRequiredService<MainConfigHandler>(),
+                    serviceProvider.GetRequiredService<ILogger<MusicLibraryService>>(),
+                    attachedSettingsProfileService: serviceProvider.GetRequiredService<IProfileService>()));
                 services.AddSingleton<DrawAudioService>();
                 services.AddSingleton<CsesScheduleParser>();
                 services.AddSingleton<ICsesScheduleStore, CsesScheduleStore>();
@@ -404,6 +407,7 @@ public partial class App : Application
                 services.AddAttachedSettingsControl<BehindSceneAttachedSettingsControl>(Langs.Common.Resources
                     .AttachedSettings_BehindScene);
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
+                services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");
 
                 // 界面 Views
                 services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
@@ -1080,14 +1084,28 @@ public partial class App : Application
 
     public static void ShowQuickDrawWindow()
     {
+        ObserveTask(ShowQuickDrawWindowAsync(), "Quick draw window action failed.");
+    }
+
+    private static async Task ShowQuickDrawWindowAsync()
+    {
         TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
         using var transaction = telemetry?.StartTransaction("ui.quick_draw_window", "ui.navigation");
 
         try
         {
+            var quickDraw = IAppHost.GetService<QuickDrawPageViewModel>();
+            if (!quickDraw.IsDrawing && !await quickDraw.AuthorizeWindowDrawAsync())
+            {
+                transaction?.Finish(SpanStatus.PermissionDenied);
+                return;
+            }
+
             if (_quickDrawWindow is { IsVisible: true })
             {
                 _quickDrawWindow.Activate();
+                if (!quickDraw.IsDrawing)
+                    await quickDraw.StartAuthorizedWindowDrawAsync();
                 transaction?.Finish(SpanStatus.Ok);
                 return;
             }
@@ -1128,7 +1146,7 @@ public partial class App : Application
 
             _quickDrawWindow.Show();
             _quickDrawWindow.Activate();
-            (_quickDrawWindow.Content as QuickDrawPage)?.StartDraw();
+            await quickDraw.StartAuthorizedWindowDrawAsync();
             transaction?.Finish(SpanStatus.Ok);
         }
         catch (Exception ex)
