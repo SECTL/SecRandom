@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using Avalonia.Collections;
@@ -38,6 +39,7 @@ public partial class FloatingWindowSettingsPage : UserControl
                 value => Settings.ShowLotteryButton = value)
         ];
         SelectedButtonOptions = BuildSelectedOptions(ButtonOptions);
+        SelectedButtonOptions.CollectionChanged += SelectedButtonOptions_OnCollectionChanged;
         DataContext = this;
         InitializeComponent();
         SubscribeSettings();
@@ -124,16 +126,11 @@ public partial class FloatingWindowSettingsPage : UserControl
         return true;
     }
 
-    private void MultiSelect_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void SelectedButtonOptions_OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        foreach (var option in e.AddedItems.OfType<MultiSelectSettingOption>())
-        {
-            option.SetSelected(true);
-        }
-
-        foreach (var option in e.RemovedItems.OfType<MultiSelectSettingOption>())
-        {
-            option.SetSelected(false);
-        }
+        Settings.ShowRollCallButton = SelectedButtonOptions.Contains(ButtonOptions[0]);
+        Settings.ShowQuickDrawButton = SelectedButtonOptions.Contains(ButtonOptions[1]);
+        Settings.ShowLotteryButton = SelectedButtonOptions.Contains(ButtonOptions[2]);
+        ConfigHandler.Save();
     }
 }

@@ -238,7 +238,8 @@
         </Border>
 
         <Grid Grid.Column="1"
-              Margin="28 0 12 28">
+              Margin="28 0 12 28"
+              ClipToBounds="True">
             <TextBlock Classes="result-name"
                        IsVisible="{Binding !IsResultVisible}"
                        Text="{Binding ReminderText}"
@@ -248,8 +249,9 @@
                        FontWeight="SemiBold" />
 
             <ScrollViewer IsVisible="{Binding IsResultVisible}"
-                          HorizontalScrollBarVisibility="Disabled"
-                          VerticalScrollBarVisibility="Auto">
+                            HorizontalScrollBarVisibility="Disabled"
+                            VerticalScrollBarVisibility="Auto"
+                            VerticalContentAlignment="Center">
                 <ItemsControl x:Name="ResultPresenter"
                               ItemsSource="{Binding ResultItems}"
                               HorizontalAlignment="Center"

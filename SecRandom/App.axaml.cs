@@ -157,6 +157,8 @@ public partial class App : Application
             _floatingWindow = new FloatingWindow();
             _floatingWindow.Opened += (_, _) => RefreshTrayWindowMenuItems();
             _floatingWindow.Closed += (_, _) => _floatingWindow = null;
+            if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.StartupDisplayFloatingWindow)
+                _floatingWindow.Hide();
             desktop.MainWindow = _floatingWindow;
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime)

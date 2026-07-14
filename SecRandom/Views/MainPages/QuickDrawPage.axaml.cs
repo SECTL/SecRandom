@@ -2,15 +2,16 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.ComponentModel;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-using Avalonia.VisualTree;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Helpers;
 using SecRandom.ViewModels.MainPages;
+using CommonResources = SecRandom.Langs.Common.Resources;
 
 namespace SecRandom.Views.MainPages;
 
@@ -20,6 +21,12 @@ public partial class QuickDrawPage : UserControl
     private int _autoCloseRevision;
     private CancellationTokenSource? _autoCloseCts;
     private readonly ItemsControl? _resultPresenter;
+    private IPointer? _dragPointer;
+    private PixelPoint _dragStartScreenPoint;
+    private PixelPoint _dragStartWindowPosition;
+    private CancellationTokenSource? _clickSequenceCts;
+    private int _clickCount;
+    private int _remainingAutoCloseSeconds;
 
     public QuickDrawPage()
     {
@@ -45,6 +52,7 @@ public partial class QuickDrawPage : UserControl
     {
         _isUnloaded = true;
         CancelAutoClose();
+        CancelClickSequence();
         ViewModel.PropertyChanged -= ViewModel_OnPropertyChanged;
         ViewModel.Config.FloatingWindowSettings.PropertyChanged -= FloatingWindowSettings_OnPropertyChanged;
     }
@@ -63,26 +71,49 @@ public partial class QuickDrawPage : UserControl
             100) / 100.0;
     }
 
-    private void DragHandle_OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    private void RootBorder_OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed && !IsChildOfButton(e.Source as Control))
-            (TopLevel.GetTopLevel(this) as Window)?.BeginMoveDrag(e);
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed
+            || TopLevel.GetTopLevel(this) is not Window window)
+            return;
+
+        _dragPointer = e.Pointer;
+        _dragStartScreenPoint = window.Position + ToPixelPoint(e.GetPosition(window), window.RenderScaling);
+        _dragStartWindowPosition = window.Position;
+        e.Pointer.Capture(RootBorder);
     }
 
-    private static bool IsChildOfButton(Control? control)
+    private void RootBorder_OnPointerMoved(object? sender, PointerEventArgs e)
     {
-        for (var current = control; current is not null; current = current.GetVisualParent() as Control)
+        if (!ReferenceEquals(e.Pointer, _dragPointer)
+            || TopLevel.GetTopLevel(this) is not Window window)
+            return;
+
+        var screenPoint = window.Position + ToPixelPoint(e.GetPosition(window), window.RenderScaling);
+        window.Position = new PixelPoint(
+            _dragStartWindowPosition.X + screenPoint.X - _dragStartScreenPoint.X,
+            _dragStartWindowPosition.Y + screenPoint.Y - _dragStartScreenPoint.Y);
+    }
+
+    private void RootBorder_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (e.InitialPressMouseButton != MouseButton.Left)
+            return;
+
+        if (ReferenceEquals(e.Pointer, _dragPointer))
         {
-            if (current is Button)
-                return true;
+            _dragPointer = null;
+            e.Pointer.Capture(null);
         }
 
-        return false;
+        RegisterClick();
     }
 
-    private void Close_OnClick(object? sender, RoutedEventArgs e)
+    private static PixelPoint ToPixelPoint(Point point, double renderScaling)
     {
-        (TopLevel.GetTopLevel(this) as Window)?.Close();
+        return new PixelPoint(
+            (int)Math.Round(point.X * renderScaling),
+            (int)Math.Round(point.Y * renderScaling));
     }
 
     private void ViewModel_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -144,6 +175,8 @@ public partial class QuickDrawPage : UserControl
     private async Task CloseAfterDelayAsync(int autoCloseRevision)
     {
         var seconds = System.Math.Clamp(ViewModel.Config.QuickDrawSettings.AutoCloseTime, 0, 60);
+        _remainingAutoCloseSeconds = seconds;
+        UpdateAutoCloseHint();
         if (seconds == 0)
             return;
 
@@ -151,7 +184,13 @@ public partial class QuickDrawPage : UserControl
         _autoCloseCts = cts;
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(seconds), cts.Token);
+            while (_remainingAutoCloseSeconds > 0)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
+                _remainingAutoCloseSeconds--;
+                UpdateAutoCloseHint();
+            }
+
             if (!_isUnloaded && autoCloseRevision == _autoCloseRevision && ReferenceEquals(_autoCloseCts, cts))
                 (TopLevel.GetTopLevel(this) as Window)?.Close();
         }
@@ -170,5 +209,68 @@ public partial class QuickDrawPage : UserControl
     {
         _autoCloseCts?.Cancel();
         _autoCloseCts = null;
+        _remainingAutoCloseSeconds = 0;
+        UpdateAutoCloseHint();
+    }
+
+    private void UpdateAutoCloseHint()
+    {
+        AutoCloseHintTextBlock.Text = _remainingAutoCloseSeconds > 0
+            ? string.Format(
+                CommonResources.ResourceManager.GetString("C_QuickDrawAutoCloseHint", CommonResources.Culture)
+                ?? throw new InvalidOperationException("Quick draw auto-close localization is missing."),
+                _remainingAutoCloseSeconds)
+            : CommonResources.ResourceManager.GetString("C_QuickDrawManualCloseHint", CommonResources.Culture)
+              ?? throw new InvalidOperationException("Quick draw manual-close localization is missing.");
+    }
+
+    private void RegisterClick()
+    {
+        var clickCount = ++_clickCount;
+        if (clickCount == 1)
+        {
+            RestartClickSequenceTimeout();
+            return;
+        }
+
+        if (clickCount == 3)
+        {
+            CancelClickSequence();
+            (TopLevel.GetTopLevel(this) as Window)?.Close();
+        }
+    }
+
+    private void RestartClickSequenceTimeout()
+    {
+        _clickSequenceCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _clickSequenceCts = cts;
+        _ = ResetClickSequenceAfterDelayAsync(cts);
+    }
+
+    private async Task ResetClickSequenceAfterDelayAsync(CancellationTokenSource cts)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(500), cts.Token);
+            if (ReferenceEquals(_clickSequenceCts, cts))
+                _clickCount = 0;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            if (ReferenceEquals(_clickSequenceCts, cts))
+                _clickSequenceCts = null;
+            cts.Dispose();
+        }
+    }
+
+    private void CancelClickSequence()
+    {
+        _clickSequenceCts?.Cancel();
+        _clickSequenceCts = null;
+        _clickCount = 0;
     }
 }

@@ -49,6 +49,12 @@
     <data name="Feat_QuickDraw" xml:space="preserve">
         <value>闪抽</value>
     </data>
+    <data name="C_QuickDrawAutoCloseHint" xml:space="preserve">
+        <value>{0} 秒后自动关闭&#xA;连续点击 3 次关闭窗口</value>
+    </data>
+    <data name="C_QuickDrawManualCloseHint" xml:space="preserve">
+        <value>连续点击 3 次关闭窗口</value>
+    </data>
     <data name="Feat_Lottery" xml:space="preserve">
         <value>抽奖</value>
     </data>

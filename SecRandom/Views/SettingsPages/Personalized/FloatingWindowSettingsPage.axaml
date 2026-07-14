@@ -64,9 +64,8 @@
                                    IconSource="{sr:FluentIconSource {sr:Fi PersonFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <u:MultiComboBox MinWidth="260"
-                                     ItemsSource="{Binding ButtonOptions}"
-                                     SelectedItems="{Binding SelectedButtonOptions}"
-                                     SelectionChanged="MultiSelect_OnSelectionChanged" />
+                                      ItemsSource="{Binding ButtonOptions}"
+                                      SelectedItems="{Binding SelectedButtonOptions}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
