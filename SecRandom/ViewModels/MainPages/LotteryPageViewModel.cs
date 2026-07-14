@@ -25,6 +25,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using SecRandom.Services.Draw;
+using SecRandom.Services.Notification;
 using SecRandom.Services.Security;
 using SecRandom.Services.Verification;
 using SecRandom.ViewModels;
@@ -50,6 +51,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly ILogger<LotteryPageViewModel> _logger;
     private readonly ISecurityService _securityService;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
+    private readonly NotificationService? _notificationService;
     private readonly FileSystemWatcher _prizeListWatcher;
     private readonly FileSystemWatcher _studentListWatcher;
     private bool _isDrawCommandRunning;
@@ -79,7 +81,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         ILogger<LotteryPageViewModel> logger,
         ISecurityService securityService,
         VerificationDrawCoordinator verificationDrawCoordinator,
-        IVoiceAnnouncementService? voiceAnnouncementService = null)
+        IVoiceAnnouncementService? voiceAnnouncementService = null,
+        NotificationService? notificationService = null)
         : base(configHandler)
     {
         _configHandler = configHandler;
@@ -91,6 +94,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         _logger = logger;
         _securityService = securityService;
         _verificationDrawCoordinator = verificationDrawCoordinator;
+        _notificationService = notificationService;
         _prizeListWatcher = CreatePrizeListWatcher();
         _studentListWatcher = CreateStudentListWatcher();
         PrizeListNames.CollectionChanged += PrizeListNamesOnCollectionChanged;
@@ -317,6 +321,11 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             RefreshCounts();
             await _drawAudioService.PlayAsync(MusicSettings.ResultMusic, MusicSettings.ResultMusicVolume,
                 MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut).ConfigureAwait(false);
+            if (_notificationService is not null)
+                await _notificationService.ShowAsync(
+                    NotificationSettingsType.Lottery,
+                    "抽奖结果",
+                    ResultItems.Select(item => item.DisplayText).ToList());
             if (_voiceAnnouncementService is not null)
                 await _voiceAnnouncementService.SpeakPrizesAsync(drawn).ConfigureAwait(false);
         }

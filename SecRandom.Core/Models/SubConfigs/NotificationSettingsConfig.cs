@@ -1,12 +1,35 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.Text.Json.Serialization;
 
 namespace SecRandom.Core.Models.SubConfigs;
 
-public partial class NotificationSettingsConfig : ObservableObject
+public partial class NotificationSettingsConfig : ObservableObject, IJsonOnDeserialized
 {
-    [ObservableProperty] private NotificationChannelSettings _rollCall = NotificationChannelSettings.CreateDisabled();
-    [ObservableProperty] private NotificationChannelSettings _quickDraw = NotificationChannelSettings.CreateEnabled();
-    [ObservableProperty] private NotificationChannelSettings _lottery = NotificationChannelSettings.CreateDisabled();
+    private bool _hasDefault;
+
+    [ObservableProperty] private NotificationChannelSettings _default = NotificationChannelSettings.CreateDisabled();
+    [ObservableProperty] private OverridableNotificationChannelSettings _rollCall = new();
+    [ObservableProperty] private OverridableNotificationChannelSettings _quickDraw = new()
+    {
+        Enabled = true,
+        OverrideBasicSettings = true
+    };
+    [ObservableProperty] private OverridableNotificationChannelSettings _lottery = new();
+
+    partial void OnDefaultChanged(NotificationChannelSettings value)
+    {
+        _hasDefault = true;
+    }
+
+    void IJsonOnDeserialized.OnDeserialized()
+    {
+        if (_hasDefault)
+            return;
+
+        RollCall.EnableAllOverrides();
+        QuickDraw.EnableAllOverrides();
+        Lottery.EnableAllOverrides();
+    }
 }
 
 public partial class NotificationChannelSettings : ObservableObject
@@ -19,12 +42,6 @@ public partial class NotificationChannelSettings : ObservableObject
     [ObservableProperty] private int _horizontalOffset = 0;
     [ObservableProperty] private int _verticalOffset = 0;
     [ObservableProperty] private int _transparency = 80;
-    [ObservableProperty] private string _floatingWindowEnabledMonitor = "OFF";
-    [ObservableProperty] private int _floatingWindowPosition = 0;
-    [ObservableProperty] private int _floatingWindowHorizontalOffset = 0;
-    [ObservableProperty] private int _floatingWindowVerticalOffset = 0;
-    [ObservableProperty] private int _floatingWindowTransparency = 80;
-    [ObservableProperty] private int _floatingWindowAutoCloseTime = 5;
     [ObservableProperty] private int _notificationServiceType = 0;
     [ObservableProperty] private int _displayDuration = 5;
     [ObservableProperty] private bool _useMainWindowWhenExceedThreshold = true;
@@ -39,7 +56,19 @@ public partial class NotificationChannelSettings : ObservableObject
         _enabled = enabledByDefault;
     }
 
-    public static NotificationChannelSettings CreateEnabled() => new(true);
-
     public static NotificationChannelSettings CreateDisabled() => new(false);
+}
+
+public partial class OverridableNotificationChannelSettings : NotificationChannelSettings
+{
+    [ObservableProperty] private bool _overrideBasicSettings;
+    [ObservableProperty] private bool _overrideNotificationWindowSettings;
+    [ObservableProperty] private bool _overrideServiceSettings;
+
+    public void EnableAllOverrides()
+    {
+        OverrideBasicSettings = true;
+        OverrideNotificationWindowSettings = true;
+        OverrideServiceSettings = true;
+    }
 }

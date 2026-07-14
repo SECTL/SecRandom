@@ -15,7 +15,7 @@ public partial class DefaultNotificationSettingsPage : NotificationChannelSettin
 
     protected override NotificationChannelSettings SelectChannelSettings(NotificationSettingsConfig settings)
     {
-        return settings.QuickDraw;
+        return settings.Default;
     }
 
     public override string ChannelTitle => Text(nameof(ChannelTitle), "S_Default");

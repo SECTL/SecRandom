@@ -28,6 +28,7 @@ SecRandom/
 │   ├── Desktop/         # TaskBarIconService, GlobalShortcutService
 │   ├── Draw/            # DrawAudioService, DrawTemporaryRecordService
 │   ├── ImportExport/    # Versioned settings/data archives, v2 migration, diagnostics, recovery snapshots
+│   ├── Notification/    # Built-in/ClassIsland draw-result notification routing
 │   ├── Ipc/             # ProtocolCommandRouter for URL/IPC command routing
 │   ├── Plugins/         # Plugin runtime: manager, catalog, invoker, state
 │   ├── Profiles/        # Active ProfileService plus non-mutating ProfileQueryService snapshots
@@ -66,6 +67,7 @@ SecRandom/
 | Profile persistence          | `Services/Profiles/ProfileService.cs`                                   | Current lists/history, active point-call list/history switching, and `SaveProfile()`; list items carry hidden `RecordId` identity. |
 | Voice announcements          | `Services/Voice/VoiceAnnouncementService.cs`, `Controls/AttachedSettings/SpecificAnnouncementAttachedSettingsControl.axaml(.cs)` | App-layer TTS runtime; voice/music settings choose system or Edge TTS, while per-student/per-prize alias/prefix/suffix live in list-page attached settings. |
 | Draw audio / temp records    | `Services/Draw/DrawAudioService.cs`, `Services/Draw/DrawTemporaryRecordService.cs` | App-layer draw audio playback and session-scoped temporary draw records.                                                |
+| Draw-result notifications    | `Services/Notification/NotificationService.cs`, `Views/NotificationWindow.cs` | Resolves default/per-draw notification overrides, delivers built-in windows, and falls back to built-in delivery when ClassIsland is unavailable. |
 | Desktop integration          | `Services/Desktop/`                                                     | Taskbar lifecycle, Windows native global shortcuts, cross-platform autostart, and `secrandom://` registration.          |
 | Telemetry runtime seam       | `Services/Telemetry/`                                                   | App-layer-only Sentry policy/runtime lifecycle boundary; reads and live-applies `PrivacySettings.SentryTelemetryEnabled`.  |
 | Online status reporting      | `Services/OnlineStatusService.cs`                                       | Host-managed SECTL online status reporter; reads `PrivacySettings.OnlineStatusMode`.                                      |
@@ -84,6 +86,7 @@ SecRandom/
 - Roll-call, lottery, and quick-draw ViewModels are shared draw sessions for UI and IPC. Their protocol methods reuse nonvisual core paths after router authorization; do not resolve a detached transient ViewModel for IPC.
 - `SettingsView` read-only preview is entered only by the security verification prompt when `AllowSettingsPreview` is enabled. Freeze the page content host, not settings navigation, and exit preview on normal authorized navigation.
 - `IVoiceAnnouncementService` is app-layer because Edge TTS playback and Windows SAPI/MCI integration are platform/runtime concerns. Per-record TTS alias/prefix/suffix belongs in attached settings on `Student`/`Prize`, not in a standalone settings page.
+- `NotificationService` is app-layer because built-in notification windows and ClassIsland IPC are runtime integrations. Resolve `NotificationSettings` through `MainConfigModel.GetOverrideNotificationSettings(...)`; do not reimplement per-draw fallback logic in ViewModels.
 - Plugin runtime services are app-layer only and are registered in `BuildHost()`. Enabled plugin pages must be configured before Host build so keyed navigation can instantiate them.
 - `.srpx` plugin files are ZIP packages containing exactly one `plugin.json`; import extracts to a temporary directory, validates the manifest, then copies into `data/plugins/<plugin-id>`.
 - Plugin runtime config/data exposed to plugins is private per plugin under `data/configs/plugins/<plugin-id>` via `PluginInfo.ConfigDirectory` and `IPluginRuntimeContext.DataDirectory`.

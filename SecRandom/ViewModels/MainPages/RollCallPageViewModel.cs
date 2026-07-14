@@ -26,6 +26,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using SecRandom.Services.Draw;
+using SecRandom.Services.Notification;
 using SecRandom.Services.Security;
 using SecRandom.Services.Verification;
 using SecRandom.ViewModels;
@@ -50,6 +51,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private readonly ILogger<RollCallPageViewModel> _logger;
     private readonly ISecurityService _securityService;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
+    private readonly NotificationService? _notificationService;
     private readonly FileSystemWatcher _studentListWatcher;
     private List<Student> _lastResultStudents = [];
     private int _studentIdPadWidth;
@@ -77,7 +79,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         ISecurityService securityService,
         VerificationDrawCoordinator verificationDrawCoordinator,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
-        DrawAudioService? drawAudioService = null)
+        DrawAudioService? drawAudioService = null,
+        NotificationService? notificationService = null)
         : base(configHandler)
     {
         _configHandler = configHandler;
@@ -89,6 +92,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         _verificationDrawCoordinator = verificationDrawCoordinator;
         _voiceAnnouncementService = voiceAnnouncementService;
         _drawAudioService = drawAudioService;
+        _notificationService = notificationService;
 
         ResultText = ReminderSettings.ReminderText;
         _studentListWatcher = CreateStudentListWatcher();
@@ -326,6 +330,12 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             StatusText = string.Format(SR.M_DrawnCountFormat, ResultItems.Count);
             RefreshCounts();
             OnPropertyChanged(nameof(ResultText));
+
+            if (_notificationService is not null)
+                await _notificationService.ShowAsync(
+                    NotificationSettingsType.RollCall,
+                    "点名结果",
+                    ResultItems.Select(item => item.DisplayText).ToList());
 
             if (_voiceAnnouncementService is not null)
                 await _voiceAnnouncementService.SpeakStudentsAsync(drawnStudents).ConfigureAwait(false);

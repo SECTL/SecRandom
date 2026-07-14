@@ -43,6 +43,7 @@ using SecRandom.Services.Config;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Draw;
+using SecRandom.Services.Notification;
 using SecRandom.Services.Plugins;
 using SecRandom.Services.Profiles;
 using SecRandom.Services.Ipc;
@@ -364,6 +365,7 @@ public partial class App : Application
                 services.AddSingleton<DesktopIntegrationService>();
                 services.AddSingleton<ProtocolCommandRouter>();
                 services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
+                services.AddSingleton<NotificationService>();
                 services.AddSingleton<DrawAudioService>();
                 services.AddSingleton<ICredentialKeyProtector, CredentialKeyProtector>();
                 services.AddSingleton<SecurityCredentialStore>();

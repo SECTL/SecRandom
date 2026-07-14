@@ -330,4 +330,13 @@
   <data name="S_Common_NotificationServiceType_D" xml:space="preserve">
     <value>选择使用 SecRandom 内置通知、ClassIsland 通知或同时使用。</value>
   </data>
+  <data name="S_Common_BasicSettings" xml:space="preserve">
+    <value>基础设置</value>
+  </data>
+  <data name="S_Common_NotificationWindowSettings" xml:space="preserve">
+    <value>通知窗口</value>
+  </data>
+  <data name="C_EnableOverride" xml:space="preserve">
+    <value>启用覆盖</value>
+  </data>
 </root>

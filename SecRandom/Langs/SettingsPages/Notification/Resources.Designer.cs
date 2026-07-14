@@ -319,6 +319,33 @@ namespace SecRandom.Langs.SettingsPages.Notification {
                 return ResourceManager.GetString("S_Common_NotificationServiceType_D", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 基础设置.
+        /// </summary>
+        public static string S_Common_BasicSettings {
+            get {
+                return ResourceManager.GetString("S_Common_BasicSettings", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 通知窗口.
+        /// </summary>
+        public static string S_Common_NotificationWindowSettings {
+            get {
+                return ResourceManager.GetString("S_Common_NotificationWindowSettings", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 启用覆盖.
+        /// </summary>
+        public static string C_EnableOverride {
+            get {
+                return ResourceManager.GetString("C_EnableOverride", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to 默认提醒设置.

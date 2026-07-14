@@ -2,6 +2,7 @@ using System.Text.Json;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs;
+using SecRandom.Core.Enums;
 
 namespace SecRandom.Core.Tests;
 
@@ -45,5 +46,55 @@ public class NotificationSettingsConfigTests
         Assert.False(settings.RollCall.Enabled);
         Assert.True(settings.QuickDraw.Enabled);
         Assert.False(settings.Lottery.Enabled);
+    }
+
+    [Fact]
+    public void MainConfigModel_UsesDefaultNotificationSettingsUntilCategoryIsOverridden()
+    {
+        MainConfigModel settings = new();
+        settings.NotificationSettings.Default.Enabled = true;
+        settings.NotificationSettings.Default.AutoCloseTime = 9;
+        settings.NotificationSettings.QuickDraw.AutoCloseTime = 3;
+        settings.NotificationSettings.QuickDraw.OverrideBasicSettings = false;
+
+        Assert.Same(
+            settings.NotificationSettings.Default,
+            settings.GetOverrideNotificationSettings(
+                NotificationSettingsType.QuickDraw,
+                OverridableNotificationSettingsType.Basic));
+
+        settings.NotificationSettings.QuickDraw.OverrideBasicSettings = true;
+
+        Assert.Same(
+            settings.NotificationSettings.QuickDraw,
+            settings.GetOverrideNotificationSettings(
+                NotificationSettingsType.QuickDraw,
+                OverridableNotificationSettingsType.Basic));
+    }
+
+    [Fact]
+    public void MainConfigModel_PreservesLegacyNotificationSettingsAsOverrides()
+    {
+        const string json = """
+                            {
+                              "notification_settings": {
+                                "roll_call": {
+                                  "enabled": true
+                                }
+                              }
+                            }
+                            """;
+
+        MainConfigModel? settings = JsonSerializer.Deserialize<MainConfigModel>(
+            json,
+            ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(settings);
+        Assert.True(settings.NotificationSettings.RollCall.OverrideBasicSettings);
+        Assert.Same(
+            settings.NotificationSettings.RollCall,
+            settings.GetOverrideNotificationSettings(
+                NotificationSettingsType.RollCall,
+                OverridableNotificationSettingsType.Basic));
     }
 }

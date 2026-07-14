@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Collections.ObjectModel;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
@@ -15,12 +17,46 @@ public abstract class NotificationChannelSettingsPageBase : UserControl
     {
         ChannelSettings = SelectChannelSettings(ViewModel.Config.NotificationSettings);
         DataContext = this;
-        ChannelSettings.PropertyChanged += SettingsOnPropertyChanged;
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public NotificationChannelSettings ChannelSettings { get; }
+    public ObservableCollection<string> MonitorOptions { get; } = ["OFF"];
+    public OverridableNotificationChannelSettings? OverrideSettings => ChannelSettings as OverridableNotificationChannelSettings;
+    public bool CanOverride => OverrideSettings is not null;
+    public bool OverrideBasicSettings
+    {
+        get => OverrideSettings?.OverrideBasicSettings ?? true;
+        set
+        {
+            if (OverrideSettings is not null)
+                OverrideSettings.OverrideBasicSettings = value;
+        }
+    }
+    public bool OverrideNotificationWindowSettings
+    {
+        get => OverrideSettings?.OverrideNotificationWindowSettings ?? true;
+        set
+        {
+            if (OverrideSettings is not null)
+                OverrideSettings.OverrideNotificationWindowSettings = value;
+        }
+    }
+    public bool OverrideServiceSettings
+    {
+        get => OverrideSettings?.OverrideServiceSettings ?? true;
+        set
+        {
+            if (OverrideSettings is not null)
+                OverrideSettings.OverrideServiceSettings = value;
+        }
+    }
     public abstract string ChannelTitle { get; }
+    public virtual string BasicSettingsTitle => Text(nameof(BasicSettingsTitle), "S_Common_BasicSettings");
+    public virtual string NotificationWindowSettingsTitle => Text(nameof(NotificationWindowSettingsTitle), "S_Common_NotificationWindowSettings");
+    public virtual string OverrideTitle => Text(nameof(OverrideTitle), "C_EnableOverride");
     public abstract string EnabledTitle { get; }
     public abstract string EnabledDescription { get; }
     public abstract string AnimationTitle { get; }
@@ -68,6 +104,28 @@ public abstract class NotificationChannelSettingsPageBase : UserControl
     protected void OnUnloaded(object? sender, RoutedEventArgs e)
     {
         ChannelSettings.PropertyChanged -= SettingsOnPropertyChanged;
+    }
+
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        ChannelSettings.PropertyChanged -= SettingsOnPropertyChanged;
+        ChannelSettings.PropertyChanged += SettingsOnPropertyChanged;
+
+        var selectedMonitor = ChannelSettings.EnabledMonitor;
+        MonitorOptions.Clear();
+        MonitorOptions.Add("OFF");
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel?.Screens is not null)
+        {
+            foreach (var screen in topLevel.Screens.All)
+            {
+                if (!string.IsNullOrWhiteSpace(screen.DisplayName))
+                    MonitorOptions.Add(screen.DisplayName);
+            }
+        }
+
+        if (!MonitorOptions.Contains(selectedMonitor))
+            MonitorOptions.Add(selectedMonitor);
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)

@@ -97,4 +97,32 @@ public partial class MainConfigModel : ConfigBase
             _ => throw new ArgumentOutOfRangeException(nameof(settingsType), settingsType, null)
         };
     }
+
+    public NotificationChannelSettings GetOverrideNotificationSettings(
+        NotificationSettingsType notificationSettingsType,
+        OverridableNotificationSettingsType settingsType)
+    {
+        var settings = notificationSettingsType switch
+        {
+            NotificationSettingsType.RollCall => NotificationSettings.RollCall,
+            NotificationSettingsType.QuickDraw => NotificationSettings.QuickDraw,
+            NotificationSettingsType.Lottery => NotificationSettings.Lottery,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(notificationSettingsType), notificationSettingsType, null)
+        };
+
+        return settingsType switch
+        {
+            OverridableNotificationSettingsType.Basic => settings.OverrideBasicSettings
+                ? settings
+                : NotificationSettings.Default,
+            OverridableNotificationSettingsType.NotificationWindow => settings.OverrideNotificationWindowSettings
+                ? settings
+                : NotificationSettings.Default,
+            OverridableNotificationSettingsType.Service => settings.OverrideServiceSettings
+                ? settings
+                : NotificationSettings.Default,
+            _ => throw new ArgumentOutOfRangeException(nameof(settingsType), settingsType, null)
+        };
+    }
 }
