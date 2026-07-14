@@ -9,7 +9,7 @@
               x:Class="SecRandom.Views.SettingsPages.LogViewer.LogViewerSettingsPage"
              x:DataType="local:LogViewerSettingsPage"
              Loaded="OnLoaded">
-    <Grid RowDefinitions="Auto * Auto 220" Margin="18 12 18 18" RowSpacing="10">
+    <Grid RowDefinitions="Auto * Auto 220" Margin="12 12 18 12" RowSpacing="10">
         <Grid Grid.Row="0" ColumnDefinitions="360 Auto * Auto Auto Auto" ColumnSpacing="8">
             <ComboBox Grid.Column="0"
                       MinWidth="260"

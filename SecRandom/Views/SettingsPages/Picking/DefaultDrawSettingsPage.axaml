@@ -10,8 +10,9 @@
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.Picking.DefaultDrawSettingsPage"
-             x:DataType="local:DefaultDrawSettingsPage"
-             Unloaded="OnUnloaded">
+              x:DataType="local:DefaultDrawSettingsPage"
+              Loaded="OnLoaded"
+              Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
             <sr:IconText Text="{x:Static lp:Resources.Section_Draw}" Glyph="{sr:Fi FlashFilled}" Margin="0 0 0 4" />
@@ -184,18 +185,8 @@
 
             <Separator Margin="0 12 0 4" />
             <sr:IconText Text="{x:Static lp:Resources.Section_Music}" Glyph="{sr:Fi Speaker2Filled}" Margin="0 0 0 4" />
-
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_AnimationMusic}" Description="{x:Static lp:Resources.S_AnimationMusic_D}" IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}">
-                <fa:FASettingsExpander.Footer><TextBox Text="{Binding Settings.AnimationMusic}" MinWidth="260" /></fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_ResultMusic}" Description="{x:Static lp:Resources.S_ResultMusic_D}" IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}">
-                <fa:FASettingsExpander.Footer><TextBox Text="{Binding Settings.ResultMusic}" MinWidth="260" /></fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_MusicVolume}" Description="{x:Static lp:Resources.S_MusicVolume_D}" IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}">
-                <fa:FASettingsExpander.Footer><StackPanel Orientation="Horizontal" Spacing="4"><NumericUpDown Value="{Binding Settings.AnimationMusicVolume}" Minimum="0" Maximum="100" /><NumericUpDown Value="{Binding Settings.ResultMusicVolume}" Minimum="0" Maximum="100" /></StackPanel></fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_MusicFadeInOut}" Description="{x:Static lp:Resources.S_MusicFadeInOut_D}" IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}">
-                <fa:FASettingsExpander.Footer><StackPanel Orientation="Horizontal" Spacing="4"><NumericUpDown Value="{Binding Settings.AnimationMusicFadeIn}" Minimum="0" Maximum="10000" /><NumericUpDown Value="{Binding Settings.AnimationMusicFadeOut}" Minimum="0" Maximum="10000" /><NumericUpDown Value="{Binding Settings.ResultMusicFadeIn}" Minimum="0" Maximum="10000" /><NumericUpDown Value="{Binding Settings.ResultMusicFadeOut}" Minimum="0" Maximum="10000" /></StackPanel></fa:FASettingsExpander.Footer>
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Music}" Description="{x:Static lp:Resources.Section_Music}" IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}">
+                <local:DrawMusicSettingsContent Settings="{Binding Settings}" MusicSelections="{Binding MusicSelections}" />
             </fa:FASettingsExpander>
 
             <Separator Margin="0 12 0 4" />

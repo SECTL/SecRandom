@@ -12,10 +12,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SecRandom.Core;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Plugins;
+using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Shared;
 using SecRandom.Services.Security;
+using SecRandom.Services.Linkage;
 
 namespace SecRandom.Services.Plugins;
 
@@ -278,7 +281,12 @@ public sealed class PluginManagerService : IPluginManager
             {
                 var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
                 var pluginLogger = loggerFactory.CreateLogger(GetPluginLogCategoryPrefix(descriptor.Id) + "Runtime");
-                var drawInvoker = new PluginDrawInvoker(descriptor.Id, pluginLogger, provider.GetRequiredService<ISecurityService>());
+                var drawInvoker = new PluginDrawInvoker(
+                    descriptor.Id,
+                    pluginLogger,
+                    provider.GetRequiredService<LinkageDrawCoordinator>(),
+                    provider.GetRequiredService<IDrawTemporaryRecordService>(),
+                    provider.GetRequiredService<MainConfigHandler>());
                 var dataDirectory = pluginInfo.ConfigDirectory;
                 var runtimeContext = new PluginRuntimeContext(descriptor.Manifest, pluginInfo, pluginLogger, drawInvoker, dataDirectory);
                 return new LoadedPluginRegistration(plugin, runtimeContext);

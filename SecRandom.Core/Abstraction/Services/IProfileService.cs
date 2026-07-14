@@ -29,7 +29,8 @@ public interface IProfileService
         string drawGroup = "",
         string drawGender = "",
         int drawMethod = 0,
-        IReadOnlyDictionary<Student, double>? weights = null);
+        IReadOnlyDictionary<Student, double>? weights = null,
+        string courseName = "");
 
     public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount);
 

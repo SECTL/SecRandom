@@ -160,6 +160,44 @@ public class FairDrawSettingsConfigTests
         Assert.Equal(0, weights[0].Weight);
     }
 
+    [Fact]
+    public void CalculateStudentWeight_CourseScopeUsesOnlyCourseGroupAndGenderHistory()
+    {
+        var groupA = new Student { Name = "A", Group = "A", Gender = "男" };
+        var groupB = new Student { Name = "B", Group = "B", Gender = "女" };
+        var history = new StudentHistory();
+        history.GroupStats["A"] = 100;
+        history.GenderStatus["男"] = 100;
+        history.Students["legacy"] = new History
+        {
+            Histories = [new HistoryItem { CourseName = "数学", RecordGroup = "A", RecordGender = "男" }]
+        };
+        var config = BuildConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = true,
+            FairDrawGroup = true,
+            FairDrawGender = true,
+            FairDrawTime = false,
+            ColdStartEnabled = false,
+            FrequencyWeight = 0,
+            BaseWeight = 0,
+            GroupWeight = 1,
+            GenderWeight = 1,
+            MinWeight = 0,
+            MaxWeight = 10
+        });
+
+        using var host = BuildHost(config, new TestProfileService(history));
+        IAppHost.Host = host;
+        var weights = new DrawEngine().CalculateStudentWeight(
+            [groupA, groupB],
+            new Dictionary<Student, History> { [groupA] = new(), [groupB] = new() },
+            "数学");
+
+        Assert.True(weights.Single(item => item.Candidate == groupB).Weight
+                    > weights.Single(item => item.Candidate == groupA).Weight);
+    }
+
     private static MainConfigModel BuildConfig(FairDrawSettingsConfig fairSettings)
     {
         return new MainConfigModel
@@ -202,10 +240,10 @@ public class FairDrawSettingsConfigTests
         }
     }
 
-    private sealed class TestProfileService : IProfileService
+    private sealed class TestProfileService(StudentHistory? studentHistory = null) : IProfileService
     {
         public StudentList? CurrentStudentList { get; } = new();
-        public StudentHistory? CurrentStudentHistory { get; } = new();
+        public StudentHistory? CurrentStudentHistory { get; } = studentHistory ?? new();
         public PrizeList? CurrentPrizeList { get; } = new();
         public PrizeHistory? CurrentPrizeHistory { get; } = new();
         public StudentListConfig? StudentListConfig => null;
@@ -214,7 +252,7 @@ public class FairDrawSettingsConfigTests
         public PrizeHistoryConfig? PrizeHistoryConfig => null;
         public void LoadStudentProfile(string name, bool saveCurrent = true) { }
         public void LoadPrizeProfile(string name, bool saveCurrent = true) { }
-        public void RecordStudentHistory(IReadOnlyList<Student> students, DateTime now, int requestedCount, string drawGroup = "", string drawGender = "", int drawMethod = 0, IReadOnlyDictionary<Student, double>? weights = null) { }
+        public void RecordStudentHistory(IReadOnlyList<Student> students, DateTime now, int requestedCount, string drawGroup = "", string drawGender = "", int drawMethod = 0, IReadOnlyDictionary<Student, double>? weights = null, string courseName = "") { }
         public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount) { }
         public void ClearCurrentStudentHistory() { }
         public void ClearCurrentPrizeHistory() { }

@@ -64,6 +64,17 @@ jobs:
             --no-restore `
             -o $outDir
 
+      - name: Verify bundled audio runtime
+        shell: pwsh
+        env:
+          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+        run: |
+          $nativeAsset = if ($env:RID.StartsWith('win-')) { 'miniaudio.dll' } elseif ($env:RID.StartsWith('linux-')) { 'libminiaudio.so' } else { 'libminiaudio.dylib' }
+          $assetPath = Join-Path "bin/$env:RID" $nativeAsset
+          if (!(Test-Path -LiteralPath $assetPath)) {
+            throw "SoundFlow native audio runtime was not published: $assetPath"
+          }
+
       - name: Pack Portable Zip
         shell: pwsh
         env:

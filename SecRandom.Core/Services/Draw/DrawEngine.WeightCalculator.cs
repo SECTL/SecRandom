@@ -13,14 +13,21 @@ public partial class DrawEngine
      */
     public List<WeightedCandidate<Student>> CalculateStudentWeight(
         List<Student> candidates,
-        IReadOnlyDictionary<Student, History>? historyCacheOverride = null)
+        IReadOnlyDictionary<Student, History>? historyCacheOverride = null,
+        string courseName = "")
     {
         if (candidates.Count == 0)
             return [];
 
         var fairSettings = ConfigData.FairDrawSettings;
         var baseWeight = SanitizeFinite(fairSettings.BaseWeight, 1.0);
-        var historyCache = historyCacheOverride ?? BuildStudentHistoryCache(candidates);
+        var historyCache = historyCacheOverride ?? BuildStudentHistoryCache(candidates, courseName);
+        IReadOnlyDictionary<string, int> groupStats = string.IsNullOrWhiteSpace(courseName)
+            ? StudentHistory.GroupStats
+            : BuildCourseBalanceStats(courseName, item => item.RecordGroup);
+        IReadOnlyDictionary<string, int> genderStats = string.IsNullOrWhiteSpace(courseName)
+            ? StudentHistory.GenderStatus
+            : BuildCourseBalanceStats(courseName, item => item.RecordGender);
         var maxStudentDrawCount = historyCache.Values.Select(history => history.TotalCount).DefaultIfEmpty(0).Max();
 
         if (!fairSettings.FairDraw)
@@ -49,13 +56,13 @@ public partial class DrawEngine
             var groupIndex = CalculateBalanceIndex(
                 fairSettings.FairDrawGroup,
                 candidate.Group,
-                StudentHistory.GroupStats,
+                groupStats,
                 fairSettings.GroupWeight);
 
             var genderIndex = CalculateBalanceIndex(
                 fairSettings.FairDrawGender,
                 candidate.Gender,
-                StudentHistory.GenderStatus,
+                genderStats,
                 fairSettings.GenderWeight);
 
             var timeIndex = 0.0;
@@ -85,6 +92,17 @@ public partial class DrawEngine
         return BuildStudentHistoryCache([student]).TryGetValue(student, out var history)
             ? history.LastDrawnTime
             : DateTime.MinValue;
+    }
+
+    private Dictionary<string, int> BuildCourseBalanceStats(string courseName, Func<HistoryItem, string> keySelector)
+    {
+        return StudentHistory.Students.Values
+            .SelectMany(history => history.Histories)
+            .Where(item => string.Equals(item.CourseName, courseName, StringComparison.Ordinal))
+            .Select(keySelector)
+            .Where(key => !string.IsNullOrWhiteSpace(key))
+            .GroupBy(key => key)
+            .ToDictionary(group => group.Key, group => group.Count());
     }
 
     private static double CalculateFrequencyIndex(

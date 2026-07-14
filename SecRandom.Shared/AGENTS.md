@@ -47,6 +47,7 @@ SecRandom.Shared/
 - `Student` and `Prize` include persisted optional metadata fields such as `Tags`; keep new fields backward-compatible with empty defaults.
 - IPC DTOs under `Models/Ipc/` are serialization-only contracts. Keep them free of UI/runtime services and do not emit internal `RecordId` values in external projections.
 - `HistoryItem.DrawRoundId` is an additive persisted field. New multi-record draws share one value so IPC history can group a logical draw; empty legacy values require conservative fallback grouping.
+- `HistoryItem.CourseName` is an additive persisted course-history field. Empty values represent legacy/global history; new linkage writes use it only for a resolved subject or the stable `__break__` marker while record identity remains `RecordId`.
 - Attached settings objects use `Guid` keys and `Dictionary<Guid, object?>`; coordinate changes with Core draw/settings
   consumers.
 - Prefer small extension methods and plain contracts here; richer behavior belongs in `SecRandom.Core`.

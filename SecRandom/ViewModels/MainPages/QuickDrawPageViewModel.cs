@@ -20,6 +20,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using SecRandom.Services.Draw;
+using SecRandom.Services.Linkage;
 using SecRandom.Services.Notification;
 using SecRandom.Services.Security;
 using SecRandom.Services.Verification;
@@ -39,6 +40,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private readonly DrawAudioService _drawAudioService;
     private readonly ILogger<QuickDrawPageViewModel> _logger;
     private readonly ISecurityService _securityService;
+    private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly NotificationService? _notificationService;
     private bool _isDrawCommandRunning;
@@ -61,6 +63,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         DrawAudioService drawAudioService,
         ILogger<QuickDrawPageViewModel> logger,
         ISecurityService securityService,
+        LinkageDrawCoordinator linkageDrawCoordinator,
         VerificationDrawCoordinator verificationDrawCoordinator,
         NotificationService? notificationService = null)
         : base(configHandler)
@@ -72,6 +75,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         _drawAudioService = drawAudioService;
         _logger = logger;
         _securityService = securityService;
+        _linkageDrawCoordinator = linkageDrawCoordinator;
         _verificationDrawCoordinator = verificationDrawCoordinator;
         _notificationService = notificationService;
         ResultItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ResultFontSize));
@@ -148,7 +152,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (_isCoolingDown)
             return;
 
-        if (!await _securityService.AuthorizeAsync(SecurityOperation.QuickDrawStart, () => Task.CompletedTask))
+        if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.QuickDrawStart, () => Task.CompletedTask))
             return;
         await StartDrawCoreAsync();
     }
@@ -175,10 +179,12 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         SetDrawCommandRunning(true);
         try
         {
+            var courseName = _linkageDrawCoordinator.GetCourseName();
             var verificationDrawTask = _verificationDrawCoordinator.DrawStudentsAsync(
                 count,
                 candidates,
                 DrawSettingsType.QuickDraw,
+                courseName: courseName,
                 cancellationToken: default);
             if (!skipPreview)
                 await ShowPreviewAsync(candidates, count).ConfigureAwait(true);
@@ -191,6 +197,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             catch (Exception exception)
             {
                 _logger.LogWarning(exception, "可验证闪抽失败。");
+                await _drawAudioService.StopAnimationMusicAsync(0, immediate: true).ConfigureAwait(false);
                 ResultItems.Clear();
                 LastDrawnStudent = null;
                 IsResultVisible = false;
@@ -198,8 +205,9 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                 return;
             }
 
-            var weights = BuildWeightSnapshot(drawn);
-            _profileService.RecordStudentHistory(drawn, DateTime.Now, count, drawMethod: (int)Config.QuickDrawSettings.DrawType, weights: weights);
+            var weights = BuildWeightSnapshot(drawn, courseName);
+            _profileService.RecordStudentHistory(drawn, DateTime.Now, count,
+                drawMethod: (int)Config.QuickDrawSettings.DrawType, weights: weights, courseName: courseName);
             _temporaryRecordService.RecordStudents(SelectedStudentListName, string.Empty, string.Empty, drawn);
             LastDrawnStudent = drawn[0];
             ReplaceResults(drawn);
@@ -211,8 +219,9 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                     NotificationSettingsType.QuickDraw,
                     "闪抽结果",
                     ResultItems.Select(item => item.DisplayText).ToList());
-            await _drawAudioService.PlayAsync(MusicSettings.ResultMusic, MusicSettings.ResultMusicVolume,
-                MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut).ConfigureAwait(false);
+            await _drawAudioService.TransitionToResultMusicAsync(MusicSettings.ResultMusic,
+                MusicSettings.ResultMusicVolume, MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut,
+                MusicSettings.AnimationMusicFadeOut).ConfigureAwait(false);
 
             StartCooldown();
         }
@@ -225,7 +234,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private async Task ClearHistoryAsync()
     {
-        if (!await _securityService.AuthorizeAsync(SecurityOperation.QuickDrawReset, () => Task.CompletedTask))
+        if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.QuickDrawReset, () => Task.CompletedTask))
             return;
         ClearHistoryCore();
     }
@@ -240,17 +249,21 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(CanStartDraw));
     }
 
-    public async Task StartProtocolDrawAsync()
-    {
-        LastDrawnStudent = null;
-        await StartDrawCoreAsync(skipPreview: true);
-    }
+    public Task<bool> StartProtocolDrawAsync(bool protectLinkage = false) => _linkageDrawCoordinator.AuthorizeAsync(
+        protectLinkage ? [SecurityOperation.QuickDrawStart, SecurityOperation.LinkageAction] : [SecurityOperation.QuickDrawStart],
+        async () =>
+        {
+            LastDrawnStudent = null;
+            await StartDrawCoreAsync(skipPreview: true);
+        });
 
-    public Task ResetProtocolDrawAsync()
-    {
-        ClearHistoryCore();
-        return Task.CompletedTask;
-    }
+    public Task<bool> ResetProtocolDrawAsync(bool protectLinkage = false) => _linkageDrawCoordinator.AuthorizeAsync(
+        protectLinkage ? [SecurityOperation.QuickDrawReset, SecurityOperation.LinkageAction] : [SecurityOperation.QuickDrawReset],
+        () =>
+        {
+            ClearHistoryCore();
+            return Task.CompletedTask;
+        });
 
     private void RefreshStudentLists()
     {
@@ -322,8 +335,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (AnimationSettings.Animation == AnimationMode.NoAnimation)
             return;
 
-        await _drawAudioService.PlayAsync(MusicSettings.AnimationMusic, MusicSettings.AnimationMusicVolume,
-            MusicSettings.AnimationMusicFadeIn, MusicSettings.AnimationMusicFadeOut).ConfigureAwait(true);
+        await _drawAudioService.StartAnimationMusicAsync(MusicSettings.AnimationMusic, MusicSettings.AnimationMusicVolume,
+            MusicSettings.AnimationMusicFadeIn, Config.MoreSettings.BackgroundMusicLoop).ConfigureAwait(true);
 
         var previewCts = new CancellationTokenSource();
         _previewCts = previewCts;
@@ -366,6 +379,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private void StopPreview()
     {
         _previewCts?.Cancel();
+        _ = _drawAudioService.StopAnimationMusicAsync(0, immediate: true);
     }
 
     private void SetDrawCommandRunning(bool value)
@@ -394,12 +408,17 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         ResultAnimationRevision++;
     }
 
-    private Dictionary<Student, double> BuildWeightSnapshot(IReadOnlyCollection<Student> drawnStudents)
+    public void ResetForCourseLinkage()
+    {
+        ClearHistoryCore();
+    }
+
+    private Dictionary<Student, double> BuildWeightSnapshot(IReadOnlyCollection<Student> drawnStudents, string courseName = "")
     {
         if (Config.QuickDrawSettings.DrawType != DrawType.Fair)
             return drawnStudents.ToDictionary(student => student, _ => 1.0);
 
-        return _drawEngine.CalculateStudentWeight((_profileService.CurrentStudentList?.Students ?? []).Where(s => s.IsCandidate).ToList())
+        return _drawEngine.CalculateStudentWeight((_profileService.CurrentStudentList?.Students ?? []).Where(s => s.IsCandidate).ToList(), courseName: courseName)
             .Where(candidate => drawnStudents.Contains(candidate.Candidate))
             .ToDictionary(candidate => candidate.Candidate, candidate => candidate.Weight);
     }
@@ -440,7 +459,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (Config.QuickDrawSettings.DrawType != DrawType.Fair)
             return 1;
 
-        return _drawEngine.CalculateStudentWeight((_profileService.CurrentStudentList?.Students ?? []).Where(s => s.IsCandidate).ToList())
+        return _drawEngine.CalculateStudentWeight((_profileService.CurrentStudentList?.Students ?? []).Where(s => s.IsCandidate).ToList(), courseName: _linkageDrawCoordinator.GetCourseName())
             .FirstOrDefault(candidate => ReferenceEquals(candidate.Candidate, student))?.Weight ?? 1;
     }
 

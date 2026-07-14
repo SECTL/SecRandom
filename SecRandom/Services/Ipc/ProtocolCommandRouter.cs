@@ -173,10 +173,9 @@ public sealed class ProtocolCommandRouter(
     {
         switch (route)
         {
-            case "roll_call/start": return await StartAuthorizedAsync(
-                SecurityOperation.RollCallStart,
+            case "roll_call/start": return await StartLinkageAsync(
                 () => !rollCall.IsDrawing && rollCall.CanStartDraw,
-                rollCall.StartProtocolDrawAsync,
+                () => rollCall.StartProtocolDrawAsync(protectLinkage: true),
                 LR.M_RollCallStarted,
                 token);
             case "roll_call/stop": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () =>
@@ -184,7 +183,7 @@ public sealed class ProtocolCommandRouter(
                 rollCall.StopProtocolDraw();
                 return Task.CompletedTask;
             }, LR.M_RollCallStopped, token);
-            case "roll_call/reset": return await RunAuthorizedAsync(SecurityOperation.RollCallReset, rollCall.ResetProtocolDrawAsync, LR.M_RollCallReset, token);
+            case "roll_call/reset": return await RunLinkageAsync(() => rollCall.ResetProtocolDrawAsync(protectLinkage: true), LR.M_RollCallReset, token);
             case "roll_call/quick_draw": return await HandleQuickDrawAsync(token);
             case "roll_call/set_count": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetCount(
                 query, LR.L_RollCallCount, rollCall.TotalCount, rollCall.RemainingCount, rollCall.MaximumDrawCount, value => rollCall.DrawCount = value), LR.M_RollCallCountSet, token);
@@ -202,10 +201,9 @@ public sealed class ProtocolCommandRouter(
     {
         switch (route)
         {
-            case "lottery/start": return await StartAuthorizedAsync(
-                SecurityOperation.LotteryStart,
+            case "lottery/start": return await StartLinkageAsync(
                 () => !lottery.IsDrawing && lottery.CanStartDraw,
-                lottery.StartProtocolDrawAsync,
+                () => lottery.StartProtocolDrawAsync(protectLinkage: true),
                 LR.M_LotteryStarted,
                 token);
             case "lottery/stop": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () =>
@@ -213,7 +211,7 @@ public sealed class ProtocolCommandRouter(
                 lottery.StopProtocolDraw();
                 return Task.CompletedTask;
             }, LR.M_LotteryStopped, token);
-            case "lottery/reset": return await RunAuthorizedAsync(SecurityOperation.LotteryReset, lottery.ResetProtocolDrawAsync, LR.M_LotteryReset, token);
+            case "lottery/reset": return await RunLinkageAsync(() => lottery.ResetProtocolDrawAsync(protectLinkage: true), LR.M_LotteryReset, token);
             case "lottery/set_count": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetCount(
                 query, LR.L_LotteryCount, lottery.TotalCount, lottery.RemainingCount, lottery.MaximumDrawCount, value => lottery.DrawCount = value), LR.M_LotteryCountSet, token);
             case "lottery/set_pool": return await RunAuthorizedAsync(SecurityOperation.LinkageAction, () => SetPrizePool(query), LR.M_PoolSet, token);
@@ -397,32 +395,25 @@ public sealed class ProtocolCommandRouter(
         }
     }
 
-    private async Task<IpcResponseEnvelope> StartAuthorizedAsync(
-        SecurityOperation operation,
+    private async Task<IpcResponseEnvelope> StartLinkageAsync(
         Func<bool> canStart,
-        Func<Task> start,
+        Func<Task<bool>> start,
         string message,
         CancellationToken token)
     {
         if (!canStart())
             return Failure("url", "invalid_state", LR.M_InvalidStartState, true);
 
-        Task? drawTask = null;
-        var allowed = await security.AuthorizeAsync(operation, () =>
-        {
-            drawTask = start();
-            return Task.CompletedTask;
-        }, token).ConfigureAwait(true);
+        var allowed = await start().ConfigureAwait(true);
         if (!allowed)
             return Failure("url", "authorization_denied", LR.M_AuthorizationDenied, true);
 
-        _ = drawTask?.ContinueWith(_ => { }, TaskContinuationOptions.OnlyOnFaulted);
         return Success(message, new { state = "running" });
     }
 
     private async Task<IpcResponseEnvelope> HandleQuickDrawAsync(CancellationToken token)
     {
-        var allowed = await security.AuthorizeAsync(SecurityOperation.QuickDrawStart, quickDraw.StartProtocolDrawAsync, token).ConfigureAwait(true);
+        var allowed = await quickDraw.StartProtocolDrawAsync(protectLinkage: true).ConfigureAwait(true);
         if (!allowed)
             return Failure("url", "authorization_denied", LR.M_AuthorizationDenied, true);
 
@@ -430,6 +421,15 @@ public sealed class ProtocolCommandRouter(
         return student is null
             ? Failure("url", "invalid_state", LR.M_NoQuickDrawResult, true)
             : Success(LR.M_QuickDrawSucceeded, new IpcRecordDto(student.Id, student.Name, student.Gender));
+    }
+
+    private async Task<IpcResponseEnvelope> RunLinkageAsync(
+        Func<Task<bool>> action,
+        string message,
+        CancellationToken token)
+    {
+        var allowed = await action().ConfigureAwait(true);
+        return allowed ? Success(message) : Failure("url", "authorization_denied", LR.M_AuthorizationDenied, true);
     }
 
     private static string? ParseAction(IReadOnlyList<ProtocolQueryItem> query, string defaultAction)

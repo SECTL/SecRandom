@@ -121,7 +121,7 @@
     <value>启用全局快捷键响应。</value>
   </data>
   <data name="S_Shortcut_D" xml:space="preserve">
-    <value>展开后按下所需组合键；Esc 取消输入，Backspace 清空快捷键。</value>
+    <value>展开后按下所需组合键；Esc 取消输入。</value>
   </data>
   <data name="S_Shortcut_OpenRollCallPage" xml:space="preserve">
     <value>打开点名页</value>

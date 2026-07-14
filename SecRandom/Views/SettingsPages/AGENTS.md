@@ -17,7 +17,7 @@ SecRandom/Views/SettingsPages/
 |-- DebugSettingsPage.axaml(.cs)          # DEBUG-only bottom page
 |-- General/                              # settings.general.*: basic/security/backup/privacy
 |-- ListManagement/                       # settings.listManagement.*: roll-call/lottery list entries
-|-- Personalized/                         # settings.personalized.*: appearance/floatingWindow
+|-- Personalized/                         # settings.personalized.*: appearance/floatingWindow/music library
 |-- Picking/                              # settings.picking.*: draw settings + face detector
 |-- Notification/                         # settings.notification.*: voice and per-draw notification channels
 |-- History/                              # settings.history.*: management + roll-call/lottery history pages
@@ -39,14 +39,17 @@ SecRandom/Views/SettingsPages/
 | Privacy settings behavior | `General/PrivacySettingsPage.axaml(.cs)` | Binds to `MainConfigModel.General.PrivacySettings`; Sentry telemetry changes apply live through `TelemetryRuntimeService`, and online status changes apply live through `OnlineStatusService`. |
 | Backup settings UI | `General/BackupSettingsPage.axaml(.cs)` | Lists real backup ZIPs under app data and delegates create/restore to `IImportExportService`, which validates archives and creates the required pre-restore snapshot. |
 | Security settings | `General/SecuritySettingsPage.axaml(.cs)` | Page ID `settings.general.security`; belongs to the General navigation group. |
+| Managed draw music | `SecRandom/Services/Music/`, `SecRandom/Services/Draw/DrawAudioService.cs` | Library files live under `data/audio/music`; app-layer service resolves selections and owns cross-platform playback. |
+| Course linkage | `SecRandom/Services/Linkage/` | CSES schedule storage/parsing, ClassIsland IPC adapter, course-boundary runtime, draw authorization, and pre-class reset. |
 | List management settings | `ListManagement/RollCallListSettingsPage.axaml(.cs)`, `ListManagement/LotteryListSettingsPage.axaml(.cs)` | Point-call list and lottery prize-pool viewing/import. |
 | Draw settings | `Picking/DefaultDrawSettingsPage.axaml(.cs)` etc. | Default, roll-call, quick-draw, and lottery draw settings are registered; visible effects must reflect on built-in draw pages. |
 | Personalized appearance settings | `Personalized/AppearanceSettingsPage.axaml(.cs)` | Mutations call `App.Current.RefreshPersonalizedSettings()`. |
+| Personalized music library | `Personalized/MusicSettingsPage.axaml(.cs)` | Page ID `settings.personalized.music`; imports, deletes, and previews managed MP3/WAV/FLAC tracks. |
 | Linkage settings | `Linkage/LinkageSettingsPage.axaml(.cs)` | Top-level `settings.linkage` entry. |
 | More settings | `More/MoreSettingsPage.axaml(.cs)` | `settings.more` top-level entry. |
 | Update settings | `Update/UpdateSettingsPage.axaml(.cs)` | `settings.update` bottom-nav entry. |
 | Notification settings | `Notification/VoiceSettingsPage.axaml(.cs)` etc. | Voice/music and notification channel entries under `settings.notification`. |
-| History management | `History/HistoryManagementSettingsPage.axaml(.cs)` | Clears roll-call/lottery history files; `settings.history.management`. |
+| History management | `History/HistoryManagementSettingsPage.axaml(.cs)` | Clears roll-call/lottery histories through active-profile or named-profile handlers; `settings.history.management`. |
 | Plugin settings | `Plugins/Overview/PluginsSettingsPage.axaml(.cs)` | `settings.plugin` group; single compact management page. |
 | Log viewer | `LogViewer/LogViewerSettingsPage.axaml(.cs)` | Hidden page `settings.logs`; opened from the settings shell more-options menu. |
 | About / external links | `About/AboutSettingsPage.axaml(.cs)` | `settings.about` bottom-nav; `Process.Start` for external URLs. |
@@ -64,7 +67,9 @@ SecRandom/Views/SettingsPages/
 - Security settings must display credential state before factor selection. Password, TOTP, and USB setup are command-driven; selected factors use the shared Ursa `MultiComboBox` pattern with plain option data, and protected-operation controls are driven by `ISecurityService` state.
 - Settings pages using Ursa `MultiComboBox` must subscribe to the backing settings model on construction and every `Loaded` event, unsubscribe on `Unloaded`, and save at the selection mutation boundary. `MultiComboBox` mutates its bound `SelectedItems` collection directly, so persist multi-select changes from that collection's `CollectionChanged` event rather than `SelectionChanged`. Follow `SecuritySettingsPage` for lifecycle and use plain option-data binding.
 - V2-parity settings pages should keep the same `ScrollViewer` + `StackPanel.page-container animated-intro` + `FASettingsExpander` rhythm as existing settings pages.
+- Linkage settings owns only the CSES picker, import/summary/clear commands, and config bindings. It must delegate schedule validation and file replacement to `ICsesScheduleStore`; ClassIsland state, timing, and draw enforcement belong to the linkage services.
 - Voice/music owns the global TTS engine, voice, volume, and content switches. Per-student/per-prize specific announcement controls belong in list management attached settings for both roll-call and lottery records.
+- Draw music configuration remains on the four picking settings pages through `Picking/DrawMusicSettingsContent`; use its managed-library dropdowns and slider controls rather than editable paths. Each page must resubscribe its settings persistence on `Loaded` after detaching on `Unloaded`.
 - If a settings change needs a restart, request it through `SettingsView.Current?.RequestRestartApp()` instead of restarting directly. Selecting UIAccess topmost in basic or floating-window settings persists the mode and uses this restart flow so the desktop launcher can run the `killtimer0/uiaccess`-style token preparation before UI initialization.
 - If a settings change only needs live UI refresh, follow `AppearanceSettingsPage` and route through `App.Current.RefreshPersonalizedSettings()`.
 - `settings.logs` should stay hidden from the sidebar and reachable from the settings shell more-options menu; keep that menu action as a navigation jump.

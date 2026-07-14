@@ -69,6 +69,7 @@ internal sealed class SecurityService(
             SecurityOperation.LotteryStart => Settings.ProtectLotteryStart,
             SecurityOperation.LotteryReset => Settings.ProtectLotteryReset,
             SecurityOperation.LinkageAction => Settings.ProtectLinkage,
+            SecurityOperation.BypassClassTimeRestriction => true,
             SecurityOperation.ChangeSecuritySettings => true,
             _ => false
         };
@@ -79,7 +80,15 @@ internal sealed class SecurityService(
         Func<Task> action,
         CancellationToken cancellationToken = default)
     {
-        if (!RequiresVerification(operation))
+        return await AuthorizeAsync([operation], action, cancellationToken);
+    }
+
+    public async Task<bool> AuthorizeAsync(
+        IReadOnlyCollection<SecurityOperation> operations,
+        Func<Task> action,
+        CancellationToken cancellationToken = default)
+    {
+        if (!RequiresVerification(operations))
         {
             await action();
             return true;
@@ -88,7 +97,7 @@ internal sealed class SecurityService(
         await _authorizationGate.WaitAsync(cancellationToken);
         try
         {
-            if (!RequiresVerification(operation))
+            if (!RequiresVerification(operations))
             {
                 await action();
                 return true;
@@ -103,7 +112,7 @@ internal sealed class SecurityService(
             var result = await VerifyAsync(response, cancellationToken);
             if (!result.IsAuthorized)
             {
-                logger.LogInformation("Security authorization rejected for {Operation}: {Failure}", operation, result.Failure);
+                logger.LogInformation("Security authorization rejected for {Operations}: {Failure}", string.Join(',', operations), result.Failure);
                 return false;
             }
 
@@ -114,6 +123,11 @@ internal sealed class SecurityService(
         {
             _authorizationGate.Release();
         }
+    }
+
+    private bool RequiresVerification(IReadOnlyCollection<SecurityOperation> operations)
+    {
+        return operations.Any(RequiresVerification);
     }
 
     public async Task<SecurityAuthorizationResult> AuthorizeSettingsAsync(

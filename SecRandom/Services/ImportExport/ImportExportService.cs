@@ -17,6 +17,7 @@ using SecRandom.Core.Models;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Plugins;
+using SecRandom.Services.Linkage;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Services.ImportExport;
@@ -175,6 +176,7 @@ public sealed class ImportExportService(
 
                 AtomicWriteSettings(candidate);
                 configHandler.Reload();
+                _ = IAppHost.TryGetService<CourseLinkageService>()?.RefreshAsync();
                 SynchronizeDesktopIntegrations(warnings);
                 return new ImportResult(snapshot, 1, warnings, []);
             }
@@ -255,6 +257,7 @@ public sealed class ImportExportService(
                 CommitCandidate(staging, rootsToCommit, inspection.Kind == ArchiveKind.AllData, warnings);
                 configHandler.Reload();
                 ReloadCurrentProfiles();
+                _ = IAppHost.TryGetService<CourseLinkageService>()?.RefreshAsync();
                 pluginManager.Refresh();
                 SynchronizeDesktopIntegrations(warnings);
                 return new ImportResult(snapshot, importedFiles, warnings, preserved);
@@ -586,6 +589,28 @@ public sealed class ImportExportService(
         CopyCompatibleSection(root, "quick_draw_settings", result.QuickDrawSettings, warnings);
         CopyCompatibleSection(root, "lottery_settings", result.LotterySettings, warnings);
         CopyCompatibleSection(root, "fair_draw_settings", result.FairDrawSettings, warnings);
+        if (root.TryGetProperty("linkage_settings", out var linkage))
+        {
+            result.LinkageSettings.VerificationRequired = GetBool(linkage, "verification_required", result.LinkageSettings.VerificationRequired);
+            result.LinkageSettings.InstantDrawDisable = GetBool(linkage, "instant_draw_disable", result.LinkageSettings.InstantDrawDisable);
+            var dataSource = GetInt(linkage, "data_source", (int)result.LinkageSettings.DataSource);
+            result.LinkageSettings.DataSource = Enum.IsDefined((LinkageDataSource)dataSource)
+                ? (LinkageDataSource)dataSource
+                : LinkageDataSource.Off;
+            result.LinkageSettings.HideFloatingWindowOnClassEnd = GetBool(linkage, "hide_floating_window_on_class_end", result.LinkageSettings.HideFloatingWindowOnClassEnd);
+            result.LinkageSettings.PreClassResetEnabled = GetBool(linkage, "pre_class_reset_enabled", result.LinkageSettings.PreClassResetEnabled);
+            result.LinkageSettings.PreClassResetTime = Math.Clamp(
+                GetInt(linkage, "pre_class_reset_time", result.LinkageSettings.PreClassResetTime), 1, 3600);
+            result.LinkageSettings.PreClassEnableTime = Math.Clamp(
+                GetInt(linkage, "pre_class_enable_time", result.LinkageSettings.PreClassEnableTime), 0, 3600);
+            result.LinkageSettings.PostClassDisableDelay = Math.Clamp(
+                GetInt(linkage, "post_class_disable_delay", result.LinkageSettings.PostClassDisableDelay), 0, 3600);
+            result.LinkageSettings.SubjectHistoryFilterEnabled = GetBool(linkage, "subject_history_filter_enabled", result.LinkageSettings.SubjectHistoryFilterEnabled);
+            result.LinkageSettings.SubjectHistoryBreakAssignment = (LinkageBreakAssignment)Math.Clamp(
+                GetInt(linkage, "subject_history_break_assignment", (int)result.LinkageSettings.SubjectHistoryBreakAssignment),
+                (int)LinkageBreakAssignment.Break,
+                (int)LinkageBreakAssignment.NextClass);
+        }
         warnings.Add("v2 设置已迁移；当前版本不支持的字段已保留为默认值。");
         return result;
     }

@@ -25,6 +25,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using SecRandom.Services.Draw;
+using SecRandom.Services.Linkage;
 using SecRandom.Services.Notification;
 using SecRandom.Services.Security;
 using SecRandom.Services.Verification;
@@ -50,6 +51,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
     private readonly ILogger<LotteryPageViewModel> _logger;
     private readonly ISecurityService _securityService;
+    private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly NotificationService? _notificationService;
     private readonly FileSystemWatcher _prizeListWatcher;
@@ -80,6 +82,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         DrawAudioService drawAudioService,
         ILogger<LotteryPageViewModel> logger,
         ISecurityService securityService,
+        LinkageDrawCoordinator linkageDrawCoordinator,
         VerificationDrawCoordinator verificationDrawCoordinator,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         NotificationService? notificationService = null)
@@ -93,6 +96,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         _voiceAnnouncementService = voiceAnnouncementService;
         _logger = logger;
         _securityService = securityService;
+        _linkageDrawCoordinator = linkageDrawCoordinator;
         _verificationDrawCoordinator = verificationDrawCoordinator;
         _notificationService = notificationService;
         _prizeListWatcher = CreatePrizeListWatcher();
@@ -238,7 +242,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        if (!await _securityService.AuthorizeAsync(SecurityOperation.LotteryStart, () => Task.CompletedTask))
+        if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.LotteryStart, () => Task.CompletedTask))
             return;
         await StartDrawCoreAsync();
     }
@@ -266,6 +270,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         SetDrawCommandRunning(true);
         try
         {
+            var courseName = _linkageDrawCoordinator.GetCourseName();
             var verificationDrawTask = _verificationDrawCoordinator.DrawPrizesAsync(
                 count,
                 _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName),
@@ -284,6 +289,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             catch (Exception exception)
             {
                 _logger.LogWarning(exception, "可验证奖品抽取失败。");
+                await _drawAudioService.StopAnimationMusicAsync(0, immediate: true).ConfigureAwait(false);
                 _lastResultPrizes.Clear();
                 ResultItems.Clear();
                 IsResultVisible = false;
@@ -291,9 +297,12 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                 return;
             }
 
-            var assignedStudents = await DrawAssignedStudentsAsync(drawn.Count, prizeProofId).ConfigureAwait(true);
+            var assignedStudents = await DrawAssignedStudentsAsync(drawn.Count, prizeProofId, courseName).ConfigureAwait(true);
             if (assignedStudents is null)
+            {
+                await _drawAudioService.StopAnimationMusicAsync(0, immediate: true).ConfigureAwait(false);
                 return;
+            }
 
             _profileService.RecordPrizeHistory(drawn, DateTime.Now, count);
             _temporaryRecordService.RecordPrizes(SelectedPrizeListName, drawn);
@@ -305,7 +314,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                     assignedStudents.Count,
                     SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup,
                     SelectedGender == AllGendersOption ? string.Empty : SelectedGender,
-                    (int)Config.RollCallSettings.DrawType);
+                    (int)Config.RollCallSettings.DrawType,
+                    courseName: courseName);
                 _temporaryRecordService.RecordStudents(
                     SelectedStudentListName,
                     CurrentGenderScope,
@@ -319,8 +329,9 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             TriggerResultAnimation();
             StatusText = string.Format(SR.M_DrawnCountFormat, ResultItems.Count);
             RefreshCounts();
-            await _drawAudioService.PlayAsync(MusicSettings.ResultMusic, MusicSettings.ResultMusicVolume,
-                MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut).ConfigureAwait(false);
+            await _drawAudioService.TransitionToResultMusicAsync(MusicSettings.ResultMusic,
+                MusicSettings.ResultMusicVolume, MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut,
+                MusicSettings.AnimationMusicFadeOut).ConfigureAwait(false);
             if (_notificationService is not null)
                 await _notificationService.ShowAsync(
                     NotificationSettingsType.Lottery,
@@ -339,7 +350,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private async Task ResetDisplayAsync()
     {
-        if (!await _securityService.AuthorizeAsync(SecurityOperation.LotteryReset, () => Task.CompletedTask))
+        if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.LotteryReset, () => Task.CompletedTask))
             return;
         ResetDisplayCore();
     }
@@ -356,15 +367,23 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         RefreshCounts();
     }
 
-    public Task StartProtocolDrawAsync() => StartDrawCoreAsync();
+    public Task<bool> StartProtocolDrawAsync(bool protectLinkage = false) => _linkageDrawCoordinator.AuthorizeAsync(
+        protectLinkage ? [SecurityOperation.LotteryStart, SecurityOperation.LinkageAction] : [SecurityOperation.LotteryStart],
+        () =>
+        {
+            _ = StartDrawCoreAsync();
+            return Task.CompletedTask;
+        });
 
     public Task ToggleDrawFromShortcutAsync() => StartDrawAsync();
 
-    public Task ResetProtocolDrawAsync()
-    {
-        ResetDisplayCore();
-        return Task.CompletedTask;
-    }
+    public Task<bool> ResetProtocolDrawAsync(bool protectLinkage = false) => _linkageDrawCoordinator.AuthorizeAsync(
+        protectLinkage ? [SecurityOperation.LotteryReset, SecurityOperation.LinkageAction] : [SecurityOperation.LotteryReset],
+        () =>
+        {
+            ResetDisplayCore();
+            return Task.CompletedTask;
+        });
     public void StopProtocolDraw() => StopPreview();
 
     public void RefreshPrizeLists()
@@ -590,8 +609,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         if (Config.LotterySettings.LotteryShowRandom < 0 || AnimationSettings.Animation == AnimationMode.NoAnimation)
             return;
 
-        await _drawAudioService.PlayAsync(MusicSettings.AnimationMusic, MusicSettings.AnimationMusicVolume,
-            MusicSettings.AnimationMusicFadeIn, MusicSettings.AnimationMusicFadeOut).ConfigureAwait(true);
+        await _drawAudioService.StartAnimationMusicAsync(MusicSettings.AnimationMusic, MusicSettings.AnimationMusicVolume,
+            MusicSettings.AnimationMusicFadeIn, Config.MoreSettings.BackgroundMusicLoop).ConfigureAwait(true);
 
         var previewCts = new CancellationTokenSource();
         _previewCts = previewCts;
@@ -636,6 +655,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private void StopPreview()
     {
         _previewCts?.Cancel();
+        _ = _drawAudioService.StopAnimationMusicAsync(0, immediate: true);
     }
 
     private void SetDrawCommandRunning(bool value)
@@ -697,7 +717,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         return result;
     }
 
-    private async Task<List<Student>?> DrawAssignedStudentsAsync(int count, Guid? parentProofId)
+    private async Task<List<Student>?> DrawAssignedStudentsAsync(int count, Guid? parentProofId, string courseName)
     {
         if (!IsStudentAssignmentEnabled)
             return [];
@@ -724,7 +744,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                 count,
                 candidates,
                 DrawSettingsType.RollCall,
-                parentProofId).ConfigureAwait(true)).Winners.ToList();
+                parentProofId,
+                courseName).ConfigureAwait(true)).Winners.ToList();
         }
         catch (Exception exception)
         {
@@ -942,6 +963,11 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             DrawStatus.InvalidWeight => SR.M_InvalidWeight,
             _ => SR.M_DrawFailed
         };
+    }
+
+    public void ResetForCourseLinkage()
+    {
+        ResetDisplayCore();
     }
 }
 

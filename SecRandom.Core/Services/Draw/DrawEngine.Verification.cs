@@ -18,13 +18,14 @@ public partial class DrawEngine
     public VerificationDrawInput CreateStudentVerificationInput(
         int count,
         IReadOnlyCollection<Student> candidates,
-        DrawSettingsType drawSettingsType)
+        DrawSettingsType drawSettingsType,
+        string courseName = "")
     {
         var usable = candidates.Where(student => student.IsCandidate).ToList();
         if (usable.Count == 0 || count <= 0 || count > usable.Count)
             throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.");
 
-        var historyCache = BuildStudentHistoryCache(usable);
+        var historyCache = BuildStudentHistoryCache(usable, courseName);
         var weighted = GetStudentDrawType(drawSettingsType) == DrawType.Fair
             ? CalculateStudentWeight(usable, historyCache)
             : usable.Select(student => new WeightedCandidate<Student> { Candidate = student, Weight = 1.0 }).ToList();

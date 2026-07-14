@@ -149,6 +149,12 @@
 
 本项目使用了以下第三方代码：
 
+### SoundFlow
+- **用途**：跨平台本地抽取音乐播放（MP3、WAV、FLAC）
+- **来源**：[LSXPrime/SoundFlow](https://github.com/LSXPrime/SoundFlow)
+- **许可证**：MIT License；随附的 miniaudio 运行时使用 MIT 条款
+- **说明**：完整声明见 [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md)
+
 ### PythonNET-Stubs-Generator
 - **路径**：`vendors/pythonnet-stub-generator/`
 - **来源**：[MHDante/pythonnet-stub-generator](https://github.com/MHDante/pythonnet-stub-generator)

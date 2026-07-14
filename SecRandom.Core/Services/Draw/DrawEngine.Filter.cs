@@ -142,7 +142,7 @@ public partial class DrawEngine
         return BuildPrizeHistoryCache([prize]).GetValueOrDefault(prize)?.TotalCount ?? 0;
     }
 
-    private Dictionary<Student, History> BuildStudentHistoryCache(IEnumerable<Student> candidates)
+    private Dictionary<Student, History> BuildStudentHistoryCache(IEnumerable<Student> candidates, string courseName = "")
     {
         var legacyKeySet = BuildUniqueStudentLegacyKeySet();
         Dictionary<Student, History> cache = new();
@@ -153,10 +153,28 @@ public partial class DrawEngine
                 candidate,
                 legacyKeySet.Contains);
             if (history is not null)
-                cache[candidate] = history;
+                cache[candidate] = string.IsNullOrWhiteSpace(courseName)
+                    ? history
+                    : FilterHistoryForCourse(history, courseName);
         }
 
         return cache;
+    }
+
+    private static History FilterHistoryForCourse(History history, string courseName)
+    {
+        var matches = history.Histories
+            .Where(item => string.Equals(item.CourseName, courseName, StringComparison.Ordinal))
+            .OrderBy(item => item.DrawTime)
+            .ToArray();
+        History result = new()
+        {
+            TotalCount = matches.Length,
+            LastDrawnTime = matches.LastOrDefault()?.DrawTime ?? DateTime.MinValue
+        };
+        foreach (var item in matches)
+            result.Histories.Add(item);
+        return result;
     }
 
     private Dictionary<Prize, History> BuildPrizeHistoryCache(IEnumerable<Prize> candidates)

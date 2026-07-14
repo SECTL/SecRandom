@@ -79,6 +79,10 @@
   <data name="O_Restarted" xml:space="preserve"><value>重启后清除</value></data>
   <data name="O_Cleared" xml:space="preserve"><value>手动清除</value></data>
   <data name="O_Random" xml:space="preserve"><value>随机抽取</value></data>
+  <data name="O_NoMusic" xml:space="preserve"><value>不开启音乐</value></data>
+  <data name="O_RandomMusic" xml:space="preserve"><value>随机播放</value></data>
+  <data name="O_MusicExternal" xml:space="preserve"><value>外部文件：{0}</value></data>
+  <data name="O_MusicUnavailable" xml:space="preserve"><value>不可用：{0}</value></data>
   <data name="O_Fair" xml:space="preserve"><value>公平抽取</value></data>
   <data name="O_Pan" xml:space="preserve"><value>按奖盘</value></data>
   <data name="O_Count" xml:space="preserve"><value>按剩余数量</value></data>
@@ -121,13 +125,13 @@
     <value>动画音乐</value>
   </data>
   <data name="S_AnimationMusic_D" xml:space="preserve">
-    <value>抽取动画播放时使用的音乐文件路径。</value>
+    <value>选择抽取动画播放时使用的音乐。</value>
   </data>
   <data name="S_ResultMusic" xml:space="preserve">
     <value>结果音乐</value>
   </data>
   <data name="S_ResultMusic_D" xml:space="preserve">
-    <value>抽取结果出现时使用的音乐文件路径。</value>
+    <value>选择抽取结果出现时使用的音乐。</value>
   </data>
   <data name="S_MusicVolume" xml:space="preserve">
     <value>音乐音量</value>
@@ -141,6 +145,16 @@
   <data name="S_MusicFadeInOut_D" xml:space="preserve">
     <value>依次设置动画音乐淡入、动画音乐淡出、结果音乐淡入和结果音乐淡出时间（毫秒）。</value>
   </data>
+  <data name="S_AnimationMusicVolume" xml:space="preserve"><value>动画音乐音量</value></data>
+  <data name="S_AnimationMusicVolume_D" xml:space="preserve"><value>设置抽取动画音乐的音量。</value></data>
+  <data name="S_ResultMusicVolume" xml:space="preserve"><value>结果音乐音量</value></data>
+  <data name="S_ResultMusicVolume_D" xml:space="preserve"><value>设置抽取结果音乐的音量。</value></data>
+  <data name="S_AnimationMusicFade" xml:space="preserve"><value>动画音乐淡入和淡出</value></data>
+  <data name="S_AnimationMusicFade_D" xml:space="preserve"><value>上方滑块控制淡入，下方滑块控制淡出，单位为毫秒。</value></data>
+  <data name="S_ResultMusicFade" xml:space="preserve"><value>结果音乐淡入和淡出</value></data>
+  <data name="S_ResultMusicFade_D" xml:space="preserve"><value>上方滑块控制淡入，下方滑块控制淡出，单位为毫秒。</value></data>
+  <data name="C_FadeIn" xml:space="preserve"><value>淡入</value></data>
+  <data name="C_FadeOut" xml:space="preserve"><value>淡出</value></data>
   <data name="Section_LotteryImage" xml:space="preserve">
     <value>奖品图片设置</value>
   </data>

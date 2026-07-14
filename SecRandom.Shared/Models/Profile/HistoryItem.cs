@@ -12,6 +12,8 @@ public partial class HistoryItem : ObservableRecipient
 
     [ObservableProperty] private string _drawGender = string.Empty;
     [ObservableProperty] private string _drawGroup = string.Empty;
+    // Empty is the legacy/global-history value; populated entries are scoped to a linkage course.
+    [ObservableProperty] private string _courseName = string.Empty;
 
     [ObservableProperty] private int _drawMethod = 1;
     [ObservableProperty] private int _drawNumbers = 1;

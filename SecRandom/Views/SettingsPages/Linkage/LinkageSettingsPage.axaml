@@ -8,23 +8,15 @@
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
               x:Class="SecRandom.Views.SettingsPages.Linkage.LinkageSettingsPage"
-             x:DataType="local:LinkageSettingsPage"
-             Unloaded="OnUnloaded">
+              x:DataType="local:LinkageSettingsPage"
+              Loaded="OnLoaded"
+              Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
             <sr:IconText x:Name="S_External"
                          Text="{x:Static lsp:Resources.S_External}"
                          Glyph="{sr:Fi LinkFilled}"
                          Margin="0 0 0 4" />
-
-            <fa:FASettingsExpander x:Name="S_External_VerificationRequired"
-                                   Header="{x:Static lsp:Resources.S_External_VerificationRequired}"
-                                   Description="{x:Static lsp:Resources.S_External_VerificationRequired_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi LinkFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding Settings.VerificationRequired}" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
 
             <fa:FASettingsExpander x:Name="S_External_InstantDrawDisable"
                                    Header="{x:Static lsp:Resources.S_External_InstantDrawDisable}"
@@ -35,6 +27,16 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_External_VerificationRequired"
+                                    Header="{x:Static lsp:Resources.S_External_VerificationRequired}"
+                                    Description="{x:Static lsp:Resources.S_External_VerificationRequired_D}"
+                                    IsVisible="{Binding Settings.InstantDrawDisable}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi ShieldCheckmarkFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.VerificationRequired}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_External_DataSource"
                                    Header="{x:Static lsp:Resources.S_External_DataSource}"
                                    Description="{x:Static lsp:Resources.S_External_DataSource_D}"
@@ -42,10 +44,23 @@
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.DataSource}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_DataSource_Off}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_DataSource_Cses}" />
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_DataSource_ClassIsland}" />
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_DataSource_UrlProtocol}" />
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_External_Cses"
+                                    Header="{x:Static lsp:Resources.S_Cses}"
+                                    Description="{Binding CsesSummary}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi CalendarLtrFilled}}">
+                <StackPanel Spacing="8">
+                    <WrapPanel>
+                        <Button Margin="0 0 8 0" Content="{x:Static lsp:Resources.C_CsesImport}" Click="ImportCses_OnClick" />
+                        <Button Margin="0 0 8 0" Content="{x:Static lsp:Resources.C_CsesView}" Click="ViewCses_OnClick" />
+                        <Button Content="{x:Static lsp:Resources.C_CsesClear}" Click="ClearCses_OnClick" />
+                    </WrapPanel>
+                </StackPanel>
             </fa:FASettingsExpander>
 
             <Separator Margin="0 12 0 4" />

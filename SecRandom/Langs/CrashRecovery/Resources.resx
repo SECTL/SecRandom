@@ -48,6 +48,9 @@
     <data name="C_RestartCountdown" xml:space="preserve">
         <value>{0} 秒后重启</value>
     </data>
+    <data name="C_Ignore" xml:space="preserve">
+        <value>忽略</value>
+    </data>
     <data name="C_Close" xml:space="preserve">
         <value>关闭</value>
     </data>

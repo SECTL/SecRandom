@@ -26,6 +26,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using SecRandom.Services.Draw;
+using SecRandom.Services.Linkage;
 using SecRandom.Services.Notification;
 using SecRandom.Services.Security;
 using SecRandom.Services.Verification;
@@ -50,6 +51,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private readonly MainConfigHandler _configHandler;
     private readonly ILogger<RollCallPageViewModel> _logger;
     private readonly ISecurityService _securityService;
+    private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly NotificationService? _notificationService;
     private readonly FileSystemWatcher _studentListWatcher;
@@ -77,6 +79,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         IDrawTemporaryRecordService temporaryRecordService,
         ILogger<RollCallPageViewModel> logger,
         ISecurityService securityService,
+        LinkageDrawCoordinator linkageDrawCoordinator,
         VerificationDrawCoordinator verificationDrawCoordinator,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         DrawAudioService? drawAudioService = null,
@@ -89,6 +92,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         _temporaryRecordService = temporaryRecordService;
         _logger = logger;
         _securityService = securityService;
+        _linkageDrawCoordinator = linkageDrawCoordinator;
         _verificationDrawCoordinator = verificationDrawCoordinator;
         _voiceAnnouncementService = voiceAnnouncementService;
         _drawAudioService = drawAudioService;
@@ -234,7 +238,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private async Task ResetDrawHistoryAsync()
     {
-        if (!await _securityService.AuthorizeAsync(SecurityOperation.RollCallReset, () => Task.CompletedTask))
+        if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.RollCallReset, () => Task.CompletedTask))
             return;
         ResetDrawHistoryCore();
     }
@@ -260,7 +264,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        if (!await _securityService.AuthorizeAsync(SecurityOperation.RollCallStart, () => Task.CompletedTask))
+        if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.RollCallStart, () => Task.CompletedTask))
             return;
         await StartDrawCoreAsync();
     }
@@ -288,10 +292,12 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         SetDrawCommandRunning(true);
         try
         {
+            var courseName = _linkageDrawCoordinator.GetCourseName();
             var verificationDrawTask = _verificationDrawCoordinator.DrawStudentsAsync(
                 count,
                 candidates,
                 DrawSettingsType.RollCall,
+                courseName: courseName,
                 cancellationToken: default);
             await ShowPreviewAsync(candidates, count).ConfigureAwait(true);
 
@@ -304,12 +310,13 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             catch (Exception exception)
             {
                 _logger.LogWarning(exception, "可验证点名抽取失败。");
+                await _drawAudioService.StopAnimationMusicAsync(0, immediate: true).ConfigureAwait(false);
                 ClearUncommittedPreview();
                 StatusText = SR.M_DrawFailed;
                 return;
             }
 
-            var weightSnapshot = BuildWeightSnapshot(drawnStudents);
+            var weightSnapshot = BuildWeightSnapshot(drawnStudents, courseName);
             _profileService.RecordStudentHistory(
                 drawnStudents,
                 now,
@@ -317,7 +324,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
                 SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup,
                 SelectedGender == AllGendersOption ? string.Empty : SelectedGender,
                 (int)Config.RollCallSettings.DrawType,
-                weightSnapshot);
+                weightSnapshot,
+                courseName);
             _temporaryRecordService.RecordStudents(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope, drawnStudents);
 
             ResultItems.Clear();
@@ -346,15 +354,23 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         }
     }
 
-    public Task StartProtocolDrawAsync() => StartDrawCoreAsync();
+    public Task<bool> StartProtocolDrawAsync(bool protectLinkage = false) => _linkageDrawCoordinator.AuthorizeAsync(
+        protectLinkage ? [SecurityOperation.RollCallStart, SecurityOperation.LinkageAction] : [SecurityOperation.RollCallStart],
+        () =>
+        {
+            _ = StartDrawCoreAsync();
+            return Task.CompletedTask;
+        });
 
     public Task ToggleDrawFromShortcutAsync() => StartDrawAsync();
 
-    public Task ResetProtocolDrawAsync()
-    {
-        ResetDrawHistoryCore();
-        return Task.CompletedTask;
-    }
+    public Task<bool> ResetProtocolDrawAsync(bool protectLinkage = false) => _linkageDrawCoordinator.AuthorizeAsync(
+        protectLinkage ? [SecurityOperation.RollCallReset, SecurityOperation.LinkageAction] : [SecurityOperation.RollCallReset],
+        () =>
+        {
+            ResetDrawHistoryCore();
+            return Task.CompletedTask;
+        });
     public void StopProtocolDraw() => StopPreview();
 
     [RelayCommand]
@@ -414,6 +430,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     public void Dispose()
     {
         StopPreview();
+        _ = _drawAudioService?.StopAnimationMusicAsync(0, immediate: true);
         StudentListNames.CollectionChanged -= StudentListNamesOnCollectionChanged;
         Config.RollCallSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.DefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
@@ -554,6 +571,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private void StopPreview()
     {
         _previewCts?.Cancel();
+        _ = _drawAudioService?.StopAnimationMusicAsync(0, immediate: true);
     }
 
     private void ClearUncommittedPreview()
@@ -683,12 +701,17 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         return counts.GetValueOrDefault(recordId) >= threshold;
     }
 
-    private Dictionary<Student, double> BuildWeightSnapshot(IReadOnlyCollection<Student> drawnStudents)
+    public void ResetForCourseLinkage()
+    {
+        ResetDrawHistoryCore();
+    }
+
+    private Dictionary<Student, double> BuildWeightSnapshot(IReadOnlyCollection<Student> drawnStudents, string courseName = "")
     {
         if (Config.RollCallSettings.DrawType != DrawType.Fair)
             return drawnStudents.ToDictionary(student => student, _ => 1.0);
 
-        return _drawEngine.CalculateStudentWeight(GetVisibleStudents().ToList())
+        return _drawEngine.CalculateStudentWeight(GetVisibleStudents().ToList(), courseName: courseName)
             .Where(candidate => drawnStudents.Contains(candidate.Candidate))
             .ToDictionary(candidate => candidate.Candidate, candidate => candidate.Weight);
     }
@@ -753,7 +776,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         if (Config.RollCallSettings.DrawType != DrawType.Fair)
             return 1;
 
-        return _drawEngine.CalculateStudentWeight(GetVisibleStudents().ToList())
+        return _drawEngine.CalculateStudentWeight(GetVisibleStudents().ToList(), courseName: _linkageDrawCoordinator.GetCourseName())
             .FirstOrDefault(candidate => ReferenceEquals(candidate.Candidate, student))
             ?.Weight ?? 1;
     }
@@ -821,20 +844,24 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     private Task PlayAnimationMusicAsync()
     {
-        return _drawAudioService?.PlayAsync(
+        return _drawAudioService?.StartAnimationMusicAsync(
             MusicSettings.AnimationMusic,
             MusicSettings.AnimationMusicVolume,
             MusicSettings.AnimationMusicFadeIn,
-            MusicSettings.AnimationMusicFadeOut) ?? Task.CompletedTask;
+            Config.MoreSettings.BackgroundMusicLoop) ?? Task.CompletedTask;
     }
 
-    private Task PlayResultMusicAsync()
+    private async Task PlayResultMusicAsync()
     {
-        return _drawAudioService?.PlayAsync(
+        if (_drawAudioService is null)
+            return;
+
+        await _drawAudioService.TransitionToResultMusicAsync(
             MusicSettings.ResultMusic,
             MusicSettings.ResultMusicVolume,
             MusicSettings.ResultMusicFadeIn,
-            MusicSettings.ResultMusicFadeOut) ?? Task.CompletedTask;
+            MusicSettings.ResultMusicFadeOut,
+            MusicSettings.AnimationMusicFadeOut).ConfigureAwait(false);
     }
 
     private FontFamily BuildResultFontFamily()

@@ -21,6 +21,7 @@
 - 文件路径统一用 `Utils.GetFilePath(...)`（数据落在 `AppContext.BaseDirectory/data/...`）。
 - 不要在页面里随意 `new` 可复用服务；需要复用/单例/可测试的服务必须进 Host。
 - 插件只能使用 `SecRandom.Core/Plugins` 中的稳定契约；运行时加载、启用状态和管理 UI 放在 `SecRandom/Services/Plugins`。
+- 课程联动的数据源固定为 `0=关闭`、`1=CSES`、`2=ClassIsland`。CSES 文件由 app 层服务管理在 `data/CSES/cses_schedule.yml`，ClassIsland IPC 仅能在 app 层适配器中引用。数据源失效或状态未知时必须允许抽取；只有确认的课间状态可触发限制、浮窗隐藏或课前重置。
 - 公平抽取不能开放算法接口给插件；插件只能通过 `IPluginDrawInvoker` 发起宿主抽取调用，不能拿到 `DrawEngine`、权重计算、随机源、历史写入或抽取配置。
 
 ## Host/依赖注入（怎么写才符合本项目）

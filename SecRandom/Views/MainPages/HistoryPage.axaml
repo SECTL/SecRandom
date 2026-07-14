@@ -7,10 +7,11 @@
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
              x:Class="SecRandom.Views.MainPages.HistoryPage">
 
-    <Grid RowDefinitions="Auto,*" Margin="12" RowSpacing="12">
+    <Grid RowDefinitions="Auto,*" Margin="0 12 0 0" RowSpacing="12">
         <TabStrip x:Name="HistoryTabStrip"
-                  Grid.Row="0"
-                  HorizontalAlignment="Center"
+                   Grid.Row="0"
+                   Margin="12 0 18 0"
+                   HorizontalAlignment="Center"
                   SelectedIndex="0"
                   Theme="{StaticResource TabStripStyle}">
             <TabStripItem Content="{x:Static langs:Resources.Tab_RollCall}" />

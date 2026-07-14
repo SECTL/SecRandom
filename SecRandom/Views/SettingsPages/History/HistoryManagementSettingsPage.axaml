@@ -8,43 +8,9 @@
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
               x:Class="SecRandom.Views.SettingsPages.History.HistoryManagementSettingsPage"
-             x:DataType="local:HistoryManagementSettingsPage"
-             Unloaded="OnUnloaded">
+              x:DataType="local:HistoryManagementSettingsPage">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
-            <sr:IconText x:Name="S_History"
-                         Text="{x:Static lsp:Resources.S_History}"
-                         Glyph="{sr:Fi HistoryFilled}"
-                         Margin="0 0 0 4" />
-
-            <fa:FASettingsExpander x:Name="S_History_ShowRollCall"
-                                   Header="{x:Static lsp:Resources.S_History_ShowRollCall}"
-                                   Description="{x:Static lsp:Resources.S_History_ShowRollCall_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PersonFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding Settings.ShowRollCallHistory}" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander x:Name="S_History_ShowLottery"
-                                   Header="{x:Static lsp:Resources.S_History_ShowLottery}"
-                                   Description="{x:Static lsp:Resources.S_History_ShowLottery_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding Settings.ShowLotteryHistory}" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander x:Name="S_History_SelectWeight"
-                                   Header="{x:Static lsp:Resources.S_History_SelectWeight}"
-                                   Description="{x:Static lsp:Resources.S_History_SelectWeight_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TopSpeedFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding Settings.SelectWeight}" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_ClearHistory"
                          Text="{x:Static lsp:Resources.S_ClearHistory}"
                          Glyph="{sr:Fi DeleteFilled}"

@@ -31,9 +31,10 @@ public sealed class VerificationDrawCoordinator(
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType,
         Guid? parentProofId = null,
+        string courseName = "",
         CancellationToken cancellationToken = default)
     {
-        var input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType);
+        var input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName);
         return DrawAsync(input, candidates, parentProofId, cancellationToken);
     }
 

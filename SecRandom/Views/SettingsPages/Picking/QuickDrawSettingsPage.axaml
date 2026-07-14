@@ -10,8 +10,9 @@
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.Picking.QuickDrawSettingsPage"
-             x:DataType="local:QuickDrawSettingsPage"
-             Unloaded="OnUnloaded">
+              x:DataType="local:QuickDrawSettingsPage"
+              Loaded="OnLoaded"
+              Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
             <sr:IconText Text="{x:Static lp:Resources.Section_Draw}" Glyph="{sr:Fi FlashFilled}" Margin="0 0 0 4" />
@@ -242,50 +243,14 @@
             </fa:FASettingsExpander>
 
             <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Music}"
-                                   Description="{x:Static lp:Resources.Section_Music}"
-                                   IsExpanded="{Binding Settings.OverrideMusicSettings, Mode=OneWay}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}">
+                                     Description="{x:Static lp:Resources.Section_Music}"
+                                     IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}"
                                   OffContent="{x:Static lp:Resources.C_EnableOverride}"
                                   IsChecked="{Binding Settings.OverrideMusicSettings}" />
                 </fa:FASettingsExpander.Footer>
-
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationMusic}"
-                                           Description="{x:Static lp:Resources.S_AnimationMusic_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <TextBox Text="{Binding Settings.AnimationMusic}" MinWidth="260" />
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultMusic}"
-                                           Description="{x:Static lp:Resources.S_ResultMusic_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <TextBox Text="{Binding Settings.ResultMusic}" MinWidth="260" />
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_MusicVolume}"
-                                           Description="{x:Static lp:Resources.S_MusicVolume_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <NumericUpDown Value="{Binding Settings.AnimationMusicVolume}" Minimum="0" Maximum="100" />
-                            <NumericUpDown Value="{Binding Settings.ResultMusicVolume}" Minimum="0" Maximum="100" />
-                        </StackPanel>
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
-                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_MusicFadeInOut}"
-                                           Description="{x:Static lp:Resources.S_MusicFadeInOut_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <NumericUpDown Value="{Binding Settings.AnimationMusicFadeIn}" Minimum="0" Maximum="10000" />
-                            <NumericUpDown Value="{Binding Settings.AnimationMusicFadeOut}" Minimum="0" Maximum="10000" />
-                            <NumericUpDown Value="{Binding Settings.ResultMusicFadeIn}" Minimum="0" Maximum="10000" />
-                            <NumericUpDown Value="{Binding Settings.ResultMusicFadeOut}" Minimum="0" Maximum="10000" />
-                        </StackPanel>
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
+                <local:DrawMusicSettingsContent Settings="{Binding Settings}" MusicSelections="{Binding MusicSelections}" IsEnabled="{Binding Settings.OverrideMusicSettings}" />
             </fa:FASettingsExpander>
         </StackPanel>
     </ScrollViewer>

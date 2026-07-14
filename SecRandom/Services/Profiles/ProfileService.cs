@@ -126,7 +126,8 @@ public class ProfileService : IProfileService
         string drawGroup = "",
         string drawGender = "",
         int drawMethod = 0,
-        IReadOnlyDictionary<Student, double>? weights = null)
+        IReadOnlyDictionary<Student, double>? weights = null,
+        string courseName = "")
     {
         var history = CurrentStudentHistory;
         if (history is null || students.Count == 0)
@@ -167,6 +168,7 @@ public class ProfileService : IProfileService
                 DrawGroup = drawGroup,
                 DrawGender = drawGender,
                 DrawMethod = drawMethod,
+                CourseName = courseName,
                 Weight = weights?.GetValueOrDefault(student, 1) ?? 1
             });
 

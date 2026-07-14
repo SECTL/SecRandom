@@ -17,6 +17,7 @@ using SecRandom.Core.Controls;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
+using SecRandom.Services.Linkage;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
@@ -42,6 +43,10 @@ public partial class FloatingWindow : Window
     private int _expandedWindowWidth;
     private int _expandedWindowHeight;
     private int _dockAnchorCenterY;
+    private readonly CourseLinkageService _linkageService = IAppHost.GetService<CourseLinkageService>();
+    private bool _hiddenByCourseLinkage;
+    private bool _wasVisibleBeforeCourseLinkage;
+    private bool _userWantsVisible = true;
 
     public FloatingWindow()
     {
@@ -58,11 +63,15 @@ public partial class FloatingWindow : Window
         AddHandler(PointerMovedEvent, OnPointerMoved, RoutingStrategies.Tunnel, handledEventsToo: true);
         AddHandler(PointerReleasedEvent, OnPointerReleased, RoutingStrategies.Tunnel, handledEventsToo: true);
         ViewModel.Config.FloatingWindowSettings.PropertyChanged += FloatingWindowSettings_OnPropertyChanged;
+        ViewModel.Config.LinkageSettings.PropertyChanged += LinkageSettings_OnPropertyChanged;
+        _linkageService.StateChanged += LinkageServiceOnStateChanged;
         RefreshItems();
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public bool CanClose { get; set; } = false;
+    public bool UserWantsVisible => _userWantsVisible;
+    public bool IsHiddenByCourseLinkage => _hiddenByCourseLinkage;
 
     public void RefreshItems()
     {
@@ -122,6 +131,46 @@ public partial class FloatingWindow : Window
     private void FloatingWindowSettings_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         RefreshItems();
+    }
+
+    private void LinkageSettings_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        ApplyCourseLinkageVisibility();
+    }
+
+    private void LinkageServiceOnStateChanged(object? sender, EventArgs e)
+    {
+        Dispatcher.UIThread.Post(ApplyCourseLinkageVisibility);
+    }
+
+    public void SetUserVisibilityIntent(bool visible)
+    {
+        _userWantsVisible = visible;
+        if (visible && _hiddenByCourseLinkage)
+            _wasVisibleBeforeCourseLinkage = true;
+        if (!visible)
+            _wasVisibleBeforeCourseLinkage = false;
+    }
+
+    private void ApplyCourseLinkageVisibility()
+    {
+        var shouldHide = ViewModel.Config.LinkageSettings.HideFloatingWindowOnClassEnd
+            && _linkageService.IsConfirmedBreakTime;
+        if (shouldHide == _hiddenByCourseLinkage)
+            return;
+
+        _hiddenByCourseLinkage = shouldHide;
+        if (shouldHide)
+        {
+            _wasVisibleBeforeCourseLinkage = IsVisible;
+            if (IsVisible)
+                Hide();
+            return;
+        }
+
+        if (_userWantsVisible && _wasVisibleBeforeCourseLinkage)
+            App.RestoreAndActivate(this);
+        _wasVisibleBeforeCourseLinkage = false;
     }
 
     private static Button GetRollCallButton(FloatingWindowSettingsConfig settings)
@@ -216,7 +265,12 @@ public partial class FloatingWindow : Window
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
         if (!CanClose) e.Cancel = true;
-        else ViewModel.Config.FloatingWindowSettings.PropertyChanged -= FloatingWindowSettings_OnPropertyChanged;
+        else
+        {
+            ViewModel.Config.FloatingWindowSettings.PropertyChanged -= FloatingWindowSettings_OnPropertyChanged;
+            ViewModel.Config.LinkageSettings.PropertyChanged -= LinkageSettings_OnPropertyChanged;
+            _linkageService.StateChanged -= LinkageServiceOnStateChanged;
+        }
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)

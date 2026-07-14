@@ -46,11 +46,11 @@ public partial class DrawSettingsConfigBase : ObservableObject
 
     // music settings below
 
-    [ObservableProperty] private string _animationMusic = string.Empty;
+    [ObservableProperty] private string _animationMusic = "$none";
     [ObservableProperty] private int _animationMusicFadeIn = 300;
     [ObservableProperty] private int _animationMusicFadeOut = 300;
 
-    [ObservableProperty] private string _resultMusic = string.Empty;
+    [ObservableProperty] private string _resultMusic = "$none";
     [ObservableProperty] private int _resultMusicFadeIn = 300;
     [ObservableProperty] private int _resultMusicFadeOut = 300;
 

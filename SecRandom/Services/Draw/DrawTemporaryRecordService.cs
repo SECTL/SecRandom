@@ -16,6 +16,7 @@ public sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordServic
 
     private readonly HashSet<string> _clearedStudentLists = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _clearedPrizeLists = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _gate = new();
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -24,131 +25,161 @@ public sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordServic
 
     public IReadOnlyDictionary<string, int> GetStudentCounts(string listName, string gender, string group)
     {
-        var state = LoadStudentState(listName);
-        return state.Scopes.TryGetValue(BuildScopeKey(gender, group), out var scope)
-            ? scope.Records.ToDictionary(pair => pair.Key, pair => pair.Value.Count)
-            : new Dictionary<string, int>();
+        lock (_gate)
+        {
+            var state = LoadStudentState(listName);
+            return state.Scopes.TryGetValue(BuildScopeKey(gender, group), out var scope)
+                ? scope.Records.ToDictionary(pair => pair.Key, pair => pair.Value.Count)
+                : new Dictionary<string, int>();
+        }
     }
 
     public void RecordStudents(string listName, string gender, string group, IEnumerable<Student> students)
     {
-        var state = LoadStudentState(listName);
-        var scopeKey = BuildScopeKey(gender, group);
-        if (!state.Scopes.TryGetValue(scopeKey, out var scope))
+        lock (_gate)
         {
-            scope = new TemporaryRecordScope();
-            state.Scopes[scopeKey] = scope;
-        }
-
-        var now = DateTimeOffset.Now;
-        foreach (var student in students)
-        {
-            var recordId = ProfileRecordIdentity.EnsureRecordId(student);
-            if (!scope.Records.TryGetValue(recordId, out var record))
+            var state = LoadStudentState(listName);
+            var scopeKey = BuildScopeKey(gender, group);
+            if (!state.Scopes.TryGetValue(scopeKey, out var scope))
             {
-                record = new TemporaryRecordItem();
-                scope.Records[recordId] = record;
+                scope = new TemporaryRecordScope();
+                state.Scopes[scopeKey] = scope;
             }
 
-            record.Name = student.Name;
-            record.Id = student.Id;
-            record.Count++;
-            record.LastDrawnTime = now;
-        }
+            var now = DateTimeOffset.Now;
+            foreach (var student in students)
+            {
+                var recordId = ProfileRecordIdentity.EnsureRecordId(student);
+                if (!scope.Records.TryGetValue(recordId, out var record))
+                {
+                    record = new TemporaryRecordItem();
+                    scope.Records[recordId] = record;
+                }
 
-        state.UpdatedAt = now;
-        SaveStudentState(listName, state);
+                record.Name = student.Name;
+                record.Id = student.Id;
+                record.Count++;
+                record.LastDrawnTime = now;
+            }
+
+            state.UpdatedAt = now;
+            SaveStudentState(listName, state);
+        }
     }
 
     public void ClearStudentScope(string listName, string gender, string group)
     {
-        var state = LoadStudentState(listName);
-        if (!state.Scopes.Remove(BuildScopeKey(gender, group)))
-            return;
+        lock (_gate)
+        {
+            var state = LoadStudentState(listName);
+            if (!state.Scopes.Remove(BuildScopeKey(gender, group)))
+                return;
 
-        state.UpdatedAt = DateTimeOffset.Now;
-        SaveStudentState(listName, state);
+            state.UpdatedAt = DateTimeOffset.Now;
+            SaveStudentState(listName, state);
+        }
     }
 
     public void ClearStudentList(string listName)
     {
-        var path = GetStudentPath(listName);
-        if (File.Exists(path))
-            File.Delete(path);
+        lock (_gate)
+        {
+            var path = GetStudentPath(listName);
+            if (File.Exists(path))
+                File.Delete(path);
+        }
     }
 
     public void ClearStudentListOnce(string listName)
     {
-        var key = NormalizeFileComponent(listName);
-        if (!_clearedStudentLists.Add(key))
-            return;
+        lock (_gate)
+        {
+            var key = NormalizeFileComponent(listName);
+            if (!_clearedStudentLists.Add(key))
+                return;
 
-        ClearStudentList(listName);
+            ClearStudentList(listName);
+        }
     }
 
     public IReadOnlyDictionary<string, int> GetPrizeCounts(string listName)
     {
-        var state = LoadPrizeState(listName);
-        return state.Scopes.TryGetValue(PrizeScopeKey, out var scope)
-            ? scope.Records.ToDictionary(pair => pair.Key, pair => pair.Value.Count)
-            : new Dictionary<string, int>();
+        lock (_gate)
+        {
+            var state = LoadPrizeState(listName);
+            return state.Scopes.TryGetValue(PrizeScopeKey, out var scope)
+                ? scope.Records.ToDictionary(pair => pair.Key, pair => pair.Value.Count)
+                : new Dictionary<string, int>();
+        }
     }
 
     public void RecordPrizes(string listName, IEnumerable<Prize> prizes)
     {
-        var state = LoadPrizeState(listName);
-        if (!state.Scopes.TryGetValue(PrizeScopeKey, out var scope))
+        lock (_gate)
         {
-            scope = new TemporaryRecordScope();
-            state.Scopes[PrizeScopeKey] = scope;
-        }
-
-        var now = DateTimeOffset.Now;
-        foreach (var prize in prizes)
-        {
-            var recordId = ProfileRecordIdentity.EnsureRecordId(prize);
-            if (!scope.Records.TryGetValue(recordId, out var record))
+            var state = LoadPrizeState(listName);
+            if (!state.Scopes.TryGetValue(PrizeScopeKey, out var scope))
             {
-                record = new TemporaryRecordItem();
-                scope.Records[recordId] = record;
+                scope = new TemporaryRecordScope();
+                state.Scopes[PrizeScopeKey] = scope;
             }
 
-            record.Name = prize.Name;
-            record.Id = prize.Id;
-            record.Count++;
-            record.LastDrawnTime = now;
-        }
+            var now = DateTimeOffset.Now;
+            foreach (var prize in prizes)
+            {
+                var recordId = ProfileRecordIdentity.EnsureRecordId(prize);
+                if (!scope.Records.TryGetValue(recordId, out var record))
+                {
+                    record = new TemporaryRecordItem();
+                    scope.Records[recordId] = record;
+                }
 
-        state.UpdatedAt = now;
-        SavePrizeState(listName, state);
+                record.Name = prize.Name;
+                record.Id = prize.Id;
+                record.Count++;
+                record.LastDrawnTime = now;
+            }
+
+            state.UpdatedAt = now;
+            SavePrizeState(listName, state);
+        }
     }
 
     public void ClearPrizeList(string listName)
     {
-        var path = GetPrizePath(listName);
-        if (File.Exists(path))
-            File.Delete(path);
+        lock (_gate)
+        {
+            var path = GetPrizePath(listName);
+            if (File.Exists(path))
+                File.Delete(path);
+        }
     }
 
     public void ClearPrizeListOnce(string listName)
     {
-        var key = NormalizeFileComponent(listName);
-        if (!_clearedPrizeLists.Add(key))
-            return;
+        lock (_gate)
+        {
+            var key = NormalizeFileComponent(listName);
+            if (!_clearedPrizeLists.Add(key))
+                return;
 
-        ClearPrizeList(listName);
+            ClearPrizeList(listName);
+        }
     }
 
     public void ClearAll()
     {
-        var directory = Utils.GetDirectoryPath("TEMP");
-        if (!Directory.Exists(directory))
-            return;
+        lock (_gate)
+        {
+            var directory = Utils.GetDirectoryPath("TEMP");
+            if (!Directory.Exists(directory))
+                return;
 
-        foreach (var file in Directory.GetFiles(directory, "roll_call_record_*.json")
-                     .Concat(Directory.GetFiles(directory, "roll_call_record__*.json"))
-                     .Concat(Directory.GetFiles(directory, "lottery_record_*.json")))
-            File.Delete(file);
+            foreach (var file in Directory.GetFiles(directory, "roll_call_record_*.json")
+                         .Concat(Directory.GetFiles(directory, "roll_call_record__*.json"))
+                         .Concat(Directory.GetFiles(directory, "lottery_record_*.json")))
+                File.Delete(file);
+        }
     }
 
     private TemporaryRecordState LoadStudentState(string listName)
