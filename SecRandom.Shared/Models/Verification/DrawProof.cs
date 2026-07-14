@@ -25,8 +25,13 @@ public sealed record class DrawProof
     [JsonPropertyName("algorithmId")]
     public string AlgorithmId { get; init; } = string.Empty;
 
+    [JsonPropertyName("algorithmEngineVersion")]
+    public string AlgorithmEngineVersion { get; init; } = string.Empty;
+
+    // Keeps deserializing v1 proof files while new exports use algorithmEngineVersion.
     [JsonPropertyName("kernelVersion")]
-    public string KernelVersion { get; init; } = string.Empty;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? LegacyKernelVersion { get; init; }
 
     [JsonPropertyName("inputHash")]
     public string InputHash { get; init; } = string.Empty;

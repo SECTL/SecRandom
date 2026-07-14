@@ -35,6 +35,11 @@ var roundHtmlPath = Path.Combine(outputDir, "round-fairness-audit.html");
 File.WriteAllText(roundHtmlPath, roundReport.ToHtml(), Encoding.UTF8);
 Console.WriteLine(roundHtmlPath);
 
+var cryptoReport = CryptoRandomAudit.Run(outputDir);
+var cryptoHtmlPath = Path.Combine(outputDir, "crypto-random-audit.html");
+File.WriteAllText(cryptoHtmlPath, cryptoReport.ToHtml(), Encoding.UTF8);
+Console.WriteLine(cryptoHtmlPath);
+
 static class AuditRunner
 {
     private const int ShortStudentIterations = 6_000;

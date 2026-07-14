@@ -46,6 +46,7 @@ SecRandom.Shared/
 - `ProfileRecordIdentity` is the boundary helper for filling missing/duplicate `RecordId` values and resolving legacy `Id`/`Name` history keys without ambiguous fallback.
 - `Student` and `Prize` include persisted optional metadata fields such as `Tags`; keep new fields backward-compatible with empty defaults.
 - IPC DTOs under `Models/Ipc/` are serialization-only contracts. Keep them free of UI/runtime services and do not emit internal `RecordId` values in external projections.
+- Draw proofs serialize their product algorithm release as `algorithmEngineVersion`; retain the nullable legacy `kernelVersion` reader only for historical proof files. User-visible labels must call it an algorithm engine version, not a kernel version.
 - `HistoryItem.DrawRoundId` is an additive persisted field. New multi-record draws share one value so IPC history can group a logical draw; empty legacy values require conservative fallback grouping.
 - `HistoryItem.CourseName` is an additive persisted course-history field. Empty values represent legacy/global history; new linkage writes use it only for a resolved subject or the stable `__break__` marker while record identity remains `RecordId`.
 - Attached settings objects use `Guid` keys and `Dictionary<Guid, object?>`; coordinate changes with Core draw/settings

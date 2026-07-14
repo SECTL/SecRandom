@@ -46,6 +46,7 @@ public partial class DrawEngine
         return new VerificationDrawInput
         {
             Kind = VerificationDrawKind.Student,
+            SamplingMode = VerificationSamplingMode.HistoryBalancedWeighted,
             Count = count,
             Candidates = frozen,
             AuditPayload = CreateAuditPayload("student", count, frozen, weighted, historyCache, new
@@ -73,12 +74,26 @@ public partial class DrawEngine
             throw new InvalidOperationException("The prepared prize pool cannot satisfy this draw.");
 
         var frozen = FreezeCandidates(weighted);
+        var hasInternalRules = weighted.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
+        var samplingMode = ConfigData.LotterySettings.DrawType == LotteryDrawType.Count && !hasInternalRules
+            ? VerificationSamplingMode.InventoryPermutation
+            : VerificationSamplingMode.WeightedWithoutReplacement;
         return new VerificationDrawInput
         {
             Kind = VerificationDrawKind.Prize,
+            SamplingMode = samplingMode,
             Count = count,
             Candidates = frozen,
-            AuditPayload = CreateAuditPayload("prize", count, frozen, weighted, historyCache)
+            AuditPayload = CreateAuditPayload("prize", count, frozen, weighted, historyCache, new
+            {
+                samplingAlgorithm = samplingMode == VerificationSamplingMode.InventoryPermutation
+                    ? "inventory-partial-permutation"
+                    : "weighted-without-replacement",
+                inventoryEntriesEqualWeight = samplingMode == VerificationSamplingMode.InventoryPermutation,
+                internalRulesRequireWeightedFallback = samplingMode == VerificationSamplingMode.WeightedWithoutReplacement
+                    && ConfigData.LotterySettings.DrawType == LotteryDrawType.Count
+                    && hasInternalRules
+            })
         };
     }
 

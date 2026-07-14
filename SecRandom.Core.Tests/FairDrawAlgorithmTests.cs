@@ -7,7 +7,9 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Interfaces;
 using SecRandom.Core.Models;
+using SecRandom.Core.Models.Verification;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
@@ -101,6 +103,32 @@ public sealed class FairDrawAlgorithmTests
                     > input.Candidates.Single(candidate => candidate.RecordId == groupB.RecordId).WeightMicros);
     }
 
+    [Fact]
+    public void CountLottery_UsesInventoryPermutationRatherThanPrizeWeights()
+    {
+        var first = new Prize { Name = "First", RecordId = Guid.NewGuid(), Count = 2, Weight = 100 };
+        var second = new Prize { Name = "Second", RecordId = Guid.NewGuid(), Count = 1, Weight = 0.01 };
+        var prizes = new PrizeList { Prizes = [first, second] };
+        var config = CreateConfig(new FairDrawSettingsConfig());
+        config.LotterySettings = new LotterySettingsConfig
+        {
+            DrawType = LotteryDrawType.Count,
+            DrawMode = DrawMode.Repeat
+        };
+
+        using var host = CreateHost(config, new TestProfileService(new StudentHistory(), new StudentList(), prizes));
+        IAppHost.Host = host;
+        var engine = new DrawEngine(new ScriptedRandomSource(2, 0));
+
+        var local = engine.DrawPrize(2, _ => true);
+        var input = engine.CreatePrizeVerificationInput(2, new Dictionary<string, int>());
+
+        Assert.True(local.IsSuccess);
+        Assert.Equal([second, first], local.Result);
+        Assert.Equal(VerificationSamplingMode.InventoryPermutation, input.SamplingMode);
+        Assert.All(input.Candidates, candidate => Assert.Equal(1_000_000, candidate.WeightMicros));
+    }
+
     private static MainConfigModel CreateConfig(FairDrawSettingsConfig fairSettings)
     {
         return new MainConfigModel
@@ -133,12 +161,16 @@ public sealed class FairDrawAlgorithmTests
         public override void DeleteConfig<T>(T config) { }
     }
 
-    private sealed class TestProfileService(StudentHistory history, StudentList students) : IProfileService
+    private sealed class TestProfileService(
+        StudentHistory history,
+        StudentList students,
+        PrizeList? prizes = null,
+        PrizeHistory? prizeHistory = null) : IProfileService
     {
         public StudentList? CurrentStudentList { get; } = students;
         public StudentHistory? CurrentStudentHistory { get; } = history;
-        public PrizeList? CurrentPrizeList { get; } = new();
-        public PrizeHistory? CurrentPrizeHistory { get; } = new();
+        public PrizeList? CurrentPrizeList { get; } = prizes ?? new();
+        public PrizeHistory? CurrentPrizeHistory { get; } = prizeHistory ?? new();
         public StudentListConfig? StudentListConfig => null;
         public StudentHistoryConfig? StudentHistoryConfig => null;
         public PrizeListConfig? PrizeListConfig => null;
@@ -150,5 +182,20 @@ public sealed class FairDrawAlgorithmTests
         public void ClearCurrentStudentHistory() { }
         public void ClearCurrentPrizeHistory() { }
         public void SaveProfile() { }
+    }
+
+    private sealed class ScriptedRandomSource(params int[] values) : IRandomSource
+    {
+        private readonly Queue<int> _values = new(values);
+
+        public int NextInt32(int maxExclusive)
+        {
+            var value = _values.Dequeue();
+            if (value < 0 || value >= maxExclusive)
+                throw new InvalidOperationException("The test random value is outside the requested bound.");
+            return value;
+        }
+
+        public double NextDouble() => throw new InvalidOperationException("Inventory permutation must not use weighted sampling.");
     }
 }

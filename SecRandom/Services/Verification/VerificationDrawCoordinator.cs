@@ -64,7 +64,7 @@ public sealed class VerificationDrawCoordinator(
         {
             try
             {
-            var clientNonce = RandomNumberGenerator.GetBytes(32);
+            var clientNonce = VerificationSeedDerivation.CreateCsprngNonce();
             var seed = VerificationSeedDerivation.DeriveOnline(
                 inputHash,
                 lease.Ticket.TicketId,
@@ -84,7 +84,7 @@ public sealed class VerificationDrawCoordinator(
             }
         }
 
-        var offlineSeed = RandomNumberGenerator.GetBytes(32);
+        var offlineSeed = VerificationSeedDerivation.CreateCsprngSeed();
         var offlineResult = kernel.Draw(input, offlineSeed);
         var offlineProof = CreateProof(input, inputHash, offlineSeed, offlineResult, VerificationProofMode.OfflineReproducible, parentProofId, null);
         return Complete(records, recordLookup, offlineResult, offlineProof, exportContext);
@@ -148,7 +148,7 @@ public sealed class VerificationDrawCoordinator(
             ParentProofId = parentProofId,
             Mode = mode,
             AlgorithmId = VerificationWireCodec.AlgorithmId,
-            KernelVersion = VerificationWireCodec.KernelVersion,
+            AlgorithmEngineVersion = VerificationWireCodec.AlgorithmEngineVersion,
             InputHash = WitnessClient.ToBase64Url(inputHash),
             Payload = WitnessClient.ToBase64Url(payload),
             AuditPayload = WitnessClient.ToBase64Url(input.AuditPayload),

@@ -72,6 +72,7 @@ SecRandom.Core/
 - Weighted drawing validates count, candidates, and weights before sampling; preserve explicit `DrawStatus` returns over
   exceptions at public boundary.
 - Draw fairness/repeat history for students and prizes must use `ProfileRecordIdentity`/`RecordId` first. Legacy `Id`/`Name` history fallback is only for backward compatibility and must stay ambiguity-safe.
+- Verification proof inputs commit a `VerificationSamplingMode`. Student proofs use history-balanced weighted sampling; count-lottery proofs use equal-probability partial inventory permutation only while no behind-scene rule is enabled. Any internal rule moves lottery proof generation to weighted-without-replacement and must stay visible in the anonymous audit payload.
 - Config handlers derive from `ConfigHandlerBase<TModel>`; config model defaults should be safe without existing data
   files.
 - IPC parser code is UI-free and must reject ambiguous routes, malformed percent escapes, control characters, oversized frames, and unsupported schemes. Keep route execution in the app layer.

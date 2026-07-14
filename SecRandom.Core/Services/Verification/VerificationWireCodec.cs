@@ -10,9 +10,10 @@ namespace SecRandom.Core.Services.Verification;
 /// </summary>
 public static class VerificationWireCodec
 {
-    public const ushort FormatVersion = 1;
+    public const ushort RequestFormatVersion = 2;
+    public const ushort ResponseFormatVersion = 1;
     public const string AlgorithmId = "secrandom-fairdraw-history-balanced-weighted-chacha20/v3";
-    public const string KernelVersion = "3.0.0";
+    public const string AlgorithmEngineVersion = "3.1.0";
 
     private static readonly byte[] InputMagic = "SRDI"u8.ToArray();
     private static readonly byte[] RequestMagic = "SRDQ"u8.ToArray();
@@ -57,7 +58,7 @@ public static class VerificationWireCodec
         var offset = 0;
         EnsureMagic(response, ref offset, ResponseMagic);
         var version = ReadUInt16(response, ref offset);
-        if (version != FormatVersion)
+        if (version != ResponseFormatVersion)
             throw new InvalidDataException($"Unsupported verification response version {version}.");
 
         var winnerCount = ReadUInt32(response, ref offset);
@@ -81,7 +82,7 @@ public static class VerificationWireCodec
     {
         var bytes = new List<byte>(checked(10 + winners.Count * 36));
         bytes.AddRange(ResponseMagic);
-        WriteUInt16(bytes, FormatVersion);
+        WriteUInt16(bytes, ResponseFormatVersion);
         WriteUInt32(bytes, checked((uint)winners.Count));
         foreach (var winner in winners)
         {
@@ -114,10 +115,14 @@ public static class VerificationWireCodec
     private static byte[] EncodeInput(VerificationDrawInput input, byte[] magic, ReadOnlySpan<byte> seed)
     {
         var candidates = CanonicalizeCandidates(input);
-        var bytes = new List<byte>(checked(43 + candidates.Count * 45));
+        if (!Enum.IsDefined(input.SamplingMode))
+            throw new ArgumentOutOfRangeException(nameof(input), "Verification sampling mode is unsupported.");
+
+        var bytes = new List<byte>(checked(48 + candidates.Count * 45));
         bytes.AddRange(magic);
-        WriteUInt16(bytes, FormatVersion);
+        WriteUInt16(bytes, RequestFormatVersion);
         bytes.Add((byte)input.Kind);
+        bytes.Add((byte)input.SamplingMode);
         WriteUInt32(bytes, checked((uint)input.Count));
         WriteUInt32(bytes, checked((uint)candidates.Count));
         if (!seed.IsEmpty)

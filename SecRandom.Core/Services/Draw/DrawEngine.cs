@@ -201,7 +201,7 @@ public partial class DrawEngine
             if (count > weightedCandidates.Count)
                 throw new RepeatLimitExhaustedException();
 
-            var result = DrawWithBehindSceneWeights(weightedCandidates, count);
+            var result = DrawPrizeCandidates(weightedCandidates, count);
             LogDrawResult("奖品抽取", result.Status, count, usable.Count, result.Result.Count);
             return result;
         }
@@ -234,7 +234,7 @@ public partial class DrawEngine
             if (count > weightedCandidates.Count)
                 throw new RepeatLimitExhaustedException();
 
-            var result = DrawWithBehindSceneWeights(weightedCandidates, count);
+            var result = DrawPrizeCandidates(weightedCandidates, count);
             LogDrawResult("奖品抽取", result.Status, count, usable.Count, result.Result.Count);
             return result;
         }
@@ -279,13 +279,36 @@ public partial class DrawEngine
             {
                 var remainingCount = Math.Max(0, prize.Count - (historyCache.GetValueOrDefault(prize)?.TotalCount ?? 0));
                 for (var i = 0; i < remainingCount; i++)
-                    result.Add(new WeightedCandidate<Prize> { Candidate = prize, Weight = prize.Weight });
+                    result.Add(new WeightedCandidate<Prize> { Candidate = prize, Weight = 1.0 });
             }
 
             return result;
         }
 
         return prizes.Select(p => new WeightedCandidate<Prize> { Candidate = p, Weight = p.Weight }).ToList();
+    }
+
+    private DrawResult<Prize> DrawPrizeCandidates(IReadOnlyList<WeightedCandidate<Prize>> candidates, int count)
+    {
+        if (ConfigData.LotterySettings.DrawType != LotteryDrawType.Count
+            || candidates.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true }))
+            return DrawWithBehindSceneWeights(candidates, count);
+
+        if (count > candidates.Count)
+            return new DrawResult<Prize> { Status = DrawStatus.NoEligibleCandidates };
+
+        var tickets = candidates.Select(candidate => candidate.Candidate).ToList();
+        for (var index = 0; index < count; index++)
+        {
+            var selectedIndex = index + _randomSource.NextInt32(tickets.Count - index);
+            (tickets[index], tickets[selectedIndex]) = (tickets[selectedIndex], tickets[index]);
+        }
+
+        return new DrawResult<Prize>
+        {
+            Status = DrawStatus.Success,
+            Result = tickets.Take(count).ToList()
+        };
     }
 
     private DrawResult<TCandidate> DrawWithBehindSceneWeights<TCandidate>(
