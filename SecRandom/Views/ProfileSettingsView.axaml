@@ -67,7 +67,8 @@
         <Border Grid.Row="2" Background="{DynamicResource LayerOnMicaBaseAltFillColorDefaultBrush}">
             <sr:DrawerHost IsDrawerOpen="{Binding ViewModel.IsDrawerOpen, Mode=TwoWay}"
                            DrawerPlacement="Right"
-                           DrawerContent="{Binding ViewModel.DrawerContent}">
+                           DrawerContent="{Binding ViewModel.DrawerContent}"
+                           Margin="12 12 18 12">
                 <Carousel SelectedIndex="{Binding ViewModel.SelectedPageIndex}"
                           Classes="animated">
                     <!-- Students -->

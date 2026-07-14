@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page_Title" xml:space="preserve"><value>Music library</value></data>
+  <data name="S_Library" xml:space="preserve"><value>Local music library</value></data>
+  <data name="S_Library_D" xml:space="preserve"><value>Imported music is copied into the app data folder and can be selected by every draw mode.</value></data>
+  <data name="C_Import" xml:space="preserve"><value>Import music</value></data>
+  <data name="C_FileName" xml:space="preserve"><value>Track</value></data>
+  <data name="C_Format" xml:space="preserve"><value>Format</value></data>
+  <data name="C_Size" xml:space="preserve"><value>Size</value></data>
+  <data name="C_Operations" xml:space="preserve"><value>Actions</value></data>
+  <data name="C_Preview" xml:space="preserve"><value>Preview</value></data>
+  <data name="C_Stop" xml:space="preserve"><value>Stop</value></data>
+  <data name="C_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="C_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="M_Empty" xml:space="preserve"><value>No music has been imported.</value></data>
+  <data name="M_ImportFailed" xml:space="preserve"><value>Unable to import the selected music files.</value></data>
+  <data name="M_PreviewFailed" xml:space="preserve"><value>Unable to preview this music file.</value></data>
+  <data name="M_DeleteTitle" xml:space="preserve"><value>Delete music</value></data>
+  <data name="M_DeleteContent" xml:space="preserve"><value>Deleting "{0}" resets every draw setting that references it to no music.</value></data>
+  <data name="M_DeletePrimary" xml:space="preserve"><value>Delete</value></data>
+  <data name="M_DeleteFailed" xml:space="preserve"><value>Unable to delete this music file.</value></data>
+  <data name="M_DeleteSuccess" xml:space="preserve"><value>Deleted "{0}".</value></data>
+  <data name="M_Imported" xml:space="preserve"><value>Imported {0} track(s).</value></data>
+</root>

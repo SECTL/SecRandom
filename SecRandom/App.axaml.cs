@@ -47,6 +47,8 @@ using SecRandom.Services.Plugins;
 using SecRandom.Services.Profiles;
 using SecRandom.Services.Ipc;
 using SecRandom.Services.ImportExport;
+using SecRandom.Services.Linkage;
+using SecRandom.Services.Music;
 using SecRandom.Services.Settings;
 using SecRandom.Services.Security;
 using SecRandom.Services.Telemetry;
@@ -158,7 +160,10 @@ public partial class App : Application
             _floatingWindow.Opened += (_, _) => RefreshTrayWindowMenuItems();
             _floatingWindow.Closed += (_, _) => _floatingWindow = null;
             if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.StartupDisplayFloatingWindow)
+            {
                 _floatingWindow.Hide();
+                _floatingWindow.SetUserVisibilityIntent(false);
+            }
             desktop.MainWindow = _floatingWindow;
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime)
@@ -288,8 +293,12 @@ public partial class App : Application
 
     private static Window ShowCrashRecoveryPromptOnly(CrashRecoveryPromptOptions promptOptions)
     {
-        CrashRecoveryWindow window = new(promptOptions, RestartFromCrashRecoveryPrompt);
-        window.Closed += (_, _) => RequestDesktopShutdown();
+        CrashRecoveryWindow window = new(promptOptions, RestartFromCrashRecoveryPrompt, canIgnore: false);
+        window.Closed += (_, _) =>
+        {
+            if (!window.WasIgnored)
+                RequestDesktopShutdown();
+        };
         return window;
     }
 
@@ -364,7 +373,15 @@ public partial class App : Application
                 services.AddSingleton<DesktopIntegrationService>();
                 services.AddSingleton<ProtocolCommandRouter>();
                 services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
+                services.AddSingleton<MusicLibraryService>();
                 services.AddSingleton<DrawAudioService>();
+                services.AddSingleton<CsesScheduleParser>();
+                services.AddSingleton<ICsesScheduleStore, CsesScheduleStore>();
+                services.AddSingleton<CsesScheduleSource>();
+                services.AddSingleton<ClassIslandScheduleSource>();
+                services.AddSingleton<CourseLinkageService>();
+                services.AddSingleton<LinkageDrawCoordinator>();
+                services.AddHostedService<CourseLinkageHostedService>();
                 services.AddSingleton<ICredentialKeyProtector, CredentialKeyProtector>();
                 services.AddSingleton<SecurityCredentialStore>();
                 services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
@@ -409,6 +426,7 @@ public partial class App : Application
                     Langs.Common.Resources.Settings_Personalized, "settings.personalized", FluentIcons.ColorFilled));
                 services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
                 services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources.Settings_FloatingWindow);
+                services.AddSettingsPage<MusicSettingsPage>(Langs.SettingsPages.Personalized.Music.Resources.Page_Title);
                 
                 services.AddSettingsPage<LinkageSettingsPage>(Langs.Common.Resources.Settings_Linkage);
                 services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
@@ -630,7 +648,11 @@ public partial class App : Application
     private static bool ShowCrashRecoveryPrompt(CrashRecoveryPromptOptions promptOptions)
     {
         CrashRecoveryWindow window = new(promptOptions, RestartFromCrashRecoveryCurrentApp);
-        window.Closed += (_, _) => RequestDesktopShutdown();
+        window.Closed += (_, _) =>
+        {
+            if (!window.WasIgnored)
+                RequestDesktopShutdown();
+        };
         window.Show();
         return true;
     }
@@ -943,10 +965,15 @@ public partial class App : Application
             () =>
             {
                 if (_floatingWindow is { IsVisible: true })
+                {
                     _floatingWindow.Hide();
+                    _floatingWindow.SetUserVisibilityIntent(false);
+                }
                 else if (_floatingWindow is not null)
                 {
-                    RestoreAndActivate(_floatingWindow);
+                    _floatingWindow.SetUserVisibilityIntent(true);
+                    if (!_floatingWindow.IsHiddenByCourseLinkage)
+                        RestoreAndActivate(_floatingWindow);
                 }
                 Current.RefreshTrayWindowMenuItems();
                 return Task.CompletedTask;
@@ -959,12 +986,19 @@ public partial class App : Application
         {
             "show" => true,
             "hide" => false,
-            _ => _floatingWindow is not { IsVisible: true }
+            _ => _floatingWindow is not { UserWantsVisible: true }
         };
         if (shouldShow && _floatingWindow is not null)
-            RestoreAndActivate(_floatingWindow);
+        {
+            _floatingWindow.SetUserVisibilityIntent(true);
+            if (!_floatingWindow.IsHiddenByCourseLinkage)
+                RestoreAndActivate(_floatingWindow);
+        }
         else if (!shouldShow)
+        {
             _floatingWindow?.Hide();
+            _floatingWindow?.SetUserVisibilityIntent(false);
+        }
         Current.RefreshTrayWindowMenuItems();
     }
 
@@ -1207,7 +1241,7 @@ public partial class App : Application
         ToggleFloatingWindow();
     }
 
-    private static void RestoreAndActivate(Window window)
+    internal static void RestoreAndActivate(Window window)
     {
         if (window.WindowState == WindowState.Minimized)
         {

@@ -49,6 +49,8 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
     public ObservableCollection<HistoryModeOption> ModeOptions { get; } = [];
     public ObservableCollection<HistoryDisplayRow> Rows { get; } = [];
     public bool HasWeightRows => Rows.Any(row => !string.IsNullOrWhiteSpace(row.Weight));
+    public bool ShouldShowSubjectColumn => Config.LinkageSettings.SubjectHistoryFilterEnabled
+        && SelectedMode != HistoryMode.Overview;
 
     public IRelayCommand RefreshCommand { get; }
 
@@ -90,7 +92,11 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
     }
 
     partial void OnSelectedClassNameChanged(string? value) => Load();
-    partial void OnSelectedModeChanged(string value) => BuildRows();
+    partial void OnSelectedModeChanged(string value)
+    {
+        BuildRows();
+        OnPropertyChanged(nameof(ShouldShowSubjectColumn));
+    }
 
     private void Load()
     {
@@ -342,6 +348,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
             Group = string.IsNullOrWhiteSpace(item.RecordGroup) ? info.Group : item.RecordGroup,
             DrawGender = FormatDrawGender(item.DrawGender),
             DrawGroup = FormatDrawGroup(item.DrawGroup),
+            Subject = FormatSubject(item.CourseName),
             DrawTime = item.DrawTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture),
             DrawMethod = item.DrawMethod == 0 ? SR.C_MethodRandom : SR.C_MethodWeight,
             DrawNumbers = item.DrawNumbers,
@@ -386,6 +393,11 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
     private static string FormatDrawGroup(string group)
     {
         return string.IsNullOrWhiteSpace(group) ? RollCallSR.O_AllGroups : group;
+    }
+
+    private static string FormatSubject(string subject)
+    {
+        return subject == "__break__" ? SR.C_Break : subject;
     }
 
     private static string FormatLatestWeight(ProfileHistory h) =>

@@ -24,10 +24,14 @@ public partial class CrashRecoveryWindow : Window, INotifyPropertyChanged
     {
     }
 
-    public CrashRecoveryWindow(CrashRecoveryPromptOptions options, Func<bool> restartApp)
+    public CrashRecoveryWindow(
+        CrashRecoveryPromptOptions options,
+        Func<bool> restartApp,
+        bool canIgnore = true)
     {
         _options = options;
         _restartApp = restartApp;
+        CanIgnore = canIgnore;
         CrashReport = CrashRecoveryRuntime.ReadCrashReport(options.CrashReportPath);
         DataContext = this;
         InitializeComponent();
@@ -39,6 +43,8 @@ public partial class CrashRecoveryWindow : Window, INotifyPropertyChanged
     public new event PropertyChangedEventHandler? PropertyChanged;
 
     public string CrashReport { get; }
+    public bool CanIgnore { get; }
+    public bool WasIgnored { get; private set; }
 
     public string RestartButtonText => _remainingSeconds > 0
         ? string.Format(CrashResources.C_RestartCountdown, _remainingSeconds)
@@ -106,6 +112,16 @@ public partial class CrashRecoveryWindow : Window, INotifyPropertyChanged
     private void Restart_OnClick(object? sender, RoutedEventArgs e)
     {
         Restart();
+    }
+
+    private void Ignore_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!CanIgnore)
+            return;
+
+        _restartTimer?.Stop();
+        WasIgnored = true;
+        Close();
     }
 
     private void Close_OnClick(object? sender, RoutedEventArgs e)

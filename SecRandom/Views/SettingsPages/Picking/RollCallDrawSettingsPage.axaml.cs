@@ -12,6 +12,7 @@ using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
 using SecRandom.ViewModels;
+using SecRandom.Services.Music;
 
 namespace SecRandom.Views.SettingsPages.Picking;
 
@@ -19,32 +20,55 @@ namespace SecRandom.Views.SettingsPages.Picking;
 public partial class RollCallDrawSettingsPage : UserControl
 {
     private bool _normalizingSettings;
+    private bool _isSubscribed;
 
     public RollCallDrawSettingsPage()
     {
         Settings = ViewModel.Config.RollCallSettings;
+        MusicLibrary.Refresh();
         RefreshStudentLists();
         DataContext = this;
         InitializeComponent();
         NormalizeDrawSettings();
-        Settings.PropertyChanged += SettingsOnPropertyChanged;
+        SubscribeSettings();
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public RollCallSettingsConfig Settings { get; }
     public ObservableCollection<string> StudentListNames { get; } = [];
+    public ObservableCollection<MusicSelection> MusicSelections => MusicLibrary.Selections;
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
+    private MusicLibraryService MusicLibrary { get; } = IAppHost.GetService<MusicLibraryService>();
+
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        MusicLibrary.Refresh();
+        SubscribeSettings();
+    }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        if (!_isSubscribed)
+            return;
+
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
+        _isSubscribed = false;
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         NormalizeDrawSettings();
         ConfigHandler.Save();
+    }
+
+    private void SubscribeSettings()
+    {
+        if (_isSubscribed)
+            return;
+
+        Settings.PropertyChanged += SettingsOnPropertyChanged;
+        _isSubscribed = true;
     }
 
     private void RefreshStudentLists()

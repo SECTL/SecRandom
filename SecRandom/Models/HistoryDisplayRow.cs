@@ -24,6 +24,7 @@ public sealed class HistoryDisplayRow
     public string Name { get; init; } = string.Empty;
     public string Gender { get; init; } = string.Empty;
     public string Group { get; init; } = string.Empty;
+    public string Subject { get; init; } = string.Empty;
     public string DrawGender { get; init; } = string.Empty;
     public string DrawGroup { get; init; } = string.Empty;
     public int TotalCount { get; init; }

@@ -148,6 +148,12 @@ Traditional random selection often has the problem of "repeatedly selecting cert
 
 This project uses the following third-party code:
 
+### SoundFlow
+- **Purpose**: Cross-platform local draw-music playback (MP3, WAV, and FLAC)
+- **Source**: [LSXPrime/SoundFlow](https://github.com/LSXPrime/SoundFlow)
+- **License**: MIT License; the bundled miniaudio runtime is used under MIT terms
+- **Notice**: See [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md) for the full notice
+
 ### PythonNET-Stubs-Generator
 - **Path**: `vendors/pythonnet-stub-generator/`
 - **Source**: [MHDante/pythonnet-stub-generator](https://github.com/MHDante/pythonnet-stub-generator)

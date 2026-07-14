@@ -36,17 +36,21 @@ public partial class DrawEngine
     private StudentList StudentList => _profileService.CurrentStudentList ?? new StudentList();
     private PrizeList PrizeList => _profileService.CurrentPrizeList ?? new PrizeList();
 
-    public DrawResult<Student> DrawStudent(int count, Func<Student, bool> filter)
+    public DrawResult<Student> DrawStudent(int count, Func<Student, bool> filter, string courseName = "")
     {
-        return DrawStudent(count, filter, DrawSettingsType.RollCall);
+        return DrawStudent(count, filter, DrawSettingsType.RollCall, courseName);
     }
 
-    public DrawResult<Student> DrawStudent(int count, Func<Student, bool> filter, DrawSettingsType drawSettingsType)
+    public DrawResult<Student> DrawStudent(
+        int count,
+        Func<Student, bool> filter,
+        DrawSettingsType drawSettingsType,
+        string courseName = "")
     {
         var hasBaseCandidates = false;
         var repeatThreshold = GetStudentRepeatThreshold(drawSettingsType);
         var drawType = GetStudentDrawType(drawSettingsType);
-        var historyCache = BuildStudentHistoryCache(StudentList.Students);
+        var historyCache = BuildStudentHistoryCache(StudentList.Students, courseName);
         _logger.LogInformation("开始学生抽取：请求数量={Count}，设置类型={SettingsType}，重复阈值={RepeatThreshold}，抽取类型={DrawType}.",
             count, drawSettingsType, repeatThreshold, drawType);
 
@@ -68,7 +72,7 @@ public partial class DrawEngine
             var usable = FilterStudents(Filter1, count, historyCache);
             var weightedCandidates = drawType switch
             {
-                DrawType.Fair => CalculateStudentWeight(usable, historyCache),
+                DrawType.Fair => CalculateStudentWeight(usable, historyCache, courseName),
                 DrawType.Random => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList(),
                 _ => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList()
             };
@@ -97,25 +101,27 @@ public partial class DrawEngine
         }
     }
 
-    public DrawResult<Student> DrawStudent(int count, IReadOnlyCollection<Student> candidates)
+    public DrawResult<Student> DrawStudent(int count, IReadOnlyCollection<Student> candidates, string courseName = "")
     {
         var candidateSet = candidates as HashSet<Student> ?? candidates.ToHashSet();
-        return DrawStudent(count, candidate => candidateSet.Contains(candidate));
+        return DrawStudent(count, candidate => candidateSet.Contains(candidate), courseName);
     }
 
     public DrawResult<Student> DrawStudent(
         int count,
         IReadOnlyCollection<Student> candidates,
-        DrawSettingsType drawSettingsType)
+        DrawSettingsType drawSettingsType,
+        string courseName = "")
     {
         var candidateSet = candidates as HashSet<Student> ?? candidates.ToHashSet();
-        return DrawStudent(count, candidate => candidateSet.Contains(candidate), drawSettingsType);
+        return DrawStudent(count, candidate => candidateSet.Contains(candidate), drawSettingsType, courseName);
     }
 
     public DrawResult<Student> DrawPreparedStudents(
         int count,
         IReadOnlyCollection<Student> candidates,
-        DrawSettingsType drawSettingsType)
+        DrawSettingsType drawSettingsType,
+        string courseName = "")
     {
         var usable = candidates.Where(student => student.IsCandidate).ToList();
         if (usable.Count == 0)
@@ -124,10 +130,10 @@ public partial class DrawEngine
             return new DrawResult<Student> { Status = DrawStatus.RepeatLimitExhausted };
 
         var drawType = GetStudentDrawType(drawSettingsType);
-        var historyCache = BuildStudentHistoryCache(usable);
+        var historyCache = BuildStudentHistoryCache(usable, courseName);
         var weightedCandidates = drawType switch
         {
-            DrawType.Fair => CalculateStudentWeight(usable, historyCache),
+            DrawType.Fair => CalculateStudentWeight(usable, historyCache, courseName),
             DrawType.Random => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList(),
             _ => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList()
         };

@@ -69,6 +69,7 @@ public interface ISecurityService
     bool RequiresVerification(SecurityOperation operation);
     Task<SecurityVerificationResult> VerifyAsync(SecurityVerificationResponse response, CancellationToken cancellationToken = default);
     Task<bool> AuthorizeAsync(SecurityOperation operation, Func<Task> action, CancellationToken cancellationToken = default);
+    Task<bool> AuthorizeAsync(IReadOnlyCollection<SecurityOperation> operations, Func<Task> action, CancellationToken cancellationToken = default);
     Task<SecurityAuthorizationResult> AuthorizeSettingsAsync(
         Func<Task> action,
         Func<Task> previewAction,

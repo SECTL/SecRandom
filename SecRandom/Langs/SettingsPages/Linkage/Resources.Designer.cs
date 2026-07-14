@@ -89,12 +89,75 @@ namespace SecRandom.Langs.SettingsPages.Linkage {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to URL 协议.
-        /// </summary>
-        public static string O_DataSource_UrlProtocol {
+        public static string O_DataSource_Cses {
             get {
-                return ResourceManager.GetString("O_DataSource_UrlProtocol", resourceCulture);
+                return ResourceManager.GetString("O_DataSource_Cses", resourceCulture);
+            }
+        }
+
+        public static string S_Cses {
+            get {
+                return ResourceManager.GetString("S_Cses", resourceCulture);
+            }
+        }
+
+        public static string C_CsesImport {
+            get {
+                return ResourceManager.GetString("C_CsesImport", resourceCulture);
+            }
+        }
+
+        public static string C_CsesView {
+            get {
+                return ResourceManager.GetString("C_CsesView", resourceCulture);
+            }
+        }
+
+        public static string C_CsesClear {
+            get {
+                return ResourceManager.GetString("C_CsesClear", resourceCulture);
+            }
+        }
+
+        public static string M_CsesMissing {
+            get {
+                return ResourceManager.GetString("M_CsesMissing", resourceCulture);
+            }
+        }
+
+        public static string M_CsesImported {
+            get {
+                return ResourceManager.GetString("M_CsesImported", resourceCulture);
+            }
+        }
+
+        public static string M_CsesCleared {
+            get {
+                return ResourceManager.GetString("M_CsesCleared", resourceCulture);
+            }
+        }
+
+        public static string M_CsesClearTitle {
+            get {
+                return ResourceManager.GetString("M_CsesClearTitle", resourceCulture);
+            }
+        }
+
+        public static string M_CsesClearContent {
+            get {
+                return ResourceManager.GetString("M_CsesClearContent", resourceCulture);
+            }
+        }
+
+        public static string C_Confirm {
+            get {
+                return ResourceManager.GetString("C_Confirm", resourceCulture);
+            }
+        }
+
+        public static string C_Cancel {
+            get {
+                return ResourceManager.GetString("C_Cancel", resourceCulture);
             }
         }
 

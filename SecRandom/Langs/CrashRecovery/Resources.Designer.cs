@@ -54,6 +54,7 @@ namespace SecRandom.Langs.CrashRecovery {
         public static string C_CopyReport => ResourceManager.GetString("C_CopyReport", resourceCulture);
         public static string C_ReportFailed => ResourceManager.GetString("C_ReportFailed", resourceCulture);
         public static string C_ReportIssue => ResourceManager.GetString("C_ReportIssue", resourceCulture);
+        public static string C_Ignore => ResourceManager.GetString("C_Ignore", resourceCulture);
         public static string C_Restart => ResourceManager.GetString("C_Restart", resourceCulture);
         public static string C_RestartCountdown => ResourceManager.GetString("C_RestartCountdown", resourceCulture);
         public static string Description => ResourceManager.GetString("Description", resourceCulture);

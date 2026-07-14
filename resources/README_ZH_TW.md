@@ -148,6 +148,12 @@
 
 本專案使用了以下第三方程式碼：
 
+### SoundFlow
+- **用途**：跨平台本機抽取音樂播放（MP3、WAV、FLAC）
+- **來源**：[LSXPrime/SoundFlow](https://github.com/LSXPrime/SoundFlow)
+- **授權**：MIT License；隨附的 miniaudio 執行階段依 MIT 條款使用
+- **聲明**：完整內容見 [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md)
+
 ### PythonNET-Stubs-Generator
 - **路徑**: `vendors/pythonnet-stub-generator/`
 - **來源**: [MHDante/pythonnet-stub-generator](https://github.com/MHDante/pythonnet-stub-generator)

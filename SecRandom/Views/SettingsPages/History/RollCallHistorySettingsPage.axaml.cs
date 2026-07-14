@@ -19,6 +19,7 @@ public partial class RollCallHistorySettingsPage : UserControl
         DataContext = ViewModel;
         InitializeComponent();
         ViewModel.PropertyChanged += ViewModelOnPropertyChanged;
+        ViewModel.Config.LinkageSettings.PropertyChanged += LinkageSettingsOnPropertyChanged;
         UpdateColumns();
     }
 
@@ -27,6 +28,7 @@ public partial class RollCallHistorySettingsPage : UserControl
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
         ViewModel.PropertyChanged -= ViewModelOnPropertyChanged;
+        ViewModel.Config.LinkageSettings.PropertyChanged -= LinkageSettingsOnPropertyChanged;
         DataContext = null;
     }
 
@@ -37,10 +39,16 @@ public partial class RollCallHistorySettingsPage : UserControl
             UpdateColumns();
     }
 
+    private void LinkageSettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == "SubjectHistoryFilterEnabled")
+            UpdateColumns();
+    }
+
     private void UpdateColumns()
     {
         var cols = HistoryGrid.Columns;
-        if (cols.Count < 11) return;
+        if (cols.Count < 12) return;
 
         var mode       = ViewModel.SelectedMode;
         var isOverview = mode == HistoryMode.Overview;
@@ -57,6 +65,7 @@ public partial class RollCallHistorySettingsPage : UserControl
         cols[7].IsVisible = isPersonal;               // 点名人数
         cols[8].IsVisible = isRecords || isPersonal;  // 选择性别
         cols[9].IsVisible = isRecords || isPersonal;  // 选择小组
-        cols[10].IsVisible = ViewModel.HasWeightRows; // 权重
+        cols[10].IsVisible = ViewModel.ShouldShowSubjectColumn; // 科目
+        cols[11].IsVisible = ViewModel.HasWeightRows; // 权重
     }
 }

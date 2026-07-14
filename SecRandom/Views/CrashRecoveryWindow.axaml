@@ -42,6 +42,10 @@
             <Button Content="{x:Static lcr:Resources.C_ReportIssue}"
                     MinWidth="96"
                     Click="ReportIssue_OnClick" />
+            <Button Content="{x:Static lcr:Resources.C_Ignore}"
+                    MinWidth="80"
+                    IsVisible="{Binding CanIgnore}"
+                    Click="Ignore_OnClick" />
             <Button Content="{Binding RestartButtonText}"
                     MinWidth="96"
                     Click="Restart_OnClick" />

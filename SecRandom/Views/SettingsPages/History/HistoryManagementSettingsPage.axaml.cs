@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using Avalonia.Controls;
@@ -9,11 +8,10 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
-using SecRandom.Core.Models.SubConfigs;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
-using SecRandom.ViewModels;
 using LR = SecRandom.Langs.SettingsPages.HistoryManagement.Resources;
 
 namespace SecRandom.Views.SettingsPages.History;
@@ -23,29 +21,10 @@ public partial class HistoryManagementSettingsPage : UserControl
 {
     public HistoryManagementSettingsPage()
     {
-        Settings = ViewModel.Config.HistoryManagementSettings;
         DataContext = this;
         InitializeComponent();
-        Settings.PropertyChanged += SettingsOnPropertyChanged;
         RefreshClearCombos();
     }
-
-    public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
-    public HistoryManagementSettingsConfig Settings { get; }
-
-    private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
-
-    private void OnUnloaded(object? sender, RoutedEventArgs e)
-    {
-        Settings.PropertyChanged -= SettingsOnPropertyChanged;
-    }
-
-    private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        ConfigHandler.Save();
-    }
-
-    // ── 清除历史记录 ──────────────────────────────────────────
 
     private void RefreshClearCombos()
     {
@@ -79,8 +58,15 @@ public partial class HistoryManagementSettingsPage : UserControl
 
         try
         {
-            var path = new StudentHistory(name).ConfigFilePath;
-            if (File.Exists(path)) File.Delete(path);
+            var profileService = IAppHost.GetService<IProfileService>();
+            if (string.Equals(profileService.StudentHistoryConfig?.Name, name, StringComparison.OrdinalIgnoreCase))
+                profileService.ClearCurrentStudentHistory();
+            else
+            {
+                var historyConfig = new StudentHistoryConfig(name);
+                Clear(historyConfig.Data);
+                historyConfig.Save();
+            }
             PopulateCombo(RollCallClassCombo, "roll_call_history");
             this.ShowSuccessToast(string.Format(LR.M_ClearSuccess, name));
         }
@@ -103,8 +89,15 @@ public partial class HistoryManagementSettingsPage : UserControl
 
         try
         {
-            var path = new PrizeHistory(name).ConfigFilePath;
-            if (File.Exists(path)) File.Delete(path);
+            var profileService = IAppHost.GetService<IProfileService>();
+            if (string.Equals(profileService.PrizeHistoryConfig?.Name, name, StringComparison.OrdinalIgnoreCase))
+                profileService.ClearCurrentPrizeHistory();
+            else
+            {
+                var historyConfig = new PrizeHistoryConfig(name);
+                Clear(historyConfig.Data);
+                historyConfig.Save();
+            }
             PopulateCombo(LotteryPoolCombo, "lottery_history");
             this.ShowSuccessToast(string.Format(LR.M_ClearSuccess, name));
         }
@@ -126,5 +119,23 @@ public partial class HistoryManagementSettingsPage : UserControl
         }.ShowAsync(TopLevel.GetTopLevel(this));
 
         return result == FAContentDialogResult.Primary;
+    }
+
+    private static void Clear(StudentHistory history)
+    {
+        history.TotalRounds = 0;
+        history.TotalStats = 0;
+        history.Students.Clear();
+        history.GroupStats.Clear();
+        history.GenderStatus.Clear();
+    }
+
+    private static void Clear(PrizeHistory history)
+    {
+        history.TotalRounds = 0;
+        history.TotalStats = 0;
+        history.Prizes.Clear();
+        history.GroupStats.Clear();
+        history.GenderStatus.Clear();
     }
 }

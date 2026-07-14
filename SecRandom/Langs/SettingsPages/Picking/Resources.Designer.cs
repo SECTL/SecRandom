@@ -1094,6 +1094,90 @@ namespace SecRandom.Langs.SettingsPages.Picking {
             }
         }
 
+        public static string O_NoMusic {
+            get {
+                return ResourceManager.GetString("O_NoMusic", resourceCulture);
+            }
+        }
+
+        public static string O_RandomMusic {
+            get {
+                return ResourceManager.GetString("O_RandomMusic", resourceCulture);
+            }
+        }
+
+        public static string O_MusicExternal {
+            get {
+                return ResourceManager.GetString("O_MusicExternal", resourceCulture);
+            }
+        }
+
+        public static string O_MusicUnavailable {
+            get {
+                return ResourceManager.GetString("O_MusicUnavailable", resourceCulture);
+            }
+        }
+
+        public static string S_AnimationMusicVolume {
+            get {
+                return ResourceManager.GetString("S_AnimationMusicVolume", resourceCulture);
+            }
+        }
+
+        public static string S_AnimationMusicVolume_D {
+            get {
+                return ResourceManager.GetString("S_AnimationMusicVolume_D", resourceCulture);
+            }
+        }
+
+        public static string S_ResultMusicVolume {
+            get {
+                return ResourceManager.GetString("S_ResultMusicVolume", resourceCulture);
+            }
+        }
+
+        public static string S_ResultMusicVolume_D {
+            get {
+                return ResourceManager.GetString("S_ResultMusicVolume_D", resourceCulture);
+            }
+        }
+
+        public static string S_AnimationMusicFade {
+            get {
+                return ResourceManager.GetString("S_AnimationMusicFade", resourceCulture);
+            }
+        }
+
+        public static string S_AnimationMusicFade_D {
+            get {
+                return ResourceManager.GetString("S_AnimationMusicFade_D", resourceCulture);
+            }
+        }
+
+        public static string S_ResultMusicFade {
+            get {
+                return ResourceManager.GetString("S_ResultMusicFade", resourceCulture);
+            }
+        }
+
+        public static string S_ResultMusicFade_D {
+            get {
+                return ResourceManager.GetString("S_ResultMusicFade_D", resourceCulture);
+            }
+        }
+
+        public static string C_FadeIn {
+            get {
+                return ResourceManager.GetString("C_FadeIn", resourceCulture);
+            }
+        }
+
+        public static string C_FadeOut {
+            get {
+                return ResourceManager.GetString("C_FadeOut", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 奖品图片设置.
         /// </summary>

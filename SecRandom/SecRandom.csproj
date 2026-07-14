@@ -71,6 +71,11 @@
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
+        <EmbeddedResource Update="Langs\SettingsPages\Personalized\Music\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
         <EmbeddedResource Update="Langs\SettingsPages\About\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -223,6 +228,12 @@
         </Compile>
 
         <Compile Update="Langs\SettingsPages\Personalized\Appearance\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+
+        <Compile Update="Langs\SettingsPages\Personalized\Music\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>
@@ -391,6 +402,11 @@
           <DependentUpon>FloatingWindowSettingsPage.axaml</DependentUpon>
           <SubType>Code</SubType>
         </Compile>
+
+        <Compile Update="Views\SettingsPages\Personalized\MusicSettingsPage.axaml.cs">
+          <DependentUpon>MusicSettingsPage.axaml</DependentUpon>
+          <SubType>Code</SubType>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>
@@ -401,9 +417,23 @@
         <PackageReference Include="Sentry.Extensions.Logging" Version="6.6.0" />
         <PackageReference Include="Sentry.Profiling" Version="6.6.0" />
         <PackageReference Include="QRCoder" Version="1.7.0" />
+        <PackageReference Include="SoundFlow" Version="1.4.1" />
+        <PackageReference Include="ClassIsland.Shared.IPC" Version="2.1.0.1" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
+        <PackageReference Include="YamlDotNet" Version="16.3.0" />
     </ItemGroup>
+
+    <PropertyGroup>
+        <SoundFlowNativeAsset Condition="'$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win-x86' Or '$(RuntimeIdentifier)' == 'win-arm64'">$(NuGetPackageRoot)soundflow\1.4.1\runtimes\$(RuntimeIdentifier)\native\miniaudio.dll</SoundFlowNativeAsset>
+        <SoundFlowNativeAsset Condition="'$(RuntimeIdentifier)' == 'linux-x64' Or '$(RuntimeIdentifier)' == 'linux-arm64'">$(NuGetPackageRoot)soundflow\1.4.1\runtimes\$(RuntimeIdentifier)\native\libminiaudio.so</SoundFlowNativeAsset>
+        <SoundFlowNativeAsset Condition="'$(RuntimeIdentifier)' == 'osx-x64' Or '$(RuntimeIdentifier)' == 'osx-arm64'">$(NuGetPackageRoot)soundflow\1.4.1\runtimes\$(RuntimeIdentifier)\native\libminiaudio.dylib</SoundFlowNativeAsset>
+    </PropertyGroup>
+
+    <Target Name="CopySoundFlowNativeAsset" AfterTargets="Publish" Condition="'$(SoundFlowNativeAsset)' != ''">
+        <Error Condition="!Exists('$(SoundFlowNativeAsset)')" Text="SoundFlow native asset is missing for $(RuntimeIdentifier): $(SoundFlowNativeAsset)" />
+        <Copy SourceFiles="$(SoundFlowNativeAsset)" DestinationFolder="$(PublishDir)" />
+    </Target>
 
     <ItemGroup>
       <AdditionalFiles Include="Views\SettingsPages\General\SecuritySettingsPage.axaml" />
@@ -415,6 +445,7 @@
       <AdditionalFiles Include="Views\SettingsPages\Notification\RollCallNotificationSettingsPage.axaml" />
       <AdditionalFiles Include="Views\SettingsPages\Notification\VoiceSettingsPage.axaml" />
       <AdditionalFiles Include="Views\SettingsPages\Personalized\FloatingWindowSettingsPage.axaml" />
+      <AdditionalFiles Include="Views\SettingsPages\Personalized\MusicSettingsPage.axaml" />
       <AdditionalFiles Include="Views\SettingsPages\Plugins\Overview\PluginsSettingsPage.axaml" />
     </ItemGroup>
 

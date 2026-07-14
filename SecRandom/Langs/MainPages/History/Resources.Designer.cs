@@ -63,8 +63,10 @@ namespace SecRandom.Langs.MainPages.History {
         public static string H_GroupLimit => ResourceManager.GetString("H_GroupLimit", resourceCulture);
         public static string H_Gender => ResourceManager.GetString("H_Gender", resourceCulture);
         public static string H_Group => ResourceManager.GetString("H_Group", resourceCulture);
+        public static string H_Subject => ResourceManager.GetString("H_Subject", resourceCulture);
         public static string H_StudentId => ResourceManager.GetString("H_StudentId", resourceCulture);
         public static string H_Serial => ResourceManager.GetString("H_Serial", resourceCulture);
         public static string H_Weight => ResourceManager.GetString("H_Weight", resourceCulture);
+        public static string C_Break => ResourceManager.GetString("C_Break", resourceCulture);
     }
 }

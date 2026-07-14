@@ -59,9 +59,9 @@
                 </DataGrid.Styles>
                 <DataGrid.Columns>
                     <DataGridTextColumn Width="180" MinWidth="170" IsVisible="False"
-                                        Header="{x:Static langs:Resources.H_DrawTime}"
-                                        SortMemberPath="SortTime"
-                                        Binding="{Binding DrawTime}" />
+                                         Header="{x:Static langs:Resources.H_DrawTime}"
+                                         SortMemberPath="SortTime"
+                                         Binding="{Binding DrawTime}" />
                     <DataGridTextColumn Width="*" IsVisible="True"
                                         Header="{x:Static langs:Resources.H_StudentId}"
                                         SortMemberPath="IdSortValue"
@@ -98,10 +98,14 @@
                                         Header="{x:Static langs:Resources.H_GroupLimit}"
                                         SortMemberPath="DrawGroupSortValue"
                                         Binding="{Binding DrawGroup}" />
+                    <DataGridTextColumn Width="1.2*" IsVisible="False"
+                                         Header="{x:Static langs:Resources.H_Subject}"
+                                         SortMemberPath="Subject"
+                                         Binding="{Binding Subject}" />
                     <DataGridTextColumn Width="*" IsVisible="False"
-                                        Header="{x:Static langs:Resources.H_Weight}"
-                                        SortMemberPath="WeightSortValue"
-                                        Binding="{Binding Weight}" />
+                                         Header="{x:Static langs:Resources.H_Weight}"
+                                         SortMemberPath="WeightSortValue"
+                                         Binding="{Binding Weight}" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>

@@ -14,5 +14,6 @@ public enum SecurityOperation
     LotteryStart,
     LotteryReset,
     LinkageAction,
+    BypassClassTimeRestriction,
     ChangeSecuritySettings
 }
