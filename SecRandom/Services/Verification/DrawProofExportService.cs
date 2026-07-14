@@ -53,8 +53,8 @@ public sealed class DrawProofExportService(
             .Where(filter => !string.IsNullOrWhiteSpace(filter))
             .ToArray();
         var filterText = SanitizeFilePart(
-            filters.Length == 0 ? "范围=全部" : string.Join("、", filters),
-            "范围=全部");
+            filters.Length == 0 ? "全部" : string.Join("、", filters),
+            "全部");
         var fixedLength = timestamp.ToString("yyyyMMdd_HHmmss_fff").Length
             + proof.ProofId.ToString("N")[..8].Length
             + ".srproof.json".Length

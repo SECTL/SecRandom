@@ -13,6 +13,13 @@ namespace SecRandom.Core.Tests;
 public sealed class VerificationKernelTests
 {
     [Fact]
+    public void ProofProtocol_UsesSecRandomHistoryBalancedAlgorithmIdentity()
+    {
+        Assert.Equal("secrandom-fairdraw-history-balanced-weighted-chacha20/v3", VerificationWireCodec.AlgorithmId);
+        Assert.Equal("3.0.0", VerificationWireCodec.KernelVersion);
+    }
+
+    [Fact]
     public void Draw_IsStableAcrossCandidateOrder()
     {
         var first = CreateInput(

@@ -11,8 +11,8 @@ namespace SecRandom.Core.Services.Verification;
 public static class VerificationWireCodec
 {
     public const ushort FormatVersion = 1;
-    public const string AlgorithmId = "weighted-fixedpoint-chacha20/v1";
-    public const string KernelVersion = "1.0.0";
+    public const string AlgorithmId = "secrandom-fairdraw-history-balanced-weighted-chacha20/v3";
+    public const string KernelVersion = "3.0.0";
 
     private static readonly byte[] InputMagic = "SRDI"u8.ToArray();
     private static readonly byte[] RequestMagic = "SRDQ"u8.ToArray();

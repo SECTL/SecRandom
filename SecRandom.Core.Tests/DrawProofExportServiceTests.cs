@@ -32,7 +32,7 @@ public sealed class DrawProofExportServiceTests
 
         var fileName = DrawProofExportService.CreateFileName(proof, DrawProofExportContext.ForStudents("默认名单"));
 
-        Assert.Contains("默认名单_范围=全部_abcdef12", fileName);
+        Assert.Contains("默认名单_全部_abcdef12", fileName);
     }
 
     [Fact]
