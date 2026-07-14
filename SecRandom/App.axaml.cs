@@ -433,9 +433,9 @@ public partial class App : Application
                     Langs.Common.Resources.Settings_Notification, "settings.notification", FluentIcons.CommentNoteFilled));
                 services.AddSettingsPage<VoiceSettingsPage>(Langs.Common.Resources.Settings_Voice);
                 services.AddSettingsPage<DefaultNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
-                services.AddSettingsPage<RollCallNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
-                services.AddSettingsPage<QuickDrawNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
-                services.AddSettingsPage<LotteryNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
+                services.AddSettingsPage<RollCallNotificationSettingsPage>(Langs.Common.Resources.Settings_RollCallNotification);
+                services.AddSettingsPage<QuickDrawNotificationSettingsPage>(Langs.Common.Resources.Settings_QuickDrawNotification);
+                services.AddSettingsPage<LotteryNotificationSettingsPage>(Langs.Common.Resources.Settings_LotteryNotification);
                 
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Feat_History, "settings.history", FluentIcons.HistoryFilled));
