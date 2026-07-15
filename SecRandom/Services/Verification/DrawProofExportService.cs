@@ -50,11 +50,12 @@ public sealed class DrawProofExportService(
         var listName = SanitizeFilePart(context.ListName, "未命名名单");
         var filters = context.FilterLabels
             .Where(filter => !string.IsNullOrWhiteSpace(filter))
+            .Where(filter => !filter.StartsWith("状态=", StringComparison.Ordinal))
             .Select(filter => SanitizeFilePart(filter, string.Empty))
             .Where(filter => !string.IsNullOrWhiteSpace(filter))
             .ToArray();
-        if (filters.Contains("状态=启用", StringComparer.Ordinal) && TryGetLotteryModeLabel(proof, out var lotteryMode))
-            filters = [lotteryMode, .. filters];
+        if (VerificationWireCodec.TryGetAlgorithmLabel(proof.AlgorithmId, out var algorithmLabel))
+            filters = [algorithmLabel, .. filters];
         var filterText = SanitizeFilePart(
             filters.Length == 0 ? "全部" : string.Join("、", filters),
             "全部");
@@ -128,16 +129,6 @@ public sealed class DrawProofExportService(
     private static string Truncate(string value, int maximumLength) =>
         value.Length <= maximumLength ? value : value[..maximumLength];
 
-    private static bool TryGetLotteryModeLabel(DrawProof proof, out string label)
-    {
-        label = proof.AlgorithmId switch
-        {
-            VerificationWireCodec.InventoryLotteryAlgorithmId => "方式=按剩余数量",
-            VerificationWireCodec.WeightedLotteryAlgorithmId => "方式=加权无放回",
-            _ => string.Empty
-        };
-        return !string.IsNullOrEmpty(label);
-    }
 }
 
 public sealed record DrawProofExportContext(string ListName, IReadOnlyList<string> FilterLabels)
@@ -155,5 +146,5 @@ public sealed record DrawProofExportContext(string ListName, IReadOnlyList<strin
     }
 
     public static DrawProofExportContext ForPrizes(string listName) =>
-        new(listName, ["状态=启用"]);
+        new(listName, []);
 }

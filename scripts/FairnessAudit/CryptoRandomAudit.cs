@@ -80,6 +80,7 @@ public static class CryptoRandomAudit
         {
             Kind = VerificationDrawKind.Prize,
             SamplingMode = VerificationSamplingMode.InventoryPermutation,
+            AlgorithmProfile = VerificationAlgorithmProfile.LotteryInventoryCount,
             Count = 2,
             Candidates =
             [

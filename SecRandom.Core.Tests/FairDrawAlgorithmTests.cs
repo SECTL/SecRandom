@@ -9,6 +9,7 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Interfaces;
 using SecRandom.Core.Models;
+using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Verification;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
@@ -60,6 +61,9 @@ public sealed class FairDrawAlgorithmTests
         Assert.DoesNotContain(high, localResult.Result);
         Assert.DoesNotContain(verificationInput.Candidates, candidate => candidate.RecordId == high.RecordId);
         using var audit = JsonDocument.Parse(verificationInput.AuditPayload);
+        Assert.Equal("secrandom-anonymous-audit/v2", audit.RootElement.GetProperty("format").GetString());
+        Assert.All(audit.RootElement.GetProperty("candidates").EnumerateArray(), candidate =>
+            Assert.True(Guid.TryParse(candidate.GetProperty("recordId").GetString(), out _)));
         Assert.True(audit.RootElement.GetProperty("fairness").GetProperty("averageGapProtectionApplied").GetBoolean());
         Assert.Equal(3, audit.RootElement.GetProperty("fairness").GetProperty("candidateCountBeforeAverageGapProtection").GetInt32());
         Assert.Equal(2, audit.RootElement.GetProperty("fairness").GetProperty("candidateCountAfterAverageGapProtection").GetInt32());
@@ -104,6 +108,48 @@ public sealed class FairDrawAlgorithmTests
     }
 
     [Fact]
+    public void RandomStudentVerification_UsesUniformSamplingProfile()
+    {
+        var first = new Student { Name = "First", RecordId = Guid.NewGuid() };
+        var second = new Student { Name = "Second", RecordId = Guid.NewGuid() };
+        var config = CreateConfig(new FairDrawSettingsConfig());
+        config.RollCallSettings.DrawType = DrawType.Random;
+        config.RollCallSettings.DrawMode = DrawMode.HalfRepeat;
+        config.RollCallSettings.HalfRepeat = 2;
+
+        using var host = CreateHost(config, new TestProfileService(new StudentHistory(), new StudentList { Students = [first, second] }));
+        IAppHost.Host = host;
+
+        var input = new DrawEngine().CreateStudentVerificationInput(1, [first, second], DrawSettingsType.RollCall);
+
+        Assert.Equal(VerificationSamplingMode.WeightedWithoutReplacement, input.SamplingMode);
+        Assert.Equal(VerificationAlgorithmProfile.StudentRandomHalfRepeat, input.AlgorithmProfile);
+        Assert.All(input.Candidates, candidate => Assert.Equal(1_000_000, candidate.WeightMicros));
+    }
+
+    [Fact]
+    public void RandomStudentVerification_UsesInternalRuleProfileWhenCandidateWeightsAreOverridden()
+    {
+        var student = new Student { Name = "First", RecordId = Guid.NewGuid() };
+        student.AttachedObjects[Guid.Parse(GlobalConstants.BehindSceneAttachedSettings)] = new BehindSceneAttachedSettings
+        {
+            IsAttachSettingsEnabled = true,
+            Probability = 50
+        };
+        var config = CreateConfig(new FairDrawSettingsConfig());
+        config.RollCallSettings.DrawType = DrawType.Random;
+        config.RollCallSettings.DrawMode = DrawMode.NoRepeat;
+
+        using var host = CreateHost(config, new TestProfileService(new StudentHistory(), new StudentList { Students = [student] }));
+        IAppHost.Host = host;
+
+        var input = new DrawEngine().CreateStudentVerificationInput(1, [student], DrawSettingsType.RollCall);
+
+        Assert.Equal(VerificationAlgorithmProfile.StudentRandomInternalRuleNoRepeat, input.AlgorithmProfile);
+        Assert.Equal(500_000, input.Candidates.Single().WeightMicros);
+    }
+
+    [Fact]
     public void CountLottery_UsesInventoryPermutationRatherThanPrizeWeights()
     {
         var first = new Prize { Name = "First", RecordId = Guid.NewGuid(), Count = 2, Weight = 100 };
@@ -126,7 +172,34 @@ public sealed class FairDrawAlgorithmTests
         Assert.True(local.IsSuccess);
         Assert.Equal([second, first], local.Result);
         Assert.Equal(VerificationSamplingMode.InventoryPermutation, input.SamplingMode);
+        Assert.Equal(VerificationAlgorithmProfile.LotteryInventoryCount, input.AlgorithmProfile);
         Assert.All(input.Candidates, candidate => Assert.Equal(1_000_000, candidate.WeightMicros));
+    }
+
+    [Fact]
+    public void CountLotteryVerification_AuditsZeroProbabilityInternalRules()
+    {
+        var blocked = new Prize { Name = "Blocked", RecordId = Guid.NewGuid(), Count = 1 };
+        blocked.AttachedObjects[Guid.Parse(GlobalConstants.BehindSceneAttachedSettings)] = new BehindSceneAttachedSettings
+        {
+            IsAttachSettingsEnabled = true,
+            Probability = 0
+        };
+        var available = new Prize { Name = "Available", RecordId = Guid.NewGuid(), Count = 1 };
+        var config = CreateConfig(new FairDrawSettingsConfig());
+        config.LotterySettings = new LotterySettingsConfig { DrawType = LotteryDrawType.Count };
+
+        using var host = CreateHost(config, new TestProfileService(
+            new StudentHistory(), new StudentList(), new PrizeList { Prizes = [blocked, available] }));
+        IAppHost.Host = host;
+
+        var input = new DrawEngine().CreatePrizeVerificationInput(1, new Dictionary<string, int>());
+        using var audit = JsonDocument.Parse(input.AuditPayload);
+
+        Assert.Equal(VerificationAlgorithmProfile.LotteryCountInternalRule, input.AlgorithmProfile);
+        Assert.True(audit.RootElement.GetProperty("internalSettingsApplied").GetBoolean());
+        Assert.Equal(0, audit.RootElement.GetProperty("internalCandidateCount").GetInt32());
+        Assert.Equal(1, audit.RootElement.GetProperty("internalExcludedCandidateCount").GetInt32());
     }
 
     private static MainConfigModel CreateConfig(FairDrawSettingsConfig fairSettings)

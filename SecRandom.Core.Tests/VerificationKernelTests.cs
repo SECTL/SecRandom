@@ -16,24 +16,30 @@ public sealed class VerificationKernelTests
     public void ProofProtocol_UsesSecRandomHistoryBalancedAlgorithmIdentity()
     {
         Assert.Equal("secrandom-fairdraw-history-balanced-weighted-chacha20/v3", VerificationWireCodec.AlgorithmId);
-        Assert.Equal("3.1.0", VerificationWireCodec.AlgorithmEngineVersion);
+        Assert.Equal("3.2.0", VerificationWireCodec.AlgorithmEngineVersion);
         Assert.Equal(
             "secrandom-inventory-permutation-chacha20/v3",
             VerificationWireCodec.GetAlgorithmId(VerificationSamplingMode.InventoryPermutation));
         Assert.Equal(
             "secrandom-lottery-weighted-without-replacement-chacha20/v3",
             VerificationWireCodec.GetAlgorithmId(VerificationSamplingMode.WeightedWithoutReplacement));
+        Assert.Equal(
+            "secrandom-student-fair-half-repeat/v3",
+            VerificationWireCodec.GetAlgorithmId(VerificationAlgorithmProfile.StudentFairHalfRepeat));
+        Assert.Equal(
+            "secrandom-lottery-pan-no-repeat/v3",
+            VerificationWireCodec.GetAlgorithmId(VerificationAlgorithmProfile.LotteryPanNoRepeat));
     }
 
     [Fact]
     public void DrawProof_UsesAlgorithmEngineVersionAndReadsLegacyKernelVersion()
     {
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
-        var current = new DrawProof { AlgorithmEngineVersion = "3.1.0" };
+        var current = new DrawProof { AlgorithmEngineVersion = "3.2.0" };
         var currentJson = JsonSerializer.Serialize(current, options);
         var legacy = JsonSerializer.Deserialize<DrawProof>("{\"kernelVersion\":\"1.0.0\"}", options);
 
-        Assert.Contains("\"algorithmEngineVersion\":\"3.1.0\"", currentJson);
+        Assert.Contains("\"algorithmEngineVersion\":\"3.2.0\"", currentJson);
         Assert.DoesNotContain("\"kernelVersion\"", currentJson);
         Assert.Equal("1.0.0", legacy!.LegacyKernelVersion);
     }
@@ -98,6 +104,7 @@ public sealed class VerificationKernelTests
         {
             Kind = VerificationDrawKind.Prize,
             SamplingMode = VerificationSamplingMode.InventoryPermutation,
+            AlgorithmProfile = VerificationAlgorithmProfile.LotteryInventoryCount,
             Count = 3,
             Candidates =
             [
@@ -130,6 +137,66 @@ public sealed class VerificationKernelTests
         };
 
         Assert.Throws<InvalidOperationException>(() => new ManagedVerificationKernel().Draw(input, new byte[32]));
+    }
+
+    [Fact]
+    public void AlgorithmProfile_RequiresItsCommittedSamplingMode()
+    {
+        var input = new VerificationDrawInput
+        {
+            Kind = VerificationDrawKind.Student,
+            SamplingMode = VerificationSamplingMode.HistoryBalancedWeighted,
+            AlgorithmProfile = VerificationAlgorithmProfile.StudentRandomNoRepeat,
+            Count = 1,
+            Candidates = [new VerificationCandidate(Guid.NewGuid(), 0, 1_000_000, false)]
+        };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => VerificationWireCodec.EncodeDrawRequest(input, new byte[32]));
+        Assert.Throws<InvalidOperationException>(() => new ManagedVerificationKernel().Draw(input, new byte[32]));
+    }
+
+    [Fact]
+    public void AlgorithmProfile_RequiresItsDrawKind()
+    {
+        var input = new VerificationDrawInput
+        {
+            Kind = VerificationDrawKind.Prize,
+            SamplingMode = VerificationSamplingMode.HistoryBalancedWeighted,
+            AlgorithmProfile = VerificationAlgorithmProfile.StudentFairNoRepeat,
+            Count = 1,
+            Candidates = [new VerificationCandidate(Guid.NewGuid(), 0, 1_000_000, false)]
+        };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => VerificationWireCodec.EncodeDrawRequest(input, new byte[32]));
+        Assert.Throws<InvalidOperationException>(() => new ManagedVerificationKernel().Draw(input, new byte[32]));
+    }
+
+    [Fact]
+    public void AlgorithmProfile_IsCommittedIntoTheV3Request()
+    {
+        var candidate = new VerificationCandidate(Guid.NewGuid(), 0, 1_000_000, false);
+        var noRepeat = new VerificationDrawInput
+        {
+            Kind = VerificationDrawKind.Student,
+            SamplingMode = VerificationSamplingMode.HistoryBalancedWeighted,
+            AlgorithmProfile = VerificationAlgorithmProfile.StudentFairNoRepeat,
+            Count = 1,
+            Candidates = [candidate]
+        };
+        var halfRepeat = new VerificationDrawInput
+        {
+            Kind = VerificationDrawKind.Student,
+            SamplingMode = VerificationSamplingMode.HistoryBalancedWeighted,
+            AlgorithmProfile = VerificationAlgorithmProfile.StudentFairHalfRepeat,
+            Count = 1,
+            Candidates = [candidate]
+        };
+
+        var request = VerificationWireCodec.EncodeDrawRequest(halfRepeat, new byte[32]);
+
+        Assert.Equal(VerificationWireCodec.RequestFormatVersion, BitConverter.ToUInt16(request, 4));
+        Assert.Equal((byte)VerificationAlgorithmProfile.StudentFairHalfRepeat, request[8]);
+        Assert.NotEqual(VerificationWireCodec.ComputeInputHash(noRepeat), VerificationWireCodec.ComputeInputHash(halfRepeat));
     }
 
     [Fact]

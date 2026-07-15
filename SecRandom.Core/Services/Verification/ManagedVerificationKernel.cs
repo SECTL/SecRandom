@@ -12,6 +12,10 @@ public sealed class ManagedVerificationKernel : IVerificationKernel
         if (seed.Length != 32)
             throw new ArgumentException("Verification seeds must contain exactly 32 bytes.", nameof(seed));
 
+        if (!VerificationWireCodec.IsKindCompatible(input.AlgorithmProfile, input.Kind)
+            || !VerificationWireCodec.IsSamplingModeCompatible(input.AlgorithmProfile, input.SamplingMode))
+            throw new InvalidOperationException("Verification algorithm profile does not match the sampling mode.");
+
         var candidates = VerificationWireCodec.CanonicalizeCandidates(input).ToList();
         if (input.Count > candidates.Count)
             throw new InvalidOperationException("Draw count exceeds the frozen candidate pool.");
