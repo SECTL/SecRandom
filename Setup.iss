@@ -34,7 +34,7 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 ArchitecturesAllowed=x86compatible
 #else
 #ifdef BuildArchArm64
-ArchitecturesAllowed=arm64compatible
+ArchitecturesAllowed=arm64
 ArchitecturesInstallIn64BitMode=arm64
 #else
 ArchitecturesAllowed=x64compatible
