@@ -1,17 +1,25 @@
-latest:
-  release: v2.3.2
-  beta: v2.3.2
-  alpha: v2.3.2
-
-latest_no:
-  release: 2
-  beta: 2
-  alpha: 2
-
-subchannels:
-  system:
-    - windows
-  arch:
-    - x64
-
-name_format: SecRandom-Windows-Setup-[version]-[arch].exe
+schema_version: 2
+product: SecRandom
+repository: SECTL/SecRandom
+manifest:
+  file_name: SecRandom-update-manifest.v1.json
+  signature_file_name: SecRandom-update-manifest.v1.sig
+  public_key_id: secrandom-release-2026-01
+runtime:
+  lite: net10.0-desktop
+sources:
+  sectl:
+    display_name: 思拓创联
+    release_only: true
+  github_mirror:
+    display_name: GitHub 镜像
+    prefix: https://ghproxy.sectl.cn/
+  github:
+    display_name: GitHub
+channels:
+  release:
+    tag: v2.3.100
+  beta:
+    tag: v2.3.100
+  alpha:
+    tag: v3.0.0-alpha.1

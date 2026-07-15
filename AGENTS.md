@@ -24,6 +24,7 @@ SecRandom-C/
 ├── SecRandom.Core/        # Core/domain + reusable UI controls/styles + config/logging/draw services
 ├── SecRandom.Shared/      # Cross-project contracts, base config/model types, IPC/profile models
 ├── SecRandom.Desktop/     # Tiny executable launcher; Program.cs bootstraps Avalonia and UiAccessStartup.cs prepares Windows UIAccess
+├── SecRandom.Launcher/    # Minimal portable-package version selector; starts an activated app-* payload only
 ├── SecRandom.Core.Tests/  # xUnit v3 test project; currently covers legacy privacy/telemetry migration
 ├── scripts/               # Standalone tooling and verification scripts, including fairness audits
 ├── docs/                  # Project rules, localization, namespace boundaries
@@ -56,6 +57,7 @@ Nested instruction files:
 | Fair draw logic | `SecRandom.Core/Services/Draw/` | Partial `DrawEngine`, weighted draw, filters, crypto RNG. |
 | Config persistence | `SecRandom.Core/Services/Config/`, `SecRandom/Services/Config/DesktopConfigService.cs` | Handler in Core, desktop JSON storage in app layer. |
 | Audit tooling | `scripts/FairnessAudit/` | Standalone fairness/performance validation script and HTML report generator. |
+| Release update signing | `scripts/ReleaseManifest/`, `.github/workflows/build_publish.yml` | Ed25519 key-generation helper and CI manifest signer; private key is Actions-secret-only. |
 | Reusable controls/styles | `SecRandom.Core/Controls/`, `SecRandom.Core/Styles/`, `SecRandom.Core/StylesBase.axaml` | App style entrypoint includes Core bundle. |
 | Localization rules | `SecRandom/Langs/`, `SecRandom.Core/Langs/`, `docs/localization.md` | Per-page resource folders; `.csproj` registers base resx/designer only. Privacy page resources live under `SecRandom/Langs/SettingsPages/General/Privacy/`. |
 | Shared contracts | `SecRandom.Shared/` | Keep UI/runtime dependencies out. Profile list items use hidden stable `RecordId` keys; visible `Id`/student number/prize number is optional metadata. |
@@ -120,6 +122,8 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - Plugin logs must use the original logging pipeline. Plugin categories use `SecRandom.Plugin[<plugin-id>].*`; plugin detail views may only filter their own category prefix.
 - Fair draw internals are not plugin API. Plugins may only call `IPluginDrawInvoker` with declarative DTOs; do not expose `DrawEngine`, `WeightedDrawEngine<T>`, random sources, weight calculators, histories, or writable draw config to plugins.
 - File/data paths should go through `Utils.GetFilePath(...)`; data lands under `AppContext.BaseDirectory/data/...`.
+- Portable ZIP updates use `SecRandom.Launcher` at the stable package root and activated `app-*` payload directories. The application, not Launcher, validates/downloads/extracts/activates a complete ZIP; `Utils.PackageRoot` / `DataRoot` keep user data stable across payload versions.
+- Update discovery accepts only fixed SECTL, GitHub, and GitHub-mirror sources. A detached Ed25519-signed release manifest and each artifact's length/SHA-512 must verify before deployment or a system installer is started; signing keys remain outside the repository.
 - Localization is per page folder: `Resources.resx`, `Resources.Designer.cs`, and optional culture files such as `Resources.en-US.resx` / `Resources.ja-JP.resx`; preserve exact filename casing used on disk.
 - In `.csproj`, register only `Resources.resx` and `Resources.Designer.cs`; do not register every language variant.
 - Resource designer generator must be `PublicResXFileCodeGenerator`.

@@ -36,6 +36,7 @@ SecRandom/
 │   ├── Settings/        # SettingsSearchService
 │   ├── Security/        # Credential store, verification prompts, factor/operation authorization
 │   ├── Telemetry/       # SentryTelemetrySdkAdapter, TelemetryRuntimeService
+│   ├── Updates/         # Signed manifest discovery, complete-artifact deployment, update scheduler
 │   ├── Voice/           # VoiceAnnouncementService
 │   └── OnlineStatusService.cs  # Root-level status reporter
 ├── Models/              # App-local view/support models
@@ -72,6 +73,7 @@ SecRandom/
 | Desktop integration          | `Services/Desktop/`                                                     | Taskbar lifecycle, Windows native global shortcuts, cross-platform autostart, and `secrandom://` registration.          |
 | Telemetry runtime seam       | `Services/Telemetry/`                                                   | App-layer-only Sentry policy/runtime lifecycle boundary; reads and live-applies `PrivacySettings.SentryTelemetryEnabled`.  |
 | Online status reporting      | `Services/OnlineStatusService.cs`                                       | Host-managed SECTL online status reporter; reads `PrivacySettings.OnlineStatusMode`.                                      |
+| Update center                | `Services/Updates/`, `Views/SettingsPages/Update/`                       | Signed full-artifact checks, portable staging/Launcher restart, or native installer handoff.                              |
 | Security authorization       | `Services/Security/`                                                     | Separate credential storage, password/TOTP/USB factors, lockout state, and operation authorization gateway.               |
 | URL/IPC automation           | `Services/Ipc/ProtocolCommandRouter.cs`, `Core/Services/SingleInstance/` | URL activation and duplex structured IPC share one protected command router; legacy plaintext activation remains supported. |
 
@@ -82,6 +84,7 @@ SecRandom/
 - Crash recovery startup prompt handling runs before single-instance acquisition; normal app restart must release `SingleInstanceService` before launching the replacement process.
 - Telemetry runtime policy belongs in app-layer services and should live-apply `MainConfigHandler.Data.General.PrivacySettings.SentryTelemetryEnabled`; do not move SDK-specific wiring into Core or Shared. The concrete Sentry adapter stays under `SecRandom/Services/Telemetry/SentryTelemetrySdkAdapter.cs`.
 - Background app services such as `OnlineStatusService` are registered through Host and must honor `PrivacySettings.OnlineStatusMode` before doing network work.
+- `UpdateCenterService` is the only update transaction entry point. It must verify raw manifest bytes with the embedded Ed25519 key and verify artifact length/SHA-512 before a complete ZIP deployment or native installer handoff; `UpdateScheduler` only checks and never downloads in the background.
 - Security services are Host singletons. Keep secrets out of normal config and route protected window, tray, draw, linkage, and plugin operations through `ISecurityService` instead of duplicating checks in UI event handlers.
 - `ProtocolCommandRouter` is a Host singleton and is the only app-layer URL/IPC command dispatcher. Keep IPC request handling on the UI dispatcher for UI mutations; `data/*` must use `IProfileQueryService` snapshots and never switch an active profile.
 - Roll-call, lottery, and quick-draw ViewModels are shared draw sessions for UI and IPC. Their protocol methods reuse nonvisual core paths after router authorization; do not resolve a detached transient ViewModel for IPC.

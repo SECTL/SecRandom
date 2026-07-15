@@ -21,6 +21,7 @@ SecRandom.Shared/
 ├── Interfaces/        # Attached settings contracts
 ├── Models/Profile/    # Student/prize list/history data models
 ├── Models/            # AttachableSettingsObject base model
+├── Updates/           # UI-free signed release manifest and package-marker DTOs
 ├── Utils.cs           # Shared file path helper used by config/data paths
 └── SecRandom.Shared.csproj  # net8.0, nullable, CommunityToolkit.Mvvm
 ```
@@ -34,6 +35,7 @@ SecRandom.Shared/
 | Attached settings contracts  | `Interfaces/IAttachedSettings.cs`, `Interfaces/IAttachableSettingsObject.cs` | Used by Core draw/attached-settings logic.                                             |
 | Serialization helpers        | `Extensions/`                                                                | Shared extension methods; keep dependency-light.                                       |
 | IPC/shared model boundary    | `Models/Ipc/`                                                                | Structured URL-request and response DTOs shared by Core transport and app routing.     |
+| Update contracts             | `Updates/`                                                                    | Serialization-only manifest, artifact, package marker, and enum contracts.             |
 | File/data path helper        | `Utils.cs`                                                                   | Central path helper used by config conventions.                                        |
 | Observable collection helper | `ComponentModels/ObservableDictionary.cs`                                    | Use carefully with persistence; dictionary mutation may not trigger outer config save. |
 
@@ -46,6 +48,7 @@ SecRandom.Shared/
 - `ProfileRecordIdentity` is the boundary helper for filling missing/duplicate `RecordId` values and resolving legacy `Id`/`Name` history keys without ambiguous fallback.
 - `Student` and `Prize` include persisted optional metadata fields such as `Tags`; keep new fields backward-compatible with empty defaults.
 - IPC DTOs under `Models/Ipc/` are serialization-only contracts. Keep them free of UI/runtime services and do not emit internal `RecordId` values in external projections.
+- Update DTOs under `Updates/` remain serialization-only. Manifest signature verification, network access, package extraction, and installer process execution belong in the app layer.
 - Draw proofs serialize their product algorithm release as `algorithmEngineVersion`; retain the nullable legacy `kernelVersion` reader only for historical proof files. User-visible labels must call it an algorithm engine version, not a kernel version.
 - `HistoryItem.DrawRoundId` is an additive persisted field. New multi-record draws share one value so IPC history can group a logical draw; empty legacy values require conservative fallback grouping.
 - `HistoryItem.CourseName` is an additive persisted course-history field. Empty values represent legacy/global history; new linkage writes use it only for a resolved subject or the stable `__break__` marker while record identity remains `RecordId`.

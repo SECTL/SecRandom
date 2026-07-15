@@ -18,6 +18,7 @@ using SecRandom.Services.Desktop;
 using SecRandom.Services.Plugins;
 using SecRandom.Services.Linkage;
 using SecRandom.Services.Telemetry;
+using SecRandom.Shared;
 
 namespace SecRandom.Services.ImportExport;
 
@@ -39,8 +40,8 @@ public sealed class ImportExportService(
         "theme", "Language", "plugins", "configs/plugins", "logs"
     ];
 
-    private readonly string _dataDirectory = Path.Combine(AppContext.BaseDirectory, "data");
-    private readonly string _backupDirectory = Path.Combine(AppContext.BaseDirectory, "data", "backup");
+    private readonly string _dataDirectory = Utils.DataRoot;
+    private readonly string _backupDirectory = Path.Combine(Utils.DataRoot, "backup");
     private readonly object _archiveOperationLock = new();
 
     public Task<string> ExportDiagnosticAsync(string destinationPath, bool includeExtendedData = false,

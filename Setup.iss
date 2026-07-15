@@ -14,12 +14,6 @@
 #ifndef MyAppOutDir
 #define MyAppOutDir "APP_OUTDIR"
 #endif
-#ifndef EnableUiAccess
-#define EnableUiAccess 0
-#endif
-#ifndef BuildArch
-#define BuildArch "x64"
-#endif
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -30,27 +24,26 @@ AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppSupportURL={#MyAppURL}
-#if EnableUiAccess == 1
+#ifdef UiAccessBuild
 DefaultDirName={autopf}\SecRandom
 #else
 DefaultDirName={localappdata}\SecRandom
 #endif
 UninstallDisplayIcon={app}\{#MyAppExeName}
-#if BuildArch == "x86"
+#ifdef BuildArchX86
 ArchitecturesAllowed=x86compatible
 #else
-; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run
-; on anything but x64 and Windows 11 on Arm.
+#ifdef BuildArchArm64
+ArchitecturesAllowed=arm64compatible
+ArchitecturesInstallIn64BitMode=arm64
+#else
 ArchitecturesAllowed=x64compatible
-; "ArchitecturesInstallIn64BitMode=x64compatible" requests that the
-; install be done in "64-bit mode" on x64 or Windows 11 on Arm,
-; meaning it should use the native 64-bit Program Files directory and
-; the 64-bit view of the registry.
 ArchitecturesInstallIn64BitMode=x64compatible
+#endif
 #endif
 DisableProgramGroupPage=yes
 ; LicenseFile=E:\Projects\Avalonia\SecRandom\LICENSE
-#if EnableUiAccess == 1
+#ifdef UiAccessBuild
 ; UIAccess is granted only to signed binaries installed under Program Files.
 PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=none
@@ -63,6 +56,7 @@ OutputBaseFilename=SecRandom-Setup
 SetupIconFile=SecRandom\Assets\AppLogo.ico
 SolidCompression=yes
 WizardStyle=modern dynamic windows11
+DefaultLanguage=chinesesimplified
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

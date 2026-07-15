@@ -62,6 +62,20 @@ namespace SecRandom.Langs.SettingsPages.Update {
             }
         }
 
+        public static string C_CheckUpdates => ResourceManager.GetString("C_CheckUpdates", resourceCulture);
+
+        public static string C_InstallUpdate => ResourceManager.GetString("C_InstallUpdate", resourceCulture);
+
+        public static string O_UpdateChannel_Alpha => ResourceManager.GetString("O_UpdateChannel_Alpha", resourceCulture);
+
+        public static string O_UpdateChannel_Beta => ResourceManager.GetString("O_UpdateChannel_Beta", resourceCulture);
+
+        public static string O_UpdateSource_Sectl => ResourceManager.GetString("O_UpdateSource_Sectl", resourceCulture);
+
+        public static string S_Check => ResourceManager.GetString("S_Check", resourceCulture);
+
+        public static string S_Check_D => ResourceManager.GetString("S_Check_D", resourceCulture);
+
         /// <summary>
         ///   Looks up a localized string similar to 每天.
         /// </summary>
@@ -122,6 +136,15 @@ namespace SecRandom.Langs.SettingsPages.Update {
         public static string O_UpdateSource_GitHub {
             get {
                 return ResourceManager.GetString("O_UpdateSource_GitHub", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to GitHub 镜像.
+        /// </summary>
+        public static string O_UpdateSource_GitHubMirror {
+            get {
+                return ResourceManager.GetString("O_UpdateSource_GitHubMirror", resourceCulture);
             }
         }
 

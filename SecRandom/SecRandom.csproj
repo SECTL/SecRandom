@@ -433,6 +433,7 @@
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
         <PackageReference Include="YamlDotNet" Version="16.3.0" />
+        <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.1" />
     </ItemGroup>
 
     <PropertyGroup>

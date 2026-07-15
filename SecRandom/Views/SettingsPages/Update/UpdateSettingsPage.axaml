@@ -36,9 +36,10 @@
                                    Description="{x:Static lsp:Resources.S_Strategy_Channel_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi CloudFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <ComboBox SelectedIndex="{Binding Settings.UpdateChannel}">
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateChannel_Stable}" />
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateChannel_Preview}" />
+                     <ComboBox SelectedIndex="{Binding SelectedChannelIndex}">
+                         <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateChannel_Stable}" />
+                         <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateChannel_Beta}" />
+                         <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateChannel_Alpha}" />
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
@@ -48,17 +49,36 @@
                                    Description="{x:Static lsp:Resources.S_Strategy_Source_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi GlobeFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <ComboBox SelectedIndex="{Binding Settings.UpdateSource}">
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_GitHub}" />
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_OfficialMirror}" />
+                     <ComboBox SelectedIndex="{Binding SelectedSourceIndex}">
+                         <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_GitHub}" />
+                         <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_Sectl}" />
+                          <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_GitHubMirror}" />
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FAInfoBar Title="{x:Static lsp:Resources.M_UpdateServicePlaceholder_Title}"
-                          Message="{x:Static lsp:Resources.M_UpdateServicePlaceholder_Message}"
-                          Severity="Informational"
-                          IsClosable="False" />
+             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Check}"
+                                    Description="{x:Static lsp:Resources.S_Check_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Spacing="8">
+                         <StackPanel Orientation="Horizontal" Spacing="8">
+                              <Button Content="{x:Static lsp:Resources.C_CheckUpdates}" Click="CheckForUpdates" />
+                              <Button Content="{x:Static lsp:Resources.C_InstallUpdate}" Click="InstallUpdate" IsEnabled="{Binding UpdateCenter.CanInstall}" />
+                          </StackPanel>
+                          <ComboBox ItemsSource="{Binding UpdateCenter.AvailableArtifacts}"
+                                    SelectedItem="{Binding UpdateCenter.SelectedArtifact, Mode=TwoWay}"
+                                    IsVisible="{Binding UpdateCenter.HasAvailableArtifacts}">
+                              <ComboBox.ItemTemplate>
+                                  <DataTemplate>
+                                      <TextBlock Text="{Binding AssetName}" />
+                                  </DataTemplate>
+                              </ComboBox.ItemTemplate>
+                          </ComboBox>
+                          <TextBlock Text="{Binding UpdateCenter.Status}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
 
             <fa:FASettingsExpander x:Name="S_Strategy_LastCheckTime"
                                    Header="{x:Static lsp:Resources.S_Strategy_LastCheckTime}"

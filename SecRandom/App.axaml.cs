@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading;
@@ -36,6 +37,7 @@ using SecRandom.Core.Services.Verification;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Services.SingleInstance;
 using SecRandom.Shared.Models.Ipc;
+using SecRandom.Shared;
 using SecRandom.Dialogs;
 using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.AppearanceSettingsConfig;
 using SecRandom.Services;
@@ -56,6 +58,7 @@ using SecRandom.Services.Security;
 using SecRandom.Services.Telemetry;
 using SecRandom.Services.Verification;
 using SecRandom.Services.Voice;
+using SecRandom.Services.Updates;
 using SecRandom.ViewModels;
 using SecRandom.ViewModels.MainPages;
 using SecRandom.ViewModels.SettingsPages;
@@ -220,7 +223,7 @@ public partial class App : Application
         {
             var replacement = CreateFirstRunOobe(desktop, startupProtocolUri);
             desktop.MainWindow = replacement;
-            oobe.Closed += (_, _) => Dispatcher.UIThread.Post(replacement.Show, DispatcherPriority.Render);
+            replacement.Show();
             oobe.CloseForLanguageChange();
         };
         oobe.Closed += (_, _) =>
@@ -430,6 +433,12 @@ public partial class App : Application
                 services.AddSingleton<GlobalShortcutService>();
                 services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<GlobalShortcutService>());
                 services.AddSingleton<DesktopIntegrationService>();
+                 services.AddHttpClient("updates", client => client.Timeout = TimeSpan.FromSeconds(30));
+                 services.AddSingleton<UpdateCenterService>(serviceProvider => new UpdateCenterService(
+                     serviceProvider.GetRequiredService<MainConfigHandler>(),
+                     serviceProvider.GetRequiredService<ILogger<UpdateCenterService>>(),
+                     serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("updates")));
+                 services.AddHostedService<UpdateScheduler>();
                 services.AddSingleton<FeatureAvailabilityService>();
                 services.AddSingleton<ProtocolCommandRouter>();
                 services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
@@ -690,6 +699,23 @@ public partial class App : Application
             return;
         }
 
+        RequestDesktopShutdown();
+    }
+
+    public async Task RestartThroughLauncherAsync()
+    {
+        var launcherName = OperatingSystem.IsWindows() ? "SecRandomLauncher.exe" : "SecRandomLauncher";
+        var launcherPath = Path.Combine(Utils.PackageRoot, launcherName);
+        if (!File.Exists(launcherPath))
+            throw new FileNotFoundException("便携版 Launcher 不存在。", launcherPath);
+
+        await StopAsync(requestLifetimeShutdown: false).ConfigureAwait(false);
+        var startInfo = new ProcessStartInfo(launcherPath)
+        {
+            WorkingDirectory = Utils.PackageRoot,
+            UseShellExecute = false
+        };
+        Process.Start(startInfo);
         RequestDesktopShutdown();
     }
 
