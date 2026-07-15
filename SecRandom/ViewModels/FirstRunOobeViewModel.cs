@@ -28,9 +28,13 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     private readonly DesktopIntegrationService _desktopIntegration;
     private readonly IProfileService _profileService;
     private AppearanceSettingsConfig? _appearanceSettings;
+    private BasicSettingsConfig? _basicSettings;
+    private PrivacySettingsConfig? _privacySettings;
+    private FloatingWindowSettingsConfig? _floatingWindowSettings;
+    private MoreSettingsConfig? _moreSettings;
 
     [ObservableProperty] private int _selectedStep;
-    [ObservableProperty] private bool _acceptedUserAgreement;
+    [ObservableProperty] private bool _acceptedPrivacyPolicy;
     [ObservableProperty] private bool _acceptedGpl;
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
     [ObservableProperty] private string _selectedPrizeListName = string.Empty;
@@ -51,21 +55,34 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         _desktopIntegration = desktopIntegration;
         _profileService = profileService;
         RefreshFromConfig();
+        SelectedStep = IsPrivacyPolicyOnly ? 1 : 0;
     }
 
     public AppearanceSettingsConfig Appearance => _configHandler.Data.Appearance;
     public BasicSettingsConfig Basic => _configHandler.Data.General.Basic;
+    public PrivacySettingsConfig PrivacySettings => _configHandler.Data.General.PrivacySettings;
     public FloatingWindowSettingsConfig FloatingWindow => _configHandler.Data.FloatingWindowSettings;
     public MoreSettingsConfig MoreSettings => _configHandler.Data.MoreSettings;
     public ObservableCollection<string> StudentListNames { get; } = [];
     public ObservableCollection<string> PrizeListNames { get; } = [];
-    public bool IsWelcomeStep => SelectedStep == 0;
-    public bool HasPrevious => SelectedStep > 0;
-    public bool IsFinalStep => SelectedStep == StepCount - 1;
+    public int SelectedStudentListCount => _profileService.CurrentStudentList?.Students.Count ?? 0;
+    public int SelectedPrizeListCount => _profileService.CurrentPrizeList?.Prizes.Count ?? 0;
+    public bool IsPrivacyPolicyOnly => _oobeService.IsPrivacyPolicyOnlyRequired();
+    public bool IsFullSetup => !IsPrivacyPolicyOnly;
+    public bool IsWelcomeStep => !IsPrivacyPolicyOnly && SelectedStep == 0;
+    public bool HasPrevious => !IsPrivacyPolicyOnly && SelectedStep > 0;
+    public bool IsStatusVisible => HasPrevious || IsPrivacyPolicyOnly;
+    public bool IsCompletionActionVisible => HasPrevious || IsPrivacyPolicyOnly;
+    public bool IsFinalStep => IsPrivacyPolicyOnly || SelectedStep == StepCount - 1;
     public string NextButtonText => IsWelcomeStep ? LR.C_Start : IsFinalStep ? LR.C_Finish : LR.C_Next;
-    public string StepProgress => string.Format(LR.M_StepProgress, SelectedStep, StepCount - 1);
-    public bool CanContinue => SelectedStep != 1 || (AcceptedUserAgreement && AcceptedGpl);
-    public int StepCount => 7;
+    public string StepProgress => IsPrivacyPolicyOnly
+        ? LR.C_LegalTitle
+        : string.Format(LR.M_StepProgress, SelectedStep, StepCount - 1);
+    public bool CanContinue => !IsPrivacyPolicyStep || (AcceptedPrivacyPolicy && AcceptedGpl);
+    public bool IsPrivacyPolicyStep => IsPrivacyPolicyOnly || SelectedStep == 1;
+    public int StepCount => 8;
+    public string PageTitle => IsPrivacyPolicyOnly ? LR.C_LegalTitle : LR.C_Title;
+    public string IntroText => IsPrivacyPolicyOnly ? LR.C_LegalDescription : LR.C_Intro;
 
     public bool SetLanguage(LanguageMode language)
     {
@@ -75,6 +92,13 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         Basic.Language = language;
         _configHandler.Save();
         StatusMessage = string.Empty;
+        OnPropertyChanged(nameof(IsPrivacyPolicyOnly));
+        OnPropertyChanged(nameof(IsFullSetup));
+        OnPropertyChanged(nameof(IsPrivacyPolicyStep));
+        OnPropertyChanged(nameof(IsStatusVisible));
+        OnPropertyChanged(nameof(IsCompletionActionVisible));
+        OnPropertyChanged(nameof(PageTitle));
+        OnPropertyChanged(nameof(IntroText));
         OnPropertyChanged(nameof(NextButtonText));
         OnPropertyChanged(nameof(StepProgress));
         return true;
@@ -83,6 +107,8 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     public void RefreshLocalizedText()
     {
         StatusMessage = string.Empty;
+        OnPropertyChanged(nameof(PageTitle));
+        OnPropertyChanged(nameof(IntroText));
         OnPropertyChanged(nameof(NextButtonText));
         OnPropertyChanged(nameof(StepProgress));
     }
@@ -92,12 +118,14 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(IsWelcomeStep));
         OnPropertyChanged(nameof(HasPrevious));
         OnPropertyChanged(nameof(IsFinalStep));
+        OnPropertyChanged(nameof(IsStatusVisible));
+        OnPropertyChanged(nameof(IsCompletionActionVisible));
         OnPropertyChanged(nameof(NextButtonText));
         OnPropertyChanged(nameof(StepProgress));
         OnPropertyChanged(nameof(CanContinue));
     }
 
-    partial void OnAcceptedUserAgreementChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
+    partial void OnAcceptedPrivacyPolicyChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
     partial void OnAcceptedGplChanged(bool value) => OnPropertyChanged(nameof(CanContinue));
 
     partial void OnSelectedStudentListNameChanged(string value)
@@ -108,6 +136,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         _profileService.LoadStudentProfile(value, saveCurrent: false);
         _configHandler.Data.RollCallSettings.DefaultClass = value;
         _configHandler.Save();
+        OnPropertyChanged(nameof(SelectedStudentListCount));
     }
 
     partial void OnSelectedPrizeListNameChanged(string value)
@@ -118,6 +147,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         _profileService.LoadPrizeProfile(value, saveCurrent: false);
         _configHandler.Data.LotterySettings.DefaultPool = value;
         _configHandler.Save();
+        OnPropertyChanged(nameof(SelectedPrizeListCount));
     }
 
     public void Previous()
@@ -142,14 +172,15 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
 
     public async Task<bool> FinishAsync()
     {
-        if (!AcceptedUserAgreement || !AcceptedGpl)
+        if (!AcceptedPrivacyPolicy || !AcceptedGpl)
         {
-            SelectedStep = 1;
+            if (!IsPrivacyPolicyOnly)
+                SelectedStep = 1;
             StatusMessage = LR.M_CompletionAgreementRequired;
             return false;
         }
 
-        if (!ApplyDesktopIntegration())
+        if (!IsPrivacyPolicyOnly && !ApplyDesktopIntegration())
             StatusMessage = LR.M_DesktopIntegrationFailed;
 
         _oobeService.Complete();
@@ -161,6 +192,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     {
         _dataSetupService.SaveStudentList(SelectedStudentListName, students);
         RefreshListSelectors();
+        OnPropertyChanged(nameof(SelectedStudentListCount));
         StatusMessage = string.Format(LR.M_StudentsImported, students.Count);
     }
 
@@ -168,6 +200,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     {
         _dataSetupService.SavePrizeList(SelectedPrizeListName, prizes);
         RefreshListSelectors();
+        OnPropertyChanged(nameof(SelectedPrizeListCount));
         StatusMessage = string.Format(LR.M_PrizesImported, prizes.Count);
     }
 
@@ -175,17 +208,50 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     {
         if (_appearanceSettings is not null)
             _appearanceSettings.PropertyChanged -= RefreshAppearance;
+        if (_basicSettings is not null)
+            _basicSettings.PropertyChanged -= PersistSettingsOnPropertyChanged;
+        if (_privacySettings is not null)
+            _privacySettings.PropertyChanged -= PersistSettingsOnPropertyChanged;
+        if (_floatingWindowSettings is not null)
+            _floatingWindowSettings.PropertyChanged -= PersistSettingsOnPropertyChanged;
+        if (_moreSettings is not null)
+            _moreSettings.PropertyChanged -= PersistSettingsOnPropertyChanged;
         _appearanceSettings = _configHandler.Data.Appearance;
-        Autostart = _configHandler.Data.General.Basic.Autostart;
-        ExternalIntegration = _configHandler.Data.General.Basic.UrlProtocol;
+        _basicSettings = _configHandler.Data.General.Basic;
+        _privacySettings = _configHandler.Data.General.PrivacySettings;
+        _floatingWindowSettings = _configHandler.Data.FloatingWindowSettings;
+        _moreSettings = _configHandler.Data.MoreSettings;
+        Autostart = _basicSettings.Autostart;
+        ExternalIntegration = _basicSettings.UrlProtocol;
         RefreshListSelectors();
+        if (IsPrivacyPolicyOnly)
+            SelectedStep = 1;
+        OnPropertyChanged(nameof(Basic));
+        OnPropertyChanged(nameof(PrivacySettings));
+        OnPropertyChanged(nameof(IsPrivacyPolicyOnly));
+        OnPropertyChanged(nameof(IsFullSetup));
+        OnPropertyChanged(nameof(IsPrivacyPolicyStep));
+        OnPropertyChanged(nameof(IsStatusVisible));
+        OnPropertyChanged(nameof(IsCompletionActionVisible));
+        OnPropertyChanged(nameof(PageTitle));
+        OnPropertyChanged(nameof(IntroText));
         OnPropertyChanged(nameof(Appearance));
         OnPropertyChanged(nameof(FloatingWindow));
         OnPropertyChanged(nameof(MoreSettings));
         _appearanceSettings.PropertyChanged += RefreshAppearance;
+        _appearanceSettings.PropertyChanged += PersistSettingsOnPropertyChanged;
+        _basicSettings.PropertyChanged += PersistSettingsOnPropertyChanged;
+        _privacySettings.PropertyChanged += PersistSettingsOnPropertyChanged;
+        _floatingWindowSettings.PropertyChanged += PersistSettingsOnPropertyChanged;
+        _moreSettings.PropertyChanged += PersistSettingsOnPropertyChanged;
     }
 
-    private void RefreshListSelectors()
+    private void PersistSettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        _configHandler.Save();
+    }
+
+    public void RefreshListSelectors()
     {
         RefreshListSelector(
             StudentListNames,
@@ -220,6 +286,44 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         }
 
         select(names.Contains(preferredName) ? preferredName : names[0]);
+    }
+
+    public void CreateStudentList(string name)
+    {
+        _dataSetupService.CreateStudentList(name);
+        RefreshListSelectors();
+        SelectedStudentListName = name;
+    }
+
+    public void CreatePrizeList(string name)
+    {
+        _dataSetupService.CreatePrizeList(name);
+        RefreshListSelectors();
+        SelectedPrizeListName = name;
+    }
+
+    public void RenameStudentList(string newName)
+    {
+        _dataSetupService.RenameStudentList(SelectedStudentListName, newName);
+        RefreshListSelectors();
+    }
+
+    public void RenamePrizeList(string newName)
+    {
+        _dataSetupService.RenamePrizeList(SelectedPrizeListName, newName);
+        RefreshListSelectors();
+    }
+
+    public void DeleteStudentList()
+    {
+        _dataSetupService.DeleteStudentList(SelectedStudentListName);
+        RefreshListSelectors();
+    }
+
+    public void DeletePrizeList()
+    {
+        _dataSetupService.DeletePrizeList(SelectedPrizeListName);
+        RefreshListSelectors();
     }
 
     public void RefreshAppearance(object? sender = null, PropertyChangedEventArgs? e = null)
@@ -262,6 +366,17 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     public void Dispose()
     {
         if (_appearanceSettings is not null)
+        {
             _appearanceSettings.PropertyChanged -= RefreshAppearance;
+            _appearanceSettings.PropertyChanged -= PersistSettingsOnPropertyChanged;
+        }
+        if (_basicSettings is not null)
+            _basicSettings.PropertyChanged -= PersistSettingsOnPropertyChanged;
+        if (_privacySettings is not null)
+            _privacySettings.PropertyChanged -= PersistSettingsOnPropertyChanged;
+        if (_floatingWindowSettings is not null)
+            _floatingWindowSettings.PropertyChanged -= PersistSettingsOnPropertyChanged;
+        if (_moreSettings is not null)
+            _moreSettings.PropertyChanged -= PersistSettingsOnPropertyChanged;
     }
 }

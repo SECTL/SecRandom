@@ -41,5 +41,7 @@ public partial class BasicSettingsConfig : ObservableObject
     [ObservableProperty] private Guid _offlineUserId = Guid.NewGuid();
     [ObservableProperty] private bool _guideCompleted = false;
     [ObservableProperty] private int _acceptedEulaVersion;
+    [ObservableProperty] private int _acceptedPrivacyPolicyVersion;
+    [ObservableProperty] private int _acceptedGplVersion;
     [ObservableProperty] private bool _showVersionNotice = true;
 }

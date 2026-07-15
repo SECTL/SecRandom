@@ -1,43 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <data name="UserAgreement" xml:space="preserve"><value>SecRandom User Agreement (Version 1)
+  <data name="PrivacyPolicy" xml:space="preserve"><value>SecRandom Privacy Policy (Version 1)
 
-1. Scope and acceptance. SecRandom is a random selection tool for educational activities. By continuing to use the software, you accept this agreement; it does not remove rights granted by applicable law.
+1. Scope and acceptance. SecRandom is a random selection tool for educational activities. By continuing to use the software, you acknowledge and accept this privacy policy; it does not remove rights granted by applicable law.
 
-2. Permitted use. You may use the software for classes, teaching activities, and other lawful internal random-selection scenarios.
+2. Local data. Rosters, prizes, history, and settings are stored locally by default. Only import data that is lawful, accurate, authorized, and necessary.
 
-3. User responsibilities. Ensure imported data is lawful, accurate, and authorized. The actual user is responsible for draw rules, result publication, and related outcomes.
+3. Sentry telemetry. When enabled, the app may upload crash, log, trace, and performance data to diagnose issues and improve stability. This does not control online-status reporting.
 
-4. Prohibited conduct. Do not use the software for unlawful discrimination, deception, security bypass, or access-control bypass. Do not violate GNU GPLv3 when modifying or distributing the software.
+4. Online-status reporting. Full reporting counts online users and includes approximate location derived from public IP. Anonymous reporting only counts online users and sends no IP or location. Off sends no online-status report.
 
-5. Data and external integration. Data is stored locally by default. Startup registration and secrandom:// external links are optional and remain subject to enabled integration and security settings.
+5. Choices and changes. These privacy options are enabled by default and can be changed here or later in Settings > General > Privacy.
 
-6. Disclaimer. The software is provided as is. To the extent permitted by law, the project makes no warranty about suitability, availability, or draw results.
+6. Network requests. The app makes the corresponding telemetry or online-status requests only when the related option is enabled. Future requests stop after the option is disabled.
 
-7. Updates and termination. Material changes increase this agreement version and require renewed acceptance. You may stop using the software at any time.
+7. Updates and termination. Material changes to this privacy policy increase its version and require renewed acknowledgement. You may stop using the software at any time.
 
-8. GPLv3. This agreement does not replace or restrict GNU GPLv3 rights for source code, modifications, and distribution.</value></data>
+8. GPLv3. This policy does not replace or restrict GNU GPLv3 rights for source code, modifications, and distribution.</value></data>
   <data name="GplNotice" xml:space="preserve"><value>GNU General Public License v3.0 (GPLv3) notice
 
 SecRandom is released under GNU GPLv3. GPLv3 permits you to run, study, modify, and redistribute the software. Distribution of modified versions must comply with its copyleft terms, including providing corresponding source code under GPLv3.
 
 The official GNU GPLv3 text controls. This acknowledgement does not require you to waive any GPLv3 rights.</value></data>
   <data name="C_Title" xml:space="preserve"><value>Set up SecRandom</value></data>
-  <data name="C_Intro" xml:space="preserve"><value>Complete the required licence acknowledgement first. Everything else can be changed later.</value></data>
+  <data name="C_Intro" xml:space="preserve"><value>Complete the required privacy-policy and GPLv3 acknowledgement first. Everything else can be changed later.</value></data>
   <data name="C_WelcomeTitle" xml:space="preserve"><value>Welcome to SecRandom</value></data>
-  <data name="C_WelcomeDescription" xml:space="preserve"><value>Complete the first-run setup in a few steps. Only the licence acknowledgements are required; you can adjust everything else later in Settings.</value></data>
+  <data name="C_WelcomeDescription" xml:space="preserve"><value>Complete the first-run setup in a few steps. Only the privacy-policy and GPLv3 acknowledgements are required; you can adjust everything else later in Settings.</value></data>
   <data name="C_Language" xml:space="preserve"><value>Language</value></data>
   <data name="O_LanguageChinese" xml:space="preserve"><value>Chinese (Simplified)</value></data>
   <data name="O_LanguageEnglish" xml:space="preserve"><value>English</value></data>
   <data name="O_LanguageJapanese" xml:space="preserve"><value>Japanese</value></data>
-  <data name="C_LegalTitle" xml:space="preserve"><value>User agreement and open-source licence</value></data>
-  <data name="C_LegalDescription" xml:space="preserve"><value>Read and acknowledge both documents before continuing. The custom agreement does not replace GPLv3 rights.</value></data>
-  <data name="C_AgreementTitle" xml:space="preserve"><value>SecRandom user agreement</value></data>
-  <data name="C_AgreementAccept" xml:space="preserve"><value>I have read and accept the SecRandom user agreement.</value></data>
+  <data name="C_LegalTitle" xml:space="preserve"><value>Privacy policy and open-source licence</value></data>
+  <data name="C_LegalDescription" xml:space="preserve"><value>Read and acknowledge the privacy policy and GNU GPLv3 before continuing. Privacy options are enabled by default and can be adjusted below.</value></data>
+  <data name="C_PrivacyPolicyTitle" xml:space="preserve"><value>SecRandom privacy policy</value></data>
+  <data name="C_PrivacyPolicyAccept" xml:space="preserve"><value>I have read and agree to the SecRandom privacy policy.</value></data>
   <data name="C_GplTitle" xml:space="preserve"><value>GNU GPLv3</value></data>
   <data name="C_GplAccept" xml:space="preserve"><value>I have read the GNU GPLv3 licence notice.</value></data>
-  <data name="C_DataTitle" xml:space="preserve"><value>Restore or create a class</value></data>
-  <data name="C_DataDescription" xml:space="preserve"><value>Restore existing SecRandom v3 data, or create a class and import a student list. Skipping this does not affect later use.</value></data>
+  <data name="C_DataTitle" xml:space="preserve"><value>Restore or select a list</value></data>
+  <data name="C_DataDescription" xml:space="preserve"><value>Restore existing SecRandom v3 data, then select or import the roll-call list to use first. Skipping this does not affect later use.</value></data>
   <data name="C_RestoreTitle" xml:space="preserve"><value>Restore existing data</value></data>
   <data name="C_RestoreDescription" xml:space="preserve"><value>Only v3 export files are accepted.</value></data>
   <data name="C_ImportSettings" xml:space="preserve"><value>Import v3 settings</value></data>
@@ -45,6 +45,18 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_RollCallList" xml:space="preserve"><value>Roll-call list</value></data>
   <data name="C_RollCallListDescription" xml:space="preserve"><value>Select the list to use for roll call, or import a roster file.</value></data>
   <data name="C_ImportRoster" xml:space="preserve"><value>Import roster</value></data>
+  <data name="C_RefreshList" xml:space="preserve"><value>Refresh</value></data>
+  <data name="C_AddList" xml:space="preserve"><value>Add</value></data>
+  <data name="C_RenameList" xml:space="preserve"><value>Rename</value></data>
+  <data name="C_DeleteList" xml:space="preserve"><value>Delete</value></data>
+  <data name="C_AddStudentListTitle" xml:space="preserve"><value>New class</value></data>
+  <data name="C_AddPrizeListTitle" xml:space="preserve"><value>New prize pool</value></data>
+  <data name="C_RenameListTitle" xml:space="preserve"><value>Rename list</value></data>
+  <data name="C_DeleteListTitle" xml:space="preserve"><value>Delete list</value></data>
+  <data name="C_ListNameTitle" xml:space="preserve"><value>List name</value></data>
+  <data name="C_ListNamePlaceholder" xml:space="preserve"><value>Enter a name</value></data>
+  <data name="C_DefaultStudentListName" xml:space="preserve"><value>New class</value></data>
+  <data name="C_DefaultPrizeListName" xml:space="preserve"><value>New prize pool</value></data>
   <data name="C_LotteryTitle" xml:space="preserve"><value>Lottery</value></data>
   <data name="C_LotteryDescription" xml:space="preserve"><value>When disabled, lottery navigation, floating controls, shortcuts, and external commands are unavailable.</value></data>
   <data name="C_LotteryEnabled" xml:space="preserve"><value>Enable lottery</value></data>
@@ -68,12 +80,25 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>Choose whether the main window opens automatically when SecRandom starts.</value></data>
   <data name="C_ExternalIntegration" xml:space="preserve"><value>External links and integration</value></data>
   <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>Register secrandom:// so external applications can open SecRandom.</value></data>
+  <data name="C_PrivacyTitle" xml:space="preserve"><value>Privacy</value></data>
+  <data name="C_PrivacyDescription" xml:space="preserve"><value>Choose the diagnostic and online-status information that SecRandom may send after startup. You can change these options later in Settings.</value></data>
+  <data name="C_PrivacyEncouragement" xml:space="preserve"><value>Please enable them~ It would be a great help for our future updates!</value></data>
+  <data name="C_SentryTelemetry" xml:space="preserve"><value>Enable Sentry telemetry</value></data>
+  <data name="C_SentryTelemetryDescription" xml:space="preserve"><value>When enabled, crash, log, trace, and performance data can be uploaded. This does not control online-status reporting.</value></data>
+  <data name="C_OnlineStatus" xml:space="preserve"><value>Online status</value></data>
+  <data name="C_OnlineStatusDescription" xml:space="preserve"><value>Full reporting includes approximate location; anonymous reporting only counts online users; off disables online-status reporting.</value></data>
+  <data name="O_OnlineStatusMode_Full" xml:space="preserve"><value>Full reporting</value></data>
+  <data name="O_OnlineStatusMode_Anonymous" xml:space="preserve"><value>Anonymous reporting</value></data>
+  <data name="O_OnlineStatusMode_Off" xml:space="preserve"><value>Do not report</value></data>
   <data name="C_CompleteTitle" xml:space="preserve"><value>Setup complete</value></data>
-  <data name="C_CompleteDescription" xml:space="preserve"><value>Click Finish to enter SecRandom. You can change classes, lottery, appearance, and desktop integration later.</value></data>
+  <data name="C_CompleteDescription" xml:space="preserve"><value>Click Finish to enter SecRandom after acknowledging the privacy policy and GPLv3. You can change lists, lottery, appearance, desktop integration, and privacy later.</value></data>
   <data name="C_CompletedItems" xml:space="preserve"><value>Configured items</value></data>
   <data name="C_CompletedClass" xml:space="preserve"><value>Manage rosters and prize pools from List Management.</value></data>
   <data name="C_CompletedAppearance" xml:space="preserve"><value>Change draw entry points, theme, and floating-window appearance in Settings.</value></data>
   <data name="C_CompletedIntegration" xml:space="preserve"><value>External-link settings do not disable the app's internal single-instance communication.</value></data>
+  <data name="C_CompletedPrivacy" xml:space="preserve"><value>Telemetry and online-status reporting can be changed in Privacy Settings.</value></data>
+  <data name="C_OverwriteTitle" xml:space="preserve"><value>Confirm list overwrite</value></data>
+  <data name="C_Overwrite" xml:space="preserve"><value>Overwrite</value></data>
   <data name="C_ResourcesTitle" xml:space="preserve"><value>Project resources</value></data>
   <data name="C_SectlWebsite" xml:space="preserve"><value>SECTL website</value></data>
   <data name="C_Documentation" xml:space="preserve"><value>SecRandom documentation</value></data>
@@ -94,7 +119,7 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_JsonFileType" xml:space="preserve"><value>JSON files</value></data>
   <data name="C_ZipFileType" xml:space="preserve"><value>ZIP files</value></data>
   <data name="C_ExitTitle" xml:space="preserve"><value>Exit setup</value></data>
-  <data name="C_ExitDescription" xml:space="preserve"><value>Licence acknowledgement is not complete. Exiting closes SecRandom without saving OOBE completion.</value></data>
+  <data name="C_ExitDescription" xml:space="preserve"><value>The privacy-policy and licence acknowledgement is not complete. Exiting closes SecRandom without saving OOBE completion.</value></data>
   <data name="C_Exit" xml:space="preserve"><value>Exit application</value></data>
   <data name="C_ContinueSetup" xml:space="preserve"><value>Continue setup</value></data>
   <data name="M_ImportConfirmation" xml:space="preserve"><value>Source version: {0}
@@ -105,12 +130,18 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
 No data was changed.</value></data>
   <data name="M_UnknownVersion" xml:space="preserve"><value>Unknown</value></data>
   <data name="M_UnsupportedImportDetail" xml:space="preserve"><value>This is not a supported SecRandom v3 export file.</value></data>
-  <data name="M_ImportCompleted" xml:space="preserve"><value>Import completed. Continue by acknowledging the current agreement version.</value></data>
+  <data name="M_ImportCompleted" xml:space="preserve"><value>Import completed. Continue by acknowledging the current privacy-policy and GNU GPLv3 versions.</value></data>
   <data name="M_ImportFailed" xml:space="preserve"><value>Import failed</value></data>
-  <data name="M_AgreementRequired" xml:space="preserve"><value>Read and acknowledge the user agreement and GNU GPLv3 first.</value></data>
-  <data name="M_CompletionAgreementRequired" xml:space="preserve"><value>The user agreement and GNU GPLv3 must be acknowledged before finishing.</value></data>
+  <data name="M_AgreementRequired" xml:space="preserve"><value>Read and acknowledge the privacy policy and GNU GPLv3 first.</value></data>
+  <data name="M_CompletionAgreementRequired" xml:space="preserve"><value>The privacy policy and GNU GPLv3 must be acknowledged before finishing.</value></data>
   <data name="M_DesktopIntegrationFailed" xml:space="preserve"><value>Some desktop integrations could not be enabled and remain off. You can retry later in Settings.</value></data>
   <data name="M_StudentsImported" xml:space="preserve"><value>Imported {0} students and set the list as the default class.</value></data>
   <data name="M_PrizesImported" xml:space="preserve"><value>Imported {0} prizes and set the pool as the default prize pool.</value></data>
+  <data name="M_OverwriteListContent" xml:space="preserve"><value>“{0}” currently has {1} records. Importing {2} records will replace its contents.</value></data>
+  <data name="M_ListNameEmpty" xml:space="preserve"><value>The name cannot be empty.</value></data>
+  <data name="M_ListNameInvalid" xml:space="preserve"><value>The name contains invalid filename characters.</value></data>
+  <data name="M_ListNameExists" xml:space="preserve"><value>A list with the same name already exists.</value></data>
+  <data name="M_KeepOneList" xml:space="preserve"><value>At least one list must remain.</value></data>
+  <data name="M_DeleteListContent" xml:space="preserve"><value>Delete “{0}”? This action cannot be undone.</value></data>
   <data name="M_StepProgress" xml:space="preserve"><value>Step {0}/{1}</value></data>
 </root>

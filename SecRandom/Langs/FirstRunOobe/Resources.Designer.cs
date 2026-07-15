@@ -26,7 +26,7 @@ public class Resources
 
     private static string Get(string name) => ResourceManager.GetString(name, resourceCulture) ?? string.Empty;
 
-    public static string UserAgreement => Get(nameof(UserAgreement));
+    public static string PrivacyPolicy => Get(nameof(PrivacyPolicy));
     public static string GplNotice => Get(nameof(GplNotice));
     public static string C_Title => Get(nameof(C_Title));
     public static string C_Intro => Get(nameof(C_Intro));
@@ -38,8 +38,8 @@ public class Resources
     public static string C_Language => Get(nameof(C_Language));
     public static string C_LegalTitle => Get(nameof(C_LegalTitle));
     public static string C_LegalDescription => Get(nameof(C_LegalDescription));
-    public static string C_AgreementTitle => Get(nameof(C_AgreementTitle));
-    public static string C_AgreementAccept => Get(nameof(C_AgreementAccept));
+    public static string C_PrivacyPolicyTitle => Get(nameof(C_PrivacyPolicyTitle));
+    public static string C_PrivacyPolicyAccept => Get(nameof(C_PrivacyPolicyAccept));
     public static string C_GplTitle => Get(nameof(C_GplTitle));
     public static string C_GplAccept => Get(nameof(C_GplAccept));
     public static string C_DataTitle => Get(nameof(C_DataTitle));
@@ -51,6 +51,18 @@ public class Resources
     public static string C_RollCallList => Get(nameof(C_RollCallList));
     public static string C_RollCallListDescription => Get(nameof(C_RollCallListDescription));
     public static string C_ImportRoster => Get(nameof(C_ImportRoster));
+    public static string C_RefreshList => Get(nameof(C_RefreshList));
+    public static string C_AddList => Get(nameof(C_AddList));
+    public static string C_RenameList => Get(nameof(C_RenameList));
+    public static string C_DeleteList => Get(nameof(C_DeleteList));
+    public static string C_AddStudentListTitle => Get(nameof(C_AddStudentListTitle));
+    public static string C_AddPrizeListTitle => Get(nameof(C_AddPrizeListTitle));
+    public static string C_RenameListTitle => Get(nameof(C_RenameListTitle));
+    public static string C_DeleteListTitle => Get(nameof(C_DeleteListTitle));
+    public static string C_ListNameTitle => Get(nameof(C_ListNameTitle));
+    public static string C_ListNamePlaceholder => Get(nameof(C_ListNamePlaceholder));
+    public static string C_DefaultStudentListName => Get(nameof(C_DefaultStudentListName));
+    public static string C_DefaultPrizeListName => Get(nameof(C_DefaultPrizeListName));
     public static string C_LotteryTitle => Get(nameof(C_LotteryTitle));
     public static string C_LotteryDescription => Get(nameof(C_LotteryDescription));
     public static string C_LotteryEnabled => Get(nameof(C_LotteryEnabled));
@@ -74,12 +86,25 @@ public class Resources
     public static string C_ShowStartupWindowDescription => Get(nameof(C_ShowStartupWindowDescription));
     public static string C_ExternalIntegration => Get(nameof(C_ExternalIntegration));
     public static string C_ExternalIntegrationDescription => Get(nameof(C_ExternalIntegrationDescription));
+    public static string C_PrivacyTitle => Get(nameof(C_PrivacyTitle));
+    public static string C_PrivacyDescription => Get(nameof(C_PrivacyDescription));
+    public static string C_PrivacyEncouragement => Get(nameof(C_PrivacyEncouragement));
+    public static string C_SentryTelemetry => Get(nameof(C_SentryTelemetry));
+    public static string C_SentryTelemetryDescription => Get(nameof(C_SentryTelemetryDescription));
+    public static string C_OnlineStatus => Get(nameof(C_OnlineStatus));
+    public static string C_OnlineStatusDescription => Get(nameof(C_OnlineStatusDescription));
+    public static string O_OnlineStatusMode_Full => Get(nameof(O_OnlineStatusMode_Full));
+    public static string O_OnlineStatusMode_Anonymous => Get(nameof(O_OnlineStatusMode_Anonymous));
+    public static string O_OnlineStatusMode_Off => Get(nameof(O_OnlineStatusMode_Off));
     public static string C_CompleteTitle => Get(nameof(C_CompleteTitle));
     public static string C_CompleteDescription => Get(nameof(C_CompleteDescription));
     public static string C_CompletedItems => Get(nameof(C_CompletedItems));
     public static string C_CompletedClass => Get(nameof(C_CompletedClass));
     public static string C_CompletedAppearance => Get(nameof(C_CompletedAppearance));
     public static string C_CompletedIntegration => Get(nameof(C_CompletedIntegration));
+    public static string C_CompletedPrivacy => Get(nameof(C_CompletedPrivacy));
+    public static string C_OverwriteTitle => Get(nameof(C_OverwriteTitle));
+    public static string C_Overwrite => Get(nameof(C_Overwrite));
     public static string C_ResourcesTitle => Get(nameof(C_ResourcesTitle));
     public static string C_SectlWebsite => Get(nameof(C_SectlWebsite));
     public static string C_Documentation => Get(nameof(C_Documentation));
@@ -115,5 +140,11 @@ public class Resources
     public static string M_DesktopIntegrationFailed => Get(nameof(M_DesktopIntegrationFailed));
     public static string M_StudentsImported => Get(nameof(M_StudentsImported));
     public static string M_PrizesImported => Get(nameof(M_PrizesImported));
+    public static string M_OverwriteListContent => Get(nameof(M_OverwriteListContent));
+    public static string M_ListNameEmpty => Get(nameof(M_ListNameEmpty));
+    public static string M_ListNameInvalid => Get(nameof(M_ListNameInvalid));
+    public static string M_ListNameExists => Get(nameof(M_ListNameExists));
+    public static string M_KeepOneList => Get(nameof(M_KeepOneList));
+    public static string M_DeleteListContent => Get(nameof(M_DeleteListContent));
     public static string M_StepProgress => Get(nameof(M_StepProgress));
 }

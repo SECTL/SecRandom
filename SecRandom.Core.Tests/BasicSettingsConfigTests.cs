@@ -73,11 +73,13 @@ public class BasicSettingsConfigTests
     }
 
     [Fact]
-    public void MainConfig_PersistsVersionedEulaAcceptance()
+    public void MainConfig_PersistsVersionedPolicyAcceptances()
     {
         MainConfigModel config = new();
         config.General.Basic.GuideCompleted = true;
         config.General.Basic.AcceptedEulaVersion = 1;
+        config.General.Basic.AcceptedPrivacyPolicyVersion = 1;
+        config.General.Basic.AcceptedGplVersion = 1;
 
         string json = JsonSerializer.Serialize(config, ConfigServiceBase.JsonOptions);
         MainConfigModel? restored = JsonSerializer.Deserialize<MainConfigModel>(json, ConfigServiceBase.JsonOptions);
@@ -85,6 +87,8 @@ public class BasicSettingsConfigTests
         Assert.NotNull(restored);
         Assert.True(restored.General.Basic.GuideCompleted);
         Assert.Equal(1, restored.General.Basic.AcceptedEulaVersion);
+        Assert.Equal(1, restored.General.Basic.AcceptedPrivacyPolicyVersion);
+        Assert.Equal(1, restored.General.Basic.AcceptedGplVersion);
     }
 
     [Theory]

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -26,7 +28,6 @@ public partial class FirstRunOobeWindow : Window
     {
         DataContext = this;
         InitializeComponent();
-        ViewModel.PropertyChanged += ViewModelOnPropertyChanged;
         Closed += WindowOnClosed;
         Opened += (_, _) => _isLanguageSelectionReady = true;
     }
@@ -117,22 +118,152 @@ public partial class FirstRunOobeWindow : Window
     {
         OpenImportDrawer(new SettingsPages.ListManagement.RollCallListImportView(
             ViewModel.SelectedStudentListName,
-            students =>
-            {
-                ViewModel.ImportStudents(students);
-                CloseImportDrawer();
-            }));
+            students => _ = ImportStudentsAsync(students)));
     }
 
     private void ImportPrizePool_OnClick(object? sender, RoutedEventArgs e)
     {
         OpenImportDrawer(new SettingsPages.ListManagement.LotteryListImportView(
             ViewModel.SelectedPrizeListName,
-            prizes =>
-            {
-                ViewModel.ImportPrizes(prizes);
-                CloseImportDrawer();
-            }));
+            prizes => _ = ImportPrizesAsync(prizes)));
+    }
+
+    private void RefreshStudentLists_OnClick(object? sender, RoutedEventArgs e) => ViewModel.RefreshListSelectors();
+
+    private void RefreshPrizeLists_OnClick(object? sender, RoutedEventArgs e) => ViewModel.RefreshListSelectors();
+
+    private async void AddStudentList_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var name = await PromptListNameAsync(LR.C_AddStudentListTitle, LR.C_AddList, LR.C_DefaultStudentListName);
+        if (name is not null)
+            CreateList(name, ViewModel.StudentListNames, ViewModel.CreateStudentList);
+    }
+
+    private async void AddPrizeList_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var name = await PromptListNameAsync(LR.C_AddPrizeListTitle, LR.C_AddList, LR.C_DefaultPrizeListName);
+        if (name is not null)
+            CreateList(name, ViewModel.PrizeListNames, ViewModel.CreatePrizeList);
+    }
+
+    private async void RenameStudentList_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var name = await PromptListNameAsync(LR.C_RenameListTitle, LR.C_RenameList, ViewModel.SelectedStudentListName);
+        if (name is not null && name != ViewModel.SelectedStudentListName)
+            CreateList(name, ViewModel.StudentListNames, ViewModel.RenameStudentList, ViewModel.SelectedStudentListName);
+    }
+
+    private async void RenamePrizeList_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var name = await PromptListNameAsync(LR.C_RenameListTitle, LR.C_RenameList, ViewModel.SelectedPrizeListName);
+        if (name is not null && name != ViewModel.SelectedPrizeListName)
+            CreateList(name, ViewModel.PrizeListNames, ViewModel.RenamePrizeList, ViewModel.SelectedPrizeListName);
+    }
+
+    private async void DeleteStudentList_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!await ConfirmDeleteListAsync(ViewModel.SelectedStudentListName, ViewModel.StudentListNames.Count))
+            return;
+
+        ViewModel.DeleteStudentList();
+    }
+
+    private async void DeletePrizeList_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!await ConfirmDeleteListAsync(ViewModel.SelectedPrizeListName, ViewModel.PrizeListNames.Count))
+            return;
+
+        ViewModel.DeletePrizeList();
+    }
+
+    private void CreateList(string name, IEnumerable<string> existingNames, Action<string> action, string? currentName = null)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            _ = ShowDialogAsync(LR.C_ListNameTitle, LR.M_ListNameEmpty);
+            return;
+        }
+
+        if (name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+        {
+            _ = ShowDialogAsync(LR.C_ListNameTitle, LR.M_ListNameInvalid);
+            return;
+        }
+
+        if (existingNames.Any(existingName => existingName != currentName && existingName == name))
+        {
+            _ = ShowDialogAsync(LR.C_ListNameTitle, LR.M_ListNameExists);
+            return;
+        }
+
+        action(name);
+    }
+
+    private async Task<string?> PromptListNameAsync(string title, string primaryButtonText, string initialName)
+    {
+        var input = new TextBox { Text = initialName, PlaceholderText = LR.C_ListNamePlaceholder, MinWidth = 320 };
+        var result = await new FAContentDialog
+        {
+            Title = title,
+            Content = input,
+            PrimaryButtonText = primaryButtonText,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Primary
+        }.ShowAsync(this);
+        return result == FAContentDialogResult.Primary ? input.Text?.Trim() : null;
+    }
+
+    private async Task<bool> ConfirmDeleteListAsync(string listName, int listCount)
+    {
+        if (listCount <= 1)
+        {
+            await ShowDialogAsync(LR.C_DeleteListTitle, LR.M_KeepOneList);
+            return false;
+        }
+
+        var result = await new FAContentDialog
+        {
+            Title = LR.C_DeleteListTitle,
+            Content = string.Format(LR.M_DeleteListContent, listName),
+            PrimaryButtonText = LR.C_DeleteList,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(this);
+        return result == FAContentDialogResult.Primary;
+    }
+
+    private async Task ImportStudentsAsync(IReadOnlyList<Shared.Models.Profile.Student> students)
+    {
+        if (!await ConfirmListOverwriteAsync(ViewModel.SelectedStudentListName, ViewModel.SelectedStudentListCount, students.Count))
+            return;
+
+        ViewModel.ImportStudents(students);
+        CloseImportDrawer();
+    }
+
+    private async Task ImportPrizesAsync(IReadOnlyList<Shared.Models.Profile.Prize> prizes)
+    {
+        if (!await ConfirmListOverwriteAsync(ViewModel.SelectedPrizeListName, ViewModel.SelectedPrizeListCount, prizes.Count))
+            return;
+
+        ViewModel.ImportPrizes(prizes);
+        CloseImportDrawer();
+    }
+
+    private async Task<bool> ConfirmListOverwriteAsync(string listName, int currentCount, int importCount)
+    {
+        if (currentCount == 0)
+            return true;
+
+        var result = await new FAContentDialog
+        {
+            Title = LR.C_OverwriteTitle,
+            Content = string.Format(LR.M_OverwriteListContent, listName, currentCount, importCount),
+            PrimaryButtonText = LR.C_Overwrite,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(this);
+        return result == FAContentDialogResult.Primary;
     }
 
     private void OpenImportDrawer(Control importView)
@@ -243,12 +374,6 @@ public partial class FirstRunOobeWindow : Window
         return string.Format(LR.M_UnsupportedImport, version, details);
     }
 
-    private void ViewModelOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName is nameof(FirstRunOobeViewModel.SelectedStudentListName) or nameof(FirstRunOobeViewModel.SelectedPrizeListName))
-            CloseImportDrawer();
-    }
-
     private void Window_OnClosing(object? sender, WindowClosingEventArgs e)
     {
         if (_canClose)
@@ -260,7 +385,6 @@ public partial class FirstRunOobeWindow : Window
 
     private void WindowOnClosed(object? sender, EventArgs e)
     {
-        ViewModel.PropertyChanged -= ViewModelOnPropertyChanged;
         Closed -= WindowOnClosed;
     }
 
