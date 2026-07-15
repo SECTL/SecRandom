@@ -351,8 +351,8 @@
                                        VerticalAlignment="Center"
                                        ToolTip.Tip="{x:Static langs:Resources.C_Language}" />
                         <ComboBox Width="150"
-                                  SelectedIndex="{Binding ViewModel.Basic.Language}"
-                                  SelectionChanged="Language_OnChanged">
+                                   SelectedIndex="{Binding ViewModel.Basic.Language, Mode=OneWay}"
+                                   SelectionChanged="Language_OnChanged">
                             <ComboBoxItem Content="{x:Static langs:Resources.O_LanguageChinese}" />
                             <ComboBoxItem Content="{x:Static langs:Resources.O_LanguageEnglish}" />
                             <ComboBoxItem Content="{x:Static langs:Resources.O_LanguageJapanese}" />
