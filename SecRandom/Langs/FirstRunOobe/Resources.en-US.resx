@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="UserAgreement" xml:space="preserve"><value>SecRandom User Agreement (Version 1)
+
+1. Scope and acceptance. SecRandom is a random selection tool for educational activities. By continuing to use the software, you accept this agreement; it does not remove rights granted by applicable law.
+
+2. Permitted use. You may use the software for classes, teaching activities, and other lawful internal random-selection scenarios.
+
+3. User responsibilities. Ensure imported data is lawful, accurate, and authorized. The actual user is responsible for draw rules, result publication, and related outcomes.
+
+4. Prohibited conduct. Do not use the software for unlawful discrimination, deception, security bypass, or access-control bypass. Do not violate GNU GPLv3 when modifying or distributing the software.
+
+5. Data and external integration. Data is stored locally by default. Startup registration and secrandom:// external links are optional and remain subject to enabled integration and security settings.
+
+6. Disclaimer. The software is provided as is. To the extent permitted by law, the project makes no warranty about suitability, availability, or draw results.
+
+7. Updates and termination. Material changes increase this agreement version and require renewed acceptance. You may stop using the software at any time.
+
+8. GPLv3. This agreement does not replace or restrict GNU GPLv3 rights for source code, modifications, and distribution.</value></data>
+  <data name="GplNotice" xml:space="preserve"><value>GNU General Public License v3.0 (GPLv3) notice
+
+SecRandom is released under GNU GPLv3. GPLv3 permits you to run, study, modify, and redistribute the software. Distribution of modified versions must comply with its copyleft terms, including providing corresponding source code under GPLv3.
+
+The official GNU GPLv3 text controls. This acknowledgement does not require you to waive any GPLv3 rights.</value></data>
+  <data name="C_Title" xml:space="preserve"><value>Set up SecRandom</value></data>
+  <data name="C_Intro" xml:space="preserve"><value>Complete the required licence acknowledgement first. Everything else can be changed later.</value></data>
+  <data name="C_WelcomeTitle" xml:space="preserve"><value>Welcome to SecRandom</value></data>
+  <data name="C_WelcomeDescription" xml:space="preserve"><value>Complete the first-run setup in a few steps. Only the licence acknowledgements are required; you can adjust everything else later in Settings.</value></data>
+  <data name="C_Language" xml:space="preserve"><value>Language</value></data>
+  <data name="O_LanguageChinese" xml:space="preserve"><value>Chinese (Simplified)</value></data>
+  <data name="O_LanguageEnglish" xml:space="preserve"><value>English</value></data>
+  <data name="O_LanguageJapanese" xml:space="preserve"><value>Japanese</value></data>
+  <data name="C_LegalTitle" xml:space="preserve"><value>User agreement and open-source licence</value></data>
+  <data name="C_LegalDescription" xml:space="preserve"><value>Read and acknowledge both documents before continuing. The custom agreement does not replace GPLv3 rights.</value></data>
+  <data name="C_AgreementTitle" xml:space="preserve"><value>SecRandom user agreement</value></data>
+  <data name="C_AgreementAccept" xml:space="preserve"><value>I have read and accept the SecRandom user agreement.</value></data>
+  <data name="C_GplTitle" xml:space="preserve"><value>GNU GPLv3</value></data>
+  <data name="C_GplAccept" xml:space="preserve"><value>I have read the GNU GPLv3 licence notice.</value></data>
+  <data name="C_DataTitle" xml:space="preserve"><value>Restore or create a class</value></data>
+  <data name="C_DataDescription" xml:space="preserve"><value>Restore existing SecRandom v3 data, or create a class and import a student list. Skipping this does not affect later use.</value></data>
+  <data name="C_RestoreTitle" xml:space="preserve"><value>Restore existing data</value></data>
+  <data name="C_RestoreDescription" xml:space="preserve"><value>Only v3 export files are accepted.</value></data>
+  <data name="C_ImportSettings" xml:space="preserve"><value>Import v3 settings</value></data>
+  <data name="C_ImportAllData" xml:space="preserve"><value>Import all v3 data</value></data>
+  <data name="C_RollCallList" xml:space="preserve"><value>Roll-call list</value></data>
+  <data name="C_RollCallListDescription" xml:space="preserve"><value>Select the list to use for roll call, or import a roster file.</value></data>
+  <data name="C_ImportRoster" xml:space="preserve"><value>Import roster</value></data>
+  <data name="C_LotteryTitle" xml:space="preserve"><value>Lottery</value></data>
+  <data name="C_LotteryDescription" xml:space="preserve"><value>When disabled, lottery navigation, floating controls, shortcuts, and external commands are unavailable.</value></data>
+  <data name="C_LotteryEnabled" xml:space="preserve"><value>Enable lottery</value></data>
+  <data name="C_PrizeImport" xml:space="preserve"><value>Import prize pool</value></data>
+  <data name="C_PrizeList" xml:space="preserve"><value>Lottery list</value></data>
+  <data name="C_PrizeListDescription" xml:space="preserve"><value>Select the list to use for lottery, or import a prize file.</value></data>
+  <data name="C_AppearanceTitle" xml:space="preserve"><value>Appearance and floating window</value></data>
+  <data name="C_Theme" xml:space="preserve"><value>Theme</value></data>
+  <data name="O_ThemeLight" xml:space="preserve"><value>Light</value></data>
+  <data name="O_ThemeDark" xml:space="preserve"><value>Dark</value></data>
+  <data name="O_ThemeAuto" xml:space="preserve"><value>System default</value></data>
+  <data name="C_ThemeColor" xml:space="preserve"><value>Accent color</value></data>
+  <data name="O_SystemColor" xml:space="preserve"><value>System accent</value></data>
+  <data name="O_CustomColor" xml:space="preserve"><value>Custom accent</value></data>
+  <data name="C_Opacity" xml:space="preserve"><value>Floating window opacity</value></data>
+  <data name="C_OpacityDescription" xml:space="preserve"><value>Applied after setup is complete.</value></data>
+  <data name="C_DesktopTitle" xml:space="preserve"><value>Desktop integration</value></data>
+  <data name="C_DesktopDescription" xml:space="preserve"><value>These options are applied when setup is completed. You can retry later in Settings if the platform rejects an operation.</value></data>
+  <data name="C_Autostart" xml:space="preserve"><value>Start at sign-in</value></data>
+  <data name="C_ShowStartupWindow" xml:space="preserve"><value>Show main window at startup</value></data>
+  <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>Choose whether the main window opens automatically when SecRandom starts.</value></data>
+  <data name="C_ExternalIntegration" xml:space="preserve"><value>External links and integration</value></data>
+  <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>Register secrandom:// so external applications can open SecRandom.</value></data>
+  <data name="C_CompleteTitle" xml:space="preserve"><value>Setup complete</value></data>
+  <data name="C_CompleteDescription" xml:space="preserve"><value>Click Finish to enter SecRandom. You can change classes, lottery, appearance, and desktop integration later.</value></data>
+  <data name="C_CompletedItems" xml:space="preserve"><value>Configured items</value></data>
+  <data name="C_CompletedClass" xml:space="preserve"><value>Manage rosters and prize pools from List Management.</value></data>
+  <data name="C_CompletedAppearance" xml:space="preserve"><value>Change draw entry points, theme, and floating-window appearance in Settings.</value></data>
+  <data name="C_CompletedIntegration" xml:space="preserve"><value>External-link settings do not disable the app's internal single-instance communication.</value></data>
+  <data name="C_ResourcesTitle" xml:space="preserve"><value>Project resources</value></data>
+  <data name="C_SectlWebsite" xml:space="preserve"><value>SECTL website</value></data>
+  <data name="C_Documentation" xml:space="preserve"><value>SecRandom documentation</value></data>
+  <data name="C_AuthorBilibili" xml:space="preserve"><value>Lizeyi_Aionflux on Bilibili</value></data>
+  <data name="C_Sponsor" xml:space="preserve"><value>Support on Afdian</value></data>
+  <data name="C_Community" xml:space="preserve"><value>SECTL community group</value></data>
+  <data name="C_CommunityAnswer" xml:space="preserve"><value>QQ group: 833875216. Join answer: 思拓创联/SECTL</value></data>
+  <data name="C_Previous" xml:space="preserve"><value>Previous</value></data>
+  <data name="C_Start" xml:space="preserve"><value>Start</value></data>
+  <data name="C_Next" xml:space="preserve"><value>Next</value></data>
+  <data name="C_Finish" xml:space="preserve"><value>Finish</value></data>
+  <data name="C_ImportSettingsTitle" xml:space="preserve"><value>Import v3 settings</value></data>
+  <data name="C_ImportAllDataTitle" xml:space="preserve"><value>Import all v3 data</value></data>
+  <data name="C_ImportTitle" xml:space="preserve"><value>Confirm import</value></data>
+  <data name="C_Import" xml:space="preserve"><value>Import</value></data>
+  <data name="C_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="C_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="C_JsonFileType" xml:space="preserve"><value>JSON files</value></data>
+  <data name="C_ZipFileType" xml:space="preserve"><value>ZIP files</value></data>
+  <data name="C_ExitTitle" xml:space="preserve"><value>Exit setup</value></data>
+  <data name="C_ExitDescription" xml:space="preserve"><value>Licence acknowledgement is not complete. Exiting closes SecRandom without saving OOBE completion.</value></data>
+  <data name="C_Exit" xml:space="preserve"><value>Exit application</value></data>
+  <data name="C_ContinueSetup" xml:space="preserve"><value>Continue setup</value></data>
+  <data name="M_ImportConfirmation" xml:space="preserve"><value>Source version: {0}
+{1} files will be processed. A recovery snapshot is created before import; security credentials are not imported.</value></data>
+  <data name="M_UnsupportedImportTitle" xml:space="preserve"><value>Unsupported import file</value></data>
+  <data name="M_UnsupportedImport" xml:space="preserve"><value>Only SecRandom v3 exports are supported. Detected version: {0}.
+{1}
+No data was changed.</value></data>
+  <data name="M_UnknownVersion" xml:space="preserve"><value>Unknown</value></data>
+  <data name="M_UnsupportedImportDetail" xml:space="preserve"><value>This is not a supported SecRandom v3 export file.</value></data>
+  <data name="M_ImportCompleted" xml:space="preserve"><value>Import completed. Continue by acknowledging the current agreement version.</value></data>
+  <data name="M_ImportFailed" xml:space="preserve"><value>Import failed</value></data>
+  <data name="M_AgreementRequired" xml:space="preserve"><value>Read and acknowledge the user agreement and GNU GPLv3 first.</value></data>
+  <data name="M_CompletionAgreementRequired" xml:space="preserve"><value>The user agreement and GNU GPLv3 must be acknowledged before finishing.</value></data>
+  <data name="M_DesktopIntegrationFailed" xml:space="preserve"><value>Some desktop integrations could not be enabled and remain off. You can retry later in Settings.</value></data>
+  <data name="M_StudentsImported" xml:space="preserve"><value>Imported {0} students and set the list as the default class.</value></data>
+  <data name="M_PrizesImported" xml:space="preserve"><value>Imported {0} prizes and set the pool as the default prize pool.</value></data>
+  <data name="M_StepProgress" xml:space="preserve"><value>Step {0}/{1}</value></data>
+</root>

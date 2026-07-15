@@ -18,30 +18,52 @@
         Closing="Window_OnClosing">
     <Grid RowDefinitions="Auto,*,Auto">
         <Border Grid.Row="0" Padding="32 24 32 20"
-                Background="{DynamicResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                Background="{DynamicResource LayerOnMicaBaseAltFillColorDefaultBrush}"
+                IsVisible="{Binding ViewModel.HasPrevious}">
             <Grid RowDefinitions="Auto,Auto" RowSpacing="6">
                 <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <Image Source="/Assets/AppLogo.png" Width="32" Height="32" />
-                        <TextBlock Text="{x:Static langs:Resources.C_Title}" VerticalAlignment="Center" FontSize="20" FontWeight="SemiBold" />
+                        <TextBlock Text="{x:Static langs:Resources.C_Title}"
+                                   VerticalAlignment="Center"
+                                   FontSize="20"
+                                   FontWeight="SemiBold" />
                     </StackPanel>
-                    <TextBlock Grid.Column="1" Text="{Binding ViewModel.StepProgress}"
-                               VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding ViewModel.StepProgress}"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </Grid>
-                <TextBlock Grid.Row="1" Text="{x:Static langs:Resources.C_Intro}"
+                <TextBlock Grid.Row="1"
+                           Text="{x:Static langs:Resources.C_Intro}"
                            Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
             </Grid>
         </Border>
 
         <sr:DrawerHost x:Name="ImportDrawerHost" Grid.Row="1" DrawerPlacement="Right">
         <Carousel Classes="animated" SelectedIndex="{Binding ViewModel.SelectedStep}">
-            <ScrollViewer>
-                <StackPanel Margin="32" Spacing="16" VerticalAlignment="Center">
-                    <TextBlock Text="{x:Static langs:Resources.C_WelcomeTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
+            <Grid Margin="32" RowDefinitions="*,Auto">
+                <StackPanel Grid.Row="0"
+                             Spacing="14"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             MaxWidth="520">
+                    <Image Source="/Assets/AppLogo.png"
+                           Width="88"
+                           Height="88"
+                           HorizontalAlignment="Center"
+                           Stretch="Uniform" />
+                    <TextBlock Text="{x:Static langs:Resources.C_WelcomeTitle}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               Theme="{StaticResource TitleTextBlockStyle}" />
                     <TextBlock Text="{x:Static langs:Resources.C_WelcomeDescription}"
-                               TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
-            </ScrollViewer>
+            </Grid>
 
             <ScrollViewer>
                 <StackPanel Margin="32" Spacing="16">
@@ -79,39 +101,60 @@
                             </StackPanel>
                         </StackPanel>
                     </Border>
-                    <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
-                        <StackPanel Spacing="10">
-                            <TextBlock Text="{x:Static langs:Resources.C_NewClass}" FontWeight="SemiBold" />
-                            <TextBox Text="{Binding ViewModel.ClassName}" PlaceholderText="{x:Static langs:Resources.C_ClassNamePlaceholder}" />
-                            <Button Classes="accent" Content="{x:Static langs:Resources.C_ImportRoster}" Click="ImportRoster_OnClick" />
-                        </StackPanel>
-                    </Border>
+                    <fa:FASettingsExpander Header="{x:Static langs:Resources.C_RollCallList}"
+                                           Description="{x:Static langs:Resources.C_RollCallListDescription}"
+                                           IconSource="{sr:FluentIconSource {sr:Fi PeopleListFilled}}"
+                                           IsExpanded="True">
+                        <fa:FASettingsExpander.Footer>
+                            <ComboBox MinWidth="220"
+                                      ItemsSource="{Binding ViewModel.StudentListNames}"
+                                      SelectedItem="{Binding ViewModel.SelectedStudentListName, Mode=TwoWay}" />
+                        </fa:FASettingsExpander.Footer>
+                        <fa:FASettingsExpanderItem>
+                            <fa:FASettingsExpanderItem.Footer>
+                                <Button Classes="accent"
+                                        Content="{x:Static langs:Resources.C_ImportRoster}"
+                                        Click="ImportRoster_OnClick" />
+                            </fa:FASettingsExpanderItem.Footer>
+                        </fa:FASettingsExpanderItem>
+                    </fa:FASettingsExpander>
                 </StackPanel>
             </ScrollViewer>
 
             <ScrollViewer>
-                <StackPanel Margin="32" Spacing="16">
+                <StackPanel Margin="32" Spacing="8">
                     <TextBlock Text="{x:Static langs:Resources.C_LotteryTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
                     <TextBlock Text="{x:Static langs:Resources.C_LotteryDescription}"
-                               TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                Margin="0 0 0 8"
+                                TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <fa:FASettingsExpander Header="{x:Static langs:Resources.C_LotteryEnabled}" IconSource="{sr:FluentIconSource {sr:Fi GiftFilled}}">
                         <fa:FASettingsExpander.Footer>
                             <ToggleSwitch IsChecked="{Binding ViewModel.MoreSettings.LotteryEnabled}" />
                         </fa:FASettingsExpander.Footer>
                     </fa:FASettingsExpander>
-                    <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16"
-                            IsVisible="{Binding ViewModel.MoreSettings.LotteryEnabled}">
-                        <StackPanel Spacing="10">
-                            <TextBlock Text="{x:Static langs:Resources.C_PrizeImport}" FontWeight="SemiBold" />
-                            <TextBox Text="{Binding ViewModel.PrizePoolName}" PlaceholderText="{x:Static langs:Resources.C_PrizePoolPlaceholder}" />
-                            <Button Classes="accent" Content="{x:Static langs:Resources.C_PrizeImport}" Click="ImportPrizePool_OnClick" />
-                        </StackPanel>
-                    </Border>
+                    <fa:FASettingsExpander Header="{x:Static langs:Resources.C_PrizeList}"
+                                           Description="{x:Static langs:Resources.C_PrizeListDescription}"
+                                           IconSource="{sr:FluentIconSource {sr:Fi LotteryFilled}}"
+                                           IsExpanded="True"
+                                           IsVisible="{Binding ViewModel.MoreSettings.LotteryEnabled}">
+                        <fa:FASettingsExpander.Footer>
+                            <ComboBox MinWidth="220"
+                                      ItemsSource="{Binding ViewModel.PrizeListNames}"
+                                      SelectedItem="{Binding ViewModel.SelectedPrizeListName, Mode=TwoWay}" />
+                        </fa:FASettingsExpander.Footer>
+                        <fa:FASettingsExpanderItem>
+                            <fa:FASettingsExpanderItem.Footer>
+                                <Button Classes="accent"
+                                        Content="{x:Static langs:Resources.C_PrizeImport}"
+                                        Click="ImportPrizePool_OnClick" />
+                            </fa:FASettingsExpanderItem.Footer>
+                        </fa:FASettingsExpanderItem>
+                    </fa:FASettingsExpander>
                 </StackPanel>
             </ScrollViewer>
 
             <ScrollViewer>
-                <StackPanel Margin="32" Spacing="16">
+                <StackPanel Margin="32" Spacing="8">
                     <TextBlock Text="{x:Static langs:Resources.C_AppearanceTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
                     <fa:FASettingsExpander Header="{x:Static langs:Resources.C_Theme}" IconSource="{sr:FluentIconSource {sr:Fi DarkThemeFilled}}">
                         <fa:FASettingsExpander.Footer>
@@ -153,8 +196,15 @@
                             <ToggleSwitch IsChecked="{Binding ViewModel.Autostart}" />
                         </fa:FASettingsExpander.Footer>
                     </fa:FASettingsExpander>
+                    <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ShowStartupWindow}"
+                                           Description="{x:Static langs:Resources.C_ShowStartupWindowDescription}"
+                                           IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding ViewModel.Basic.ShowStartupWindow}" />
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
                     <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ExternalIntegration}" Description="{x:Static langs:Resources.C_ExternalIntegrationDescription}"
-                                           IconSource="{sr:FluentIconSource {sr:Fi LinkSquareFilled}}">
+                                            IconSource="{sr:FluentIconSource {sr:Fi LinkSquareFilled}}">
                         <fa:FASettingsExpander.Footer>
                             <ToggleSwitch IsChecked="{Binding ViewModel.ExternalIntegration}" />
                         </fa:FASettingsExpander.Footer>
@@ -163,10 +213,12 @@
             </ScrollViewer>
 
             <ScrollViewer>
-                <StackPanel Margin="32" Spacing="16">
-                    <TextBlock Text="{x:Static langs:Resources.C_CompleteTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
+                <StackPanel Margin="32" Spacing="14">
+                    <TextBlock Text="{x:Static langs:Resources.C_CompleteTitle}"
+                               Theme="{StaticResource TitleTextBlockStyle}" />
                     <TextBlock Text="{x:Static langs:Resources.C_CompleteDescription}"
-                               TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <Border Padding="16" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" CornerRadius="6">
                         <StackPanel Spacing="8">
                             <TextBlock Text="{x:Static langs:Resources.C_CompletedItems}" FontWeight="SemiBold" />
@@ -175,16 +227,72 @@
                             <TextBlock Text="{x:Static langs:Resources.C_CompletedIntegration}" TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{x:Static langs:Resources.C_ResourcesTitle}" FontWeight="SemiBold" />
+                        <WrapPanel ItemHeight="40" HorizontalAlignment="Left">
+                            <WrapPanel.Styles>
+                                <Style Selector="HyperlinkButton">
+                                    <Setter Property="Margin" Value="2" />
+                                    <Setter Property="Padding" Value="4" />
+                                </Style>
+                            </WrapPanel.Styles>
+                            <HyperlinkButton CommandParameter="https://sectl.cn/" Click="OpenLink_OnClick"
+                                             Content="{x:Static langs:Resources.C_SectlWebsite}" />
+                            <HyperlinkButton CommandParameter="https://secrandom.sectl.cn/" Click="OpenLink_OnClick"
+                                             Content="{x:Static langs:Resources.C_Documentation}" />
+                            <HyperlinkButton CommandParameter="https://space.bilibili.com/520571577" Click="OpenLink_OnClick"
+                                             Content="{x:Static langs:Resources.C_AuthorBilibili}" />
+                            <HyperlinkButton CommandParameter="https://afdian.com/a/lzy0983" Click="OpenLink_OnClick"
+                                             Content="{x:Static langs:Resources.C_Sponsor}" />
+                            <HyperlinkButton CommandParameter="https://qm.qq.com/q/k0l04MbSXS" Click="OpenLink_OnClick"
+                                             Content="{x:Static langs:Resources.C_Community}" />
+                        </WrapPanel>
+                        <Border Padding="12,8" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="6">
+                            <TextBlock Text="{x:Static langs:Resources.C_CommunityAnswer}"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Border>
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
         </Carousel>
         </sr:DrawerHost>
 
         <Border Grid.Row="2" Padding="24 16" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
-            <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Text="{Binding ViewModel.StatusMessage}" TextWrapping="Wrap" VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Grid>
+                    <TextBlock Text="{Binding ViewModel.StatusMessage}"
+                               IsVisible="{Binding ViewModel.HasPrevious}"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="8"
+                                VerticalAlignment="Center"
+                                IsVisible="{Binding ViewModel.IsWelcomeStep}">
+                        <sr:FluentIcon Glyph="{sr:Fi GlobeFilled}"
+                                       Width="20"
+                                       Height="20"
+                                       VerticalAlignment="Center"
+                                       ToolTip.Tip="{x:Static langs:Resources.C_Language}" />
+                        <ComboBox Width="150"
+                                  SelectedIndex="{Binding ViewModel.Basic.Language}"
+                                  SelectionChanged="Language_OnChanged">
+                            <ComboBoxItem Content="{x:Static langs:Resources.O_LanguageChinese}" />
+                            <ComboBoxItem Content="{x:Static langs:Resources.O_LanguageEnglish}" />
+                            <ComboBoxItem Content="{x:Static langs:Resources.O_LanguageJapanese}" />
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
+                <Button Grid.ColumnSpan="3"
+                        Classes="accent"
+                        Content="{Binding ViewModel.NextButtonText}"
+                        IsEnabled="{Binding ViewModel.CanContinue}"
+                        IsVisible="{Binding ViewModel.IsWelcomeStep}"
+                        HorizontalAlignment="Center"
+                        Click="Next_OnClick" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                            IsVisible="{Binding ViewModel.HasPrevious}">
                     <Button Content="{x:Static langs:Resources.C_Previous}" IsVisible="{Binding ViewModel.HasPrevious}" Click="Previous_OnClick" />
                     <Button Classes="accent" Content="{Binding ViewModel.NextButtonText}" IsEnabled="{Binding ViewModel.CanContinue}" Click="Next_OnClick" />
                 </StackPanel>

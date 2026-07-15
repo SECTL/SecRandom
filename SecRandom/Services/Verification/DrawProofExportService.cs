@@ -117,7 +117,14 @@ public sealed class DrawProofExportService(
 
         StringBuilder builder = new();
         foreach (var character in value.Trim())
-            builder.Append(char.IsControl(character) || InvalidFileNameCharacters.Contains(character) ? '_' : character);
+        {
+            builder.Append(character switch
+            {
+                ':' or '：' or ',' or '，' or '、' => '_',
+                _ when char.IsControl(character) || InvalidFileNameCharacters.Contains(character) => '_',
+                _ => character
+            });
+        }
 
         var sanitized = builder.ToString().Trim(' ', '.');
         if (string.IsNullOrWhiteSpace(sanitized))

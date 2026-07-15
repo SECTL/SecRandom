@@ -12,9 +12,6 @@ public sealed class OobeDataSetupService(MainConfigHandler configHandler, IProfi
     public void SaveStudentList(string name, IReadOnlyList<Student> students)
     {
         name = ValidateName(name, "班级名称");
-        if (File.Exists(new StudentList(name).ConfigFilePath))
-            throw new InvalidOperationException("同名班级已存在，请使用其他班级名称。");
-
         var listConfig = new StudentListConfig(name);
         listConfig.Data.Students.Clear();
         foreach (var student in students)
@@ -31,9 +28,6 @@ public sealed class OobeDataSetupService(MainConfigHandler configHandler, IProfi
     public void SavePrizeList(string name, IReadOnlyList<Prize> prizes)
     {
         name = ValidateName(name, "奖品池名称");
-        if (File.Exists(new PrizeList(name).ConfigFilePath))
-            throw new InvalidOperationException("同名奖品池已存在，请使用其他奖品池名称。");
-
         var listConfig = new PrizeListConfig(name);
         listConfig.Data.Prizes.Clear();
         foreach (var prize in prizes)

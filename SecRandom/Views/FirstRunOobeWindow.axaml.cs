@@ -1,5 +1,6 @@
 using System;
-using System.ComponentModel;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Services.ImportExport;
 using SecRandom.ViewModels;
 using LR = SecRandom.Langs.FirstRunOobe.Resources;
@@ -17,6 +19,8 @@ namespace SecRandom.Views;
 public partial class FirstRunOobeWindow : Window
 {
     private bool _canClose;
+    private bool _isLanguageSelectionReady;
+    private bool _refreshLanguageWhenDrawerCloses;
 
     public FirstRunOobeWindow()
     {
@@ -24,11 +28,14 @@ public partial class FirstRunOobeWindow : Window
         InitializeComponent();
         ViewModel.PropertyChanged += ViewModelOnPropertyChanged;
         Closed += WindowOnClosed;
+        Opened += (_, _) => _isLanguageSelectionReady = true;
     }
 
     public FirstRunOobeViewModel ViewModel { get; } = IAppHost.GetService<FirstRunOobeViewModel>();
     public bool IsCompleted { get; private set; }
+    public bool IsReplacingForLanguageChange { get; private set; }
     public event EventHandler? Completed;
+    public event EventHandler? LanguageChanged;
     private IImportExportService ImportExportService { get; } = IAppHost.GetService<IImportExportService>();
 
     private void Previous_OnClick(object? sender, RoutedEventArgs e)
@@ -58,10 +65,58 @@ public partial class FirstRunOobeWindow : Window
         ViewModel.RefreshAppearance();
     }
 
+    private void Language_OnChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (!_isLanguageSelectionReady)
+            return;
+
+        if (sender is not ComboBox { SelectedIndex: >= 0 } selector ||
+            !ViewModel.SetLanguage((LanguageMode)selector.SelectedIndex))
+            return;
+
+        var culture = ViewModel.Basic.Language switch
+        {
+            LanguageMode.ChineseSimplified => "zh-Hans",
+            LanguageMode.English => "en-US",
+            LanguageMode.Japanese => "ja-JP",
+            _ => "zh-Hans"
+        };
+
+        App.InitializeLanguages(new CultureInfo(culture));
+        ViewModel.RefreshLocalizedText();
+        if (ImportDrawerHost.IsDrawerOpen)
+        {
+            _refreshLanguageWhenDrawerCloses = true;
+            return;
+        }
+
+        LanguageChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void CloseForLanguageChange()
+    {
+        IsReplacingForLanguageChange = true;
+        _canClose = true;
+        Close();
+    }
+
+    private static void OpenLink_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { CommandParameter: string url })
+            return;
+
+        if (OperatingSystem.IsWindows())
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        else if (OperatingSystem.IsLinux())
+            Process.Start(new ProcessStartInfo("xdg-open", url) { UseShellExecute = false });
+        else if (OperatingSystem.IsMacOS())
+            Process.Start(new ProcessStartInfo("open", url) { UseShellExecute = false });
+    }
+
     private void ImportRoster_OnClick(object? sender, RoutedEventArgs e)
     {
         OpenImportDrawer(new SettingsPages.ListManagement.RollCallListImportView(
-            ViewModel.ClassName,
+            ViewModel.SelectedStudentListName,
             students =>
             {
                 ViewModel.ImportStudents(students);
@@ -72,7 +127,7 @@ public partial class FirstRunOobeWindow : Window
     private void ImportPrizePool_OnClick(object? sender, RoutedEventArgs e)
     {
         OpenImportDrawer(new SettingsPages.ListManagement.LotteryListImportView(
-            ViewModel.PrizePoolName,
+            ViewModel.SelectedPrizeListName,
             prizes =>
             {
                 ViewModel.ImportPrizes(prizes);
@@ -100,6 +155,11 @@ public partial class FirstRunOobeWindow : Window
     {
         ImportDrawerHost.IsDrawerOpen = false;
         ImportDrawerHost.DrawerContent = null;
+        if (!_refreshLanguageWhenDrawerCloses)
+            return;
+
+        _refreshLanguageWhenDrawerCloses = false;
+        LanguageChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private async void ImportSettings_OnClick(object? sender, RoutedEventArgs e)
@@ -185,7 +245,7 @@ public partial class FirstRunOobeWindow : Window
 
     private void ViewModelOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(FirstRunOobeViewModel.ClassName) or nameof(FirstRunOobeViewModel.PrizePoolName))
+        if (e.PropertyName is nameof(FirstRunOobeViewModel.SelectedStudentListName) or nameof(FirstRunOobeViewModel.SelectedPrizeListName))
             CloseImportDrawer();
     }
 

@@ -33,6 +33,10 @@ SecRandom 以 GNU GPLv3 许可发布。GPLv3 允许您运行、研究、修改�
   <data name="C_Intro" xml:space="preserve"><value>先完成必要的许可确认，其余内容可随时在设置中调整。</value></data>
   <data name="C_WelcomeTitle" xml:space="preserve"><value>欢迎使用 SecRandom</value></data>
   <data name="C_WelcomeDescription" xml:space="preserve"><value>接下来将用几步完成首次设置。只有许可确认是必需的，名单、抽奖、外观和桌面集成均可跳过，并可随时在设置中修改。</value></data>
+  <data name="O_LanguageChinese" xml:space="preserve"><value>简体中文</value></data>
+  <data name="O_LanguageEnglish" xml:space="preserve"><value>English</value></data>
+  <data name="O_LanguageJapanese" xml:space="preserve"><value>日本語</value></data>
+  <data name="C_Language" xml:space="preserve"><value>语言</value></data>
   <data name="C_LegalTitle" xml:space="preserve"><value>用户协议与开源许可</value></data>
   <data name="C_LegalDescription" xml:space="preserve"><value>继续使用前，请阅读并确认以下两份文本。自定义用户协议不取代 GNU GPLv3 赋予的开源权利。</value></data>
   <data name="C_AgreementTitle" xml:space="preserve"><value>SecRandom 用户协议</value></data>
@@ -45,16 +49,15 @@ SecRandom 以 GNU GPLv3 许可发布。GPLv3 允许您运行、研究、修改�
   <data name="C_RestoreDescription" xml:space="preserve"><value>导入前会检查导出版本，只接受 v3 文件。</value></data>
   <data name="C_ImportSettings" xml:space="preserve"><value>导入 v3 设置</value></data>
   <data name="C_ImportAllData" xml:space="preserve"><value>导入 v3 全部数据</value></data>
-  <data name="C_NewClass" xml:space="preserve"><value>新建班级</value></data>
-  <data name="C_DefaultClassName" xml:space="preserve"><value>我的班级</value></data>
-  <data name="C_ClassNamePlaceholder" xml:space="preserve"><value>班级名称</value></data>
+  <data name="C_RollCallList" xml:space="preserve"><value>点名名单</value></data>
+  <data name="C_RollCallListDescription" xml:space="preserve"><value>选择首次用于点名的名单，也可导入名单文件。</value></data>
   <data name="C_ImportRoster" xml:space="preserve"><value>导入名单</value></data>
   <data name="C_LotteryTitle" xml:space="preserve"><value>抽奖功能</value></data>
   <data name="C_LotteryDescription" xml:space="preserve"><value>关闭后会隐藏抽奖侧栏和浮窗选项，并拒绝抽奖快捷键及外部指令。</value></data>
   <data name="C_LotteryEnabled" xml:space="preserve"><value>启用抽奖</value></data>
   <data name="C_PrizeImport" xml:space="preserve"><value>导入奖品池</value></data>
-  <data name="C_DefaultPrizePoolName" xml:space="preserve"><value>我的奖品池</value></data>
-  <data name="C_PrizePoolPlaceholder" xml:space="preserve"><value>奖品池名称</value></data>
+  <data name="C_PrizeList" xml:space="preserve"><value>抽奖名单</value></data>
+  <data name="C_PrizeListDescription" xml:space="preserve"><value>选择首次用于抽奖的名单，也可导入奖品文件。</value></data>
   <data name="C_AppearanceTitle" xml:space="preserve"><value>外观与浮窗</value></data>
   <data name="C_Theme" xml:space="preserve"><value>主题</value></data>
   <data name="O_ThemeLight" xml:space="preserve"><value>浅色</value></data>
@@ -68,6 +71,8 @@ SecRandom 以 GNU GPLv3 许可发布。GPLv3 允许您运行、研究、修改�
   <data name="C_DesktopTitle" xml:space="preserve"><value>桌面集成</value></data>
   <data name="C_DesktopDescription" xml:space="preserve"><value>这些选项会在完成时写入系统。若平台拒绝操作，设置会保持关闭并可稍后重试。</value></data>
   <data name="C_Autostart" xml:space="preserve"><value>开机启动</value></data>
+  <data name="C_ShowStartupWindow" xml:space="preserve"><value>启动显示主窗口</value></data>
+  <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>设置软件启动时是否自动显示主窗口。</value></data>
   <data name="C_ExternalIntegration" xml:space="preserve"><value>外部链接与联动</value></data>
   <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>注册 secrandom:// 链接以允许外部程序唤起 SecRandom。</value></data>
   <data name="C_CompleteTitle" xml:space="preserve"><value>完成设置</value></data>
@@ -76,7 +81,15 @@ SecRandom 以 GNU GPLv3 许可发布。GPLv3 允许您运行、研究、修改�
   <data name="C_CompletedClass" xml:space="preserve"><value>点名名单与奖品池可在名单管理中维护。</value></data>
   <data name="C_CompletedAppearance" xml:space="preserve"><value>抽奖入口、主题和浮窗外观可在设置中修改。</value></data>
   <data name="C_CompletedIntegration" xml:space="preserve"><value>外部链接开关不会关闭应用内部的单实例通信。</value></data>
+  <data name="C_ResourcesTitle" xml:space="preserve"><value>项目资源</value></data>
+  <data name="C_SectlWebsite" xml:space="preserve"><value>SECTL 官网</value></data>
+  <data name="C_Documentation" xml:space="preserve"><value>SecRandom 文档</value></data>
+  <data name="C_AuthorBilibili" xml:space="preserve"><value>黎泽懿_Aionflux 的哔哩哔哩</value></data>
+  <data name="C_Sponsor" xml:space="preserve"><value>爱发电赞助</value></data>
+  <data name="C_Community" xml:space="preserve"><value>SECTL 社区群</value></data>
+  <data name="C_CommunityAnswer" xml:space="preserve"><value>QQ群：833875216；进群答案：思拓创联/SECTL</value></data>
   <data name="C_Previous" xml:space="preserve"><value>上一步</value></data>
+  <data name="C_Start" xml:space="preserve"><value>开始</value></data>
   <data name="C_Next" xml:space="preserve"><value>下一步</value></data>
   <data name="C_Finish" xml:space="preserve"><value>完成</value></data>
   <data name="C_ImportSettingsTitle" xml:space="preserve"><value>导入 v3 设置</value></data>

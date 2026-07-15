@@ -160,20 +160,7 @@ public partial class App : Application
 
             if (IAppHost.GetService<FirstRunOobeService>().IsRequired())
             {
-                _isOobeActive = true;
-                var oobe = new FirstRunOobeWindow();
-                desktop.MainWindow = oobe;
-                oobe.Completed += (_, _) =>
-                {
-                    _isOobeActive = false;
-                    ContinueDesktopStartup(desktop, startupProtocolUri);
-                };
-                oobe.Closed += (_, _) =>
-                {
-                    if (!oobe.IsCompleted)
-                        RequestDesktopShutdown();
-                };
-                oobe.Show();
+                ShowFirstRunOobe(desktop, startupProtocolUri);
                 base.OnFrameworkInitializationCompleted();
                 return;
             }
@@ -208,6 +195,30 @@ public partial class App : Application
 
         AppDomain.CurrentDomain.ProcessExit += CurrentDomainOnProcessExit;
         Dispatcher.UIThread.UnhandledException += App_OnDispatcherUnhandledException;
+    }
+
+    private void ShowFirstRunOobe(IClassicDesktopStyleApplicationLifetime desktop, string? startupProtocolUri)
+    {
+        _isOobeActive = true;
+        var oobe = new FirstRunOobeWindow();
+        desktop.MainWindow = oobe;
+        oobe.Completed += (_, _) =>
+        {
+            _isOobeActive = false;
+            ContinueDesktopStartup(desktop, startupProtocolUri);
+            ShowMainWindow();
+        };
+        oobe.LanguageChanged += (_, _) =>
+        {
+            ShowFirstRunOobe(desktop, startupProtocolUri);
+            oobe.CloseForLanguageChange();
+        };
+        oobe.Closed += (_, _) =>
+        {
+            if (!oobe.IsCompleted && !oobe.IsReplacingForLanguageChange)
+                RequestDesktopShutdown();
+        };
+        oobe.Show();
     }
 
     /// <summary>
@@ -847,6 +858,8 @@ public partial class App : Application
 
     public static void InitializeLanguages(CultureInfo cultureInfo)
     {
+        CultureInfo.CurrentCulture = cultureInfo;
+        CultureInfo.CurrentUICulture = cultureInfo;
         CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
         CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
     }

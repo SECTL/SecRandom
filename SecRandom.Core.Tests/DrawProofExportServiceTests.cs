@@ -20,7 +20,7 @@ public sealed class DrawProofExportServiceTests
             proof,
             DrawProofExportContext.ForStudents("高一:一班", "A/组", "女"));
 
-        Assert.Equal("20260714_083012_345_高一_一班_组别=A_组、性别=女_12345678.srproof.json", fileName);
+        Assert.Equal("20260714_083012_345_高一_一班_组别=A_组_性别=女_12345678.srproof.json", fileName);
     }
 
     [Fact]
@@ -70,7 +70,38 @@ public sealed class DrawProofExportServiceTests
             proof,
             DrawProofExportContext.ForStudents("默认名单"));
 
-        Assert.Contains("默认名单_点名：随机，半重复_abcdef12", fileName);
+        Assert.Contains("默认名单_点名_随机_半重复_abcdef12", fileName);
+        Assert.DoesNotContain(':', fileName);
+        Assert.DoesNotContain(',', fileName);
+        Assert.DoesNotContain('：', fileName);
+        Assert.DoesNotContain('，', fileName);
+        Assert.DoesNotContain('、', fileName);
+    }
+
+    [Theory]
+    [InlineData("secrandom-lottery-inventory-count/v3")]
+    [InlineData("secrandom-lottery-count-internal-rule/v3")]
+    [InlineData("secrandom-lottery-pan-repeat/v3")]
+    [InlineData("secrandom-lottery-pan-no-repeat/v3")]
+    [InlineData("secrandom-lottery-pan-half-repeat/v3")]
+    public void CreateFileName_RemovesPunctuationFromLotteryAlgorithmLabels(string algorithmId)
+    {
+        var proof = new DrawProof
+        {
+            ProofId = Guid.Parse("abcdef12-1234-1234-1234-123456789abc"),
+            CreatedAtUtc = new DateTimeOffset(2026, 7, 14, 0, 0, 0, TimeSpan.Zero),
+            AlgorithmId = algorithmId
+        };
+
+        var fileName = DrawProofExportService.CreateFileName(
+            proof,
+            DrawProofExportContext.ForPrizes("期末奖池"));
+
+        Assert.DoesNotContain(':', fileName);
+        Assert.DoesNotContain(',', fileName);
+        Assert.DoesNotContain('：', fileName);
+        Assert.DoesNotContain('，', fileName);
+        Assert.DoesNotContain('、', fileName);
     }
 
     [Fact]

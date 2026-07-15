@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="UserAgreement" xml:space="preserve"><value>SecRandom ユーザー規約（バージョン 1）
+
+1. 適用範囲と同意。SecRandom は教育活動向けのランダム抽選ツールです。本ソフトウェアを使い続けることで、本規約に同意したものとみなされます。本規約は適用法令により与えられる権利を制限しません。
+
+2. 許可される利用。授業、教育活動、およびその他の適法な内部ランダム抽選の場面で本ソフトウェアを利用できます。
+
+3. 利用者の責任。インポートするデータが適法、正確、かつ許可済みであることを確認してください。抽選ルール、結果の公開、およびそれに伴う結果については、実際の利用者が責任を負います。
+
+4. 禁止事項。本ソフトウェアを違法な差別、欺瞞、セキュリティ回避、またはアクセス制御の回避に利用してはいけません。ソフトウェアの変更または配布時に GNU GPLv3 に違反してはいけません。
+
+5. データと外部連携。データは既定でローカルに保存されます。自動起動の登録と secrandom:// 外部リンクは任意であり、有効化された連携およびセキュリティ設定の対象となります。
+
+6. 免責事項。本ソフトウェアは現状のまま提供されます。法令で認められる範囲で、プロジェクトは適合性、可用性、または抽選結果について保証しません。
+
+7. 更新と終了。重要な変更がある場合は規約のバージョンを上げ、あらためて同意を求めます。いつでも本ソフトウェアの利用を停止できます。
+
+8. GPLv3。本規約は、ソースコード、変更、および配布に関する GNU GPLv3 の権利を置き換えたり制限したりしません。</value></data>
+  <data name="GplNotice" xml:space="preserve"><value>GNU General Public License v3.0（GPLv3）について
+
+SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフトウェアの実行、研究、変更、再配布を認めます。変更版を配布する場合は、対応するソースコードを GPLv3 で提供するなど、コピーレフト条項を守る必要があります。
+
+正式な GNU GPLv3 の本文が優先されます。この確認により GPLv3 の権利を放棄する必要はありません。</value></data>
+  <data name="C_Title" xml:space="preserve"><value>SecRandom の初期設定</value></data>
+  <data name="C_Intro" xml:space="preserve"><value>まず必要なライセンス確認を完了してください。その他の項目は後から変更できます。</value></data>
+  <data name="C_WelcomeTitle" xml:space="preserve"><value>SecRandom へようこそ</value></data>
+  <data name="C_WelcomeDescription" xml:space="preserve"><value>数ステップで初回設定を完了します。必須なのはライセンス確認のみで、それ以外は後から設定で変更できます。</value></data>
+  <data name="C_Language" xml:space="preserve"><value>言語</value></data>
+  <data name="O_LanguageChinese" xml:space="preserve"><value>簡体字中国語</value></data>
+  <data name="O_LanguageEnglish" xml:space="preserve"><value>英語</value></data>
+  <data name="O_LanguageJapanese" xml:space="preserve"><value>日本語</value></data>
+  <data name="C_LegalTitle" xml:space="preserve"><value>ユーザー規約とオープンソースライセンス</value></data>
+  <data name="C_LegalDescription" xml:space="preserve"><value>続行する前に、両方の文書を読み、確認してください。独自規約は GPLv3 の権利を置き換えるものではありません。</value></data>
+  <data name="C_AgreementTitle" xml:space="preserve"><value>SecRandom ユーザー規約</value></data>
+  <data name="C_AgreementAccept" xml:space="preserve"><value>SecRandom ユーザー規約を読み、同意しました。</value></data>
+  <data name="C_GplTitle" xml:space="preserve"><value>GNU GPLv3</value></data>
+  <data name="C_GplAccept" xml:space="preserve"><value>GNU GPLv3 の説明を読みました。</value></data>
+  <data name="C_DataTitle" xml:space="preserve"><value>データの復元またはクラスの作成</value></data>
+  <data name="C_DataDescription" xml:space="preserve"><value>既存の SecRandom v3 データを復元するか、クラスを作成して学生名簿をインポートできます。スキップしても後の利用に影響しません。</value></data>
+  <data name="C_RestoreTitle" xml:space="preserve"><value>既存データを復元</value></data>
+  <data name="C_RestoreDescription" xml:space="preserve"><value>v3 のエクスポートファイルのみ受け付けます。</value></data>
+  <data name="C_ImportSettings" xml:space="preserve"><value>v3 設定をインポート</value></data>
+  <data name="C_ImportAllData" xml:space="preserve"><value>v3 の全データをインポート</value></data>
+  <data name="C_RollCallList" xml:space="preserve"><value>点呼名簿</value></data>
+  <data name="C_RollCallListDescription" xml:space="preserve"><value>点呼に使用する名簿を選択するか、名簿ファイルをインポートします。</value></data>
+  <data name="C_ImportRoster" xml:space="preserve"><value>名簿をインポート</value></data>
+  <data name="C_LotteryTitle" xml:space="preserve"><value>抽選機能</value></data>
+  <data name="C_LotteryDescription" xml:space="preserve"><value>無効にすると、抽選ナビゲーション、フローティング操作、ショートカット、外部コマンドを利用できません。</value></data>
+  <data name="C_LotteryEnabled" xml:space="preserve"><value>抽選を有効にする</value></data>
+  <data name="C_PrizeImport" xml:space="preserve"><value>賞品プールをインポート</value></data>
+  <data name="C_PrizeList" xml:space="preserve"><value>抽選リスト</value></data>
+  <data name="C_PrizeListDescription" xml:space="preserve"><value>抽選に使用するリストを選択するか、賞品ファイルをインポートします。</value></data>
+  <data name="C_AppearanceTitle" xml:space="preserve"><value>外観とフローティングウィンドウ</value></data>
+  <data name="C_Theme" xml:space="preserve"><value>テーマ</value></data>
+  <data name="O_ThemeLight" xml:space="preserve"><value>ライト</value></data>
+  <data name="O_ThemeDark" xml:space="preserve"><value>ダーク</value></data>
+  <data name="O_ThemeAuto" xml:space="preserve"><value>システム既定</value></data>
+  <data name="C_ThemeColor" xml:space="preserve"><value>アクセントカラー</value></data>
+  <data name="O_SystemColor" xml:space="preserve"><value>システムのアクセントカラー</value></data>
+  <data name="O_CustomColor" xml:space="preserve"><value>カスタムアクセントカラー</value></data>
+  <data name="C_Opacity" xml:space="preserve"><value>フローティングウィンドウの不透明度</value></data>
+  <data name="C_OpacityDescription" xml:space="preserve"><value>設定完了後に適用されます。</value></data>
+  <data name="C_DesktopTitle" xml:space="preserve"><value>デスクトップ連携</value></data>
+  <data name="C_DesktopDescription" xml:space="preserve"><value>これらの設定は完了時に適用されます。プラットフォームが操作を拒否した場合は、後から設定で再試行できます。</value></data>
+  <data name="C_Autostart" xml:space="preserve"><value>サインイン時に起動</value></data>
+  <data name="C_ShowStartupWindow" xml:space="preserve"><value>起動時にメインウィンドウを表示</value></data>
+  <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>SecRandom の起動時にメインウィンドウを自動表示するかを選択します。</value></data>
+  <data name="C_ExternalIntegration" xml:space="preserve"><value>外部リンクと連携</value></data>
+  <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>外部アプリケーションから SecRandom を開けるよう secrandom:// を登録します。</value></data>
+  <data name="C_CompleteTitle" xml:space="preserve"><value>設定を完了</value></data>
+  <data name="C_CompleteDescription" xml:space="preserve"><value>完了をクリックして SecRandom を開始します。クラス、抽選、外観、デスクトップ連携は後から変更できます。</value></data>
+  <data name="C_CompletedItems" xml:space="preserve"><value>設定済みの項目</value></data>
+  <data name="C_CompletedClass" xml:space="preserve"><value>名簿と賞品プールはリスト管理から管理できます。</value></data>
+  <data name="C_CompletedAppearance" xml:space="preserve"><value>抽選の入口、テーマ、フローティングウィンドウの外観は設定で変更できます。</value></data>
+  <data name="C_CompletedIntegration" xml:space="preserve"><value>外部リンクの設定は、アプリ内部の単一インスタンス通信を無効にしません。</value></data>
+  <data name="C_ResourcesTitle" xml:space="preserve"><value>プロジェクトのリソース</value></data>
+  <data name="C_SectlWebsite" xml:space="preserve"><value>SECTL 公式サイト</value></data>
+  <data name="C_Documentation" xml:space="preserve"><value>SecRandom ドキュメント</value></data>
+  <data name="C_AuthorBilibili" xml:space="preserve"><value>黎泽懿_Aionflux の Bilibili</value></data>
+  <data name="C_Sponsor" xml:space="preserve"><value>Afdian で支援</value></data>
+  <data name="C_Community" xml:space="preserve"><value>SECTL コミュニティグループ</value></data>
+  <data name="C_CommunityAnswer" xml:space="preserve"><value>QQ グループ：833875216。参加回答：思拓创联/SECTL</value></data>
+  <data name="C_Previous" xml:space="preserve"><value>戻る</value></data>
+  <data name="C_Start" xml:space="preserve"><value>開始</value></data>
+  <data name="C_Next" xml:space="preserve"><value>次へ</value></data>
+  <data name="C_Finish" xml:space="preserve"><value>完了</value></data>
+  <data name="C_ImportSettingsTitle" xml:space="preserve"><value>v3 設定をインポート</value></data>
+  <data name="C_ImportAllDataTitle" xml:space="preserve"><value>v3 の全データをインポート</value></data>
+  <data name="C_ImportTitle" xml:space="preserve"><value>インポートの確認</value></data>
+  <data name="C_Import" xml:space="preserve"><value>インポート</value></data>
+  <data name="C_Cancel" xml:space="preserve"><value>キャンセル</value></data>
+  <data name="C_Close" xml:space="preserve"><value>閉じる</value></data>
+  <data name="C_JsonFileType" xml:space="preserve"><value>JSON ファイル</value></data>
+  <data name="C_ZipFileType" xml:space="preserve"><value>ZIP ファイル</value></data>
+  <data name="C_ExitTitle" xml:space="preserve"><value>初期設定を終了</value></data>
+  <data name="C_ExitDescription" xml:space="preserve"><value>ライセンス確認が完了していません。終了すると SecRandom が閉じ、OOBE の完了状態は保存されません。</value></data>
+  <data name="C_Exit" xml:space="preserve"><value>アプリケーションを終了</value></data>
+  <data name="C_ContinueSetup" xml:space="preserve"><value>設定を続ける</value></data>
+  <data name="M_ImportConfirmation" xml:space="preserve"><value>ソースのバージョン：{0}
+{1} 個のファイルを処理します。インポート前に復元スナップショットを作成し、セキュリティ資格情報はインポートしません。</value></data>
+  <data name="M_UnsupportedImportTitle" xml:space="preserve"><value>未対応のインポートファイル</value></data>
+  <data name="M_UnsupportedImport" xml:space="preserve"><value>SecRandom v3 のエクスポートファイルのみ対応しています。検出されたバージョン：{0}。
+{1}
+データは変更されていません。</value></data>
+  <data name="M_UnknownVersion" xml:space="preserve"><value>不明</value></data>
+  <data name="M_UnsupportedImportDetail" xml:space="preserve"><value>このファイルは対応している SecRandom v3 のエクスポートファイルではありません。</value></data>
+  <data name="M_ImportCompleted" xml:space="preserve"><value>インポートが完了しました。現在の規約バージョンを確認して続行してください。</value></data>
+  <data name="M_ImportFailed" xml:space="preserve"><value>インポートに失敗しました</value></data>
+  <data name="M_AgreementRequired" xml:space="preserve"><value>先にユーザー規約と GNU GPLv3 を読み、確認してください。</value></data>
+  <data name="M_CompletionAgreementRequired" xml:space="preserve"><value>完了する前に、ユーザー規約と GNU GPLv3 の確認が必要です。</value></data>
+  <data name="M_DesktopIntegrationFailed" xml:space="preserve"><value>一部のデスクトップ連携を有効にできなかったため、無効のままです。後から設定で再試行できます。</value></data>
+  <data name="M_StudentsImported" xml:space="preserve"><value>{0} 人の学生をインポートし、既定のクラスに設定しました。</value></data>
+  <data name="M_PrizesImported" xml:space="preserve"><value>{0} 件の賞品をインポートし、既定の賞品プールに設定しました。</value></data>
+  <data name="M_StepProgress" xml:space="preserve"><value>ステップ {0}/{1}</value></data>
+</root>
