@@ -110,7 +110,8 @@ jobs:
               ConvertTo-Json -Compress | Set-Content -LiteralPath (Join-Path $path 'SecRandom.package.json') -Encoding utf8NoBOM
           }
           function Publish-Launcher([string]$path, [bool]$selfContained) {
-            $arguments = @('publish', 'SecRandom.Launcher/SecRandom.Launcher.csproj', '-c', 'Release', '-r', $env:RID, '-p:UseAppHost=true', '--no-restore', '-o', $path)
+            $assemblyVersion = $env:VERSION.TrimStart('v', 'V')
+            $arguments = @('publish', 'SecRandom.Launcher/SecRandom.Launcher.csproj', '-c', 'Release', '-r', $env:RID, '-p:UseAppHost=true', "-p:Version=$assemblyVersion", '--no-restore', '-o', $path)
             if ($selfContained) { $arguments += '--self-contained' } else { $arguments += @('--self-contained', 'false') }
             & dotnet @arguments
             if ($LASTEXITCODE -ne 0) { throw "Launcher publish failed with exit code $LASTEXITCODE." }
@@ -177,12 +178,13 @@ jobs:
           mkdir -p "$full_root" "$light_root" dist
           full_app="$full_root/app-${VERSION}-0"
           light_app="$light_root/app-${VERSION}-0"
+          assembly_version="${VERSION#v}"
           cp -a "staging/full/${RID}" "$full_app"
           cp -a "staging/light/${RID}" "$light_app"
           printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"portable-zip","runtimeKind":"self-contained"}\n' "$RID" > "$full_app/SecRandom.package.json"
           printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"portable-zip","runtimeKind":"framework-dependent"}\n' "$RID" > "$light_app/SecRandom.package.json"
-          dotnet publish SecRandom.Launcher/SecRandom.Launcher.csproj -c Release -r "$RID" --self-contained -p:UseAppHost=true --no-restore -o "$full_root"
-          dotnet publish SecRandom.Launcher/SecRandom.Launcher.csproj -c Release -r "$RID" --self-contained false -p:UseAppHost=true --no-restore -o "$light_root"
+          dotnet publish SecRandom.Launcher/SecRandom.Launcher.csproj -c Release -r "$RID" --self-contained -p:UseAppHost=true -p:Version="$assembly_version" --no-restore -o "$full_root"
+          dotnet publish SecRandom.Launcher/SecRandom.Launcher.csproj -c Release -r "$RID" --self-contained false -p:UseAppHost=true -p:Version="$assembly_version" --no-restore -o "$light_root"
           (cd "$full_root" && zip -qr "../../../../dist/SecRandom_${RID}_portable_full.zip" .)
           (cd "$light_root" && zip -qr "../../../../dist/SecRandom_${RID}_portable_light.zip" .)
 
