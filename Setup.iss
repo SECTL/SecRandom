@@ -56,11 +56,11 @@ OutputBaseFilename=SecRandom-Setup
 SetupIconFile=SecRandom\Assets\AppLogo.ico
 SolidCompression=yes
 WizardStyle=modern dynamic windows11
-DefaultLanguage=chinesesimplified
+LanguageDetectionMethod=none
 
 [Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
