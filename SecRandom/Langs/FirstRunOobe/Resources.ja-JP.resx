@@ -8,7 +8,7 @@
 
 3. Sentry テレメトリ。有効にすると、問題の診断と安定性向上のため、クラッシュ、ログ、トレース、パフォーマンス情報を送信できます。オンライン状態の報告は制御しません。
 
-4. オンライン状態。完全報告はオンライン人数を集計し、公開 IP から推定したおおよその位置情報を含みます。匿名報告はオンライン人数のみを集計し、IP や位置情報を送信しません。停止すると報告しません。
+4. オンライン状態。通常報告はオンライン人数を集計し、公開 IP から推定したおおよその位置情報を含みます。匿名報告はオンライン人数のみを集計し、IP や位置情報を送信しません。停止すると報告しません。
 
 5. 選択と変更。プライバシー設定は既定で有効です。このページまたは「設定 > 全般 > プライバシー」でいつでも変更できます。
 
@@ -86,8 +86,8 @@ SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="C_SentryTelemetry" xml:space="preserve"><value>Sentry テレメトリを有効にする</value></data>
   <data name="C_SentryTelemetryDescription" xml:space="preserve"><value>有効にすると、クラッシュ、ログ、トレース、パフォーマンス情報を送信できます。オンライン状態の報告は制御しません。</value></data>
   <data name="C_OnlineStatus" xml:space="preserve"><value>オンライン状態</value></data>
-  <data name="C_OnlineStatusDescription" xml:space="preserve"><value>完全報告にはおおよその位置情報が含まれます。匿名報告はオンライン人数のみを集計し、停止すると送信しません。</value></data>
-  <data name="O_OnlineStatusMode_Full" xml:space="preserve"><value>完全報告</value></data>
+   <data name="C_OnlineStatusDescription" xml:space="preserve"><value>通常報告にはおおよその位置情報が含まれます。匿名報告はオンライン人数のみを集計し、停止すると送信しません。</value></data>
+   <data name="O_OnlineStatusMode_Full" xml:space="preserve"><value>通常報告</value></data>
   <data name="O_OnlineStatusMode_Anonymous" xml:space="preserve"><value>匿名報告</value></data>
   <data name="O_OnlineStatusMode_Off" xml:space="preserve"><value>報告しない</value></data>
   <data name="C_CompleteTitle" xml:space="preserve"><value>設定を完了</value></data>

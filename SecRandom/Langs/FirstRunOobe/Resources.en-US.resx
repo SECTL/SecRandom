@@ -8,7 +8,7 @@
 
 3. Sentry telemetry. When enabled, the app may upload crash, log, trace, and performance data to diagnose issues and improve stability. This does not control online-status reporting.
 
-4. Online-status reporting. Full reporting counts online users and includes approximate location derived from public IP. Anonymous reporting only counts online users and sends no IP or location. Off sends no online-status report.
+4. Online-status reporting. Standard reporting counts online users and includes approximate location derived from public IP. Anonymous reporting only counts online users and sends no IP or location. Off sends no online-status report.
 
 5. Choices and changes. These privacy options are enabled by default and can be changed here or later in Settings > General > Privacy.
 
@@ -86,8 +86,8 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_SentryTelemetry" xml:space="preserve"><value>Enable Sentry telemetry</value></data>
   <data name="C_SentryTelemetryDescription" xml:space="preserve"><value>When enabled, crash, log, trace, and performance data can be uploaded. This does not control online-status reporting.</value></data>
   <data name="C_OnlineStatus" xml:space="preserve"><value>Online status</value></data>
-  <data name="C_OnlineStatusDescription" xml:space="preserve"><value>Full reporting includes approximate location; anonymous reporting only counts online users; off disables online-status reporting.</value></data>
-  <data name="O_OnlineStatusMode_Full" xml:space="preserve"><value>Full reporting</value></data>
+   <data name="C_OnlineStatusDescription" xml:space="preserve"><value>Standard reporting includes approximate location; anonymous reporting only counts online users; off disables online-status reporting.</value></data>
+   <data name="O_OnlineStatusMode_Full" xml:space="preserve"><value>Standard reporting</value></data>
   <data name="O_OnlineStatusMode_Anonymous" xml:space="preserve"><value>Anonymous reporting</value></data>
   <data name="O_OnlineStatusMode_Off" xml:space="preserve"><value>Do not report</value></data>
   <data name="C_CompleteTitle" xml:space="preserve"><value>Setup complete</value></data>

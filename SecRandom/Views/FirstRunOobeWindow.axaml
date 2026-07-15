@@ -67,9 +67,9 @@
                             Content="{Binding ViewModel.NextButtonText}"
                             IsEnabled="{Binding ViewModel.CanContinue}"
                             HorizontalAlignment="Center"
-                            MinWidth="156"
-                            MinHeight="52"
-                            FontSize="17"
+                            MinWidth="132"
+                            MinHeight="44"
+                            FontSize="16"
                             Margin="0 14 0 0"
                             Click="Next_OnClick" />
                 </StackPanel>

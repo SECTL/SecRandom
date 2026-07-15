@@ -200,8 +200,16 @@ public partial class App : Application
     private void ShowFirstRunOobe(IClassicDesktopStyleApplicationLifetime desktop, string? startupProtocolUri)
     {
         _isOobeActive = true;
-        var oobe = new FirstRunOobeWindow();
+        var oobe = CreateFirstRunOobe(desktop, startupProtocolUri);
         desktop.MainWindow = oobe;
+        oobe.Show();
+    }
+
+    private FirstRunOobeWindow CreateFirstRunOobe(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        string? startupProtocolUri)
+    {
+        var oobe = new FirstRunOobeWindow();
         oobe.Completed += (_, _) =>
         {
             _isOobeActive = false;
@@ -210,7 +218,9 @@ public partial class App : Application
         };
         oobe.LanguageChanged += (_, _) =>
         {
-            ShowFirstRunOobe(desktop, startupProtocolUri);
+            var replacement = CreateFirstRunOobe(desktop, startupProtocolUri);
+            desktop.MainWindow = replacement;
+            oobe.Closed += (_, _) => Dispatcher.UIThread.Post(replacement.Show, DispatcherPriority.Render);
             oobe.CloseForLanguageChange();
         };
         oobe.Closed += (_, _) =>
@@ -218,7 +228,7 @@ public partial class App : Application
             if (!oobe.IsCompleted && !oobe.IsReplacingForLanguageChange)
                 RequestDesktopShutdown();
         };
-        oobe.Show();
+        return oobe;
     }
 
     /// <summary>
@@ -862,6 +872,7 @@ public partial class App : Application
         CultureInfo.CurrentUICulture = cultureInfo;
         CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
         CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+        Langs.FirstRunOobe.Resources.Culture = cultureInfo;
     }
 
     /// <summary>
