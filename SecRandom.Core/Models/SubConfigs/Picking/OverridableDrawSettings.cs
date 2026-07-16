@@ -10,4 +10,5 @@ public partial class OverridableDrawSettings : DrawSettingsConfigBase
     [ObservableProperty] private bool _overrideStudentImageSettings = false;
     [ObservableProperty] private bool _overrideReminderSettings = false;
     [ObservableProperty] private bool _overrideMusicSettings = false;
+    [ObservableProperty] private bool _overrideVoiceAnnouncementSettings = false;
 }

@@ -66,13 +66,15 @@ public partial class QuickDrawPage : UserControl
     private void UpdateFloatingWindowOpacity()
     {
         RootBorder.Opacity = System.Math.Clamp(
-            ViewModel.Config.FloatingWindowSettings.FloatingWindowOpacity,
+            ViewModel.NotificationOpacity ?? ViewModel.Config.FloatingWindowSettings.FloatingWindowOpacity,
             20,
             100) / 100.0;
     }
 
     private void RootBorder_OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
+        if (!App.SupportsProgrammaticWindowPositioning)
+            return;
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed
             || TopLevel.GetTopLevel(this) is not Window window)
             return;
@@ -85,6 +87,8 @@ public partial class QuickDrawPage : UserControl
 
     private void RootBorder_OnPointerMoved(object? sender, PointerEventArgs e)
     {
+        if (!App.SupportsProgrammaticWindowPositioning)
+            return;
         if (!ReferenceEquals(e.Pointer, _dragPointer)
             || TopLevel.GetTopLevel(this) is not Window window)
             return;
@@ -120,6 +124,9 @@ public partial class QuickDrawPage : UserControl
     {
         if (_isUnloaded)
             return;
+
+        if (e.PropertyName == nameof(QuickDrawPageViewModel.NotificationOpacity))
+            UpdateFloatingWindowOpacity();
 
         Dispatcher.UIThread.Post(async () => await RunResultAnimationAsync(e.PropertyName), DispatcherPriority.Render);
     }
@@ -157,6 +164,23 @@ public partial class QuickDrawPage : UserControl
                     return;
                 await CloseAfterDelayAsync(autoCloseRevision);
             }
+            else if (propertyName == nameof(QuickDrawPageViewModel.NotificationDisplayRevision))
+            {
+                var autoCloseRevision = ++_autoCloseRevision;
+                CancelAutoClose();
+                await WaitForResultPresenterLayoutAsync();
+                if (_isUnloaded || autoCloseRevision != _autoCloseRevision)
+                    return;
+                if (ViewModel.NotificationAnimationEnabled)
+                    await DrawAnimationHelper.RevealAsync(
+                        _resultPresenter,
+                        true,
+                        ViewModel.AnimationStyle,
+                        ViewModel.AnimationDuration);
+                if (_isUnloaded || autoCloseRevision != _autoCloseRevision)
+                    return;
+                await CloseAfterDelayAsync(autoCloseRevision);
+            }
         }
         catch
         {
@@ -174,7 +198,7 @@ public partial class QuickDrawPage : UserControl
 
     private async Task CloseAfterDelayAsync(int autoCloseRevision)
     {
-        var seconds = System.Math.Clamp(ViewModel.Config.QuickDrawSettings.AutoCloseTime, 0, 60);
+        var seconds = ViewModel.ResultAutoCloseTime;
         _remainingAutoCloseSeconds = seconds;
         UpdateAutoCloseHint();
         if (seconds == 0)

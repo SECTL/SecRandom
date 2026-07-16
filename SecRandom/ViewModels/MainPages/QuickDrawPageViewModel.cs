@@ -42,16 +42,19 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private readonly ISecurityService _securityService;
     private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
+    private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
     private readonly NotificationService? _notificationService;
     private bool _isDrawCommandRunning;
     private bool _isCoolingDown;
     private CancellationTokenSource? _previewCts;
+    private int? _notificationAutoCloseTime;
 
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
     [ObservableProperty] private string _statusText = "准备闪抽";
     [ObservableProperty] private bool _isResultVisible;
     [ObservableProperty] private int _previewAnimationRevision;
     [ObservableProperty] private int _resultAnimationRevision;
+    [ObservableProperty] private int _notificationDisplayRevision;
     [ObservableProperty] private bool _isDrawing;
     [ObservableProperty] private Student? _lastDrawnStudent;
 
@@ -65,6 +68,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         ISecurityService securityService,
         LinkageDrawCoordinator linkageDrawCoordinator,
         VerificationDrawCoordinator verificationDrawCoordinator,
+        IVoiceAnnouncementService? voiceAnnouncementService = null,
         NotificationService? notificationService = null)
         : base(configHandler)
     {
@@ -77,6 +81,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         _securityService = securityService;
         _linkageDrawCoordinator = linkageDrawCoordinator;
         _verificationDrawCoordinator = verificationDrawCoordinator;
+        _voiceAnnouncementService = voiceAnnouncementService;
         _notificationService = notificationService;
         ResultItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ResultFontSize));
         RefreshStudentLists();
@@ -108,6 +113,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     public int PreviewAnimationDuration => AnimationSettings.Animation == AnimationMode.AutoPlay
         ? Math.Clamp(AnimationSettings.AnimationInterval, 1, 10000)
         : 80;
+    public int ResultAutoCloseTime => _notificationAutoCloseTime ?? 0;
 
     private DrawSettingsConfigBase DisplaySettings =>
         Config.GetOverrideDrawSettings(DrawSettingsType.QuickDraw, OverridableDrawSettingsType.Display);
@@ -123,6 +129,9 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
     private DrawSettingsConfigBase MusicSettings =>
         Config.GetOverrideDrawSettings(DrawSettingsType.QuickDraw, OverridableDrawSettingsType.Music);
+
+    private DrawSettingsConfigBase VoiceAnnouncementSettings =>
+        Config.GetOverrideDrawSettings(DrawSettingsType.QuickDraw, OverridableDrawSettingsType.VoiceAnnouncement);
 
     partial void OnSelectedStudentListNameChanged(string value)
     {
@@ -149,28 +158,38 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        if (_isCoolingDown)
+        if (_isCoolingDown || _isDrawCommandRunning)
             return;
 
         if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.QuickDrawStart, () => Task.CompletedTask))
             return;
-        await StartDrawCoreAsync();
+        await StartAuthorizedTriggeredDrawAsync();
     }
 
-    public Task<bool> AuthorizeWindowDrawAsync() => _linkageDrawCoordinator.AuthorizeAsync(
+    public Task<bool> AuthorizeTriggeredDrawAsync() => _linkageDrawCoordinator.AuthorizeAsync(
         SecurityOperation.QuickDrawStart,
         () => Task.CompletedTask);
 
-    public Task StartAuthorizedWindowDrawAsync() => StartDrawCoreAsync();
-
-    private async Task StartDrawCoreAsync(bool skipPreview = false)
+    public Task StartAuthorizedTriggeredDrawAsync()
     {
-        if (IsDrawing)
+        var showBuiltInNotificationAnimation = _notificationService?.UsesBuiltInNotificationService(
+            NotificationSettingsType.QuickDraw) == true;
+        return StartDrawCoreAsync(
+            skipPreview: !showBuiltInNotificationAnimation,
+            showBuiltInNotificationAnimation: showBuiltInNotificationAnimation);
+    }
+
+    private async Task StartDrawCoreAsync(
+        bool skipPreview = false,
+        bool showBuiltInNotificationAnimation = false)
+    {
+        if (IsDrawing || _isDrawCommandRunning)
             return;
 
         if (_isCoolingDown)
             return;
 
+        ClearNotificationPresentation();
         if (!TryLoadDefaultStudentList())
             return;
 
@@ -182,9 +201,27 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         }
 
         const int count = 1;
+        ResultItems.Clear();
+        IsResultVisible = false;
+        StatusText = "正在闪抽";
+        _notificationAutoCloseTime = null;
         SetDrawCommandRunning(true);
         try
         {
+            if (showBuiltInNotificationAnimation)
+            {
+                showBuiltInNotificationAnimation = await (_notificationService?.BeginBuiltInNotificationPresentationAsync(
+                    NotificationSettingsType.QuickDraw) ?? Task.FromResult(false));
+            }
+
+            if (_notificationService is not null)
+                await _notificationService.BeginClassIslandAnimationAsync(
+                    NotificationSettingsType.QuickDraw,
+                    SelectedStudentListName,
+                    candidates,
+                    count);
+
+            skipPreview = !showBuiltInNotificationAnimation;
             var courseName = _linkageDrawCoordinator.GetCourseName();
             var verificationDrawTask = _verificationDrawCoordinator.DrawStudentsAsync(
                 count,
@@ -206,7 +243,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                         DrawMusicAttachedSettingsResolver.GetAnimationMusic(drawn.FirstOrDefault(), MusicSettings.AnimationMusic),
                         MusicSettings.AnimationMusicVolume,
                         MusicSettings.AnimationMusicFadeIn,
-                        Config.MoreSettings.BackgroundMusicLoop).ConfigureAwait(true);
+                        MusicSettings.AnimationMusicLoop).ConfigureAwait(true);
 
                 await previewTask.ConfigureAwait(true);
             }
@@ -214,6 +251,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             {
                 _logger.LogWarning(exception, "可验证闪抽失败。");
                 StopPreview();
+                if (showBuiltInNotificationAnimation)
+                    _notificationService?.CancelBuiltInNotificationPresentation(NotificationSettingsType.QuickDraw);
                 ResultItems.Clear();
                 LastDrawnStudent = null;
                 IsResultVisible = false;
@@ -226,19 +265,23 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                 drawMethod: (int)Config.QuickDrawSettings.DrawType, weights: weights, courseName: courseName);
             _temporaryRecordService.RecordStudents(SelectedStudentListName, string.Empty, string.Empty, drawn);
             LastDrawnStudent = drawn[0];
+            _notificationAutoCloseTime = showBuiltInNotificationAnimation
+                ? ResolveNotificationAutoCloseTime()
+                : null;
             ReplaceResults(drawn);
             IsResultVisible = true;
-            TriggerResultAnimation();
             StatusText = $"已抽取 {ResultItems.Count} 人";
             if (_notificationService is not null)
-                await _notificationService.ShowAsync(
+                _notificationService.QueueStudents(
                     NotificationSettingsType.QuickDraw,
-                    "闪抽结果",
-                    ResultItems.Select(item => item.DisplayText).ToList());
+                    SelectedStudentListName,
+                    drawn);
             await _drawAudioService.TransitionToResultMusicAsync(
                 DrawMusicAttachedSettingsResolver.GetResultMusic(drawn.FirstOrDefault(), MusicSettings.ResultMusic),
                 MusicSettings.ResultMusicVolume, MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut,
                 MusicSettings.AnimationMusicFadeOut).ConfigureAwait(false);
+            if (_voiceAnnouncementService is not null && VoiceAnnouncementSettings.VoiceAnnouncementEnabled)
+                await _voiceAnnouncementService.SpeakStudentsAsync(drawn).ConfigureAwait(false);
 
             StartCooldown();
         }
@@ -258,6 +301,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
     private void ClearHistoryCore()
     {
+        _notificationAutoCloseTime = null;
         _temporaryRecordService.ClearStudentScope(SelectedStudentListName, string.Empty, string.Empty);
         ResultItems.Clear();
         LastDrawnStudent = null;
@@ -266,12 +310,27 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(CanStartDraw));
     }
 
+    private int? ResolveNotificationAutoCloseTime()
+    {
+        var basicSettings = Config.GetOverrideNotificationSettings(
+            NotificationSettingsType.QuickDraw,
+            OverridableNotificationSettingsType.Basic);
+        if (!basicSettings.Enabled)
+            return null;
+
+        return Math.Clamp(Config.GetOverrideNotificationSettings(
+                NotificationSettingsType.QuickDraw,
+                OverridableNotificationSettingsType.Service).DisplayDuration,
+            1,
+            60);
+    }
+
     public Task<bool> StartProtocolDrawAsync(bool protectLinkage = false) => _linkageDrawCoordinator.AuthorizeAsync(
         protectLinkage ? [SecurityOperation.QuickDrawStart, SecurityOperation.LinkageAction] : [SecurityOperation.QuickDrawStart],
         async () =>
         {
             LastDrawnStudent = null;
-            await StartDrawCoreAsync(skipPreview: true);
+            await StartAuthorizedTriggeredDrawAsync();
         });
 
     public Task<bool> ResetProtocolDrawAsync(bool protectLinkage = false) => _linkageDrawCoordinator.AuthorizeAsync(
@@ -355,7 +414,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         await _drawAudioService.StartAnimationMusicAsync(
             animationMusic,
             MusicSettings.AnimationMusicVolume,
-            MusicSettings.AnimationMusicFadeIn, Config.MoreSettings.BackgroundMusicLoop).ConfigureAwait(true);
+            MusicSettings.AnimationMusicFadeIn, MusicSettings.AnimationMusicLoop).ConfigureAwait(true);
 
         var previewCts = new CancellationTokenSource();
         _previewCts = previewCts;
@@ -427,6 +486,58 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         ResultAnimationRevision++;
     }
 
+    public void ShowNotificationResult(
+        IReadOnlyCollection<string> items,
+        int autoCloseTime,
+        bool animate,
+        bool preserveQuickDrawResult)
+    {
+        _notificationAutoCloseTime = Math.Clamp(autoCloseTime, 0, 60);
+        NotificationAnimationEnabled = animate;
+        if (!preserveQuickDrawResult || ResultItems.Count == 0)
+        {
+            ResultItems.Clear();
+            foreach (var item in items.Where(item => !string.IsNullOrWhiteSpace(item)))
+                ResultItems.Add(CreateNotificationResultItem(item));
+        }
+
+        if (ResultItems.Count == 0)
+            return;
+
+        IsResultVisible = true;
+        OnPropertyChanged(nameof(ResultAutoCloseTime));
+        NotificationDisplayRevision++;
+    }
+
+    public void ShowNotificationPreview(
+        IReadOnlyCollection<string> items,
+        bool preserveQuickDrawResult)
+    {
+        _notificationAutoCloseTime = null;
+        if (!preserveQuickDrawResult || ResultItems.Count == 0)
+        {
+            ResultItems.Clear();
+            foreach (var item in items.Where(item => !string.IsNullOrWhiteSpace(item)))
+                ResultItems.Add(CreateNotificationResultItem(item));
+        }
+
+        if (ResultItems.Count == 0)
+            return;
+
+        IsResultVisible = true;
+        OnPropertyChanged(nameof(ResultAutoCloseTime));
+        TriggerPreviewAnimation();
+    }
+
+    public bool NotificationAnimationEnabled { get; private set; }
+
+    [ObservableProperty] private double? _notificationOpacity;
+
+    public void ClearNotificationPresentation()
+    {
+        NotificationOpacity = null;
+    }
+
     public void ResetForCourseLinkage()
     {
         ClearHistoryCore();
@@ -459,6 +570,24 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             BuildImage(student),
             StudentImageSettings.StudentImage,
             BuildInitial(student));
+    }
+
+    private QuickDrawResultItem CreateNotificationResultItem(string item)
+    {
+        var accentBrush = ResolveAccentBrush();
+        return new QuickDrawResultItem(
+            item,
+            string.Empty,
+            false,
+            DisplaySettings.DisplayStyle == DisplayStyleMode.Card,
+            accentBrush,
+            DrawColorHelper.ResolveTextBrush(accentBrush, Config.Appearance.Theme),
+            false,
+            string.Empty,
+            1,
+            null,
+            false,
+            item.Trim()[0].ToString());
     }
 
     private string FormatStudent(Student student)

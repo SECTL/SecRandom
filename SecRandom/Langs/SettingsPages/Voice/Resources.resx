@@ -25,13 +25,13 @@
     <value>启用语音播报</value>
   </data>
   <data name="S_Playback_Enable_D" xml:space="preserve">
-    <value>抽取完成后自动播报结果。</value>
+    <value>作为所有抽取语音播报的总开关；各抽取设置可单独控制是否播报</value>
   </data>
   <data name="S_Playback_Engine" xml:space="preserve">
     <value>语音引擎</value>
   </data>
   <data name="S_Playback_Engine_D" xml:space="preserve">
-    <value>选择用于播报的语音引擎。</value>
+    <value>选择用于播报的语音引擎</value>
   </data>
   <data name="O_VoiceEngine_System" xml:space="preserve">
     <value>系统语音</value>
@@ -43,52 +43,67 @@
     <value>Edge TTS 音色</value>
   </data>
   <data name="S_Playback_EdgeTtsVoice_D" xml:space="preserve">
-    <value>Edge TTS 使用的 voice 名称。</value>
+    <value>Edge TTS 使用的 voice 名称</value>
+  </data>
+  <data name="S_Playback_Voice" xml:space="preserve">
+    <value>音色</value>
+  </data>
+  <data name="S_Playback_Voice_D" xml:space="preserve">
+    <value>根据当前语音引擎显示可用音色</value>
+  </data>
+  <data name="S_Playback_Actions" xml:space="preserve">
+    <value>语音操作</value>
+  </data>
+  <data name="S_Playback_Actions_D" xml:space="preserve">
+    <value>刷新可用音色，或按当前设置试听播报</value>
+  </data>
+  <data name="C_RefreshVoices" xml:space="preserve">
+    <value>刷新音色</value>
+  </data>
+  <data name="C_TestVoice" xml:space="preserve">
+    <value>试听</value>
+  </data>
+  <data name="C_TestVoiceText" xml:space="preserve">
+    <value>这是一条语音播报测试。</value>
+  </data>
+  <data name="M_VoicesRefreshed" xml:space="preserve">
+    <value>音色列表已刷新。</value>
+  </data>
+  <data name="M_TestVoiceCompleted" xml:space="preserve">
+    <value>试听已完成。</value>
+  </data>
+  <data name="M_TestVoiceFailed" xml:space="preserve">
+    <value>试听失败</value>
   </data>
   <data name="S_Playback_Volume" xml:space="preserve">
     <value>语音音量</value>
   </data>
   <data name="S_Playback_Volume_D" xml:space="preserve">
-    <value>设置播报音量。</value>
+    <value>设置播报音量</value>
   </data>
   <data name="S_Playback_SpeechRate" xml:space="preserve">
     <value>语速</value>
   </data>
   <data name="S_Playback_SpeechRate_D" xml:space="preserve">
-    <value>设置播报速度百分比。</value>
+    <value>设置播报速度百分比</value>
   </data>
   <data name="S_Content" xml:space="preserve">
     <value>播报内容</value>
-  </data>
-  <data name="S_Content_SpecificAnnouncements" xml:space="preserve">
-    <value>启用自定义播报字段</value>
-  </data>
-  <data name="S_Content_SpecificAnnouncements_D" xml:space="preserve">
-    <value>控制播报时是否按字段组合结果。</value>
   </data>
   <data name="S_Content_AnnounceId" xml:space="preserve">
     <value>播报编号</value>
   </data>
   <data name="S_Content_AnnounceId_D" xml:space="preserve">
-    <value>结果中包含编号。</value>
+    <value>结果中包含编号</value>
   </data>
   <data name="S_Content_AnnounceName" xml:space="preserve">
     <value>播报姓名</value>
   </data>
   <data name="S_Content_AnnounceName_D" xml:space="preserve">
-    <value>结果中包含姓名。</value>
-  </data>
-  <data name="S_Content_Suffix" xml:space="preserve">
-    <value>播报后缀</value>
-  </data>
-  <data name="S_Content_Prefix" xml:space="preserve">
-    <value>播报前缀</value>
+    <value>结果中包含姓名</value>
   </data>
   <data name="S_SystemVolume_Control_D" xml:space="preserve">
-    <value>播报前自动调整系统音量。</value>
-  </data>
-  <data name="S_Content_Prefix_D" xml:space="preserve">
-    <value>在播报内容前添加自定义文本。</value>
+    <value>播报前自动调整系统音量</value>
   </data>
   <data name="S_SystemVolume_Control" xml:space="preserve">
     <value>启用系统音量控制</value>
@@ -97,18 +112,15 @@
     <value>系统音量大小</value>
   </data>
   <data name="S_SystemVolume_Size_D" xml:space="preserve">
-    <value>设置语音播报时使用的系统音量。</value>
+    <value>设置语音播报时使用的系统音量</value>
   </data>
   <data name="S_Playback_WaitComplete_D" xml:space="preserve">
-    <value>等待当前语音播报完成后再允许下一次抽取。</value>
+    <value>等待当前语音播报完成后再允许下一次抽取</value>
   </data>
   <data name="S_Playback_WaitComplete" xml:space="preserve">
     <value>等待播报完成</value>
   </data>
   <data name="S_SystemVolume" xml:space="preserve">
     <value>系统音量</value>
-  </data>
-  <data name="S_Content_Suffix_D" xml:space="preserve">
-    <value>在播报内容后添加自定义文本。</value>
   </data>
 </root>

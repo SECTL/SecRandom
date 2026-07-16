@@ -8,6 +8,8 @@ public interface IVoiceAnnouncementService
 
     Task SpeakAsync(string text, bool waitForCompletion = false, CancellationToken cancellationToken = default);
 
+    Task PreviewAsync(string text, CancellationToken cancellationToken = default);
+
     Task SpeakStudentsAsync(
         IEnumerable<Student> students,
         bool waitForCompletion = false,
@@ -18,5 +20,3 @@ public interface IVoiceAnnouncementService
         bool waitForCompletion = false,
         CancellationToken cancellationToken = default);
 }
-
-public sealed record VoiceOption(string Id, string DisplayName, string Description = "");

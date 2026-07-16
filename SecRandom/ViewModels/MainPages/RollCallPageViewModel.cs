@@ -162,6 +162,9 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private DrawSettingsConfigBase MusicSettings =>
         Config.GetOverrideDrawSettings(DrawSettingsType.RollCall, OverridableDrawSettingsType.Music);
 
+    private DrawSettingsConfigBase VoiceAnnouncementSettings =>
+        Config.GetOverrideDrawSettings(DrawSettingsType.RollCall, OverridableDrawSettingsType.VoiceAnnouncement);
+
     private StudentList? CurrentStudentList => _profileService.CurrentStudentList;
     private StudentHistory? CurrentStudentHistory => _profileService.CurrentStudentHistory;
     private string CurrentGroupScope => SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup;
@@ -292,6 +295,13 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         SetDrawCommandRunning(true);
         try
         {
+            if (_notificationService is not null)
+                await _notificationService.BeginClassIslandAnimationAsync(
+                    NotificationSettingsType.RollCall,
+                    SelectedStudentListName,
+                    candidates,
+                    count);
+
             var courseName = _linkageDrawCoordinator.GetCourseName();
             var now = DateTime.Now;
             var verificationDrawTask = _verificationDrawCoordinator.DrawStudentsAsync(
@@ -348,12 +358,12 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             OnPropertyChanged(nameof(ResultText));
 
             if (_notificationService is not null)
-                await _notificationService.ShowAsync(
+                _notificationService.QueueStudents(
                     NotificationSettingsType.RollCall,
-                    "点名结果",
-                    ResultItems.Select(item => item.DisplayText).ToList());
+                    SelectedStudentListName,
+                    drawnStudents);
 
-            if (_voiceAnnouncementService is not null)
+            if (_voiceAnnouncementService is not null && VoiceAnnouncementSettings.VoiceAnnouncementEnabled)
                 await _voiceAnnouncementService.SpeakStudentsAsync(drawnStudents).ConfigureAwait(false);
         }
         finally
@@ -646,12 +656,9 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         var source = candidates?.ToList() ?? GetCandidates().ToList();
         RemainingItems.Clear();
         foreach (var item in source
-                      .Where(student => !HasReachedRepeatLimit(student))
-                      .OrderBy(student => string.IsNullOrWhiteSpace(student.Id))
-                      .ThenBy(student => int.TryParse(student.Id, out _) ? 0 : 1)
-                      .ThenBy(student => int.TryParse(student.Id, out var id) ? id : int.MaxValue)
-                      .ThenBy(student => string.IsNullOrWhiteSpace(student.Id) ? student.Name.Trim() : student.Id.Trim(), StringComparer.CurrentCultureIgnoreCase)
-                      .Select(CreateRemainingItem))
+                       .Where(student => !HasReachedRepeatLimit(student))
+                       .OrderForList()
+                       .Select(CreateRemainingItem))
             RemainingItems.Add(item);
     }
 
@@ -856,7 +863,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             animationMusic,
             MusicSettings.AnimationMusicVolume,
             MusicSettings.AnimationMusicFadeIn,
-            Config.MoreSettings.BackgroundMusicLoop) ?? Task.CompletedTask;
+            MusicSettings.AnimationMusicLoop) ?? Task.CompletedTask;
     }
 
     private async Task PlayResultMusicAsync(Student? musicTarget)

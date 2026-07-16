@@ -47,6 +47,21 @@ public partial class DrawSettingsConfigBase : ObservableObject
     // music settings below
 
     [ObservableProperty] private string _animationMusic = "$none";
+    private bool _animationMusicLoop = true;
+    private bool _hasAnimationMusicLoop;
+    [ObservableProperty] private bool _voiceAnnouncementEnabled = true;
+
+    public bool AnimationMusicLoop
+    {
+        get => _animationMusicLoop;
+        set
+        {
+            _hasAnimationMusicLoop = true;
+            SetProperty(ref _animationMusicLoop, value);
+        }
+    }
+
+    internal bool HasAnimationMusicLoop => _hasAnimationMusicLoop;
     [ObservableProperty] private int _animationMusicFadeIn = 300;
     [ObservableProperty] private int _animationMusicFadeOut = 300;
 

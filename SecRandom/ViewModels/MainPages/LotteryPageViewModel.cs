@@ -156,6 +156,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         Config.GetOverrideDrawSettings(DrawSettingsType.Lottery, OverridableDrawSettingsType.Color);
     private DrawSettingsConfigBase MusicSettings =>
         Config.GetOverrideDrawSettings(DrawSettingsType.Lottery, OverridableDrawSettingsType.Music);
+    private DrawSettingsConfigBase VoiceAnnouncementSettings =>
+        Config.GetOverrideDrawSettings(DrawSettingsType.Lottery, OverridableDrawSettingsType.VoiceAnnouncement);
     private string CurrentGroupScope => SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup;
     private string CurrentGenderScope => SelectedGender == AllGendersOption ? string.Empty : SelectedGender;
 
@@ -267,7 +269,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        var prizes = (_profileService.CurrentPrizeList?.Prizes ?? []).Where(p => p.Exists).ToList();
+        var prizes = (_profileService.CurrentPrizeList?.Prizes ?? []).Where(p => p.IsCandidate).ToList();
         if (prizes.Count == 0)
         {
             StatusText = SR.M_NoPrizes;
@@ -278,6 +280,12 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         SetDrawCommandRunning(true);
         try
         {
+            if (_notificationService is not null)
+                await _notificationService.BeginClassIslandLotteryAnimationAsync(
+                    SelectedPrizeListName,
+                    prizes,
+                    count);
+
             var courseName = _linkageDrawCoordinator.GetCourseName();
             var verificationDrawTask = _verificationDrawCoordinator.DrawPrizesAsync(
                 count,
@@ -299,7 +307,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                         DrawMusicAttachedSettingsResolver.GetAnimationMusic(drawn.FirstOrDefault(), MusicSettings.AnimationMusic),
                         MusicSettings.AnimationMusicVolume,
                         MusicSettings.AnimationMusicFadeIn,
-                        Config.MoreSettings.BackgroundMusicLoop).ConfigureAwait(true);
+                        MusicSettings.AnimationMusicLoop).ConfigureAwait(true);
 
                 await previewTask.ConfigureAwait(true);
             }
@@ -351,11 +359,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                 MusicSettings.ResultMusicVolume, MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut,
                 MusicSettings.AnimationMusicFadeOut).ConfigureAwait(false);
             if (_notificationService is not null)
-                await _notificationService.ShowAsync(
-                    NotificationSettingsType.Lottery,
-                    "抽奖结果",
-                    ResultItems.Select(item => item.DisplayText).ToList());
-            if (_voiceAnnouncementService is not null)
+                _notificationService.QueueLottery(SelectedPrizeListName, drawn, assignedStudents);
+            if (_voiceAnnouncementService is not null && VoiceAnnouncementSettings.VoiceAnnouncementEnabled)
                 await _voiceAnnouncementService.SpeakPrizesAsync(drawn).ConfigureAwait(false);
         }
         finally
@@ -594,17 +599,14 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         var temporaryCounts = _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName);
         RemainingItems.Clear();
         foreach (var item in prizes
-                     .OrderBy(prize => string.IsNullOrWhiteSpace(prize.Id))
-                     .ThenBy(prize => int.TryParse(prize.Id, out _) ? 0 : 1)
-                     .ThenBy(prize => int.TryParse(prize.Id, out var id) ? id : int.MaxValue)
-                     .ThenBy(prize => string.IsNullOrWhiteSpace(prize.Id) ? prize.Name.Trim() : prize.Id.Trim(), StringComparer.CurrentCultureIgnoreCase)
-                     .Select(prize => CreateRemainingItem(prize, temporaryCounts)))
+                      .OrderForList()
+                      .Select(prize => CreateRemainingItem(prize, temporaryCounts)))
             RemainingItems.Add(item);
     }
 
     private IEnumerable<Prize> GetCurrentPrizes()
     {
-        return (_profileService.CurrentPrizeList?.Prizes ?? []).Where(prize => prize.Exists);
+        return (_profileService.CurrentPrizeList?.Prizes ?? []).Where(prize => prize.IsCandidate);
     }
 
     private int CalculateRemainingCount(IReadOnlyCollection<Prize> prizes)
@@ -661,7 +663,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         await _drawAudioService.StartAnimationMusicAsync(
             animationMusic,
             MusicSettings.AnimationMusicVolume,
-            MusicSettings.AnimationMusicFadeIn, Config.MoreSettings.BackgroundMusicLoop).ConfigureAwait(true);
+            MusicSettings.AnimationMusicFadeIn, MusicSettings.AnimationMusicLoop).ConfigureAwait(true);
 
         var previewCts = new CancellationTokenSource();
         _previewCts = previewCts;
@@ -890,16 +892,17 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
     private string FormatAssignedPrize(Prize prize, Student student)
     {
+        var prizeText = string.IsNullOrWhiteSpace(prize.Name) ? prize.Id : prize.Name;
         return Config.LotterySettings.LotteryShowRandom switch
         {
-            LotteryShowRandomMode.PrizeHyphenName => JoinInline(prize.Name, student.Name),
-            LotteryShowRandomMode.PrizeBreakName => JoinLines(prize.Name, student.Name),
-            LotteryShowRandomMode.PrizeHyphenGroupHyphenName => JoinInline(prize.Name, student.Group, student.Name),
-            LotteryShowRandomMode.PrizeBreakGroupHyphenName => JoinLines(prize.Name, JoinInline(student.Group, student.Name)),
-            LotteryShowRandomMode.PrizeBreakGroupBreakName => JoinLines(prize.Name, student.Group, student.Name),
-            LotteryShowRandomMode.PrizeBreakGroup => JoinLines(prize.Name, student.Group),
-            LotteryShowRandomMode.PrizeHyphenGroup => JoinInline(prize.Name, student.Group),
-            _ => JoinLines(prize.Name, student.Name)
+            LotteryShowRandomMode.PrizeHyphenName => JoinInline(prizeText, student.Name),
+            LotteryShowRandomMode.PrizeBreakName => JoinLines(prizeText, student.Name),
+            LotteryShowRandomMode.PrizeHyphenGroupHyphenName => JoinInline(prizeText, student.Group, student.Name),
+            LotteryShowRandomMode.PrizeBreakGroupHyphenName => JoinLines(prizeText, JoinInline(student.Group, student.Name)),
+            LotteryShowRandomMode.PrizeBreakGroupBreakName => JoinLines(prizeText, student.Group, student.Name),
+            LotteryShowRandomMode.PrizeBreakGroup => JoinLines(prizeText, student.Group),
+            LotteryShowRandomMode.PrizeHyphenGroup => JoinInline(prizeText, student.Group),
+            _ => JoinLines(prizeText, student.Name)
         };
     }
 

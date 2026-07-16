@@ -62,6 +62,42 @@ namespace SecRandom.Langs.SettingsPages.Voice {
             }
         }
 
+        public static string C_RefreshVoices {
+            get {
+                return ResourceManager.GetString("C_RefreshVoices", resourceCulture);
+            }
+        }
+
+        public static string C_TestVoice {
+            get {
+                return ResourceManager.GetString("C_TestVoice", resourceCulture);
+            }
+        }
+
+        public static string C_TestVoiceText {
+            get {
+                return ResourceManager.GetString("C_TestVoiceText", resourceCulture);
+            }
+        }
+
+        public static string M_TestVoiceCompleted {
+            get {
+                return ResourceManager.GetString("M_TestVoiceCompleted", resourceCulture);
+            }
+        }
+
+        public static string M_TestVoiceFailed {
+            get {
+                return ResourceManager.GetString("M_TestVoiceFailed", resourceCulture);
+            }
+        }
+
+        public static string M_VoicesRefreshed {
+            get {
+                return ResourceManager.GetString("M_VoicesRefreshed", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 语音设置.
         /// </summary>
@@ -117,60 +153,6 @@ namespace SecRandom.Langs.SettingsPages.Voice {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 播报前缀.
-        /// </summary>
-        public static string S_Content_Prefix {
-            get {
-                return ResourceManager.GetString("S_Content_Prefix", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 在播报内容前添加自定义文本。.
-        /// </summary>
-        public static string S_Content_Prefix_D {
-            get {
-                return ResourceManager.GetString("S_Content_Prefix_D", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 启用自定义播报字段.
-        /// </summary>
-        public static string S_Content_SpecificAnnouncements {
-            get {
-                return ResourceManager.GetString("S_Content_SpecificAnnouncements", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 控制播报时是否按字段组合结果。.
-        /// </summary>
-        public static string S_Content_SpecificAnnouncements_D {
-            get {
-                return ResourceManager.GetString("S_Content_SpecificAnnouncements_D", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 播报后缀.
-        /// </summary>
-        public static string S_Content_Suffix {
-            get {
-                return ResourceManager.GetString("S_Content_Suffix", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 在播报内容后添加自定义文本。.
-        /// </summary>
-        public static string S_Content_Suffix_D {
-            get {
-                return ResourceManager.GetString("S_Content_Suffix_D", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to 语音播报.
         /// </summary>
         public static string S_Playback {
@@ -197,6 +179,18 @@ namespace SecRandom.Langs.SettingsPages.Voice {
             }
         }
 
+        public static string S_Playback_Actions {
+            get {
+                return ResourceManager.GetString("S_Playback_Actions", resourceCulture);
+            }
+        }
+
+        public static string S_Playback_Actions_D {
+            get {
+                return ResourceManager.GetString("S_Playback_Actions_D", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 启用语音播报.
         /// </summary>
@@ -206,8 +200,20 @@ namespace SecRandom.Langs.SettingsPages.Voice {
             }
         }
 
+        public static string S_Playback_Voice {
+            get {
+                return ResourceManager.GetString("S_Playback_Voice", resourceCulture);
+            }
+        }
+
+        public static string S_Playback_Voice_D {
+            get {
+                return ResourceManager.GetString("S_Playback_Voice_D", resourceCulture);
+            }
+        }
+
         /// <summary>
-        ///   Looks up a localized string similar to 抽取完成后自动播报结果。.
+        ///   Looks up a localized string similar to 作为所有抽取语音播报的总开关；各抽取设置可单独控制是否播报。.
         /// </summary>
         public static string S_Playback_Enable_D {
             get {
