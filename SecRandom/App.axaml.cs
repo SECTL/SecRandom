@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -31,6 +32,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Extensions.Registry;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models;
+using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services.Verification;
@@ -91,9 +93,9 @@ public partial class App : Application
 {
     private static FloatingWindow? _floatingWindow;
     private static Window? _quickDrawWindow;
+    private static NotificationChannelSettings? _quickDrawNotificationSettings;
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
-    private static MainWindow? _profileSettingsWindow;
     private NativeMenuItem? _floatingWindowMenuItem;
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     private readonly object _shutdownGate = new();
@@ -403,6 +405,7 @@ public partial class App : Application
                 // 配置
                 services.AddSingleton<ConfigServiceBase, DesktopConfigService>();
                 services.AddSingleton<MainConfigHandler>();
+                services.AddSingleton<DeviceUuidStore>();
 
                 // 服务
                 services.AddSingleton<IProfileService, ProfileService>();
@@ -411,8 +414,8 @@ public partial class App : Application
                 services.AddSingleton<DrawProofExportService>();
                 services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
                 services.AddHttpClient<IWitnessClient, WitnessClient>(client => client.Timeout = TimeSpan.FromSeconds(3));
-                services.AddSingleton<WitnessTicketCache>();
-                services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<WitnessTicketCache>());
+                services.AddSingleton<DrawProofAttestationService>();
+                services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<DrawProofAttestationService>());
                 services.AddTransient<VerificationDrawCoordinator>();
                 services.AddSingleton<SettingsSearchService>();
                 services.AddSingleton<FirstRunOobeService>();
@@ -433,14 +436,19 @@ public partial class App : Application
                 services.AddSingleton<GlobalShortcutService>();
                 services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<GlobalShortcutService>());
                 services.AddSingleton<DesktopIntegrationService>();
+                services.AddSingleton<IExternalLauncher, ExternalLauncher>();
                  services.AddHttpClient("updates", client => client.Timeout = TimeSpan.FromSeconds(30));
-                 services.AddSingleton<UpdateCenterService>(serviceProvider => new UpdateCenterService(
-                     serviceProvider.GetRequiredService<MainConfigHandler>(),
-                     serviceProvider.GetRequiredService<ILogger<UpdateCenterService>>(),
-                     serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("updates")));
-                 services.AddHostedService<UpdateScheduler>();
+                  services.AddSingleton<UpdateCenterService>(serviceProvider => new UpdateCenterService(
+                      serviceProvider.GetRequiredService<MainConfigHandler>(),
+                      serviceProvider.GetRequiredService<ILogger<UpdateCenterService>>(),
+                      serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("updates")));
+                  services.AddSingleton<IUpdateNotificationService, UpdateNotificationService>();
+                  services.AddHostedService<UpdateScheduler>();
                 services.AddSingleton<FeatureAvailabilityService>();
                 services.AddSingleton<ProtocolCommandRouter>();
+                services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
+                services.AddSingleton<ISpeechProvider, EdgeTtsSpeechProvider>();
+                services.AddSingleton<ISpeechAudioPlayer, SpeechAudioPlayer>();
                 services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
                 services.AddSingleton<NotificationService>();
                 services.AddSingleton(serviceProvider => new MusicLibraryService(
@@ -467,16 +475,14 @@ public partial class App : Application
                 services.AddTransient<SettingsView>();
                 services.AddTransient<SettingsViewModel>();
 
-                services.AddTransient<ProfileSettingsView>();
-                services.AddTransient<ProfileSettingsViewModel>();
                 services.AddSingleton<FirstRunOobeViewModel>();
                 services.AddTransient<QuickDrawPage>();
 
                 // 附加设置
-                services.AddAttachedSettingsControl<BehindSceneAttachedSettingsControl>(Langs.Common.Resources
-                    .AttachedSettings_BehindScene);
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
                 services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");
+                services.AddAttachedSettingsControl<SpecificAnnouncementAttachedSettingsControl>(
+                    Langs.AttachedSettings.Resources.C_SpecificVoice);
 
                 // 界面 Views
                 services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
@@ -1179,6 +1185,73 @@ public partial class App : Application
         ObserveTask(ShowQuickDrawWindowAsync(), "Quick draw window action failed.");
     }
 
+    public static void ShowQuickDrawNotificationWindow(
+        IReadOnlyCollection<string> items,
+        int autoCloseTime,
+        bool animate,
+        bool preserveQuickDrawResult,
+        NotificationChannelSettings windowSettings,
+        bool showPreview)
+    {
+        Dispatcher.UIThread.Post(() => ObserveTask(
+            ShowQuickDrawNotificationWindowAsync(items, autoCloseTime, animate, preserveQuickDrawResult, windowSettings, showPreview),
+            "Quick draw notification window action failed."));
+    }
+
+    public static Task ShowQuickDrawNotificationPreviewWindowAsync(NotificationChannelSettings windowSettings)
+    {
+        return Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            _quickDrawNotificationSettings = windowSettings;
+            var quickDraw = IAppHost.GetService<QuickDrawPageViewModel>();
+            quickDraw.NotificationOpacity = Math.Clamp(windowSettings.Transparency, 20, 100);
+            var window = GetOrCreateQuickDrawWindow();
+            window.Opacity = 1;
+            if (!window.IsVisible)
+                window.Show();
+            window.Activate();
+            Dispatcher.UIThread.Post(
+                () => PositionQuickDrawNotificationWindow(window, windowSettings),
+                DispatcherPriority.Render);
+        }).GetTask();
+    }
+
+    public static void HideQuickDrawNotificationWindow()
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_quickDrawWindow is { IsVisible: true })
+                _quickDrawWindow.Hide();
+        });
+    }
+
+    private static async Task ShowQuickDrawNotificationWindowAsync(
+        IReadOnlyCollection<string> items,
+        int autoCloseTime,
+        bool animate,
+        bool preserveQuickDrawResult,
+        NotificationChannelSettings windowSettings,
+        bool showPreview)
+    {
+        _quickDrawNotificationSettings = windowSettings;
+        var quickDraw = IAppHost.GetService<QuickDrawPageViewModel>();
+        quickDraw.NotificationOpacity = Math.Clamp(windowSettings.Transparency, 20, 100);
+        var window = GetOrCreateQuickDrawWindow();
+        window.Opacity = 1;
+        if (!window.IsVisible)
+            window.Show();
+        window.Activate();
+        if (showPreview)
+        {
+            quickDraw.ShowNotificationPreview(items, preserveQuickDrawResult);
+            await Task.Delay(quickDraw.PreviewAnimationDuration);
+        }
+        quickDraw.ShowNotificationResult(items, autoCloseTime, animate, preserveQuickDrawResult);
+        Dispatcher.UIThread.Post(
+            () => PositionQuickDrawNotificationWindow(window, windowSettings),
+            DispatcherPriority.Render);
+    }
+
     private static async Task ShowQuickDrawWindowAsync()
     {
         TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
@@ -1186,59 +1259,30 @@ public partial class App : Application
 
         try
         {
+            _quickDrawNotificationSettings = null;
             var quickDraw = IAppHost.GetService<QuickDrawPageViewModel>();
-            if (!quickDraw.IsDrawing && !await quickDraw.AuthorizeWindowDrawAsync())
+            quickDraw.ClearNotificationPresentation();
+            if (!quickDraw.IsDrawing && !await quickDraw.AuthorizeTriggeredDrawAsync())
             {
                 transaction?.Finish(SpanStatus.PermissionDenied);
                 return;
             }
 
-            if (_quickDrawWindow is { IsVisible: true })
+            var showBuiltInNotificationAnimation = IAppHost.GetService<NotificationService>()
+                .UsesBuiltInNotificationService(NotificationSettingsType.QuickDraw);
+            if (!showBuiltInNotificationAnimation)
             {
-                _quickDrawWindow.Activate();
+                HideQuickDrawNotificationWindow();
                 if (!quickDraw.IsDrawing)
-                    await quickDraw.StartAuthorizedWindowDrawAsync();
+                    await quickDraw.StartAuthorizedTriggeredDrawAsync();
                 transaction?.Finish(SpanStatus.Ok);
                 return;
             }
 
-            if (_quickDrawWindow is not { IsLoaded: true })
-            {
-                _quickDrawWindow = new Window
-                {
-                    Content = IAppHost.GetService<QuickDrawPage>(),
-                    Title = @"SecRandom",
-                    MinWidth = 280,
-                    MinHeight = 160,
-                    SizeToContent = SizeToContent.WidthAndHeight,
-                    Topmost = true,
-                    WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                    WindowDecorations = WindowDecorations.None,
-                    CanMinimize = false,
-                    CanMaximize = false,
-                    CanResize = false,
-                    ShowInTaskbar = false,
-                    Background = Brushes.Transparent,
-                    TransparencyLevelHint = [WindowTransparencyLevel.Transparent]
-                };
-                _quickDrawWindow.Opened += (_, _) =>
-                {
-                    ApplyQuickDrawWindowBounds(_quickDrawWindow);
-                    Dispatcher.UIThread.Post(
-                        () => CenterQuickDrawWindow(_quickDrawWindow),
-                        DispatcherPriority.Render);
-                };
-                _quickDrawWindow.SizeChanged += (_, _) => Dispatcher.UIThread.Post(
-                    () => CenterQuickDrawWindow(_quickDrawWindow),
-                    DispatcherPriority.Render);
-                _quickDrawWindow.PositionChanged += (_, _) => ApplyQuickDrawWindowBounds(_quickDrawWindow);
-                _quickDrawWindow.ScalingChanged += (_, _) => ApplyQuickDrawWindowBounds(_quickDrawWindow);
-                _quickDrawWindow.Closed += (_, _) => _quickDrawWindow = null;
-            }
-
-            _quickDrawWindow.Show();
-            _quickDrawWindow.Activate();
-            await quickDraw.StartAuthorizedWindowDrawAsync();
+            if (!quickDraw.IsDrawing)
+                await quickDraw.StartAuthorizedTriggeredDrawAsync();
+            else if (_quickDrawWindow is { IsVisible: true })
+                _quickDrawWindow.Activate();
             transaction?.Finish(SpanStatus.Ok);
         }
         catch (Exception ex)
@@ -1247,6 +1291,105 @@ public partial class App : Application
             IAppHost.TryGetService<ILogger<App>>()?.LogError(ex, "Failed to show quick draw window.");
             throw;
         }
+    }
+
+    private static Window GetOrCreateQuickDrawWindow()
+    {
+        if (_quickDrawWindow is { IsLoaded: true })
+            return _quickDrawWindow;
+
+        _quickDrawWindow = new Window
+        {
+            Content = IAppHost.GetService<QuickDrawPage>(),
+            Title = @"SecRandom",
+            MinWidth = 280,
+            MinHeight = 160,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            Topmost = true,
+            WindowStartupLocation = WindowStartupLocation.CenterScreen,
+            WindowDecorations = WindowDecorations.None,
+            CanMinimize = false,
+            CanMaximize = false,
+            CanResize = false,
+            ShowInTaskbar = false,
+            Background = Brushes.Transparent,
+            TransparencyLevelHint = [WindowTransparencyLevel.Transparent]
+        };
+        _quickDrawWindow.Opened += (_, _) =>
+        {
+            ApplyQuickDrawWindowBounds(_quickDrawWindow);
+            Dispatcher.UIThread.Post(
+                () => PositionOrCenterQuickDrawWindow(_quickDrawWindow),
+                DispatcherPriority.Render);
+        };
+        _quickDrawWindow.SizeChanged += (_, _) => Dispatcher.UIThread.Post(
+            () => PositionOrCenterQuickDrawWindow(_quickDrawWindow),
+            DispatcherPriority.Render);
+        _quickDrawWindow.PositionChanged += (_, _) => ApplyQuickDrawWindowBounds(_quickDrawWindow);
+        _quickDrawWindow.ScalingChanged += (_, _) => ApplyQuickDrawWindowBounds(_quickDrawWindow);
+        _quickDrawWindow.Closed += (_, _) =>
+        {
+            _quickDrawWindow = null;
+            _quickDrawNotificationSettings = null;
+        };
+        return _quickDrawWindow;
+    }
+
+    private static void PositionOrCenterQuickDrawWindow(Window? window)
+    {
+        if (_quickDrawNotificationSettings is { } settings)
+            PositionQuickDrawNotificationWindow(window, settings);
+        else
+            CenterQuickDrawWindow(window);
+    }
+
+    private static void PositionQuickDrawNotificationWindow(
+        Window? window,
+        NotificationChannelSettings settings)
+    {
+        if (window is null)
+            return;
+
+        var nativeNames = WindowsMonitorNameProvider.GetNames();
+        var screen = window.Screens.All.FirstOrDefault(candidate =>
+        {
+            nativeNames.TryGetValue(candidate.Bounds.Position, out var nativeName);
+            var displayName = string.IsNullOrWhiteSpace(candidate.DisplayName) ? nativeName : candidate.DisplayName;
+            return !string.IsNullOrWhiteSpace(settings.EnabledMonitor)
+                   && NotificationMonitorIdentifier.Matches(
+                       displayName,
+                       candidate.Bounds,
+                       settings.EnabledMonitor);
+        })
+            ?? window.Screens.Primary
+            ?? window.Screens.All.FirstOrDefault();
+        if (screen is null)
+            return;
+
+        var scale = window.RenderScaling;
+        var width = (int)Math.Round(window.Bounds.Width * scale);
+        var height = (int)Math.Round(window.Bounds.Height * scale);
+        if (width <= 0 || height <= 0)
+            return;
+
+        var area = screen.WorkingArea;
+        var x = settings.WindowPosition switch
+        {
+            1 or 2 => area.Center.X - width / 2,
+            3 => area.X,
+            4 => area.Right - width,
+            _ => area.Center.X - width / 2
+        };
+        var y = settings.WindowPosition switch
+        {
+            1 => area.Y,
+            2 => area.Bottom - height,
+            3 or 4 => area.Center.Y - height / 2,
+            _ => area.Center.Y - height / 2
+        };
+        window.Position = new PixelPoint(
+            Math.Clamp(x + settings.HorizontalOffset, area.X, Math.Max(area.X, area.Right - width)),
+            Math.Clamp(y + settings.VerticalOffset, area.Y, Math.Max(area.Y, area.Bottom - height)));
     }
 
     private static void ApplyQuickDrawWindowBounds(Window? window)
@@ -1283,28 +1426,6 @@ public partial class App : Application
         window.Position = new PixelPoint(
             area.X + (area.Width - width) / 2,
             area.Y + (area.Height - height) / 2);
-    }
-
-    private void ShowProfileSettingsWindow()
-    {
-        if (_profileSettingsWindow is { IsVisible: true })
-        {
-            _profileSettingsWindow.Activate();
-            return;
-        }
-
-        if (_profileSettingsWindow is not { IsLoaded: true })
-        {
-            _profileSettingsWindow = new MainWindow
-            {
-                Content = IAppHost.GetService<ProfileSettingsView>(),
-                Title = @"SecRandom"
-            };
-            _profileSettingsWindow.Closed += (_, _) => _profileSettingsWindow = null;
-        }
-
-        _profileSettingsWindow.Show();
-        _profileSettingsWindow.Activate();
     }
 
     #endregion
@@ -1377,11 +1498,6 @@ public partial class App : Application
     private void MenuItemOpenSettings_OnClick(object? sender, EventArgs e)
     {
         ShowSettingsWindow();
-    }
-
-    private void MenuItemOpenProfileSettings_OnClick(object? sender, EventArgs e)
-    {
-        ShowProfileSettingsWindow();
     }
 
     private void MenuItemRestartProgram_OnClick(object? sender, EventArgs e)

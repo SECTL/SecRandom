@@ -25,6 +25,7 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.LotteryList {
         }
         public static global::System.Globalization.CultureInfo Culture { get => resourceCulture; set => resourceCulture = value; }
         public static string C_AddList => ResourceManager.GetString("C_AddList", resourceCulture);
+        public static string C_AddPrize => ResourceManager.GetString("C_AddPrize", resourceCulture);
         public static string C_Cancel => ResourceManager.GetString("C_Cancel", resourceCulture);
         public static string C_ColumnMapping => ResourceManager.GetString("C_ColumnMapping", resourceCulture);
         public static string C_ColumnMapping_D => ResourceManager.GetString("C_ColumnMapping_D", resourceCulture);
@@ -62,6 +63,10 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.LotteryList {
         public static string K_TagsColumns => ResourceManager.GetString("K_TagsColumns", resourceCulture);
         public static string K_WeightColumns => ResourceManager.GetString("K_WeightColumns", resourceCulture);
         public static string M_AddListSuccess => ResourceManager.GetString("M_AddListSuccess", resourceCulture);
+        public static string M_AddPrizeInvalidValues => ResourceManager.GetString("M_AddPrizeInvalidValues", resourceCulture);
+        public static string M_AddPrizeRequired => ResourceManager.GetString("M_AddPrizeRequired", resourceCulture);
+        public static string M_AddPrizeSuccess => ResourceManager.GetString("M_AddPrizeSuccess", resourceCulture);
+        public static string M_AddPrizeTitle => ResourceManager.GetString("M_AddPrizeTitle", resourceCulture);
         public static string M_DuplicateClose => ResourceManager.GetString("M_DuplicateClose", resourceCulture);
         public static string M_DuplicateContent => ResourceManager.GetString("M_DuplicateContent", resourceCulture);
         public static string M_DuplicatePrimary => ResourceManager.GetString("M_DuplicatePrimary", resourceCulture);

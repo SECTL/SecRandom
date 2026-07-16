@@ -35,12 +35,8 @@
             <NativeMenuItem Header="{x:Static langs:Resources.Menu_ShowFloatingWindow}"
                              Click="MenuItemToggleFloatingWindow_OnClick" />
 
-            <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenProfileSettings}"
-                            IsVisible="{x:Static sr:GlobalConstants.IsDevelopment}"
-                            Click="MenuItemOpenProfileSettings_OnClick" />
-
             <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenSettings}"
-                            Click="MenuItemOpenSettings_OnClick" />
+                             Click="MenuItemOpenSettings_OnClick" />
 
             <NativeMenuItemSeparator />
 

@@ -18,6 +18,7 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
+using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.RollCallList.Resources;
 
@@ -95,6 +96,9 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
 
         SelectedStudentListConfig?.Save();
         SelectedStudentListConfig = new StudentListConfig(SelectedStudentListName);
+        if (SortStudents())
+            SelectedStudentListConfig.Save();
+
         OnPropertyChanged(nameof(SelectedStudentList));
     }
 
@@ -152,37 +156,6 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         this.ShowSuccessToast(string.Format(LR.M_AddListSuccess, listName));
     }
 
-    private async void RenameListButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        if (string.IsNullOrWhiteSpace(SelectedStudentListName) || SelectedStudentListConfig == null)
-        {
-            this.ShowWarningToast(LR.M_SelectListFirst);
-            return;
-        }
-
-        var oldName = SelectedStudentListName;
-        var newName = await ShowListNameDialogAsync(LR.M_ListNameDialogTitle_Rename, LR.M_ListNameDialogPrimary_Rename,
-            oldName);
-        if (newName == null || newName == oldName)
-            return;
-
-        if (!ValidateNewListName(newName))
-            return;
-
-        SaveSelectedStudentList();
-
-        RenameProfileFile(new StudentList(oldName), new StudentList(newName));
-        RenameProfileFile(new StudentHistory(oldName), new StudentHistory(newName));
-
-        var service = IAppHost.GetService<IProfileService>();
-        if (service.StudentListConfig?.Name == oldName)
-            service.LoadStudentProfile(newName, saveCurrent: false);
-
-        RefreshStudentLists(newName);
-        _logger.LogInformation("已重命名点名名单：原名单={OldListName}，新名单={NewListName}。", oldName, newName);
-        this.ShowSuccessToast(string.Format(LR.M_RenameListSuccess, newName));
-    }
-
     private async void DeleteListButton_OnClick(object? sender, RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(SelectedStudentListName) || SelectedStudentListConfig == null)
@@ -227,6 +200,80 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         var view = new RollCallListImportView(SelectedStudentListName, OnStudentsImported);
         SettingsView.Current?.OpenDrawer(view);
         _logger.LogInformation("打开点名名单导入面板：目标名单={ListName}。", SelectedStudentListName);
+    }
+
+    private async void AddMemberButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (SelectedStudentListConfig?.Data == null)
+        {
+            this.ShowWarningToast(LR.M_SelectListFirst);
+            return;
+        }
+
+        var form = new StackPanel { Spacing = 8 };
+        var id = AddInputField(form, LR.C_StudentId);
+        var name = AddInputField(form, LR.C_Name);
+        var gender = AddInputField(form, LR.C_Gender);
+        var group = AddInputField(form, LR.C_Group);
+        var tags = AddInputField(form, LR.C_Tags);
+
+        var dialog = new FAContentDialog
+        {
+            Title = LR.M_AddMemberTitle,
+            Content = form,
+            PrimaryButtonText = LR.C_AddMember,
+            CloseButtonText = LR.C_Cancel,
+            IsPrimaryButtonEnabled = false,
+            DefaultButton = FAContentDialogButton.Primary
+        };
+
+        void UpdateCanConfirm()
+        {
+            dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(id.Text) ||
+                                            !string.IsNullOrWhiteSpace(name.Text);
+        }
+
+        id.TextChanged += (_, _) => UpdateCanConfirm();
+        name.TextChanged += (_, _) => UpdateCanConfirm();
+        var result = await dialog.ShowAsync(TopLevel.GetTopLevel(this));
+
+        var studentId = id.Text?.Trim() ?? string.Empty;
+        var studentName = name.Text?.Trim() ?? string.Empty;
+        if (result != FAContentDialogResult.Primary)
+            return;
+
+        if (string.IsNullOrWhiteSpace(studentId) && string.IsNullOrWhiteSpace(studentName))
+        {
+            this.ShowWarningToast(LR.M_AddMemberRequired);
+            return;
+        }
+
+        SelectedStudentListConfig.Data.Students.Add(new Student
+        {
+            Id = studentId,
+            Name = studentName,
+            Gender = gender.Text?.Trim() ?? string.Empty,
+            Group = group.Text?.Trim() ?? string.Empty,
+            Tags = tags.Text?.Trim() ?? string.Empty,
+            RecordId = Guid.NewGuid()
+        });
+        SortStudents();
+        SaveSelectedStudentList();
+        OnPropertyChanged(nameof(SelectedStudentList));
+        _logger.LogInformation("已向点名名单新增成员：名单={ListName}，当前成员数={Count}。", SelectedStudentListName,
+            SelectedStudentListConfig.Data.Students.Count);
+        this.ShowSuccessToast(LR.M_AddMemberSuccess);
+    }
+
+    private static TextBox AddInputField(StackPanel form, string label, string initialText = "")
+    {
+        var field = new StackPanel { Spacing = 4 };
+        field.Children.Add(new TextBlock { Text = label });
+
+        var input = new TextBox { Text = initialText, MinWidth = 320 };
+        field.Children.Add(input);
+        form.Children.Add(field);
+        return input;
     }
 
     private async Task<bool> ConfirmOverwriteAsync(int currentCount, int importCount)
@@ -321,24 +368,6 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         return Utils.GetFilePath("list", "roll_call_list", $"{listName}.json");
     }
 
-    private static void RenameProfileFile(ProfileConfigBase oldConfig, ProfileConfigBase newConfig)
-    {
-        var oldPath = oldConfig.ConfigFilePath;
-        var newPath = newConfig.ConfigFilePath;
-
-        if (string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase) || !File.Exists(oldPath))
-            return;
-
-        var directory = Path.GetDirectoryName(newPath);
-        if (!string.IsNullOrWhiteSpace(directory))
-            Directory.CreateDirectory(directory);
-
-        if (File.Exists(newPath))
-            File.Delete(newPath);
-
-        File.Move(oldPath, newPath);
-    }
-
     private static void DeleteProfileFile(ProfileConfigBase config)
     {
         var path = config.ConfigFilePath;
@@ -359,12 +388,29 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         foreach (var student in students)
             SelectedStudentListConfig.Data.Students.Add(student);
 
+        SortStudents();
         SaveSelectedStudentList();
         IAppHost.TryGetService<IProfileService>()?.LoadStudentProfile(SelectedStudentListName, saveCurrent: false);
         OnPropertyChanged(nameof(SelectedStudentList));
         SettingsView.Current?.CloseDrawer();
         _logger.LogInformation("已导入点名名单：目标名单={ListName}，导入数量={Count}。", SelectedStudentListName, students.Count);
         this.ShowSuccessToast(string.Format(LR.M_ImportSuccess, students.Count, SelectedStudentListName));
+    }
+
+    private bool SortStudents()
+    {
+        if (SelectedStudentListConfig?.Data == null)
+            return false;
+
+        var sorted = SelectedStudentListConfig.Data.Students.OrderForList().ToList();
+        if (SelectedStudentListConfig.Data.Students.SequenceEqual(sorted))
+            return false;
+
+        SelectedStudentListConfig.Data.Students.Clear();
+        foreach (var student in sorted)
+            SelectedStudentListConfig.Data.Students.Add(student);
+
+        return true;
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

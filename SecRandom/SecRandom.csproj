@@ -13,6 +13,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\SecRandom.Core\SecRandom.Core.csproj" />
+        <ProjectReference Include="..\SecRandom4Ci.Interface\SecRandom4Ci.Interface.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -92,16 +93,6 @@
         </EmbeddedResource>
 
         <EmbeddedResource Update="Langs\AttachedSettings\Resources.resx">
-            <Generator>PublicResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-
-        <EmbeddedResource Update="Langs\ProfileSettings\Resources.resx">
-            <Generator>PublicResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-
-        <EmbeddedResource Update="Langs\ProfileSettings\Students\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
@@ -268,18 +259,6 @@
             <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
 
-        <Compile Update="Langs\ProfileSettings\Resources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Resources.resx</DependentUpon>
-        </Compile>
-
-        <Compile Update="Langs\ProfileSettings\Students\Resources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Resources.resx</DependentUpon>
-        </Compile>
-
         <Compile Update="Langs\SettingsPages\ListManagement\RollCallList\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
@@ -379,11 +358,6 @@
           <SubType>Code</SubType>
         </Compile>
 
-        <Compile Update="Views\SettingsPages\Notification\NotificationSettingsPage.axaml.cs">
-          <DependentUpon>NotificationSettingsPage.axaml</DependentUpon>
-          <SubType>Code</SubType>
-        </Compile>
-
         <Compile Update="Views\SettingsPages\Notification\RollCallNotificationSettingsPage.axaml.cs">
           <DependentUpon>RollCallNotificationSettingsPage.axaml</DependentUpon>
           <SubType>Code</SubType>
@@ -428,7 +402,7 @@
         <PackageReference Include="Sentry.Extensions.Logging" Version="6.6.0" />
         <PackageReference Include="Sentry.Profiling" Version="6.6.0" />
         <PackageReference Include="QRCoder" Version="1.7.0" />
-        <PackageReference Include="SoundFlow" Version="1.4.1" />
+        <PackageReference Include="SoundFlow" Version="[1.2.1.3]" />
         <PackageReference Include="ClassIsland.Shared.IPC" Version="2.1.0.1" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
@@ -436,23 +410,20 @@
         <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.1" />
     </ItemGroup>
 
-    <PropertyGroup>
-        <SoundFlowNativeAsset Condition="'$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win-x86' Or '$(RuntimeIdentifier)' == 'win-arm64'">$(NuGetPackageRoot)soundflow\1.4.1\runtimes\$(RuntimeIdentifier)\native\miniaudio.dll</SoundFlowNativeAsset>
-        <SoundFlowNativeAsset Condition="'$(RuntimeIdentifier)' == 'linux-x64' Or '$(RuntimeIdentifier)' == 'linux-arm64'">$(NuGetPackageRoot)soundflow\1.4.1\runtimes\$(RuntimeIdentifier)\native\libminiaudio.so</SoundFlowNativeAsset>
-        <SoundFlowNativeAsset Condition="'$(RuntimeIdentifier)' == 'osx-x64' Or '$(RuntimeIdentifier)' == 'osx-arm64'">$(NuGetPackageRoot)soundflow\1.4.1\runtimes\$(RuntimeIdentifier)\native\libminiaudio.dylib</SoundFlowNativeAsset>
-    </PropertyGroup>
-
-    <Target Name="CopySoundFlowNativeAsset" AfterTargets="Publish" Condition="'$(SoundFlowNativeAsset)' != ''">
-        <Error Condition="!Exists('$(SoundFlowNativeAsset)')" Text="SoundFlow native asset is missing for $(RuntimeIdentifier): $(SoundFlowNativeAsset)" />
-        <Copy SourceFiles="$(SoundFlowNativeAsset)" DestinationFolder="$(PublishDir)" />
-    </Target>
+    <ItemGroup>
+        <Compile Include="..\vendors\EdgeTtsSharp\Edge_tts_sharp\Edge_tts.cs" Link="ThirdParty\EdgeTtsSharp\Edge_tts.cs" />
+        <Compile Include="..\vendors\EdgeTtsSharp\Edge_tts_sharp\Tools.cs" Link="ThirdParty\EdgeTtsSharp\Tools.cs" />
+        <Compile Include="..\vendors\EdgeTtsSharp\Edge_tts_sharp\Model\eVoice.cs" Link="ThirdParty\EdgeTtsSharp\Model\eVoice.cs" />
+        <Compile Include="..\vendors\EdgeTtsSharp\Edge_tts_sharp\Model\PlayOption.cs" Link="ThirdParty\EdgeTtsSharp\Model\PlayOption.cs" />
+        <Compile Include="..\vendors\EdgeTtsSharp\Edge_tts_sharp\Model\Log.cs" Link="ThirdParty\EdgeTtsSharp\Model\Log.cs" />
+        <EmbeddedResource Include="..\vendors\EdgeTtsSharp\Edge_tts_sharp\Source\VoiceList.json" Link="ThirdParty\EdgeTtsSharp\Source\VoiceList.json" LogicalName="Edge_tts_sharp.Source.VoiceList.json" />
+    </ItemGroup>
 
     <ItemGroup>
       <AdditionalFiles Include="Views\SettingsPages\General\SecuritySettingsPage.axaml" />
       <AdditionalFiles Include="Views\SettingsPages\Notification\DefaultNotificationSettingsPage.axaml" />
       <AdditionalFiles Include="Views\SettingsPages\Notification\LotteryNotificationSettingsPage.axaml" />
       <AdditionalFiles Include="Views\SettingsPages\Notification\NotificationChannelSettingsContent.axaml" />
-      <AdditionalFiles Include="Views\SettingsPages\Notification\NotificationSettingsPage.axaml" />
       <AdditionalFiles Include="Views\SettingsPages\Notification\QuickDrawNotificationSettingsPage.axaml" />
       <AdditionalFiles Include="Views\SettingsPages\Notification\RollCallNotificationSettingsPage.axaml" />
       <AdditionalFiles Include="Views\SettingsPages\Notification\VoiceSettingsPage.axaml" />

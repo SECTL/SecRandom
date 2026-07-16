@@ -18,6 +18,7 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
+using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.LotteryList.Resources;
 
@@ -94,6 +95,9 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
 
         SelectedPrizeListConfig?.Save();
         SelectedPrizeListConfig = new PrizeListConfig(SelectedPrizeListName);
+        if (SortPrizes())
+            SelectedPrizeListConfig.Save();
+
         OnPropertyChanged(nameof(SelectedPrizeList));
     }
 
@@ -148,34 +152,6 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         this.ShowSuccessToast(string.Format(LR.M_AddListSuccess, listName));
     }
 
-    private async void RenameListButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        if (string.IsNullOrWhiteSpace(SelectedPrizeListName) || SelectedPrizeListConfig == null)
-        {
-            this.ShowWarningToast(LR.M_SelectListFirst);
-            return;
-        }
-
-        var oldName = SelectedPrizeListName;
-        var newName = await ShowListNameDialogAsync(LR.M_ListNameDialogTitle_Rename, LR.M_ListNameDialogPrimary_Rename,
-            oldName);
-        if (newName == null || newName == oldName || !ValidateNewListName(newName))
-            return;
-
-        SaveSelectedPrizeList();
-
-        RenameProfileFile(new PrizeList(oldName), new PrizeList(newName));
-        RenameProfileFile(new PrizeHistory(oldName), new PrizeHistory(newName));
-
-        var service = IAppHost.GetService<IProfileService>();
-        if (service.PrizeListConfig?.Name == oldName)
-            service.LoadPrizeProfile(newName, saveCurrent: false);
-
-        RefreshPrizeLists(newName);
-        _logger.LogInformation("已重命名奖品池：原奖品池={OldListName}，新奖品池={NewListName}。", oldName, newName);
-        this.ShowSuccessToast(string.Format(LR.M_RenameListSuccess, newName));
-    }
-
     private async void DeleteListButton_OnClick(object? sender, RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(SelectedPrizeListName) || SelectedPrizeListConfig == null)
@@ -220,6 +196,87 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         var view = new LotteryListImportView(SelectedPrizeListName, OnPrizesImported);
         SettingsView.Current?.OpenDrawer(view);
         _logger.LogInformation("打开奖品池导入面板：目标奖品池={ListName}。", SelectedPrizeListName);
+    }
+
+    private async void AddPrizeButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (SelectedPrizeListConfig?.Data == null)
+        {
+            this.ShowWarningToast(LR.M_SelectListFirst);
+            return;
+        }
+
+        var form = new StackPanel { Spacing = 8 };
+        var id = AddInputField(form, LR.C_PrizeId);
+        var name = AddInputField(form, LR.C_Name);
+        var weight = AddInputField(form, LR.C_Weight, "1");
+        var count = AddInputField(form, LR.C_Count, "1");
+        var tags = AddInputField(form, LR.C_Tags);
+
+        var dialog = new FAContentDialog
+        {
+            Title = LR.M_AddPrizeTitle,
+            Content = form,
+            PrimaryButtonText = LR.C_AddPrize,
+            CloseButtonText = LR.C_Cancel,
+            IsPrimaryButtonEnabled = false,
+            DefaultButton = FAContentDialogButton.Primary
+        };
+
+        void UpdatePrimaryButtonState()
+        {
+            dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(id.Text) ||
+                                            !string.IsNullOrWhiteSpace(name.Text);
+        }
+
+        id.TextChanged += (_, _) => UpdatePrimaryButtonState();
+        name.TextChanged += (_, _) => UpdatePrimaryButtonState();
+        var result = await dialog.ShowAsync(TopLevel.GetTopLevel(this));
+
+        if (result != FAContentDialogResult.Primary)
+            return;
+
+        var prizeId = id.Text?.Trim() ?? string.Empty;
+        var prizeName = name.Text?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(prizeId) && string.IsNullOrWhiteSpace(prizeName))
+        {
+            this.ShowWarningToast(LR.M_AddPrizeRequired);
+            return;
+        }
+
+        if (!double.TryParse(weight.Text, out var prizeWeight) || prizeWeight <= 0 ||
+            !int.TryParse(count.Text, out var prizeCount) || prizeCount <= 0)
+        {
+            this.ShowWarningToast(LR.M_AddPrizeInvalidValues);
+            return;
+        }
+
+        SelectedPrizeListConfig.Data.Prizes.Add(new Prize
+        {
+            Id = prizeId,
+            Name = prizeName,
+            Weight = prizeWeight,
+            Count = prizeCount,
+            Tags = tags.Text?.Trim() ?? string.Empty,
+            RecordId = Guid.NewGuid()
+        });
+        SortPrizes();
+        SaveSelectedPrizeList();
+        OnPropertyChanged(nameof(SelectedPrizeList));
+        _logger.LogInformation("已向奖品池新增奖品：奖品池={ListName}，当前奖品数={Count}。", SelectedPrizeListName,
+            SelectedPrizeListConfig.Data.Prizes.Count);
+        this.ShowSuccessToast(LR.M_AddPrizeSuccess);
+    }
+
+    private static TextBox AddInputField(StackPanel form, string label, string initialText = "")
+    {
+        var field = new StackPanel { Spacing = 4 };
+        field.Children.Add(new TextBlock { Text = label });
+
+        var input = new TextBox { Text = initialText, MinWidth = 320 };
+        field.Children.Add(input);
+        form.Children.Add(field);
+        return input;
     }
 
     private async Task<bool> ConfirmOverwriteAsync(int currentCount, int importCount)
@@ -314,24 +371,6 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         return Utils.GetFilePath("list", "lottery_list", $"{listName}.json");
     }
 
-    private static void RenameProfileFile(ProfileConfigBase oldConfig, ProfileConfigBase newConfig)
-    {
-        var oldPath = oldConfig.ConfigFilePath;
-        var newPath = newConfig.ConfigFilePath;
-
-        if (string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase) || !File.Exists(oldPath))
-            return;
-
-        var directory = Path.GetDirectoryName(newPath);
-        if (!string.IsNullOrWhiteSpace(directory))
-            Directory.CreateDirectory(directory);
-
-        if (File.Exists(newPath))
-            File.Delete(newPath);
-
-        File.Move(oldPath, newPath);
-    }
-
     private static void DeleteProfileFile(ProfileConfigBase config)
     {
         var path = config.ConfigFilePath;
@@ -352,12 +391,29 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         foreach (var prize in prizes)
             SelectedPrizeListConfig.Data.Prizes.Add(prize);
 
+        SortPrizes();
         SaveSelectedPrizeList();
         IAppHost.TryGetService<IProfileService>()?.LoadPrizeProfile(SelectedPrizeListName, saveCurrent: false);
         OnPropertyChanged(nameof(SelectedPrizeList));
         SettingsView.Current?.CloseDrawer();
         _logger.LogInformation("已导入奖品池：目标奖品池={ListName}，导入数量={Count}。", SelectedPrizeListName, prizes.Count);
         this.ShowSuccessToast(string.Format(LR.M_ImportSuccess, prizes.Count, SelectedPrizeListName));
+    }
+
+    private bool SortPrizes()
+    {
+        if (SelectedPrizeListConfig?.Data == null)
+            return false;
+
+        var sorted = SelectedPrizeListConfig.Data.Prizes.OrderForList().ToList();
+        if (SelectedPrizeListConfig.Data.Prizes.SequenceEqual(sorted))
+            return false;
+
+        SelectedPrizeListConfig.Data.Prizes.Clear();
+        foreach (var prize in sorted)
+            SelectedPrizeListConfig.Data.Prizes.Add(prize);
+
+        return true;
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

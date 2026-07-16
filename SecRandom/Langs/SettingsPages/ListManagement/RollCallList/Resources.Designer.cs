@@ -49,6 +49,7 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.RollCallList {
         }
 
         public static string C_Cancel => ResourceManager.GetString("C_Cancel", resourceCulture);
+        public static string C_AddMember => ResourceManager.GetString("C_AddMember", resourceCulture);
         public static string C_AddList => ResourceManager.GetString("C_AddList", resourceCulture);
         public static string C_ColumnMapping => ResourceManager.GetString("C_ColumnMapping", resourceCulture);
         public static string C_ColumnMapping_D => ResourceManager.GetString("C_ColumnMapping_D", resourceCulture);
@@ -98,6 +99,9 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.RollCallList {
         public static string M_ImportSuccess => ResourceManager.GetString("M_ImportSuccess", resourceCulture);
         public static string M_KeepOneList => ResourceManager.GetString("M_KeepOneList", resourceCulture);
         public static string M_AddListSuccess => ResourceManager.GetString("M_AddListSuccess", resourceCulture);
+        public static string M_AddMemberRequired => ResourceManager.GetString("M_AddMemberRequired", resourceCulture);
+        public static string M_AddMemberSuccess => ResourceManager.GetString("M_AddMemberSuccess", resourceCulture);
+        public static string M_AddMemberTitle => ResourceManager.GetString("M_AddMemberTitle", resourceCulture);
         public static string M_ListNameDialogPrimary_Add => ResourceManager.GetString("M_ListNameDialogPrimary_Add", resourceCulture);
         public static string M_ListNameDialogPrimary_Rename => ResourceManager.GetString("M_ListNameDialogPrimary_Rename", resourceCulture);
         public static string M_ListNameDialogTitle_Add => ResourceManager.GetString("M_ListNameDialogTitle_Add", resourceCulture);

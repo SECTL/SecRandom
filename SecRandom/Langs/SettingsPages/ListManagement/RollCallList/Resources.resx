@@ -37,13 +37,16 @@
         <value>当前名单</value>
     </data>
     <data name="S_CurrentList_D" xml:space="preserve">
-        <value>选择要查看或导入的点名名单。</value>
+        <value>选择要查看或导入的点名名单</value>
     </data>
     <data name="C_Refresh" xml:space="preserve">
         <value>刷新</value>
     </data>
     <data name="C_ImportList" xml:space="preserve">
         <value>导入名单</value>
+    </data>
+    <data name="C_AddMember" xml:space="preserve">
+        <value>添加成员</value>
     </data>
     <data name="C_AddList" xml:space="preserve">
         <value>新增名单</value>
@@ -94,7 +97,7 @@
         <value>列映射</value>
     </data>
     <data name="C_ColumnMapping_D" xml:space="preserve">
-        <value>学号/编号和姓名至少选择一项；性别、小组、标签可留空。两项均为空的行不会导入。</value>
+        <value>学号/编号和姓名至少选择一项；性别、小组、标签可留空；两项均为空的行不会导入</value>
     </data>
     <data name="C_StudentIdColumn" xml:space="preserve">
         <value>学号/编号列</value>
@@ -173,6 +176,15 @@
     </data>
     <data name="M_ImportSuccess" xml:space="preserve">
         <value>已导入 {0} 名学生到“{1}”。</value>
+    </data>
+    <data name="M_AddMemberTitle" xml:space="preserve">
+        <value>添加成员</value>
+    </data>
+    <data name="M_AddMemberRequired" xml:space="preserve">
+        <value>请至少填写学号/编号或姓名。</value>
+    </data>
+    <data name="M_AddMemberSuccess" xml:space="preserve">
+        <value>已添加成员。</value>
     </data>
     <data name="M_ListNameDialogTitle_Add" xml:space="preserve">
         <value>新增名单</value>
