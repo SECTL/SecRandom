@@ -25,9 +25,9 @@ AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppSupportURL={#MyAppURL}
 #ifdef UiAccessBuild
-DefaultDirName={autopf}\SecRandom
+DefaultDirName={autopf}\SECTL\SecRandom
 #else
-DefaultDirName={localappdata}\SecRandom
+DefaultDirName={localappdata}\SECTL\SecRandom
 #endif
 UninstallDisplayIcon={app}\{#MyAppExeName}
 #ifdef BuildArchX86
@@ -51,7 +51,7 @@ PrivilegesRequiredOverridesAllowed=none
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 #endif
-OutputDir=SetupOutput
+OutputDir=artifacts\release\setup
 OutputBaseFilename=SecRandom-Setup
 SetupIconFile=SecRandom\Assets\AppLogo.ico
 SolidCompression=yes
@@ -60,6 +60,7 @@ LanguageDetectionMethod=none
 
 [Languages]
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
