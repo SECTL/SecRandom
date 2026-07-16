@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="M_Disabled" xml:space="preserve"><value>URL プロトコルが無効です。</value></data>
+  <data name="M_DataOnlyIpc" xml:space="preserve"><value>データの照会は IPC でのみ利用できます。</value></data>
+  <data name="M_UnsupportedCommand" xml:space="preserve"><value>未対応のプロトコルコマンドです。</value></data>
+  <data name="M_InvalidMainPage" xml:space="preserve"><value>メインウィンドウのページパラメーターが無効です。</value></data>
+  <data name="M_InvalidSettingsPage" xml:space="preserve"><value>設定ページのパラメーターが無効です。</value></data>
+  <data name="M_InvalidWindowAction" xml:space="preserve"><value>ウィンドウ操作のパラメーターが無効です。</value></data>
+  <data name="M_MainWindowRequested" xml:space="preserve"><value>メインウィンドウの操作を要求しました</value></data>
+  <data name="M_SettingsHidden" xml:space="preserve"><value>設定ウィンドウを非表示にしました</value></data>
+  <data name="M_SettingsPreviewOpened" xml:space="preserve"><value>読み取り専用の設定プレビューを開きました</value></data>
+  <data name="M_SettingsRequested" xml:space="preserve"><value>設定ウィンドウの操作を要求しました</value></data>
+  <data name="M_FloatPageUnsupported" xml:space="preserve"><value>フローティングウィンドウはページパラメーターに対応していません。</value></data>
+  <data name="M_FloatingRequested" xml:space="preserve"><value>フローティングウィンドウの操作を要求しました</value></data>
+  <data name="M_MainToggled" xml:space="preserve"><value>メインウィンドウの表示状態を切り替えました</value></data>
+  <data name="M_FloatingToggled" xml:space="preserve"><value>フローティングウィンドウの表示状態を切り替えました</value></data>
+  <data name="M_Restarting" xml:space="preserve"><value>アプリケーションを再起動しています</value></data>
+  <data name="M_Exiting" xml:space="preserve"><value>アプリケーションを終了しています</value></data>
+  <data name="M_RollCallStarted" xml:space="preserve"><value>点呼を開始しました</value></data>
+  <data name="M_RollCallStopped" xml:space="preserve"><value>点呼を停止しました</value></data>
+  <data name="M_RollCallReset" xml:space="preserve"><value>点呼をリセットしました</value></data>
+  <data name="M_QuickDrawSucceeded" xml:space="preserve"><value>クイック抽選に成功しました</value></data>
+  <data name="M_LotteryStarted" xml:space="preserve"><value>抽選を開始しました</value></data>
+  <data name="M_LotteryStopped" xml:space="preserve"><value>抽選を停止しました</value></data>
+  <data name="M_LotteryReset" xml:space="preserve"><value>抽選をリセットしました</value></data>
+  <data name="M_RollCallCountSet" xml:space="preserve"><value>点呼人数を設定しました</value></data>
+  <data name="M_RollCallGroupSet" xml:space="preserve"><value>点呼グループを設定しました</value></data>
+  <data name="M_RollCallGenderSet" xml:space="preserve"><value>点呼の性別フィルターを設定しました</value></data>
+  <data name="M_StudentListSet" xml:space="preserve"><value>学生名簿を設定しました</value></data>
+  <data name="M_LotteryCountSet" xml:space="preserve"><value>抽選人数を設定しました</value></data>
+  <data name="M_PoolSet" xml:space="preserve"><value>賞品プールを設定しました</value></data>
+  <data name="M_LotteryGroupSet" xml:space="preserve"><value>抽選グループを設定しました</value></data>
+  <data name="M_LotteryGenderSet" xml:space="preserve"><value>抽選の性別フィルターを設定しました</value></data>
+  <data name="M_UnsupportedRollCall" xml:space="preserve"><value>未対応の点呼コマンドです。</value></data>
+  <data name="M_UnsupportedLottery" xml:space="preserve"><value>未対応の抽選コマンドです。</value></data>
+  <data name="M_MissingProfileName" xml:space="preserve"><value>名簿または賞品プールの名前がありません。</value></data>
+  <data name="M_UnsupportedData" xml:space="preserve"><value>未対応のデータ照会コマンドです。</value></data>
+  <data name="M_RollCallListNotFound" xml:space="preserve"><value>点呼名簿が見つかりません。</value></data>
+  <data name="M_PrizePoolNotFound" xml:space="preserve"><value>賞品プールが見つかりません。</value></data>
+  <data name="M_RollCallHistoryNotFound" xml:space="preserve"><value>点呼履歴が見つかりません。</value></data>
+  <data name="M_PrizeHistoryNotFound" xml:space="preserve"><value>抽選履歴が見つかりません。</value></data>
+  <data name="M_RollCallListLoaded" xml:space="preserve"><value>点呼名簿を読み込みました</value></data>
+  <data name="M_PrizePoolLoaded" xml:space="preserve"><value>賞品プールを読み込みました</value></data>
+  <data name="M_RollCallHistoryLoaded" xml:space="preserve"><value>点呼履歴を読み込みました</value></data>
+  <data name="M_PrizeHistoryLoaded" xml:space="preserve"><value>抽選履歴を読み込みました</value></data>
+  <data name="M_AuthorizationDenied" xml:space="preserve"><value>操作が承認されませんでした。</value></data>
+  <data name="M_InvalidStartState" xml:space="preserve"><value>現在の状態では抽選を開始できません。</value></data>
+  <data name="M_NoQuickDrawResult" xml:space="preserve"><value>クイック抽選の結果がありません。</value></data>
+  <data name="M_NoEligibleRecordsFormat" xml:space="preserve"><value>{0} に抽選可能な記録がありません。</value></data>
+  <data name="M_InvalidParameterFormat" xml:space="preserve"><value>{0} パラメーターが無効です。</value></data>
+  <data name="M_InvalidStudentList" xml:space="preserve"><value>学生名簿のパラメーターが無効です。</value></data>
+  <data name="M_InvalidPool" xml:space="preserve"><value>賞品プールのパラメーターが無効です。</value></data>
+  <data name="M_AssignmentUnavailable" xml:space="preserve"><value>抽選用の学生割り当て名簿が有効になっていません。</value></data>
+  <data name="L_RollCallCount" xml:space="preserve"><value>点呼人数</value></data>
+  <data name="L_RollCallGroup" xml:space="preserve"><value>点呼グループ</value></data>
+  <data name="L_RollCallGender" xml:space="preserve"><value>点呼の性別フィルター</value></data>
+  <data name="L_LotteryCount" xml:space="preserve"><value>抽選人数</value></data>
+  <data name="L_LotteryGroup" xml:space="preserve"><value>抽選グループ</value></data>
+  <data name="L_LotteryGender" xml:space="preserve"><value>抽選の性別フィルター</value></data>
+</root>
