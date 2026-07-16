@@ -35,32 +35,24 @@ public partial class UpdateSettingsPage : UserControl
         set => Settings.UpdateChannel = Enum.IsDefined((UpdateChannel)value) ? (UpdateChannel)value : UpdateChannel.Release;
     }
 
-    public int SelectedSourceIndex
-    {
-        get => Settings.UpdateSource switch
-        {
-            UpdateSource.Sectl => 1,
-            UpdateSource.GitHubMirror => 2,
-            _ => 0
-        };
-        set => Settings.UpdateSource = value switch
-        {
-            1 => UpdateSource.Sectl,
-            2 => UpdateSource.GitHubMirror,
-            _ => UpdateSource.GitHub
-        };
-    }
-
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
 
     private async void CheckForUpdates(object? sender, RoutedEventArgs e)
     {
-        await UpdateCenter.CheckAsync();
+        if (UpdateCenter.CanDownloadAndInstall)
+            await UpdateCenter.DownloadAndInstallAsync();
+        else
+            await UpdateCenter.CheckAsync();
     }
 
     private async void InstallUpdate(object? sender, RoutedEventArgs e)
     {
-        await UpdateCenter.DownloadAndInstallAsync();
+        await UpdateCenter.ApplyDownloadedUpdateAsync();
+    }
+
+    private async void ForceCheckForUpdates(object? sender, RoutedEventArgs e)
+    {
+        await UpdateCenter.CheckAsync(force: true);
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)

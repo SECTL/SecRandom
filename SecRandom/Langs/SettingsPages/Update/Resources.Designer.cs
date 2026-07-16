@@ -66,6 +66,14 @@ namespace SecRandom.Langs.SettingsPages.Update {
 
         public static string C_InstallUpdate => ResourceManager.GetString("C_InstallUpdate", resourceCulture);
 
+        public static string C_DownloadAndInstall => ResourceManager.GetString("C_DownloadAndInstall", resourceCulture);
+
+        public static string C_ForceCheckUpdates => ResourceManager.GetString("C_ForceCheckUpdates", resourceCulture);
+
+        public static string C_ForceCheckUpdates_D => ResourceManager.GetString("C_ForceCheckUpdates_D", resourceCulture);
+
+        public static string M_StatusNotChecked => ResourceManager.GetString("M_StatusNotChecked", resourceCulture);
+
         public static string O_UpdateChannel_Alpha => ResourceManager.GetString("O_UpdateChannel_Alpha", resourceCulture);
 
         public static string O_UpdateChannel_Beta => ResourceManager.GetString("O_UpdateChannel_Beta", resourceCulture);
@@ -139,6 +147,12 @@ namespace SecRandom.Langs.SettingsPages.Update {
             }
         }
 
+        public static string O_AutoUpdateMode_Notify => ResourceManager.GetString("O_AutoUpdateMode_Notify", resourceCulture);
+
+        public static string O_AutoUpdateMode_Download => ResourceManager.GetString("O_AutoUpdateMode_Download", resourceCulture);
+
+        public static string O_AutoUpdateMode_Install => ResourceManager.GetString("O_AutoUpdateMode_Install", resourceCulture);
+
         /// <summary>
         ///   Looks up a localized string similar to GitHub 镜像.
         /// </summary>
@@ -156,6 +170,8 @@ namespace SecRandom.Langs.SettingsPages.Update {
                 return ResourceManager.GetString("O_UpdateSource_OfficialMirror", resourceCulture);
             }
         }
+
+        public static string O_UpdateSource_Auto => ResourceManager.GetString("O_UpdateSource_Auto", resourceCulture);
 
         /// <summary>
         ///   Looks up a localized string similar to 更新设置.

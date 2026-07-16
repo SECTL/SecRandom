@@ -25,25 +25,25 @@
     <value>自动更新模式</value>
   </data>
   <data name="S_Strategy_AutoUpdateMode_D" xml:space="preserve">
-    <value>控制程序检查与提示更新的频率。</value>
+    <value>自动检查发现的新版本，可选择通知、下载或安装</value>
   </data>
   <data name="O_AutoUpdateMode_Off" xml:space="preserve">
     <value>关闭</value>
   </data>
-  <data name="O_AutoUpdateMode_Daily" xml:space="preserve">
-    <value>每天</value>
+  <data name="O_AutoUpdateMode_Notify" xml:space="preserve">
+    <value>自动检查更新并通知</value>
   </data>
-  <data name="O_AutoUpdateMode_Weekly" xml:space="preserve">
-    <value>每周</value>
+  <data name="O_AutoUpdateMode_Download" xml:space="preserve">
+    <value>自动检查更新并下载</value>
   </data>
-  <data name="O_AutoUpdateMode_Manual" xml:space="preserve">
-    <value>手动检查</value>
+  <data name="O_AutoUpdateMode_Install" xml:space="preserve">
+    <value>自动检查更新并安装</value>
   </data>
   <data name="S_Strategy_Channel" xml:space="preserve">
     <value>更新通道</value>
   </data>
   <data name="S_Strategy_Channel_D" xml:space="preserve">
-    <value>选择稳定版或预览版更新。</value>
+    <value>选择稳定版或预览版更新</value>
   </data>
   <data name="O_UpdateChannel_Stable" xml:space="preserve">
     <value>稳定版</value>
@@ -61,13 +61,16 @@
     <value>更新来源</value>
   </data>
   <data name="S_Strategy_Source_D" xml:space="preserve">
-    <value>选择用于检查更新的下载来源。</value>
+    <value>自动选择会依次尝试思拓创联官方、GitHub 镜像和 GitHub</value>
   </data>
   <data name="O_UpdateSource_OfficialMirror" xml:space="preserve">
     <value>官方镜像</value>
   </data>
   <data name="O_UpdateSource_GitHub" xml:space="preserve">
     <value>GitHub</value>
+  </data>
+  <data name="O_UpdateSource_Auto" xml:space="preserve">
+    <value>自动选择（推荐）</value>
   </data>
   <data name="O_UpdateSource_Sectl" xml:space="preserve">
     <value>思拓创联</value>
@@ -81,11 +84,20 @@
   <data name="C_InstallUpdate" xml:space="preserve">
     <value>安装更新</value>
   </data>
+  <data name="C_DownloadAndInstall" xml:space="preserve">
+    <value>下载并安装</value>
+  </data>
+  <data name="C_ForceCheckUpdates" xml:space="preserve">
+    <value>强制检查更新</value>
+  </data>
+  <data name="C_ForceCheckUpdates_D" xml:space="preserve">
+    <value>检查当前通道的最新版本，即使其低于当前版本。</value>
+  </data>
   <data name="S_Check" xml:space="preserve">
     <value>检查更新</value>
   </data>
   <data name="S_Check_D" xml:space="preserve">
-    <value>仅检查已签名的完整发布清单；不会在后台下载更新。</value>
+    <value>仅检查已签名的完整发布清单；不会在后台下载更新</value>
   </data>
   <data name="M_UpdateServicePlaceholder_Title" xml:space="preserve">
     <value>更新服务尚未接入</value>
@@ -97,7 +109,7 @@
     <value>上次检查时间</value>
   </data>
   <data name="S_Strategy_LastCheckTime_D" xml:space="preserve">
-    <value>显示最近一次检查更新的时间。</value>
+    <value>显示最近一次检查更新的时间</value>
   </data>
   <data name="M_StatusNotChecked" xml:space="preserve"><value>尚未检查更新。</value></data>
   <data name="M_StatusChecking" xml:space="preserve"><value>正在检查更新。</value></data>
@@ -108,8 +120,10 @@
   <data name="M_StatusDownloading" xml:space="preserve"><value>正在下载完整安装包 {0}。</value></data>
   <data name="M_StatusVerifying" xml:space="preserve"><value>正在验证安装包完整性。</value></data>
   <data name="M_StatusPreparing" xml:space="preserve"><value>正在准备应用更新。</value></data>
+  <data name="M_StatusReadyToInstall" xml:space="preserve"><value>更新已下载，等待安装。</value></data>
   <data name="M_StatusRestarting" xml:space="preserve"><value>正在重启以应用更新。</value></data>
   <data name="M_SectlReleaseOnly" xml:space="preserve"><value>思拓创联分发只提供稳定版更新。</value></data>
+  <data name="M_NoUpdateSourceAvailable" xml:space="preserve"><value>没有可用的更新来源。</value></data>
   <data name="M_NoCompatibleArtifact" xml:space="preserve"><value>该版本没有适用于当前系统、架构和安装形态的完整安装包。</value></data>
   <data name="M_SectlMissingTag" xml:space="preserve"><value>思拓创联未返回版本标签。</value></data>
   <data name="M_MetadataEmpty" xml:space="preserve"><value>更新元数据为空。</value></data>

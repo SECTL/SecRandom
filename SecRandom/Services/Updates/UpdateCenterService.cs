@@ -48,6 +48,8 @@ public sealed class UpdateCenterService(
     private string _statusMessage = Text("M_StatusNotChecked");
     private UpdateManifest? _manifest;
     private UpdateArtifact? _selectedArtifact;
+    private UpdateSource _activeSource;
+    private string? _downloadedPackagePath;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -55,7 +57,11 @@ public sealed class UpdateCenterService(
     public UpdateOperationPhase Phase
     {
         get => _phase;
-        private set => SetField(ref _phase, value);
+        private set
+        {
+            if (SetField(ref _phase, value))
+                OnPropertyChanged(nameof(CanCheck));
+        }
     }
 
     public string StatusMessage
@@ -84,8 +90,11 @@ public sealed class UpdateCenterService(
     }
 
     public bool IsBusy => Phase is UpdateOperationPhase.Checking or UpdateOperationPhase.Downloading or UpdateOperationPhase.Verifying or UpdateOperationPhase.Installing;
-    public bool CanInstall => Phase == UpdateOperationPhase.ReadyToInstall && SelectedArtifact is not null;
+    public bool CanCheck => !IsBusy;
+    public bool CanDownloadAndInstall => Phase == UpdateOperationPhase.UpdateAvailable && SelectedArtifact is not null;
+    public bool CanApplyUpdate => Phase == UpdateOperationPhase.ReadyToInstall && SelectedArtifact is not null;
     public bool HasAvailableArtifacts => AvailableArtifacts.Count > 0;
+    public string PrimaryActionText => CanDownloadAndInstall ? Text("C_DownloadAndInstall") : Text("C_CheckUpdates");
 
     public async Task CheckAsync(bool force = false)
     {
@@ -100,14 +109,8 @@ public sealed class UpdateCenterService(
             Phase = UpdateOperationPhase.Checking;
             StatusMessage = Text("M_StatusChecking");
             var channel = GetChannel();
-            var source = GetSource();
-            if (source == UpdateSource.Sectl && channel != UpdateChannel.Release)
-                throw new InvalidOperationException(Text("M_SectlReleaseOnly"));
-
-            var tag = await GetChannelTagAsync(source, channel, cancellationToken);
-            var manifestBytes = await DownloadAssetAsync(source, tag, ManifestFileName, cancellationToken);
-            var signatureBytes = await DownloadAssetAsync(source, tag, SignatureFileName, cancellationToken);
-            var manifest = VerifyAndDeserializeManifest(manifestBytes, signatureBytes, tag, channel);
+            var (source, manifest) = await GetManifestAsync(channel, cancellationToken);
+            _activeSource = source;
             if (!force && !IsNewerVersion(manifest.Version, GlobalConstants.Version))
             {
                 configHandler.Data.UpdateSettings.LastCheckTime = DateTime.Now;
@@ -130,7 +133,7 @@ public sealed class UpdateCenterService(
             configHandler.Save();
             OnPropertyChanged(nameof(AvailableVersion));
             OnPropertyChanged(nameof(NotesUrl));
-            Phase = UpdateOperationPhase.ReadyToInstall;
+            Phase = UpdateOperationPhase.UpdateAvailable;
             StatusMessage = SelectedArtifact is null
                 ? string.Format(CultureInfo.CurrentUICulture, Text("M_StatusUpdateAvailableSelect"), manifest.Version)
                 : string.Format(CultureInfo.CurrentUICulture, Text("M_StatusUpdateAvailable"), manifest.Version);
@@ -154,6 +157,12 @@ public sealed class UpdateCenterService(
 
     public async Task DownloadAndInstallAsync()
     {
+        await DownloadAsync(installAfterDownload: false);
+        await ApplyDownloadedUpdateAsync();
+    }
+
+    public async Task DownloadAsync(bool installAfterDownload)
+    {
         if (_manifest is null || SelectedArtifact is null || IsBusy)
             return;
 
@@ -164,8 +173,7 @@ public sealed class UpdateCenterService(
         {
             Phase = UpdateOperationPhase.Downloading;
             StatusMessage = string.Format(CultureInfo.CurrentUICulture, Text("M_StatusDownloading"), SelectedArtifact.AssetName);
-            var source = GetSource();
-            var package = await DownloadAssetAsync(source, _manifest.Tag, SelectedArtifact.AssetName, cancellationToken);
+            var package = await DownloadAssetWithFallbackAsync(_manifest.Tag, SelectedArtifact.AssetName, cancellationToken);
             Phase = UpdateOperationPhase.Verifying;
             StatusMessage = Text("M_StatusVerifying");
             VerifyArtifact(package, SelectedArtifact);
@@ -175,20 +183,15 @@ public sealed class UpdateCenterService(
             var packagePath = Path.Combine(updateDirectory, SelectedArtifact.Sha512.ToLowerInvariant() + extension);
             await File.WriteAllBytesAsync(packagePath + ".partial", package, cancellationToken);
             File.Move(packagePath + ".partial", packagePath, true);
+            _downloadedPackagePath = packagePath;
 
-            Phase = UpdateOperationPhase.Installing;
-            StatusMessage = Text("M_StatusPreparing");
-            if (ParsePackageKind(SelectedArtifact.Kind) == UpdatePackageKind.PortableZip)
-                await DeployPortableAsync(packagePath, SelectedArtifact, cancellationToken);
-            else
-                StartSystemInstaller(packagePath, ParsePackageKind(SelectedArtifact.Kind));
+            if (!installAfterDownload)
+            {
+                Phase = UpdateOperationPhase.ReadyToInstall;
+                StatusMessage = Text("M_StatusReadyToInstall");
+                return;
+            }
 
-            Phase = UpdateOperationPhase.Restarting;
-            StatusMessage = Text("M_StatusRestarting");
-            if (ParsePackageKind(SelectedArtifact.Kind) == UpdatePackageKind.PortableZip)
-                await App.Current.RestartThroughLauncherAsync();
-            else
-                App.Current.Stop();
         }
         catch (OperationCanceledException)
         {
@@ -200,6 +203,39 @@ public sealed class UpdateCenterService(
             logger.LogWarning(exception, "更新包完整性校验失败。");
             Phase = UpdateOperationPhase.VerificationFailed;
             StatusMessage = exception.Message;
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "应用更新失败。");
+            Phase = UpdateOperationPhase.InstallFailed;
+            StatusMessage = exception.Message;
+        }
+        finally
+        {
+            OnStateChanged();
+        }
+    }
+
+    public async Task ApplyDownloadedUpdateAsync()
+    {
+        if (_downloadedPackagePath is null || SelectedArtifact is null || IsBusy)
+            return;
+
+        try
+        {
+            Phase = UpdateOperationPhase.Installing;
+            StatusMessage = Text("M_StatusPreparing");
+            if (ParsePackageKind(SelectedArtifact.Kind) == UpdatePackageKind.PortableZip)
+                await DeployPortableAsync(_downloadedPackagePath, SelectedArtifact, CancellationToken.None);
+            else
+                StartSystemInstaller(_downloadedPackagePath, ParsePackageKind(SelectedArtifact.Kind));
+
+            Phase = UpdateOperationPhase.Restarting;
+            StatusMessage = Text("M_StatusRestarting");
+            if (ParsePackageKind(SelectedArtifact.Kind) == UpdatePackageKind.PortableZip)
+                await App.Current.RestartThroughLauncherAsync();
+            else
+                App.Current.Stop();
         }
         catch (Exception exception)
         {
@@ -295,7 +331,8 @@ public sealed class UpdateCenterService(
 
     private bool IsCompatibleArtifact(UpdateArtifact artifact)
     {
-        if (!string.Equals(artifact.Os, GetCurrentOs(), StringComparison.OrdinalIgnoreCase)
+        var os = GetCurrentOs();
+        if (os is null || !string.Equals(artifact.Os, os, StringComparison.OrdinalIgnoreCase)
             || !string.Equals(artifact.Arch, GetCurrentArchitecture(), StringComparison.OrdinalIgnoreCase))
             return false;
 
@@ -449,7 +486,60 @@ public sealed class UpdateCenterService(
 
     private UpdateChannel GetChannel() => configHandler.Data.UpdateSettings.UpdateChannel;
 
-    private UpdateSource GetSource() => configHandler.Data.UpdateSettings.UpdateSource;
+    private async Task<(UpdateSource Source, UpdateManifest Manifest)> GetManifestAsync(
+        UpdateChannel channel, CancellationToken cancellationToken)
+    {
+        Exception? lastException = null;
+        foreach (var source in GetSources(channel))
+        {
+            try
+            {
+                var tag = await GetChannelTagAsync(source, channel, cancellationToken);
+                var manifestBytes = await DownloadAssetAsync(source, tag, ManifestFileName, cancellationToken);
+                var signatureBytes = await DownloadAssetAsync(source, tag, SignatureFileName, cancellationToken);
+                return (source, VerifyAndDeserializeManifest(manifestBytes, signatureBytes, tag, channel));
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                lastException = exception;
+                logger.LogInformation(exception, "更新源 {Source} 不可用，尝试下一个来源。", source);
+            }
+        }
+
+        throw lastException ?? new InvalidOperationException(Text("M_NoUpdateSourceAvailable"));
+    }
+
+    private IEnumerable<UpdateSource> GetSources(UpdateChannel channel)
+    {
+        return [UpdateSource.Sectl, UpdateSource.GitHubMirror, UpdateSource.GitHub];
+    }
+
+    private async Task<byte[]> DownloadAssetWithFallbackAsync(string tag, string assetName, CancellationToken cancellationToken)
+    {
+        Exception? lastException = null;
+        foreach (var source in GetSources(GetChannel()).OrderBy(source => source == _activeSource ? 0 : 1))
+        {
+            try
+            {
+                return await DownloadAssetAsync(source, tag, assetName, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                lastException = exception;
+                logger.LogInformation(exception, "更新包来源 {Source} 不可用，尝试下一个来源。", source);
+            }
+        }
+
+        throw lastException ?? new InvalidOperationException(Text("M_NoUpdateSourceAvailable"));
+    }
 
     private static UpdatePackageKind ParsePackageKind(string value) => value.ToLowerInvariant() switch
     {
@@ -460,9 +550,9 @@ public sealed class UpdateCenterService(
         _ => throw new InvalidDataException(Text("M_UnknownPackageKind"))
     };
 
-    private static string GetCurrentOs() => OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsLinux() ? "linux" : "macos";
+    private static string? GetCurrentOs() => OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsLinux() ? "linux" : OperatingSystem.IsMacOS() ? "macos" : null;
     private static string GetCurrentArchitecture() => RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant() switch { "x64" => "x64", "x86" => "x86", "arm64" => "arm64", var value => value };
-    private static string GetCurrentRid() => OperatingSystem.IsWindows() ? $"win-{GetCurrentArchitecture()}" : OperatingSystem.IsLinux() ? $"linux-{GetCurrentArchitecture()}" : $"osx-{GetCurrentArchitecture()}";
+    private static string? GetCurrentRid() => OperatingSystem.IsWindows() ? $"win-{GetCurrentArchitecture()}" : OperatingSystem.IsLinux() ? $"linux-{GetCurrentArchitecture()}" : OperatingSystem.IsMacOS() ? $"osx-{GetCurrentArchitecture()}" : null;
 
     private static bool HasRequiredDesktopRuntime()
     {
@@ -495,7 +585,10 @@ public sealed class UpdateCenterService(
     private void OnStateChanged()
     {
         OnPropertyChanged(nameof(IsBusy));
-        OnPropertyChanged(nameof(CanInstall));
+        OnPropertyChanged(nameof(PrimaryActionText));
+        OnPropertyChanged(nameof(CanCheck));
+        OnPropertyChanged(nameof(CanDownloadAndInstall));
+        OnPropertyChanged(nameof(CanApplyUpdate));
         OnPropertyChanged(nameof(HasAvailableArtifacts));
     }
 

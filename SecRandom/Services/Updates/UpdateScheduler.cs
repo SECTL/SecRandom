@@ -11,6 +11,7 @@ namespace SecRandom.Services.Updates;
 public sealed class UpdateScheduler(
     MainConfigHandler configHandler,
     UpdateCenterService updateCenter,
+    IUpdateNotificationService updateNotificationService,
     ILogger<UpdateScheduler> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -22,15 +23,25 @@ public sealed class UpdateScheduler(
             try
             {
                 var settings = configHandler.Data.UpdateSettings;
-                var interval = settings.AutoUpdateMode switch
+                if (settings.AutoUpdateMode > 0
+                    && (!settings.LastCheckTime.HasValue || DateTime.Now - settings.LastCheckTime.Value >= TimeSpan.FromDays(1)))
                 {
-                    1 => TimeSpan.FromDays(1),
-                    2 => TimeSpan.FromDays(7),
-                    _ => TimeSpan.Zero
-                };
-                if (interval > TimeSpan.Zero && DateTime.Now - settings.LastCheckTime >= interval)
-                    await Dispatcher.UIThread.InvokeAsync(
-                        () => updateCenter.CheckAsync(), DispatcherPriority.Normal).ConfigureAwait(false);
+                    await Dispatcher.UIThread.InvokeAsync(async () =>
+                    {
+                        await updateCenter.CheckAsync();
+                        if (!updateCenter.CanDownloadAndInstall)
+                            return;
+                        if (settings.AutoUpdateMode == 1)
+                            await updateNotificationService.ShowUpdateAvailableAsync(updateCenter.AvailableVersion);
+                        else if (settings.AutoUpdateMode == 2)
+                            await updateCenter.DownloadAsync(installAfterDownload: false);
+                        else
+                        {
+                            await updateCenter.DownloadAsync(installAfterDownload: false);
+                            await updateCenter.ApplyDownloadedUpdateAsync();
+                        }
+                    }, DispatcherPriority.Normal).ConfigureAwait(false);
+                }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

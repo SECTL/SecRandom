@@ -12,6 +12,43 @@
              Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" Margin="0 0 0 12">
+                <sr:FluentIcon Grid.RowSpan="2"
+                                Glyph="{sr:Fi ArrowSyncFilled}"
+                               FontSize="40"
+                               Margin="0 0 10 0"
+                               VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding UpdateCenter.Status}"
+                           FontSize="22"
+                           FontWeight="Medium"
+                           TextWrapping="Wrap" />
+                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="0 4 0 0">
+                    <TextBlock Text="{x:Static lsp:Resources.S_Strategy_LastCheckTime}" Opacity="0.7" />
+                    <TextBlock Text="{Binding Settings.LastCheckTime, StringFormat={}{0:g}, TargetNullValue={x:Static lsp:Resources.M_StatusNotChecked}}" />
+                </StackPanel>
+            </Grid>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0 0 0 16">
+                <Button Classes="accent"
+                        Content="{Binding UpdateCenter.PrimaryActionText}"
+                        Click="CheckForUpdates"
+                        IsEnabled="{Binding UpdateCenter.CanCheck}" />
+                <Button Content="{x:Static lsp:Resources.C_InstallUpdate}"
+                        Click="InstallUpdate"
+                        IsVisible="{Binding UpdateCenter.CanApplyUpdate}" />
+            </StackPanel>
+            <ComboBox ItemsSource="{Binding UpdateCenter.AvailableArtifacts}"
+                      SelectedItem="{Binding UpdateCenter.SelectedArtifact, Mode=TwoWay}"
+                      IsVisible="{Binding UpdateCenter.HasAvailableArtifacts}"
+                      Margin="0 0 0 16">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding AssetName}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
             <sr:IconText x:Name="S_Strategy"
                          Text="{x:Static lsp:Resources.S_Strategy}"
                          Glyph="{sr:Fi ArrowSyncFilled}"
@@ -24,9 +61,9 @@
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.AutoUpdateMode}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_AutoUpdateMode_Off}" />
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_AutoUpdateMode_Daily}" />
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_AutoUpdateMode_Weekly}" />
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_AutoUpdateMode_Manual}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_AutoUpdateMode_Notify}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_AutoUpdateMode_Download}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_AutoUpdateMode_Install}" />
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
@@ -36,57 +73,17 @@
                                    Description="{x:Static lsp:Resources.S_Strategy_Channel_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi CloudFilled}}">
                 <fa:FASettingsExpander.Footer>
-                     <ComboBox SelectedIndex="{Binding SelectedChannelIndex}">
-                         <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateChannel_Stable}" />
-                         <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateChannel_Beta}" />
-                         <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateChannel_Alpha}" />
+                    <ComboBox SelectedIndex="{Binding SelectedChannelIndex}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateChannel_Stable}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateChannel_Beta}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateChannel_Alpha}" />
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander x:Name="S_Strategy_Source"
-                                   Header="{x:Static lsp:Resources.S_Strategy_Source}"
-                                   Description="{x:Static lsp:Resources.S_Strategy_Source_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi GlobeFilled}}">
-                <fa:FASettingsExpander.Footer>
-                     <ComboBox SelectedIndex="{Binding SelectedSourceIndex}">
-                         <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_GitHub}" />
-                         <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_Sectl}" />
-                          <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_GitHubMirror}" />
-                    </ComboBox>
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Check}"
-                                    Description="{x:Static lsp:Resources.S_Check_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <StackPanel Spacing="8">
-                         <StackPanel Orientation="Horizontal" Spacing="8">
-                              <Button Content="{x:Static lsp:Resources.C_CheckUpdates}" Click="CheckForUpdates" />
-                              <Button Content="{x:Static lsp:Resources.C_InstallUpdate}" Click="InstallUpdate" IsEnabled="{Binding UpdateCenter.CanInstall}" />
-                          </StackPanel>
-                          <ComboBox ItemsSource="{Binding UpdateCenter.AvailableArtifacts}"
-                                    SelectedItem="{Binding UpdateCenter.SelectedArtifact, Mode=TwoWay}"
-                                    IsVisible="{Binding UpdateCenter.HasAvailableArtifacts}">
-                              <ComboBox.ItemTemplate>
-                                  <DataTemplate>
-                                      <TextBlock Text="{Binding AssetName}" />
-                                  </DataTemplate>
-                              </ComboBox.ItemTemplate>
-                          </ComboBox>
-                          <TextBlock Text="{Binding UpdateCenter.Status}" TextWrapping="Wrap" />
-                    </StackPanel>
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander x:Name="S_Strategy_LastCheckTime"
-                                   Header="{x:Static lsp:Resources.S_Strategy_LastCheckTime}"
-                                   Description="{x:Static lsp:Resources.S_Strategy_LastCheckTime_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <TextBlock Text="{Binding Settings.LastCheckTime}" VerticalAlignment="Center" />
-                </fa:FASettingsExpander.Footer>
+                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_ForceCheckUpdates}"
+                                           Description="{x:Static lsp:Resources.C_ForceCheckUpdates_D}"
+                                           IsClickEnabled="True"
+                                           Click="ForceCheckForUpdates"
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}" />
             </fa:FASettingsExpander>
         </StackPanel>
     </ScrollViewer>
