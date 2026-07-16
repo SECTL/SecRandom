@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Layout;
 using Avalonia.Media;
 using SecRandom.Core.Models.SubConfigs;
 
@@ -91,7 +90,7 @@ public sealed class NotificationWindow : Window
 
     private Avalonia.Platform.Screen ResolveScreen(NotificationChannelSettings settings)
     {
-        if (!string.Equals(settings.EnabledMonitor, "OFF", StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(settings.EnabledMonitor))
         {
             var selected = Screens.All.FirstOrDefault(screen => string.Equals(
                 screen.DisplayName,

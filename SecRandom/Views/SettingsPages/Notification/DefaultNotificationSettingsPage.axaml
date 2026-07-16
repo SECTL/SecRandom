@@ -1,9 +1,130 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Notification"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:notification="clr-namespace:SecRandom.Views.SettingsPages.Notification"
-             x:Class="SecRandom.Views.SettingsPages.Notification.DefaultNotificationSettingsPage">
+             x:Class="SecRandom.Views.SettingsPages.Notification.DefaultNotificationSettingsPage"
+             x:DataType="notification:DefaultNotificationSettingsPage">
     <ScrollViewer>
-        <notification:NotificationChannelSettingsContent />
+        <StackPanel Classes="page-container animated-intro">
+            <sr:IconText Text="{Binding BasicSettingsTitle}" Glyph="{sr:Fi SettingsFilled}" Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander Header="{Binding EnabledTitle}"
+                                   Description="{Binding EnabledDescription}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi CommentNoteFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding ChannelSettings.Enabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{Binding AnimationTitle}"
+                                   Description="{Binding AnimationDescription}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding ChannelSettings.Animation}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{Binding AutoCloseTimeTitle}"
+                                   Description="{Binding AutoCloseTimeDescription}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimerFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <NumericUpDown Value="{Binding ChannelSettings.AutoCloseTime}" Minimum="1" Maximum="60" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText Text="{Binding NotificationWindowSettingsTitle}" Glyph="{sr:Fi WindowFilled}" Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander Header="{Binding WindowPositionTitle}"
+                                   Description="{Binding WindowPositionDescription}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding ChannelSettings.WindowPosition}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_WindowPosition_Center}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_WindowPosition_Top}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_WindowPosition_Bottom}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_WindowPosition_Left}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_WindowPosition_Right}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{Binding EnabledMonitorTitle}"
+                                   Description="{Binding EnabledMonitorDescription}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox ItemsSource="{Binding MonitorOptions}"
+                              SelectedItem="{Binding SelectedMonitor, Mode=TwoWay}"
+                              PlaceholderText="{x:Static lsp:Resources.O_Monitor_Unspecified}"
+                              MinWidth="180">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Label}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{Binding OffsetTitle}"
+                                   Description="{Binding OffsetDescription}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PositionToBackFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <NumericUpDown Value="{Binding ChannelSettings.HorizontalOffset}" Minimum="-2000" Maximum="2000" />
+                        <NumericUpDown Value="{Binding ChannelSettings.VerticalOffset}" Minimum="-2000" Maximum="2000" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{Binding TransparencyTitle}"
+                                   Description="{Binding TransparencyDescription}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <NumericUpDown Value="{Binding ChannelSettings.Transparency}" Minimum="20" Maximum="100" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText Text="{Binding NotificationServiceTitle}" Glyph="{sr:Fi CommentNoteFilled}" Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander Header="{Binding NotificationServiceTypeTitle}"
+                                   Description="{Binding NotificationServiceTypeDescription}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi CommentNoteFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding ChannelSettings.NotificationServiceType}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_NotificationService_SecRandom}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_NotificationService_ClassIsland}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_NotificationService_Both}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{Binding DisplayDurationTitle}"
+                                   Description="{Binding DisplayDurationDescription}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimePickerFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <NumericUpDown Value="{Binding ChannelSettings.DisplayDuration}" Minimum="1" Maximum="60" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{Binding UseMainWindowWhenExceedThresholdTitle}"
+                                   Description="{Binding UseMainWindowWhenExceedThresholdDescription}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding ChannelSettings.UseMainWindowWhenExceedThreshold}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{Binding MainWindowDisplayThresholdTitle}"
+                                   Description="{Binding MainWindowDisplayThresholdDescription}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi NumberSymbolFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <NumericUpDown Value="{Binding ChannelSettings.MainWindowDisplayThreshold}" Minimum="1" Maximum="100" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+        </StackPanel>
     </ScrollViewer>
 </UserControl>

@@ -4,12 +4,12 @@
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
              xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Notification"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-             xmlns:notification="clr-namespace:SecRandom.Views.SettingsPages.Notification"
-             x:Class="SecRandom.Views.SettingsPages.Notification.NotificationChannelSettingsContent"
-             x:DataType="notification:NotificationChannelSettingsPageBase">
+              xmlns:notification="clr-namespace:SecRandom.Views.SettingsPages.Notification"
+              x:Class="SecRandom.Views.SettingsPages.Notification.NotificationChannelSettingsContent"
+              x:DataType="notification:NotificationChannelSettingsPageBase">
     <StackPanel Classes="page-container animated-intro">
-        <sr:IconText Text="{Binding ChannelTitle}"
-                     Glyph="{sr:Fi CommentNoteFilled}"
+        <sr:IconText Text="{Binding BasicSettingsTitle}"
+                     Glyph="{sr:Fi SettingsFilled}"
                      Margin="0 0 0 4" />
 
         <fa:FASettingsExpander Header="{Binding BasicSettingsTitle}"
@@ -44,6 +44,11 @@
             </fa:FASettingsExpanderItem>
         </fa:FASettingsExpander>
 
+        <Separator Margin="0 12 0 4" />
+        <sr:IconText Text="{Binding NotificationWindowSettingsTitle}"
+                     Glyph="{sr:Fi WindowFilled}"
+                     Margin="0 0 0 4" />
+
         <fa:FASettingsExpander Header="{Binding NotificationWindowSettingsTitle}"
                                IsExpanded="{Binding OverrideNotificationWindowSettings, Mode=OneWay}"
                                IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
@@ -71,8 +76,15 @@
                                        Description="{Binding EnabledMonitorDescription}">
                 <fa:FASettingsExpanderItem.Footer>
                     <ComboBox ItemsSource="{Binding MonitorOptions}"
-                              SelectedItem="{Binding ChannelSettings.EnabledMonitor}"
-                              MinWidth="180" />
+                              SelectedItem="{Binding SelectedMonitor, Mode=TwoWay}"
+                              PlaceholderText="{x:Static lsp:Resources.O_Monitor_Unspecified}"
+                              MinWidth="180">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Label}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
 
@@ -93,6 +105,11 @@
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
         </fa:FASettingsExpander>
+
+        <Separator Margin="0 12 0 4" />
+        <sr:IconText Text="{Binding NotificationServiceTitle}"
+                     Glyph="{sr:Fi CommentNoteFilled}"
+                     Margin="0 0 0 4" />
 
         <fa:FASettingsExpander Header="{Binding NotificationServiceTitle}"
                                IsExpanded="{Binding OverrideServiceSettings, Mode=OneWay}"

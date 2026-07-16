@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Core.Enums;
@@ -36,7 +37,14 @@ public partial class MainConfigModel : ConfigBase
     [ObservableProperty] private LotterySettingsConfig _lotterySettings = new();
 
     [ObservableProperty] private FloatingWindowSettingsConfig _floatingWindowSettings = new();
-    [ObservableProperty] private NotificationSettingsConfig _notificationSettings = new();
+    private NotificationSettingsConfig _notificationSettings = new();
+
+    [AllowNull]
+    public NotificationSettingsConfig NotificationSettings
+    {
+        get => _notificationSettings;
+        set => SetProperty(ref _notificationSettings, value ?? new NotificationSettingsConfig());
+    }
     [ObservableProperty] private SecuritySettingsConfig _securitySettings = new();
     [ObservableProperty] private LinkageSettingsConfig _linkageSettings = new();
     [ObservableProperty] private VoiceSettingsConfig _voiceSettings = new();

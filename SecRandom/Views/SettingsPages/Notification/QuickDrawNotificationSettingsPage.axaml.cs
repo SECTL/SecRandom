@@ -18,7 +18,6 @@ public partial class QuickDrawNotificationSettingsPage : NotificationChannelSett
         return settings.QuickDraw;
     }
 
-    public override string ChannelTitle => LR.S_QuickDraw;
     public override string EnabledTitle => LR.S_QuickDraw_Enabled;
     public override string EnabledDescription => LR.S_QuickDraw_Enabled_D;
     public override string AnimationTitle => LR.S_QuickDraw_Animation;

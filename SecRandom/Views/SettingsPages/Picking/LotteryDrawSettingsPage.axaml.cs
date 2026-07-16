@@ -29,8 +29,8 @@ public partial class LotteryDrawSettingsPage : UserControl
         RefreshPrizeLists();
         DataContext = this;
         InitializeComponent();
-        NormalizeDrawSettings();
         SubscribeSettings();
+        NormalizeDrawSettings();
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
@@ -81,7 +81,7 @@ public partial class LotteryDrawSettingsPage : UserControl
 
     private void NormalizeDrawSettings()
     {
-        if (_normalizingSettings)
+        if (SettingsView.Current?.IsPreviewMode == true || _normalizingSettings)
             return;
 
         _normalizingSettings = true;

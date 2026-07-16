@@ -1,4 +1,6 @@
+using System.Reflection;
 using SecRandom.Services.Desktop;
+using SecRandom.Services.Ipc;
 
 namespace SecRandom.Core.Tests;
 
@@ -36,5 +38,16 @@ public class ProtocolActivationTests
 
         Assert.NotNull(ProtocolActivation.ConsumeStartupUri());
         Assert.Null(ProtocolActivation.ConsumeStartupUri());
+    }
+
+    [Fact]
+    public void LegacyNotificationSettingsRouteTargetsRegisteredDefaultPage()
+    {
+        var field = typeof(ProtocolCommandRouter).GetField(
+            "SettingsPages",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        var pages = Assert.IsType<Dictionary<string, string>>(field?.GetValue(null));
+
+        Assert.Equal("settings.notification.default", pages["notificationsettingsinterface"]);
     }
 }

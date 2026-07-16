@@ -1,6 +1,6 @@
-using System.ComponentModel;
 using System.Collections.ObjectModel;
-using Avalonia;
+using System.ComponentModel;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
@@ -11,11 +11,14 @@ using LR = SecRandom.Langs.SettingsPages.Notification.Resources;
 
 namespace SecRandom.Views.SettingsPages.Notification;
 
-public abstract class NotificationChannelSettingsPageBase : UserControl
+public abstract class NotificationChannelSettingsPageBase : UserControl, INotifyPropertyChanged
 {
     protected NotificationChannelSettingsPageBase()
     {
         ChannelSettings = SelectChannelSettings(ViewModel.Config.NotificationSettings);
+        MonitorOptions = [new MonitorOption("", Text("Not specified", "O_Monitor_Unspecified"))];
+        if (!string.IsNullOrWhiteSpace(ChannelSettings.EnabledMonitor))
+            MonitorOptions.Add(new MonitorOption(ChannelSettings.EnabledMonitor, ChannelSettings.EnabledMonitor));
         DataContext = this;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
@@ -23,16 +26,36 @@ public abstract class NotificationChannelSettingsPageBase : UserControl
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public NotificationChannelSettings ChannelSettings { get; }
-    public ObservableCollection<string> MonitorOptions { get; } = ["OFF"];
+    public ObservableCollection<MonitorOption> MonitorOptions { get; }
+    public MonitorOption? SelectedMonitor
+    {
+        get => MonitorOptions.FirstOrDefault(option => option.Value == ChannelSettings.EnabledMonitor);
+        set
+        {
+            if (value is null || value.Value == ChannelSettings.EnabledMonitor)
+                return;
+
+            ChannelSettings.EnabledMonitor = value.Value;
+        }
+    }
     public OverridableNotificationChannelSettings? OverrideSettings => ChannelSettings as OverridableNotificationChannelSettings;
     public bool CanOverride => OverrideSettings is not null;
+    private event PropertyChangedEventHandler? NotifyPropertyChanged;
+    event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
+    {
+        add => NotifyPropertyChanged += value;
+        remove => NotifyPropertyChanged -= value;
+    }
     public bool OverrideBasicSettings
     {
         get => OverrideSettings?.OverrideBasicSettings ?? true;
         set
         {
-            if (OverrideSettings is not null)
-                OverrideSettings.OverrideBasicSettings = value;
+            if (OverrideSettings is null || OverrideSettings.OverrideBasicSettings == value)
+                return;
+
+            OverrideSettings.OverrideBasicSettings = value;
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OverrideBasicSettings)));
         }
     }
     public bool OverrideNotificationWindowSettings
@@ -40,8 +63,11 @@ public abstract class NotificationChannelSettingsPageBase : UserControl
         get => OverrideSettings?.OverrideNotificationWindowSettings ?? true;
         set
         {
-            if (OverrideSettings is not null)
-                OverrideSettings.OverrideNotificationWindowSettings = value;
+            if (OverrideSettings is null || OverrideSettings.OverrideNotificationWindowSettings == value)
+                return;
+
+            OverrideSettings.OverrideNotificationWindowSettings = value;
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OverrideNotificationWindowSettings)));
         }
     }
     public bool OverrideServiceSettings
@@ -49,11 +75,13 @@ public abstract class NotificationChannelSettingsPageBase : UserControl
         get => OverrideSettings?.OverrideServiceSettings ?? true;
         set
         {
-            if (OverrideSettings is not null)
-                OverrideSettings.OverrideServiceSettings = value;
+            if (OverrideSettings is null || OverrideSettings.OverrideServiceSettings == value)
+                return;
+
+            OverrideSettings.OverrideServiceSettings = value;
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OverrideServiceSettings)));
         }
     }
-    public abstract string ChannelTitle { get; }
     public virtual string BasicSettingsTitle => Text(nameof(BasicSettingsTitle), "S_Common_BasicSettings");
     public virtual string NotificationWindowSettingsTitle => Text(nameof(NotificationWindowSettingsTitle), "S_Common_NotificationWindowSettings");
     public virtual string OverrideTitle => Text(nameof(OverrideTitle), "C_EnableOverride");
@@ -71,17 +99,6 @@ public abstract class NotificationChannelSettingsPageBase : UserControl
     public abstract string OffsetDescription { get; }
     public abstract string TransparencyTitle { get; }
     public abstract string TransparencyDescription { get; }
-    public virtual string FloatingWindowTitle => Text(nameof(FloatingWindowTitle), "S_Common_FloatingWindow");
-    public virtual string FloatingWindowEnabledMonitorTitle => Text(nameof(FloatingWindowEnabledMonitorTitle), "S_Common_FloatingWindowEnabledMonitor");
-    public virtual string FloatingWindowEnabledMonitorDescription => Text(nameof(FloatingWindowEnabledMonitorDescription), "S_Common_FloatingWindowEnabledMonitor_D");
-    public virtual string FloatingWindowPositionTitle => Text(nameof(FloatingWindowPositionTitle), "S_Common_FloatingWindowPosition");
-    public virtual string FloatingWindowPositionDescription => Text(nameof(FloatingWindowPositionDescription), "S_Common_FloatingWindowPosition_D");
-    public virtual string FloatingWindowOffsetTitle => Text(nameof(FloatingWindowOffsetTitle), "S_Common_FloatingWindowOffset");
-    public virtual string FloatingWindowOffsetDescription => Text(nameof(FloatingWindowOffsetDescription), "S_Common_FloatingWindowOffset_D");
-    public virtual string FloatingWindowTransparencyTitle => Text(nameof(FloatingWindowTransparencyTitle), "S_Common_FloatingWindowTransparency");
-    public virtual string FloatingWindowTransparencyDescription => Text(nameof(FloatingWindowTransparencyDescription), "S_Common_FloatingWindowTransparency_D");
-    public virtual string FloatingWindowAutoCloseTimeTitle => Text(nameof(FloatingWindowAutoCloseTimeTitle), "S_Common_FloatingWindowAutoCloseTime");
-    public virtual string FloatingWindowAutoCloseTimeDescription => Text(nameof(FloatingWindowAutoCloseTimeDescription), "S_Common_FloatingWindowAutoCloseTime_D");
     public virtual string NotificationServiceTitle => Text(nameof(NotificationServiceTitle), "S_Common_NotificationService");
     public virtual string NotificationServiceTypeTitle => Text(nameof(NotificationServiceTypeTitle), "S_Common_NotificationServiceType");
     public virtual string NotificationServiceTypeDescription => Text(nameof(NotificationServiceTypeDescription), "S_Common_NotificationServiceType_D");
@@ -112,24 +129,29 @@ public abstract class NotificationChannelSettingsPageBase : UserControl
         ChannelSettings.PropertyChanged += SettingsOnPropertyChanged;
 
         var selectedMonitor = ChannelSettings.EnabledMonitor;
-        MonitorOptions.Clear();
-        MonitorOptions.Add("OFF");
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel?.Screens is not null)
         {
             foreach (var screen in topLevel.Screens.All)
             {
-                if (!string.IsNullOrWhiteSpace(screen.DisplayName))
-                    MonitorOptions.Add(screen.DisplayName);
+                if (!string.IsNullOrWhiteSpace(screen.DisplayName)
+                    && MonitorOptions.All(option => option.Value != screen.DisplayName))
+                    MonitorOptions.Add(new MonitorOption(screen.DisplayName, screen.DisplayName));
             }
         }
 
-        if (!MonitorOptions.Contains(selectedMonitor))
-            MonitorOptions.Add(selectedMonitor);
+        if (!string.IsNullOrWhiteSpace(selectedMonitor)
+            && MonitorOptions.All(option => option.Value != selectedMonitor))
+            MonitorOptions.Add(new MonitorOption(selectedMonitor, selectedMonitor));
+
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(NotificationChannelSettings.EnabledMonitor))
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedMonitor)));
         ConfigHandler.Save();
     }
 }
+
+public sealed record MonitorOption(string Value, string Label);

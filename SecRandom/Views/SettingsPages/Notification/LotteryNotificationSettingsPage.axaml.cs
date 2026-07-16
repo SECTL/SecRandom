@@ -18,7 +18,6 @@ public partial class LotteryNotificationSettingsPage : NotificationChannelSettin
         return settings.Lottery;
     }
 
-    public override string ChannelTitle => LR.S_Lottery;
     public override string EnabledTitle => LR.S_Lottery_Enabled;
     public override string EnabledDescription => LR.S_Lottery_Enabled_D;
     public override string AnimationTitle => LR.S_Lottery_Animation;

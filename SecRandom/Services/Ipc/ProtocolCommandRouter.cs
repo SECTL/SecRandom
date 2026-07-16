@@ -38,7 +38,7 @@ public sealed class ProtocolCommandRouter(
         ["listmanagementinterface"] = "settings.listManagement.rollCallList",
         ["extractionsettingsinterface"] = "settings.picking.default",
         ["floatingwindowmanagementinterface"] = "settings.personalized.floatingWindow",
-        ["notificationsettingsinterface"] = "settings.notification.legacy",
+        ["notificationsettingsinterface"] = "settings.notification.default",
         ["safetysettingsinterface"] = "settings.general.security",
         ["customsettingsinterface"] = "settings.more", ["moresettingsinterface"] = "settings.more",
         ["voicesettingsinterface"] = "settings.notification.voiceMusic",

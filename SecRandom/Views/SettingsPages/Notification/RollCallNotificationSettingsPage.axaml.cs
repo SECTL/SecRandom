@@ -18,7 +18,6 @@ public partial class RollCallNotificationSettingsPage : NotificationChannelSetti
         return settings.RollCall;
     }
 
-    public override string ChannelTitle => LR.S_RollCall;
     public override string EnabledTitle => LR.S_RollCall_Enabled;
     public override string EnabledDescription => LR.S_RollCall_Enabled_D;
     public override string AnimationTitle => LR.S_RollCall_Animation;

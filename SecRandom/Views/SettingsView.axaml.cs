@@ -22,12 +22,14 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Extensions;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Models;
 using SecRandom.Services.ImportExport;
+using SecRandom.Services.Security;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
@@ -63,6 +65,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     public static SettingsView? Current { get; private set; }
     public static AutoCompleteFilterPredicate<object?> SettingsFilterProperty => SearchFilter;
 
+    public bool IsPreviewMode => _isPreviewMode;
     public SettingsViewModel ViewModel { get; } = IAppHost.GetService<SettingsViewModel>();
     private IImportExportService ImportExportService { get; } = IAppHost.GetService<IImportExportService>();
 
@@ -277,7 +280,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
 
     private async Task ShowRestartDialog()
     {
-        if (_isShowingRestartDialog) return;
+        if (_isPreviewMode || _isShowingRestartDialog) return;
         _isShowingRestartDialog = true;
 
         var r = await new FAContentDialog
@@ -293,7 +296,13 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         if (r != FAContentDialogResult.Primary)
             return;
 
-        App.Current.Restart();
+        await IAppHost.GetService<ISecurityService>().AuthorizeAsync(
+            SecurityOperation.RestartApplication,
+            () =>
+            {
+                App.Current.Restart();
+                return Task.CompletedTask;
+            });
     }
 
     private void ButtonRestartApp_OnClick(object? sender, RoutedEventArgs e)

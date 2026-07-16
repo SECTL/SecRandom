@@ -18,7 +18,6 @@ public partial class DefaultNotificationSettingsPage : NotificationChannelSettin
         return settings.Default;
     }
 
-    public override string ChannelTitle => Text(nameof(ChannelTitle), "S_Default");
     public override string EnabledTitle => Text(nameof(EnabledTitle), "S_Default_Enabled");
     public override string EnabledDescription => Text(nameof(EnabledDescription), "S_Default_Enabled_D");
     public override string AnimationTitle => Text(nameof(AnimationTitle), "S_Default_Animation");

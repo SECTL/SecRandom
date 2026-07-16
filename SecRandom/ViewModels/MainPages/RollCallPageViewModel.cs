@@ -310,7 +310,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             catch (Exception exception)
             {
                 _logger.LogWarning(exception, "可验证点名抽取失败。");
-                await _drawAudioService.StopAnimationMusicAsync(0, immediate: true).ConfigureAwait(false);
+                await (_drawAudioService?.StopAnimationMusicAsync(0, immediate: true) ?? Task.CompletedTask)
+                    .ConfigureAwait(false);
                 ClearUncommittedPreview();
                 StatusText = SR.M_DrawFailed;
                 return;

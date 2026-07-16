@@ -40,12 +40,14 @@ public sealed class NotificationService
             return;
 
         var service = config.GetOverrideNotificationSettings(type, OverridableNotificationSettingsType.Service);
-        if (service.UseMainWindowWhenExceedThreshold
-            && items.Count > Math.Clamp(service.MainWindowDisplayThreshold, 1, 100))
+        var useMainWindow = service.UseMainWindowWhenExceedThreshold
+                            && items.Count > Math.Clamp(service.MainWindowDisplayThreshold, 1, 100);
+        if (useMainWindow)
         {
             Dispatcher.UIThread.Post(App.ShowMainWindow);
             return;
         }
+
         var useBuiltIn = service.NotificationServiceType is 0 or 2;
         var useClassIsland = service.NotificationServiceType is 1 or 2;
         var classIslandDelivered = useClassIsland && await SendToClassIslandAsync(type, title, items, service);

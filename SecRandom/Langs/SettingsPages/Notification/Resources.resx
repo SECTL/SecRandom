@@ -286,7 +286,7 @@
     <value>通知显示器</value>
   </data>
   <data name="S_Common_EnabledMonitor_D" xml:space="preserve">
-    <value>指定通知窗口显示在哪个显示器，OFF 表示不指定。</value>
+    <value>指定通知窗口显示在哪个显示器；不指定时使用主显示器。</value>
   </data>
   <data name="S_Common_FloatingWindow" xml:space="preserve">
     <value>内置通知浮窗</value>
@@ -295,7 +295,7 @@
     <value>浮窗显示器</value>
   </data>
   <data name="S_Common_FloatingWindowEnabledMonitor_D" xml:space="preserve">
-    <value>指定内置通知浮窗显示在哪个显示器，OFF 表示不指定。</value>
+    <value>指定内置通知浮窗显示在哪个显示器；不指定时使用主显示器。</value>
   </data>
   <data name="S_Common_FloatingWindowPosition" xml:space="preserve">
     <value>浮窗位置</value>
@@ -338,5 +338,8 @@
   </data>
   <data name="C_EnableOverride" xml:space="preserve">
     <value>启用覆盖</value>
+  </data>
+  <data name="O_Monitor_Unspecified" xml:space="preserve">
+    <value>不指定</value>
   </data>
 </root>

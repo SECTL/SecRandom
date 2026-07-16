@@ -85,6 +85,15 @@ namespace SecRandom.Langs.SettingsPages.Notification {
                 return ResourceManager.GetString("O_NotificationService_SecRandom", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 不指定.
+        /// </summary>
+        public static string O_Monitor_Unspecified {
+            get {
+                return ResourceManager.GetString("O_Monitor_Unspecified", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to 底部.
@@ -186,7 +195,7 @@ namespace SecRandom.Langs.SettingsPages.Notification {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 指定通知窗口显示在哪个显示器，OFF 表示不指定。.
+        ///   Looks up a localized string similar to 指定通知窗口显示在哪个显示器；不指定时使用主显示器。.
         /// </summary>
         public static string S_Common_EnabledMonitor_D {
             get {
@@ -231,7 +240,7 @@ namespace SecRandom.Langs.SettingsPages.Notification {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 指定内置通知浮窗显示在哪个显示器，OFF 表示不指定。.
+        ///   Looks up a localized string similar to 指定内置通知浮窗显示在哪个显示器；不指定时使用主显示器。.
         /// </summary>
         public static string S_Common_FloatingWindowEnabledMonitor_D {
             get {
