@@ -285,33 +285,6 @@ namespace SecRandom.Langs.SettingsPages.More {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 音乐.
-        /// </summary>
-        public static string S_Music {
-            get {
-                return ResourceManager.GetString("S_Music", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 背景音乐循环.
-        /// </summary>
-        public static string S_Music_BackgroundLoop {
-            get {
-                return ResourceManager.GetString("S_Music_BackgroundLoop", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 抽取动画音乐播放时循环背景音乐。.
-        /// </summary>
-        public static string S_Music_BackgroundLoop_D {
-            get {
-                return ResourceManager.GetString("S_Music_BackgroundLoop_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 页面管理.
         /// </summary>
         public static string S_PageManagement {

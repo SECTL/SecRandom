@@ -1,205 +1,128 @@
 <div align="center">
 
-<image src="../resources/secrandom-icon-paper.png" height="128"/>
+<img src="secrandom-icon-paper.png" width="128" height="128" alt="SecRandom" />
 
-# SecRandom - Fair Random Selection System
+# SecRandom
 
-🎯 **Truly Fair Random Selection Algorithm** | 🚀 **Modern Educational Tools** | 🎨 **Elegant Interactive Experience**
-
-> The Readme you are currently reading is **translated by AI** and reviewed by our developers. If you find any errors, please report it.
-</div>
-
-<!-- Project Status Badges -->
-<div align="center">
+**A random-selection tool for classrooms and teams, with configurable workflows, managed history, and verifiable draw records.**
 
 [![GitHub Issues](https://img.shields.io/github/issues-search/SECTL/SecRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=Issues)](https://github.com/SECTL/SecRandom/issues)
 [![Latest Release](https://img.shields.io/github/v/release/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=Latest%20Release)](https://github.com/SECTL/SecRandom/releases/latest)
-[![Latest Beta](https://img.shields.io/github/v/release/SECTL/SecRandom?include_prereleases&style=for-the-badge&label=Beta)](https://github.com/SECTL/SecRandom/releases/)
+[![Pre-release](https://img.shields.io/github/v/release/SECTL/SecRandom?include_prereleases&style=for-the-badge&label=Pre-release)](https://github.com/SECTL/SecRandom/releases)
 [![Last Update](https://img.shields.io/github/last-commit/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=Last%20Update)](https://github.com/SECTL/SecRandom/commits/master)
-[![Downloads](https://img.shields.io/github/downloads/SECTL/SecRandom/total?style=for-the-badge&color=00b4ab&label=Total%20Downloads)](https://github.com/SECTL/SecRandom/releases)
+[![Downloads](https://img.shields.io/github/downloads/SECTL/SecRandom/total?style=for-the-badge&color=00b4ab&label=Downloads)](https://github.com/SECTL/SecRandom/releases)
 
-[![QQ Group](https://img.shields.io/badge/-QQ%20Group%7C833875216-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/iWcfaPHn7W)
-[![bilibili](https://img.shields.io/badge/-Bilibili%7C%E9%BB%8E%E6%B3%BD%E6%87%BF-%23FB7299?style=for-the-badge&logo=bilibili)](https://space.bilibili.com/520571577)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](https://opensource.org/licenses/GPL-3.0)
+[![QQ Group](https://img.shields.io/badge/-QQ%20Group%20%7C%20833875216-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/iWcfaPHn7W)
+[![Bilibili](https://img.shields.io/badge/-Bilibili%20%7C%20%E9%BB%8E%E6%B3%BD%E6%87%BF-%23FB7299?style=for-the-badge&logo=bilibili)](https://space.bilibili.com/520571577)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](../LICENSE)
 
-**Language** [ [简体中文](../README.md) | **✔English** | [繁體中文](./README_ZH_TW.md) ]
+**Language** [ [简体中文](../README.md) | **English** | [日本語](README_JA.md) ]
+
 </div>
 
 <div align="center">
 
-![Code Contribution Statistics](https://repobeats.axiom.co/api/embed/7d42538bcd781370672c00b6b6ecd5282802ee3d.svg "Code Contribution Statistics Chart")
+![Code contribution statistics](https://repobeats.axiom.co/api/embed/7d42538bcd781370672c00b6b6ecd5282802ee3d.svg "Code contribution statistics")
 
 </div>
 
 > [!NOTE]
->
-> SecRandom will be open source under the GNU GPLv3 license
->
-> GNU GPLv3 has Copyleft characteristics, which means you can modify the source code of SecRandom, but **must also open source the modified version under the GNU GPLv3 license**
----------
+> SecRandom is released under GNU GPLv3. You may modify and redistribute the source, but derivative redistributions must also use GNU GPLv3.
 
-## 📖 Table of Contents
+## SecRandom v3
 
-- [SecRandom - Fair Random Selection System](#secrandom---fair-random-selection-system)
-  - [📖 Table of Contents](#-table-of-contents)
-  - [🎯 Why Choose Fair Selection](#-why-choose-fair-selection)
-  - [🌟 Core Features](#-core-features)
-    - [🎯 Intelligent Fair Selection System](#-intelligent-fair-selection-system)
-    - [🎨 Modern User Experience](#-modern-user-experience)
-    - [🚀 Powerful Feature Set](#-powerful-feature-set)
-    - [💻 System Compatibility](#-system-compatibility)
-  - [📥 Download](#-download)
-    - [🌐 Official Download Page](#-official-download-page)
-  - [📸 Software Screenshots](#-software-screenshots)
-  - [🙏 Contributors and Special Thanks](#-contributors-and-special-thanks)
-  - [Third-Party Dependencies and Code](#third-party-dependencies-and-code)
-    - [PythonNET-Stubs-Generator](#pythonnet-stubs-generator)
-  - [💝 Support Us](#-support-us)
-    - [Afdian Support](#afdian-support)
-  - [📞 Contact](#-contact)
-  - [📄 Official Documentation](#-official-documentation)
-  - [Contributing Guidelines and Actions Build Workflow](#contributing-guidelines-and-actions-build-workflow)
-  - [✨ Star History](#-star-history)
+SecRandom v3 is a desktop application for classroom, class, and team random selection. It unifies roll call, quick draw, and prize drawing under one profile, history, and settings system, with inspectable draw proofs.
 
-## 🎯 Why Choose Fair Selection
+History-balanced weights and candidate filters help reduce repeat selections and improve long-term distribution. They do not replace management of real-world rosters, rules, or processes, and SecRandom does not claim to verify those conditions.
 
-Traditional random selection often has the problem of "repeatedly selecting certain people while others are rarely selected". SecRandom uses an **intelligent dynamic weight algorithm** combined with **average gap protection mechanism** to ensure every member gets a fair chance of being selected:
+## Features
 
-- **Avoid Repeated Selection**: The more times someone is selected, the lower their probability of being selected again
-- **Balance Group Opportunities**: Ensure members from different groups have equal selection opportunities
-- **Gender Balance Consideration**: Balance selection frequency of different genders during the selection process
-- **Cold Start Protection**: New members or those who haven't been selected for a long time won't lose opportunities due to low weight
-- **Average Filtering**: Only allow members with selection count ≤ average to enter the candidate pool, avoiding over-selection
-- **Maximum Gap Protection**: When the gap between max and min selection counts exceeds the threshold, exclude extremes and recalculate to ensure fairness
-- **Candidate Pool Size Guarantee**: Ensure the candidate pool is not smaller than the set minimum size, avoiding single-person dead loops
-- **Probability Visualization**: Real-time display of each member's selection probability, making the process transparent and trustworthy
+### Draw workflows
 
-## 🌟 Core Features
+- **Roll call**: Standard random and history-balanced draws with configurable repeat, no-repeat, and partial-repeat rules.
+- **Quick draw**: Fast student draws from a standalone floating window without taking over the main workspace.
+- **Lottery**: Prize-wheel and inventory-count drawing modes; student and prize pools maintain separate histories.
+- **Presentation**: Shared draw animation, result display, speech, music, and notification settings. The built-in notification can fall back when an external notification service fails.
 
-### 🎯 Intelligent Fair Selection System
+### History balance and lists
 
-- ✅ **Dynamic Weighting Algorithm**: Intelligently calculates weights based on multiple dimensions including selection count, group, and gender, ensuring every member gets a truly fair chance
-- ✅ **Cold Start Protection Mechanism**: Provides weight protection for new members or those who haven't been selected for a long time, avoiding missed opportunities due to low initial weight
-- ✅ **Average Gap Protection**: Combines dual mechanisms of average filtering and maximum gap protection to effectively avoid extremely uneven selection results
-- ✅ **Flexible Configuration Options**: Supports customizing core parameters like gap threshold and minimum candidate pool size to meet different scenario needs
-- ✅ **Real-time Probability Visualization**: Intuitively displays probability changes for each member being selected, making the selection process completely transparent and trustworthy
+- Configurable weights consider history count, time since a previous result, group, and gender context, with cold-start and gap protections.
+- Stable internal record identities preserve history; displayed student numbers, IDs, and names are metadata rather than required unique identities.
+- Multiple student lists and prize pools with `.xlsx`, `.xls`, and `.csv` import, field mapping, and preview.
+- Every logical draw round is retained for review and management by profile and draw type.
 
-### 🎨 Modern User Experience
+### Fair selection
 
-- ✅ **Fluent Design Elegant Interface**: Adopts Microsoft Fluent Design language, supporting automatic light/dark theme switching
-- ✅ **Convenient Floating Window Mode**: Can call up a small floating window for quick selection at any time, without affecting current workflow
-- ✅ **Smart Voice Announcement**: Automatically voice broadcasts selection results, supporting multiple voice engines and custom voice settings
+Fair selection combines a cryptographic random source with candidate weights derived from personal draw history, time since the last result, group and gender distribution. Cold-start, average-gap, and candidate-pool protections help reduce repeated selections and long-term imbalance. Its results depend on the list, rules, and configuration; it does not make absolute claims about real-world fairness.
 
-### 🚀 Powerful Feature Set
+### Verifiable draws
 
-- ✅ **Diverse Selection Modes**: Supports single selection, multiple selection, group selection, gender selection, etc., meeting different scenario needs
-- ✅ **Smart History Records**: Automatically records detailed information such as selection time and results, supporting conditional filtering and automatic cleanup of expired records
-- ✅ **Multi-list Management System**: Supports importing/exporting Excel lists, easily managing member information for multiple classes or teams
+- Ordinary draws immediately save a locally replayable `.srproof.json` proof containing algorithm/input summaries, results, and required anonymous audit data.
+- A newly created proof may be submitted once in the background for replay verification and a signed receipt. Proofs can be exported and retained under age and storage limits.
+- Formal online witnessing is an explicit option: the service locks an anonymous request, then creates server-side random material and returns an `OnlineWitnessed` proof.
 
-### 💻 System Compatibility
+### Data, privacy, and security
 
-- ✅ **Cross-platform Support**: Perfectly compatible with Windows 7/10/11 systems and mainstream Linux distributions
-- ✅ **Multi-architecture Adaptation**: Natively supports x64 and x86 architectures, adapting to different hardware environments
-- ✅ **Startup on Boot Function**: Supports setting automatic startup on boot, always available (Windows only)
+- Profiles, settings, and full data support export, import, manual backup, and automatic backup. Imports accept only SecRandom v3 manifest/envelope formats and create a recovery snapshot before writes.
+- Full-data exports can include lists, history, proofs, audio, course-linkage, and plugin data, but never security credentials.
+- Telemetry upload and online-status reporting are independent controls.
+- Optional password, TOTP, and USB binding protections use a separate credential store and can protect draws, resets, settings, or external commands.
 
-## 📥 Download
+### Integration, plugins, and delivery
 
-### 🌐 Official Download Page
+- Optional course linkage supports CSES schedules and ClassIsland. Only a confirmed break state restricts draws when configured; unavailable, invalid, or unknown data does not block normal use.
+- ClassIsland notifications require the `SecRandom4Ci` v2 plugin. Plugins use a restricted declarative draw interface and cannot access random sources, weighting logic, writable history, or host services directly.
+- The update center validates a signed release manifest and artifact integrity. Portable packages use a stable launcher and versioned `app-*` payloads so data can survive updates.
 
-- 📥 **[Official Download Page](https://secrandom.sectl.top/download.html)** - Get the latest stable version and beta versions
+## Verification modes and limits
 
-## 📸 Software Screenshots
+**Offline reproducible proofs** preserve and replay ordinary draws. A background signed receipt can help detect proof changes after submission. It is not a pre-draw server witness, and it cannot prove that the local executable, the real-world candidate pool, or actions before the draw were unmodified.
 
-<details>
-<summary>📸 Software Screenshots Display ✨</summary>
+**Formal online witnessing** is an explicitly selected alternative. The service locks an anonymous request before generating random material and calculating a result; network, service, or device failures wait for a clear outcome and must not silently fall back to a local draw. It strengthens protection of the locked flow against local code, seed, and proof replacement, but it still cannot establish that a real-world roster is authentic, complete, or unfiltered before submission.
 
-<div align="center">
+## Technical evolution
 
-<img src="ScreenShots/en_us/pick.png" alt="Pick Interface" height="400px"/> <br/> <sub> Pick Interface </sub> <br/>
-<img src="ScreenShots/en_us/lottery.png" alt="Lottery Interface" height="400px"/> <br/> <sub> Lottery Interface </sub> <br/>
-<img src="ScreenShots/en_us/history.png" alt="History Records" height="400px"/> <br/> <sub> History Records </sub> <br/>
-<img src="ScreenShots/en_us/pick_settings.png" alt="Pick Settings" height="400px"/> <br/> <sub> Pick Settings </sub> <br/>
+| Version | Stack | Stage |
+| --- | --- | --- |
+| v1 | Python + PyQt5 + qfluentwidgets | First desktop implementation |
+| v2 | Python + PySide6 + qfluentwidgets | Qt stack evolution |
+| **v3** | **C# + Avalonia + FluentAvalonia** | .NET desktop rewrite for continued draw, verification, plugin, and desktop-integration development |
 
-</div>
-</details>
+## Download and updates
 
-## 🙏 Contributors and Special Thanks
+- [GitHub Releases](https://github.com/SECTL/SecRandom/releases) provides release packages and change notes.
+- The [official download page](https://secrandom.sectl.top/download.html) provides stable and pre-release entry points.
+- Automatic updates validate a signed release manifest and artifact length/hash before deployment. Refer to the package and notes supplied with each release for installation details.
 
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="top" width="11.11%"><a href="https://github.com/lzy98276"><img src="../data/assets/contribution/contributor1.png" width="100px;" alt="lzy98276"/><br /><sub><b>lzy98276 (黎泽懿_Aionflux)</b></sub></a><br /><a href="#content-lzy98276" title="Content">🖋</a> <a href="#design-lzy98276" title="Design">🎨</a> <a href="#ideas-lzy98276" title="Ideas, Planning, & Feedback">🤔</a> <a href="#maintenance-lzy98276" title="Maintenance">🚧</a> <a href="#doc-lzy98276" title="Documentation">📖</a> <a href="#bug-lzy98276" title="Bug reports">🐛</a></td>
-      <td align="center" valign="top" width="11.11%"><a href="https://github.com/chenjintang-shrimp"><img src="../data/assets/contribution/contributor2.png" width="100px;" alt="chenjintang-shrimp"/><br /><sub><b>chenjintang-shrimp</b></sub></a><br /><a href="#code-chenjintang-shrimp" title="Code">💻</a></td>
-      <td align="center" valign="top" width="11.11%"><a href="https://github.com/yuanbenxin"><img src="../data/assets/contribution/contributor3.png" width="100px;" alt="yuanbenxin"/><br /><sub><b>yuanbenxin (本新同学)</b></sub></a><br /><a href="#code-yuanbenxin" title="Code">💻</a> <a href="#design-yuanbenxin" title="Design">🎨</a> <a href="#maintenance-yuanbenxin" title="Maintenance">🚧</a> <a href="#doc-yuanbenxin" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="11.11%"><a href="https://github.com/LeafS825"><img src="../data/assets/contribution/contributor4.png" width="100px;" alt="LeafS"/><br /><sub><b>LeafS</b></sub></a><br /><a href="#doc-LeafS" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="11.11%"><a href="https://github.com/QiKeZhiCao"><img src="../data/assets/contribution/contributor5.png" width="100px;" alt="QiKeZhiCao"/><br /><sub><b>QiKeZhiCao (弃稞之草)</b></sub></a><br /><a href="#ideas-QiKeZhiCao" title="Ideas, Planning, & Feedback">🤔</a> <a href="#maintenance-QiKeZhiCao" title="Maintenance">🚧</a></td>
-      <td align="center" valign="top" width="11.11%"><a href="https://github.com/Fox-block-offcial"><img src="../data/assets/contribution/contributor6.png" width="100px;" alt="Fox-block-offcial"/><br /><sub><b>Fox-block-offcial</b></sub></a><br /><a href="#bug-Fox-block-offcial" title="Bug reports">🐛</a> <a href="#testing-Fox-block-offcial" title="Testing">⚠️</a></td>
-      <td align="center" valign="top" width="11.11%"><a href="https://github.com/jursin"><img src="../data/assets/contribution/contributor7.png" width="100px;" alt="Jursin"/><br /><sub><b>Jursin</b></sub></a><br /><a href="#code-jursin" title="Code">💻</a> <a href="#design-jursin" title="Design">🎨</a> <a href="#maintenance-jursin" title="Maintenance">🚧</a> <a href="#doc-jursin" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="11.11%"><a href="https://github.com/LHGS-github"><img src="../data/assets/contribution/contributor8.png" width="100px;" alt="LHGS-github"/><br /><sub><b>LHGS-github</b></sub></a><br /><a href="#doc-LHGS-github" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="11.11%"><a href="https://github.com/real01bit"><img src="../data/assets/contribution/contributor9.png" width="100px;" alt="real01bit"/><br /><sub><b>real01bit</b></sub></a><br /><a href="#code-real01bit" title="Code">💻</a></td>
-    </tr>
-  </tbody>
-</table>
+## License and third-party notices
 
-## Third-Party Dependencies and Code
+SecRandom is released under [GNU GPLv3](../LICENSE). See [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md) for third-party components, copyright information, and distribution-review notes.
 
-This project uses the following third-party code:
+## Contributors and special thanks
 
-### SoundFlow
-- **Purpose**: Cross-platform local draw-music playback (MP3, WAV, and FLAC)
-- **Source**: [LSXPrime/SoundFlow](https://github.com/LSXPrime/SoundFlow)
-- **License**: MIT License; the bundled miniaudio runtime is used under MIT terms
-- **Notice**: See [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md) for the full notice
+<a href="https://github.com/SECTL/SecRandom/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=SECTL/SecRandom" alt="SecRandom contributors" />
+</a>
 
-### PythonNET-Stubs-Generator
-- **Path**: `vendors/pythonnet-stub-generator/`
-- **Source**: [MHDante/pythonnet-stub-generator](https://github.com/MHDante/pythonnet-stub-generator)
-- **License**: MIT License
-- **Copyright**
-  - Copyright (c) 2019 Robert McNeel & Associates
-  - Copyright (c) 2022 Dante Camarena
-- **Status**: Modified compilation target platform to .NET 9.0
-- *Note: The original MIT License text is preserved in `vendors/pythonnet-stub-generator/LICENSE.md`.*
+Thank you to everyone who contributes code, reports issues, improves documentation, or provides feedback. The avatars are generated from GitHub contributor data; select them to open the [GitHub contributors page](https://github.com/SECTL/SecRandom/graphs/contributors) for complete statistics.
 
-## 💝 Support Us
+## Support and community
 
-If you find SecRandom helpful, you're welcome to support our development work!
-
-### Afdian Support
-
-> [!CAUTION]
-> **Afdian is a Chinese-based donation platform.** You may not use Afdian out of mainland China.
-
-- 🌟 **[Afdian Support Link](https://afdian.com/a/lzy0983)** - Support developers through the Afdian platform
-
-## 📞 Contact
-
-* 📧 [Email](mailto:lzy.12@foxmail.com)
-* 👥 [QQ Group 833875216](https://qm.qq.com/q/iWcfaPHn7W)
-* 💬 [QQ Channel](https://pd.qq.com/s/4x5dafd34?b=9)
-* 🎥 [Bilibili Homepage](https://space.bilibili.com/520571577)
-* 🐛 [Issue Report](https://github.com/SECTL/SecRandom/issues)
-
-## 📄 Official Documentation
-
-- 📄 **[SecRandom Official Documentation](https://secrandom.sectl.top)**
+- [Support us on Afdian](https://afdian.com/a/lzy0983)
+- [Email](mailto:lzy.12@foxmail.com)
+- [QQ Group 833875216](https://qm.qq.com/q/iWcfaPHn7W)
+- [QQ Channel](https://pd.qq.com/s/4x5dafd34?b=9)
+- [Bilibili](https://space.bilibili.com/520571577)
+- [Report an issue](https://github.com/SECTL/SecRandom/issues)
+- [SecRandom documentation](https://secrandom.sectl.top/doc/overview.html)
 - [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
+- [English contributing guide](CONTRIBUTING_EN.md)
 
-## Contributing Guidelines and Actions Build Workflow
-
-Check out our Contributing Guidelines to learn more:
-
-- [English Contributing Guidelines](./CONTRIBUTING_EN.md)
-
-## ✨ Star History
+## Star History
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date&theme=dark">
   <img alt="Star History" src="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date">
 </picture>
-
 
 **Copyright © 2025-2026 SECTL**

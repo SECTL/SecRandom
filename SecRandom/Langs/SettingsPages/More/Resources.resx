@@ -18,15 +18,6 @@
   <data name="Page_Title" xml:space="preserve">
     <value>更多设置</value>
   </data>
-  <data name="S_Music" xml:space="preserve">
-    <value>音乐</value>
-  </data>
-  <data name="S_Music_BackgroundLoop" xml:space="preserve">
-    <value>背景音乐循环</value>
-  </data>
-  <data name="S_Music_BackgroundLoop_D" xml:space="preserve">
-    <value>抽取动画音乐播放时循环背景音乐。</value>
-  </data>
   <data name="S_PageManagement" xml:space="preserve">
     <value>页面管理</value>
   </data>
@@ -34,13 +25,13 @@
     <value>启用抽奖</value>
   </data>
   <data name="S_LotteryEnabled_D" xml:space="preserve">
-    <value>关闭后隐藏抽奖入口，并拒绝抽奖快捷键和外部指令。</value>
+    <value>关闭后隐藏抽奖入口，并拒绝抽奖快捷键和外部指令</value>
   </data>
   <data name="S_RollCallPanelPosition" xml:space="preserve">
     <value>点名控制面板位置</value>
   </data>
   <data name="S_RollCallPanelPosition_D" xml:space="preserve">
-    <value>设置点名页控制面板显示在主内容左侧或右侧。</value>
+    <value>设置点名页控制面板显示在主内容左侧或右侧</value>
   </data>
   <data name="O_Right" xml:space="preserve">
     <value>右侧</value>
@@ -52,7 +43,7 @@
     <value>点名页面控件</value>
   </data>
   <data name="S_RollCallControls_D" xml:space="preserve">
-    <value>控制点名页侧边控制面板中的控件显示。</value>
+    <value>控制点名页侧边控制面板中的控件显示</value>
   </data>
   <data name="S_RollCallResetButton" xml:space="preserve">
     <value>重置按钮</value>
@@ -82,13 +73,13 @@
     <value>抽奖控制面板位置</value>
   </data>
   <data name="S_LotteryPanelPosition_D" xml:space="preserve">
-    <value>设置抽奖页控制面板显示在主内容左侧或右侧。</value>
+    <value>设置抽奖页控制面板显示在主内容左侧或右侧</value>
   </data>
   <data name="S_LotteryControls" xml:space="preserve">
     <value>抽奖页面控件</value>
   </data>
   <data name="S_LotteryControls_D" xml:space="preserve">
-    <value>控制抽奖页侧边控制面板中的控件显示。</value>
+    <value>控制抽奖页侧边控制面板中的控件显示</value>
   </data>
   <data name="S_LotteryResetButton" xml:space="preserve">
     <value>重置按钮</value>
@@ -124,28 +115,28 @@
     <value>启用快捷键</value>
   </data>
   <data name="S_Shortcut_Enable_D" xml:space="preserve">
-    <value>启用全局快捷键响应。</value>
+    <value>启用全局快捷键响应</value>
   </data>
   <data name="S_Shortcut_D" xml:space="preserve">
-    <value>展开后按下所需组合键；Esc 取消输入。</value>
+    <value>展开后按下所需组合键；Esc 取消输入</value>
   </data>
   <data name="S_Shortcut_OpenRollCallPage" xml:space="preserve">
     <value>打开点名页</value>
   </data>
   <data name="S_Shortcut_OpenRollCallPage_D" xml:space="preserve">
-    <value>设置打开点名页的快捷键。</value>
+    <value>设置打开点名页的快捷键</value>
   </data>
   <data name="S_Shortcut_QuickDraw" xml:space="preserve">
     <value>执行闪抽</value>
   </data>
   <data name="S_Shortcut_QuickDraw_D" xml:space="preserve">
-    <value>设置执行快速抽取的快捷键。</value>
+    <value>设置执行快速抽取的快捷键</value>
   </data>
   <data name="S_Shortcut_OpenLotteryPage" xml:space="preserve">
     <value>打开抽奖页</value>
   </data>
   <data name="S_Shortcut_OpenLotteryPage_D" xml:space="preserve">
-    <value>设置打开抽奖页的快捷键。</value>
+    <value>设置打开抽奖页的快捷键</value>
   </data>
   <data name="S_Shortcut_IncreaseRollCallCount" xml:space="preserve">
     <value>增加点名人数</value>

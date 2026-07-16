@@ -11,7 +11,7 @@ public class SettingsMarkupTests
                               && element.Attribute("IsExpanded") is not null)
             .ToList();
 
-        Assert.Equal(3, overrideSections.Count);
+        Assert.Equal(2, overrideSections.Count);
         Assert.All(overrideSections, section =>
         {
             var items = section.Elements()
@@ -46,7 +46,7 @@ public class SettingsMarkupTests
     {
         string markup = File.ReadAllText(GetNotificationMarkupPath());
 
-        Assert.Contains("IsExpanded=\"{Binding OverrideBasicSettings, Mode=OneWay}\"", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("OverrideBasicSettings", markup, StringComparison.Ordinal);
         Assert.Contains("IsExpanded=\"{Binding OverrideNotificationWindowSettings, Mode=OneWay}\"", markup, StringComparison.Ordinal);
         Assert.Contains("IsExpanded=\"{Binding OverrideServiceSettings, Mode=OneWay}\"", markup, StringComparison.Ordinal);
     }
@@ -62,7 +62,7 @@ public class SettingsMarkupTests
             .Where(element => element.Name.LocalName == "FASettingsExpander")
             .ToList();
 
-        Assert.Equal(11, rows.Count);
+        Assert.Equal(9, rows.Count);
         Assert.All(rows, row =>
         {
             Assert.Null(row.Attribute("IsExpanded"));
@@ -71,6 +71,44 @@ public class SettingsMarkupTests
         Assert.DoesNotContain(
             document.Descendants(),
             element => element.Name.LocalName == "NotificationChannelSettingsContent");
+        Assert.DoesNotContain("BasicSettingsTitle", File.ReadAllText(GetDefaultNotificationMarkupPath()), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NotificationChannelBasicSettingsAreDirectRows()
+    {
+        string markup = File.ReadAllText(GetNotificationMarkupPath());
+
+        Assert.Contains("Header=\"{Binding EnabledTitle}\"", markup, StringComparison.Ordinal);
+        Assert.Contains("Header=\"{Binding AnimationTitle}\"", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("AutoCloseTime", markup, StringComparison.Ordinal);
+        Assert.Contains("Text=\"{Binding OverridableSettingsTitle}\"", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("FASettingsExpanderItem Content=\"{Binding EnabledTitle}\"", markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void QuickDrawSettingsUseNotificationDisplayDurationOnly()
+    {
+        string markup = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Views/SettingsPages/Picking/QuickDrawSettingsPage.axaml"));
+        string settings = File.ReadAllText(GetRepositoryPath(
+            "SecRandom.Core/Models/SubConfigs/Picking/QuickDrawSettingsConfig.cs"));
+
+        Assert.DoesNotContain("S_AutoCloseTime", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("AutoCloseTime", settings, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("SecRandom/Views/SettingsPages/Notification/DefaultNotificationSettingsPage.axaml")]
+    [InlineData("SecRandom/Views/SettingsPages/Notification/NotificationChannelSettingsContent.axaml")]
+    public void NotificationTransparencyUsesANumericSlider(string relativePath)
+    {
+        string markup = File.ReadAllText(GetRepositoryPath(relativePath));
+
+        Assert.Contains("<Slider Minimum=\"20\"", markup, StringComparison.Ordinal);
+        Assert.Contains("Value=\"{Binding ChannelSettings.Transparency, Mode=TwoWay}\"", markup, StringComparison.Ordinal);
+        Assert.Contains("Text=\"{Binding ChannelSettings.Transparency}\"", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("NumericUpDown Value=\"{Binding ChannelSettings.Transparency}", markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -91,6 +129,7 @@ public class SettingsMarkupTests
         Assert.DoesNotContain("MonitorOptions.Clear()", source, StringComparison.Ordinal);
         Assert.DoesNotContain("MonitorOptions.Remove", source, StringComparison.Ordinal);
         Assert.Contains("MonitorOptions.Add(new MonitorOption(ChannelSettings.EnabledMonitor", source, StringComparison.Ordinal);
+        Assert.Contains("WindowsMonitorNameProvider.GetNames()", source, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -99,22 +138,60 @@ public class SettingsMarkupTests
         string source = File.ReadAllText(GetRepositoryPath(
             "SecRandom/Services/Notification/NotificationService.cs"));
         int fallbackStart = source.IndexOf("if (useMainWindow)", StringComparison.Ordinal);
-        int backendDeliveryStart = source.IndexOf("var useBuiltIn", fallbackStart, StringComparison.Ordinal);
+        int backendDeliveryStart = source.IndexOf("if (serviceSettings.UsesBuiltInNotificationService)", fallbackStart, StringComparison.Ordinal);
 
         Assert.True(fallbackStart >= 0 && backendDeliveryStart > fallbackStart);
         Assert.Contains("return;", source[fallbackStart..backendDeliveryStart], StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void NotificationDeliveryChecksTheChannelEnabledSwitchBeforeShowingBuiltInWindow()
+    {
+        string source = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Services/Notification/NotificationService.cs"));
+        int enabledCheck = source.IndexOf("if (!basicSettings.Enabled)", StringComparison.Ordinal);
+        int builtInDelivery = source.IndexOf("ShowBuiltIn(", StringComparison.Ordinal);
+
+        Assert.True(enabledCheck >= 0 && builtInDelivery > enabledCheck);
+        Assert.Contains("return;", source[enabledCheck..builtInDelivery], StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("SecRandom/Views/SettingsPages/Notification/DefaultNotificationSettingsPage.axaml")]
+    [InlineData("SecRandom/Views/SettingsPages/Notification/NotificationChannelSettingsContent.axaml")]
+    public void NotificationSettingsUseBackendNeutralFailureFallback(string relativePath)
+    {
+        string markup = File.ReadAllText(GetRepositoryPath(relativePath));
+
+        Assert.Contains("UseBuiltInOnServiceFailure", markup, StringComparison.Ordinal);
+        Assert.Contains("UsesExternalNotificationServiceOnly", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("UseBuiltInOnClassIslandFailure", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("ClassIslandFailureFallback", markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void QuickDrawWindowPresentationFollowsTheBuiltInNotificationService()
+    {
+        string appSource = File.ReadAllText(GetRepositoryPath("SecRandom/App.axaml.cs"));
+        string viewModelSource = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/ViewModels/MainPages/QuickDrawPageViewModel.cs"));
+
+        Assert.Contains("UsesBuiltInNotificationService(NotificationSettingsType.QuickDraw)", appSource, StringComparison.Ordinal);
+        Assert.Contains("StartAuthorizedTriggeredDrawAsync()", appSource, StringComparison.Ordinal);
+        Assert.Contains("BeginBuiltInNotificationPresentationAsync(", viewModelSource, StringComparison.Ordinal);
+        Assert.Contains("skipPreview = !showBuiltInNotificationAnimation;", viewModelSource, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData(
         "SecRandom/Views/SettingsPages/Picking/RollCallDrawSettingsPage.axaml",
-        "OverrideDisplaySettings,OverrideAnimationSettings,OverrideColorSettings,OverrideStudentImageSettings,OverrideMusicSettings,OverrideReminderSettings")]
+        "OverrideDisplaySettings,OverrideAnimationSettings,OverrideColorSettings,OverrideStudentImageSettings,OverrideMusicSettings,OverrideVoiceAnnouncementSettings,OverrideReminderSettings")]
     [InlineData(
         "SecRandom/Views/SettingsPages/Picking/QuickDrawSettingsPage.axaml",
-        "OverrideDisplaySettings,OverrideAnimationSettings,OverrideColorSettings,OverrideStudentImageSettings,OverrideMusicSettings")]
+        "OverrideDisplaySettings,OverrideAnimationSettings,OverrideColorSettings,OverrideStudentImageSettings,OverrideMusicSettings,OverrideVoiceAnnouncementSettings")]
     [InlineData(
         "SecRandom/Views/SettingsPages/Picking/LotteryDrawSettingsPage.axaml",
-        "OverrideDisplaySettings,OverrideAnimationSettings,OverrideColorSettings,OverrideStudentImageSettings,OverrideMusicSettings,OverrideReminderSettings")]
+        "OverrideDisplaySettings,OverrideAnimationSettings,OverrideColorSettings,OverrideStudentImageSettings,OverrideMusicSettings,OverrideVoiceAnnouncementSettings,OverrideReminderSettings")]
     public void DrawOverrideSectionsUseSettingsExpanderItems(string relativePath, string overrideNames)
     {
         var document = System.Xml.Linq.XDocument.Load(GetRepositoryPath(relativePath));
@@ -133,6 +210,20 @@ public class SettingsMarkupTests
             Assert.NotEmpty(rows);
             Assert.All(rows, row => Assert.Equal("FASettingsExpanderItem", row.Name.LocalName));
         }
+    }
+
+    [Theory]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/RollCallDrawSettingsPage.axaml")]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/QuickDrawSettingsPage.axaml")]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/LotteryDrawSettingsPage.axaml")]
+    public void DrawSettingsUseOneOverridableSettingsHeading(string relativePath)
+    {
+        string markup = File.ReadAllText(GetRepositoryPath(relativePath));
+
+        Assert.Contains("Text=\"{x:Static lp:Resources.Section_Overridable}\"", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Text=\"{x:Static lp:Resources.Section_Display}\"", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Text=\"{x:Static lp:Resources.Section_Animation}\"", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Text=\"{x:Static lp:Resources.Section_Color}\"", markup, StringComparison.Ordinal);
     }
 
     [Theory]

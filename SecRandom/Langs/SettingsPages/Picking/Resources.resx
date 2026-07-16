@@ -31,8 +31,6 @@
   <data name="S_DefaultPool_D" xml:space="preserve"><value>打开抽奖页时默认使用的奖池</value></data>
   <data name="S_DisableAfterClick" xml:space="preserve"><value>点击后禁用时间</value></data>
   <data name="S_DisableAfterClick_D" xml:space="preserve"><value>点击一次闪抽后禁用按钮的秒数</value></data>
-  <data name="S_AutoCloseTime" xml:space="preserve"><value>自动关闭时间</value></data>
-  <data name="S_AutoCloseTime_D" xml:space="preserve"><value>抽取完成后自动关闭闪抽浮窗的秒数，设为 0 则不自动关闭</value></data>
   <data name="S_FontSource" xml:space="preserve"><value>字体来源</value></data>
   <data name="S_FontSource_D" xml:space="preserve"><value>跟随全局字体或为抽取结果单独指定字体</value></data>
   <data name="S_CustomFont" xml:space="preserve"><value>自定义字体</value></data>
@@ -116,43 +114,54 @@
   <data name="O_PrizeBreakGroup" xml:space="preserve"><value>奖品/小组</value></data>
   <data name="O_PrizeHyphenGroup" xml:space="preserve"><value>奖品-小组</value></data>
   <data name="Section_Overridable" xml:space="preserve">
-    <value>可覆盖的设置</value>
+    <value>可覆盖设置</value>
   </data>
   <data name="Section_Music" xml:space="preserve">
     <value>音乐设置</value>
+  </data>
+  <data name="Section_VoiceAnnouncement" xml:space="preserve">
+    <value>语音播报</value>
+  </data>
+  <data name="S_VoiceAnnouncementEnabled" xml:space="preserve">
+    <value>启用语音播报</value>
+  </data>
+  <data name="S_VoiceAnnouncementEnabled_D" xml:space="preserve">
+    <value>抽取完成后播报结果；全局语音播报开关关闭时，此设置不会生效</value>
   </data>
   <data name="S_AnimationMusic" xml:space="preserve">
     <value>动画音乐</value>
   </data>
   <data name="S_AnimationMusic_D" xml:space="preserve">
-    <value>选择抽取动画播放时使用的音乐。</value>
+    <value>选择抽取动画播放时使用的音乐</value>
   </data>
+  <data name="S_AnimationMusicLoop" xml:space="preserve"><value>循环播放动画音乐</value></data>
+  <data name="S_AnimationMusicLoop_D" xml:space="preserve"><value>动画持续期间重复播放动画音乐</value></data>
   <data name="S_ResultMusic" xml:space="preserve">
     <value>结果音乐</value>
   </data>
   <data name="S_ResultMusic_D" xml:space="preserve">
-    <value>选择抽取结果出现时使用的音乐。</value>
+    <value>选择抽取结果出现时使用的音乐</value>
   </data>
   <data name="S_MusicVolume" xml:space="preserve">
     <value>音乐音量</value>
   </data>
   <data name="S_MusicVolume_D" xml:space="preserve">
-    <value>依次设置动画音乐和结果音乐的音量。</value>
+    <value>依次设置动画音乐和结果音乐的音量</value>
   </data>
   <data name="S_MusicFadeInOut" xml:space="preserve">
     <value>音乐淡入淡出</value>
   </data>
   <data name="S_MusicFadeInOut_D" xml:space="preserve">
-    <value>依次设置动画音乐淡入、动画音乐淡出、结果音乐淡入和结果音乐淡出时间（毫秒）。</value>
+    <value>依次设置动画音乐淡入、动画音乐淡出、结果音乐淡入和结果音乐淡出时间（毫秒）</value>
   </data>
   <data name="S_AnimationMusicVolume" xml:space="preserve"><value>动画音乐音量</value></data>
-  <data name="S_AnimationMusicVolume_D" xml:space="preserve"><value>设置抽取动画音乐的音量。</value></data>
+  <data name="S_AnimationMusicVolume_D" xml:space="preserve"><value>设置抽取动画音乐的音量</value></data>
   <data name="S_ResultMusicVolume" xml:space="preserve"><value>结果音乐音量</value></data>
-  <data name="S_ResultMusicVolume_D" xml:space="preserve"><value>设置抽取结果音乐的音量。</value></data>
+  <data name="S_ResultMusicVolume_D" xml:space="preserve"><value>设置抽取结果音乐的音量</value></data>
   <data name="S_AnimationMusicFade" xml:space="preserve"><value>动画音乐淡入和淡出</value></data>
-  <data name="S_AnimationMusicFade_D" xml:space="preserve"><value>上方滑块控制淡入，下方滑块控制淡出，单位为毫秒。</value></data>
+  <data name="S_AnimationMusicFade_D" xml:space="preserve"><value>上方滑块控制淡入，下方滑块控制淡出，单位为毫秒</value></data>
   <data name="S_ResultMusicFade" xml:space="preserve"><value>结果音乐淡入和淡出</value></data>
-  <data name="S_ResultMusicFade_D" xml:space="preserve"><value>上方滑块控制淡入，下方滑块控制淡出，单位为毫秒。</value></data>
+  <data name="S_ResultMusicFade_D" xml:space="preserve"><value>上方滑块控制淡入，下方滑块控制淡出，单位为毫秒</value></data>
   <data name="C_FadeIn" xml:space="preserve"><value>淡入</value></data>
   <data name="C_FadeOut" xml:space="preserve"><value>淡出</value></data>
   <data name="Section_LotteryImage" xml:space="preserve">
@@ -162,12 +171,12 @@
     <value>显示奖品图片</value>
   </data>
   <data name="S_LotteryImage_D" xml:space="preserve">
-    <value>在抽奖结果中显示奖品图片。</value>
+    <value>在抽奖结果中显示奖品图片</value>
   </data>
   <data name="S_LotteryImagePosition" xml:space="preserve">
     <value>奖品图片位置</value>
   </data>
   <data name="S_LotteryImagePosition_D" xml:space="preserve">
-    <value>奖品图片相对文字的位置。</value>
+    <value>奖品图片相对文字的位置</value>
   </data>
 </root>

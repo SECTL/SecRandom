@@ -24,11 +24,70 @@
             PublicKeyToken=b77a5c561934e089
         </value>
     </resheader>
-
-    <data name="Welcome" xml:space="preserve">
-        <value>Welcome to Avalonia! RollCall</value>
-    </data>
     <data name="C_Stop" xml:space="preserve">
         <value>Stop</value>
     </data>
+  <data name="C_RemainingListTitle" xml:space="preserve">
+     <value>Remaining list</value>
+  </data>
+  <data name="M_NoStudents" xml:space="preserve">
+     <value>No students match the current filters</value>
+  </data>
+  <data name="M_ResultSeparator" xml:space="preserve">
+     <value>, </value>
+  </data>
+  <data name="M_RepeatLimitExhausted" xml:space="preserve">
+     <value>Not enough students remain. Reset the records or adjust the filters.</value>
+  </data>
+  <data name="M_InvalidWeight" xml:space="preserve">
+     <value>Invalid weight settings</value>
+  </data>
+  <data name="C_Reset" xml:space="preserve">
+     <value>Reset</value>
+  </data>
+  <data name="C_ShowRemainingList" xml:space="preserve">
+     <value>Show remaining list</value>
+  </data>
+  <data name="M_NoCandidates" xml:space="preserve">
+     <value>No students are available to draw</value>
+  </data>
+  <data name="C_ListSettings" xml:space="preserve">
+     <value>List settings</value>
+  </data>
+  <data name="C_RollCallSettings" xml:space="preserve">
+     <value>Roll-call settings</value>
+  </data>
+  <data name="O_AllGenders" xml:space="preserve">
+     <value>Draw from all genders</value>
+  </data>
+  <data name="M_Ready" xml:space="preserve">
+     <value>Ready</value>
+  </data>
+  <data name="M_ResetDone" xml:space="preserve">
+     <value>Roll-call records reset</value>
+  </data>
+  <data name="M_NoEligibleCandidates" xml:space="preserve">
+     <value>No students meet the weighting criteria</value>
+  </data>
+  <data name="M_DrawFailed" xml:space="preserve">
+     <value>Draw failed</value>
+  </data>
+  <data name="M_CountSummaryFormat" xml:space="preserve">
+     <value>Total students: {0} | Remaining: {1}</value>
+  </data>
+  <data name="M_NoRemainingStudents" xml:space="preserve">
+     <value>No students remain under the current filters</value>
+  </data>
+  <data name="C_Close" xml:space="preserve">
+     <value>Close</value>
+  </data>
+  <data name="M_DrawnCountFormat" xml:space="preserve">
+     <value>{0} students drawn</value>
+  </data>
+  <data name="O_AllGroups" xml:space="preserve">
+     <value>Draw from all students</value>
+  </data>
+  <data name="C_Start" xml:space="preserve">
+     <value>Start</value>
+  </data>
 </root>

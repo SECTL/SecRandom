@@ -127,9 +127,6 @@
     <data name="C_ToBeWritten" xml:space="preserve">
         <value>(等待编写)</value>
     </data>
-    <data name="Menu_OpenProfileSettings" xml:space="preserve">
-        <value>编辑档案</value>
-    </data>
     <data name="AttachedSettings_BehindScene" xml:space="preserve">
         <value>内幕设置</value>
     </data>
@@ -162,15 +159,6 @@
     </data>
     <data name="Settings_Plugin" xml:space="preserve">
         <value>插件</value>
-    </data>
-    <data name="Settings_Music" xml:space="preserve">
-        <value>音乐</value>
-    </data>
-    <data name="Settings_BackgroundMusicLoop" xml:space="preserve">
-        <value>背景音乐循环</value>
-    </data>
-    <data name="Settings_BackgroundMusicLoop_D" xml:space="preserve">
-        <value>控制抽取页面的背景音乐是否循环播放</value>
     </data>
     <data name="Settings_EnableShortcut" xml:space="preserve">
         <value>启用快捷键</value>
@@ -246,7 +234,7 @@
         <value>应用程序已在运行</value>
     </data>
     <data name="MultiInstance_Message" xml:space="preserve">
-        <value>SecRandom 已经有一个实例正在运行。</value>
+        <value>SecRandom 已经有一个实例正在运行</value>
     </data>
     <data name="MultiInstance_OpenExisting" xml:space="preserve">
         <value>打开已有实例主界面</value>

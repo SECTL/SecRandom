@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page_Default" xml:space="preserve"><value>Default Draw Settings</value></data>
+  <data name="Page_RollCall" xml:space="preserve"><value>Roll-call Draw Settings</value></data>
+  <data name="Page_QuickDraw" xml:space="preserve"><value>Quick Draw Settings</value></data>
+  <data name="Page_Lottery" xml:space="preserve"><value>Lottery Draw Settings</value></data>
+  <data name="Section_Draw" xml:space="preserve"><value>Draw Settings</value></data>
+  <data name="Section_Display" xml:space="preserve"><value>Display Settings</value></data>
+  <data name="Section_Animation" xml:space="preserve"><value>Animation Settings</value></data>
+  <data name="Section_Color" xml:space="preserve"><value>Color Settings</value></data>
+  <data name="Section_StudentImage" xml:space="preserve"><value>Student Image Settings</value></data>
+  <data name="Section_Reminder" xml:space="preserve"><value>Reminder Settings</value></data>
+  <data name="C_EnableOverride" xml:space="preserve"><value>Enable Override</value></data>
+  <data name="S_DrawMode" xml:space="preserve"><value>Draw Mode</value></data>
+  <data name="S_DrawMode_D" xml:space="preserve"><value>Controls how repeated draw records are handled</value></data>
+  <data name="S_HalfRepeat" xml:space="preserve"><value>Half-repeat Threshold</value></data>
+  <data name="S_HalfRepeat_D" xml:space="preserve"><value>After this number of draws, the item will not re-enter the candidate pool</value></data>
+  <data name="S_ClearRecord" xml:space="preserve"><value>Clear Records</value></data>
+  <data name="S_ClearRecord_D" xml:space="preserve"><value>Controls when draw records are cleared</value></data>
+  <data name="S_DrawType" xml:space="preserve"><value>Draw Method</value></data>
+  <data name="S_DrawType_D" xml:space="preserve"><value>Choose random or fair drawing</value></data>
+  <data name="S_LotteryDrawType" xml:space="preserve"><value>Lottery Method</value></data>
+  <data name="S_LotteryDrawType_D" xml:space="preserve"><value>Choose drawing by prize wheel or remaining quantity</value></data>
+  <data name="S_DefaultClass" xml:space="preserve"><value>Default Class List</value></data>
+  <data name="S_DefaultClass_D" xml:space="preserve"><value>The list used by default when opening a page or running Quick Draw</value></data>
+  <data name="S_DefaultPool" xml:space="preserve"><value>Default Prize Pool</value></data>
+  <data name="S_DefaultPool_D" xml:space="preserve"><value>The prize pool used by default when opening the lottery page</value></data>
+  <data name="S_DisableAfterClick" xml:space="preserve"><value>Disable After Click</value></data>
+  <data name="S_DisableAfterClick_D" xml:space="preserve"><value>Seconds to disable the button after a Quick Draw</value></data>
+  <data name="S_FontSource" xml:space="preserve"><value>Font Source</value></data>
+  <data name="S_FontSource_D" xml:space="preserve"><value>Follow the global font or specify a font for draw results</value></data>
+  <data name="S_CustomFont" xml:space="preserve"><value>Custom Font</value></data>
+  <data name="S_CustomFont_D" xml:space="preserve"><value>Font family name; leave empty to use the default font</value></data>
+  <data name="S_FontSize" xml:space="preserve"><value>Font Size</value></data>
+  <data name="S_FontSize_D" xml:space="preserve"><value>Text size for draw results</value></data>
+  <data name="S_DisplayFormat" xml:space="preserve"><value>Display Format</value></data>
+  <data name="S_DisplayFormat_D" xml:space="preserve"><value>Choose whether results show names, IDs, or both</value></data>
+  <data name="S_DisplayStyle" xml:space="preserve"><value>Display Style</value></data>
+  <data name="S_DisplayStyle_D" xml:space="preserve"><value>Controls the overall style of draw results</value></data>
+  <data name="S_LotteryShowRandom" xml:space="preserve"><value>Lottery Process Display</value></data>
+  <data name="S_LotteryShowRandom_D" xml:space="preserve"><value>Display format for candidate results during the lottery</value></data>
+  <data name="S_ShowTags" xml:space="preserve"><value>Show Tags</value></data>
+  <data name="S_ShowTags_D" xml:space="preserve"><value>Show student or prize tags in draw results</value></data>
+  <data name="S_ShowWeightTransparency" xml:space="preserve"><value>Show Weight Transparency</value></data>
+  <data name="S_ShowWeightTransparency_D" xml:space="preserve"><value>Show weight information in the result display</value></data>
+  <data name="S_ReminderText" xml:space="preserve"><value>Reminder Text</value></data>
+  <data name="S_ReminderText_D" xml:space="preserve"><value>Text shown beside the result area on draw pages</value></data>
+  <data name="S_ReminderFontSize" xml:space="preserve"><value>Reminder Font Size</value></data>
+  <data name="S_ReminderFontSize_D" xml:space="preserve"><value>Reminder text size</value></data>
+  <data name="S_ReminderTextColor" xml:space="preserve"><value>Reminder Color</value></data>
+  <data name="S_ReminderTextColor_D" xml:space="preserve"><value>Reminder text color</value></data>
+  <data name="S_ReminderTextOpacity" xml:space="preserve"><value>Reminder Opacity</value></data>
+  <data name="S_ReminderTextOpacity_D" xml:space="preserve"><value>Reminder text opacity (0-100)</value></data>
+  <data name="S_Animation" xml:space="preserve"><value>Animation Mode</value></data>
+  <data name="S_Animation_D" xml:space="preserve"><value>Set how the draw animation plays</value></data>
+  <data name="S_AnimationInterval" xml:space="preserve"><value>Animation Interval</value></data>
+  <data name="S_AnimationInterval_D" xml:space="preserve"><value>Interval between draw animation changes (milliseconds)</value></data>
+  <data name="S_AutoplayCount" xml:space="preserve"><value>Autoplay Count</value></data>
+  <data name="S_AutoplayCount_D" xml:space="preserve"><value>Number of candidate result changes in autoplay mode</value></data>
+  <data name="S_AnimationStyle" xml:space="preserve"><value>Animation Style</value></data>
+  <data name="S_AnimationStyle_D" xml:space="preserve"><value>Unified animation effect for the draw process and final result</value></data>
+  <data name="S_ColorTheme" xml:space="preserve"><value>Color Theme</value></data>
+  <data name="S_ColorTheme_D" xml:space="preserve"><value>Set the source of colors for draw animations and results</value></data>
+  <data name="S_FixedColor" xml:space="preserve"><value>Fixed Color</value></data>
+  <data name="S_FixedColor_D" xml:space="preserve"><value>Used when the color theme is fixed color</value></data>
+  <data name="S_StudentImage" xml:space="preserve"><value>Show Student Images</value></data>
+  <data name="S_StudentImage_D" xml:space="preserve"><value>Show student images in draw results</value></data>
+  <data name="S_StudentImagePosition" xml:space="preserve"><value>Image Position</value></data>
+  <data name="S_StudentImagePosition_D" xml:space="preserve"><value>Position of the student image relative to the text</value></data>
+  <data name="O_Repeat" xml:space="preserve"><value>Allow Repeats</value></data><data name="O_NoRepeat" xml:space="preserve"><value>No Repeats</value></data><data name="O_HalfRepeat" xml:space="preserve"><value>Half Repeat</value></data><data name="O_Restarted" xml:space="preserve"><value>Clear on Restart</value></data><data name="O_Cleared" xml:space="preserve"><value>Clear Manually</value></data><data name="O_Random" xml:space="preserve"><value>Random Draw</value></data><data name="O_NoMusic" xml:space="preserve"><value>No Music</value></data><data name="O_RandomMusic" xml:space="preserve"><value>Random Playback</value></data><data name="O_MusicExternal" xml:space="preserve"><value>External file: {0}</value></data><data name="O_MusicUnavailable" xml:space="preserve"><value>Unavailable: {0}</value></data><data name="O_Fair" xml:space="preserve"><value>Fair Draw</value></data><data name="O_Pan" xml:space="preserve"><value>By Prize Wheel</value></data><data name="O_Count" xml:space="preserve"><value>By Remaining Quantity</value></data><data name="O_FollowGlobal" xml:space="preserve"><value>Follow Global</value></data><data name="O_Custom" xml:space="preserve"><value>Custom</value></data><data name="O_Both" xml:space="preserve"><value>ID and Name</value></data><data name="O_Name" xml:space="preserve"><value>Name Only</value></data><data name="O_Id" xml:space="preserve"><value>ID Only</value></data><data name="O_Default" xml:space="preserve"><value>Default</value></data><data name="O_Card" xml:space="preserve"><value>Card</value></data><data name="O_ManualStop" xml:space="preserve"><value>Manual Stop</value></data><data name="O_AutoPlay" xml:space="preserve"><value>Autoplay</value></data><data name="O_NoAnimation" xml:space="preserve"><value>No Animation</value></data><data name="O_AnimationDirectRotate" xml:space="preserve"><value>Direct Rotation</value></data><data name="O_AnimationFadeFloat" xml:space="preserve"><value>Fade and Float Up</value></data><data name="O_AnimationHorizontalShake" xml:space="preserve"><value>Horizontal Shake</value></data><data name="O_NoColor" xml:space="preserve"><value>None</value></data><data name="O_RandomColor" xml:space="preserve"><value>Random</value></data><data name="O_FixedColor" xml:space="preserve"><value>Fixed Color</value></data><data name="O_Left" xml:space="preserve"><value>Left</value></data><data name="O_Top" xml:space="preserve"><value>Top</value></data><data name="O_Right" xml:space="preserve"><value>Right</value></data><data name="O_Bottom" xml:space="preserve"><value>Bottom</value></data>
+  <data name="O_PrizeBreakGroupHyphenName" xml:space="preserve"><value>Prize/Group-Name</value></data><data name="O_PrizeBreakGroupBreakName" xml:space="preserve"><value>Prize/Group/Name</value></data><data name="O_PrizeHyphenGroupHyphenName" xml:space="preserve"><value>Prize-Group-Name</value></data><data name="O_PrizeBreakName" xml:space="preserve"><value>Prize/Name</value></data><data name="O_PrizeHyphenName" xml:space="preserve"><value>Prize-Name</value></data><data name="O_PrizeBreakGroup" xml:space="preserve"><value>Prize/Group</value></data><data name="O_PrizeHyphenGroup" xml:space="preserve"><value>Prize-Group</value></data>
+  <data name="Section_Overridable" xml:space="preserve"><value>Overridable Settings</value></data><data name="Section_Music" xml:space="preserve"><value>Music Settings</value></data><data name="Section_VoiceAnnouncement" xml:space="preserve"><value>Voice Announcement</value></data><data name="S_VoiceAnnouncementEnabled" xml:space="preserve"><value>Enable Voice Announcement</value></data><data name="S_VoiceAnnouncementEnabled_D" xml:space="preserve"><value>Announce results after a draw; ineffective when global voice announcements are disabled</value></data><data name="S_AnimationMusic" xml:space="preserve"><value>Animation Music</value></data><data name="S_AnimationMusic_D" xml:space="preserve"><value>Music used while the draw animation plays</value></data><data name="S_AnimationMusicLoop" xml:space="preserve"><value>Loop Animation Music</value></data><data name="S_AnimationMusicLoop_D" xml:space="preserve"><value>Repeat animation music while the animation continues</value></data><data name="S_ResultMusic" xml:space="preserve"><value>Result Music</value></data><data name="S_ResultMusic_D" xml:space="preserve"><value>Music used when the draw result appears</value></data><data name="S_MusicVolume" xml:space="preserve"><value>Music Volume</value></data><data name="S_MusicVolume_D" xml:space="preserve"><value>Set the animation and result music volume in order</value></data><data name="S_MusicFadeInOut" xml:space="preserve"><value>Music Fade In and Out</value></data><data name="S_MusicFadeInOut_D" xml:space="preserve"><value>Set animation fade-in, animation fade-out, result fade-in, and result fade-out times (milliseconds)</value></data><data name="S_AnimationMusicVolume" xml:space="preserve"><value>Animation Music Volume</value></data><data name="S_AnimationMusicVolume_D" xml:space="preserve"><value>Set the animation music volume</value></data><data name="S_ResultMusicVolume" xml:space="preserve"><value>Result Music Volume</value></data><data name="S_ResultMusicVolume_D" xml:space="preserve"><value>Set the result music volume</value></data><data name="S_AnimationMusicFade" xml:space="preserve"><value>Animation Music Fade In and Out</value></data><data name="S_AnimationMusicFade_D" xml:space="preserve"><value>Top slider controls fade-in, bottom slider controls fade-out, in milliseconds</value></data><data name="S_ResultMusicFade" xml:space="preserve"><value>Result Music Fade In and Out</value></data><data name="S_ResultMusicFade_D" xml:space="preserve"><value>Top slider controls fade-in, bottom slider controls fade-out, in milliseconds</value></data><data name="C_FadeIn" xml:space="preserve"><value>Fade In</value></data><data name="C_FadeOut" xml:space="preserve"><value>Fade Out</value></data><data name="Section_LotteryImage" xml:space="preserve"><value>Prize Image Settings</value></data><data name="S_LotteryImage" xml:space="preserve"><value>Show Prize Images</value></data><data name="S_LotteryImage_D" xml:space="preserve"><value>Show prize images in lottery results</value></data><data name="S_LotteryImagePosition" xml:space="preserve"><value>Prize Image Position</value></data><data name="S_LotteryImagePosition_D" xml:space="preserve"><value>Position of the prize image relative to the text</value></data>
+</root>

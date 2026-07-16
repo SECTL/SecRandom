@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page_Title" xml:space="preserve"><value>セキュリティ設定</value></data>
+  <data name="S_Verification" xml:space="preserve"><value>認証方式</value></data>
+  <data name="S_Verification_Password" xml:space="preserve"><value>パスワード認証を有効にする</value></data>
+  <data name="S_Verification_Password_D" xml:space="preserve"><value>ローカルパスワードで重要な操作を保護します</value></data>
+  <data name="S_Verification_Totp" xml:space="preserve"><value>TOTP 認証を有効にする</value></data>
+  <data name="S_Verification_Totp_D" xml:space="preserve"><value>ワンタイムコードで重要な操作を保護します</value></data>
+  <data name="S_Verification_UsbBinding" xml:space="preserve"><value>USB 登録を有効にする</value></data>
+  <data name="S_Verification_UsbBinding_D" xml:space="preserve"><value>登録したデバイスが接続されている場合のみ認証を許可します</value></data>
+  <data name="S_Protection" xml:space="preserve"><value>保護対象</value></data>
+  <data name="S_Protection_SensitiveOperations" xml:space="preserve"><value>重要な操作の前に認証</value></data>
+  <data name="S_Protection_SensitiveOperations_D" xml:space="preserve"><value>セキュリティなど重要な設定を変更する前に認証を要求します</value></data>
+  <data name="S_Protection_LinkageOperations" xml:space="preserve"><value>連携操作の前に認証</value></data>
+  <data name="S_Protection_LinkageOperations_D" xml:space="preserve"><value>外部連携による抽選やページ切り替えの前に認証を要求します</value></data>
+  <data name="S_Credentials" xml:space="preserve"><value>セキュリティ状態と認証情報</value></data>
+  <data name="S_Enabled" xml:space="preserve"><value>セキュリティ保護を有効にする</value></data>
+  <data name="S_Enabled_D" xml:space="preserve"><value>有効にすると、選択した操作の前に認証が必要になります</value></data>
+  <data name="S_Password" xml:space="preserve"><value>パスワード</value></data>
+  <data name="S_Password_D" xml:space="preserve"><value>パスワードは 6 文字以上必要です</value></data>
+  <data name="S_Totp" xml:space="preserve"><value>TOTP コード</value></data>
+  <data name="S_Totp_D" xml:space="preserve"><value>認証アプリの 6 桁コードを使用します</value></data>
+  <data name="S_Usb" xml:space="preserve"><value>USB ドライブ</value></data>
+  <data name="S_Usb_D" xml:space="preserve"><value>登録したドライブにセキュリティトークンを保存します</value></data>
+  <data name="S_Factors" xml:space="preserve"><value>認証方式</value></data>
+  <data name="S_Factors_D" xml:space="preserve"><value>パスワードは必須です。設定済みの方式を追加できます</value></data>
+  <data name="S_RequireAll" xml:space="preserve"><value>選択したすべての方式を要求</value></data>
+  <data name="S_RequireAll_D" xml:space="preserve"><value>パスワードは常に必要です。オフの場合は追加方式のいずれかで続行できます</value></data>
+  <data name="S_WindowOperations" xml:space="preserve"><value>ウィンドウとアプリ</value></data>
+  <data name="S_WindowOperations_D" xml:space="preserve"><value>設定、ウィンドウ表示、アプリ操作を保護します</value></data>
+  <data name="S_DrawOperations" xml:space="preserve"><value>抽選</value></data>
+  <data name="S_DrawOperations_D" xml:space="preserve"><value>各抽選の開始とリセットを個別に保護します</value></data>
+  <data name="C_ManageBindings" xml:space="preserve"><value>登録を管理</value></data>
+  <data name="C_SetPassword" xml:space="preserve"><value>パスワードを設定</value></data>
+  <data name="C_ManagePassword" xml:space="preserve"><value>パスワードを変更または削除</value></data>
+  <data name="C_SetTotp" xml:space="preserve"><value>TOTP を設定</value></data>
+  <data name="C_ResetTotp" xml:space="preserve"><value>TOTP をリセット</value></data>
+  <data name="C_OpenSettings" xml:space="preserve"><value>設定を開く</value></data>
+  <data name="C_AllowSettingsPreview" xml:space="preserve"><value>設定の読み取り専用プレビューを許可</value></data>
+  <data name="C_ToggleMainWindow" xml:space="preserve"><value>メインウィンドウを表示/非表示</value></data>
+  <data name="C_ToggleFloatingWindow" xml:space="preserve"><value>フローティングウィンドウを表示/非表示</value></data>
+  <data name="C_Restart" xml:space="preserve"><value>アプリを再起動</value></data>
+  <data name="C_Exit" xml:space="preserve"><value>アプリを終了</value></data>
+  <data name="C_RollCallStart" xml:space="preserve"><value>点呼を開始</value></data>
+  <data name="C_RollCallReset" xml:space="preserve"><value>点呼をリセット</value></data>
+  <data name="C_QuickDrawStart" xml:space="preserve"><value>クイック抽選を開始</value></data>
+  <data name="C_QuickDrawReset" xml:space="preserve"><value>クイック抽選をクリア</value></data>
+  <data name="C_LotteryStart" xml:space="preserve"><value>抽選を開始</value></data>
+  <data name="C_LotteryReset" xml:space="preserve"><value>抽選をリセット</value></data>
+  <data name="C_CurrentPassword" xml:space="preserve"><value>現在のパスワード</value></data>
+  <data name="C_NewPassword" xml:space="preserve"><value>新しいパスワード</value></data>
+  <data name="C_ConfirmPassword" xml:space="preserve"><value>新しいパスワードを確認</value></data>
+  <data name="C_RemovePassword" xml:space="preserve"><value>パスワードを削除</value></data>
+  <data name="C_Save" xml:space="preserve"><value>保存</value></data>
+  <data name="C_Cancel" xml:space="preserve"><value>キャンセル</value></data>
+  <data name="C_Verify" xml:space="preserve"><value>認証</value></data>
+  <data name="C_Preview" xml:space="preserve"><value>プレビュー</value></data>
+  <data name="C_VerifyAndSave" xml:space="preserve"><value>認証して保存</value></data>
+  <data name="C_Bind" xml:space="preserve"><value>登録</value></data>
+  <data name="C_UnbindSelected" xml:space="preserve"><value>選択した登録を解除</value></data>
+  <data name="C_BoundDevices" xml:space="preserve"><value>登録済みドライブ</value></data>
+  <data name="C_UsbConnected" xml:space="preserve"><value>接続済み</value></data>
+  <data name="C_UsbDisconnected" xml:space="preserve"><value>未接続</value></data>
+  <data name="C_PasswordPlaceholder" xml:space="preserve"><value>パスワードを入力</value></data>
+  <data name="C_CurrentPasswordPlaceholder" xml:space="preserve"><value>現在のパスワードを入力</value></data>
+  <data name="C_NewPasswordPlaceholder" xml:space="preserve"><value>新しいパスワードを入力</value></data>
+  <data name="C_ConfirmPasswordPlaceholder" xml:space="preserve"><value>新しいパスワードを再入力</value></data>
+  <data name="C_TotpPlaceholder" xml:space="preserve"><value>6 桁のコードを入力</value></data>
+  <data name="C_UsbPathPlaceholder" xml:space="preserve"><value>例: E:\ または /media/user/drive</value></data>
+  <data name="C_SelectUsb" xml:space="preserve"><value>USB ドライブを選択</value></data>
+  <data name="C_SelectedUsb" xml:space="preserve"><value>選択した場所</value></data>
+  <data name="M_PasswordDialogTitle" xml:space="preserve"><value>セキュリティパスワードを管理</value></data>
+  <data name="M_SetPasswordDialogTitle" xml:space="preserve"><value>セキュリティパスワードを設定</value></data>
+  <data name="M_TotpDialogTitle" xml:space="preserve"><value>TOTP コードを設定</value></data>
+  <data name="M_TotpSetupDescription" xml:space="preserve"><value>認証アプリにキーを追加し、現在の 6 桁コードを入力してください。</value></data>
+  <data name="M_TotpManualKey" xml:space="preserve"><value>手動キー</value></data>
+  <data name="M_TotpCode" xml:space="preserve"><value>認証コード</value></data>
+  <data name="C_Copy" xml:space="preserve"><value>コピー</value></data>
+  <data name="M_Copied" xml:space="preserve"><value>コピーしました。</value></data>
+  <data name="M_UsbDialogTitle" xml:space="preserve"><value>USB 登録を管理</value></data>
+  <data name="M_UsbSetupDescription" xml:space="preserve"><value>接続した USB ドライブのルートフォルダーを選択してください。SecRandom.safety.key がそこに作成されます。</value></data>
+  <data name="M_UsbShortDescription" xml:space="preserve"><value>認証に使用する USB ドライブを選択します。</value></data>
+  <data name="M_UsbPickerTitle" xml:space="preserve"><value>セキュリティ認証用 USB ドライブを選択</value></data>
+  <data name="M_SelectUsbFirst" xml:space="preserve"><value>先に USB ドライブを選択してください。</value></data>
+  <data name="M_VerificationDialogTitle" xml:space="preserve"><value>セキュリティ認証</value></data>
+  <data name="M_VerificationAllFactors" xml:space="preserve"><value>選択したすべての認証方式を完了してください。</value></data>
+  <data name="M_VerificationAnyFactor" xml:space="preserve"><value>選択した認証方式のいずれかを完了すると続行できます。</value></data>
+  <data name="M_VerificationLockedFormat" xml:space="preserve"><value>認証がロックされています。{0} 秒後に再試行してください。</value></data>
+  <data name="M_LockoutFormat" xml:space="preserve"><value>認証がロックされています。{0} 秒後に再試行してください。</value></data>
+  <data name="M_UsbPresent" xml:space="preserve"><value>登録済み USB ドライブが接続されています</value></data>
+  <data name="M_PasswordRemoved" xml:space="preserve"><value>パスワードを削除し、セキュリティ保護を無効にしました。</value></data>
+  <data name="M_PasswordSaved" xml:space="preserve"><value>パスワードを保存しました。</value></data>
+  <data name="M_PasswordSaveFailed" xml:space="preserve"><value>パスワードを保存できません。6 文字以上で、変更時は現在のパスワードを確認してください。</value></data>
+  <data name="M_SetPasswordFirst" xml:space="preserve"><value>先にパスワードを設定してください。</value></data>
+  <data name="M_TotpSaved" xml:space="preserve"><value>TOTP 設定を保存しました。</value></data>
+  <data name="M_TotpSaveFailed" xml:space="preserve"><value>コードが無効です。TOTP 設定は保存されませんでした。</value></data>
+  <data name="M_UsbUpdated" xml:space="preserve"><value>USB 登録を更新しました。</value></data>
+  <data name="M_UsbUpdateFailed" xml:space="preserve"><value>USB 登録を更新できません。ドライブの接続と書き込み権限を確認してください。</value></data>
+</root>

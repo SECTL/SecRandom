@@ -6,7 +6,7 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Page_Title" xml:space="preserve"><value>音乐库</value></data>
   <data name="S_Library" xml:space="preserve"><value>本地音乐库</value></data>
-  <data name="S_Library_D" xml:space="preserve"><value>导入的音乐会复制到应用数据目录，可供所有抽取场景选择。</value></data>
+  <data name="S_Library_D" xml:space="preserve"><value>导入的音乐会复制到应用数据目录，可供所有抽取场景选择</value></data>
   <data name="C_Import" xml:space="preserve"><value>导入音乐</value></data>
   <data name="C_FileName" xml:space="preserve"><value>曲目</value></data>
   <data name="C_Format" xml:space="preserve"><value>格式</value></data>

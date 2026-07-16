@@ -163,7 +163,7 @@
         <value>备份文件不存在，请刷新后重试</value>
     </data>
     <data name="M_DeleteContent" xml:space="preserve">
-        <value>确定要删除备份“{0}”吗？此操作无法撤销。</value>
+        <value>确定要删除备份“{0}”吗？此操作无法撤销</value>
     </data>
     <data name="M_DeleteFailed" xml:space="preserve">
         <value>删除备份失败</value>

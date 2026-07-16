@@ -4,23 +4,36 @@
   <resheader name="version"><value>1.3</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page_Title" xml:space="preserve"><value>Security Settings</value></data>
+  <data name="S_Verification" xml:space="preserve"><value>Verification Methods</value></data>
+  <data name="S_Verification_Password" xml:space="preserve"><value>Enable Password Verification</value></data>
+  <data name="S_Verification_Password_D" xml:space="preserve"><value>Protect sensitive operations with a local password</value></data>
+  <data name="S_Verification_Totp" xml:space="preserve"><value>Enable TOTP Verification</value></data>
+  <data name="S_Verification_Totp_D" xml:space="preserve"><value>Protect sensitive operations with one-time codes</value></data>
+  <data name="S_Verification_UsbBinding" xml:space="preserve"><value>Enable USB Binding</value></data>
+  <data name="S_Verification_UsbBinding_D" xml:space="preserve"><value>Allow verification only when the bound device is present</value></data>
+  <data name="S_Protection" xml:space="preserve"><value>Protected Operations</value></data>
+  <data name="S_Protection_SensitiveOperations" xml:space="preserve"><value>Verify Before Sensitive Operations</value></data>
+  <data name="S_Protection_SensitiveOperations_D" xml:space="preserve"><value>Require verification before changing critical settings</value></data>
+  <data name="S_Protection_LinkageOperations" xml:space="preserve"><value>Verify Before Linkage Operations</value></data>
+  <data name="S_Protection_LinkageOperations_D" xml:space="preserve"><value>Require verification before external linkage triggers a draw or page change</value></data>
   <data name="S_Credentials" xml:space="preserve"><value>Security Status and Credentials</value></data>
   <data name="S_Enabled" xml:space="preserve"><value>Enable Security Protection</value></data>
-  <data name="S_Enabled_D" xml:space="preserve"><value>Enabled operations require verification before they run.</value></data>
+  <data name="S_Enabled_D" xml:space="preserve"><value>Enabled operations require verification before they run</value></data>
   <data name="S_Password" xml:space="preserve"><value>Password</value></data>
-  <data name="S_Password_D" xml:space="preserve"><value>Passwords must contain at least 6 characters.</value></data>
+  <data name="S_Password_D" xml:space="preserve"><value>Passwords must contain at least 6 characters</value></data>
   <data name="S_Totp" xml:space="preserve"><value>TOTP Code</value></data>
-  <data name="S_Totp_D" xml:space="preserve"><value>Use a 6-digit code from an authenticator app.</value></data>
+  <data name="S_Totp_D" xml:space="preserve"><value>Use a 6-digit code from an authenticator app</value></data>
   <data name="S_Usb" xml:space="preserve"><value>USB Drive</value></data>
-  <data name="S_Usb_D" xml:space="preserve"><value>A bound drive stores a security token and can be used for verification.</value></data>
+  <data name="S_Usb_D" xml:space="preserve"><value>A bound drive stores a security token and can be used for verification</value></data>
   <data name="S_Factors" xml:space="preserve"><value>Verification Methods</value></data>
-  <data name="S_Factors_D" xml:space="preserve"><value>Password is required. Add other configured methods when needed.</value></data>
+  <data name="S_Factors_D" xml:space="preserve"><value>Password is required; add other configured methods when needed</value></data>
   <data name="S_RequireAll" xml:space="preserve"><value>Require All Selected Methods</value></data>
-  <data name="S_RequireAll_D" xml:space="preserve"><value>Password is always required. When off, any one selected additional method is sufficient.</value></data>
+  <data name="S_RequireAll_D" xml:space="preserve"><value>Password is always required; when off, any one selected additional method is sufficient</value></data>
   <data name="S_WindowOperations" xml:space="preserve"><value>Windows and App</value></data>
-  <data name="S_WindowOperations_D" xml:space="preserve"><value>Protect settings, window visibility, and app lifecycle actions.</value></data>
+  <data name="S_WindowOperations_D" xml:space="preserve"><value>Protect settings, window visibility, and app lifecycle actions</value></data>
   <data name="S_DrawOperations" xml:space="preserve"><value>Draws</value></data>
-  <data name="S_DrawOperations_D" xml:space="preserve"><value>Protect each draw start and reset action separately.</value></data>
+  <data name="S_DrawOperations_D" xml:space="preserve"><value>Protect each draw start and reset action separately</value></data>
   <data name="C_ManageBindings" xml:space="preserve"><value>Manage Bindings</value></data>
   <data name="C_SetPassword" xml:space="preserve"><value>Set Password</value></data>
   <data name="C_ManagePassword" xml:space="preserve"><value>Change or Remove Password</value></data>
@@ -45,6 +58,7 @@
   <data name="C_Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="C_Verify" xml:space="preserve"><value>Verify</value></data>
   <data name="C_VerifyAndSave" xml:space="preserve"><value>Verify and Save</value></data>
+  <data name="C_Preview" xml:space="preserve"><value>Preview</value></data>
   <data name="C_Bind" xml:space="preserve"><value>Bind</value></data>
   <data name="C_UnbindSelected" xml:space="preserve"><value>Unbind Selected</value></data>
   <data name="C_BoundDevices" xml:space="preserve"><value>Bound Drives</value></data>
@@ -67,7 +81,6 @@
   <data name="M_TotpCode" xml:space="preserve"><value>Verification Code</value></data>
   <data name="C_Copy" xml:space="preserve"><value>Copy</value></data>
   <data name="M_Copied" xml:space="preserve"><value>Copied.</value></data>
-  <data name="C_Preview" xml:space="preserve"><value>Preview</value></data>
   <data name="M_UsbDialogTitle" xml:space="preserve"><value>Manage USB Binding</value></data>
   <data name="M_UsbSetupDescription" xml:space="preserve"><value>Select the root folder of a mounted USB drive. SecRandom.safety.key will be created there.</value></data>
   <data name="M_UsbShortDescription" xml:space="preserve"><value>Select the USB drive used for verification.</value></data>

@@ -1,157 +1,90 @@
 # 贡献指南
 
-❤️感谢您向 SecRandom 做出贡献，您可以为 SecRandom 项目做出包括但不限于反馈 Bug、提出功能请求、贡献代码等贡献。在进行贡献前，请务必阅读以下指南。
+感谢你为 SecRandom 提交问题、提出建议、完善文档或贡献代码。
 
-**语言选择** [ **✔简体中文** | [English](resources/CONTRIBUTING_EN.md) | [繁體中文](resources/CONTRIBUTING_ZH_TW.md) ]
+**语言** [ **简体中文** | [English](resources/CONTRIBUTING_EN.md) | [日本語](resources/CONTRIBUTING_JA.md) ]
 
-## 反馈 Bug
+## 提交 Issue
 
-如果在使用 SecRandom 的过程中遇到 Bug，可以在 GitHub Issues 中提交 Bug 反馈。
+- 使用 [GitHub Issues](https://github.com/SECTL/SecRandom/issues) 报告缺陷或提出功能请求。
+- 提交缺陷时，请提供复现步骤、预期行为、实际行为、SecRandom 版本、系统环境和必要日志或截图。
+- 提交功能请求时，请说明使用场景、预期行为和现有功能无法满足需求的原因。
+- 不要在公开 Issue、日志或截图中提交密码、TOTP 密钥、USB 绑定令牌或其他敏感数据。
 
-**请务必准确地按照 Issues 模板中的要求和示例填写相关字段**，否则开发者可能难以诊断您遇到的问题。
+## 开发环境
 
-## 提交功能请求
+SecRandom v3 是基于 .NET 的桌面应用：
 
-如果您有关于 SecRandom 新功能的想法，欢迎在 GitHub Issues 提交功能请求。
+| 类别 | 技术 | 用途 |
+| --- | --- | --- |
+| 语言与运行时 | C# / .NET 10 | 应用、核心服务与测试 |
+| 桌面 UI | Avalonia + FluentAvalonia | 跨平台桌面界面 |
+| 依赖注入 | Microsoft.Extensions.Hosting | 应用服务与 ViewModel 组合 |
+| 测试 | xUnit v3 | 单元测试 |
+| 构建与发布 | GitHub Actions | 多平台构建、打包与发布 |
 
-## 贡献代码
+### 前置条件
 
-在为 SecRandom 贡献代码之前，请务必阅读以下指南。
-
-### 技术栈
-
-在开始贡献之前，了解项目的技术栈将有助于您更快地上手：
-
-| 类别 | 技术/工具 | 用途 |
-|------|-----------|------|
-| 编程语言 | Python 3.13.5 | 项目的主要开发语言 |
-| 包管理器 | uv | 依赖管理和虚拟环境创建 |
-| UI 框架 | PySide6 + PyQt-Fluent-Widgets | 现代化桌面应用界面开发 |
-| 日志管理 | loguru | 高效的日志记录 |
-| 数据处理 | numpy & pandas | 数据处理和分析 |
-| 语音合成 | edge-tts | 文本转语音功能 |
-| Excel 处理 | openpyxl | Excel 文件导入导出 |
-| 安全认证 | pyotp | 双因素认证 |
-
-### 开发环境搭建
-
-#### 1. 前置条件
-
-确保您的系统已安装以下软件：
-
-- Python 3.13.5
+- [.NET SDK 10.0.x](https://dotnet.microsoft.com/download/dotnet/10.0)
 - Git
-- uv 包管理器 ([安装指南](https://docs.astral.sh/uv/getting-started/))
+- 目标平台对应的桌面运行环境；实际打包与安装方式以发行版本说明为准。
 
-#### 2. 准备工作
-
-1. **Fork 项目**
-   - 访问 [SecRandom GitHub 仓库](https://github.com/SECTL/SecRandom)
-   - 点击右上角的 "Fork" 按钮，创建您自己的仓库副本
-
-2. **克隆仓库**
-
-   ```bash
-   git clone https://github.com/您的用户名/SecRandom.git
-   cd SecRandom
-   ```
-
-3. **添加上游仓库**
-
-   ```bash
-   git remote add upstream https://github.com/SECTL/SecRandom.git
-   ```
-
-#### 3. 安装依赖
-
-使用 uv 安装项目依赖：
+### 获取与运行
 
 ```bash
-uv sync
+git clone https://github.com/<your-account>/SecRandom.git
+cd SecRandom
+git remote add upstream https://github.com/SECTL/SecRandom.git
+
+dotnet restore SecRandom.sln
+dotnet build SecRandom.sln -c Release --no-restore
+dotnet test SecRandom.sln -c Release --no-build
+dotnet run --project SecRandom.Desktop/SecRandom.Desktop.csproj
 ```
 
-#### 4. 运行项目
-
-安装依赖后，您可以直接运行项目：
+如需只验证某个测试项目，可运行：
 
 ```bash
-uv run main.py
+dotnet test SecRandom.Core.Tests/SecRandom.Core.Tests.csproj -c Release --no-restore
 ```
 
-#### 5. C# IPC 相关开发
+## 代码约定
 
-您需要 .NET 9.0 来生成 .NET 程序集的 Python 存根（用于 IDE 提示）。如果您选择放弃 IDE 提示，无需安装 .NET 9.0。
-程序集存放在 `data/dlls` 目录。下面是存根生成方法：
+提交前请阅读仓库根目录的 [AGENTS.md](AGENTS.md) 和 [项目规则](docs/project_rules.md)。其中的约束优先于一般编码习惯。以下规则尤其重要：
 
-```bash
-powershell ./scripts/generate-stubs.ps1
-```
+- `SecRandom.Desktop` 仅负责启动，不要把应用业务逻辑放入启动壳。
+- 可复用服务和 ViewModel 必须在 `SecRandom/App.axaml.cs` 的 `BuildHost()` 中注册；不要在页面中直接 `new` 可复用服务。
+- 新导航页需要 `[PageInfo(...)]`，并通过 `AddMainPage<T>()` 或 `AddSettingsPage<T>()` 注册，不要手写侧边栏菜单项。
+- UI 文本按页面放入 `Langs` 下对应的资源目录。基础资源、英文和日文资源保持同一键集合；不要把所有页面文本放进共享资源文件。
+- 使用 `RecordId` 维护学生、奖品和历史的内部身份；显示的 `Id` 或名称不是必需的唯一标识。
+- 配置字典和集合的直接修改不会自动保存，负责该变更的代码必须在合适的生命周期调用保存。
+- 安全授权统一通过 `ISecurityService`；凭据不得写入普通设置、日志、导出数据或诊断信息。
+- 插件只能依赖 `SecRandom.Core/Plugins` 的稳定契约，不能获得抽取内部、可写配置、可写历史或完整宿主服务。
+- 新应用图标使用项目的 Fluent Filled 图标系统，不要加入原始 Unicode Fluent 字形。
 
-如果您正在使用 Linux 发行版，请先安装 [PowerShell 7](https://github.com/PowerShell/PowerShell)，并将上方命令中的 `powershell` 替换为 `pwsh`。
+## 修改范围与测试
 
-### 贡献准则
+- 将改动保持在解决问题所需的最小范围，避免顺带重构无关代码。
+- 为新增或修复的核心行为补充聚焦测试，特别是抽取、配置、导入导出、安全、证明和共享契约。
+- UI、系统集成、权限、更新和跨平台行为需要实际运行验证；编译通过不能替代运行验证。
+- 不要提交 `bin/`、`obj/`、`artifacts/`、`publish/` 或打包过程生成的文件。
+- 修改文档时，保持简体中文、英文和日文 README/贡献指南中的事实、链接和结构同步。
 
-**您为 SecRandom 贡献的功能须遵循以下准则：**
+## 提交与 Pull Request
 
-- **稳定**：您贡献的功能需要能尽可能稳定工作。
-- **具有泛用性**：您贡献的功能需要面向大部分用户。
-- **激进功能需添加开关**：如果您贡献的功能比较激进，请添加功能开关，并默认禁用此功能。
-- **能用**：在提交补丁前，请在本地测试您实现的功能是否能正常使用。
-- 尽量不要提交仅包含文案修复的补丁。
+- 从当前目标分支创建主题分支，并在开始前同步上游。
+- 提交信息建议遵循 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/)，例如 `fix: correct proof retention cleanup`。
+- PR 应说明问题、方案和验证方式；涉及 UI 时附上截图或录屏，涉及行为变化时说明兼容性和迁移影响。
+- 提交 PR 前至少运行与改动范围相符的还原、构建和测试命令，并在 PR 描述中说明未运行的检查及原因。
+- 不要未经人工审阅直接提交生成式 AI 产出的代码、测试或文档；贡献者对提交内容的正确性和许可合规性负责。
 
-### 补丁质量
+## CI 与发布
 
-随着本项目的规模逐渐扩大，有些用户提交了一些低质量的补丁。这些补丁有的完全不能实现预期的功能，有的甚至根本不能通过编译，浪费了开发者的时间和精力对这些补丁进行代码审阅和问题排查。我们接受有瑕疵的补丁， **但我们希望您在提交补丁前，您的补丁至少应该满足以下的要求：**
+仓库使用 GitHub Actions：
 
-- 实现的功能能够工作，在提交补丁前请至少在本地机器测试一次补丁的功能是否可以正常工作。
-- 我们不建议在没有人为干预的情况下完全地使用生成式人工智能实现您要贡献的功能。
+- `.github/workflows/build_publish.yml` 负责多平台构建、打包、签名清单生成和手动发布流程。
+- `.github/workflows/codeQL.yml` 负责 CodeQL 安全扫描。
 
-如果您持续提交低质量的补丁，我们可能会限制您继续向本项目/组织提交补丁。
+常规贡献无需通过提交信息触发发布。发布由维护者在 GitHub Actions 的手动工作流中指定发布标签后执行。
 
-### 分支与开发周期
-
-SecRandom 代码仓库目前具有以下分支：
-
-- `master`：SecRandom 主要开发分支。
-
-当开始下个版本的 SecRandom 时，会将当前的主分支分叉到对应的维护分支。在开发下一个版本的 SecRandom 过程中，也会在维护分支上并行维护当前稳定版本的功能。
-
-由于不同开发分支上的代码接口可能存在差异。因此，**根据您做出的贡献类型，您需要选择不同的基础分支。**
-
-**以下类型的贡献建议以当前的维护分支为基础分支：**
-
-- 修复稳定版中的 Bug
-- 对稳定版中的功能进行小幅度的优化
-
-**以下类型的贡献建议以 `master` 为基础分支：**
-
-- 添加新的功能
-- 对代码进行重构
-- 其它对 SecRandom 进行较大改动的贡献
-- 修改README等文档
-
-### 提交
-
-在本代码仓库提交时，请尽量遵守 [约定式提交](https://www.conventionalcommits.org/zh-hans/v1.0.0/) 规范。
-
-### 合并更改
-
-在进行合并之前，请先测试您贡献的代码，确保您贡献的代码能稳定运作。
-
-您可以向本项目发起 [Pull Request](https://github.com/SECTL/SecRandom/pulls) 来合并您的更改。在发起 Pull Request 时，请简要地描述您做的更改，并最好附上您实现的功能的演示截图/视频。
-
-### Actions 构建工作流
-
-SecRandom 项目使用 GitHub Actions 进行自动构建和发布，配置文件位于 `.github/workflows/build-unified.yml`。
-
-#### 触发构建
-
-您可以通过以下方式触发构建：
-
-1. **提交消息触发**：
-   - 在 commit 消息中包含 `开始打包` 关键词
-   - 示例：`git commit -m "新增功能 开始打包"`
-
----
-
-感谢您对 SecRandom 项目的支持和贡献！让我们一起打造更好的公平随机抽取系统！ 🚀
+感谢你的贡献。

@@ -175,6 +175,18 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_LogViewer_D", resourceCulture);
             }
         }
+
+        public static string C_MoreOptions_OpenLogDirectory {
+            get { return ResourceManager.GetString("C_MoreOptions_OpenLogDirectory", resourceCulture); }
+        }
+
+        public static string C_MoreOptions_OpenDataDirectory {
+            get { return ResourceManager.GetString("C_MoreOptions_OpenDataDirectory", resourceCulture); }
+        }
+
+        public static string C_MoreOptions_OpenAppDirectory {
+            get { return ResourceManager.GetString("C_MoreOptions_OpenAppDirectory", resourceCulture); }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to 搜索设置....
@@ -192,6 +204,10 @@ namespace SecRandom.Langs.SettingsView {
             get {
                 return ResourceManager.GetString("M_NeedsRestarting", resourceCulture);
             }
+        }
+
+        public static string M_OpenDirectoryFailed {
+            get { return ResourceManager.GetString("M_OpenDirectoryFailed", resourceCulture); }
         }
         
         /// <summary>

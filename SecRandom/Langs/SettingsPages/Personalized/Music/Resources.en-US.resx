@@ -6,7 +6,7 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Page_Title" xml:space="preserve"><value>Music library</value></data>
   <data name="S_Library" xml:space="preserve"><value>Local music library</value></data>
-  <data name="S_Library_D" xml:space="preserve"><value>Imported music is copied into the app data folder and can be selected by every draw mode.</value></data>
+  <data name="S_Library_D" xml:space="preserve"><value>Imported music is copied into the app data folder and can be selected by every draw mode</value></data>
   <data name="C_Import" xml:space="preserve"><value>Import music</value></data>
   <data name="C_FileName" xml:space="preserve"><value>Track</value></data>
   <data name="C_Format" xml:space="preserve"><value>Format</value></data>

@@ -535,6 +535,24 @@ namespace SecRandom.Langs.SettingsPages.Picking {
                 return ResourceManager.GetString("S_AnimationMusic_D", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 循环播放动画音乐.
+        /// </summary>
+        public static string S_AnimationMusicLoop {
+            get {
+                return ResourceManager.GetString("S_AnimationMusicLoop", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 动画持续期间重复播放动画音乐。.
+        /// </summary>
+        public static string S_AnimationMusicLoop_D {
+            get {
+                return ResourceManager.GetString("S_AnimationMusicLoop_D", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to 动画音乐淡入和淡出.
@@ -587,24 +605,6 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         public static string S_AnimationStyle_D {
             get {
                 return ResourceManager.GetString("S_AnimationStyle_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 自动关闭时间.
-        /// </summary>
-        public static string S_AutoCloseTime {
-            get {
-                return ResourceManager.GetString("S_AutoCloseTime", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 抽取完成后自动关闭闪抽浮窗的秒数，设为 0 则不自动关闭.
-        /// </summary>
-        public static string S_AutoCloseTime_D {
-            get {
-                return ResourceManager.GetString("S_AutoCloseTime_D", resourceCulture);
             }
         }
         
@@ -1183,6 +1183,24 @@ namespace SecRandom.Langs.SettingsPages.Picking {
                 return ResourceManager.GetString("S_StudentImagePosition_D", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 启用语音播报.
+        /// </summary>
+        public static string S_VoiceAnnouncementEnabled {
+            get {
+                return ResourceManager.GetString("S_VoiceAnnouncementEnabled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 抽取完成后播报结果；全局语音播报开关关闭时，此设置不会生效。.
+        /// </summary>
+        public static string S_VoiceAnnouncementEnabled_D {
+            get {
+                return ResourceManager.GetString("S_VoiceAnnouncementEnabled_D", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to 动画设置.
@@ -1262,6 +1280,15 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         public static string Section_StudentImage {
             get {
                 return ResourceManager.GetString("Section_StudentImage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 语音播报.
+        /// </summary>
+        public static string Section_VoiceAnnouncement {
+            get {
+                return ResourceManager.GetString("Section_VoiceAnnouncement", resourceCulture);
             }
         }
     }

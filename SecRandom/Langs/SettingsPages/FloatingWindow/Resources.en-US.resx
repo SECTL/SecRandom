@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="Page_Title"><value>Floating Window</value></data>
+  <data name="S_Display"><value>Window Display</value></data>
+  <data name="S_Display_StartupDisplay"><value>Show floating window at startup</value></data>
+  <data name="S_Display_StartupDisplay_D"><value>Automatically open the floating window after the program starts</value></data>
+  <data name="S_Display_Opacity"><value>Floating window opacity</value></data>
+  <data name="S_Display_Opacity_D"><value>Applies to both the main floating window and the quick-draw window</value></data>
+  <data name="S_Display_TopmostMode"><value>Floating window topmost mode</value></data>
+  <data name="S_Display_TopmostMode_D"><value>Choose whether the floating window stays above other windows</value></data>
+  <data name="O_TopmostMode_None"><value>Not topmost</value></data>
+  <data name="O_TopmostMode_Topmost"><value>Topmost</value></data>
+  <data name="O_TopmostMode_UIAccess"><value>UIAccess topmost</value></data>
+  <data name="S_Buttons"><value>Floating Window Controls</value></data>
+  <data name="S_Buttons_RollCall"><value>Roll Call</value></data>
+  <data name="S_Buttons_RollCall_D"><value>Show the roll-call entry in the floating window</value></data>
+  <data name="S_Buttons_QuickDraw"><value>Quick Draw</value></data>
+  <data name="S_Buttons_QuickDraw_D"><value>Show the quick-draw entry in the floating window</value></data>
+  <data name="S_Buttons_Lottery"><value>Lottery</value></data>
+  <data name="S_Buttons_Lottery_D"><value>Show the lottery entry in the floating window</value></data>
+  <data name="S_Interaction"><value>Movement and Docking</value></data>
+  <data name="S_Interaction_StickToEdge"><value>Edge docking</value></data>
+  <data name="S_Interaction_StickToEdge_D"><value>Snap to the nearest left or right edge of the current screen when dragging ends</value></data>
+  <data name="S_Interaction_Draggable"><value>Draggable</value></data>
+  <data name="S_Interaction_Draggable_D"><value>When disabled, neither the main floating window nor its handle can be dragged</value></data>
+  <data name="S_Interaction_DoNotStealFocus"><value>Focus-free mode</value></data>
+  <data name="S_Interaction_DoNotStealFocus_D"><value>Try not to take focus from the current window when the floating window is clicked</value></data>
+  <data name="S_Interaction_HideOnForegroundProcessNames_D"><value>Separate names with semicolons ; and hide the floating window when a process matches, such as WeChat.exe</value></data>
+  <data name="S_Interaction_LongPressDuration"><value>Long-press duration</value></data>
+  <data name="S_Interaction_HideOnForegroundProcessNames"><value>Foreground process names</value></data>
+  <data name="S_Interaction_HideOnForeground_D"><value>Automatically hide the floating window when the foreground window title or process matches</value></data>
+  <data name="S_Interaction_StickToEdgeRecoverSeconds"><value>Auto-collapse delay</value></data>
+  <data name="S_Interaction_LongPressDuration_D"><value>Milliseconds required to trigger a long-press action</value></data>
+  <data name="S_Interaction_HideOnForeground"><value>Hide on foreground window</value></data>
+  <data name="S_Interaction_StickToEdgeRecoverSeconds_D"><value>Wait this many seconds after docking before collapsing; set to 0 to keep expanded</value></data>
+  <data name="S_Interaction_HideOnForegroundWindowTitles_D"><value>Separate with semicolons ; and hide when the title contains matching text</value></data>
+  <data name="S_Interaction_HideOnForegroundWindowTitles"><value>Foreground window titles</value></data>
+  <data name="S_Buttons_EnabledItems"><value>Floating Window Controls</value></data>
+  <data name="S_Buttons_EnabledItems_D"><value>Choose the feature entries shown in the main floating window</value></data>
+  <data name="S_Buttons_Placement"><value>Control layout</value></data>
+  <data name="S_Buttons_Placement_D"><value>Rectangle uses a two-column grid; vertical and horizontal use a single column</value></data>
+  <data name="O_Placement_Rectangle"><value>Rectangle</value></data><data name="O_Placement_Vertical"><value>Vertical</value></data><data name="O_Placement_Horizontal"><value>Horizontal</value></data>
+  <data name="S_Buttons_DisplayStyle"><value>Control display style</value></data>
+  <data name="S_Buttons_DisplayStyle_D"><value>Choose icons, text, or both for floating-window controls</value></data>
+  <data name="O_DisplayStyle_IconText"><value>Icon and text</value></data><data name="O_DisplayStyle_Icon"><value>Icon only</value></data><data name="O_DisplayStyle_Text"><value>Text only</value></data>
+  <data name="S_Buttons_Size"><value>Control size</value></data>
+  <data name="S_Buttons_Size_D"><value>Adjust the side length of each square control; the icon and text scale with it</value></data>
+  <data name="O_Size_XXS"><value>Tiny</value></data><data name="O_Size_XS"><value>Very small</value></data><data name="O_Size_S"><value>Small</value></data><data name="O_Size_M"><value>Medium</value></data><data name="O_Size_L"><value>Large</value></data><data name="O_Size_XL"><value>Very large</value></data><data name="O_Size_XXL"><value>Huge</value></data>
+  <data name="S_Interaction_StickToEdgeDisplayStyle"><value>Collapsed handle style</value></data>
+  <data name="S_Interaction_StickToEdgeDisplayStyle_D"><value>Choose a roll-call icon, the word “Draw,” or a direction arrow for the edge handle</value></data>
+  <data name="S_Dock"><value>Edge Collapse</value></data><data name="S_Dock_Size"><value>Handle size</value></data><data name="S_Dock_Size_D"><value>Adjust the square side length of the edge handle</value></data>
+  <data name="O_StickDisplay_Icon"><value>Icon</value></data><data name="O_StickDisplay_Text"><value>Text</value></data><data name="O_StickDisplay_Arrow"><value>Arrow</value></data>
+</root>

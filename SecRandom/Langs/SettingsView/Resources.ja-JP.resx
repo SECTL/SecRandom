@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="M_NeedsRestarting" xml:space="preserve"><value>再起動が必要です</value></data>
+  <data name="M_NeedsRestarting_D" xml:space="preserve"><value>一部の設定を適用するには再起動が必要です</value></data>
+  <data name="M_NeedsRestarting_Primary" xml:space="preserve"><value>再起動</value></data>
+  <data name="M_NeedsRestarting_Close" xml:space="preserve"><value>キャンセル</value></data>
+  <data name="M_NeedsRestarting_Tooltip" xml:space="preserve"><value>一部の設定を適用するには再起動が必要です。クリックしてアプリを再起動します。</value></data>
+  <data name="C_SearchBox_Watermark" xml:space="preserve"><value>設定を検索...</value></data>
+  <data name="C_MoreOptions" xml:space="preserve"><value>その他のオプション...</value></data>
+  <data name="C_MoreOptions_LogViewer" xml:space="preserve"><value>ログを表示</value></data>
+  <data name="C_MoreOptions_LogViewer_D" xml:space="preserve"><value>アプリケーションのログファイルを表示・管理します</value></data>
+  <data name="C_MoreOptions_ExportDiagnosticData" xml:space="preserve"><value>診断データをエクスポート</value></data>
+  <data name="C_MoreOptions_ExportDiagnosticData_D" xml:space="preserve"><value>匿名化した実行情報と限定ログを今すぐエクスポートして問題を調査します</value></data>
+  <data name="C_MoreOptions_ExportSettings" xml:space="preserve"><value>設定をエクスポート</value></data>
+  <data name="C_MoreOptions_ExportSettings_D" xml:space="preserve"><value>現在の設定を SecRandom v3 設定ファイルとしてバックアップ・移行用にエクスポートします</value></data>
+  <data name="C_MoreOptions_ImportSettings" xml:space="preserve"><value>設定をインポート</value></data>
+  <data name="C_MoreOptions_ImportSettings_D" xml:space="preserve"><value>SecRandom v3 設定ファイルから設定のみをインポートし、現在の設定を置き換えます</value></data>
+  <data name="C_MoreOptions_ExportAllData" xml:space="preserve"><value>すべてのデータをエクスポート</value></data>
+  <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve"><value>資格情報を除くデータ、設定、プラグイン、プラグインの個別設定を今すぐエクスポートします</value></data>
+  <data name="C_MoreOptions_ImportAllData" xml:space="preserve"><value>すべてのデータをインポート</value></data>
+  <data name="C_MoreOptions_ImportAllData_D" xml:space="preserve"><value>SecRandom v3 バックアップからすべてのデータをインポートします。インポート前に復元スナップショットを作成します</value></data>
+   <data name="C_MoreOptions_OpenLogDirectory" xml:space="preserve"><value>ログフォルダーを開く</value></data>
+   <data name="C_MoreOptions_OpenDataDirectory" xml:space="preserve"><value>データフォルダーを開く</value></data>
+   <data name="C_MoreOptions_OpenAppDirectory" xml:space="preserve"><value>アプリケーションフォルダーを開く</value></data>
+  <data name="C_ExportSettingsFileTitle" xml:space="preserve"><value>設定をエクスポート</value></data>
+  <data name="C_ExportDiagnosticDataFileTitle" xml:space="preserve"><value>診断データをエクスポート</value></data>
+  <data name="C_ImportSettingsFileTitle" xml:space="preserve"><value>設定をインポート</value></data>
+  <data name="C_ExportAllDataFileTitle" xml:space="preserve"><value>すべてのデータをエクスポート</value></data>
+  <data name="C_ImportAllDataFileTitle" xml:space="preserve"><value>すべてのデータをインポート</value></data>
+  <data name="C_JsonFileType" xml:space="preserve"><value>JSON ファイル</value></data>
+  <data name="C_ZipFileType" xml:space="preserve"><value>ZIP ファイル</value></data>
+  <data name="C_Import" xml:space="preserve"><value>インポート</value></data>
+  <data name="C_Cancel" xml:space="preserve"><value>キャンセル</value></data>
+  <data name="C_Close" xml:space="preserve"><value>閉じる</value></data>
+  <data name="C_DiagnosticStandard" xml:space="preserve"><value>標準診断パッケージ</value></data>
+  <data name="C_DiagnosticExtended" xml:space="preserve"><value>拡張診断パッケージ</value></data>
+  <data name="M_DiagnosticExportTitle" xml:space="preserve"><value>診断データをエクスポート</value></data>
+  <data name="M_DiagnosticExportContent" xml:space="preserve"><value>標準パッケージには匿名化したログと実行情報が含まれます。拡張パッケージには匿名化した設定スナップショット、プラグインとプロファイル数の概要、匿名化したクラッシュレポートも含まれます。どちらにもリストや履歴の内容、プラグインの個別設定、安全資格情報は含まれません</value></data>
+  <data name="M_ImportTitle" xml:space="preserve"><value>インポートの確認</value></data>
+  <data name="M_ImportSettingsContent" xml:space="preserve"><value>ウィンドウ、起動、テーマ、抽選、デスクトップ連携を含む、資格情報以外のすべての設定が置き換えられます。先に復元スナップショットを作成し、失敗した場合はインポートを中止します。パスワード、TOTP、USB バインド、ロックアウト状態はインポートされません。</value></data>
+  <data name="M_ImportAllDataContent" xml:space="preserve"><value>資格情報以外のデータ、設定、プロファイル、履歴、リソース、プラグイン、プラグインの個別設定が置き換えられます。先に完全な復元スナップショットを作成し、失敗した場合はインポートを中止します。安全資格情報はインポートされません。</value></data>
+  <data name="M_ImportUnsupportedTitle" xml:space="preserve"><value>サポートされていないインポートファイル</value></data>
+  <data name="M_ImportUnsupportedContent" xml:space="preserve"><value>このファイルはサポートされている SecRandom v3 エクスポートファイルではありません。</value></data>
+  <data name="M_ImportUnsupportedUnknownVersion" xml:space="preserve"><value>不明</value></data>
+  <data name="M_ImportUnsupportedVersion" xml:space="preserve"><value>検出されたエクスポートバージョン: {0}&#xA;&#xA;{1}&#xA;&#xA;復元スナップショットは作成されず、データも変更されていません。</value></data>
+  <data name="M_ExportSuccess" xml:space="preserve"><value>エクスポートしました: {0}</value></data>
+  <data name="M_ImportSuccess" xml:space="preserve"><value>インポートが完了しました。復元バックアップ: {0}</value></data>
+  <data name="M_ExportFailed" xml:space="preserve"><value>エクスポートに失敗しました。</value></data>
+  <data name="M_ImportFailed" xml:space="preserve"><value>置き換えを完了できず、インポートに失敗しました。</value></data>
+  <data name="M_OpenDirectoryFailed" xml:space="preserve"><value>フォルダーを開けませんでした。</value></data>
+  <data name="M_PageNotFound" xml:space="preserve"><value>ページ {0} が見つかりません</value></data>
+</root>

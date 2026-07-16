@@ -46,6 +46,15 @@
     <data name="Feat_RollCall" xml:space="preserve">
         <value>Roll Call</value>
     </data>
+    <data name="Feat_QuickDraw" xml:space="preserve">
+        <value>Quick Draw</value>
+    </data>
+    <data name="C_QuickDrawAutoCloseHint" xml:space="preserve">
+        <value>Closes automatically in {0} seconds&#xA;Click 3 times in a row to close</value>
+    </data>
+    <data name="C_QuickDrawManualCloseHint" xml:space="preserve">
+        <value>Click 3 times in a row to close</value>
+    </data>
     <data name="Settings_About" xml:space="preserve">
         <value>About SecRandom</value>
     </data>
@@ -85,14 +94,20 @@
     <data name="Feat_History" xml:space="preserve">
         <value>History</value>
     </data>
+    <data name="Feat_RollCallHistory" xml:space="preserve">
+        <value>Roll Call History</value>
+    </data>
+    <data name="Feat_LotteryHistory" xml:space="preserve">
+        <value>Lottery History</value>
+    </data>
+    <data name="Settings_HistoryManagement" xml:space="preserve">
+        <value>History Management</value>
+    </data>
     <data name="Settings_Update" xml:space="preserve">
         <value>Update Settings</value>
     </data>
     <data name="Feat_Lottery" xml:space="preserve">
         <value>Lottery</value>
-    </data>
-    <data name="Feat_QuickDraw" xml:space="preserve">
-        <value>Quick Draw</value>
     </data>
     <data name="Menu_OpenSettings" xml:space="preserve">
         <value>Open Settings</value>
@@ -111,9 +126,6 @@
     </data>
     <data name="C_ToBeWritten" xml:space="preserve">
         <value>(To be written)</value>
-    </data>
-    <data name="Menu_OpenProfileSettings" xml:space="preserve">
-        <value>Open Profile Settings</value>
     </data>
     <data name="AttachedSettings_BehindScene" xml:space="preserve">
         <value>Behind Scene Settings</value>
@@ -135,6 +147,87 @@
     </data>
     <data name="Settings_Appearance" xml:space="preserve">
         <value>Appearance</value>
+    </data>
+    <data name="Settings_FairPick" xml:space="preserve">
+        <value>Fair Draw Settings</value>
+    </data>
+    <data name="Settings_VoiceMusic" xml:space="preserve">
+        <value>Voice and Music</value>
+    </data>
+    <data name="Settings_DefaultNotification" xml:space="preserve">
+        <value>Default Notification Settings</value>
+    </data>
+    <data name="Settings_Plugin" xml:space="preserve">
+        <value>Plugins</value>
+    </data>
+    <data name="Settings_EnableShortcut" xml:space="preserve">
+        <value>Enable Shortcuts</value>
+    </data>
+    <data name="Settings_EnableShortcut_D" xml:space="preserve">
+        <value>Allow keyboard shortcuts to open pages or perform draws</value>
+    </data>
+    <data name="Settings_OpenRollCallPageShortcut" xml:space="preserve">
+        <value>Open Roll Call Page</value>
+    </data>
+    <data name="Settings_OpenRollCallPageShortcut_D" xml:space="preserve">
+        <value>Set the shortcut for opening the roll call page</value>
+    </data>
+    <data name="Settings_QuickDrawShortcut" xml:space="preserve">
+        <value>Perform Quick Draw</value>
+    </data>
+    <data name="Settings_QuickDrawShortcut_D" xml:space="preserve">
+        <value>Set the shortcut for performing a quick draw</value>
+    </data>
+    <data name="Settings_OpenLotteryPageShortcut" xml:space="preserve">
+        <value>Open Lottery Page</value>
+    </data>
+    <data name="Settings_OpenLotteryPageShortcut_D" xml:space="preserve">
+        <value>Set the shortcut for opening the lottery page</value>
+    </data>
+    <data name="Settings_ShortcutExampleRollCall" xml:space="preserve">
+        <value>Ctrl+Alt+R</value>
+    </data>
+    <data name="Settings_ShortcutExampleQuickDraw" xml:space="preserve">
+        <value>Ctrl+Alt+Q</value>
+    </data>
+    <data name="Settings_ShortcutExampleLottery" xml:space="preserve">
+        <value>Ctrl+Alt+L</value>
+    </data>
+    <data name="Settings_FairPick_ByTotal" xml:space="preserve">
+        <value>Fair Draw by Total Draws</value>
+    </data>
+    <data name="Settings_FairPick_ByTotal_D" xml:space="preserve">
+        <value>Adjust candidate weights according to historical draw counts</value>
+    </data>
+    <data name="Settings_FairPick_ByGroup" xml:space="preserve">
+        <value>Fair Draw by Group</value>
+    </data>
+    <data name="Settings_FairPick_ByGender" xml:space="preserve">
+        <value>Fair Draw by Gender</value>
+    </data>
+    <data name="Settings_FairPick_ByTime" xml:space="preserve">
+        <value>Fair Draw by Time</value>
+    </data>
+    <data name="Settings_FairPick_Weights" xml:space="preserve">
+        <value>Advanced Weight Settings</value>
+    </data>
+    <data name="Settings_FairPick_Protection" xml:space="preserve">
+        <value>Draw Protection Settings</value>
+    </data>
+    <data name="Settings_FairPick_GapProtection" xml:space="preserve">
+        <value>Average Gap Protection</value>
+    </data>
+    <data name="Settings_FairPick_GapThreshold" xml:space="preserve">
+        <value>Difference Threshold</value>
+    </data>
+    <data name="Settings_FairPick_GapThreshold_D" xml:space="preserve">
+        <value>Maximum allowed difference in draw counts</value>
+    </data>
+    <data name="Settings_FairPick_Shield" xml:space="preserve">
+        <value>Shield After Draw</value>
+    </data>
+    <data name="Settings_FairPick_ColdStart" xml:space="preserve">
+        <value>Cold-Start Protection</value>
     </data>
 
     <data name="MultiInstance_Title" xml:space="preserve">

@@ -177,15 +177,6 @@ namespace SecRandom.Langs.Common {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 编辑档案 (debug).
-        /// </summary>
-        public static string Menu_OpenProfileSettings {
-            get {
-                return ResourceManager.GetString("Menu_OpenProfileSettings", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to 打开设置.
         /// </summary>
         public static string Menu_OpenSettings {
@@ -368,18 +359,6 @@ namespace SecRandom.Langs.Common {
         public static string Settings_DefaultNotification {
             get {
                 return ResourceManager.GetString("Settings_DefaultNotification", resourceCulture);
-            }
-        }
-
-        public static string Settings_BackgroundMusicLoop {
-            get {
-                return ResourceManager.GetString("Settings_BackgroundMusicLoop", resourceCulture);
-            }
-        }
-
-        public static string Settings_BackgroundMusicLoop_D {
-            get {
-                return ResourceManager.GetString("Settings_BackgroundMusicLoop_D", resourceCulture);
             }
         }
 

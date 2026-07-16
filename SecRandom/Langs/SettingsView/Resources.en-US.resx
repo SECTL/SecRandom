@@ -1,4 +1,4 @@
-﻿<root>
+<root>
     <resheader name="resmimetype">
         <value>text/microsoft-resx</value>
     </resheader>
@@ -19,7 +19,7 @@
         <value>Needs Restarting</value>
     </data>
     <data name="M_NeedsRestarting_D" xml:space="preserve">
-        <value>Some settings require a restart to take effect.</value>
+        <value>Some settings require a restart to take effect</value>
     </data>
     <data name="M_NeedsRestarting_Primary" xml:space="preserve">
         <value>Restart</value>
@@ -40,32 +40,35 @@
         <value>Export diagnostic data</value>
     </data>
     <data name="C_MoreOptions_ExportDiagnosticData_D" xml:space="preserve">
-        <value>Export redacted runtime information and limited logs now.</value>
+        <value>Export redacted runtime information and limited logs now</value>
     </data>
     <data name="C_MoreOptions_ExportSettings" xml:space="preserve">
         <value>Export settings</value>
     </data>
     <data name="C_MoreOptions_ExportSettings_D" xml:space="preserve">
-        <value>Export portable non-credential settings.</value>
+        <value>Export portable non-credential settings</value>
     </data>
     <data name="C_MoreOptions_ImportSettings" xml:space="preserve">
         <value>Import settings</value>
     </data>
     <data name="C_MoreOptions_ImportSettings_D" xml:space="preserve">
-        <value>Replace non-credential settings after creating a recovery snapshot.</value>
+        <value>Replace non-credential settings after creating a recovery snapshot</value>
     </data>
     <data name="C_MoreOptions_ExportAllData" xml:space="preserve">
         <value>Export all data</value>
     </data>
     <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve">
-        <value>Export non-credential data, plugins, and plugin private configuration now.</value>
+        <value>Export non-credential data, plugins, and plugin private configuration now</value>
     </data>
     <data name="C_MoreOptions_ImportAllData" xml:space="preserve">
         <value>Import all data</value>
     </data>
     <data name="C_MoreOptions_ImportAllData_D" xml:space="preserve">
-        <value>Import a current-version or v2 archive after creating a recovery snapshot.</value>
+        <value>Import a current-version or v2 archive after creating a recovery snapshot</value>
     </data>
+    <data name="C_MoreOptions_OpenLogDirectory"><value>Open log directory</value></data>
+    <data name="C_MoreOptions_OpenDataDirectory"><value>Open data directory</value></data>
+    <data name="C_MoreOptions_OpenAppDirectory"><value>Open application directory</value></data>
     <data name="C_ExportSettingsFileTitle" xml:space="preserve">
         <value>Export settings</value>
     </data>
@@ -129,4 +132,12 @@
     <data name="M_PageNotFound" xml:space="preserve">
         <value>Page {0} Not Found</value>
     </data>
+    <data name="M_OpenDirectoryFailed"><value>Unable to open the directory.</value></data>
+    <data name="C_MoreOptions_LogViewer"><value>View logs</value></data>
+    <data name="C_MoreOptions_LogViewer_D"><value>View and manage application log files</value></data>
+    <data name="C_Close"><value>Close</value></data>
+    <data name="M_ImportUnsupportedTitle"><value>Unsupported Import File</value></data>
+    <data name="M_ImportUnsupportedContent"><value>This is not a supported SecRandom v3 export file.</value></data>
+    <data name="M_ImportUnsupportedUnknownVersion"><value>Unknown</value></data>
+    <data name="M_ImportUnsupportedVersion"><value>Detected export version: {0}&#xA;&#xA;{1}&#xA;&#xA;No recovery snapshot was created and no data was changed.</value></data>
 </root>

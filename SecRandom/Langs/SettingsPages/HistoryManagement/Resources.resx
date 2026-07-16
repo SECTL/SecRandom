@@ -17,19 +17,19 @@
     <value>显示点名历史</value>
   </data>
   <data name="S_History_ShowRollCall_D" xml:space="preserve">
-    <value>在历史页中显示点名记录。</value>
+    <value>在历史页中显示点名记录</value>
   </data>
   <data name="S_History_ShowLottery" xml:space="preserve">
     <value>显示抽奖历史</value>
   </data>
   <data name="S_History_ShowLottery_D" xml:space="preserve">
-    <value>在历史页中显示抽奖记录。</value>
+    <value>在历史页中显示抽奖记录</value>
   </data>
   <data name="S_History_SelectWeight" xml:space="preserve">
     <value>显示权重信息</value>
   </data>
   <data name="S_History_SelectWeight_D" xml:space="preserve">
-    <value>查看历史记录时显示参与抽取的权重信息。</value>
+    <value>查看历史记录时显示参与抽取的权重信息</value>
   </data>
   <data name="S_Filter" xml:space="preserve">
     <value>筛选</value>
@@ -38,13 +38,13 @@
     <value>默认班级筛选</value>
   </data>
   <data name="S_Filter_SelectedClassName_D" xml:space="preserve">
-    <value>进入历史页时默认选择的班级。</value>
+    <value>进入历史页时默认选择的班级</value>
   </data>
   <data name="S_Filter_SelectedPoolName" xml:space="preserve">
     <value>默认奖池筛选</value>
   </data>
   <data name="S_Filter_SelectedPoolName_D" xml:space="preserve">
-    <value>进入历史页时默认选择的奖池。</value>
+    <value>进入历史页时默认选择的奖池</value>
   </data>
   <data name="S_ClearHistory" xml:space="preserve">
     <value>清除历史记录</value>
@@ -53,13 +53,13 @@
     <value>清除点名历史</value>
   </data>
   <data name="S_ClearHistory_RollCall_D" xml:space="preserve">
-    <value>删除选定班级的全部点名历史记录，此操作不可撤销。</value>
+    <value>删除选定班级的全部点名历史记录，此操作不可撤销</value>
   </data>
   <data name="S_ClearHistory_Lottery" xml:space="preserve">
     <value>清除抽奖历史</value>
   </data>
   <data name="S_ClearHistory_Lottery_D" xml:space="preserve">
-    <value>删除选定奖池的全部抽奖历史记录，此操作不可撤销。</value>
+    <value>删除选定奖池的全部抽奖历史记录，此操作不可撤销</value>
   </data>
   <data name="C_Clear" xml:space="preserve">
     <value>清除</value>

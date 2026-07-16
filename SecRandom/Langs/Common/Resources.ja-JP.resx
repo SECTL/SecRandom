@@ -25,6 +25,75 @@
         </value>
     </resheader>
 
+    <data name="Feat_Settings" xml:space="preserve"><value>設定</value></data>
+    <data name="Menu_ToggleMainWindow" xml:space="preserve"><value>メインウィンドウを表示/非表示</value></data>
+    <data name="Menu_ToggleFloatingWindow" xml:space="preserve"><value>フローティングウィンドウを表示/非表示</value></data>
+    <data name="Menu_ShowMainWindow" xml:space="preserve"><value>メインウィンドウを表示</value></data>
+    <data name="Menu_ShowFloatingWindow" xml:space="preserve"><value>フローティングウィンドウを表示</value></data>
+    <data name="Menu_HideFloatingWindow" xml:space="preserve"><value>フローティングウィンドウを非表示</value></data>
+    <data name="Feat_RollCall" xml:space="preserve"><value>点呼</value></data>
+    <data name="Feat_QuickDraw" xml:space="preserve"><value>クイック抽選</value></data>
+    <data name="C_QuickDrawAutoCloseHint" xml:space="preserve"><value>{0} 秒後に自動的に閉じます&#xA;3 回連続クリックで閉じます</value></data>
+    <data name="C_QuickDrawManualCloseHint" xml:space="preserve"><value>3 回連続クリックで閉じます</value></data>
+    <data name="Feat_Lottery" xml:space="preserve"><value>抽選</value></data>
+    <data name="Settings_About" xml:space="preserve"><value>SecRandom について</value></data>
+    <data name="Settings_Basic" xml:space="preserve"><value>基本</value></data>
+    <data name="Settings_RosterManagement" xml:space="preserve"><value>名簿管理</value></data>
+    <data name="Settings_Draw" xml:space="preserve"><value>抽選設定</value></data>
+    <data name="Settings_FloatingWindow" xml:space="preserve"><value>フローティングウィンドウ</value></data>
+    <data name="Settings_Notification" xml:space="preserve"><value>通知設定</value></data>
+    <data name="Settings_RollCallNotification" xml:space="preserve"><value>点呼通知設定</value></data>
+    <data name="Settings_QuickDrawNotification" xml:space="preserve"><value>クイック抽選通知設定</value></data>
+    <data name="Settings_LotteryNotification" xml:space="preserve"><value>抽選通知設定</value></data>
+    <data name="Settings_Security" xml:space="preserve"><value>セキュリティ設定</value></data>
+    <data name="Settings_Linkage" xml:space="preserve"><value>連携設定</value></data>
+    <data name="Settings_Voice" xml:space="preserve"><value>音声設定</value></data>
+    <data name="Feat_History" xml:space="preserve"><value>履歴</value></data>
+    <data name="Feat_RollCallHistory" xml:space="preserve"><value>点呼履歴</value></data>
+    <data name="Feat_LotteryHistory" xml:space="preserve"><value>抽選履歴</value></data>
+    <data name="Settings_HistoryManagement" xml:space="preserve"><value>履歴管理</value></data>
+    <data name="Settings_Update" xml:space="preserve"><value>更新設定</value></data>
+    <data name="Menu_OpenSettings" xml:space="preserve"><value>設定を開く</value></data>
+    <data name="Menu_OpenMainWindow" xml:space="preserve"><value>メインウィンドウを開く</value></data>
+    <data name="Menu_ExitProgram" xml:space="preserve"><value>終了</value></data>
+    <data name="App_Description" xml:space="preserve"><value>教育現場向けの使いやすい点呼・抽選ソフトウェアです。教室での点呼をより効率的かつ透明にします。</value></data>
+    <data name="App_License" xml:space="preserve"><value>このプロジェクトは GNU General Public License v3.0 の下でライセンスされています。</value></data>
+    <data name="C_ToBeWritten" xml:space="preserve"><value>（作成中）</value></data>
+    <data name="AttachedSettings_BehindScene" xml:space="preserve"><value>詳細設定</value></data>
+    <data name="Settings_Backup" xml:space="preserve"><value>バックアップ設定</value></data>
+    <data name="Menu_RestartProgram" xml:space="preserve"><value>再起動</value></data>
+    <data name="Settings_General" xml:space="preserve"><value>一般設定</value></data>
+    <data name="Settings_Home" xml:space="preserve"><value>概要</value></data>
+    <data name="Settings_Personalized" xml:space="preserve"><value>個人設定</value></data>
+    <data name="Settings_Appearance" xml:space="preserve"><value>外観</value></data>
+    <data name="Settings_FairPick" xml:space="preserve"><value>公平な抽選設定</value></data>
+    <data name="Settings_VoiceMusic" xml:space="preserve"><value>音声と音楽</value></data>
+    <data name="Settings_DefaultNotification" xml:space="preserve"><value>既定の通知設定</value></data>
+    <data name="Settings_Plugin" xml:space="preserve"><value>プラグイン</value></data>
+    <data name="Settings_EnableShortcut" xml:space="preserve"><value>ショートカットを有効にする</value></data>
+    <data name="Settings_EnableShortcut_D" xml:space="preserve"><value>キーボードショートカットでページを開いたり抽選を実行したりします</value></data>
+    <data name="Settings_OpenRollCallPageShortcut" xml:space="preserve"><value>点呼ページを開く</value></data>
+    <data name="Settings_OpenRollCallPageShortcut_D" xml:space="preserve"><value>点呼ページを開くショートカットを設定します</value></data>
+    <data name="Settings_QuickDrawShortcut" xml:space="preserve"><value>クイック抽選を実行</value></data>
+    <data name="Settings_QuickDrawShortcut_D" xml:space="preserve"><value>クイック抽選を実行するショートカットを設定します</value></data>
+    <data name="Settings_OpenLotteryPageShortcut" xml:space="preserve"><value>抽選ページを開く</value></data>
+    <data name="Settings_OpenLotteryPageShortcut_D" xml:space="preserve"><value>抽選ページを開くショートカットを設定します</value></data>
+    <data name="Settings_ShortcutExampleRollCall" xml:space="preserve"><value>Ctrl+Alt+R</value></data>
+    <data name="Settings_ShortcutExampleQuickDraw" xml:space="preserve"><value>Ctrl+Alt+Q</value></data>
+    <data name="Settings_ShortcutExampleLottery" xml:space="preserve"><value>Ctrl+Alt+L</value></data>
+    <data name="Settings_FairPick_ByTotal" xml:space="preserve"><value>抽選回数による公平な抽選</value></data>
+    <data name="Settings_FairPick_ByTotal_D" xml:space="preserve"><value>過去の抽選回数に応じて候補の重みを調整します</value></data>
+    <data name="Settings_FairPick_ByGroup" xml:space="preserve"><value>グループによる公平な抽選</value></data>
+    <data name="Settings_FairPick_ByGender" xml:space="preserve"><value>性別による公平な抽選</value></data>
+    <data name="Settings_FairPick_ByTime" xml:space="preserve"><value>時間による公平な抽選</value></data>
+    <data name="Settings_FairPick_Weights" xml:space="preserve"><value>高度な重み設定</value></data>
+    <data name="Settings_FairPick_Protection" xml:space="preserve"><value>抽選保護設定</value></data>
+    <data name="Settings_FairPick_GapProtection" xml:space="preserve"><value>平均間隔保護</value></data>
+    <data name="Settings_FairPick_GapThreshold" xml:space="preserve"><value>差分しきい値</value></data>
+    <data name="Settings_FairPick_GapThreshold_D" xml:space="preserve"><value>抽選回数に許容される最大差</value></data>
+    <data name="Settings_FairPick_Shield" xml:space="preserve"><value>抽選後に除外</value></data>
+    <data name="Settings_FairPick_ColdStart" xml:space="preserve"><value>コールドスタート保護</value></data>
+
     <data name="MultiInstance_Title" xml:space="preserve">
         <value>アプリケーションは既に実行中です</value>
     </data>

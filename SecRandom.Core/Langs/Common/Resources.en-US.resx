@@ -28,12 +28,15 @@
         <value>MiSans (Default)</value>
     </data>
     <data name="C_AttachedSettingsEnableTip" xml:space="preserve">
-        <value>Enable custom settings here</value>
+        <value>Enable specific settings here</value>
     </data>
     <data name="C_AttachedSettings" xml:space="preserve">
         <value>Attached Settings</value>
     </data>
     <data name="C_AttachedSettingsButtonTip" xml:space="preserve">
         <value>Open attached settings</value>
+    </data>
+    <data name="M_Nothing" xml:space="preserve">
+        <value>There is nothing here yet</value>
     </data>
 </root>

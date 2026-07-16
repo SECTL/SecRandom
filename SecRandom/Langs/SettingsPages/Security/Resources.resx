@@ -17,19 +17,19 @@
     <value>启用密码验证</value>
   </data>
   <data name="S_Verification_Password_D" xml:space="preserve">
-    <value>使用本地密码保护敏感操作。</value>
+    <value>使用本地密码保护敏感操作</value>
   </data>
   <data name="S_Verification_Totp" xml:space="preserve">
     <value>启用 TOTP 验证</value>
   </data>
   <data name="S_Verification_Totp_D" xml:space="preserve">
-    <value>使用一次性验证码保护敏感操作。</value>
+    <value>使用一次性验证码保护敏感操作</value>
   </data>
   <data name="S_Verification_UsbBinding" xml:space="preserve">
     <value>启用 USB 绑定</value>
   </data>
   <data name="S_Verification_UsbBinding_D" xml:space="preserve">
-    <value>仅在绑定设备存在时允许通过验证。</value>
+    <value>仅在绑定设备存在时允许通过验证</value>
   </data>
   <data name="S_Protection" xml:space="preserve">
     <value>保护范围</value>
@@ -38,31 +38,31 @@
     <value>敏感操作前验证</value>
   </data>
   <data name="S_Protection_SensitiveOperations_D" xml:space="preserve">
-    <value>修改安全、联动、名单等关键设置前要求验证。</value>
+    <value>修改安全、联动、名单等关键设置前要求验证</value>
   </data>
   <data name="S_Protection_LinkageOperations" xml:space="preserve">
     <value>联动操作前验证</value>
   </data>
   <data name="S_Protection_LinkageOperations_D" xml:space="preserve">
-    <value>外部联动触发抽取或页面切换前要求验证。</value>
+    <value>外部联动触发抽取或页面切换前要求验证</value>
   </data>
   <data name="S_Credentials" xml:space="preserve"><value>安全状态与凭据</value></data>
   <data name="S_Enabled" xml:space="preserve"><value>启用安全保护</value></data>
-  <data name="S_Enabled_D" xml:space="preserve"><value>启用后，已选的操作会在执行前要求验证。</value></data>
+  <data name="S_Enabled_D" xml:space="preserve"><value>启用后，已选的操作会在执行前要求验证</value></data>
   <data name="S_Password" xml:space="preserve"><value>密码</value></data>
-  <data name="S_Password_D" xml:space="preserve"><value>密码至少需要 6 位。</value></data>
+  <data name="S_Password_D" xml:space="preserve"><value>密码至少需要 6 位</value></data>
   <data name="S_Totp" xml:space="preserve"><value>TOTP 动态口令</value></data>
-  <data name="S_Totp_D" xml:space="preserve"><value>配置后可使用认证器应用生成的 6 位验证码。</value></data>
+  <data name="S_Totp_D" xml:space="preserve"><value>配置后可使用认证器应用生成的 6 位验证码</value></data>
   <data name="S_Usb" xml:space="preserve"><value>绑定 U 盘</value></data>
-  <data name="S_Usb_D" xml:space="preserve"><value>绑定盘内会保存专用安全令牌，插入该盘时可作为验证方式。</value></data>
+  <data name="S_Usb_D" xml:space="preserve"><value>绑定盘内会保存专用安全令牌，插入该盘时可作为验证方式</value></data>
   <data name="S_Factors" xml:space="preserve"><value>验证方式</value></data>
-  <data name="S_Factors_D" xml:space="preserve"><value>密码为必选项；可额外选择已经配置的验证方式。</value></data>
+  <data name="S_Factors_D" xml:space="preserve"><value>密码为必选项；可额外选择已经配置的验证方式</value></data>
   <data name="S_RequireAll" xml:space="preserve"><value>全部已选验证方式均需验证</value></data>
-  <data name="S_RequireAll_D" xml:space="preserve"><value>密码始终需要验证。关闭时，任意一个已选附加方式通过即可继续。</value></data>
+   <data name="S_RequireAll_D" xml:space="preserve"><value>密码始终需要验证；关闭时，任意一个已选附加方式通过即可继续</value></data>
   <data name="S_WindowOperations" xml:space="preserve"><value>窗口与应用</value></data>
-  <data name="S_WindowOperations_D" xml:space="preserve"><value>保护设置入口、窗口显隐及应用生命周期操作。</value></data>
+  <data name="S_WindowOperations_D" xml:space="preserve"><value>保护设置入口、窗口显隐及应用生命周期操作</value></data>
   <data name="S_DrawOperations" xml:space="preserve"><value>抽取</value></data>
-  <data name="S_DrawOperations_D" xml:space="preserve"><value>分别保护每一种抽取的开始和重置操作。</value></data>
+  <data name="S_DrawOperations_D" xml:space="preserve"><value>分别保护每一种抽取的开始和重置操作</value></data>
   <data name="C_ManageBindings" xml:space="preserve"><value>管理绑定</value></data>
   <data name="C_SetPassword" xml:space="preserve"><value>设置密码</value></data>
   <data name="C_ManagePassword" xml:space="preserve"><value>修改或移除密码</value></data>

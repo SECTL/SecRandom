@@ -25,19 +25,19 @@
     <value>允许验证后继续</value>
   </data>
   <data name="S_External_VerificationRequired_D" xml:space="preserve">
-    <value>仅在已启用非上课时段限制时生效。开启后，通过已配置的安全验证可以临时继续抽取或重置；关闭后将直接阻止。</value>
+    <value>仅在已启用非上课时段限制时生效；开启后，通过已配置的安全验证可以临时继续抽取或重置；关闭后将直接阻止</value>
   </data>
   <data name="S_External_InstantDrawDisable" xml:space="preserve">
     <value>限制非上课时段操作</value>
   </data>
   <data name="S_External_InstantDrawDisable_D" xml:space="preserve">
-    <value>课程数据源明确显示处于课间或非上课时段时，限制抽取和重置。关闭后不作限制。</value>
+    <value>课程数据源明确显示处于课间或非上课时段时，限制抽取和重置；关闭后不作限制</value>
   </data>
   <data name="S_External_DataSource" xml:space="preserve">
     <value>数据源</value>
   </data>
   <data name="S_External_DataSource_D" xml:space="preserve">
-    <value>选择课程或外部联动数据来源。</value>
+    <value>选择课程或外部联动数据来源</value>
   </data>
   <data name="O_DataSource_Off" xml:space="preserve">
     <value>关闭</value>
@@ -88,28 +88,28 @@
     <value>下课隐藏悬浮窗</value>
   </data>
   <data name="S_ClassTime_HideFloatingWindow_D" xml:space="preserve">
-    <value>课程结束时自动隐藏悬浮窗。</value>
+    <value>课程结束时自动隐藏悬浮窗</value>
   </data>
   <data name="S_ClassTime_PreClassReset" xml:space="preserve">
     <value>课前重置</value>
   </data>
   <data name="S_ClassTime_PreClassReset_D" xml:space="preserve">
-    <value>上课前自动重置临时抽取记录。</value>
+    <value>上课前自动重置临时抽取记录</value>
   </data>
   <data name="S_ClassTime_PreClassResetTime" xml:space="preserve">
     <value>课前重置时间</value>
   </data>
   <data name="S_ClassTime_PreClassResetTime_D" xml:space="preserve">
-    <value>距离上课多少秒内执行课前重置。</value>
+    <value>距离上课多少秒内执行课前重置</value>
   </data>
   <data name="S_ClassTime_PostClassDisableDelay" xml:space="preserve">
     <value>课后禁用延迟</value>
   </data>
   <data name="S_ClassTime_PostClassDisableDelay_D" xml:space="preserve">
-    <value>课程结束后延迟多少秒禁用相关抽取入口。</value>
+    <value>课程结束后延迟多少秒禁用相关抽取入口</value>
   </data>
   <data name="S_SubjectHistory_BreakAssignment_D" xml:space="preserve">
-    <value>选择课间时段的历史记录归属方式。</value>
+    <value>选择课间时段的历史记录归属方式</value>
   </data>
   <data name="O_BreakAssignment_Break" xml:space="preserve">
     <value>课间</value>
@@ -130,12 +130,12 @@
     <value>课前解禁时间</value>
   </data>
   <data name="S_SubjectHistory_Filter_D" xml:space="preserve">
-    <value>计算权重时只使用当前科目的历史记录。</value>
+    <value>计算权重时只使用当前科目的历史记录</value>
   </data>
   <data name="S_SubjectHistory_Filter" xml:space="preserve">
     <value>科目历史记录过滤</value>
   </data>
   <data name="S_ClassTime_PreClassEnableTime_D" xml:space="preserve">
-    <value>上课前多少秒提前解除课间禁用。</value>
+    <value>上课前多少秒提前解除课间禁用</value>
   </data>
 </root>

@@ -34,7 +34,7 @@
         <value>启用 Sentry 遥测</value>
     </data>
     <data name="S_SentryTelemetry_Enabled_D" xml:space="preserve">
-        <value>开启后上传崩溃、日志、追踪和性能分析数据；不会控制在线状态统计。</value>
+        <value>开启后上传崩溃、日志、追踪和性能分析数据；不会控制在线状态统计</value>
     </data>
     <data name="S_OnlineStatus" xml:space="preserve">
         <value>在线状态统计</value>
@@ -43,7 +43,7 @@
         <value>在线状态</value>
     </data>
     <data name="S_OnlineStatus_Mode_D" xml:space="preserve">
-        <value>正常上报包含粗略位置信息，匿名上报仅计入在线人数不报位置，停止则不上报在线状态。</value>
+        <value>正常上报包含粗略位置信息，匿名上报仅计入在线人数不报位置，停止则不上报在线状态</value>
     </data>
     <data name="O_OnlineStatusMode_Full" xml:space="preserve">
         <value>正常上报</value>

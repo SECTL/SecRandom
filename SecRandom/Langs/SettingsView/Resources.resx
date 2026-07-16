@@ -28,7 +28,7 @@
         <value>需要重启</value>
     </data>
     <data name="M_NeedsRestarting_D" xml:space="preserve">
-        <value>部分设置需要重启以应用更改。</value>
+        <value>部分设置需要重启以应用更改</value>
     </data>
     <data name="M_NeedsRestarting_Primary" xml:space="preserve">
         <value>重启</value>
@@ -81,6 +81,15 @@
     <data name="C_MoreOptions_ImportAllData_D" xml:space="preserve">
         <value>仅从 SecRandom v3 备份导入全部数据，导入前自动创建恢复快照</value>
     </data>
+    <data name="C_MoreOptions_OpenLogDirectory" xml:space="preserve">
+        <value>打开日志目录</value>
+    </data>
+    <data name="C_MoreOptions_OpenDataDirectory" xml:space="preserve">
+        <value>打开数据目录</value>
+    </data>
+    <data name="C_MoreOptions_OpenAppDirectory" xml:space="preserve">
+        <value>打开应用目录</value>
+    </data>
     <data name="C_ExportSettingsFileTitle" xml:space="preserve">
         <value>导出设置</value>
     </data>
@@ -121,7 +130,7 @@
         <value>导出诊断数据</value>
     </data>
     <data name="M_DiagnosticExportContent" xml:space="preserve">
-        <value>标准诊断包包含全部经过脱敏处理的日志和运行时信息。扩展诊断包还包含脱敏设置快照、插件与档案数量摘要及脱敏崩溃报告。两种诊断包均不包含名单、历史原文、插件私有配置或安全凭据。</value>
+        <value>标准诊断包包含全部经过脱敏处理的日志和运行时信息。扩展诊断包还包含脱敏设置快照、插件与档案数量摘要及脱敏崩溃报告。两种诊断包均不包含名单、历史原文、插件私有配置或安全凭据</value>
     </data>
     <data name="M_ImportTitle" xml:space="preserve">
         <value>确认导入</value>
@@ -155,6 +164,9 @@
     </data>
     <data name="M_ImportFailed" xml:space="preserve">
         <value>导入失败，未完成覆盖。</value>
+    </data>
+    <data name="M_OpenDirectoryFailed" xml:space="preserve">
+        <value>无法打开目录。</value>
     </data>
     <data name="M_PageNotFound" xml:space="preserve">
         <value>页面 {0} 未找到</value>
