@@ -37,10 +37,12 @@ public sealed class UpdateCenterService(
     private const string Repository = "SECTL/SecRandom";
     private const string ManifestFileName = "SecRandom-update-manifest.v1.json";
     private const string SignatureFileName = "SecRandom-update-manifest.v1.sig";
-    private static readonly Uri GitHubRawMetadataUri = new("https://raw.githubusercontent.com/SECTL/SecRandom/master/metadata.yaml");
+    private static readonly Uri GitHubRawMetadataUri = new("https://raw.githubusercontent.com/SECTL/SecRandom/dev/v3/metadata.yaml");
     private static readonly Uri GitHubMirrorPrefix = new("https://ghproxy.sectl.cn/");
     private readonly HttpClient _httpClient = httpClient;
-    private readonly IDeserializer _yamlDeserializer = new DeserializerBuilder().Build();
+    private readonly IDeserializer _yamlDeserializer = new DeserializerBuilder()
+        .IgnoreUnmatchedProperties()
+        .Build();
     private CancellationTokenSource? _operationCancellation;
     private UpdateOperationPhase _phase;
     private string _statusMessage = Text("M_StatusNotChecked");
