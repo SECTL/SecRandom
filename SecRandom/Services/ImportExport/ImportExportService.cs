@@ -15,6 +15,7 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Models;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.Desktop;
+using SecRandom.Services.Config;
 using SecRandom.Services.Plugins;
 using SecRandom.Services.Linkage;
 using SecRandom.Services.Telemetry;
@@ -27,6 +28,7 @@ public sealed class ImportExportService(
     IProfileService profileService,
     DesktopIntegrationService desktopIntegrationService,
     IPluginManager pluginManager,
+    DeviceUuidStore deviceUuidStore,
     ILogger<ImportExportService> logger) : IImportExportService
 {
     private const string ArchiveFormatName = "secrandom-archive";
@@ -36,7 +38,7 @@ public sealed class ImportExportService(
 
     private static readonly string[] AllDataRoots =
     [
-        "config/settings.json", "list", "history", "TEMP", "proofs", "audio", "CSES", "images", "themes",
+        "config/settings.json", "config/device-uuid.json", "list", "history", "TEMP", "proofs", "audio", "CSES", "images", "themes",
         "theme", "Language", "plugins", "configs/plugins", "logs"
     ];
 
@@ -172,7 +174,7 @@ public sealed class ImportExportService(
 
                     SaveCurrentState();
                     var snapshot = CreateArchive(CreateBackupPath("pre_import_settings"), ArchiveKind.PreImportSettings,
-                        ["config/settings.json"], cancellationToken);
+                        ["config/settings.json", "config/device-uuid.json"], cancellationToken);
 
                     AtomicWriteSettings(candidate);
                     ReloadRuntimeConfiguration();
@@ -205,7 +207,11 @@ public sealed class ImportExportService(
     {
         var backup = configHandler.Data.General.Backup;
         var roots = new List<string>();
-        if (backup.IncludeConfig) roots.Add("config/settings.json");
+        if (backup.IncludeConfig)
+        {
+            roots.Add("config/settings.json");
+            roots.Add("config/device-uuid.json");
+        }
         if (backup.IncludeList) roots.Add("list");
         if (backup.IncludeHistory) roots.Add("history");
         if (backup.IncludeProofs) roots.Add("proofs");
@@ -384,8 +390,6 @@ public sealed class ImportExportService(
     private void AddRootToArchive(ZipArchive archive, string root, List<ArchiveFileEntry> files, CancellationToken cancellationToken)
     {
         var normalized = NormalizePath(root);
-        if (normalized == "config")
-            normalized = "config/settings.json";
         if (!IsManagedPath(normalized))
             return;
 
@@ -462,7 +466,7 @@ public sealed class ImportExportService(
                 var candidate = Path.Combine(staging, root.Replace('/', Path.DirectorySeparatorChar));
                 if (!File.Exists(candidate) && !Directory.Exists(candidate))
                 {
-                    if (!replaceMissingRoots || root.Equals("config/settings.json", StringComparison.OrdinalIgnoreCase))
+                    if (!replaceMissingRoots || root.StartsWith("config/", StringComparison.OrdinalIgnoreCase))
                         continue;
                     var emptyTarget = Path.Combine(_dataDirectory, root.Replace('/', Path.DirectorySeparatorChar));
                     var emptyOld = Path.Combine(previous, root.Replace('/', Path.DirectorySeparatorChar));
@@ -530,6 +534,7 @@ public sealed class ImportExportService(
     private void ReloadRuntimeConfiguration()
     {
         configHandler.Reload();
+        deviceUuidStore.Reload();
         IAppHost.TryGetService<FeatureAvailabilityService>()?.Refresh();
         IAppHost.TryGetService<GlobalShortcutService>()?.Refresh();
         IAppHost.TryGetService<ShortcutService>()?.Refresh();
@@ -702,8 +707,10 @@ public sealed class ImportExportService(
 
     private static IReadOnlyList<string> GetRoots(IEnumerable<string> paths)
     {
-        return paths.Select(NormalizePath).Select(path => path.StartsWith("config/settings.json", StringComparison.OrdinalIgnoreCase)
-                ? "config/settings.json"
+        return paths.Select(NormalizePath).Select(path => path.StartsWith("config/", StringComparison.OrdinalIgnoreCase)
+                ? path.Equals("config/device-uuid.json", StringComparison.OrdinalIgnoreCase)
+                    ? "config/device-uuid.json"
+                    : "config/settings.json"
                 : path.StartsWith("configs/plugins", StringComparison.OrdinalIgnoreCase)
                     ? "configs/plugins"
                     : path.Split('/')[0])

@@ -80,6 +80,7 @@ public class BasicSettingsConfigTests
         config.General.Basic.AcceptedEulaVersion = 1;
         config.General.Basic.AcceptedPrivacyPolicyVersion = 1;
         config.General.Basic.AcceptedGplVersion = 1;
+        config.General.Basic.AcceptedVerificationNoticeVersion = 1;
 
         string json = JsonSerializer.Serialize(config, ConfigServiceBase.JsonOptions);
         MainConfigModel? restored = JsonSerializer.Deserialize<MainConfigModel>(json, ConfigServiceBase.JsonOptions);
@@ -89,6 +90,33 @@ public class BasicSettingsConfigTests
         Assert.Equal(1, restored.General.Basic.AcceptedEulaVersion);
         Assert.Equal(1, restored.General.Basic.AcceptedPrivacyPolicyVersion);
         Assert.Equal(1, restored.General.Basic.AcceptedGplVersion);
+        Assert.Equal(1, restored.General.Basic.AcceptedVerificationNoticeVersion);
+    }
+
+    [Fact]
+    public void MainConfig_LegacyOfflineUserIdIsReadButNotWritten()
+    {
+        const string legacyUuid = "12345678-1234-1234-1234-123456789abc";
+        string json = $"{{\"general\":{{\"basic\":{{\"offline_user_id\":\"{legacyUuid}\"}}}}}}";
+
+        MainConfigModel? restored = JsonSerializer.Deserialize<MainConfigModel>(json, ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(restored);
+        Assert.Equal(Guid.Parse(legacyUuid), restored.General.Basic.LegacyOfflineUserId);
+        Assert.DoesNotContain("offline_user_id", JsonSerializer.Serialize(restored, ConfigServiceBase.JsonOptions));
+    }
+
+    [Fact]
+    public void MainConfig_MigratesLegacyDeviceUuidWithoutSerializingItAgain()
+    {
+        var deviceUuid = Guid.NewGuid();
+        var json = $"{{\"general\":{{\"basic\":{{\"offline_user_id\":\"{deviceUuid:D}\"}}}}}}";
+
+        MainConfigModel? restored = JsonSerializer.Deserialize<MainConfigModel>(json, ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(restored);
+        Assert.Equal(deviceUuid, restored.General.Basic.LegacyOfflineUserId);
+        Assert.DoesNotContain("offline_user_id", JsonSerializer.Serialize(restored, ConfigServiceBase.JsonOptions));
     }
 
     [Theory]

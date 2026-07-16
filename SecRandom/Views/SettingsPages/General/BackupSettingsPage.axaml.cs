@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -19,6 +18,7 @@ using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Models;
+using SecRandom.Services.Desktop;
 using SecRandom.Services.ImportExport;
 using SecRandom.Shared;
 using SecRandom.ViewModels;
@@ -37,6 +37,7 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
     private readonly ILogger<BackupSettingsPage> _logger =
         IAppHost.GetService<ILogger<BackupSettingsPage>>();
     private readonly IImportExportService _importExportService = IAppHost.GetService<IImportExportService>();
+    private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
 
     public BackupSettingsPage()
     {
@@ -193,8 +194,10 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
 
     private void ViewBackupFolder_OnClick(object? sender, RoutedEventArgs e)
     {
-        OpenPath(GetBackupDirectory());
-        _logger.LogInformation("已请求打开备份目录：路径={Path}。", GetBackupDirectory());
+        var directory = GetBackupDirectory();
+        if (!ExternalLauncher.TryOpenPath(directory))
+            this.ShowErrorToast("无法打开备份目录。");
+        _logger.LogInformation("已请求打开备份目录：路径={Path}。", directory);
     }
 
     private async void RestoreBackup_OnClick(object? sender, RoutedEventArgs e)
@@ -309,7 +312,11 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
 
     private IEnumerable<string> GetSelectedDataRoots()
     {
-        if (Settings.IncludeConfig) yield return "config/settings.json";
+        if (Settings.IncludeConfig)
+        {
+            yield return "config/settings.json";
+            yield return "config/device-uuid.json";
+        }
         if (Settings.IncludeList) yield return "list";
         if (Settings.IncludeHistory) yield return "history";
         if (Settings.IncludeProofs) yield return "proofs";
@@ -346,16 +353,6 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         return unit == 0
             ? $"{bytes} {units[unit]}"
             : $"{size.ToString("0.#", CultureInfo.CurrentCulture)} {units[unit]}";
-    }
-
-    private static void OpenPath(string path)
-    {
-        if (OperatingSystem.IsWindows())
-            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
-        else if (OperatingSystem.IsLinux())
-            Process.Start(new ProcessStartInfo("xdg-open", path) { UseShellExecute = false });
-        else if (OperatingSystem.IsMacOS())
-            Process.Start(new ProcessStartInfo("open", path) { UseShellExecute = false });
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

@@ -61,4 +61,5 @@ public static class Utils
         return appDirectoryName.StartsWith("app-", StringComparison.Ordinal)
                && File.Exists(Path.Combine(normalizedAppDirectory, "SecRandom.package.json"));
     }
+
 }

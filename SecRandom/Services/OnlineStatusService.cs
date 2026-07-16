@@ -4,9 +4,9 @@ using System.ComponentModel;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Net.Sockets;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
+using SecRandom.Services.Config;
 
 namespace SecRandom.Services;
 
@@ -41,10 +42,11 @@ public sealed partial class OnlineStatusService : BackgroundService
         new("https://321260.xyz/api/ip.php"),
         new("https://ddns.oray.com/checkip"),
         new("http://v4.66666.host:66/ip"),
-        new("https://myip.ipip.net")
+        new("https://myip.ipip.net"),
+        new("https://api64.ipify.org")
     ];
 
-    private BasicSettingsConfig _basicSettings;
+    private readonly DeviceUuidStore _deviceUuidStore;
     private readonly MainConfigHandler _configHandler;
     private readonly HttpClient _httpClient;
     private readonly ILogger<OnlineStatusService> _logger;
@@ -57,11 +59,14 @@ public sealed partial class OnlineStatusService : BackgroundService
     private int _cachedOnlineCount;
     private long _cachedOnlineCountUpdatedAtUnixMilliseconds;
 
-    public OnlineStatusService(MainConfigHandler configHandler, ILogger<OnlineStatusService> logger)
+    public OnlineStatusService(
+        MainConfigHandler configHandler,
+        DeviceUuidStore deviceUuidStore,
+        ILogger<OnlineStatusService> logger)
     {
         _configHandler = configHandler;
+        _deviceUuidStore = deviceUuidStore;
         _logger = logger;
-        _basicSettings = configHandler.Data.Basic;
         _privacySettings = configHandler.Data.General.PrivacySettings;
         _httpClient = new HttpClient { Timeout = RequestTimeout };
 
@@ -118,13 +123,11 @@ public sealed partial class OnlineStatusService : BackgroundService
 
     public void Refresh()
     {
-        var basicSettings = _configHandler.Data.Basic;
         var privacySettings = _configHandler.Data.General.PrivacySettings;
-        if (ReferenceEquals(_basicSettings, basicSettings) && ReferenceEquals(_privacySettings, privacySettings))
+        if (ReferenceEquals(_privacySettings, privacySettings))
             return;
 
         _privacySettings.PropertyChanged -= PrivacySettingsOnPropertyChanged;
-        _basicSettings = basicSettings;
         _privacySettings = privacySettings;
         _privacySettings.PropertyChanged += PrivacySettingsOnPropertyChanged;
         ClearIpLocationCache();
@@ -306,10 +309,8 @@ public sealed partial class OnlineStatusService : BackgroundService
             try
             {
                 string text = await _httpClient.GetStringAsync(uri, cancellationToken).ConfigureAwait(false);
-                Match match = Ipv4Regex().Match(text.Trim());
-
-                if (match.Success && IPAddress.TryParse(match.Value, out _))
-                    return match.Value;
+                if (TryParseIpAddress(text, out var ipAddress))
+                    return ipAddress.ToString();
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -367,13 +368,7 @@ public sealed partial class OnlineStatusService : BackgroundService
 
     private Guid EnsureDeviceUuid()
     {
-        if (_basicSettings.OfflineUserId != Guid.Empty)
-            return _basicSettings.OfflineUserId;
-
-        // 在线 API 需要稳定设备键；该值只在本地保存，语义上仍是伪匿名 ID。
-        _basicSettings.OfflineUserId = Guid.NewGuid();
-        _configHandler.Save();
-        return _basicSettings.OfflineUserId;
+        return _deviceUuidStore.GetOrCreate();
     }
 
     private async Task LogReportFailureAsync(HttpResponseMessage response, CancellationToken cancellationToken)
@@ -442,21 +437,39 @@ public sealed partial class OnlineStatusService : BackgroundService
             return true;
         }
 
-        return ipAddress.StartsWith("127.", StringComparison.Ordinal)
-               || ipAddress.StartsWith("192.168.", StringComparison.Ordinal)
-               || ipAddress.StartsWith("10.", StringComparison.Ordinal)
-               || IsPrivate172Address(ipAddress);
+        if (!IPAddress.TryParse(ipAddress, out var address))
+            return true;
+
+        if (address.IsIPv4MappedToIPv6)
+            address = address.MapToIPv4();
+
+        if (IPAddress.IsLoopback(address) || address.Equals(IPAddress.Any) || address.Equals(IPAddress.IPv6Any))
+            return true;
+
+        if (address.AddressFamily == AddressFamily.InterNetworkV6)
+        {
+            var bytes = address.GetAddressBytes();
+            return address.IsIPv6LinkLocal || (bytes[0] & 0xfe) == 0xfc;
+        }
+
+        var octets = address.GetAddressBytes();
+        return octets[0] == 10
+               || octets[0] == 127
+               || (octets[0] == 172 && octets[1] is >= 16 and <= 31)
+               || (octets[0] == 192 && octets[1] == 168);
     }
 
-    private static bool IsPrivate172Address(string ipAddress)
+    private static bool TryParseIpAddress(string text, out IPAddress ipAddress)
     {
-        if (!ipAddress.StartsWith("172.", StringComparison.Ordinal))
-            return false;
+        if (IPAddress.TryParse(text.Trim(), out ipAddress!))
+            return true;
 
-        string[] parts = ipAddress.Split('.');
-        return parts.Length >= 2
-               && int.TryParse(parts[1], out int secondOctet)
-               && secondOctet is >= 16 and <= 31;
+        foreach (var token in text.Split([' ', '\t', '\r', '\n', ',', ';', '[', ']'], StringSplitOptions.RemoveEmptyEntries))
+            if (IPAddress.TryParse(token, out ipAddress!))
+                return true;
+
+        ipAddress = IPAddress.None;
+        return false;
     }
 
     private static string DetectDeviceType()
@@ -480,8 +493,6 @@ public sealed partial class OnlineStatusService : BackgroundService
 
     private static JsonSerializerOptions JsonOptions { get; } = new(JsonSerializerDefaults.Web);
 
-    [GeneratedRegex(@"\b(?:\d{1,3}\.){3}\d{1,3}\b")]
-    private static partial Regex Ipv4Regex();
 
     public sealed record OnlineStatusPolicy(
         OnlineStatusMode Mode,

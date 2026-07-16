@@ -37,11 +37,20 @@ public partial class BasicSettingsConfig : ObservableObject
         set => LegacyTelemetryMode = value;
     }
 
+    // Retained only to migrate installations that stored the device identifier in settings.json.
+    [JsonIgnore] public Guid LegacyOfflineUserId { get; private set; }
+
+    [JsonPropertyName("offline_user_id")]
+    public Guid LegacyOfflineUserIdOnLoad
+    {
+        set => LegacyOfflineUserId = value;
+    }
+
     // Hidden Configs
-    [ObservableProperty] private Guid _offlineUserId = Guid.NewGuid();
     [ObservableProperty] private bool _guideCompleted = false;
     [ObservableProperty] private int _acceptedEulaVersion;
     [ObservableProperty] private int _acceptedPrivacyPolicyVersion;
     [ObservableProperty] private int _acceptedGplVersion;
+    [ObservableProperty] private int _acceptedVerificationNoticeVersion;
     [ObservableProperty] private bool _showVersionNotice = true;
 }
