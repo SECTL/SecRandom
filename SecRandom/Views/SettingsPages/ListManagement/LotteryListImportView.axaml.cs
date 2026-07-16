@@ -239,7 +239,7 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
         }
 
         IdColumn = LR.C_NoneColumn;
-        NameColumn = RequiredColumnOptions.Skip(1).FirstOrDefault() ?? RequiredColumnOptions.FirstOrDefault();
+        NameColumn = LR.C_NoneColumn;
         WeightColumn = LR.C_NoneColumn;
         CountColumn = LR.C_NoneColumn;
         TagsColumn = LR.C_NoneColumn;
@@ -288,7 +288,7 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
         foreach (var row in _rows.Take(3))
             PreviewRows.Add(CreatePreviewRow(row));
 
-        CanImport = _rows.Count > 0 && IsSelectedColumn(NameColumn);
+        CanImport = _rows.Count > 0 && (IsSelectedColumn(IdColumn) || IsSelectedColumn(NameColumn));
         StatusText = _rows.Count == 0
             ? LR.M_SelectFileFirst
             : CanImport
@@ -318,10 +318,11 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
                 Tags = string.Join(' ', SplitTags(GetColumnValue(row, TagsColumn))),
                 Exists = true
             })
-            .Where(prize => !string.IsNullOrWhiteSpace(prize.Name))
+            .Where(prize => prize.IsCandidate)
             .ToList();
 
-        var duplicatedNames = prizes.GroupBy(prize => prize.Name)
+        var duplicatedNames = prizes.Where(prize => !string.IsNullOrWhiteSpace(prize.Name))
+            .GroupBy(prize => prize.Name)
             .Where(group => group.Count() > 1)
             .Select(group => group.Key)
             .ToList();

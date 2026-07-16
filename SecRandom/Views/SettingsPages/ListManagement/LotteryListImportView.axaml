@@ -44,7 +44,7 @@
                     </sr:Field>
                     <sr:Field Label="{x:Static lr:Resources.C_NameColumn}">
                         <ComboBox MaxWidth="360"
-                                  ItemsSource="{Binding RequiredColumnOptions}"
+                                  ItemsSource="{Binding OptionalColumnOptions}"
                                   SelectedItem="{Binding NameColumn, Mode=TwoWay}" />
                     </sr:Field>
                     <sr:Field Label="{x:Static lr:Resources.C_WeightColumn}">

@@ -92,7 +92,7 @@ public partial class DrawEngine
         IReadOnlyDictionary<Prize, History> historyCache)
     {
         var currentPool = PrizeList.Prizes
-            .Where(p => p.Exists)
+            .Where(p => p.IsCandidate)
             .Where(filter)
             .ToList();
 

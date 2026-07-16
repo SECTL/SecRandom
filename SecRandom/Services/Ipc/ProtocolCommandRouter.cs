@@ -259,7 +259,7 @@ public sealed class ProtocolCommandRouter(
         var list = profileQuery.LoadPrizeList(name);
         if (list is null)
             return Failure("url", "not_found", LR.M_PrizePoolNotFound, true);
-        var data = list.Prizes.Where(prize => prize.Exists)
+        var data = list.Prizes.Where(prize => prize.IsCandidate)
             .Select(prize => new IpcRecordDto(prize.Id, prize.Name, string.Empty)).ToList();
         return Success(LR.M_PrizePoolLoaded, data);
     }

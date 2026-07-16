@@ -192,7 +192,7 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
 
     private IEnumerable<Prize> GetVisiblePrizes()
     {
-        return _prizeList?.Prizes.Where(prize => prize.Exists) ?? [];
+        return _prizeList?.Prizes.Where(prize => prize.IsCandidate) ?? [];
     }
 
     private HistoryDisplayRow BuildOverviewRow(Prize prize)
