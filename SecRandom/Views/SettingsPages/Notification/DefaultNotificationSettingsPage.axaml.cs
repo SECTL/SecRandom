@@ -22,8 +22,6 @@ public partial class DefaultNotificationSettingsPage : NotificationChannelSettin
     public override string EnabledDescription => Text(nameof(EnabledDescription), "S_Default_Enabled_D");
     public override string AnimationTitle => Text(nameof(AnimationTitle), "S_Default_Animation");
     public override string AnimationDescription => Text(nameof(AnimationDescription), "S_Default_Animation_D");
-    public override string AutoCloseTimeTitle => Text(nameof(AutoCloseTimeTitle), "S_Default_AutoCloseTime");
-    public override string AutoCloseTimeDescription => Text(nameof(AutoCloseTimeDescription), "S_Default_AutoCloseTime_D");
     public override string WindowPositionTitle => Text(nameof(WindowPositionTitle), "S_Default_WindowPosition");
     public override string WindowPositionDescription => Text(nameof(WindowPositionDescription), "S_Default_WindowPosition_D");
     public override string OffsetTitle => Text(nameof(OffsetTitle), "S_Default_Offset");

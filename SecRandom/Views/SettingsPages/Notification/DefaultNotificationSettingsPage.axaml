@@ -8,33 +8,6 @@
              x:DataType="notification:DefaultNotificationSettingsPage">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
-            <sr:IconText Text="{Binding BasicSettingsTitle}" Glyph="{sr:Fi SettingsFilled}" Margin="0 0 0 4" />
-
-            <fa:FASettingsExpander Header="{Binding EnabledTitle}"
-                                   Description="{Binding EnabledDescription}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi CommentNoteFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding ChannelSettings.Enabled}" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander Header="{Binding AnimationTitle}"
-                                   Description="{Binding AnimationDescription}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding ChannelSettings.Animation}" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander Header="{Binding AutoCloseTimeTitle}"
-                                   Description="{Binding AutoCloseTimeDescription}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TimerFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <NumericUpDown Value="{Binding ChannelSettings.AutoCloseTime}" Minimum="1" Maximum="60" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <Separator Margin="0 12 0 4" />
             <sr:IconText Text="{Binding NotificationWindowSettingsTitle}" Glyph="{sr:Fi WindowFilled}" Margin="0 0 0 4" />
 
             <fa:FASettingsExpander Header="{Binding WindowPositionTitle}"
@@ -80,10 +53,20 @@
             </fa:FASettingsExpander>
 
             <fa:FASettingsExpander Header="{Binding TransparencyTitle}"
-                                   Description="{Binding TransparencyDescription}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
+                                    Description="{Binding TransparencyDescription}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <NumericUpDown Value="{Binding ChannelSettings.Transparency}" Minimum="20" Maximum="100" />
+                    <Grid Width="280" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Slider Minimum="20"
+                                Maximum="100"
+                                TickFrequency="1"
+                                IsSnapToTickEnabled="True"
+                                Value="{Binding ChannelSettings.Transparency, Mode=TwoWay}" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                            <TextBlock Width="32" TextAlignment="Right" Text="{Binding ChannelSettings.Transparency}" />
+                            <TextBlock Text="%" />
+                        </StackPanel>
+                    </Grid>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
@@ -99,6 +82,15 @@
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_NotificationService_ClassIsland}" />
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_NotificationService_Both}" />
                     </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{Binding NotificationServiceFailureFallbackTitle}"
+                                     Description="{Binding NotificationServiceFailureFallbackDescription}"
+                                      IsVisible="{Binding UsesExternalNotificationServiceOnly}"
+                                     IconSource="{sr:FluentIconSource {sr:Fi ArrowReplyFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding ChannelSettings.UseBuiltInOnServiceFailure}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

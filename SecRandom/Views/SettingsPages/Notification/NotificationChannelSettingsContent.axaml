@@ -12,41 +12,25 @@
                      Glyph="{sr:Fi SettingsFilled}"
                      Margin="0 0 0 4" />
 
-        <fa:FASettingsExpander Header="{Binding BasicSettingsTitle}"
-                               IsExpanded="{Binding OverrideBasicSettings, Mode=OneWay}"
-                               IconSource="{sr:FluentIconSource {sr:Fi SettingsFilled}}">
+        <fa:FASettingsExpander Header="{Binding EnabledTitle}"
+                               Description="{Binding EnabledDescription}"
+                               IconSource="{sr:FluentIconSource {sr:Fi CommentNoteFilled}}">
             <fa:FASettingsExpander.Footer>
-                <ToggleSwitch IsVisible="{Binding CanOverride}"
-                              OnContent="{Binding OverrideTitle}"
-                              OffContent="{Binding OverrideTitle}"
-                              IsChecked="{Binding OverrideBasicSettings}" />
+                <ToggleSwitch IsChecked="{Binding ChannelSettings.Enabled}" />
             </fa:FASettingsExpander.Footer>
+        </fa:FASettingsExpander>
 
-            <fa:FASettingsExpanderItem Content="{Binding EnabledTitle}"
-                                       Description="{Binding EnabledDescription}">
-                <fa:FASettingsExpanderItem.Footer>
-                    <ToggleSwitch IsChecked="{Binding ChannelSettings.Enabled}" />
-                </fa:FASettingsExpanderItem.Footer>
-            </fa:FASettingsExpanderItem>
-
-            <fa:FASettingsExpanderItem Content="{Binding AnimationTitle}"
-                                       Description="{Binding AnimationDescription}">
-                <fa:FASettingsExpanderItem.Footer>
-                    <ToggleSwitch IsChecked="{Binding ChannelSettings.Animation}" />
-                </fa:FASettingsExpanderItem.Footer>
-            </fa:FASettingsExpanderItem>
-
-            <fa:FASettingsExpanderItem Content="{Binding AutoCloseTimeTitle}"
-                                       Description="{Binding AutoCloseTimeDescription}">
-                <fa:FASettingsExpanderItem.Footer>
-                    <NumericUpDown Value="{Binding ChannelSettings.AutoCloseTime}" Minimum="1" Maximum="60" />
-                </fa:FASettingsExpanderItem.Footer>
-            </fa:FASettingsExpanderItem>
+        <fa:FASettingsExpander Header="{Binding AnimationTitle}"
+                               Description="{Binding AnimationDescription}"
+                               IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
+            <fa:FASettingsExpander.Footer>
+                <ToggleSwitch IsChecked="{Binding ChannelSettings.Animation}" />
+            </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
 
         <Separator Margin="0 12 0 4" />
-        <sr:IconText Text="{Binding NotificationWindowSettingsTitle}"
-                     Glyph="{sr:Fi WindowFilled}"
+        <sr:IconText Text="{Binding OverridableSettingsTitle}"
+                     Glyph="{sr:Fi SettingsFilled}"
                      Margin="0 0 0 4" />
 
         <fa:FASettingsExpander Header="{Binding NotificationWindowSettingsTitle}"
@@ -99,17 +83,22 @@
             </fa:FASettingsExpanderItem>
 
             <fa:FASettingsExpanderItem Content="{Binding TransparencyTitle}"
-                                       Description="{Binding TransparencyDescription}">
+                                        Description="{Binding TransparencyDescription}">
                 <fa:FASettingsExpanderItem.Footer>
-                    <NumericUpDown Value="{Binding ChannelSettings.Transparency}" Minimum="20" Maximum="100" />
+                    <Grid Width="280" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Slider Minimum="20"
+                                Maximum="100"
+                                TickFrequency="1"
+                                IsSnapToTickEnabled="True"
+                                Value="{Binding ChannelSettings.Transparency, Mode=TwoWay}" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                            <TextBlock Width="32" TextAlignment="Right" Text="{Binding ChannelSettings.Transparency}" />
+                            <TextBlock Text="%" />
+                        </StackPanel>
+                    </Grid>
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
         </fa:FASettingsExpander>
-
-        <Separator Margin="0 12 0 4" />
-        <sr:IconText Text="{Binding NotificationServiceTitle}"
-                     Glyph="{sr:Fi CommentNoteFilled}"
-                     Margin="0 0 0 4" />
 
         <fa:FASettingsExpander Header="{Binding NotificationServiceTitle}"
                                IsExpanded="{Binding OverrideServiceSettings, Mode=OneWay}"
@@ -129,6 +118,14 @@
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_NotificationService_ClassIsland}" />
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_NotificationService_Both}" />
                     </ComboBox>
+                </fa:FASettingsExpanderItem.Footer>
+            </fa:FASettingsExpanderItem>
+
+            <fa:FASettingsExpanderItem Content="{Binding NotificationServiceFailureFallbackTitle}"
+                                        Description="{Binding NotificationServiceFailureFallbackDescription}"
+                                         IsVisible="{Binding UsesExternalNotificationServiceOnly}">
+                <fa:FASettingsExpanderItem.Footer>
+                    <ToggleSwitch IsChecked="{Binding ChannelSettings.UseBuiltInOnServiceFailure}" />
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
 

@@ -384,24 +384,6 @@ namespace SecRandom.Langs.SettingsPages.Notification {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 通知关闭时间.
-        /// </summary>
-        public static string S_Default_AutoCloseTime {
-            get {
-                return ResourceManager.GetString("S_Default_AutoCloseTime", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 通知自动关闭前保留的秒数。.
-        /// </summary>
-        public static string S_Default_AutoCloseTime_D {
-            get {
-                return ResourceManager.GetString("S_Default_AutoCloseTime_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 通知显示时长.
         /// </summary>
         public static string S_Default_DisplayDuration {
@@ -551,24 +533,6 @@ namespace SecRandom.Langs.SettingsPages.Notification {
         public static string S_Lottery_Animation_D {
             get {
                 return ResourceManager.GetString("S_Lottery_Animation_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 抽奖通知关闭时间.
-        /// </summary>
-        public static string S_Lottery_AutoCloseTime {
-            get {
-                return ResourceManager.GetString("S_Lottery_AutoCloseTime", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 通知自动关闭前保留的秒数。.
-        /// </summary>
-        public static string S_Lottery_AutoCloseTime_D {
-            get {
-                return ResourceManager.GetString("S_Lottery_AutoCloseTime_D", resourceCulture);
             }
         }
         
@@ -726,24 +690,6 @@ namespace SecRandom.Langs.SettingsPages.Notification {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 闪抽通知关闭时间.
-        /// </summary>
-        public static string S_QuickDraw_AutoCloseTime {
-            get {
-                return ResourceManager.GetString("S_QuickDraw_AutoCloseTime", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 通知自动关闭前保留的秒数。.
-        /// </summary>
-        public static string S_QuickDraw_AutoCloseTime_D {
-            get {
-                return ResourceManager.GetString("S_QuickDraw_AutoCloseTime_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 闪抽通知显示时长.
         /// </summary>
         public static string S_QuickDraw_DisplayDuration {
@@ -893,24 +839,6 @@ namespace SecRandom.Langs.SettingsPages.Notification {
         public static string S_RollCall_Animation_D {
             get {
                 return ResourceManager.GetString("S_RollCall_Animation_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 点名通知关闭时间.
-        /// </summary>
-        public static string S_RollCall_AutoCloseTime {
-            get {
-                return ResourceManager.GetString("S_RollCall_AutoCloseTime", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 通知自动关闭前保留的秒数。.
-        /// </summary>
-        public static string S_RollCall_AutoCloseTime_D {
-            get {
-                return ResourceManager.GetString("S_RollCall_AutoCloseTime_D", resourceCulture);
             }
         }
         

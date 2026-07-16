@@ -21,89 +21,66 @@ namespace SecRandom.Views.SettingsPages.Notification;
 [PageInfo("settings.notification.voiceMusic", FluentIcons.PersonVoiceFilled, "settings.notification")]
 public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
 {
-    private VoiceOption? _selectedSystemTtsVoice;
-    private VoiceOption? _selectedEdgeTtsVoice;
     private bool _isLoadingSystemVoices;
     private bool _isLoadingEdgeVoices;
+    private bool _suppressVoiceSelectionSave;
+    private bool _isSettingsSubscribed;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
 
     public VoiceSettingsPage()
     {
         Settings = ViewModel.Config.VoiceSettings;
-        MoreSettings = ViewModel.Config.MoreSettings;
+        if (!OperatingSystem.IsWindows() && Settings.VoiceEngine != 1)
+        {
+            Settings.VoiceEngine = 1;
+            ConfigHandler.Save();
+        }
+
         DataContext = this;
         InitializeComponent();
-        Settings.PropertyChanged += SettingsOnPropertyChanged;
-        MoreSettings.PropertyChanged += SettingsOnPropertyChanged;
         _ = RefreshVoicesAsync();
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
-    public VoiceSettingsConfig Settings { get; }
-    public MoreSettingsConfig MoreSettings { get; }
-    public ObservableCollection<string> VoiceEngineOptions { get; } =
-    [
-        Langs.SettingsPages.Voice.Resources.O_VoiceEngine_System,
-        Langs.SettingsPages.Voice.Resources.O_VoiceEngine_EdgeTts
-    ];
+    public SecRandom.Core.Models.SubConfigs.VoiceSettingsConfig Settings { get; }
+    public ObservableCollection<VoiceEngineOption> VoiceEngineOptions { get; } =
+        OperatingSystem.IsWindows()
+            ?
+            [
+                new(0, Langs.SettingsPages.Voice.Resources.O_VoiceEngine_System),
+                new(1, Langs.SettingsPages.Voice.Resources.O_VoiceEngine_EdgeTts)
+            ]
+            : [new(1, Langs.SettingsPages.Voice.Resources.O_VoiceEngine_EdgeTts)];
 
     public ObservableCollection<VoiceOption> SystemTtsVoices { get; } = [];
     public ObservableCollection<VoiceOption> EdgeTtsVoices { get; } = [];
-
     public ObservableCollection<VoiceOption> CurrentVoiceOptions =>
         Settings.VoiceEngine == 0 ? SystemTtsVoices : EdgeTtsVoices;
 
     public bool IsLoadingCurrentVoices =>
         Settings.VoiceEngine == 0 ? IsLoadingSystemVoices : IsLoadingEdgeVoices;
 
-    public VoiceOption? SelectedVoice
+    public string? SelectedVoiceId
     {
-        get => Settings.VoiceEngine == 0 ? SelectedSystemTtsVoice : SelectedEdgeTtsVoice;
+        get => Settings.VoiceEngine == 0 ? Settings.SystemTtsVoiceName : Settings.EdgeTtsVoiceName;
         set
         {
-            if (Settings.VoiceEngine == 0)
-                SelectedSystemTtsVoice = value;
-            else
-                SelectedEdgeTtsVoice = value;
+            if (_suppressVoiceSelectionSave || string.IsNullOrWhiteSpace(value) ||
+                string.Equals(SelectedVoiceId, value, StringComparison.Ordinal))
+                return;
 
+            if (Settings.VoiceEngine == 0)
+                Settings.SystemTtsVoiceName = value;
+            else
+                Settings.EdgeTtsVoiceName = value;
+
+            ConfigHandler.Save();
             OnPropertyChanged();
         }
     }
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private IVoiceAnnouncementService VoiceService { get; } = IAppHost.GetService<IVoiceAnnouncementService>();
-
-    public VoiceOption? SelectedSystemTtsVoice
-    {
-        get => _selectedSystemTtsVoice;
-        set
-        {
-            if (_selectedSystemTtsVoice == value)
-                return;
-
-            _selectedSystemTtsVoice = value;
-            if (value != null)
-                Settings.SystemTtsVoiceName = value.Id;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(SelectedVoice));
-        }
-    }
-
-    public VoiceOption? SelectedEdgeTtsVoice
-    {
-        get => _selectedEdgeTtsVoice;
-        set
-        {
-            if (_selectedEdgeTtsVoice == value)
-                return;
-
-            _selectedEdgeTtsVoice = value;
-            if (value != null)
-                Settings.EdgeTtsVoiceName = value.Id;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(SelectedVoice));
-        }
-    }
 
     public bool IsLoadingSystemVoices
     {
@@ -139,40 +116,72 @@ public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
         remove => NotifyPropertyChanged -= value;
     }
 
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        if (_isSettingsSubscribed)
+            return;
+
+        Settings.PropertyChanged += SettingsOnPropertyChanged;
+        _isSettingsSubscribed = true;
+    }
+
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        if (!_isSettingsSubscribed)
+            return;
+
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
-        MoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
+        _isSettingsSubscribed = false;
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(VoiceSettingsConfig.VoiceEngine))
+        {
             RefreshCurrentVoiceBindings();
+            OnPropertyChanged(nameof(SelectedVoiceId));
+        }
 
         ConfigHandler.Save();
     }
 
     private async Task RefreshVoicesAsync()
     {
-        try
+        if (OperatingSystem.IsWindows())
         {
-            IsLoadingSystemVoices = true;
-            var systemVoices = await VoiceService.GetVoicesAsync(0);
-            ReplaceVoices(SystemTtsVoices, systemVoices);
-            SelectedSystemTtsVoice = SelectVoice(SystemTtsVoices, Settings.SystemTtsVoiceName);
-        }
-        finally
-        {
-            IsLoadingSystemVoices = false;
+            try
+            {
+                IsLoadingSystemVoices = true;
+                var systemVoices = await VoiceService.GetVoicesAsync(0);
+                _suppressVoiceSelectionSave = true;
+                try
+                {
+                    ReplaceVoices(SystemTtsVoices, systemVoices);
+                }
+                finally
+                {
+                    _suppressVoiceSelectionSave = false;
+                }
+            }
+            finally
+            {
+                IsLoadingSystemVoices = false;
+            }
         }
 
         try
         {
             IsLoadingEdgeVoices = true;
             var edgeVoices = await VoiceService.GetVoicesAsync(1);
-            ReplaceVoices(EdgeTtsVoices, edgeVoices);
-            SelectedEdgeTtsVoice = SelectVoice(EdgeTtsVoices, Settings.EdgeTtsVoiceName);
+            _suppressVoiceSelectionSave = true;
+            try
+            {
+                ReplaceVoices(EdgeTtsVoices, edgeVoices);
+            }
+            finally
+            {
+                _suppressVoiceSelectionSave = false;
+            }
         }
         finally
         {
@@ -180,24 +189,26 @@ public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
         }
 
         RefreshCurrentVoiceBindings();
+        OnPropertyChanged(nameof(SelectedVoiceId));
+        ConfigHandler.Save();
     }
 
     private async void RefreshVoicesButton_OnClick(object? sender, RoutedEventArgs e)
     {
         await RefreshVoicesAsync();
-        this.ShowSuccessToast("音色列表已刷新。");
+        this.ShowSuccessToast(Langs.SettingsPages.Voice.Resources.M_VoicesRefreshed);
     }
 
     private async void TestVoiceButton_OnClick(object? sender, RoutedEventArgs e)
     {
         try
         {
-            await VoiceService.SpeakAsync("这是一条语音播报测试。", true);
-            this.ShowSuccessToast("试听已完成。");
+            await VoiceService.PreviewAsync(Langs.SettingsPages.Voice.Resources.C_TestVoiceText);
+            this.ShowSuccessToast(Langs.SettingsPages.Voice.Resources.M_TestVoiceCompleted);
         }
         catch (Exception ex)
         {
-            this.ShowErrorToast("试听失败", ex);
+            this.ShowErrorToast(Langs.SettingsPages.Voice.Resources.M_TestVoiceFailed, ex);
         }
     }
 
@@ -205,7 +216,7 @@ public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
     {
         OnPropertyChanged(nameof(CurrentVoiceOptions));
         OnPropertyChanged(nameof(IsLoadingCurrentVoices));
-        OnPropertyChanged(nameof(SelectedVoice));
+        OnPropertyChanged(nameof(SelectedVoiceId));
     }
 
     private static void ReplaceVoices(
@@ -217,12 +228,7 @@ public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
             target.Add(item);
     }
 
-    private static VoiceOption? SelectVoice(
-        ObservableCollection<VoiceOption> source,
-        string selectedId)
-    {
-        return source.FirstOrDefault(voice => voice.Id == selectedId) ?? source.FirstOrDefault();
-    }
+    public sealed record VoiceEngineOption(int Id, string DisplayName);
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
