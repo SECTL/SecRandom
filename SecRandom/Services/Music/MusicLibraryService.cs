@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using Avalonia.Platform.Storage;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction.Services;
@@ -103,6 +105,50 @@ public sealed class MusicLibraryService(
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "导入音乐失败：文件={FileName}。", Path.GetFileName(sourcePath));
+            }
+        }
+
+        Refresh();
+        return imported;
+    }
+
+    public async Task<IReadOnlyList<MusicTrack>> ImportAsync(IEnumerable<IStorageFile> sourceFiles)
+    {
+        var imported = new List<MusicTrack>();
+        try
+        {
+            Directory.CreateDirectory(MusicDirectory);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "创建音乐库目录失败。");
+            return imported;
+        }
+
+        foreach (var sourceFile in sourceFiles)
+        {
+            var extension = Path.GetExtension(sourceFile.Name).ToLowerInvariant();
+            if (!SupportedExtensions.Contains(extension))
+                continue;
+
+            try
+            {
+                var baseName = Path.GetFileNameWithoutExtension(sourceFile.Name);
+                var destinationName = $"{baseName}{extension}";
+                var index = 2;
+                while (File.Exists(Path.Combine(MusicDirectory, destinationName)))
+                    destinationName = $"{baseName} ({index++}){extension}";
+
+                var destinationPath = Path.Combine(MusicDirectory, destinationName);
+                await using var source = await sourceFile.OpenReadAsync();
+                await using var destination = File.Create(destinationPath);
+                await source.CopyToAsync(destination);
+                imported.Add(new MusicTrack(destinationName, Path.GetFileNameWithoutExtension(destinationName),
+                    new FileInfo(destinationPath).Length));
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "导入音乐失败：文件={FileName}。", sourceFile.Name);
             }
         }
 

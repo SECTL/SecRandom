@@ -70,7 +70,7 @@
             </fa:FASettingsExpander>
 
             <Separator Margin="0 12 0 4" />
-            <sr:IconText Text="{x:Static lp:Resources.Section_Display}" Glyph="{sr:Fi TextFontFilled}" Margin="0 0 0 4" />
+            <sr:IconText Text="{x:Static lp:Resources.Section_Overridable}" Glyph="{sr:Fi SettingsFilled}" Margin="0 0 0 4" />
 
             <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Display}"
                                     Description="{x:Static lp:Resources.Section_Display}"
@@ -139,9 +139,6 @@
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
-            <Separator Margin="0 12 0 4" />
-            <sr:IconText Text="{x:Static lp:Resources.Section_Animation}" Glyph="{sr:Fi FlashFilled}" Margin="0 0 0 4" />
-
             <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Animation}" Description="{x:Static lp:Resources.Section_Animation}" IsExpanded="{Binding Settings.OverrideAnimationSettings, Mode=OneWay}" IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}" OffContent="{x:Static lp:Resources.C_EnableOverride}" IsChecked="{Binding Settings.OverrideAnimationSettings}" />
@@ -180,9 +177,6 @@
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
-            <Separator Margin="0 12 0 4" />
-            <sr:IconText Text="{x:Static lp:Resources.Section_Color}" Glyph="{sr:Fi ColorFilled}" Margin="0 0 0 4" />
-
             <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Color}" Description="{x:Static lp:Resources.Section_Color}" IsExpanded="{Binding Settings.OverrideColorSettings, Mode=OneWay}" IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}" OffContent="{x:Static lp:Resources.C_EnableOverride}" IsChecked="{Binding Settings.OverrideColorSettings}" />
@@ -204,9 +198,6 @@
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
-
-            <Separator Margin="0 12 0 4" />
-            <sr:IconText Text="{x:Static lp:Resources.Section_LotteryImage}" Glyph="{sr:Fi ImageFilled}" Margin="0 0 0 4" />
 
             <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_LotteryImage}" Description="{x:Static lp:Resources.Section_LotteryImage}" IsExpanded="{Binding Settings.OverrideStudentImageSettings, Mode=OneWay}" IconSource="{sr:FluentIconSource {sr:Fi ImageFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -231,9 +222,6 @@
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
-            <Separator Margin="0 12 0 4" />
-            <sr:IconText Text="{x:Static lp:Resources.Section_Music}" Glyph="{sr:Fi Speaker2Filled}" Margin="0 0 0 4" />
-
             <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Music}" IsExpanded="{Binding Settings.OverrideMusicSettings, Mode=OneWay}" IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}" OffContent="{x:Static lp:Resources.C_EnableOverride}" IsChecked="{Binding Settings.OverrideMusicSettings}" />
@@ -244,8 +232,22 @@
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
-            <Separator Margin="0 12 0 4" />
-            <sr:IconText Text="{x:Static lp:Resources.Section_Reminder}" Glyph="{sr:Fi TextFontFilled}" Margin="0 0 0 4" />
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_VoiceAnnouncement}"
+                                     Description="{x:Static lp:Resources.Section_VoiceAnnouncement}"
+                                     IsExpanded="{Binding Settings.OverrideVoiceAnnouncementSettings, Mode=OneWay}"
+                                     IconSource="{sr:FluentIconSource {sr:Fi PersonVoiceFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch OnContent="{x:Static lp:Resources.C_EnableOverride}"
+                                  OffContent="{x:Static lp:Resources.C_EnableOverride}"
+                                  IsChecked="{Binding Settings.OverrideVoiceAnnouncementSettings}" />
+                </fa:FASettingsExpander.Footer>
+                <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_VoiceAnnouncementEnabled}"
+                                           Description="{x:Static lp:Resources.S_VoiceAnnouncementEnabled_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.VoiceAnnouncementEnabled}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
 
             <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Reminder}" Description="{x:Static lp:Resources.Section_Reminder}" IsExpanded="{Binding Settings.OverrideReminderSettings, Mode=OneWay}" IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
                 <fa:FASettingsExpander.Footer>

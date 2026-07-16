@@ -62,7 +62,7 @@ public partial class MusicSettingsPage : UserControl, INotifyPropertyChanged
 
         try
         {
-            var imported = Library.Import(files.Select(file => file.TryGetLocalPath()).OfType<string>());
+            var imported = await Library.ImportAsync(files);
             if (imported.Count > 0)
                 this.ShowSuccessToast(string.Format(LR.M_Imported, imported.Count));
             else if (files.Count > 0)

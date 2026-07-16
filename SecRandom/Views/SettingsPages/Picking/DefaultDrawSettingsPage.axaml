@@ -190,6 +190,16 @@
             </fa:FASettingsExpander>
 
             <Separator Margin="0 12 0 4" />
+            <sr:IconText Text="{x:Static lp:Resources.Section_VoiceAnnouncement}" Glyph="{sr:Fi PersonVoiceFilled}" Margin="0 0 0 4" />
+            <fa:FASettingsExpander Header="{x:Static lp:Resources.S_VoiceAnnouncementEnabled}"
+                                    Description="{x:Static lp:Resources.S_VoiceAnnouncementEnabled_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi PersonVoiceFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.VoiceAnnouncementEnabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <Separator Margin="0 12 0 4" />
             <sr:IconText Text="{x:Static lp:Resources.Section_Reminder}" Glyph="{sr:Fi TextFontFilled}"
                          Margin="0 0 0 4" />
 

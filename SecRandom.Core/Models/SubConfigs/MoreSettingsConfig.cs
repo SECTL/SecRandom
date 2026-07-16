@@ -1,11 +1,36 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Core.Enums.Configs;
+using System.Text.Json.Serialization;
 
 namespace SecRandom.Core.Models.SubConfigs;
 
 public partial class MoreSettingsConfig : ObservableObject
 {
-    [ObservableProperty] private bool _backgroundMusicLoop = true;
+    private bool? _legacyBackgroundMusicLoop;
+
+    [JsonPropertyName("background_music_loop")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? LegacyBackgroundMusicLoop
+    {
+        get => null;
+        set => _legacyBackgroundMusicLoop = value;
+    }
+
+    [JsonPropertyName("backgroundMusicLoop")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? LegacyBackgroundMusicLoopCamelCase
+    {
+        get => null;
+        set => _legacyBackgroundMusicLoop = value;
+    }
+
+    public bool? ConsumeLegacyBackgroundMusicLoop()
+    {
+        var value = _legacyBackgroundMusicLoop;
+        _legacyBackgroundMusicLoop = null;
+        return value;
+    }
+
     [ObservableProperty] private bool _lotteryEnabled = true;
     [ObservableProperty] private RollCallControlPanelPosition _rollCallControlPanelPosition = RollCallControlPanelPosition.Right;
     [ObservableProperty] private bool _rollCallResetButton = true;

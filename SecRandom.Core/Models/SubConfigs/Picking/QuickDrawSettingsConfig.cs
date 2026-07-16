@@ -10,5 +10,4 @@ public partial class QuickDrawSettingsConfig : OverridableDrawSettings
     [ObservableProperty] private DrawType _drawType = DrawType.Fair;
     [ObservableProperty] private string _defaultClass = string.Empty;
     [ObservableProperty] private int _disableAfterClick = 1;
-    [ObservableProperty] private int _autoCloseTime = 3;
 }

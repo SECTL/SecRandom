@@ -40,6 +40,14 @@
                 </ComboBox.ItemTemplate>
             </ComboBox>
         </Grid>
+        <Grid ColumnDefinitions="*,80" ColumnSpacing="16" Margin="0 8 0 4">
+            <StackPanel Spacing="2">
+                <TextBlock Text="{x:Static lp:Resources.S_AnimationMusicLoop}" />
+                <TextBlock Text="{x:Static lp:Resources.S_AnimationMusicLoop_D}" Opacity="0.7" TextWrapping="Wrap" />
+            </StackPanel>
+            <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                          IsChecked="{Binding Settings.AnimationMusicLoop, ElementName=Root, Mode=TwoWay}" />
+        </Grid>
         <Separator Margin="0 8" />
         <Grid ColumnDefinitions="*,220,56" ColumnSpacing="12" Margin="0 4">
             <StackPanel Spacing="2">

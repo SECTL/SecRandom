@@ -96,7 +96,6 @@ public partial class QuickDrawSettingsPage : UserControl
             };
 
             Settings.DisableAfterClick = System.Math.Clamp(Settings.DisableAfterClick, 0, 60);
-            Settings.AutoCloseTime = System.Math.Clamp(Settings.AutoCloseTime, 0, 60);
         }
         finally
         {

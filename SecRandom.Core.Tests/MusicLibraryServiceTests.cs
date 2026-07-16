@@ -8,6 +8,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Shared.Extensions;
 using SecRandom.Services.Music;
 using SecRandom.Shared.Models.Profile;
+using System.Text.Json;
 
 namespace SecRandom.Core.Tests;
 
@@ -69,6 +70,53 @@ public sealed class MusicLibraryServiceTests : IDisposable
         Assert.Equal(300, settings.AnimationMusicFadeOut);
         Assert.Equal(300, settings.ResultMusicFadeIn);
         Assert.Equal(300, settings.ResultMusicFadeOut);
+        Assert.True(settings.AnimationMusicLoop);
+    }
+
+    [Theory]
+    [InlineData("backgroundMusicLoop")]
+    [InlineData("background_music_loop")]
+    public void LegacyBackgroundMusicLoop_MigratesToEveryDrawMusicSetting(string legacyPropertyName)
+    {
+        var json = $$"""
+            {
+              "moreSettings": { "{{legacyPropertyName}}": false },
+              "default_draw_settings": {}
+            }
+            """;
+
+        var settings = JsonSerializer.Deserialize<MainConfigModel>(json, ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(settings);
+        Assert.False(settings.DefaultDrawSettings.AnimationMusicLoop);
+        Assert.False(settings.RollCallSettings.AnimationMusicLoop);
+        Assert.False(settings.QuickDrawSettings.AnimationMusicLoop);
+        Assert.False(settings.LotterySettings.AnimationMusicLoop);
+        var serialized = JsonSerializer.Serialize(settings, ConfigServiceBase.JsonOptions);
+        Assert.DoesNotContain("backgroundMusicLoop", serialized);
+        Assert.DoesNotContain("background_music_loop", serialized);
+    }
+
+    [Fact]
+    public void LegacyBackgroundMusicLoop_DoesNotOverwriteExplicitDrawSettings()
+    {
+        const string json = """
+            {
+              "more_settings": { "background_music_loop": false },
+              "default_draw_settings": { "animation_music_loop": true },
+              "roll_call_settings": {},
+              "quick_draw_settings": { "animation_music_loop": true },
+              "lottery_settings": { "animation_music_loop": false }
+            }
+            """;
+
+        var settings = JsonSerializer.Deserialize<MainConfigModel>(json, ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(settings);
+        Assert.True(settings.DefaultDrawSettings.AnimationMusicLoop);
+        Assert.False(settings.RollCallSettings.AnimationMusicLoop);
+        Assert.True(settings.QuickDrawSettings.AnimationMusicLoop);
+        Assert.False(settings.LotterySettings.AnimationMusicLoop);
     }
 
     [Fact]

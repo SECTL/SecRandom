@@ -13,21 +13,6 @@
               Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
-            <sr:IconText x:Name="S_Music"
-                         Text="{x:Static lsp:Resources.S_Music}"
-                         Glyph="{sr:Fi MusicNote2Filled}"
-                         Margin="0 0 0 4" />
-
-            <fa:FASettingsExpander x:Name="S_Music_BackgroundLoop"
-                                   Header="{x:Static lsp:Resources.S_Music_BackgroundLoop}"
-                                   Description="{x:Static lsp:Resources.S_Music_BackgroundLoop_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi MusicNote2Filled}}">
-                <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding Settings.BackgroundMusicLoop}" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <Separator Margin="0 12 0 4" />
             <sr:IconText Text="{x:Static lsp:Resources.S_PageManagement}"
                           Glyph="{sr:Fi PanelRightFilled}"
                           Margin="0 0 0 4" />
