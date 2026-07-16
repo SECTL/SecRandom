@@ -13,7 +13,7 @@ public sealed class WitnessChallengeTicket
     public string ServerNonce { get; init; } = string.Empty;
     public string SubjectId { get; init; } = string.Empty;
     public string AlgorithmId { get; init; } = string.Empty;
-    public string KernelVersion { get; init; } = string.Empty;
+    public string AlgorithmEngineVersion { get; init; } = string.Empty;
     public DateTimeOffset ExpiresAtUtc { get; init; }
     public string KeyId { get; init; } = string.Empty;
 }

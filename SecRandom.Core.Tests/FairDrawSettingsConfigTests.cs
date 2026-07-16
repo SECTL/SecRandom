@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs.Picking;
@@ -196,6 +197,45 @@ public class FairDrawSettingsConfigTests
 
         Assert.True(weights.Single(item => item.Candidate == groupB).Weight
                     > weights.Single(item => item.Candidate == groupA).Weight);
+    }
+
+    [Fact]
+    public void CreateStudentVerificationInput_AppliesAverageGapProtection()
+    {
+        var first = new Student { Name = "A", RecordId = Guid.NewGuid() };
+        var second = new Student { Name = "B", RecordId = Guid.NewGuid() };
+        var overdrawn = new Student { Name = "C", RecordId = Guid.NewGuid() };
+        var history = new StudentHistory
+        {
+            Students =
+            {
+                [first.RecordId.ToString("D")] = new History { TotalCount = 0 },
+                [second.RecordId.ToString("D")] = new History { TotalCount = 0 },
+                [overdrawn.RecordId.ToString("D")] = new History { TotalCount = 3 }
+            }
+        };
+        var config = BuildConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = true,
+            EnableAvgGapProtection = true,
+            GapThreshold = 1,
+            FairDrawGroup = false,
+            FairDrawGender = false,
+            FairDrawTime = false,
+            ColdStartEnabled = false
+        });
+        config.RollCallSettings.DrawType = DrawType.Fair;
+
+        using var host = BuildHost(config, new TestProfileService(history));
+        IAppHost.Host = host;
+
+        var input = new DrawEngine().CreateStudentVerificationInput(
+            1,
+            [first, second, overdrawn],
+            DrawSettingsType.RollCall);
+
+        Assert.Equal(2, input.Candidates.Count);
+        Assert.DoesNotContain(input.Candidates, candidate => candidate.RecordId == overdrawn.RecordId);
     }
 
     private static MainConfigModel BuildConfig(FairDrawSettingsConfig fairSettings)

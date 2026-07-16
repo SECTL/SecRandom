@@ -44,11 +44,11 @@ public sealed partial class OnlineStatusService : BackgroundService
         new("https://myip.ipip.net")
     ];
 
-    private readonly BasicSettingsConfig _basicSettings;
+    private BasicSettingsConfig _basicSettings;
     private readonly MainConfigHandler _configHandler;
     private readonly HttpClient _httpClient;
     private readonly ILogger<OnlineStatusService> _logger;
-    private readonly PrivacySettingsConfig _privacySettings;
+    private PrivacySettingsConfig _privacySettings;
     private readonly object _cacheLock = new();
     // 统计读取和周期上报可能并发触发；同一时间只允许一个调用刷新公网 IP/地区。
     private readonly SemaphoreSlim _locationRefreshLock = new(1, 1);
@@ -114,6 +114,20 @@ public sealed partial class OnlineStatusService : BackgroundService
         _locationRefreshLock.Dispose();
         _httpClient.Dispose();
         base.Dispose();
+    }
+
+    public void Refresh()
+    {
+        var basicSettings = _configHandler.Data.Basic;
+        var privacySettings = _configHandler.Data.General.PrivacySettings;
+        if (ReferenceEquals(_basicSettings, basicSettings) && ReferenceEquals(_privacySettings, privacySettings))
+            return;
+
+        _privacySettings.PropertyChanged -= PrivacySettingsOnPropertyChanged;
+        _basicSettings = basicSettings;
+        _privacySettings = privacySettings;
+        _privacySettings.PropertyChanged += PrivacySettingsOnPropertyChanged;
+        ClearIpLocationCache();
     }
 
     public async Task<OnlineStatsResult> GetOnlineStatsAsync(CancellationToken cancellationToken = default)

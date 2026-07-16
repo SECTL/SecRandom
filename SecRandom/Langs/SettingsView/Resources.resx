@@ -61,25 +61,25 @@
         <value>导出设置</value>
     </data>
     <data name="C_MoreOptions_ExportSettings_D" xml:space="preserve">
-        <value>将当前设置导出为配置文件，用于备份和迁移</value>
+        <value>将当前设置导出为 SecRandom v3 配置文件，用于备份和迁移</value>
     </data>
     <data name="C_MoreOptions_ImportSettings" xml:space="preserve">
         <value>导入设置</value>
     </data>
     <data name="C_MoreOptions_ImportSettings_D" xml:space="preserve">
-        <value>从配置文件导入设置，覆盖当前配置信息</value>
+        <value>仅从 SecRandom v3 配置文件导入设置，覆盖当前配置信息</value>
     </data>
     <data name="C_MoreOptions_ExportAllData" xml:space="preserve">
         <value>导出所有数据</value>
     </data>
     <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve">
-        <value>立即导出全部非凭据数据、设置、插件和插件私有配置</value>
+        <value>立即导出 SecRandom v3 全部非凭据数据、设置、插件和插件私有配置</value>
     </data>
     <data name="C_MoreOptions_ImportAllData" xml:space="preserve">
         <value>导入所有数据</value>
     </data>
     <data name="C_MoreOptions_ImportAllData_D" xml:space="preserve">
-        <value>从当前版本或 v2 备份导入全部数据，导入前自动创建恢复快照</value>
+        <value>仅从 SecRandom v3 备份导入全部数据，导入前自动创建恢复快照</value>
     </data>
     <data name="C_ExportSettingsFileTitle" xml:space="preserve">
         <value>导出设置</value>
@@ -108,6 +108,9 @@
     <data name="C_Cancel" xml:space="preserve">
         <value>取消</value>
     </data>
+    <data name="C_Close" xml:space="preserve">
+        <value>关闭</value>
+    </data>
     <data name="C_DiagnosticStandard" xml:space="preserve">
         <value>标准诊断包</value>
     </data>
@@ -127,7 +130,19 @@
         <value>将替换当前所有非凭据设置，包括窗口、启动、主题、抽取和系统集成。确认后会先自动创建设置恢复快照；快照失败时不会导入。密码、TOTP、USB 绑定和锁定状态不会导入。</value>
     </data>
     <data name="M_ImportAllDataContent" xml:space="preserve">
-        <value>将替换现有非凭据数据、设置、名单、历史、资源、插件和插件私有配置。确认后会先自动创建完整恢复快照；快照失败时不会导入。v2 历史中无法表达的字段会保留原始副本。安全凭据不会导入。</value>
+        <value>将替换现有非凭据数据、设置、名单、历史、资源、插件和插件私有配置。确认后会先自动创建完整恢复快照；快照失败时不会导入。安全凭据不会导入。</value>
+    </data>
+    <data name="M_ImportUnsupportedTitle" xml:space="preserve">
+        <value>不支持的导入文件</value>
+    </data>
+    <data name="M_ImportUnsupportedContent" xml:space="preserve">
+        <value>该文件不是受支持的 SecRandom v3 导出文件。</value>
+    </data>
+    <data name="M_ImportUnsupportedUnknownVersion" xml:space="preserve">
+        <value>未识别</value>
+    </data>
+    <data name="M_ImportUnsupportedVersion" xml:space="preserve">
+        <value>检测到的导出版本：{0}\n\n{1}\n\n未创建恢复快照，也未修改任何数据。</value>
     </data>
     <data name="M_ExportSuccess" xml:space="preserve">
         <value>已导出：{0}</value>

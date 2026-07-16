@@ -69,7 +69,7 @@ public partial class DrawEngine
                 return (historyCache.GetValueOrDefault(student)?.TotalCount ?? 0) < repeatThreshold;
             }
 
-            var usable = FilterStudents(Filter1, count, historyCache);
+            var usable = FilterStudents(Filter1, count, historyCache, drawType == DrawType.Fair);
             var weightedCandidates = drawType switch
             {
                 DrawType.Fair => CalculateStudentWeight(usable, historyCache, courseName),
@@ -123,22 +123,29 @@ public partial class DrawEngine
         DrawSettingsType drawSettingsType,
         string courseName = "")
     {
-        var usable = candidates.Where(student => student.IsCandidate).ToList();
-        if (usable.Count == 0)
-            return new DrawResult<Student> { Status = DrawStatus.NoCandidates };
-        if (count > usable.Count)
-            return new DrawResult<Student> { Status = DrawStatus.RepeatLimitExhausted };
-
+        var preparedCandidates = candidates.Where(student => student.IsCandidate).ToList();
+        var historyCache = BuildStudentHistoryCache(preparedCandidates, courseName);
         var drawType = GetStudentDrawType(drawSettingsType);
-        var historyCache = BuildStudentHistoryCache(usable, courseName);
-        var weightedCandidates = drawType switch
+        try
         {
-            DrawType.Fair => CalculateStudentWeight(usable, historyCache, courseName),
-            DrawType.Random => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList(),
-            _ => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList()
-        };
+            var usable = FilterPreparedStudents(preparedCandidates, count, historyCache, drawType == DrawType.Fair);
+            var weightedCandidates = drawType switch
+            {
+                DrawType.Fair => CalculateStudentWeight(usable, historyCache, courseName),
+                DrawType.Random => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList(),
+                _ => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList()
+            };
 
-        return DrawWithBehindSceneWeights(weightedCandidates, count);
+            return DrawWithBehindSceneWeights(weightedCandidates, count);
+        }
+        catch (CandidateNotFoundException)
+        {
+            return new DrawResult<Student> { Status = DrawStatus.NoCandidates };
+        }
+        catch (RepeatLimitExhaustedException)
+        {
+            return new DrawResult<Student> { Status = DrawStatus.RepeatLimitExhausted };
+        }
     }
 
     private int GetStudentRepeatThreshold(DrawSettingsType drawSettingsType)
@@ -194,7 +201,7 @@ public partial class DrawEngine
             if (count > weightedCandidates.Count)
                 throw new RepeatLimitExhaustedException();
 
-            var result = DrawWithBehindSceneWeights(weightedCandidates, count);
+            var result = DrawPrizeCandidates(weightedCandidates, count);
             LogDrawResult("奖品抽取", result.Status, count, usable.Count, result.Result.Count);
             return result;
         }
@@ -227,7 +234,7 @@ public partial class DrawEngine
             if (count > weightedCandidates.Count)
                 throw new RepeatLimitExhaustedException();
 
-            var result = DrawWithBehindSceneWeights(weightedCandidates, count);
+            var result = DrawPrizeCandidates(weightedCandidates, count);
             LogDrawResult("奖品抽取", result.Status, count, usable.Count, result.Result.Count);
             return result;
         }
@@ -272,13 +279,36 @@ public partial class DrawEngine
             {
                 var remainingCount = Math.Max(0, prize.Count - (historyCache.GetValueOrDefault(prize)?.TotalCount ?? 0));
                 for (var i = 0; i < remainingCount; i++)
-                    result.Add(new WeightedCandidate<Prize> { Candidate = prize, Weight = prize.Weight });
+                    result.Add(new WeightedCandidate<Prize> { Candidate = prize, Weight = 1.0 });
             }
 
             return result;
         }
 
         return prizes.Select(p => new WeightedCandidate<Prize> { Candidate = p, Weight = p.Weight }).ToList();
+    }
+
+    private DrawResult<Prize> DrawPrizeCandidates(IReadOnlyList<WeightedCandidate<Prize>> candidates, int count)
+    {
+        if (ConfigData.LotterySettings.DrawType != LotteryDrawType.Count
+            || candidates.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true }))
+            return DrawWithBehindSceneWeights(candidates, count);
+
+        if (count > candidates.Count)
+            return new DrawResult<Prize> { Status = DrawStatus.NoEligibleCandidates };
+
+        var tickets = candidates.Select(candidate => candidate.Candidate).ToList();
+        for (var index = 0; index < count; index++)
+        {
+            var selectedIndex = index + _randomSource.NextInt32(tickets.Count - index);
+            (tickets[index], tickets[selectedIndex]) = (tickets[selectedIndex], tickets[index]);
+        }
+
+        return new DrawResult<Prize>
+        {
+            Status = DrawStatus.Success,
+            Result = tickets.Take(count).ToList()
+        };
     }
 
     private DrawResult<TCandidate> DrawWithBehindSceneWeights<TCandidate>(

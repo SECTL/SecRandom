@@ -19,6 +19,7 @@ public sealed class ShortcutService(
     MainConfigHandler configHandler,
     RollCallPageViewModel rollCallViewModel,
     LotteryPageViewModel lotteryViewModel,
+    FeatureAvailabilityService featureAvailability,
     ILogger<ShortcutService> logger) : IHostedService, IDisposable
 {
     private const uint WmHotKey = 0x0312;
@@ -30,7 +31,7 @@ public sealed class ShortcutService(
     private const uint ModWin = 0x0008;
     private const uint ModNoRepeat = 0x4000;
 
-    private readonly MoreSettingsConfig _settings = configHandler.Data.MoreSettings;
+    private MoreSettingsConfig _settings = configHandler.Data.MoreSettings;
     private readonly Dictionary<int, ShortcutAction> _registeredActions = [];
     private Thread? _hotkeyThread;
     private uint _hotkeyThreadId;
@@ -39,6 +40,7 @@ public sealed class ShortcutService(
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _settings.PropertyChanged += SettingsOnPropertyChanged;
+        featureAvailability.Changed += FeatureAvailabilityOnChanged;
         if (!OperatingSystem.IsWindows())
             return Task.CompletedTask;
 
@@ -54,15 +56,32 @@ public sealed class ShortcutService(
     public Task StopAsync(CancellationToken cancellationToken)
     {
         _settings.PropertyChanged -= SettingsOnPropertyChanged;
+        featureAvailability.Changed -= FeatureAvailabilityOnChanged;
         if (_hotkeyThreadId != 0)
             PostThreadMessage(_hotkeyThreadId, WmStop, UIntPtr.Zero, IntPtr.Zero);
         return Task.CompletedTask;
+    }
+
+    public void Refresh()
+    {
+        if (ReferenceEquals(_settings, configHandler.Data.MoreSettings))
+            return;
+
+        _settings.PropertyChanged -= SettingsOnPropertyChanged;
+        _settings = configHandler.Data.MoreSettings;
+        _settings.PropertyChanged += SettingsOnPropertyChanged;
+        SettingsOnPropertyChanged(this, new PropertyChangedEventArgs(nameof(MoreSettingsConfig.EnableShortcut)));
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (_hotkeyThreadId != 0)
             PostThreadMessage(_hotkeyThreadId, WmReload, UIntPtr.Zero, IntPtr.Zero);
+    }
+
+    private void FeatureAvailabilityOnChanged(object? sender, EventArgs e)
+    {
+        SettingsOnPropertyChanged(sender, new PropertyChangedEventArgs(nameof(MoreSettingsConfig.LotteryEnabled)));
     }
 
     private void HotkeyThreadMain()
@@ -95,18 +114,21 @@ public sealed class ShortcutService(
         if (!_settings.EnableShortcut)
             return;
 
-        var bindings = new (ShortcutAction Action, string Gesture)[]
+        var bindings = new List<(ShortcutAction Action, string Gesture)>
         {
             (ShortcutAction.OpenRollCallPage, _settings.OpenRollCallPageShortcut),
             (ShortcutAction.QuickDraw, _settings.QuickDrawShortcut),
-            (ShortcutAction.OpenLotteryPage, _settings.OpenLotteryPageShortcut),
             (ShortcutAction.IncreaseRollCallCount, _settings.IncreaseRollCallCountShortcut),
             (ShortcutAction.DecreaseRollCallCount, _settings.DecreaseRollCallCountShortcut),
-            (ShortcutAction.IncreaseLotteryCount, _settings.IncreaseLotteryCountShortcut),
-            (ShortcutAction.DecreaseLotteryCount, _settings.DecreaseLotteryCountShortcut),
-            (ShortcutAction.StartRollCall, _settings.StartRollCallShortcut),
-            (ShortcutAction.StartLottery, _settings.StartLotteryShortcut)
+            (ShortcutAction.StartRollCall, _settings.StartRollCallShortcut)
         };
+        if (featureAvailability.IsLotteryEnabled)
+        {
+            bindings.Add((ShortcutAction.OpenLotteryPage, _settings.OpenLotteryPageShortcut));
+            bindings.Add((ShortcutAction.IncreaseLotteryCount, _settings.IncreaseLotteryCountShortcut));
+            bindings.Add((ShortcutAction.DecreaseLotteryCount, _settings.DecreaseLotteryCountShortcut));
+            bindings.Add((ShortcutAction.StartLottery, _settings.StartLotteryShortcut));
+        }
 
         var id = 1;
         foreach (var binding in bindings)
@@ -135,6 +157,10 @@ public sealed class ShortcutService(
 
     private void Execute(ShortcutAction action)
     {
+        if (!featureAvailability.IsLotteryEnabled && action is ShortcutAction.OpenLotteryPage
+            or ShortcutAction.IncreaseLotteryCount or ShortcutAction.DecreaseLotteryCount or ShortcutAction.StartLottery)
+            return;
+
         switch (action)
         {
             case ShortcutAction.OpenRollCallPage:

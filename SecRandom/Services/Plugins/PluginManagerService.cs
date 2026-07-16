@@ -286,7 +286,8 @@ public sealed class PluginManagerService : IPluginManager
                     pluginLogger,
                     provider.GetRequiredService<LinkageDrawCoordinator>(),
                     provider.GetRequiredService<IDrawTemporaryRecordService>(),
-                    provider.GetRequiredService<MainConfigHandler>());
+                    provider.GetRequiredService<MainConfigHandler>(),
+                    provider.GetRequiredService<FeatureAvailabilityService>());
                 var dataDirectory = pluginInfo.ConfigDirectory;
                 var runtimeContext = new PluginRuntimeContext(descriptor.Manifest, pluginInfo, pluginLogger, drawInvoker, dataDirectory);
                 return new LoadedPluginRegistration(plugin, runtimeContext);

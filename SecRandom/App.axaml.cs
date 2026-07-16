@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading;
@@ -36,6 +37,7 @@ using SecRandom.Core.Services.Verification;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Services.SingleInstance;
 using SecRandom.Shared.Models.Ipc;
+using SecRandom.Shared;
 using SecRandom.Dialogs;
 using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.AppearanceSettingsConfig;
 using SecRandom.Services;
@@ -48,6 +50,7 @@ using SecRandom.Services.Plugins;
 using SecRandom.Services.Profiles;
 using SecRandom.Services.Ipc;
 using SecRandom.Services.ImportExport;
+using SecRandom.Services.FirstRun;
 using SecRandom.Services.Linkage;
 using SecRandom.Services.Music;
 using SecRandom.Services.Settings;
@@ -55,6 +58,7 @@ using SecRandom.Services.Security;
 using SecRandom.Services.Telemetry;
 using SecRandom.Services.Verification;
 using SecRandom.Services.Voice;
+using SecRandom.Services.Updates;
 using SecRandom.ViewModels;
 using SecRandom.ViewModels.MainPages;
 using SecRandom.ViewModels.SettingsPages;
@@ -94,6 +98,7 @@ public partial class App : Application
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     private readonly object _shutdownGate = new();
     private bool _isStopping;
+    private bool _isOobeActive;
     public new static App Current => (Application.Current as App)!;
     internal bool IsStopping => _isStopping;
 
@@ -156,21 +161,36 @@ public partial class App : Application
             // 启动服务主机
             BuildHost();
 
-            _desktopLifetime = desktop;
-            _floatingWindow = new FloatingWindow();
-            _floatingWindow.Opened += (_, _) => RefreshTrayWindowMenuItems();
-            _floatingWindow.Closed += (_, _) => _floatingWindow = null;
-            if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.StartupDisplayFloatingWindow)
+            if (IAppHost.GetService<FirstRunOobeService>().IsRequired())
             {
-                _floatingWindow.Hide();
-                _floatingWindow.SetUserVisibilityIntent(false);
+                ShowFirstRunOobe(desktop, startupProtocolUri);
+                base.OnFrameworkInitializationCompleted();
+                return;
             }
-            desktop.MainWindow = _floatingWindow;
+
+            ContinueDesktopStartup(desktop, startupProtocolUri);
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime)
         {
             throw new PlatformNotSupportedException();
         }
+
+        base.OnFrameworkInitializationCompleted();
+    }
+
+    private void ContinueDesktopStartup(IClassicDesktopStyleApplicationLifetime desktop, string? startupProtocolUri)
+    {
+        _desktopLifetime = desktop;
+        ObserveTask(StartRuntimeServicesAsync(), "Runtime service startup failed.");
+        _floatingWindow = new FloatingWindow();
+        _floatingWindow.Opened += (_, _) => RefreshTrayWindowMenuItems();
+        _floatingWindow.Closed += (_, _) => _floatingWindow = null;
+        if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.StartupDisplayFloatingWindow)
+        {
+            _floatingWindow.Hide();
+            _floatingWindow.SetUserVisibilityIntent(false);
+        }
+        desktop.MainWindow = _floatingWindow;
 
         InitializeApp();
         if (startupProtocolUri is not null)
@@ -178,8 +198,40 @@ public partial class App : Application
 
         AppDomain.CurrentDomain.ProcessExit += CurrentDomainOnProcessExit;
         Dispatcher.UIThread.UnhandledException += App_OnDispatcherUnhandledException;
+    }
 
-        base.OnFrameworkInitializationCompleted();
+    private void ShowFirstRunOobe(IClassicDesktopStyleApplicationLifetime desktop, string? startupProtocolUri)
+    {
+        _isOobeActive = true;
+        var oobe = CreateFirstRunOobe(desktop, startupProtocolUri);
+        desktop.MainWindow = oobe;
+        oobe.Show();
+    }
+
+    private FirstRunOobeWindow CreateFirstRunOobe(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        string? startupProtocolUri)
+    {
+        var oobe = new FirstRunOobeWindow();
+        oobe.Completed += (_, _) =>
+        {
+            _isOobeActive = false;
+            ContinueDesktopStartup(desktop, startupProtocolUri);
+            ShowMainWindow();
+        };
+        oobe.LanguageChanged += (_, _) =>
+        {
+            var replacement = CreateFirstRunOobe(desktop, startupProtocolUri);
+            desktop.MainWindow = replacement;
+            replacement.Show();
+            oobe.CloseForLanguageChange();
+        };
+        oobe.Closed += (_, _) =>
+        {
+            if (!oobe.IsCompleted && !oobe.IsReplacingForLanguageChange)
+                RequestDesktopShutdown();
+        };
+        return oobe;
     }
 
     /// <summary>
@@ -254,6 +306,9 @@ public partial class App : Application
     {
         Dispatcher.UIThread.Post(() =>
         {
+            if (_isOobeActive)
+                return;
+
             switch (command)
             {
                 case SingleInstanceCommand.ShowMainWindow:
@@ -284,6 +339,10 @@ public partial class App : Application
 
     private Task<IpcResponseEnvelope> OnIpcRequestReceived(IpcRequestEnvelope request, CancellationToken cancellationToken)
     {
+        if (_isOobeActive)
+            return Task.FromResult(new IpcResponseEnvelope(true, "url",
+                new IpcBusinessResult("error", "初始设置尚未完成。", "oobe_required")));
+
         return IAppHost.GetService<ProtocolCommandRouter>().HandleIpcAsync(request, cancellationToken);
     }
 
@@ -356,6 +415,8 @@ public partial class App : Application
                 services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<WitnessTicketCache>());
                 services.AddTransient<VerificationDrawCoordinator>();
                 services.AddSingleton<SettingsSearchService>();
+                services.AddSingleton<FirstRunOobeService>();
+                services.AddSingleton<OobeDataSetupService>();
                 services.AddSingleton<IImportExportService, Services.ImportExport.ImportExportService>();
                 services.AddHostedService<AutomaticBackupService>();
                 services.AddTransient<DrawEngine>();
@@ -372,10 +433,20 @@ public partial class App : Application
                 services.AddSingleton<GlobalShortcutService>();
                 services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<GlobalShortcutService>());
                 services.AddSingleton<DesktopIntegrationService>();
+                 services.AddHttpClient("updates", client => client.Timeout = TimeSpan.FromSeconds(30));
+                 services.AddSingleton<UpdateCenterService>(serviceProvider => new UpdateCenterService(
+                     serviceProvider.GetRequiredService<MainConfigHandler>(),
+                     serviceProvider.GetRequiredService<ILogger<UpdateCenterService>>(),
+                     serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("updates")));
+                 services.AddHostedService<UpdateScheduler>();
+                services.AddSingleton<FeatureAvailabilityService>();
                 services.AddSingleton<ProtocolCommandRouter>();
                 services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
                 services.AddSingleton<NotificationService>();
-                services.AddSingleton<MusicLibraryService>();
+                services.AddSingleton(serviceProvider => new MusicLibraryService(
+                    serviceProvider.GetRequiredService<MainConfigHandler>(),
+                    serviceProvider.GetRequiredService<ILogger<MusicLibraryService>>(),
+                    attachedSettingsProfileService: serviceProvider.GetRequiredService<IProfileService>()));
                 services.AddSingleton<DrawAudioService>();
                 services.AddSingleton<CsesScheduleParser>();
                 services.AddSingleton<ICsesScheduleStore, CsesScheduleStore>();
@@ -398,12 +469,14 @@ public partial class App : Application
 
                 services.AddTransient<ProfileSettingsView>();
                 services.AddTransient<ProfileSettingsViewModel>();
+                services.AddSingleton<FirstRunOobeViewModel>();
                 services.AddTransient<QuickDrawPage>();
 
                 // 附加设置
                 services.AddAttachedSettingsControl<BehindSceneAttachedSettingsControl>(Langs.Common.Resources
                     .AttachedSettings_BehindScene);
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
+                services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");
 
                 // 界面 Views
                 services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
@@ -508,9 +581,6 @@ public partial class App : Application
         RefreshPersonalizedSettings();
 
         IAppHost.GetService<IProfileService>();
-
-        // 先初始化遥测，再启动 Host，确保 HostedService 启动时的日志能被捕获。
-        ObserveTask(StartRuntimeServicesAsync(), "Runtime service startup failed.");
 
         // RESOURCES TEST
         var isVisible = false;
@@ -629,6 +699,23 @@ public partial class App : Application
             return;
         }
 
+        RequestDesktopShutdown();
+    }
+
+    public async Task RestartThroughLauncherAsync()
+    {
+        var launcherName = OperatingSystem.IsWindows() ? "SecRandomLauncher.exe" : "SecRandomLauncher";
+        var launcherPath = Path.Combine(Utils.PackageRoot, launcherName);
+        if (!File.Exists(launcherPath))
+            throw new FileNotFoundException("便携版 Launcher 不存在。", launcherPath);
+
+        await StopAsync(requestLifetimeShutdown: false).ConfigureAwait(false);
+        var startInfo = new ProcessStartInfo(launcherPath)
+        {
+            WorkingDirectory = Utils.PackageRoot,
+            UseShellExecute = false
+        };
+        Process.Start(startInfo);
         RequestDesktopShutdown();
     }
 
@@ -807,8 +894,11 @@ public partial class App : Application
 
     public static void InitializeLanguages(CultureInfo cultureInfo)
     {
+        CultureInfo.CurrentCulture = cultureInfo;
+        CultureInfo.CurrentUICulture = cultureInfo;
         CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
         CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+        Langs.FirstRunOobe.Resources.Culture = cultureInfo;
     }
 
     /// <summary>
@@ -918,6 +1008,9 @@ public partial class App : Application
 
     public static void ToggleMainWindow(string? pageId = null)
     {
+        if (pageId == "main.lottery" && !IAppHost.GetService<FeatureAvailabilityService>().IsLotteryEnabled)
+            return;
+
         ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeAsync(
             SecurityOperation.ToggleMainWindow,
             () =>
@@ -931,6 +1024,9 @@ public partial class App : Application
 
     public static void SetMainWindowVisibility(string action, string? pageId = null)
     {
+        if (pageId == "main.lottery" && !IAppHost.GetService<FeatureAvailabilityService>().IsLotteryEnabled)
+            return;
+
         var shouldShow = action switch
         {
             "show" => true,
@@ -1080,14 +1176,28 @@ public partial class App : Application
 
     public static void ShowQuickDrawWindow()
     {
+        ObserveTask(ShowQuickDrawWindowAsync(), "Quick draw window action failed.");
+    }
+
+    private static async Task ShowQuickDrawWindowAsync()
+    {
         TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
         using var transaction = telemetry?.StartTransaction("ui.quick_draw_window", "ui.navigation");
 
         try
         {
+            var quickDraw = IAppHost.GetService<QuickDrawPageViewModel>();
+            if (!quickDraw.IsDrawing && !await quickDraw.AuthorizeWindowDrawAsync())
+            {
+                transaction?.Finish(SpanStatus.PermissionDenied);
+                return;
+            }
+
             if (_quickDrawWindow is { IsVisible: true })
             {
                 _quickDrawWindow.Activate();
+                if (!quickDraw.IsDrawing)
+                    await quickDraw.StartAuthorizedWindowDrawAsync();
                 transaction?.Finish(SpanStatus.Ok);
                 return;
             }
@@ -1128,7 +1238,7 @@ public partial class App : Application
 
             _quickDrawWindow.Show();
             _quickDrawWindow.Activate();
-            (_quickDrawWindow.Content as QuickDrawPage)?.StartDraw();
+            await quickDraw.StartAuthorizedWindowDrawAsync();
             transaction?.Finish(SpanStatus.Ok);
         }
         catch (Exception ex)

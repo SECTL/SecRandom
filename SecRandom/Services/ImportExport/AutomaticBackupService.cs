@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Services.Config;
+using SecRandom.Shared;
 
 namespace SecRandom.Services.ImportExport;
 
@@ -15,7 +16,7 @@ public sealed class AutomaticBackupService(
     ILogger<AutomaticBackupService> logger) : BackgroundService
 {
     private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(1);
-    private readonly string _backupDirectory = Path.Combine(AppContext.BaseDirectory, "data", "backup");
+    private readonly string _backupDirectory = Path.Combine(Utils.DataRoot, "backup");
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

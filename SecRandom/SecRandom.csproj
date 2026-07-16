@@ -26,6 +26,11 @@
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
+        <EmbeddedResource Update="Langs\FirstRunOobe\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
         <EmbeddedResource Update="Langs\MainPages\RollCall\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -180,6 +185,12 @@
         </Compile>
 
         <Compile Update="Langs\CrashRecovery\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+
+        <Compile Update="Langs\FirstRunOobe\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>
@@ -422,6 +433,7 @@
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
         <PackageReference Include="YamlDotNet" Version="16.3.0" />
+        <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.1" />
     </ItemGroup>
 
     <PropertyGroup>

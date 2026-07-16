@@ -2,6 +2,7 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Models.Verification;
+using SecRandom.Core.Services.Draw.Exceptions;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Interfaces;
 using SecRandom.Shared.Models.Profile;
@@ -21,22 +22,51 @@ public partial class DrawEngine
         DrawSettingsType drawSettingsType,
         string courseName = "")
     {
-        var usable = candidates.Where(student => student.IsCandidate).ToList();
-        if (usable.Count == 0 || count <= 0 || count > usable.Count)
+        var preparedCandidates = candidates.Where(student => student.IsCandidate).ToList();
+        if (preparedCandidates.Count == 0 || count <= 0 || count > preparedCandidates.Count)
             throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.");
 
-        var historyCache = BuildStudentHistoryCache(usable, courseName);
-        var weighted = GetStudentDrawType(drawSettingsType) == DrawType.Fair
-            ? CalculateStudentWeight(usable, historyCache)
+        var historyCache = BuildStudentHistoryCache(preparedCandidates, courseName);
+        var drawType = GetStudentDrawType(drawSettingsType);
+        var drawMode = GetStudentDrawMode(drawSettingsType);
+        List<Student> usable;
+        try
+        {
+            usable = FilterPreparedStudents(preparedCandidates, count, historyCache, drawType == DrawType.Fair);
+        }
+        catch (Exception exception) when (exception is CandidateNotFoundException or RepeatLimitExhaustedException)
+        {
+            throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.", exception);
+        }
+
+        var weighted = drawType == DrawType.Fair
+            ? CalculateStudentWeight(usable, historyCache, courseName)
             : usable.Select(student => new WeightedCandidate<Student> { Candidate = student, Weight = 1.0 }).ToList();
 
         var frozen = FreezeCandidates(weighted);
+        if (count > frozen.Count)
+            throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.");
+        var hasInternalRules = weighted.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
+        var algorithmProfile = GetStudentAlgorithmProfile(drawType, drawMode, hasInternalRules);
         return new VerificationDrawInput
         {
             Kind = VerificationDrawKind.Student,
+            SamplingMode = drawType == DrawType.Fair
+                ? VerificationSamplingMode.HistoryBalancedWeighted
+                : VerificationSamplingMode.WeightedWithoutReplacement,
+            AlgorithmProfile = algorithmProfile,
             Count = count,
             Candidates = frozen,
-            AuditPayload = CreateAuditPayload("student", count, frozen, weighted, historyCache)
+            AuditPayload = CreateAuditPayload("student", count, frozen, weighted, historyCache, new
+            {
+                fairDraw = drawType == DrawType.Fair,
+                algorithmProfile = algorithmProfile.ToString(),
+                repeatMode = ToAuditName(drawMode),
+                halfRepeatLimit = drawMode == DrawMode.HalfRepeat ? GetStudentRepeatThreshold(drawSettingsType) : (int?)null,
+                averageGapProtectionApplied = drawType == DrawType.Fair && ConfigData.FairDrawSettings.EnableAvgGapProtection,
+                candidateCountBeforeAverageGapProtection = preparedCandidates.Count,
+                candidateCountAfterAverageGapProtection = usable.Count
+            })
         };
     }
 
@@ -54,14 +84,101 @@ public partial class DrawEngine
             throw new InvalidOperationException("The prepared prize pool cannot satisfy this draw.");
 
         var frozen = FreezeCandidates(weighted);
+        if (count > frozen.Count)
+            throw new InvalidOperationException("The prepared prize pool cannot satisfy this draw.");
+        var hasInternalRules = weighted.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
+        var lotteryDrawType = ConfigData.LotterySettings.DrawType;
+        var lotteryDrawMode = ConfigData.LotterySettings.DrawMode;
+        var samplingMode = lotteryDrawType == LotteryDrawType.Count && !hasInternalRules
+            ? VerificationSamplingMode.InventoryPermutation
+            : VerificationSamplingMode.WeightedWithoutReplacement;
         return new VerificationDrawInput
         {
             Kind = VerificationDrawKind.Prize,
+            SamplingMode = samplingMode,
+            AlgorithmProfile = GetLotteryAlgorithmProfile(lotteryDrawType, lotteryDrawMode, hasInternalRules),
             Count = count,
             Candidates = frozen,
-            AuditPayload = CreateAuditPayload("prize", count, frozen, weighted, historyCache)
+            AuditPayload = CreateAuditPayload("prize", count, frozen, weighted, historyCache, new
+            {
+                samplingAlgorithm = samplingMode == VerificationSamplingMode.InventoryPermutation
+                    ? "inventory-partial-permutation"
+                    : "weighted-without-replacement",
+                inventoryEntriesEqualWeight = samplingMode == VerificationSamplingMode.InventoryPermutation,
+                internalRulesRequireWeightedFallback = samplingMode == VerificationSamplingMode.WeightedWithoutReplacement
+                    && lotteryDrawType == LotteryDrawType.Count
+                    && hasInternalRules,
+                algorithmProfile = GetLotteryAlgorithmProfile(lotteryDrawType, lotteryDrawMode, hasInternalRules).ToString(),
+                lotteryMode = lotteryDrawType == LotteryDrawType.Count ? "count" : "pan",
+                repeatMode = lotteryDrawType == LotteryDrawType.Pan ? ToAuditName(lotteryDrawMode) : null,
+                halfRepeatLimit = lotteryDrawType == LotteryDrawType.Pan && lotteryDrawMode == DrawMode.HalfRepeat
+                    ? GetLotteryRepeatThreshold()
+                    : (int?)null
+            })
         };
     }
+
+    private static VerificationAlgorithmProfile GetStudentAlgorithmProfile(
+        DrawType drawType,
+        DrawMode drawMode,
+        bool hasInternalRules)
+    {
+        if (hasInternalRules)
+        {
+            return (drawType, drawMode) switch
+            {
+                (DrawType.Fair, DrawMode.Repeat) => VerificationAlgorithmProfile.StudentFairInternalRuleRepeat,
+                (DrawType.Fair, DrawMode.NoRepeat) => VerificationAlgorithmProfile.StudentFairInternalRuleNoRepeat,
+                (DrawType.Fair, _) => VerificationAlgorithmProfile.StudentFairInternalRuleHalfRepeat,
+                (_, DrawMode.Repeat) => VerificationAlgorithmProfile.StudentRandomInternalRuleRepeat,
+                (_, DrawMode.NoRepeat) => VerificationAlgorithmProfile.StudentRandomInternalRuleNoRepeat,
+                _ => VerificationAlgorithmProfile.StudentRandomInternalRuleHalfRepeat
+            };
+        }
+
+        return (drawType, drawMode) switch
+        {
+            (DrawType.Fair, DrawMode.Repeat) => VerificationAlgorithmProfile.StudentFairRepeat,
+            (DrawType.Fair, DrawMode.NoRepeat) => VerificationAlgorithmProfile.StudentFairNoRepeat,
+            (DrawType.Fair, DrawMode.HalfRepeat) => VerificationAlgorithmProfile.StudentFairHalfRepeat,
+            (_, DrawMode.Repeat) => VerificationAlgorithmProfile.StudentRandomRepeat,
+            (_, DrawMode.NoRepeat) => VerificationAlgorithmProfile.StudentRandomNoRepeat,
+            _ => VerificationAlgorithmProfile.StudentRandomHalfRepeat
+        };
+    }
+
+    private static VerificationAlgorithmProfile GetLotteryAlgorithmProfile(
+        LotteryDrawType drawType,
+        DrawMode drawMode,
+        bool hasInternalRules)
+    {
+        if (drawType == LotteryDrawType.Count)
+            return hasInternalRules
+                ? VerificationAlgorithmProfile.LotteryCountInternalRule
+                : VerificationAlgorithmProfile.LotteryInventoryCount;
+
+        return drawMode switch
+        {
+            DrawMode.Repeat => VerificationAlgorithmProfile.LotteryPanRepeat,
+            DrawMode.NoRepeat => VerificationAlgorithmProfile.LotteryPanNoRepeat,
+            _ => VerificationAlgorithmProfile.LotteryPanHalfRepeat
+        };
+    }
+
+    private DrawMode GetStudentDrawMode(DrawSettingsType drawSettingsType) => drawSettingsType switch
+    {
+        DrawSettingsType.RollCall => ConfigData.RollCallSettings.DrawMode,
+        DrawSettingsType.QuickDraw => ConfigData.QuickDrawSettings.DrawMode,
+        _ => ConfigData.RollCallSettings.DrawMode
+    };
+
+    private static string ToAuditName(DrawMode drawMode) => drawMode switch
+    {
+        DrawMode.Repeat => "repeat",
+        DrawMode.NoRepeat => "no-repeat",
+        DrawMode.HalfRepeat => "half-repeat",
+        _ => "unknown"
+    };
 
     private static IReadOnlyList<VerificationCandidate> FreezeCandidates<TCandidate>(
         IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates)
@@ -137,18 +254,27 @@ public partial class DrawEngine
         int count,
         IReadOnlyList<VerificationCandidate> candidates,
         IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates,
-        IReadOnlyDictionary<TCandidate, History> historyCache)
+        IReadOnlyDictionary<TCandidate, History> historyCache,
+        object? fairness = null)
         where TCandidate : IAttachableSettingsObject
     {
         var historyByRecordId = historyCache.ToDictionary(pair => GetRecordId(pair.Key), pair => pair.Value);
         Dictionary<Guid, double?> internalSettingsByRecordId = [];
+        var internalExcludedCandidateCount = 0;
         foreach (var weighted in weightedCandidates)
         {
             var recordId = GetRecordId(weighted.Candidate);
             var settings = GetBehindSceneSettings(weighted.Candidate);
-            internalSettingsByRecordId[recordId] = settings is { IsAttachSettingsEnabled: true }
-                ? Math.Clamp(settings.Probability, 0d, 100d)
-                : null;
+            if (settings is not { IsAttachSettingsEnabled: true })
+            {
+                internalSettingsByRecordId[recordId] = null;
+                continue;
+            }
+
+            var probability = Math.Clamp(settings.Probability, 0d, 100d);
+            internalSettingsByRecordId[recordId] = probability;
+            if (probability <= 0)
+                internalExcludedCandidateCount++;
         }
         var ordered = candidates
             .OrderBy(candidate => candidate.RecordId.ToString("N"), StringComparer.Ordinal)
@@ -159,6 +285,7 @@ public partial class DrawEngine
                 return new
                 {
                     index,
+                    recordId = candidate.RecordId,
                     candidate.OccurrenceIndex,
                     candidate.WeightMicros,
                     candidate.IsGuaranteed,
@@ -174,12 +301,15 @@ public partial class DrawEngine
 
         return JsonSerializer.SerializeToUtf8Bytes(new
         {
-            format = "secrandom-anonymous-audit/v1",
+            format = "secrandom-anonymous-audit/v2",
             operation,
             requestedCount = count,
             candidateCount = ordered.Length,
-            internalSettingsApplied = ordered.Any(candidate => candidate.internalSettingApplied),
+            internalSettingsApplied = ordered.Any(candidate => candidate.internalSettingApplied)
+                                      || internalExcludedCandidateCount > 0,
             internalCandidateCount = ordered.Count(candidate => candidate.internalSettingApplied),
+            internalExcludedCandidateCount,
+            fairness,
             candidates = ordered
         });
     }

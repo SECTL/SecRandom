@@ -157,6 +157,12 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         await StartDrawCoreAsync();
     }
 
+    public Task<bool> AuthorizeWindowDrawAsync() => _linkageDrawCoordinator.AuthorizeAsync(
+        SecurityOperation.QuickDrawStart,
+        () => Task.CompletedTask);
+
+    public Task StartAuthorizedWindowDrawAsync() => StartDrawCoreAsync();
+
     private async Task StartDrawCoreAsync(bool skipPreview = false)
     {
         if (IsDrawing)
@@ -184,20 +190,30 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                 count,
                 candidates,
                 DrawSettingsType.QuickDraw,
+                DrawProofExportContext.ForStudents(SelectedStudentListName, courseName: courseName),
                 courseName: courseName,
                 cancellationToken: default);
-            if (!skipPreview)
-                await ShowPreviewAsync(candidates, count).ConfigureAwait(true);
-
+            var previewTask = skipPreview
+                ? Task.CompletedTask
+                : ShowPreviewAsync(candidates, count, MusicSettings.AnimationMusic);
             List<Student> drawn;
             try
             {
+                var drawCompletedFirst = await Task.WhenAny(verificationDrawTask, previewTask).ConfigureAwait(true) == verificationDrawTask;
                 drawn = (await verificationDrawTask.ConfigureAwait(true)).Winners.ToList();
+                if (drawCompletedFirst && !previewTask.IsCompleted)
+                    await _drawAudioService.StartAnimationMusicAsync(
+                        DrawMusicAttachedSettingsResolver.GetAnimationMusic(drawn.FirstOrDefault(), MusicSettings.AnimationMusic),
+                        MusicSettings.AnimationMusicVolume,
+                        MusicSettings.AnimationMusicFadeIn,
+                        Config.MoreSettings.BackgroundMusicLoop).ConfigureAwait(true);
+
+                await previewTask.ConfigureAwait(true);
             }
             catch (Exception exception)
             {
                 _logger.LogWarning(exception, "可验证闪抽失败。");
-                await _drawAudioService.StopAnimationMusicAsync(0, immediate: true).ConfigureAwait(false);
+                StopPreview();
                 ResultItems.Clear();
                 LastDrawnStudent = null;
                 IsResultVisible = false;
@@ -219,7 +235,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                     NotificationSettingsType.QuickDraw,
                     "闪抽结果",
                     ResultItems.Select(item => item.DisplayText).ToList());
-            await _drawAudioService.TransitionToResultMusicAsync(MusicSettings.ResultMusic,
+            await _drawAudioService.TransitionToResultMusicAsync(
+                DrawMusicAttachedSettingsResolver.GetResultMusic(drawn.FirstOrDefault(), MusicSettings.ResultMusic),
                 MusicSettings.ResultMusicVolume, MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut,
                 MusicSettings.AnimationMusicFadeOut).ConfigureAwait(false);
 
@@ -330,12 +347,14 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         return counts.GetValueOrDefault(recordId) >= threshold;
     }
 
-    private async Task ShowPreviewAsync(IReadOnlyList<Student> candidates, int count)
+    private async Task ShowPreviewAsync(IReadOnlyList<Student> candidates, int count, string animationMusic)
     {
         if (AnimationSettings.Animation == AnimationMode.NoAnimation)
             return;
 
-        await _drawAudioService.StartAnimationMusicAsync(MusicSettings.AnimationMusic, MusicSettings.AnimationMusicVolume,
+        await _drawAudioService.StartAnimationMusicAsync(
+            animationMusic,
+            MusicSettings.AnimationMusicVolume,
             MusicSettings.AnimationMusicFadeIn, Config.MoreSettings.BackgroundMusicLoop).ConfigureAwait(true);
 
         var previewCts = new CancellationTokenSource();

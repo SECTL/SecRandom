@@ -30,27 +30,30 @@ public sealed class VerificationDrawCoordinator(
         int count,
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType,
+        DrawProofExportContext exportContext,
         Guid? parentProofId = null,
         string courseName = "",
         CancellationToken cancellationToken = default)
     {
         var input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName);
-        return DrawAsync(input, candidates, parentProofId, cancellationToken);
+        return DrawAsync(input, candidates, exportContext, parentProofId, cancellationToken);
     }
 
     public Task<VerificationDrawOutcome<Prize>> DrawPrizesAsync(
         int count,
         IReadOnlyDictionary<string, int> temporaryCounts,
         IReadOnlyCollection<Prize> prizes,
+        DrawProofExportContext exportContext,
         CancellationToken cancellationToken = default)
     {
         var input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts);
-        return DrawAsync(input, prizes, null, cancellationToken);
+        return DrawAsync(input, prizes, exportContext, null, cancellationToken);
     }
 
     private async Task<VerificationDrawOutcome<TCandidate>> DrawAsync<TCandidate>(
         VerificationDrawInput input,
         IReadOnlyCollection<TCandidate> records,
+        DrawProofExportContext exportContext,
         Guid? parentProofId,
         CancellationToken cancellationToken)
         where TCandidate : class
@@ -61,7 +64,7 @@ public sealed class VerificationDrawCoordinator(
         {
             try
             {
-            var clientNonce = RandomNumberGenerator.GetBytes(32);
+            var clientNonce = VerificationSeedDerivation.CreateCsprngNonce();
             var seed = VerificationSeedDerivation.DeriveOnline(
                 inputHash,
                 lease.Ticket.TicketId,
@@ -71,8 +74,8 @@ public sealed class VerificationDrawCoordinator(
             var pendingProof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OnlineWitnessed, parentProofId,
                 new DrawProofWitness { Challenge = lease.Token, KeyId = lease.Ticket.KeyId });
             var localProof = pendingProof with { Mode = VerificationProofMode.OfflineReproducible, Witness = null };
-            var outcome = Complete(records, recordLookup, result, localProof);
-            _ = FinalizeWitnessAsync(lease, clientNonce, pendingProof);
+            var outcome = Complete(records, recordLookup, result, localProof, exportContext);
+            _ = FinalizeWitnessAsync(lease, clientNonce, pendingProof, exportContext);
             return outcome;
             }
             catch (Exception exception)
@@ -81,13 +84,17 @@ public sealed class VerificationDrawCoordinator(
             }
         }
 
-        var offlineSeed = RandomNumberGenerator.GetBytes(32);
+        var offlineSeed = VerificationSeedDerivation.CreateCsprngSeed();
         var offlineResult = kernel.Draw(input, offlineSeed);
         var offlineProof = CreateProof(input, inputHash, offlineSeed, offlineResult, VerificationProofMode.OfflineReproducible, parentProofId, null);
-        return Complete(records, recordLookup, offlineResult, offlineProof);
+        return Complete(records, recordLookup, offlineResult, offlineProof, exportContext);
     }
 
-    private async Task FinalizeWitnessAsync(TicketLease lease, byte[] clientNonce, DrawProof pendingProof)
+    private async Task FinalizeWitnessAsync(
+        TicketLease lease,
+        byte[] clientNonce,
+        DrawProof pendingProof,
+        DrawProofExportContext exportContext)
     {
         try
         {
@@ -102,7 +109,7 @@ public sealed class VerificationDrawCoordinator(
                     Receipt = receipt,
                     KeyId = lease.Ticket.KeyId
                 }
-            });
+            }, exportContext);
         }
         catch (Exception exception)
         {
@@ -114,14 +121,15 @@ public sealed class VerificationDrawCoordinator(
         IReadOnlyCollection<TCandidate> records,
         IReadOnlyDictionary<Guid, TCandidate> recordLookup,
         VerificationKernelResult result,
-        DrawProof proof)
+        DrawProof proof,
+        DrawProofExportContext exportContext)
         where TCandidate : class
     {
         var winners = result.Winners.Select(winner => recordLookup.TryGetValue(winner.RecordId, out var record)
             ? record
             : throw new InvalidDataException("Verification kernel returned a record outside the frozen pool."))
             .ToList();
-        var proofPath = proofExporter.Save(proof);
+        var proofPath = proofExporter.Save(proof, exportContext);
         return new VerificationDrawOutcome<TCandidate>(winners, proof, proofPath);
     }
 
@@ -139,8 +147,8 @@ public sealed class VerificationDrawCoordinator(
         {
             ParentProofId = parentProofId,
             Mode = mode,
-            AlgorithmId = VerificationWireCodec.AlgorithmId,
-            KernelVersion = VerificationWireCodec.KernelVersion,
+            AlgorithmId = VerificationWireCodec.GetAlgorithmId(input.AlgorithmProfile),
+            AlgorithmEngineVersion = VerificationWireCodec.AlgorithmEngineVersion,
             InputHash = WitnessClient.ToBase64Url(inputHash),
             Payload = WitnessClient.ToBase64Url(payload),
             AuditPayload = WitnessClient.ToBase64Url(input.AuditPayload),
@@ -172,6 +180,7 @@ public sealed class VerificationDrawCoordinator(
         ProfileRecordIdentity.EnsureRecordId(prize);
         return prize.RecordId;
     }
+
 }
 
 public sealed record VerificationDrawOutcome<TCandidate>(

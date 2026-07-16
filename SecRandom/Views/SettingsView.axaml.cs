@@ -348,7 +348,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
             return;
         var path = await PickSavePathAsync(
             GetResource("C_ExportSettingsFileTitle"),
-            "settings.json",
+            "SecRandom_v3_settings.json",
             "json",
             GetResource("C_JsonFileType"));
         if (path is null)
@@ -380,6 +380,11 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         try
         {
             var inspection = await ImportExportService.InspectSettingsAsync(path);
+            if (!inspection.IsSupportedV3)
+            {
+                await ShowUnsupportedImportAsync(inspection);
+                return;
+            }
             if (!await ConfirmImportAsync(BuildImportConfirmation(GetResource("M_ImportSettingsContent"), inspection)))
                 return;
             var result = await ImportExportService.ImportSettingsAsync(path);
@@ -389,7 +394,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         catch (Exception ex)
         {
             _logger.LogError(ex, "导入设置失败。");
-            this.ShowErrorToast(GetResource("M_ImportFailed"));
+            await ShowImportFailureAsync(ex);
         }
     }
 
@@ -399,7 +404,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
             return;
         var path = await PickSavePathAsync(
             GetResource("C_ExportAllDataFileTitle"),
-            "SecRandom_all_data.zip",
+            "SecRandom_v3_all_data.zip",
             "zip",
             GetResource("C_ZipFileType"));
         if (path is null)
@@ -431,6 +436,11 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         try
         {
             var inspection = await ImportExportService.InspectAllDataAsync(path);
+            if (!inspection.IsSupportedV3)
+            {
+                await ShowUnsupportedImportAsync(inspection);
+                return;
+            }
             if (!await ConfirmImportAsync(BuildImportConfirmation(GetResource("M_ImportAllDataContent"), inspection)))
                 return;
             var result = await ImportExportService.ImportAllDataAsync(path);
@@ -440,7 +450,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         catch (Exception ex)
         {
             _logger.LogError(ex, "导入全部数据失败。");
-            this.ShowErrorToast(GetResource("M_ImportFailed"));
+            await ShowImportFailureAsync(ex);
         }
     }
 
@@ -488,6 +498,34 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         return result == FAContentDialogResult.Primary;
     }
 
+    private async Task ShowUnsupportedImportAsync(ImportInspection inspection)
+    {
+        var detectedVersion = string.IsNullOrWhiteSpace(inspection.ProducerVersion)
+            ? GetResource("M_ImportUnsupportedUnknownVersion")
+            : inspection.ProducerVersion;
+        var details = inspection.Warnings.Count == 0
+            ? GetResource("M_ImportUnsupportedContent")
+            : string.Join(Environment.NewLine, inspection.Warnings);
+        await new FAContentDialog
+        {
+            Title = GetResource("M_ImportUnsupportedTitle"),
+            Content = string.Format(GetResource("M_ImportUnsupportedVersion"), detectedVersion, details),
+            CloseButtonText = GetResource("C_Close"),
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+    }
+
+    private async Task ShowImportFailureAsync(Exception exception)
+    {
+        await new FAContentDialog
+        {
+            Title = GetResource("M_ImportFailed"),
+            Content = exception.Message,
+            CloseButtonText = GetResource("C_Close"),
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+    }
+
     private async Task<bool?> ConfirmDiagnosticExportAsync()
     {
         var result = await new FAContentDialog
@@ -511,7 +549,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     private static string BuildImportConfirmation(string content, ImportInspection inspection)
     {
         var warningText = inspection.Warnings.Count == 0 ? string.Empty : $"\n\n{string.Join(Environment.NewLine, inspection.Warnings)}";
-        return $"{content}\n\n来源：{inspection.Format} {inspection.ProducerVersion}\n将处理 {inspection.FileCount} 个文件。导入前会自动创建恢复快照，快照失败将取消导入。安全凭据不会导入。{warningText}";
+        return $"{content}\n\n来源版本：{inspection.ProducerVersion}\n将处理 {inspection.FileCount} 个文件。导入前会自动创建恢复快照，快照失败将取消导入。安全凭据不会导入。{warningText}";
     }
 
     private bool CanTransferData()

@@ -6,6 +6,7 @@ namespace SecRandom.Core.Models.SubConfigs;
 public partial class MoreSettingsConfig : ObservableObject
 {
     [ObservableProperty] private bool _backgroundMusicLoop = true;
+    [ObservableProperty] private bool _lotteryEnabled = true;
     [ObservableProperty] private RollCallControlPanelPosition _rollCallControlPanelPosition = RollCallControlPanelPosition.Right;
     [ObservableProperty] private bool _rollCallResetButton = true;
     [ObservableProperty] private bool _rollCallQuantityControl = true;

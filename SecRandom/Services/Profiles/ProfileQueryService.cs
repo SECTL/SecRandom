@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using SecRandom.Core.Abstraction;
+using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.Models.Profile;
 
@@ -20,7 +21,7 @@ public sealed class ProfileQueryService : IProfileQueryService
         if (string.IsNullOrWhiteSpace(name))
             return null;
 
-        var directory = Path.Combine(AppContext.BaseDirectory, "data", category, directoryName);
+        var directory = Path.Combine(Utils.DataRoot, category, directoryName);
         if (!Directory.Exists(directory))
             return null;
 

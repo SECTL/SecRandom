@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Services;
 using SecRandom.ViewModels.MainPages;
 using SecRandom.Views;
 
@@ -25,9 +26,11 @@ public sealed class GlobalShortcutService : IHostedService
     private const uint ModWin = 0x0008;
     private const uint ModNoRepeat = 0x4000;
 
-    private readonly MoreSettingsConfig _settings;
+    private readonly MainConfigHandler _configHandler;
+    private MoreSettingsConfig _settings;
     private readonly RollCallPageViewModel _rollCall;
     private readonly LotteryPageViewModel _lottery;
+    private readonly FeatureAvailabilityService _featureAvailability;
     private readonly ILogger<GlobalShortcutService> _logger;
     private readonly ManualResetEventSlim _threadReady = new();
     private readonly object _settingsGate = new();
@@ -41,11 +44,14 @@ public sealed class GlobalShortcutService : IHostedService
         MainConfigHandler configHandler,
         RollCallPageViewModel rollCall,
         LotteryPageViewModel lottery,
+        FeatureAvailabilityService featureAvailability,
         ILogger<GlobalShortcutService> logger)
     {
+        _configHandler = configHandler;
         _settings = configHandler.Data.MoreSettings;
         _rollCall = rollCall;
         _lottery = lottery;
+        _featureAvailability = featureAvailability;
         _logger = logger;
     }
 
@@ -65,6 +71,7 @@ public sealed class GlobalShortcutService : IHostedService
             _started = true;
             _pendingBindings = CreateBindings();
             _settings.PropertyChanged += SettingsOnPropertyChanged;
+            _featureAvailability.Changed += FeatureAvailabilityOnChanged;
             _thread = new Thread(RunMessageLoop)
             {
                 IsBackground = true,
@@ -89,6 +96,7 @@ public sealed class GlobalShortcutService : IHostedService
 
             _started = false;
             _settings.PropertyChanged -= SettingsOnPropertyChanged;
+            _featureAvailability.Changed -= FeatureAvailabilityOnChanged;
             thread = _thread;
             threadId = _threadId;
             _thread = null;
@@ -99,6 +107,25 @@ public sealed class GlobalShortcutService : IHostedService
             PostThreadMessage(threadId, WmQuit, UIntPtr.Zero, IntPtr.Zero);
         thread?.Join(TimeSpan.FromSeconds(2));
         return Task.CompletedTask;
+    }
+
+    public void Refresh()
+    {
+        lock (_settingsGate)
+        {
+            if (ReferenceEquals(_settings, _configHandler.Data.MoreSettings))
+                return;
+
+            _settings.PropertyChanged -= SettingsOnPropertyChanged;
+            _settings = _configHandler.Data.MoreSettings;
+            if (!_started)
+                return;
+
+            _settings.PropertyChanged += SettingsOnPropertyChanged;
+            _pendingBindings = CreateBindings();
+            if (_threadId != 0)
+                PostThreadMessage(_threadId, WmReload, UIntPtr.Zero, IntPtr.Zero);
+        }
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -112,6 +139,11 @@ public sealed class GlobalShortcutService : IHostedService
             if (_threadId != 0)
                 PostThreadMessage(_threadId, WmReload, UIntPtr.Zero, IntPtr.Zero);
         }
+    }
+
+    private void FeatureAvailabilityOnChanged(object? sender, EventArgs e)
+    {
+        SettingsOnPropertyChanged(sender, new PropertyChangedEventArgs(nameof(MoreSettingsConfig.LotteryEnabled)));
     }
 
     private void RunMessageLoop()
@@ -180,6 +212,10 @@ public sealed class GlobalShortcutService : IHostedService
 
     private void Execute(ShortcutAction action)
     {
+        if (!_featureAvailability.IsLotteryEnabled && action is ShortcutAction.OpenLotteryPage
+            or ShortcutAction.IncreaseLotteryCount or ShortcutAction.DecreaseLotteryCount or ShortcutAction.StartLottery)
+            return;
+
         switch (action)
         {
             case ShortcutAction.OpenRollCallPage:
@@ -229,18 +265,22 @@ public sealed class GlobalShortcutService : IHostedService
         if (!_settings.EnableShortcut)
             return [];
 
-        return
-        [
+        var bindings = new List<ShortcutBinding>
+        {
             new(ShortcutAction.OpenRollCallPage, _settings.OpenRollCallPageShortcut),
             new(ShortcutAction.QuickDraw, _settings.QuickDrawShortcut),
-            new(ShortcutAction.OpenLotteryPage, _settings.OpenLotteryPageShortcut),
             new(ShortcutAction.IncreaseRollCallCount, _settings.IncreaseRollCallCountShortcut),
             new(ShortcutAction.DecreaseRollCallCount, _settings.DecreaseRollCallCountShortcut),
-            new(ShortcutAction.IncreaseLotteryCount, _settings.IncreaseLotteryCountShortcut),
-            new(ShortcutAction.DecreaseLotteryCount, _settings.DecreaseLotteryCountShortcut),
-            new(ShortcutAction.StartRollCall, _settings.StartRollCallShortcut),
-            new(ShortcutAction.StartLottery, _settings.StartLotteryShortcut)
-        ];
+            new(ShortcutAction.StartRollCall, _settings.StartRollCallShortcut)
+        };
+        if (_featureAvailability.IsLotteryEnabled)
+        {
+            bindings.Add(new(ShortcutAction.OpenLotteryPage, _settings.OpenLotteryPageShortcut));
+            bindings.Add(new(ShortcutAction.IncreaseLotteryCount, _settings.IncreaseLotteryCountShortcut));
+            bindings.Add(new(ShortcutAction.DecreaseLotteryCount, _settings.DecreaseLotteryCountShortcut));
+            bindings.Add(new(ShortcutAction.StartLottery, _settings.StartLotteryShortcut));
+        }
+        return bindings.ToArray();
     }
 
     private static bool TryParseShortcut(string shortcut, out uint modifiers, out uint virtualKey)

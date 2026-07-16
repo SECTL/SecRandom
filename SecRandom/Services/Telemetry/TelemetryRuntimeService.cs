@@ -16,7 +16,8 @@ public sealed class TelemetryRuntimeService : IDisposable, IAsyncDisposable
 
     private readonly object _gate = new();
     private readonly ILogger<TelemetryRuntimeService> _logger;
-    private readonly PrivacySettingsConfig _privacySettings;
+    private readonly MainConfigHandler _mainConfigHandler;
+    private PrivacySettingsConfig _privacySettings;
     private readonly ITelemetrySdkAdapter _sdkAdapter;
 
     private bool _disposed;
@@ -31,6 +32,7 @@ public sealed class TelemetryRuntimeService : IDisposable, IAsyncDisposable
         ITelemetrySdkAdapter sdkAdapter)
     {
         _logger = logger;
+        _mainConfigHandler = mainConfigHandler;
         _privacySettings = mainConfigHandler.Data.General.PrivacySettings;
         _sdkAdapter = sdkAdapter;
         _privacySettings.PropertyChanged += PrivacySettingsOnPropertyChanged;
@@ -54,6 +56,21 @@ public sealed class TelemetryRuntimeService : IDisposable, IAsyncDisposable
         }
 
         await DisableAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task RefreshAsync(CancellationToken cancellationToken = default)
+    {
+        lock (_gate)
+        {
+            if (ReferenceEquals(_privacySettings, _mainConfigHandler.Data.General.PrivacySettings))
+                return;
+
+            _privacySettings.PropertyChanged -= PrivacySettingsOnPropertyChanged;
+            _privacySettings = _mainConfigHandler.Data.General.PrivacySettings;
+            _privacySettings.PropertyChanged += PrivacySettingsOnPropertyChanged;
+        }
+
+        await ApplyCurrentPolicyAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)

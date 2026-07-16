@@ -14,12 +14,6 @@
 #ifndef MyAppOutDir
 #define MyAppOutDir "APP_OUTDIR"
 #endif
-#ifndef EnableUiAccess
-#define EnableUiAccess 0
-#endif
-#ifndef BuildArch
-#define BuildArch "x64"
-#endif
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -30,27 +24,26 @@ AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppSupportURL={#MyAppURL}
-#if EnableUiAccess == 1
-DefaultDirName={autopf}\SecRandom
+#ifdef UiAccessBuild
+DefaultDirName={autopf}\SECTL\SecRandom
 #else
-DefaultDirName={localappdata}\SecRandom
+DefaultDirName={localappdata}\SECTL\SecRandom
 #endif
 UninstallDisplayIcon={app}\{#MyAppExeName}
-#if BuildArch == "x86"
+#ifdef BuildArchX86
 ArchitecturesAllowed=x86compatible
 #else
-; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run
-; on anything but x64 and Windows 11 on Arm.
+#ifdef BuildArchArm64
+ArchitecturesAllowed=arm64
+ArchitecturesInstallIn64BitMode=arm64
+#else
 ArchitecturesAllowed=x64compatible
-; "ArchitecturesInstallIn64BitMode=x64compatible" requests that the
-; install be done in "64-bit mode" on x64 or Windows 11 on Arm,
-; meaning it should use the native 64-bit Program Files directory and
-; the 64-bit view of the registry.
 ArchitecturesInstallIn64BitMode=x64compatible
+#endif
 #endif
 DisableProgramGroupPage=yes
 ; LicenseFile=E:\Projects\Avalonia\SecRandom\LICENSE
-#if EnableUiAccess == 1
+#ifdef UiAccessBuild
 ; UIAccess is granted only to signed binaries installed under Program Files.
 PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=none
@@ -58,15 +51,17 @@ PrivilegesRequiredOverridesAllowed=none
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 #endif
-OutputDir=SetupOutput
+OutputDir=artifacts\release\setup
 OutputBaseFilename=SecRandom-Setup
 SetupIconFile=SecRandom\Assets\AppLogo.ico
 SolidCompression=yes
 WizardStyle=modern dynamic windows11
+LanguageDetectionMethod=none
 
 [Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked

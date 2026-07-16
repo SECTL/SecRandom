@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:local="clr-namespace:SecRandom.Controls.AttachedSettings"
+             mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="180"
+             x:Class="SecRandom.Controls.AttachedSettings.DrawMusicAttachedSettingsControl"
+             x:Name="RootControl">
+    <StackPanel Spacing="8"
+                DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=local:DrawMusicAttachedSettingsControl}}">
+        <sr:Field Label="动画音乐">
+            <ComboBox ItemsSource="{Binding MusicSelections}"
+                      SelectedValue="{Binding AnimationMusic, Mode=TwoWay}"
+                      SelectedValueBinding="{Binding Id}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock MaxWidth="360"
+                                   Text="{Binding DisplayName}"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="{Binding DisplayName}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </sr:Field>
+
+        <sr:Field Label="结果音乐">
+            <ComboBox ItemsSource="{Binding MusicSelections}"
+                      SelectedValue="{Binding ResultMusic, Mode=TwoWay}"
+                      SelectedValueBinding="{Binding Id}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock MaxWidth="360"
+                                   Text="{Binding DisplayName}"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="{Binding DisplayName}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </sr:Field>
+
+        <TextBlock Text="启用后，抽取到该记录时会优先使用这里选择的动画和结果音乐。"
+                   TextWrapping="Wrap"
+                   FontSize="12"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+    </StackPanel>
+</UserControl>

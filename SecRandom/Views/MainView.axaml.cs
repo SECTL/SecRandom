@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Avalonia.Media.Imaging;
 using DynamicData;
 using FluentAvalonia.UI.Controls;
@@ -17,6 +18,7 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Extensions;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services;
+using SecRandom.Services;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
@@ -30,6 +32,8 @@ public partial class MainView : UserControl, IFANavigationPageFactory
 
     private AppToastAdorner? _appToastAdorner;
     private bool _isAdornerAdded;
+    private bool _isFeatureAvailabilitySubscribed;
+    private readonly FeatureAvailabilityService _featureAvailability = IAppHost.GetService<FeatureAvailabilityService>();
 
     public MainView()
     {
@@ -41,7 +45,6 @@ public partial class MainView : UserControl, IFANavigationPageFactory
         _navigationView = this.FindControl<FANavigationView>("NavigationView");
 
         _navigationFrame?.NavigationPageFactory = this;
-
         BuildNavigationMenuItems();
         SelectNavigationItemById(DefaultMainPageId);
 
@@ -72,6 +75,12 @@ public partial class MainView : UserControl, IFANavigationPageFactory
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
+        if (!_isFeatureAvailabilitySubscribed)
+        {
+            _featureAvailability.Changed += FeatureAvailabilityOnChanged;
+            _isFeatureAvailabilitySubscribed = true;
+        }
+
         if (ViewModel.SelectedPageInfo is null) SelectNavigationItemById(DefaultMainPageId);
 
         if (Content is not Control element || _isAdornerAdded) return;
@@ -93,6 +102,11 @@ public partial class MainView : UserControl, IFANavigationPageFactory
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        if (_isFeatureAvailabilitySubscribed)
+        {
+            _featureAvailability.Changed -= FeatureAvailabilityOnChanged;
+            _isFeatureAvailabilitySubscribed = false;
+        }
         DataContext = null;
     }
 
@@ -103,11 +117,13 @@ public partial class MainView : UserControl, IFANavigationPageFactory
 
         ViewModel.NavigationViewItems
             .AddRange(PagesRegistryService.MainItems
+                .Where(IsPageAvailable)
                 .Where(info => info.Location == PageLocation.Top)
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
 
         ViewModel.NavigationViewFooterItems
             .AddRange(PagesRegistryService.MainItems
+                .Where(IsPageAvailable)
                 .Where(info => info.Location == PageLocation.Bottom)
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
 
@@ -122,7 +138,22 @@ public partial class MainView : UserControl, IFANavigationPageFactory
     {
         var info = PagesRegistryService.MainItems.FirstOrDefault(info => info.Id == id);
 
-        if (info != null) CoreNavigate(info);
+        if (info != null && IsPageAvailable(info)) CoreNavigate(info);
+    }
+
+    private bool IsPageAvailable(PageInfo info)
+    {
+        return info.Id != "main.lottery" || _featureAvailability.IsLotteryEnabled;
+    }
+
+    private void FeatureAvailabilityOnChanged(object? sender, EventArgs e)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            BuildNavigationMenuItems();
+            if (ViewModel.SelectedPageInfo?.Id == "main.lottery" && !_featureAvailability.IsLotteryEnabled)
+                SelectNavigationItemById(DefaultMainPageId);
+        });
     }
 
     private void SelectNavigationItem(PageInfo info)

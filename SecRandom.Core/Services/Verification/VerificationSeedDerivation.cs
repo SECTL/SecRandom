@@ -5,7 +5,11 @@ namespace SecRandom.Core.Services.Verification;
 
 public static class VerificationSeedDerivation
 {
-    private static readonly byte[] DomainSeparator = Encoding.ASCII.GetBytes("SecRandomProof/v1/seed");
+    private static readonly byte[] DomainSeparator = Encoding.ASCII.GetBytes("SecRandomProof/v3/seed");
+
+    public static byte[] CreateCsprngSeed() => RandomNumberGenerator.GetBytes(32);
+
+    public static byte[] CreateCsprngNonce() => RandomNumberGenerator.GetBytes(32);
 
     public static byte[] DeriveOnline(
         ReadOnlySpan<byte> inputHash,

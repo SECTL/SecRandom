@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using SecRandom.Shared.Abstraction;
 
@@ -29,6 +30,7 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
     }
 
     public T Data { get; private set; }
+    public event EventHandler? Reloaded;
 
     private ILogger Logger { get; }
     private ConfigServiceBase ConfigService { get; }
@@ -40,6 +42,7 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
         Logger.LogInformation("Reloading config file.");
         Data = ConfigService.LoadConfig(FallbackFactory());
         Data.PropertyChanged += Data_OnPropertyChanged;
+        Reloaded?.Invoke(this, EventArgs.Empty);
     }
 
     public virtual void Save()

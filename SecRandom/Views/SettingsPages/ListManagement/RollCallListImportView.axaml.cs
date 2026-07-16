@@ -20,7 +20,7 @@ namespace SecRandom.Views.SettingsPages.ListManagement;
 
 public partial class RollCallListImportView : UserControl, INotifyPropertyChanged
 {
-    private readonly Action<IReadOnlyList<Student>> _importHandler;
+    private Action<IReadOnlyList<Student>> _importHandler;
     private readonly List<Dictionary<string, string>> _rows = [];
     private bool _canImport;
     private string? _genderColumn;
@@ -30,6 +30,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
     private string _selectedFileName = LR.C_NoFileSelected;
     private string _statusText = LR.M_SelectFileFirst;
     private string? _tagsColumn;
+    private string _targetListName = string.Empty;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
     private readonly ILogger<RollCallListImportView> _logger =
         IAppHost.GetService<ILogger<RollCallListImportView>>();
@@ -41,7 +42,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
 
     public RollCallListImportView(string targetListName, Action<IReadOnlyList<Student>> importHandler)
     {
-        TargetListDescription = string.Format(LR.C_TargetList, targetListName);
+        TargetListName = targetListName;
         _importHandler = importHandler;
         DataContext = this;
         InitializeComponent();
@@ -51,7 +52,25 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
     public ObservableCollection<string> OptionalColumnOptions { get; } = [LR.C_NoneColumn];
     public ObservableCollection<ImportPreviewRow> PreviewRows { get; } = [];
 
-    public string TargetListDescription { get; }
+    public string TargetListName
+    {
+        get => _targetListName;
+        set
+        {
+            if (SetField(ref _targetListName, value))
+                NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TargetListDescription)));
+        }
+    }
+
+    public string TargetListDescription => string.Format(LR.C_TargetList, TargetListName);
+
+    public Action<IReadOnlyList<Student>> ImportHandler
+    {
+        get => _importHandler;
+        set => _importHandler = value;
+    }
+
+    public Action? CloseHandler { get; set; }
 
     public string SelectedFileName
     {
@@ -166,13 +185,26 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
     private async Task LoadFileAsync(IStorageFile file)
     {
         var path = file.TryGetLocalPath();
+        var temporaryPath = false;
         if (path == null)
+        {
             path = await CopyToTemporaryFileAsync(file);
+            temporaryPath = true;
+        }
 
-        var rows = MiniExcel.Query(path, useHeaderRow: true)
-            .Cast<IDictionary<string, object?>>()
-            .Select(row => row.ToDictionary(pair => pair.Key, pair => ConvertCell(pair.Value)))
-            .ToList();
+        List<Dictionary<string, string>> rows;
+        try
+        {
+            rows = MiniExcel.Query(path, useHeaderRow: true)
+                .Cast<IDictionary<string, object?>>()
+                .Select(row => row.ToDictionary(pair => pair.Key, pair => ConvertCell(pair.Value)))
+                .ToList();
+        }
+        finally
+        {
+            if (temporaryPath && File.Exists(path))
+                File.Delete(path);
+        }
 
         _rows.Clear();
         _rows.AddRange(rows);
@@ -354,7 +386,10 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
 
     private void CancelButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        SettingsView.Current?.CloseDrawer();
+        if (CloseHandler is not null)
+            CloseHandler();
+        else
+            SettingsView.Current?.CloseDrawer();
     }
 
     private static bool IsSelectedColumn(string? column)

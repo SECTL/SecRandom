@@ -46,44 +46,9 @@ jobs:
         shell: pwsh
         env:
           RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
-        run: dotnet restore SecRandom.Desktop/SecRandom.Desktop.csproj -r $env:RID
-
-      - name: Publish Desktop
-        shell: pwsh
-        env:
-          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
         run: |
-          $outDir = "bin/$env:RID"
-          dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj `
-            -c Release `
-            -r $env:RID `
-            --self-contained `
-            -p:PublishTrimmed=false `
-            -p:UseAppHost=true `
-            -p:EnableUiAccess=false `
-            --no-restore `
-            -o $outDir
-
-      - name: Verify bundled audio runtime
-        shell: pwsh
-        env:
-          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
-        run: |
-          $nativeAsset = if ($env:RID.StartsWith('win-')) { 'miniaudio.dll' } elseif ($env:RID.StartsWith('linux-')) { 'libminiaudio.so' } else { 'libminiaudio.dylib' }
-          $assetPath = Join-Path "bin/$env:RID" $nativeAsset
-          if (!(Test-Path -LiteralPath $assetPath)) {
-            throw "SoundFlow native audio runtime was not published: $assetPath"
-          }
-
-      - name: Pack Portable Zip
-        shell: pwsh
-        env:
-          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
-        run: |
-          New-Item -ItemType Directory -Path dist -Force | Out-Null
-          $source = "bin/$env:RID/*"
-          $target = "dist/SecRandom_$env:RID`_portable.zip"
-          Compress-Archive -Path $source -DestinationPath $target -Force
+          dotnet restore SecRandom.Desktop/SecRandom.Desktop.csproj -r $env:RID
+          dotnet restore SecRandom.Launcher/SecRandom.Launcher.csproj -r $env:RID
 
       - name: Get Latest Tag
         id: get_tag
@@ -94,19 +59,160 @@ jobs:
           echo "LATEST_TAG=$latestTag" >> $env:GITHUB_OUTPUT
           echo "Latest tag: $latestTag"
 
-      - name: Install Inno Setup Chinese Language
-        if: ${{ matrix.os == 'windows' }}
+      - name: Publish Desktop
+        shell: pwsh
+        env:
+          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
         run: |
-          $langUrl = "https://raw.githubusercontent.com/kira-96/Inno-Setup-Chinese-Simplified-Translation/main/ChineseSimplified.isl"
-          $langPath = "C:\Program Files (x86)\Inno Setup 6\Languages\ChineseSimplified.isl"
+          $releaseRoot = 'artifacts/release'
+          $fullDir = "$releaseRoot/publish/full/$env:RID"
+          $lightDir = "$releaseRoot/publish/light/$env:RID"
+          New-Item -ItemType Directory -Path $fullDir, $lightDir -Force | Out-Null
+          dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj `
+            -c Release `
+            -r $env:RID `
+            --self-contained `
+            -p:PublishTrimmed=false `
+            -p:UseAppHost=true `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            --no-restore `
+            -o $fullDir
+          dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj `
+            -c Release `
+            -r $env:RID `
+            --self-contained false `
+            -p:PublishTrimmed=false `
+            -p:UseAppHost=true `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            --no-restore `
+            -o $lightDir
+
+      - name: Verify bundled audio runtime
+        shell: pwsh
+        env:
+          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+        run: |
+          $nativeAsset = if ($env:RID.StartsWith('win-')) { 'miniaudio.dll' } elseif ($env:RID.StartsWith('linux-')) { 'libminiaudio.so' } else { 'libminiaudio.dylib' }
+          $assetPath = Join-Path "artifacts/release/publish/full/$env:RID" $nativeAsset
+          if (!(Test-Path -LiteralPath $assetPath)) {
+            throw "SoundFlow native audio runtime was not published: $assetPath"
+          }
+
+      - name: Pack Portable Zips (Windows)
+        if: ${{ matrix.os == 'windows' }}
+        shell: pwsh
+        env:
+          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
+          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+          WINDOWS_CODESIGN_PFX_BASE64: ${{ secrets.WINDOWS_CODESIGN_PFX_BASE64 }}
+          WINDOWS_CODESIGN_PFX_PASSWORD: ${{ secrets.WINDOWS_CODESIGN_PFX_PASSWORD }}
+          WINDOWS_CODESIGN_TIMESTAMP_URL: ${{ secrets.WINDOWS_CODESIGN_TIMESTAMP_URL }}
+        run: |
+          function Write-Marker([string]$path, [string]$runtimeKind) {
+            @{ schemaVersion = 1; product = 'SecRandom'; rid = $env:RID; packageKind = 'portable-zip'; runtimeKind = $runtimeKind } |
+              ConvertTo-Json -Compress | Set-Content -LiteralPath (Join-Path $path 'SecRandom.package.json') -Encoding utf8NoBOM
+          }
+          function Publish-Launcher([string]$path, [bool]$selfContained) {
+            $assemblyVersion = $env:VERSION.TrimStart('v', 'V')
+            $arguments = @('publish', 'SecRandom.Launcher/SecRandom.Launcher.csproj', '-c', 'Release', '-r', $env:RID, '-p:UseAppHost=true', '-p:PublishSingleFile=true', '-p:IncludeNativeLibrariesForSelfExtract=true', '-p:DebugType=None', '-p:DebugSymbols=false', "-p:Version=$assemblyVersion", '--no-restore', '-o', $path)
+            if ($selfContained) { $arguments += '--self-contained' } else { $arguments += @('--self-contained', 'false') }
+            & dotnet @arguments
+            if ($LASTEXITCODE -ne 0) { throw "Launcher publish failed with exit code $LASTEXITCODE." }
+          }
+          function Sign-File([string]$path, [string]$signTool, [string]$certificatePath) {
+            $arguments = @('sign', '/fd', 'SHA256', '/f', $certificatePath, '/p', $env:WINDOWS_CODESIGN_PFX_PASSWORD)
+            if (-not [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_TIMESTAMP_URL)) {
+              $arguments += @('/tr', $env:WINDOWS_CODESIGN_TIMESTAMP_URL, '/td', 'SHA256')
+            }
+            $arguments += $path
+            & $signTool @arguments
+            if ($LASTEXITCODE -ne 0) { throw "signtool failed for $path with exit code $LASTEXITCODE." }
+          }
+          $releaseRoot = 'artifacts/release'
+          $zipRoot = "$releaseRoot/portable/$env:RID"
+          $fullRoot = "$zipRoot/full"
+          $lightRoot = "$zipRoot/light"
+          Remove-Item $zipRoot -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $fullRoot, $lightRoot, "$releaseRoot/dist" -Force | Out-Null
+          $fullApp = Join-Path $fullRoot "app-$env:VERSION-0"
+          $lightApp = Join-Path $lightRoot "app-$env:VERSION-0"
+          Copy-Item "$releaseRoot/publish/full/$env:RID" $fullApp -Recurse
+          Copy-Item "$releaseRoot/publish/light/$env:RID" $lightApp -Recurse
+          Write-Marker $fullApp 'self-contained'
+          Write-Marker $lightApp 'framework-dependent'
+          Publish-Launcher $fullRoot $true
+          Publish-Launcher $lightRoot $false
+          if (-not [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_PFX_BASE64) -and -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_PFX_PASSWORD)) {
+            $certificatePath = Join-Path $env:RUNNER_TEMP 'secrandom-portable.pfx'
+            try {
+              [IO.File]::WriteAllBytes($certificatePath, [Convert]::FromBase64String($env:WINDOWS_CODESIGN_PFX_BASE64))
+              $signTool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe' | Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
+              if ([string]::IsNullOrWhiteSpace($signTool)) { throw 'signtool.exe was not found on the Windows runner.' }
+              foreach ($file in @(
+                (Join-Path $fullRoot 'SecRandomLauncher.exe'),
+                (Join-Path $lightRoot 'SecRandomLauncher.exe'),
+                (Join-Path $fullApp 'SecRandom.Desktop.exe'),
+                (Join-Path $lightApp 'SecRandom.Desktop.exe')
+              )) {
+                Sign-File $file $signTool $certificatePath
+              }
+            }
+            finally {
+              Remove-Item $certificatePath -Force -ErrorAction SilentlyContinue
+            }
+          }
+          else {
+            Write-Warning 'Windows code-signing secrets are unavailable; portable executables will be unsigned.'
+          }
+          Compress-Archive -Path "$fullRoot/*" -DestinationPath "$releaseRoot/dist/SecRandom_$env:RID`_portable_full.zip" -Force
+          Compress-Archive -Path "$lightRoot/*" -DestinationPath "$releaseRoot/dist/SecRandom_$env:RID`_portable_light.zip" -Force
+
+      - name: Pack Portable Zips (Unix)
+        if: ${{ matrix.os != 'windows' }}
+        shell: bash
+        env:
+          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
+          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+        run: |
+          set -euo pipefail
+          release_root="artifacts/release"
+          zip_root="${release_root}/portable/${RID}"
+          full_root="${zip_root}/full"
+          light_root="${zip_root}/light"
+          rm -rf "$zip_root"
+          mkdir -p "$full_root" "$light_root" "${release_root}/dist"
+          full_app="$full_root/app-${VERSION}-0"
+          light_app="$light_root/app-${VERSION}-0"
+          assembly_version="${VERSION#v}"
+          cp -a "${release_root}/publish/full/${RID}" "$full_app"
+          cp -a "${release_root}/publish/light/${RID}" "$light_app"
+          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"portable-zip","runtimeKind":"self-contained"}\n' "$RID" > "$full_app/SecRandom.package.json"
+          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"portable-zip","runtimeKind":"framework-dependent"}\n' "$RID" > "$light_app/SecRandom.package.json"
+          dotnet publish SecRandom.Launcher/SecRandom.Launcher.csproj -c Release -r "$RID" --self-contained -p:UseAppHost=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -p:Version="$assembly_version" --no-restore -o "$full_root"
+          dotnet publish SecRandom.Launcher/SecRandom.Launcher.csproj -c Release -r "$RID" --self-contained false -p:UseAppHost=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -p:Version="$assembly_version" --no-restore -o "$light_root"
+          (cd "$full_root" && zip -qr "../../../dist/SecRandom_${RID}_portable_full.zip" .)
+          (cd "$light_root" && zip -qr "../../../dist/SecRandom_${RID}_portable_light.zip" .)
+
+      - name: Install Inno Setup Languages
+        if: ${{ matrix.os == 'windows' }}
+        shell: pwsh
+        run: |
           $langDir = "C:\Program Files (x86)\Inno Setup 6\Languages"
-          
           if (!(Test-Path $langDir)) {
             New-Item -ItemType Directory -Path $langDir -Force
           }
 
-          Invoke-WebRequest -Uri $langUrl -OutFile $langPath
-          echo "Downloaded Chinese Language: $langPath"
+          $languages = @{
+            'ChineseSimplified.isl' = 'https://raw.githubusercontent.com/kira-96/Inno-Setup-Chinese-Simplified-Translation/main/ChineseSimplified.isl'
+            'Japanese.isl' = 'https://raw.githubusercontent.com/jrsoftware/issrc/main/Files/Languages/Japanese.isl'
+          }
+          foreach ($language in $languages.GetEnumerator()) {
+            $path = Join-Path $langDir $language.Key
+            Invoke-WebRequest -Uri $language.Value -OutFile $path
+            Write-Host "Downloaded Inno Setup language: $($language.Key)"
+          }
 
       - name: Build Windows Setup
         if: ${{ matrix.os == 'windows' }}
@@ -119,10 +225,11 @@ jobs:
           WINDOWS_CODESIGN_PFX_PASSWORD: ${{ secrets.WINDOWS_CODESIGN_PFX_PASSWORD }}
           WINDOWS_CODESIGN_TIMESTAMP_URL: ${{ secrets.WINDOWS_CODESIGN_TIMESTAMP_URL }}
         run: |
-          $outDir = "bin/$env:RID"
-          $enableUiAccess = if (-not [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_PFX_BASE64) -and -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_PFX_PASSWORD)) { 1 } else { 0 }
-          if ($enableUiAccess -eq 1) {
-            $outDir = "bin/$env:RID-uiaccess"
+          $uiAccessBuild = -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_PFX_BASE64) -and -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_PFX_PASSWORD)
+          if ($uiAccessBuild) {
+            $outDir = "artifacts/release/installer/$env:RID"
+            Remove-Item $outDir -Recurse -Force -ErrorAction SilentlyContinue
+            New-Item -ItemType Directory -Path $outDir -Force | Out-Null
             dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj `
               -c Release `
               -r $env:RID `
@@ -158,18 +265,32 @@ jobs:
             }
           }
           else {
+            $outDir = "artifacts/release/installer/$env:RID"
+            Remove-Item $outDir -Recurse -Force -ErrorAction SilentlyContinue
+            Copy-Item "artifacts/release/publish/full/$env:RID" $outDir -Recurse
             Write-Warning "Windows code-signing secrets are unavailable; building the installer without the UIAccess manifest."
           }
 
-          New-Item -ItemType Directory -Path "SetupOutput" -Force | Out-Null
+          @{ schemaVersion = 1; product = 'SecRandom'; rid = $env:RID; packageKind = 'windows-exe'; runtimeKind = 'self-contained' } |
+            ConvertTo-Json -Compress | Set-Content -LiteralPath (Join-Path $outDir 'SecRandom.package.json') -Encoding utf8NoBOM
+          $setupOutput = 'artifacts/release/setup'
+          New-Item -ItemType Directory -Path $setupOutput -Force | Out-Null
 
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" Setup.iss `
-            /DMyAppVersion=$env:VERSION `
-            /DMyAppOutDir=$outDir `
-            /DBuildArch=$env:ARCH `
-            /DEnableUiAccess=$enableUiAccess `
-            /F"SecRandom_$env:RID`_setup" `
-            /O"SetupOutput"
+          $isccArguments = @(
+            "/DMyAppVersion=$env:VERSION"
+            "/DMyAppOutDir=$outDir"
+            "/FSecRandom_${env:RID}_setup"
+            "/O$setupOutput"
+          )
+          if ($uiAccessBuild) { $isccArguments += '/DUiAccessBuild' }
+          switch ($env:ARCH) {
+            'x86' { $isccArguments += '/DBuildArchX86' }
+            'x64' { $isccArguments += '/DBuildArchX64' }
+            'arm64' { $isccArguments += '/DBuildArchArm64' }
+            default { throw "Unsupported Windows architecture: $env:ARCH" }
+          }
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" Setup.iss @isccArguments
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE." }
           
       - name: Build Linux deb
         if: ${{ matrix.os == 'linux' }}
@@ -182,7 +303,8 @@ jobs:
           set -euo pipefail
 
           version_no_v="${VERSION#v}"
-          mkdir -p dist
+          release_root="artifacts/release"
+          mkdir -p "${release_root}/dist"
 
           deb_arch="amd64"
           case "${{ matrix.arch }}" in
@@ -190,15 +312,17 @@ jobs:
             arm64) deb_arch="arm64" ;;
           esac
 
-          pkgroot="$(pwd)/pkgroot"
-          rm -rf "$pkgroot"
+          work="$(pwd)/${release_root}/linux/${RID}"
+          pkgroot="${work}/package-root"
+          rm -rf "$work"
           mkdir -p "$pkgroot/DEBIAN"
           mkdir -p "$pkgroot/usr/lib/secrandom"
           mkdir -p "$pkgroot/usr/bin"
           mkdir -p "$pkgroot/usr/share/applications"
           mkdir -p "$pkgroot/usr/share/icons/hicolor/256x256/apps"
 
-          cp -a "bin/${RID}/." "$pkgroot/usr/lib/secrandom/"
+          cp -a "${release_root}/publish/full/${RID}/." "$pkgroot/usr/lib/secrandom/"
+          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"linux-deb","runtimeKind":"self-contained"}\n' "$RID" > "$pkgroot/usr/lib/secrandom/SecRandom.package.json"
           chmod +x "$pkgroot/usr/lib/secrandom/SecRandom.Desktop" || true
 
           cat > "$pkgroot/usr/bin/secrandom" << 'EOF'
@@ -231,7 +355,7 @@ jobs:
           Description: SecRandom
           EOF
 
-          dpkg-deb --build "$pkgroot" "dist/SecRandom_${RID}_deb.deb"
+          dpkg-deb --build "$pkgroot" "${release_root}/dist/SecRandom_${RID}_deb.deb"
 
       - name: Build macOS pkg
         if: ${{ matrix.os == 'macos' }}
@@ -239,19 +363,28 @@ jobs:
           ARCH: ${{ matrix.arch }}
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
           RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+          MACOS_SIGNING_P12_BASE64: ${{ secrets.MACOS_SIGNING_P12_BASE64 }}
+          MACOS_SIGNING_P12_PASSWORD: ${{ secrets.MACOS_SIGNING_P12_PASSWORD }}
+          MACOS_APPLICATION_SIGNING_IDENTITY: ${{ secrets.MACOS_APPLICATION_SIGNING_IDENTITY }}
+          MACOS_INSTALLER_SIGNING_IDENTITY: ${{ secrets.MACOS_INSTALLER_SIGNING_IDENTITY }}
+          MACOS_NOTARY_APPLE_ID: ${{ secrets.MACOS_NOTARY_APPLE_ID }}
+          MACOS_NOTARY_TEAM_ID: ${{ secrets.MACOS_NOTARY_TEAM_ID }}
+          MACOS_NOTARY_PASSWORD: ${{ secrets.MACOS_NOTARY_PASSWORD }}
         shell: bash
         run: |
           set -euo pipefail
 
           version_no_v="${VERSION#v}"
-          mkdir -p dist
+          release_root="artifacts/release"
+          mkdir -p "${release_root}/dist"
 
-          work="$(pwd)/macpkg"
+          work="$(pwd)/${release_root}/macos/${RID}"
           rm -rf "$work"
           mkdir -p "$work/bundle/SecRandom.app/Contents/MacOS"
           mkdir -p "$work/bundle/SecRandom.app/Contents/Resources"
 
-          cp -a "bin/${RID}/." "$work/bundle/SecRandom.app/Contents/MacOS/"
+          cp -a "${release_root}/publish/full/${RID}/." "$work/bundle/SecRandom.app/Contents/MacOS/"
+          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"macos-pkg","runtimeKind":"self-contained"}\n' "$RID" > "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.package.json"
           chmod +x "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.Desktop" || true
 
           cat > "$work/bundle/SecRandom.app/Contents/Info.plist" << EOF
@@ -286,6 +419,25 @@ jobs:
             iconutil -c icns "$iconset" -o "$work/bundle/SecRandom.app/Contents/Resources/AppIcon.icns"
           fi
 
+          if [ -z "$MACOS_SIGNING_P12_BASE64" ] || [ -z "$MACOS_SIGNING_P12_PASSWORD" ] || [ -z "$MACOS_APPLICATION_SIGNING_IDENTITY" ] || [ -z "$MACOS_INSTALLER_SIGNING_IDENTITY" ] || [ -z "$MACOS_NOTARY_APPLE_ID" ] || [ -z "$MACOS_NOTARY_TEAM_ID" ] || [ -z "$MACOS_NOTARY_PASSWORD" ]; then
+            echo "macOS signing or notarization credentials are unavailable; skipping PKG creation."
+            exit 0
+          fi
+
+          keychain="$RUNNER_TEMP/secrandom-signing.keychain-db"
+          certificate="$RUNNER_TEMP/secrandom-signing.p12"
+          trap 'security delete-keychain "$keychain" >/dev/null 2>&1 || true; rm -f "$certificate"' EXIT
+          echo "$MACOS_SIGNING_P12_BASE64" | base64 --decode > "$certificate"
+          security create-keychain -p "$MACOS_SIGNING_P12_PASSWORD" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$MACOS_SIGNING_P12_PASSWORD" "$keychain"
+          security import "$certificate" -k "$keychain" -P "$MACOS_SIGNING_P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productbuild
+          security list-keychain -d user -s "$keychain"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_SIGNING_P12_PASSWORD" "$keychain"
+
+          codesign --force --deep --options runtime --sign "$MACOS_APPLICATION_SIGNING_IDENTITY" "$work/bundle/SecRandom.app"
+          codesign --verify --deep --strict "$work/bundle/SecRandom.app"
+
           pkgroot="$work/pkgroot"
           mkdir -p "$pkgroot/Applications"
           cp -a "$work/bundle/SecRandom.app" "$pkgroot/Applications/"
@@ -295,34 +447,39 @@ jobs:
             --identifier "top.sectl.secrandom" \
             --version "$version_no_v" \
             --install-location "/" \
-            "dist/SecRandom_${RID}_pkg.pkg"
+            --sign "$MACOS_INSTALLER_SIGNING_IDENTITY" \
+            "${release_root}/dist/SecRandom_${RID}_pkg.pkg"
+
+          xcrun notarytool submit "${release_root}/dist/SecRandom_${RID}_pkg.pkg" --apple-id "$MACOS_NOTARY_APPLE_ID" --team-id "$MACOS_NOTARY_TEAM_ID" --password "$MACOS_NOTARY_PASSWORD" --wait
+          xcrun stapler staple "${release_root}/dist/SecRandom_${RID}_pkg.pkg"
+          pkgutil --check-signature "${release_root}/dist/SecRandom_${RID}_pkg.pkg"
 
       - name: Upload Portable Artifact
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}_portable
-          path: dist/*.zip
+          path: artifacts/release/dist/*.zip
 
       - name: Upload Setup Artifact
         if: ${{ matrix.os == 'windows' }}
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}_setup
-          path: SetupOutput/*.exe
+          path: artifacts/release/setup/*.exe
 
       - name: Upload deb Artifact
         if: ${{ matrix.os == 'linux' }}
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}_deb
-          path: dist/*.deb
+          path: artifacts/release/dist/*.deb
 
       - name: Upload pkg Artifact
         if: ${{ matrix.os == 'macos' }}
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}_pkg
-          path: dist/*.pkg
+          path: artifacts/release/dist/*.pkg
 
   publish:
     name: Publish_Release
@@ -343,17 +500,93 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v8
         with:
-          path: ./out_artifacts
+          path: ./artifacts/release/downloaded
 
       - name: Combine Artifacts
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Path ./out -Force | Out-Null
-          Get-ChildItem ./out_artifacts -Recurse -File -Include *.zip,*.exe,*.deb,*.pkg | ForEach-Object {
-            Copy-Item $_.FullName ./out -Force
+          $releaseOutput = './artifacts/release/output'
+          New-Item -ItemType Directory -Path $releaseOutput -Force | Out-Null
+          Get-ChildItem ./artifacts/release/downloaded -Recurse -File -Include *.zip,*.exe,*.deb,*.pkg | ForEach-Object {
+            Copy-Item $_.FullName $releaseOutput -Force
           }
           Write-Host "Combined files:"
-          Get-ChildItem ./out -File | Select-Object Name, Length
+          Get-ChildItem $releaseOutput -File | Select-Object Name, Length
+
+      - name: Generate signed update manifest
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+          UPDATE_MANIFEST_PRIVATE_KEY_PEM_BASE64: ${{ secrets.UPDATE_MANIFEST_PRIVATE_KEY_PEM_BASE64 }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:UPDATE_MANIFEST_PRIVATE_KEY_PEM_BASE64)) {
+            throw 'Release publication requires the UPDATE_MANIFEST_PRIVATE_KEY_PEM_BASE64 secret.'
+          }
+          $privateKeyPath = Join-Path $env:RUNNER_TEMP 'secrandom-update-ed25519.pem'
+          $publicDerPath = Join-Path $env:RUNNER_TEMP 'secrandom-update-ed25519-public.der'
+          try {
+            [IO.File]::WriteAllBytes($privateKeyPath, [Convert]::FromBase64String($env:UPDATE_MANIFEST_PRIVATE_KEY_PEM_BASE64))
+            & openssl pkey -in $privateKeyPath -pubout -outform DER -out $publicDerPath
+            if ($LASTEXITCODE -ne 0) { throw "OpenSSL Ed25519 public-key export failed with exit code $LASTEXITCODE." }
+            $publicDer = [IO.File]::ReadAllBytes($publicDerPath)
+            if ($publicDer.Length -lt 32) { throw 'The update-signing public key is invalid.' }
+            $derivedPublicKey = [Convert]::ToBase64String($publicDer[($publicDer.Length - 32)..($publicDer.Length - 1)])
+            $embeddedPublicKey = (Get-Content -LiteralPath 'SecRandom/Assets/Updates/release-public-key.txt' -Raw).Trim()
+            if ($derivedPublicKey -cne $embeddedPublicKey) {
+              throw 'UPDATE_MANIFEST_PRIVATE_KEY_PEM_BASE64 does not match SecRandom/Assets/Updates/release-public-key.txt.'
+            }
+            $releaseTag = $env:RELEASE_TAG
+            $channel = if ($releaseTag -match '-alpha(?:\.|$)') { 'alpha' } elseif ($releaseTag -match '-beta(?:\.|$)') { 'beta' } elseif ($releaseTag -match '-') { throw "Unsupported prerelease tag: $releaseTag" } else { 'release' }
+            $metadata = Get-Content -LiteralPath metadata.yaml -Raw
+            $channelMatch = [regex]::Match($metadata, "(?ms)^  $channel:\s*\r?\n\s+tag:\s*(?<tag>\S+)\s*$")
+            if (-not $channelMatch.Success -or $channelMatch.Groups['tag'].Value -ne $releaseTag) {
+              throw "metadata.yaml channel '$channel' must point to release tag $releaseTag."
+            }
+            $releaseOutput = './artifacts/release/output'
+            $artifacts = Get-ChildItem $releaseOutput -File | ForEach-Object {
+              $name = $_.Name
+              $kind, $runtimeKind, $os, $arch = if ($name -match '^SecRandom_(?<rid>(win|linux|osx)-(?<arch>x64|x86|arm64))_portable_(?<runtime>full|light)\.zip$') {
+                $platform = switch ($Matches[2]) { 'win' { 'windows' } 'linux' { 'linux' } 'osx' { 'macos' } }
+                @('portable-zip', $(if ($Matches.runtime -eq 'full') { 'self-contained' } else { 'framework-dependent' }), $platform, $Matches.arch)
+              } elseif ($name -match '^SecRandom_(?<rid>win-(?<arch>x64|x86|arm64))_setup\.exe$') {
+                @('windows-exe', 'self-contained', 'windows', $Matches.arch)
+              } elseif ($name -match '^SecRandom_(?<rid>linux-(?<arch>x64|arm64))_deb\.deb$') {
+                @('linux-deb', 'self-contained', 'linux', $Matches.arch)
+              } elseif ($name -match '^SecRandom_(?<rid>osx-(?<arch>x64|arm64))_pkg\.pkg$') {
+                @('macos-pkg', 'self-contained', 'macos', $Matches.arch)
+              } else {
+                throw "Unrecognized release artifact name: $name"
+              }
+              [ordered]@{
+                id = "$os-$arch-$kind-$runtimeKind"
+                os = $os
+                arch = $arch
+                kind = $kind
+                runtimeKind = $runtimeKind
+                assetName = $name
+                byteLength = $_.Length
+                sha512 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA512).Hash
+              }
+            }
+            $manifest = [ordered]@{
+              schemaVersion = 1
+              product = 'SecRandom'
+              channel = $channel
+              tag = $releaseTag
+              version = $releaseTag.TrimStart('v')
+              publishedAt = [DateTimeOffset]::UtcNow.ToString('O')
+              artifacts = @($artifacts)
+            }
+            $manifestPath = "$releaseOutput/SecRandom-update-manifest.v1.json"
+            $signaturePath = "$releaseOutput/SecRandom-update-manifest.v1.sig"
+            $manifest | ConvertTo-Json -Depth 5 -Compress | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM -NoNewline
+            & openssl pkeyutl -sign -rawin -inkey $privateKeyPath -in $manifestPath -out $signaturePath
+            if ($LASTEXITCODE -ne 0) { throw "OpenSSL Ed25519 signing failed with exit code $LASTEXITCODE." }
+          }
+          finally {
+            Remove-Item $privateKeyPath -Force -ErrorAction SilentlyContinue
+            Remove-Item $publicDerPath -Force -ErrorAction SilentlyContinue
+          }
 
       - name: Generate Release Note
         env:
@@ -365,7 +598,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           name: SecRandom ${{ github.event.inputs.release_tag }}
-          artifacts: "./out/*.zip,./out/*.exe,./out/*.deb,./out/*.pkg"
+          artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/SecRandom-update-manifest.v1.json,./artifacts/release/output/SecRandom-update-manifest.v1.sig"
           draft: true
           bodyFile: ./release-note.md
           token: ${{ secrets.GITHUB_TOKEN }}

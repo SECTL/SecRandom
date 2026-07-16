@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
+using SecRandom.Shared;
 
 namespace SecRandom.Services.Security;
 
@@ -69,7 +70,7 @@ internal sealed class CredentialKeyProtector : ICredentialKeyProtector
     [SupportedOSPlatform("windows")]
     private static byte[]? LoadOrCreateWindowsKey()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "data", "config", "security", "key.v1");
+        var path = Path.Combine(Utils.DataRoot, "config", "security", "key.v1");
         try
         {
             if (File.Exists(path))

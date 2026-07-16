@@ -9,11 +9,33 @@ public partial class DrawEngine
     private List<Student> FilterStudents(
         Func<Student, bool> filter,
         int drawCount,
-        IReadOnlyDictionary<Student, History>? historyCacheOverride = null)
+        IReadOnlyDictionary<Student, History>? historyCacheOverride = null,
+        bool applyAverageGapProtection = false)
     {
         var filteredList = StudentList.Students.Where(filter).ToList();
         var historyCache = historyCacheOverride ?? BuildStudentHistoryCache(filteredList);
 
+        return ApplyAverageGapProtection(filteredList, drawCount, historyCache, applyAverageGapProtection);
+    }
+
+    private List<Student> FilterPreparedStudents(
+        IReadOnlyCollection<Student> candidates,
+        int drawCount,
+        IReadOnlyDictionary<Student, History>? historyCacheOverride = null,
+        bool applyAverageGapProtection = false)
+    {
+        var filteredList = candidates.Where(student => student.IsCandidate).ToList();
+        var historyCache = historyCacheOverride ?? BuildStudentHistoryCache(filteredList);
+
+        return ApplyAverageGapProtection(filteredList, drawCount, historyCache, applyAverageGapProtection);
+    }
+
+    private List<Student> ApplyAverageGapProtection(
+        List<Student> filteredList,
+        int drawCount,
+        IReadOnlyDictionary<Student, History> historyCache,
+        bool applyAverageGapProtection)
+    {
         if (filteredList.Count == 0)
             throw new CandidateNotFoundException();
 
@@ -21,7 +43,7 @@ public partial class DrawEngine
             throw new RepeatLimitExhaustedException();
 
         var fairSettings = ConfigData.FairDrawSettings;
-        if (!fairSettings.EnableAvgGapProtection)
+        if (!applyAverageGapProtection || !fairSettings.EnableAvgGapProtection)
             return filteredList;
 
         var countByStudent = filteredList.ToDictionary(
@@ -32,38 +54,25 @@ public partial class DrawEngine
         var avg = countByStudent.Values.Average();
         var minDrawCount = countByStudent.Values.Min();
         var maxDrawCount = countByStudent.Values.Max();
+        var maxEligibleDrawCount = avg;
+        if (maxDrawCount - minDrawCount > Math.Max(0, fairSettings.GapThreshold))
+            maxEligibleDrawCount = Math.Min(maxEligibleDrawCount, minDrawCount + Math.Max(0, fairSettings.GapThreshold));
+
         var pool = filteredList
-            .Where(s => countByStudent[s] <= avg)
+            .Where(s => countByStudent[s] <= maxEligibleDrawCount)
             .ToList();
 
-        if (maxDrawCount - minDrawCount > Math.Max(0, fairSettings.GapThreshold))
+        if (pool.Count < drawCount)
         {
-            var filteredWithoutMax = filteredList
-                .Where(s => countByStudent[s] < maxDrawCount)
-                .ToList();
-
-            if (filteredWithoutMax.Count > 0)
+            foreach (var level in filteredList
+                         .Where(student => !pool.Contains(student))
+                         .GroupBy(student => countByStudent[student])
+                         .OrderBy(group => group.Key))
             {
-                var newAvg = filteredWithoutMax.Average(s => countByStudent[s]);
-                pool = filteredWithoutMax
-                    .Where(s => countByStudent[s] <= newAvg)
-                    .ToList();
+                pool.AddRange(level);
+                if (pool.Count >= drawCount)
+                    break;
             }
-        }
-
-        var requiredSize = Math.Max(drawCount, Math.Max(1, fairSettings.MinPoolSize));
-        if (pool.Count < requiredSize)
-        {
-            var threshold = (int)Math.Ceiling(avg);
-            var expandedPool = ExpandStudentPool(filteredList, countByStudent, requiredSize, threshold, maxDrawCount);
-
-            if (expandedPool.Count < requiredSize)
-                expandedPool = filteredList.ToList();
-
-            pool = expandedPool
-                .OrderBy(s => countByStudent[s])
-                .Take(requiredSize)
-                .ToList();
         }
 
         if (pool.Count == 0 || pool.Count < drawCount)
@@ -75,29 +84,6 @@ public partial class DrawEngine
     private int GetStudentDrawCount(Student student)
     {
         return BuildStudentHistoryCache([student]).GetValueOrDefault(student)?.TotalCount ?? 0;
-    }
-
-    private static List<Student> ExpandStudentPool(
-        List<Student> candidates,
-        IReadOnlyDictionary<Student, int> countByStudent,
-        int requiredSize,
-        int initialThreshold,
-        int maxDrawCount)
-    {
-        var threshold = initialThreshold;
-        var pool = candidates
-            .Where(s => countByStudent[s] <= threshold)
-            .ToList();
-
-        while (pool.Count < requiredSize && threshold < maxDrawCount)
-        {
-            threshold++;
-            pool = candidates
-                .Where(s => countByStudent[s] <= threshold)
-                .ToList();
-        }
-
-        return pool;
     }
 
     private List<Prize> FilterPrizes(

@@ -32,7 +32,7 @@ public sealed class WitnessClient(
         var request = new
         {
             algorithmId = VerificationWireCodec.AlgorithmId,
-            kernelVersion = VerificationWireCodec.KernelVersion,
+            algorithmEngineVersion = VerificationWireCodec.AlgorithmEngineVersion,
             inputHash = ToBase64Url(inputHash),
             clientCommit = ToBase64Url(SHA256.HashData(clientNonce)),
             subject = new { type = "offline-user-id", id = configHandler.Data.General.Basic.OfflineUserId.ToString("D") },
@@ -48,7 +48,7 @@ public sealed class WitnessClient(
 
         if (ticket.InputHash != request.inputHash || ticket.ClientCommit != request.clientCommit ||
             ticket.SubjectId != request.subject.id || ticket.AlgorithmId != request.algorithmId ||
-            ticket.KernelVersion != request.kernelVersion || ticket.ExpiresAtUtc <= DateTimeOffset.UtcNow)
+            ticket.AlgorithmEngineVersion != request.algorithmEngineVersion || ticket.ExpiresAtUtc <= DateTimeOffset.UtcNow)
             throw new InvalidDataException("Witness challenge is not bound to this frozen draw input.");
 
         return (ticket, envelope.Token);

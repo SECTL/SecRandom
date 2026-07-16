@@ -18,6 +18,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Services.Linkage;
+using SecRandom.Services;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
@@ -44,6 +45,7 @@ public partial class FloatingWindow : Window
     private int _expandedWindowHeight;
     private int _dockAnchorCenterY;
     private readonly CourseLinkageService _linkageService = IAppHost.GetService<CourseLinkageService>();
+    private readonly FeatureAvailabilityService _featureAvailability = IAppHost.GetService<FeatureAvailabilityService>();
     private bool _hiddenByCourseLinkage;
     private bool _wasVisibleBeforeCourseLinkage;
     private bool _userWantsVisible = true;
@@ -65,6 +67,8 @@ public partial class FloatingWindow : Window
         ViewModel.Config.FloatingWindowSettings.PropertyChanged += FloatingWindowSettings_OnPropertyChanged;
         ViewModel.Config.LinkageSettings.PropertyChanged += LinkageSettings_OnPropertyChanged;
         _linkageService.StateChanged += LinkageServiceOnStateChanged;
+        _featureAvailability.Changed += FeatureAvailabilityOnChanged;
+        Closed += (_, _) => _featureAvailability.Changed -= FeatureAvailabilityOnChanged;
         RefreshItems();
     }
 
@@ -78,7 +82,7 @@ public partial class FloatingWindow : Window
         var settings = ViewModel.Config.FloatingWindowSettings;
         ApplyWindowSettings(settings);
         ButtonsPanel.Children.Clear();
-        foreach (var controlName in GetVisibleButtonNames(settings))
+        foreach (var controlName in GetVisibleButtonNames(settings, _featureAvailability.IsLotteryEnabled))
         {
             var control = controlName switch
             {
@@ -121,11 +125,16 @@ public partial class FloatingWindow : Window
             : System.Math.Clamp(value, 32, 160);
     }
 
-    private static IEnumerable<string> GetVisibleButtonNames(FloatingWindowSettingsConfig settings)
+    private static IEnumerable<string> GetVisibleButtonNames(FloatingWindowSettingsConfig settings, bool isLotteryEnabled)
     {
         if (settings.ShowRollCallButton) yield return "roll_call";
         if (settings.ShowQuickDrawButton) yield return "quick_draw";
-        if (settings.ShowLotteryButton) yield return "lottery";
+        if (settings.ShowLotteryButton && isLotteryEnabled) yield return "lottery";
+    }
+
+    private void FeatureAvailabilityOnChanged(object? sender, EventArgs e)
+    {
+        Dispatcher.UIThread.Post(RefreshItems);
     }
 
     private void FloatingWindowSettings_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
