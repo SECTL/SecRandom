@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -18,6 +17,7 @@ using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Plugins;
 using SecRandom.Services.Plugins;
+using SecRandom.Services.Desktop;
 using LR = SecRandom.Langs.SettingsPages.Plugins.Overview.Resources;
 
 namespace SecRandom.Views.SettingsPages.Plugins.Overview;
@@ -28,6 +28,7 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
     private readonly IPluginManager _pluginManager = IAppHost.GetService<IPluginManager>();
     private readonly IPluginCatalogService _pluginCatalog = IAppHost.GetService<IPluginCatalogService>();
     private readonly PluginSelectionState _selectionState = IAppHost.GetService<PluginSelectionState>();
+    private readonly IExternalLauncher _externalLauncher = IAppHost.GetService<IExternalLauncher>();
     private PluginOverviewItem? _selectedItem;
     private PluginCatalogMirror? _selectedCatalogMirror;
     private PluginCatalogSource? _selectedCatalogSource;
@@ -414,11 +415,7 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
 
     private void OpenPluginsFolderButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        Process.Start(new ProcessStartInfo()
-        {
-            FileName = Path.Combine(PluginDirectory),
-            UseShellExecute = true
-        });
+        _externalLauncher.TryOpenPath(PluginDirectory);
     }
 
     private void OpenSelectedFolderButton_OnClick(object? sender, RoutedEventArgs e)
@@ -426,11 +423,7 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
         if (SelectedItem?.InstalledPlugin == null)
             return;
 
-        Process.Start(new ProcessStartInfo()
-        {
-            FileName = Path.Combine(SelectedItem.InstalledPlugin.DirectoryPath),
-            UseShellExecute = true
-        });
+        _externalLauncher.TryOpenPath(SelectedItem.InstalledPlugin.DirectoryPath);
     }
 
     private void EnableSelectedButton_OnClick(object? sender, RoutedEventArgs e)

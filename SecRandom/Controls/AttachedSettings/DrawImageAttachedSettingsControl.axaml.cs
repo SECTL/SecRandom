@@ -1,4 +1,6 @@
+using System;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
@@ -8,6 +10,7 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.AttachedSettings;
+using SecRandom.Shared;
 
 namespace SecRandom.Controls.AttachedSettings;
 
@@ -64,7 +67,24 @@ public partial class DrawImageAttachedSettingsControl : AttachedSettingsControlB
 
         var path = files.FirstOrDefault()?.TryGetLocalPath();
         if (!string.IsNullOrWhiteSpace(path))
+        {
             ImagePath = path;
+            return;
+        }
+
+        var file = files.FirstOrDefault();
+        if (file is null)
+            return;
+
+        var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (extension is not (".png" or ".jpg" or ".jpeg" or ".bmp" or ".gif" or ".webp"))
+            return;
+
+        var managedPath = Path.Combine(Utils.GetDirectoryPath("images"), $"{Guid.NewGuid():N}{extension}");
+        await using var source = await file.OpenReadAsync();
+        await using var target = File.Create(managedPath);
+        await source.CopyToAsync(target);
+        ImagePath = managedPath;
     }
 
     private void OnPropertyChanged(string? propertyName = null)

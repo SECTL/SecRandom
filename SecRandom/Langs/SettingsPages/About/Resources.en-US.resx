@@ -31,7 +31,7 @@
         <value>Program Information</value>
     </data>
     <data name="C_ProjectHome" xml:space="preserve">
-        <value>Project Home</value>
+        <value>Documentation</value>
     </data>
     <data name="S_Author_D" xml:space="preserve">
         <value>Lead Developer of SecRandom</value>
@@ -46,7 +46,7 @@
         <value>Donate</value>
     </data>
     <data name="S_Author_Donate_D" xml:space="preserve">
-        <value>Visit 黎泽懿_Aionflux's Afdian page to support the project's development. Thank you for your donation!</value>
+        <value>Visit 黎泽懿_Aionflux's Afdian page to support the project's development; thank you for your donation!</value>
     </data>
     <data name="S_Author_Org" xml:space="preserve">
         <value>SECTL</value>
@@ -67,10 +67,22 @@
         <value>Online Users</value>
     </data>
     <data name="S_Ack_OnlineUsers_D" xml:space="preserve">
-        <value>Thank you for your support. Your use of the software is the greatest encouragement we could receive.</value>
+        <value>Thank you for your support; your use of the software is the greatest encouragement we could receive</value>
     </data>
     <data name="S_Ack_Contributors" xml:space="preserve">
         <value>Contributors</value>
+    </data>
+    <data name="S_Ack_Contributors_D" xml:space="preserve">
+        <value>View GitHub contributors who have committed code to SecRandom</value>
+    </data>
+    <data name="S_Ack_Contributors_ContributionCount" xml:space="preserve">
+        <value>{0} commits</value>
+    </data>
+    <data name="C_Refresh" xml:space="preserve">
+        <value>Refresh</value>
+    </data>
+    <data name="M_ContributorsLoadFailed" xml:space="preserve">
+        <value>Unable to load the contributors list: {0}</value>
     </data>
     <data name="S_UserInformation" xml:space="preserve">
         <value>User Information</value>
@@ -83,5 +95,14 @@
     </data>
     <data name="S_Author_R" xml:space="preserve">
         <value>黎泽懿_Aionflux</value>
+    </data>
+    <data name="C_InternalSettingsActivatedTitle" xml:space="preserve">
+        <value>Internal Settings Shown</value>
+    </data>
+    <data name="C_Close" xml:space="preserve">
+        <value>Close</value>
+    </data>
+    <data name="M_InternalSettingsActivated" xml:space="preserve">
+        <value>“Internal Settings” is now shown in the Attached Settings menu at the right of each student or prize in List Management. It is available only for this run and is hidden automatically after the app restarts.&#xA;&#xA;Internal settings affect candidate weights and are not appropriate for fair, public, or auditable draws in schools or events. When a selected person has internal settings enabled, uploading the verifiable file to the verification website shows a notice; this can expose the setting.&#xA;&#xA;Internal settings have lower priority than fair-draw rules. A student or prize with internal settings that is selected now is not guaranteed to be selected next time.</value>
     </data>
 </root>

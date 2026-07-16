@@ -22,20 +22,29 @@
 SecRandom is released under GNU GPLv3. GPLv3 permits you to run, study, modify, and redistribute the software. Distribution of modified versions must comply with its copyleft terms, including providing corresponding source code under GPLv3.
 
 The official GNU GPLv3 text controls. This acknowledgement does not require you to waive any GPLv3 rights.</value></data>
+  <data name="VerificationNotice" xml:space="preserve"><value>About verifiable draws
+
+1. Ordinary mode records the candidate pool, weights, rules, random material, and result. It can complete draws offline and save a locally reproducible proof; new draws are submitted to fair.sectl.cn for independent replay and signing when online. Offline or failed historical proofs are never automatically resent, but can be uploaded manually to the verification site after connectivity is restored. The signature reveals later proof-file tampering.
+
+2. Formal notarization mode first locks the anonymous candidate pool, weights, and rules at fair.sectl.cn. The server then generates random material, calculates the result, and stores an immutable official proof. Network disruption, outage, service unavailability, device failure, or other force majeure before final server evidence is returned never substitutes a local result or automatically changes mode. Once the server confirms the lock, the pool, rules, random material, and result cannot be replaced, supplemented, or recalculated during that draw.
+
+3. Formal notarization protects the locked flow from replacement of local draw code, random material, or result files. It cannot prove that the real-world roster is complete or authentic, nor that the pool was not manipulated before submission.</value></data>
   <data name="C_Title" xml:space="preserve"><value>Set up SecRandom</value></data>
-  <data name="C_Intro" xml:space="preserve"><value>Complete the required privacy-policy and GPLv3 acknowledgement first. Everything else can be changed later.</value></data>
+  <data name="C_Intro" xml:space="preserve"><value>Read the verifiable-draw notice and complete the required privacy-policy and GPLv3 acknowledgement first. Everything else can be changed later.</value></data>
   <data name="C_WelcomeTitle" xml:space="preserve"><value>Welcome to SecRandom</value></data>
-  <data name="C_WelcomeDescription" xml:space="preserve"><value>Complete the first-run setup in a few steps. Only the privacy-policy and GPLv3 acknowledgements are required; you can adjust everything else later in Settings.</value></data>
+  <data name="C_WelcomeDescription" xml:space="preserve"><value>Complete the first-run setup in a few steps. The verifiable-draw notice, privacy-policy, and GPLv3 acknowledgements are required; you can adjust everything else later in Settings.</value></data>
   <data name="C_Language" xml:space="preserve"><value>Language</value></data>
   <data name="O_LanguageChinese" xml:space="preserve"><value>Chinese (Simplified)</value></data>
   <data name="O_LanguageEnglish" xml:space="preserve"><value>English</value></data>
   <data name="O_LanguageJapanese" xml:space="preserve"><value>Japanese</value></data>
   <data name="C_LegalTitle" xml:space="preserve"><value>Privacy policy and open-source licence</value></data>
-  <data name="C_LegalDescription" xml:space="preserve"><value>Read and acknowledge the privacy policy and GNU GPLv3 before continuing. Privacy options are enabled by default and can be adjusted below.</value></data>
+  <data name="C_LegalDescription" xml:space="preserve"><value>Read the verifiable-draw notice, then acknowledge the privacy policy and GNU GPLv3 before continuing. Privacy options are enabled by default and can be adjusted below.</value></data>
   <data name="C_PrivacyPolicyTitle" xml:space="preserve"><value>SecRandom privacy policy</value></data>
   <data name="C_PrivacyPolicyAccept" xml:space="preserve"><value>I have read and agree to the SecRandom privacy policy.</value></data>
   <data name="C_GplTitle" xml:space="preserve"><value>GNU GPLv3</value></data>
   <data name="C_GplAccept" xml:space="preserve"><value>I have read the GNU GPLv3 licence notice.</value></data>
+  <data name="C_VerificationNoticeTitle" xml:space="preserve"><value>About verifiable draws</value></data>
+  <data name="C_VerificationNoticeAccept" xml:space="preserve"><value>I have read the notice about verifiable draws.</value></data>
   <data name="C_DataTitle" xml:space="preserve"><value>Restore or select a list</value></data>
   <data name="C_DataDescription" xml:space="preserve"><value>Restore existing SecRandom v3 data, then select or import the roll-call list to use first. Skipping this does not affect later use.</value></data>
   <data name="C_RestoreTitle" xml:space="preserve"><value>Restore existing data</value></data>
@@ -65,10 +74,12 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_PrizeListDescription" xml:space="preserve"><value>Select the list to use for lottery, or import a prize file.</value></data>
   <data name="C_AppearanceTitle" xml:space="preserve"><value>Appearance and floating window</value></data>
   <data name="C_Theme" xml:space="preserve"><value>Theme</value></data>
+  <data name="C_ThemeDescription" xml:space="preserve"><value>Choose light, dark, or follow the system appearance.</value></data>
   <data name="O_ThemeLight" xml:space="preserve"><value>Light</value></data>
   <data name="O_ThemeDark" xml:space="preserve"><value>Dark</value></data>
   <data name="O_ThemeAuto" xml:space="preserve"><value>System default</value></data>
   <data name="C_ThemeColor" xml:space="preserve"><value>Accent color</value></data>
+  <data name="C_ThemeColorDescription" xml:space="preserve"><value>Use the system accent color or choose a custom app accent color.</value></data>
   <data name="O_SystemColor" xml:space="preserve"><value>System accent</value></data>
   <data name="O_CustomColor" xml:space="preserve"><value>Custom accent</value></data>
   <data name="C_Opacity" xml:space="preserve"><value>Floating window opacity</value></data>
@@ -76,6 +87,7 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_DesktopTitle" xml:space="preserve"><value>Desktop integration</value></data>
   <data name="C_DesktopDescription" xml:space="preserve"><value>These options are applied when setup is completed. You can retry later in Settings if the platform rejects an operation.</value></data>
   <data name="C_Autostart" xml:space="preserve"><value>Start at sign-in</value></data>
+  <data name="C_AutostartDescription" xml:space="preserve"><value>Start SecRandom automatically when you sign in.</value></data>
   <data name="C_ShowStartupWindow" xml:space="preserve"><value>Show main window at startup</value></data>
   <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>Choose whether the main window opens automatically when SecRandom starts.</value></data>
   <data name="C_ExternalIntegration" xml:space="preserve"><value>External links and integration</value></data>
@@ -91,7 +103,7 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="O_OnlineStatusMode_Anonymous" xml:space="preserve"><value>Anonymous reporting</value></data>
   <data name="O_OnlineStatusMode_Off" xml:space="preserve"><value>Do not report</value></data>
   <data name="C_CompleteTitle" xml:space="preserve"><value>Setup complete</value></data>
-  <data name="C_CompleteDescription" xml:space="preserve"><value>Click Finish to enter SecRandom after acknowledging the privacy policy and GPLv3. You can change lists, lottery, appearance, desktop integration, and privacy later.</value></data>
+  <data name="C_CompleteDescription" xml:space="preserve"><value>Click Finish to enter SecRandom after reading the verifiable-draw notice and acknowledging the privacy policy and GPLv3. You can change lists, lottery, appearance, desktop integration, and privacy later.</value></data>
   <data name="C_CompletedItems" xml:space="preserve"><value>Configured items</value></data>
   <data name="C_CompletedClass" xml:space="preserve"><value>Manage rosters and prize pools from List Management.</value></data>
   <data name="C_CompletedAppearance" xml:space="preserve"><value>Change draw entry points, theme, and floating-window appearance in Settings.</value></data>
@@ -119,7 +131,7 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_JsonFileType" xml:space="preserve"><value>JSON files</value></data>
   <data name="C_ZipFileType" xml:space="preserve"><value>ZIP files</value></data>
   <data name="C_ExitTitle" xml:space="preserve"><value>Exit setup</value></data>
-  <data name="C_ExitDescription" xml:space="preserve"><value>The privacy-policy and licence acknowledgement is not complete. Exiting closes SecRandom without saving OOBE completion.</value></data>
+  <data name="C_ExitDescription" xml:space="preserve"><value>The verifiable-draw notice, privacy-policy, and licence acknowledgement are not complete. Exiting closes SecRandom without saving OOBE completion.</value></data>
   <data name="C_Exit" xml:space="preserve"><value>Exit application</value></data>
   <data name="C_ContinueSetup" xml:space="preserve"><value>Continue setup</value></data>
   <data name="M_ImportConfirmation" xml:space="preserve"><value>Source version: {0}
@@ -132,8 +144,8 @@ No data was changed.</value></data>
   <data name="M_UnsupportedImportDetail" xml:space="preserve"><value>This is not a supported SecRandom v3 export file.</value></data>
   <data name="M_ImportCompleted" xml:space="preserve"><value>Import completed. Continue by acknowledging the current privacy-policy and GNU GPLv3 versions.</value></data>
   <data name="M_ImportFailed" xml:space="preserve"><value>Import failed</value></data>
-  <data name="M_AgreementRequired" xml:space="preserve"><value>Read and acknowledge the privacy policy and GNU GPLv3 first.</value></data>
-  <data name="M_CompletionAgreementRequired" xml:space="preserve"><value>The privacy policy and GNU GPLv3 must be acknowledged before finishing.</value></data>
+  <data name="M_AgreementRequired" xml:space="preserve"><value>Read and acknowledge the verifiable-draw notice, privacy policy, and GNU GPLv3 first.</value></data>
+  <data name="M_CompletionAgreementRequired" xml:space="preserve"><value>The verifiable-draw notice, privacy policy, and GNU GPLv3 must be acknowledged before finishing.</value></data>
   <data name="M_DesktopIntegrationFailed" xml:space="preserve"><value>Some desktop integrations could not be enabled and remain off. You can retry later in Settings.</value></data>
   <data name="M_StudentsImported" xml:space="preserve"><value>Imported {0} students and set the list as the default class.</value></data>
   <data name="M_PrizesImported" xml:space="preserve"><value>Imported {0} prizes and set the pool as the default prize pool.</value></data>

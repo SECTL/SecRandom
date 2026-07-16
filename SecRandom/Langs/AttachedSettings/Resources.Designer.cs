@@ -76,5 +76,47 @@ namespace SecRandom.Langs.AttachedSettings {
                 return ResourceManager.GetString("C_ProbabilityDescription", resourceCulture);
             }
         }
+
+        public static string C_SpecificVoice {
+            get {
+                return ResourceManager.GetString("C_SpecificVoice", resourceCulture);
+            }
+        }
+
+        public static string C_SpecificVoiceAlias {
+            get {
+                return ResourceManager.GetString("C_SpecificVoiceAlias", resourceCulture);
+            }
+        }
+
+        public static string C_SpecificVoiceAliasPlaceholder {
+            get {
+                return ResourceManager.GetString("C_SpecificVoiceAliasPlaceholder", resourceCulture);
+            }
+        }
+
+        public static string C_SpecificVoicePrefix {
+            get {
+                return ResourceManager.GetString("C_SpecificVoicePrefix", resourceCulture);
+            }
+        }
+
+        public static string C_SpecificVoiceSuffix {
+            get {
+                return ResourceManager.GetString("C_SpecificVoiceSuffix", resourceCulture);
+            }
+        }
+
+        public static string C_SpecificVoiceOptional {
+            get {
+                return ResourceManager.GetString("C_SpecificVoiceOptional", resourceCulture);
+            }
+        }
+
+        public static string C_SpecificVoiceDescription {
+            get {
+                return ResourceManager.GetString("C_SpecificVoiceDescription", resourceCulture);
+            }
+        }
     }
 }

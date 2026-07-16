@@ -30,4 +30,11 @@
     <data name="C_ProbabilityDescription" xml:space="preserve">
         <value>The default is 0. The weight range is 0-100; 0 excludes this item, and 100 guarantees it.</value>
     </data>
+    <data name="C_SpecificVoice" xml:space="preserve"><value>Specific voice</value></data>
+    <data name="C_SpecificVoiceAlias" xml:space="preserve"><value>TTS alias</value></data>
+    <data name="C_SpecificVoiceAliasPlaceholder" xml:space="preserve"><value>Leave blank to use the original name</value></data>
+    <data name="C_SpecificVoicePrefix" xml:space="preserve"><value>Announcement prefix</value></data>
+    <data name="C_SpecificVoiceSuffix" xml:space="preserve"><value>Announcement suffix</value></data>
+    <data name="C_SpecificVoiceOptional" xml:space="preserve"><value>Optional</value></data>
+    <data name="C_SpecificVoiceDescription" xml:space="preserve"><value>When enabled, announcements use this item's alias, prefix, and suffix.</value></data>
 </root>

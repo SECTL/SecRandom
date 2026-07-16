@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:fa="using:FluentAvalonia.UI.Controls"
+             xmlns:core="using:SecRandom.Core"
              xmlns:ls="clr-namespace:SecRandom.Langs.SettingsView"
              xmlns:views="using:SecRandom.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
@@ -59,16 +60,22 @@
                     </AutoCompleteBox.InnerRightContent>
                 </AutoCompleteBox>
 
-                <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
-                    <Button Classes="accent"
+                 <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
+                     <Button Classes="accent"
                             Margin="0 -8" VerticalAlignment="Center"
                             IsVisible="{Binding ViewModel.IsRequestedRestart}"
                             ToolTip.Tip="{x:Static ls:Resources.M_NeedsRestarting_Tooltip}"
                             Click="ButtonRestartApp_OnClick">
                          <sr:IconText Glyph="{sr:Fi ArrowCounterclockwiseFilled}" Text="{x:Static ls:Resources.M_NeedsRestarting}" />
-                    </Button>
+                     </Button>
 
-                    <Button Theme="{StaticResource TransparentButton}"
+                     <TextBlock Text="{x:Static core:GlobalConstants.Version}"
+                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                FontSize="12"
+                                VerticalAlignment="Center"
+                                IsHitTestVisible="False" />
+
+                     <Button Theme="{StaticResource TransparentButton}"
                             ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions}"
                             VerticalAlignment="Center" HorizontalAlignment="Right"
                             Margin="0 0 4 0">
@@ -99,11 +106,23 @@
                                            Header="{x:Static ls:Resources.C_MoreOptions_ExportAllData}"
                                            ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportAllData_D}"
                                            Click="ExportAllDataMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_ImportAllData}"
-                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportAllData_D}"
-                                           Click="ImportAllDataMenuItem_OnClick" />
-                            </MenuFlyout>
+                                  <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowFilled}}"
+                                            Header="{x:Static ls:Resources.C_MoreOptions_ImportAllData}"
+                                            ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportAllData_D}"
+                                            Click="ImportAllDataMenuItem_OnClick" />
+
+                                 <Separator />
+
+                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
+                                           Header="{x:Static ls:Resources.C_MoreOptions_OpenLogDirectory}"
+                                           Click="OpenLogDirectoryMenuItem_OnClick" />
+                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
+                                           Header="{x:Static ls:Resources.C_MoreOptions_OpenDataDirectory}"
+                                           Click="OpenDataDirectoryMenuItem_OnClick" />
+                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
+                                           Header="{x:Static ls:Resources.C_MoreOptions_OpenAppDirectory}"
+                                           Click="OpenAppDirectoryMenuItem_OnClick" />
+                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>
 

@@ -28,6 +28,7 @@ public class Resources
 
     public static string PrivacyPolicy => Get(nameof(PrivacyPolicy));
     public static string GplNotice => Get(nameof(GplNotice));
+    public static string VerificationNotice => Get(nameof(VerificationNotice));
     public static string C_Title => Get(nameof(C_Title));
     public static string C_Intro => Get(nameof(C_Intro));
     public static string C_WelcomeTitle => Get(nameof(C_WelcomeTitle));
@@ -42,6 +43,8 @@ public class Resources
     public static string C_PrivacyPolicyAccept => Get(nameof(C_PrivacyPolicyAccept));
     public static string C_GplTitle => Get(nameof(C_GplTitle));
     public static string C_GplAccept => Get(nameof(C_GplAccept));
+    public static string C_VerificationNoticeTitle => Get(nameof(C_VerificationNoticeTitle));
+    public static string C_VerificationNoticeAccept => Get(nameof(C_VerificationNoticeAccept));
     public static string C_DataTitle => Get(nameof(C_DataTitle));
     public static string C_DataDescription => Get(nameof(C_DataDescription));
     public static string C_RestoreTitle => Get(nameof(C_RestoreTitle));
@@ -71,10 +74,12 @@ public class Resources
     public static string C_PrizeListDescription => Get(nameof(C_PrizeListDescription));
     public static string C_AppearanceTitle => Get(nameof(C_AppearanceTitle));
     public static string C_Theme => Get(nameof(C_Theme));
+    public static string C_ThemeDescription => Get(nameof(C_ThemeDescription));
     public static string O_ThemeLight => Get(nameof(O_ThemeLight));
     public static string O_ThemeDark => Get(nameof(O_ThemeDark));
     public static string O_ThemeAuto => Get(nameof(O_ThemeAuto));
     public static string C_ThemeColor => Get(nameof(C_ThemeColor));
+    public static string C_ThemeColorDescription => Get(nameof(C_ThemeColorDescription));
     public static string O_SystemColor => Get(nameof(O_SystemColor));
     public static string O_CustomColor => Get(nameof(O_CustomColor));
     public static string C_Opacity => Get(nameof(C_Opacity));
@@ -82,6 +87,7 @@ public class Resources
     public static string C_DesktopTitle => Get(nameof(C_DesktopTitle));
     public static string C_DesktopDescription => Get(nameof(C_DesktopDescription));
     public static string C_Autostart => Get(nameof(C_Autostart));
+    public static string C_AutostartDescription => Get(nameof(C_AutostartDescription));
     public static string C_ShowStartupWindow => Get(nameof(C_ShowStartupWindow));
     public static string C_ShowStartupWindowDescription => Get(nameof(C_ShowStartupWindowDescription));
     public static string C_ExternalIntegration => Get(nameof(C_ExternalIntegration));

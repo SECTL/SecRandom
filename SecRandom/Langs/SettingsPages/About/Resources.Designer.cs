@@ -68,6 +68,27 @@ namespace SecRandom.Langs.SettingsPages.About {
             }
         }
 
+        public static string C_Close {
+            get {
+                return ResourceManager.GetString("C_Close", resourceCulture);
+            }
+        }
+
+        public static string C_InternalSettingsActivatedTitle {
+            get {
+                return ResourceManager.GetString("C_InternalSettingsActivatedTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 刷新.
+        /// </summary>
+        public static string C_Refresh {
+            get {
+                return ResourceManager.GetString("C_Refresh", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 组织主页.
         /// </summary>
@@ -105,6 +126,24 @@ namespace SecRandom.Langs.SettingsPages.About {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to {0} 次提交.
+        /// </summary>
+        public static string S_Ack_Contributors_ContributionCount {
+            get {
+                return ResourceManager.GetString("S_Ack_Contributors_ContributionCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 查看为 SecRandom 提交代码的 GitHub 贡献者.
+        /// </summary>
+        public static string S_Ack_Contributors_D {
+            get {
+                return ResourceManager.GetString("S_Ack_Contributors_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 在线人数.
         /// </summary>
         public static string S_Ack_OnlineUsers {
@@ -119,6 +158,21 @@ namespace SecRandom.Langs.SettingsPages.About {
         public static string S_Ack_OnlineUsers_D {
             get {
                 return ResourceManager.GetString("S_Ack_OnlineUsers_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 无法加载贡献者名单：{0}.
+        /// </summary>
+        public static string M_ContributorsLoadFailed {
+            get {
+                return ResourceManager.GetString("M_ContributorsLoadFailed", resourceCulture);
+            }
+        }
+
+        public static string M_InternalSettingsActivated {
+            get {
+                return ResourceManager.GetString("M_InternalSettingsActivated", resourceCulture);
             }
         }
 

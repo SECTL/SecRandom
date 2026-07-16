@@ -7,10 +7,13 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Controls;
+using SecRandom.Core;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Controls;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Services.ImportExport;
 using SecRandom.ViewModels;
@@ -21,6 +24,7 @@ namespace SecRandom.Views;
 public partial class FirstRunOobeWindow : Window
 {
     private bool _canClose;
+    private bool _isDevelopmentAdornerAdded;
     private bool _isLanguageSelectionReady;
     private bool _refreshLanguageWhenDrawerCloses;
 
@@ -29,7 +33,7 @@ public partial class FirstRunOobeWindow : Window
         DataContext = this;
         InitializeComponent();
         Closed += WindowOnClosed;
-        Opened += (_, _) => _isLanguageSelectionReady = true;
+        Opened += WindowOnOpened;
     }
 
     public FirstRunOobeViewModel ViewModel { get; } = IAppHost.GetService<FirstRunOobeViewModel>();
@@ -38,6 +42,23 @@ public partial class FirstRunOobeWindow : Window
     public event EventHandler? Completed;
     public event EventHandler? LanguageChanged;
     private IImportExportService ImportExportService { get; } = IAppHost.GetService<IImportExportService>();
+
+    private void WindowOnOpened(object? sender, EventArgs e)
+    {
+        _isLanguageSelectionReady = true;
+
+        if (!GlobalConstants.IsDevelopment || _isDevelopmentAdornerAdded || Content is not Control element)
+            return;
+
+        var layer = AdornerLayer.GetAdornerLayer(element);
+        if (layer is null)
+            return;
+
+        var adorner = new DevelopmentBuildAdorner();
+        layer.Children.Add(adorner);
+        AdornerLayer.SetAdornedElement(adorner, this);
+        _isDevelopmentAdornerAdded = true;
+    }
 
     private void Previous_OnClick(object? sender, RoutedEventArgs e)
     {
@@ -101,17 +122,12 @@ public partial class FirstRunOobeWindow : Window
         Close();
     }
 
-    private static void OpenLink_OnClick(object? sender, RoutedEventArgs e)
+    private void OpenLink_OnClick(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button { CommandParameter: string url })
             return;
 
-        if (OperatingSystem.IsWindows())
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-        else if (OperatingSystem.IsLinux())
-            Process.Start(new ProcessStartInfo("xdg-open", url) { UseShellExecute = false });
-        else if (OperatingSystem.IsMacOS())
-            Process.Start(new ProcessStartInfo("open", url) { UseShellExecute = false });
+        IAppHost.GetService<Services.Desktop.IExternalLauncher>().TryOpenUri(url);
     }
 
     private void ImportRoster_OnClick(object? sender, RoutedEventArgs e)

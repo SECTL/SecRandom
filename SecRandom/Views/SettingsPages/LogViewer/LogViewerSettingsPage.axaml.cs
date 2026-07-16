@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -21,6 +20,7 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Logging;
+using SecRandom.Services.Desktop;
 using LR = SecRandom.Langs.SettingsPages.LogViewer.Resources;
 
 namespace SecRandom.Views.SettingsPages.LogViewer;
@@ -28,6 +28,7 @@ namespace SecRandom.Views.SettingsPages.LogViewer;
 [PageInfo("settings.logs", FluentIcons.DocumentFilled, location: PageLocation.Bottom, isHide: true, useFullWidth: true)]
 public partial class LogViewerSettingsPage : UserControl, INotifyPropertyChanged
 {
+    private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
     private const int MaxLoadedLines = 2000;
 
     private readonly ILogger<LogViewerSettingsPage> _logger =
@@ -361,14 +362,9 @@ public partial class LogViewerSettingsPage : UserControl, INotifyPropertyChanged
                string.Equals(Path.GetFullPath(path), Path.GetFullPath(otherPath), StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void OpenPath(string path)
+    private void OpenPath(string path)
     {
-        if (OperatingSystem.IsWindows())
-            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
-        else if (OperatingSystem.IsLinux())
-            Process.Start(new ProcessStartInfo("xdg-open", path) { UseShellExecute = false });
-        else if (OperatingSystem.IsMacOS())
-            Process.Start(new ProcessStartInfo("open", path) { UseShellExecute = false });
+        ExternalLauncher.TryOpenPath(path);
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

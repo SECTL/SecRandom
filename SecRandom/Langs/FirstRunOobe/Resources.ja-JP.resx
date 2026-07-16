@@ -22,20 +22,29 @@
 SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフトウェアの実行、研究、変更、再配布を認めます。変更版を配布する場合は、対応するソースコードを GPLv3 で提供するなど、コピーレフト条項を守る必要があります。
 
 正式な GNU GPLv3 の本文が優先されます。この確認により GPLv3 の権利を放棄する必要はありません。</value></data>
+  <data name="VerificationNotice" xml:space="preserve"><value>検証可能な抽選について
+
+1. 通常モードは候補プール、重み、ルール、乱数材料、結果を記録します。オフラインでもローカル抽選を完了して再現可能な証明を保存でき、オンライン時には新しい抽選を fair.sectl.cn に送信して独立再生と署名を行います。オフライン保存または送信失敗となった過去の証明は自動送信されませんが、接続復旧後に検証サイトへ手動アップロードできます。署名は送信後の証明ファイル改ざんを検出します。
+
+2. 正式公証モードは、匿名候補プール、重み、ルールを fair.sectl.cn に先に固定します。サーバーが乱数材料を生成し、結果を計算して不変の公式証明を保存します。ネットワーク障害、切断、サービス停止、端末故障その他の不可抗力によりサーバー完結証明を取得できない場合も、ローカル結果への代替やモードの自動変更は行いません。サーバーが固定を確認した後は、候補プール、ルール、乱数材料、結果を処理中に置換、追加抽選、再計算できません。
+
+3. 正式公証は、固定後の処理におけるローカル抽選コード、乱数材料、結果ファイルの置換を防ぎます。ただし、実世界の名簿の完全性・真正性や、送信前の候補プール操作までは証明できません。</value></data>
   <data name="C_Title" xml:space="preserve"><value>SecRandom の初期設定</value></data>
-  <data name="C_Intro" xml:space="preserve"><value>まず必要なプライバシーポリシーと GPLv3 の確認を完了してください。その他の項目は後から変更できます。</value></data>
+  <data name="C_Intro" xml:space="preserve"><value>まず検証可能な抽選について読み、必要なプライバシーポリシーと GPLv3 の確認を完了してください。その他の項目は後から変更できます。</value></data>
   <data name="C_WelcomeTitle" xml:space="preserve"><value>SecRandom へようこそ</value></data>
-  <data name="C_WelcomeDescription" xml:space="preserve"><value>数ステップで初回設定を完了します。必須なのはプライバシーポリシーと GPLv3 の確認だけで、それ以外は後から設定で変更できます。</value></data>
+  <data name="C_WelcomeDescription" xml:space="preserve"><value>数ステップで初回設定を完了します。検証可能な抽選について、プライバシーポリシー、GPLv3 の確認が必要で、それ以外は後から設定で変更できます。</value></data>
   <data name="C_Language" xml:space="preserve"><value>言語</value></data>
   <data name="O_LanguageChinese" xml:space="preserve"><value>簡体字中国語</value></data>
   <data name="O_LanguageEnglish" xml:space="preserve"><value>英語</value></data>
   <data name="O_LanguageJapanese" xml:space="preserve"><value>日本語</value></data>
   <data name="C_LegalTitle" xml:space="preserve"><value>プライバシーポリシーとオープンソースライセンス</value></data>
-  <data name="C_LegalDescription" xml:space="preserve"><value>続行する前に、プライバシーポリシーと GNU GPLv3 を読み、確認してください。プライバシー設定は既定で有効で、下で変更できます。</value></data>
+  <data name="C_LegalDescription" xml:space="preserve"><value>続行する前に、まず検証可能な抽選について読み、プライバシーポリシーと GNU GPLv3 を確認してください。プライバシー設定は既定で有効で、下で変更できます。</value></data>
   <data name="C_PrivacyPolicyTitle" xml:space="preserve"><value>SecRandom プライバシーポリシー</value></data>
   <data name="C_PrivacyPolicyAccept" xml:space="preserve"><value>SecRandom のプライバシーポリシーを読み、同意しました。</value></data>
   <data name="C_GplTitle" xml:space="preserve"><value>GNU GPLv3</value></data>
   <data name="C_GplAccept" xml:space="preserve"><value>GNU GPLv3 の説明を読みました。</value></data>
+  <data name="C_VerificationNoticeTitle" xml:space="preserve"><value>検証可能な抽選について</value></data>
+  <data name="C_VerificationNoticeAccept" xml:space="preserve"><value>検証可能な抽選についての注意事項を読みました。</value></data>
   <data name="C_DataTitle" xml:space="preserve"><value>データの復元またはリストの選択</value></data>
   <data name="C_DataDescription" xml:space="preserve"><value>既存の SecRandom v3 データを復元し、最初に使う点呼名簿を選択またはインポートできます。スキップしても後の利用に影響しません。</value></data>
   <data name="C_RestoreTitle" xml:space="preserve"><value>既存データを復元</value></data>
@@ -65,10 +74,12 @@ SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="C_PrizeListDescription" xml:space="preserve"><value>抽選に使用するリストを選択するか、賞品ファイルをインポートします。</value></data>
   <data name="C_AppearanceTitle" xml:space="preserve"><value>外観とフローティングウィンドウ</value></data>
   <data name="C_Theme" xml:space="preserve"><value>テーマ</value></data>
+  <data name="C_ThemeDescription" xml:space="preserve"><value>ライト、ダーク、またはシステムの外観に合わせるかを選択します。</value></data>
   <data name="O_ThemeLight" xml:space="preserve"><value>ライト</value></data>
   <data name="O_ThemeDark" xml:space="preserve"><value>ダーク</value></data>
   <data name="O_ThemeAuto" xml:space="preserve"><value>システム既定</value></data>
   <data name="C_ThemeColor" xml:space="preserve"><value>アクセントカラー</value></data>
+  <data name="C_ThemeColorDescription" xml:space="preserve"><value>システムのアクセントカラーを使うか、アプリ用のカスタムカラーを選択します。</value></data>
   <data name="O_SystemColor" xml:space="preserve"><value>システムのアクセントカラー</value></data>
   <data name="O_CustomColor" xml:space="preserve"><value>カスタムアクセントカラー</value></data>
   <data name="C_Opacity" xml:space="preserve"><value>フローティングウィンドウの不透明度</value></data>
@@ -76,6 +87,7 @@ SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="C_DesktopTitle" xml:space="preserve"><value>デスクトップ連携</value></data>
   <data name="C_DesktopDescription" xml:space="preserve"><value>これらの設定は完了時に適用されます。プラットフォームが操作を拒否した場合は、後から設定で再試行できます。</value></data>
   <data name="C_Autostart" xml:space="preserve"><value>サインイン時に起動</value></data>
+  <data name="C_AutostartDescription" xml:space="preserve"><value>システムへのサインイン後に SecRandom を自動で起動します。</value></data>
   <data name="C_ShowStartupWindow" xml:space="preserve"><value>起動時にメインウィンドウを表示</value></data>
   <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>SecRandom の起動時にメインウィンドウを自動表示するかを選択します。</value></data>
   <data name="C_ExternalIntegration" xml:space="preserve"><value>外部リンクと連携</value></data>
@@ -91,7 +103,7 @@ SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="O_OnlineStatusMode_Anonymous" xml:space="preserve"><value>匿名報告</value></data>
   <data name="O_OnlineStatusMode_Off" xml:space="preserve"><value>報告しない</value></data>
   <data name="C_CompleteTitle" xml:space="preserve"><value>設定を完了</value></data>
-  <data name="C_CompleteDescription" xml:space="preserve"><value>プライバシーポリシーと GPLv3 を確認したら、完了をクリックして SecRandom を開始します。リスト、抽選、外観、デスクトップ連携、プライバシーは後から変更できます。</value></data>
+  <data name="C_CompleteDescription" xml:space="preserve"><value>検証可能な抽選について読み、プライバシーポリシーと GPLv3 を確認したら、完了をクリックして SecRandom を開始します。リスト、抽選、外観、デスクトップ連携、プライバシーは後から変更できます。</value></data>
   <data name="C_CompletedItems" xml:space="preserve"><value>設定済みの項目</value></data>
   <data name="C_CompletedClass" xml:space="preserve"><value>名簿と賞品プールはリスト管理から管理できます。</value></data>
   <data name="C_CompletedAppearance" xml:space="preserve"><value>抽選の入口、テーマ、フローティングウィンドウの外観は設定で変更できます。</value></data>
@@ -119,7 +131,7 @@ SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="C_JsonFileType" xml:space="preserve"><value>JSON ファイル</value></data>
   <data name="C_ZipFileType" xml:space="preserve"><value>ZIP ファイル</value></data>
   <data name="C_ExitTitle" xml:space="preserve"><value>初期設定を終了</value></data>
-  <data name="C_ExitDescription" xml:space="preserve"><value>プライバシーポリシーとライセンスの確認が完了していません。終了すると SecRandom が閉じ、OOBE の完了状態は保存されません。</value></data>
+  <data name="C_ExitDescription" xml:space="preserve"><value>検証可能な抽選について、プライバシーポリシー、ライセンスの確認が完了していません。終了すると SecRandom が閉じ、OOBE の完了状態は保存されません。</value></data>
   <data name="C_Exit" xml:space="preserve"><value>アプリケーションを終了</value></data>
   <data name="C_ContinueSetup" xml:space="preserve"><value>設定を続ける</value></data>
   <data name="M_ImportConfirmation" xml:space="preserve"><value>ソースのバージョン：{0}
@@ -132,8 +144,8 @@ SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="M_UnsupportedImportDetail" xml:space="preserve"><value>このファイルは対応している SecRandom v3 のエクスポートファイルではありません。</value></data>
   <data name="M_ImportCompleted" xml:space="preserve"><value>インポートが完了しました。現在のプライバシーポリシーと GNU GPLv3 のバージョンを確認して続行してください。</value></data>
   <data name="M_ImportFailed" xml:space="preserve"><value>インポートに失敗しました</value></data>
-  <data name="M_AgreementRequired" xml:space="preserve"><value>先にプライバシーポリシーと GNU GPLv3 を読み、確認してください。</value></data>
-  <data name="M_CompletionAgreementRequired" xml:space="preserve"><value>完了する前に、プライバシーポリシーと GNU GPLv3 の確認が必要です。</value></data>
+  <data name="M_AgreementRequired" xml:space="preserve"><value>先に検証可能な抽選について、プライバシーポリシー、GNU GPLv3 を読み、確認してください。</value></data>
+  <data name="M_CompletionAgreementRequired" xml:space="preserve"><value>完了する前に、検証可能な抽選について、プライバシーポリシー、GNU GPLv3 の確認が必要です。</value></data>
   <data name="M_DesktopIntegrationFailed" xml:space="preserve"><value>一部のデスクトップ連携を有効にできなかったため、無効のままです。後から設定で再試行できます。</value></data>
   <data name="M_StudentsImported" xml:space="preserve"><value>{0} 人の学生をインポートし、既定のクラスに設定しました。</value></data>
   <data name="M_PrizesImported" xml:space="preserve"><value>{0} 件の賞品をインポートし、既定の賞品プールに設定しました。</value></data>

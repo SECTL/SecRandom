@@ -17,4 +17,8 @@ public partial class App
         && Environment.OSVersion.Version >= new Version(10, 0, 22000, 0)
         && AvaloniaUnsafeAccessorHelpers.GetActiveWin32CompositionMode() ==
         AvaloniaUnsafeAccessorHelpers.Win32CompositionMode.WinUIComposition;
+
+    public static bool SupportsProgrammaticWindowPositioning { get; } = !OperatingSystem.IsLinux()
+        || (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY"))
+            && !string.Equals(Environment.GetEnvironmentVariable("XDG_SESSION_TYPE"), "wayland", StringComparison.OrdinalIgnoreCase));
 }

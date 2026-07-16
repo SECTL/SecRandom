@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -27,9 +28,12 @@ using SecRandom.Core.Extensions;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Logging;
 using SecRandom.Models;
+using SecRandom.Services.Desktop;
 using SecRandom.Services.ImportExport;
 using SecRandom.Services.Security;
+using SecRandom.Shared;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
@@ -68,6 +72,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     public bool IsPreviewMode => _isPreviewMode;
     public SettingsViewModel ViewModel { get; } = IAppHost.GetService<SettingsViewModel>();
     private IImportExportService ImportExportService { get; } = IAppHost.GetService<IImportExportService>();
+    private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
 
     #region Misc
 
@@ -315,6 +320,27 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         SelectNavigationItemById("settings.logs");
     }
 
+    private void OpenLogDirectoryMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        OpenDirectory(FileLoggerProvider.LogDirectory);
+    }
+
+    private void OpenDataDirectoryMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        OpenDirectory(Utils.DataRoot);
+    }
+
+    private void OpenAppDirectoryMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        OpenDirectory(Utils.PackageRoot);
+    }
+
+    private void OpenDirectory(string path)
+    {
+        if (!ExternalLauncher.TryOpenPath(path))
+            this.ShowErrorToast(GetResource("M_OpenDirectoryFailed"));
+    }
+
     private async void ExportDiagnosticDataMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
         if (!CanTransferData())
@@ -348,7 +374,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
             return;
         var path = await PickSavePathAsync(
             GetResource("C_ExportSettingsFileTitle"),
-            "SecRandom_v3_settings.json",
+            $"SecRandom_{GlobalConstants.Version}_settings.json",
             "json",
             GetResource("C_JsonFileType"));
         if (path is null)
@@ -404,7 +430,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
             return;
         var path = await PickSavePathAsync(
             GetResource("C_ExportAllDataFileTitle"),
-            "SecRandom_v3_all_data.zip",
+            $"SecRandom_{GlobalConstants.Version}_all_data.zip",
             "zip",
             GetResource("C_ZipFileType"));
         if (path is null)

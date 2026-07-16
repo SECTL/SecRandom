@@ -52,6 +52,7 @@ public partial class FloatingWindowSettingsPage : UserControl
     public AvaloniaList<MultiSelectSettingOption> ButtonOptions { get; }
     public AvaloniaList<MultiSelectSettingOption> SelectedButtonOptions { get; }
     public bool IsUiAccessSupported => OperatingSystem.IsWindows();
+    public bool SupportsProgrammaticWindowPositioning => App.SupportsProgrammaticWindowPositioning;
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private DesktopIntegrationService DesktopIntegration { get; } = IAppHost.GetService<DesktopIntegrationService>();

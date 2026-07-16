@@ -29,7 +29,8 @@ public abstract class AttachedSettingsControlBase : UserControl
 
     public static AttachedSettingsControlBase? GetInstance(AttachedSettingsControlInfo info, ref object? settings)
     {
-        var control = IAppHost.Host?.Services.GetKeyedService<AttachedSettingsControlBase>(info.Guid);
+        var control = IAppHost.Host?.Services.GetKeyedService<AttachedSettingsControlBase>(info.Guid)
+                      ?? Activator.CreateInstance(info.AttachedSettingsControlType) as AttachedSettingsControlBase;
         if (control == null) return null;
 
         var baseType = info.AttachedSettingsControlType.BaseType;

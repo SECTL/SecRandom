@@ -31,7 +31,7 @@
         <value>应用信息</value>
     </data>
     <data name="C_ProjectHome" xml:space="preserve">
-        <value>项目主页</value>
+        <value>文档站</value>
     </data>
     <data name="S_Author_R" xml:space="preserve">
         <value>黎泽懿_Aionflux</value>
@@ -75,6 +75,18 @@
     <data name="S_Ack_Contributors" xml:space="preserve">
         <value>贡献人员</value>
     </data>
+    <data name="S_Ack_Contributors_D" xml:space="preserve">
+        <value>查看为 SecRandom 提交代码的 GitHub 贡献者</value>
+    </data>
+    <data name="S_Ack_Contributors_ContributionCount" xml:space="preserve">
+        <value>{0} 次提交</value>
+    </data>
+    <data name="C_Refresh" xml:space="preserve">
+        <value>刷新</value>
+    </data>
+    <data name="M_ContributorsLoadFailed" xml:space="preserve">
+        <value>无法加载贡献者名单：{0}</value>
+    </data>
     <data name="S_UserInformation" xml:space="preserve">
         <value>用户信息</value>
     </data>
@@ -83,5 +95,14 @@
     </data>
     <data name="S_Author" xml:space="preserve">
         <value>应用作者</value>
+    </data>
+    <data name="C_InternalSettingsActivatedTitle" xml:space="preserve">
+        <value>内幕设置已显示</value>
+    </data>
+    <data name="C_Close" xml:space="preserve">
+        <value>关闭</value>
+    </data>
+    <data name="M_InternalSettingsActivated" xml:space="preserve">
+        <value>已在名单管理页面每位学生或奖品右侧的“附加设置”菜单中显示“内幕设置”。此显示仅对本次运行有效，重新启动软件后会自动隐藏。&#xA;&#xA;内幕设置会影响候选项权重，不适用于需要公平、公开或可审计的学校和活动抽取。启用内幕设置的人员若被抽中，可验证文件上传至验证网站时会显示相应提醒；这可能使设置行为被发现。&#xA;&#xA;内幕设置的优先级低于公平抽取规则。已设置内幕的学生或奖品即使本次被抽中，也不代表下次一定会被抽中。</value>
     </data>
 </root>

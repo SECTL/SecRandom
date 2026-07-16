@@ -30,4 +30,25 @@
     <data name="C_ProbabilityDescription" xml:space="preserve">
         <value>默认值为 0，权重范围为 0-100；0 为不参与，100 为必中。</value>
     </data>
+    <data name="C_SpecificVoice" xml:space="preserve">
+        <value>专属语音</value>
+    </data>
+    <data name="C_SpecificVoiceAlias" xml:space="preserve">
+        <value>TTS 别名</value>
+    </data>
+    <data name="C_SpecificVoiceAliasPlaceholder" xml:space="preserve">
+        <value>留空则使用原名称</value>
+    </data>
+    <data name="C_SpecificVoicePrefix" xml:space="preserve">
+        <value>播报前缀</value>
+    </data>
+    <data name="C_SpecificVoiceSuffix" xml:space="preserve">
+        <value>播报后缀</value>
+    </data>
+    <data name="C_SpecificVoiceOptional" xml:space="preserve">
+        <value>可选</value>
+    </data>
+    <data name="C_SpecificVoiceDescription" xml:space="preserve">
+        <value>启用后，播报将使用此条目的别名、前缀和后缀。</value>
+    </data>
 </root>

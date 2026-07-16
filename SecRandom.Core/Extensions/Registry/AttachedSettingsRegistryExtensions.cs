@@ -26,6 +26,28 @@ public static class AttachedSettingsRegistryExtensions
 
         services.AddKeyedTransient<AttachedSettingsControlBase, T>(info.Guid);
 
+        RegisterAttachedSettingsControl<T>(name, info, usages);
+        return services;
+    }
+
+    public static bool RegisterAttachedSettingsControl<T>(string name)
+        where T : AttachedSettingsControlBase
+    {
+        var type = typeof(T);
+        if (type.GetCustomAttributes(false).FirstOrDefault(x => x is AttachedSettingsControlInfo) is not
+            AttachedSettingsControlInfo info ||
+            type.GetCustomAttributes(false).FirstOrDefault(x => x is AttachedSettingsUsage) is not AttachedSettingsUsage usages ||
+            AttachedSettingsRegistryService.RegisteredControls.Any(control => control.Guid == info.Guid))
+            return false;
+
+        RegisterAttachedSettingsControl<T>(name, info, usages);
+        return true;
+    }
+
+    private static void RegisterAttachedSettingsControl<T>(string name, AttachedSettingsControlInfo info,
+        AttachedSettingsUsage usages)
+        where T : AttachedSettingsControlBase
+    {
         info.Name = name;
         info.AttachedSettingsControlType = typeof(T);
         info.Targets = usages.Targets;
@@ -43,7 +65,5 @@ public static class AttachedSettingsRegistryExtensions
 
         if (usages.Targets.HasFlag(AttachedSettingsTargets.PrizeList))
             AttachedSettingsRegistryService.PrizeListAttachedSettingsControls.Add(info);
-
-        return services;
     }
 }

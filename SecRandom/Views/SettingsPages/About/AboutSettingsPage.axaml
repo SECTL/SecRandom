@@ -9,8 +9,51 @@
              xmlns:lsa="clr-namespace:SecRandom.Langs.SettingsPages.About"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.About"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.SettingsPages.About.AboutSettingsPage"
-             x:DataType="local:AboutSettingsPage">
+              x:Class="SecRandom.Views.SettingsPages.About.AboutSettingsPage"
+              x:DataType="local:AboutSettingsPage">
+    <UserControl.Resources>
+        <Grid x:Key="ContributorsDrawer" Width="320" Margin="16" RowDefinitions="Auto,Auto,Auto,*">
+            <TextBlock Grid.Row="0" Text="{x:Static lsa:Resources.S_Ack_Contributors}"
+                       Theme="{StaticResource SubtitleTextBlockStyle}" />
+            <TextBlock Grid.Row="1" Margin="0,6,0,8" Text="{x:Static lsa:Resources.S_Ack_Contributors_D}"
+                       TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Button Grid.Row="2" HorizontalAlignment="Left" Click="RefreshContributors_OnClick"
+                    IsEnabled="{Binding CanRefreshContributors}"
+                    ToolTip.Tip="{x:Static lsa:Resources.C_Refresh}">
+                <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseFilled}" />
+            </Button>
+            <ListBox Grid.Row="3" Margin="0,8,0,0" ItemsSource="{Binding Contributors}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.Styles>
+                    <Style Selector="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Margin" Value="0" />
+                        <Setter Property="Padding" Value="0" />
+                    </Style>
+                </ListBox.Styles>
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="local:GitHubContributor">
+                        <Button Width="288" Margin="0" HorizontalContentAlignment="Stretch" Padding="4" Background="Transparent"
+                                CommandParameter="{Binding ProfileUrl}" Click="OpenContributorProfile_OnClick"
+                                ToolTip.Tip="{Binding ProfileUrl}">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                <Border Width="36" Height="36" CornerRadius="18" ClipToBounds="True"
+                                        Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                                    <Image Source="{Binding Avatar}" Stretch="UniformToFill" />
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                    <TextBlock Text="{Binding Login}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding ContributionText}" FontSize="12"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                </StackPanel>
+                                <sr:FluentIcon Grid.Column="2" Glyph="{sr:Fi OpenFilled}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+    </UserControl.Resources>
     <sr:StickyScrollViewer CollapsedHeight="58">
         <sr:StickyScrollViewer.HeaderContent>
             <Grid>
@@ -63,10 +106,13 @@
                             </Border.Background>
                         </Border>
                     </Panel>
-                    <Image Source="/Assets/Banners/secrandom-banner.png" Stretch="Uniform"
-                           HorizontalAlignment="Center"
-                           MaxWidth="{StaticResource PageContainerWidth}"
-                           VerticalAlignment="Top" />
+                    <Border Background="Transparent"
+                            HorizontalAlignment="Center"
+                            MaxWidth="{StaticResource PageContainerWidth}"
+                            VerticalAlignment="Top"
+                            PointerPressed="Banner_OnPointerPressed">
+                        <Image Source="/Assets/Banners/secrandom-banner.png" Stretch="Uniform" />
+                    </Border>
                 </Panel>
 
                 <Border Margin="12 16 18 0"
@@ -112,8 +158,8 @@
                                 </Style>
                             </WrapPanel.Styles>
 
-                            <HyperlinkButton Click="UriNavigationCommands_OnClick"
-                                             CommandParameter="https://secrandom.sectl.top">
+                             <HyperlinkButton Click="UriNavigationCommands_OnClick"
+                                              CommandParameter="https://secrandom.sectl.cn">
                                 <TextBlock Text="{x:Static lsa:Resources.C_ProjectHome}" />
                             </HyperlinkButton>
 
@@ -188,8 +234,9 @@
                 </fa:FASettingsExpanderItem>
 
                 <fa:FASettingsExpanderItem Content="{x:Static lsa:Resources.S_Ack_Contributors}"
-                                           Footer="{x:Static lc:Resources.C_ToBeWritten}"
-                                            IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource {sr:Fi OpenFilled}}" />
+                                           Description="{x:Static lsa:Resources.S_Ack_Contributors_D}"
+                                           IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}"
+                                           Click="Contributors_OnClick" />
             </fa:FASettingsExpander>
         </StackPanel>
     </sr:StickyScrollViewer>
