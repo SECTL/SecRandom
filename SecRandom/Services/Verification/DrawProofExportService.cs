@@ -37,11 +37,44 @@ public sealed class DrawProofExportService(
             timestamp.ToString("yyyy-MM"),
             timestamp.ToString("yyyy-MM-dd"),
             CreateFileName(proof, context));
-        var temporaryPath = path + ".tmp";
-        File.WriteAllText(temporaryPath, JsonSerializer.Serialize(proof, JsonOptions));
-        File.Move(temporaryPath, path, true);
+        SaveAtPath(path, proof);
+        RemoveProofsOverStorageLimit(configHandler.Data.General.ProofRetention.MaximumStorageBytes);
         logger.LogInformation("已导出抽取证明：ProofId={ProofId}，模式={Mode}，路径={Path}。", proof.ProofId, proof.Mode, path);
         return path;
+    }
+
+    public void SaveAtPath(string path, DrawProof proof)
+    {
+        var temporaryPath = path + $".{Guid.NewGuid():N}.tmp";
+        File.WriteAllText(temporaryPath, JsonSerializer.Serialize(proof, JsonOptions));
+        File.Move(temporaryPath, path, true);
+    }
+
+    public IEnumerable<string> EnumerateProofPaths()
+    {
+        var root = Utils.GetDirectoryPath("proofs");
+        return Directory.Exists(root)
+            ? Directory.EnumerateFiles(root, "*.srproof.json", SearchOption.AllDirectories)
+            : [];
+    }
+
+    public bool TryRead(string path, out DrawProof? proof)
+    {
+        try
+        {
+            proof = JsonSerializer.Deserialize<DrawProof>(File.ReadAllText(path), JsonOptions);
+            return proof is not null;
+        }
+        catch (IOException)
+        {
+            proof = null;
+            return false;
+        }
+        catch (JsonException)
+        {
+            proof = null;
+            return false;
+        }
     }
 
     public static string CreateFileName(DrawProof proof, DrawProofExportContext context)
@@ -94,6 +127,42 @@ public sealed class DrawProofExportService(
             catch (UnauthorizedAccessException exception)
             {
                 logger.LogDebug(exception, "无权删除过期证明文件：{Path}。", path);
+            }
+        }
+    }
+
+    private void RemoveProofsOverStorageLimit(long maximumStorageBytes)
+    {
+        if (maximumStorageBytes <= 0)
+            return;
+
+        var root = Utils.GetDirectoryPath("proofs");
+        if (!Directory.Exists(root))
+            return;
+
+        var files = Directory.EnumerateFiles(root, "*.srproof.json", SearchOption.AllDirectories)
+            .Select(path => new FileInfo(path))
+            .OrderBy(file => file.LastWriteTimeUtc)
+            .ToList();
+        var totalBytes = files.Sum(file => file.Length);
+        foreach (var file in files)
+        {
+            if (totalBytes <= maximumStorageBytes)
+                break;
+
+            try
+            {
+                var length = file.Length;
+                file.Delete();
+                totalBytes -= length;
+            }
+            catch (IOException exception)
+            {
+                logger.LogDebug(exception, "跳过正在使用的超限证明文件：{Path}。", file.FullName);
+            }
+            catch (UnauthorizedAccessException exception)
+            {
+                logger.LogDebug(exception, "无权删除超限证明文件：{Path}。", file.FullName);
             }
         }
     }

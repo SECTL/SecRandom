@@ -59,11 +59,13 @@ public sealed class DrawProofResult
 public sealed class DrawProofWitness
 {
     [JsonPropertyName("challenge")]
-    public string Challenge { get; init; } = string.Empty;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Challenge { get; init; }
 
     [JsonPropertyName("receipt")]
-    public string Receipt { get; init; } = string.Empty;
+    public string? Receipt { get; init; }
 
     [JsonPropertyName("keyId")]
-    public string KeyId { get; init; } = string.Empty;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? KeyId { get; init; }
 }

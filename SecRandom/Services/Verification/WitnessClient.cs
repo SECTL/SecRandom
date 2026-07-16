@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -8,98 +9,147 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using SecRandom.Core;
-using SecRandom.Core.Services.Config;
+using Microsoft.Extensions.Logging;
 using SecRandom.Core.Services.Verification;
+using SecRandom.Services.Config;
 using SecRandom.Shared.Models.Verification;
 
 namespace SecRandom.Services.Verification;
 
 public sealed class WitnessClient(
     HttpClient httpClient,
-    MainConfigHandler configHandler) : IWitnessClient
+    DeviceUuidStore deviceUuidStore,
+    ILogger<WitnessClient> logger) : IWitnessClient
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.KebabCaseLower) }
     };
 
-    public async Task<(WitnessChallengeTicket Ticket, string Token)> CreateChallengeAsync(
-        byte[] inputHash,
-        byte[] clientNonce,
-        CancellationToken cancellationToken)
-    {
-        var request = new
-        {
-            algorithmId = VerificationWireCodec.AlgorithmId,
-            algorithmEngineVersion = VerificationWireCodec.AlgorithmEngineVersion,
-            inputHash = ToBase64Url(inputHash),
-            clientCommit = ToBase64Url(SHA256.HashData(clientNonce)),
-            subject = new { type = "offline-user-id", id = configHandler.Data.General.Basic.OfflineUserId.ToString("D") },
-            clientVersion = GlobalConstants.Version
-        };
-
-        using var response = await httpClient.PostAsJsonAsync(new Uri(new Uri(WitnessServiceUrl), "v1/challenges"), request, JsonOptions, cancellationToken)
-            .ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-        var envelope = await response.Content.ReadFromJsonAsync<WitnessChallengeResponse>(JsonOptions, cancellationToken)
-            .ConfigureAwait(false) ?? throw new InvalidDataException("Witness service returned an empty challenge response.");
-        var ticket = VerifyToken<WitnessChallengeTicket>(envelope.Token);
-
-        if (ticket.InputHash != request.inputHash || ticket.ClientCommit != request.clientCommit ||
-            ticket.SubjectId != request.subject.id || ticket.AlgorithmId != request.algorithmId ||
-            ticket.AlgorithmEngineVersion != request.algorithmEngineVersion || ticket.ExpiresAtUtc <= DateTimeOffset.UtcNow)
-            throw new InvalidDataException("Witness challenge is not bound to this frozen draw input.");
-
-        return (ticket, envelope.Token);
-    }
-
-    public async Task<(WitnessTicket Ticket, string Token)> CreateTicketAsync(CancellationToken cancellationToken)
-    {
-        var request = new
-        {
-            subject = new { type = "offline-user-id", id = configHandler.Data.General.Basic.OfflineUserId.ToString("D") },
-            clientVersion = GlobalConstants.Version
-        };
-
-        using var response = await httpClient.PostAsJsonAsync(new Uri(new Uri(WitnessServiceUrl), "v1/tickets"), request, JsonOptions, cancellationToken)
-            .ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-        var envelope = await response.Content.ReadFromJsonAsync<WitnessTicketResponse>(JsonOptions, cancellationToken)
-            .ConfigureAwait(false) ?? throw new InvalidDataException("Witness service returned an empty ticket response.");
-        var ticket = VerifyToken<WitnessTicket>(envelope.Token);
-        if (ticket.SubjectId != request.subject.id || ticket.ExpiresAtUtc <= DateTimeOffset.UtcNow)
-            throw new InvalidDataException("Witness ticket is not bound to this installation.");
-        return (ticket, envelope.Token);
-    }
-
-    public async Task<string> FinalizeAsync(
-        string ticketToken,
-        byte[] clientNonce,
+    public async Task<string> AttestAsync(
         DrawProof proof,
         CancellationToken cancellationToken)
     {
-        var request = new
+        using var request = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(WitnessServiceUrl), "v1/proofs/attest"))
         {
-            ticket = ticketToken,
-            clientNonce = ToBase64Url(clientNonce),
-            proof
+            Content = JsonContent.Create(proof, options: JsonOptions)
         };
-
-        using var response = await httpClient.PostAsJsonAsync(new Uri(new Uri(WitnessServiceUrl), "v1/proofs/finalize"), request, JsonOptions, cancellationToken)
+        AddClientId(request);
+        using var response = await httpClient.SendAsync(request, cancellationToken)
             .ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-        var envelope = await response.Content.ReadFromJsonAsync<WitnessFinalizeResponse>(JsonOptions, cancellationToken)
-            .ConfigureAwait(false) ?? throw new InvalidDataException("Witness service returned an empty finalization response.");
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            throw new HttpRequestException($"Witness attestation failed with {(int)response.StatusCode}: {error}", null, response.StatusCode);
+        }
+        var envelope = await response.Content.ReadFromJsonAsync<WitnessAttestationResponse>(JsonOptions, cancellationToken)
+            .ConfigureAwait(false) ?? throw new InvalidDataException("Witness service returned an empty attestation response.");
         var receipt = VerifyToken<WitnessReceipt>(envelope.Token);
         if (receipt.ProofId != proof.ProofId || receipt.InputHash != proof.InputHash ||
-            receipt.PayloadHash != ToBase64Url(SHA256.HashData(FromBase64Url(proof.Payload))))
-            throw new InvalidDataException("Witness receipt is not bound to this proof.");
+            receipt.PayloadHash != ToBase64Url(SHA256.HashData(FromBase64Url(proof.Payload))) ||
+            receipt.AuditPayloadHash != ToBase64Url(SHA256.HashData(FromBase64Url(proof.AuditPayload))) ||
+            receipt.ProofHash != ComputeAttestedProofHash(proof) ||
+            receipt.Mode != proof.Mode)
+            throw new InvalidDataException("Server attestation is not bound to this proof.");
 
         return envelope.Token;
     }
 
-    private static T VerifyToken<T>(string token)
+    public async Task<DrawProof> NotarizeAsync(
+        FormalNotarizationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var lockedRequest = FromBase64Url(request.ZeroSeedRequest);
+        if (lockedRequest.Length >= 17 && lockedRequest.AsSpan(0, 4).SequenceEqual("SRDQ"u8))
+        {
+            logger.LogDebug(
+                "提交正式公证锁定请求：ProofId={ProofId}，协议版本={Version}，抽取种类={DrawKind}，抽样策略={SamplingMode}，算法配置={AlgorithmProfile}，请求数量={Count}，候选数={CandidateCount}，帧长度={FrameLength}。",
+                request.ProofId,
+                BinaryPrimitives.ReadUInt16LittleEndian(lockedRequest[4..]),
+                lockedRequest[6],
+                lockedRequest[7],
+                lockedRequest[8],
+                BinaryPrimitives.ReadUInt32LittleEndian(lockedRequest[9..]),
+                BinaryPrimitives.ReadUInt32LittleEndian(lockedRequest[13..]),
+                lockedRequest.Length);
+        }
+
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(WitnessServiceUrl), "v1/notarizations"))
+        {
+            Content = JsonContent.Create(request, options: JsonOptions)
+        };
+        AddClientId(httpRequest);
+        using var response = await httpClient.SendAsync(httpRequest, cancellationToken)
+            .ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            throw new HttpRequestException($"Formal notarization failed with {(int)response.StatusCode}: {error}", null, response.StatusCode);
+        }
+        var envelope = await response.Content.ReadFromJsonAsync<FormalNotarizationResponse>(JsonOptions, cancellationToken)
+            .ConfigureAwait(false) ?? throw new InvalidDataException("Witness service returned an empty notarization response.");
+        var proof = envelope.Proof;
+        var receipt = VerifyToken<WitnessReceipt>(proof.Witness?.Receipt
+            ?? throw new InvalidDataException("Formal notarization did not include a receipt."));
+        if (proof.ProofId != request.ProofId || proof.ParentProofId != request.ParentProofId || proof.Mode != VerificationProofMode.OnlineWitnessed
+            || proof.InputHash != request.InputHash || receipt.Role != "server-notary"
+            || receipt.ProofId != proof.ProofId || receipt.InputHash != proof.InputHash
+            || receipt.PayloadHash != ToBase64Url(SHA256.HashData(FromBase64Url(proof.Payload)))
+            || receipt.AuditPayloadHash != ToBase64Url(SHA256.HashData(FromBase64Url(proof.AuditPayload)))
+            || receipt.ProofHash != ComputeAttestedProofHash(proof)
+            || receipt.Mode != proof.Mode)
+            throw new InvalidDataException("Server notarization is not bound to the locked draw.");
+
+        var payload = FromBase64Url(proof.Payload);
+        if (payload.Length < 49 || !payload.AsSpan(0, 4).SequenceEqual("SRDQ"u8)
+            || !FromBase64Url(proof.AuditPayload).AsSpan().SequenceEqual(FromBase64Url(request.AuditPayload))
+            || !MatchesLockedRequest(payload, FromBase64Url(request.ZeroSeedRequest)))
+            throw new InvalidDataException("Server notarization does not match the locked input frame.");
+
+        var challenge = VerifyToken<FormalLockReceipt>(proof.Witness?.Challenge
+            ?? throw new InvalidDataException("Formal notarization did not include a lock receipt."));
+        if (challenge.Role != "server-notary-lock" || challenge.KeyId != proof.Witness.KeyId
+            || challenge.ProofId != request.ProofId || challenge.ParentProofId != request.ParentProofId
+            || challenge.InputHash != request.InputHash || challenge.ClientNonce != request.ClientNonce
+            || challenge.RequestHash != ToBase64Url(SHA256.HashData(FromBase64Url(request.ZeroSeedRequest)))
+            || challenge.AuditPayloadHash != ToBase64Url(SHA256.HashData(FromBase64Url(request.AuditPayload)))
+            || FromBase64Url(challenge.ServerNonce).Length != 32)
+            throw new InvalidDataException("Formal notarization lock receipt is not bound to this request.");
+
+        return proof;
+    }
+
+    internal static byte[] DeriveFormalSeed(DrawProof proof)
+    {
+        var lockReceipt = VerifyToken<FormalLockReceipt>(proof.Witness?.Challenge
+            ?? throw new InvalidDataException("Formal proof does not include a lock receipt."));
+        return VerificationSeedDerivation.DeriveOnline(
+            FromBase64Url(proof.InputHash), lockReceipt.TicketId,
+            FromBase64Url(lockReceipt.ClientNonce), FromBase64Url(lockReceipt.ServerNonce));
+    }
+
+    private static bool MatchesLockedRequest(ReadOnlySpan<byte> payload, ReadOnlySpan<byte> lockedRequest)
+    {
+        if (lockedRequest.Length < 49 || !lockedRequest[..4].SequenceEqual("SRDQ"u8))
+            return false;
+
+        var candidateCount = BinaryPrimitives.ReadUInt32LittleEndian(payload[13..]);
+        var requestLength = checked(49 + (int)candidateCount * 45);
+        if (requestLength != lockedRequest.Length || payload.Length <= requestLength)
+            return false;
+
+        var finalizedRequest = payload[..requestLength].ToArray();
+        finalizedRequest.AsSpan(17, 32).Clear();
+        return finalizedRequest.AsSpan().SequenceEqual(lockedRequest);
+    }
+
+    private void AddClientId(HttpRequestMessage request)
+    {
+        var clientId = deviceUuidStore.GetOrCreate();
+        request.Headers.Add("X-SecRandom-Client-Id", clientId.ToString("D"));
+    }
+
+    internal static T VerifyToken<T>(string token)
     {
         var parts = token.Split('.', StringSplitOptions.None);
         if (parts.Length != 2)
@@ -127,6 +177,58 @@ public sealed class WitnessClient(
         var normalized = value.Replace('-', '+').Replace('_', '/');
         normalized = normalized.PadRight(normalized.Length + (4 - normalized.Length % 4) % 4, '=');
         return Convert.FromBase64String(normalized);
+    }
+
+    internal static string ComputeAttestedProofHash(DrawProof proof)
+    {
+        ArgumentNullException.ThrowIfNull(proof);
+        ArgumentNullException.ThrowIfNull(proof.Result);
+
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        AppendString(hash, proof.Format);
+        AppendString(hash, proof.ProofId.ToString("N"));
+        AppendString(hash, proof.ParentProofId?.ToString("N"));
+        AppendInt32(hash, (int)proof.Mode);
+        AppendInt64(hash, proof.CreatedAtUtc.UtcDateTime.Ticks);
+        AppendString(hash, proof.AlgorithmId);
+        AppendString(hash, proof.AlgorithmEngineVersion);
+        AppendString(hash, proof.LegacyKernelVersion);
+        AppendString(hash, proof.InputHash);
+        AppendString(hash, proof.Payload);
+        AppendString(hash, proof.AuditPayload);
+        AppendInt32(hash, proof.Result.WinnerRecordIds.Count);
+        foreach (var winnerRecordId in proof.Result.WinnerRecordIds)
+            AppendString(hash, winnerRecordId.ToString("N"));
+        AppendString(hash, proof.Witness?.Challenge);
+        AppendString(hash, proof.Witness?.KeyId);
+        return ToBase64Url(hash.GetHashAndReset());
+    }
+
+    private static void AppendString(IncrementalHash hash, string? value)
+    {
+        if (value is null)
+        {
+            AppendInt32(hash, -1);
+            return;
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(value);
+        AppendInt32(hash, bytes.Length);
+        hash.AppendData(bytes);
+    }
+
+    private static void AppendInt32(IncrementalHash hash, int value)
+    {
+        Span<byte> buffer = stackalloc byte[sizeof(int)];
+        BinaryPrimitives.WriteInt32LittleEndian(buffer, value);
+        hash.AppendData(buffer);
+    }
+
+    private static void AppendInt64(IncrementalHash hash, long value)
+    {
+        Span<byte> buffer = stackalloc byte[sizeof(long)];
+        BinaryPrimitives.WriteInt64LittleEndian(buffer, value);
+        hash.AppendData(buffer);
     }
 
     private const string WitnessServiceUrl = "https://fair.sectl.cn/";

@@ -19,7 +19,7 @@ using RollCallSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.RollCall
 
 namespace SecRandom.Core.Models;
 
-public partial class MainConfigModel : ConfigBase
+public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
 {
     [ObservableProperty] private FloatPositionConfig _floatPosition = new();
 
@@ -51,6 +51,12 @@ public partial class MainConfigModel : ConfigBase
     [ObservableProperty] private HistoryManagementSettingsConfig _historyManagementSettings = new();
     [ObservableProperty] private UpdateSettingsConfig _updateSettings = new();
     [ObservableProperty] private MoreSettingsConfig _moreSettings = new();
+
+    [JsonPropertyName("moreSettings")]
+    public MoreSettingsConfig LegacyMoreSettingsOnLoad
+    {
+        set => MoreSettings = value;
+    }
 
     [JsonIgnore] public override string ConfigFilePath => Utils.GetFilePath("config", "settings.json");
 
@@ -102,15 +108,16 @@ public partial class MainConfigModel : ConfigBase
                 : DefaultDrawSettings,
             OverridableDrawSettingsType.Reminder => settings.OverrideReminderSettings ? settings : DefaultDrawSettings,
             OverridableDrawSettingsType.Music => settings.OverrideMusicSettings ? settings : DefaultDrawSettings,
+            OverridableDrawSettingsType.VoiceAnnouncement => settings.OverrideVoiceAnnouncementSettings
+                ? settings
+                : DefaultDrawSettings,
             _ => throw new ArgumentOutOfRangeException(nameof(settingsType), settingsType, null)
         };
     }
 
-    public NotificationChannelSettings GetOverrideNotificationSettings(
-        NotificationSettingsType notificationSettingsType,
-        OverridableNotificationSettingsType settingsType)
+    public NotificationChannelSettings GetNotificationChannelSettings(NotificationSettingsType notificationSettingsType)
     {
-        var settings = notificationSettingsType switch
+        return notificationSettingsType switch
         {
             NotificationSettingsType.RollCall => NotificationSettings.RollCall,
             NotificationSettingsType.QuickDraw => NotificationSettings.QuickDraw,
@@ -118,12 +125,16 @@ public partial class MainConfigModel : ConfigBase
             _ => throw new ArgumentOutOfRangeException(
                 nameof(notificationSettingsType), notificationSettingsType, null)
         };
+    }
 
+    public NotificationChannelSettings GetOverrideNotificationSettings(
+        NotificationSettingsType notificationSettingsType,
+        OverridableNotificationSettingsType settingsType)
+    {
+        var settings = (OverridableNotificationChannelSettings)GetNotificationChannelSettings(notificationSettingsType);
         return settingsType switch
         {
-            OverridableNotificationSettingsType.Basic => settings.OverrideBasicSettings
-                ? settings
-                : NotificationSettings.Default,
+            OverridableNotificationSettingsType.Basic => settings,
             OverridableNotificationSettingsType.NotificationWindow => settings.OverrideNotificationWindowSettings
                 ? settings
                 : NotificationSettings.Default,
@@ -132,5 +143,28 @@ public partial class MainConfigModel : ConfigBase
                 : NotificationSettings.Default,
             _ => throw new ArgumentOutOfRangeException(nameof(settingsType), settingsType, null)
         };
+    }
+
+    void IJsonOnDeserialized.OnDeserialized()
+    {
+        ApplyLegacyAnimationMusicLoop();
+    }
+
+    private void ApplyLegacyAnimationMusicLoop()
+    {
+        var legacyMusicLoop = MoreSettings.ConsumeLegacyBackgroundMusicLoop();
+        if (legacyMusicLoop is not { } animationMusicLoop)
+            return;
+
+        ApplyLegacyAnimationMusicLoop(DefaultDrawSettings, animationMusicLoop);
+        ApplyLegacyAnimationMusicLoop(RollCallSettings, animationMusicLoop);
+        ApplyLegacyAnimationMusicLoop(QuickDrawSettings, animationMusicLoop);
+        ApplyLegacyAnimationMusicLoop(LotterySettings, animationMusicLoop);
+    }
+
+    private static void ApplyLegacyAnimationMusicLoop(DrawSettingsConfigBase settings, bool value)
+    {
+        if (!settings.HasAnimationMusicLoop)
+            settings.AnimationMusicLoop = value;
     }
 }

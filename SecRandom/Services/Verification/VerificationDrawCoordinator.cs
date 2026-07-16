@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Verification;
+using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Shared.Models.Profile;
@@ -19,10 +20,10 @@ namespace SecRandom.Services.Verification;
 public sealed class VerificationDrawCoordinator(
     DrawEngine drawEngine,
     IVerificationKernel kernel,
-    IWitnessClient witnessClient,
-    WitnessTicketCache ticketCache,
     DrawProofExportService proofExporter,
-    ILogger<VerificationDrawCoordinator> logger)
+    DrawProofAttestationService attestationService,
+    MainConfigHandler configHandler,
+    IWitnessClient witnessClient)
 {
     public bool IsEnabled => true;
 
@@ -58,63 +59,39 @@ public sealed class VerificationDrawCoordinator(
         CancellationToken cancellationToken)
         where TCandidate : class
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var recordLookup = records.ToDictionary(GetRecordId);
         var inputHash = VerificationWireCodec.ComputeInputHash(input);
-        if (ticketCache.TryTake(out var lease))
+        DrawProof proof;
+        VerificationKernelResult result;
+        if (configHandler.Data.General.Verification.Mode == VerificationMode.FormalNotarized)
         {
-            try
+            var request = new FormalNotarizationRequest
             {
-            var clientNonce = VerificationSeedDerivation.CreateCsprngNonce();
-            var seed = VerificationSeedDerivation.DeriveOnline(
-                inputHash,
-                lease.Ticket.TicketId,
-                clientNonce,
-                WitnessClient.FromBase64Url(lease.Ticket.ServerNonce));
-            var result = kernel.Draw(input, seed);
-            var pendingProof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OnlineWitnessed, parentProofId,
-                new DrawProofWitness { Challenge = lease.Token, KeyId = lease.Ticket.KeyId });
-            var localProof = pendingProof with { Mode = VerificationProofMode.OfflineReproducible, Witness = null };
-            var outcome = Complete(records, recordLookup, result, localProof, exportContext);
-            _ = FinalizeWitnessAsync(lease, clientNonce, pendingProof, exportContext);
-            return outcome;
-            }
-            catch (Exception exception)
-            {
-                logger.LogWarning(exception, "服务器见证票据无效，已重新生成本地可重放证明。");
-            }
+                ProofId = Guid.NewGuid(),
+                ParentProofId = parentProofId,
+                InputHash = WitnessClient.ToBase64Url(inputHash),
+                ZeroSeedRequest = WitnessClient.ToBase64Url(VerificationWireCodec.EncodeDrawRequest(input, new byte[32])),
+                AuditPayload = WitnessClient.ToBase64Url(input.AuditPayload),
+                ClientNonce = WitnessClient.ToBase64Url(VerificationSeedDerivation.CreateCsprngNonce())
+            };
+            proof = await witnessClient.NotarizeAsync(request, cancellationToken).ConfigureAwait(false);
+            result = VerificationWireCodec.DecodeDrawResponse(GetResponse(proof));
+            var replay = kernel.Draw(input, WitnessClient.DeriveFormalSeed(proof));
+            if (!replay.Winners.SequenceEqual(result.Winners)
+                || !result.Winners.Select(winner => winner.RecordId).SequenceEqual(proof.Result.WinnerRecordIds))
+                throw new InvalidDataException("Formal notarization result does not replay from its locked evidence.");
         }
-
-        var offlineSeed = VerificationSeedDerivation.CreateCsprngSeed();
-        var offlineResult = kernel.Draw(input, offlineSeed);
-        var offlineProof = CreateProof(input, inputHash, offlineSeed, offlineResult, VerificationProofMode.OfflineReproducible, parentProofId, null);
-        return Complete(records, recordLookup, offlineResult, offlineProof, exportContext);
-    }
-
-    private async Task FinalizeWitnessAsync(
-        TicketLease lease,
-        byte[] clientNonce,
-        DrawProof pendingProof,
-        DrawProofExportContext exportContext)
-    {
-        try
+        else
         {
-            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            var receipt = await witnessClient.FinalizeAsync(lease.Token, clientNonce, pendingProof, cancellation.Token)
-                .ConfigureAwait(false);
-            proofExporter.Save(pendingProof with
-            {
-                Witness = new DrawProofWitness
-                {
-                    Challenge = lease.Token,
-                    Receipt = receipt,
-                    KeyId = lease.Ticket.KeyId
-                }
-            }, exportContext);
+            var seed = VerificationSeedDerivation.CreateCsprngSeed();
+            result = kernel.Draw(input, seed);
+            proof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OfflineReproducible, parentProofId, null);
         }
-        catch (Exception exception)
-        {
-            logger.LogWarning(exception, "服务器见证票据结算失败；保留本地可重放证明。ProofId={ProofId}", pendingProof.ProofId);
-        }
+        var outcome = Complete(records, recordLookup, result, proof, exportContext);
+        if (proof.Mode == VerificationProofMode.OfflineReproducible)
+            attestationService.Request(outcome.ProofPath);
+        return outcome;
     }
 
     private VerificationDrawOutcome<TCandidate> Complete<TCandidate>(
@@ -179,6 +156,20 @@ public sealed class VerificationDrawCoordinator(
     {
         ProfileRecordIdentity.EnsureRecordId(prize);
         return prize.RecordId;
+    }
+
+    private static byte[] GetResponse(DrawProof proof)
+    {
+        var payload = WitnessClient.FromBase64Url(proof.Payload);
+        if (payload.Length < 49 || !payload.AsSpan(0, 4).SequenceEqual("SRDQ"u8))
+            throw new InvalidDataException("Formal notarization payload has an invalid request frame.");
+
+        var candidateCount = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(13, 4));
+        var requestLength = checked(49 + (int)candidateCount * 45);
+        if (requestLength >= payload.Length)
+            throw new InvalidDataException("Formal notarization payload has no response frame.");
+
+        return payload[requestLength..];
     }
 
 }

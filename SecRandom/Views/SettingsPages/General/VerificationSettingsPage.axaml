@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
               xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
               xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.General"
               xmlns:lv="clr-namespace:SecRandom.Langs.SettingsPages.General.Verification"
               xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
@@ -20,6 +20,18 @@
                            LineHeight="20" />
             </fa:FAInfoBar>
 
+            <fa:FASettingsExpander Header="{x:Static lv:Resources.S_VerificationMode}"
+                                    Description="{x:Static lv:Resources.S_VerificationMode_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi ShieldCheckmarkFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding SelectedVerificationModeIndex, Mode=OneWay}"
+                              SelectionChanged="VerificationMode_OnChanged">
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_VerificationMode_Local}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_VerificationMode_Server}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander Header="{x:Static lv:Resources.S_ProofFolder}"
                                     Description="{x:Static lv:Resources.S_ProofFolder_D}"
                                     IconSource="{sr:FluentIconSource {sr:Fi FolderOpenFilled}}">
@@ -30,6 +42,22 @@
                         <Button Content="{x:Static lv:Resources.C_OpenVerificationWebsite}"
                                 Click="OpenVerificationWebsite_OnClick" />
                     </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{x:Static lv:Resources.S_LocalProofStorageLimit}"
+                                    Description="{x:Static lv:Resources.S_LocalProofStorageLimit_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi HardDriveFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding SelectedStorageIndex}">
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Storage_16MB}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Storage_32MB}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Storage_64MB}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Storage_128MB}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Storage_256MB}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Storage_512MB}" />
+                        <ComboBoxItem Content="{x:Static lv:Resources.O_Storage_1GB}" />
+                    </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
