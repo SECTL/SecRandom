@@ -27,9 +27,11 @@ internal sealed class SecurityCredentialStore(ICredentialKeyProtector keyProtect
             if (envelope is null || envelope.Version != Version || string.IsNullOrWhiteSpace(envelope.Payload))
                 return new SecurityCredentials();
 
+            if (!envelope.Protected)
+                return new SecurityCredentials();
+
             var bytes = Convert.FromBase64String(envelope.Payload);
-            if (envelope.Protected)
-                bytes = keyProtector.Unprotect(bytes);
+            bytes = keyProtector.Unprotect(bytes);
 
             return JsonSerializer.Deserialize<SecurityCredentials>(bytes, _jsonOptions) ?? new SecurityCredentials();
         }
@@ -49,24 +51,12 @@ internal sealed class SecurityCredentialStore(ICredentialKeyProtector keyProtect
 
     public void Save(SecurityCredentials credentials)
     {
-        var persisted = credentials;
         if (!CanStoreSecrets)
-        {
-            // Never downgrade TOTP or USB secrets to plaintext when a platform protector is unavailable.
-            persisted = new SecurityCredentials
-            {
-                Password = credentials.Password,
-                FailedAttempts = credentials.FailedAttempts,
-                LockedUntilUtc = credentials.LockedUntilUtc
-            };
-        }
+            throw new CryptographicException("The platform credential store is unavailable.");
 
-        var payload = JsonSerializer.SerializeToUtf8Bytes(persisted, _jsonOptions);
-        var protect = CanStoreSecrets;
-        if (protect)
-            payload = keyProtector.Protect(payload);
+        var payload = keyProtector.Protect(JsonSerializer.SerializeToUtf8Bytes(credentials, _jsonOptions));
 
-        var envelope = new SecurityCredentialEnvelope(Version, protect, Convert.ToBase64String(payload));
+        var envelope = new SecurityCredentialEnvelope(Version, true, Convert.ToBase64String(payload));
         var temporaryPath = _path + ".tmp";
         File.WriteAllText(temporaryPath, JsonSerializer.Serialize(envelope, _jsonOptions), Encoding.UTF8);
         File.Move(temporaryPath, _path, true);

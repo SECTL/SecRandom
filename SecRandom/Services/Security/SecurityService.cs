@@ -229,6 +229,9 @@ internal sealed class SecurityService(
 
         lock (_gate)
         {
+            if (!credentialStore.CanStoreSecrets)
+                return Task.FromResult(false);
+
             var credentials = credentialStore.Load();
             if (credentials.Password is not null && !VerifyPassword(credentials.Password, currentPassword ?? string.Empty))
                 return Task.FromResult(false);
@@ -247,6 +250,9 @@ internal sealed class SecurityService(
     {
         lock (_gate)
         {
+            if (!credentialStore.CanStoreSecrets)
+                return Task.FromResult(false);
+
             var credentials = credentialStore.Load();
             if (credentials.Password is null || !VerifyPassword(credentials.Password, currentPassword))
                 return Task.FromResult(false);

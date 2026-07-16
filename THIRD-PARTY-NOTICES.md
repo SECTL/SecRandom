@@ -1,8 +1,8 @@
 ﻿# Third-Party Notices
 
-## SoundFlow 1.4.1
+## SoundFlow 1.2.1.3
 
-Source: https://github.com/LSXPrime/SoundFlow
+Source: https://github.com/ClassIsland/SoundFlow (distributed through the ClassIsland MyGet feed)
 
 Copyright (c) 2025 LSXPrime
 
@@ -34,3 +34,9 @@ SoundFlow's bundled playback runtime uses miniaudio by David Reid. miniaudio
 is dual licensed under MIT or the Unlicense; SecRandom redistributes it under
 the MIT terms above. See SoundFlow's `SOUNDFLOW-THIRD-PARTY-NOTICES.txt` for
 the upstream notice set.
+
+## EdgeTtsSharp
+
+Source: https://github.com/ClassIsland/EdgeTtsSharp
+
+The repository is included as the `vendors/EdgeTtsSharp` Git submodule for Edge voice metadata and synthesis protocol code. Its upstream repository currently does not declare a license; distribution review is required before shipping this dependency in a release.

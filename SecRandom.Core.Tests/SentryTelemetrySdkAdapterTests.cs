@@ -25,11 +25,11 @@ public class SentryTelemetrySdkAdapterTests
     }
 
     [Fact]
-    public void ConfigureOptions_EnablesStructuredLogs()
+    public void ConfigureOptions_DisablesStructuredLogs()
     {
         SentryOptions options = GetConfiguredOptions();
 
-        Assert.True(options.EnableLogs);
+        Assert.False(options.EnableLogs);
     }
 
     [Fact]

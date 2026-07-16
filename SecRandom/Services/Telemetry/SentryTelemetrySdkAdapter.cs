@@ -125,8 +125,8 @@ public sealed class SentryTelemetrySdkAdapter : ITelemetrySdkAdapter
         options.IsGlobalModeEnabled = true;
         // 启用会话追踪以支持 Release Health
         options.AutoSessionTracking = true;
-        // 启用 Sentry 结构化日志（Logs 产品需要）
-        options.EnableLogs = true;
+        // 禁用 Sentry 结构化日志，保留异常与事务遥测
+        options.EnableLogs = false;
 
         // 桌面客户端不向第三方 HTTP 服务传播 Sentry trace headers
         options.TracePropagationTargets.Clear();

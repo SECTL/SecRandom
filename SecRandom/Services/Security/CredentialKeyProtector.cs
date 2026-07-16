@@ -21,6 +21,7 @@ internal sealed class CredentialKeyProtector : ICredentialKeyProtector
     private const string LinuxCommand = "secret-tool";
     private const string MacCommand = "security";
     private const string ServiceName = "SecRandom.SecurityCredentials";
+    private static readonly TimeSpan CommandTimeout = TimeSpan.FromSeconds(5);
     private readonly Lazy<byte[]?> _key;
 
     public CredentialKeyProtector()
@@ -99,28 +100,30 @@ internal sealed class CredentialKeyProtector : ICredentialKeyProtector
 
     private static byte[]? LoadOrCreateMacKey()
     {
-        var key = Run(MacCommand, ["find-generic-password", "-a", Environment.UserName, "-s", ServiceName, "-w"]);
-        if (key is null)
-        {
-            key = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
-            if (Run(MacCommand, ["add-generic-password", "-a", Environment.UserName, "-s", ServiceName, "-w", key, "-U"]) is null)
-                return null;
-        }
+        var lookup = Run(MacCommand, ["find-generic-password", "-a", Environment.UserName, "-s", ServiceName, "-w"]);
+        if (lookup.ExitCode == 0)
+            return TryDecodeKey(lookup.Output);
+        if (lookup.ExitCode != 44)
+            return null;
 
-        return TryDecodeKey(key);
+        var key = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        return Run(MacCommand, ["add-generic-password", "-a", Environment.UserName, "-s", ServiceName, "-w", key, "-U"]).ExitCode == 0
+            ? TryDecodeKey(key)
+            : null;
     }
 
     private static byte[]? LoadOrCreateLinuxKey()
     {
-        var key = Run(LinuxCommand, ["lookup", "service", "SecRandom", "purpose", "security-credentials"]);
-        if (key is null)
-        {
-            key = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
-            if (Run(LinuxCommand, ["store", "--label=SecRandom security credentials", "service", "SecRandom", "purpose", "security-credentials"], key) is null)
-                return null;
-        }
+        var lookup = Run(LinuxCommand, ["lookup", "service", "SecRandom", "purpose", "security-credentials"]);
+        if (lookup.ExitCode == 0)
+            return TryDecodeKey(lookup.Output);
+        if (lookup.ExitCode != 1 || !string.IsNullOrWhiteSpace(lookup.Error))
+            return null;
 
-        return TryDecodeKey(key);
+        var key = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        return Run(LinuxCommand, ["store", "--label=SecRandom security credentials", "service", "SecRandom", "purpose", "security-credentials"], key).ExitCode == 0
+            ? TryDecodeKey(key)
+            : null;
     }
 
     private static byte[]? TryDecodeKey(string key)
@@ -136,7 +139,7 @@ internal sealed class CredentialKeyProtector : ICredentialKeyProtector
         }
     }
 
-    private static string? Run(string fileName, IReadOnlyList<string> arguments, string? standardInput = null)
+    private static CommandResult Run(string fileName, IReadOnlyList<string> arguments, string? standardInput = null)
     {
         try
         {
@@ -156,19 +159,31 @@ internal sealed class CredentialKeyProtector : ICredentialKeyProtector
                 process.StartInfo.ArgumentList.Add(argument);
             process.Start();
             if (standardInput is not null)
+            {
                 process.StandardInput.Write(standardInput);
-            process.StandardInput.Close();
+                process.StandardInput.Close();
+            }
+
+            if (!process.WaitForExit((int)CommandTimeout.TotalMilliseconds))
+            {
+                process.Kill(entireProcessTree: true);
+                process.WaitForExit();
+                return new CommandResult(null, string.Empty, "Command timed out.");
+            }
+
             var output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
-            return process.ExitCode == 0 ? output : null;
+            var error = process.StandardError.ReadToEnd();
+            return new CommandResult(process.ExitCode, output, error);
         }
         catch (InvalidOperationException)
         {
-            return null;
+            return new CommandResult(null, string.Empty, string.Empty);
         }
         catch (System.ComponentModel.Win32Exception)
         {
-            return null;
+            return new CommandResult(null, string.Empty, string.Empty);
         }
     }
+
+    private sealed record CommandResult(int? ExitCode, string Output, string Error);
 }

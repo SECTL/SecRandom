@@ -75,7 +75,7 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
                 var history = new PrizeHistoryConfig(name).Data;
                 return new HomeProfileCard(
                     name,
-                    list.Prizes.Count(prize => prize.Exists),
+                    list.Prizes.Count(prize => prize.IsCandidate),
                     history.TotalRounds,
                     history.TotalStats,
                     FormatLastDrawnTime(history.Prizes.Values.Select(item => item.LastDrawnTime)));

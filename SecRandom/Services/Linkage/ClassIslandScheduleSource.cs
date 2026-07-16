@@ -129,6 +129,7 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
             await Task.Delay(JsonRouteReadyDelay, cancellationToken).ConfigureAwait(false);
             if (client.PeerProxy is null)
             {
+                DisposeClient(client);
                 ScheduleRetry();
                 return null;
             }
@@ -160,7 +161,19 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
     private void InvalidateConnection()
     {
         _lessons = null;
+        DisposeClient(_client);
         _client = null;
+    }
+
+    private static void DisposeClient(IpcClient? client)
+    {
+        try
+        {
+            client?.Provider.Dispose();
+        }
+        catch (Exception)
+        {
+        }
     }
 
     private void ScheduleRetry()
