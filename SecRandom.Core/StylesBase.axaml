@@ -33,6 +33,7 @@
     <StyleInclude Source="/Controls/Empty.axaml" />
     <StyleInclude Source="/Controls/Emptiable.axaml" />
     <StyleInclude Source="/Controls/Field.axaml" />
+    <StyleInclude Source="/Styles/SampleAppNav.axaml" />
 
     <Style Selector=":is(Window)">
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />

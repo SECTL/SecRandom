@@ -103,6 +103,7 @@ public partial class App : Application
     private bool _isOobeActive;
     public new static App Current => (Application.Current as App)!;
     internal bool IsStopping => _isStopping;
+    public static bool IsDesktop;
 
     public event EventHandler? AppStarted;
     public event EventHandler? AppStopping;
@@ -139,6 +140,7 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             _desktopLifetime = desktop;
+            IsDesktop = true;
 
             if (CrashRecoveryRuntime.StartupPromptOptions is { } promptOptions)
             {

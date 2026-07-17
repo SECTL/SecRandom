@@ -13,7 +13,9 @@
     <Grid RowDefinitions="Auto *">
         <Border Grid.Row="0" Height="48">
             <StackPanel Orientation="Horizontal" Margin="8" Spacing="8">
-                <Button Theme="{StaticResource PaneToggleButtonStyle}"
+                <Button x:Name="NavPaneToggleButton"
+                        Theme="{StaticResource PaneToggleButtonStyle}"
+                        IsVisible="False"
                         MinWidth="40" Width="48"
                         VerticalAlignment="Center"
                         Margin="-7 -8 -8 -8"
@@ -33,10 +35,10 @@
 
         <fa:FANavigationView Grid.Row="1"
                              x:Name="NavigationView"
-                             PaneDisplayMode="Auto"
+                             PaneDisplayMode="Left"
                              IsSettingsVisible="False"
                              IsPaneToggleButtonVisible="False"
-                             IsPaneOpen="False"
+                             IsPaneOpen="True"
                              MenuItemsSource="{Binding ViewModel.NavigationViewItems, Mode=OneWay}"
                              FooterMenuItemsSource="{Binding ViewModel.NavigationViewFooterItems, Mode=OneWay}"
                              SelectedItem="{Binding ViewModel.SelectedNavigationViewItem, UpdateSourceTrigger=PropertyChanged}"

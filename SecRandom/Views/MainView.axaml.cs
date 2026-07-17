@@ -112,6 +112,8 @@ public partial class MainView : UserControl, IFANavigationPageFactory
 
     private void BuildNavigationMenuItems()
     {
+        
+        
         ViewModel.NavigationViewItems.Clear();
         ViewModel.NavigationViewFooterItems.Clear();
 
@@ -119,19 +121,53 @@ public partial class MainView : UserControl, IFANavigationPageFactory
             .AddRange(PagesRegistryService.MainItems
                 .Where(IsPageAvailable)
                 .Where(info => info.Location == PageLocation.Top)
-                .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
+                .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
+                .Select(x =>
+                {
+                    if (App.IsDesktop || OperatingSystem.IsBrowser())
+                    {
+                        x.Classes.Add(@"SampleAppNav");
+                    }
+
+                    return x;
+                }));
 
         ViewModel.NavigationViewFooterItems
             .AddRange(PagesRegistryService.MainItems
                 .Where(IsPageAvailable)
                 .Where(info => info.Location == PageLocation.Bottom)
-                .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
+                .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
+                .Select(x =>
+                {
+                    if (App.IsDesktop || OperatingSystem.IsBrowser())
+                    {
+                        x.Classes.Add(@"SampleAppNav");
+                    }
 
-        var settingsPageInfo = new PageInfo("settings", FluentIcons.SettingsFilled, null, PageLocation.Bottom)
+                    return x;
+                }));
+
+        var settingsPageInfo = new PageInfo(@"settings", FluentIcons.SettingsFilled, null, PageLocation.Bottom)
         {
             Name = Langs.Common.Resources.Feat_Settings
         };
-        ViewModel.NavigationViewFooterItems.Add(settingsPageInfo.ToNavigationViewItemBase());
+        var settingsItem = settingsPageInfo.ToNavigationViewItemBase();
+        if (App.IsDesktop || OperatingSystem.IsBrowser())
+        {
+            settingsItem.Classes.Add(@"SampleAppNav");
+        }
+        
+        ViewModel.NavigationViewFooterItems.Add(settingsItem);
+        
+        if (App.IsDesktop || OperatingSystem.IsBrowser())
+        {
+            _navigationView?.Classes.Add(@"SampleAppNav");
+        }
+        else
+        {
+            _navigationView?.PaneDisplayMode = FANavigationViewPaneDisplayMode.LeftMinimal;
+            NavPaneToggleButton.IsVisible = true;
+        }
     }
 
     public void SelectNavigationItemById(string id)
