@@ -53,8 +53,7 @@ public partial class FloatingWindow : Window
     public FloatingWindow()
     {
         DataContext = this;
-        if (App.SupportsProgrammaticWindowPositioning)
-            Position = new PixelPoint(ViewModel.Config.FloatPosition.X, ViewModel.Config.FloatPosition.Y);
+        Position = new PixelPoint(ViewModel.Config.FloatPosition.X, ViewModel.Config.FloatPosition.Y);
         InitializeComponent();
 
         TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
@@ -287,6 +286,8 @@ public partial class FloatingWindow : Window
     {
         TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
         Dispatcher.UIThread.Post(RestoreStartupPositionAndScheduleDock, DispatcherPriority.Render);
+        // 触发布局更新
+        Width = 20;
     }
 
     private async void RestoreStartupPositionAndScheduleDock()
