@@ -18,6 +18,9 @@ mono_crash.*
 
 # Build results
 [Dd]ebug/
+!SecRandom/Langs/SettingsPages/Debug/
+!SecRandom/Langs/SettingsPages/Debug/Resources.resx
+!SecRandom/Langs/SettingsPages/Debug/Resources.Designer.cs
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/

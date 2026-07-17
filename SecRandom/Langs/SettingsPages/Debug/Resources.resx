@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page_Title" xml:space="preserve"><value>Debug</value></data>
+  <data name="C_DrawerTest" xml:space="preserve"><value>Drawer test content</value></data>
+  <data name="C_HideDebugEntry" xml:space="preserve"><value>Hide debug entry</value></data>
+  <data name="C_HideDebugEntry_D" xml:space="preserve"><value>Hide this page from settings navigation.</value></data>
+  <data name="C_Hide" xml:space="preserve"><value>Hide</value></data>
+  <data name="S_UiTests" xml:space="preserve"><value>UI tests</value></data>
+  <data name="C_SendToast" xml:space="preserve"><value>Send test toast</value></data>
+  <data name="C_OpenDrawer" xml:space="preserve"><value>Open test drawer</value></data>
+  <data name="S_CrashRecovery" xml:space="preserve"><value>Crash recovery</value></data>
+  <data name="C_ShowCrashRecovery" xml:space="preserve"><value>Show crash recovery window</value></data>
+  <data name="C_ThrowDispatcherException" xml:space="preserve"><value>Throw dispatcher exception</value></data>
+  <data name="C_RestartProgram" xml:space="preserve"><value>Restart application</value></data>
+  <data name="S_Plugins" xml:space="preserve"><value>Plugins</value></data>
+  <data name="C_ShowPluginSettings" xml:space="preserve"><value>Show plugin settings</value></data>
+  <data name="C_ShowPluginSettings_D" xml:space="preserve"><value>Temporarily show the plugin settings entry.</value></data>
+  <data name="S_InternalSettings" xml:space="preserve"><value>Internal settings</value></data>
+  <data name="C_EnableInternalSettings" xml:space="preserve"><value>Enable internal settings</value></data>
+  <data name="C_EnableInternalSettings_D" xml:space="preserve"><value>Temporarily expose internal attached settings.</value></data>
+  <data name="S_UpdateDiagnostics" xml:space="preserve"><value>Update diagnostics</value></data>
+  <data name="C_RefreshUpdate" xml:space="preserve"><value>Refresh update diagnostics</value></data>
+  <data name="C_RefreshUpdate_D" xml:space="preserve"><value>Refresh runtime update information.</value></data>
+  <data name="S_LinkageNotificationDiagnostics" xml:space="preserve"><value>Linkage and notification diagnostics</value></data>
+  <data name="C_RefreshLinkage" xml:space="preserve"><value>Refresh linkage diagnostics</value></data>
+  <data name="C_RefreshLinkage_D" xml:space="preserve"><value>Refresh linkage and notification information.</value></data>
+  <data name="S_PlatformDiagnostics" xml:space="preserve"><value>Platform diagnostics</value></data>
+  <data name="C_RefreshPlatform" xml:space="preserve"><value>Refresh platform diagnostics</value></data>
+  <data name="C_RefreshPlatform_D" xml:space="preserve"><value>Refresh runtime platform information.</value></data>
+  <data name="S_DataPathDiagnostics" xml:space="preserve"><value>Data and path diagnostics</value></data>
+  <data name="C_RefreshPaths" xml:space="preserve"><value>Refresh data paths</value></data>
+  <data name="C_RefreshPaths_D" xml:space="preserve"><value>Refresh application data-path information.</value></data>
+  <data name="M_TestToast" xml:space="preserve"><value>Test toast</value></data>
+  <data name="M_ShowPluginSettings_Title" xml:space="preserve"><value>Show plugin settings?</value></data>
+  <data name="M_ShowPluginSettings" xml:space="preserve"><value>This temporarily exposes the plugin settings navigation entry.</value></data>
+  <data name="C_Show" xml:space="preserve"><value>Show</value></data>
+  <data name="C_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="M_InternalSettings_ConfirmTitle" xml:space="preserve"><value>Enable internal settings?</value></data>
+  <data name="M_InternalSettings" xml:space="preserve"><value>Internal settings can affect candidate weights and are not suitable for fair or auditable draws.</value></data>
+  <data name="C_Enable" xml:space="preserve"><value>Enable</value></data>
+  <data name="C_CurrentVersion" xml:space="preserve"><value>Current version</value></data>
+  <data name="C_UpdateChannel" xml:space="preserve"><value>Update channel</value></data>
+  <data name="C_CheckPhase" xml:space="preserve"><value>Check phase</value></data>
+  <data name="C_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="C_LastCheck" xml:space="preserve"><value>Last check</value></data>
+  <data name="C_AvailableVersion" xml:space="preserve"><value>Available version</value></data>
+  <data name="C_LinkageSource" xml:space="preserve"><value>Linkage source</value></data>
+  <data name="C_CourseSource" xml:space="preserve"><value>Course source</value></data>
+  <data name="C_CourseState" xml:space="preserve"><value>Course state</value></data>
+  <data name="C_SnapshotAvailable" xml:space="preserve"><value>Snapshot available</value></data>
+  <data name="C_CurrentCourse" xml:space="preserve"><value>Current course</value></data>
+  <data name="C_NextCourse" xml:space="preserve"><value>Next course</value></data>
+  <data name="C_DrawRestricted" xml:space="preserve"><value>Draw restricted</value></data>
+  <data name="C_SnapshotError" xml:space="preserve"><value>Snapshot error</value></data>
+  <data name="C_NotificationsEnabled" xml:space="preserve"><value>Notifications enabled</value></data>
+  <data name="C_BuiltInNotification" xml:space="preserve"><value>Built-in notification</value></data>
+  <data name="C_ExternalNotification" xml:space="preserve"><value>External notification</value></data>
+  <data name="C_NotificationFallback" xml:space="preserve"><value>Notification fallback</value></data>
+  <data name="C_DisplayDuration" xml:space="preserve"><value>Display duration</value></data>
+  <data name="C_Branch" xml:space="preserve"><value>Branch</value></data>
+  <data name="C_Commit" xml:space="preserve"><value>Commit</value></data>
+  <data name="C_Version" xml:space="preserve"><value>Version</value></data>
+  <data name="C_OperatingSystem" xml:space="preserve"><value>Operating system</value></data>
+  <data name="C_Architecture" xml:space="preserve"><value>Architecture</value></data>
+  <data name="C_Runtime" xml:space="preserve"><value>Runtime</value></data>
+  <data name="C_AppDirectory" xml:space="preserve"><value>Application directory</value></data>
+  <data name="C_PackageRoot" xml:space="preserve"><value>Package root</value></data>
+  <data name="C_DataDirectory" xml:space="preserve"><value>Data directory</value></data>
+  <data name="C_MainWindowCreated" xml:space="preserve"><value>Main window created</value></data>
+  <data name="C_SettingsWindowCreated" xml:space="preserve"><value>Settings window created</value></data>
+  <data name="C_SettingsFile" xml:space="preserve"><value>Settings file</value></data>
+  <data name="C_LogDirectory" xml:space="preserve"><value>Log directory</value></data>
+  <data name="C_BackupDirectory" xml:space="preserve"><value>Backup directory</value></data>
+  <data name="C_PluginDirectory" xml:space="preserve"><value>Plugin directory</value></data>
+  <data name="C_PluginConfigDirectory" xml:space="preserve"><value>Plugin configuration directory</value></data>
+  <data name="C_ProofDirectory" xml:space="preserve"><value>Proof directory</value></data>
+  <data name="C_UpdateDownloadDirectory" xml:space="preserve"><value>Update download directory</value></data>
+  <data name="C_CourseLinkageDirectory" xml:space="preserve"><value>Course linkage directory</value></data>
+  <data name="C_CrashDirectory" xml:space="preserve"><value>Crash directory</value></data>
+  <data name="C_Exists" xml:space="preserve"><value>Exists</value></data>
+  <data name="C_Missing" xml:space="preserve"><value>Missing</value></data>
+</root>
