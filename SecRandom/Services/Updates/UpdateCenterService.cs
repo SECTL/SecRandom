@@ -501,6 +501,9 @@ public sealed class UpdateCenterService(
             }
         }
 
+        if (lastException is HttpRequestException { StatusCode: System.Net.HttpStatusCode.NotFound })
+            throw new InvalidOperationException(Text("M_ReleaseManifestMissing"), lastException);
+
         throw lastException ?? new InvalidOperationException(Text("M_NoUpdateSourceAvailable"));
     }
 

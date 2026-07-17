@@ -124,6 +124,7 @@
   <data name="M_StatusRestarting" xml:space="preserve"><value>正在重启以应用更新</value></data>
   <data name="M_SectlReleaseOnly" xml:space="preserve"><value>思拓创联分发只提供稳定版更新</value></data>
   <data name="M_NoUpdateSourceAvailable" xml:space="preserve"><value>没有可用的更新来源</value></data>
+  <data name="M_ReleaseManifestMissing" xml:space="preserve"><value>当前更新通道尚未发布可验证的更新包</value></data>
   <data name="M_NoCompatibleArtifact" xml:space="preserve"><value>该版本没有适用于当前系统、架构和安装形态的完整安装包</value></data>
   <data name="M_SectlMissingTag" xml:space="preserve"><value>思拓创联未返回版本标签</value></data>
   <data name="M_MetadataEmpty" xml:space="preserve"><value>更新元数据为空</value></data>
