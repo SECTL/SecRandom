@@ -69,12 +69,11 @@
                                    Header="{x:Static lsb:Resources.S_Includes}"
                                    Description="{x:Static lsb:Resources.S_Includes_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi DatabaseArrowDownFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <u:MultiComboBox MinWidth="260"
-                                     ItemsSource="{Binding IncludeOptions}"
-                                     SelectedItems="{Binding SelectedIncludeOptions}"
-                                     SelectionChanged="MultiSelect_OnSelectionChanged" />
-                </fa:FASettingsExpander.Footer>
+                 <fa:FASettingsExpander.Footer>
+                     <u:MultiComboBox MinWidth="260"
+                                      ItemsSource="{Binding IncludeOptions}"
+                                      SelectedItems="{Binding SelectedIncludeOptions}" />
+                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
             <Separator Margin="0 12 0 4" />

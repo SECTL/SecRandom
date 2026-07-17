@@ -55,6 +55,8 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.RollCallList {
         public static string C_ColumnMapping_D => ResourceManager.GetString("C_ColumnMapping_D", resourceCulture);
         public static string C_DefaultListName => ResourceManager.GetString("C_DefaultListName", resourceCulture);
         public static string C_DeleteList => ResourceManager.GetString("C_DeleteList", resourceCulture);
+        public static string C_Operations => ResourceManager.GetString("C_Operations", resourceCulture);
+        public static string C_DeleteMember => ResourceManager.GetString("C_DeleteMember", resourceCulture);
         public static string C_Exists => ResourceManager.GetString("C_Exists", resourceCulture);
         public static string C_FilePickerTitle => ResourceManager.GetString("C_FilePickerTitle", resourceCulture);
         public static string C_FilePickerTypeName => ResourceManager.GetString("C_FilePickerTypeName", resourceCulture);
@@ -95,6 +97,11 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.RollCallList {
         public static string M_DeleteListPrimary => ResourceManager.GetString("M_DeleteListPrimary", resourceCulture);
         public static string M_DeleteListSuccess => ResourceManager.GetString("M_DeleteListSuccess", resourceCulture);
         public static string M_DeleteListTitle => ResourceManager.GetString("M_DeleteListTitle", resourceCulture);
+        public static string M_DeleteMemberContent => ResourceManager.GetString("M_DeleteMemberContent", resourceCulture);
+        public static string M_DeleteMemberNotFound => ResourceManager.GetString("M_DeleteMemberNotFound", resourceCulture);
+        public static string M_DeleteMemberPrimary => ResourceManager.GetString("M_DeleteMemberPrimary", resourceCulture);
+        public static string M_DeleteMemberSuccess => ResourceManager.GetString("M_DeleteMemberSuccess", resourceCulture);
+        public static string M_DeleteMemberTitle => ResourceManager.GetString("M_DeleteMemberTitle", resourceCulture);
         public static string M_FileLoaded => ResourceManager.GetString("M_FileLoaded", resourceCulture);
         public static string M_ImportSuccess => ResourceManager.GetString("M_ImportSuccess", resourceCulture);
         public static string M_KeepOneList => ResourceManager.GetString("M_KeepOneList", resourceCulture);

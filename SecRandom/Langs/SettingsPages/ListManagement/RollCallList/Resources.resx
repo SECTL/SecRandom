@@ -57,6 +57,12 @@
     <data name="C_DeleteList" xml:space="preserve">
         <value>删除名单</value>
     </data>
+    <data name="C_Operations" xml:space="preserve">
+        <value>操作</value>
+    </data>
+    <data name="C_DeleteMember" xml:space="preserve">
+        <value>删除成员</value>
+    </data>
     <data name="C_Exists" xml:space="preserve">
         <value>存在</value>
     </data>
@@ -227,6 +233,21 @@
     </data>
     <data name="M_DeleteListSuccess" xml:space="preserve">
         <value>已删除名单“{0}”。</value>
+    </data>
+    <data name="M_DeleteMemberTitle" xml:space="preserve">
+        <value>删除成员？</value>
+    </data>
+    <data name="M_DeleteMemberContent" xml:space="preserve">
+        <value>将从名单“{1}”中删除成员“{0}”。此操作不可撤销。</value>
+    </data>
+    <data name="M_DeleteMemberPrimary" xml:space="preserve">
+        <value>删除</value>
+    </data>
+    <data name="M_DeleteMemberSuccess" xml:space="preserve">
+        <value>已删除成员“{0}”。</value>
+    </data>
+    <data name="M_DeleteMemberNotFound" xml:space="preserve">
+        <value>该成员已不存在，名单已刷新。</value>
     </data>
     <data name="M_KeepOneList" xml:space="preserve">
         <value>至少需要保留一个名单。</value>

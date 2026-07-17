@@ -9,7 +9,6 @@ public enum UpdateChannel
 
 public enum UpdateSource
 {
-    Sectl,
     GitHub,
     GitHubMirror
 }

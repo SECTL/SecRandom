@@ -138,6 +138,28 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         RefreshStudentLists();
     }
 
+    private async void DeleteStudentButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { CommandParameter: Student student } || SelectedStudentListConfig?.Data == null)
+            return;
+
+        var displayName = string.IsNullOrWhiteSpace(student.Name) ? student.Id : student.Name;
+        if (!await ConfirmDeleteMemberAsync(displayName))
+            return;
+
+        if (!SelectedStudentListConfig.Data.Students.Remove(student))
+        {
+            this.ShowWarningToast(LR.M_DeleteMemberNotFound);
+            OnPropertyChanged(nameof(SelectedStudentList));
+            return;
+        }
+
+        SaveSelectedStudentList();
+        OnPropertyChanged(nameof(SelectedStudentList));
+        _logger.LogInformation("已删除点名名单成员：名单={ListName}，记录={RecordId}。", SelectedStudentListName, student.RecordId);
+        this.ShowSuccessToast(string.Format(LR.M_DeleteMemberSuccess, displayName));
+    }
+
     private async void AddListButton_OnClick(object? sender, RoutedEventArgs e)
     {
         var listName = await ShowListNameDialogAsync(LR.M_ListNameDialogTitle_Add, LR.M_ListNameDialogPrimary_Add,
@@ -297,6 +319,20 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
             Title = LR.M_DeleteListTitle,
             Content = string.Format(LR.M_DeleteListContent, listName),
             PrimaryButtonText = LR.M_DeleteListPrimary,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+
+        return result == FAContentDialogResult.Primary;
+    }
+
+    private async Task<bool> ConfirmDeleteMemberAsync(string memberName)
+    {
+        var result = await new FAContentDialog
+        {
+            Title = LR.M_DeleteMemberTitle,
+            Content = string.Format(LR.M_DeleteMemberContent, memberName, SelectedStudentListName),
+            PrimaryButtonText = LR.M_DeleteMemberPrimary,
             CloseButtonText = LR.C_Cancel,
             DefaultButton = FAContentDialogButton.Close
         }.ShowAsync(TopLevel.GetTopLevel(this));

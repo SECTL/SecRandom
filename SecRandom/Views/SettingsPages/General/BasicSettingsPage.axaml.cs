@@ -33,6 +33,9 @@ public partial class BasicSettingsPage : UserControl
     public BasicSettingsConfig Settings { get; }
     public CrashRecoverySettingsConfig CrashRecoverySettings => ViewModel.Config.General.CrashRecovery;
     public bool IsUiAccessSupported => OperatingSystem.IsWindows();
+    public string MainWindowTopmostModeDescription => IsUiAccessSupported
+        ? LR.S_Behavior_MainWindowTopmostMode_D
+        : LR.S_Behavior_MainWindowTopmostMode_NonWindows_D;
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private DesktopIntegrationService DesktopIntegration { get; } = IAppHost.GetService<DesktopIntegrationService>();
 

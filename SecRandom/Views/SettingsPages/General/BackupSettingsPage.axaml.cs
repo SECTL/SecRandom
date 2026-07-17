@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -33,6 +34,7 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
 
     private string _backupUsageText = FormatSize(0);
     private bool _isSubscribed;
+    private bool _isIncludeOptionsSubscribed;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
     private readonly ILogger<BackupSettingsPage> _logger =
         IAppHost.GetService<ILogger<BackupSettingsPage>>();
@@ -106,11 +108,8 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
-        if (!_isSubscribed)
-            return;
-
-        Settings.PropertyChanged -= SettingsOnPropertyChanged;
-        _isSubscribed = false;
+        UnsubscribeSettings();
+        UnsubscribeIncludeOptions();
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -120,11 +119,40 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
 
     private void SubscribeSettings()
     {
-        if (_isSubscribed)
+        if (!_isSubscribed)
+        {
+            Settings.PropertyChanged += SettingsOnPropertyChanged;
+            _isSubscribed = true;
+        }
+
+        SubscribeIncludeOptions();
+    }
+
+    private void UnsubscribeSettings()
+    {
+        if (!_isSubscribed)
             return;
 
-        Settings.PropertyChanged += SettingsOnPropertyChanged;
-        _isSubscribed = true;
+        Settings.PropertyChanged -= SettingsOnPropertyChanged;
+        _isSubscribed = false;
+    }
+
+    private void SubscribeIncludeOptions()
+    {
+        if (_isIncludeOptionsSubscribed)
+            return;
+
+        SelectedIncludeOptions.CollectionChanged += IncludeOptionsOnCollectionChanged;
+        _isIncludeOptionsSubscribed = true;
+    }
+
+    private void UnsubscribeIncludeOptions()
+    {
+        if (!_isIncludeOptionsSubscribed)
+            return;
+
+        SelectedIncludeOptions.CollectionChanged -= IncludeOptionsOnCollectionChanged;
+        _isIncludeOptionsSubscribed = false;
     }
 
     private void RefreshBackups()
@@ -161,16 +189,11 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         return new AvaloniaList<MultiSelectSettingOption>(options.Where(option => option.IsSelected));
     }
 
-    private void MultiSelect_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void IncludeOptionsOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs _)
     {
-        foreach (var option in e.AddedItems.OfType<MultiSelectSettingOption>())
+        foreach (var option in IncludeOptions)
         {
-            option.SetSelected(true);
-        }
-
-        foreach (var option in e.RemovedItems.OfType<MultiSelectSettingOption>())
-        {
-            option.SetSelected(false);
+            option.SetSelected(SelectedIncludeOptions.Contains(option));
         }
 
         ConfigHandler.Save();

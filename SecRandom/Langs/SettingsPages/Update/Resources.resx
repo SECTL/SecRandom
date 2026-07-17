@@ -91,7 +91,7 @@
     <value>强制检查更新</value>
   </data>
   <data name="C_ForceCheckUpdates_D" xml:space="preserve">
-    <value>检查当前通道的最新版本，即使其低于当前版本。</value>
+    <value>检查当前通道的最新版本，即使其低于当前版本</value>
   </data>
   <data name="S_Check" xml:space="preserve">
     <value>检查更新</value>
@@ -103,7 +103,7 @@
     <value>更新服务尚未接入</value>
   </data>
   <data name="M_UpdateServicePlaceholder_Message" xml:space="preserve">
-    <value>此页面先保留 v2 的设置入口和配置项，后续可接入真实更新检查服务。</value>
+    <value>此页面先保留 v2 的设置入口和配置项，后续可接入真实更新检查服务</value>
   </data>
   <data name="S_Strategy_LastCheckTime" xml:space="preserve">
     <value>上次检查时间</value>
@@ -111,41 +111,41 @@
   <data name="S_Strategy_LastCheckTime_D" xml:space="preserve">
     <value>显示最近一次检查更新的时间</value>
   </data>
-  <data name="M_StatusNotChecked" xml:space="preserve"><value>尚未检查更新。</value></data>
-  <data name="M_StatusChecking" xml:space="preserve"><value>正在检查更新。</value></data>
-  <data name="M_StatusUpToDate" xml:space="preserve"><value>当前已是最新版本。</value></data>
-  <data name="M_StatusUpdateAvailable" xml:space="preserve"><value>发现新版本 {0}。</value></data>
-  <data name="M_StatusUpdateAvailableSelect" xml:space="preserve"><value>发现新版本 {0}，请选择完整安装包。</value></data>
-  <data name="M_StatusCancelled" xml:space="preserve"><value>已取消更新操作。</value></data>
-  <data name="M_StatusDownloading" xml:space="preserve"><value>正在下载完整安装包 {0}。</value></data>
-  <data name="M_StatusVerifying" xml:space="preserve"><value>正在验证安装包完整性。</value></data>
-  <data name="M_StatusPreparing" xml:space="preserve"><value>正在准备应用更新。</value></data>
-  <data name="M_StatusReadyToInstall" xml:space="preserve"><value>更新已下载，等待安装。</value></data>
-  <data name="M_StatusRestarting" xml:space="preserve"><value>正在重启以应用更新。</value></data>
-  <data name="M_SectlReleaseOnly" xml:space="preserve"><value>思拓创联分发只提供稳定版更新。</value></data>
-  <data name="M_NoUpdateSourceAvailable" xml:space="preserve"><value>没有可用的更新来源。</value></data>
-  <data name="M_NoCompatibleArtifact" xml:space="preserve"><value>该版本没有适用于当前系统、架构和安装形态的完整安装包。</value></data>
-  <data name="M_SectlMissingTag" xml:space="preserve"><value>思拓创联未返回版本标签。</value></data>
-  <data name="M_MetadataEmpty" xml:space="preserve"><value>更新元数据为空。</value></data>
-  <data name="M_MetadataInvalid" xml:space="preserve"><value>更新元数据格式无效。</value></data>
-  <data name="M_MetadataChannelMissing" xml:space="preserve"><value>更新通道 {0} 没有版本标签。</value></data>
-  <data name="M_ManifestSignatureInvalid" xml:space="preserve"><value>更新清单签名校验失败。请检查发布公钥和更新源。</value></data>
-  <data name="M_ManifestInvalid" xml:space="preserve"><value>更新清单格式无效。</value></data>
-  <data name="M_ManifestMismatch" xml:space="preserve"><value>更新清单与所选通道不匹配。</value></data>
-  <data name="M_PublicKeyInvalid" xml:space="preserve"><value>内置更新公钥无效。</value></data>
-  <data name="M_PortableLauncherMissing" xml:space="preserve"><value>当前便携版缺少稳定 Launcher，无法自动部署版本目录。请下载一次新的全量 ZIP。</value></data>
-  <data name="M_ZipAppDirectoryMissing" xml:space="preserve"><value>完整 ZIP 缺少版本目录。</value></data>
-  <data name="M_ZipMarkerMissing" xml:space="preserve"><value>完整 ZIP 缺少包形态标记。</value></data>
-  <data name="M_ZipMismatch" xml:space="preserve"><value>完整 ZIP 与当前运行环境不匹配。</value></data>
-  <data name="M_TargetVersionExists" xml:space="preserve"><value>目标版本目录已存在，请重新检查更新。</value></data>
-  <data name="M_ZipLauncherMissing" xml:space="preserve"><value>完整 ZIP 缺少 Launcher。</value></data>
-  <data name="M_ArtifactLengthMismatch" xml:space="preserve"><value>安装包大小与更新清单不一致。</value></data>
-  <data name="M_ArtifactHashMismatch" xml:space="preserve"><value>安装包 SHA-512 校验失败。</value></data>
-  <data name="M_ZipEntryLimit" xml:space="preserve"><value>完整 ZIP 的文件数量超过安全上限。</value></data>
-  <data name="M_ZipInvalidPath" xml:space="preserve"><value>完整 ZIP 包含非法文件路径。</value></data>
-  <data name="M_ZipSizeLimit" xml:space="preserve"><value>完整 ZIP 解压后的总大小超过安全上限。</value></data>
-  <data name="M_ZipOutsidePath" xml:space="preserve"><value>完整 ZIP 包含越界文件路径。</value></data>
-  <data name="M_InstallerUnsupported" xml:space="preserve"><value>不支持该安装包类型。</value></data>
-  <data name="M_InstallerStartFailed" xml:space="preserve"><value>无法启动系统安装程序。</value></data>
-  <data name="M_UnknownPackageKind" xml:space="preserve"><value>更新清单包含未知安装包类型。</value></data>
+  <data name="M_StatusNotChecked" xml:space="preserve"><value>尚未检查更新</value></data>
+  <data name="M_StatusChecking" xml:space="preserve"><value>正在检查更新</value></data>
+  <data name="M_StatusUpToDate" xml:space="preserve"><value>当前已是最新版本</value></data>
+  <data name="M_StatusUpdateAvailable" xml:space="preserve"><value>发现新版本 {0}</value></data>
+  <data name="M_StatusUpdateAvailableSelect" xml:space="preserve"><value>发现新版本 {0}，请选择完整安装包</value></data>
+  <data name="M_StatusCancelled" xml:space="preserve"><value>已取消更新操作</value></data>
+  <data name="M_StatusDownloading" xml:space="preserve"><value>正在下载完整安装包 {0}</value></data>
+  <data name="M_StatusVerifying" xml:space="preserve"><value>正在验证安装包完整性</value></data>
+  <data name="M_StatusPreparing" xml:space="preserve"><value>正在准备应用更新</value></data>
+  <data name="M_StatusReadyToInstall" xml:space="preserve"><value>更新已下载，等待安装</value></data>
+  <data name="M_StatusRestarting" xml:space="preserve"><value>正在重启以应用更新</value></data>
+  <data name="M_SectlReleaseOnly" xml:space="preserve"><value>思拓创联分发只提供稳定版更新</value></data>
+  <data name="M_NoUpdateSourceAvailable" xml:space="preserve"><value>没有可用的更新来源</value></data>
+  <data name="M_NoCompatibleArtifact" xml:space="preserve"><value>该版本没有适用于当前系统、架构和安装形态的完整安装包</value></data>
+  <data name="M_SectlMissingTag" xml:space="preserve"><value>思拓创联未返回版本标签</value></data>
+  <data name="M_MetadataEmpty" xml:space="preserve"><value>更新元数据为空</value></data>
+  <data name="M_MetadataInvalid" xml:space="preserve"><value>更新元数据格式无效</value></data>
+  <data name="M_MetadataChannelMissing" xml:space="preserve"><value>更新通道 {0} 没有版本标签</value></data>
+  <data name="M_ManifestSignatureInvalid" xml:space="preserve"><value>更新清单签名校验失败，请检查发布公钥和更新源</value></data>
+  <data name="M_ManifestInvalid" xml:space="preserve"><value>更新清单格式无效</value></data>
+  <data name="M_ManifestMismatch" xml:space="preserve"><value>更新清单与所选通道不匹配</value></data>
+  <data name="M_PublicKeyInvalid" xml:space="preserve"><value>内置更新公钥无效</value></data>
+  <data name="M_PortableLauncherMissing" xml:space="preserve"><value>当前便携版缺少稳定 Launcher，无法自动部署版本目录，请下载一次新的全量 ZIP</value></data>
+  <data name="M_ZipAppDirectoryMissing" xml:space="preserve"><value>完整 ZIP 缺少版本目录</value></data>
+  <data name="M_ZipMarkerMissing" xml:space="preserve"><value>完整 ZIP 缺少包形态标记</value></data>
+  <data name="M_ZipMismatch" xml:space="preserve"><value>完整 ZIP 与当前运行环境不匹配</value></data>
+  <data name="M_TargetVersionExists" xml:space="preserve"><value>目标版本目录已存在，请重新检查更新</value></data>
+  <data name="M_ZipLauncherMissing" xml:space="preserve"><value>完整 ZIP 缺少 Launcher</value></data>
+  <data name="M_ArtifactLengthMismatch" xml:space="preserve"><value>安装包大小与更新清单不一致</value></data>
+  <data name="M_ArtifactHashMismatch" xml:space="preserve"><value>安装包 SHA-512 校验失败</value></data>
+  <data name="M_ZipEntryLimit" xml:space="preserve"><value>完整 ZIP 的文件数量超过安全上限</value></data>
+  <data name="M_ZipInvalidPath" xml:space="preserve"><value>完整 ZIP 包含非法文件路径</value></data>
+  <data name="M_ZipSizeLimit" xml:space="preserve"><value>完整 ZIP 解压后的总大小超过安全上限</value></data>
+  <data name="M_ZipOutsidePath" xml:space="preserve"><value>完整 ZIP 包含越界文件路径</value></data>
+  <data name="M_InstallerUnsupported" xml:space="preserve"><value>不支持该安装包类型</value></data>
+  <data name="M_InstallerStartFailed" xml:space="preserve"><value>无法启动系统安装程序</value></data>
+  <data name="M_UnknownPackageKind" xml:space="preserve"><value>更新清单包含未知安装包类型</value></data>
 </root>

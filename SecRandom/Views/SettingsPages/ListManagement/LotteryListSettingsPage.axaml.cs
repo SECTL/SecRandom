@@ -137,6 +137,28 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         RefreshPrizeLists();
     }
 
+    private async void DeletePrizeButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { CommandParameter: Prize prize } || SelectedPrizeListConfig?.Data == null)
+            return;
+
+        var displayName = string.IsNullOrWhiteSpace(prize.Name) ? prize.Id : prize.Name;
+        if (!await ConfirmDeletePrizeAsync(displayName))
+            return;
+
+        if (!SelectedPrizeListConfig.Data.Prizes.Remove(prize))
+        {
+            this.ShowWarningToast(LR.M_DeletePrizeNotFound);
+            OnPropertyChanged(nameof(SelectedPrizeList));
+            return;
+        }
+
+        SaveSelectedPrizeList();
+        OnPropertyChanged(nameof(SelectedPrizeList));
+        _logger.LogInformation("已删除奖品池条目：奖品池={ListName}，记录={RecordId}。", SelectedPrizeListName, prize.RecordId);
+        this.ShowSuccessToast(string.Format(LR.M_DeletePrizeSuccess, displayName));
+    }
+
     private async void AddListButton_OnClick(object? sender, RoutedEventArgs e)
     {
         var listName = await ShowListNameDialogAsync(LR.M_ListNameDialogTitle_Add, LR.M_ListNameDialogPrimary_Add,
@@ -300,6 +322,20 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
             Title = LR.M_DeleteListTitle,
             Content = string.Format(LR.M_DeleteListContent, listName),
             PrimaryButtonText = LR.M_DeleteListPrimary,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+
+        return result == FAContentDialogResult.Primary;
+    }
+
+    private async Task<bool> ConfirmDeletePrizeAsync(string prizeName)
+    {
+        var result = await new FAContentDialog
+        {
+            Title = LR.M_DeletePrizeTitle,
+            Content = string.Format(LR.M_DeletePrizeContent, prizeName, SelectedPrizeListName),
+            PrimaryButtonText = LR.M_DeletePrizePrimary,
             CloseButtonText = LR.C_Cancel,
             DefaultButton = FAContentDialogButton.Close
         }.ShowAsync(TopLevel.GetTopLevel(this));

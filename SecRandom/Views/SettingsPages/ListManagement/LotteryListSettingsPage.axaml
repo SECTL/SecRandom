@@ -75,6 +75,25 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="80" Header="{x:Static lr:Resources.C_Operations}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Width="32"
+                                            Height="32"
+                                            Padding="0"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Theme="{StaticResource TransparentButton}"
+                                            Foreground="Red"
+                                            ToolTip.Tip="{x:Static lr:Resources.C_DeletePrize}"
+                                            AutomationProperties.Name="{x:Static lr:Resources.C_DeletePrize}"
+                                            CommandParameter="{Binding}"
+                                            Click="DeletePrizeButton_OnClick">
+                                        <sr:FluentIcon Glyph="{sr:Fi DeleteFilled}" />
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>

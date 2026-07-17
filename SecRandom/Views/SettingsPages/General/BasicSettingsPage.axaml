@@ -73,7 +73,7 @@
 
             <fa:FASettingsExpander x:Name="S_Behavior_MainWindowTopmostMode"
                                    Header="{x:Static lsb:Resources.S_Behavior_MainWindowTopmostMode}"
-                                   Description="{x:Static lsb:Resources.S_Behavior_MainWindowTopmostMode_D}"
+                                   Description="{Binding MainWindowTopmostModeDescription}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PinFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.MainWindowTopmostMode}">

@@ -269,6 +269,15 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 选择主窗口是否保持在其他窗口上方.
+        /// </summary>
+        public static string S_Behavior_MainWindowTopmostMode_NonWindows_D {
+            get {
+                return ResourceManager.GetString("S_Behavior_MainWindowTopmostMode_NonWindows_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 启动显示主窗口.
         /// </summary>
         public static string S_Behavior_ShowStartupWindow {

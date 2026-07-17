@@ -234,6 +234,15 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 选择悬浮窗置顶方式，UIAccess 会在重启时请求管理员权限，取消或失败时本次启动使用普通置顶.
+        /// </summary>
+        public static string S_Display_TopmostMode_Windows_D {
+            get {
+                return ResourceManager.GetString("S_Display_TopmostMode_Windows_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 交互.
         /// </summary>
         public static string S_Interaction {

@@ -65,6 +65,9 @@ bug 报 GitHub Issue 或 SECTL QQ组织群 - 833875216</value>
     <data name="S_Behavior_MainWindowTopmostMode_D" xml:space="preserve">
         <value>选择主窗口置顶方式（UIAccess 在重启时请求管理员权限以获取系统 UIAccess 令牌；取消或失败时本次启动回退为普通置顶）</value>
     </data>
+    <data name="S_Behavior_MainWindowTopmostMode_NonWindows_D" xml:space="preserve">
+        <value>选择主窗口是否保持在其他窗口上方</value>
+    </data>
     <data name="S_Behavior_BackgroundResident" xml:space="preserve">
         <value>后台驻留</value>
     </data>

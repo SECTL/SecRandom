@@ -39,6 +39,9 @@
   <data name="S_Display_TopmostMode_D" xml:space="preserve">
     <value>选择悬浮窗是否保持在其他窗口上方</value>
   </data>
+  <data name="S_Display_TopmostMode_Windows_D" xml:space="preserve">
+    <value>选择悬浮窗置顶方式，UIAccess 会在重启时请求管理员权限，取消或失败时本次启动使用普通置顶</value>
+  </data>
   <data name="O_TopmostMode_None" xml:space="preserve">
     <value>不置顶</value>
   </data>

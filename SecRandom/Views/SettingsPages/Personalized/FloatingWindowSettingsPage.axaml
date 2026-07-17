@@ -40,7 +40,7 @@
 
             <fa:FASettingsExpander x:Name="S_Display_TopmostMode"
                                    Header="{x:Static lsp:Resources.S_Display_TopmostMode}"
-                                   Description="{x:Static lsp:Resources.S_Display_TopmostMode_D}"
+                                   Description="{Binding TopmostModeDescription}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PinFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.FloatingWindowTopmostMode}">

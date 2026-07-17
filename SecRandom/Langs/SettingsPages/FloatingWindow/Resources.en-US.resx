@@ -8,6 +8,7 @@
   <data name="S_Display_Opacity_D"><value>Applies to both the main floating window and the quick-draw window</value></data>
   <data name="S_Display_TopmostMode"><value>Floating window topmost mode</value></data>
   <data name="S_Display_TopmostMode_D"><value>Choose whether the floating window stays above other windows</value></data>
+  <data name="S_Display_TopmostMode_Windows_D"><value>Choose how the floating window stays on top (UIAccess requests administrator permission on restart; cancellation or failure uses ordinary topmost for this launch)</value></data>
   <data name="O_TopmostMode_None"><value>Not topmost</value></data>
   <data name="O_TopmostMode_Topmost"><value>Topmost</value></data>
   <data name="O_TopmostMode_UIAccess"><value>UIAccess topmost</value></data>

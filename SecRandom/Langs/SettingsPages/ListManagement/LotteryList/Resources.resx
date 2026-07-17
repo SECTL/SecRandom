@@ -57,6 +57,12 @@
     <data name="C_DeleteList" xml:space="preserve">
         <value>删除奖池</value>
     </data>
+    <data name="C_Operations" xml:space="preserve">
+        <value>操作</value>
+    </data>
+    <data name="C_DeletePrize" xml:space="preserve">
+        <value>删除奖品</value>
+    </data>
     <data name="C_Exists" xml:space="preserve">
         <value>存在</value>
     </data>
@@ -230,6 +236,21 @@
     </data>
     <data name="M_DeleteListSuccess" xml:space="preserve">
         <value>已删除奖池“{0}”。</value>
+    </data>
+    <data name="M_DeletePrizeTitle" xml:space="preserve">
+        <value>删除奖品？</value>
+    </data>
+    <data name="M_DeletePrizeContent" xml:space="preserve">
+        <value>将从奖池“{1}”中删除奖品“{0}”。此操作不可撤销。</value>
+    </data>
+    <data name="M_DeletePrizePrimary" xml:space="preserve">
+        <value>删除</value>
+    </data>
+    <data name="M_DeletePrizeSuccess" xml:space="preserve">
+        <value>已删除奖品“{0}”。</value>
+    </data>
+    <data name="M_DeletePrizeNotFound" xml:space="preserve">
+        <value>该奖品已不存在，奖池已刷新。</value>
     </data>
     <data name="M_KeepOneList" xml:space="preserve">
         <value>至少需要保留一个奖池。</value>

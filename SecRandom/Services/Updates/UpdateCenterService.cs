@@ -253,14 +253,6 @@ public sealed class UpdateCenterService(
 
     private async Task<string> GetChannelTagAsync(UpdateSource source, UpdateChannel channel, CancellationToken cancellationToken)
     {
-        if (source == UpdateSource.Sectl)
-        {
-            using var response = await _httpClient.GetAsync("https://appwrite.sectl.cn/api/software/latest-tag?projectSlug=SecRandom", cancellationToken);
-            response.EnsureSuccessStatusCode();
-            using var document = JsonDocument.Parse(await response.Content.ReadAsStreamAsync(cancellationToken));
-            return document.RootElement.GetProperty("tag").GetString() ?? throw new InvalidDataException(Text("M_SectlMissingTag"));
-        }
-
         var metadataUri = source == UpdateSource.GitHub
             ? GitHubRawMetadataUri
             : new Uri($"{GitHubMirrorPrefix}{GitHubRawMetadataUri.AbsoluteUri}");
@@ -278,7 +270,6 @@ public sealed class UpdateCenterService(
     {
         Uri uri = source switch
         {
-            UpdateSource.Sectl => new Uri($"https://appwrite.sectl.cn/api/software/download?projectSlug=SecRandom&tag={Uri.EscapeDataString(tag)}&fileName={Uri.EscapeDataString(assetName)}&source=server"),
             UpdateSource.GitHub => new Uri($"https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(assetName)}"),
             UpdateSource.GitHubMirror => new Uri($"{GitHubMirrorPrefix}https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(assetName)}"),
             _ => throw new ArgumentOutOfRangeException(nameof(source))
@@ -490,7 +481,7 @@ public sealed class UpdateCenterService(
         UpdateChannel channel, CancellationToken cancellationToken)
     {
         Exception? lastException = null;
-        foreach (var source in GetSources(channel))
+        foreach (var source in GetSources())
         {
             try
             {
@@ -513,15 +504,15 @@ public sealed class UpdateCenterService(
         throw lastException ?? new InvalidOperationException(Text("M_NoUpdateSourceAvailable"));
     }
 
-    private IEnumerable<UpdateSource> GetSources(UpdateChannel channel)
+    private static IEnumerable<UpdateSource> GetSources()
     {
-        return [UpdateSource.Sectl, UpdateSource.GitHubMirror, UpdateSource.GitHub];
+        return [UpdateSource.GitHubMirror, UpdateSource.GitHub];
     }
 
     private async Task<byte[]> DownloadAssetWithFallbackAsync(string tag, string assetName, CancellationToken cancellationToken)
     {
         Exception? lastException = null;
-        foreach (var source in GetSources(GetChannel()).OrderBy(source => source == _activeSource ? 0 : 1))
+        foreach (var source in GetSources().OrderBy(source => source == _activeSource ? 0 : 1))
         {
             try
             {
