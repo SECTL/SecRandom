@@ -108,13 +108,12 @@ public sealed class UpdateCenterService(
         {
             Phase = UpdateOperationPhase.Checking;
             StatusMessage = Text("M_StatusChecking");
+            RecordCheckAttempt();
             var channel = GetChannel();
             var (source, manifest) = await GetManifestAsync(channel, cancellationToken);
             _activeSource = source;
             if (!force && !IsNewerVersion(manifest.Version, GlobalConstants.Version))
             {
-                configHandler.Data.UpdateSettings.LastCheckTime = DateTime.Now;
-                configHandler.Save();
                 Phase = UpdateOperationPhase.UpToDate;
                 StatusMessage = Text("M_StatusUpToDate");
                 return;
@@ -129,8 +128,6 @@ public sealed class UpdateCenterService(
             foreach (var artifact in artifacts)
                 AvailableArtifacts.Add(artifact);
             SelectedArtifact = ReadCurrentPackageMarker() is null ? null : SelectDefaultArtifact(artifacts);
-            configHandler.Data.UpdateSettings.LastCheckTime = DateTime.Now;
-            configHandler.Save();
             OnPropertyChanged(nameof(AvailableVersion));
             OnPropertyChanged(nameof(NotesUrl));
             Phase = UpdateOperationPhase.UpdateAvailable;
@@ -250,6 +247,12 @@ public sealed class UpdateCenterService(
     }
 
     public void CancelCurrentOperation() => _operationCancellation?.Cancel();
+
+    private void RecordCheckAttempt()
+    {
+        configHandler.Data.UpdateSettings.LastCheckTime = DateTime.Now;
+        configHandler.Save();
+    }
 
     private async Task<string> GetChannelTagAsync(UpdateSource source, UpdateChannel channel, CancellationToken cancellationToken)
     {
@@ -503,6 +506,9 @@ public sealed class UpdateCenterService(
 
         if (lastException is HttpRequestException { StatusCode: System.Net.HttpStatusCode.NotFound })
             throw new InvalidOperationException(Text("M_ReleaseManifestMissing"), lastException);
+
+        if (lastException is HttpRequestException)
+            throw new InvalidOperationException(Text("M_UpdateSourceUnavailable"), lastException);
 
         throw lastException ?? new InvalidOperationException(Text("M_NoUpdateSourceAvailable"));
     }
