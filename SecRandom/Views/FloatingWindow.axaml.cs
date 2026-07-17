@@ -286,8 +286,7 @@ public partial class FloatingWindow : Window
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
-        if (App.SupportsProgrammaticWindowPositioning)
-            Dispatcher.UIThread.Post(RestoreStartupPositionAndScheduleDock, DispatcherPriority.Render);
+        Dispatcher.UIThread.Post(RestoreStartupPositionAndScheduleDock, DispatcherPriority.Render);
     }
 
     private async void RestoreStartupPositionAndScheduleDock()
@@ -325,9 +324,7 @@ public partial class FloatingWindow : Window
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
-        if (!App.SupportsProgrammaticWindowPositioning)
-            return;
-
+        
         if (ViewModel.Config.FloatingWindowSettings.Draggable
             && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
@@ -355,8 +352,6 @@ public partial class FloatingWindow : Window
 
     private void OnPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (!App.SupportsProgrammaticWindowPositioning)
-            return;
         if (_isMovingDockHandle)
         {
             MoveDockHandle(e);
@@ -408,8 +403,6 @@ public partial class FloatingWindow : Window
     private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
-        if (!App.SupportsProgrammaticWindowPositioning)
-            return;
 
         if (_isMovingDockHandle)
         {
