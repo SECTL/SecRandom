@@ -22,36 +22,43 @@
                     ToolTip.Tip="{x:Static lsa:Resources.C_Refresh}">
                 <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseFilled}" />
             </Button>
-            <ListBox Grid.Row="3" Margin="0,8,0,0" ItemsSource="{Binding Contributors}"
+            
+            <ItemsControl Grid.Row="3" Margin="0,8,0,0" ItemsSource="{Binding Contributors}"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                <ListBox.Styles>
-                    <Style Selector="ListBoxItem">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        <Setter Property="Margin" Value="0" />
-                        <Setter Property="Padding" Value="0" />
-                    </Style>
-                </ListBox.Styles>
-                <ListBox.ItemTemplate>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="4"></StackPanel>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                
+                <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="local:GitHubContributor">
-                        <Button Width="288" Margin="0" HorizontalContentAlignment="Stretch" Padding="4" Background="Transparent"
+                        <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Margin="0" Padding="4" Background="Transparent"
                                 CommandParameter="{Binding ProfileUrl}" Click="OpenContributorProfile_OnClick"
                                 ToolTip.Tip="{Binding ProfileUrl}">
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                                 <Border Width="36" Height="36" CornerRadius="18" ClipToBounds="True"
-                                        Background="{DynamicResource ControlFillColorSecondaryBrush}">
-                                    <Image Source="{Binding Avatar}" Stretch="UniformToFill" />
+                                        Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                        BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                                        BorderThickness="1">
+                                    <Border Width="34" Height="34" CornerRadius="17" ClipToBounds="True">
+                                        <Image Source="{Binding Avatar}" Stretch="UniformToFill" />
+                                    </Border>
                                 </Border>
+                                
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
                                     <TextBlock Text="{Binding Login}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                                     <TextBlock Text="{Binding ContributionText}" FontSize="12"
                                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                 </StackPanel>
+                                
                                 <sr:FluentIcon Grid.Column="2" Glyph="{sr:Fi OpenFilled}" VerticalAlignment="Center" />
                             </Grid>
                         </Button>
                     </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </Grid>
     </UserControl.Resources>
     <sr:StickyScrollViewer CollapsedHeight="58">
