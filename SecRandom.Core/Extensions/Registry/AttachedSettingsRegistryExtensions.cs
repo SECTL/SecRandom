@@ -44,6 +44,22 @@ public static class AttachedSettingsRegistryExtensions
         return true;
     }
 
+    public static bool UnregisterAttachedSettingsControl<T>()
+        where T : AttachedSettingsControlBase
+    {
+        var type = typeof(T);
+        if (type.GetCustomAttributes(false).FirstOrDefault(x => x is AttachedSettingsControlInfo) is not
+            AttachedSettingsControlInfo info)
+            return false;
+
+        var removed = AttachedSettingsRegistryService.RegisteredControls.Remove(info);
+        AttachedSettingsRegistryService.StudentAttachedSettingsControls.Remove(info);
+        AttachedSettingsRegistryService.PrizeAttachedSettingsControls.Remove(info);
+        AttachedSettingsRegistryService.StudentListAttachedSettingsControls.Remove(info);
+        AttachedSettingsRegistryService.PrizeListAttachedSettingsControls.Remove(info);
+        return removed;
+    }
+
     private static void RegisterAttachedSettingsControl<T>(string name, AttachedSettingsControlInfo info,
         AttachedSettingsUsage usages)
         where T : AttachedSettingsControlBase

@@ -18,15 +18,14 @@ using Microsoft.Extensions.Hosting;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
-using SecRandom.Core.Extensions.Registry;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core;
-using SecRandom.Controls.AttachedSettings;
 using SecRandom.Services;
 using SecRandom.Services.Desktop;
 using SecRandom.Views;
 using LR = SecRandom.Langs.SettingsPages.About.Resources;
+using DebugResources = SecRandom.Langs.SettingsPages.Debug.DebugStrings;
 
 namespace SecRandom.Views.SettingsPages.About;
 
@@ -34,8 +33,8 @@ namespace SecRandom.Views.SettingsPages.About;
 public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
 {
     private const string ContributorsEndpoint = "https://api.github.com/repos/SECTL/SecRandom/contributors?per_page=30";
-    private const int InternalSettingsActivationClickCount = 10;
-    private static readonly TimeSpan InternalSettingsActivationClickInterval = TimeSpan.FromMilliseconds(300);
+    private const int InternalSettingsActivationClickCount = 20;
+    private static readonly TimeSpan InternalSettingsActivationClickInterval = TimeSpan.FromMilliseconds(200);
     private bool _isRefreshingContributors;
     private int _bannerClickCount;
     private DateTimeOffset _lastBannerClickAt;
@@ -76,8 +75,12 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
         InitializeComponent();
     }
 
-    private async void Banner_OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    private void OrganizationIcon_OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
+        if (sender is not Control control || e.GetPosition(control).X > 48)
+            return;
+
+        e.Handled = true;
         var now = DateTimeOffset.UtcNow;
         _bannerClickCount = now - _lastBannerClickAt <= InternalSettingsActivationClickInterval
             ? _bannerClickCount + 1
@@ -89,38 +92,8 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
 
         _bannerClickCount = 0;
         _lastBannerClickAt = default;
-        if (!RegisterInternalSettingsControl())
-            return;
-
-        await new FAContentDialog
-        {
-            Title = LR.C_InternalSettingsActivatedTitle,
-            Content = CreateInternalSettingsDialogContent(),
-            CloseButtonText = LR.C_Close,
-            DefaultButton = FAContentDialogButton.Close
-        }.ShowAsync(TopLevel.GetTopLevel(this));
-    }
-
-    private static StackPanel CreateInternalSettingsDialogContent()
-    {
-        var paragraphs = LR.M_InternalSettingsActivated.Split("\n\n", StringSplitOptions.None);
-        var content = new StackPanel { Spacing = 12 };
-        foreach (var paragraph in paragraphs)
-        {
-            content.Children.Add(new TextBlock
-            {
-                Text = paragraph,
-                TextWrapping = Avalonia.Media.TextWrapping.Wrap
-            });
-        }
-
-        return content;
-    }
-
-    private static bool RegisterInternalSettingsControl()
-    {
-        return AttachedSettingsRegistryExtensions.RegisterAttachedSettingsControl<BehindSceneAttachedSettingsControl>(
-            SecRandom.Langs.Common.Resources.AttachedSettings_BehindScene);
+        SettingsView.Current?.ShowDebugNavigationItem();
+        this.ShowToast(DebugResources.Get("M_DebugShown"));
     }
 
     private void OpenLink(string url)

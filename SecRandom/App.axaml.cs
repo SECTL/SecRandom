@@ -544,7 +544,7 @@ public partial class App : Application
                 services.AddSettingsPage<RollCallHistorySettingsPage>(Langs.Common.Resources.Feat_RollCallHistory);
                 services.AddSettingsPage<LotteryHistorySettingsPage>(Langs.Common.Resources.Feat_LotteryHistory);
 
-                services.AddSettingsPageSeparator();
+                services.AddSettingsPageSeparator(isHide: true);
                 services.AddSettingsPage<PluginsSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources.Page_Title);
                 
                 // 底部
@@ -552,10 +552,8 @@ public partial class App : Application
                 services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
 
-#if DEBUG
-                services.AddSettingsPageSeparator(PageLocation.Bottom);
-                services.AddSettingsPage<DebugSettingsPage>("调试");
-#endif
+                services.AddSettingsPageSeparator(PageLocation.Bottom, isHide: true);
+                 services.AddSettingsPage<DebugSettingsPage>(Langs.SettingsPages.Debug.DebugStrings.Get("Page_Title"));
                 
                 // 杂项
                 services.AddSettingsPage<LogViewerSettingsPage>(Langs.SettingsPages.LogViewer.Resources.Page_Title);

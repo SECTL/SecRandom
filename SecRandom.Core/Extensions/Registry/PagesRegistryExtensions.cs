@@ -43,9 +43,9 @@ public static class PagesRegistryExtensions
     }
 
     public static IServiceCollection AddSettingsPageSeparator(this IServiceCollection services,
-        PageLocation location = PageLocation.Top)
+        PageLocation location = PageLocation.Top, bool isHide = false)
     {
-        PagesRegistryService.SettingsItems.Add(new PageInfo(true, location));
+        PagesRegistryService.SettingsItems.Add(new PageInfo(true, location) { IsHide = isHide });
         return services;
     }
 

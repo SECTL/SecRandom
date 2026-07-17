@@ -116,8 +116,7 @@
                     <Border Background="Transparent"
                             HorizontalAlignment="Center"
                             MaxWidth="{StaticResource PageContainerWidth}"
-                            VerticalAlignment="Top"
-                            PointerPressed="Banner_OnPointerPressed">
+                            VerticalAlignment="Top">
                         <Image Source="/Assets/Banners/secrandom-banner.png" Stretch="Uniform" />
                     </Border>
                 </Panel>
@@ -201,8 +200,9 @@
                                            CommandParameter="https://afdian.com/a/lzy0983" />
 
                 <fa:FASettingsExpanderItem x:Name="S_Author_Org"
-                                           Content="{x:Static lsa:Resources.S_Author_Org}"
-                                           Description="{x:Static lsa:Resources.S_Author_Org_D}">
+                                            Content="{x:Static lsa:Resources.S_Author_Org}"
+                                            Description="{x:Static lsa:Resources.S_Author_Org_D}"
+                                            PointerPressed="OrganizationIcon_OnPointerPressed">
                     <fa:FASettingsExpanderItem.IconSource>
                         <fa:FAImageIconSource Source="/Assets/SECTLLogo.png" />
                     </fa:FASettingsExpanderItem.IconSource>

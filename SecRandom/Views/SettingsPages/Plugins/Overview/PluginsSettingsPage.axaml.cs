@@ -22,7 +22,7 @@ using LR = SecRandom.Langs.SettingsPages.Plugins.Overview.Resources;
 
 namespace SecRandom.Views.SettingsPages.Plugins.Overview;
 
-[PageInfo("settings.plugin", FluentIcons.AppsListFilled, useFullWidth: true, hidePageTitle: true)]
+[PageInfo("settings.plugin", FluentIcons.AppsListFilled, isHide: true, useFullWidth: true, hidePageTitle: true)]
 public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
 {
     private readonly IPluginManager _pluginManager = IAppHost.GetService<IPluginManager>();

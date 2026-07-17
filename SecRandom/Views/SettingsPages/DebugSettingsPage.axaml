@@ -1,37 +1,116 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.SettingsPages.DebugSettingsPage">
+               xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+               xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+               xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+               xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
+               mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+               x:Class="SecRandom.Views.SettingsPages.DebugSettingsPage"
+               x:DataType="local:DebugSettingsPage">
     <UserControl.Resources>
         <!-- ReSharper disable once Xaml.RedundantResource -->
         <StackPanel x:Key="DrawerTest" Margin="16" Width="300">
-            <TextBlock>Drawer 测试</TextBlock>
+            <TextBlock Text="{Binding Strings.C_DrawerTest}" />
         </StackPanel>
     </UserControl.Resources>
 
     <ScrollViewer>
-        <StackPanel Classes="page-container animated-intro">
-             <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi AppsFilled}}"
-                                    Header="UI 功能测试" IsExpanded="True">
-                <fa:FASettingsExpanderItem Content="发送 Toast" IsClickEnabled="True"
+         <StackPanel Classes="page-container animated-intro">
+              <fa:FASettingsExpanderItem Content="{Binding Strings.C_HideDebugEntry}"
+                                          Description="{Binding Strings.C_HideDebugEntry_D}">
+                  <fa:FASettingsExpanderItem.Footer>
+                      <Button Content="{Binding Strings.C_Hide}" Click="HideDebugNavigation_OnClick" />
+                  </fa:FASettingsExpanderItem.Footer>
+              </fa:FASettingsExpanderItem>
+
+              <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi AppsFilled}}"
+                                      Header="{Binding Strings.S_UiTests}" IsExpanded="False">
+                <fa:FASettingsExpanderItem Content="{Binding Strings.C_SendToast}" IsClickEnabled="True"
                                             Click="SendToast_OnClick" />
-                <fa:FASettingsExpanderItem Content="打开 Drawer" IsClickEnabled="True"
+                <fa:FASettingsExpanderItem Content="{Binding Strings.C_OpenDrawer}" IsClickEnabled="True"
                                             Click="OpenDrawer_Test" />
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}"
-                                    Header="崩溃恢复测试" IsExpanded="True">
-                <fa:FASettingsExpanderItem Content="显示崩溃恢复页" IsClickEnabled="True"
+              <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}"
+                                       Header="{Binding Strings.S_CrashRecovery}" IsExpanded="False">
+                <fa:FASettingsExpanderItem Content="{Binding Strings.C_ShowCrashRecovery}" IsClickEnabled="True"
                                             Click="ShowCrashRecoveryWindow_OnClick" />
-                <fa:FASettingsExpanderItem Content="触发 UI 线程异常" IsClickEnabled="True"
+                <fa:FASettingsExpanderItem Content="{Binding Strings.C_ThrowDispatcherException}" IsClickEnabled="True"
                                             Click="ThrowDispatcherException_OnClick" />
-                <fa:FASettingsExpanderItem Content="重启程序" IsClickEnabled="True"
-                                            Click="RestartProgram_OnClick" />
-            </fa:FASettingsExpander>
-        </StackPanel>
+                 <fa:FASettingsExpanderItem Content="{Binding Strings.C_RestartProgram}" IsClickEnabled="True"
+                                             Click="RestartProgram_OnClick" />
+             </fa:FASettingsExpander>
+
+                <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi PuzzlePieceFilled}}"
+                                         Header="{Binding Strings.S_Plugins}" IsExpanded="False">
+                    <fa:FASettingsExpanderItem Content="{Binding Strings.C_ShowPluginSettings}"
+                                                Description="{Binding Strings.C_ShowPluginSettings_D}">
+                        <fa:FASettingsExpanderItem.Footer>
+                            <ToggleSwitch x:Name="PluginSettingsToggle"
+                                          IsChecked="{Binding IsPluginSettingsVisible}" />
+                        </fa:FASettingsExpanderItem.Footer>
+                   </fa:FASettingsExpanderItem>
+                </fa:FASettingsExpander>
+
+               <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi ShieldLockFilled}}"
+                                        Header="{Binding Strings.S_InternalSettings}" IsExpanded="False">
+                    <fa:FASettingsExpanderItem Content="{Binding Strings.C_EnableInternalSettings}"
+                                                Description="{Binding Strings.C_EnableInternalSettings_D}">
+                        <fa:FASettingsExpanderItem.Footer>
+                            <ToggleSwitch x:Name="InternalSettingsToggle"
+                                          IsChecked="{Binding IsInternalSettingsEnabled}" />
+                        </fa:FASettingsExpanderItem.Footer>
+                   </fa:FASettingsExpanderItem>
+               </fa:FASettingsExpander>
+
+              <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}"
+                                       Header="{Binding Strings.S_UpdateDiagnostics}" IsExpanded="False">
+                   <fa:FASettingsExpanderItem Content="{Binding Strings.C_RefreshUpdate}"
+                                               Description="{Binding Strings.C_RefreshUpdate_D}"
+                                              IsClickEnabled="True"
+                                              Click="RefreshDiagnostics_OnClick" />
+                  <TextBlock Text="{Binding UpdateDiagnostics}"
+                             FontFamily="Cascadia Mono, Consolas, monospace"
+                             TextWrapping="Wrap"
+                             Opacity="0.8" />
+              </fa:FASettingsExpander>
+
+              <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi CalendarInfoFilled}}"
+                                       Header="{Binding Strings.S_LinkageNotificationDiagnostics}" IsExpanded="False">
+                   <fa:FASettingsExpanderItem Content="{Binding Strings.C_RefreshLinkage}"
+                                               Description="{Binding Strings.C_RefreshLinkage_D}"
+                                              IsClickEnabled="True"
+                                              Click="RefreshDiagnostics_OnClick" />
+                  <TextBlock Text="{Binding LinkageAndNotificationDiagnostics}"
+                             FontFamily="Cascadia Mono, Consolas, monospace"
+                             TextWrapping="Wrap"
+                             Opacity="0.8" />
+              </fa:FASettingsExpander>
+
+              <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi DesktopPulseFilled}}"
+                                       Header="{Binding Strings.S_PlatformDiagnostics}" IsExpanded="False">
+                   <fa:FASettingsExpanderItem Content="{Binding Strings.C_RefreshPlatform}"
+                                               Description="{Binding Strings.C_RefreshPlatform_D}"
+                                              IsClickEnabled="True"
+                                              Click="RefreshDiagnostics_OnClick" />
+                  <TextBlock Text="{Binding PlatformDiagnostics}"
+                             FontFamily="Cascadia Mono, Consolas, monospace"
+                             TextWrapping="Wrap"
+                             Opacity="0.8" />
+              </fa:FASettingsExpander>
+
+              <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi FolderOpenFilled}}"
+                                       Header="{Binding Strings.S_DataPathDiagnostics}" IsExpanded="False">
+                   <fa:FASettingsExpanderItem Content="{Binding Strings.C_RefreshPaths}"
+                                               Description="{Binding Strings.C_RefreshPaths_D}"
+                                              IsClickEnabled="True"
+                                              Click="RefreshDiagnostics_OnClick" />
+                  <TextBlock Text="{Binding DataAndPathDiagnostics}"
+                             FontFamily="Cascadia Mono, Consolas, monospace"
+                             TextWrapping="Wrap"
+                             Opacity="0.8" />
+              </fa:FASettingsExpander>
+          </StackPanel>
     </ScrollViewer>
 </UserControl>

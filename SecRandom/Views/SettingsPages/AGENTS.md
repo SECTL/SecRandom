@@ -14,7 +14,7 @@ Settings navigation subtree: top-level settings pages, grouped settings pages, a
 ```
 SecRandom/Views/SettingsPages/
 |-- HomeSettingsPage.axaml(.cs)           # Top-level student-history overview
-|-- DebugSettingsPage.axaml(.cs)          # DEBUG-only bottom page
+|-- DebugSettingsPage.axaml(.cs)          # Runtime-hidden bottom debug page
 |-- General/                              # settings.general.*: basic/security/backup/privacy
 |-- ListManagement/                       # settings.listManagement.*: roll-call/lottery list entries
 |-- Personalized/                         # settings.personalized.*: appearance/floatingWindow/music library
@@ -54,7 +54,7 @@ SecRandom/Views/SettingsPages/
 | Log viewer | `LogViewer/LogViewerSettingsPage.axaml(.cs)` | Hidden page `settings.logs`; opened from the settings shell more-options menu. |
 | About / external links | `About/AboutSettingsPage.axaml(.cs)` | `settings.about` bottom-nav; `Process.Start` for external URLs. |
 | Shell navigation semantics | `../SettingsView.axaml.cs` | Default page `settings.overview`, history stack, generated menu. |
-| Localization pairing | `../../Langs/SettingsPages/` | Page folders mirror settings-page domains, except DEBUG-only pages. |
+| Localization pairing | `../../Langs/SettingsPages/` | Page folders mirror settings-page domains, including the runtime-hidden Debug page. |
 
 ## CONVENTIONS
 
@@ -84,7 +84,7 @@ SecRandom/Views/SettingsPages/
 
 - Do not add a settings page file here without registering it in `BuildHost()`.
 - Do not invent a new page-ID shape that breaks `settings.xxx` / `settings.group.xxx`.
-- Do not localize DEBUG-only pages by accident; `DebugSettingsPage` intentionally remains debug-scoped.
+- `DebugSettingsPage` is available in all builds for the About-page activation path; keep it hidden by default in release builds and localize all user-facing text under `Langs/SettingsPages/Debug/`.
 - Do not put backup/config persistence logic in these pages when the boundary belongs in Core handlers or app services.
 - Do not open navigation targets by manually editing menu items in `SettingsView`; register pages/groups and let the registry build the menu.
 - Do not turn `settings.plugin` into a store or marketplace page; it is a settings group for installed plugin management.

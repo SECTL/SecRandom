@@ -58,6 +58,8 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         InitializeComponent();
 
         NavigationFrame.NavigationPageFactory = this;
+        if (GlobalConstants.IsDevelopment)
+            ShowDebugNavigationItem();
         BuildNavigationMenuItems();
         SelectNavigationItemById(DefaultMainPageId);
 
@@ -599,6 +601,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     {
         ViewModel.NavigationViewItems.Clear();
         ViewModel.NavigationViewFooterItems.Clear();
+        ViewModel.FlattenNavigationItems.Clear();
 
         ViewModel.NavigationViewItems
             .AddRange(PagesRegistryService.SettingsItems
@@ -633,6 +636,51 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         var info = PagesRegistryService.SettingsItems.FirstOrDefault(info => info.Id == id);
 
         if (info != null) CoreNavigate(info, isBack);
+    }
+
+    public void ShowDebugNavigationItem()
+    {
+        var debugPage = PagesRegistryService.SettingsItems.FirstOrDefault(info => info.Id == "settings.debug");
+        if (debugPage is null || !debugPage.IsHide)
+            return;
+
+        debugPage.IsHide = false;
+        var debugSeparator = PagesRegistryService.SettingsItems
+            .TakeWhile(info => info != debugPage)
+            .LastOrDefault(info => info.IsSeparator && info.Location == PageLocation.Bottom);
+        if (debugSeparator is not null)
+            debugSeparator.IsHide = false;
+        BuildNavigationMenuItems();
+    }
+
+    public void HideDebugNavigationItem()
+    {
+        var debugPage = PagesRegistryService.SettingsItems.FirstOrDefault(info => info.Id == "settings.debug");
+        if (debugPage is null || debugPage.IsHide)
+            return;
+
+        debugPage.IsHide = true;
+        var debugSeparator = PagesRegistryService.SettingsItems
+            .TakeWhile(info => info != debugPage)
+            .LastOrDefault(info => info.IsSeparator && info.Location == PageLocation.Bottom);
+        if (debugSeparator is not null)
+            debugSeparator.IsHide = true;
+        BuildNavigationMenuItems();
+    }
+
+    public void SetPluginSettingsNavigationVisible(bool isVisible)
+    {
+        var pluginPage = PagesRegistryService.SettingsItems.FirstOrDefault(info => info.Id == "settings.plugin");
+        if (pluginPage is null || pluginPage.IsHide == !isVisible)
+            return;
+
+        pluginPage.IsHide = !isVisible;
+        var pluginSeparator = PagesRegistryService.SettingsItems
+            .TakeWhile(info => info != pluginPage)
+            .LastOrDefault(info => info.IsSeparator && info.Location == PageLocation.Top);
+        if (pluginSeparator is not null)
+            pluginSeparator.IsHide = !isVisible;
+        BuildNavigationMenuItems();
     }
 
     public void NavigateToPage(string id)

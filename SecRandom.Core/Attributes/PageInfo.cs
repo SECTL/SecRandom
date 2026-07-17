@@ -50,7 +50,7 @@ public class PageInfo : Attribute
     public string? GroupId { get; }
     public PageLocation Location { get; }
 
-    public bool IsHide { get; }
+    public bool IsHide { get; set; }
     public bool UseFullWidth { get; }
     public bool HidePageTitle { get; }
 

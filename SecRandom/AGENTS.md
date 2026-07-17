@@ -165,4 +165,4 @@ SecRandom/
 - Do not assume config dictionary/list mutations auto-save; call save at the mutation boundary or unload.
 - Do not require either student number or name in roll-call column mapping; a candidate needs at least one nonblank value, while `RecordId` remains the internal identity.
 - Do not put reusable controls/styles here when they are intended for Core consumers.
-- `DebugSettingsPage` intentionally skips its localization folder and remains guarded by `#if DEBUG`.
+- `DebugSettingsPage` is registered in every build so the About-page activation path can expose it in release builds; it is hidden by default outside `#if DEBUG`, and its user-facing text lives under `Langs/SettingsPages/Debug/`.
