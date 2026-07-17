@@ -10,8 +10,8 @@
               x:Class="SecRandom.Views.SettingsPages.Plugins.Overview.PluginsSettingsPage"
              x:DataType="local:PluginsSettingsPage"
              Loaded="OnLoaded">
-    <Grid Classes="page-container animated-intro"
-          Margin="8"
+    <Grid Classes="animated-intro"
+          Margin="12"
           RowDefinitions="Auto,*"
           RowSpacing="8"
           MinHeight="620">
