@@ -34,9 +34,6 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_WelcomeTitle" xml:space="preserve"><value>Welcome to SecRandom</value></data>
   <data name="C_WelcomeDescription" xml:space="preserve"><value>Complete the first-run setup in a few steps. The verifiable-draw notice, privacy-policy, and GPLv3 acknowledgements are required; you can adjust everything else later in Settings.</value></data>
   <data name="C_Language" xml:space="preserve"><value>Language</value></data>
-  <data name="O_LanguageChinese" xml:space="preserve"><value>Chinese (Simplified)</value></data>
-  <data name="O_LanguageEnglish" xml:space="preserve"><value>English</value></data>
-  <data name="O_LanguageJapanese" xml:space="preserve"><value>Japanese</value></data>
   <data name="C_LegalTitle" xml:space="preserve"><value>Privacy policy and open-source licence</value></data>
   <data name="C_LegalDescription" xml:space="preserve"><value>Read the verifiable-draw notice, then acknowledge the privacy policy and GNU GPLv3 before continuing. Privacy options are enabled by default and can be adjusted below.</value></data>
   <data name="C_PrivacyPolicyTitle" xml:space="preserve"><value>SecRandom privacy policy</value></data>

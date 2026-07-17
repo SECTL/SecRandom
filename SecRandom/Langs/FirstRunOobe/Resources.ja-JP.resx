@@ -34,9 +34,6 @@ SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="C_WelcomeTitle" xml:space="preserve"><value>SecRandom へようこそ</value></data>
   <data name="C_WelcomeDescription" xml:space="preserve"><value>数ステップで初回設定を完了します。検証可能な抽選について、プライバシーポリシー、GPLv3 の確認が必要で、それ以外は後から設定で変更できます。</value></data>
   <data name="C_Language" xml:space="preserve"><value>言語</value></data>
-  <data name="O_LanguageChinese" xml:space="preserve"><value>簡体字中国語</value></data>
-  <data name="O_LanguageEnglish" xml:space="preserve"><value>英語</value></data>
-  <data name="O_LanguageJapanese" xml:space="preserve"><value>日本語</value></data>
   <data name="C_LegalTitle" xml:space="preserve"><value>プライバシーポリシーとオープンソースライセンス</value></data>
   <data name="C_LegalDescription" xml:space="preserve"><value>続行する前に、まず検証可能な抽選について読み、プライバシーポリシーと GNU GPLv3 を確認してください。プライバシー設定は既定で有効で、下で変更できます。</value></data>
   <data name="C_PrivacyPolicyTitle" xml:space="preserve"><value>SecRandom プライバシーポリシー</value></data>

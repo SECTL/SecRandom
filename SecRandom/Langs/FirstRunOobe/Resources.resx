@@ -40,9 +40,6 @@ SecRandom 以 GNU GPLv3 许可发布。GPLv3 允许您运行、研究、修改�
   <data name="C_Intro" xml:space="preserve"><value>先阅读可验证抽取须知，并完成必要的隐私政策与 GPLv3 确认；其余内容可随时在设置中调整。</value></data>
   <data name="C_WelcomeTitle" xml:space="preserve"><value>欢迎使用 SecRandom</value></data>
   <data name="C_WelcomeDescription" xml:space="preserve"><value>接下来将用几步完成首次设置。可验证抽取须知、隐私政策与 GPLv3 确认是必需的，名单、抽奖、外观和桌面集成均可跳过，并可随时在设置中修改。</value></data>
-  <data name="O_LanguageChinese" xml:space="preserve"><value>简体中文</value></data>
-  <data name="O_LanguageEnglish" xml:space="preserve"><value>English</value></data>
-  <data name="O_LanguageJapanese" xml:space="preserve"><value>日本語</value></data>
   <data name="C_Language" xml:space="preserve"><value>语言</value></data>
   <data name="C_LegalTitle" xml:space="preserve"><value>隐私政策与开源许可</value></data>
   <data name="C_LegalDescription" xml:space="preserve"><value>继续使用前，请先阅读可验证抽取须知，再确认隐私政策与 GNU GPLv3。隐私选项默认开启，您可以在下方调整。</value></data>

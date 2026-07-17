@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -11,6 +9,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Controls;
+using FluentAvalonia.UI.Windowing;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Controls;
@@ -21,7 +20,7 @@ using LR = SecRandom.Langs.FirstRunOobe.Resources;
 
 namespace SecRandom.Views;
 
-public partial class FirstRunOobeWindow : Window
+public partial class FirstRunOobeWindow : FAAppWindow
 {
     private bool _canClose;
     private bool _isDevelopmentAdornerAdded;
