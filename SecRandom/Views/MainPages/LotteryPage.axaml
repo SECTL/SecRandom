@@ -5,10 +5,11 @@
              xmlns:vm="using:SecRandom.ViewModels.MainPages"
              xmlns:langs="using:SecRandom.Langs.MainPages.Lottery"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="720"
-              x:Class="SecRandom.Views.MainPages.LotteryPage"
-              x:DataType="vm:LotteryPageViewModel"
-              Loaded="OnLoaded"
-              Unloaded="OnUnloaded">
+             x:Class="SecRandom.Views.MainPages.LotteryPage"
+             x:DataType="vm:LotteryPageViewModel"
+             Loaded="OnLoaded"
+             Unloaded="OnUnloaded"
+             x:Name="RootControl">
     <UserControl.Resources>
         <DataTemplate x:Key="LotteryControlPanelTemplate"
                       DataType="vm:LotteryPageViewModel">
@@ -286,8 +287,8 @@
                                          <TextBlock Text="{Binding DisplayText}"
                                                     Classes="result-name"
                                                     Foreground="{Binding TextBrush}"
-                                                    FontSize="{Binding $parent[UserControl].DataContext.ResultFontSize}"
-                                                    FontFamily="{Binding $parent[UserControl].DataContext.ResultFontFamily}"
+                                                    FontSize="{Binding #RootControl.ViewModel.ResultFontSize}"
+                                                    FontFamily="{Binding #RootControl.ViewModel.ResultFontFamily}"
                                                     FontWeight="SemiBold" />
                                          <TextBlock Text="{Binding Tags}"
                                                     IsVisible="{Binding IsTagsVisible}"
@@ -320,8 +321,8 @@
                                      <TextBlock Text="{Binding DisplayText}"
                                                 Classes="result-name"
                                                 Foreground="{Binding TextBrush}"
-                                                FontSize="{Binding $parent[UserControl].DataContext.ResultFontSize}"
-                                                FontFamily="{Binding $parent[UserControl].DataContext.ResultFontFamily}"
+                                                FontSize="{Binding #RootControl.ViewModel.ResultFontSize}"
+                                                FontFamily="{Binding #RootControl.ViewModel.ResultFontFamily}"
                                                 FontWeight="SemiBold" />
                                      <TextBlock Text="{Binding Tags}"
                                                 IsVisible="{Binding IsTagsVisible}"
