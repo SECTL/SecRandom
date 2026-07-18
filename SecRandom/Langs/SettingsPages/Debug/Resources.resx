@@ -4,83 +4,85 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="Page_Title" xml:space="preserve"><value>Debug</value></data>
-  <data name="C_DrawerTest" xml:space="preserve"><value>Drawer test content</value></data>
-  <data name="C_HideDebugEntry" xml:space="preserve"><value>Hide debug entry</value></data>
-  <data name="C_HideDebugEntry_D" xml:space="preserve"><value>Hide this page from settings navigation.</value></data>
-  <data name="C_Hide" xml:space="preserve"><value>Hide</value></data>
-  <data name="S_UiTests" xml:space="preserve"><value>UI tests</value></data>
-  <data name="C_SendToast" xml:space="preserve"><value>Send test toast</value></data>
-  <data name="C_OpenDrawer" xml:space="preserve"><value>Open test drawer</value></data>
-  <data name="S_CrashRecovery" xml:space="preserve"><value>Crash recovery</value></data>
-  <data name="C_ShowCrashRecovery" xml:space="preserve"><value>Show crash recovery window</value></data>
-  <data name="C_ThrowDispatcherException" xml:space="preserve"><value>Throw dispatcher exception</value></data>
-  <data name="C_RestartProgram" xml:space="preserve"><value>Restart application</value></data>
-  <data name="S_Plugins" xml:space="preserve"><value>Plugins</value></data>
-  <data name="C_ShowPluginSettings" xml:space="preserve"><value>Show plugin settings</value></data>
-  <data name="C_ShowPluginSettings_D" xml:space="preserve"><value>Temporarily show the plugin settings entry.</value></data>
-  <data name="S_InternalSettings" xml:space="preserve"><value>Internal settings</value></data>
-  <data name="C_EnableInternalSettings" xml:space="preserve"><value>Enable internal settings</value></data>
-  <data name="C_EnableInternalSettings_D" xml:space="preserve"><value>Temporarily expose internal attached settings.</value></data>
-  <data name="S_UpdateDiagnostics" xml:space="preserve"><value>Update diagnostics</value></data>
-  <data name="C_RefreshUpdate" xml:space="preserve"><value>Refresh update diagnostics</value></data>
-  <data name="C_RefreshUpdate_D" xml:space="preserve"><value>Refresh runtime update information.</value></data>
-  <data name="S_LinkageNotificationDiagnostics" xml:space="preserve"><value>Linkage and notification diagnostics</value></data>
-  <data name="C_RefreshLinkage" xml:space="preserve"><value>Refresh linkage diagnostics</value></data>
-  <data name="C_RefreshLinkage_D" xml:space="preserve"><value>Refresh linkage and notification information.</value></data>
-  <data name="S_PlatformDiagnostics" xml:space="preserve"><value>Platform diagnostics</value></data>
-  <data name="C_RefreshPlatform" xml:space="preserve"><value>Refresh platform diagnostics</value></data>
-  <data name="C_RefreshPlatform_D" xml:space="preserve"><value>Refresh runtime platform information.</value></data>
-  <data name="S_DataPathDiagnostics" xml:space="preserve"><value>Data and path diagnostics</value></data>
-  <data name="C_RefreshPaths" xml:space="preserve"><value>Refresh data paths</value></data>
-  <data name="C_RefreshPaths_D" xml:space="preserve"><value>Refresh application data-path information.</value></data>
-  <data name="M_TestToast" xml:space="preserve"><value>Test toast</value></data>
-  <data name="M_ShowPluginSettings_Title" xml:space="preserve"><value>Show plugin settings?</value></data>
-  <data name="M_ShowPluginSettings" xml:space="preserve"><value>This temporarily exposes the plugin settings navigation entry.</value></data>
-  <data name="C_Show" xml:space="preserve"><value>Show</value></data>
-  <data name="C_Cancel" xml:space="preserve"><value>Cancel</value></data>
-  <data name="M_InternalSettings_ConfirmTitle" xml:space="preserve"><value>Enable internal settings?</value></data>
-  <data name="M_InternalSettings" xml:space="preserve"><value>Internal settings can affect candidate weights and are not suitable for fair or auditable draws.</value></data>
-  <data name="C_Enable" xml:space="preserve"><value>Enable</value></data>
-  <data name="C_CurrentVersion" xml:space="preserve"><value>Current version</value></data>
-  <data name="C_UpdateChannel" xml:space="preserve"><value>Update channel</value></data>
-  <data name="C_CheckPhase" xml:space="preserve"><value>Check phase</value></data>
-  <data name="C_Status" xml:space="preserve"><value>Status</value></data>
-  <data name="C_LastCheck" xml:space="preserve"><value>Last check</value></data>
-  <data name="C_AvailableVersion" xml:space="preserve"><value>Available version</value></data>
-  <data name="C_LinkageSource" xml:space="preserve"><value>Linkage source</value></data>
-  <data name="C_CourseSource" xml:space="preserve"><value>Course source</value></data>
-  <data name="C_CourseState" xml:space="preserve"><value>Course state</value></data>
-  <data name="C_SnapshotAvailable" xml:space="preserve"><value>Snapshot available</value></data>
-  <data name="C_CurrentCourse" xml:space="preserve"><value>Current course</value></data>
-  <data name="C_NextCourse" xml:space="preserve"><value>Next course</value></data>
-  <data name="C_DrawRestricted" xml:space="preserve"><value>Draw restricted</value></data>
-  <data name="C_SnapshotError" xml:space="preserve"><value>Snapshot error</value></data>
-  <data name="C_NotificationsEnabled" xml:space="preserve"><value>Notifications enabled</value></data>
-  <data name="C_BuiltInNotification" xml:space="preserve"><value>Built-in notification</value></data>
-  <data name="C_ExternalNotification" xml:space="preserve"><value>External notification</value></data>
-  <data name="C_NotificationFallback" xml:space="preserve"><value>Notification fallback</value></data>
-  <data name="C_DisplayDuration" xml:space="preserve"><value>Display duration</value></data>
-  <data name="C_Branch" xml:space="preserve"><value>Branch</value></data>
-  <data name="C_Commit" xml:space="preserve"><value>Commit</value></data>
-  <data name="C_Version" xml:space="preserve"><value>Version</value></data>
-  <data name="C_OperatingSystem" xml:space="preserve"><value>Operating system</value></data>
-  <data name="C_Architecture" xml:space="preserve"><value>Architecture</value></data>
-  <data name="C_Runtime" xml:space="preserve"><value>Runtime</value></data>
-  <data name="C_AppDirectory" xml:space="preserve"><value>Application directory</value></data>
-  <data name="C_PackageRoot" xml:space="preserve"><value>Package root</value></data>
-  <data name="C_DataDirectory" xml:space="preserve"><value>Data directory</value></data>
-  <data name="C_MainWindowCreated" xml:space="preserve"><value>Main window created</value></data>
-  <data name="C_SettingsWindowCreated" xml:space="preserve"><value>Settings window created</value></data>
-  <data name="C_SettingsFile" xml:space="preserve"><value>Settings file</value></data>
-  <data name="C_LogDirectory" xml:space="preserve"><value>Log directory</value></data>
-  <data name="C_BackupDirectory" xml:space="preserve"><value>Backup directory</value></data>
-  <data name="C_PluginDirectory" xml:space="preserve"><value>Plugin directory</value></data>
-  <data name="C_PluginConfigDirectory" xml:space="preserve"><value>Plugin configuration directory</value></data>
-  <data name="C_ProofDirectory" xml:space="preserve"><value>Proof directory</value></data>
-  <data name="C_UpdateDownloadDirectory" xml:space="preserve"><value>Update download directory</value></data>
-  <data name="C_CourseLinkageDirectory" xml:space="preserve"><value>Course linkage directory</value></data>
-  <data name="C_CrashDirectory" xml:space="preserve"><value>Crash directory</value></data>
-  <data name="C_Exists" xml:space="preserve"><value>Exists</value></data>
-  <data name="C_Missing" xml:space="preserve"><value>Missing</value></data>
+  <data name="Page_Title" xml:space="preserve"><value>调试</value></data>
+  <data name="S_DebugEntry" xml:space="preserve"><value>调试入口</value></data>
+  <data name="C_DrawerTest" xml:space="preserve"><value>抽屉测试内容</value></data>
+  <data name="C_HideDebugEntry" xml:space="preserve"><value>隐藏调试入口</value></data>
+  <data name="C_HideDebugEntry_D" xml:space="preserve"><value>从设置导航中隐藏此页面</value></data>
+  <data name="C_Hide" xml:space="preserve"><value>隐藏</value></data>
+  <data name="S_UiTests" xml:space="preserve"><value>界面测试</value></data>
+  <data name="C_SendToast" xml:space="preserve"><value>发送测试通知</value></data>
+  <data name="C_OpenDrawer" xml:space="preserve"><value>打开测试抽屉</value></data>
+  <data name="S_CrashRecovery" xml:space="preserve"><value>崩溃恢复</value></data>
+  <data name="C_ShowCrashRecovery" xml:space="preserve"><value>显示崩溃恢复窗口</value></data>
+  <data name="C_ThrowDispatcherException" xml:space="preserve"><value>引发界面线程异常</value></data>
+  <data name="C_RestartProgram" xml:space="preserve"><value>重启应用</value></data>
+  <data name="S_Plugins" xml:space="preserve"><value>插件</value></data>
+  <data name="C_ShowPluginSettings" xml:space="preserve"><value>显示插件设置</value></data>
+  <data name="C_ShowPluginSettings_D" xml:space="preserve"><value>临时显示插件设置入口</value></data>
+  <data name="S_InternalSettings" xml:space="preserve"><value>内部设置</value></data>
+  <data name="C_EnableInternalSettings" xml:space="preserve"><value>启用内部设置</value></data>
+  <data name="C_EnableInternalSettings_D" xml:space="preserve"><value>临时显示内部附加设置</value></data>
+  <data name="S_UpdateDiagnostics" xml:space="preserve"><value>更新诊断</value></data>
+  <data name="C_RefreshUpdate" xml:space="preserve"><value>刷新更新诊断</value></data>
+  <data name="C_RefreshUpdate_D" xml:space="preserve"><value>刷新运行时更新信息</value></data>
+  <data name="S_LinkageNotificationDiagnostics" xml:space="preserve"><value>联动与通知诊断</value></data>
+  <data name="C_RefreshLinkage" xml:space="preserve"><value>刷新联动诊断</value></data>
+  <data name="C_RefreshLinkage_D" xml:space="preserve"><value>刷新联动与通知信息</value></data>
+  <data name="S_PlatformDiagnostics" xml:space="preserve"><value>平台诊断</value></data>
+  <data name="C_RefreshPlatform" xml:space="preserve"><value>刷新平台诊断</value></data>
+  <data name="C_RefreshPlatform_D" xml:space="preserve"><value>刷新运行时平台信息</value></data>
+  <data name="S_DataPathDiagnostics" xml:space="preserve"><value>数据与路径诊断</value></data>
+  <data name="C_RefreshPaths" xml:space="preserve"><value>刷新数据路径</value></data>
+  <data name="C_RefreshPaths_D" xml:space="preserve"><value>刷新应用数据路径信息</value></data>
+  <data name="M_TestToast" xml:space="preserve"><value>测试通知</value></data>
+  <data name="M_DebugShown" xml:space="preserve"><value>已显示调试入口</value></data>
+  <data name="M_ShowPluginSettings_Title" xml:space="preserve"><value>显示插件设置？</value></data>
+  <data name="M_ShowPluginSettings" xml:space="preserve"><value>这会临时显示插件设置导航入口</value></data>
+  <data name="C_Show" xml:space="preserve"><value>显示</value></data>
+  <data name="C_Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="M_InternalSettings_ConfirmTitle" xml:space="preserve"><value>启用内部设置？</value></data>
+  <data name="M_InternalSettings" xml:space="preserve"><value>内部设置会影响候选项权重，不适用于需要公平性或可审计性的抽取</value></data>
+  <data name="C_Enable" xml:space="preserve"><value>启用</value></data>
+  <data name="C_CurrentVersion" xml:space="preserve"><value>当前版本</value></data>
+  <data name="C_UpdateChannel" xml:space="preserve"><value>更新通道</value></data>
+  <data name="C_CheckPhase" xml:space="preserve"><value>检查阶段</value></data>
+  <data name="C_Status" xml:space="preserve"><value>状态</value></data>
+  <data name="C_LastCheck" xml:space="preserve"><value>上次检查</value></data>
+  <data name="C_AvailableVersion" xml:space="preserve"><value>可用版本</value></data>
+  <data name="C_LinkageSource" xml:space="preserve"><value>联动来源</value></data>
+  <data name="C_CourseSource" xml:space="preserve"><value>课程来源</value></data>
+  <data name="C_CourseState" xml:space="preserve"><value>课程状态</value></data>
+  <data name="C_SnapshotAvailable" xml:space="preserve"><value>快照可用</value></data>
+  <data name="C_CurrentCourse" xml:space="preserve"><value>当前课程</value></data>
+  <data name="C_NextCourse" xml:space="preserve"><value>下一节课程</value></data>
+  <data name="C_DrawRestricted" xml:space="preserve"><value>抽取受限</value></data>
+  <data name="C_SnapshotError" xml:space="preserve"><value>快照错误</value></data>
+  <data name="C_NotificationsEnabled" xml:space="preserve"><value>通知已启用</value></data>
+  <data name="C_BuiltInNotification" xml:space="preserve"><value>内置通知</value></data>
+  <data name="C_ExternalNotification" xml:space="preserve"><value>外部通知</value></data>
+  <data name="C_NotificationFallback" xml:space="preserve"><value>通知回退</value></data>
+  <data name="C_DisplayDuration" xml:space="preserve"><value>显示时长</value></data>
+  <data name="C_Branch" xml:space="preserve"><value>分支</value></data>
+  <data name="C_Commit" xml:space="preserve"><value>提交</value></data>
+  <data name="C_Version" xml:space="preserve"><value>版本</value></data>
+  <data name="C_OperatingSystem" xml:space="preserve"><value>操作系统</value></data>
+  <data name="C_Architecture" xml:space="preserve"><value>架构</value></data>
+  <data name="C_Runtime" xml:space="preserve"><value>运行时</value></data>
+  <data name="C_AppDirectory" xml:space="preserve"><value>应用目录</value></data>
+  <data name="C_PackageRoot" xml:space="preserve"><value>程序包根目录</value></data>
+  <data name="C_DataDirectory" xml:space="preserve"><value>数据目录</value></data>
+  <data name="C_MainWindowCreated" xml:space="preserve"><value>主窗口已创建</value></data>
+  <data name="C_SettingsWindowCreated" xml:space="preserve"><value>设置窗口已创建</value></data>
+  <data name="C_SettingsFile" xml:space="preserve"><value>设置文件</value></data>
+  <data name="C_LogDirectory" xml:space="preserve"><value>日志目录</value></data>
+  <data name="C_BackupDirectory" xml:space="preserve"><value>备份目录</value></data>
+  <data name="C_PluginDirectory" xml:space="preserve"><value>插件目录</value></data>
+  <data name="C_PluginConfigDirectory" xml:space="preserve"><value>插件配置目录</value></data>
+  <data name="C_ProofDirectory" xml:space="preserve"><value>证明目录</value></data>
+  <data name="C_UpdateDownloadDirectory" xml:space="preserve"><value>更新下载目录</value></data>
+  <data name="C_CourseLinkageDirectory" xml:space="preserve"><value>课程联动目录</value></data>
+  <data name="C_CrashDirectory" xml:space="preserve"><value>崩溃报告目录</value></data>
+  <data name="C_Exists" xml:space="preserve"><value>存在</value></data>
+  <data name="C_Missing" xml:space="preserve"><value>缺失</value></data>
 </root>
