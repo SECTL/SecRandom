@@ -1,5 +1,7 @@
-﻿<Project>
+<Project>
     <PropertyGroup>
+        <!-- GitInfo is a generated public type, so only final entry assemblies may emit it. -->
+        <EnableGitInfoGenerator Condition="'$(EnableGitInfoGenerator)' == ''">false</EnableGitInfoGenerator>
         <!-- we'll do our own versioning -->
         <GitVersion>false</GitVersion>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -11,20 +13,21 @@
         <DefaultItemExcludes>$(DefaultItemExcludes);artifacts/**;publish/**</DefaultItemExcludes>
     </PropertyGroup>
 
-    <ItemGroup>
+    <ItemGroup Condition="'$(EnableGitInfoGenerator)' == 'true'">
         <PackageReference Include="SecRandom.SimpleGitInfoGenerator" Version="1.0.0.0"
-                          PrivateAssets="All" IncludeAssets="build;analyzers"/>
+                           PrivateAssets="All" IncludeAssets="build;analyzers"/>
 
         <Compile Include="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)'))/AssemblyInfo.cs">
             <LinkBase>Properties</LinkBase>
         </Compile>
     </ItemGroup>
 
-    <PropertyGroup>
+    <PropertyGroup Condition="'$(EnableGitInfoGenerator)' == 'true'">
         <GitVersion_UpdateAssemblyInfo>true</GitVersion_UpdateAssemblyInfo>
     </PropertyGroup>
 
     <Target Name="NormalizeGitTagForAssemblyVersion"
+            Condition="'$(EnableGitInfoGenerator)' == 'true'"
             AfterTargets="GetGitInfoForSourceGenerator"
             BeforeTargets="CoreCompile">
         <PropertyGroup>

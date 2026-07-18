@@ -18,7 +18,7 @@
   - 类上标注 `[PageInfo(...)]`
   - 在 `SecRandom/App.axaml.cs` 的 `BuildHost()` 里用 `services.AddMainPage<T>() / AddSettingsPage<T>()` 注册
 - 本地化必须按“每页一个文件夹”拆分，不要混在一起。
-- 文件路径统一用 `Utils.GetFilePath(...)`。桌面和便携包数据落在 package root 的 `data/...`；仅 `SecRandom.Mobile.MobileApp` 可以在任何路径首次读取前一次性配置 app-private local-data root，其他代码不得运行中改写根目录。
+- 文件路径统一用 `Utils.GetFilePath(...)`。桌面和便携包数据落在 package root 的 `data/...`；仅 `SecRandom.Mobile.MobileApp` 可以在任何路径首次读取前调用一次 `Utils.ConfigureMobileDataRoot()`，它固定选择 app-private `LocalApplicationData/SecRandom/data`，其他代码不得运行中改写根目录。
 - 不要在页面里随意 `new` 可复用服务；需要复用/单例/可测试的服务必须进 Host。
 - 平台功能必须使用 `SecRandom.Platforms.Abstractions` 的窄接口，经 `App.BuildHost()` 注册后调用。窗口类只能声明所需特性，不得直接添加 Win32/X11/AppKit 调用或散落的 `OperatingSystem.Is*` 分支。
 - 插件只能使用 `SecRandom.Core/Plugins` 中的稳定契约；运行时加载、启用状态和管理 UI 放在 `SecRandom/Services/Plugins`。

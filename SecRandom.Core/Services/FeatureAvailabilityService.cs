@@ -5,8 +5,10 @@ using SecRandom.Core.Services.Config;
 
 namespace SecRandom.Core.Services;
 
-internal sealed class FeatureAvailabilityService : IFeatureAvailabilityService
+public static partial class CoreRuntimeServiceCollectionExtensions
 {
+    private sealed class FeatureAvailabilityService : IFeatureAvailabilityService
+    {
     private readonly MainConfigHandler _configHandler;
     private MoreSettingsConfig _settings;
 
@@ -35,5 +37,6 @@ internal sealed class FeatureAvailabilityService : IFeatureAvailabilityService
     {
         if (e.PropertyName == nameof(MoreSettingsConfig.LotteryEnabled))
             Changed?.Invoke(this, EventArgs.Empty);
+    }
     }
 }

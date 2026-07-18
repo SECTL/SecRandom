@@ -565,7 +565,7 @@ jobs:
           ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
           ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         run: |
-          $arguments = @('build', 'SecRandom.Mobile/SecRandom.Mobile.csproj', '-c', 'Release', '-r', 'android-arm64', '-p:BuildMobile=true', '-f', 'net10.0-android', '-p:ApplicationVersion=${{ github.run_number }}')
+          $arguments = @('build', 'SecRandom.Mobile/SecRandom.Mobile.csproj', '-c', 'Release', '-r', 'android-arm64', '-p:BuildMobile=true', '-p:MobileTargetFramework=net10.0-android', '-p:ApplicationVersion=${{ github.run_number }}')
           $hasSigningSecrets = @($env:ANDROID_SIGNING_KEYSTORE_BASE64, $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, $env:ANDROID_SIGNING_KEY_ALIAS, $env:ANDROID_SIGNING_KEY_PASSWORD) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
           if ($hasSigningSecrets.Count -gt 0 -and $hasSigningSecrets.Count -ne 4) {
             throw 'All Android signing secrets must be configured together.'
@@ -663,7 +663,7 @@ jobs:
           -c Release
           -r iossimulator-arm64
           -p:BuildMobile=true
-          -f net10.0-ios
+          -p:MobileTargetFramework=net10.0-ios
           -p:EnableCodeSigning=false
           -p:CodesignRequireProvisioningProfile=false
           -p:BuildIpa=false
@@ -682,7 +682,7 @@ jobs:
             -c Release \
             -r ios-arm64 \
             -p:BuildMobile=true \
-            -f net10.0-ios \
+            -p:MobileTargetFramework=net10.0-ios \
             -p:ApplicationVersion=${{ github.run_number }} \
             -p:EnableCodeSigning=false \
             -p:CodesignRequireProvisioningProfile=false \

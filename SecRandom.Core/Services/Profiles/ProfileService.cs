@@ -5,10 +5,12 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
 
-namespace SecRandom.Core.Services.Profiles;
+namespace SecRandom.Core.Services;
 
-internal sealed class ProfileService : IProfileService
+public static partial class CoreRuntimeServiceCollectionExtensions
 {
+    private sealed class ProfileService : IProfileService
+    {
     private readonly ILogger<ProfileService> _logger;
     private readonly MainConfigHandler _configHandler;
     private readonly ConfigServiceBase _configService;
@@ -315,5 +317,6 @@ internal sealed class ProfileService : IProfileService
             .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name));
 
         return string.IsNullOrWhiteSpace(existing) ? "default" : existing;
+    }
     }
 }

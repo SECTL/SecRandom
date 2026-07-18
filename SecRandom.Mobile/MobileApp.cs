@@ -9,9 +9,7 @@ using Microsoft.Extensions.Hosting;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services;
-using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
-using SecRandom.Core.Services.Profiles;
 using SecRandom.Core.Views;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
@@ -43,12 +41,7 @@ public sealed class MobileApp : Avalonia.Application
                 .ConfigureServices(services =>
                 {
                     services.AddPlatformServices(PlatformStartupContext.Current);
-                    services.AddSingleton<ConfigServiceBase, FileConfigService>();
-                    services.AddSingleton<MainConfigHandler>();
-                    services.AddSingleton<IProfileService, ProfileService>();
-                    services.AddSingleton<IDrawTemporaryRecordService, DrawTemporaryRecordService>();
-                    services.AddTransient<DrawEngine>();
-                    services.AddSingleton<IFeatureAvailabilityService, FeatureAvailabilityService>();
+                    services.AddCoreRuntimeServices();
                     services.AddSingleton<SingleViewHostProvider>();
                     services.AddSingleton<IViewHostProvider>(serviceProvider =>
                         serviceProvider.GetRequiredService<SingleViewHostProvider>());
@@ -122,11 +115,7 @@ public sealed class MobileApp : Avalonia.Application
 
     private static void ConfigureMobileDataRoot()
     {
-        var localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        if (string.IsNullOrWhiteSpace(localApplicationData))
-            throw new InvalidOperationException("The platform does not provide an application-private data directory.");
-
-        Utils.ConfigureDataRoot(Path.Combine(localApplicationData, "SecRandom", "data"));
+        Utils.ConfigureMobileDataRoot();
     }
 
     private async Task StartMobileHostAsync(IHost host, ISingleViewApplicationLifetime singleView)

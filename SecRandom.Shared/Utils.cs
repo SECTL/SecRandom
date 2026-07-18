@@ -23,9 +23,21 @@ public static class Utils
     }
 
     /// <summary>
-    ///     Selects an application-private data root before any persisted data path is resolved.
+    ///     Selects the app-private data root before any persisted path is resolved on a mobile platform.
     /// </summary>
-    internal static void ConfigureDataRoot(string dataRoot)
+    public static void ConfigureMobileDataRoot()
+    {
+        if (!OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS())
+            throw new PlatformNotSupportedException("Mobile data roots are only supported on Android and iOS.");
+
+        var localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (string.IsNullOrWhiteSpace(localApplicationData))
+            throw new InvalidOperationException("The platform does not provide an application-private data directory.");
+
+        ConfigureDataRoot(Path.Combine(localApplicationData, "SecRandom", "data"));
+    }
+
+    private static void ConfigureDataRoot(string dataRoot)
     {
         if (string.IsNullOrWhiteSpace(dataRoot))
             throw new ArgumentException("The data root cannot be blank.", nameof(dataRoot));

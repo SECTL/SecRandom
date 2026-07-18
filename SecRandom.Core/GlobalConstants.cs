@@ -1,13 +1,17 @@
 using Avalonia.Media;
+using System.Reflection;
 
 namespace SecRandom.Core;
 
 public static class GlobalConstants
 {
-    public static string Tag => GitInfo.Tag;
-    public static string Branch => GitInfo.Branch;
-    public static string CommitHash => GitInfo.CommitHash[..7];
-    public static string FullCommitHash => GitInfo.CommitHash;
+    private static readonly Assembly VersionAssembly = Assembly.GetEntryAssembly() ?? typeof(GlobalConstants).Assembly;
+    private static readonly (string Tag, string Branch, string CommitHash) VersionParts = GetVersionParts();
+
+    public static string Tag => VersionParts.Tag;
+    public static string Branch => VersionParts.Branch;
+    public static string CommitHash => VersionParts.CommitHash[..7];
+    public static string FullCommitHash => VersionParts.CommitHash;
 
     public static string CodeName => @"Nonomi";
     public static string Version => $@"v{Tag}";
@@ -35,4 +39,21 @@ public static class GlobalConstants
 
     public static FontFamily DefaultAvaFontFamily { get; } =
         new(@"avares://SecRandom/Assets/Fonts/MiSans/#MiSans");
+
+    private static (string Tag, string Branch, string CommitHash) GetVersionParts()
+    {
+        var version = VersionAssembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion;
+        if (string.IsNullOrWhiteSpace(version))
+            return ("0.0.0.0", "Unknown", "Unknown");
+
+        var separator = version.IndexOf('+');
+        var generatedGitInfo = VersionAssembly.GetType("SecRandom.GitInfo");
+        var branch = generatedGitInfo?.GetProperty("Branch", BindingFlags.Public | BindingFlags.Static)?.GetValue(null) as string
+                     ?? "Unknown";
+        return separator < 0
+            ? (version, branch, "Unknown")
+            : (version[..separator], branch, version[(separator + 1)..]);
+    }
 }

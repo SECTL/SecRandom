@@ -35,7 +35,6 @@ using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
-using SecRandom.Core.Services.Profiles;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Core.Services.Logging;
@@ -418,14 +417,11 @@ public partial class App : Application
                 services.AddSingleton<ILoggerProvider, FileLoggerProvider>();
 
                 // 配置
-                services.AddSingleton<ConfigServiceBase, FileConfigService>();
-                services.AddSingleton<MainConfigHandler>();
+                services.AddCoreRuntimeServices();
                 services.AddSingleton<DeviceUuidStore>();
 
                 // 服务
-                services.AddSingleton<IProfileService, ProfileService>();
                 services.AddSingleton<IProfileQueryService, ProfileQueryService>();
-                services.AddSingleton<IDrawTemporaryRecordService, DrawTemporaryRecordService>();
                 services.AddSingleton<DrawProofExportService>();
                 services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
                 services.AddHttpClient<IWitnessClient, WitnessClient>(client => client.Timeout = TimeSpan.FromSeconds(3));
@@ -437,7 +433,6 @@ public partial class App : Application
                 services.AddSingleton<OobeDataSetupService>();
                 services.AddSingleton<IImportExportService, Services.ImportExport.ImportExportService>();
                 services.AddHostedService<AutomaticBackupService>();
-                services.AddTransient<DrawEngine>();
                 services.AddSingleton(pluginStateStore);
                 services.AddSingleton<PluginSelectionState>();
                 services.AddSingleton<IPluginManager, PluginManagerService>();
@@ -459,7 +454,6 @@ public partial class App : Application
                     serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("updates")));
                 services.AddSingleton<IUpdateNotificationService, UpdateNotificationService>();
                 services.AddHostedService<UpdateScheduler>();
-                services.AddSingleton<IFeatureAvailabilityService, FeatureAvailabilityService>();
                 services.AddSingleton<ProtocolCommandRouter>();
                 services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
                 services.AddSingleton<ISpeechProvider, EdgeTtsSpeechProvider>();

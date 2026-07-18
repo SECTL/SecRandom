@@ -5,7 +5,8 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(BuildMobile)' == 'true'">
-        <TargetFrameworks>net10.0-android;net10.0-ios</TargetFrameworks>
+        <TargetFrameworks Condition="'$(MobileTargetFramework)' == ''">net10.0-android;net10.0-ios</TargetFrameworks>
+        <TargetFrameworks Condition="'$(MobileTargetFramework)' != ''">$(MobileTargetFramework)</TargetFrameworks>
         <OutputType>Exe</OutputType>
         <ApplicationTitle>SecRandom</ApplicationTitle>
         <ApplicationId>cn.sectl.secrandom.mobile</ApplicationId>
@@ -19,22 +20,23 @@
     <PropertyGroup>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
         <GenerateResourceDesigner>true</GenerateResourceDesigner>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\SecRandom.Platforms\SecRandom.Platforms.csproj"
-                          AdditionalProperties="TargetFramework=net10.0"
-                          GlobalPropertiesToRemove="TargetFramework;TargetFrameworks" />
+                           AdditionalProperties="TargetFramework=net10.0"
+                           GlobalPropertiesToRemove="TargetFramework;TargetFrameworks;MobileTargetFramework" />
         <ProjectReference Include="..\SecRandom.Platforms.Abstractions\SecRandom.Platforms.Abstractions.csproj"
-                          AdditionalProperties="TargetFramework=net10.0"
-                          GlobalPropertiesToRemove="TargetFramework;TargetFrameworks" />
+                           AdditionalProperties="TargetFramework=net10.0"
+                           GlobalPropertiesToRemove="TargetFramework;TargetFrameworks;MobileTargetFramework" />
         <ProjectReference Include="..\SecRandom.Shared\SecRandom.Shared.csproj"
                            AdditionalProperties="TargetFramework=net8.0"
-                           GlobalPropertiesToRemove="TargetFramework;TargetFrameworks" />
+                           GlobalPropertiesToRemove="TargetFramework;TargetFrameworks;MobileTargetFramework" />
         <ProjectReference Include="..\SecRandom.Core\SecRandom.Core.csproj"
-                          AdditionalProperties="TargetFramework=net10.0"
-                          GlobalPropertiesToRemove="TargetFramework;TargetFrameworks" />
+                           AdditionalProperties="TargetFramework=net10.0"
+                           GlobalPropertiesToRemove="TargetFramework;TargetFrameworks;MobileTargetFramework" />
     </ItemGroup>
 
     <ItemGroup>

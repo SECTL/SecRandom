@@ -4,10 +4,12 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
 
-namespace SecRandom.Core.Services.Draw;
+namespace SecRandom.Core.Services;
 
-internal sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordService> logger) : IDrawTemporaryRecordService
+public static partial class CoreRuntimeServiceCollectionExtensions
 {
+    private sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordService> logger) : IDrawTemporaryRecordService
+    {
     private const string PrizeScopeKey = "prizes";
     private readonly HashSet<string> _clearedStudentLists = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _clearedPrizeLists = new(StringComparer.OrdinalIgnoreCase);
@@ -235,5 +237,6 @@ internal sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordServ
         public string Id { get; set; } = string.Empty;
         public int Count { get; set; }
         public DateTimeOffset LastDrawnTime { get; set; }
+    }
     }
 }
