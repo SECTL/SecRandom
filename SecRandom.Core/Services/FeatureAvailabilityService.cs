@@ -1,11 +1,11 @@
-using System;
 using System.ComponentModel;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 
-namespace SecRandom.Services;
+namespace SecRandom.Core.Services;
 
-public sealed class FeatureAvailabilityService
+public sealed class FeatureAvailabilityService : IFeatureAvailabilityService
 {
     private readonly MainConfigHandler _configHandler;
     private MoreSettingsConfig _settings;
@@ -18,7 +18,6 @@ public sealed class FeatureAvailabilityService
     }
 
     public bool IsLotteryEnabled => _settings.LotteryEnabled;
-
     public event EventHandler? Changed;
 
     public void Refresh()

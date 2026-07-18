@@ -89,8 +89,7 @@ public class FairDrawSettingsConfigTests
         });
 
         using var host = BuildHost(config, new TestProfileService());
-        IAppHost.Host = host;
-        var engine = new DrawEngine();
+        var engine = CreateEngine(host);
 
         var weights = engine.CalculateStudentWeight([first, second], new Dictionary<Student, History>
         {
@@ -121,8 +120,7 @@ public class FairDrawSettingsConfigTests
         });
 
         using var host = BuildHost(config, new TestProfileService());
-        IAppHost.Host = host;
-        var engine = new DrawEngine();
+        var engine = CreateEngine(host);
 
         var weights = engine.CalculateStudentWeight([lowCount, highCount], new Dictionary<Student, History>
         {
@@ -150,8 +148,7 @@ public class FairDrawSettingsConfigTests
         });
 
         using var host = BuildHost(config, new TestProfileService());
-        IAppHost.Host = host;
-        var engine = new DrawEngine();
+        var engine = CreateEngine(host);
 
         var weights = engine.CalculateStudentWeight([shielded], new Dictionary<Student, History>
         {
@@ -189,8 +186,7 @@ public class FairDrawSettingsConfigTests
         });
 
         using var host = BuildHost(config, new TestProfileService(history));
-        IAppHost.Host = host;
-        var weights = new DrawEngine().CalculateStudentWeight(
+        var weights = CreateEngine(host).CalculateStudentWeight(
             [groupA, groupB],
             new Dictionary<Student, History> { [groupA] = new(), [groupB] = new() },
             "数学");
@@ -227,9 +223,8 @@ public class FairDrawSettingsConfigTests
         config.RollCallSettings.DrawType = DrawType.Fair;
 
         using var host = BuildHost(config, new TestProfileService(history));
-        IAppHost.Host = host;
 
-        var input = new DrawEngine().CreateStudentVerificationInput(
+        var input = CreateEngine(host).CreateStudentVerificationInput(
             1,
             [first, second, overdrawn],
             DrawSettingsType.RollCall);
@@ -260,6 +255,14 @@ public class FairDrawSettingsConfigTests
                 services.AddSingleton<MainConfigHandler>();
             })
             .Build();
+    }
+
+    private static DrawEngine CreateEngine(IHost host)
+    {
+        return new DrawEngine(
+            host.Services.GetRequiredService<MainConfigHandler>(),
+            host.Services.GetRequiredService<IProfileService>(),
+            host.Services.GetRequiredService<ILogger<DrawEngine>>());
     }
 
     private sealed class TestConfigService(MainConfigModel config) : ConfigServiceBase

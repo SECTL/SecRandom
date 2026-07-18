@@ -1,19 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
 
-namespace SecRandom.Services.Draw;
+namespace SecRandom.Core.Services.Draw;
 
 public sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordService> logger) : IDrawTemporaryRecordService
 {
     private const string PrizeScopeKey = "prizes";
-
     private readonly HashSet<string> _clearedStudentLists = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _clearedPrizeLists = new(StringComparer.OrdinalIgnoreCase);
     private readonly object _gate = new();
@@ -95,10 +90,8 @@ public sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordServic
         lock (_gate)
         {
             var key = NormalizeFileComponent(listName);
-            if (!_clearedStudentLists.Add(key))
-                return;
-
-            ClearStudentList(listName);
+            if (_clearedStudentLists.Add(key))
+                ClearStudentList(listName);
         }
     }
 
@@ -160,10 +153,8 @@ public sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordServic
         lock (_gate)
         {
             var key = NormalizeFileComponent(listName);
-            if (!_clearedPrizeLists.Add(key))
-                return;
-
-            ClearPrizeList(listName);
+            if (_clearedPrizeLists.Add(key))
+                ClearPrizeList(listName);
         }
     }
 
@@ -172,9 +163,6 @@ public sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordServic
         lock (_gate)
         {
             var directory = Utils.GetDirectoryPath("TEMP");
-            if (!Directory.Exists(directory))
-                return;
-
             foreach (var file in Directory.GetFiles(directory, "roll_call_record_*.json")
                          .Concat(Directory.GetFiles(directory, "roll_call_record__*.json"))
                          .Concat(Directory.GetFiles(directory, "lottery_record_*.json")))
@@ -182,9 +170,13 @@ public sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordServic
         }
     }
 
-    private TemporaryRecordState LoadStudentState(string listName)
+    private TemporaryRecordState LoadStudentState(string listName) => LoadState(GetStudentPath(listName), listName, "读取临时抽取记录失败，将使用空记录：{Path}");
+    private TemporaryRecordState LoadPrizeState(string listName) => LoadState(GetPrizePath(listName), listName, "读取临时抽奖记录失败，将使用空记录：{Path}");
+    private static void SaveStudentState(string listName, TemporaryRecordState state) => SaveState(GetStudentPath(listName), state);
+    private static void SavePrizeState(string listName, TemporaryRecordState state) => SaveState(GetPrizePath(listName), state);
+
+    private TemporaryRecordState LoadState(string path, string listName, string failureMessage)
     {
-        var path = GetStudentPath(listName);
         if (!File.Exists(path))
             return new TemporaryRecordState { ListName = listName };
 
@@ -195,62 +187,27 @@ public sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordServic
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "读取临时抽取记录失败，将使用空记录：{Path}", path);
+            logger.LogWarning(ex, failureMessage, path);
             return new TemporaryRecordState { ListName = listName };
         }
     }
 
-    private static void SaveStudentState(string listName, TemporaryRecordState state)
+    private static void SaveState(string path, TemporaryRecordState state)
     {
-        var path = GetStudentPath(listName);
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, JsonSerializer.Serialize(state, JsonOptions));
     }
 
-    private TemporaryRecordState LoadPrizeState(string listName)
-    {
-        var path = GetPrizePath(listName);
-        if (!File.Exists(path))
-            return new TemporaryRecordState { ListName = listName };
+    private static string GetStudentPath(string listName) =>
+        Utils.GetFilePath("TEMP", $"roll_call_record_{NormalizeFileComponent(listName)}.json");
 
-        try
-        {
-            return JsonSerializer.Deserialize<TemporaryRecordState>(File.ReadAllText(path), JsonOptions)
-                   ?? new TemporaryRecordState { ListName = listName };
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "读取临时抽奖记录失败，将使用空记录：{Path}", path);
-            return new TemporaryRecordState { ListName = listName };
-        }
-    }
+    private static string GetPrizePath(string listName) =>
+        Utils.GetFilePath("TEMP", $"lottery_record_{NormalizeFileComponent(listName)}.json");
 
-    private static void SavePrizeState(string listName, TemporaryRecordState state)
-    {
-        var path = GetPrizePath(listName);
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, JsonSerializer.Serialize(state, JsonOptions));
-    }
+    private static string BuildScopeKey(string gender, string group) =>
+        $"gender={NormalizeScopeValue(gender)}|group={NormalizeScopeValue(group)}";
 
-    private static string GetStudentPath(string listName)
-    {
-        return Utils.GetFilePath("TEMP", $"roll_call_record_{NormalizeFileComponent(listName)}.json");
-    }
-
-    private static string GetPrizePath(string listName)
-    {
-        return Utils.GetFilePath("TEMP", $"lottery_record_{NormalizeFileComponent(listName)}.json");
-    }
-
-    private static string BuildScopeKey(string gender, string group)
-    {
-        return $"gender={NormalizeScopeValue(gender)}|group={NormalizeScopeValue(group)}";
-    }
-
-    private static string NormalizeScopeValue(string value)
-    {
-        return string.IsNullOrWhiteSpace(value) ? "*" : value.Trim();
-    }
+    private static string NormalizeScopeValue(string value) => string.IsNullOrWhiteSpace(value) ? "*" : value.Trim();
 
     private static string NormalizeFileComponent(string value)
     {

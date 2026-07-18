@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Avalonia.Platform;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
@@ -127,7 +128,7 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
                 var manifestBytes = await DownloadAsync(source, tag, ManifestFileName, cancellationToken);
                 var signatureBytes = await DownloadAsync(source, tag, SignatureFileName, cancellationToken);
                 VerifyManifest(manifestBytes, signatureBytes, tag);
-                var manifest = JsonSerializer.Deserialize<UpdateManifest>(manifestBytes)
+                var manifest = JsonSerializer.Deserialize(manifestBytes, MobileUpdateJsonContext.Default.UpdateManifest)
                                 ?? throw new InvalidDataException(LR.M_ManifestInvalid);
                 return (tag, manifest);
             }
@@ -189,7 +190,7 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
         if (!signer.VerifySignature(signature))
             throw new CryptographicException(LR.M_ManifestSignatureInvalid);
 
-        var parsed = JsonSerializer.Deserialize<UpdateManifest>(manifest)
+        var parsed = JsonSerializer.Deserialize(manifest, MobileUpdateJsonContext.Default.UpdateManifest)
                       ?? throw new InvalidDataException(LR.M_ManifestInvalid);
         if (parsed.SchemaVersion != 1 || parsed.Product != "SecRandom" || parsed.Tag != tag)
             throw new InvalidDataException(LR.M_ManifestTagMismatch);
@@ -285,3 +286,7 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
         public string Tag { get; init; } = string.Empty;
     }
 }
+
+[JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
+[JsonSerializable(typeof(UpdateManifest))]
+internal partial class MobileUpdateJsonContext : JsonSerializerContext;

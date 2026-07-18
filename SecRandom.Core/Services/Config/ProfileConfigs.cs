@@ -1,4 +1,5 @@
-﻿using SecRandom.Core.Abstraction;
+﻿using Microsoft.Extensions.Logging;
+using SecRandom.Core.Abstraction;
 using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.Models.Profile;
 
@@ -9,12 +10,23 @@ public class ProfileConfigHandlerBase<T> : ConfigHandlerBase<T> where T : Profil
     public ProfileConfigHandlerBase(string name)
         : base(() => (T)Activator.CreateInstance(typeof(T), name)!)
     {
+        Initialize(name);
+    }
+
+    public ProfileConfigHandlerBase(string name, ILogger logger, ConfigServiceBase configService)
+        : base(logger, configService, () => (T)Activator.CreateInstance(typeof(T), name)!)
+    {
+        Initialize(name);
+    }
+
+    private void Initialize(string name)
+    {
         Name = name;
         Data.Name = name;
         SaveIfProfileDataNormalized();
     }
 
-    public string Name { get; }
+    public string Name { get; private set; } = string.Empty;
 
     public override void Reload()
     {
@@ -37,10 +49,46 @@ public class ProfileConfigHandlerBase<T> : ConfigHandlerBase<T> where T : Profil
     }
 }
 
-public class StudentListConfig(string name) : ProfileConfigHandlerBase<StudentList>(name);
+public class StudentListConfig : ProfileConfigHandlerBase<StudentList>
+{
+    public StudentListConfig(string name) : base(name)
+    {
+    }
 
-public class StudentHistoryConfig(string name) : ProfileConfigHandlerBase<StudentHistory>(name);
+    public StudentListConfig(string name, ILogger logger, ConfigServiceBase configService) : base(name, logger, configService)
+    {
+    }
+}
 
-public class PrizeListConfig(string name) : ProfileConfigHandlerBase<PrizeList>(name);
+public class StudentHistoryConfig : ProfileConfigHandlerBase<StudentHistory>
+{
+    public StudentHistoryConfig(string name) : base(name)
+    {
+    }
 
-public class PrizeHistoryConfig(string name) : ProfileConfigHandlerBase<PrizeHistory>(name);
+    public StudentHistoryConfig(string name, ILogger logger, ConfigServiceBase configService) : base(name, logger, configService)
+    {
+    }
+}
+
+public class PrizeListConfig : ProfileConfigHandlerBase<PrizeList>
+{
+    public PrizeListConfig(string name) : base(name)
+    {
+    }
+
+    public PrizeListConfig(string name, ILogger logger, ConfigServiceBase configService) : base(name, logger, configService)
+    {
+    }
+}
+
+public class PrizeHistoryConfig : ProfileConfigHandlerBase<PrizeHistory>
+{
+    public PrizeHistoryConfig(string name) : base(name)
+    {
+    }
+
+    public PrizeHistoryConfig(string name, ILogger logger, ConfigServiceBase configService) : base(name, logger, configService)
+    {
+    }
+}

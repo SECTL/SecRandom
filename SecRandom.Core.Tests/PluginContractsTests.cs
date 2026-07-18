@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Microsoft.Extensions.Logging.Abstractions;
 using SecRandom.Core.Plugins;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Views;
 using SecRandom.Services.Plugins;
 using SecRandom.Shared;
 using System.IO.Compression;
@@ -54,6 +55,68 @@ public class PluginContractsTests
         };
 
         registration.Validate();
+    }
+
+    [Fact]
+    public void PluginViewRegistration_RequiresAnOwnedViewBaseId()
+    {
+        var registration = new PluginViewRegistration
+        {
+            PluginId = "demo",
+            ViewId = "plugin.demo.settings.page",
+            ViewType = typeof(PluginTestView)
+        };
+
+        Assert.Throws<ArgumentException>(registration.Validate);
+    }
+
+    [Fact]
+    public void PluginViewRegistration_RequiresAParameterlessViewConstructor()
+    {
+        var registration = new PluginViewRegistration
+        {
+            PluginId = "demo",
+            ViewId = "plugin.demo.view.dialog",
+            ViewType = typeof(PluginViewWithDependencies)
+        };
+
+        Assert.Throws<ArgumentException>(registration.Validate);
+    }
+
+    [Fact]
+    public void PluginViewRegistration_AcceptsAnOwnedParameterlessView()
+    {
+        var registration = new PluginViewRegistration
+        {
+            PluginId = "demo",
+            ViewId = "plugin.demo.view.dialog",
+            ViewType = typeof(PluginTestView)
+        };
+
+        registration.Validate();
+    }
+
+    [Fact]
+    public async Task PluginViewService_RejectsAnotherPluginsViewId()
+    {
+        var service = new PluginViewService("demo", new RecordingViewEngine());
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.ShowAsync(
+            "plugin.other.view.dialog",
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task PluginViewService_DelegatesOwnedViewIds()
+    {
+        var engine = new RecordingViewEngine();
+        var service = new PluginViewService("demo", engine);
+
+        await Assert.ThrowsAsync<NotSupportedException>(() => service.ShowAsync(
+            "plugin.demo.view.dialog",
+            cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Equal("plugin.demo.view.dialog", engine.LastShownViewId);
     }
 
     [Fact]
@@ -133,5 +196,39 @@ public class PluginContractsTests
             if (File.Exists(stateFilePath))
                 File.Delete(stateFilePath);
         }
+    }
+
+    public sealed class PluginTestView : ViewBase
+    {
+    }
+
+    private sealed class PluginViewWithDependencies : ViewBase
+    {
+        public PluginViewWithDependencies(object dependency)
+        {
+            ArgumentNullException.ThrowIfNull(dependency);
+        }
+    }
+
+    private sealed class RecordingViewEngine : IViewEngine
+    {
+        public string? LastShownViewId { get; private set; }
+
+        public Task<IViewHandle> ShowAsync(string viewId, ViewShowOptions? options = null, CancellationToken cancellationToken = default)
+        {
+            LastShownViewId = viewId;
+            throw new NotSupportedException();
+        }
+
+        public Task<ViewCloseResult> ShowModalAsync(string viewId, ViewShowOptions? options = null, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<ViewCloseResult> CloseAsync(string viewId, ViewCloseReason reason = ViewCloseReason.Programmatic,
+            object? result = null, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task CloseHostAsync(IViewHost host, ViewCloseReason reason, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
     }
 }

@@ -51,8 +51,7 @@ public sealed class FairDrawAlgorithmTests
         var students = new StudentList { Students = [low, average, high] };
 
         using var host = CreateHost(config, new TestProfileService(history, students));
-        IAppHost.Host = host;
-        var engine = new DrawEngine();
+        var engine = CreateEngine(host);
 
         var localResult = engine.DrawPreparedStudents(1, [low, average, high], DrawSettingsType.RollCall);
         var verificationInput = engine.CreateStudentVerificationInput(1, [low, average, high], DrawSettingsType.RollCall);
@@ -99,9 +98,8 @@ public sealed class FairDrawAlgorithmTests
         var students = new StudentList { Students = [groupA, groupB] };
 
         using var host = CreateHost(config, new TestProfileService(history, students));
-        IAppHost.Host = host;
 
-        var input = new DrawEngine().CreateStudentVerificationInput(1, [groupA, groupB], DrawSettingsType.RollCall, "数学");
+        var input = CreateEngine(host).CreateStudentVerificationInput(1, [groupA, groupB], DrawSettingsType.RollCall, "数学");
 
         Assert.True(input.Candidates.Single(candidate => candidate.RecordId == groupA.RecordId).WeightMicros
                     > input.Candidates.Single(candidate => candidate.RecordId == groupB.RecordId).WeightMicros);
@@ -118,9 +116,8 @@ public sealed class FairDrawAlgorithmTests
         config.RollCallSettings.HalfRepeat = 2;
 
         using var host = CreateHost(config, new TestProfileService(new StudentHistory(), new StudentList { Students = [first, second] }));
-        IAppHost.Host = host;
 
-        var input = new DrawEngine().CreateStudentVerificationInput(1, [first, second], DrawSettingsType.RollCall);
+        var input = CreateEngine(host).CreateStudentVerificationInput(1, [first, second], DrawSettingsType.RollCall);
 
         Assert.Equal(VerificationSamplingMode.WeightedWithoutReplacement, input.SamplingMode);
         Assert.Equal(VerificationAlgorithmProfile.StudentRandomHalfRepeat, input.AlgorithmProfile);
@@ -141,9 +138,8 @@ public sealed class FairDrawAlgorithmTests
         config.RollCallSettings.DrawMode = DrawMode.NoRepeat;
 
         using var host = CreateHost(config, new TestProfileService(new StudentHistory(), new StudentList { Students = [student] }));
-        IAppHost.Host = host;
 
-        var input = new DrawEngine().CreateStudentVerificationInput(1, [student], DrawSettingsType.RollCall);
+        var input = CreateEngine(host).CreateStudentVerificationInput(1, [student], DrawSettingsType.RollCall);
 
         Assert.Equal(VerificationAlgorithmProfile.StudentRandomInternalRuleNoRepeat, input.AlgorithmProfile);
         Assert.Equal(500_000, input.Candidates.Single().WeightMicros);
@@ -163,8 +159,7 @@ public sealed class FairDrawAlgorithmTests
         };
 
         using var host = CreateHost(config, new TestProfileService(new StudentHistory(), new StudentList(), prizes));
-        IAppHost.Host = host;
-        var engine = new DrawEngine(new ScriptedRandomSource(2, 0));
+        var engine = CreateEngine(host, new ScriptedRandomSource(2, 0));
 
         var local = engine.DrawPrize(2, _ => true);
         var input = engine.CreatePrizeVerificationInput(2, new Dictionary<string, int>());
@@ -191,9 +186,8 @@ public sealed class FairDrawAlgorithmTests
 
         using var host = CreateHost(config, new TestProfileService(
             new StudentHistory(), new StudentList(), new PrizeList { Prizes = [blocked, available] }));
-        IAppHost.Host = host;
 
-        var input = new DrawEngine().CreatePrizeVerificationInput(1, new Dictionary<string, int>());
+        var input = CreateEngine(host).CreatePrizeVerificationInput(1, new Dictionary<string, int>());
         using var audit = JsonDocument.Parse(input.AuditPayload);
 
         Assert.Equal(VerificationAlgorithmProfile.LotteryCountInternalRule, input.AlgorithmProfile);
@@ -224,6 +218,15 @@ public sealed class FairDrawAlgorithmTests
                 services.AddSingleton<MainConfigHandler>();
             })
             .Build();
+    }
+
+    private static DrawEngine CreateEngine(IHost host, IRandomSource? randomSource = null)
+    {
+        return new DrawEngine(
+            host.Services.GetRequiredService<MainConfigHandler>(),
+            host.Services.GetRequiredService<IProfileService>(),
+            host.Services.GetRequiredService<ILogger<DrawEngine>>(),
+            randomSource);
     }
 
     private sealed class TestConfigService(MainConfigModel config) : ConfigServiceBase

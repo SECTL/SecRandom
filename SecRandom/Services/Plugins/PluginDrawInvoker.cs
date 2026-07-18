@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Plugins;
@@ -11,7 +10,6 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.Security;
 using SecRandom.Services.Linkage;
-using SecRandom.Services;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Services.Plugins;
@@ -22,18 +20,18 @@ public sealed class PluginDrawInvoker(
     LinkageDrawCoordinator linkageDrawCoordinator,
     IDrawTemporaryRecordService temporaryRecordService,
     MainConfigHandler configHandler,
-    FeatureAvailabilityService featureAvailability) : IPluginDrawInvoker
+    DrawEngine drawEngine,
+    IProfileService profileService,
+    IFeatureAvailabilityService featureAvailability) : IPluginDrawInvoker
 {
     public async Task<PluginDrawResult> DrawStudentsAsync(PluginStudentDrawRequest request)
     {
         PluginDrawResult? response = null;
         await linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.RollCallStart, () =>
         {
-            var engine = new DrawEngine();
-            var profileService = IAppHost.GetService<IProfileService>();
             var studentListName = profileService.CurrentStudentList?.Name ?? string.Empty;
             var temporaryCounts = temporaryRecordService.GetStudentCounts(studentListName, string.Empty, string.Empty);
-            var result = engine.DrawStudent(Math.Max(1, request.Count), student =>
+            var result = drawEngine.DrawStudent(Math.Max(1, request.Count), student =>
                 MatchesTags(student.Tags, request) && !HasReachedStudentRepeatLimit(student, temporaryCounts),
                 linkageDrawCoordinator.GetCourseName());
             if (result.IsSuccess && result.Result.Count > 0)
@@ -75,11 +73,9 @@ public sealed class PluginDrawInvoker(
                 return Task.CompletedTask;
             }
 
-            var engine = new DrawEngine();
-            var profileService = IAppHost.GetService<IProfileService>();
             var prizeListName = profileService.CurrentPrizeList?.Name ?? string.Empty;
             var requestedCount = Math.Max(1, request.Count);
-            var result = engine.DrawPrizeWithTemporaryCounts(
+            var result = drawEngine.DrawPrizeWithTemporaryCounts(
                 requestedCount,
                 _ => true,
                 temporaryRecordService.GetPrizeCounts(prizeListName));

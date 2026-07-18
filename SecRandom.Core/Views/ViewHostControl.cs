@@ -1,4 +1,6 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -14,6 +16,7 @@ public class ViewHostControl : UserControl, IViewHost
     private readonly List<ViewBase> _pageStack = [];
     private readonly List<ViewBase> _modalStack = [];
     private bool _isDestroyed;
+    private TopLevel? _topLevel;
 
     public ViewHostControl(string hostId)
     {
@@ -38,6 +41,25 @@ public class ViewHostControl : UserControl, IViewHost
     public IReadOnlyList<ViewBase> PageStack => _pageStack;
     public ViewBase? ActiveModalView => _modalStack.LastOrDefault();
     public event EventHandler? Destroyed;
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _topLevel = TopLevel.GetTopLevel(this);
+        if (_topLevel is not null)
+            _topLevel.BackRequested += TopLevelOnBackRequested;
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        if (_topLevel is not null)
+        {
+            _topLevel.BackRequested -= TopLevelOnBackRequested;
+            _topLevel = null;
+        }
+
+        base.OnDetachedFromVisualTree(e);
+    }
 
     public Task ShowPageAsync(ViewBase view, CancellationToken cancellationToken = default)
     {
@@ -135,5 +157,18 @@ public class ViewHostControl : UserControl, IViewHost
     {
         if (_isDestroyed)
             throw new ObjectDisposedException(HostId, "The view host has been destroyed.");
+    }
+
+    private void TopLevelOnBackRequested(object? sender, RoutedEventArgs e)
+    {
+        if (e.Handled || _isDestroyed)
+            return;
+
+        var view = ActiveModalView ?? _pageStack.LastOrDefault();
+        if (view is null)
+            return;
+
+        e.Handled = true;
+        _ = view.CloseAsync(reason: ViewCloseReason.Back);
     }
 }

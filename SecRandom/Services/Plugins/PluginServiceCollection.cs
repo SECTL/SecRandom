@@ -2,6 +2,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using SecRandom.Core.Extensions.Registry;
 using SecRandom.Core.Plugins;
+using SecRandom.Core.Views;
 
 namespace SecRandom.Services.Plugins;
 
@@ -21,9 +22,29 @@ public sealed class PluginServiceCollection(
         services.AddPluginSettingsPage(registration);
     }
 
+    public void AddView(PluginViewRegistration registration)
+    {
+        ArgumentNullException.ThrowIfNull(registration);
+        EnsurePluginOwnsRegistration(registration.PluginId);
+        registration.Validate();
+        services.AddViewRegistration(new ViewRegistration
+        {
+            Id = registration.ViewId,
+            PluginId = registration.PluginId,
+            ViewType = registration.ViewType,
+            DefaultPresentation = registration.DefaultPresentation
+        });
+    }
+
     private void EnsurePluginOwnsRegistration(PluginPageRegistration registration)
     {
-        if (!string.Equals(registration.PluginId, manifest.Id, StringComparison.Ordinal))
+        ArgumentNullException.ThrowIfNull(registration);
+        EnsurePluginOwnsRegistration(registration.PluginId);
+    }
+
+    private void EnsurePluginOwnsRegistration(string pluginId)
+    {
+        if (!string.Equals(pluginId, manifest.Id, StringComparison.Ordinal))
             throw new InvalidOperationException("Plugin page registration must use the current plugin id.");
     }
 }

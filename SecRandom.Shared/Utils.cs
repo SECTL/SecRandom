@@ -5,9 +5,42 @@ namespace SecRandom.Shared;
 public static class Utils
 {
     public const string PackageRootEnvironmentVariable = "SECRANDOM_PACKAGE_ROOT";
+    private static readonly object DataRootGate = new();
+    private static string? _configuredDataRoot;
+    private static bool _dataRootWasRead;
 
     public static string PackageRoot => ResolvePackageRoot();
-    public static string DataRoot => Path.Combine(PackageRoot, "data");
+    public static string DataRoot
+    {
+        get
+        {
+            lock (DataRootGate)
+            {
+                _dataRootWasRead = true;
+                return _configuredDataRoot ?? Path.Combine(PackageRoot, "data");
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Selects an application-private data root before any persisted data path is resolved.
+    /// </summary>
+    internal static void ConfigureDataRoot(string dataRoot)
+    {
+        if (string.IsNullOrWhiteSpace(dataRoot))
+            throw new ArgumentException("The data root cannot be blank.", nameof(dataRoot));
+
+        var normalizedRoot = Path.GetFullPath(dataRoot);
+        lock (DataRootGate)
+        {
+            if (_dataRootWasRead)
+                throw new InvalidOperationException("The data root must be configured before it is first used.");
+            if (_configuredDataRoot is not null)
+                throw new InvalidOperationException("The data root has already been configured.");
+
+            _configuredDataRoot = normalizedRoot;
+        }
+    }
 
     private static string GetPath([Localizable(false)] params string[] strings)
     {
@@ -60,6 +93,15 @@ public static class Utils
         var appDirectoryName = Path.GetFileName(normalizedAppDirectory.TrimEnd(Path.DirectorySeparatorChar));
         return appDirectoryName.StartsWith("app-", StringComparison.Ordinal)
                && File.Exists(Path.Combine(normalizedAppDirectory, "SecRandom.package.json"));
+    }
+
+    internal static void ResetDataRootForTests()
+    {
+        lock (DataRootGate)
+        {
+            _configuredDataRoot = null;
+            _dataRootWasRead = false;
+        }
     }
 
 }

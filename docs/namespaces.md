@@ -10,7 +10,7 @@
 
 这个命名空间会开放给插件。
 
-插件开放面集中在 `SecRandom.Core.Plugins`。这里仅放稳定 DTO 和受限接口，例如插件清单、权限、页面注册和 `IPluginDrawInvoker`。不要把宿主运行时、完整 DI、可写配置/Profile 服务或公平抽取内部算法放进插件开放面。
+插件开放面集中在 `SecRandom.Core.Plugins`，而 `SecRandom.Core.Views` 提供可由插件注册/调用的逻辑 Avalonia 视图契约。这里只放稳定 DTO 和受限接口，例如插件清单、权限、页面/视图注册、`IPluginDrawInvoker` 与 `IPluginViewService`。不要把物理宿主、完整 DI、可写配置/Profile 服务或公平抽取内部算法放进插件开放面。
 
 ## SecRandom.Core.Tests
 

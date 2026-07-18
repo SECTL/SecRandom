@@ -13,6 +13,8 @@ public interface IPluginServiceCollection
 {
     void AddMainPage(PluginPageRegistration registration);
     void AddSettingsPage(PluginPageRegistration registration);
+    void AddView(PluginViewRegistration registration) =>
+        throw new NotSupportedException("The current plugin service collection does not support views.");
 }
 
 public interface IPluginBuildContext
@@ -28,6 +30,7 @@ public interface IPluginRuntimeContext
     ILogger Logger { get; }
     IPluginDrawInvoker? DrawInvoker { get; }
     string DataDirectory { get; }
+    IPluginViewService? ViewService => null;
 }
 
 public sealed class PluginInfo

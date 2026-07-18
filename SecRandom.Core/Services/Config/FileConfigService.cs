@@ -1,30 +1,23 @@
-using System;
-using System.IO;
-using System.Linq;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Shared.Abstraction;
 
-namespace SecRandom.Services.Config;
+namespace SecRandom.Core.Services.Config;
 
-public class DesktopConfigService(ILogger<DesktopConfigService> logger) : ConfigServiceBase
+public sealed class FileConfigService(ILogger<FileConfigService> logger) : ConfigServiceBase
 {
-    private ILogger<DesktopConfigService> Logger { get; } = logger;
-
     public override bool IsConfigExists<T>(T fallback)
     {
         var filePath = fallback.ConfigFilePath;
-        Logger.LogInformation("Checking config file existence: {Path}", filePath);
-
+        logger.LogInformation("Checking config file existence: {Path}", filePath);
         return File.Exists(filePath);
     }
 
     public override T LoadConfig<T>(T fallback)
     {
         var filePath = fallback.ConfigFilePath;
-        Logger.LogInformation("Loading config file: {Path}", filePath);
-
+        logger.LogInformation("Loading config file: {Path}", filePath);
         if (!File.Exists(filePath))
         {
             SaveConfig(fallback);
@@ -43,7 +36,7 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Unable to load config file, using fallback without rewriting: {Path}", filePath);
+            logger.LogWarning(ex, "Unable to load config file, using fallback without rewriting: {Path}", filePath);
             return fallback;
         }
     }
@@ -51,18 +44,15 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
     public override void SaveConfig<T>(T config)
     {
         var filePath = config.ConfigFilePath;
-        Logger.LogInformation("Saving config file: {Path}", filePath);
-
+        logger.LogInformation("Saving config file: {Path}", filePath);
         EnsureDirectory(filePath);
-        var json = JsonSerializer.Serialize(config, JsonOptions);
-        File.WriteAllText(filePath, json);
+        File.WriteAllText(filePath, JsonSerializer.Serialize(config, JsonOptions));
     }
 
     public override void DeleteConfig<T>(T config)
     {
         var filePath = config.ConfigFilePath;
-        Logger.LogInformation("Deleting config file: {Path}", filePath);
-
+        logger.LogInformation("Deleting config file: {Path}", filePath);
         if (File.Exists(filePath))
             File.Delete(filePath);
     }
@@ -76,9 +66,9 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
         {
             using var document = JsonDocument.Parse(json);
             var root = document.RootElement;
-            return root.ValueKind == JsonValueKind.Object &&
-                   root.EnumerateObject().Any() &&
-                   !IsEncryptedEnvelope(root);
+            return root.ValueKind == JsonValueKind.Object
+                   && root.EnumerateObject().Any()
+                   && !IsEncryptedEnvelope(root);
         }
         catch
         {
@@ -88,10 +78,10 @@ public class DesktopConfigService(ILogger<DesktopConfigService> logger) : Config
 
     private static bool IsEncryptedEnvelope(JsonElement root)
     {
-        return root.TryGetProperty("version", out _) &&
-               root.TryGetProperty("nonce", out _) &&
-               root.TryGetProperty("tag", out _) &&
-               root.TryGetProperty("ciphertext", out _);
+        return root.TryGetProperty("version", out _)
+               && root.TryGetProperty("nonce", out _)
+               && root.TryGetProperty("tag", out _)
+               && root.TryGetProperty("ciphertext", out _);
     }
 
     private static void ApplyProfileName<T>(T loaded, T fallback) where T : ConfigBase

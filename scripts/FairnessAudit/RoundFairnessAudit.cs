@@ -30,12 +30,11 @@ public static class RoundFairnessAudit
     {
         var config = BuildConfig();
         using var host = BuildHost(config, BuildProfile());
-        IAppHost.Host = host;
 
         ProfileRecordIdentityDiagnostics.Reset();
 
         var profile = (AuditProfileService)host.Services.GetRequiredService<IProfileService>();
-        var engine = new DrawEngine(new DeterministicRandomSource(20260628));
+        var engine = CreateEngine(host, new DeterministicRandomSource(20260628));
         var result = Simulate(engine, profile);
 
         return result with
@@ -189,6 +188,15 @@ public static class RoundFairnessAudit
                 services.AddSingleton<MainConfigHandler>();
             })
             .Build();
+    }
+
+    private static DrawEngine CreateEngine(IHost host, IRandomSource randomSource)
+    {
+        return new DrawEngine(
+            host.Services.GetRequiredService<MainConfigHandler>(),
+            host.Services.GetRequiredService<IProfileService>(),
+            host.Services.GetRequiredService<ILogger<DrawEngine>>(),
+            randomSource);
     }
 
     private static MainConfigModel BuildConfig()

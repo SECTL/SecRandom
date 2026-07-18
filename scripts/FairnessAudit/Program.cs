@@ -52,18 +52,16 @@ static class AuditRunner
         var config = BuildConfig();
 
         using var shortHost = BuildHost(config, BuildProfile());
-        IAppHost.Host = shortHost;
 
         ProfileRecordIdentityDiagnostics.Reset();
-        var shortEngine = new DrawEngine(new DeterministicRandomSource(20260626));
+        var shortEngine = CreateEngine(shortHost, new DeterministicRandomSource(20260626));
         var shortStudentSummary = SimulateStudents(shortEngine, (FakeProfileService)shortHost.Services.GetRequiredService<IProfileService>(), ShortStudentIterations, "学生短期抽取结果");
         var shortPrizeSummary = SimulatePrizes(shortEngine, (FakeProfileService)shortHost.Services.GetRequiredService<IProfileService>(), ShortPrizeIterations, "奖品短期抽取结果");
 
         ProfileRecordIdentityDiagnostics.Reset();
         using var longHost = BuildHost(config, BuildProfile());
-        IAppHost.Host = longHost;
 
-        var longEngine = new DrawEngine(new DeterministicRandomSource(20260627));
+        var longEngine = CreateEngine(longHost, new DeterministicRandomSource(20260627));
         var studentSummary = SimulateStudents(longEngine, (FakeProfileService)longHost.Services.GetRequiredService<IProfileService>(), StudentIterations, "学生长期公平性");
         var prizeSummary = SimulatePrizes(longEngine, (FakeProfileService)longHost.Services.GetRequiredService<IProfileService>(), PrizeIterations, "奖品长期公平性");
 
@@ -92,6 +90,15 @@ static class AuditRunner
                 services.AddSingleton<MainConfigHandler>();
             })
             .Build();
+    }
+
+    private static DrawEngine CreateEngine(IHost host, IRandomSource randomSource)
+    {
+        return new DrawEngine(
+            host.Services.GetRequiredService<MainConfigHandler>(),
+            host.Services.GetRequiredService<IProfileService>(),
+            host.Services.GetRequiredService<ILogger<DrawEngine>>(),
+            randomSource);
     }
 
     private static MainConfigModel BuildConfig()

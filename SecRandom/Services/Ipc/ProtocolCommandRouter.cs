@@ -25,7 +25,7 @@ public sealed class ProtocolCommandRouter(
     QuickDrawPageViewModel quickDraw,
     IProfileQueryService profileQuery,
     ISecurityService security,
-    FeatureAvailabilityService featureAvailability)
+    IFeatureAvailabilityService featureAvailability)
 {
     private static readonly Dictionary<string, string> MainPages = new(StringComparer.OrdinalIgnoreCase)
     {

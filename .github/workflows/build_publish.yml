@@ -596,6 +596,101 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
+  validate_mobile_ios:
+    name: Validate_Mobile_iOS_Simulator
+    runs-on: macos-26
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          persist-credentials: false
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.102
+
+      - name: Get Latest Tag
+        id: get_tag
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        shell: bash
+        run: echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
+
+      - name: Pin iOS SDK version
+        shell: bash
+        run: |
+          cat > global.json <<'EOF'
+          {
+            "sdk": {
+              "version": "10.0.102",
+              "rollForward": "disable"
+            }
+          }
+          EOF
+          dotnet --version
+
+      - name: Verify iOS toolchain
+        shell: bash
+        run: |
+          test "$(uname -m)" = arm64
+          test -d "$DEVELOPER_DIR"
+          xcodebuild -version
+          dotnet --version
+
+      - name: Install iOS workload
+        shell: bash
+        run: dotnet workload install ios --version 10.0.102 --skip-manifest-update
+
+      - name: Build iOS simulator target
+        shell: bash
+        run: >
+          dotnet build SecRandom.Mobile/SecRandom.Mobile.csproj
+          -c Release
+          -r iossimulator-arm64
+          -p:BuildMobile=true
+          -f net10.0-ios
+          -p:EnableCodeSigning=false
+          -p:CodesignRequireProvisioningProfile=false
+          -p:BuildIpa=false
+          -p:ArchiveOnBuild=false
+
+      - name: Publish unsigned iOS arm64 IPA
+        shell: bash
+        env:
+          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
+        run: |
+          version="${VERSION#v}"
+          version="${version#V}"
+          output="artifacts/mobile/SecRandom-v${version}-iOS-arm64-unsigned.ipa"
+          mkdir -p artifacts/mobile
+          dotnet publish SecRandom.Mobile/SecRandom.Mobile.csproj \
+            -c Release \
+            -r ios-arm64 \
+            -p:BuildMobile=true \
+            -f net10.0-ios \
+            -p:ApplicationVersion=${{ github.run_number }} \
+            -p:EnableCodeSigning=false \
+            -p:CodesignRequireProvisioningProfile=false \
+            -p:BuildIpa=true \
+            -p:ArchiveOnBuild=false \
+            -p:IpaPackagePath="$GITHUB_WORKSPACE/$output"
+          test -s "$output"
+          unzip -l "$output" | grep -q 'Payload/.*\.app/Info.plist'
+
+      - name: Upload unsigned iOS IPA
+        uses: actions/upload-artifact@v7
+        with:
+          name: SecRandom-iOS-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}-unsigned
+          path: artifacts/mobile/SecRandom-v*-iOS-arm64-unsigned.ipa
+          retention-days: 14
+          if-no-files-found: error
+
   publish:
     name: Publish_Release
     runs-on: windows-2022

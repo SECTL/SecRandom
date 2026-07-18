@@ -39,6 +39,7 @@ SecRandom/
 │   ├── Security/        # Credential store, verification prompts, factor/operation authorization
 │   ├── Telemetry/       # SentryTelemetrySdkAdapter, TelemetryRuntimeService
 │   ├── Updates/         # Signed manifest discovery, complete-artifact deployment, update scheduler
+│   ├── ViewEngine/      # Desktop Avalonia view-host provider for Core logical views
 │   ├── Voice/           # VoiceAnnouncementService
 │   ├── Verification/    # Immediate local proof export and asynchronous fair.sectl.cn replay attestation
 │   └── OnlineStatusService.cs  # Root-level status reporter
@@ -77,6 +78,7 @@ SecRandom/
 | Managed music library        | `Services/Music/MusicLibraryService.cs`, `Views/SettingsPages/Personalized/MusicSettingsPage.axaml(.cs)` | Imports, removes, and previews managed MP3/WAV/FLAC files under `data/audio/music`. |
 | Desktop integration          | `Services/Desktop/`                                                     | Taskbar lifecycle, Windows native global shortcuts, cross-platform autostart, and `secrandom://` registration.          |
 | Platform feature calls       | `Services/Platform/`, `../SecRandom.Platforms.Abstractions/`            | Views obtain `IWindowFeatureService` through Host; native implementations stay outside the app project.                 |
+| Cross-platform view host     | `Services/ViewEngine/`                                                    | Desktop physical host provider for `SecRandom.Core.Views`; it owns ordinary Avalonia windows only.                       |
 | Mobile root                  | `../SecRandom.Mobile/MobileApp.cs`, `../SecRandom.Mobile/MobileEntryPoint.cs` | Independent SingleView shell only; it owns a minimal Host and never starts desktop windows or desktop hosted services. |
 | Telemetry runtime seam       | `Services/Telemetry/`                                                   | App-layer-only Sentry policy/runtime lifecycle boundary; reads and live-applies `PrivacySettings.SentryTelemetryEnabled`.  |
 | Online status reporting      | `Services/OnlineStatusService.cs`                                       | Host-managed SECTL online status reporter; reads `PrivacySettings.OnlineStatusMode`.                                      |
@@ -89,7 +91,8 @@ SecRandom/
 - `BuildHost()` registers logging, config, services, windows/views, ViewModels, attached settings controls, and
   navigation pages.
 - Desktop `BuildHost()` receives the root selected by `SecRandom.Desktop` through `PlatformStartupContext` and registers it with `AddPlatformServices`. App code may adapt an Avalonia `TopLevel` into a neutral handle, but it must not contain Win32/X11/AppKit operations or platform selection logic. `SecRandom.Mobile.MobileApp` owns a separate minimal Host and must not call desktop `BuildHost()`.
-- `MainWindow` and `FloatingWindow` retain their presentation and configuration behavior but request topmost through `IWindowFeatureService`; additional task-switcher, no-activate, click-through, or capture features must be added through the same interface rather than direct native calls.
+- `BuildHost()` registers the desktop `IViewHostProvider` after `AddViewEngine()`. The provider may create ordinary Avalonia windows for logical Core views, but it must not replace the existing `MainView`, `SettingsView`, floating-window, or tray ownership paths until their dedicated migration phase.
+- `MainWindow` and `FloatingWindow` retain their presentation and configuration behavior but request topmost through `IWindowFeatureService`; `FloatingWindow` requests `ToolWindow` during construction while its native handle is available but before its first show, then requests task-switcher exclusion after opening where supported. Its transparent composition hint must be set during construction. Floating-window restoration must preserve `ShowActivated=False` and not steal focus. Linux implements tool/task-switcher semantics through X11 EWMH when `DISPLAY` is available, including XWayland sessions; native Wayland remains out of scope. macOS maps `ToolWindow` to an `NSWindow` utility window that joins all Spaces; Command-Tab remains application-level and is not modeled as a per-window task-switcher exclusion.
 - `App` is desktop-only. Its SingleView branch must reject misuse and direct callers to `SecRandom.Mobile.MobileApp`; the independent mobile shell must not route through desktop single-instance, OOBE, floating-window, tray, shortcut, update, plugin, or protocol startup paths.
 - Crash recovery startup prompt handling runs before single-instance acquisition; normal app restart must release `SingleInstanceService` before launching the replacement process.
 - Telemetry runtime policy belongs in app-layer services and should live-apply `MainConfigHandler.Data.General.PrivacySettings.SentryTelemetryEnabled`; do not move SDK-specific wiring into Core or Shared. The concrete Sentry adapter stays under `SecRandom/Services/Telemetry/SentryTelemetrySdkAdapter.cs`.

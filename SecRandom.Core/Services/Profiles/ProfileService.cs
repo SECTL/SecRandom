@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
@@ -9,22 +5,30 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
 
-namespace SecRandom.Services.Profiles;
+namespace SecRandom.Core.Services.Profiles;
 
-public class ProfileService : IProfileService
+public sealed class ProfileService : IProfileService
 {
-    private readonly ILogger<ProfileService> _logger = IAppHost.GetService<ILogger<ProfileService>>();
-    private MainConfigHandler Config { get; } = IAppHost.GetService<MainConfigHandler>();
+    private readonly ILogger<ProfileService> _logger;
+    private readonly MainConfigHandler _configHandler;
+    private readonly ConfigServiceBase _configService;
 
-    public ProfileService()
+    public ProfileService(
+        ILogger<ProfileService> logger,
+        MainConfigHandler configHandler,
+        ConfigServiceBase configService)
     {
-        var studentListName = ResolveProfileName("list", "roll_call_list", Config.Data.RollCallSettings.DefaultClass);
-        var prizeListName = ResolveProfileName("list", "lottery_list", Config.Data.LotterySettings.DefaultPool);
+        _logger = logger;
+        _configHandler = configHandler;
+        _configService = configService;
 
-        StudentListConfig = new StudentListConfig(studentListName);
-        StudentHistoryConfig = new StudentHistoryConfig(studentListName);
-        PrizeListConfig = new PrizeListConfig(prizeListName);
-        PrizeHistoryConfig = new PrizeHistoryConfig(prizeListName);
+        var studentListName = ResolveProfileName("list", "roll_call_list", _configHandler.Data.RollCallSettings.DefaultClass);
+        var prizeListName = ResolveProfileName("list", "lottery_list", _configHandler.Data.LotterySettings.DefaultPool);
+
+        StudentListConfig = CreateStudentListConfig(studentListName);
+        StudentHistoryConfig = CreateStudentHistoryConfig(studentListName);
+        PrizeListConfig = CreatePrizeListConfig(prizeListName);
+        PrizeHistoryConfig = CreatePrizeHistoryConfig(prizeListName);
 
         _logger.LogInformation(
             "已加载默认档案：学生名单={StudentListName}，学生数量={StudentCount}，奖品池={PrizeListName}，奖品数量={PrizeCount}。",
@@ -51,8 +55,8 @@ public class ProfileService : IProfileService
 
         if (StudentListConfig?.Name == name && StudentHistoryConfig?.Name == name)
         {
-            StudentListConfig?.Reload();
-            StudentHistoryConfig?.Reload();
+            StudentListConfig.Reload();
+            StudentHistoryConfig.Reload();
             return;
         }
 
@@ -62,8 +66,8 @@ public class ProfileService : IProfileService
             StudentHistoryConfig?.Save();
         }
 
-        StudentListConfig = new StudentListConfig(name);
-        StudentHistoryConfig = new StudentHistoryConfig(name);
+        StudentListConfig = CreateStudentListConfig(name);
+        StudentHistoryConfig = CreateStudentHistoryConfig(name);
 
         _logger.LogInformation(
             "已切换点名名单：学生名单={StudentListName}，学生数量={StudentCount}。",
@@ -78,8 +82,8 @@ public class ProfileService : IProfileService
 
         if (PrizeListConfig?.Name == name && PrizeHistoryConfig?.Name == name)
         {
-            PrizeListConfig?.Reload();
-            PrizeHistoryConfig?.Reload();
+            PrizeListConfig.Reload();
+            PrizeHistoryConfig.Reload();
             return;
         }
 
@@ -89,8 +93,8 @@ public class ProfileService : IProfileService
             PrizeHistoryConfig?.Save();
         }
 
-        PrizeListConfig = new PrizeListConfig(name);
-        PrizeHistoryConfig = new PrizeHistoryConfig(name);
+        PrizeListConfig = CreatePrizeListConfig(name);
+        PrizeHistoryConfig = CreatePrizeHistoryConfig(name);
 
         _logger.LogInformation(
             "已切换奖品池：奖品池={PrizeListName}，奖品数量={PrizeCount}。",
@@ -208,8 +212,8 @@ public class ProfileService : IProfileService
         var drawRoundId = Guid.NewGuid().ToString("N");
         var allPrizes = CurrentPrizeList?.Prizes ?? [];
         var uniqueLegacyKeys = ProfileRecordIdentity.BuildUniquePrizeLegacyKeySet(allPrizes);
-
         HashSet<string> drawnKeys = [];
+
         foreach (var prize in prizes)
         {
             var key = ProfileRecordIdentity.EnsureRecordId(prize);
@@ -291,11 +295,14 @@ public class ProfileService : IProfileService
         _logger.LogInformation("已清空当前抽奖历史：奖品池={PrizeListName}。", PrizeHistoryConfig?.Name);
     }
 
+    private StudentListConfig CreateStudentListConfig(string name) => new(name, _logger, _configService);
+    private StudentHistoryConfig CreateStudentHistoryConfig(string name) => new(name, _logger, _configService);
+    private PrizeListConfig CreatePrizeListConfig(string name) => new(name, _logger, _configService);
+    private PrizeHistoryConfig CreatePrizeHistoryConfig(string name) => new(name, _logger, _configService);
+
     private static string ResolveProfileName(string rootA, string rootB, string preferredName)
     {
         var directory = Utils.GetDirectoryPath(rootA, rootB);
-        Directory.CreateDirectory(directory);
-
         if (!string.IsNullOrWhiteSpace(preferredName))
         {
             var preferredPath = Path.Combine(directory, $"{preferredName}.json");

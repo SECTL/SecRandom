@@ -55,7 +55,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly NotificationService? _notificationService;
-    private readonly FeatureAvailabilityService _featureAvailability;
+    private readonly IFeatureAvailabilityService _featureAvailability;
     private readonly FileSystemWatcher _prizeListWatcher;
     private readonly FileSystemWatcher _studentListWatcher;
     private bool _isDrawCommandRunning;
@@ -86,7 +86,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         ISecurityService securityService,
         LinkageDrawCoordinator linkageDrawCoordinator,
         VerificationDrawCoordinator verificationDrawCoordinator,
-        FeatureAvailabilityService featureAvailability,
+        IFeatureAvailabilityService featureAvailability,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         NotificationService? notificationService = null)
         : base(configHandler)

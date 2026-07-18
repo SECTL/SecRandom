@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
@@ -20,13 +19,20 @@ public partial class DrawEngine
     private static readonly Guid BehindSceneAttachedSettingsId =
         Guid.Parse(GlobalConstants.BehindSceneAttachedSettings);
 
-    private readonly MainConfigHandler _configHandler = IAppHost.GetService<MainConfigHandler>();
-    private readonly IProfileService _profileService = IAppHost.GetService<IProfileService>();
-    private readonly ILogger<DrawEngine> _logger = IAppHost.GetService<ILogger<DrawEngine>>();
+    private readonly MainConfigHandler _configHandler;
+    private readonly IProfileService _profileService;
+    private readonly ILogger<DrawEngine> _logger;
     private readonly IRandomSource _randomSource;
 
-    public DrawEngine(IRandomSource? randomSource = null)
+    public DrawEngine(
+        MainConfigHandler configHandler,
+        IProfileService profileService,
+        ILogger<DrawEngine> logger,
+        IRandomSource? randomSource = null)
     {
+        _configHandler = configHandler;
+        _profileService = profileService;
+        _logger = logger;
         _randomSource = randomSource ?? new CryptoRandomSource();
     }
 

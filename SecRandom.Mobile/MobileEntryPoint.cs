@@ -51,9 +51,21 @@ using Avalonia.iOS;
 using Foundation;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
+using System.Runtime.Versioning;
+using UIKit;
 
 namespace SecRandom.Mobile;
 
+[SupportedOSPlatform("ios13.0")]
+public static class MobileEntryPoint
+{
+    public static void Main(string[] args)
+    {
+        UIApplication.Main(args, null, typeof(AppDelegate));
+    }
+}
+
+[SupportedOSPlatform("ios13.0")]
 [Register("AppDelegate")]
 public sealed class AppDelegate : AvaloniaAppDelegate<MobileApp>
 {

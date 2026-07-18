@@ -535,7 +535,7 @@ public sealed class ImportExportService(
     {
         configHandler.Reload();
         deviceUuidStore.Reload();
-        IAppHost.TryGetService<FeatureAvailabilityService>()?.Refresh();
+        IAppHost.TryGetService<IFeatureAvailabilityService>()?.Refresh();
         IAppHost.TryGetService<GlobalShortcutService>()?.Refresh();
         IAppHost.TryGetService<ShortcutService>()?.Refresh();
         _ = IAppHost.TryGetService<TelemetryRuntimeService>()?.RefreshAsync();

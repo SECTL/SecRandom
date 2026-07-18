@@ -13,6 +13,7 @@ using Avalonia.Platform;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
@@ -47,7 +48,7 @@ public partial class FloatingWindow : Window
     private int _expandedWindowHeight;
     private int _dockAnchorCenterY;
     private readonly CourseLinkageService _linkageService = IAppHost.GetService<CourseLinkageService>();
-    private readonly FeatureAvailabilityService _featureAvailability = IAppHost.GetService<FeatureAvailabilityService>();
+    private readonly IFeatureAvailabilityService _featureAvailability = IAppHost.GetService<IFeatureAvailabilityService>();
     private bool _hiddenByCourseLinkage;
     private bool _wasVisibleBeforeCourseLinkage;
     private bool _userWantsVisible = true;
@@ -57,6 +58,8 @@ public partial class FloatingWindow : Window
         DataContext = this;
         Position = new PixelPoint(ViewModel.Config.FloatPosition.X, ViewModel.Config.FloatPosition.Y);
         InitializeComponent();
+        TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
+        this.ApplyPlatformFeatures(WindowFeatures.ToolWindow, enabled: true);
 
         TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
         RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
@@ -70,6 +73,7 @@ public partial class FloatingWindow : Window
         ViewModel.Config.LinkageSettings.PropertyChanged += LinkageSettings_OnPropertyChanged;
         _linkageService.StateChanged += LinkageServiceOnStateChanged;
         _featureAvailability.Changed += FeatureAvailabilityOnChanged;
+        Opened += OnOpened;
         Closed += (_, _) => _featureAvailability.Changed -= FeatureAvailabilityOnChanged;
         RefreshItems();
     }
@@ -183,7 +187,7 @@ public partial class FloatingWindow : Window
         }
 
         if (_userWantsVisible && _wasVisibleBeforeCourseLinkage)
-            App.RestoreAndActivate(this);
+            App.RestoreWithoutActivating(this);
         _wasVisibleBeforeCourseLinkage = false;
     }
 
@@ -289,11 +293,15 @@ public partial class FloatingWindow : Window
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
         ApplyWindowSettings(ViewModel.Config.FloatingWindowSettings);
         Dispatcher.UIThread.Post(RestoreStartupPositionAndScheduleDock, DispatcherPriority.Render);
         // 触发布局更新
         Width = 20;
+    }
+
+    private void OnOpened(object? sender, EventArgs e)
+    {
+        this.ApplyPlatformFeatures(WindowFeatures.SkipTaskSwitcher, enabled: true);
     }
 
     private async void RestoreStartupPositionAndScheduleDock()

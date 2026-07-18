@@ -1,8 +1,10 @@
+using Avalonia;
+using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace SecRandom.Core.Views;
 
-public sealed class ViewEngine(IServiceProvider services, IViewRegistry registry, IViewHostProvider hostProvider) : IViewEngine
+internal sealed class ViewEngine(IServiceProvider services, IViewRegistry registry, IViewHostProvider hostProvider) : IViewEngine
 {
     private readonly Dictionary<string, ViewSession> _sessionsById = new(StringComparer.Ordinal);
     private readonly Dictionary<ViewBase, ViewSession> _sessionsByView = [];
@@ -34,8 +36,7 @@ public sealed class ViewEngine(IServiceProvider services, IViewRegistry registry
                 throw new ViewHostUnavailableException(hostSelection, viewId);
 
             ObserveHost(hostSelection.Host);
-            var view = ActivatorUtilities.CreateInstance(services, registration.ViewType) as ViewBase
-                       ?? throw new InvalidOperationException($"View '{viewId}' could not be created as a ViewBase.");
+            var view = await CreateViewAsync(registration, cancellationToken).ConfigureAwait(false);
             var presentation = options.Presentation ?? registration.DefaultPresentation;
             var session = new ViewSession(viewId, view, hostSelection.Host, presentation);
             view.Attach(viewId, (request, token) => CloseSessionAsync(session, request, token));
@@ -87,13 +88,6 @@ public sealed class ViewEngine(IServiceProvider services, IViewRegistry registry
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(viewId);
-
-        ViewSession? session;
-        lock (_gate)
-        {
-            _sessionsById.TryGetValue(viewId, out session);
-        }
-
         return CloseByIdAsync(viewId, reason, result, cancellationToken);
     }
 
@@ -144,7 +138,13 @@ public sealed class ViewEngine(IServiceProvider services, IViewRegistry registry
         if (!_sessionsByView.TryGetValue(session.View, out var activeSession) || !ReferenceEquals(activeSession, session))
             return ViewCloseResult.AlreadyClosed(request.Reason, request.Result);
 
-        if (!session.View.TryBeginClose(request.Reason, request.Result, request.IsCancelable, out var closeResult))
+        var closeResult = await RunOnUiThreadAsync(() =>
+        {
+            return session.View.TryBeginClose(request.Reason, request.Result, request.IsCancelable, out var result)
+                ? result
+                : result;
+        }, cancellationToken).ConfigureAwait(false);
+        if (!closeResult.WasClosed)
             return closeResult;
 
         try
@@ -158,7 +158,8 @@ public sealed class ViewEngine(IServiceProvider services, IViewRegistry registry
 
         _sessionsById.Remove(session.ViewId);
         _sessionsByView.Remove(session.View);
-        session.View.CompleteClose(closeResult);
+        await RunOnUiThreadAsync(() => session.View.CompleteClose(closeResult), cancellationToken)
+            .ConfigureAwait(false);
         session.TryComplete(closeResult);
         return closeResult;
     }
@@ -194,6 +195,61 @@ public sealed class ViewEngine(IServiceProvider services, IViewRegistry registry
     private void HostOnDestroyed(object? sender, EventArgs e)
     {
         if (sender is IViewHost host)
-            _ = CloseHostAsync(host, ViewCloseReason.HostShutdown);
+            _ = HandleHostDestroyedAsync(host);
+    }
+
+    private async Task HandleHostDestroyedAsync(IViewHost host)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (!_observedHosts.Remove(host))
+                return;
+
+            host.Destroyed -= HostOnDestroyed;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+
+        await CloseHostAsync(host, ViewCloseReason.HostDestroyed).ConfigureAwait(false);
+    }
+
+    private Task<ViewBase> CreateViewAsync(ViewRegistration registration, CancellationToken cancellationToken)
+    {
+        ViewBase Create()
+        {
+            if (!string.IsNullOrWhiteSpace(registration.PluginId))
+            {
+                return Activator.CreateInstance(registration.ViewType) as ViewBase
+                       ?? throw new InvalidOperationException(
+                           $"Plugin view '{registration.Id}' could not be created as a ViewBase.");
+            }
+
+            return ActivatorUtilities.CreateInstance(services, registration.ViewType) as ViewBase
+                   ?? throw new InvalidOperationException($"View '{registration.Id}' could not be created as a ViewBase.");
+        }
+
+        return RunOnUiThreadAsync(Create, cancellationToken);
+    }
+
+    private static Task<T> RunOnUiThreadAsync<T>(Func<T> action, CancellationToken cancellationToken)
+    {
+        if (Application.Current is null || Dispatcher.UIThread.CheckAccess())
+            return Task.FromResult(action());
+
+        return Dispatcher.UIThread.InvokeAsync(action, DispatcherPriority.Normal, cancellationToken).GetTask();
+    }
+
+    private static Task RunOnUiThreadAsync(Action action, CancellationToken cancellationToken)
+    {
+        if (Application.Current is null || Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+            return Task.CompletedTask;
+        }
+
+        return Dispatcher.UIThread.InvokeAsync(action, DispatcherPriority.Normal, cancellationToken).GetTask();
     }
 }

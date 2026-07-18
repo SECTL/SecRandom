@@ -1,4 +1,3 @@
-using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using SecRandom.Core.Views;
 
@@ -7,120 +6,215 @@ namespace SecRandom.Core.Tests;
 public sealed class ViewEngineTests
 {
     [Fact]
-    public void RegistryRejectsDuplicateIdsAndNonControlViews()
+    public void RegistryRejectsDuplicateAndNonViewBaseRegistrations()
     {
         var registry = new ViewRegistry();
-        registry.Register(new ViewDescriptor { Id = "test.view", ViewType = typeof(TestView) });
+        registry.Register(new ViewRegistration { Id = "test.view", ViewType = typeof(TestView) });
 
         Assert.Throws<InvalidOperationException>(() => registry.Register(
-            new ViewDescriptor { Id = "test.view", ViewType = typeof(TestView) }));
+            new ViewRegistration { Id = "test.view", ViewType = typeof(TestView) }));
         Assert.Throws<ArgumentException>(() => registry.Register(
-            new ViewDescriptor { Id = "test.invalid", ViewType = typeof(object) }));
+            new ViewRegistration { Id = "test.invalid", ViewType = typeof(object) }));
     }
 
     [Fact]
-    public void PluginDescriptorRequiresOwnedPrefix()
+    public void ViewRegistrationRequiresTheReservedPluginPrefix()
     {
-        var descriptor = new ViewDescriptor
+        Assert.Throws<ArgumentException>(() => new ViewRegistration
         {
             Id = "main.rollCall",
             PluginId = "demo",
             ViewType = typeof(TestView)
-        };
-
-        Assert.Throws<ArgumentException>(descriptor.Validate);
+        }.Validate());
     }
 
     [Fact]
-    public async Task CloseGuardCanRejectUserCloseButNotHostShutdown()
+    public async Task ClosingEventCanCancelUserCloseButNotHostDestruction()
     {
-        var host = new TestHost(ViewPresentationPreference.Default);
-        using var provider = CreateProvider(host, out var registry);
-        registry.Register(new ViewDescriptor { Id = "test.view", ViewType = typeof(TestView) });
-        var service = provider.GetRequiredService<IViewService>();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var host = new TestHost("test-host");
+        using var provider = CreateProvider(host, out var state);
+        var engine = provider.GetRequiredService<IViewEngine>();
 
-        var session = await service.ShowAsync("test.view");
-        session.Closing += (_, args) => args.Cancel = true;
+        var handle = await engine.ShowAsync("test.view", cancellationToken: cancellationToken);
+        var view = Assert.IsType<TestView>(state.LastCreated);
+        view.Closing += (_, args) => args.Cancel = true;
 
-        Assert.False(await service.CloseAsync(session, ViewCloseReason.User));
-        Assert.False(session.IsClosed);
-        Assert.True(await service.CloseAsync(session, ViewCloseReason.HostShutdown, isCancelable: false));
-        Assert.True(session.IsClosed);
+        var canceled = await view.CloseAsync(reason: ViewCloseReason.User, cancellationToken: cancellationToken);
+        Assert.True(canceled.WasCanceled);
+
+        host.RaiseDestroyed();
+        var closed = await handle.Completion.WaitAsync(TimeSpan.FromSeconds(2), cancellationToken);
+
+        Assert.True(closed.WasClosed);
+        Assert.Equal(ViewCloseReason.HostDestroyed, closed.Reason);
         Assert.Equal(1, host.CloseCount);
     }
 
     [Fact]
-    public async Task ClosingModalCompletesWithTheAssignedResult()
+    public async Task ModalCompletionCarriesTheCloseResult()
     {
-        var host = new TestHost(ViewPresentationPreference.Modal);
-        using var provider = CreateProvider(host, out var registry);
-        registry.Register(new ViewDescriptor
-        {
-            Id = "test.modal",
-            ViewType = typeof(TestView),
-            DefaultPresentation = ViewPresentationPreference.Modal
-        });
-        var service = provider.GetRequiredService<IViewService>();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var host = new TestHost("test-host");
+        using var provider = CreateProvider(host, out var state);
+        var engine = provider.GetRequiredService<IViewEngine>();
 
-        var session = await service.ShowAsync("test.modal");
-        session.SetResult("accepted");
+        var modal = engine.ShowModalAsync("test.modal", cancellationToken: cancellationToken);
+        await WaitForAsync(() => state.LastCreated is not null, cancellationToken);
 
-        Assert.True(await service.CloseAsync(session));
-        Assert.Equal("accepted", await session.Completion);
-        Assert.Equal(1, host.ShowCount);
+        var close = await state.LastCreated!.CloseAsync("accepted", cancellationToken: cancellationToken);
+        var result = await modal;
+
+        Assert.True(close.WasClosed);
+        Assert.True(result.WasClosed);
+        Assert.Equal("accepted", result.Result);
+        Assert.Equal(1, host.ModalShowCount);
         Assert.Equal(1, host.CloseCount);
     }
 
     [Fact]
-    public async Task UnsupportedPresentationFailsBeforeCreatingAView()
+    public async Task SingleViewProviderRejectsNewHostRequests()
     {
-        var host = new TestHost(ViewPresentationPreference.Default);
-        using var provider = CreateProvider(host, out var registry);
-        registry.Register(new ViewDescriptor { Id = "test.view", ViewType = typeof(TestView) });
-        var service = provider.GetRequiredService<IViewService>();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var host = new TestHost("single-host");
+        using var provider = CreateProvider(host, out _);
+        var engine = provider.GetRequiredService<IViewEngine>();
 
-        await Assert.ThrowsAsync<ViewPresentationNotSupportedException>(() => service.ShowAsync(
+        var exception = await Assert.ThrowsAsync<ViewHostUnavailableException>(() => engine.ShowAsync(
             "test.view",
-            new ViewShowOptions { Presentation = ViewPresentationPreference.Sheet }));
-        Assert.Equal(0, host.ShowCount);
+            new ViewShowOptions { ActivationPreference = ViewActivationPreference.NewHost },
+            cancellationToken));
+
+        Assert.True(exception.Selection.IsUnsupported);
+        Assert.Equal(0, host.PageShowCount);
     }
 
-    private static ServiceProvider CreateProvider(TestHost host, out IViewRegistry registry)
+    [Fact]
+    public async Task DefaultDesktopLikeProviderCanReuseItsCurrentHost()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var host = new TestHost("reused-host");
+        using var provider = CreateProvider(host, out _);
+        var engine = provider.GetRequiredService<IViewEngine>();
+
+        await engine.ShowAsync("test.view", cancellationToken: cancellationToken);
+        await engine.ShowAsync("test.modal", cancellationToken: cancellationToken);
+
+        Assert.Equal(1, host.PageShowCount);
+        Assert.Equal(1, host.ModalShowCount);
+    }
+
+    [Fact]
+    public async Task ApplicationShutdownClosesCancelableViews()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var host = new TestHost("shutdown-host");
+        using var provider = CreateProvider(host, out var state);
+        var engine = provider.GetRequiredService<IViewEngine>();
+
+        var handle = await engine.ShowAsync("test.view", cancellationToken: cancellationToken);
+        Assert.IsType<TestView>(state.LastCreated).Closing += (_, args) => args.Cancel = true;
+
+        await engine.CloseHostAsync(host, ViewCloseReason.ApplicationShutdown, cancellationToken);
+        var result = await handle.Completion.WaitAsync(TimeSpan.FromSeconds(2), cancellationToken);
+
+        Assert.True(result.WasClosed);
+        Assert.Equal(ViewCloseReason.ApplicationShutdown, result.Reason);
+    }
+
+    [Fact]
+    public void ViewHandlesDoNotExposeTheUnderlyingHostOrView()
+    {
+        var names = typeof(IViewHandle).GetProperties().Select(property => property.Name).ToArray();
+
+        Assert.DoesNotContain("Host", names);
+        Assert.DoesNotContain("View", names);
+    }
+
+    private static ServiceProvider CreateProvider(TestHost host, out TestViewState state)
     {
         var services = new ServiceCollection();
-        services.AddViewEngine();
-        services.AddSingleton<IViewHostRegistry>(new TestHostRegistry(host));
+        services.AddSingleton<TestViewState>();
+        services.AddSingleton<SingleViewHostProvider>();
+        services.AddSingleton<IViewHostProvider>(provider => provider.GetRequiredService<SingleViewHostProvider>());
+        services.AddViewEngine()
+            .AddView<TestView>("test.view")
+            .AddView<TestView>("test.modal", ViewPresentation.Modal);
+
         var provider = services.BuildServiceProvider();
-        registry = provider.GetRequiredService<IViewRegistry>();
+        provider.GetRequiredService<SingleViewHostProvider>().Attach(host);
+        state = provider.GetRequiredService<TestViewState>();
         return provider;
     }
 
-    private sealed class TestView : UserControl
+    private static async Task WaitForAsync(Func<bool> condition, CancellationToken cancellationToken)
     {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(2);
+        while (!condition())
+        {
+            if (DateTime.UtcNow >= deadline)
+                throw new TimeoutException("The expected view was not created.");
+
+            await Task.Delay(10, cancellationToken);
+        }
     }
 
-    private sealed class TestHost(params ViewPresentationPreference[] supported) : IViewHost
+    private sealed class TestView : ViewBase
     {
-        public int ShowCount { get; private set; }
-        public int CloseCount { get; private set; }
-
-        public bool Supports(ViewPresentationPreference presentation) => supported.Contains(presentation);
-
-        public Task ShowAsync(ViewSession session, CancellationToken cancellationToken = default)
+        public TestView(TestViewState state)
         {
-            ShowCount++;
+            state.LastCreated = this;
+        }
+    }
+
+    private sealed class TestViewState
+    {
+        public TestView? LastCreated { get; set; }
+    }
+
+    private sealed class TestHost(string hostId) : IViewHost
+    {
+        private readonly List<ViewBase> _pages = [];
+
+        public string HostId { get; } = hostId;
+        public IReadOnlyList<ViewBase> PageStack => _pages;
+        public ViewBase? ActiveModalView { get; private set; }
+        public int PageShowCount { get; private set; }
+        public int ModalShowCount { get; private set; }
+        public int CloseCount { get; private set; }
+        public event EventHandler? Destroyed;
+
+        public Task ShowPageAsync(ViewBase view, CancellationToken cancellationToken = default)
+        {
+            PageShowCount++;
+            _pages.Add(view);
             return Task.CompletedTask;
         }
 
-        public Task CloseAsync(ViewSession session, CancellationToken cancellationToken = default)
+        public Task ShowModalAsync(ViewBase view, CancellationToken cancellationToken = default)
+        {
+            ModalShowCount++;
+            ActiveModalView = view;
+            return Task.CompletedTask;
+        }
+
+        public Task ActivateAsync(ViewBase view, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task CloseAsync(ViewBase view, CancellationToken cancellationToken = default)
         {
             CloseCount++;
+            _pages.Remove(view);
+            if (ReferenceEquals(ActiveModalView, view))
+                ActiveModalView = null;
             return Task.CompletedTask;
         }
-    }
 
-    private sealed class TestHostRegistry(TestHost host) : IViewHostRegistry
-    {
-        public IViewHost Resolve(ViewPresentationPreference presentation) => host;
+        public Task DestroyAsync(CancellationToken cancellationToken = default)
+        {
+            RaiseDestroyed();
+            return Task.CompletedTask;
+        }
+
+        public void RaiseDestroyed() => Destroyed?.Invoke(this, EventArgs.Empty);
     }
 }

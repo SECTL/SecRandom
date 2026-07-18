@@ -9,7 +9,13 @@ public static class ViewServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.TryAddSingleton<IViewRegistry, ViewRegistry>();
+        services.TryAddSingleton<IViewRegistry>(serviceProvider =>
+        {
+            var registry = new ViewRegistry();
+            foreach (var registration in serviceProvider.GetServices<IHostedViewRegistration>())
+                registry.Register(registration.Registration);
+            return registry;
+        });
         services.TryAddSingleton<IViewEngine, ViewEngine>();
         return new ViewEngineBuilder(services);
     }
@@ -34,18 +40,12 @@ public static class ViewServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(registration);
         registration.Validate();
 
-        services.AddTransient(registration.ViewType);
+        if (string.IsNullOrWhiteSpace(registration.PluginId))
+            services.AddTransient(registration.ViewType);
         services.AddSingleton<IHostedViewRegistration>(_ => new HostedViewRegistration(registration));
         return services;
     }
 
-    public static void RegisterHostedViews(this IServiceProvider services)
-    {
-        ArgumentNullException.ThrowIfNull(services);
-        var registry = services.GetRequiredService<IViewRegistry>();
-        foreach (var registration in services.GetServices<IHostedViewRegistration>())
-            registry.Register(registration.Registration);
-    }
 }
 
 internal interface IHostedViewRegistration

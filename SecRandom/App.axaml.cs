@@ -35,9 +35,12 @@ using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Services.Profiles;
+using SecRandom.Core.Services;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Services.SingleInstance;
+using SecRandom.Core.Views;
 using SecRandom.Shared.Models.Ipc;
 using SecRandom.Shared;
 using SecRandom.Dialogs;
@@ -61,6 +64,7 @@ using SecRandom.Services.Telemetry;
 using SecRandom.Services.Verification;
 using SecRandom.Services.Voice;
 using SecRandom.Services.Updates;
+using SecRandom.Services.ViewEngine;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
 using SecRandom.ViewModels;
@@ -388,6 +392,10 @@ public partial class App : Application
                 var pluginStateStore = new PluginStateStore();
 
                 services.AddPlatformServices(platform);
+                services.AddViewEngine();
+                services.AddSingleton<DesktopViewHostProvider>();
+                services.AddSingleton<IViewHostProvider>(serviceProvider =>
+                    serviceProvider.GetRequiredService<DesktopViewHostProvider>());
 
                 // 日志
                 services.AddLogging(builder =>
@@ -410,7 +418,7 @@ public partial class App : Application
                 services.AddSingleton<ILoggerProvider, FileLoggerProvider>();
 
                 // 配置
-                services.AddSingleton<ConfigServiceBase, DesktopConfigService>();
+                services.AddSingleton<ConfigServiceBase, FileConfigService>();
                 services.AddSingleton<MainConfigHandler>();
                 services.AddSingleton<DeviceUuidStore>();
 
@@ -451,7 +459,7 @@ public partial class App : Application
                     serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("updates")));
                 services.AddSingleton<IUpdateNotificationService, UpdateNotificationService>();
                 services.AddHostedService<UpdateScheduler>();
-                services.AddSingleton<FeatureAvailabilityService>();
+                services.AddSingleton<IFeatureAvailabilityService, FeatureAvailabilityService>();
                 services.AddSingleton<ProtocolCommandRouter>();
                 services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
                 services.AddSingleton<ISpeechProvider, EdgeTtsSpeechProvider>();
@@ -1018,7 +1026,7 @@ public partial class App : Application
 
     public static void ToggleMainWindow(string? pageId = null)
     {
-        if (pageId == "main.lottery" && !IAppHost.GetService<FeatureAvailabilityService>().IsLotteryEnabled)
+        if (pageId == "main.lottery" && !IAppHost.GetService<IFeatureAvailabilityService>().IsLotteryEnabled)
             return;
 
         ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeAsync(
@@ -1034,7 +1042,7 @@ public partial class App : Application
 
     public static void SetMainWindowVisibility(string action, string? pageId = null)
     {
-        if (pageId == "main.lottery" && !IAppHost.GetService<FeatureAvailabilityService>().IsLotteryEnabled)
+        if (pageId == "main.lottery" && !IAppHost.GetService<IFeatureAvailabilityService>().IsLotteryEnabled)
             return;
 
         var shouldShow = action switch
@@ -1081,7 +1089,7 @@ public partial class App : Application
                 {
                     _floatingWindow.SetUserVisibilityIntent(true);
                     if (!_floatingWindow.IsHiddenByCourseLinkage)
-                        RestoreAndActivate(_floatingWindow);
+                        RestoreWithoutActivating(_floatingWindow);
                 }
                 Current.RefreshTrayWindowMenuItems();
                 return Task.CompletedTask;
@@ -1100,7 +1108,7 @@ public partial class App : Application
         {
             _floatingWindow.SetUserVisibilityIntent(true);
             if (!_floatingWindow.IsHiddenByCourseLinkage)
-                RestoreAndActivate(_floatingWindow);
+                RestoreWithoutActivating(_floatingWindow);
         }
         else if (!shouldShow)
         {
@@ -1489,6 +1497,13 @@ public partial class App : Application
         }
         window.Show();
         window.Activate();
+    }
+
+    internal static void RestoreWithoutActivating(Window window)
+    {
+        if (window.WindowState == WindowState.Minimized)
+            window.WindowState = WindowState.Normal;
+        window.Show();
     }
 
     private void RefreshTrayWindowMenuItems()

@@ -13,9 +13,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Plugins;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Logging;
+using SecRandom.Core.Views;
 using SecRandom.Shared;
 using SecRandom.Services.Security;
 using SecRandom.Services.Linkage;
@@ -287,9 +289,20 @@ public sealed class PluginManagerService : IPluginManager
                     provider.GetRequiredService<LinkageDrawCoordinator>(),
                     provider.GetRequiredService<IDrawTemporaryRecordService>(),
                     provider.GetRequiredService<MainConfigHandler>(),
-                    provider.GetRequiredService<FeatureAvailabilityService>());
+                    provider.GetRequiredService<DrawEngine>(),
+                    provider.GetRequiredService<IProfileService>(),
+                    provider.GetRequiredService<IFeatureAvailabilityService>());
                 var dataDirectory = pluginInfo.ConfigDirectory;
-                var runtimeContext = new PluginRuntimeContext(descriptor.Manifest, pluginInfo, pluginLogger, drawInvoker, dataDirectory);
+                var viewService = provider.GetService<IViewEngine>() is { } viewEngine
+                    ? new PluginViewService(descriptor.Id, viewEngine)
+                    : null;
+                var runtimeContext = new PluginRuntimeContext(
+                    descriptor.Manifest,
+                    pluginInfo,
+                    pluginLogger,
+                    drawInvoker,
+                    dataDirectory,
+                    viewService);
                 return new LoadedPluginRegistration(plugin, runtimeContext);
             });
 

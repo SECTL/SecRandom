@@ -5,8 +5,7 @@ namespace SecRandom.Platforms.Linux;
 public sealed class LinuxPlatformServiceRoot : IPlatformServiceRoot
 {
     private static readonly bool IsX11Session = !string.IsNullOrWhiteSpace(
-        Environment.GetEnvironmentVariable("DISPLAY")) && string.IsNullOrWhiteSpace(
-        Environment.GetEnvironmentVariable("WAYLAND_DISPLAY"));
+        Environment.GetEnvironmentVariable("DISPLAY"));
 
     public PlatformKind Kind => PlatformKind.Linux;
 
@@ -16,7 +15,7 @@ public sealed class LinuxPlatformServiceRoot : IPlatformServiceRoot
         SupportsMultipleWindows: true,
         SupportsWindowPositioning: false,
         SupportsTopmost: IsX11Session,
-        SupportsTaskSwitcherExclusion: false,
+        SupportsTaskSwitcherExclusion: IsX11Session,
         SupportsNoActivate: false,
         SupportsClickThrough: false,
         SupportsCaptureExclusion: false,

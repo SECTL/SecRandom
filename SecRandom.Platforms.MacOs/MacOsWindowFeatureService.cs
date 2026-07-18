@@ -7,8 +7,12 @@ public sealed class MacOsWindowFeatureService : IWindowFeatureService
 {
     private const nint NsNormalWindowLevel = 0;
     private const nint NsFloatingWindowLevel = 3;
+    private const nint NsUtilityWindowStyleMask = 1 << 4;
+    private const nint NsWindowCollectionBehaviorCanJoinAllSpaces = 1 << 0;
 
-    public WindowFeatures SupportedFeatures => WindowFeatures.Topmost | WindowFeatures.ClickThrough;
+    public WindowFeatures SupportedFeatures => WindowFeatures.Topmost |
+                                                WindowFeatures.ToolWindow |
+                                                WindowFeatures.ClickThrough;
 
     public WindowFeatureApplyResult Apply(PlatformWindowHandle window, WindowFeatureRequest request)
     {
@@ -55,7 +59,58 @@ public sealed class MacOsWindowFeatureService : IWindowFeatureService
             }
         }
 
+        if ((requested & WindowFeatures.ToolWindow) != 0)
+        {
+            if (TrySetToolWindow(window.Value, request.Enabled, out var failure))
+            {
+                applied |= WindowFeatures.ToolWindow;
+            }
+            else
+            {
+                failed |= WindowFeatures.ToolWindow;
+                detail ??= failure;
+            }
+        }
+
         return WindowFeatureApplyResult.Partial(applied, unsupported, failed, detail);
+    }
+
+    private static bool TrySetToolWindow(nint window, bool enabled, out string? failure)
+    {
+        try
+        {
+            var styleMaskSelector = SelRegisterName("styleMask");
+            var collectionBehaviorSelector = SelRegisterName("collectionBehavior");
+            if (styleMaskSelector == nint.Zero || collectionBehaviorSelector == nint.Zero)
+            {
+                failure = "Unable to resolve the Objective-C NSWindow style selectors.";
+                return false;
+            }
+
+            var styleMask = ObjcMsgSendNint(window, styleMaskSelector);
+            if (!TrySendBooleanOrInteger(
+                    window,
+                    "setStyleMask:",
+                    enabled ? styleMask | NsUtilityWindowStyleMask : styleMask & ~NsUtilityWindowStyleMask,
+                    out failure))
+            {
+                return false;
+            }
+
+            var collectionBehavior = ObjcMsgSendNint(window, collectionBehaviorSelector);
+            return TrySendBooleanOrInteger(
+                window,
+                "setCollectionBehavior:",
+                enabled
+                    ? collectionBehavior | NsWindowCollectionBehaviorCanJoinAllSpaces
+                    : collectionBehavior & ~NsWindowCollectionBehaviorCanJoinAllSpaces,
+                out failure);
+        }
+        catch (Exception exception)
+        {
+            failure = exception.Message;
+            return false;
+        }
     }
 
     private static bool TrySendBooleanOrInteger(nint window, string selectorName, nint value, out string? failure)
@@ -85,4 +140,7 @@ public sealed class MacOsWindowFeatureService : IWindowFeatureService
 
     [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend", CallingConvention = CallingConvention.Cdecl)]
     private static extern void ObjcMsgSend(nint receiver, nint selector, nint argument);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend", CallingConvention = CallingConvention.Cdecl)]
+    private static extern nint ObjcMsgSendNint(nint receiver, nint selector);
 }

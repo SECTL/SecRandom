@@ -8,11 +8,13 @@ public sealed class PluginRuntimeContext(
     PluginInfo pluginInfo,
     ILogger logger,
     IPluginDrawInvoker? drawInvoker,
-    string dataDirectory) : IPluginRuntimeContext
+    string dataDirectory,
+    IPluginViewService? viewService = null) : IPluginRuntimeContext
 {
     public PluginManifest Manifest { get; } = manifest;
     public PluginInfo PluginInfo { get; } = pluginInfo;
     public ILogger Logger { get; } = logger;
     public IPluginDrawInvoker? DrawInvoker { get; } = drawInvoker;
     public string DataDirectory { get; } = dataDirectory;
+    public IPluginViewService? ViewService { get; } = viewService;
 }

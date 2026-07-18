@@ -30,7 +30,10 @@
                           AdditionalProperties="TargetFramework=net10.0"
                           GlobalPropertiesToRemove="TargetFramework;TargetFrameworks" />
         <ProjectReference Include="..\SecRandom.Shared\SecRandom.Shared.csproj"
-                          AdditionalProperties="TargetFramework=net8.0"
+                           AdditionalProperties="TargetFramework=net8.0"
+                           GlobalPropertiesToRemove="TargetFramework;TargetFrameworks" />
+        <ProjectReference Include="..\SecRandom.Core\SecRandom.Core.csproj"
+                          AdditionalProperties="TargetFramework=net10.0"
                           GlobalPropertiesToRemove="TargetFramework;TargetFrameworks" />
     </ItemGroup>
 

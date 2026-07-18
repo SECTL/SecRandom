@@ -12,6 +12,7 @@ using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums;
@@ -33,7 +34,7 @@ public partial class MainView : UserControl, IFANavigationPageFactory
     private AppToastAdorner? _appToastAdorner;
     private bool _isAdornerAdded;
     private bool _isFeatureAvailabilitySubscribed;
-    private readonly FeatureAvailabilityService _featureAvailability = IAppHost.GetService<FeatureAvailabilityService>();
+    private readonly IFeatureAvailabilityService _featureAvailability = IAppHost.GetService<IFeatureAvailabilityService>();
 
     public MainView()
     {
