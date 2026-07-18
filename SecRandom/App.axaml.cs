@@ -548,7 +548,6 @@ public partial class App : Application
                 services.AddSettingsPage<PluginsSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources.Page_Title);
                 
                 // 底部
-                services.AddSettingsPageSeparator(PageLocation.Bottom);
                 services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
 
