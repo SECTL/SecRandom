@@ -499,7 +499,7 @@ jobs:
 
   build_mobile_shell:
     name: Build_Mobile_Shell_${{ matrix.target }}
-    runs-on: ${{ matrix.target == 'android' && 'ubuntu-24.04' || 'macos-15' }}
+    runs-on: ${{ matrix.target == 'android' && 'ubuntu-24.04' || 'macos-26' }}
     strategy:
       fail-fast: false
       matrix:
@@ -525,14 +525,10 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Setup Android SDK
-        if: ${{ matrix.target == 'android' }}
-        uses: android-actions/setup-android@v3
-
       - name: Install Android SDK packages
         if: ${{ matrix.target == 'android' }}
         shell: pwsh
-        run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+        run: & "$env:ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Install mobile workload
         shell: pwsh
@@ -545,6 +541,14 @@ jobs:
       - name: Build mobile shell
         shell: pwsh
         run: dotnet build SecRandom.Mobile/SecRandom.Mobile.csproj -c Release -p:BuildMobile=true -f net10.0-${{ matrix.target }} --no-restore
+
+      - name: Upload mobile build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: mobile-${{ matrix.target }}-unsigned
+          path: SecRandom.Mobile/bin/Release/net10.0-${{ matrix.target }}/
+          retention-days: 14
+          if-no-files-found: error
 
   publish:
     name: Publish_Release
