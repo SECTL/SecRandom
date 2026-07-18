@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SecRandom.ViewModels.MainPages"
              xmlns:langs="using:SecRandom.Langs.MainPages.Lottery"
+             xmlns:system="clr-namespace:System;assembly=System.Runtime"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="720"
              x:Class="SecRandom.Views.MainPages.LotteryPage"
              x:DataType="vm:LotteryPageViewModel"
@@ -13,109 +14,132 @@
     <UserControl.Resources>
         <DataTemplate x:Key="LotteryControlPanelTemplate"
                       DataType="vm:LotteryPageViewModel">
-            <StackPanel Classes="roll-control-stack" Spacing="0">
-                <Button Classes="roll-wide"
-                        Content="{x:Static langs:Resources.C_Reset}"
-                        IsVisible="{Binding MoreSettings.LotteryResetButton}"
-                        Command="{Binding ResetDisplayCommand}" />
+            <Viewbox Width="234">
+                <StackPanel Width="180" Spacing="6">
+                    <StackPanel.Resources>
+                        <ResourceDictionary>
+                            <system:Double x:Key="SizeBase">36</system:Double>
+                        </ResourceDictionary>
+                    </StackPanel.Resources>
+                    
+                    <StackPanel.Styles>
+                        <Style Selector="StackPanel > Button">
+                            <Setter Property="Height" Value="{DynamicResource SizeBase}" />
+                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                        </Style>
+                        
+                        <Style Selector="StackPanel > ComboBox">
+                            <Setter Property="Height" Value="{DynamicResource SizeBase}" />
+                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                        </Style>
+                    </StackPanel.Styles>
+                    
+                    <Button Content="{x:Static langs:Resources.C_Reset}"
+                            IsVisible="{Binding MoreSettings.LotteryResetButton}"
+                            Command="{Binding ResetDisplayCommand}" />
 
-                <Grid Classes="roll-count-row"
-                      ColumnDefinitions="45,*,45"
-                      IsVisible="{Binding MoreSettings.LotteryQuantityControl}">
-                    <Button Grid.Column="0"
-                            Classes="roll-compact"
-                            Content="-"
-                            IsEnabled="{Binding CanDecreaseCount}"
-                            Command="{Binding DecreaseCountCommand}" />
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding DrawCount}"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               FontSize="28"
-                               FontWeight="SemiBold" />
-                    <Button Grid.Column="2"
-                            Classes="roll-compact"
-                            Content="+"
-                            IsEnabled="{Binding CanIncreaseCount}"
-                            Command="{Binding IncreaseCountCommand}" />
-                </Grid>
+                    <Grid HorizontalAlignment="Stretch"
+                          ColumnDefinitions="Auto * Auto"
+                          ColumnSpacing="8">
+                        <Grid.Styles>
+                            <Style Selector="Grid > Button">
+                                <Setter Property="Width" Value="{DynamicResource SizeBase}" />
+                                <Setter Property="Height" Value="{DynamicResource SizeBase}" />
+                                <Setter Property="Margin" Value="0" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="FontSize" Value="24" />
+                            </Style>
+                        </Grid.Styles>
+                        
+                        <Button Grid.Column="0"
+                                Content="-"
+                                IsEnabled="{Binding CanDecreaseCount}"
+                                Command="{Binding DecreaseCountCommand}" />
+                        
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding DrawCount}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="28"
+                                   FontWeight="SemiBold" />
+                        
+                        <Button Grid.Column="2"
+                                Content="+"
+                                IsEnabled="{Binding CanIncreaseCount}"
+                                Command="{Binding IncreaseCountCommand}" />
+                    </Grid>
 
-                <Button Classes="roll-wide accent"
-                        Content="{Binding DrawButtonText}"
-                        IsVisible="{Binding MoreSettings.LotteryStartButton}"
-                        IsEnabled="{Binding CanStartDraw}"
-                        Command="{Binding StartDrawCommand}" />
+                    <Button Classes="accent"
+                            Content="{Binding DrawButtonText}"
+                            IsVisible="{Binding MoreSettings.LotteryStartButton}"
+                            IsEnabled="{Binding CanStartDraw}"
+                            Command="{Binding StartDrawCommand}" />
 
-                <ComboBox Classes="roll-selector"
-                          IsVisible="{Binding MoreSettings.LotteryListSelector}"
-                          ItemsSource="{Binding PrizeListNames}"
-                          SelectedItem="{Binding SelectedPrizeListName}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       TextAlignment="Center" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
+                    <ComboBox IsVisible="{Binding MoreSettings.LotteryListSelector}"
+                              ItemsSource="{Binding PrizeListNames}"
+                              SelectedItem="{Binding SelectedPrizeListName}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           TextAlignment="Center" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
 
-                <ComboBox Classes="roll-selector"
-                          IsVisible="{Binding MoreSettings.LotteryStudentListSelector}"
-                          ItemsSource="{Binding StudentListNames}"
-                          SelectedItem="{Binding SelectedStudentListName}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       TextAlignment="Center" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
+                    <ComboBox IsVisible="{Binding MoreSettings.LotteryStudentListSelector}"
+                              ItemsSource="{Binding StudentListNames}"
+                              SelectedItem="{Binding SelectedStudentListName}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           TextAlignment="Center" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
 
-                <ComboBox Classes="roll-selector"
-                          IsVisible="{Binding IsGroupSelectorVisible}"
-                          ItemsSource="{Binding GroupOptions}"
-                          SelectedItem="{Binding SelectedGroup}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       TextAlignment="Center" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
+                    <ComboBox IsVisible="{Binding IsGroupSelectorVisible}"
+                              ItemsSource="{Binding GroupOptions}"
+                              SelectedItem="{Binding SelectedGroup}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           TextAlignment="Center" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
 
-                <ComboBox Classes="roll-selector"
-                          IsVisible="{Binding IsGenderSelectorVisible}"
-                          ItemsSource="{Binding GenderOptions}"
-                          SelectedItem="{Binding SelectedGender}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       TextAlignment="Center" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
+                    <ComboBox IsVisible="{Binding IsGenderSelectorVisible}"
+                              ItemsSource="{Binding GenderOptions}"
+                              SelectedItem="{Binding SelectedGender}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           TextAlignment="Center" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
 
-                <Button Classes="roll-wide"
-                        Content="{x:Static langs:Resources.C_ShowRemainingList}"
-                        FontSize="18"
-                        IsVisible="{Binding MoreSettings.LotteryRemainingButton}"
-                        Click="RemainingListButton_OnClick" />
-
-                <TextBlock Text="{Binding CountSummary}"
-                           IsVisible="{Binding MoreSettings.LotteryQuantityLabel}"
-                           HorizontalAlignment="Center"
-                           TextAlignment="Center"
-                           FontSize="16"
-                           FontWeight="SemiBold"
-                           Margin="0 8 0 0" />
-            </StackPanel>
+                    <Button Content="{x:Static langs:Resources.C_ShowRemainingList}"
+                            FontSize="18"
+                            IsVisible="{Binding MoreSettings.LotteryRemainingButton}"
+                            Click="RemainingListButton_OnClick" />
+            
+                    <Viewbox HorizontalAlignment="Stretch" StretchDirection="DownOnly">
+                        <TextBlock Text="{Binding CountSummary}"
+                                   IsVisible="{Binding MoreSettings.RollCallQuantityLabel}"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center" />
+                    </Viewbox>
+                </StackPanel>
+            </Viewbox>
         </DataTemplate>
 
         <DataTemplate x:Key="LotteryRemainingItemTemplate"
@@ -129,15 +153,18 @@
                     BorderThickness="1"
                     Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
                 <Grid RowDefinitions="Auto,Auto,Auto">
-                    <TextBlock Text="{Binding DisplayText}"
-                                TextWrapping="Wrap"
-                                MaxHeight="44"
-                                FontWeight="SemiBold" />
+                    <TextBlock Grid.Row="0"
+                               Text="{Binding DisplayText}"
+                               TextWrapping="Wrap"
+                               MaxHeight="44"
+                               FontWeight="SemiBold" />
+                    
                     <TextBlock Grid.Row="1"
                                Text="{Binding Tags}"
                                IsVisible="{Binding IsTagsVisible}"
                                Opacity="0.58"
                                FontSize="12" />
+                    
                     <TextBlock Grid.Row="2"
                                Text="{Binding CountText}"
                                Opacity="0.68"
@@ -148,66 +175,6 @@
     </UserControl.Resources>
 
     <UserControl.Styles>
-        <Style Selector="Border.roll-control-panel">
-            <Setter Property="Width" Value="236" />
-            <Setter Property="MinWidth" Value="200" />
-            <Setter Property="MaxWidth" Value="260" />
-            <Setter Property="Margin" Value="12 0 28 28" />
-            <Setter Property="VerticalAlignment" Value="Bottom" />
-            <Setter Property="HorizontalAlignment" Value="Right" />
-        </Style>
-
-        <Style Selector="StackPanel.roll-control-stack">
-            <Setter Property="Width" Value="236" />
-            <Setter Property="MinWidth" Value="200" />
-            <Setter Property="MaxWidth" Value="260" />
-            <Setter Property="HorizontalAlignment" Value="Right" />
-        </Style>
-
-        <Style Selector="Grid.roll-count-row">
-            <Setter Property="Width" Value="236" />
-            <Setter Property="MinWidth" Value="200" />
-            <Setter Property="MaxWidth" Value="260" />
-            <Setter Property="Height" Value="45" />
-            <Setter Property="Margin" Value="0 4" />
-        </Style>
-
-        <Style Selector="Button.roll-wide">
-            <Setter Property="Width" Value="236" />
-            <Setter Property="MinWidth" Value="200" />
-            <Setter Property="MaxWidth" Value="260" />
-            <Setter Property="Height" Value="45" />
-            <Setter Property="Margin" Value="0 4" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="FontSize" Value="18" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-
-        <Style Selector="Button.roll-compact">
-            <Setter Property="Width" Value="45" />
-            <Setter Property="MinWidth" Value="45" />
-            <Setter Property="MaxWidth" Value="45" />
-            <Setter Property="Height" Value="45" />
-            <Setter Property="MinHeight" Value="45" />
-            <Setter Property="MaxHeight" Value="45" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="FontSize" Value="24" />
-            <Setter Property="FontWeight" Value="Bold" />
-        </Style>
-
-        <Style Selector="ComboBox.roll-selector">
-            <Setter Property="Width" Value="236" />
-            <Setter Property="MinWidth" Value="200" />
-            <Setter Property="MaxWidth" Value="260" />
-            <Setter Property="Height" Value="45" />
-            <Setter Property="Margin" Value="0 4" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-        </Style>
-
         <Style Selector="TextBlock.result-name">
             <Setter Property="TextAlignment" Value="Center" />
             <Setter Property="HorizontalAlignment" Value="Center" />
@@ -230,9 +197,8 @@
     <Grid ColumnDefinitions="Auto,*,Auto"
           RowDefinitions="*"
           MinHeight="560">
-        <Border Grid.Column="0"
-                Classes="roll-control-panel"
-                HorizontalAlignment="Left"
+        <Border Grid.Column="0" Margin="0 0 24 24"
+                HorizontalAlignment="Left" VerticalAlignment="Bottom"
                 IsVisible="{Binding IsControlPanelOnLeft}">
             <ContentControl Content="{Binding}"
                             ContentTemplate="{StaticResource LotteryControlPanelTemplate}" />
@@ -341,9 +307,9 @@
                 </ItemsControl>
             </ScrollViewer>
         </Grid>
-
-        <Border Grid.Column="2"
-                Classes="roll-control-panel"
+        
+        <Border Grid.Column="2" Margin="0 0 24 24"
+                HorizontalAlignment="Right" VerticalAlignment="Bottom"
                 IsVisible="{Binding IsControlPanelOnRight}">
             <ContentControl Content="{Binding}"
                             ContentTemplate="{StaticResource LotteryControlPanelTemplate}" />

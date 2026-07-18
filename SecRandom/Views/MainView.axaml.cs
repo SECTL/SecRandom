@@ -167,7 +167,7 @@ public partial class MainView : UserControl, IFANavigationPageFactory
         else
         {
             _navigationView?.PaneDisplayMode = FANavigationViewPaneDisplayMode.LeftMinimal;
-            NavPaneToggleButton.IsVisible = true;
+            ViewModel.IsNavPaneToggleButtonVisible = true;
         }
     }
 
