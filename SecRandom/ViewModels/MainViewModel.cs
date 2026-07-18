@@ -19,4 +19,6 @@ public partial class MainViewModel(MainConfigHandler configHandler)
     public ObservableCollection<FANavigationViewItemBase> FlattenNavigationItems { get; } = [];
     public ObservableCollection<FANavigationViewItemBase> NavigationViewItems { get; } = [];
     public ObservableCollection<FANavigationViewItemBase> NavigationViewFooterItems { get; } = [];
+
+    [ObservableProperty] private bool _isNavPaneToggleButtonVisible = false;
 }
