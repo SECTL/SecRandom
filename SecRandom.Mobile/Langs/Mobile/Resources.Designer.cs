@@ -75,6 +75,8 @@ public class Resources
 
     public static string M_PackageUnavailable => ResourceManager.GetString("M_PackageUnavailable", resourceCulture)!;
 
+    public static string M_StartupFailed => ResourceManager.GetString("M_StartupFailed", resourceCulture)!;
+
     public static string M_UpdateAvailable => ResourceManager.GetString("M_UpdateAvailable", resourceCulture)!;
 
     public static string M_UpToDate => ResourceManager.GetString("M_UpToDate", resourceCulture)!;

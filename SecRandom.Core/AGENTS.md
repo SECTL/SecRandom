@@ -23,6 +23,7 @@ SecRandom.Core/
 ├── Assets/               # Icon mapping JSON inputs for generated Fluent/Lucide icon enums
 ├── Helpers/              # Core helper utilities
 ├── Interfaces/           # Core-facing interfaces
+├── Views/                # Plugin-facing logical view/session contracts; app shells provide physical hosts
 ├── Styles/               # Modular shared style files
 ├── StylesBase.axaml      # Shared style hub imported by app
 ├── Services/Draw/        # Fair/random draw engine and filters
@@ -54,6 +55,7 @@ SecRandom.Core/
 | Logging providers          | `Services/Logging/`                                                              | Console/file logging; file logs live under `data/logs`, current log path is exposed by `FileLoggerProvider` for viewer/diagnostics. |
 | Config schema              | `Enums/Configs/`, `Models/SubConfigs/`                                           | Many settings model types live here, including v2-parity models for floating window, notification, security, linkage, voice, history, update, and more settings. |
 | Shared controls            | `Controls/*.axaml(.cs)`                                                          | Reusable app controls; keep templates and code-behind paired.           |
+| Cross-platform view engine | `Views/`                                                                         | Logical view lifecycle, presentation intent, DI factory/service, and host contracts. |
 | Shared styles              | `StylesBase.axaml`, `Styles/*.axaml`                                             | Imported by `SecRandom/Styles.axaml`.                                   |
 | Constants/helpers          | `GlobalConstants.cs`, `Helpers/`                                                 | Keep cross-cutting values here only when Core consumers need them.      |
 
@@ -61,6 +63,7 @@ SecRandom.Core/
 
 - Core is plugin-facing per `docs/namespaces.md`; avoid app-only dependencies and unstable public contracts.
 - Plugin-facing contracts belong under `SecRandom.Core/Plugins`; keep them DTO/interface based and avoid app-layer service types.
+- `Views/` is the public logical view-engine boundary. It may use Avalonia `Control` but must not expose `Window`, application lifetimes, native platform APIs, raw `IServiceProvider`, or app-layer services to plugins. Physical desktop/mobile hosts are registered by their application shells through DI.
 - `PluginInfo` exposes plugin manifest, installed plugin directory, and private config directory. Plugins should persist their own config under `data/configs/plugins/<plugin-id>`.
 - Plugin page registration uses runtime `Type` registration through `AddPluginMainPage` / `AddPluginSettingsPage`; plugin page IDs must start with `plugin.<plugin-id>.`.
 - Plugin draw access must remain invocation-only through `IPluginDrawInvoker`; never add `DrawEngine`, `WeightedDrawEngine<T>`, `IRandomSource`, writable history, or draw config to plugin contracts.

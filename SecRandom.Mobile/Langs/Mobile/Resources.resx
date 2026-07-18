@@ -53,6 +53,9 @@
     <data name="M_OpeningInstaller" xml:space="preserve">
         <value>正在打开系统安装器</value>
     </data>
+    <data name="M_StartupFailed" xml:space="preserve">
+        <value>移动端初始化失败。请重新启动应用；若问题持续，请提交 Android 日志。</value>
+    </data>
     <data name="M_InstallerOpened" xml:space="preserve">
         <value>已交给系统安装器</value>
     </data>

@@ -26,21 +26,43 @@ public sealed class MobileApp : Avalonia.Application
         if (ApplicationLifetime is not ISingleViewApplicationLifetime singleView)
             throw new PlatformNotSupportedException("SecRandom.Mobile requires an Avalonia single-view lifetime.");
 
-        _host = Host
-            .CreateDefaultBuilder()
-            .ConfigureServices(services =>
+        try
+        {
+            _host = Host
+                .CreateDefaultBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.AddPlatformServices(PlatformStartupContext.Current);
+                    services.AddHttpClient<MobileUpdateService>();
+                })
+                .Build();
+            var capabilities = _host.Services.GetRequiredService<PlatformCapabilities>();
+            singleView.MainView = new MobileRootView(capabilities, _host.Services.GetRequiredService<MobileUpdateService>());
+
+            if (singleView is IControlledApplicationLifetime controlled)
+                controlled.Exit += (_, _) => _ = StopHostAsync();
+
+            _ = _host.StartAsync();
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(exception);
+#if ANDROID
+            if (OperatingSystem.IsAndroidVersionAtLeast(24))
+                Android.Util.Log.Error("SecRandom.Mobile", exception.ToString());
+#endif
+            _host?.Dispose();
+            _host = null;
+            singleView.MainView = new TextBlock
             {
-                services.AddPlatformServices(PlatformStartupContext.Current);
-                services.AddHttpClient<MobileUpdateService>();
-            })
-            .Build();
-        var capabilities = _host.Services.GetRequiredService<PlatformCapabilities>();
-        singleView.MainView = new MobileRootView(capabilities, _host.Services.GetRequiredService<MobileUpdateService>());
-
-        if (singleView is IControlledApplicationLifetime controlled)
-            controlled.Exit += (_, _) => _ = StopHostAsync();
-
-        _ = _host.StartAsync();
+                Text = LR.M_StartupFailed,
+                Margin = new Thickness(32),
+                TextAlignment = TextAlignment.Center,
+                TextWrapping = TextWrapping.Wrap,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+        }
         base.OnFrameworkInitializationCompleted();
     }
 

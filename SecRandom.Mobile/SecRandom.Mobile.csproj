@@ -8,7 +8,7 @@
         <TargetFrameworks>net10.0-android;net10.0-ios</TargetFrameworks>
         <OutputType>Exe</OutputType>
         <ApplicationTitle>SecRandom</ApplicationTitle>
-        <ApplicationId>top.sectl.secrandom.mobile</ApplicationId>
+        <ApplicationId>cn.sectl.secrandom.mobile</ApplicationId>
         <RuntimeIdentifier Condition="'$(TargetFramework)' == 'net10.0-android'">android-arm64</RuntimeIdentifier>
         <RuntimeIdentifier Condition="'$(TargetFramework)' == 'net10.0-ios'">ios-arm64</RuntimeIdentifier>
         <AndroidPackageFormats Condition="'$(TargetFramework)' == 'net10.0-android'">apk</AndroidPackageFormats>
@@ -73,4 +73,16 @@
     </ItemGroup>
 
     <Import Project="..\Global.props" />
+
+    <Target Name="SetMobileApplicationDisplayVersion"
+            DependsOnTargets="GetGitInfoForSourceGenerator"
+            BeforeTargets="_GetAndroidPackageName;_CompileAppManifestInputs"
+            Condition="'$(BuildMobile)' == 'true'">
+        <PropertyGroup>
+            <_MobileApplicationDisplayVersion>$(GitTag)</_MobileApplicationDisplayVersion>
+            <_MobileApplicationDisplayVersion Condition="$([System.String]::Copy('$(_MobileApplicationDisplayVersion)').StartsWith('v'))">$([System.String]::Copy('$(_MobileApplicationDisplayVersion)').Substring(1))</_MobileApplicationDisplayVersion>
+            <!-- versionCode stays monotonic for Android updates; versionName follows the desktop Git tag. -->
+            <ApplicationDisplayVersion>$(_MobileApplicationDisplayVersion)</ApplicationDisplayVersion>
+        </PropertyGroup>
+    </Target>
 </Project>

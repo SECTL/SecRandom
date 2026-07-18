@@ -518,6 +518,14 @@ jobs:
         with:
           dotnet-version: 10.0.102
 
+      - name: Get Latest Tag
+        id: get_tag
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        shell: pwsh
+        run: |
+          $latestTag = git describe --tags --abbrev=0
+          "LATEST_TAG=$latestTag" >> $env:GITHUB_OUTPUT
+
       - name: Setup Android build tools
         if: ${{ matrix.target == 'android' }}
         uses: actions/setup-java@v5
@@ -542,13 +550,13 @@ jobs:
       - name: Build mobile shell
         shell: pwsh
         env:
-          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || format('0.0.0-ci.{0}', github.run_number) }}
+          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
           ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
           ANDROID_SIGNING_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEYSTORE_PASSWORD }}
           ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
           ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         run: |
-          $arguments = @('build', 'SecRandom.Mobile/SecRandom.Mobile.csproj', '-c', 'Release', '-r', 'android-arm64', '-p:BuildMobile=true', '-f', 'net10.0-android', '--no-restore', "-p:Version=$($env:VERSION.TrimStart('v', 'V'))", "-p:ApplicationDisplayVersion=$($env:VERSION.TrimStart('v', 'V'))", '-p:ApplicationVersion=${{ github.run_number }}')
+          $arguments = @('build', 'SecRandom.Mobile/SecRandom.Mobile.csproj', '-c', 'Release', '-r', 'android-arm64', '-p:BuildMobile=true', '-f', 'net10.0-android', '--no-restore', '-p:ApplicationVersion=${{ github.run_number }}')
           $hasSigningSecrets = @($env:ANDROID_SIGNING_KEYSTORE_BASE64, $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, $env:ANDROID_SIGNING_KEY_ALIAS, $env:ANDROID_SIGNING_KEY_PASSWORD) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
           if ($hasSigningSecrets.Count -gt 0 -and $hasSigningSecrets.Count -ne 4) {
             throw 'All Android signing secrets must be configured together.'
@@ -569,7 +577,7 @@ jobs:
       - name: Prepare Android APK
         shell: pwsh
         env:
-          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || format('0.0.0-ci.{0}', github.run_number) }}
+          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
         run: |
           $apk = Get-ChildItem 'SecRandom.Mobile/bin/Release/net10.0-android/android-arm64' -Filter '*-Signed.apk' |
             Select-Object -First 1 -ExpandProperty FullName
@@ -583,7 +591,7 @@ jobs:
         if: ${{ matrix.target == 'android' }}
         uses: actions/upload-artifact@v7
         with:
-          name: SecRandom-Android-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || format('0.0.0-ci.{0}', github.run_number) }}
+          name: SecRandom-Android-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
           path: artifacts/mobile/SecRandom-v*-Android-arm64.apk
           retention-days: 14
           if-no-files-found: error

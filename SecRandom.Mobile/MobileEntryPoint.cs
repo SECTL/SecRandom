@@ -10,6 +10,7 @@ using SecRandom.Platforms.Abstractions;
 using System.Runtime.Versioning;
 
 [assembly: UsesPermission(Android.Manifest.Permission.RequestInstallPackages)]
+[assembly: UsesPermission(Android.Manifest.Permission.Internet)]
 
 namespace SecRandom.Mobile;
 
@@ -36,6 +37,7 @@ public sealed class UpdateFileProvider : FileProvider
 }
 
 [Activity(MainLauncher = true, Exported = true,
+    Theme = "@style/Theme.AppCompat.DayNight.NoActionBar",
     ConfigurationChanges = Android.Content.PM.ConfigChanges.Orientation |
                            Android.Content.PM.ConfigChanges.ScreenSize)]
 public sealed class MainActivity : AvaloniaMainActivity

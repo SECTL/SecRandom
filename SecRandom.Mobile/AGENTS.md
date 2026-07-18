@@ -16,7 +16,7 @@ This project is an independent Android/iOS Avalonia SingleView shell. It must no
 - The current root is a read-only availability surface, not a reduced desktop shell. Do not add fake navigation, inactive desktop controls, or desktop-only settings.
 - Mobile strings live in `Langs/Mobile/`; preserve the base resx/designer registration pattern in the project file.
 - The shared app icon is linked as an Avalonia resource. Do not introduce a second product identity without an explicit mobile design decision.
-- Android launcher metadata uses application ID `top.sectl.secrandom.mobile`, visible title `SecRandom`, and the shared `AppLogo.png` as its `mipmap/app_logo` resource. Release CI assigns the GitHub run number as the monotonic Android `versionCode`, so an update APK can replace an earlier build. CI renames the APK to `SecRandom-v<version>-Android-arm64.apk` after signing; a formal release requires all Android keystore secrets so future updates retain the same signer.
+- Android launcher metadata uses application ID `cn.sectl.secrandom.mobile`, visible title `SecRandom`, and the shared `AppLogo.png` as its `mipmap/app_logo` resource. Android `versionName` follows the same Git tag as desktop; release CI assigns the GitHub run number as the monotonic Android `versionCode`, so an update APK can replace an earlier build. CI renames the APK to `SecRandom-v<version>-Android-arm64.apk` after signing; a formal release requires all Android keystore secrets so future updates retain the same signer.
 - Android checks the shared signed release manifest, verifies APK length/SHA-512, and hands a downloaded update to the system installer. iOS distribution and updates are deliberately deferred.
 
 ## Validation
