@@ -20,12 +20,6 @@
 
 </div>
 
-<div align="center">
-
-![Code contribution statistics](https://repobeats.axiom.co/api/embed/7d42538bcd781370672c00b6b6ecd5282802ee3d.svg "Code contribution statistics")
-
-</div>
-
 > [!NOTE]
 > SecRandom is released under GNU GPLv3. You may modify and redistribute the source, but derivative redistributions must also use GNU GPLv3.
 

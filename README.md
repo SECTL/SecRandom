@@ -20,12 +20,6 @@
 
 </div>
 
-<div align="center">
-
-![代码贡献统计](https://repobeats.axiom.co/api/embed/7d42538bcd781370672c00b6b6ecd5282802ee3d.svg "代码贡献统计图表")
-
-</div>
-
 > [!NOTE]
 > SecRandom 以 GNU GPLv3 协议发布。您可以修改和再发布源代码，但再发布的衍生作品也必须遵循 GNU GPLv3。
 

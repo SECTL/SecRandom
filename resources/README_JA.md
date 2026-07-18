@@ -20,12 +20,6 @@
 
 </div>
 
-<div align="center">
-
-![Code contribution statistics](https://repobeats.axiom.co/api/embed/7d42538bcd781370672c00b6b6ecd5282802ee3d.svg "Code contribution statistics")
-
-</div>
-
 > [!NOTE]
 > SecRandom は GNU GPLv3 で公開されています。ソースコードの変更と再配布は可能ですが、派生物も GNU GPLv3 で公開する必要があります。
 
