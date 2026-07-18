@@ -9,7 +9,7 @@ using System.Runtime.Versioning;
 
 namespace SecRandom.Mobile;
 
-[Application]
+[Application(Icon = "@mipmap/app_logo")]
 [SupportedOSPlatform("android24.0")]
 public class MobileApplication : AvaloniaAndroidApplication<MobileApp>
 {

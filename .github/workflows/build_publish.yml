@@ -516,7 +516,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 10.0.100
 
       - name: Setup Android build tools
         if: ${{ matrix.target == 'android' }}
@@ -533,7 +533,7 @@ jobs:
 
       - name: Install mobile workload
         shell: pwsh
-        run: dotnet workload install ${{ matrix.target }}
+        run: dotnet workload install ${{ matrix.target }} --version 10.0.100
 
       - name: Restore mobile shell
         shell: pwsh
@@ -543,11 +543,36 @@ jobs:
         shell: pwsh
         run: dotnet build SecRandom.Mobile/SecRandom.Mobile.csproj -c Release -p:BuildMobile=true -f net10.0-${{ matrix.target }} --no-restore
 
-      - name: Upload mobile build artifact
+      - name: Upload Android APK
+        if: ${{ matrix.target == 'android' }}
         uses: actions/upload-artifact@v7
         with:
-          name: mobile-${{ matrix.target }}-unsigned
-          path: SecRandom.Mobile/bin/Release/net10.0-${{ matrix.target }}/
+          name: SecRandom-Android
+          path: SecRandom.Mobile/bin/Release/net10.0-android/SecRandom-Android-v*.apk
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Package iOS app bundle
+        if: ${{ matrix.target == 'ios' }}
+        shell: pwsh
+        run: |
+          $appBundle = Get-ChildItem "SecRandom.Mobile/bin/Release/net10.0-ios" -Directory -Recurse -Filter '*.app' |
+            Select-Object -First 1 -ExpandProperty FullName
+          if ([string]::IsNullOrWhiteSpace($appBundle)) {
+            throw 'The iOS build did not produce an app bundle.'
+          }
+          New-Item -ItemType Directory -Path "artifacts/mobile" -Force | Out-Null
+          & ditto $appBundle "artifacts/mobile/SecRandom-iOS.app"
+          if ($LASTEXITCODE -ne 0) {
+            throw "ditto failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Upload iOS app bundle
+        if: ${{ matrix.target == 'ios' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: SecRandom-iOS
+          path: artifacts/mobile/SecRandom-iOS.app
           retention-days: 14
           if-no-files-found: error
 

@@ -7,6 +7,10 @@
     <PropertyGroup Condition="'$(BuildMobile)' == 'true'">
         <TargetFrameworks>net10.0-android;net10.0-ios</TargetFrameworks>
         <OutputType>Exe</OutputType>
+        <ApplicationTitle>SecRandom</ApplicationTitle>
+        <ApplicationId>top.sectl.secrandom.mobile</ApplicationId>
+        <AndroidPackageFormats Condition="'$(TargetFramework)' == 'net10.0-android'">apk</AndroidPackageFormats>
+        <ApkFileSigned Condition="'$(TargetFramework)' == 'net10.0-android'">$(OutDir)SecRandom-Android-v$(Version).apk</ApkFileSigned>
         <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net10.0-android'">24</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net10.0-ios'">13.0</SupportedOSPlatformVersion>
     </PropertyGroup>
@@ -33,6 +37,7 @@
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-android'">
         <PackageReference Include="Avalonia.Android" Version="$(AvaloniaVersion)" />
+        <AndroidResource Include="..\SecRandom\Assets\AppLogo.png" Link="Resources\mipmap\app_logo.png" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-ios'">
