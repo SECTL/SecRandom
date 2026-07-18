@@ -5,11 +5,13 @@ using Avalonia;
 using Avalonia.Android;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
+using System.Runtime.Versioning;
 
 namespace SecRandom.Mobile;
 
 [Application]
-public sealed class MobileApplication : AvaloniaAndroidApplication<MobileApp>
+[SupportedOSPlatform("android24.0")]
+public class MobileApplication : AvaloniaAndroidApplication<MobileApp>
 {
     protected MobileApplication(nint javaReference, JniHandleOwnership transfer)
         : base(javaReference, transfer)

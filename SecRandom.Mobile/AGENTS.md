@@ -20,5 +20,5 @@ This project is an independent Android/iOS Avalonia SingleView shell. It must no
 ## Validation
 
 - Neutral build: `dotnet build SecRandom.Mobile/SecRandom.Mobile.csproj -c Release`.
-- Android: install the `android` workload, then restore/build with `-p:BuildMobile=true -f net10.0-android`.
+- Android: install the `android` workload, Android SDK API 36/build-tools, and JDK 21; then restore/build with `-p:BuildMobile=true -f net10.0-android`. When the SDK/JDK are not in the environment, pass `AndroidSdkDirectory` and `JavaSdkDirectory` explicitly.
 - iOS: on macOS install the `ios` workload, then restore/build with `-p:BuildMobile=true -f net10.0-ios`.

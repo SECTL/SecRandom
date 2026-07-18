@@ -12,7 +12,7 @@ using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile;
 
-public sealed class MobileApp : Application
+public sealed class MobileApp : Avalonia.Application
 {
     private IHost? _host;
     private bool _stopping;

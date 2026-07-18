@@ -519,13 +519,29 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Setup Android build tools
+        if: ${{ matrix.target == 'android' }}
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Android SDK
+        if: ${{ matrix.target == 'android' }}
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        if: ${{ matrix.target == 'android' }}
+        shell: pwsh
+        run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
       - name: Install mobile workload
         shell: pwsh
         run: dotnet workload install ${{ matrix.target }}
 
       - name: Restore mobile shell
         shell: pwsh
-        run: dotnet restore SecRandom.Mobile/SecRandom.Mobile.csproj -p:BuildMobile=true -p:TargetFrameworks=net10.0-${{ matrix.target }}
+        run: dotnet restore SecRandom.Mobile/SecRandom.Mobile.csproj -p:BuildMobile=true -p:TargetFramework=net10.0-${{ matrix.target }}
 
       - name: Build mobile shell
         shell: pwsh
