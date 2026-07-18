@@ -3,6 +3,14 @@ using Avalonia;
 using Avalonia.Media;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
+using SecRandom.Platforms;
+#if SEC_RANDOM_PLATFORM_WINDOWS
+using SecRandom.Platforms.Windows;
+#elif SEC_RANDOM_PLATFORM_LINUX
+using SecRandom.Platforms.Linux;
+#elif SEC_RANDOM_PLATFORM_MACOS
+using SecRandom.Platforms.MacOs;
+#endif
 
 namespace SecRandom.Desktop;
 
@@ -21,6 +29,7 @@ internal sealed class Program
         }
 
         args = UiAccessStartup.GetApplicationArguments(args);
+        ConfigurePlatformServices();
         ProtocolActivation.SetStartupArguments(args);
         CrashRecoveryRuntime.SetStartupArguments(args);
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
@@ -39,6 +48,19 @@ internal sealed class Program
         {
             AppDomain.CurrentDomain.UnhandledException -= CurrentDomainOnUnhandledException;
         }
+    }
+
+    private static void ConfigurePlatformServices()
+    {
+#if SEC_RANDOM_PLATFORM_WINDOWS
+        PlatformStartupContext.Set(new WindowsPlatformServiceRoot());
+#elif SEC_RANDOM_PLATFORM_LINUX
+        PlatformStartupContext.Set(new LinuxPlatformServiceRoot());
+#elif SEC_RANDOM_PLATFORM_MACOS
+        PlatformStartupContext.Set(new MacOsPlatformServiceRoot());
+#else
+        throw new PlatformNotSupportedException("No SecRandom desktop platform implementation was selected.");
+#endif
     }
 
     private static void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)

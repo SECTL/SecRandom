@@ -20,13 +20,14 @@
 - 本地化必须按“每页一个文件夹”拆分，不要混在一起。
 - 文件路径统一用 `Utils.GetFilePath(...)`（数据落在 `AppContext.BaseDirectory/data/...`）。
 - 不要在页面里随意 `new` 可复用服务；需要复用/单例/可测试的服务必须进 Host。
+- 平台功能必须使用 `SecRandom.Platforms.Abstractions` 的窄接口，经 `App.BuildHost()` 注册后调用。窗口类只能声明所需特性，不得直接添加 Win32/X11/AppKit 调用或散落的 `OperatingSystem.Is*` 分支。
 - 插件只能使用 `SecRandom.Core/Plugins` 中的稳定契约；运行时加载、启用状态和管理 UI 放在 `SecRandom/Services/Plugins`。
 - 课程联动的数据源固定为 `0=关闭`、`1=CSES`、`2=ClassIsland`。CSES 文件由 app 层服务管理在 `data/CSES/cses_schedule.yml`，ClassIsland IPC 仅能在 app 层适配器中引用。数据源失效或状态未知时必须允许抽取；只有确认的课间状态可触发限制、浮窗隐藏或课前重置。
 - 公平抽取不能开放算法接口给插件；插件只能通过 `IPluginDrawInvoker` 发起宿主抽取调用，不能拿到 `DrawEngine`、权重计算、随机源、历史写入或抽取配置。
 
 ## Host/依赖注入（怎么写才符合本项目）
 
-- Host 构建与所有注册入口：`SecRandom/App.axaml.cs` 的 `BuildHost()`。
+- 桌面 Host 构建与注册入口：`SecRandom/App.axaml.cs` 的 `BuildHost()`。`SecRandom.Mobile` 是不引用桌面应用程序集的独立 SingleView 壳，`MobileApp` 只构建最小 Host，不得调用桌面 `BuildHost()`。
 - 取服务统一走静态入口：
   - `IAppHost.GetService<T>()`（拿不到会抛异常）
   - `IAppHost.TryGetService<T>()`（拿不到返回 null）
@@ -117,3 +118,4 @@ services.AddSettingsPage<LotteryTablePreviewPage>(
 - 新增服务
   - 优先放 `SecRandom.Core/Services`（通用）或 `SecRandom/Services`（UI 专属）
   - 在 `BuildHost()` 注册（需要复用的一律不要 `new`）
+- 平台原生实现放在对应 `SecRandom.Platforms.<OS>` 项目；平台抽象、启动上下文和 Stub 不进入 `Core`/`Shared` 的插件或 IPC 公开面

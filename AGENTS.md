@@ -26,6 +26,12 @@ SecRandom-C/
 ├── SecRandom4Ci.Interface/ # Shared ClassIsland v2 IPC contract for the SecRandom4Ci plugin
 ├── SecRandom.Desktop/     # Tiny executable launcher; Program.cs bootstraps Avalonia and UiAccessStartup.cs prepares Windows UIAccess
 ├── SecRandom.Launcher/    # Minimal portable-package version selector; starts an activated app-* payload only
+├── SecRandom.Platforms.Abstractions/ # Platform-neutral window capability contracts and result DTOs
+├── SecRandom.Platforms/   # Startup context, DI registration, and unsupported-platform stub
+├── SecRandom.Platforms.Windows/ # Windows-native window feature implementation
+├── SecRandom.Platforms.Linux/ # Linux-native window feature implementation boundary
+├── SecRandom.Platforms.MacOs/ # macOS-native window feature implementation boundary
+├── SecRandom.Mobile/      # Android/iOS SingleView entrypoint skeleton
 ├── SecRandom.Core.Tests/  # xUnit v3 test project; currently covers legacy privacy/telemetry migration
 ├── scripts/               # Standalone tooling and verification scripts, including fairness audits
 ├── docs/                  # Project rules, localization, namespace boundaries
@@ -48,6 +54,9 @@ Nested instruction files:
 |------|----------|-------|
 | Run/build/test | `SecRandom.sln`, `.github/workflows/Build.yml` | Use solution commands; no Makefile/CMake. |
 | Desktop startup | `SecRandom.Desktop/Program.cs` | Process entry → Avalonia lifetime. |
+| Platform capability contracts | `SecRandom.Platforms.Abstractions/`, `SecRandom.Platforms/` | App-internal platform root, window feature requests/results, startup context, and DI bridge. |
+| Native window features | `SecRandom.Platforms.Windows/`, `SecRandom.Platforms.Linux/`, `SecRandom.Platforms.MacOs/` | Each platform owns native feature handling; views must not add platform API calls. |
+| Mobile startup | `SecRandom.Mobile/` | Independent Android/iOS SingleView shell. `MobileApp` owns its minimal Host and root view; it does not reference desktop `SecRandom`. |
 | App composition / DI | `SecRandom/App.axaml.cs` | `BuildHost()` is the registration source of truth. |
 | Main navigation | `SecRandom/Views/MainView.axaml.cs` | Default page `main.rollCall`; keyed DI page factory. Built-in draw pages are `main.rollCall` and `main.lottery`; quick draw opens from the floating window instead of the main sidebar. |
 | Settings navigation | `SecRandom/Views/SettingsView.axaml.cs` | Default page `settings.overview`; has back stack + restart dialog. General group now includes `settings.general.basic`, `settings.general.privacy`, and `settings.general.backup`. |
@@ -117,6 +126,10 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - Formal notarization is the explicit alternative to ordinary replay attestation: the client sends a zero-seed anonymous request, `fair.sectl.cn` durably locks it, persists server random material after the lock, calculates the result, and returns an immutable `OnlineWitnessed` proof. Formal mode waits for that response and must never substitute a local draw after an error; its ledger is independent of retention-limited public proof sharing. It protects the locked flow against local code/seed/proof replacement, but cannot establish real-world roster authenticity, completeness, or pre-submission pool integrity.
 - Settings preview is a security-prompt outcome, not URL authorization bypass. When enabled, it freezes page content while preserving settings navigation and must not mutate configuration.
 - ViewModels must be registered in `SecRandom/App.axaml.cs` `BuildHost()`; reusable services also go through Host.
+- Platform feature callers must resolve narrow platform contracts from Host. `PlatformStartupContext` is startup-only: desktop `Program` sets it before Avalonia starts, and desktop `App` reads it once to register the selected root. `SecRandom.Mobile.MobileApp` sets and consumes it in its independent minimal Host. Do not use it from views, ViewModels, Core, or business services.
+- Window feature requests use `IWindowFeatureService` with a neutral `PlatformWindowHandle`, `WindowFeatureRequest`, and explicit `Applied`/`Unsupported`/`Failed` result. Keep Win32/X11/AppKit operations in the matching `SecRandom.Platforms.<OS>` project.
+- `TopmostMode.UiAccess` remains a Windows process-token capability controlled by `SecRandom.Desktop/UiAccessStartup.cs`; it is not a generic window feature or a responsibility of platform window services.
+- `SecRandom.Mobile` defaults to a neutral target so normal desktop solution builds do not require mobile workloads. `BuildMobile=true` enables Android/iOS targets; its independent `MobileApp` starts `ISingleViewApplicationLifetime` with its own `MobileRootView` and must not start desktop-only services or reference the desktop application assembly.
 - Resolve shared services via `IAppHost.GetService<T>()` / `TryGetService<T>()` unless constructor injection is already the local style.
 - Navigation pages need `[PageInfo(...)]` plus `services.AddMainPage<T>()` or `services.AddSettingsPage<T>()` in `BuildHost()`.
 - Built-in main navigation entries may use `PageLocation.Bottom` for bottom-pinned sidebar items; roll-call (`main.rollCall`) and lottery (`main.lottery`) are bottom-pinned and full-width/title-hidden. Quick draw is not a main navigation page and opens from the floating window.

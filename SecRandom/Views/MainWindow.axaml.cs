@@ -11,6 +11,8 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
+using SecRandom.Platforms.Abstractions;
+using SecRandom.Services.Platform;
 
 namespace SecRandom.Views;
 
@@ -78,6 +80,7 @@ public partial class MainWindow : FAAppWindow
         }
 
         _hasBeenShown = true;
+        ApplyPlatformWindowFeatures();
     }
 
     private bool UsesStoredWindowSettings => _settingsScope != MainWindowSettingsScope.None;
@@ -89,7 +92,7 @@ public partial class MainWindow : FAAppWindow
             return;
 
         if (UsesPrimaryWindowSettings)
-            Topmost = _settings.MainWindowTopmostMode is TopmostMode.Topmost or TopmostMode.UiAccess;
+            ApplyPlatformWindowFeatures();
         if (!_settings.AutoSaveWindowSize)
             return;
 
@@ -114,10 +117,19 @@ public partial class MainWindow : FAAppWindow
     {
         if (UsesPrimaryWindowSettings
             && e.PropertyName == nameof(BasicSettingsConfig.MainWindowTopmostMode))
-            Topmost = _settings!.MainWindowTopmostMode is TopmostMode.Topmost or TopmostMode.UiAccess;
+            ApplyPlatformWindowFeatures();
         else if (e.PropertyName == nameof(BasicSettingsConfig.AutoSaveWindowSize)
                  && _settings!.AutoSaveWindowSize)
             SaveWindowSize();
+    }
+
+    private void ApplyPlatformWindowFeatures()
+    {
+        var enabled = UsesPrimaryWindowSettings &&
+                      _settings?.MainWindowTopmostMode is TopmostMode.Topmost or TopmostMode.UiAccess;
+        Topmost = enabled;
+        if (IsLoaded)
+            this.ApplyPlatformFeatures(WindowFeatures.Topmost, enabled);
     }
 
     private void MainWindowOnPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)

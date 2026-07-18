@@ -14,6 +14,8 @@
     <ItemGroup>
         <ProjectReference Include="..\SecRandom.Core\SecRandom.Core.csproj" />
         <ProjectReference Include="..\SecRandom4Ci.Interface\SecRandom4Ci.Interface.csproj" />
+        <ProjectReference Include="..\SecRandom.Platforms\SecRandom.Platforms.csproj" />
+        <ProjectReference Include="..\SecRandom.Platforms.Abstractions\SecRandom.Platforms.Abstractions.csproj" />
     </ItemGroup>
 
     <ItemGroup>

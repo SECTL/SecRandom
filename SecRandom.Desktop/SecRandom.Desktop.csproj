@@ -9,6 +9,8 @@
         <ApplicationIcon>..\SecRandom\Assets\AppLogo.ico</ApplicationIcon>
     </PropertyGroup>
 
+    <Import Project="..\Platforms.props" />
+
     <PropertyGroup>
         <EnableUiAccess Condition="'$(EnableUiAccess)' == ''">false</EnableUiAccess>
         <ApplicationManifest Condition="'$(EnableUiAccess)' != 'true'">app.manifest</ApplicationManifest>
@@ -21,6 +23,20 @@
 
     <ItemGroup>
         <ProjectReference Include="..\SecRandom\SecRandom.csproj"/>
+        <ProjectReference Include="..\SecRandom.Platforms\SecRandom.Platforms.csproj" />
+        <ProjectReference Include="..\SecRandom.Platforms.Abstractions\SecRandom.Platforms.Abstractions.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(SecRandomPlatform)' == 'Windows'">
+        <ProjectReference Include="..\SecRandom.Platforms.Windows\SecRandom.Platforms.Windows.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(SecRandomPlatform)' == 'Linux'">
+        <ProjectReference Include="..\SecRandom.Platforms.Linux\SecRandom.Platforms.Linux.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(SecRandomPlatform)' == 'MacOs'">
+        <ProjectReference Include="..\SecRandom.Platforms.MacOs\SecRandom.Platforms.MacOs.csproj" />
     </ItemGroup>
 
     <Import Project="..\Global.props"/>

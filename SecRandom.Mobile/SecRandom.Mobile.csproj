@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup Condition="'$(BuildMobile)' != 'true'">
+        <TargetFramework>net10.0</TargetFramework>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(BuildMobile)' == 'true'">
+        <TargetFrameworks>net10.0-android;net10.0-ios</TargetFrameworks>
+        <OutputType>Exe</OutputType>
+        <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net10.0-android'">24</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net10.0-ios'">13.0</SupportedOSPlatformVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <GenerateResourceDesigner>true</GenerateResourceDesigner>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\SecRandom.Platforms\SecRandom.Platforms.csproj" />
+        <ProjectReference Include="..\SecRandom.Platforms.Abstractions\SecRandom.Platforms.Abstractions.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-android'">
+        <PackageReference Include="Avalonia.Android" Version="$(AvaloniaVersion)" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-ios'">
+        <PackageReference Include="Avalonia.iOS" Version="$(AvaloniaVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <AvaloniaResource Include="..\SecRandom\Assets\AppLogo.png" Link="Assets\AppLogo.png" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Update="Langs\Mobile\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Langs\Mobile\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+    </ItemGroup>
+
+    <Import Project="..\Global.props" />
+</Project>

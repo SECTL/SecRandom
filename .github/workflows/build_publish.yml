@@ -47,8 +47,9 @@ jobs:
         shell: pwsh
         env:
           RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+          PLATFORM: ${{ matrix.os == 'windows' && 'Windows' || (matrix.os == 'linux' && 'Linux' || 'MacOs') }}
         run: |
-          dotnet restore SecRandom.Desktop/SecRandom.Desktop.csproj -r $env:RID
+          dotnet restore SecRandom.Desktop/SecRandom.Desktop.csproj -r $env:RID -p:SecRandomPlatform=$env:PLATFORM
           dotnet restore SecRandom.Launcher/SecRandom.Launcher.csproj -r $env:RID
 
       - name: Get Latest Tag
@@ -64,15 +65,17 @@ jobs:
         shell: pwsh
         env:
           RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+          PLATFORM: ${{ matrix.os == 'windows' && 'Windows' || (matrix.os == 'linux' && 'Linux' || 'MacOs') }}
         run: |
           $releaseRoot = 'artifacts/release'
           $fullDir = "$releaseRoot/publish/full/$env:RID"
           $lightDir = "$releaseRoot/publish/light/$env:RID"
           New-Item -ItemType Directory -Path $fullDir, $lightDir -Force | Out-Null
           dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj `
-            -c Release `
-            -r $env:RID `
-            --self-contained `
+             -c Release `
+             -r $env:RID `
+             -p:SecRandomPlatform=$env:PLATFORM `
+             --self-contained `
             -p:PublishTrimmed=false `
             -p:UseAppHost=true `
             -p:DebugType=None `
@@ -80,9 +83,10 @@ jobs:
             --no-restore `
             -o $fullDir
           dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj `
-            -c Release `
-            -r $env:RID `
-            --self-contained false `
+             -c Release `
+             -r $env:RID `
+             -p:SecRandomPlatform=$env:PLATFORM `
+             --self-contained false `
             -p:PublishTrimmed=false `
             -p:UseAppHost=true `
             -p:DebugType=None `
@@ -222,6 +226,7 @@ jobs:
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
           ARCH: ${{ matrix.arch }}
           RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+          PLATFORM: Windows
           WINDOWS_CODESIGN_PFX_BASE64: ${{ secrets.WINDOWS_CODESIGN_PFX_BASE64 }}
           WINDOWS_CODESIGN_PFX_PASSWORD: ${{ secrets.WINDOWS_CODESIGN_PFX_PASSWORD }}
           WINDOWS_CODESIGN_TIMESTAMP_URL: ${{ secrets.WINDOWS_CODESIGN_TIMESTAMP_URL }}
@@ -234,6 +239,7 @@ jobs:
             dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj `
               -c Release `
               -r $env:RID `
+              -p:SecRandomPlatform=$env:PLATFORM `
               --self-contained `
               -p:PublishTrimmed=false `
               -p:UseAppHost=true `
@@ -491,6 +497,39 @@ jobs:
           name: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}_pkg
           path: artifacts/release/dist/*.pkg
           if-no-files-found: ignore
+
+  build_mobile_shell:
+    name: Build_Mobile_Shell_${{ matrix.target }}
+    runs-on: ${{ matrix.target == 'android' && 'ubuntu-24.04' || 'macos-15' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [android, ios]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install mobile workload
+        shell: pwsh
+        run: dotnet workload install ${{ matrix.target }}
+
+      - name: Restore mobile shell
+        shell: pwsh
+        run: dotnet restore SecRandom.Mobile/SecRandom.Mobile.csproj -p:BuildMobile=true -p:TargetFrameworks=net10.0-${{ matrix.target }}
+
+      - name: Build mobile shell
+        shell: pwsh
+        run: dotnet build SecRandom.Mobile/SecRandom.Mobile.csproj -c Release -p:BuildMobile=true -f net10.0-${{ matrix.target }} --no-restore
 
   publish:
     name: Publish_Release

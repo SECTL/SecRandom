@@ -19,6 +19,8 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Services.Linkage;
 using SecRandom.Services;
+using SecRandom.Services.Platform;
+using SecRandom.Platforms.Abstractions;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
@@ -101,7 +103,10 @@ public partial class FloatingWindow : Window
     {
         var size = GetButtonSize(settings.FloatingWindowSize);
         WindowBorder.Opacity = System.Math.Clamp(settings.FloatingWindowOpacity, 20, 100) / 100.0;
-        Topmost = settings.FloatingWindowTopmostMode is TopmostMode.Topmost or TopmostMode.UiAccess;
+        var topmost = settings.FloatingWindowTopmostMode is TopmostMode.Topmost or TopmostMode.UiAccess;
+        Topmost = topmost;
+        if (IsLoaded)
+            this.ApplyPlatformFeatures(WindowFeatures.Topmost, topmost);
         ButtonsPanel.Orientation = settings.FloatingWindowPlacement == 1
             ? Orientation.Vertical
             : Orientation.Horizontal;
@@ -285,6 +290,7 @@ public partial class FloatingWindow : Window
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
+        ApplyWindowSettings(ViewModel.Config.FloatingWindowSettings);
         Dispatcher.UIThread.Post(RestoreStartupPositionAndScheduleDock, DispatcherPriority.Render);
         // 触发布局更新
         Width = 20;

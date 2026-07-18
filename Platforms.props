@@ -1,0 +1,27 @@
+<Project>
+    <PropertyGroup>
+        <SecRandomPlatform Condition="'$(SecRandomPlatform)' == '' and $(RuntimeIdentifier.StartsWith('win-'))">Windows</SecRandomPlatform>
+        <SecRandomPlatform Condition="'$(SecRandomPlatform)' == '' and $(RuntimeIdentifier.StartsWith('linux-'))">Linux</SecRandomPlatform>
+        <SecRandomPlatform Condition="'$(SecRandomPlatform)' == '' and $(RuntimeIdentifier.StartsWith('osx-'))">MacOs</SecRandomPlatform>
+        <SecRandomPlatform Condition="'$(SecRandomPlatform)' == '' and '$(RuntimeIdentifier)' == '' and $([System.OperatingSystem]::IsWindows())">Windows</SecRandomPlatform>
+        <SecRandomPlatform Condition="'$(SecRandomPlatform)' == '' and '$(RuntimeIdentifier)' == '' and $([System.OperatingSystem]::IsLinux())">Linux</SecRandomPlatform>
+        <SecRandomPlatform Condition="'$(SecRandomPlatform)' == '' and '$(RuntimeIdentifier)' == '' and $([System.OperatingSystem]::IsMacOS())">MacOs</SecRandomPlatform>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(SecRandomPlatform)' == 'Windows'">
+        <DefineConstants>$(DefineConstants);SEC_RANDOM_PLATFORM_WINDOWS</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(SecRandomPlatform)' == 'Linux'">
+        <DefineConstants>$(DefineConstants);SEC_RANDOM_PLATFORM_LINUX</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(SecRandomPlatform)' == 'MacOs'">
+        <DefineConstants>$(DefineConstants);SEC_RANDOM_PLATFORM_MACOS</DefineConstants>
+    </PropertyGroup>
+
+    <Target Name="ValidateSecRandomPlatformSelection" BeforeTargets="PrepareForBuild"
+            Condition="'$(SecRandomPlatform)' != 'Windows' and '$(SecRandomPlatform)' != 'Linux' and '$(SecRandomPlatform)' != 'MacOs'">
+        <Error Text="Unable to select a SecRandom desktop platform for RuntimeIdentifier '$(RuntimeIdentifier)'. Set SecRandomPlatform to Windows, Linux, or MacOs." />
+    </Target>
+</Project>

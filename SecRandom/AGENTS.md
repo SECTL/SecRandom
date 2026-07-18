@@ -26,6 +26,7 @@ SecRandom/
 │   ├── Config/          # DesktopConfigService
 │   ├── CrashRecovery/   # Crash detection, recovery prompt, restart guard
 │   ├── Desktop/         # TaskBarIconService, GlobalShortcutService
+│   ├── Platform/        # App-side neutral window-handle adapter for platform feature requests
 │   ├── Draw/            # DrawAudioService, DrawTemporaryRecordService
 │   ├── ImportExport/    # Strict v3 settings/data archives, diagnostics, recovery snapshots
 │   ├── Linkage/         # CSES/ClassIsland sources, course state runtime, draw authorization, pre-class reset
@@ -75,6 +76,8 @@ SecRandom/
 | Draw audio / temp records    | `Services/Draw/DrawAudioService.cs`, `Services/Draw/DrawTemporaryRecordService.cs` | App-layer draw audio playback and session-scoped temporary draw records.                                                |
 | Managed music library        | `Services/Music/MusicLibraryService.cs`, `Views/SettingsPages/Personalized/MusicSettingsPage.axaml(.cs)` | Imports, removes, and previews managed MP3/WAV/FLAC files under `data/audio/music`. |
 | Desktop integration          | `Services/Desktop/`                                                     | Taskbar lifecycle, Windows native global shortcuts, cross-platform autostart, and `secrandom://` registration.          |
+| Platform feature calls       | `Services/Platform/`, `../SecRandom.Platforms.Abstractions/`            | Views obtain `IWindowFeatureService` through Host; native implementations stay outside the app project.                 |
+| Mobile root                  | `../SecRandom.Mobile/MobileApp.cs`, `../SecRandom.Mobile/MobileEntryPoint.cs` | Independent SingleView shell only; it owns a minimal Host and never starts desktop windows or desktop hosted services. |
 | Telemetry runtime seam       | `Services/Telemetry/`                                                   | App-layer-only Sentry policy/runtime lifecycle boundary; reads and live-applies `PrivacySettings.SentryTelemetryEnabled`.  |
 | Online status reporting      | `Services/OnlineStatusService.cs`                                       | Host-managed SECTL online status reporter; reads `PrivacySettings.OnlineStatusMode`.                                      |
 | Update center                | `Services/Updates/`, `Views/SettingsPages/Update/`                       | Signed full-artifact checks, portable staging/Launcher restart, or native installer handoff.                              |
@@ -85,6 +88,9 @@ SecRandom/
 
 - `BuildHost()` registers logging, config, services, windows/views, ViewModels, attached settings controls, and
   navigation pages.
+- Desktop `BuildHost()` receives the root selected by `SecRandom.Desktop` through `PlatformStartupContext` and registers it with `AddPlatformServices`. App code may adapt an Avalonia `TopLevel` into a neutral handle, but it must not contain Win32/X11/AppKit operations or platform selection logic. `SecRandom.Mobile.MobileApp` owns a separate minimal Host and must not call desktop `BuildHost()`.
+- `MainWindow` and `FloatingWindow` retain their presentation and configuration behavior but request topmost through `IWindowFeatureService`; additional task-switcher, no-activate, click-through, or capture features must be added through the same interface rather than direct native calls.
+- `App` is desktop-only. Its SingleView branch must reject misuse and direct callers to `SecRandom.Mobile.MobileApp`; the independent mobile shell must not route through desktop single-instance, OOBE, floating-window, tray, shortcut, update, plugin, or protocol startup paths.
 - Crash recovery startup prompt handling runs before single-instance acquisition; normal app restart must release `SingleInstanceService` before launching the replacement process.
 - Telemetry runtime policy belongs in app-layer services and should live-apply `MainConfigHandler.Data.General.PrivacySettings.SentryTelemetryEnabled`; do not move SDK-specific wiring into Core or Shared. The concrete Sentry adapter stays under `SecRandom/Services/Telemetry/SentryTelemetrySdkAdapter.cs`.
 - Background app services such as `OnlineStatusService` are registered through Host and must honor `PrivacySettings.OnlineStatusMode` before doing network work.

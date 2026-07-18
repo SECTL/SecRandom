@@ -61,6 +61,8 @@ using SecRandom.Services.Telemetry;
 using SecRandom.Services.Verification;
 using SecRandom.Services.Voice;
 using SecRandom.Services.Updates;
+using SecRandom.Platforms;
+using SecRandom.Platforms.Abstractions;
 using SecRandom.ViewModels;
 using SecRandom.ViewModels.MainPages;
 using SecRandom.ViewModels.SettingsPages;
@@ -163,7 +165,7 @@ public partial class App : Application
             SingleInstanceService.Instance.RequestReceived += OnIpcRequestReceived;
 
             // 启动服务主机
-            BuildHost();
+            BuildHost(PlatformStartupContext.Current);
 
             if (IAppHost.GetService<FirstRunOobeService>().IsRequired())
             {
@@ -176,7 +178,8 @@ public partial class App : Application
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime)
         {
-            throw new PlatformNotSupportedException();
+            throw new PlatformNotSupportedException(
+                "SecRandom.App is the desktop application host. Mobile startup is owned by SecRandom.Mobile.MobileApp.");
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -373,7 +376,7 @@ public partial class App : Application
             RequestDesktopShutdown);
     }
 
-    private void BuildHost()
+    private void BuildHost(IPlatformServiceRoot platform)
     {
         if (IAppHost.Host is not null) return;
 
@@ -383,6 +386,8 @@ public partial class App : Application
             .ConfigureServices(services =>
             {
                 var pluginStateStore = new PluginStateStore();
+
+                services.AddPlatformServices(platform);
 
                 // 日志
                 services.AddLogging(builder =>
@@ -439,13 +444,13 @@ public partial class App : Application
                 services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<GlobalShortcutService>());
                 services.AddSingleton<DesktopIntegrationService>();
                 services.AddSingleton<IExternalLauncher, ExternalLauncher>();
-                 services.AddHttpClient("updates", client => client.Timeout = TimeSpan.FromSeconds(30));
-                  services.AddSingleton<UpdateCenterService>(serviceProvider => new UpdateCenterService(
-                      serviceProvider.GetRequiredService<MainConfigHandler>(),
-                      serviceProvider.GetRequiredService<ILogger<UpdateCenterService>>(),
-                      serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("updates")));
-                  services.AddSingleton<IUpdateNotificationService, UpdateNotificationService>();
-                  services.AddHostedService<UpdateScheduler>();
+                services.AddHttpClient("updates", client => client.Timeout = TimeSpan.FromSeconds(30));
+                services.AddSingleton<UpdateCenterService>(serviceProvider => new UpdateCenterService(
+                    serviceProvider.GetRequiredService<MainConfigHandler>(),
+                    serviceProvider.GetRequiredService<ILogger<UpdateCenterService>>(),
+                    serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("updates")));
+                services.AddSingleton<IUpdateNotificationService, UpdateNotificationService>();
+                services.AddHostedService<UpdateScheduler>();
                 services.AddSingleton<FeatureAvailabilityService>();
                 services.AddSingleton<ProtocolCommandRouter>();
                 services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();

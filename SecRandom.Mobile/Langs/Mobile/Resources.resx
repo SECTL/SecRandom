@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+                id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true" />
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="Title" xml:space="preserve">
+        <value>SecRandom</value>
+    </data>
+    <data name="Subtitle" xml:space="preserve">
+        <value>移动端基础运行环境</value>
+    </data>
+    <data name="Description" xml:space="preserve">
+        <value>移动端平台服务已就绪。抽签与桌面集成功能会在完成移动端服务边界验证后逐步开放。</value>
+    </data>
+    <data name="PlatformSummary" xml:space="preserve">
+        <value>当前平台：{0}。此版本采用单视图模式。</value>
+    </data>
+</root>
