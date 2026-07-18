@@ -528,7 +528,8 @@ jobs:
       - name: Install Android SDK packages
         if: ${{ matrix.target == 'android' }}
         shell: pwsh
-        run: & "$env:ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+        run: |
+          & "$env:ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Install mobile workload
         shell: pwsh
