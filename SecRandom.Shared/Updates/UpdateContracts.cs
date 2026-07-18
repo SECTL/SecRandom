@@ -18,7 +18,8 @@ public enum UpdatePackageKind
     PortableZip,
     WindowsExe,
     LinuxDeb,
-    MacosPkg
+    MacosPkg,
+    MacosApp
 }
 
 public enum UpdateRuntimeKind

@@ -472,6 +472,11 @@ public sealed class UpdateCenterService(
                 UseShellExecute = false,
                 ArgumentList = { packagePath }
             },
+            UpdatePackageKind.MacosApp => new ProcessStartInfo("open")
+            {
+                UseShellExecute = false,
+                ArgumentList = { packagePath }
+            },
             _ => throw new InvalidOperationException(Text("M_InstallerUnsupported"))
         };
         if (Process.Start(startInfo) is null)
@@ -547,6 +552,7 @@ public sealed class UpdateCenterService(
         "windows-exe" => UpdatePackageKind.WindowsExe,
         "linux-deb" => UpdatePackageKind.LinuxDeb,
         "macos-pkg" => UpdatePackageKind.MacosPkg,
+        "macos-app" => UpdatePackageKind.MacosApp,
         _ => throw new InvalidDataException(Text("M_UnknownPackageKind"))
     };
 

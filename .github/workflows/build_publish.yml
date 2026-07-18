@@ -385,7 +385,7 @@ jobs:
           mkdir -p "$work/bundle/SecRandom.app/Contents/Resources"
 
           cp -a "${release_root}/publish/full/${RID}/." "$work/bundle/SecRandom.app/Contents/MacOS/"
-          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"macos-pkg","runtimeKind":"self-contained"}\n' "$RID" > "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.package.json"
+          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"macos-app","runtimeKind":"self-contained"}\n' "$RID" > "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.package.json"
           chmod +x "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.Desktop" || true
 
           cat > "$work/bundle/SecRandom.app/Contents/Info.plist" << EOF
@@ -421,7 +421,10 @@ jobs:
           fi
 
           if [ -z "$MACOS_SIGNING_P12_BASE64" ] || [ -z "$MACOS_SIGNING_P12_PASSWORD" ] || [ -z "$MACOS_APPLICATION_SIGNING_IDENTITY" ] || [ -z "$MACOS_INSTALLER_SIGNING_IDENTITY" ] || [ -z "$MACOS_NOTARY_APPLE_ID" ] || [ -z "$MACOS_NOTARY_TEAM_ID" ] || [ -z "$MACOS_NOTARY_PASSWORD" ]; then
-            echo "macOS signing or notarization credentials are unavailable; skipping PKG creation."
+            echo "macOS signing or notarization credentials are unavailable; keeping unsigned APP and skipping signed PKG."
+            ditto -c -k --sequesterRsrc --keepParent \
+              "$work/bundle/SecRandom.app" \
+              "${release_root}/dist/SecRandom_${RID}_app.zip"
             exit 0
           fi
 
@@ -438,6 +441,12 @@ jobs:
 
           codesign --force --deep --options runtime --sign "$MACOS_APPLICATION_SIGNING_IDENTITY" "$work/bundle/SecRandom.app"
           codesign --verify --deep --strict "$work/bundle/SecRandom.app"
+
+          ditto -c -k --sequesterRsrc --keepParent \
+            "$work/bundle/SecRandom.app" \
+            "${release_root}/dist/SecRandom_${RID}_app.zip"
+
+          printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"macos-pkg","runtimeKind":"self-contained"}\n' "$RID" > "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.package.json"
 
           pkgroot="$work/pkgroot"
           mkdir -p "$pkgroot/Applications"
@@ -481,6 +490,7 @@ jobs:
         with:
           name: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}_pkg
           path: artifacts/release/dist/*.pkg
+          if-no-files-found: ignore
 
   publish:
     name: Publish_Release
@@ -556,6 +566,8 @@ jobs:
                 @('linux-deb', 'self-contained', 'linux', $Matches.arch)
               } elseif ($name -match '^SecRandom_(?<rid>osx-(?<arch>x64|arm64))_pkg\.pkg$') {
                 @('macos-pkg', 'self-contained', 'macos', $Matches.arch)
+              } elseif ($name -match '^SecRandom_(?<rid>osx-(?<arch>x64|arm64))_app\.zip$') {
+                @('macos-app', 'self-contained', 'macos', $Matches.arch)
               } else {
                 throw "Unrecognized release artifact name: $name"
               }
