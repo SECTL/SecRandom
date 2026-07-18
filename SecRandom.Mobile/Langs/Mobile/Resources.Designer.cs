@@ -37,6 +37,10 @@ public class Resources
 
     public static string Description => ResourceManager.GetString("Description", resourceCulture)!;
 
+    public static string CheckUpdates => ResourceManager.GetString("CheckUpdates", resourceCulture)!;
+
+    public static string InstallUpdate => ResourceManager.GetString("InstallUpdate", resourceCulture)!;
+
     public static string PlatformSummary => ResourceManager.GetString("PlatformSummary", resourceCulture)!;
 
     public static string Subtitle => ResourceManager.GetString("Subtitle", resourceCulture)!;

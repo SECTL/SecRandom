@@ -1,11 +1,15 @@
 #if ANDROID
 using Android.App;
+using Android.Content;
 using Android.Runtime;
+using AndroidX.Core.Content;
 using Avalonia;
 using Avalonia.Android;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
 using System.Runtime.Versioning;
+
+[assembly: UsesPermission(Android.Manifest.Permission.RequestInstallPackages)]
 
 namespace SecRandom.Mobile;
 
@@ -23,6 +27,12 @@ public class MobileApplication : AvaloniaAndroidApplication<MobileApp>
         PlatformStartupContext.Set(new MobilePlatformServiceRoot(PlatformKind.Android));
         return base.CustomizeAppBuilder(builder);
     }
+}
+
+[ContentProvider(["${applicationId}.updatefileprovider"], Exported = false, GrantUriPermissions = true)]
+[MetaData("android.support.FILE_PROVIDER_PATHS", Resource = "@xml/update_paths")]
+public sealed class UpdateFileProvider : FileProvider
+{
 }
 
 [Activity(MainLauncher = true, Exported = true,

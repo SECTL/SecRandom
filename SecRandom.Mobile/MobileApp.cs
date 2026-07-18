@@ -28,10 +28,14 @@ public sealed class MobileApp : Avalonia.Application
 
         _host = Host
             .CreateDefaultBuilder()
-            .ConfigureServices(services => services.AddPlatformServices(PlatformStartupContext.Current))
+            .ConfigureServices(services =>
+            {
+                services.AddPlatformServices(PlatformStartupContext.Current);
+                services.AddHttpClient<MobileUpdateService>();
+            })
             .Build();
         var capabilities = _host.Services.GetRequiredService<PlatformCapabilities>();
-        singleView.MainView = new MobileRootView(capabilities);
+        singleView.MainView = new MobileRootView(capabilities, _host.Services.GetRequiredService<MobileUpdateService>());
 
         if (singleView is IControlledApplicationLifetime controlled)
             controlled.Exit += (_, _) => _ = StopHostAsync();
@@ -60,7 +64,7 @@ public sealed class MobileApp : Avalonia.Application
 
 public sealed class MobileRootView : UserControl
 {
-    public MobileRootView(PlatformCapabilities capabilities)
+    public MobileRootView(PlatformCapabilities capabilities, MobileUpdateService updateService)
     {
         var logo = new Image
         {
@@ -98,6 +102,34 @@ public sealed class MobileRootView : UserControl
             TextAlignment = TextAlignment.Center,
             TextWrapping = TextWrapping.Wrap
         };
+        var updateStatus = new TextBlock
+        {
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            Opacity = 0.78
+        };
+        var installUpdate = new Avalonia.Controls.Button
+        {
+            Content = LR.InstallUpdate,
+            IsVisible = false,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+        };
+        var checkUpdates = new Avalonia.Controls.Button
+        {
+            Content = LR.CheckUpdates,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+        };
+        void RefreshUpdateUi()
+        {
+            updateStatus.Text = updateService.Status;
+            installUpdate.IsVisible = updateService.IsUpdateAvailable;
+            checkUpdates.IsEnabled = !updateService.IsBusy;
+            installUpdate.IsEnabled = !updateService.IsBusy;
+        }
+        updateService.PropertyChanged += (_, _) => Avalonia.Threading.Dispatcher.UIThread.Post(RefreshUpdateUi);
+        checkUpdates.Click += async (_, _) => await updateService.CheckAsync();
+        installUpdate.Click += async (_, _) => await updateService.DownloadAndInstallAsync();
+        RefreshUpdateUi();
 
         Content = new Grid
         {
@@ -110,7 +142,7 @@ public sealed class MobileRootView : UserControl
                     MaxWidth = 520,
                     HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
                     VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                    Children = { logo, title, subtitle, description, status }
+                    Children = { logo, title, subtitle, description, status, updateStatus, checkUpdates, installUpdate }
                 }
             }
         };

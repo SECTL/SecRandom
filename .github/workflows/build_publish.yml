@@ -170,8 +170,8 @@ jobs:
           else {
             Write-Warning 'Windows code-signing secrets are unavailable; portable executables will be unsigned.'
           }
-          Compress-Archive -Path "$fullRoot/*" -DestinationPath "$releaseRoot/dist/SecRandom_$env:RID`_portable_full.zip" -Force
-          Compress-Archive -Path "$lightRoot/*" -DestinationPath "$releaseRoot/dist/SecRandom_$env:RID`_portable_light.zip" -Force
+          Compress-Archive -Path "$fullRoot/*" -DestinationPath "$releaseRoot/dist/SecRandom-$env:VERSION-$env:RID-portable-full.zip" -Force
+          Compress-Archive -Path "$lightRoot/*" -DestinationPath "$releaseRoot/dist/SecRandom-$env:VERSION-$env:RID-portable-light.zip" -Force
 
       - name: Pack Portable Zips (Unix)
         if: ${{ matrix.os != 'windows' }}
@@ -196,8 +196,8 @@ jobs:
           printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"portable-zip","runtimeKind":"framework-dependent"}\n' "$RID" > "$light_app/SecRandom.package.json"
           dotnet publish SecRandom.Launcher/SecRandom.Launcher.csproj -c Release -r "$RID" --self-contained -p:UseAppHost=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -p:Version="$assembly_version" --no-restore -o "$full_root"
           dotnet publish SecRandom.Launcher/SecRandom.Launcher.csproj -c Release -r "$RID" --self-contained false -p:UseAppHost=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -p:Version="$assembly_version" --no-restore -o "$light_root"
-          (cd "$full_root" && zip -qr "../../../dist/SecRandom_${RID}_portable_full.zip" .)
-          (cd "$light_root" && zip -qr "../../../dist/SecRandom_${RID}_portable_light.zip" .)
+          (cd "$full_root" && zip -qr "../../../dist/SecRandom_${VERSION}-${RID}-portable-full.zip" .)
+          (cd "$light_root" && zip -qr "../../../dist/SecRandom_${VERSION}-${RID}-portable-light.zip" .)
 
       - name: Install Inno Setup Languages
         if: ${{ matrix.os == 'windows' }}
@@ -285,7 +285,7 @@ jobs:
           $isccArguments = @(
             "/DMyAppVersion=$env:VERSION"
             "/DMyAppOutDir=$outDir"
-            "/FSecRandom_${env:RID}_setup"
+            "/FSecRandom_$env:VERSION-$env:RID-setup"
             "/O$setupOutput"
           )
           if ($uiAccessBuild) { $isccArguments += '/DUiAccessBuild' }
@@ -361,7 +361,7 @@ jobs:
           Description: SecRandom
           EOF
 
-          dpkg-deb --build "$pkgroot" "${release_root}/dist/SecRandom_${RID}_deb.deb"
+          dpkg-deb --build "$pkgroot" "${release_root}/dist/SecRandom_${VERSION}-${RID}.deb"
 
       - name: Build macOS pkg
         if: ${{ matrix.os == 'macos' }}
@@ -429,7 +429,7 @@ jobs:
             echo "macOS signing or notarization credentials are unavailable; keeping unsigned APP and skipping signed PKG."
             ditto -c -k --sequesterRsrc --keepParent \
               "$work/bundle/SecRandom.app" \
-              "${release_root}/dist/SecRandom_${RID}_app.zip"
+              "${release_root}/dist/SecRandom_${VERSION}-${RID}.app.zip"
             exit 0
           fi
 
@@ -449,7 +449,7 @@ jobs:
 
           ditto -c -k --sequesterRsrc --keepParent \
             "$work/bundle/SecRandom.app" \
-            "${release_root}/dist/SecRandom_${RID}_app.zip"
+            "${release_root}/dist/SecRandom_${VERSION}-${RID}.app.zip"
 
           printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"macos-pkg","runtimeKind":"self-contained"}\n' "$RID" > "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.package.json"
 
@@ -463,11 +463,11 @@ jobs:
             --version "$version_no_v" \
             --install-location "/" \
             --sign "$MACOS_INSTALLER_SIGNING_IDENTITY" \
-            "${release_root}/dist/SecRandom_${RID}_pkg.pkg"
+            "${release_root}/dist/SecRandom_${VERSION}-${RID}.pkg"
 
-          xcrun notarytool submit "${release_root}/dist/SecRandom_${RID}_pkg.pkg" --apple-id "$MACOS_NOTARY_APPLE_ID" --team-id "$MACOS_NOTARY_TEAM_ID" --password "$MACOS_NOTARY_PASSWORD" --wait
-          xcrun stapler staple "${release_root}/dist/SecRandom_${RID}_pkg.pkg"
-          pkgutil --check-signature "${release_root}/dist/SecRandom_${RID}_pkg.pkg"
+          xcrun notarytool submit "${release_root}/dist/SecRandom_${VERSION}-${RID}.pkg" --apple-id "$MACOS_NOTARY_APPLE_ID" --team-id "$MACOS_NOTARY_TEAM_ID" --password "$MACOS_NOTARY_PASSWORD" --wait
+          xcrun stapler staple "${release_root}/dist/SecRandom_${VERSION}-${RID}.pkg"
+          pkgutil --check-signature "${release_root}/dist/SecRandom_${VERSION}-${RID}.pkg"
 
       - name: Upload Portable Artifact
         uses: actions/upload-artifact@v7
@@ -498,12 +498,12 @@ jobs:
           if-no-files-found: ignore
 
   build_mobile_shell:
-    name: Build_Mobile_Shell_${{ matrix.target }}
-    runs-on: ${{ matrix.target == 'android' && 'ubuntu-24.04' || 'macos-26' }}
+    name: Build_Mobile_Shell_Android
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        target: [android, ios]
+        target: [android]
 
     steps:
       - name: Checkout
@@ -516,7 +516,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.100
+          dotnet-version: 10.0.102
 
       - name: Setup Android build tools
         if: ${{ matrix.target == 'android' }}
@@ -533,54 +533,66 @@ jobs:
 
       - name: Install mobile workload
         shell: pwsh
-        run: dotnet workload install ${{ matrix.target }} --version 10.0.100
+        run: dotnet workload install ${{ matrix.target }} --version 10.0.102
 
       - name: Restore mobile shell
         shell: pwsh
-        run: dotnet restore SecRandom.Mobile/SecRandom.Mobile.csproj -p:BuildMobile=true -p:TargetFramework=net10.0-${{ matrix.target }}
+        run: dotnet restore SecRandom.Mobile/SecRandom.Mobile.csproj -r android-arm64 -p:BuildMobile=true -p:TargetFramework=net10.0-android
 
       - name: Build mobile shell
         shell: pwsh
-        run: dotnet build SecRandom.Mobile/SecRandom.Mobile.csproj -c Release -p:BuildMobile=true -f net10.0-${{ matrix.target }} --no-restore
+        env:
+          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || format('0.0.0-ci.{0}', github.run_number) }}
+          ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+          ANDROID_SIGNING_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEYSTORE_PASSWORD }}
+          ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+          ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+        run: |
+          $arguments = @('build', 'SecRandom.Mobile/SecRandom.Mobile.csproj', '-c', 'Release', '-r', 'android-arm64', '-p:BuildMobile=true', '-f', 'net10.0-android', '--no-restore', "-p:Version=$($env:VERSION.TrimStart('v', 'V'))", "-p:ApplicationDisplayVersion=$($env:VERSION.TrimStart('v', 'V'))", '-p:ApplicationVersion=${{ github.run_number }}')
+          $hasSigningSecrets = @($env:ANDROID_SIGNING_KEYSTORE_BASE64, $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, $env:ANDROID_SIGNING_KEY_ALIAS, $env:ANDROID_SIGNING_KEY_PASSWORD) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+          if ($hasSigningSecrets.Count -gt 0 -and $hasSigningSecrets.Count -ne 4) {
+            throw 'All Android signing secrets must be configured together.'
+          }
+          if ($hasSigningSecrets.Count -eq 4) {
+            $keystorePath = Join-Path $env:RUNNER_TEMP 'secrandom-android.keystore'
+            [IO.File]::WriteAllBytes($keystorePath, [Convert]::FromBase64String($env:ANDROID_SIGNING_KEYSTORE_BASE64))
+            $arguments += @('-p:AndroidKeyStore=true', "-p:AndroidSigningKeyStore=$keystorePath", "-p:AndroidSigningStorePass=$env:ANDROID_SIGNING_KEYSTORE_PASSWORD", "-p:AndroidSigningKeyAlias=$env:ANDROID_SIGNING_KEY_ALIAS", "-p:AndroidSigningKeyPass=$env:ANDROID_SIGNING_KEY_PASSWORD")
+          }
+          elseif ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+            throw 'Release publication requires all Android signing secrets.'
+          }
+          & dotnet @arguments
+          if ($LASTEXITCODE -ne 0) {
+            throw "Android build failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Prepare Android APK
+        shell: pwsh
+        env:
+          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || format('0.0.0-ci.{0}', github.run_number) }}
+        run: |
+          $apk = Get-ChildItem 'SecRandom.Mobile/bin/Release/net10.0-android/android-arm64' -Filter '*-Signed.apk' |
+            Select-Object -First 1 -ExpandProperty FullName
+          if ([string]::IsNullOrWhiteSpace($apk)) {
+            throw 'The Android build did not produce a signed APK.'
+          }
+          New-Item -ItemType Directory -Path 'artifacts/mobile' -Force | Out-Null
+          Copy-Item $apk "artifacts/mobile/SecRandom-v$($env:VERSION.TrimStart('v', 'V'))-Android-arm64.apk"
 
       - name: Upload Android APK
         if: ${{ matrix.target == 'android' }}
         uses: actions/upload-artifact@v7
         with:
-          name: SecRandom-Android
-          path: SecRandom.Mobile/bin/Release/net10.0-android/SecRandom-Android-v*.apk
-          retention-days: 14
-          if-no-files-found: error
-
-      - name: Package iOS app bundle
-        if: ${{ matrix.target == 'ios' }}
-        shell: pwsh
-        run: |
-          $appBundle = Get-ChildItem "SecRandom.Mobile/bin/Release/net10.0-ios" -Directory -Recurse -Filter '*.app' |
-            Select-Object -First 1 -ExpandProperty FullName
-          if ([string]::IsNullOrWhiteSpace($appBundle)) {
-            throw 'The iOS build did not produce an app bundle.'
-          }
-          New-Item -ItemType Directory -Path "artifacts/mobile" -Force | Out-Null
-          & ditto $appBundle "artifacts/mobile/SecRandom-iOS.app"
-          if ($LASTEXITCODE -ne 0) {
-            throw "ditto failed with exit code $LASTEXITCODE."
-          }
-
-      - name: Upload iOS app bundle
-        if: ${{ matrix.target == 'ios' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: SecRandom-iOS
-          path: artifacts/mobile/SecRandom-iOS.app
+          name: SecRandom-Android-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || format('0.0.0-ci.{0}', github.run_number) }}
+          path: artifacts/mobile/SecRandom-v*-Android-arm64.apk
           retention-days: 14
           if-no-files-found: error
 
   publish:
     name: Publish_Release
     runs-on: windows-2022
-    needs: [build_desktop]
-    if: ${{ always() && success('build_desktop') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
+    needs: [build_desktop, build_mobile_shell]
+    if: ${{ always() && success('build_desktop') && success('build_mobile_shell') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
     permissions:
       contents: write
     concurrency:
@@ -603,7 +615,7 @@ jobs:
         run: |
           $releaseOutput = './artifacts/release/output'
           New-Item -ItemType Directory -Path $releaseOutput -Force | Out-Null
-          Get-ChildItem ./artifacts/release/downloaded -Recurse -File -Include *.zip,*.exe,*.deb,*.pkg | ForEach-Object {
+          Get-ChildItem ./artifacts/release/downloaded -Recurse -File -Include *.zip,*.exe,*.deb,*.pkg,*.apk | ForEach-Object {
             Copy-Item $_.FullName $releaseOutput -Force
           }
           Write-Host "Combined files:"
@@ -641,17 +653,19 @@ jobs:
             $releaseOutput = './artifacts/release/output'
             $artifacts = Get-ChildItem $releaseOutput -File | ForEach-Object {
               $name = $_.Name
-              $kind, $runtimeKind, $os, $arch = if ($name -match '^SecRandom_(?<rid>(win|linux|osx)-(?<arch>x64|x86|arm64))_portable_(?<runtime>full|light)\.zip$') {
+              $kind, $runtimeKind, $os, $arch = if ($name -match '^SecRandom-v.+-(?<rid>(win|linux|osx)-(?<arch>x64|x86|arm64))-portable-(?<runtime>full|light)\.zip$') {
                 $platform = switch ($Matches[2]) { 'win' { 'windows' } 'linux' { 'linux' } 'osx' { 'macos' } }
                 @('portable-zip', $(if ($Matches.runtime -eq 'full') { 'self-contained' } else { 'framework-dependent' }), $platform, $Matches.arch)
-              } elseif ($name -match '^SecRandom_(?<rid>win-(?<arch>x64|x86|arm64))_setup\.exe$') {
+              } elseif ($name -match '^SecRandom-v.+-(?<rid>win-(?<arch>x64|x86|arm64))-setup\.exe$') {
                 @('windows-exe', 'self-contained', 'windows', $Matches.arch)
-              } elseif ($name -match '^SecRandom_(?<rid>linux-(?<arch>x64|arm64))_deb\.deb$') {
+              } elseif ($name -match '^SecRandom-v.+-(?<rid>linux-(?<arch>x64|arm64))\.deb$') {
                 @('linux-deb', 'self-contained', 'linux', $Matches.arch)
-              } elseif ($name -match '^SecRandom_(?<rid>osx-(?<arch>x64|arm64))_pkg\.pkg$') {
+              } elseif ($name -match '^SecRandom-v.+-(?<rid>osx-(?<arch>x64|arm64))\.pkg$') {
                 @('macos-pkg', 'self-contained', 'macos', $Matches.arch)
-              } elseif ($name -match '^SecRandom_(?<rid>osx-(?<arch>x64|arm64))_app\.zip$') {
+              } elseif ($name -match '^SecRandom-v.+-(?<rid>osx-(?<arch>x64|arm64))\.app\.zip$') {
                 @('macos-app', 'self-contained', 'macos', $Matches.arch)
+              } elseif ($name -match '^SecRandom-v.+-Android-(?<arch>arm64)\.apk$') {
+                @('android-apk', 'self-contained', 'android', $Matches.arch)
               } else {
                 throw "Unrecognized release artifact name: $name"
               }
@@ -696,7 +710,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           name: SecRandom ${{ github.event.inputs.release_tag }}
-          artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/SecRandom-update-manifest.v1.json,./artifacts/release/output/SecRandom-update-manifest.v1.sig"
+          artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/*.apk,./artifacts/release/output/SecRandom-update-manifest.v1.json,./artifacts/release/output/SecRandom-update-manifest.v1.sig"
           draft: true
           bodyFile: ./release-note.md
           token: ${{ secrets.GITHUB_TOKEN }}

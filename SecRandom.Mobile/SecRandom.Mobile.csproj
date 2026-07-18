@@ -9,8 +9,9 @@
         <OutputType>Exe</OutputType>
         <ApplicationTitle>SecRandom</ApplicationTitle>
         <ApplicationId>top.sectl.secrandom.mobile</ApplicationId>
+        <RuntimeIdentifier Condition="'$(TargetFramework)' == 'net10.0-android'">android-arm64</RuntimeIdentifier>
+        <RuntimeIdentifier Condition="'$(TargetFramework)' == 'net10.0-ios'">ios-arm64</RuntimeIdentifier>
         <AndroidPackageFormats Condition="'$(TargetFramework)' == 'net10.0-android'">apk</AndroidPackageFormats>
-        <ApkFileSigned Condition="'$(TargetFramework)' == 'net10.0-android'">$(OutDir)SecRandom-Android-v$(Version).apk</ApkFileSigned>
         <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net10.0-android'">24</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net10.0-ios'">13.0</SupportedOSPlatformVersion>
     </PropertyGroup>
@@ -28,16 +29,23 @@
         <ProjectReference Include="..\SecRandom.Platforms.Abstractions\SecRandom.Platforms.Abstractions.csproj"
                           AdditionalProperties="TargetFramework=net10.0"
                           GlobalPropertiesToRemove="TargetFramework;TargetFrameworks" />
+        <ProjectReference Include="..\SecRandom.Shared\SecRandom.Shared.csproj"
+                          AdditionalProperties="TargetFramework=net8.0"
+                          GlobalPropertiesToRemove="TargetFramework;TargetFrameworks" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+        <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.1" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+        <PackageReference Include="YamlDotNet" Version="16.3.0" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-android'">
         <PackageReference Include="Avalonia.Android" Version="$(AvaloniaVersion)" />
         <AndroidResource Include="..\SecRandom\Assets\AppLogo.png" Link="Resources\mipmap\app_logo.png" />
+        <AndroidResource Include="Platforms\Android\update_paths.xml" Link="Resources\xml\update_paths.xml" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-ios'">
@@ -46,6 +54,7 @@
 
     <ItemGroup>
         <AvaloniaResource Include="..\SecRandom\Assets\AppLogo.png" Link="Assets\AppLogo.png" />
+        <AvaloniaResource Include="..\SecRandom\Assets\Updates\release-public-key.txt" Link="Assets\Updates\release-public-key.txt" />
     </ItemGroup>
 
     <ItemGroup>

@@ -19,7 +19,8 @@ public enum UpdatePackageKind
     WindowsExe,
     LinuxDeb,
     MacosPkg,
-    MacosApp
+    MacosApp,
+    AndroidApk
 }
 
 public enum UpdateRuntimeKind
