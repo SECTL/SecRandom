@@ -10,6 +10,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
 using SecRandom.Shared.Updates;
 using YamlDotNet.Serialization;
+using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile;
 
@@ -55,7 +56,7 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
         try
         {
             IsBusy = true;
-            Status = "正在检查更新";
+            Status = LR.M_CheckingUpdates;
             var (tag, manifest) = await GetManifestAsync(cancellationToken);
             var artifact = manifest.Artifacts.SingleOrDefault(artifact =>
                 string.Equals(artifact.Os, "android", StringComparison.OrdinalIgnoreCase)
@@ -65,19 +66,19 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
             {
                 _artifact = null;
                 AvailableVersion = string.Empty;
-                Status = "已是最新版本";
+                Status = LR.M_UpToDate;
                 OnPropertyChanged(nameof(IsUpdateAvailable));
                 return;
             }
 
             _artifact = artifact;
             AvailableVersion = manifest.Version;
-            Status = $"发现新版本 {manifest.Version}";
+            Status = string.Format(CultureInfo.CurrentCulture, LR.M_UpdateAvailable, manifest.Version);
             OnPropertyChanged(nameof(IsUpdateAvailable));
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            Status = $"检查更新失败: {exception.Message}";
+            Status = string.Format(CultureInfo.CurrentCulture, LR.M_CheckUpdatesFailed, exception.Message);
         }
         finally
         {
@@ -93,17 +94,17 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
         try
         {
             IsBusy = true;
-            Status = "正在下载更新";
+            Status = LR.M_DownloadingUpdate;
             var bytes = await DownloadWithFallbackAsync(_artifact.AssetName, cancellationToken);
             VerifyArtifact(bytes, _artifact);
             var path = await WritePackageAsync(bytes, _artifact.AssetName, cancellationToken);
-            Status = "正在打开系统安装器";
+            Status = LR.M_OpeningInstaller;
             OpenSystemInstaller(path);
-            Status = "已交给系统安装器";
+            Status = LR.M_InstallerOpened;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            Status = $"安装更新失败: {exception.Message}";
+            Status = string.Format(CultureInfo.CurrentCulture, LR.M_InstallUpdateFailed, exception.Message);
         }
         finally
         {
@@ -118,16 +119,16 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
             try
             {
                 var metadata = await httpClient.GetStringAsync(GetMetadataUri(source), cancellationToken);
-                var document = _yaml.Deserialize<MetadataDocument>(metadata) ?? throw new InvalidDataException("更新元数据为空。");
+                var document = _yaml.Deserialize<MetadataDocument>(metadata) ?? throw new InvalidDataException(LR.M_EmptyMetadata);
                 var tag = document.Channels?.GetValueOrDefault("release")?.Tag;
                 if (string.IsNullOrWhiteSpace(tag))
-                    throw new InvalidDataException("更新元数据缺少 release 通道。");
+                    throw new InvalidDataException(LR.M_MissingReleaseChannel);
 
                 var manifestBytes = await DownloadAsync(source, tag, ManifestFileName, cancellationToken);
                 var signatureBytes = await DownloadAsync(source, tag, SignatureFileName, cancellationToken);
                 VerifyManifest(manifestBytes, signatureBytes, tag);
                 var manifest = JsonSerializer.Deserialize<UpdateManifest>(manifestBytes)
-                               ?? throw new InvalidDataException("更新清单无效。");
+                                ?? throw new InvalidDataException(LR.M_ManifestInvalid);
                 return (tag, manifest);
             }
             catch (Exception) when (source != UpdateSource.GitHub)
@@ -136,7 +137,7 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
             }
         }
 
-        throw new InvalidOperationException("无法获取更新清单。");
+        throw new InvalidOperationException(LR.M_ManifestUnavailable);
     }
 
     private async Task<byte[]> DownloadWithFallbackAsync(string assetName, CancellationToken cancellationToken)
@@ -146,7 +147,7 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
             try
             {
                 var metadata = await httpClient.GetStringAsync(GetMetadataUri(source), cancellationToken);
-                var document = _yaml.Deserialize<MetadataDocument>(metadata) ?? throw new InvalidDataException("更新元数据为空。");
+                var document = _yaml.Deserialize<MetadataDocument>(metadata) ?? throw new InvalidDataException(LR.M_EmptyMetadata);
                 var tag = document.Channels?.GetValueOrDefault("release")?.Tag;
                 if (!string.IsNullOrWhiteSpace(tag))
                     return await DownloadAsync(source, tag, assetName, cancellationToken);
@@ -156,7 +157,7 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
             }
         }
 
-        throw new InvalidOperationException("无法下载更新包。");
+        throw new InvalidOperationException(LR.M_PackageUnavailable);
     }
 
     private static IEnumerable<UpdateSource> GetSources() => [UpdateSource.GitHubMirror, UpdateSource.GitHub];
@@ -175,9 +176,9 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
     private static void VerifyArtifact(byte[] bytes, UpdateArtifact artifact)
     {
         if (bytes.LongLength != artifact.ByteLength)
-            throw new CryptographicException("更新包长度校验失败。");
+            throw new CryptographicException(LR.M_PackageLengthInvalid);
         if (!string.Equals(Convert.ToHexString(SHA512.HashData(bytes)), artifact.Sha512, StringComparison.OrdinalIgnoreCase))
-            throw new CryptographicException("更新包哈希校验失败。");
+            throw new CryptographicException(LR.M_PackageHashInvalid);
     }
 
     private static void VerifyManifest(byte[] manifest, byte[] signature, string tag)
@@ -186,12 +187,12 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
         signer.Init(false, new Ed25519PublicKeyParameters(ReadPublicKey(), 0));
         signer.BlockUpdate(manifest, 0, manifest.Length);
         if (!signer.VerifySignature(signature))
-            throw new CryptographicException("更新清单签名无效。");
+            throw new CryptographicException(LR.M_ManifestSignatureInvalid);
 
         var parsed = JsonSerializer.Deserialize<UpdateManifest>(manifest)
-                     ?? throw new InvalidDataException("更新清单无效。");
+                      ?? throw new InvalidDataException(LR.M_ManifestInvalid);
         if (parsed.SchemaVersion != 1 || parsed.Product != "SecRandom" || parsed.Tag != tag)
-            throw new InvalidDataException("更新清单与发布标签不匹配。");
+            throw new InvalidDataException(LR.M_ManifestTagMismatch);
     }
 
     private static byte[] ReadPublicKey()
@@ -224,7 +225,7 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
         OpenAndroidSystemInstaller(path);
 #pragma warning restore CA1416
 #else
-        throw new PlatformNotSupportedException("System package installation is only available on Android.");
+        throw new PlatformNotSupportedException(LR.M_AndroidOnlyInstaller);
 #endif
     }
 
@@ -243,7 +244,7 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
     [System.Runtime.Versioning.SupportedOSPlatform("android24.0")]
     private static void OpenAndroidSystemInstaller(string path)
     {
-        var context = Android.App.Application.Context ?? throw new InvalidOperationException("Android context is unavailable.");
+        var context = Android.App.Application.Context ?? throw new InvalidOperationException(LR.M_AndroidContextUnavailable);
         var uri = AndroidX.Core.Content.FileProvider.GetUriForFile(context,
             $"{context.PackageName}.updatefileprovider", new Java.IO.File(path));
         var intent = new Android.Content.Intent(Android.Content.Intent.ActionView)

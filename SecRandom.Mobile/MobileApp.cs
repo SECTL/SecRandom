@@ -130,6 +130,8 @@ public sealed class MobileRootView : UserControl
         checkUpdates.Click += async (_, _) => await updateService.CheckAsync();
         installUpdate.Click += async (_, _) => await updateService.DownloadAndInstallAsync();
         RefreshUpdateUi();
+        if (capabilities.Kind == PlatformKind.Android)
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => _ = updateService.CheckAsync());
 
         Content = new Grid
         {

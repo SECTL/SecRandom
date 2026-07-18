@@ -41,6 +41,44 @@ public class Resources
 
     public static string InstallUpdate => ResourceManager.GetString("InstallUpdate", resourceCulture)!;
 
+    public static string M_AndroidContextUnavailable => ResourceManager.GetString("M_AndroidContextUnavailable", resourceCulture)!;
+
+    public static string M_AndroidOnlyInstaller => ResourceManager.GetString("M_AndroidOnlyInstaller", resourceCulture)!;
+
+    public static string M_CheckingUpdates => ResourceManager.GetString("M_CheckingUpdates", resourceCulture)!;
+
+    public static string M_CheckUpdatesFailed => ResourceManager.GetString("M_CheckUpdatesFailed", resourceCulture)!;
+
+    public static string M_DownloadingUpdate => ResourceManager.GetString("M_DownloadingUpdate", resourceCulture)!;
+
+    public static string M_EmptyMetadata => ResourceManager.GetString("M_EmptyMetadata", resourceCulture)!;
+
+    public static string M_InstallUpdateFailed => ResourceManager.GetString("M_InstallUpdateFailed", resourceCulture)!;
+
+    public static string M_InstallerOpened => ResourceManager.GetString("M_InstallerOpened", resourceCulture)!;
+
+    public static string M_ManifestInvalid => ResourceManager.GetString("M_ManifestInvalid", resourceCulture)!;
+
+    public static string M_ManifestSignatureInvalid => ResourceManager.GetString("M_ManifestSignatureInvalid", resourceCulture)!;
+
+    public static string M_ManifestTagMismatch => ResourceManager.GetString("M_ManifestTagMismatch", resourceCulture)!;
+
+    public static string M_ManifestUnavailable => ResourceManager.GetString("M_ManifestUnavailable", resourceCulture)!;
+
+    public static string M_MissingReleaseChannel => ResourceManager.GetString("M_MissingReleaseChannel", resourceCulture)!;
+
+    public static string M_OpeningInstaller => ResourceManager.GetString("M_OpeningInstaller", resourceCulture)!;
+
+    public static string M_PackageHashInvalid => ResourceManager.GetString("M_PackageHashInvalid", resourceCulture)!;
+
+    public static string M_PackageLengthInvalid => ResourceManager.GetString("M_PackageLengthInvalid", resourceCulture)!;
+
+    public static string M_PackageUnavailable => ResourceManager.GetString("M_PackageUnavailable", resourceCulture)!;
+
+    public static string M_UpdateAvailable => ResourceManager.GetString("M_UpdateAvailable", resourceCulture)!;
+
+    public static string M_UpToDate => ResourceManager.GetString("M_UpToDate", resourceCulture)!;
+
     public static string PlatformSummary => ResourceManager.GetString("PlatformSummary", resourceCulture)!;
 
     public static string Subtitle => ResourceManager.GetString("Subtitle", resourceCulture)!;

@@ -35,4 +35,61 @@
     <data name="InstallUpdate" xml:space="preserve">
         <value>下载并安装更新</value>
     </data>
+    <data name="M_CheckingUpdates" xml:space="preserve">
+        <value>正在检查更新</value>
+    </data>
+    <data name="M_UpToDate" xml:space="preserve">
+        <value>已是最新版本</value>
+    </data>
+    <data name="M_UpdateAvailable" xml:space="preserve">
+        <value>发现新版本 {0}</value>
+    </data>
+    <data name="M_CheckUpdatesFailed" xml:space="preserve">
+        <value>检查更新失败: {0}</value>
+    </data>
+    <data name="M_DownloadingUpdate" xml:space="preserve">
+        <value>正在下载更新</value>
+    </data>
+    <data name="M_OpeningInstaller" xml:space="preserve">
+        <value>正在打开系统安装器</value>
+    </data>
+    <data name="M_InstallerOpened" xml:space="preserve">
+        <value>已交给系统安装器</value>
+    </data>
+    <data name="M_InstallUpdateFailed" xml:space="preserve">
+        <value>安装更新失败: {0}</value>
+    </data>
+    <data name="M_EmptyMetadata" xml:space="preserve">
+        <value>更新元数据为空。</value>
+    </data>
+    <data name="M_MissingReleaseChannel" xml:space="preserve">
+        <value>更新元数据缺少 release 通道。</value>
+    </data>
+    <data name="M_ManifestUnavailable" xml:space="preserve">
+        <value>无法获取更新清单。</value>
+    </data>
+    <data name="M_PackageUnavailable" xml:space="preserve">
+        <value>无法下载更新包。</value>
+    </data>
+    <data name="M_PackageLengthInvalid" xml:space="preserve">
+        <value>更新包长度校验失败。</value>
+    </data>
+    <data name="M_PackageHashInvalid" xml:space="preserve">
+        <value>更新包哈希校验失败。</value>
+    </data>
+    <data name="M_ManifestSignatureInvalid" xml:space="preserve">
+        <value>更新清单签名无效。</value>
+    </data>
+    <data name="M_ManifestInvalid" xml:space="preserve">
+        <value>更新清单无效。</value>
+    </data>
+    <data name="M_ManifestTagMismatch" xml:space="preserve">
+        <value>更新清单与发布标签不匹配。</value>
+    </data>
+    <data name="M_AndroidContextUnavailable" xml:space="preserve">
+        <value>Android 上下文不可用。</value>
+    </data>
+    <data name="M_AndroidOnlyInstaller" xml:space="preserve">
+        <value>系统安装仅适用于 Android。</value>
+    </data>
 </root>

@@ -196,8 +196,8 @@ jobs:
           printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"portable-zip","runtimeKind":"framework-dependent"}\n' "$RID" > "$light_app/SecRandom.package.json"
           dotnet publish SecRandom.Launcher/SecRandom.Launcher.csproj -c Release -r "$RID" --self-contained -p:UseAppHost=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -p:Version="$assembly_version" --no-restore -o "$full_root"
           dotnet publish SecRandom.Launcher/SecRandom.Launcher.csproj -c Release -r "$RID" --self-contained false -p:UseAppHost=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -p:Version="$assembly_version" --no-restore -o "$light_root"
-          (cd "$full_root" && zip -qr "../../../dist/SecRandom_${VERSION}-${RID}-portable-full.zip" .)
-          (cd "$light_root" && zip -qr "../../../dist/SecRandom_${VERSION}-${RID}-portable-light.zip" .)
+          (cd "$full_root" && zip -qr "../../../dist/SecRandom-${VERSION}-${RID}-portable-full.zip" .)
+          (cd "$light_root" && zip -qr "../../../dist/SecRandom-${VERSION}-${RID}-portable-light.zip" .)
 
       - name: Install Inno Setup Languages
         if: ${{ matrix.os == 'windows' }}
@@ -285,7 +285,7 @@ jobs:
           $isccArguments = @(
             "/DMyAppVersion=$env:VERSION"
             "/DMyAppOutDir=$outDir"
-            "/FSecRandom_$env:VERSION-$env:RID-setup"
+            "/FSecRandom-$env:VERSION-$env:RID-setup"
             "/O$setupOutput"
           )
           if ($uiAccessBuild) { $isccArguments += '/DUiAccessBuild' }
@@ -361,7 +361,7 @@ jobs:
           Description: SecRandom
           EOF
 
-          dpkg-deb --build "$pkgroot" "${release_root}/dist/SecRandom_${VERSION}-${RID}.deb"
+          dpkg-deb --build "$pkgroot" "${release_root}/dist/SecRandom-${VERSION}-${RID}.deb"
 
       - name: Build macOS pkg
         if: ${{ matrix.os == 'macos' }}
@@ -429,7 +429,7 @@ jobs:
             echo "macOS signing or notarization credentials are unavailable; keeping unsigned APP and skipping signed PKG."
             ditto -c -k --sequesterRsrc --keepParent \
               "$work/bundle/SecRandom.app" \
-              "${release_root}/dist/SecRandom_${VERSION}-${RID}.app.zip"
+              "${release_root}/dist/SecRandom-${VERSION}-${RID}.app.zip"
             exit 0
           fi
 
@@ -449,7 +449,7 @@ jobs:
 
           ditto -c -k --sequesterRsrc --keepParent \
             "$work/bundle/SecRandom.app" \
-            "${release_root}/dist/SecRandom_${VERSION}-${RID}.app.zip"
+            "${release_root}/dist/SecRandom-${VERSION}-${RID}.app.zip"
 
           printf '{"schemaVersion":1,"product":"SecRandom","rid":"%s","packageKind":"macos-pkg","runtimeKind":"self-contained"}\n' "$RID" > "$work/bundle/SecRandom.app/Contents/MacOS/SecRandom.package.json"
 
@@ -463,11 +463,11 @@ jobs:
             --version "$version_no_v" \
             --install-location "/" \
             --sign "$MACOS_INSTALLER_SIGNING_IDENTITY" \
-            "${release_root}/dist/SecRandom_${VERSION}-${RID}.pkg"
+            "${release_root}/dist/SecRandom-${VERSION}-${RID}.pkg"
 
-          xcrun notarytool submit "${release_root}/dist/SecRandom_${VERSION}-${RID}.pkg" --apple-id "$MACOS_NOTARY_APPLE_ID" --team-id "$MACOS_NOTARY_TEAM_ID" --password "$MACOS_NOTARY_PASSWORD" --wait
-          xcrun stapler staple "${release_root}/dist/SecRandom_${VERSION}-${RID}.pkg"
-          pkgutil --check-signature "${release_root}/dist/SecRandom_${VERSION}-${RID}.pkg"
+          xcrun notarytool submit "${release_root}/dist/SecRandom-${VERSION}-${RID}.pkg" --apple-id "$MACOS_NOTARY_APPLE_ID" --team-id "$MACOS_NOTARY_TEAM_ID" --password "$MACOS_NOTARY_PASSWORD" --wait
+          xcrun stapler staple "${release_root}/dist/SecRandom-${VERSION}-${RID}.pkg"
+          pkgutil --check-signature "${release_root}/dist/SecRandom-${VERSION}-${RID}.pkg"
 
       - name: Upload Portable Artifact
         uses: actions/upload-artifact@v7
