@@ -60,7 +60,7 @@ SecRandom.Shared/
 - Prefer small extension methods and plain contracts here; richer behavior belongs in `SecRandom.Core`.
 - `ConfigBase` / `ProfileConfigBase` define paths and identity for persisted files; handlers and desktop storage live
   outside Shared.
-- `Utils.GetFilePath(...)` is the expected route for data/config paths; regardless of installation or portable deployment, `Utils.DataRoot` must remain `<PackageRoot>/data`. Do not redirect it to system or user-profile locations.
+- `Utils.GetFilePath(...)` is the expected route for data/config paths. Its default desktop/portable root remains `<PackageRoot>/data`. `Utils.ConfigureDataRoot(...)` is internal and startup-only: `SecRandom.Mobile` may call it exactly once before any path is read to select its app-private local-data root; no Shared model, Core service, plugin, or desktop flow may change it.
 - If adding a shared model that will be persisted, consider backward-compatible defaults and nullable behavior first.
 - Comments should document serialization/backward-compatibility constraints, not obvious property names.
 

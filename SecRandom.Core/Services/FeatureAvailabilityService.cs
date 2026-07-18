@@ -5,7 +5,7 @@ using SecRandom.Core.Services.Config;
 
 namespace SecRandom.Core.Services;
 
-public sealed class FeatureAvailabilityService : IFeatureAvailabilityService
+internal sealed class FeatureAvailabilityService : IFeatureAvailabilityService
 {
     private readonly MainConfigHandler _configHandler;
     private MoreSettingsConfig _settings;

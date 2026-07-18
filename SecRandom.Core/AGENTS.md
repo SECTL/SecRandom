@@ -28,6 +28,7 @@ SecRandom.Core/
 ├── StylesBase.axaml      # Shared style hub imported by app
 ├── Services/Draw/        # Fair/random draw engine and filters
 ├── Services/Config/      # Config handlers over Shared config models
+├── Services/Profiles/    # Host-internal profile persistence runtime shared by desktop/mobile
 ├── Services/Ipc/         # Strict URL/IPC request parsing and normalization
 ├── Services/Logging/     # Console/file logging providers/formatters
 ├── Extensions/Registry/  # DI/page registration helpers
@@ -50,7 +51,10 @@ SecRandom.Core/
 | Navigation registry        | `Services/PagesRegistryService.cs`                                               | Static main/settings/group collections.                                 |
 | Attached-settings registry | `Services/AttachedSettingsRegistryService.cs`                                    | Static attached-settings control collections.                           |
 | Draw algorithm             | `Services/Draw/DrawEngine*.cs`, `WeightedDrawEngine.cs`, `CryptoRandomSource.cs` | Fairness, filters, weighted sampling; history lookup uses `RecordId`.    |
-| Config handlers            | `Services/Config/`                                                               | `MainConfigHandler` and `ProfileConfigs` wrap config model persistence. |
+| Config handlers            | `Services/Config/`                                                               | `FileConfigService`, `MainConfigHandler`, and `ProfileConfigs` implement host-internal JSON persistence. |
+| Profile runtime            | `Services/Profiles/ProfileService.cs`                                            | Injected current-list/history runtime shared by desktop and mobile hosts. |
+| Temporary draw records     | `Services/Draw/DrawTemporaryRecordService.cs`                                   | Host-internal student/prize temporary records shared by desktop and mobile hosts. |
+| Feature availability       | `Services/FeatureAvailabilityService.cs`                                        | `MoreSettings.LotteryEnabled` runtime gate behind `IFeatureAvailabilityService`. |
 | Protocol parsing           | `Services/Ipc/ProtocolRequestParser.cs`                                          | Bounded route/query parser shared by URL and IPC routing. |
 | Logging providers          | `Services/Logging/`                                                              | Console/file logging; file logs live under `data/logs`, current log path is exposed by `FileLoggerProvider` for viewer/diagnostics. |
 | Config schema              | `Enums/Configs/`, `Models/SubConfigs/`                                           | Many settings model types live here, including v2-parity models for floating window, notification, security, linkage, voice, history, update, and more settings. |
@@ -67,7 +71,7 @@ SecRandom.Core/
 - `PluginInfo` exposes plugin manifest, installed plugin directory, and private config directory. Plugins should persist their own config under `data/configs/plugins/<plugin-id>`.
 - Plugin page registration uses runtime `Type` registration through `AddPluginMainPage` / `AddPluginSettingsPage`; plugin page IDs must start with `plugin.<plugin-id>.`.
 - Plugin draw access must remain invocation-only through `IPluginDrawInvoker`; never add `DrawEngine`, `WeightedDrawEngine<T>`, `IRandomSource`, writable history, or draw config to plugin contracts.
-- `IAppHost.GetService<T>()` is used in Core services like `DrawEngine`; Host is built by app layer.
+- Existing Core services may use `IAppHost.GetService<T>()` during the transition, but `DrawEngine` and new reusable runtime services use constructor injection. Construct `DrawEngine` with `MainConfigHandler`, `IProfileService`, and `ILogger<DrawEngine>`; do not add a new static-Host dependency.
 - `IProfileService.LoadStudentProfile(name)` switches the app-layer active point-call student list and matching history; callers should use it instead of constructing profile configs directly when changing the active roll-call list.
 - Registration helpers are responsible for both keyed DI and `PagesRegistryService` metadata.
 - `DrawEngine` is partial: keep filtering in `DrawEngine.Filter.cs`, weight math in `DrawEngine.WeightCalculator.cs`,
@@ -78,6 +82,7 @@ SecRandom.Core/
 - Verification proof inputs commit a `VerificationSamplingMode` and `VerificationAlgorithmProfile`. The profile must match the draw kind and sampler: fair/random students use history-balanced or unit-weight sampling when no behind-scene rule is active, student behind-scene weighting uses a dedicated profile, Count lottery uses equal-probability partial inventory permutation without behind-scene rules, and Pan or an internal-rule fallback uses weighted-without-replacement. Any internal rule, including zero-probability exclusions, must stay visible in the anonymous audit payload.
 - Config handlers derive from `ConfigHandlerBase<TModel>`; config model defaults should be safe without existing data
   files.
+- `FileConfigService`, `ProfileService`, `DrawTemporaryRecordService`, and the concrete feature-availability service are host-internal Core implementations, not plugin API. Desktop and mobile register them through their composition roots while exposing only the established narrow contracts to consumers.
 - IPC parser code is UI-free and must reject ambiguous routes, malformed percent escapes, control characters, oversized frames, and unsupported schemes. Keep route execution in the app layer.
 - File logging should keep user-facing log messages in Chinese for app events. Avoid logging student/prize names or full config payloads; prefer counts, status, file names, and operation names.
 - V2-parity settings models that are shared by app settings pages but not yet backed by services live directly under `Models/SubConfigs/` and hang off `MainConfigModel` until their runtime service boundaries settle. `MoreSettingsConfig` also owns built-in draw page chrome toggles such as roll-call/lottery control panel placement and visibility.

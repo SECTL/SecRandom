@@ -9,6 +9,7 @@ This project is an independent Android/iOS Avalonia SingleView shell. It must no
 - Default builds target neutral `net10.0` as a library so desktop development does not require mobile workloads.
 - `BuildMobile=true` enables `net10.0-android` and `net10.0-ios`; `MobileEntryPoint.cs` sets `PlatformStartupContext` before `MobileApp` is initialized. CI builds Android packages, continuously compiles the unsigned iOS arm64 simulator target, and uploads an unsigned iOS arm64 IPA as an Actions artifact. The IPA is only for inspection or later signing; iOS signing, device distribution, and update delivery remain deferred.
 - `MobileApp` owns the minimal mobile Host and assigns `MobileRootView` to the SingleView lifetime. `MobileRootView` is the physical `ViewHostControl` for Core logical views and uses `SingleViewHostProvider`; keep its registrations limited to features actually supported on mobile.
+- Before building that Host, `MobileApp` configures `Utils` once to `LocalApplicationData/SecRandom/data`. The Host then registers the host-internal Core JSON config, profile, temporary-record, lottery-availability, and draw services; it assigns `IAppHost.Host` only for transitional Core consumers and clears it during shutdown. Never reuse the desktop package-root `data/` path or add desktop hosted services.
 - `MobilePlatformServiceRoot` must explicitly report unsupported desktop window, tray, shortcut, UIAccess, URL registration, and background-residency capabilities.
 
 ## UI And Resources

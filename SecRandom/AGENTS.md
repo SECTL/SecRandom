@@ -23,18 +23,18 @@ SecRandom/
 │   └── SettingsPages/
 │       └── History/     # History settings VMs (RollCallHistoryViewModel, LotteryHistoryViewModel)
 ├── Services/            # App-only services
-│   ├── Config/          # DesktopConfigService
+│   ├── Config/          # Device UUID and desktop-specific configuration adapters
 │   ├── CrashRecovery/   # Crash detection, recovery prompt, restart guard
 │   ├── Desktop/         # TaskBarIconService, GlobalShortcutService
 │   ├── Platform/        # App-side neutral window-handle adapter for platform feature requests
-│   ├── Draw/            # DrawAudioService, DrawTemporaryRecordService
+│   ├── Draw/            # DrawAudioService
 │   ├── ImportExport/    # Strict v3 settings/data archives, diagnostics, recovery snapshots
 │   ├── Linkage/         # CSES/ClassIsland sources, course state runtime, draw authorization, pre-class reset
 │   ├── Music/            # Managed local draw-music library and stable track selection resolution
 │   ├── Notification/     # ClassIsland SecRandom4Ci notification bridge
 │   ├── Ipc/             # ProtocolCommandRouter for URL/IPC command routing
 │   ├── Plugins/         # Plugin runtime: manager, catalog, invoker, state
-│   ├── Profiles/        # Active ProfileService plus non-mutating ProfileQueryService snapshots
+│   ├── Profiles/        # Non-mutating ProfileQueryService snapshots
 │   ├── Settings/        # SettingsSearchService
 │   ├── Security/        # Credential store, verification prompts, factor/operation authorization
 │   ├── Telemetry/       # SentryTelemetrySdkAdapter, TelemetryRuntimeService
@@ -65,16 +65,16 @@ SecRandom/
 | History settings ViewModels  | `ViewModels/SettingsPages/History/`                                     | VMs used by roll-call/lottery history settings pages embedded in settings and main history views.                          |
 | Add settings page            | `Views/SettingsPages/`, `Langs/SettingsPages/`, `App.axaml.cs`          | `[PageInfo]` + localization folder + `AddSettingsPage<T>()`; update title/resource wiring if language refresh is needed. General pages currently include `Basic`, `Privacy`, and `Backup`; v2-parity root entries include floating window, notification, security, linkage, voice, history, update, logs, and more settings. |
 | Log viewer                   | `Views/SettingsPages/LogViewer/LogViewerSettingsPage.axaml(.cs)`       | Hidden settings page `settings.logs`; opened from the settings more-options menu. Reads `.log` and `.log.gz` files from `data/logs`. |
-| App config JSON              | `Services/Config/DesktopConfigService.cs`                               | Core handlers call into this app-specific storage.                                                                       |
+| App config JSON              | `../SecRandom.Core/Services/Config/FileConfigService.cs`                 | Desktop registers the host-internal Core JSON storage; its default package-root path remains unchanged.                    |
 | Device UUID                  | `Services/Config/DeviceUuidStore.cs`                                    | Persists the pseudo-anonymous online/witness client identity in `data/config/device-uuid.json`.                         |
 | Settings/data import-export  | `Services/ImportExport/`, `Views/SettingsView.axaml(.cs)`               | `IImportExportService` owns strict v3 ZIP/JSON transfer, diagnostics, manual/automatic backups, and mandatory pre-import snapshots; `AutomaticBackupService` is Host-managed and checks configured backup cadence. Draw-verification proof files live under `data/proofs` and are included by default in both manual and automatic backups. The settings shell owns pickers, preview/confirmation, feedback, and restart requests. |
 | Searchable settings metadata | `Services/Settings/SettingsSearchService.cs`                            | Reflects `Langs.SettingsPages.*` resources and registered settings pages. Matches by `Type.Name` so pages in subdirectories are found correctly. |
 | Plugin runtime               | `Services/Plugins/`                                                     | Imports `.srpx` packages, scans `data/plugins`, stores enable/restart state, starts enabled plugins, filters plugin logs, and exposes restricted host invokers. |
 | ClassIsland notifications    | `Services/Notification/`, `../SecRandom4Ci.Interface/`                 | Sends draw-result DTOs to the optional ClassIsland `SecRandom4Ci` plugin through v2 IPC. |
-| Profile persistence          | `Services/Profiles/ProfileService.cs`                                   | Current lists/history, active point-call list/history switching, and `SaveProfile()`; list items carry hidden `RecordId` identity. |
+| Profile persistence          | `../SecRandom.Core/Services/Profiles/ProfileService.cs`                 | Current lists/history, active point-call list/history switching, and `SaveProfile()`; list items carry hidden `RecordId` identity. |
 | Voice announcements          | `Services/Voice/`, `Controls/AttachedSettings/SpecificAnnouncementAttachedSettingsControl.axaml(.cs)` | App-layer TTS runtime: `ISpeechProvider` implementations enumerate/synthesize system or Edge audio, `SpeechAudioPlayer` owns SoundFlow/MiniAudio playback, and `VoiceAnnouncementService` builds one batched result announcement. The registered `专属语音` attached setting supplies per-student/per-prize alias, prefix, and suffix. |
 | Draw-proof attestation       | `Services/Verification/` | Immediately saves a local reproducible proof, then asynchronously asks `fair.sectl.cn` to replay and sign its exact committed content. |
-| Draw audio / temp records    | `Services/Draw/DrawAudioService.cs`, `Services/Draw/DrawTemporaryRecordService.cs` | App-layer draw audio playback and session-scoped temporary draw records.                                                |
+| Draw audio / temp records    | `Services/Draw/DrawAudioService.cs`, `../SecRandom.Core/Services/Draw/DrawTemporaryRecordService.cs` | Audio stays app-layer; session-scoped temporary records are shared Core runtime behavior. |
 | Managed music library        | `Services/Music/MusicLibraryService.cs`, `Views/SettingsPages/Personalized/MusicSettingsPage.axaml(.cs)` | Imports, removes, and previews managed MP3/WAV/FLAC files under `data/audio/music`. |
 | Desktop integration          | `Services/Desktop/`                                                     | Taskbar lifecycle, Windows native global shortcuts, cross-platform autostart, and `secrandom://` registration.          |
 | Platform feature calls       | `Services/Platform/`, `../SecRandom.Platforms.Abstractions/`            | Views obtain `IWindowFeatureService` through Host; native implementations stay outside the app project.                 |
@@ -140,7 +140,7 @@ SecRandom/
 - `DeviceUuidStore` owns the pseudo-anonymous UUID in `data/config/device-uuid.json`. It migrates the legacy value from settings on first access; full-data and configuration backups preserve it, while settings-only imports leave the local device UUID untouched.
 - Current settings and archives carry `producer_version`; all import and restore paths accept only SecRandom v3 exports after inspection, then preserve the mandatory snapshot/staging workflow. Unsupported files must be rejected before any live-data mutation.
 - First-run OOBE is a top-level window shown after `BuildHost()` and before `FloatingWindow` construction. Its fixed header/footer surround an animated carousel that starts with a non-blocking centered welcome screen and application icon; this welcome screen is outside the seven configuration pages, whose first item places the collapsed-by-default verifiable-draw notice before the privacy-policy/GPLv3 acknowledgement controls and requires its explicit read checkbox when its version has not been accepted. The full setup later has a separate privacy page after desktop integration and before completion, binding the distinct Sentry telemetry and online-status settings; a policy-version update remains limited to the acknowledgement page plus those privacy choices. The welcome screen's lower-left language selector saves `Basic.Language`, applies the selected culture, refreshes localized ViewModel-derived values, and replaces only the OOBE window so static localized XAML resources reload without restarting the application or leaving first-run setup. An active OOBE import drawer defers visual replacement until it closes, preserving its preview and mapping work. OOBE class/prize spreadsheet imports open the shared list-management import controls in the window's right-side `DrawerHost`, preserving the settings-page mapping, preview, duplicate, and cancel behavior. Its ViewModel and setup services are Host-registered. `GuideCompleted`, `AcceptedVerificationNoticeVersion`, `AcceptedPrivacyPolicyVersion`, and `AcceptedGplVersion` control whether acknowledgement is required. Completion must hand off to normal startup and explicitly show the primary main window before closing OOBE, so the application remains open.
-- `FeatureAvailabilityService` is the sole runtime lottery-capability decision. `MoreSettings.LotteryEnabled` must gate sidebar navigation, floating-window controls, shortcuts, `App` page selection, and `ProtocolCommandRouter` lottery commands.
+- Core's `IFeatureAvailabilityService` is the sole runtime lottery-capability decision. `MoreSettings.LotteryEnabled` must gate sidebar navigation, floating-window controls, shortcuts, `App` page selection, and `ProtocolCommandRouter` lottery commands.
 - `Styles.axaml` should stay a thin include of `avares://SecRandom.Core/StylesBase.axaml` unless app-only styling is
   needed.
 - Application-owned UI icons use Fluent `Filled` variants, including settings entries, command buttons, menus, navigation items, and floating-window actions. Prefer `sr:Fi NameFilled` or `FluentIcons.NameFilled`; do not introduce new raw Unicode glyphs.
@@ -153,7 +153,7 @@ SecRandom/
 - Privacy settings localization lives under `Langs/SettingsPages/General/Privacy/` and follows the same base `.resx` + designer registration pattern as other settings pages.
 - IPC response localization lives under `Langs/Ipc/`; it supplies human-readable response messages while protocol `code` values remain invariant for automation clients.
 - List management pages currently include roll-call lists (`data/list/roll_call_list`) and lottery prize pools (`data/list/lottery_list`). A roll-call import may map student number or name; it requires at least one and excludes rows where both are blank.
-- Roll-call and lottery list/history files are stored as plain JSON on disk; keep their `.json` paths stable and use `DesktopConfigService` instead of direct serialization.
+- Roll-call and lottery list/history files are stored as plain JSON on disk; keep their `.json` paths stable and use the Host-registered Core file config service instead of direct serialization.
 - Required files for a localized resource set: `Resources.resx` and `Resources.Designer.cs`; culture files such as
   `Resources.en-US.resx` / `Resources.ja-JP.resx` are optional and must keep exact on-disk casing.
 - Register only base `.resx` and designer in `SecRandom.csproj` using existing `EmbeddedResource` / `Compile` pattern.

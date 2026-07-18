@@ -102,7 +102,7 @@ public sealed class MobileApp : Avalonia.Application
         {
             if (_rootView is not null)
             {
-                await _host.Services.GetRequiredService<IViewEngine>()
+                await host.Services.GetRequiredService<IViewEngine>()
                     .CloseHostAsync(_rootView, ViewCloseReason.ApplicationShutdown)
                     .ConfigureAwait(false);
                 await _rootView.DestroyAsync().ConfigureAwait(false);
@@ -137,6 +137,10 @@ public sealed class MobileApp : Avalonia.Application
             if (_stopping || !ReferenceEquals(host, _host))
                 return;
 
+            _ = host.Services.GetRequiredService<IProfileService>();
+            _ = host.Services.GetRequiredService<IDrawTemporaryRecordService>();
+            _ = host.Services.GetRequiredService<IFeatureAvailabilityService>();
+            _ = host.Services.GetRequiredService<DrawEngine>();
             await host.Services.GetRequiredService<IViewEngine>()
                 .ShowAsync(MobileStatusView.Id)
                 .ConfigureAwait(false);

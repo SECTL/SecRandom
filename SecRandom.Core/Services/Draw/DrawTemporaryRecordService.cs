@@ -6,7 +6,7 @@ using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.Draw;
 
-public sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordService> logger) : IDrawTemporaryRecordService
+internal sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordService> logger) : IDrawTemporaryRecordService
 {
     private const string PrizeScopeKey = "prizes";
     private readonly HashSet<string> _clearedStudentLists = new(StringComparer.OrdinalIgnoreCase);

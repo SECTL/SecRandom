@@ -10,7 +10,7 @@
 
 这个命名空间会开放给插件。
 
-插件开放面集中在 `SecRandom.Core.Plugins`，而 `SecRandom.Core.Views` 提供可由插件注册/调用的逻辑 Avalonia 视图契约。这里只放稳定 DTO 和受限接口，例如插件清单、权限、页面/视图注册、`IPluginDrawInvoker` 与 `IPluginViewService`。不要把物理宿主、完整 DI、可写配置/Profile 服务或公平抽取内部算法放进插件开放面。
+插件开放面集中在 `SecRandom.Core.Plugins`，而 `SecRandom.Core.Views` 提供可由插件注册/调用的逻辑 Avalonia 视图契约。这里只放稳定 DTO 和受限接口，例如插件清单、权限、页面/视图注册、`IPluginDrawInvoker` 与 `IPluginViewService`。`Services/Config/FileConfigService`、`Services/Profiles/ProfileService`、临时记录和功能开关实现是 desktop/mobile Host 共享的内部运行时实现，不是插件 API。不要把物理宿主、完整 DI、可写配置/Profile 服务或公平抽取内部算法放进插件开放面。
 
 ## SecRandom.Core.Tests
 
@@ -30,4 +30,4 @@
 
 ## SecRandom.Mobile
 
-Android/iOS 的独立 Avalonia SingleView 启动壳。它在移动平台上设置平台根并启动最小移动 Host，且不引用桌面 `SecRandom` 应用程序集；在移动端适配完整配置、档案、权限和抽签流程之前，不复用桌面窗口、桌面 Host 或桌面后台服务。
+Android/iOS 的独立 Avalonia SingleView 启动壳。它在移动平台上设置平台根、在任何持久化路径被读取前选择 app-private local-data root，并启动最小移动 Host；它不引用桌面 `SecRandom` 应用程序集，也不复用桌面窗口、桌面 Host 或桌面后台服务。该 Host 可复用 Core 的配置、档案、临时记录、功能开关和抽取后端，但移动 UI 仅显示已经实现的流程。

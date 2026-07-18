@@ -5,7 +5,7 @@ using SecRandom.Shared.Abstraction;
 
 namespace SecRandom.Core.Services.Config;
 
-public sealed class FileConfigService(ILogger<FileConfigService> logger) : ConfigServiceBase
+internal sealed class FileConfigService(ILogger<FileConfigService> logger) : ConfigServiceBase
 {
     public override bool IsConfigExists<T>(T fallback)
     {

@@ -7,7 +7,7 @@ using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.Profiles;
 
-public sealed class ProfileService : IProfileService
+internal sealed class ProfileService : IProfileService
 {
     private readonly ILogger<ProfileService> _logger;
     private readonly MainConfigHandler _configHandler;
