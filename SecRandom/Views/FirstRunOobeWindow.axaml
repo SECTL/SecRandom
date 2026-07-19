@@ -21,22 +21,17 @@
         <Border Grid.Row="0" Padding="32 24 32 20"
                 Background="{DynamicResource LayerOnMicaBaseAltFillColorDefaultBrush}"
                 IsVisible="{Binding ViewModel.IsStatusVisible}">
-            <Grid RowDefinitions="Auto,Auto" RowSpacing="6">
-                <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Image Source="/Assets/AppLogo.png" Width="32" Height="32" />
-                        <TextBlock Text="{Binding ViewModel.PageTitle}"
-                                   VerticalAlignment="Center"
-                                   FontSize="20"
-                                   FontWeight="SemiBold" />
-                    </StackPanel>
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding ViewModel.StepProgress}"
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Image Source="/Assets/AppLogo.png" Width="32" Height="32" />
+                    <TextBlock Text="{Binding ViewModel.PageTitle}"
                                VerticalAlignment="Center"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                </Grid>
-                <TextBlock Grid.Row="1"
-                           Text="{Binding ViewModel.IntroText}"
+                               FontSize="20"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+                <TextBlock Grid.Column="1"
+                           Text="{Binding ViewModel.StepProgress}"
+                           VerticalAlignment="Center"
                            Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
             </Grid>
         </Border>
