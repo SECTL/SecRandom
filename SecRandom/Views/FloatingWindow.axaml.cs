@@ -136,13 +136,7 @@ public partial class FloatingWindow : Window
 
     private static int GetEffectiveButtonSize(FloatingWindowSettingsConfig settings)
     {
-        var size = GetButtonSize(settings.FloatingWindowSize);
-        return settings.FloatingWindowDisplayStyle switch
-        {
-            0 => Math.Max(size, 72),
-            2 => Math.Max(size, 48),
-            _ => size
-        };
+        return GetButtonSize(settings.FloatingWindowSize);
     }
 
     private static IEnumerable<string> GetVisibleButtonNames(FloatingWindowSettingsConfig settings, bool isLotteryEnabled)

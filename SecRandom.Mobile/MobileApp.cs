@@ -6,6 +6,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using System.ComponentModel;
 using FluentAvalonia.Styling;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -181,13 +182,14 @@ public sealed class MobileRootView : UserControl
     private readonly MainConfigHandler _configHandler;
     private readonly ViewHostControl _viewHost;
     private readonly IViewEngine _viewEngine;
-    private readonly Grid _pageHost;
-    private readonly Grid _legacyPageHost;
     private readonly TextBlock _pageTitle;
     private readonly Button _drawTab;
     private readonly Button _historyTab;
     private readonly Button _overviewTab;
     private readonly Button _settingsTab;
+    private readonly Border _header;
+    private readonly Border _bottomBar;
+    private readonly Grid _root;
     private MobileDestination _destination = MobileDestination.Draw;
 
     public MobileRootView(
@@ -208,9 +210,6 @@ public sealed class MobileRootView : UserControl
             Foreground = MobileTheme.Text,
             VerticalAlignment = VerticalAlignment.Center
         };
-        _legacyPageHost = new Grid();
-        _pageHost = new Grid { Children = { _legacyPageHost, _viewHost } };
-        _viewHost.SetValue(Panel.ZIndexProperty, 1);
         _drawTab = MobileUi.CreateNavigationButton(LR.N_Draw);
         _historyTab = MobileUi.CreateNavigationButton(LR.N_History);
         _overviewTab = MobileUi.CreateNavigationButton(LR.N_Overview);
@@ -220,7 +219,7 @@ public sealed class MobileRootView : UserControl
         _overviewTab.Click += async (_, _) => await ShowOverviewAsync();
         _settingsTab.Click += async (_, _) => await ShowSettingsAsync();
 
-        var header = new Border
+        _header = new Border
         {
             Padding = new Thickness(20, 14),
             Background = MobileTheme.Surface,
@@ -245,7 +244,7 @@ public sealed class MobileRootView : UserControl
         };
         Grid.SetColumn(_pageTitle, 1);
 
-        var bottomBar = new Border
+        _bottomBar = new Border
         {
             Padding = new Thickness(8, 8, 8, 10),
             Background = MobileTheme.Surface,
@@ -261,17 +260,19 @@ public sealed class MobileRootView : UserControl
         Grid.SetColumn(_overviewTab, 2);
         Grid.SetColumn(_settingsTab, 3);
 
-        var root = new Grid
+        _root = new Grid
         {
             RowDefinitions = new RowDefinitions("Auto,*,Auto"),
             Background = MobileTheme.Canvas,
-            Children = { header, _pageHost, bottomBar }
+            Children = { _header, _viewHost, _bottomBar }
         };
-        Grid.SetRow(_pageHost, 1);
-        Grid.SetRow(bottomBar, 2);
-        Content = root;
+        Grid.SetRow(_viewHost, 1);
+        Grid.SetRow(_bottomBar, 2);
+        Content = _root;
 
         AddHandler(TopLevel.BackRequestedEvent, OnBackRequested, RoutingStrategies.Bubble);
+        _configHandler.Data.Appearance.PropertyChanged += AppearanceOnPropertyChanged;
+        DetachedFromVisualTree += (_, _) => _configHandler.Data.Appearance.PropertyChanged -= AppearanceOnPropertyChanged;
         RenderCurrentDestination();
     }
 
@@ -288,42 +289,35 @@ public sealed class MobileRootView : UserControl
 
     private async Task ShowHistoryAsync()
     {
-        await _viewEngine.CloseAsync("main.rollCall").ConfigureAwait(true);
-        _destination = MobileDestination.History;
-        RenderCurrentDestination();
-        await _viewEngine.ShowAsync("main.history").ConfigureAwait(true);
+        await ShowPrimaryRouteAsync(MobileDestination.History, "main.history").ConfigureAwait(true);
     }
 
     private async Task ShowDrawAsync()
     {
-        await _viewEngine.CloseAsync("main.history").ConfigureAwait(true);
-        _destination = MobileDestination.Draw;
-        RenderCurrentDestination();
-        await _viewEngine.ShowAsync("main.rollCall").ConfigureAwait(true);
+        await ShowPrimaryRouteAsync(MobileDestination.Draw, "main.rollCall").ConfigureAwait(true);
     }
 
     private async Task ShowSettingsAsync()
     {
-        await CloseMainViewsAsync().ConfigureAwait(true);
-        _destination = MobileDestination.Settings;
-        RenderCurrentDestination();
-        await _viewEngine.ShowAsync("settings.mobile").ConfigureAwait(true);
+        await ShowPrimaryRouteAsync(MobileDestination.Settings, "settings.mobile").ConfigureAwait(true);
     }
 
     private async Task ShowOverviewAsync()
     {
-        await CloseMainViewsAsync().ConfigureAwait(true);
-        _destination = MobileDestination.Overview;
-        RenderCurrentDestination();
-        await _viewEngine.ShowAsync("main.overview").ConfigureAwait(true);
+        await ShowPrimaryRouteAsync(MobileDestination.Overview, "main.overview").ConfigureAwait(true);
     }
 
-    private async Task CloseMainViewsAsync()
+    private async Task ShowPrimaryRouteAsync(MobileDestination destination, string routeId)
     {
-        await _viewEngine.CloseAsync("main.rollCall").ConfigureAwait(true);
-        await _viewEngine.CloseAsync("main.history").ConfigureAwait(true);
-        await _viewEngine.CloseAsync("main.overview").ConfigureAwait(true);
-        await _viewEngine.CloseAsync("settings.mobile").ConfigureAwait(true);
+        foreach (var activeRoute in PrimaryRouteIds)
+        {
+            if (!string.Equals(activeRoute, routeId, StringComparison.Ordinal))
+                await _viewEngine.CloseAsync(activeRoute).ConfigureAwait(true);
+        }
+
+        _destination = destination;
+        RenderCurrentDestination();
+        await _viewEngine.ShowAsync(routeId).ConfigureAwait(true);
     }
 
     private void RenderCurrentDestination()
@@ -341,15 +335,24 @@ public sealed class MobileRootView : UserControl
             _ => throw new ArgumentOutOfRangeException()
         };
 
-        _legacyPageHost.Children.Clear();
-        _legacyPageHost.Children.Add(_destination switch
-        {
-            MobileDestination.Draw => new Grid(),
-            MobileDestination.History => new Grid(),
-            MobileDestination.Overview => new Grid(),
-            MobileDestination.Settings => new Grid(),
-            _ => throw new ArgumentOutOfRangeException()
-        });
     }
+
+    private void AppearanceOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(_configHandler.Data.Appearance.Theme))
+            return;
+
+        MobileTheme.Apply(_configHandler.Data.Appearance.Theme);
+        _root.Background = MobileTheme.Canvas;
+        _header.Background = MobileTheme.Surface;
+        _header.BorderBrush = MobileTheme.Border;
+        _bottomBar.Background = MobileTheme.Surface;
+        _bottomBar.BorderBrush = MobileTheme.Border;
+        _pageTitle.Foreground = MobileTheme.Text;
+        RenderCurrentDestination();
+    }
+
+    private static IReadOnlyList<string> PrimaryRouteIds { get; } =
+        ["main.rollCall", "main.history", "main.overview", "settings.mobile"];
 
 }
