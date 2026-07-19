@@ -31,7 +31,7 @@ SecRandom-C/
 ├── SecRandom.Platforms.Windows/ # Windows-native window feature implementation
 ├── SecRandom.Platforms.Linux/ # Linux-native window feature implementation boundary
 ├── SecRandom.Platforms.MacOs/ # macOS-native window feature implementation boundary
-├── SecRandom.Mobile/      # Android/iOS SingleView entrypoint skeleton
+├── SecRandom.Mobile/      # Independent Android/iOS SingleView app shell, views, and mobile-only UI
 ├── SecRandom.Core.Tests/  # xUnit v3 test project; currently covers legacy privacy/telemetry migration
 ├── scripts/               # Standalone tooling and verification scripts, including fairness audits
 ├── docs/                  # Project rules, localization, namespace boundaries

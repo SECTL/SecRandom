@@ -45,15 +45,61 @@ public class Resources
 
     public static string M_AndroidOnlyInstaller => ResourceManager.GetString("M_AndroidOnlyInstaller", resourceCulture)!;
 
+    public static string C_AddPrize => ResourceManager.GetString("C_AddPrize", resourceCulture)!;
+
+    public static string C_Back => ResourceManager.GetString("C_Back", resourceCulture)!;
+
+    public static string C_AddStudent => ResourceManager.GetString("C_AddStudent", resourceCulture)!;
+
+    public static string C_CheckUpdates => ResourceManager.GetString("C_CheckUpdates", resourceCulture)!;
+
+    public static string C_ClearTemporaryRecords => ResourceManager.GetString("C_ClearTemporaryRecords", resourceCulture)!;
+
+    public static string C_DrawOne => ResourceManager.GetString("C_DrawOne", resourceCulture)!;
+
+    public static string C_DrawPrize => ResourceManager.GetString("C_DrawPrize", resourceCulture)!;
+
+    public static string C_InstallUpdate => ResourceManager.GetString("C_InstallUpdate", resourceCulture)!;
+
+    public static string C_Lottery => ResourceManager.GetString("C_Lottery", resourceCulture)!;
+
+    public static string C_ManagePrizePool => ResourceManager.GetString("C_ManagePrizePool", resourceCulture)!;
+
+    public static string C_ManageStudentList => ResourceManager.GetString("C_ManageStudentList", resourceCulture)!;
+
+    public static string C_Remove => ResourceManager.GetString("C_Remove", resourceCulture)!;
+
+    public static string C_RollCall => ResourceManager.GetString("C_RollCall", resourceCulture)!;
+
     public static string M_CheckingUpdates => ResourceManager.GetString("M_CheckingUpdates", resourceCulture)!;
 
+    public static string M_AboutLicense => ResourceManager.GetString("M_AboutLicense", resourceCulture)!;
+
     public static string M_CheckUpdatesFailed => ResourceManager.GetString("M_CheckUpdatesFailed", resourceCulture)!;
+
+    public static string M_AddPrizesPrompt => ResourceManager.GetString("M_AddPrizesPrompt", resourceCulture)!;
+
+    public static string M_AddStudentsPrompt => ResourceManager.GetString("M_AddStudentsPrompt", resourceCulture)!;
+
+    public static string M_CandidatePrizes => ResourceManager.GetString("M_CandidatePrizes", resourceCulture)!;
+
+    public static string M_CandidateStudents => ResourceManager.GetString("M_CandidateStudents", resourceCulture)!;
 
     public static string M_DownloadingUpdate => ResourceManager.GetString("M_DownloadingUpdate", resourceCulture)!;
 
     public static string M_EmptyMetadata => ResourceManager.GetString("M_EmptyMetadata", resourceCulture)!;
 
     public static string M_InstallUpdateFailed => ResourceManager.GetString("M_InstallUpdateFailed", resourceCulture)!;
+
+    public static string M_DefaultList => ResourceManager.GetString("M_DefaultList", resourceCulture)!;
+
+    public static string M_DefaultPool => ResourceManager.GetString("M_DefaultPool", resourceCulture)!;
+
+    public static string M_Disabled => ResourceManager.GetString("M_Disabled", resourceCulture)!;
+
+    public static string M_DrawCompleted => ResourceManager.GetString("M_DrawCompleted", resourceCulture)!;
+
+    public static string M_DrawFailed => ResourceManager.GetString("M_DrawFailed", resourceCulture)!;
 
     public static string M_InstallerOpened => ResourceManager.GetString("M_InstallerOpened", resourceCulture)!;
 
@@ -66,6 +112,36 @@ public class Resources
     public static string M_ManifestUnavailable => ResourceManager.GetString("M_ManifestUnavailable", resourceCulture)!;
 
     public static string M_MissingReleaseChannel => ResourceManager.GetString("M_MissingReleaseChannel", resourceCulture)!;
+
+    public static string M_NoCandidates => ResourceManager.GetString("M_NoCandidates", resourceCulture)!;
+
+    public static string M_NoEligibleCandidates => ResourceManager.GetString("M_NoEligibleCandidates", resourceCulture)!;
+
+    public static string M_NoHistory => ResourceManager.GetString("M_NoHistory", resourceCulture)!;
+
+    public static string M_NoPrizes => ResourceManager.GetString("M_NoPrizes", resourceCulture)!;
+
+    public static string M_NoStudents => ResourceManager.GetString("M_NoStudents", resourceCulture)!;
+
+    public static string M_PrizeId => ResourceManager.GetString("M_PrizeId", resourceCulture)!;
+
+    public static string M_Ready => ResourceManager.GetString("M_Ready", resourceCulture)!;
+
+    public static string M_RepeatLimitExhausted => ResourceManager.GetString("M_RepeatLimitExhausted", resourceCulture)!;
+
+    public static string M_StudentId => ResourceManager.GetString("M_StudentId", resourceCulture)!;
+
+    public static string M_Enabled => ResourceManager.GetString("M_Enabled", resourceCulture)!;
+
+    public static string M_InvalidWeight => ResourceManager.GetString("M_InvalidWeight", resourceCulture)!;
+
+    public static string M_LotteryRounds => ResourceManager.GetString("M_LotteryRounds", resourceCulture)!;
+
+    public static string M_Prizes => ResourceManager.GetString("M_Prizes", resourceCulture)!;
+
+    public static string M_RollCallRounds => ResourceManager.GetString("M_RollCallRounds", resourceCulture)!;
+
+    public static string M_Students => ResourceManager.GetString("M_Students", resourceCulture)!;
 
     public static string M_OpeningInstaller => ResourceManager.GetString("M_OpeningInstaller", resourceCulture)!;
 
@@ -80,6 +156,146 @@ public class Resources
     public static string M_UpdateAvailable => ResourceManager.GetString("M_UpdateAvailable", resourceCulture)!;
 
     public static string M_UpToDate => ResourceManager.GetString("M_UpToDate", resourceCulture)!;
+
+    public static string M_BackupMobileUnavailable => ResourceManager.GetString("M_BackupMobileUnavailable", resourceCulture)!;
+
+    public static string M_GeneralMobileOnly => ResourceManager.GetString("M_GeneralMobileOnly", resourceCulture)!;
+
+    public static string N_Draw => ResourceManager.GetString("N_Draw", resourceCulture)!;
+
+    public static string N_History => ResourceManager.GetString("N_History", resourceCulture)!;
+
+    public static string N_Overview => ResourceManager.GetString("N_Overview", resourceCulture)!;
+
+    public static string N_Settings => ResourceManager.GetString("N_Settings", resourceCulture)!;
+
+    public static string P_Draw => ResourceManager.GetString("P_Draw", resourceCulture)!;
+
+    public static string P_History => ResourceManager.GetString("P_History", resourceCulture)!;
+
+    public static string P_Overview => ResourceManager.GetString("P_Overview", resourceCulture)!;
+
+    public static string P_Settings => ResourceManager.GetString("P_Settings", resourceCulture)!;
+
+    public static string S_AppUpdates => ResourceManager.GetString("S_AppUpdates", resourceCulture)!;
+
+    public static string S_AppUpdates_D => ResourceManager.GetString("S_AppUpdates_D", resourceCulture)!;
+
+    public static string S_About => ResourceManager.GetString("S_About", resourceCulture)!;
+
+    public static string S_About_D => ResourceManager.GetString("S_About_D", resourceCulture)!;
+
+    public static string S_AverageGapProtection => ResourceManager.GetString("S_AverageGapProtection", resourceCulture)!;
+
+    public static string S_Backup => ResourceManager.GetString("S_Backup", resourceCulture)!;
+
+    public static string S_Backup_D => ResourceManager.GetString("S_Backup_D", resourceCulture)!;
+
+    public static string S_CurrentList => ResourceManager.GetString("S_CurrentList", resourceCulture)!;
+
+    public static string S_CurrentPool => ResourceManager.GetString("S_CurrentPool", resourceCulture)!;
+
+    public static string S_DataOverview => ResourceManager.GetString("S_DataOverview", resourceCulture)!;
+
+    public static string S_DrawSettings => ResourceManager.GetString("S_DrawSettings", resourceCulture)!;
+
+    public static string S_DrawSettings_D => ResourceManager.GetString("S_DrawSettings_D", resourceCulture)!;
+
+    public static string S_FairDraw => ResourceManager.GetString("S_FairDraw", resourceCulture)!;
+
+    public static string S_FairDraw_D => ResourceManager.GetString("S_FairDraw_D", resourceCulture)!;
+
+    public static string S_FairDrawEnabled => ResourceManager.GetString("S_FairDrawEnabled", resourceCulture)!;
+
+    public static string S_FairDrawGender => ResourceManager.GetString("S_FairDrawGender", resourceCulture)!;
+
+    public static string S_FairDrawGroup => ResourceManager.GetString("S_FairDrawGroup", resourceCulture)!;
+
+    public static string S_FairDrawTime => ResourceManager.GetString("S_FairDrawTime", resourceCulture)!;
+
+    public static string S_FrequencyFunction => ResourceManager.GetString("S_FrequencyFunction", resourceCulture)!;
+
+    public static string S_General => ResourceManager.GetString("S_General", resourceCulture)!;
+
+    public static string S_General_D => ResourceManager.GetString("S_General_D", resourceCulture)!;
+
+    public static string S_GapThreshold => ResourceManager.GetString("S_GapThreshold", resourceCulture)!;
+
+    public static string S_ColdStart => ResourceManager.GetString("S_ColdStart", resourceCulture)!;
+
+    public static string S_ColdStartRounds => ResourceManager.GetString("S_ColdStartRounds", resourceCulture)!;
+
+    public static string S_ListManagement => ResourceManager.GetString("S_ListManagement", resourceCulture)!;
+
+    public static string S_ListManagement_D => ResourceManager.GetString("S_ListManagement_D", resourceCulture)!;
+
+    public static string S_Lottery => ResourceManager.GetString("S_Lottery", resourceCulture)!;
+
+    public static string S_Personalization => ResourceManager.GetString("S_Personalization", resourceCulture)!;
+
+    public static string S_Personalization_D => ResourceManager.GetString("S_Personalization_D", resourceCulture)!;
+
+    public static string S_PrizePool => ResourceManager.GetString("S_PrizePool", resourceCulture)!;
+
+    public static string S_RecentDraws => ResourceManager.GetString("S_RecentDraws", resourceCulture)!;
+
+    public static string S_StudentList => ResourceManager.GetString("S_StudentList", resourceCulture)!;
+
+    public static string S_RollCall => ResourceManager.GetString("S_RollCall", resourceCulture)!;
+
+    public static string S_RepeatMode => ResourceManager.GetString("S_RepeatMode", resourceCulture)!;
+
+    public static string S_HalfRepeat => ResourceManager.GetString("S_HalfRepeat", resourceCulture)!;
+
+    public static string S_ClearRecord => ResourceManager.GetString("S_ClearRecord", resourceCulture)!;
+
+    public static string S_Shield => ResourceManager.GetString("S_Shield", resourceCulture)!;
+
+    public static string S_ShieldTime => ResourceManager.GetString("S_ShieldTime", resourceCulture)!;
+
+    public static string S_SettingsCategories => ResourceManager.GetString("S_SettingsCategories", resourceCulture)!;
+
+    public static string S_Theme => ResourceManager.GetString("S_Theme", resourceCulture)!;
+
+    public static string S_Version => ResourceManager.GetString("S_Version", resourceCulture)!;
+
+    public static string O_Count => ResourceManager.GetString("O_Count", resourceCulture)!;
+
+    public static string O_Cleared => ResourceManager.GetString("O_Cleared", resourceCulture)!;
+
+    public static string O_Fair => ResourceManager.GetString("O_Fair", resourceCulture)!;
+
+    public static string O_FrequencyIndex => ResourceManager.GetString("O_FrequencyIndex", resourceCulture)!;
+
+    public static string O_FrequencyLinear => ResourceManager.GetString("O_FrequencyLinear", resourceCulture)!;
+
+    public static string O_FrequencySquareRoot => ResourceManager.GetString("O_FrequencySquareRoot", resourceCulture)!;
+
+    public static string O_HalfRepeat => ResourceManager.GetString("O_HalfRepeat", resourceCulture)!;
+
+    public static string O_NoRepeat => ResourceManager.GetString("O_NoRepeat", resourceCulture)!;
+
+    public static string O_Pan => ResourceManager.GetString("O_Pan", resourceCulture)!;
+
+    public static string O_Random => ResourceManager.GetString("O_Random", resourceCulture)!;
+
+    public static string O_Repeat => ResourceManager.GetString("O_Repeat", resourceCulture)!;
+
+    public static string O_Restarted => ResourceManager.GetString("O_Restarted", resourceCulture)!;
+
+    public static string O_ThemeAuto => ResourceManager.GetString("O_ThemeAuto", resourceCulture)!;
+
+    public static string O_ThemeDark => ResourceManager.GetString("O_ThemeDark", resourceCulture)!;
+
+    public static string O_ThemeLight => ResourceManager.GetString("O_ThemeLight", resourceCulture)!;
+
+    public static string W_PrizeId => ResourceManager.GetString("W_PrizeId", resourceCulture)!;
+
+    public static string W_PrizeName => ResourceManager.GetString("W_PrizeName", resourceCulture)!;
+
+    public static string W_StudentId => ResourceManager.GetString("W_StudentId", resourceCulture)!;
+
+    public static string W_StudentName => ResourceManager.GetString("W_StudentName", resourceCulture)!;
 
     public static string PlatformSummary => ResourceManager.GetString("PlatformSummary", resourceCulture)!;
 

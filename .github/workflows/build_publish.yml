@@ -655,7 +655,7 @@ jobs:
 
       - name: Install iOS workload
         shell: bash
-        run: dotnet workload install ios --version 10.0.100
+        run: dotnet workload install ios --version 10.0.101.1
 
       - name: Build iOS simulator target
         shell: bash

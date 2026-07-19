@@ -1,9 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
+using FluentAvalonia.Styling;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SecRandom.Core.Abstraction;
@@ -14,6 +14,7 @@ using SecRandom.Core.Views;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
 using SecRandom.Shared;
+using SecRandom.Mobile.Views;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile;
@@ -26,6 +27,11 @@ public sealed class MobileApp : Avalonia.Application
 
     public override void Initialize()
     {
+        Styles.Add(new FluentAvaloniaTheme
+        {
+            PreferSystemTheme = true,
+            UseSystemFontOnWindows = true
+        });
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -46,7 +52,7 @@ public sealed class MobileApp : Avalonia.Application
                     services.AddSingleton<IViewHostProvider>(serviceProvider =>
                         serviceProvider.GetRequiredService<SingleViewHostProvider>());
                     services.AddViewEngine()
-                        .AddView<MobileStatusView>(MobileStatusView.Id);
+                        .AddView<MobileShellView>(MobileShellView.Id);
                     services.AddHttpClient<MobileUpdateService>();
                 })
                 .Build();
@@ -131,7 +137,7 @@ public sealed class MobileApp : Avalonia.Application
             _ = host.Services.GetRequiredService<IFeatureAvailabilityService>();
             _ = host.Services.GetRequiredService<DrawEngine>();
             await host.Services.GetRequiredService<IViewEngine>()
-                .ShowAsync(MobileStatusView.Id)
+                .ShowAsync(MobileShellView.Id)
                 .ConfigureAwait(false);
         }
         catch (Exception exception)
@@ -162,102 +168,5 @@ public sealed class MobileRootView : ViewHostControl
 {
     public MobileRootView() : base("mobile.root")
     {
-    }
-}
-
-public sealed class MobileStatusView : ViewBase
-{
-    public const string Id = "mobile.status";
-
-    private readonly MobileUpdateService _updateService;
-    private readonly System.ComponentModel.PropertyChangedEventHandler _updateStatusChanged;
-
-    public MobileStatusView(PlatformCapabilities capabilities, MobileUpdateService updateService)
-    {
-        _updateService = updateService;
-        var logo = new Image
-        {
-            Source = new Bitmap(AssetLoader.Open(new Uri("avares://SecRandom.Mobile/Assets/AppLogo.png"))),
-            Width = 72,
-            Height = 72,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
-        };
-        var title = new TextBlock
-        {
-            Text = LR.Title,
-            FontSize = 28,
-            FontWeight = FontWeight.SemiBold,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
-        };
-        var subtitle = new TextBlock
-        {
-            Text = LR.Subtitle,
-            FontSize = 16,
-            Opacity = 0.72,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
-        };
-        var description = new TextBlock
-        {
-            Text = LR.Description,
-            FontSize = 16,
-            LineHeight = 24,
-            TextAlignment = TextAlignment.Center,
-            TextWrapping = TextWrapping.Wrap
-        };
-        var status = new TextBlock
-        {
-            Text = string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.PlatformSummary, capabilities.Kind),
-            Opacity = 0.68,
-            TextAlignment = TextAlignment.Center,
-            TextWrapping = TextWrapping.Wrap
-        };
-        var updateStatus = new TextBlock
-        {
-            TextAlignment = TextAlignment.Center,
-            TextWrapping = TextWrapping.Wrap,
-            Opacity = 0.78
-        };
-        var installUpdate = new Avalonia.Controls.Button
-        {
-            Content = LR.InstallUpdate,
-            IsVisible = false,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
-        };
-        var checkUpdates = new Avalonia.Controls.Button
-        {
-            Content = LR.CheckUpdates,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
-        };
-        void RefreshUpdateUi()
-        {
-            updateStatus.Text = _updateService.Status;
-            installUpdate.IsVisible = _updateService.IsUpdateAvailable;
-            checkUpdates.IsEnabled = !_updateService.IsBusy;
-            installUpdate.IsEnabled = !_updateService.IsBusy;
-        }
-        _updateStatusChanged = (_, _) => Avalonia.Threading.Dispatcher.UIThread.Post(RefreshUpdateUi);
-        _updateService.PropertyChanged += _updateStatusChanged;
-        Closed += (_, _) => _updateService.PropertyChanged -= _updateStatusChanged;
-        checkUpdates.Click += async (_, _) => await _updateService.CheckAsync();
-        installUpdate.Click += async (_, _) => await _updateService.DownloadAndInstallAsync();
-        RefreshUpdateUi();
-        if (capabilities.Kind == PlatformKind.Android)
-            Avalonia.Threading.Dispatcher.UIThread.Post(() => _ = _updateService.CheckAsync());
-
-        Content = new Grid
-        {
-            Margin = new Thickness(32, 40),
-            Children =
-            {
-                new StackPanel
-                {
-                    Spacing = 18,
-                    MaxWidth = 520,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                    Children = { logo, title, subtitle, description, status, updateStatus, checkUpdates, installUpdate }
-                }
-            }
-        };
     }
 }
