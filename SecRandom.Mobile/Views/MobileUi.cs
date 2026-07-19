@@ -4,12 +4,14 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using AvaloniaButton = Avalonia.Controls.Button;
+using AvaloniaOrientation = Avalonia.Layout.Orientation;
 
 namespace SecRandom.Mobile.Views;
 
 internal static class MobileUi
 {
-    internal static Button CreateNavigationButton(string text) => new()
+    internal static AvaloniaButton CreateNavigationButton(string text) => new()
     {
         Content = text,
         Padding = new Thickness(2, 8),
@@ -19,7 +21,7 @@ internal static class MobileUi
         HorizontalContentAlignment = HorizontalAlignment.Center
     };
 
-    internal static Button CreateSegmentButton(string text, bool selected, bool left) => new()
+    internal static AvaloniaButton CreateSegmentButton(string text, bool selected, bool left) => new()
     {
         Content = text,
         Padding = new Thickness(18, 7),
@@ -58,7 +60,7 @@ internal static class MobileUi
 
     internal static Control CreateNavigationRow(string title, string description, Action open)
     {
-        var row = new Button
+        var row = new AvaloniaButton
         {
             Background = MobileTheme.Surface,
             BorderBrush = MobileTheme.Border,
@@ -89,7 +91,7 @@ internal static class MobileUi
 
     internal static Control CreateChoiceRow(string text, bool selected, Action select)
     {
-        var button = new Button
+        var button = new AvaloniaButton
         {
             Content = text,
             Background = selected ? MobileTheme.PrimaryWash : MobileTheme.Surface,
@@ -164,9 +166,9 @@ internal static class MobileUi
         Child = new StackPanel { Spacing = 12, Children = { result, detail } }
     };
 
-    internal static Button CreatePrimaryButton(string text, bool enabled, Action? onClick = null)
+    internal static AvaloniaButton CreatePrimaryButton(string text, bool enabled, Action? onClick = null)
     {
-        var button = new Button
+        var button = new AvaloniaButton
         {
             Content = text,
             IsEnabled = enabled,
@@ -182,9 +184,9 @@ internal static class MobileUi
         return button;
     }
 
-    internal static Button CreateSecondaryButton(string text, Action onClick)
+    internal static AvaloniaButton CreateSecondaryButton(string text, Action onClick)
     {
-        var button = new Button
+        var button = new AvaloniaButton
         {
             Content = text,
             MinHeight = 44,
@@ -223,12 +225,12 @@ internal static class MobileUi
         if (!string.IsNullOrWhiteSpace(detail))
             text.Children.Add(new TextBlock { Text = detail, FontSize = 12, Foreground = MobileTheme.MutedText, TextWrapping = TextWrapping.Wrap });
 
-        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
+        var actions = new StackPanel { Orientation = AvaloniaOrientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
         if (trailing is not null)
             actions.Children.Add(trailing);
         if (remove is not null)
         {
-            var removeButton = new Button
+            var removeButton = new AvaloniaButton
             {
                 Content = LR.C_Remove,
                 Background = Brushes.Transparent,

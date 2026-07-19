@@ -9,6 +9,8 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using AvaloniaButton = Avalonia.Controls.Button;
+using AvaloniaOrientation = Avalonia.Layout.Orientation;
 
 namespace SecRandom.Mobile.Views;
 
@@ -49,7 +51,7 @@ internal sealed class MobileDrawPage : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Child = new StackPanel
             {
-                Orientation = Orientation.Horizontal,
+                Orientation = AvaloniaOrientation.Horizontal,
                 Spacing = 2,
                 Children = { rollCall, lottery }
             }
@@ -130,7 +132,7 @@ internal sealed class MobileDrawPage : UserControl
         ]);
     }
 
-    private void DrawStudent(IReadOnlyList<Student> candidates, TextBlock result, TextBlock detail, Button draw)
+    private void DrawStudent(IReadOnlyList<Student> candidates, TextBlock result, TextBlock detail, AvaloniaButton draw)
     {
         draw.IsEnabled = false;
         try
@@ -176,7 +178,7 @@ internal sealed class MobileDrawPage : UserControl
         }
     }
 
-    private void DrawPrize(IReadOnlyList<Prize> candidates, TextBlock result, TextBlock detail, Button draw)
+    private void DrawPrize(IReadOnlyList<Prize> candidates, TextBlock result, TextBlock detail, AvaloniaButton draw)
     {
         draw.IsEnabled = false;
         try

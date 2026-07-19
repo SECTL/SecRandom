@@ -13,6 +13,7 @@ using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Views;
 using SecRandom.Mobile.Views.Settings;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using AvaloniaButton = Avalonia.Controls.Button;
 
 namespace SecRandom.Mobile.Views;
 
@@ -29,10 +30,10 @@ public sealed class MobileShellView : ViewBase
     private readonly EventHandler _featureAvailabilityChanged;
     private Grid _pageHost = null!;
     private TextBlock _pageTitle = null!;
-    private Button _drawTab = null!;
-    private Button _historyTab = null!;
-    private Button _overviewTab = null!;
-    private Button _settingsTab = null!;
+    private AvaloniaButton _drawTab = null!;
+    private AvaloniaButton _historyTab = null!;
+    private AvaloniaButton _overviewTab = null!;
+    private AvaloniaButton _settingsTab = null!;
     private MobileDestination _destination = MobileDestination.Draw;
     private DrawSurface _drawSurface = DrawSurface.RollCall;
     private MobileSettingsSection? _settingsSection;

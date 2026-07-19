@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Styling;
 using SecRandom.Core.Enums.Configs;
+using AvaloniaApplication = Avalonia.Application;
 
 namespace SecRandom.Mobile.Views;
 
@@ -20,7 +21,7 @@ internal static class MobileTheme
 
     internal static void Apply(ThemeMode theme)
     {
-        Application.Current!.RequestedThemeVariant = theme switch
+        AvaloniaApplication.Current!.RequestedThemeVariant = theme switch
         {
             ThemeMode.Light => ThemeVariant.Light,
             ThemeMode.Dark => ThemeVariant.Dark,
@@ -34,6 +35,6 @@ internal static class MobileTheme
         return new SolidColorBrush(Color.Parse(color));
     }
 
-    private static bool IsDarkTheme => Application.Current?.ActualThemeVariant == ThemeVariant.Dark
-                                       || Application.Current?.RequestedThemeVariant == ThemeVariant.Dark;
+    private static bool IsDarkTheme => AvaloniaApplication.Current?.ActualThemeVariant == ThemeVariant.Dark
+                                       || AvaloniaApplication.Current?.RequestedThemeVariant == ThemeVariant.Dark;
 }
