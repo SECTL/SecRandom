@@ -112,6 +112,30 @@ public sealed class CoreRuntimeServicesTests : IDisposable
         Assert.Equal(1, changeCount);
     }
 
+    [Fact]
+    public void HistoryQueryService_ReadsPersistedRecordsWithoutSwitchingActiveProfiles()
+    {
+        using var provider = CreateProvider();
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        config.Data.RollCallSettings.DefaultClass = "history-class";
+        config.Data.LotterySettings.DefaultPool = "history-pool";
+        config.Save();
+
+        var profile = provider.GetRequiredService<IProfileService>();
+        var student = new Student { Name = "Lin", RecordId = Guid.NewGuid() };
+        profile.CurrentStudentList!.Students.Add(student);
+        profile.SaveProfile();
+        profile.RecordStudentHistory([student], DateTime.Now, 1);
+
+        var activeStudentList = profile.StudentListConfig;
+        var query = provider.GetRequiredService<IHistoryQueryService>();
+        var item = Assert.Single(query.GetRecentItems(10));
+
+        Assert.Equal("Lin", item.DisplayName);
+        Assert.False(item.IsPrize);
+        Assert.Same(activeStudentList, profile.StudentListConfig);
+    }
+
     public void Dispose()
     {
         ResetDataRootForTests();

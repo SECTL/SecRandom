@@ -59,6 +59,7 @@ public sealed class MobileApp : Avalonia.Application
                     services.AddSingleton<IViewHostProvider>(serviceProvider =>
                         serviceProvider.GetRequiredService<SingleViewHostProvider>());
                     services.AddViewEngine()
+                        .AddView<MobileDrawView>("main.rollCall")
                         .AddView<MobileHistoryPage>("main.history");
                     services.AddHttpClient<MobileUpdateService>();
                     services.AddSingleton<MobileDeviceUuidStore>();
@@ -145,6 +146,9 @@ public sealed class MobileApp : Avalonia.Application
             _ = host.Services.GetRequiredService<IDrawTemporaryRecordService>();
             _ = host.Services.GetRequiredService<IFeatureAvailabilityService>();
             _ = host.Services.GetRequiredService<DrawEngine>();
+            await host.Services.GetRequiredService<IViewEngine>()
+                .ShowAsync("main.rollCall")
+                .ConfigureAwait(false);
         }
         catch (Exception exception)
         {
@@ -240,7 +244,7 @@ public sealed class MobileRootView : UserControl
         _historyTab = MobileUi.CreateNavigationButton(LR.N_History);
         _overviewTab = MobileUi.CreateNavigationButton(LR.N_Overview);
         _settingsTab = MobileUi.CreateNavigationButton(LR.N_Settings);
-        _drawTab.Click += (_, _) => NavigateTo(MobileDestination.Draw);
+        _drawTab.Click += async (_, _) => await ShowDrawAsync();
         _historyTab.Click += async (_, _) => await ShowHistoryAsync();
         _overviewTab.Click += (_, _) => NavigateTo(MobileDestination.Overview);
         _settingsTab.Click += (_, _) => NavigateTo(MobileDestination.Settings);
@@ -313,7 +317,7 @@ public sealed class MobileRootView : UserControl
 
     private async void NavigateTo(MobileDestination destination)
     {
-        await _viewEngine.CloseAsync("main.history").ConfigureAwait(true);
+        await CloseMainViewsAsync().ConfigureAwait(true);
         _destination = destination;
         _settingsSection = null;
         RenderCurrentDestination();
@@ -321,10 +325,26 @@ public sealed class MobileRootView : UserControl
 
     private async Task ShowHistoryAsync()
     {
+        await _viewEngine.CloseAsync("main.rollCall").ConfigureAwait(true);
         _destination = MobileDestination.History;
         _settingsSection = null;
         RenderCurrentDestination();
         await _viewEngine.ShowAsync("main.history").ConfigureAwait(true);
+    }
+
+    private async Task ShowDrawAsync()
+    {
+        await _viewEngine.CloseAsync("main.history").ConfigureAwait(true);
+        _destination = MobileDestination.Draw;
+        _settingsSection = null;
+        RenderCurrentDestination();
+        await _viewEngine.ShowAsync("main.rollCall").ConfigureAwait(true);
+    }
+
+    private async Task CloseMainViewsAsync()
+    {
+        await _viewEngine.CloseAsync("main.rollCall").ConfigureAwait(true);
+        await _viewEngine.CloseAsync("main.history").ConfigureAwait(true);
     }
 
     private void OpenSettings(MobileSettingsSection section)
@@ -370,15 +390,7 @@ public sealed class MobileRootView : UserControl
         _legacyPageHost.Children.Clear();
         _legacyPageHost.Children.Add(_destination switch
         {
-            MobileDestination.Draw => new MobileDrawPage(
-                _profileService,
-                _temporaryRecordService,
-                _featureAvailabilityService,
-                _configHandler,
-                _drawEngine,
-                _drawSurface,
-                SelectDrawSurface,
-                () => OpenSettings(MobileSettingsSection.ListManagement)),
+            MobileDestination.Draw => new Grid(),
             MobileDestination.History => new Grid(),
             MobileDestination.Overview => new MobileOverviewPage(_profileService),
             MobileDestination.Settings => CreateSettingsPage(),

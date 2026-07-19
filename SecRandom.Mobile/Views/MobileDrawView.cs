@@ -1,0 +1,57 @@
+using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Views;
+
+namespace SecRandom.Mobile.Views;
+
+/// <summary>
+/// MVE route for the mobile draw surface. The physical root owns only chrome.
+/// </summary>
+public sealed class MobileDrawView : ViewBase
+{
+    private readonly IProfileService _profileService;
+    private readonly IDrawTemporaryRecordService _temporaryRecordService;
+    private readonly IFeatureAvailabilityService _featureAvailabilityService;
+    private readonly MainConfigHandler _configHandler;
+    private readonly DrawEngine _drawEngine;
+    private DrawSurface _surface = DrawSurface.RollCall;
+
+    public MobileDrawView(
+        IProfileService profileService,
+        IDrawTemporaryRecordService temporaryRecordService,
+        IFeatureAvailabilityService featureAvailabilityService,
+        MainConfigHandler configHandler,
+        DrawEngine drawEngine)
+    {
+        _profileService = profileService;
+        _temporaryRecordService = temporaryRecordService;
+        _featureAvailabilityService = featureAvailabilityService;
+        _configHandler = configHandler;
+        _drawEngine = drawEngine;
+        Render();
+    }
+
+    private void Render()
+    {
+        Content = new MobileDrawPage(
+            _profileService,
+            _temporaryRecordService,
+            _featureAvailabilityService,
+            _configHandler,
+            _drawEngine,
+            _surface,
+            SelectSurface,
+            static () => { });
+    }
+
+    private void SelectSurface(DrawSurface surface)
+    {
+        if (surface == DrawSurface.Lottery && !_featureAvailabilityService.IsLotteryEnabled)
+            return;
+
+        _surface = surface;
+        Render();
+    }
+}
