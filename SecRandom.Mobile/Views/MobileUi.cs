@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using SecRandom.Core.Controls;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 using AvaloniaButton = Avalonia.Controls.Button;
 using AvaloniaOrientation = Avalonia.Layout.Orientation;
@@ -11,14 +12,25 @@ namespace SecRandom.Mobile.Views;
 
 internal static class MobileUi
 {
-    internal static AvaloniaButton CreateNavigationButton(string text) => new()
+    internal static AvaloniaButton CreateNavigationButton(string text, string icon) => new()
     {
-        Content = text,
-        Padding = new Thickness(2, 8),
+        Content = new StackPanel
+        {
+            Spacing = 2,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children =
+            {
+                new FluentIcon(icon, 20) { HorizontalAlignment = HorizontalAlignment.Center },
+                new TextBlock { Text = text, HorizontalAlignment = HorizontalAlignment.Center }
+            }
+        },
+        Padding = new Thickness(2, 4),
         Background = Brushes.Transparent,
         BorderThickness = new Thickness(0),
         FontSize = 12,
-        HorizontalContentAlignment = HorizontalAlignment.Center
+        HorizontalContentAlignment = HorizontalAlignment.Center,
+        VerticalContentAlignment = VerticalAlignment.Center
     };
 
     internal static AvaloniaButton CreateSegmentButton(string text, bool selected, bool left) => new()

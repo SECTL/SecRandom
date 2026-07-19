@@ -189,6 +189,30 @@ public sealed class CoreRuntimeServicesTests : IDisposable
         Assert.Equal(1, temporary.GetPrizeCounts(listName)[prize.RecordId.ToString("D")]);
     }
 
+    [Fact]
+    public void ProfileCatalogEditor_UsesRecordIdsAndPersistsMutations()
+    {
+        using var provider = CreateProvider();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var editor = provider.GetRequiredService<IProfileCatalogEditor>();
+
+        Assert.True(editor.AddStudent("  Mei ", "  07 "));
+        var student = Assert.Single(editor.GetStudents());
+        var studentId = student.RecordId.ToString("D");
+        Assert.Equal("Mei", student.Name);
+        Assert.Equal("07", student.Id);
+        Assert.True(editor.SetStudentEnabled(studentId, false));
+        Assert.False(student.Exists);
+        Assert.True(editor.RemoveStudent(studentId));
+        Assert.Empty(profile.CurrentStudentList!.Students);
+
+        Assert.False(editor.AddPrize("", ""));
+        Assert.True(editor.AddPrize("Book", "P1"));
+        var prize = Assert.Single(editor.GetPrizes());
+        Assert.True(editor.RemovePrize(prize.RecordId.ToString("D")));
+        Assert.Empty(profile.CurrentPrizeList!.Prizes);
+    }
+
     public void Dispose()
     {
         ResetDataRootForTests();

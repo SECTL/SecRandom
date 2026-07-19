@@ -1,13 +1,14 @@
 using Avalonia.Controls;
+using SecRandom.Core.Views;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Views.Settings;
 
-internal sealed class MobileBackupSettingsPage : UserControl
+public sealed class MobileBackupSettingsPage : ViewBase
 {
-    internal MobileBackupSettingsPage(Action goBack)
+    public MobileBackupSettingsPage()
     {
-        Content = MobileUi.CreateSettingsScroll(LR.S_Backup, LR.S_Backup_D, goBack, [
+        Content = MobileUi.CreateSettingsScroll(LR.S_Backup, LR.S_Backup_D, CloseView, [
             new TextBlock
             {
                 Text = LR.M_BackupMobileUnavailable,
@@ -16,4 +17,6 @@ internal sealed class MobileBackupSettingsPage : UserControl
             }
         ]);
     }
+
+    private void CloseView() => _ = CloseAsync(reason: ViewCloseReason.Back);
 }

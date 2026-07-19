@@ -1,14 +1,15 @@
 using Avalonia.Controls;
+using SecRandom.Core.Views;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Views.Settings;
 
-internal sealed class MobileAboutSettingsPage : UserControl
+public sealed class MobileAboutSettingsPage : ViewBase
 {
-    internal MobileAboutSettingsPage(Action goBack)
+    public MobileAboutSettingsPage()
     {
         var version = typeof(MobileAboutSettingsPage).Assembly.GetName().Version?.ToString() ?? "0.0.0";
-        Content = MobileUi.CreateSettingsScroll(LR.S_About, LR.S_About_D, goBack, [
+        Content = MobileUi.CreateSettingsScroll(LR.S_About, LR.S_About_D, CloseView, [
             MobileUi.CreateMetric(LR.S_Version, version, MobileTheme.SurfaceMuted),
             new TextBlock
             {
@@ -18,4 +19,6 @@ internal sealed class MobileAboutSettingsPage : UserControl
             }
         ]);
     }
+
+    private void CloseView() => _ = CloseAsync(reason: ViewCloseReason.Back);
 }

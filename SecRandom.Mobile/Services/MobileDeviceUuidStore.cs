@@ -19,7 +19,7 @@ internal sealed class MobileDeviceUuidStore
             try
             {
                 var file = File.Exists(path)
-                    ? JsonSerializer.Deserialize<DeviceUuidFile>(File.ReadAllText(path))
+                    ? JsonSerializer.Deserialize(File.ReadAllText(path), MobileJsonContext.Default.DeviceUuidFile)
                     : null;
                 if (file is not null && file.Uuid != Guid.Empty)
                 {
@@ -35,12 +35,10 @@ internal sealed class MobileDeviceUuidStore
             var created = Guid.NewGuid();
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             var temporary = path + ".tmp";
-            File.WriteAllText(temporary, JsonSerializer.Serialize(new DeviceUuidFile(created)));
+            File.WriteAllText(temporary, JsonSerializer.Serialize(new DeviceUuidFile(created), MobileJsonContext.Default.DeviceUuidFile));
             File.Move(temporary, path, true);
             _deviceId = created;
             return created;
         }
     }
-
-    private sealed record DeviceUuidFile(Guid Uuid);
 }

@@ -2,31 +2,33 @@ using Avalonia.Controls;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Views;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Views.Settings;
 
-internal sealed class MobileDrawSettingsPage : UserControl
+public sealed class MobileDrawSettingsPage : ViewBase
 {
     private readonly MainConfigHandler _configHandler;
     private readonly IDrawTemporaryRecordService _temporaryRecordService;
     private readonly IProfileService _profileService;
-    private readonly Action _refresh;
 
-    internal MobileDrawSettingsPage(
+    public MobileDrawSettingsPage(
         MainConfigHandler configHandler,
         IDrawTemporaryRecordService temporaryRecordService,
-        IProfileService profileService,
-        Action goBack,
-        Action refresh)
+        IProfileService profileService)
     {
         _configHandler = configHandler;
         _temporaryRecordService = temporaryRecordService;
         _profileService = profileService;
-        _refresh = refresh;
+        Render();
+    }
 
-        var rollCall = configHandler.Data.RollCallSettings;
-        var lottery = configHandler.Data.LotterySettings;
+    private void Render()
+    {
+
+        var rollCall = _configHandler.Data.RollCallSettings;
+        var lottery = _configHandler.Data.LotterySettings;
         var items = new List<Control>
         {
             MobileUi.CreateLabel(LR.S_RollCall),
@@ -59,7 +61,7 @@ internal sealed class MobileDrawSettingsPage : UserControl
         items.Add(MobileUi.CreateChoiceRow(LR.O_Cleared, lottery.ClearRecord == ClearRecordMode.Cleared, () => Save(() => lottery.ClearRecord = ClearRecordMode.Cleared)));
         items.Add(MobileUi.CreateSecondaryButton(LR.C_ClearTemporaryRecords, ClearTemporaryRecords));
 
-        Content = MobileUi.CreateSettingsScroll(LR.S_DrawSettings, LR.S_DrawSettings_D, goBack, items);
+        Content = MobileUi.CreateSettingsScroll(LR.S_DrawSettings, LR.S_DrawSettings_D, CloseView, items);
     }
 
     private Control CreateDrawModeRow(string text, bool selected, Action setMode) =>
@@ -69,13 +71,15 @@ internal sealed class MobileDrawSettingsPage : UserControl
     {
         mutate();
         _configHandler.Save();
-        _refresh();
+        Render();
     }
 
     private void ClearTemporaryRecords()
     {
         _temporaryRecordService.ClearStudentList(_profileService.StudentListConfig?.Name ?? "default");
         _temporaryRecordService.ClearPrizeList(_profileService.PrizeListConfig?.Name ?? "default");
-        _refresh();
+        Render();
     }
+
+    private void CloseView() => _ = CloseAsync(reason: ViewCloseReason.Back);
 }

@@ -13,6 +13,7 @@ using Microsoft.Extensions.Hosting;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Icons;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
@@ -61,10 +62,17 @@ public sealed class MobileApp : Avalonia.Application
                     services.AddSingleton<IViewHostProvider>(serviceProvider =>
                         serviceProvider.GetRequiredService<SingleViewHostProvider>());
                     services.AddViewEngine()
-                        .AddView<MobileDrawView>("main.rollCall")
-                        .AddView<MobileHistoryPage>("main.history")
-                        .AddView<MobileOverviewPage>("main.overview")
-                        .AddView<MobileSettingsView>("settings.mobile");
+                        .AddView<MobileDrawPage>(MobileRoutes.Draw)
+                        .AddView<MobileHistoryPage>(MobileRoutes.History)
+                        .AddView<MobileOverviewPage>(MobileRoutes.Overview)
+                        .AddView<MobileSettingsCatalogPage>(MobileRoutes.Settings)
+                        .AddView<MobileGeneralSettingsPage>(MobileRoutes.General)
+                        .AddView<MobilePersonalizationSettingsPage>(MobileRoutes.Personalization)
+                        .AddView<MobileListManagementSettingsPage>(MobileRoutes.ListManagement)
+                        .AddView<MobileDrawSettingsPage>(MobileRoutes.DrawSettings)
+                        .AddView<MobileBackupSettingsPage>(MobileRoutes.Backup)
+                        .AddView<MobileUpdateSettingsPage>(MobileRoutes.Update)
+                        .AddView<MobileAboutSettingsPage>(MobileRoutes.About);
                     services.AddHttpClient<MobileUpdateService>();
                     services.AddSingleton<MobileDeviceUuidStore>();
                     services.AddHostedService<MobileOnlineStatusService>();
@@ -151,7 +159,7 @@ public sealed class MobileApp : Avalonia.Application
             _ = host.Services.GetRequiredService<IFeatureAvailabilityService>();
             _ = host.Services.GetRequiredService<DrawEngine>();
             await host.Services.GetRequiredService<IViewEngine>()
-                .ShowAsync("main.rollCall")
+                .ShowAsync(MobileRoutes.Draw)
                 .ConfigureAwait(false);
         }
         catch (Exception exception)
@@ -211,10 +219,10 @@ public sealed class MobileRootView : UserControl
             Foreground = MobileTheme.Text,
             VerticalAlignment = VerticalAlignment.Center
         };
-        _drawTab = MobileUi.CreateNavigationButton(LR.N_Draw);
-        _historyTab = MobileUi.CreateNavigationButton(LR.N_History);
-        _overviewTab = MobileUi.CreateNavigationButton(LR.N_Overview);
-        _settingsTab = MobileUi.CreateNavigationButton(LR.N_Settings);
+        _drawTab = MobileUi.CreateNavigationButton(LR.N_Draw, FluentIcons.PeopleFilled);
+        _historyTab = MobileUi.CreateNavigationButton(LR.N_History, FluentIcons.HistoryFilled);
+        _overviewTab = MobileUi.CreateNavigationButton(LR.N_Overview, FluentIcons.HomeFilled);
+        _settingsTab = MobileUi.CreateNavigationButton(LR.N_Settings, FluentIcons.SettingsFilled);
         _drawTab.Click += async (_, _) => await ShowDrawAsync();
         _historyTab.Click += async (_, _) => await ShowHistoryAsync();
         _overviewTab.Click += async (_, _) => await ShowOverviewAsync();
@@ -290,22 +298,22 @@ public sealed class MobileRootView : UserControl
 
     private async Task ShowHistoryAsync()
     {
-        await ShowPrimaryRouteAsync(MobileDestination.History, "main.history").ConfigureAwait(true);
+        await ShowPrimaryRouteAsync(MobileDestination.History, MobileRoutes.History).ConfigureAwait(true);
     }
 
     private async Task ShowDrawAsync()
     {
-        await ShowPrimaryRouteAsync(MobileDestination.Draw, "main.rollCall").ConfigureAwait(true);
+        await ShowPrimaryRouteAsync(MobileDestination.Draw, MobileRoutes.Draw).ConfigureAwait(true);
     }
 
     private async Task ShowSettingsAsync()
     {
-        await ShowPrimaryRouteAsync(MobileDestination.Settings, "settings.mobile").ConfigureAwait(true);
+        await ShowPrimaryRouteAsync(MobileDestination.Settings, MobileRoutes.Settings).ConfigureAwait(true);
     }
 
     private async Task ShowOverviewAsync()
     {
-        await ShowPrimaryRouteAsync(MobileDestination.Overview, "main.overview").ConfigureAwait(true);
+        await ShowPrimaryRouteAsync(MobileDestination.Overview, MobileRoutes.Overview).ConfigureAwait(true);
     }
 
     private async Task ShowPrimaryRouteAsync(MobileDestination destination, string routeId)
@@ -353,7 +361,6 @@ public sealed class MobileRootView : UserControl
         RenderCurrentDestination();
     }
 
-    private static IReadOnlyList<string> PrimaryRouteIds { get; } =
-        ["main.rollCall", "main.history", "main.overview", "settings.mobile"];
+    private static IReadOnlyList<string> PrimaryRouteIds => MobileRoutes.All;
 
 }

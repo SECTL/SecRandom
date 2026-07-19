@@ -28,7 +28,7 @@ This is an Android/iOS SingleView application for education random draws. It is 
 
 ## Implementation Practices
 
-- `MobileRootView` owns mobile-only fixed chrome; business destinations are MVE sessions shown through its inner host.
+- `MobileRootView` owns mobile-only fixed chrome; business destinations and every mobile settings page are independent MVE sessions shown through its inner host.
 - Profile mutations save through `IProfileService`; draws record both persistent history and temporary records.
 - The `LotteryEnabled` Core capability remains the only decision for whether the lottery segment can be selected.
 - Theme selection applies the saved `Appearance.Theme` immediately. Mobile keeps the `公平抽取` / `随机抽取` choice in roll-call settings, but when `公平抽取` is selected it runs the Core algorithm with the fixed `MobileDesktopDefaultsV1` policy snapshot and ignores persisted `MainConfigModel.FairDrawSettings` values.

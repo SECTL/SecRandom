@@ -6,7 +6,7 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Services.Config;
-using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Views;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 using AvaloniaButton = Avalonia.Controls.Button;
@@ -14,40 +14,44 @@ using AvaloniaOrientation = Avalonia.Layout.Orientation;
 
 namespace SecRandom.Mobile.Views;
 
-internal sealed class MobileDrawPage : UserControl
+public sealed class MobileDrawPage : ViewBase
 {
     private readonly IProfileService _profileService;
     private readonly IDrawTemporaryRecordService _temporaryRecordService;
     private readonly MainConfigHandler _configHandler;
-    private readonly DrawEngine _drawEngine;
+    private readonly IFeatureAvailabilityService _featureAvailabilityService;
     private readonly IRollCallSession _rollCallSession;
     private readonly ILotterySession _lotterySession;
+    private readonly IViewEngine _viewEngine;
+    private DrawSurface _drawSurface = DrawSurface.RollCall;
 
-    internal MobileDrawPage(
+    public MobileDrawPage(
         IProfileService profileService,
         IDrawTemporaryRecordService temporaryRecordService,
         IFeatureAvailabilityService featureAvailabilityService,
         MainConfigHandler configHandler,
-        DrawEngine drawEngine,
         IRollCallSession rollCallSession,
         ILotterySession lotterySession,
-        DrawSurface drawSurface,
-        Action<DrawSurface> selectSurface,
-        Action openListManagement)
+        IViewEngine viewEngine)
     {
         _profileService = profileService;
         _temporaryRecordService = temporaryRecordService;
         _configHandler = configHandler;
-        _drawEngine = drawEngine;
+        _featureAvailabilityService = featureAvailabilityService;
         _rollCallSession = rollCallSession;
         _lotterySession = lotterySession;
+        _viewEngine = viewEngine;
         EnsureRestartTemporaryRecordsCleared();
+        Render();
+    }
 
-        var rollCall = MobileUi.CreateSegmentButton(LR.C_RollCall, drawSurface == DrawSurface.RollCall, true);
-        var lottery = MobileUi.CreateSegmentButton(LR.C_Lottery, drawSurface == DrawSurface.Lottery, false);
-        lottery.IsEnabled = featureAvailabilityService.IsLotteryEnabled;
-        rollCall.Click += (_, _) => selectSurface(DrawSurface.RollCall);
-        lottery.Click += (_, _) => selectSurface(DrawSurface.Lottery);
+    private void Render()
+    {
+        var rollCall = MobileUi.CreateSegmentButton(LR.C_RollCall, _drawSurface == DrawSurface.RollCall, true);
+        var lottery = MobileUi.CreateSegmentButton(LR.C_Lottery, _drawSurface == DrawSurface.Lottery, false);
+        lottery.IsEnabled = _featureAvailabilityService.IsLotteryEnabled;
+        rollCall.Click += (_, _) => SelectSurface(DrawSurface.RollCall);
+        lottery.Click += (_, _) => SelectSurface(DrawSurface.Lottery);
 
         var selector = new Border
         {
@@ -63,12 +67,12 @@ internal sealed class MobileDrawPage : UserControl
             }
         };
 
-        Content = drawSurface == DrawSurface.RollCall
-            ? CreateRollCallContent(selector, openListManagement)
-            : CreateLotteryContent(selector, openListManagement);
+        Content = _drawSurface == DrawSurface.RollCall
+            ? CreateRollCallContent(selector)
+            : CreateLotteryContent(selector);
     }
 
-    private Control CreateRollCallContent(Control selector, Action openListManagement)
+    private Control CreateRollCallContent(Control selector)
     {
         var candidates = GetEligibleStudents();
         var hasStudents = (_profileService.CurrentStudentList?.Students.Any(student => student.IsCandidate) ?? false);
@@ -99,11 +103,11 @@ internal sealed class MobileDrawPage : UserControl
             MobileUi.CreateTitle(_profileService.StudentListConfig?.Name ?? LR.M_DefaultList),
             MobileUi.CreateResultPanel(result, detail, MobileTheme.PrimaryWash),
             draw,
-            MobileUi.CreateSecondaryButton(LR.C_ManageStudentList, openListManagement)
+            MobileUi.CreateSecondaryButton(LR.C_ManageStudentList, OpenListManagement)
         ]);
     }
 
-    private Control CreateLotteryContent(Control selector, Action openListManagement)
+    private Control CreateLotteryContent(Control selector)
     {
         var candidates = GetEligiblePrizes();
         var hasPrizes = (_profileService.CurrentPrizeList?.Prizes.Any(prize => prize.IsCandidate) ?? false);
@@ -134,7 +138,7 @@ internal sealed class MobileDrawPage : UserControl
             MobileUi.CreateTitle(_profileService.PrizeListConfig?.Name ?? LR.M_DefaultPool),
             MobileUi.CreateResultPanel(result, detail, MobileTheme.WarmWash),
             draw,
-            MobileUi.CreateSecondaryButton(LR.C_ManagePrizePool, openListManagement)
+            MobileUi.CreateSecondaryButton(LR.C_ManagePrizePool, OpenListManagement)
         ]);
     }
 
@@ -198,38 +202,30 @@ internal sealed class MobileDrawPage : UserControl
 
     private List<Student> GetEligibleStudents()
     {
-        var students = _profileService.CurrentStudentList?.Students.Where(student => student.IsCandidate).ToList() ?? [];
-        var threshold = GetRepeatThreshold(_configHandler.Data.RollCallSettings.DrawMode, _configHandler.Data.RollCallSettings.HalfRepeat);
-        if (threshold <= 0)
-            return students;
-
-        var counts = _temporaryRecordService.GetStudentCounts(GetStudentListName(), string.Empty, string.Empty);
-        return students.Where(student => counts.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(student)) < threshold).ToList();
+        return _rollCallSession.GetEligibleStudents().ToList();
     }
 
     private List<Prize> GetEligiblePrizes()
     {
-        var prizes = _profileService.CurrentPrizeList?.Prizes.Where(prize => prize.IsCandidate).ToList() ?? [];
-        var counts = _temporaryRecordService.GetPrizeCounts(GetPrizeListName());
-        if (_configHandler.Data.LotterySettings.DrawType == LotteryDrawType.Count)
-            return prizes.Where(prize => prize.Count - counts.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(prize)) > 0).ToList();
-
-        var threshold = GetRepeatThreshold(_configHandler.Data.LotterySettings.DrawMode, _configHandler.Data.LotterySettings.HalfRepeat);
-        return threshold <= 0
-            ? prizes
-            : prizes.Where(prize => counts.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(prize)) < threshold).ToList();
+        return _lotterySession.GetEligiblePrizes().ToList();
     }
 
     private string GetStudentListName() => _profileService.StudentListConfig?.Name ?? "default";
     private string GetPrizeListName() => _profileService.PrizeListConfig?.Name ?? "default";
 
-    private static int GetRepeatThreshold(DrawMode mode, int halfRepeat) => mode switch
+    private void SelectSurface(DrawSurface surface)
     {
-        DrawMode.Repeat => 0,
-        DrawMode.NoRepeat => 1,
-        DrawMode.HalfRepeat => Math.Max(1, halfRepeat),
-        _ => 1
-    };
+        if (surface == DrawSurface.Lottery && !_featureAvailabilityService.IsLotteryEnabled)
+            return;
+
+        _drawSurface = surface;
+        Render();
+    }
+
+    private void OpenListManagement()
+    {
+        _ = _viewEngine.ShowAsync(MobileRoutes.ListManagement);
+    }
 
     private static string GetDrawFailureText(DrawStatus status) => status switch
     {

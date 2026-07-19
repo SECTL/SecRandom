@@ -1,21 +1,24 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using SecRandom.Core.Abstraction.Services;
-using SecRandom.Shared.Extensions;
+using SecRandom.Core.Views;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Views.Settings;
 
-internal sealed class MobileListManagementSettingsPage : UserControl
+public sealed class MobileListManagementSettingsPage : ViewBase
 {
-    private readonly IProfileService _profileService;
-    private readonly Action _refresh;
+    private readonly IProfileCatalogEditor _catalogEditor;
 
-    internal MobileListManagementSettingsPage(IProfileService profileService, Action goBack, Action refresh)
+    public MobileListManagementSettingsPage(IProfileCatalogEditor catalogEditor)
     {
-        _profileService = profileService;
-        _refresh = refresh;
+        _catalogEditor = catalogEditor;
+        Render();
+    }
+
+    private void Render()
+    {
 
         var studentName = new TextBox { PlaceholderText = LR.W_StudentName, MinHeight = 44 };
         var studentId = new TextBox { PlaceholderText = LR.W_StudentId, MinHeight = 44 };
@@ -23,12 +26,12 @@ internal sealed class MobileListManagementSettingsPage : UserControl
         var prizeId = new TextBox { PlaceholderText = LR.W_PrizeId, MinHeight = 44 };
         var studentRows = new StackPanel { Spacing = 8 };
         var prizeRows = new StackPanel { Spacing = 8 };
-        foreach (var student in (_profileService.CurrentStudentList?.Students ?? []).OrderForList())
+        foreach (var student in _catalogEditor.GetStudents())
             studentRows.Children.Add(CreateStudentRow(student));
-        foreach (var prize in (_profileService.CurrentPrizeList?.Prizes ?? []).OrderForList())
+        foreach (var prize in _catalogEditor.GetPrizes())
             prizeRows.Children.Add(CreatePrizeRow(prize));
 
-        Content = MobileUi.CreateSettingsScroll(LR.S_ListManagement, LR.S_ListManagement_D, goBack, [
+        Content = MobileUi.CreateSettingsScroll(LR.S_ListManagement, LR.S_ListManagement_D, CloseView, [
             MobileUi.CreateLabel(LR.S_StudentList),
             MobileUi.CreateTitle(LR.C_AddStudent),
             studentName,
@@ -48,15 +51,13 @@ internal sealed class MobileListManagementSettingsPage : UserControl
     {
         var active = CreateActiveToggle(student.Exists, value =>
         {
-            student.Exists = value;
-            _profileService.SaveProfile();
-            _refresh();
+            _catalogEditor.SetStudentEnabled(student.RecordId.ToString("D"), value);
+            Render();
         });
         return MobileUi.CreateRow(MobileUi.Format(student.Id, student.Name), student.Exists ? LR.M_Enabled : LR.M_Disabled, active, () =>
         {
-            _profileService.CurrentStudentList?.Students.Remove(student);
-            _profileService.SaveProfile();
-            _refresh();
+            _catalogEditor.RemoveStudent(student.RecordId.ToString("D"));
+            Render();
         });
     }
 
@@ -64,15 +65,13 @@ internal sealed class MobileListManagementSettingsPage : UserControl
     {
         var active = CreateActiveToggle(prize.Exists, value =>
         {
-            prize.Exists = value;
-            _profileService.SaveProfile();
-            _refresh();
+            _catalogEditor.SetPrizeEnabled(prize.RecordId.ToString("D"), value);
+            Render();
         });
         return MobileUi.CreateRow(MobileUi.Format(prize.Id, prize.Name), prize.Exists ? LR.M_Enabled : LR.M_Disabled, active, () =>
         {
-            _profileService.CurrentPrizeList?.Prizes.Remove(prize);
-            _profileService.SaveProfile();
-            _refresh();
+            _catalogEditor.RemovePrize(prize.RecordId.ToString("D"));
+            Render();
         });
     }
 
@@ -81,15 +80,8 @@ internal sealed class MobileListManagementSettingsPage : UserControl
         if (string.IsNullOrWhiteSpace(name.Text) && string.IsNullOrWhiteSpace(id.Text))
             return;
 
-        var student = new Student
-        {
-            Name = name.Text?.Trim() ?? string.Empty,
-            Id = id.Text?.Trim() ?? string.Empty
-        };
-        ProfileRecordIdentity.EnsureRecordId(student);
-        _profileService.CurrentStudentList?.Students.Add(student);
-        _profileService.SaveProfile();
-        _refresh();
+        if (_catalogEditor.AddStudent(name.Text ?? string.Empty, id.Text ?? string.Empty))
+            Render();
     }
 
     private void AddPrize(TextBox name, TextBox id)
@@ -97,15 +89,8 @@ internal sealed class MobileListManagementSettingsPage : UserControl
         if (string.IsNullOrWhiteSpace(name.Text) && string.IsNullOrWhiteSpace(id.Text))
             return;
 
-        var prize = new Prize
-        {
-            Name = name.Text?.Trim() ?? string.Empty,
-            Id = id.Text?.Trim() ?? string.Empty
-        };
-        ProfileRecordIdentity.EnsureRecordId(prize);
-        _profileService.CurrentPrizeList?.Prizes.Add(prize);
-        _profileService.SaveProfile();
-        _refresh();
+        if (_catalogEditor.AddPrize(name.Text ?? string.Empty, id.Text ?? string.Empty))
+            Render();
     }
 
     private static ToggleSwitch CreateActiveToggle(bool enabled, Action<bool> setEnabled)
@@ -119,5 +104,10 @@ internal sealed class MobileListManagementSettingsPage : UserControl
         };
         active.IsCheckedChanged += (_, _) => setEnabled(active.IsChecked == true);
         return active;
+    }
+
+    private void CloseView()
+    {
+        _ = CloseAsync(reason: ViewCloseReason.Back);
     }
 }

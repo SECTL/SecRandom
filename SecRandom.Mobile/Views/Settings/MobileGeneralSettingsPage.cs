@@ -1,22 +1,29 @@
 using Avalonia.Controls;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Views;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Views.Settings;
 
-internal sealed class MobileGeneralSettingsPage : UserControl
+public sealed class MobileGeneralSettingsPage : ViewBase
 {
-    internal MobileGeneralSettingsPage(MainConfigHandler configHandler, Action goBack)
+    public MobileGeneralSettingsPage(MainConfigHandler configHandler)
+    {
+        Render(configHandler);
+    }
+
+    private void Render(MainConfigHandler configHandler)
     {
         var privacy = configHandler.Data.General.PrivacySettings;
         void Save(Action mutate)
         {
             mutate();
             configHandler.Save();
+            Render(configHandler);
         }
 
-        Content = MobileUi.CreateSettingsScroll(LR.S_General, LR.S_General_D, goBack, [
+        Content = MobileUi.CreateSettingsScroll(LR.S_General, LR.S_General_D, CloseView, [
             new TextBlock
             {
                 Text = LR.M_GeneralMobileOnly,
@@ -32,4 +39,6 @@ internal sealed class MobileGeneralSettingsPage : UserControl
                 () => Save(() => privacy.OnlineStatusMode = OnlineStatusMode.Full))
         ]);
     }
+
+    private void CloseView() => _ = CloseAsync(reason: ViewCloseReason.Back);
 }

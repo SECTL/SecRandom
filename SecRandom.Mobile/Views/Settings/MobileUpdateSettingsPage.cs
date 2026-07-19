@@ -1,29 +1,40 @@
 using Avalonia.Controls;
+using SecRandom.Core.Views;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Views.Settings;
 
-internal sealed class MobileUpdateSettingsPage : UserControl
+public sealed class MobileUpdateSettingsPage : ViewBase
 {
-    internal MobileUpdateSettingsPage(MobileUpdateService updateService, Action goBack, Action refresh)
+    private readonly MobileUpdateService _updateService;
+
+    public MobileUpdateSettingsPage(MobileUpdateService updateService)
     {
-        Content = MobileUi.CreateSettingsScroll(LR.S_AppUpdates, LR.S_AppUpdates_D, goBack, [
+        _updateService = updateService;
+        Render();
+    }
+
+    private void Render()
+    {
+        Content = MobileUi.CreateSettingsScroll(LR.S_AppUpdates, LR.S_AppUpdates_D, CloseView, [
             MobileUi.CreateSecondaryButton(LR.C_CheckUpdates, async () =>
             {
-                await updateService.CheckAsync();
-                refresh();
+                await _updateService.CheckAsync();
+                Render();
             }),
             new TextBlock
             {
-                Text = updateService.Status,
+                Text = _updateService.Status,
                 Foreground = MobileTheme.MutedText,
                 TextWrapping = Avalonia.Media.TextWrapping.Wrap
             },
-            MobileUi.CreatePrimaryButton(LR.C_InstallUpdate, updateService.IsUpdateAvailable && !updateService.IsBusy, async () =>
+            MobileUi.CreatePrimaryButton(LR.C_InstallUpdate, _updateService.IsUpdateAvailable && !_updateService.IsBusy, async () =>
             {
-                await updateService.DownloadAndInstallAsync();
-                refresh();
+                await _updateService.DownloadAndInstallAsync();
+                Render();
             })
         ]);
     }
+
+    private void CloseView() => _ = CloseAsync(reason: ViewCloseReason.Back);
 }
