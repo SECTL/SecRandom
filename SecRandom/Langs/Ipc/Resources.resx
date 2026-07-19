@@ -30,7 +30,7 @@
   <data name="M_RollCallCountSet" xml:space="preserve"><value>点名人数已设置</value></data>
   <data name="M_RollCallGroupSet" xml:space="preserve"><value>点名分组已设置</value></data>
   <data name="M_RollCallGenderSet" xml:space="preserve"><value>点名性别筛选已设置</value></data>
-  <data name="M_StudentListSet" xml:space="preserve"><value>学生名单已设置</value></data>
+  <data name="M_StudentListSet" xml:space="preserve"><value>成员名单已设置</value></data>
   <data name="M_LotteryCountSet" xml:space="preserve"><value>抽奖人数已设置</value></data>
   <data name="M_PoolSet" xml:space="preserve"><value>奖池已设置</value></data>
   <data name="M_LotteryGroupSet" xml:space="preserve"><value>抽奖分组已设置</value></data>
@@ -52,9 +52,9 @@
   <data name="M_NoQuickDrawResult" xml:space="preserve"><value>未产生闪抽结果。</value></data>
   <data name="M_NoEligibleRecordsFormat" xml:space="preserve"><value>{0}没有可抽取的记录。</value></data>
   <data name="M_InvalidParameterFormat" xml:space="preserve"><value>{0}参数无效。</value></data>
-  <data name="M_InvalidStudentList" xml:space="preserve"><value>学生名单参数无效。</value></data>
+  <data name="M_InvalidStudentList" xml:space="preserve"><value>成员名单参数无效。</value></data>
   <data name="M_InvalidPool" xml:space="preserve"><value>奖池参数无效。</value></data>
-  <data name="M_AssignmentUnavailable" xml:space="preserve"><value>抽奖未启用学生分配名单。</value></data>
+  <data name="M_AssignmentUnavailable" xml:space="preserve"><value>抽奖未启用成员分配名单。</value></data>
   <data name="L_RollCallCount" xml:space="preserve"><value>点名人数</value></data>
   <data name="L_RollCallGroup" xml:space="preserve"><value>点名分组</value></data>
   <data name="L_RollCallGender" xml:space="preserve"><value>点名性别筛选</value></data>

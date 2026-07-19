@@ -106,6 +106,86 @@ public sealed class FairDrawAlgorithmTests
     }
 
     [Fact]
+    public void MobileDesktopDefaultsPolicy_MatchesFreshDesktopDefaultFairWeights()
+    {
+        var first = new Student { Name = "First", RecordId = Guid.NewGuid(), Group = "A", Gender = "男" };
+        var second = new Student { Name = "Second", RecordId = Guid.NewGuid(), Group = "B", Gender = "女" };
+        var history = new StudentHistory
+        {
+            TotalStats = 20,
+            Students =
+            {
+                [first.RecordId.ToString("D")] = new History { TotalCount = 3 },
+                [second.RecordId.ToString("D")] = new History { TotalCount = 0 }
+            },
+            GroupStats =
+            {
+                ["A"] = 3,
+                ["B"] = 0
+            },
+            GenderStatus =
+            {
+                ["男"] = 3,
+                ["女"] = 0
+            }
+        };
+        var config = CreateConfig(new FairDrawSettingsConfig());
+
+        using var host = CreateHost(config, new TestProfileService(history, new StudentList { Students = [first, second] }));
+        var engine = CreateEngine(host);
+
+        var desktopWeights = engine.CalculateStudentWeight([first, second]);
+        var mobileWeights = engine.CalculateStudentWeightWithMobileDesktopDefaults([first, second]);
+
+        Assert.Equal(
+            desktopWeights.Select(candidate => (candidate.Candidate.RecordId, candidate.Weight)),
+            mobileWeights.Select(candidate => (candidate.Candidate.RecordId, candidate.Weight)));
+    }
+
+    [Fact]
+    public void MobileDesktopDefaultsPolicy_IgnoresPersistedFairDrawSettings()
+    {
+        var first = new Student { Name = "First", RecordId = Guid.NewGuid(), Group = "A", Gender = "男" };
+        var second = new Student { Name = "Second", RecordId = Guid.NewGuid(), Group = "B", Gender = "女" };
+        var history = new StudentHistory
+        {
+            TotalStats = 20,
+            Students =
+            {
+                [first.RecordId.ToString("D")] = new History { TotalCount = 5 },
+                [second.RecordId.ToString("D")] = new History { TotalCount = 0 }
+            }
+        };
+        var config = CreateConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = false,
+            FairDrawGroup = false,
+            FairDrawGender = false,
+            FairDrawTime = false,
+            FrequencyFunction = FrequencyFunctionMode.Linear,
+            EnableAvgGapProtection = false,
+            ColdStartEnabled = false,
+            BaseWeight = 9,
+            MinWeight = 9,
+            MaxWeight = 9,
+            GroupWeight = 0,
+            GenderWeight = 0,
+            TimeWeight = 0
+        });
+
+        using var host = CreateHost(config, new TestProfileService(history, new StudentList { Students = [first, second] }));
+        var engine = CreateEngine(host);
+
+        var desktopWeights = engine.CalculateStudentWeight([first, second]);
+        var mobileWeights = engine.CalculateStudentWeightWithMobileDesktopDefaults([first, second]);
+
+        Assert.All(desktopWeights, candidate => Assert.Equal(9, candidate.Weight));
+        Assert.NotEqual(
+            desktopWeights.Select(candidate => candidate.Weight),
+            mobileWeights.Select(candidate => candidate.Weight));
+    }
+
+    [Fact]
     public void RandomStudentVerification_UsesUniformSamplingProfile()
     {
         var first = new Student { Name = "First", RecordId = Guid.NewGuid() };
@@ -122,6 +202,34 @@ public sealed class FairDrawAlgorithmTests
         Assert.Equal(VerificationSamplingMode.WeightedWithoutReplacement, input.SamplingMode);
         Assert.Equal(VerificationAlgorithmProfile.StudentRandomHalfRepeat, input.AlgorithmProfile);
         Assert.All(input.Candidates, candidate => Assert.Equal(1_000_000, candidate.WeightMicros));
+    }
+
+    [Fact]
+    public void RandomMobileDraw_RemainsUnitWeightedAndScripted()
+    {
+        var first = new Student { Name = "First", RecordId = Guid.NewGuid() };
+        var second = new Student { Name = "Second", RecordId = Guid.NewGuid() };
+        var config = CreateConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = false,
+            BaseWeight = 99,
+            MinWeight = 99,
+            MaxWeight = 99,
+            EnableAvgGapProtection = false,
+            ColdStartEnabled = false,
+            FairDrawGroup = false,
+            FairDrawGender = false,
+            FairDrawTime = false
+        });
+        config.RollCallSettings.DrawType = DrawType.Random;
+
+        using var host = CreateHost(config, new TestProfileService(new StudentHistory(), new StudentList { Students = [first, second] }));
+        var engine = CreateEngine(host, new WeightedScriptedRandomSource(0.75));
+
+        var output = engine.DrawPreparedStudents(1, [first, second], DrawSettingsType.RollCall);
+
+        Assert.True(output.IsSuccess);
+        Assert.Equal(second, output.Result.Single());
     }
 
     [Fact]
@@ -229,6 +337,30 @@ public sealed class FairDrawAlgorithmTests
             randomSource);
     }
 
+    private sealed class ScriptedRandomSource(params int[] values) : IRandomSource
+    {
+        private readonly Queue<int> _values = new(values);
+
+        public int NextInt32(int maxExclusive)
+        {
+            var value = _values.Dequeue();
+            if (value < 0 || value >= maxExclusive)
+                throw new InvalidOperationException("The test random value is outside the requested bound.");
+            return value;
+        }
+
+        public double NextDouble() => throw new InvalidOperationException("Weighted sampling must not use NextDouble in this test.");
+    }
+
+    private sealed class WeightedScriptedRandomSource(params double[] values) : IRandomSource
+    {
+        private readonly Queue<double> _values = new(values);
+
+        public int NextInt32(int maxExclusive) => throw new InvalidOperationException("This test uses weighted sampling.");
+
+        public double NextDouble() => _values.Dequeue();
+    }
+
     private sealed class TestConfigService(MainConfigModel config) : ConfigServiceBase
     {
         public override bool IsConfigExists<T>(T fallback) => true;
@@ -260,18 +392,4 @@ public sealed class FairDrawAlgorithmTests
         public void SaveProfile() { }
     }
 
-    private sealed class ScriptedRandomSource(params int[] values) : IRandomSource
-    {
-        private readonly Queue<int> _values = new(values);
-
-        public int NextInt32(int maxExclusive)
-        {
-            var value = _values.Dequeue();
-            if (value < 0 || value >= maxExclusive)
-                throw new InvalidOperationException("The test random value is outside the requested bound.");
-            return value;
-        }
-
-        public double NextDouble() => throw new InvalidOperationException("Inventory permutation must not use weighted sampling.");
-    }
 }

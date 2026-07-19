@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using Avalonia;
@@ -29,10 +30,12 @@ using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Logging;
+using SecRandom.Core.Views;
 using SecRandom.Models;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.ImportExport;
 using SecRandom.Services.Security;
+using SecRandom.Services.ViewEngine;
 using SecRandom.Shared;
 using SecRandom.ViewModels;
 
@@ -41,8 +44,11 @@ namespace SecRandom.Views;
 public partial class SettingsView : UserControl, IFANavigationPageFactory
 {
     private const string DefaultMainPageId = "settings.overview";
+    private const string EmbeddedHostId = "desktop.settings";
 
     private readonly ILogger<SettingsView> _logger = IAppHost.GetService<ILogger<SettingsView>>();
+    private readonly ViewHostControl _embeddedViewHost;
+    private readonly DesktopViewHostProvider _desktopViewHostProvider = IAppHost.GetService<DesktopViewHostProvider>();
     private AppToastAdorner? _appToastAdorner;
 
     private Border? _currentHighlight;
@@ -55,9 +61,15 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     {
         Current = this;
         DataContext = this;
+        _embeddedViewHost = new ViewHostControl(EmbeddedHostId);
         InitializeComponent();
 
+        var embeddedViewHostPresenter = this.FindControl<ContentControl>("EmbeddedViewHostPresenter");
+        if (embeddedViewHostPresenter is not null)
+            embeddedViewHostPresenter.Content = _embeddedViewHost;
+
         NavigationFrame.NavigationPageFactory = this;
+        _desktopViewHostProvider.RegisterEmbeddedHost(_embeddedViewHost);
         if (GlobalConstants.IsDevelopment)
             ShowDebugNavigationItem();
         BuildNavigationMenuItems();
@@ -191,7 +203,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
 
         if (duration.HasValue)
         {
-            var timer = new Timer(duration.Value.TotalMilliseconds) { AutoReset = false };
+            var timer = new System.Timers.Timer(duration.Value.TotalMilliseconds) { AutoReset = false };
             timer.Elapsed += (_, _) =>
             {
                 Dispatcher.UIThread.Post(() =>
@@ -258,6 +270,13 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     {
         IAppHost.TryGetService<MainConfigHandler>()?.Save();
         DataContext = null;
+    }
+
+    public async Task CloseEmbeddedHostAsync(ViewCloseReason reason, CancellationToken cancellationToken = default)
+    {
+        var viewEngine = IAppHost.GetService<IViewEngine>();
+        await viewEngine.CloseHostAsync(_embeddedViewHost, reason, cancellationToken).ConfigureAwait(false);
+        await _embeddedViewHost.DestroyAsync(cancellationToken).ConfigureAwait(false);
     }
 
     #endregion

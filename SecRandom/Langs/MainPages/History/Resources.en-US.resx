@@ -7,7 +7,7 @@
   <data name="Page_Title" xml:space="preserve"><value>History</value></data>
   <data name="Tab_RollCall" xml:space="preserve"><value>Roll-call history</value></data>
   <data name="Tab_Lottery" xml:space="preserve"><value>Lottery history</value></data>
-  <data name="C_SelectClass" xml:space="preserve"><value>Select class</value></data>
+  <data name="C_SelectClass" xml:space="preserve"><value>Select list</value></data>
   <data name="C_SelectPool" xml:space="preserve"><value>Select prize pool</value></data>
   <data name="C_SelectMode" xml:space="preserve"><value>View mode</value></data>
   <data name="C_Refresh" xml:space="preserve"><value>Refresh</value></data>
@@ -23,15 +23,15 @@
   <data name="H_DrawTime" xml:space="preserve"><value>Roll-call time</value></data>
   <data name="H_LotteryTime" xml:space="preserve"><value>Lottery time</value></data>
   <data name="H_DrawMode" xml:space="preserve"><value>Roll-call mode</value></data>
-  <data name="H_DrawNumbers" xml:space="preserve"><value>Roll-call count</value></data>
+  <data name="H_DrawNumbers" xml:space="preserve"><value>Roll-call quantity</value></data>
   <data name="H_LotteryNumbers" xml:space="preserve"><value>Draw count</value></data>
-  <data name="H_StudentId" xml:space="preserve"><value>Student number</value></data>
+  <data name="H_StudentId" xml:space="preserve"><value>Sequence/ID</value></data>
   <data name="H_Serial" xml:space="preserve"><value>No.</value></data>
   <data name="H_Gender" xml:space="preserve"><value>Gender</value></data>
-  <data name="H_Group" xml:space="preserve"><value>Group</value></data>
-  <data name="H_Subject" xml:space="preserve"><value>Subject</value></data>
+  <data name="H_Group" xml:space="preserve"><value>Segment</value></data>
+  <data name="H_Subject" xml:space="preserve"><value>Schedule item</value></data>
   <data name="H_GenderLimit" xml:space="preserve"><value>Gender limit</value></data>
-  <data name="H_GroupLimit" xml:space="preserve"><value>Group limit</value></data>
+  <data name="H_GroupLimit" xml:space="preserve"><value>Segment limit</value></data>
   <data name="H_Weight" xml:space="preserve"><value>Weight</value></data>
-  <data name="C_Break" xml:space="preserve"><value>Break</value></data>
+  <data name="C_Break" xml:space="preserve"><value>Free period</value></data>
 </root>

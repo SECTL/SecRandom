@@ -42,7 +42,7 @@
   <data name="C_Show" xml:space="preserve"><value>显示</value></data>
   <data name="C_Cancel" xml:space="preserve"><value>取消</value></data>
   <data name="M_InternalSettings_ConfirmTitle" xml:space="preserve"><value>启用内幕设置？</value></data>
-  <data name="M_InternalSettings" xml:space="preserve"><value>已在名单管理页面每位学生或奖品右侧的“附加设置”菜单中显示“内幕设置”。此显示仅对本次运行有效，重新启动软件后会自动隐藏。&#xA;&#xA;内幕设置会影响候选项权重，不适用于需要公平、公开或可审计的学校和活动抽取。启用内幕设置的人员若被抽中，可验证文件上传至验证网站时会显示相应提醒；这可能使设置行为被发现。&#xA;&#xA;内幕设置的优先级低于公平抽取规则。已设置内幕的学生或奖品即使本次被抽中，也不代表下次一定会被抽中。</value></data>
+  <data name="M_InternalSettings" xml:space="preserve"><value>已在名单管理页面每位成员或奖品右侧的“附加设置”菜单中显示“内幕设置”。此显示仅对本次运行有效，重新启动软件后会自动隐藏。&#xA;&#xA;内幕设置会影响候选项权重，不适用于需要公平、公开或可审计的公开活动抽取。启用内幕设置的人员若被抽中，可验证文件上传至验证网站时会显示相应提醒；这可能使设置行为被发现。&#xA;&#xA;内幕设置的优先级低于公平抽取规则。已设置内幕的成员或奖品即使本次被抽中，也不代表下次一定会被抽中。</value></data>
   <data name="C_Enable" xml:space="preserve"><value>启用</value></data>
   <data name="C_CurrentVersion" xml:space="preserve"><value>当前版本</value></data>
   <data name="C_UpdateChannel" xml:space="preserve"><value>更新通道</value></data>
@@ -51,11 +51,11 @@
   <data name="C_LastCheck" xml:space="preserve"><value>上次检查</value></data>
   <data name="C_AvailableVersion" xml:space="preserve"><value>可用版本</value></data>
   <data name="C_LinkageSource" xml:space="preserve"><value>联动来源</value></data>
-  <data name="C_CourseSource" xml:space="preserve"><value>课程来源</value></data>
-  <data name="C_CourseState" xml:space="preserve"><value>课程状态</value></data>
+  <data name="C_CourseSource" xml:space="preserve"><value>日程来源</value></data>
+  <data name="C_CourseState" xml:space="preserve"><value>日程状态</value></data>
   <data name="C_SnapshotAvailable" xml:space="preserve"><value>快照可用</value></data>
-  <data name="C_CurrentCourse" xml:space="preserve"><value>当前课程</value></data>
-  <data name="C_NextCourse" xml:space="preserve"><value>下一节课程</value></data>
+  <data name="C_CurrentCourse" xml:space="preserve"><value>当前日程项目</value></data>
+  <data name="C_NextCourse" xml:space="preserve"><value>下一日程项目</value></data>
   <data name="C_DrawRestricted" xml:space="preserve"><value>抽取受限</value></data>
   <data name="C_SnapshotError" xml:space="preserve"><value>快照错误</value></data>
   <data name="C_NotificationsEnabled" xml:space="preserve"><value>通知已启用</value></data>
@@ -81,7 +81,7 @@
   <data name="C_PluginConfigDirectory" xml:space="preserve"><value>插件配置目录</value></data>
   <data name="C_ProofDirectory" xml:space="preserve"><value>证明目录</value></data>
   <data name="C_UpdateDownloadDirectory" xml:space="preserve"><value>更新下载目录</value></data>
-  <data name="C_CourseLinkageDirectory" xml:space="preserve"><value>课程联动目录</value></data>
+  <data name="C_CourseLinkageDirectory" xml:space="preserve"><value>日程联动目录</value></data>
   <data name="C_CrashDirectory" xml:space="preserve"><value>崩溃报告目录</value></data>
   <data name="C_Exists" xml:space="preserve"><value>存在</value></data>
   <data name="C_Missing" xml:space="preserve"><value>缺失</value></data>

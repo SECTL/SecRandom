@@ -56,7 +56,7 @@
     <data name="Menu_OpenSettings" xml:space="preserve"><value>設定を開く</value></data>
     <data name="Menu_OpenMainWindow" xml:space="preserve"><value>メインウィンドウを開く</value></data>
     <data name="Menu_ExitProgram" xml:space="preserve"><value>終了</value></data>
-    <data name="App_Description" xml:space="preserve"><value>教育現場向けの使いやすい点呼・抽選ソフトウェアです。教室での点呼をより効率的かつ透明にします。</value></data>
+    <data name="App_Description" xml:space="preserve"><value>活動や組織向けの使いやすい点呼・抽選ソフトウェアです。抽選の流れをより効率的かつ透明にします。</value></data>
     <data name="App_License" xml:space="preserve"><value>このプロジェクトは GNU General Public License v3.0 の下でライセンスされています。</value></data>
     <data name="C_ToBeWritten" xml:space="preserve"><value>（作成中）</value></data>
     <data name="AttachedSettings_BehindScene" xml:space="preserve"><value>詳細設定</value></data>

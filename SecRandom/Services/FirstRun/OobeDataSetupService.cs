@@ -12,7 +12,7 @@ public sealed class OobeDataSetupService(MainConfigHandler configHandler, IProfi
 {
     public void SaveStudentList(string name, IReadOnlyList<Student> students)
     {
-        name = ValidateName(name, "班级名称");
+        name = ValidateName(name);
         var listConfig = new StudentListConfig(name);
         listConfig.Data.Students.Clear();
         foreach (var student in students)
@@ -28,7 +28,7 @@ public sealed class OobeDataSetupService(MainConfigHandler configHandler, IProfi
 
     public void SavePrizeList(string name, IReadOnlyList<Prize> prizes)
     {
-        name = ValidateName(name, "奖品池名称");
+        name = ValidateName(name);
         var listConfig = new PrizeListConfig(name);
         listConfig.Data.Prizes.Clear();
         foreach (var prize in prizes)
@@ -44,16 +44,16 @@ public sealed class OobeDataSetupService(MainConfigHandler configHandler, IProfi
 
     public void CreateStudentList(string name)
     {
-        name = ValidateName(name, "班级名称");
+        name = ValidateName(name);
         if (File.Exists(new StudentList(name).ConfigFilePath))
-            throw new InvalidOperationException("同名班级已存在。");
+            throw new OobeDataSetupException(OobeDataSetupError.ListAlreadyExists);
 
         new StudentListConfig(name).Save();
     }
 
     public void CreatePrizeList(string name)
     {
-        name = ValidateName(name, "奖品池名称");
+        name = ValidateName(name);
         if (File.Exists(new PrizeList(name).ConfigFilePath))
             throw new InvalidOperationException("同名奖品池已存在。");
 
@@ -62,12 +62,12 @@ public sealed class OobeDataSetupService(MainConfigHandler configHandler, IProfi
 
     public void RenameStudentList(string oldName, string newName)
     {
-        oldName = ValidateName(oldName, "班级名称");
-        newName = ValidateName(newName, "班级名称");
+        oldName = ValidateName(oldName);
+        newName = ValidateName(newName);
         if (oldName == newName)
             return;
         if (File.Exists(new StudentList(newName).ConfigFilePath))
-            throw new InvalidOperationException("同名班级已存在。");
+            throw new OobeDataSetupException(OobeDataSetupError.ListAlreadyExists);
 
         profileService.SaveProfile();
         MoveProfileFile(new StudentList(oldName), new StudentList(newName));
@@ -80,8 +80,8 @@ public sealed class OobeDataSetupService(MainConfigHandler configHandler, IProfi
 
     public void RenamePrizeList(string oldName, string newName)
     {
-        oldName = ValidateName(oldName, "奖品池名称");
-        newName = ValidateName(newName, "奖品池名称");
+        oldName = ValidateName(oldName);
+        newName = ValidateName(newName);
         if (oldName == newName)
             return;
         if (File.Exists(new PrizeList(newName).ConfigFilePath))
@@ -98,7 +98,7 @@ public sealed class OobeDataSetupService(MainConfigHandler configHandler, IProfi
 
     public void DeleteStudentList(string name)
     {
-        name = ValidateName(name, "班级名称");
+        name = ValidateName(name);
         profileService.SaveProfile();
         DeleteProfileFile(new StudentList(name));
         DeleteProfileFile(new StudentHistory(name));
@@ -106,17 +106,17 @@ public sealed class OobeDataSetupService(MainConfigHandler configHandler, IProfi
 
     public void DeletePrizeList(string name)
     {
-        name = ValidateName(name, "奖品池名称");
+        name = ValidateName(name);
         profileService.SaveProfile();
         DeleteProfileFile(new PrizeList(name));
         DeleteProfileFile(new PrizeHistory(name));
     }
 
-    private static string ValidateName(string name, string displayName)
+    private static string ValidateName(string name)
     {
         name = name.Trim();
         if (string.IsNullOrWhiteSpace(name) || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
-            throw new InvalidOperationException($"{displayName}不能为空，且不能包含文件名非法字符。");
+            throw new OobeDataSetupException(OobeDataSetupError.ListNameInvalid);
         return name;
     }
 
@@ -133,4 +133,15 @@ public sealed class OobeDataSetupService(MainConfigHandler configHandler, IProfi
         if (File.Exists(config.ConfigFilePath))
             File.Delete(config.ConfigFilePath);
     }
+}
+
+public enum OobeDataSetupError
+{
+    ListNameInvalid,
+    ListAlreadyExists
+}
+
+public sealed class OobeDataSetupException(OobeDataSetupError error) : InvalidOperationException
+{
+    public OobeDataSetupError Error { get; } = error;
 }

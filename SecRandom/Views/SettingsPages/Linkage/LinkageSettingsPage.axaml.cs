@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -112,12 +113,12 @@ public partial class LinkageSettingsPage : UserControl
             }
 
             var schedule = await CsesStore.ImportAsync(path);
-            CsesSummary = schedule.Summary;
-            this.ShowSuccessToast(string.Format(LR.M_CsesImported, schedule.Summary));
+            CsesSummary = FormatCsesSummary(schedule);
+            this.ShowSuccessToast(string.Format(CultureInfo.CurrentCulture, LR.M_CsesImported, CsesSummary));
         }
-        catch (Exception exception)
+        catch (CsesScheduleException exception)
         {
-            this.ShowErrorToast(exception.Message);
+            this.ShowErrorToast(FormatCsesError(exception));
         }
         finally
         {
@@ -163,6 +164,32 @@ public partial class LinkageSettingsPage : UserControl
 
     private void RefreshCsesSummary()
     {
-        CsesSummary = CsesStore.Load()?.Summary ?? LR.M_CsesMissing;
+        var schedule = CsesStore.Load();
+        CsesSummary = schedule is null ? LR.M_CsesMissing : FormatCsesSummary(schedule);
+    }
+
+    private static string FormatCsesSummary(CsesSchedule schedule) => string.Format(
+        CultureInfo.CurrentCulture,
+        LR.ResourceManager.GetString("M_CsesSummary", LR.Culture) ?? "{0} {1:HH:mm} {2:HH:mm}",
+        schedule.PeriodCount,
+        schedule.Earliest,
+        schedule.Latest);
+
+    private static string FormatCsesError(CsesScheduleException exception)
+    {
+        var key = exception.Error switch
+        {
+            CsesScheduleError.Empty => "M_CsesErrorEmpty",
+            CsesScheduleError.RootNotObject => "M_CsesErrorRoot",
+            CsesScheduleError.NoValidItems => "M_CsesErrorNoItems",
+            CsesScheduleError.InvalidItem => "M_CsesErrorInvalidItem",
+            CsesScheduleError.InvalidTime => "M_CsesErrorInvalidTime",
+            CsesScheduleError.OverlappingItems => "M_CsesErrorOverlap",
+            _ => throw new ArgumentOutOfRangeException(nameof(exception))
+        };
+        var format = LR.ResourceManager.GetString(key, LR.Culture) ?? key;
+        return exception.Argument is null
+            ? format
+            : string.Format(CultureInfo.CurrentCulture, format, exception.Argument);
     }
 }

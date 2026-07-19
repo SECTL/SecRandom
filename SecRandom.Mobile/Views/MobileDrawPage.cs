@@ -146,7 +146,17 @@ internal sealed class MobileDrawPage : UserControl
                 return;
             }
 
-            var output = _drawEngine.DrawPreparedStudents(1, currentCandidates, DrawSettingsType.RollCall);
+            var drawType = _configHandler.Data.RollCallSettings.DrawType;
+            var prepared = drawType == DrawType.Fair
+                ? _drawEngine.PrepareStudentsForMobileDesktopDefaults(
+                    1,
+                    currentCandidates,
+                    DrawSettingsType.RollCall,
+                    DrawType.Fair)
+                : null;
+            var output = drawType == DrawType.Fair
+                ? _drawEngine.DrawPreparedStudents(prepared!, 1)
+                : _drawEngine.DrawPreparedStudents(1, currentCandidates, DrawSettingsType.RollCall);
             if (!output.IsSuccess || output.Result.Count == 0)
             {
                 result.Text = GetDrawFailureText(output.Status);
@@ -155,10 +165,8 @@ internal sealed class MobileDrawPage : UserControl
             }
 
             var student = output.Result[0];
-            var weights = _configHandler.Data.RollCallSettings.DrawType == DrawType.Fair
-                ? _drawEngine.CalculateStudentWeight(currentCandidates)
-                    .Where(candidate => ReferenceEquals(candidate.Candidate, student))
-                    .ToDictionary(candidate => candidate.Candidate, candidate => candidate.Weight)
+            var weights = drawType == DrawType.Fair
+                ? prepared!.WeightedCandidates.ToDictionary(candidate => candidate.Candidate, candidate => candidate.Weight)
                 : new Dictionary<Student, double> { [student] = 1 };
             _profileService.RecordStudentHistory(
                 output.Result,

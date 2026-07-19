@@ -119,7 +119,7 @@
         <value>退出程序</value>
     </data>
     <data name="App_Description" xml:space="preserve">
-        <value>一个易用的点名/抽奖软件，专为教育场景设计，让课堂点名更高效透明</value>
+        <value>一款易用的点名/抽奖软件，面向活动与组织场景设计，让抽取过程更高效透明</value>
     </data>
     <data name="App_License" xml:space="preserve">
         <value>本项目基于 GNU General Public License v3.0 获得许可。</value>
@@ -200,7 +200,7 @@
         <value>根据历史抽取次数调整候选权重</value>
     </data>
     <data name="Settings_FairPick_ByGroup" xml:space="preserve">
-        <value>按小组公平抽取</value>
+        <value>按分组公平抽取</value>
     </data>
     <data name="Settings_FairPick_ByGender" xml:space="preserve">
         <value>按性别公平抽取</value>

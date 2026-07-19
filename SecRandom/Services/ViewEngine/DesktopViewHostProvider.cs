@@ -12,6 +12,7 @@ namespace SecRandom.Services.ViewEngine;
 public sealed class DesktopViewHostProvider : IViewHostProvider
 {
     private readonly List<DesktopViewHostWindow> _hosts = [];
+    private readonly Dictionary<string, IViewHost> _embeddedHosts = new(StringComparer.Ordinal);
     private int _nextHostNumber;
 
     public Task<ViewHostSelection> GetHostAsync(
@@ -21,6 +22,16 @@ public sealed class DesktopViewHostProvider : IViewHostProvider
         ArgumentNullException.ThrowIfNull(options);
         return RunOnUiThreadAsync(() =>
         {
+            if (!string.IsNullOrWhiteSpace(options.HostId))
+            {
+                if (options.ActivationPreference == ViewActivationPreference.NewHost)
+                    return ViewHostSelection.Unsupported("A named host cannot be combined with creating a new host.");
+
+                return _embeddedHosts.TryGetValue(options.HostId, out var embeddedHost)
+                    ? ViewHostSelection.Success(embeddedHost)
+                    : ViewHostSelection.Failed($"Desktop view host '{options.HostId}' is not registered.");
+            }
+
             var existing = _hosts.LastOrDefault(host => !host.IsClosed);
             if (options.ActivationPreference == ViewActivationPreference.ExistingHost)
             {
@@ -39,6 +50,34 @@ public sealed class DesktopViewHostProvider : IViewHostProvider
         });
     }
 
+    public Task RegisterEmbeddedHostAsync(IViewHost host, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(host);
+        return RunOnUiThreadAsync(() => RegisterEmbeddedHost(host));
+    }
+
+    public void RegisterEmbeddedHost(IViewHost host)
+    {
+        ArgumentNullException.ThrowIfNull(host);
+        if (!Dispatcher.UIThread.CheckAccess())
+            throw new InvalidOperationException("Desktop embedded hosts must be registered on the UI thread.");
+
+        if (_embeddedHosts.TryGetValue(host.HostId, out var existing) && !ReferenceEquals(existing, host))
+            throw new InvalidOperationException($"Desktop embedded host '{host.HostId}' is already registered.");
+
+        if (_embeddedHosts.ContainsKey(host.HostId))
+            return;
+
+        _embeddedHosts.Add(host.HostId, host);
+        host.Destroyed += EmbeddedHostOnDestroyed;
+    }
+
+    public Task UnregisterEmbeddedHostAsync(IViewHost host, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(host);
+        return RunOnUiThreadAsync(() => UnregisterEmbeddedHost(host));
+    }
+
     private void HostOnDestroyed(object? sender, EventArgs e)
     {
         if (sender is DesktopViewHostWindow host)
@@ -48,10 +87,36 @@ public sealed class DesktopViewHostProvider : IViewHostProvider
         }
     }
 
+    private void EmbeddedHostOnDestroyed(object? sender, EventArgs e)
+    {
+        if (sender is IViewHost host)
+            UnregisterEmbeddedHost(host);
+    }
+
+    private void UnregisterEmbeddedHost(IViewHost host)
+    {
+        if (!_embeddedHosts.TryGetValue(host.HostId, out var existing) || !ReferenceEquals(existing, host))
+            return;
+
+        existing.Destroyed -= EmbeddedHostOnDestroyed;
+        _embeddedHosts.Remove(host.HostId);
+    }
+
     private static Task<T> RunOnUiThreadAsync<T>(Func<T> action)
     {
         if (Dispatcher.UIThread.CheckAccess())
             return Task.FromResult(action());
+
+        return Dispatcher.UIThread.InvokeAsync(action).GetTask();
+    }
+
+    private static Task RunOnUiThreadAsync(Action action)
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+            return Task.CompletedTask;
+        }
 
         return Dispatcher.UIThread.InvokeAsync(action).GetTask();
     }
@@ -151,16 +216,15 @@ internal sealed class DesktopViewHostWindow : Window, IViewHost
         {
             while (true)
             {
-                var activeView = ActiveModalView ?? PageStack.LastOrDefault();
-                if (activeView is null)
-                {
-                    await DestroyAsync().ConfigureAwait(false);
-                    return;
-                }
+                var closed = await _contentHost.CloseActiveViewAsync().ConfigureAwait(false);
+                if (closed)
+                    continue;
 
-                var closeResult = await activeView.CloseAsync(reason: ViewCloseReason.User).ConfigureAwait(false);
-                if (!closeResult.WasClosed)
+                if (ActiveModalView is not null || PageStack.Count != 0)
                     return;
+
+                await DestroyAsync().ConfigureAwait(false);
+                return;
             }
         }
         finally

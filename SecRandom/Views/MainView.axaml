@@ -62,9 +62,15 @@
                                    Theme="{StaticResource TitleTextBlockStyle}" />
                     </Grid>
 
-                    <fa:FAFrame Grid.Row="1" x:Name="NavigationFrame"
-                                IsNavigationStackEnabled="False" CacheSize="0"
-                                Content="{Binding ViewModel.FrameContent}" />
+                    <Grid Grid.Row="1">
+                        <fa:FAFrame x:Name="NavigationFrame"
+                                    IsNavigationStackEnabled="False" CacheSize="0"
+                                    Content="{Binding ViewModel.FrameContent}" />
+                        <ContentControl x:Name="EmbeddedViewHostPresenter"
+                                        IsHitTestVisible="False"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch" />
+                    </Grid>
                 </Grid>
             </sr:DrawerHost>
         </fa:FANavigationView>

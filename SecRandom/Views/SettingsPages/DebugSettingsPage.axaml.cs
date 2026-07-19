@@ -23,6 +23,7 @@ using SecRandom.Services.Updates;
 using SecRandom.Shared;
 using SecRandom.Views;
 using DebugResources = SecRandom.Langs.SettingsPages.Debug.DebugStrings;
+using LinkageResources = SecRandom.Langs.SettingsPages.Linkage.Resources;
 
 namespace SecRandom.Views.SettingsPages;
 
@@ -234,7 +235,7 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
                                             + $"{T("C_CurrentCourse")}: {snapshot.CurrentCourse?.Name ?? "-"}\n"
                                             + $"{T("C_NextCourse")}: {snapshot.NextCourse?.Name ?? "-"}\n"
                                             + $"{T("C_DrawRestricted")}: {_courseLinkage.IsConfirmedNonClassTime}\n"
-                                            + $"{T("C_SnapshotError")}: {EmptyAsDash(snapshot.Error)}\n\n"
+                                             + $"{T("C_SnapshotError")}: {EmptyAsDash(FormatScheduleError(snapshot.Error))}\n\n"
                                             + $"{T("C_NotificationsEnabled")}: {notification.Enabled}\n"
                                             + $"{T("C_BuiltInNotification")}: {notification.UsesBuiltInNotificationService}\n"
                                             + $"{T("C_ExternalNotification")}: {notification.UsesExternalNotificationService}\n"
@@ -264,6 +265,36 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
                                  + FormatPath(T("C_UpdateDownloadDirectory"), Path.Combine(dataRoot, "updates", "downloads"), isDirectory: true)
                                  + FormatPath(T("C_CourseLinkageDirectory"), Path.Combine(dataRoot, "CSES"), isDirectory: true)
                                  + FormatPath(T("C_CrashDirectory"), Path.Combine(dataRoot, "crashes"), isDirectory: true);
+    }
+
+    private static string? FormatScheduleError(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+            return error;
+
+        var (code, argument) = error.Split(':', 2) switch
+        {
+            [var knownCode, var knownArgument] => (knownCode, knownArgument),
+            [var knownCode] => (knownCode, null),
+            _ => (error, null)
+        };
+        var key = code switch
+        {
+            ScheduleErrorCodes.CsesMissing => "M_ScheduleError_CsesMissing",
+            ScheduleErrorCodes.ClassIslandUnavailable => "M_ScheduleError_ClassIslandUnavailable",
+            ScheduleErrorCodes.ClassIslandTimerStopped => "M_ScheduleError_ClassIslandTimerStopped",
+            ScheduleErrorCodes.ClassIslandScheduleDisabled => "M_ScheduleError_ClassIslandScheduleDisabled",
+            ScheduleErrorCodes.ClassIslandScheduleUnloaded => "M_ScheduleError_ClassIslandScheduleUnloaded",
+            ScheduleErrorCodes.ClassIslandTimeUnconfirmed => "M_ScheduleError_ClassIslandTimeUnconfirmed",
+            ScheduleErrorCodes.ClassIslandUnsupportedState => "M_ScheduleError_ClassIslandUnsupportedState",
+            ScheduleErrorCodes.ClassIslandReadFailed => "M_ScheduleError_ClassIslandReadFailed",
+            _ => null
+        };
+        if (key is null)
+            return error;
+
+        var format = LinkageResources.ResourceManager.GetString(key, LinkageResources.Culture) ?? key;
+        return argument is null ? format : string.Format(CultureInfo.CurrentCulture, format, argument);
     }
 
     private void SetDiagnostic<T>(ref T field, T value, string propertyName)

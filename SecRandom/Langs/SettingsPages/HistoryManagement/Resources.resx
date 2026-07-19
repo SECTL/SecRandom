@@ -35,10 +35,10 @@
     <value>筛选</value>
   </data>
   <data name="S_Filter_SelectedClassName" xml:space="preserve">
-    <value>默认班级筛选</value>
+    <value>默认名单筛选</value>
   </data>
   <data name="S_Filter_SelectedClassName_D" xml:space="preserve">
-    <value>进入历史页时默认选择的班级</value>
+    <value>进入历史页时默认选择的名单</value>
   </data>
   <data name="S_Filter_SelectedPoolName" xml:space="preserve">
     <value>默认奖池筛选</value>
@@ -53,7 +53,7 @@
     <value>清除点名历史</value>
   </data>
   <data name="S_ClearHistory_RollCall_D" xml:space="preserve">
-    <value>删除选定班级的全部点名历史记录，此操作不可撤销</value>
+    <value>删除选定名单的全部点名历史记录，此操作不可撤销</value>
   </data>
   <data name="S_ClearHistory_Lottery" xml:space="preserve">
     <value>清除抽奖历史</value>

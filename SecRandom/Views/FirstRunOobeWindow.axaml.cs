@@ -14,6 +14,7 @@ using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Services.FirstRun;
 using SecRandom.Services.ImportExport;
 using SecRandom.ViewModels;
 using LR = SecRandom.Langs.FirstRunOobe.Resources;
@@ -211,7 +212,20 @@ public partial class FirstRunOobeWindow : FAAppWindow
             return;
         }
 
-        action(name);
+        try
+        {
+            action(name);
+        }
+        catch (OobeDataSetupException exception)
+        {
+            var message = exception.Error switch
+            {
+                OobeDataSetupError.ListNameInvalid => LR.M_ListNameInvalid,
+                OobeDataSetupError.ListAlreadyExists => LR.M_ListNameExists,
+                _ => LR.M_ListNameInvalid
+            };
+            _ = ShowDialogAsync(LR.C_ListNameTitle, message);
+        }
     }
 
     private async Task<string?> PromptListNameAsync(string title, string primaryButtonText, string initialName)

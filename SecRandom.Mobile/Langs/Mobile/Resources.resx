@@ -21,7 +21,7 @@
         <value>SecRandom</value>
     </data>
     <data name="Subtitle" xml:space="preserve">
-        <value>移动端基础运行环境</value>
+        <value>移动端基础运行框架</value>
     </data>
     <data name="Description" xml:space="preserve">
         <value>移动端平台服务已就绪。抽签与桌面集成功能会在完成移动端服务边界验证后逐步开放。</value>
@@ -120,7 +120,7 @@
         <value>抽取奖品</value>
     </data>
     <data name="C_ManageStudentList" xml:space="preserve">
-        <value>管理学生名单</value>
+        <value>管理成员名单</value>
     </data>
     <data name="C_ManagePrizePool" xml:space="preserve">
         <value>管理奖池</value>
@@ -129,7 +129,7 @@
         <value>清空临时抽取记录</value>
     </data>
     <data name="C_AddStudent" xml:space="preserve">
-        <value>添加学生</value>
+        <value>添加成员</value>
     </data>
     <data name="C_AddPrize" xml:space="preserve">
         <value>添加奖品</value>
@@ -156,7 +156,7 @@
         <value>数据概览</value>
     </data>
     <data name="S_StudentList" xml:space="preserve">
-        <value>学生名单</value>
+        <value>成员名单</value>
     </data>
     <data name="S_PrizePool" xml:space="preserve">
         <value>奖池</value>
@@ -177,10 +177,10 @@
         <value>设置</value>
     </data>
     <data name="W_StudentName" xml:space="preserve">
-        <value>学生姓名</value>
+        <value>成员名称</value>
     </data>
     <data name="W_StudentId" xml:space="preserve">
-        <value>学号（可选）</value>
+        <value>编号（可选）</value>
     </data>
     <data name="W_PrizeName" xml:space="preserve">
         <value>奖品名称</value>
@@ -198,10 +198,10 @@
         <value>默认奖池</value>
     </data>
     <data name="M_NoStudents" xml:space="preserve">
-        <value>名单中还没有可点名学生</value>
+        <value>名单中还没有可点名成员</value>
     </data>
     <data name="M_AddStudentsPrompt" xml:space="preserve">
-        <value>请在设置中添加学生</value>
+        <value>请在设置中添加成员</value>
     </data>
     <data name="M_NoPrizes" xml:space="preserve">
         <value>奖池中还没有可抽取奖品</value>
@@ -219,7 +219,7 @@
         <value>抽取完成</value>
     </data>
     <data name="M_StudentId" xml:space="preserve">
-        <value>学号：{0}</value>
+        <value>编号：{0}</value>
     </data>
     <data name="M_PrizeId" xml:space="preserve">
         <value>编号：{0}</value>
@@ -228,7 +228,7 @@
         <value>尚无抽取记录</value>
     </data>
     <data name="M_Students" xml:space="preserve">
-        <value>学生</value>
+        <value>成员</value>
     </data>
     <data name="M_Prizes" xml:space="preserve">
         <value>奖品</value>
@@ -267,7 +267,7 @@
         <value>移动端备份与恢复将在提供受系统文件访问授权的完整事务后开放。</value>
     </data>
     <data name="M_AboutLicense" xml:space="preserve">
-        <value>SecRandom 是面向教育场景的公平抽取工具，采用 GPLv3 许可证发布。</value>
+        <value>SecRandom 是面向活动与组织场景的公平抽取工具，采用 GPLv3 许可证发布。</value>
     </data>
     <data name="C_Back" xml:space="preserve">
         <value>返回设置</value>
@@ -291,19 +291,13 @@
         <value>名单管理</value>
     </data>
     <data name="S_ListManagement_D" xml:space="preserve">
-        <value>学生名单与奖池</value>
+        <value>成员名单与奖池</value>
     </data>
     <data name="S_DrawSettings" xml:space="preserve">
         <value>抽取</value>
     </data>
     <data name="S_DrawSettings_D" xml:space="preserve">
         <value>点名和抽奖规则</value>
-    </data>
-    <data name="S_FairDraw" xml:space="preserve">
-        <value>公平抽取</value>
-    </data>
-    <data name="S_FairDraw_D" xml:space="preserve">
-        <value>公平权重和间隔保护</value>
     </data>
     <data name="S_Backup" xml:space="preserve">
         <value>备份</value>
@@ -331,21 +325,6 @@
     </data>
     <data name="S_RepeatMode" xml:space="preserve">
         <value>重复规则</value>
-    </data>
-    <data name="S_FairDrawEnabled" xml:space="preserve">
-        <value>启用公平权重</value>
-    </data>
-    <data name="S_FairDrawGroup" xml:space="preserve">
-        <value>平衡分组</value>
-    </data>
-    <data name="S_FairDrawGender" xml:space="preserve">
-        <value>平衡性别</value>
-    </data>
-    <data name="S_FairDrawTime" xml:space="preserve">
-        <value>考虑抽取间隔</value>
-    </data>
-    <data name="S_AverageGapProtection" xml:space="preserve">
-        <value>启用平均间隔保护</value>
     </data>
     <data name="S_Version" xml:space="preserve">
         <value>版本</value>
@@ -386,37 +365,10 @@
     <data name="O_Cleared" xml:space="preserve">
         <value>手动清除</value>
     </data>
-    <data name="O_FrequencyLinear" xml:space="preserve">
-        <value>线性</value>
-    </data>
-    <data name="O_FrequencySquareRoot" xml:space="preserve">
-        <value>平方根</value>
-    </data>
-    <data name="O_FrequencyIndex" xml:space="preserve">
-        <value>指数</value>
-    </data>
     <data name="S_HalfRepeat" xml:space="preserve">
         <value>半重复阈值</value>
     </data>
     <data name="S_ClearRecord" xml:space="preserve">
         <value>清除记录</value>
-    </data>
-    <data name="S_FrequencyFunction" xml:space="preserve">
-        <value>频率函数</value>
-    </data>
-    <data name="S_GapThreshold" xml:space="preserve">
-        <value>间隔阈值</value>
-    </data>
-    <data name="S_ColdStart" xml:space="preserve">
-        <value>启用冷启动保护</value>
-    </data>
-    <data name="S_ColdStartRounds" xml:space="preserve">
-        <value>冷启动轮次</value>
-    </data>
-    <data name="S_Shield" xml:space="preserve">
-        <value>启用抽取屏蔽</value>
-    </data>
-    <data name="S_ShieldTime" xml:space="preserve">
-        <value>屏蔽时长</value>
     </data>
 </root>

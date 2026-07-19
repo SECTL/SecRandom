@@ -19,6 +19,7 @@ using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
+using QuickDrawResources = SecRandom.Langs.MainPages.QuickDraw.Resources;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Linkage;
 using SecRandom.Services.Notification;
@@ -50,7 +51,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private int? _notificationAutoCloseTime;
 
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
-    [ObservableProperty] private string _statusText = "准备闪抽";
+    [ObservableProperty] private string _statusText = QuickDrawResources.M_Ready;
     [ObservableProperty] private bool _isResultVisible;
     [ObservableProperty] private int _previewAnimationRevision;
     [ObservableProperty] private int _resultAnimationRevision;
@@ -90,7 +91,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     public ObservableCollection<string> StudentListNames { get; } = [];
     public ObservableCollection<QuickDrawResultItem> ResultItems { get; } = [];
     public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && !_isCoolingDown && GetEligibleCandidates().Any());
-    public string DrawButtonText => IsDrawing ? "停止" : "闪抽";
+    public string DrawButtonText => IsDrawing ? QuickDrawResources.C_Stop : QuickDrawResources.C_Start;
     public double ResultFontSize
     {
         get
@@ -196,14 +197,14 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         var candidates = GetEligibleCandidates().ToList();
         if (candidates.Count == 0)
         {
-            StatusText = "没有可抽取的学生";
+            StatusText = QuickDrawResources.M_NoMembers;
             return;
         }
 
         const int count = 1;
         ResultItems.Clear();
         IsResultVisible = false;
-        StatusText = "正在闪抽";
+        StatusText = QuickDrawResources.M_Drawing;
         _notificationAutoCloseTime = null;
         SetDrawCommandRunning(true);
         try
@@ -256,7 +257,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                 ResultItems.Clear();
                 LastDrawnStudent = null;
                 IsResultVisible = false;
-                StatusText = "闪抽失败";
+                StatusText = QuickDrawResources.M_DrawFailed;
                 return;
             }
 
@@ -270,7 +271,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                 : null;
             ReplaceResults(drawn);
             IsResultVisible = true;
-            StatusText = $"已抽取 {ResultItems.Count} 人";
+            StatusText = string.Format(QuickDrawResources.M_DrawnCountFormat, ResultItems.Count);
             if (_notificationService is not null)
                 _notificationService.QueueStudents(
                     NotificationSettingsType.QuickDraw,
@@ -306,7 +307,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         ResultItems.Clear();
         LastDrawnStudent = null;
         IsResultVisible = false;
-        StatusText = "已清空当前名单抽取记录";
+        StatusText = QuickDrawResources.M_ResetDone;
         OnPropertyChanged(nameof(CanStartDraw));
     }
 
@@ -359,13 +360,13 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         var defaultClass = Config.QuickDrawSettings.DefaultClass.Trim();
         if (string.IsNullOrWhiteSpace(defaultClass))
         {
-            StatusText = "请先在闪抽设置中选择默认抽取名单";
+            StatusText = QuickDrawResources.M_DefaultListRequired;
             return false;
         }
 
         if (!StudentListNames.Contains(defaultClass))
         {
-            StatusText = "默认抽取名单不存在，请在闪抽设置中重新选择";
+            StatusText = QuickDrawResources.M_DefaultListMissing;
             return false;
         }
 

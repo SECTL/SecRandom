@@ -94,7 +94,7 @@
     <value>奖池选择</value>
   </data>
   <data name="S_LotteryStudentListSelector" xml:space="preserve">
-    <value>学生名单选择</value>
+    <value>成员名单选择</value>
   </data>
   <data name="S_LotteryRangeSelector" xml:space="preserve">
     <value>范围选择</value>

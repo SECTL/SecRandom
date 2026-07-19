@@ -103,6 +103,6 @@
         <value>Close</value>
     </data>
     <data name="M_InternalSettingsActivated" xml:space="preserve">
-        <value>“Internal Settings” is now shown in the Attached Settings menu at the right of each student or prize in List Management. It is available only for this run and is hidden automatically after the app restarts.&#xA;&#xA;Internal settings affect candidate weights and are not appropriate for fair, public, or auditable draws in schools or events. When a selected person has internal settings enabled, uploading the verifiable file to the verification website shows a notice; this can expose the setting.&#xA;&#xA;Internal settings have lower priority than fair-draw rules. A student or prize with internal settings that is selected now is not guaranteed to be selected next time.</value>
+        <value>“Internal Settings” is now shown in the Attached Settings menu at the right of each member or prize in List Management. It is available only for this run and is hidden automatically after the app restarts.&#xA;&#xA;Internal settings affect candidate weights and are not appropriate for fair, public, or auditable draws in activities or organizations. When a selected person has internal settings enabled, uploading the verifiable file to the verification website shows a notice; this can expose the setting.&#xA;&#xA;Internal settings have lower priority than fair-draw rules. A member or prize with internal settings that is selected now is not guaranteed to be selected next time.</value>
     </data>
 </root>

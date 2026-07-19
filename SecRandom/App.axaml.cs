@@ -911,6 +911,7 @@ public partial class App : Application
         CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
         CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
         Langs.FirstRunOobe.Resources.Culture = cultureInfo;
+        Langs.MainPages.QuickDraw.Resources.Culture = cultureInfo;
     }
 
     /// <summary>
@@ -1004,7 +1005,14 @@ public partial class App : Application
                     Content = IAppHost.GetService<MainView>(),
                     Title = @"SecRandom"
                 };
-                _mainWindow.Closed += (_, _) => _mainWindow = null;
+                var mainWindow = _mainWindow;
+                var mainView = (MainView)mainWindow.Content;
+                mainWindow.Closed += (_, _) =>
+                {
+                    ObserveTask(mainView.CloseEmbeddedHostAsync(ViewCloseReason.HostDestroyed), "Main embedded host cleanup failed.");
+                    if (ReferenceEquals(_mainWindow, mainWindow))
+                        _mainWindow = null;
+                };
             }
 
             RestoreAndActivate(_mainWindow);
@@ -1172,7 +1180,14 @@ public partial class App : Application
                     Content = IAppHost.GetService<SettingsView>(),
                     Title = @"SecRandom"
                 };
-                _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+                var settingsWindow = _settingsWindow;
+                var settingsView = (SettingsView)settingsWindow.Content;
+                settingsWindow.Closed += (_, _) =>
+                {
+                    ObserveTask(settingsView.CloseEmbeddedHostAsync(ViewCloseReason.HostDestroyed), "Settings embedded host cleanup failed.");
+                    if (ReferenceEquals(_settingsWindow, settingsWindow))
+                        _settingsWindow = null;
+                };
             }
 
             RestoreAndActivate(_settingsWindow);

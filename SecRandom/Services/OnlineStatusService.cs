@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services;
 using SecRandom.Services.Config;
 
 namespace SecRandom.Services;
@@ -474,16 +475,7 @@ public sealed partial class OnlineStatusService : BackgroundService
 
     private static string DetectDeviceType()
     {
-        if (OperatingSystem.IsWindows())
-            return "windows-desktop";
-
-        if (OperatingSystem.IsMacOS())
-            return "macos-desktop";
-
-        if (OperatingSystem.IsLinux())
-            return "linux-desktop";
-
-        return "unknown-desktop";
+        return OnlineStatusDeviceType.Detect();
     }
 
     private static string GetRegionPart(IReadOnlyList<string> parts, int index)

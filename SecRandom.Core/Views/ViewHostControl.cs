@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -16,7 +15,6 @@ public class ViewHostControl : UserControl, IViewHost
     private readonly List<ViewBase> _pageStack = [];
     private readonly List<ViewBase> _modalStack = [];
     private bool _isDestroyed;
-    private TopLevel? _topLevel;
 
     public ViewHostControl(string hostId)
     {
@@ -35,31 +33,15 @@ public class ViewHostControl : UserControl, IViewHost
         _root.Children.Add(_pagePresenter);
         _root.Children.Add(_modalOverlay);
         Content = _root;
+        IsVisible = false;
+        IsHitTestVisible = false;
     }
 
     public string HostId { get; }
     public IReadOnlyList<ViewBase> PageStack => _pageStack;
     public ViewBase? ActiveModalView => _modalStack.LastOrDefault();
+    public bool HasActiveView => ActiveModalView is not null || _pageStack.Count != 0;
     public event EventHandler? Destroyed;
-
-    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        base.OnAttachedToVisualTree(e);
-        _topLevel = TopLevel.GetTopLevel(this);
-        if (_topLevel is not null)
-            _topLevel.BackRequested += TopLevelOnBackRequested;
-    }
-
-    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        if (_topLevel is not null)
-        {
-            _topLevel.BackRequested -= TopLevelOnBackRequested;
-            _topLevel = null;
-        }
-
-        base.OnDetachedFromVisualTree(e);
-    }
 
     public Task ShowPageAsync(ViewBase view, CancellationToken cancellationToken = default)
     {
@@ -69,6 +51,7 @@ public class ViewHostControl : UserControl, IViewHost
             ThrowIfDestroyed();
             _pageStack.Add(view);
             _pagePresenter.Content = view;
+            UpdateVisibility();
         });
     }
 
@@ -81,6 +64,7 @@ public class ViewHostControl : UserControl, IViewHost
             _modalStack.Add(view);
             _modalPresenter.Content = view;
             _modalOverlay.IsVisible = true;
+            UpdateVisibility();
         });
     }
 
@@ -96,6 +80,7 @@ public class ViewHostControl : UserControl, IViewHost
                 _modalStack.Add(view);
                 _modalPresenter.Content = view;
                 _modalOverlay.IsVisible = true;
+                UpdateVisibility();
                 return;
             }
 
@@ -103,6 +88,7 @@ public class ViewHostControl : UserControl, IViewHost
                 throw new InvalidOperationException("The view is not active in this host.");
 
             _pagePresenter.Content = view;
+            UpdateVisibility();
         });
     }
 
@@ -115,12 +101,37 @@ public class ViewHostControl : UserControl, IViewHost
             {
                 _modalPresenter.Content = ActiveModalView;
                 _modalOverlay.IsVisible = ActiveModalView is not null;
+                UpdateVisibility();
                 return;
             }
 
             if (_pageStack.Remove(view))
+            {
                 _pagePresenter.Content = _pageStack.Count == 0 ? null : _pageStack[^1];
+                UpdateVisibility();
+            }
         });
+    }
+
+    public Task<bool> RequestBackAsync(CancellationToken cancellationToken = default) => CloseActiveViewAsync(cancellationToken);
+
+    public async Task<bool> CloseActiveViewAsync(CancellationToken cancellationToken = default)
+    {
+        ViewBase? activeView = null;
+        await RunOnUiThreadAsync(() =>
+        {
+            if (_isDestroyed)
+                return;
+
+            activeView = ActiveModalView ?? _pageStack.LastOrDefault();
+        }).ConfigureAwait(false);
+
+        if (activeView is null)
+            return false;
+
+        var closeResult = await activeView.CloseAsync(reason: ViewCloseReason.Back, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        return closeResult.WasClosed;
     }
 
     public Task DestroyAsync(CancellationToken cancellationToken = default)
@@ -136,11 +147,10 @@ public class ViewHostControl : UserControl, IViewHost
             _pagePresenter.Content = null;
             _modalPresenter.Content = null;
             _modalOverlay.IsVisible = false;
+            UpdateVisibility();
             Destroyed?.Invoke(this, EventArgs.Empty);
         });
     }
-
-    public Task NotifyDestroyedAsync(CancellationToken cancellationToken = default) => DestroyAsync(cancellationToken);
 
     private static Task RunOnUiThreadAsync(Action action)
     {
@@ -159,16 +169,10 @@ public class ViewHostControl : UserControl, IViewHost
             throw new ObjectDisposedException(HostId, "The view host has been destroyed.");
     }
 
-    private void TopLevelOnBackRequested(object? sender, RoutedEventArgs e)
+    private void UpdateVisibility()
     {
-        if (e.Handled || _isDestroyed)
-            return;
-
-        var view = ActiveModalView ?? _pageStack.LastOrDefault();
-        if (view is null)
-            return;
-
-        e.Handled = true;
-        _ = view.CloseAsync(reason: ViewCloseReason.Back);
+        var hasActiveView = !_isDestroyed && HasActiveView;
+        IsVisible = hasActiveView;
+        IsHitTestVisible = hasActiveView;
     }
 }

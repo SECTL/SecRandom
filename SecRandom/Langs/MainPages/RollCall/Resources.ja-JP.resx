@@ -12,17 +12,17 @@
   <data name="C_Close" xml:space="preserve"><value>閉じる</value></data>
   <data name="C_ListSettings" xml:space="preserve"><value>名簿設定</value></data>
   <data name="C_RollCallSettings" xml:space="preserve"><value>点呼設定</value></data>
-  <data name="O_AllGroups" xml:space="preserve"><value>すべての学生から抽選</value></data>
+  <data name="O_AllGroups" xml:space="preserve"><value>すべてのメンバーから抽選</value></data>
   <data name="O_AllGenders" xml:space="preserve"><value>すべての性別から抽選</value></data>
   <data name="M_Ready" xml:space="preserve"><value>準備完了</value></data>
   <data name="M_ResetDone" xml:space="preserve"><value>点呼記録をリセットしました</value></data>
-  <data name="M_NoStudents" xml:space="preserve"><value>現在の条件に一致する学生がいません</value></data>
-  <data name="M_NoRemainingStudents" xml:space="preserve"><value>現在の条件では残りの学生がいません</value></data>
-  <data name="M_DrawnCountFormat" xml:space="preserve"><value>{0} 人の学生を抽選しました</value></data>
-  <data name="M_CountSummaryFormat" xml:space="preserve"><value>学生数: {0} | 残り: {1}</value></data>
-  <data name="M_NoCandidates" xml:space="preserve"><value>抽選できる学生がいません</value></data>
-  <data name="M_NoEligibleCandidates" xml:space="preserve"><value>重み条件を満たす学生がいません</value></data>
-  <data name="M_RepeatLimitExhausted" xml:space="preserve"><value>残りの学生が不足しています。記録をリセットするか、条件を調整してください。</value></data>
+  <data name="M_NoStudents" xml:space="preserve"><value>現在の条件に一致するメンバーがいません</value></data>
+  <data name="M_NoRemainingStudents" xml:space="preserve"><value>現在の条件では残りのメンバーがいません</value></data>
+  <data name="M_DrawnCountFormat" xml:space="preserve"><value>{0} 人のメンバーを抽選しました</value></data>
+  <data name="M_CountSummaryFormat" xml:space="preserve"><value>メンバー数: {0} | 残り: {1}</value></data>
+  <data name="M_NoCandidates" xml:space="preserve"><value>抽選できるメンバーがいません</value></data>
+  <data name="M_NoEligibleCandidates" xml:space="preserve"><value>重み条件を満たすメンバーがいません</value></data>
+  <data name="M_RepeatLimitExhausted" xml:space="preserve"><value>残りのメンバーが不足しています。記録をリセットするか、条件を調整してください。</value></data>
   <data name="M_InvalidWeight" xml:space="preserve"><value>重みの設定が無効です</value></data>
   <data name="M_DrawFailed" xml:space="preserve"><value>抽選に失敗しました</value></data>
   <data name="M_ResultSeparator" xml:space="preserve"><value>、</value></data>

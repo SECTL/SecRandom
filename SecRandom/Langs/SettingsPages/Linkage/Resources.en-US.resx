@@ -1,1 +1,141 @@
-<?xml version="1.0" encoding="utf-8"?><root><data name="Page_Title"><value>Course Linkage</value></data><data name="S_External"><value>Course Linkage</value></data><data name="S_External_VerificationRequired"><value>Allow verified continuation</value></data><data name="S_External_VerificationRequired_D"><value>When off-class restrictions are enabled, allow temporary drawing or reset after configured security verification; otherwise block directly</value></data><data name="S_External_InstantDrawDisable"><value>Restrict off-class operations</value></data><data name="S_External_InstantDrawDisable_D"><value>Restrict drawing and reset when course data confirms a break or non-class period; disable for no restriction</value></data><data name="S_External_DataSource"><value>Data source</value></data><data name="S_External_DataSource_D"><value>Choose the course or external linkage source</value></data><data name="O_DataSource_Off"><value>Off</value></data><data name="O_DataSource_ClassIsland"><value>ClassIsland</value></data><data name="O_DataSource_Cses"><value>CSES timetable</value></data><data name="S_Cses"><value>CSES timetable</value></data><data name="C_CsesImport"><value>Import timetable</value></data><data name="C_CsesView"><value>View summary</value></data><data name="C_CsesClear"><value>Clear timetable</value></data><data name="M_CsesMissing"><value>No valid CSES timetable has been imported.</value></data><data name="M_CsesImported"><value>CSES timetable imported: {0}</value></data><data name="M_CsesCleared"><value>CSES timetable cleared.</value></data><data name="M_CsesClearTitle"><value>Clear Timetable</value></data><data name="M_CsesClearContent"><value>Clear the currently imported CSES timetable?</value></data><data name="C_Confirm"><value>Confirm</value></data><data name="C_Cancel"><value>Cancel</value></data><data name="S_ClassTime"><value>Class Timing</value></data><data name="S_ClassTime_HideFloatingWindow"><value>Hide floating window after class</value></data><data name="S_ClassTime_HideFloatingWindow_D"><value>Automatically hide the floating window when class ends</value></data><data name="S_ClassTime_PreClassReset"><value>Reset before class</value></data><data name="S_ClassTime_PreClassReset_D"><value>Automatically reset temporary draw records before class</value></data><data name="S_ClassTime_PreClassResetTime"><value>Pre-class reset time</value></data><data name="S_ClassTime_PreClassResetTime_D"><value>Perform the reset within this many seconds before class</value></data><data name="S_ClassTime_PostClassDisableDelay"><value>Post-class disable delay</value></data><data name="S_ClassTime_PostClassDisableDelay_D"><value>Delay disabling related draw entries by this many seconds after class ends</value></data><data name="S_SubjectHistory_BreakAssignment_D"><value>Choose how history during breaks is assigned</value></data><data name="O_BreakAssignment_Break"><value>Break</value></data><data name="S_SubjectHistory"><value>Subject History</value></data><data name="S_SubjectHistory_BreakAssignment"><value>Break assignment</value></data><data name="O_BreakAssignment_NextClass"><value>Next class</value></data><data name="O_BreakAssignment_PreviousClass"><value>Previous class</value></data><data name="S_ClassTime_PreClassEnableTime"><value>Pre-class enable time</value></data><data name="S_SubjectHistory_Filter_D"><value>Use only the current subject's history when calculating weights</value></data><data name="S_SubjectHistory_Filter"><value>Subject history filter</value></data><data name="S_ClassTime_PreClassEnableTime_D"><value>Enable operations this many seconds before class</value></data></root>
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="Page_Title">
+    <value>Schedule Integration</value>
+  </data>
+  <data name="S_External">
+    <value>Schedule Integration</value>
+  </data>
+  <data name="S_External_VerificationRequired">
+    <value>Allow verified continuation</value>
+  </data>
+  <data name="S_External_VerificationRequired_D">
+    <value>When off-schedule restrictions are enabled, allow temporary drawing or reset after configured security verification; otherwise block directly</value>
+  </data>
+  <data name="S_External_InstantDrawDisable">
+    <value>Restrict off-schedule operations</value>
+  </data>
+  <data name="S_External_InstantDrawDisable_D">
+    <value>Restrict drawing and reset when schedule data confirms an off-schedule period; disable for no restriction</value>
+  </data>
+  <data name="S_External_DataSource">
+    <value>Data source</value>
+  </data>
+  <data name="S_External_DataSource_D">
+    <value>Choose the schedule or external integration source</value>
+  </data>
+  <data name="O_DataSource_Off">
+    <value>Off</value>
+  </data>
+  <data name="O_DataSource_ClassIsland">
+    <value>ClassIsland</value>
+  </data>
+  <data name="O_DataSource_Cses">
+    <value>CSES schedule</value>
+  </data>
+  <data name="S_Cses">
+    <value>CSES schedule</value>
+  </data>
+  <data name="C_CsesImport">
+    <value>Import timetable</value>
+  </data>
+  <data name="C_CsesView">
+    <value>View summary</value>
+  </data>
+  <data name="C_CsesClear">
+    <value>Clear timetable</value>
+  </data>
+  <data name="M_CsesMissing">
+    <value>No valid CSES schedule has been imported.</value>
+  </data>
+  <data name="M_CsesImported">
+    <value>CSES schedule imported: {0}</value>
+  </data>
+  <data name="M_CsesCleared">
+    <value>CSES schedule cleared.</value>
+  </data>
+  <data name="M_CsesClearTitle">
+    <value>Clear Timetable</value>
+  </data>
+  <data name="M_CsesClearContent">
+    <value>Clear the currently imported CSES schedule?</value>
+  </data>
+  <data name="C_Confirm">
+    <value>Confirm</value>
+  </data>
+  <data name="C_Cancel">
+    <value>Cancel</value>
+  </data>
+  <data name="S_ClassTime">
+    <value>Schedule period</value>
+  </data>
+  <data name="S_ClassTime_HideFloatingWindow">
+    <value>Hide floating window after the schedule ends</value>
+  </data>
+  <data name="S_ClassTime_HideFloatingWindow_D">
+    <value>Automatically hide the floating window after the schedule ends</value>
+  </data>
+  <data name="S_ClassTime_PreClassReset">
+    <value>Reset before the schedule starts</value>
+  </data>
+  <data name="S_ClassTime_PreClassReset_D">
+    <value>Automatically reset temporary draw records before the schedule starts</value>
+  </data>
+  <data name="S_ClassTime_PreClassResetTime">
+    <value>Pre-schedule reset time</value>
+  </data>
+  <data name="S_ClassTime_PreClassResetTime_D">
+    <value>Reset this many seconds before the schedule starts</value>
+  </data>
+  <data name="S_ClassTime_PostClassDisableDelay">
+    <value>Post-schedule restriction delay</value>
+  </data>
+  <data name="S_ClassTime_PostClassDisableDelay_D">
+    <value>Restrict related draw actions this many seconds after the schedule ends</value>
+  </data>
+  <data name="S_SubjectHistory_BreakAssignment_D">
+    <value>Choose the history assignment for off-schedule periods</value>
+  </data>
+  <data name="O_BreakAssignment_Break">
+    <value>Off-schedule period</value>
+  </data>
+  <data name="S_SubjectHistory">
+    <value>Schedule Item History</value>
+  </data>
+  <data name="S_SubjectHistory_BreakAssignment">
+    <value>Off-schedule assignment</value>
+  </data>
+  <data name="O_BreakAssignment_NextClass">
+    <value>Next schedule item</value>
+  </data>
+  <data name="O_BreakAssignment_PreviousClass">
+    <value>Previous schedule item</value>
+  </data>
+  <data name="S_ClassTime_PreClassEnableTime">
+    <value>Pre-schedule enable time</value>
+  </data>
+  <data name="S_SubjectHistory_Filter_D">
+    <value>Use only the current schedule item's history when calculating weights</value>
+  </data>
+  <data name="S_SubjectHistory_Filter">
+    <value>Schedule-item history filter</value>
+  </data>
+  <data name="S_ClassTime_PreClassEnableTime_D">
+    <value>Enable operations this many seconds before the schedule starts</value>
+  </data>
+  <data name="M_CsesSummary"><value>{0} schedule periods, from {1:HH:mm} to {2:HH:mm}</value></data>
+  <data name="M_CsesErrorEmpty"><value>The CSES schedule file is empty.</value></data>
+  <data name="M_CsesErrorRoot"><value>The CSES schedule file root must be an object.</value></data>
+  <data name="M_CsesErrorNoItems"><value>The CSES schedule file contains no valid schedule items.</value></data>
+  <data name="M_CsesErrorInvalidItem"><value>The CSES schedule item format is invalid.</value></data>
+  <data name="M_CsesErrorInvalidTime"><value>The schedule item “{0}” must start before it ends.</value></data>
+  <data name="M_CsesErrorOverlap"><value>Schedule items overlap on weekday {0}.</value></data>
+  <data name="M_ScheduleError_CsesMissing"><value>No valid CSES schedule has been imported.</value></data>
+  <data name="M_ScheduleError_ClassIslandUnavailable"><value>Unable to connect to ClassIsland.</value></data>
+  <data name="M_ScheduleError_ClassIslandTimerStopped"><value>The ClassIsland timer is not running.</value></data>
+  <data name="M_ScheduleError_ClassIslandScheduleDisabled"><value>ClassIsland has not enabled its schedule.</value></data>
+  <data name="M_ScheduleError_ClassIslandScheduleUnloaded"><value>ClassIsland has not loaded today's schedule.</value></data>
+  <data name="M_ScheduleError_ClassIslandTimeUnconfirmed"><value>ClassIsland has not confirmed the current time state.</value></data>
+  <data name="M_ScheduleError_ClassIslandUnsupportedState"><value>ClassIsland returned an unsupported current state: {0}.</value></data>
+  <data name="M_ScheduleError_ClassIslandReadFailed"><value>Unable to read the ClassIsland schedule state.</value></data>
+</root>

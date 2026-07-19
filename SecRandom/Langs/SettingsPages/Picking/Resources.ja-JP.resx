@@ -1,8 +1,426 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader><resheader name="version"><value>2.0</value></resheader><resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader><resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="Page_Default" xml:space="preserve"><value>既定の抽選設定</value></data><data name="Page_RollCall" xml:space="preserve"><value>点呼抽選設定</value></data><data name="Page_QuickDraw" xml:space="preserve"><value>クイック抽選設定</value></data><data name="Page_Lottery" xml:space="preserve"><value>くじ引き抽選設定</value></data><data name="Section_Draw" xml:space="preserve"><value>抽選設定</value></data><data name="Section_Display" xml:space="preserve"><value>表示設定</value></data><data name="Section_Animation" xml:space="preserve"><value>アニメーション設定</value></data><data name="Section_Color" xml:space="preserve"><value>色設定</value></data><data name="Section_StudentImage" xml:space="preserve"><value>生徒画像設定</value></data><data name="Section_Reminder" xml:space="preserve"><value>リマインダー設定</value></data><data name="C_EnableOverride" xml:space="preserve"><value>上書きを有効化</value></data>
-  <data name="S_DrawMode" xml:space="preserve"><value>抽選モード</value></data><data name="S_DrawMode_D" xml:space="preserve"><value>重複する抽選記録の扱いを指定します</value></data><data name="S_HalfRepeat" xml:space="preserve"><value>半重複のしきい値</value></data><data name="S_HalfRepeat_D" xml:space="preserve"><value>この回数抽選された項目は候補に戻りません</value></data><data name="S_ClearRecord" xml:space="preserve"><value>記録を消去</value></data><data name="S_ClearRecord_D" xml:space="preserve"><value>抽選記録を消去するタイミングを指定します</value></data><data name="S_DrawType" xml:space="preserve"><value>抽選方法</value></data><data name="S_DrawType_D" xml:space="preserve"><value>ランダム抽選または公平な抽選を選択します</value></data><data name="S_LotteryDrawType" xml:space="preserve"><value>くじ引き方法</value></data><data name="S_LotteryDrawType_D" xml:space="preserve"><value>くじ盤または残り個数による抽選を選択します</value></data><data name="S_DefaultClass" xml:space="preserve"><value>既定のクラス名簿</value></data><data name="S_DefaultClass_D" xml:space="preserve"><value>ページを開くとき、またはクイック抽選時に使う名簿</value></data><data name="S_DefaultPool" xml:space="preserve"><value>既定の景品プール</value></data><data name="S_DefaultPool_D" xml:space="preserve"><value>くじ引きページを開くときに使う景品プール</value></data><data name="S_DisableAfterClick" xml:space="preserve"><value>クリック後の無効時間</value></data><data name="S_DisableAfterClick_D" xml:space="preserve"><value>クイック抽選後にボタンを無効にする秒数</value></data><data name="S_FontSource" xml:space="preserve"><value>フォントの指定元</value></data><data name="S_FontSource_D" xml:space="preserve"><value>全体設定に従うか、抽選結果専用のフォントを指定します</value></data><data name="S_CustomFont" xml:space="preserve"><value>カスタムフォント</value></data><data name="S_CustomFont_D" xml:space="preserve"><value>フォントファミリー名。空欄の場合は既定のフォントを使用します</value></data><data name="S_FontSize" xml:space="preserve"><value>フォントサイズ</value></data><data name="S_FontSize_D" xml:space="preserve"><value>抽選結果の文字サイズ</value></data><data name="S_DisplayFormat" xml:space="preserve"><value>表示形式</value></data><data name="S_DisplayFormat_D" xml:space="preserve"><value>結果に名前、ID、または両方を表示するか指定します</value></data><data name="S_DisplayStyle" xml:space="preserve"><value>表示スタイル</value></data><data name="S_DisplayStyle_D" xml:space="preserve"><value>抽選結果全体のスタイルを指定します</value></data><data name="S_LotteryShowRandom" xml:space="preserve"><value>抽選中の表示</value></data><data name="S_LotteryShowRandom_D" xml:space="preserve"><value>抽選中に候補結果を表示する形式</value></data><data name="S_ShowTags" xml:space="preserve"><value>タグを表示</value></data><data name="S_ShowTags_D" xml:space="preserve"><value>抽選結果に生徒または景品のタグを表示します</value></data><data name="S_ShowWeightTransparency" xml:space="preserve"><value>重みを表示</value></data><data name="S_ShowWeightTransparency_D" xml:space="preserve"><value>結果表示に重みの情報を表示します</value></data><data name="S_ReminderText" xml:space="preserve"><value>リマインダー</value></data><data name="S_ReminderText_D" xml:space="preserve"><value>抽選ページの結果欄の横に表示する文字</value></data><data name="S_ReminderFontSize" xml:space="preserve"><value>リマインダーの文字サイズ</value></data><data name="S_ReminderFontSize_D" xml:space="preserve"><value>リマインダーの文字サイズ</value></data><data name="S_ReminderTextColor" xml:space="preserve"><value>リマインダーの色</value></data><data name="S_ReminderTextColor_D" xml:space="preserve"><value>リマインダーの文字色</value></data><data name="S_ReminderTextOpacity" xml:space="preserve"><value>リマインダーの不透明度</value></data><data name="S_ReminderTextOpacity_D" xml:space="preserve"><value>リマインダーの不透明度（0-100）</value></data><data name="S_Animation" xml:space="preserve"><value>アニメーションモード</value></data><data name="S_Animation_D" xml:space="preserve"><value>抽選アニメーションの再生方法</value></data><data name="S_AnimationInterval" xml:space="preserve"><value>アニメーション間隔</value></data><data name="S_AnimationInterval_D" xml:space="preserve"><value>抽選アニメーションの切り替え間隔（ミリ秒）</value></data><data name="S_AutoplayCount" xml:space="preserve"><value>自動再生回数</value></data><data name="S_AutoplayCount_D" xml:space="preserve"><value>自動再生時に候補結果を切り替える回数</value></data><data name="S_AnimationStyle" xml:space="preserve"><value>アニメーションスタイル</value></data><data name="S_AnimationStyle_D" xml:space="preserve"><value>抽選中と最終結果に使用する統一アニメーション</value></data><data name="S_ColorTheme" xml:space="preserve"><value>カラーテーマ</value></data><data name="S_ColorTheme_D" xml:space="preserve"><value>抽選アニメーションと結果の色の指定元</value></data><data name="S_FixedColor" xml:space="preserve"><value>固定色</value></data><data name="S_FixedColor_D" xml:space="preserve"><value>固定色のテーマで使用します</value></data><data name="S_StudentImage" xml:space="preserve"><value>画像を表示</value></data><data name="S_StudentImage_D" xml:space="preserve"><value>抽選結果に生徒画像を表示します</value></data><data name="S_StudentImagePosition" xml:space="preserve"><value>画像の位置</value></data><data name="S_StudentImagePosition_D" xml:space="preserve"><value>文字に対する生徒画像の位置</value></data>
-  <data name="O_Repeat" xml:space="preserve"><value>重複を許可</value></data><data name="O_NoRepeat" xml:space="preserve"><value>重複なし</value></data><data name="O_HalfRepeat" xml:space="preserve"><value>半重複</value></data><data name="O_Restarted" xml:space="preserve"><value>再起動後に消去</value></data><data name="O_Cleared" xml:space="preserve"><value>手動で消去</value></data><data name="O_Random" xml:space="preserve"><value>ランダム抽選</value></data><data name="O_NoMusic" xml:space="preserve"><value>音楽なし</value></data><data name="O_RandomMusic" xml:space="preserve"><value>ランダム再生</value></data><data name="O_MusicExternal" xml:space="preserve"><value>外部ファイル: {0}</value></data><data name="O_MusicUnavailable" xml:space="preserve"><value>利用不可: {0}</value></data><data name="O_Fair" xml:space="preserve"><value>公平な抽選</value></data><data name="O_Pan" xml:space="preserve"><value>くじ盤による</value></data><data name="O_Count" xml:space="preserve"><value>残り個数による</value></data><data name="O_FollowGlobal" xml:space="preserve"><value>全体設定に従う</value></data><data name="O_Custom" xml:space="preserve"><value>カスタム</value></data><data name="O_Both" xml:space="preserve"><value>IDと名前</value></data><data name="O_Name" xml:space="preserve"><value>名前のみ</value></data><data name="O_Id" xml:space="preserve"><value>IDのみ</value></data><data name="O_Default" xml:space="preserve"><value>既定</value></data><data name="O_Card" xml:space="preserve"><value>カード</value></data><data name="O_ManualStop" xml:space="preserve"><value>手動停止</value></data><data name="O_AutoPlay" xml:space="preserve"><value>自動再生</value></data><data name="O_NoAnimation" xml:space="preserve"><value>アニメーションなし</value></data><data name="O_AnimationDirectRotate" xml:space="preserve"><value>直接切り替え</value></data><data name="O_AnimationFadeFloat" xml:space="preserve"><value>フェードして上昇</value></data><data name="O_AnimationHorizontalShake" xml:space="preserve"><value>左右に揺らす</value></data><data name="O_NoColor" xml:space="preserve"><value>なし</value></data><data name="O_RandomColor" xml:space="preserve"><value>ランダム</value></data><data name="O_FixedColor" xml:space="preserve"><value>固定色</value></data><data name="O_Left" xml:space="preserve"><value>左</value></data><data name="O_Top" xml:space="preserve"><value>上</value></data><data name="O_Right" xml:space="preserve"><value>右</value></data><data name="O_Bottom" xml:space="preserve"><value>下</value></data><data name="O_PrizeBreakGroupHyphenName" xml:space="preserve"><value>景品/グループ-名前</value></data><data name="O_PrizeBreakGroupBreakName" xml:space="preserve"><value>景品/グループ/名前</value></data><data name="O_PrizeHyphenGroupHyphenName" xml:space="preserve"><value>景品-グループ-名前</value></data><data name="O_PrizeBreakName" xml:space="preserve"><value>景品/名前</value></data><data name="O_PrizeHyphenName" xml:space="preserve"><value>景品-名前</value></data><data name="O_PrizeBreakGroup" xml:space="preserve"><value>景品/グループ</value></data><data name="O_PrizeHyphenGroup" xml:space="preserve"><value>景品-グループ</value></data>
-  <data name="Section_Overridable" xml:space="preserve"><value>上書き可能な設定</value></data><data name="Section_Music" xml:space="preserve"><value>音楽設定</value></data><data name="Section_VoiceAnnouncement" xml:space="preserve"><value>音声案内</value></data><data name="S_VoiceAnnouncementEnabled" xml:space="preserve"><value>音声案内を有効化</value></data><data name="S_VoiceAnnouncementEnabled_D" xml:space="preserve"><value>抽選後に結果を読み上げます。全体の音声案内が無効の場合は機能しません</value></data><data name="S_AnimationMusic" xml:space="preserve"><value>アニメーション音楽</value></data><data name="S_AnimationMusic_D" xml:space="preserve"><value>抽選アニメーション中に再生する音楽</value></data><data name="S_AnimationMusicLoop" xml:space="preserve"><value>アニメーション音楽をループ</value></data><data name="S_AnimationMusicLoop_D" xml:space="preserve"><value>アニメーション中に音楽を繰り返します</value></data><data name="S_ResultMusic" xml:space="preserve"><value>結果音楽</value></data><data name="S_ResultMusic_D" xml:space="preserve"><value>抽選結果の表示時に再生する音楽</value></data><data name="S_MusicVolume" xml:space="preserve"><value>音楽の音量</value></data><data name="S_MusicVolume_D" xml:space="preserve"><value>アニメーション音楽と結果音楽の音量</value></data><data name="S_MusicFadeInOut" xml:space="preserve"><value>音楽のフェード</value></data><data name="S_MusicFadeInOut_D" xml:space="preserve"><value>アニメーションのフェードイン、フェードアウト、結果音楽のフェードイン、フェードアウト時間（ミリ秒）</value></data><data name="S_AnimationMusicVolume" xml:space="preserve"><value>アニメーション音楽の音量</value></data><data name="S_AnimationMusicVolume_D" xml:space="preserve"><value>アニメーション音楽の音量</value></data><data name="S_ResultMusicVolume" xml:space="preserve"><value>結果音楽の音量</value></data><data name="S_ResultMusicVolume_D" xml:space="preserve"><value>結果音楽の音量</value></data><data name="S_AnimationMusicFade" xml:space="preserve"><value>アニメーション音楽のフェード</value></data><data name="S_AnimationMusicFade_D" xml:space="preserve"><value>上のスライダーがフェードイン、下がフェードアウト（ミリ秒）</value></data><data name="S_ResultMusicFade" xml:space="preserve"><value>結果音楽のフェード</value></data><data name="S_ResultMusicFade_D" xml:space="preserve"><value>上のスライダーがフェードイン、下がフェードアウト（ミリ秒）</value></data><data name="C_FadeIn" xml:space="preserve"><value>フェードイン</value></data><data name="C_FadeOut" xml:space="preserve"><value>フェードアウト</value></data><data name="Section_LotteryImage" xml:space="preserve"><value>景品画像設定</value></data><data name="S_LotteryImage" xml:space="preserve"><value>景品画像を表示</value></data><data name="S_LotteryImage_D" xml:space="preserve"><value>くじ引き結果に景品画像を表示します</value></data><data name="S_LotteryImagePosition" xml:space="preserve"><value>景品画像の位置</value></data><data name="S_LotteryImagePosition_D" xml:space="preserve"><value>文字に対する景品画像の位置</value></data>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Page_Default" xml:space="preserve">
+    <value>既定の抽選設定</value>
+  </data>
+  <data name="Page_RollCall" xml:space="preserve">
+    <value>点呼抽選設定</value>
+  </data>
+  <data name="Page_QuickDraw" xml:space="preserve">
+    <value>クイック抽選設定</value>
+  </data>
+  <data name="Page_Lottery" xml:space="preserve">
+    <value>くじ引き抽選設定</value>
+  </data>
+  <data name="Section_Draw" xml:space="preserve">
+    <value>抽選設定</value>
+  </data>
+  <data name="Section_Display" xml:space="preserve">
+    <value>表示設定</value>
+  </data>
+  <data name="Section_Animation" xml:space="preserve">
+    <value>アニメーション設定</value>
+  </data>
+  <data name="Section_Color" xml:space="preserve">
+    <value>色設定</value>
+  </data>
+  <data name="Section_StudentImage" xml:space="preserve">
+    <value>メンバー画像設定</value>
+  </data>
+  <data name="Section_Reminder" xml:space="preserve">
+    <value>リマインダー設定</value>
+  </data>
+  <data name="C_EnableOverride" xml:space="preserve">
+    <value>上書きを有効化</value>
+  </data>
+  <data name="S_DrawMode" xml:space="preserve">
+    <value>抽選モード</value>
+  </data>
+  <data name="S_DrawMode_D" xml:space="preserve">
+    <value>重複する抽選記録の扱いを指定します</value>
+  </data>
+  <data name="S_HalfRepeat" xml:space="preserve">
+    <value>半重複のしきい値</value>
+  </data>
+  <data name="S_HalfRepeat_D" xml:space="preserve">
+    <value>この回数抽選された項目は候補に戻りません</value>
+  </data>
+  <data name="S_ClearRecord" xml:space="preserve">
+    <value>記録を消去</value>
+  </data>
+  <data name="S_ClearRecord_D" xml:space="preserve">
+    <value>抽選記録を消去するタイミングを指定します</value>
+  </data>
+  <data name="S_DrawType" xml:space="preserve">
+    <value>抽選方法</value>
+  </data>
+  <data name="S_DrawType_D" xml:space="preserve">
+    <value>ランダム抽選または公平な抽選を選択します</value>
+  </data>
+  <data name="S_LotteryDrawType" xml:space="preserve">
+    <value>くじ引き方法</value>
+  </data>
+  <data name="S_LotteryDrawType_D" xml:space="preserve">
+    <value>くじ盤または残り個数による抽選を選択します</value>
+  </data>
+  <data name="S_DefaultClass" xml:space="preserve">
+    <value>既定のメンバーリスト</value>
+  </data>
+  <data name="S_DefaultClass_D" xml:space="preserve">
+    <value>ページを開くとき、またはクイック抽選時に使う名簿</value>
+  </data>
+  <data name="S_DefaultPool" xml:space="preserve">
+    <value>既定の景品プール</value>
+  </data>
+  <data name="S_DefaultPool_D" xml:space="preserve">
+    <value>くじ引きページを開くときに使う景品プール</value>
+  </data>
+  <data name="S_DisableAfterClick" xml:space="preserve">
+    <value>クリック後の無効時間</value>
+  </data>
+  <data name="S_DisableAfterClick_D" xml:space="preserve">
+    <value>クイック抽選後にボタンを無効にする秒数</value>
+  </data>
+  <data name="S_FontSource" xml:space="preserve">
+    <value>フォントの指定元</value>
+  </data>
+  <data name="S_FontSource_D" xml:space="preserve">
+    <value>全体設定に従うか、抽選結果専用のフォントを指定します</value>
+  </data>
+  <data name="S_CustomFont" xml:space="preserve">
+    <value>カスタムフォント</value>
+  </data>
+  <data name="S_CustomFont_D" xml:space="preserve">
+    <value>フォントファミリー名。空欄の場合は既定のフォントを使用します</value>
+  </data>
+  <data name="S_FontSize" xml:space="preserve">
+    <value>フォントサイズ</value>
+  </data>
+  <data name="S_FontSize_D" xml:space="preserve">
+    <value>抽選結果の文字サイズ</value>
+  </data>
+  <data name="S_DisplayFormat" xml:space="preserve">
+    <value>表示形式</value>
+  </data>
+  <data name="S_DisplayFormat_D" xml:space="preserve">
+    <value>結果に名称、番号、または両方を表示するか指定します</value>
+  </data>
+  <data name="S_DisplayStyle" xml:space="preserve">
+    <value>表示スタイル</value>
+  </data>
+  <data name="S_DisplayStyle_D" xml:space="preserve">
+    <value>抽選結果全体のスタイルを指定します</value>
+  </data>
+  <data name="S_LotteryShowRandom" xml:space="preserve">
+    <value>抽選中の表示</value>
+  </data>
+  <data name="S_LotteryShowRandom_D" xml:space="preserve">
+    <value>抽選中に候補結果を表示する形式</value>
+  </data>
+  <data name="S_ShowTags" xml:space="preserve">
+    <value>タグを表示</value>
+  </data>
+  <data name="S_ShowTags_D" xml:space="preserve">
+    <value>抽選結果にメンバーまたは景品のタグを表示します</value>
+  </data>
+  <data name="S_ShowWeightTransparency" xml:space="preserve">
+    <value>重みを表示</value>
+  </data>
+  <data name="S_ShowWeightTransparency_D" xml:space="preserve">
+    <value>結果表示に重みの情報を表示します</value>
+  </data>
+  <data name="S_ReminderText" xml:space="preserve">
+    <value>リマインダー</value>
+  </data>
+  <data name="S_ReminderText_D" xml:space="preserve">
+    <value>抽選ページの結果欄の横に表示する文字</value>
+  </data>
+  <data name="S_ReminderFontSize" xml:space="preserve">
+    <value>リマインダーの文字サイズ</value>
+  </data>
+  <data name="S_ReminderFontSize_D" xml:space="preserve">
+    <value>リマインダーの文字サイズ</value>
+  </data>
+  <data name="S_ReminderTextColor" xml:space="preserve">
+    <value>リマインダーの色</value>
+  </data>
+  <data name="S_ReminderTextColor_D" xml:space="preserve">
+    <value>リマインダーの文字色</value>
+  </data>
+  <data name="S_ReminderTextOpacity" xml:space="preserve">
+    <value>リマインダーの不透明度</value>
+  </data>
+  <data name="S_ReminderTextOpacity_D" xml:space="preserve">
+    <value>リマインダーの不透明度（0-100）</value>
+  </data>
+  <data name="S_Animation" xml:space="preserve">
+    <value>アニメーションモード</value>
+  </data>
+  <data name="S_Animation_D" xml:space="preserve">
+    <value>抽選アニメーションの再生方法</value>
+  </data>
+  <data name="S_AnimationInterval" xml:space="preserve">
+    <value>アニメーション間隔</value>
+  </data>
+  <data name="S_AnimationInterval_D" xml:space="preserve">
+    <value>抽選アニメーションの切り替え間隔（ミリ秒）</value>
+  </data>
+  <data name="S_AutoplayCount" xml:space="preserve">
+    <value>自動再生回数</value>
+  </data>
+  <data name="S_AutoplayCount_D" xml:space="preserve">
+    <value>自動再生時に候補結果を切り替える回数</value>
+  </data>
+  <data name="S_AnimationStyle" xml:space="preserve">
+    <value>アニメーションスタイル</value>
+  </data>
+  <data name="S_AnimationStyle_D" xml:space="preserve">
+    <value>抽選中と最終結果に使用する統一アニメーション</value>
+  </data>
+  <data name="S_ColorTheme" xml:space="preserve">
+    <value>カラーテーマ</value>
+  </data>
+  <data name="S_ColorTheme_D" xml:space="preserve">
+    <value>抽選アニメーションと結果の色の指定元</value>
+  </data>
+  <data name="S_FixedColor" xml:space="preserve">
+    <value>固定色</value>
+  </data>
+  <data name="S_FixedColor_D" xml:space="preserve">
+    <value>固定色のテーマで使用します</value>
+  </data>
+  <data name="S_StudentImage" xml:space="preserve">
+    <value>画像を表示</value>
+  </data>
+  <data name="S_StudentImage_D" xml:space="preserve">
+    <value>抽選結果にメンバー画像を表示します</value>
+  </data>
+  <data name="S_StudentImagePosition" xml:space="preserve">
+    <value>画像の位置</value>
+  </data>
+  <data name="S_StudentImagePosition_D" xml:space="preserve">
+    <value>文字に対するメンバー画像の位置</value>
+  </data>
+  <data name="O_Repeat" xml:space="preserve">
+    <value>重複を許可</value>
+  </data>
+  <data name="O_NoRepeat" xml:space="preserve">
+    <value>重複なし</value>
+  </data>
+  <data name="O_HalfRepeat" xml:space="preserve">
+    <value>半重複</value>
+  </data>
+  <data name="O_Restarted" xml:space="preserve">
+    <value>再起動後に消去</value>
+  </data>
+  <data name="O_Cleared" xml:space="preserve">
+    <value>手動で消去</value>
+  </data>
+  <data name="O_Random" xml:space="preserve">
+    <value>ランダム抽選</value>
+  </data>
+  <data name="O_NoMusic" xml:space="preserve">
+    <value>音楽なし</value>
+  </data>
+  <data name="O_RandomMusic" xml:space="preserve">
+    <value>ランダム再生</value>
+  </data>
+  <data name="O_MusicExternal" xml:space="preserve">
+    <value>外部ファイル: {0}</value>
+  </data>
+  <data name="O_MusicUnavailable" xml:space="preserve">
+    <value>利用不可: {0}</value>
+  </data>
+  <data name="O_Fair" xml:space="preserve">
+    <value>公平な抽選</value>
+  </data>
+  <data name="O_Pan" xml:space="preserve">
+    <value>くじ盤による</value>
+  </data>
+  <data name="O_Count" xml:space="preserve">
+    <value>残り個数による</value>
+  </data>
+  <data name="O_FollowGlobal" xml:space="preserve">
+    <value>全体設定に従う</value>
+  </data>
+  <data name="O_Custom" xml:space="preserve">
+    <value>カスタム</value>
+  </data>
+  <data name="O_Both" xml:space="preserve">
+    <value>番号と名称</value>
+  </data>
+  <data name="O_Name" xml:space="preserve">
+    <value>名称のみ</value>
+  </data>
+  <data name="O_Id" xml:space="preserve">
+    <value>番号のみ</value>
+  </data>
+  <data name="O_Default" xml:space="preserve">
+    <value>既定</value>
+  </data>
+  <data name="O_Card" xml:space="preserve">
+    <value>カード</value>
+  </data>
+  <data name="O_ManualStop" xml:space="preserve">
+    <value>手動停止</value>
+  </data>
+  <data name="O_AutoPlay" xml:space="preserve">
+    <value>自動再生</value>
+  </data>
+  <data name="O_NoAnimation" xml:space="preserve">
+    <value>アニメーションなし</value>
+  </data>
+  <data name="O_AnimationDirectRotate" xml:space="preserve">
+    <value>直接切り替え</value>
+  </data>
+  <data name="O_AnimationFadeFloat" xml:space="preserve">
+    <value>フェードして上昇</value>
+  </data>
+  <data name="O_AnimationHorizontalShake" xml:space="preserve">
+    <value>左右に揺らす</value>
+  </data>
+  <data name="O_NoColor" xml:space="preserve">
+    <value>なし</value>
+  </data>
+  <data name="O_RandomColor" xml:space="preserve">
+    <value>ランダム</value>
+  </data>
+  <data name="O_FixedColor" xml:space="preserve">
+    <value>固定色</value>
+  </data>
+  <data name="O_Left" xml:space="preserve">
+    <value>左</value>
+  </data>
+  <data name="O_Top" xml:space="preserve">
+    <value>上</value>
+  </data>
+  <data name="O_Right" xml:space="preserve">
+    <value>右</value>
+  </data>
+  <data name="O_Bottom" xml:space="preserve">
+    <value>下</value>
+  </data>
+  <data name="O_PrizeBreakGroupHyphenName" xml:space="preserve">
+    <value>景品/分組-名称</value>
+  </data>
+  <data name="O_PrizeBreakGroupBreakName" xml:space="preserve">
+    <value>景品/分組/名称</value>
+  </data>
+  <data name="O_PrizeHyphenGroupHyphenName" xml:space="preserve">
+    <value>景品-分組-名称</value>
+  </data>
+  <data name="O_PrizeBreakName" xml:space="preserve">
+    <value>景品/名称</value>
+  </data>
+  <data name="O_PrizeHyphenName" xml:space="preserve">
+    <value>景品-名称</value>
+  </data>
+  <data name="O_PrizeBreakGroup" xml:space="preserve">
+    <value>景品/分組</value>
+  </data>
+  <data name="O_PrizeHyphenGroup" xml:space="preserve">
+    <value>景品-分組</value>
+  </data>
+  <data name="Section_Overridable" xml:space="preserve">
+    <value>上書き可能な設定</value>
+  </data>
+  <data name="Section_Music" xml:space="preserve">
+    <value>音楽設定</value>
+  </data>
+  <data name="Section_VoiceAnnouncement" xml:space="preserve">
+    <value>音声案内</value>
+  </data>
+  <data name="S_VoiceAnnouncementEnabled" xml:space="preserve">
+    <value>音声案内を有効化</value>
+  </data>
+  <data name="S_VoiceAnnouncementEnabled_D" xml:space="preserve">
+    <value>抽選後に結果を読み上げます。全体の音声案内が無効の場合は機能しません</value>
+  </data>
+  <data name="S_AnimationMusic" xml:space="preserve">
+    <value>アニメーション音楽</value>
+  </data>
+  <data name="S_AnimationMusic_D" xml:space="preserve">
+    <value>抽選アニメーション中に再生する音楽</value>
+  </data>
+  <data name="S_AnimationMusicLoop" xml:space="preserve">
+    <value>アニメーション音楽をループ</value>
+  </data>
+  <data name="S_AnimationMusicLoop_D" xml:space="preserve">
+    <value>アニメーション中に音楽を繰り返します</value>
+  </data>
+  <data name="S_ResultMusic" xml:space="preserve">
+    <value>結果音楽</value>
+  </data>
+  <data name="S_ResultMusic_D" xml:space="preserve">
+    <value>抽選結果の表示時に再生する音楽</value>
+  </data>
+  <data name="S_MusicVolume" xml:space="preserve">
+    <value>音楽の音量</value>
+  </data>
+  <data name="S_MusicVolume_D" xml:space="preserve">
+    <value>アニメーション音楽と結果音楽の音量</value>
+  </data>
+  <data name="S_MusicFadeInOut" xml:space="preserve">
+    <value>音楽のフェード</value>
+  </data>
+  <data name="S_MusicFadeInOut_D" xml:space="preserve">
+    <value>アニメーションのフェードイン、フェードアウト、結果音楽のフェードイン、フェードアウト時間（ミリ秒）</value>
+  </data>
+  <data name="S_AnimationMusicVolume" xml:space="preserve">
+    <value>アニメーション音楽の音量</value>
+  </data>
+  <data name="S_AnimationMusicVolume_D" xml:space="preserve">
+    <value>アニメーション音楽の音量</value>
+  </data>
+  <data name="S_ResultMusicVolume" xml:space="preserve">
+    <value>結果音楽の音量</value>
+  </data>
+  <data name="S_ResultMusicVolume_D" xml:space="preserve">
+    <value>結果音楽の音量</value>
+  </data>
+  <data name="S_AnimationMusicFade" xml:space="preserve">
+    <value>アニメーション音楽のフェード</value>
+  </data>
+  <data name="S_AnimationMusicFade_D" xml:space="preserve">
+    <value>上のスライダーがフェードイン、下がフェードアウト（ミリ秒）</value>
+  </data>
+  <data name="S_ResultMusicFade" xml:space="preserve">
+    <value>結果音楽のフェード</value>
+  </data>
+  <data name="S_ResultMusicFade_D" xml:space="preserve">
+    <value>上のスライダーがフェードイン、下がフェードアウト（ミリ秒）</value>
+  </data>
+  <data name="C_FadeIn" xml:space="preserve">
+    <value>フェードイン</value>
+  </data>
+  <data name="C_FadeOut" xml:space="preserve">
+    <value>フェードアウト</value>
+  </data>
+  <data name="Section_LotteryImage" xml:space="preserve">
+    <value>景品画像設定</value>
+  </data>
+  <data name="S_LotteryImage" xml:space="preserve">
+    <value>景品画像を表示</value>
+  </data>
+  <data name="S_LotteryImage_D" xml:space="preserve">
+    <value>くじ引き結果に景品画像を表示します</value>
+  </data>
+  <data name="S_LotteryImagePosition" xml:space="preserve">
+    <value>景品画像の位置</value>
+  </data>
+  <data name="S_LotteryImagePosition_D" xml:space="preserve">
+    <value>文字に対する景品画像の位置</value>
+  </data>
 </root>

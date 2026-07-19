@@ -22,7 +22,19 @@ public sealed class CsesScheduleSource : ICourseScheduleSource
     {
         var schedule = _scheduleStore.Load();
         return Task.FromResult(schedule is null
-            ? CourseScheduleSnapshot.Unavailable(SourceName, "未导入有效的 CSES 课程表。")
+            ? CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.CsesMissing)
             : CourseScheduleMath.Evaluate(schedule, DateTimeOffset.Now));
     }
+}
+
+internal static class ScheduleErrorCodes
+{
+    public const string CsesMissing = "cses.missing";
+    public const string ClassIslandUnavailable = "classisland.unavailable";
+    public const string ClassIslandTimerStopped = "classisland.timer-stopped";
+    public const string ClassIslandScheduleDisabled = "classisland.schedule-disabled";
+    public const string ClassIslandScheduleUnloaded = "classisland.schedule-unloaded";
+    public const string ClassIslandTimeUnconfirmed = "classisland.time-unconfirmed";
+    public const string ClassIslandUnsupportedState = "classisland.unsupported-state";
+    public const string ClassIslandReadFailed = "classisland.read-failed";
 }

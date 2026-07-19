@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
@@ -19,7 +21,9 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Extensions;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services;
+using SecRandom.Core.Views;
 using SecRandom.Services;
+using SecRandom.Services.ViewEngine;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
@@ -27,9 +31,13 @@ namespace SecRandom.Views;
 public partial class MainView : UserControl, IFANavigationPageFactory
 {
     private const string DefaultMainPageId = "main.rollCall";
+    private const string EmbeddedHostId = "desktop.main";
 
     private readonly FAFrame? _navigationFrame;
     private readonly FANavigationView? _navigationView;
+    private readonly ContentControl? _embeddedViewHostPresenter;
+    private readonly ViewHostControl _embeddedViewHost;
+    private readonly DesktopViewHostProvider _desktopViewHostProvider = IAppHost.GetService<DesktopViewHostProvider>();
 
     private AppToastAdorner? _appToastAdorner;
     private bool _isAdornerAdded;
@@ -40,12 +48,17 @@ public partial class MainView : UserControl, IFANavigationPageFactory
     {
         Current = this;
         DataContext = this;
+        _embeddedViewHost = new ViewHostControl(EmbeddedHostId);
         InitializeComponent();
 
         _navigationFrame = this.FindControl<FAFrame>("NavigationFrame");
         _navigationView = this.FindControl<FANavigationView>("NavigationView");
+        _embeddedViewHostPresenter = this.FindControl<ContentControl>("EmbeddedViewHostPresenter");
+        if (_embeddedViewHostPresenter is not null)
+            _embeddedViewHostPresenter.Content = _embeddedViewHost;
 
         _navigationFrame?.NavigationPageFactory = this;
+        _desktopViewHostProvider.RegisterEmbeddedHost(_embeddedViewHost);
         BuildNavigationMenuItems();
         SelectNavigationItemById(DefaultMainPageId);
 
@@ -109,6 +122,13 @@ public partial class MainView : UserControl, IFANavigationPageFactory
             _isFeatureAvailabilitySubscribed = false;
         }
         DataContext = null;
+    }
+
+    public async Task CloseEmbeddedHostAsync(ViewCloseReason reason, CancellationToken cancellationToken = default)
+    {
+        var viewEngine = IAppHost.GetService<IViewEngine>();
+        await viewEngine.CloseHostAsync(_embeddedViewHost, reason, cancellationToken).ConfigureAwait(false);
+        await _embeddedViewHost.DestroyAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private void BuildNavigationMenuItems()

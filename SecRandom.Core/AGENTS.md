@@ -79,6 +79,7 @@ SecRandom.Core/
 - Weighted drawing validates count, candidates, and weights before sampling; preserve explicit `DrawStatus` returns over
   exceptions at public boundary.
 - Draw fairness/repeat history for students and prizes must use `ProfileRecordIdentity`/`RecordId` first. Legacy `Id`/`Name` history fallback is only for backward compatibility and must stay ambiguity-safe.
+- Student fair-draw execution must support explicit internal policy snapshots. Desktop public `DrawEngine` methods stay byte-compatible by deriving a `DesktopConfigured` snapshot from live `MainConfigModel.FairDrawSettings`; mobile fair draws use the fixed `MobileDesktopDefaultsV1` snapshot and must not read persisted fair-setting values.
 - Verification proof inputs commit a `VerificationSamplingMode` and `VerificationAlgorithmProfile`. The profile must match the draw kind and sampler: fair/random students use history-balanced or unit-weight sampling when no behind-scene rule is active, student behind-scene weighting uses a dedicated profile, Count lottery uses equal-probability partial inventory permutation without behind-scene rules, and Pan or an internal-rule fallback uses weighted-without-replacement. Any internal rule, including zero-probability exclusions, must stay visible in the anonymous audit payload.
 - Config handlers derive from `ConfigHandlerBase<TModel>`; config model defaults should be safe without existing data
   files.

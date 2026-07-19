@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="C_Start" xml:space="preserve"><value>クイック抽選</value></data>
+  <data name="C_Stop" xml:space="preserve"><value>停止</value></data>
+  <data name="M_Ready" xml:space="preserve"><value>クイック抽選の準備完了</value></data>
+  <data name="M_NoMembers" xml:space="preserve"><value>抽選できるメンバーがいません</value></data>
+  <data name="M_Drawing" xml:space="preserve"><value>抽選中...</value></data>
+  <data name="M_DrawFailed" xml:space="preserve"><value>クイック抽選に失敗しました</value></data>
+  <data name="M_DrawnCountFormat" xml:space="preserve"><value>{0} 人のメンバーを抽選しました</value></data>
+  <data name="M_ResetDone" xml:space="preserve"><value>現在のリストの点呼記録を消去しました</value></data>
+  <data name="M_DefaultListRequired" xml:space="preserve"><value>先にクイック抽選設定で既定のメンバーリストを選択してください</value></data>
+  <data name="M_DefaultListMissing" xml:space="preserve"><value>既定のメンバーリストが存在しません。クイック抽選設定で選び直してください</value></data>
+</root>

@@ -1,20 +1,27 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using FluentAvalonia.Styling;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services;
+using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Views;
+using SecRandom.Mobile.Views;
+using SecRandom.Mobile.Services;
+using SecRandom.Mobile.Views.Settings;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
 using SecRandom.Shared;
-using SecRandom.Mobile.Views;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile;
@@ -52,13 +59,15 @@ public sealed class MobileApp : Avalonia.Application
                     services.AddSingleton<IViewHostProvider>(serviceProvider =>
                         serviceProvider.GetRequiredService<SingleViewHostProvider>());
                     services.AddViewEngine()
-                        .AddView<MobileShellView>(MobileShellView.Id);
+                        .AddView<MobileHistoryPage>("main.history");
                     services.AddHttpClient<MobileUpdateService>();
+                    services.AddSingleton<MobileDeviceUuidStore>();
+                    services.AddHostedService<MobileOnlineStatusService>();
+                    services.AddSingleton<MobileRootView>();
                 })
                 .Build();
             IAppHost.Host = _host;
-            _rootView = new MobileRootView();
-            _host.Services.GetRequiredService<SingleViewHostProvider>().Attach(_rootView);
+            _rootView = _host.Services.GetRequiredService<MobileRootView>();
             singleView.MainView = _rootView;
 
             if (singleView is IControlledApplicationLifetime controlled)
@@ -102,9 +111,9 @@ public sealed class MobileApp : Avalonia.Application
             if (_rootView is not null)
             {
                 await host.Services.GetRequiredService<IViewEngine>()
-                    .CloseHostAsync(_rootView, ViewCloseReason.ApplicationShutdown)
+                    .CloseHostAsync(_rootView.InnerViewHost, ViewCloseReason.ApplicationShutdown)
                     .ConfigureAwait(false);
-                await _rootView.DestroyAsync().ConfigureAwait(false);
+                await _rootView.InnerViewHost.DestroyAsync().ConfigureAwait(false);
             }
             await host.StopAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         }
@@ -136,9 +145,6 @@ public sealed class MobileApp : Avalonia.Application
             _ = host.Services.GetRequiredService<IDrawTemporaryRecordService>();
             _ = host.Services.GetRequiredService<IFeatureAvailabilityService>();
             _ = host.Services.GetRequiredService<DrawEngine>();
-            await host.Services.GetRequiredService<IViewEngine>()
-                .ShowAsync(MobileShellView.Id)
-                .ConfigureAwait(false);
         }
         catch (Exception exception)
         {
@@ -164,9 +170,245 @@ public sealed class MobileApp : Avalonia.Application
     }
 }
 
-public sealed class MobileRootView : ViewHostControl
+public sealed class MobileRootView : UserControl
 {
-    public MobileRootView() : base("mobile.root")
+    private readonly IProfileService _profileService;
+    private readonly IHistoryQueryService _historyQueryService;
+    private readonly IDrawTemporaryRecordService _temporaryRecordService;
+    private readonly IFeatureAvailabilityService _featureAvailabilityService;
+    private readonly MainConfigHandler _configHandler;
+    private readonly DrawEngine _drawEngine;
+    private readonly MobileUpdateService _updateService;
+    private readonly EventHandler _featureAvailabilityChanged;
+    private readonly ViewHostControl _viewHost;
+    private readonly IViewEngine _viewEngine;
+    private readonly Grid _pageHost;
+    private readonly Grid _legacyPageHost;
+    private readonly TextBlock _pageTitle;
+    private readonly Button _drawTab;
+    private readonly Button _historyTab;
+    private readonly Button _overviewTab;
+    private readonly Button _settingsTab;
+    private MobileDestination _destination = MobileDestination.Draw;
+    private DrawSurface _drawSurface = DrawSurface.RollCall;
+    private MobileSettingsSection? _settingsSection;
+
+    public MobileRootView(
+        IProfileService profileService,
+        IHistoryQueryService historyQueryService,
+        IDrawTemporaryRecordService temporaryRecordService,
+        IFeatureAvailabilityService featureAvailabilityService,
+        MainConfigHandler configHandler,
+        DrawEngine drawEngine,
+        MobileUpdateService updateService,
+        SingleViewHostProvider singleViewHostProvider,
+        IViewEngine viewEngine)
     {
+        _profileService = profileService;
+        _historyQueryService = historyQueryService;
+        _temporaryRecordService = temporaryRecordService;
+        _featureAvailabilityService = featureAvailabilityService;
+        _configHandler = configHandler;
+        _drawEngine = drawEngine;
+        _updateService = updateService;
+        _viewEngine = viewEngine;
+        _viewHost = new ViewHostControl("mobile.root");
+        singleViewHostProvider.Attach(_viewHost);
+        MobileTheme.Apply(_configHandler.Data.Appearance.Theme);
+
+        _featureAvailabilityChanged = (_, _) => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (!_featureAvailabilityService.IsLotteryEnabled && _drawSurface == DrawSurface.Lottery)
+                _drawSurface = DrawSurface.RollCall;
+            if (_destination == MobileDestination.Draw)
+                RenderCurrentDestination();
+        });
+        _featureAvailabilityService.Changed += _featureAvailabilityChanged;
+        DetachedFromVisualTree += (_, _) => _featureAvailabilityService.Changed -= _featureAvailabilityChanged;
+
+        _pageTitle = new TextBlock
+        {
+            FontSize = 20,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = MobileTheme.Text,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        _legacyPageHost = new Grid();
+        _pageHost = new Grid { Children = { _legacyPageHost, _viewHost } };
+        _viewHost.SetValue(Panel.ZIndexProperty, 1);
+        _drawTab = MobileUi.CreateNavigationButton(LR.N_Draw);
+        _historyTab = MobileUi.CreateNavigationButton(LR.N_History);
+        _overviewTab = MobileUi.CreateNavigationButton(LR.N_Overview);
+        _settingsTab = MobileUi.CreateNavigationButton(LR.N_Settings);
+        _drawTab.Click += (_, _) => NavigateTo(MobileDestination.Draw);
+        _historyTab.Click += async (_, _) => await ShowHistoryAsync();
+        _overviewTab.Click += (_, _) => NavigateTo(MobileDestination.Overview);
+        _settingsTab.Click += (_, _) => NavigateTo(MobileDestination.Settings);
+
+        var header = new Border
+        {
+            Padding = new Thickness(20, 14),
+            Background = MobileTheme.Surface,
+            BorderBrush = MobileTheme.Border,
+            BorderThickness = new Thickness(0, 0, 0, 1),
+            Child = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+                Children =
+                {
+                    new Image
+                    {
+                        Source = new Bitmap(AssetLoader.Open(new Uri("avares://SecRandom.Mobile/Assets/AppLogo.png"))),
+                        Width = 32,
+                        Height = 32,
+                        Margin = new Thickness(0, 0, 10, 0),
+                        VerticalAlignment = VerticalAlignment.Center
+                    },
+                    _pageTitle
+                }
+            }
+        };
+        Grid.SetColumn(_pageTitle, 1);
+
+        var bottomBar = new Border
+        {
+            Padding = new Thickness(8, 8, 8, 10),
+            Background = MobileTheme.Surface,
+            BorderBrush = MobileTheme.Border,
+            BorderThickness = new Thickness(0, 1, 0, 0),
+            Child = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("*,*,*,*"),
+                Children = { _drawTab, _historyTab, _overviewTab, _settingsTab }
+            }
+        };
+        Grid.SetColumn(_historyTab, 1);
+        Grid.SetColumn(_overviewTab, 2);
+        Grid.SetColumn(_settingsTab, 3);
+
+        var root = new Grid
+        {
+            RowDefinitions = new RowDefinitions("Auto,*,Auto"),
+            Background = MobileTheme.Canvas,
+            Children = { header, _pageHost, bottomBar }
+        };
+        Grid.SetRow(_pageHost, 1);
+        Grid.SetRow(bottomBar, 2);
+        Content = root;
+
+        AddHandler(TopLevel.BackRequestedEvent, OnBackRequested, RoutingStrategies.Bubble);
+        RenderCurrentDestination();
+    }
+
+    private void OnBackRequested(object? sender, RoutedEventArgs e)
+    {
+        if (e.Handled)
+            return;
+
+        e.Handled = true;
+        _ = _viewHost.RequestBackAsync();
+    }
+
+    public ViewHostControl InnerViewHost => _viewHost;
+
+    private async void NavigateTo(MobileDestination destination)
+    {
+        await _viewEngine.CloseAsync("main.history").ConfigureAwait(true);
+        _destination = destination;
+        _settingsSection = null;
+        RenderCurrentDestination();
+    }
+
+    private async Task ShowHistoryAsync()
+    {
+        _destination = MobileDestination.History;
+        _settingsSection = null;
+        RenderCurrentDestination();
+        await _viewEngine.ShowAsync("main.history").ConfigureAwait(true);
+    }
+
+    private void OpenSettings(MobileSettingsSection section)
+    {
+        _destination = MobileDestination.Settings;
+        _settingsSection = section;
+        RenderCurrentDestination();
+    }
+
+    private void SelectDrawSurface(DrawSurface surface)
+    {
+        if (surface == DrawSurface.Lottery && !_featureAvailabilityService.IsLotteryEnabled)
+            return;
+
+        _drawSurface = surface;
+        RenderCurrentDestination();
+    }
+
+    private void ApplyTheme(ThemeMode theme)
+    {
+        _configHandler.Data.Appearance.Theme = theme;
+        _configHandler.Save();
+        MobileTheme.Apply(theme);
+        _pageTitle.Foreground = MobileTheme.Text;
+        RenderCurrentDestination();
+    }
+
+    private void RenderCurrentDestination()
+    {
+        _drawTab.Foreground = _destination == MobileDestination.Draw ? MobileTheme.Primary : MobileTheme.MutedText;
+        _historyTab.Foreground = _destination == MobileDestination.History ? MobileTheme.Primary : MobileTheme.MutedText;
+        _overviewTab.Foreground = _destination == MobileDestination.Overview ? MobileTheme.Primary : MobileTheme.MutedText;
+        _settingsTab.Foreground = _destination == MobileDestination.Settings ? MobileTheme.Primary : MobileTheme.MutedText;
+        _pageTitle.Text = _destination switch
+        {
+            MobileDestination.Draw => LR.P_Draw,
+            MobileDestination.History => LR.P_History,
+            MobileDestination.Overview => LR.P_Overview,
+            MobileDestination.Settings => LR.P_Settings,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        _legacyPageHost.Children.Clear();
+        _legacyPageHost.Children.Add(_destination switch
+        {
+            MobileDestination.Draw => new MobileDrawPage(
+                _profileService,
+                _temporaryRecordService,
+                _featureAvailabilityService,
+                _configHandler,
+                _drawEngine,
+                _drawSurface,
+                SelectDrawSurface,
+                () => OpenSettings(MobileSettingsSection.ListManagement)),
+            MobileDestination.History => new Grid(),
+            MobileDestination.Overview => new MobileOverviewPage(_profileService),
+            MobileDestination.Settings => CreateSettingsPage(),
+            _ => throw new ArgumentOutOfRangeException()
+        });
+    }
+
+    private Control CreateSettingsPage()
+    {
+        return _settingsSection switch
+        {
+            null => new MobileSettingsCatalogPage(OpenSettings),
+            MobileSettingsSection.General => new MobileGeneralSettingsPage(_configHandler, ReturnToSettingsCatalog),
+            MobileSettingsSection.Personalization => new MobilePersonalizationSettingsPage(
+                _configHandler, ReturnToSettingsCatalog, ApplyTheme),
+            MobileSettingsSection.ListManagement => new MobileListManagementSettingsPage(
+                _profileService, ReturnToSettingsCatalog, RenderCurrentDestination),
+            MobileSettingsSection.Draw => new MobileDrawSettingsPage(
+                _configHandler, _temporaryRecordService, _profileService, ReturnToSettingsCatalog, RenderCurrentDestination),
+            MobileSettingsSection.Backup => new MobileBackupSettingsPage(ReturnToSettingsCatalog),
+            MobileSettingsSection.Update => new MobileUpdateSettingsPage(
+                _updateService, ReturnToSettingsCatalog, RenderCurrentDestination),
+            MobileSettingsSection.About => new MobileAboutSettingsPage(ReturnToSettingsCatalog),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+
+    private void ReturnToSettingsCatalog()
+    {
+        _settingsSection = null;
+        RenderCurrentDestination();
     }
 }

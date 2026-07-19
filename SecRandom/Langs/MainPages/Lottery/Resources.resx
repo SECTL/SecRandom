@@ -34,10 +34,10 @@
     <value>关闭</value>
   </data>
   <data name="O_NoStudentAssignment" xml:space="preserve">
-    <value>不抽取学生</value>
+    <value>不抽取成员</value>
   </data>
   <data name="O_AllGroups" xml:space="preserve">
-    <value>抽取全部学生</value>
+    <value>抽取全部成员</value>
   </data>
   <data name="O_AllGenders" xml:space="preserve">
     <value>抽取全部性别</value>
@@ -55,10 +55,10 @@
     <value>没有剩余奖品</value>
   </data>
   <data name="M_NoStudents" xml:space="preserve">
-    <value>当前筛选条件下没有学生</value>
+    <value>当前筛选条件下没有成员</value>
   </data>
   <data name="M_NoRemainingStudents" xml:space="preserve">
-    <value>当前筛选条件下没有剩余学生</value>
+    <value>当前筛选条件下没有剩余成员</value>
   </data>
   <data name="M_DrawnCountFormat" xml:space="preserve">
     <value>已抽取 {0} 个奖品</value>

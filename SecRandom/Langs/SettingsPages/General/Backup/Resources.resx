@@ -88,7 +88,7 @@
         <value>可复现和核验抽取结果的证明文件（proofs）</value>
     </data>
     <data name="S_Includes_Images_D" xml:space="preserve">
-        <value>学生/奖品图片资源（images）</value>
+        <value>成员/奖品图片资源（images）</value>
     </data>
     <data name="S_Includes_List_D" xml:space="preserve">
         <value>点名/抽奖名单等数据（list）</value>

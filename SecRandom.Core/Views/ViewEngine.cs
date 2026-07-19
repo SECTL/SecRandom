@@ -73,6 +73,7 @@ internal sealed class ViewEngine(IServiceProvider services, IViewRegistry regist
             : new ViewShowOptions
             {
                 ActivationPreference = options.ActivationPreference,
+                HostId = options.HostId,
                 Presentation = ViewPresentation.Modal,
                 ReuseExistingView = options.ReuseExistingView
             };

@@ -16,10 +16,26 @@ public partial class DrawEngine
         IReadOnlyDictionary<Student, History>? historyCacheOverride = null,
         string courseName = "")
     {
+        return CalculateStudentWeight(candidates, FairDrawPolicySnapshot.FromConfig(ConfigData.FairDrawSettings), historyCacheOverride, courseName);
+    }
+
+    internal List<WeightedCandidate<Student>> CalculateStudentWeightWithMobileDesktopDefaults(
+        List<Student> candidates,
+        IReadOnlyDictionary<Student, History>? historyCacheOverride = null,
+        string courseName = "")
+    {
+        return CalculateStudentWeight(candidates, FairDrawPolicySnapshot.MobileDesktopDefaultsV1, historyCacheOverride, courseName);
+    }
+
+    internal List<WeightedCandidate<Student>> CalculateStudentWeight(
+        List<Student> candidates,
+        FairDrawPolicySnapshot fairSettings,
+        IReadOnlyDictionary<Student, History>? historyCacheOverride = null,
+        string courseName = "")
+    {
         if (candidates.Count == 0)
             return [];
 
-        var fairSettings = ConfigData.FairDrawSettings;
         var baseWeight = SanitizeFinite(fairSettings.BaseWeight, 1.0);
         var historyCache = historyCacheOverride is null
             ? BuildStudentHistoryCache(candidates, courseName)
@@ -75,7 +91,7 @@ public partial class DrawEngine
                             SanitizeFinite(fairSettings.TimeWeight, 0.5);
 
             var totalIndex = baseWeight + frequencyIndex + groupIndex + genderIndex + timeIndex;
-            if (IsStudentShielded(lastDrawnTime))
+            if (IsStudentShielded(lastDrawnTime, fairSettings))
                 totalIndex = 0;
 
             calculatedStudentWeight.Add(new WeightedCandidate<Student> { Candidate = candidate, Weight = totalIndex });
@@ -154,7 +170,11 @@ public partial class DrawEngine
 
     private bool IsStudentShielded(DateTime lastDrawnTime)
     {
-        var fairSettings = ConfigData.FairDrawSettings;
+        return IsStudentShielded(lastDrawnTime, FairDrawPolicySnapshot.FromConfig(ConfigData.FairDrawSettings));
+    }
+
+    private static bool IsStudentShielded(DateTime lastDrawnTime, FairDrawPolicySnapshot fairSettings)
+    {
         if (!fairSettings.ShieldEnabled || fairSettings.ShieldTime <= 0 || lastDrawnTime == DateTime.MinValue)
             return false;
 

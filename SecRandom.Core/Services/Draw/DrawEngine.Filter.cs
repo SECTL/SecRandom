@@ -18,6 +18,18 @@ public partial class DrawEngine
         return ApplyAverageGapProtection(filteredList, drawCount, historyCache, applyAverageGapProtection);
     }
 
+    private List<Student> FilterStudents(
+        Func<Student, bool> filter,
+        int drawCount,
+        IReadOnlyDictionary<Student, History>? historyCacheOverride,
+        StudentDrawExecutionPolicy executionPolicy)
+    {
+        var filteredList = StudentList.Students.Where(filter).ToList();
+        var historyCache = historyCacheOverride ?? BuildStudentHistoryCache(filteredList);
+
+        return ApplyAverageGapProtection(filteredList, drawCount, historyCache, executionPolicy);
+    }
+
     private List<Student> FilterPreparedStudents(
         IReadOnlyCollection<Student> candidates,
         int drawCount,
@@ -30,11 +42,40 @@ public partial class DrawEngine
         return ApplyAverageGapProtection(filteredList, drawCount, historyCache, applyAverageGapProtection);
     }
 
+    private List<Student> FilterPreparedStudents(
+        IReadOnlyCollection<Student> candidates,
+        int drawCount,
+        IReadOnlyDictionary<Student, History>? historyCacheOverride,
+        StudentDrawExecutionPolicy executionPolicy)
+    {
+        var filteredList = candidates.Where(student => student.IsCandidate).ToList();
+        var historyCache = historyCacheOverride ?? BuildStudentHistoryCache(filteredList);
+
+        return ApplyAverageGapProtection(filteredList, drawCount, historyCache, executionPolicy);
+    }
+
     private List<Student> ApplyAverageGapProtection(
         List<Student> filteredList,
         int drawCount,
         IReadOnlyDictionary<Student, History> historyCache,
         bool applyAverageGapProtection)
+    {
+        return ApplyAverageGapProtection(
+            filteredList,
+            drawCount,
+            historyCache,
+            new StudentDrawExecutionPolicy(
+                "LegacyImplicit",
+                0,
+                applyAverageGapProtection ? DrawType.Fair : DrawType.Random,
+                FairDrawPolicySnapshot.FromConfig(ConfigData.FairDrawSettings)));
+    }
+
+    private static List<Student> ApplyAverageGapProtection(
+        List<Student> filteredList,
+        int drawCount,
+        IReadOnlyDictionary<Student, History> historyCache,
+        StudentDrawExecutionPolicy executionPolicy)
     {
         if (filteredList.Count == 0)
             throw new CandidateNotFoundException();
@@ -42,8 +83,8 @@ public partial class DrawEngine
         if (drawCount > filteredList.Count)
             throw new RepeatLimitExhaustedException();
 
-        var fairSettings = ConfigData.FairDrawSettings;
-        if (!applyAverageGapProtection || !fairSettings.EnableAvgGapProtection)
+        var fairSettings = executionPolicy.FairDrawSettings;
+        if (executionPolicy.DrawType != DrawType.Fair || !fairSettings.EnableAvgGapProtection)
             return filteredList;
 
         var countByStudent = filteredList.ToDictionary(

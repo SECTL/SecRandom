@@ -26,27 +26,23 @@ public partial class DrawEngine
         if (preparedCandidates.Count == 0 || count <= 0 || count > preparedCandidates.Count)
             throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.");
 
-        var historyCache = BuildStudentHistoryCache(preparedCandidates, courseName);
         var drawType = GetStudentDrawType(drawSettingsType);
         var drawMode = GetStudentDrawMode(drawSettingsType);
-        List<Student> usable;
+        var executionPolicy = StudentDrawExecutionPolicy.DesktopConfigured(drawType, ConfigData.FairDrawSettings);
+        DrawPreparedStudentsSnapshot prepared;
         try
         {
-            usable = FilterPreparedStudents(preparedCandidates, count, historyCache, drawType == DrawType.Fair);
+            prepared = PrepareStudentsForDraw(count, preparedCandidates, executionPolicy, courseName);
         }
         catch (Exception exception) when (exception is CandidateNotFoundException or RepeatLimitExhaustedException)
         {
             throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.", exception);
         }
 
-        var weighted = drawType == DrawType.Fair
-            ? CalculateStudentWeight(usable, historyCache, courseName)
-            : usable.Select(student => new WeightedCandidate<Student> { Candidate = student, Weight = 1.0 }).ToList();
-
-        var frozen = FreezeCandidates(weighted);
+        var frozen = FreezeCandidates(prepared.WeightedCandidates);
         if (count > frozen.Count)
             throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.");
-        var hasInternalRules = weighted.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
+        var hasInternalRules = prepared.WeightedCandidates.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
         var algorithmProfile = GetStudentAlgorithmProfile(drawType, drawMode, hasInternalRules);
         return new VerificationDrawInput
         {
@@ -57,15 +53,15 @@ public partial class DrawEngine
             AlgorithmProfile = algorithmProfile,
             Count = count,
             Candidates = frozen,
-            AuditPayload = CreateAuditPayload("student", count, frozen, weighted, historyCache, new
+            AuditPayload = CreateAuditPayload("student", count, frozen, prepared.WeightedCandidates, prepared.HistoryCache, new
             {
                 fairDraw = drawType == DrawType.Fair,
                 algorithmProfile = algorithmProfile.ToString(),
                 repeatMode = ToAuditName(drawMode),
                 halfRepeatLimit = drawMode == DrawMode.HalfRepeat ? GetStudentRepeatThreshold(drawSettingsType) : (int?)null,
-                averageGapProtectionApplied = drawType == DrawType.Fair && ConfigData.FairDrawSettings.EnableAvgGapProtection,
+                averageGapProtectionApplied = executionPolicy.DrawType == DrawType.Fair && executionPolicy.FairDrawSettings.EnableAvgGapProtection,
                 candidateCountBeforeAverageGapProtection = preparedCandidates.Count,
-                candidateCountAfterAverageGapProtection = usable.Count
+                candidateCountAfterAverageGapProtection = prepared.UsableCandidates.Count
             })
         };
     }

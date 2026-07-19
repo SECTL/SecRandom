@@ -2,7 +2,7 @@
 <root>
   <data name="PrivacyPolicy" xml:space="preserve"><value>SecRandom Privacy Policy (Version 1)
 
-1. Scope and acceptance. SecRandom is a random selection tool for educational activities. By continuing to use the software, you acknowledge and accept this privacy policy; it does not remove rights granted by applicable law.
+1. Scope and acceptance. SecRandom is a random selection tool for activities and organizations. By continuing to use the software, you acknowledge and accept this privacy policy; it does not remove rights granted by applicable law.
 
 2. Local data. Rosters, prizes, history, and settings are stored locally by default. Only import data that is lawful, accurate, authorized, and necessary.
 
@@ -49,19 +49,19 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_ImportSettings" xml:space="preserve"><value>Import v3 settings</value></data>
   <data name="C_ImportAllData" xml:space="preserve"><value>Import all v3 data</value></data>
   <data name="C_RollCallList" xml:space="preserve"><value>Roll-call list</value></data>
-  <data name="C_RollCallListDescription" xml:space="preserve"><value>Select the list to use for roll call, or import a roster file.</value></data>
-  <data name="C_ImportRoster" xml:space="preserve"><value>Import roster</value></data>
+  <data name="C_RollCallListDescription" xml:space="preserve"><value>Select the list to use for roll call, or import a member-list file.</value></data>
+  <data name="C_ImportRoster" xml:space="preserve"><value>Import member list</value></data>
   <data name="C_RefreshList" xml:space="preserve"><value>Refresh</value></data>
   <data name="C_AddList" xml:space="preserve"><value>Add</value></data>
   <data name="C_RenameList" xml:space="preserve"><value>Rename</value></data>
   <data name="C_DeleteList" xml:space="preserve"><value>Delete</value></data>
-  <data name="C_AddStudentListTitle" xml:space="preserve"><value>New class</value></data>
+  <data name="C_AddStudentListTitle" xml:space="preserve"><value>New list</value></data>
   <data name="C_AddPrizeListTitle" xml:space="preserve"><value>New prize pool</value></data>
   <data name="C_RenameListTitle" xml:space="preserve"><value>Rename list</value></data>
   <data name="C_DeleteListTitle" xml:space="preserve"><value>Delete list</value></data>
   <data name="C_ListNameTitle" xml:space="preserve"><value>List name</value></data>
   <data name="C_ListNamePlaceholder" xml:space="preserve"><value>Enter a name</value></data>
-  <data name="C_DefaultStudentListName" xml:space="preserve"><value>New class</value></data>
+  <data name="C_DefaultStudentListName" xml:space="preserve"><value>New list</value></data>
   <data name="C_DefaultPrizeListName" xml:space="preserve"><value>New prize pool</value></data>
   <data name="C_LotteryTitle" xml:space="preserve"><value>Lottery</value></data>
   <data name="C_LotteryDescription" xml:space="preserve"><value>When disabled, lottery navigation, floating controls, shortcuts, and external commands are unavailable.</value></data>
@@ -102,7 +102,7 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_CompleteTitle" xml:space="preserve"><value>Setup complete</value></data>
   <data name="C_CompleteDescription" xml:space="preserve"><value>Click Finish to enter SecRandom after reading the verifiable-draw notice and acknowledging the privacy policy and GPLv3. You can change lists, lottery, appearance, desktop integration, and privacy later.</value></data>
   <data name="C_CompletedItems" xml:space="preserve"><value>Configured items</value></data>
-  <data name="C_CompletedClass" xml:space="preserve"><value>Manage rosters and prize pools from List Management.</value></data>
+  <data name="C_CompletedClass" xml:space="preserve"><value>Manage member lists and prize pools from List Management.</value></data>
   <data name="C_CompletedAppearance" xml:space="preserve"><value>Change draw entry points, theme, and floating-window appearance in Settings.</value></data>
   <data name="C_CompletedIntegration" xml:space="preserve"><value>External-link settings do not disable the app's internal single-instance communication.</value></data>
   <data name="C_CompletedPrivacy" xml:space="preserve"><value>Telemetry and online-status reporting can be changed in Privacy Settings.</value></data>
@@ -144,7 +144,7 @@ No data was changed.</value></data>
   <data name="M_AgreementRequired" xml:space="preserve"><value>Read and acknowledge the verifiable-draw notice, privacy policy, and GNU GPLv3 first.</value></data>
   <data name="M_CompletionAgreementRequired" xml:space="preserve"><value>The verifiable-draw notice, privacy policy, and GNU GPLv3 must be acknowledged before finishing.</value></data>
   <data name="M_DesktopIntegrationFailed" xml:space="preserve"><value>Some desktop integrations could not be enabled and remain off. You can retry later in Settings.</value></data>
-  <data name="M_StudentsImported" xml:space="preserve"><value>Imported {0} students and set the list as the default class.</value></data>
+  <data name="M_StudentsImported" xml:space="preserve"><value>Imported {0} members and set the list as the default list.</value></data>
   <data name="M_PrizesImported" xml:space="preserve"><value>Imported {0} prizes and set the pool as the default prize pool.</value></data>
   <data name="M_OverwriteListContent" xml:space="preserve"><value>“{0}” currently has {1} records. Importing {2} records will replace its contents.</value></data>
   <data name="M_ListNameEmpty" xml:space="preserve"><value>The name cannot be empty.</value></data>

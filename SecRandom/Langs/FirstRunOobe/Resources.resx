@@ -9,7 +9,7 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="PrivacyPolicy" xml:space="preserve"><value>SecRandom 隐私政策（版本 1）
 
-1. 适用范围与接受。SecRandom 是面向教育活动的随机抽取工具。继续使用本软件，即表示您已阅读并接受本隐私政策；本政策不排除适用法律赋予您的权利。
+1. 适用范围与接受。SecRandom 是面向活动与组织的随机抽取工具。继续使用本软件，即表示您已阅读并接受本隐私政策；本政策不排除适用法律赋予您的权利。
 
 2. 本地数据。您导入的名单、奖品、历史和设置默认保存在本地。请确保导入的数据来源合法、准确且经过授权，并仅处理必要的数据。
 
@@ -62,13 +62,13 @@ SecRandom 以 GNU GPLv3 许可发布。GPLv3 允许您运行、研究、修改�
   <data name="C_AddList" xml:space="preserve"><value>新建</value></data>
   <data name="C_RenameList" xml:space="preserve"><value>重命名</value></data>
   <data name="C_DeleteList" xml:space="preserve"><value>删除</value></data>
-  <data name="C_AddStudentListTitle" xml:space="preserve"><value>新建班级</value></data>
+  <data name="C_AddStudentListTitle" xml:space="preserve"><value>新建名单</value></data>
   <data name="C_AddPrizeListTitle" xml:space="preserve"><value>新建奖品池</value></data>
   <data name="C_RenameListTitle" xml:space="preserve"><value>重命名名单</value></data>
   <data name="C_DeleteListTitle" xml:space="preserve"><value>删除名单</value></data>
   <data name="C_ListNameTitle" xml:space="preserve"><value>名单名称</value></data>
   <data name="C_ListNamePlaceholder" xml:space="preserve"><value>请输入名称</value></data>
-  <data name="C_DefaultStudentListName" xml:space="preserve"><value>新班级</value></data>
+  <data name="C_DefaultStudentListName" xml:space="preserve"><value>新名单</value></data>
   <data name="C_DefaultPrizeListName" xml:space="preserve"><value>新奖品池</value></data>
   <data name="C_LotteryTitle" xml:space="preserve"><value>抽奖功能</value></data>
   <data name="C_LotteryDescription" xml:space="preserve"><value>关闭后会隐藏抽奖侧栏和浮窗选项，并拒绝抽奖快捷键及外部指令。</value></data>
@@ -151,7 +151,7 @@ SecRandom 以 GNU GPLv3 许可发布。GPLv3 允许您运行、研究、修改�
   <data name="M_AgreementRequired" xml:space="preserve"><value>请先阅读并确认可验证抽取须知、隐私政策与 GNU GPLv3。</value></data>
   <data name="M_CompletionAgreementRequired" xml:space="preserve"><value>完成前需要确认可验证抽取须知、隐私政策与 GNU GPLv3。</value></data>
   <data name="M_DesktopIntegrationFailed" xml:space="preserve"><value>部分桌面集成未能启用，已保留为关闭状态。可在设置中稍后重试。</value></data>
-  <data name="M_StudentsImported" xml:space="preserve"><value>已导入 {0} 名学生，并设为默认班级。</value></data>
+  <data name="M_StudentsImported" xml:space="preserve"><value>已导入 {0} 名成员，并设为默认名单。</value></data>
   <data name="M_PrizesImported" xml:space="preserve"><value>已导入 {0} 个奖品，并设为默认奖品池。</value></data>
   <data name="M_OverwriteListContent" xml:space="preserve"><value>“{0}”当前包含 {1} 条记录。导入 {2} 条记录将覆盖现有内容。</value></data>
   <data name="M_ListNameEmpty" xml:space="preserve"><value>名称不能为空。</value></data>

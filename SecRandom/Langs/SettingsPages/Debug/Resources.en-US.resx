@@ -1,18 +1,277 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <data name="M_InternalSettings_ConfirmTitle" xml:space="preserve"><value>Enable insider settings?</value></data>
-  <data name="S_DebugEntry" xml:space="preserve"><value>Debug entry</value></data>
-  <data name="C_HideDebugEntry" xml:space="preserve"><value>Hide debug entry</value></data>
-  <data name="C_HideDebugEntry_D" xml:space="preserve"><value>Hide the Debug entry from the sidebar</value></data>
-  <data name="C_Hide" xml:space="preserve"><value>Hide</value></data>
-  <data name="M_DebugShown" xml:space="preserve"><value>Debug entry is now visible.</value></data>
-  <data name="Page_Title" xml:space="preserve"><value>Debug</value></data><data name="S_UiTests" xml:space="preserve"><value>UI tests</value></data><data name="C_DrawerTest" xml:space="preserve"><value>Drawer test</value></data><data name="C_SendToast" xml:space="preserve"><value>Send toast</value></data><data name="M_TestToast" xml:space="preserve"><value>Test toast</value></data><data name="C_OpenDrawer" xml:space="preserve"><value>Open drawer</value></data><data name="S_CrashRecovery" xml:space="preserve"><value>Crash recovery tests</value></data><data name="C_ShowCrashRecovery" xml:space="preserve"><value>Show crash recovery</value></data><data name="C_ThrowDispatcherException" xml:space="preserve"><value>Throw UI-thread exception</value></data><data name="C_RestartProgram" xml:space="preserve"><value>Restart application</value></data>
-  <data name="S_Plugins" xml:space="preserve"><value>Plugin page</value></data><data name="C_ShowPluginSettings" xml:space="preserve"><value>Show plugin management</value></data><data name="C_ShowPluginSettings_D" xml:space="preserve"><value>Plugins are still under test. Enabling it shows the navigation entry; it will be visible by default after release.</value></data><data name="M_ShowPluginSettings_Title" xml:space="preserve"><value>Show plugin management?</value></data><data name="M_ShowPluginSettings" xml:space="preserve"><value>Plugin features are still under test and may change. This switch only shows the plugin-management navigation entry for this session. It will be removed from Debug and visible by default after release.</value></data><data name="C_Show" xml:space="preserve"><value>Show</value></data><data name="C_Cancel" xml:space="preserve"><value>Cancel</value></data>
-  <data name="S_InternalSettings" xml:space="preserve"><value>Insider settings</value></data><data name="C_EnableInternalSettings" xml:space="preserve"><value>Enable insider settings</value></data><data name="C_EnableInternalSettings_D" xml:space="preserve"><value>Temporarily shows insider attached settings.</value></data><data name="M_InternalSettings_Title" xml:space="preserve"><value>Insider settings enabled</value></data><data name="M_InternalSettings" xml:space="preserve"><value>Insider settings are now shown in the attached-settings menu for each student or prize on the list-management pages. This is active only for the current run and is hidden after restart.
+  <data name="M_InternalSettings_ConfirmTitle" xml:space="preserve">
+    <value>Enable insider settings?</value>
+  </data>
+  <data name="S_DebugEntry" xml:space="preserve">
+    <value>Debug entry</value>
+  </data>
+  <data name="C_HideDebugEntry" xml:space="preserve">
+    <value>Hide debug entry</value>
+  </data>
+  <data name="C_HideDebugEntry_D" xml:space="preserve">
+    <value>Hide the Debug entry from the sidebar</value>
+  </data>
+  <data name="C_Hide" xml:space="preserve">
+    <value>Hide</value>
+  </data>
+  <data name="M_DebugShown" xml:space="preserve">
+    <value>Debug entry is now visible.</value>
+  </data>
+  <data name="Page_Title" xml:space="preserve">
+    <value>Debug</value>
+  </data>
+  <data name="S_UiTests" xml:space="preserve">
+    <value>UI tests</value>
+  </data>
+  <data name="C_DrawerTest" xml:space="preserve">
+    <value>Drawer test</value>
+  </data>
+  <data name="C_SendToast" xml:space="preserve">
+    <value>Send toast</value>
+  </data>
+  <data name="M_TestToast" xml:space="preserve">
+    <value>Test toast</value>
+  </data>
+  <data name="C_OpenDrawer" xml:space="preserve">
+    <value>Open drawer</value>
+  </data>
+  <data name="S_CrashRecovery" xml:space="preserve">
+    <value>Crash recovery tests</value>
+  </data>
+  <data name="C_ShowCrashRecovery" xml:space="preserve">
+    <value>Show crash recovery</value>
+  </data>
+  <data name="C_ThrowDispatcherException" xml:space="preserve">
+    <value>Throw UI-thread exception</value>
+  </data>
+  <data name="C_RestartProgram" xml:space="preserve">
+    <value>Restart application</value>
+  </data>
+  <data name="S_Plugins" xml:space="preserve">
+    <value>Plugin page</value>
+  </data>
+  <data name="C_ShowPluginSettings" xml:space="preserve">
+    <value>Show plugin management</value>
+  </data>
+  <data name="C_ShowPluginSettings_D" xml:space="preserve">
+    <value>Plugins are still under test. Enabling it shows the navigation entry; it will be visible by default after release.</value>
+  </data>
+  <data name="M_ShowPluginSettings_Title" xml:space="preserve">
+    <value>Show plugin management?</value>
+  </data>
+  <data name="M_ShowPluginSettings" xml:space="preserve">
+    <value>Plugin features are still under test and may change. This switch only shows the plugin-management navigation entry for this session. It will be removed from Debug and visible by default after release.</value>
+  </data>
+  <data name="C_Show" xml:space="preserve">
+    <value>Show</value>
+  </data>
+  <data name="C_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="S_InternalSettings" xml:space="preserve">
+    <value>Insider settings</value>
+  </data>
+  <data name="C_EnableInternalSettings" xml:space="preserve">
+    <value>Enable insider settings</value>
+  </data>
+  <data name="C_EnableInternalSettings_D" xml:space="preserve">
+    <value>Temporarily shows insider attached settings.</value>
+  </data>
+  <data name="M_InternalSettings_Title" xml:space="preserve">
+    <value>Insider settings enabled</value>
+  </data>
+  <data name="M_InternalSettings" xml:space="preserve">
+    <value>Insider settings are now shown in the attached-settings menu for each member or prize on the list-management pages. This is active only for the current run and is hidden after restart.
 
 Insider settings affect candidate weights and are not suitable for draws that need to be fair, public, or auditable. If a person with insider settings is selected, uploading the verification file may show a related notice and reveal that the settings were used.
 
-Insider settings have lower priority than fair-draw rules. Selecting a student or prize with these settings does not guarantee a future selection.</value></data><data name="C_Enable" xml:space="preserve"><value>Enable</value></data>
-  <data name="S_UpdateDiagnostics" xml:space="preserve"><value>Update diagnostics</value></data><data name="C_RefreshUpdate" xml:space="preserve"><value>Refresh update status</value></data><data name="C_RefreshUpdate_D" xml:space="preserve"><value>Reads the current update channel, status, and last check time.</value></data><data name="S_LinkageNotificationDiagnostics" xml:space="preserve"><value>Course linkage and notification</value></data><data name="C_RefreshLinkage" xml:space="preserve"><value>Refresh linkage status</value></data><data name="C_RefreshLinkage_D" xml:space="preserve"><value>Refreshes the course snapshot and reads notification settings.</value></data><data name="S_PlatformDiagnostics" xml:space="preserve"><value>Window and platform</value></data><data name="C_RefreshPlatform" xml:space="preserve"><value>Refresh platform status</value></data><data name="C_RefreshPlatform_D" xml:space="preserve"><value>Reads runtime, window, and data-directory information.</value></data><data name="S_DataPathDiagnostics" xml:space="preserve"><value>Data and path diagnostics</value></data><data name="C_RefreshPaths" xml:space="preserve"><value>Refresh path status</value></data><data name="C_RefreshPaths_D" xml:space="preserve"><value>Only reads configuration and data paths; it does not create directories or modify files.</value></data>
-  <data name="C_CurrentVersion" xml:space="preserve"><value>Current version</value></data><data name="C_UpdateChannel" xml:space="preserve"><value>Update channel</value></data><data name="C_CheckPhase" xml:space="preserve"><value>Check phase</value></data><data name="C_Status" xml:space="preserve"><value>Status</value></data><data name="C_LastCheck" xml:space="preserve"><value>Last check</value></data><data name="C_AvailableVersion" xml:space="preserve"><value>Available version</value></data><data name="C_LinkageSource" xml:space="preserve"><value>Linkage source</value></data><data name="C_CourseSource" xml:space="preserve"><value>Course source</value></data><data name="C_CourseState" xml:space="preserve"><value>Course state</value></data><data name="C_SnapshotAvailable" xml:space="preserve"><value>Snapshot available</value></data><data name="C_CurrentCourse" xml:space="preserve"><value>Current course</value></data><data name="C_NextCourse" xml:space="preserve"><value>Next course</value></data><data name="C_DrawRestricted" xml:space="preserve"><value>Draw restricted by linkage</value></data><data name="C_SnapshotError" xml:space="preserve"><value>Snapshot error</value></data><data name="C_NotificationsEnabled" xml:space="preserve"><value>Default notification enabled</value></data><data name="C_BuiltInNotification" xml:space="preserve"><value>Built-in notification</value></data><data name="C_ExternalNotification" xml:space="preserve"><value>External notification</value></data><data name="C_NotificationFallback" xml:space="preserve"><value>Fallback to built-in</value></data><data name="C_DisplayDuration" xml:space="preserve"><value>Display duration</value></data><data name="C_Branch" xml:space="preserve"><value>Branch</value></data><data name="C_Commit" xml:space="preserve"><value>Commit</value></data><data name="C_Version" xml:space="preserve"><value>Version</value></data><data name="C_OperatingSystem" xml:space="preserve"><value>Operating system</value></data><data name="C_Architecture" xml:space="preserve"><value>Architecture</value></data><data name="C_Runtime" xml:space="preserve"><value>.NET</value></data><data name="C_AppDirectory" xml:space="preserve"><value>App directory</value></data><data name="C_PackageRoot" xml:space="preserve"><value>Package root</value></data><data name="C_DataDirectory" xml:space="preserve"><value>Data directory</value></data><data name="C_MainWindowCreated" xml:space="preserve"><value>Main window created</value></data><data name="C_SettingsWindowCreated" xml:space="preserve"><value>Settings window created</value></data><data name="C_SettingsFile" xml:space="preserve"><value>Settings file</value></data><data name="C_LogDirectory" xml:space="preserve"><value>Log directory</value></data><data name="C_BackupDirectory" xml:space="preserve"><value>Backup directory</value></data><data name="C_PluginDirectory" xml:space="preserve"><value>Plugin directory</value></data><data name="C_PluginConfigDirectory" xml:space="preserve"><value>Plugin configuration</value></data><data name="C_ProofDirectory" xml:space="preserve"><value>Proof directory</value></data><data name="C_UpdateDownloadDirectory" xml:space="preserve"><value>Update downloads</value></data><data name="C_CourseLinkageDirectory" xml:space="preserve"><value>Course linkage</value></data><data name="C_CrashDirectory" xml:space="preserve"><value>Crash reports</value></data><data name="C_Exists" xml:space="preserve"><value>Exists</value></data><data name="C_Missing" xml:space="preserve"><value>Missing</value></data>
+Insider settings have lower priority than fair-draw rules. Selecting a member or prize with these settings does not guarantee a future selection.</value>
+  </data>
+  <data name="C_Enable" xml:space="preserve">
+    <value>Enable</value>
+  </data>
+  <data name="S_UpdateDiagnostics" xml:space="preserve">
+    <value>Update diagnostics</value>
+  </data>
+  <data name="C_RefreshUpdate" xml:space="preserve">
+    <value>Refresh update status</value>
+  </data>
+  <data name="C_RefreshUpdate_D" xml:space="preserve">
+    <value>Reads the current update channel, status, and last check time.</value>
+  </data>
+  <data name="S_LinkageNotificationDiagnostics" xml:space="preserve">
+    <value>Schedule linkage and notification</value>
+  </data>
+  <data name="C_RefreshLinkage" xml:space="preserve">
+    <value>Refresh linkage status</value>
+  </data>
+  <data name="C_RefreshLinkage_D" xml:space="preserve">
+    <value>Refreshes the schedule snapshot and reads notification settings.</value>
+  </data>
+  <data name="S_PlatformDiagnostics" xml:space="preserve">
+    <value>Window and platform</value>
+  </data>
+  <data name="C_RefreshPlatform" xml:space="preserve">
+    <value>Refresh platform status</value>
+  </data>
+  <data name="C_RefreshPlatform_D" xml:space="preserve">
+    <value>Reads runtime, window, and data-directory information.</value>
+  </data>
+  <data name="S_DataPathDiagnostics" xml:space="preserve">
+    <value>Data and path diagnostics</value>
+  </data>
+  <data name="C_RefreshPaths" xml:space="preserve">
+    <value>Refresh path status</value>
+  </data>
+  <data name="C_RefreshPaths_D" xml:space="preserve">
+    <value>Only reads configuration and data paths; it does not create directories or modify files.</value>
+  </data>
+  <data name="C_CurrentVersion" xml:space="preserve">
+    <value>Current version</value>
+  </data>
+  <data name="C_UpdateChannel" xml:space="preserve">
+    <value>Update channel</value>
+  </data>
+  <data name="C_CheckPhase" xml:space="preserve">
+    <value>Check phase</value>
+  </data>
+  <data name="C_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="C_LastCheck" xml:space="preserve">
+    <value>Last check</value>
+  </data>
+  <data name="C_AvailableVersion" xml:space="preserve">
+    <value>Available version</value>
+  </data>
+  <data name="C_LinkageSource" xml:space="preserve">
+    <value>Linkage source</value>
+  </data>
+  <data name="C_CourseSource" xml:space="preserve">
+    <value>Schedule source</value>
+  </data>
+  <data name="C_CourseState" xml:space="preserve">
+    <value>Schedule state</value>
+  </data>
+  <data name="C_SnapshotAvailable" xml:space="preserve">
+    <value>Snapshot available</value>
+  </data>
+  <data name="C_CurrentCourse" xml:space="preserve">
+    <value>Current schedule item</value>
+  </data>
+  <data name="C_NextCourse" xml:space="preserve">
+    <value>Next schedule item</value>
+  </data>
+  <data name="C_DrawRestricted" xml:space="preserve">
+    <value>Draw restricted by linkage</value>
+  </data>
+  <data name="C_SnapshotError" xml:space="preserve">
+    <value>Snapshot error</value>
+  </data>
+  <data name="C_NotificationsEnabled" xml:space="preserve">
+    <value>Default notification enabled</value>
+  </data>
+  <data name="C_BuiltInNotification" xml:space="preserve">
+    <value>Built-in notification</value>
+  </data>
+  <data name="C_ExternalNotification" xml:space="preserve">
+    <value>External notification</value>
+  </data>
+  <data name="C_NotificationFallback" xml:space="preserve">
+    <value>Fallback to built-in</value>
+  </data>
+  <data name="C_DisplayDuration" xml:space="preserve">
+    <value>Display duration</value>
+  </data>
+  <data name="C_Branch" xml:space="preserve">
+    <value>Branch</value>
+  </data>
+  <data name="C_Commit" xml:space="preserve">
+    <value>Commit</value>
+  </data>
+  <data name="C_Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="C_OperatingSystem" xml:space="preserve">
+    <value>Operating system</value>
+  </data>
+  <data name="C_Architecture" xml:space="preserve">
+    <value>Architecture</value>
+  </data>
+  <data name="C_Runtime" xml:space="preserve">
+    <value>.NET</value>
+  </data>
+  <data name="C_AppDirectory" xml:space="preserve">
+    <value>App directory</value>
+  </data>
+  <data name="C_PackageRoot" xml:space="preserve">
+    <value>Package root</value>
+  </data>
+  <data name="C_DataDirectory" xml:space="preserve">
+    <value>Data directory</value>
+  </data>
+  <data name="C_MainWindowCreated" xml:space="preserve">
+    <value>Main window created</value>
+  </data>
+  <data name="C_SettingsWindowCreated" xml:space="preserve">
+    <value>Settings window created</value>
+  </data>
+  <data name="C_SettingsFile" xml:space="preserve">
+    <value>Settings file</value>
+  </data>
+  <data name="C_LogDirectory" xml:space="preserve">
+    <value>Log directory</value>
+  </data>
+  <data name="C_BackupDirectory" xml:space="preserve">
+    <value>Backup directory</value>
+  </data>
+  <data name="C_PluginDirectory" xml:space="preserve">
+    <value>Plugin directory</value>
+  </data>
+  <data name="C_PluginConfigDirectory" xml:space="preserve">
+    <value>Plugin configuration</value>
+  </data>
+  <data name="C_ProofDirectory" xml:space="preserve">
+    <value>Proof directory</value>
+  </data>
+  <data name="C_UpdateDownloadDirectory" xml:space="preserve">
+    <value>Update downloads</value>
+  </data>
+  <data name="C_CourseLinkageDirectory" xml:space="preserve">
+    <value>Course linkage</value>
+  </data>
+  <data name="C_CrashDirectory" xml:space="preserve">
+    <value>Crash reports</value>
+  </data>
+  <data name="C_Exists" xml:space="preserve">
+    <value>Exists</value>
+  </data>
+  <data name="C_Missing" xml:space="preserve">
+    <value>Missing</value>
+  </data>
+  <data name="M_ScheduleError_CsesMissing" xml:space="preserve">
+    <value>尚未导入有效的 CSES 日程表。</value>
+  </data>
+  <data name="M_ScheduleError_ClassIslandUnavailable" xml:space="preserve">
+    <value>无法连接到 ClassIsland。</value>
+  </data>
+  <data name="M_ScheduleError_ClassIslandTimerStopped" xml:space="preserve">
+    <value>ClassIsland 计时器未运行。</value>
+  </data>
+  <data name="M_ScheduleError_ClassIslandScheduleDisabled" xml:space="preserve">
+    <value>ClassIsland 未启用日程表。</value>
+  </data>
+  <data name="M_ScheduleError_ClassIslandScheduleUnloaded" xml:space="preserve">
+    <value>ClassIsland 尚未加载当天日程。</value>
+  </data>
+  <data name="M_ScheduleError_ClassIslandTimeUnconfirmed" xml:space="preserve">
+    <value>ClassIsland 尚未确认当前时间状态。</value>
+  </data>
+  <data name="M_ScheduleError_ClassIslandUnsupportedState" xml:space="preserve">
+    <value>ClassIsland 返回了未支持的当前状态：{0}。</value>
+  </data>
+  <data name="M_ScheduleError_ClassIslandReadFailed" xml:space="preserve">
+    <value>无法读取 ClassIsland 的日程状态。</value>
+  </data>
 </root>

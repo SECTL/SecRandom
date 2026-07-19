@@ -22,6 +22,7 @@ public sealed class MobileShellView : ViewBase
     public const string Id = "mobile.shell";
 
     private readonly IProfileService _profileService;
+    private readonly IHistoryQueryService _historyQueryService;
     private readonly IDrawTemporaryRecordService _temporaryRecordService;
     private readonly IFeatureAvailabilityService _featureAvailabilityService;
     private readonly MainConfigHandler _configHandler;
@@ -40,6 +41,7 @@ public sealed class MobileShellView : ViewBase
 
     public MobileShellView(
         IProfileService profileService,
+        IHistoryQueryService historyQueryService,
         IDrawTemporaryRecordService temporaryRecordService,
         IFeatureAvailabilityService featureAvailabilityService,
         MainConfigHandler configHandler,
@@ -47,6 +49,7 @@ public sealed class MobileShellView : ViewBase
         MobileUpdateService updateService)
     {
         _profileService = profileService;
+        _historyQueryService = historyQueryService;
         _temporaryRecordService = temporaryRecordService;
         _featureAvailabilityService = featureAvailabilityService;
         _configHandler = configHandler;
@@ -199,9 +202,9 @@ public sealed class MobileShellView : ViewBase
                 SelectDrawSurface,
                 () => OpenSettings(MobileSettingsSection.ListManagement)),
             MobileDestination.History => new MobileHistoryPage(
-                _profileService,
-                _temporaryRecordService,
-                RenderCurrentDestination),
+            _profileService,
+                _historyQueryService,
+                _temporaryRecordService),
             MobileDestination.Overview => new MobileOverviewPage(_profileService),
             MobileDestination.Settings => CreateSettingsPage(),
             _ => throw new ArgumentOutOfRangeException()
@@ -213,15 +216,13 @@ public sealed class MobileShellView : ViewBase
         return _settingsSection switch
         {
             null => new MobileSettingsCatalogPage(OpenSettings),
-            MobileSettingsSection.General => new MobileGeneralSettingsPage(ReturnToSettingsCatalog),
+            MobileSettingsSection.General => new MobileGeneralSettingsPage(_configHandler, ReturnToSettingsCatalog),
             MobileSettingsSection.Personalization => new MobilePersonalizationSettingsPage(
                 _configHandler, ReturnToSettingsCatalog, ApplyTheme),
             MobileSettingsSection.ListManagement => new MobileListManagementSettingsPage(
                 _profileService, ReturnToSettingsCatalog, RenderCurrentDestination),
             MobileSettingsSection.Draw => new MobileDrawSettingsPage(
                 _configHandler, _temporaryRecordService, _profileService, ReturnToSettingsCatalog, RenderCurrentDestination),
-            MobileSettingsSection.FairDraw => new MobileFairDrawSettingsPage(
-                _configHandler, ReturnToSettingsCatalog, RenderCurrentDestination),
             MobileSettingsSection.Backup => new MobileBackupSettingsPage(ReturnToSettingsCatalog),
             MobileSettingsSection.Update => new MobileUpdateSettingsPage(
                 _updateService, ReturnToSettingsCatalog, RenderCurrentDestination),
@@ -257,7 +258,6 @@ internal enum MobileSettingsSection
     Personalization,
     ListManagement,
     Draw,
-    FairDraw,
     Backup,
     Update,
     About

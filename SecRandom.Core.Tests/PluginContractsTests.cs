@@ -120,6 +120,20 @@ public class PluginContractsTests
     }
 
     [Fact]
+    public async Task PluginViewService_RejectsNamedHostSelection()
+    {
+        var engine = new RecordingViewEngine();
+        var service = new PluginViewService("demo", engine);
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.ShowAsync(
+            "plugin.demo.view.dialog",
+            new ViewShowOptions { HostId = "desktop.main" },
+            TestContext.Current.CancellationToken));
+
+        Assert.Null(engine.LastShownViewId);
+    }
+
+    [Fact]
     public void PluginDrawInvokerContract_DoesNotExposeFairDrawInternals()
     {
         var publicSurface = typeof(IPluginDrawInvoker)

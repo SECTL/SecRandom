@@ -49,7 +49,7 @@
     <value>名称</value>
   </data>
   <data name="C_StudentCount" xml:space="preserve">
-    <value>学生数</value>
+    <value>成员数</value>
   </data>
   <data name="C_PrizeCount" xml:space="preserve">
     <value>奖品数</value>
@@ -61,7 +61,7 @@
     <value>历史汇总</value>
   </data>
   <data name="M_NoRollCallLists" xml:space="preserve">
-    <value>尚未创建学生名单。</value>
+    <value>尚未创建成员名单。</value>
   </data>
   <data name="M_NoLotteryPools" xml:space="preserve">
     <value>尚未创建奖品池。</value>

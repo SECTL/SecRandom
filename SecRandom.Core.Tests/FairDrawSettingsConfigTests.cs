@@ -6,6 +6,7 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Interfaces;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
@@ -196,6 +197,70 @@ public class FairDrawSettingsConfigTests
     }
 
     [Fact]
+    public void MobileDesktopDefaults_IgnoresPersistedFairDrawSettingsAndKeepsFilteredWeights()
+    {
+        var first = new Student { Name = "A", RecordId = Guid.NewGuid() };
+        var second = new Student { Name = "B", RecordId = Guid.NewGuid() };
+        var overdrawn = new Student { Name = "C", RecordId = Guid.NewGuid() };
+        var history = new StudentHistory
+        {
+            Students =
+            {
+                [first.RecordId.ToString("D")] = new History { TotalCount = 0 },
+                [second.RecordId.ToString("D")] = new History { TotalCount = 0 },
+                [overdrawn.RecordId.ToString("D")] = new History { TotalCount = 3 }
+            }
+        };
+        var configA = BuildConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = false,
+            EnableAvgGapProtection = false,
+            GapThreshold = 99,
+            FairDrawGroup = false,
+            FairDrawGender = false,
+            FairDrawTime = false,
+            ColdStartEnabled = false,
+            BaseWeight = 20,
+            MinWeight = 20,
+            MaxWeight = 20
+        });
+        configA.RollCallSettings.DrawType = DrawType.Fair;
+
+        var configB = BuildConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = true,
+            EnableAvgGapProtection = true,
+            GapThreshold = 1,
+            FairDrawGroup = true,
+            FairDrawGender = true,
+            FairDrawTime = true,
+            ColdStartEnabled = true,
+            BaseWeight = 1,
+            MinWeight = 0.5,
+            MaxWeight = 5.0
+        });
+        configB.RollCallSettings.DrawType = DrawType.Fair;
+
+        using var hostA = BuildHost(configA, new TestProfileService(history));
+        using var hostB = BuildHost(configB, new TestProfileService(history));
+        var engineA = CreateEngine(hostA, new ScriptedRandomSource(0));
+        var engineB = CreateEngine(hostB, new ScriptedRandomSource(0));
+
+        var preparedA = engineA.PrepareStudentsForMobileDesktopDefaults(1, [first, second, overdrawn], DrawSettingsType.RollCall, DrawType.Fair);
+        var preparedB = engineB.PrepareStudentsForMobileDesktopDefaults(1, [first, second, overdrawn], DrawSettingsType.RollCall, DrawType.Fair);
+        var outputA = engineA.DrawPreparedStudents(preparedA, 1);
+        var outputB = engineB.DrawPreparedStudents(preparedB, 1);
+
+        Assert.Equal(preparedA.UsableCandidates, preparedB.UsableCandidates);
+        Assert.Equal(preparedA.WeightedCandidates.Select(candidate => (candidate.Candidate, candidate.Weight)), preparedB.WeightedCandidates.Select(candidate => (candidate.Candidate, candidate.Weight)));
+        Assert.DoesNotContain(overdrawn, preparedA.UsableCandidates);
+        Assert.True(outputA.IsSuccess);
+        Assert.True(outputB.IsSuccess);
+        Assert.Equal(outputA.Result, outputB.Result);
+        Assert.DoesNotContain(overdrawn, outputA.Result);
+    }
+
+    [Fact]
     public void CreateStudentVerificationInput_AppliesAverageGapProtection()
     {
         var first = new Student { Name = "A", RecordId = Guid.NewGuid() };
@@ -257,12 +322,22 @@ public class FairDrawSettingsConfigTests
             .Build();
     }
 
-    private static DrawEngine CreateEngine(IHost host)
+    private static DrawEngine CreateEngine(IHost host, IRandomSource? randomSource = null)
     {
         return new DrawEngine(
             host.Services.GetRequiredService<MainConfigHandler>(),
             host.Services.GetRequiredService<IProfileService>(),
-            host.Services.GetRequiredService<ILogger<DrawEngine>>());
+            host.Services.GetRequiredService<ILogger<DrawEngine>>(),
+            randomSource);
+    }
+
+    private sealed class ScriptedRandomSource(params double[] values) : IRandomSource
+    {
+        private readonly Queue<double> _values = new(values);
+
+        public int NextInt32(int maxExclusive) => throw new InvalidOperationException("This test uses weighted sampling.");
+
+        public double NextDouble() => _values.Dequeue();
     }
 
     private sealed class TestConfigService(MainConfigModel config) : ConfigServiceBase

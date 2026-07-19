@@ -10,15 +10,15 @@
   <data name="C_ShowRemainingList" xml:space="preserve"><value>残りのリストを表示</value></data>
   <data name="C_RemainingListTitle" xml:space="preserve"><value>残りの賞品</value></data>
   <data name="C_Close" xml:space="preserve"><value>閉じる</value></data>
-  <data name="O_NoStudentAssignment" xml:space="preserve"><value>学生を抽選しない</value></data>
-  <data name="O_AllGroups" xml:space="preserve"><value>すべての学生から抽選</value></data>
+  <data name="O_NoStudentAssignment" xml:space="preserve"><value>メンバーを抽選しない</value></data>
+  <data name="O_AllGroups" xml:space="preserve"><value>すべてのメンバーから抽選</value></data>
   <data name="O_AllGenders" xml:space="preserve"><value>すべての性別から抽選</value></data>
   <data name="M_Ready" xml:space="preserve"><value>抽選の準備完了</value></data>
   <data name="M_ResetDone" xml:space="preserve"><value>抽選表示をリセットしました</value></data>
   <data name="M_NoPrizes" xml:space="preserve"><value>抽選できる賞品がありません</value></data>
   <data name="M_NoRemainingPrizes" xml:space="preserve"><value>残りの賞品がありません</value></data>
-  <data name="M_NoStudents" xml:space="preserve"><value>現在の条件に一致する学生がいません</value></data>
-  <data name="M_NoRemainingStudents" xml:space="preserve"><value>現在の条件では残りの学生がいません</value></data>
+  <data name="M_NoStudents" xml:space="preserve"><value>現在の条件に一致するメンバーがいません</value></data>
+  <data name="M_NoRemainingStudents" xml:space="preserve"><value>現在の条件では残りのメンバーがいません</value></data>
   <data name="M_DrawnCountFormat" xml:space="preserve"><value>{0} 件の賞品を抽選しました</value></data>
   <data name="M_CountSummaryFormat" xml:space="preserve"><value>賞品総数: {0} | 残りの賞品: {1}</value></data>
   <data name="M_DrawFailed" xml:space="preserve"><value>抽選に失敗しました</value></data>

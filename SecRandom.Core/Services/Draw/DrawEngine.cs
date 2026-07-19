@@ -53,12 +53,23 @@ public partial class DrawEngine
         DrawSettingsType drawSettingsType,
         string courseName = "")
     {
+        return DrawStudent(count, filter, drawSettingsType, StudentDrawExecutionPolicy.DesktopConfigured(
+            GetStudentDrawType(drawSettingsType),
+            ConfigData.FairDrawSettings), courseName);
+    }
+
+    internal DrawResult<Student> DrawStudent(
+        int count,
+        Func<Student, bool> filter,
+        DrawSettingsType drawSettingsType,
+        StudentDrawExecutionPolicy executionPolicy,
+        string courseName = "")
+    {
         var hasBaseCandidates = false;
         var repeatThreshold = GetStudentRepeatThreshold(drawSettingsType);
-        var drawType = GetStudentDrawType(drawSettingsType);
         var historyCache = BuildStudentHistoryCache(StudentList.Students, courseName);
         _logger.LogInformation("开始学生抽取：请求数量={Count}，设置类型={SettingsType}，重复阈值={RepeatThreshold}，抽取类型={DrawType}.",
-            count, drawSettingsType, repeatThreshold, drawType);
+            count, drawSettingsType, repeatThreshold, executionPolicy.DrawType);
 
         try
         {
@@ -75,13 +86,8 @@ public partial class DrawEngine
                 return (historyCache.GetValueOrDefault(student)?.TotalCount ?? 0) < repeatThreshold;
             }
 
-            var usable = FilterStudents(Filter1, count, historyCache, drawType == DrawType.Fair);
-            var weightedCandidates = drawType switch
-            {
-                DrawType.Fair => CalculateStudentWeight(usable, historyCache, courseName),
-                DrawType.Random => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList(),
-                _ => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList()
-            };
+            var usable = FilterStudents(Filter1, count, historyCache, executionPolicy);
+            var weightedCandidates = BuildStudentWeightedCandidates(usable, historyCache, executionPolicy, courseName);
 
             var result = DrawWithBehindSceneWeights(weightedCandidates, count);
             LogDrawResult("学生抽取", result.Status, count, usable.Count, result.Result.Count);
@@ -129,20 +135,64 @@ public partial class DrawEngine
         DrawSettingsType drawSettingsType,
         string courseName = "")
     {
+        return DrawPreparedStudents(count, candidates, drawSettingsType, StudentDrawExecutionPolicy.DesktopConfigured(
+            GetStudentDrawType(drawSettingsType),
+            ConfigData.FairDrawSettings), courseName);
+    }
+
+    internal DrawResult<Student> DrawPreparedStudentsWithMobileDesktopDefaults(
+        int count,
+        IReadOnlyCollection<Student> candidates,
+        DrawSettingsType drawSettingsType,
+        DrawType drawType,
+        string courseName = "")
+    {
+        return DrawPreparedStudents(
+            count,
+            candidates,
+            drawSettingsType,
+            StudentDrawExecutionPolicy.MobileDesktopDefaultsV1(drawType),
+            courseName);
+    }
+
+    internal DrawPreparedStudentsSnapshot PrepareStudentsForDraw(
+        int count,
+        IReadOnlyCollection<Student> candidates,
+        StudentDrawExecutionPolicy executionPolicy,
+        string courseName = "")
+    {
         var preparedCandidates = candidates.Where(student => student.IsCandidate).ToList();
         var historyCache = BuildStudentHistoryCache(preparedCandidates, courseName);
-        var drawType = GetStudentDrawType(drawSettingsType);
+        var usable = FilterPreparedStudents(preparedCandidates, count, historyCache, executionPolicy);
+        var weightedCandidates = BuildStudentWeightedCandidates(usable, historyCache, executionPolicy, courseName);
+        return new DrawPreparedStudentsSnapshot(usable, weightedCandidates, historyCache);
+    }
+
+    internal DrawPreparedStudentsSnapshot PrepareStudentsForMobileDesktopDefaults(
+        int count,
+        IReadOnlyCollection<Student> candidates,
+        DrawSettingsType drawSettingsType,
+        DrawType drawType,
+        string courseName = "")
+    {
+        return PrepareStudentsForDraw(
+            count,
+            candidates,
+            StudentDrawExecutionPolicy.MobileDesktopDefaultsV1(drawType),
+            courseName);
+    }
+
+    internal DrawResult<Student> DrawPreparedStudents(
+        int count,
+        IReadOnlyCollection<Student> candidates,
+        DrawSettingsType drawSettingsType,
+        StudentDrawExecutionPolicy executionPolicy,
+        string courseName = "")
+    {
         try
         {
-            var usable = FilterPreparedStudents(preparedCandidates, count, historyCache, drawType == DrawType.Fair);
-            var weightedCandidates = drawType switch
-            {
-                DrawType.Fair => CalculateStudentWeight(usable, historyCache, courseName),
-                DrawType.Random => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList(),
-                _ => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList()
-            };
-
-            return DrawWithBehindSceneWeights(weightedCandidates, count);
+            var prepared = PrepareStudentsForDraw(count, candidates, executionPolicy, courseName);
+            return DrawPreparedStudents(prepared, count);
         }
         catch (CandidateNotFoundException)
         {
@@ -152,6 +202,11 @@ public partial class DrawEngine
         {
             return new DrawResult<Student> { Status = DrawStatus.RepeatLimitExhausted };
         }
+    }
+
+    internal DrawResult<Student> DrawPreparedStudents(DrawPreparedStudentsSnapshot prepared, int count)
+    {
+        return DrawWithBehindSceneWeights(prepared.WeightedCandidates, count);
     }
 
     private int GetStudentRepeatThreshold(DrawSettingsType drawSettingsType)
@@ -179,6 +234,20 @@ public partial class DrawEngine
             DrawSettingsType.RollCall => ConfigData.RollCallSettings.DrawType,
             DrawSettingsType.QuickDraw => ConfigData.QuickDrawSettings.DrawType,
             _ => ConfigData.RollCallSettings.DrawType
+        };
+    }
+
+    private List<WeightedCandidate<Student>> BuildStudentWeightedCandidates(
+        List<Student> usable,
+        IReadOnlyDictionary<Student, History> historyCache,
+        StudentDrawExecutionPolicy executionPolicy,
+        string courseName)
+    {
+        return executionPolicy.DrawType switch
+        {
+            DrawType.Fair => CalculateStudentWeight(usable, executionPolicy.FairDrawSettings, historyCache, courseName),
+            DrawType.Random => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList(),
+            _ => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList()
         };
     }
 

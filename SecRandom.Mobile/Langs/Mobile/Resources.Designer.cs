@@ -185,8 +185,6 @@ public class Resources
 
     public static string S_About_D => ResourceManager.GetString("S_About_D", resourceCulture)!;
 
-    public static string S_AverageGapProtection => ResourceManager.GetString("S_AverageGapProtection", resourceCulture)!;
-
     public static string S_Backup => ResourceManager.GetString("S_Backup", resourceCulture)!;
 
     public static string S_Backup_D => ResourceManager.GetString("S_Backup_D", resourceCulture)!;
@@ -201,29 +199,9 @@ public class Resources
 
     public static string S_DrawSettings_D => ResourceManager.GetString("S_DrawSettings_D", resourceCulture)!;
 
-    public static string S_FairDraw => ResourceManager.GetString("S_FairDraw", resourceCulture)!;
-
-    public static string S_FairDraw_D => ResourceManager.GetString("S_FairDraw_D", resourceCulture)!;
-
-    public static string S_FairDrawEnabled => ResourceManager.GetString("S_FairDrawEnabled", resourceCulture)!;
-
-    public static string S_FairDrawGender => ResourceManager.GetString("S_FairDrawGender", resourceCulture)!;
-
-    public static string S_FairDrawGroup => ResourceManager.GetString("S_FairDrawGroup", resourceCulture)!;
-
-    public static string S_FairDrawTime => ResourceManager.GetString("S_FairDrawTime", resourceCulture)!;
-
-    public static string S_FrequencyFunction => ResourceManager.GetString("S_FrequencyFunction", resourceCulture)!;
-
     public static string S_General => ResourceManager.GetString("S_General", resourceCulture)!;
 
     public static string S_General_D => ResourceManager.GetString("S_General_D", resourceCulture)!;
-
-    public static string S_GapThreshold => ResourceManager.GetString("S_GapThreshold", resourceCulture)!;
-
-    public static string S_ColdStart => ResourceManager.GetString("S_ColdStart", resourceCulture)!;
-
-    public static string S_ColdStartRounds => ResourceManager.GetString("S_ColdStartRounds", resourceCulture)!;
 
     public static string S_ListManagement => ResourceManager.GetString("S_ListManagement", resourceCulture)!;
 
@@ -249,10 +227,6 @@ public class Resources
 
     public static string S_ClearRecord => ResourceManager.GetString("S_ClearRecord", resourceCulture)!;
 
-    public static string S_Shield => ResourceManager.GetString("S_Shield", resourceCulture)!;
-
-    public static string S_ShieldTime => ResourceManager.GetString("S_ShieldTime", resourceCulture)!;
-
     public static string S_SettingsCategories => ResourceManager.GetString("S_SettingsCategories", resourceCulture)!;
 
     public static string S_Theme => ResourceManager.GetString("S_Theme", resourceCulture)!;
@@ -264,12 +238,6 @@ public class Resources
     public static string O_Cleared => ResourceManager.GetString("O_Cleared", resourceCulture)!;
 
     public static string O_Fair => ResourceManager.GetString("O_Fair", resourceCulture)!;
-
-    public static string O_FrequencyIndex => ResourceManager.GetString("O_FrequencyIndex", resourceCulture)!;
-
-    public static string O_FrequencyLinear => ResourceManager.GetString("O_FrequencyLinear", resourceCulture)!;
-
-    public static string O_FrequencySquareRoot => ResourceManager.GetString("O_FrequencySquareRoot", resourceCulture)!;
 
     public static string O_HalfRepeat => ResourceManager.GetString("O_HalfRepeat", resourceCulture)!;
 

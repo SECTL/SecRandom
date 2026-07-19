@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SecRandom.Core.Views;
+using SecRandom.Services.ViewEngine;
 
 namespace SecRandom.Core.Tests;
 
@@ -123,6 +124,101 @@ public sealed class ViewEngineTests
     }
 
     [Fact]
+    public async Task ShowModalAsync_PreservesHostId()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var provider = new RecordingHostProvider();
+        var services = new ServiceCollection();
+        services.AddSingleton<IViewHostProvider>(provider);
+        services.AddViewEngine().AddView<TestView>("test.modal", ViewPresentation.Modal);
+        await using var serviceProvider = services.BuildServiceProvider();
+        var engine = serviceProvider.GetRequiredService<IViewEngine>();
+
+        await Assert.ThrowsAsync<ViewHostUnavailableException>(() => engine.ShowModalAsync(
+            "test.modal",
+            new ViewShowOptions { HostId = "desktop.main" },
+            cancellationToken));
+
+        Assert.Equal("desktop.main", provider.LastOptions?.HostId);
+        Assert.Equal(ViewPresentation.Modal, provider.LastOptions?.Presentation);
+    }
+
+    [Fact]
+    public async Task DesktopProvider_RoutesNamedEmbeddedHost()
+    {
+        var provider = new DesktopViewHostProvider();
+        var embeddedHost = new TestHost("desktop.main");
+        await provider.RegisterEmbeddedHostAsync(embeddedHost, TestContext.Current.CancellationToken);
+
+        var selection = await provider.GetHostAsync(
+            new ViewShowOptions { HostId = "desktop.main" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(selection.IsSuccess);
+        Assert.Same(embeddedHost, selection.Host);
+    }
+
+    [Fact]
+    public async Task DesktopProvider_RejectsUnknownNamedEmbeddedHostWithoutCreatingWindow()
+    {
+        var provider = new DesktopViewHostProvider();
+
+        var selection = await provider.GetHostAsync(
+            new ViewShowOptions { HostId = "desktop.unknown" },
+            TestContext.Current.CancellationToken);
+
+        Assert.False(selection.IsSuccess);
+        Assert.False(selection.IsUnsupported);
+        Assert.Null(selection.Host);
+    }
+
+    [Fact]
+    public async Task DesktopProvider_RejectsDuplicateEmbeddedHostIds()
+    {
+        var provider = new DesktopViewHostProvider();
+        await provider.RegisterEmbeddedHostAsync(new TestHost("desktop.main"), TestContext.Current.CancellationToken);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => provider.RegisterEmbeddedHostAsync(
+            new TestHost("desktop.main"),
+            TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task DesktopProvider_UnregistersDestroyedEmbeddedHost()
+    {
+        var provider = new DesktopViewHostProvider();
+        var host = new TestHost("desktop.main");
+        await provider.RegisterEmbeddedHostAsync(host, TestContext.Current.CancellationToken);
+
+        host.RaiseDestroyed();
+        var selection = await provider.GetHostAsync(
+            new ViewShowOptions { HostId = "desktop.main" },
+            TestContext.Current.CancellationToken);
+
+        Assert.False(selection.IsSuccess);
+        Assert.Null(selection.Host);
+    }
+
+    [Fact]
+    public async Task DesktopProvider_RejectsNewHostForNamedEmbeddedHost()
+    {
+        var provider = new DesktopViewHostProvider();
+        await provider.RegisterEmbeddedHostAsync(new TestHost("desktop.main"), TestContext.Current.CancellationToken);
+
+        var selection = await provider.GetHostAsync(
+            new ViewShowOptions
+            {
+                HostId = "desktop.main",
+                ActivationPreference = ViewActivationPreference.NewHost
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.False(selection.IsSuccess);
+        Assert.True(selection.IsUnsupported);
+        Assert.Null(selection.Host);
+    }
+
+    [Fact]
     public void ViewHandlesDoNotExposeTheUnderlyingHostOrView()
     {
         var names = typeof(IViewHandle).GetProperties().Select(property => property.Name).ToArray();
@@ -164,6 +260,17 @@ public sealed class ViewEngineTests
         public TestView(TestViewState state)
         {
             state.LastCreated = this;
+        }
+    }
+
+    private sealed class RecordingHostProvider : IViewHostProvider
+    {
+        public ViewShowOptions? LastOptions { get; private set; }
+
+        public Task<ViewHostSelection> GetHostAsync(ViewShowOptions options, CancellationToken cancellationToken = default)
+        {
+            LastOptions = options;
+            return Task.FromResult(ViewHostSelection.Failed("No host available for this test."));
         }
     }
 

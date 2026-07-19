@@ -60,6 +60,9 @@ public sealed class PluginViewService(string pluginId, IViewEngine viewEngine) :
         CancellationToken cancellationToken = default)
     {
         EnsureOwned(viewId);
+        if (!string.IsNullOrWhiteSpace(options?.HostId))
+            throw new ArgumentException("Plugins may not target a specific host.", nameof(options));
+
         return viewEngine.ShowAsync(viewId, options, cancellationToken);
     }
 

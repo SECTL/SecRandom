@@ -97,10 +97,10 @@
     <value>结果中包含编号</value>
   </data>
   <data name="S_Content_AnnounceName" xml:space="preserve">
-    <value>播报姓名</value>
+    <value>播报名称</value>
   </data>
   <data name="S_Content_AnnounceName_D" xml:space="preserve">
-    <value>结果中包含姓名</value>
+    <value>结果中包含名称</value>
   </data>
   <data name="S_SystemVolume_Control_D" xml:space="preserve">
     <value>播报前自动调整系统音量</value>

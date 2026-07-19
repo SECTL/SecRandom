@@ -1,22 +1,22 @@
 using Avalonia.Controls;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Views;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Views;
 
-internal sealed class MobileHistoryPage : UserControl
+public sealed class MobileHistoryPage : ViewBase
 {
-    internal MobileHistoryPage(
+    public MobileHistoryPage(
         IProfileService profileService,
-        IDrawTemporaryRecordService temporaryRecordService,
-        Action refresh)
+        IHistoryQueryService historyQueryService,
+        IDrawTemporaryRecordService temporaryRecordService)
     {
-        var entries = (profileService.CurrentStudentHistory?.Students.Values ?? [])
-            .SelectMany(item => item.Histories)
-            .Concat((profileService.CurrentPrizeHistory?.Prizes.Values ?? []).SelectMany(item => item.Histories))
-            .OrderByDescending(item => item.DrawTime)
-            .Take(30)
-            .ToList();
+        Render();
+
+        void Render()
+        {
+        var entries = historyQueryService.GetRecentItems(30);
 
         var rows = new StackPanel { Spacing = 8 };
         if (entries.Count == 0)
@@ -32,14 +32,13 @@ internal sealed class MobileHistoryPage : UserControl
         {
             foreach (var item in entries)
             {
-                var name = string.IsNullOrWhiteSpace(item.RecordName) ? item.RecordNumber : item.RecordName;
                 rows.Children.Add(MobileUi.CreateRow(
-                    name,
+                    item.DisplayName,
                     item.DrawTime.ToString("g", System.Globalization.CultureInfo.CurrentCulture)));
             }
         }
 
-        Content = MobileUi.CreateScroll([
+            Content = MobileUi.CreateScroll([
             MobileUi.CreateLabel(LR.S_RecentDraws),
             MobileUi.CreateTitle(LR.P_History),
             rows,
@@ -47,8 +46,9 @@ internal sealed class MobileHistoryPage : UserControl
             {
                 temporaryRecordService.ClearStudentList(profileService.StudentListConfig?.Name ?? "default");
                 temporaryRecordService.ClearPrizeList(profileService.PrizeListConfig?.Name ?? "default");
-                refresh();
+                    Render();
             })
         ]);
+        }
     }
 }
