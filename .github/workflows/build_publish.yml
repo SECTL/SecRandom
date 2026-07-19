@@ -565,7 +565,8 @@ jobs:
           ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
           ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         run: |
-          $arguments = @('build', 'SecRandom.Mobile/SecRandom.Mobile.csproj', '-c', 'Release', '-r', 'android-arm64', '-p:BuildMobile=true', '-p:MobileTargetFramework=net10.0-android', '-p:ApplicationVersion=${{ github.run_number }}')
+          $version = $env:VERSION.TrimStart('v', 'V')
+          $arguments = @('build', 'SecRandom.Mobile/SecRandom.Mobile.csproj', '-c', 'Release', '-r', 'android-arm64', '-p:BuildMobile=true', '-p:MobileTargetFramework=net10.0-android', "-p:Version=$version", '-p:ApplicationVersion=${{ github.run_number }}')
           $hasSigningSecrets = @($env:ANDROID_SIGNING_KEYSTORE_BASE64, $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, $env:ANDROID_SIGNING_KEY_ALIAS, $env:ANDROID_SIGNING_KEY_PASSWORD) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
           if ($hasSigningSecrets.Count -gt 0 -and $hasSigningSecrets.Count -ne 4) {
             throw 'All Android signing secrets must be configured together.'
@@ -654,16 +655,19 @@ jobs:
 
       - name: Install iOS workload
         shell: bash
-        run: dotnet workload install ios
+        run: dotnet workload install ios --version 10.0.100
 
       - name: Build iOS simulator target
         shell: bash
+        env:
+          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
         run: >
           dotnet build SecRandom.Mobile/SecRandom.Mobile.csproj
           -c Release
           -r iossimulator-arm64
           -p:BuildMobile=true
           -p:MobileTargetFramework=net10.0-ios
+          -p:Version=${VERSION#v}
           -p:EnableCodeSigning=false
           -p:CodesignRequireProvisioningProfile=false
           -p:BuildIpa=false
@@ -683,6 +687,7 @@ jobs:
             -r ios-arm64 \
             -p:BuildMobile=true \
             -p:MobileTargetFramework=net10.0-ios \
+            -p:Version="$version" \
             -p:ApplicationVersion=${{ github.run_number }} \
             -p:EnableCodeSigning=false \
             -p:CodesignRequireProvisioningProfile=false \
