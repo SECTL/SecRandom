@@ -23,6 +23,7 @@ using SecRandom.Core.Views;
 using SecRandom.Mobile.Views;
 using SecRandom.Mobile.Services;
 using SecRandom.Mobile.Views.Settings;
+using SecRandom.Mobile.Controls;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
 using SecRandom.Shared;
@@ -193,11 +194,9 @@ public sealed class MobileRootView : UserControl
     private readonly MainConfigHandler _configHandler;
     private readonly ViewHostControl _viewHost;
     private readonly IViewEngine _viewEngine;
-    private readonly TextBlock _pageTitle;
-    private readonly Border _header;
-    private readonly Border _bottomBar;
+    private readonly MobilePageHeader _header;
+    private readonly MobileNavigationBar _bottomBar;
     private readonly Grid _root;
-    private readonly FANavigationView _bottomNavigation;
     private MobileDestination _destination = MobileDestination.Draw;
 
     public MobileRootView(
@@ -211,55 +210,9 @@ public sealed class MobileRootView : UserControl
         singleViewHostProvider.Attach(_viewHost);
         MobileTheme.Apply(_configHandler.Data.Appearance.Theme);
 
-        _pageTitle = new TextBlock
-        {
-            FontSize = 20,
-            FontWeight = FontWeight.SemiBold,
-            Foreground = MobileTheme.Text,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        _header = new Border
-        {
-            Padding = new Thickness(20, 14),
-            Background = MobileTheme.Surface,
-            BorderBrush = MobileTheme.Border,
-            BorderThickness = new Thickness(0, 0, 0, 1),
-            Child = new Grid
-            {
-                ColumnDefinitions = new ColumnDefinitions("Auto,*"),
-                Children =
-                {
-                    new Image
-                    {
-                        Source = new Bitmap(AssetLoader.Open(new Uri("avares://SecRandom.Mobile/Assets/AppLogo.png"))),
-                        Width = 32,
-                        Height = 32,
-                        Margin = new Thickness(0, 0, 10, 0),
-                        VerticalAlignment = VerticalAlignment.Center
-                    },
-                    _pageTitle
-                }
-            }
-        };
-        Grid.SetColumn(_pageTitle, 1);
-
-        _bottomNavigation = new FANavigationView
-        {
-            PaneDisplayMode = FANavigationViewPaneDisplayMode.Top,
-            IsPaneToggleButtonVisible = false,
-            IsBackButtonVisible = false,
-            IsSettingsVisible = false,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            MenuItems =
-            {
-                new FANavigationViewItem { Content = LR.N_Draw, IconSource = new FluentIconSource(FluentIcons.PeopleFilled), Tag = MobileDestination.Draw },
-                new FANavigationViewItem { Content = LR.N_History, IconSource = new FluentIconSource(FluentIcons.HistoryFilled), Tag = MobileDestination.History },
-                new FANavigationViewItem { Content = LR.N_Overview, IconSource = new FluentIconSource(FluentIcons.HomeFilled), Tag = MobileDestination.Overview },
-                new FANavigationViewItem { Content = LR.N_Settings, IconSource = new FluentIconSource(FluentIcons.SettingsFilled), Tag = MobileDestination.Settings }
-            }
-        };
-        _bottomNavigation.SelectionChanged += (_, args) =>
+        _header = new MobilePageHeader();
+        _bottomBar = new MobileNavigationBar();
+        _bottomBar.NavigationView.SelectionChanged += (_, args) =>
         {
             if (args.SelectedItem is FANavigationViewItem { Tag: MobileDestination destination })
                 _ = ShowPrimaryRouteAsync(destination, destination switch
@@ -272,13 +225,6 @@ public sealed class MobileRootView : UserControl
                 });
         };
 
-        _bottomBar = new Border
-        {
-            Background = MobileTheme.Surface,
-            BorderBrush = MobileTheme.Border,
-            BorderThickness = new Thickness(0, 1, 0, 0),
-            Child = _bottomNavigation
-        };
         _root = new Grid
         {
             RowDefinitions = new RowDefinitions("Auto,*,Auto"),
@@ -341,7 +287,7 @@ public sealed class MobileRootView : UserControl
 
     private void RenderCurrentDestination()
     {
-        _pageTitle.Text = _destination switch
+        _header.Title = _destination switch
         {
             MobileDestination.Draw => LR.P_Draw,
             MobileDestination.History => LR.P_History,
@@ -349,9 +295,7 @@ public sealed class MobileRootView : UserControl
             MobileDestination.Settings => LR.P_Settings,
             _ => throw new ArgumentOutOfRangeException()
         };
-        _bottomNavigation.SelectedItem = _bottomNavigation.MenuItems
-            .OfType<FANavigationViewItem>()
-            .FirstOrDefault(item => item.Tag is MobileDestination destination && destination == _destination);
+        _bottomBar.Select(_destination);
     }
 
     private void AppearanceOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -361,11 +305,8 @@ public sealed class MobileRootView : UserControl
 
         MobileTheme.Apply(_configHandler.Data.Appearance.Theme);
         _root.Background = MobileTheme.Canvas;
-        _header.Background = MobileTheme.Surface;
-        _header.BorderBrush = MobileTheme.Border;
-        _bottomBar.Background = MobileTheme.Surface;
-        _bottomBar.BorderBrush = MobileTheme.Border;
-        _pageTitle.Foreground = MobileTheme.Text;
+        _header.RefreshTheme();
+        _bottomBar.RefreshTheme();
         RenderCurrentDestination();
     }
 
