@@ -102,9 +102,19 @@ public sealed class MobileApp : Avalonia.Application
                 IAppHost.Host = null;
             _host?.Dispose();
             _host = null;
+            string startupFailedText;
+            try
+            {
+                startupFailedText = LR.M_StartupFailed;
+            }
+            catch (Exception resourceException)
+            {
+                // The startup error page must not crash when the resource lookup itself fails.
+                startupFailedText = "SecRandom startup failed: " + resourceException.GetType().Name;
+            }
             singleView.MainView = new TextBlock
             {
-                Text = LR.M_StartupFailed,
+                Text = startupFailedText + "\n" + exception,
                 Margin = new Thickness(32),
                 TextAlignment = TextAlignment.Center,
                 TextWrapping = TextWrapping.Wrap,
