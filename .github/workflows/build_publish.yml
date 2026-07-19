@@ -1,4 +1,4 @@
-﻿name: Build & Publish
+name: Build & Publish
 
 on:
   push:
@@ -566,7 +566,7 @@ jobs:
           ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         run: |
           $version = $env:VERSION.TrimStart('v', 'V')
-          $arguments = @('build', 'SecRandom.Mobile/SecRandom.Mobile.csproj', '-c', 'Release', '-r', 'android-arm64', '-p:BuildMobile=true', '-p:MobileTargetFramework=net10.0-android', "-p:Version=$version", '-p:ApplicationVersion=${{ github.run_number }}')
+          $arguments = @('build', 'SecRandom.Android/SecRandom.Android.csproj', '-c', 'Release', '-r', 'android-arm64', '-p:BuildMobile=true', "-p:Version=$version", '-p:ApplicationVersion=${{ github.run_number }}')
           $hasSigningSecrets = @($env:ANDROID_SIGNING_KEYSTORE_BASE64, $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, $env:ANDROID_SIGNING_KEY_ALIAS, $env:ANDROID_SIGNING_KEY_PASSWORD) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
           if ($hasSigningSecrets.Count -gt 0 -and $hasSigningSecrets.Count -ne 4) {
             throw 'All Android signing secrets must be configured together.'
@@ -589,7 +589,7 @@ jobs:
         env:
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
         run: |
-          $apk = Get-ChildItem 'SecRandom.Mobile/bin/Release/net10.0-android/android-arm64' -Filter '*-Signed.apk' |
+          $apk = Get-ChildItem 'SecRandom.Android/bin/Release/net10.0-android/android-arm64' -Filter '*-Signed.apk' |
             Select-Object -First 1 -ExpandProperty FullName
           if ([string]::IsNullOrWhiteSpace($apk)) {
             throw 'The Android build did not produce a signed APK.'
@@ -662,11 +662,10 @@ jobs:
         env:
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
         run: >
-          dotnet build SecRandom.Mobile/SecRandom.Mobile.csproj
+          dotnet build SecRandom.iOS/SecRandom.iOS.csproj
           -c Release
           -r iossimulator-arm64
           -p:BuildMobile=true
-          -p:MobileTargetFramework=net10.0-ios
           -p:Version=${VERSION#v}
           -p:EnableCodeSigning=false
           -p:CodesignRequireProvisioningProfile=false
@@ -683,12 +682,11 @@ jobs:
           version="${version#V}"
           output="artifacts/mobile/SecRandom-v${version}-iOS-arm64-unsigned.ipa"
           mkdir -p artifacts/mobile
-          dotnet publish SecRandom.Mobile/SecRandom.Mobile.csproj \
+          dotnet publish SecRandom.iOS/SecRandom.iOS.csproj \
             -c Release \
             -f net10.0-ios \
             -r ios-arm64 \
             -p:BuildMobile=true \
-            -p:MobileTargetFramework=net10.0-ios \
             -p:Version="$version" \
             -p:ApplicationVersion=${{ github.run_number }} \
             -p:EnableCodeSigning=false \

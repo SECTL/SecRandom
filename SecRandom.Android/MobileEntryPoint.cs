@@ -2,7 +2,6 @@
 using Android.App;
 using Android.Content;
 using Android.Runtime;
-using AndroidX.Core.Content;
 using Avalonia;
 using Avalonia.Android;
 using SecRandom.Platforms;
@@ -12,7 +11,7 @@ using System.Runtime.Versioning;
 [assembly: UsesPermission(Android.Manifest.Permission.RequestInstallPackages)]
 [assembly: UsesPermission(Android.Manifest.Permission.Internet)]
 
-namespace SecRandom.Mobile;
+namespace SecRandom.Mobile.Android;
 
 [Application(Icon = "@mipmap/app_logo")]
 [SupportedOSPlatform("android24.0")]
@@ -25,54 +24,30 @@ public class MobileApplication : AvaloniaAndroidApplication<MobileApp>
 
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
-        PlatformStartupContext.Set(new MobilePlatformServiceRoot(PlatformKind.Android));
+        PlatformStartupContext.Set(new MobilePlatformServiceRoot(PlatformKind.Android)
+        {
+            UpdateInstaller = new AndroidUpdateInstaller(),
+            StartupErrorLogger = exception =>
+            {
+                if (OperatingSystem.IsAndroidVersionAtLeast(24))
+                    global::Android.Util.Log.Error("SecRandom.Mobile", exception.ToString());
+            }
+        });
         return base.CustomizeAppBuilder(builder);
     }
 }
 
 [ContentProvider(["${applicationId}.updatefileprovider"], Exported = false, GrantUriPermissions = true)]
 [MetaData("android.support.FILE_PROVIDER_PATHS", Resource = "@xml/update_paths")]
-public sealed class UpdateFileProvider : FileProvider
+public sealed class UpdateFileProvider : global::AndroidX.Core.Content.FileProvider
 {
 }
 
 [Activity(MainLauncher = true, Exported = true,
     Theme = "@style/Theme.AppCompat.DayNight.NoActionBar",
-    ConfigurationChanges = Android.Content.PM.ConfigChanges.Orientation |
-                           Android.Content.PM.ConfigChanges.ScreenSize)]
+    ConfigurationChanges = global::Android.Content.PM.ConfigChanges.Orientation |
+                           global::Android.Content.PM.ConfigChanges.ScreenSize)]
 public sealed class MainActivity : AvaloniaMainActivity
 {
-}
-#endif
-
-#if IOS
-using Avalonia;
-using Avalonia.iOS;
-using Foundation;
-using SecRandom.Platforms;
-using SecRandom.Platforms.Abstractions;
-using System.Runtime.Versioning;
-using UIKit;
-
-namespace SecRandom.Mobile;
-
-[SupportedOSPlatform("ios13.0")]
-public static class MobileEntryPoint
-{
-    public static void Main(string[] args)
-    {
-        UIApplication.Main(args, null, typeof(AppDelegate));
-    }
-}
-
-[SupportedOSPlatform("ios13.0")]
-[Register("AppDelegate")]
-public sealed class AppDelegate : AvaloniaAppDelegate<MobileApp>
-{
-    protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
-    {
-        PlatformStartupContext.Set(new MobilePlatformServiceRoot(PlatformKind.Ios));
-        return base.CustomizeAppBuilder(builder);
-    }
 }
 #endif

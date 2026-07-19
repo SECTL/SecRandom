@@ -28,6 +28,16 @@ public sealed class MobilePlatformServiceRoot : IPlatformServiceRoot, IWindowFea
 
     public PlatformCapabilities Capabilities { get; }
 
+    /// <summary>
+    /// Platform heads inject their update installer here before PlatformStartupContext.Set runs.
+    /// </summary>
+    public IMobileUpdateInstaller UpdateInstaller { get; set; } = new UnsupportedMobileUpdateInstaller();
+
+    /// <summary>
+    /// Platform heads may attach a startup error sink (for example Android.Util.Log) for Host-build failures.
+    /// </summary>
+    public Action<Exception>? StartupErrorLogger { get; set; }
+
     public IWindowFeatureService WindowFeatures => this;
 
     public global::SecRandom.Platforms.Abstractions.WindowFeatures SupportedFeatures =>

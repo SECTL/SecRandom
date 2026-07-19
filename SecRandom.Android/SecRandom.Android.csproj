@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup Condition="'$(BuildMobile)' != 'true'">
+        <TargetFramework>net10.0</TargetFramework>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(BuildMobile)' == 'true'">
+        <TargetFramework>net10.0-android</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <ApplicationTitle>SecRandom</ApplicationTitle>
+        <ApplicationId>cn.sectl.secrandom.mobile</ApplicationId>
+        <RuntimeIdentifier>android-arm64</RuntimeIdentifier>
+        <AndroidPackageFormats>apk</AndroidPackageFormats>
+        <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\SecRandom.Mobile.Shared\SecRandom.Mobile.Shared.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(BuildMobile)' == 'true'">
+        <PackageReference Include="Avalonia.Android" Version="$(AvaloniaVersion)" />
+        <AndroidResource Include="..\SecRandom\Assets\AppLogo.png" Link="Resources\mipmap\app_logo.png" />
+        <AndroidResource Include="Platforms\Android\update_paths.xml" Link="Resources\xml\update_paths.xml" />
+    </ItemGroup>
+
+    <Import Project="..\Global.props" />
+
+    <Target Name="SetMobileApplicationDisplayVersion"
+            DependsOnTargets="GetGitInfoForSourceGenerator"
+            BeforeTargets="_GetAndroidPackageName;_CompileAppManifestInputs"
+            Condition="'$(BuildMobile)' == 'true'">
+        <PropertyGroup>
+            <_MobileApplicationDisplayVersion>$(GitTag)</_MobileApplicationDisplayVersion>
+            <_MobileApplicationDisplayVersion Condition="$([System.String]::Copy('$(_MobileApplicationDisplayVersion)').StartsWith('v'))">$([System.String]::Copy('$(_MobileApplicationDisplayVersion)').Substring(1))</_MobileApplicationDisplayVersion>
+            <!-- versionCode stays monotonic for Android updates; versionName follows the desktop Git tag. -->
+            <ApplicationDisplayVersion>$(_MobileApplicationDisplayVersion)</ApplicationDisplayVersion>
+        </PropertyGroup>
+    </Target>
+</Project>

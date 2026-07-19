@@ -1,4 +1,4 @@
-﻿# SecRandom 开发 Rules（必须遵守）
+# SecRandom 开发 Rules（必须遵守）
 
 ## 项目概述与结构
 
@@ -27,7 +27,7 @@
 
 ## Host/依赖注入（怎么写才符合本项目）
 
-- 桌面 Host 构建与注册入口：`SecRandom/App.axaml.cs` 的 `BuildHost()`。`SecRandom.Mobile` 是不引用桌面应用程序集的独立 SingleView 壳，`MobileApp` 只构建最小 Host，不得调用桌面 `BuildHost()`。
+- 桌面 Host 构建与注册入口：`SecRandom/App.axaml.cs` 的 `BuildHost()`。`SecRandom.Mobile.Shared`（RootNamespace 保持 `SecRandom.Mobile`）是不引用桌面应用程序集的独立 SingleView 壳，`MobileApp` 只构建最小 Host，不得调用桌面 `BuildHost()`；`SecRandom.Android` / `SecRandom.iOS` 仅为平台入口头项目。移动端构建用 `-p:BuildMobile=true` 直接构建对应入口头项目，不再使用 `MobileTargetFramework` 开关。
 - 取服务统一走静态入口：
   - `IAppHost.GetService<T>()`（拿不到会抛异常）
   - `IAppHost.TryGetService<T>()`（拿不到返回 null）

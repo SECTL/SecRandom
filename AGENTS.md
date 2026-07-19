@@ -10,9 +10,9 @@ Maintenance contract:
 - `docs/project_rules.md` is the source of truth when a convention conflicts with this summary.
 -->
 
-**Last Update:** 2026-05-03
-**Last Submit:** 175e36f0
-**Last modified model:** deepseek-v4-pro
+**Last Update:** 2026-07-19
+**Last Submit:** 9b508d12
+**Last modified model:** kimi-k2
 
 ## OVERVIEW
 SecRandom is a GPLv3 C#/.NET desktop app for fair random drawing in education scenarios. Stack: .NET solution, Avalonia + FluentAvalonia UI, Microsoft.Extensions.Hosting DI, xUnit v3 tests.
@@ -31,7 +31,9 @@ SecRandom-C/
 ├── SecRandom.Platforms.Windows/ # Windows-native window feature implementation
 ├── SecRandom.Platforms.Linux/ # Linux-native window feature implementation boundary
 ├── SecRandom.Platforms.MacOs/ # macOS-native window feature implementation boundary
-├── SecRandom.Mobile/      # Independent Android/iOS SingleView app shell, views, and mobile-only UI
+├── SecRandom.Mobile.Shared/ # Neutral net10.0 mobile shared library (assembly/namespace stay SecRandom.Mobile): SingleView shell, views, mobile-only UI
+├── SecRandom.Android/       # Android entry head: net10.0-android Exe with BuildMobile=true, otherwise empty neutral library
+├── SecRandom.iOS/           # iOS entry head: net10.0-ios Exe with BuildMobile=true, otherwise empty neutral library
 ├── SecRandom.Core.Tests/  # xUnit v3 test project; currently covers legacy privacy/telemetry migration
 ├── scripts/               # Standalone tooling and verification scripts, including fairness audits
 ├── docs/                  # Project rules, localization, namespace boundaries
@@ -56,7 +58,7 @@ Nested instruction files:
 | Desktop startup | `SecRandom.Desktop/Program.cs` | Process entry → Avalonia lifetime. |
 | Platform capability contracts | `SecRandom.Platforms.Abstractions/`, `SecRandom.Platforms/` | App-internal platform root, window feature requests/results, startup context, and DI bridge. |
 | Native window features | `SecRandom.Platforms.Windows/`, `SecRandom.Platforms.Linux/`, `SecRandom.Platforms.MacOs/` | Each platform owns native feature handling; views must not add platform API calls. |
-| Mobile startup | `SecRandom.Mobile/` | Independent Android/iOS SingleView shell. `MobileApp` owns its minimal Host and root view; it does not reference desktop `SecRandom`. |
+| Mobile startup | `SecRandom.Mobile.Shared/`, `SecRandom.Android/`, `SecRandom.iOS/` | Shared library holds the independent SingleView shell (`MobileApp` owns its minimal Host and root view; it does not reference desktop `SecRandom`); the Android/iOS heads own platform entry points and platform seams. |
 | App composition / DI | `SecRandom/App.axaml.cs` | `BuildHost()` is the registration source of truth. |
 | Main navigation | `SecRandom/Views/MainView.axaml.cs` | Default page `main.rollCall`; keyed DI page factory. Built-in draw pages are `main.rollCall` and `main.lottery`; quick draw opens from the floating window instead of the main sidebar. |
 | Settings navigation | `SecRandom/Views/SettingsView.axaml.cs` | Default page `settings.overview`; has back stack + restart dialog. General group now includes `settings.general.basic`, `settings.general.privacy`, and `settings.general.backup`. |
@@ -128,10 +130,10 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - Settings preview is a security-prompt outcome, not URL authorization bypass. When enabled, it freezes page content while preserving settings navigation and must not mutate configuration.
 - ViewModels must be registered in `SecRandom/App.axaml.cs` `BuildHost()`; reusable services also go through Host.
 - The cross-platform view engine lives in `SecRandom.Core/Views/`. It separates logical Avalonia `Control` sessions, presentation intent, close/result handling, factories, and hosts. Core contracts must not expose `Window`, platform lifetimes, native APIs, or raw `IServiceProvider`; desktop and mobile shells register their physical presenters through DI. Plugins may receive only a future restricted view service, never the app-wide route service or host registry.
-- Platform feature callers must resolve narrow platform contracts from Host. `PlatformStartupContext` is startup-only: desktop `Program` sets it before Avalonia starts, and desktop `App` reads it once to register the selected root. `SecRandom.Mobile.MobileApp` sets and consumes it in its independent minimal Host. Do not use it from views, ViewModels, Core, or business services.
+- Platform feature callers must resolve narrow platform contracts from Host. `PlatformStartupContext` is startup-only: desktop `Program` sets it before Avalonia starts, and desktop `App` reads it once to register the selected root. On mobile, the `SecRandom.Android` / `SecRandom.iOS` entry points set it with a `MobilePlatformServiceRoot` before `SecRandom.Mobile.MobileApp` builds and consumes its independent minimal Host. Do not use it from views, ViewModels, Core, or business services.
 - Window feature requests use `IWindowFeatureService` with a neutral `PlatformWindowHandle`, `WindowFeatureRequest`, and explicit `Applied`/`Unsupported`/`Failed` result. Keep Win32/X11/AppKit operations in the matching `SecRandom.Platforms.<OS>` project.
 - `TopmostMode.UiAccess` remains a Windows process-token capability controlled by `SecRandom.Desktop/UiAccessStartup.cs`; it is not a generic window feature or a responsibility of platform window services.
-- `SecRandom.Mobile` defaults to a neutral target so normal desktop solution builds do not require mobile workloads. `BuildMobile=true` enables Android/iOS targets, while `MobileTargetFramework` selects one mobile target for a platform-specific CI build without leaking that choice into referenced projects; its independent `MobileApp` calls `Utils.ConfigureMobileDataRoot()` before it builds its minimal Host, calls `AddCoreRuntimeServices()`, assigns/clears `IAppHost.Host` for the existing transitional Core handlers, starts `ISingleViewApplicationLifetime` with its own `MobileRootView`, and must not start desktop-only services or reference the desktop application assembly. CI builds Android packages and unsigned iOS arm64 IPAs; the iOS job is a required input to manual release publication, and the IPA is included in the signed release manifest and GitHub Release assets. iOS device distribution and update delivery remain deferred.
+- Mobile is split into the neutral `SecRandom.Mobile.Shared` library (always net10.0; assembly name and namespaces stay `SecRandom.Mobile`) plus the `SecRandom.Android` / `SecRandom.iOS` entry heads, so normal desktop solution builds do not require mobile workloads. `BuildMobile=true` enables the mobile TFM on the two head projects (`net10.0-android` / `net10.0-ios` Exe); the `MobileTargetFramework` switch no longer exists — build the head project directly for a platform-specific CI build. Platform-specific code lives only in the heads behind shared seams (`IMobileUpdateInstaller`, `MobilePlatformServiceRoot.StartupErrorLogger`); the shared library contains no `#if ANDROID` / `#if IOS` code. The independent `MobileApp` calls `Utils.ConfigureMobileDataRoot()` before it builds its minimal Host, calls `AddCoreRuntimeServices()`, assigns/clears `IAppHost.Host` for the existing transitional Core handlers, starts `ISingleViewApplicationLifetime` with its own `MobileRootView`, and must not start desktop-only services or reference the desktop application assembly. CI builds Android packages and unsigned iOS arm64 IPAs; the iOS job is a required input to manual release publication, and the IPA is included in the signed release manifest and GitHub Release assets. iOS device distribution and update delivery remain deferred.
 - Resolve shared services via `IAppHost.GetService<T>()` / `TryGetService<T>()` unless constructor injection is already the local style.
 - Navigation pages need `[PageInfo(...)]` plus `services.AddMainPage<T>()` or `services.AddSettingsPage<T>()` in `BuildHost()`.
 - Built-in main navigation entries may use `PageLocation.Bottom` for bottom-pinned sidebar items; roll-call (`main.rollCall`) and lottery (`main.lottery`) are bottom-pinned and full-width/title-hidden. Quick draw is not a main navigation page and opens from the floating window.
@@ -153,7 +155,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - Localization keys: `S_` settings, `S_xxx_D` description, `S_xxx_R` real key, `O_` options, `M_` messages, `C_` controls.
 - Views commonly set `DataContext = this` and expose `ViewModel`; bindings use `ViewModel.*`.
 - ViewModels use CommunityToolkit MVVM (`ObservableRecipient`, `[ObservableProperty]`); app VMs inherit `SecRandom.ViewModels.ViewModelBase`.
-- `Global.props` carries the main MSBuild behavior: unsafe enabled, Windows targeting enabled, SourceLink, full debug symbols, and default exclusion of project-local `artifacts/` / `publish/` output trees from SDK item globbing. Its `GitInfo` generator and shared `AssemblyInfo.cs` are enabled only by final entry assemblies (`SecRandom.Desktop` and `SecRandom.Mobile`), because generated `SecRandom.GitInfo` types must not leak from referenced class libraries.
+- `Global.props` carries the main MSBuild behavior: unsafe enabled, Windows targeting enabled, SourceLink, full debug symbols, and default exclusion of project-local `artifacts/` / `publish/` output trees from SDK item globbing. Its `GitInfo` generator and shared `AssemblyInfo.cs` are enabled only by final entry assemblies (`SecRandom.Desktop`, `SecRandom.Android`, and `SecRandom.iOS`), because generated `SecRandom.GitInfo` types must not leak from referenced class libraries.
 - `Directory.Build.props` only pins `AvaloniaVersion`.
 - Standalone verification scripts live under `scripts/`; keep them self-contained and write outputs under `artifacts/`.
 - Release CI keeps generated material under `artifacts/release/`: RID publish trees under `publish/`, portable ZIP assembly under `portable/`, Windows installer staging under `installer/` and `setup/`, platform package workspaces under `linux/` / `macos/`, upload candidates under `dist/`, and release-job downloads/final signed assets under `downloaded/` / `output/`. The Android job stages its signed arm64 APK separately, then the release job includes it in `output/`, the signed manifest, and the GitHub release. Portable ZIP contents must remain a root `SecRandomLauncher` plus one valid `app-*` payload directory; do not rearrange that runtime package contract.

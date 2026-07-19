@@ -37,7 +37,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecRandom.Platforms.Linux",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecRandom.Platforms.MacOs", "SecRandom.Platforms.MacOs\SecRandom.Platforms.MacOs.csproj", "{8646C178-65FF-40D3-8F51-5C21A5D75B3B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecRandom.Mobile", "SecRandom.Mobile\SecRandom.Mobile.csproj", "{ED06CC6F-D2DF-4E24-A4DB-504714F77FEE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SecRandom.Mobile.Shared", "SecRandom.Mobile.Shared\SecRandom.Mobile.Shared.csproj", "{5E70A298-A0BB-440B-ADB0-975F3EAFE0A1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SecRandom.Android", "SecRandom.Android\SecRandom.Android.csproj", "{8E41CBAE-25D9-4DDB-9D9E-4494F1856C88}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SecRandom.iOS", "SecRandom.iOS\SecRandom.iOS.csproj", "{08294FBE-5861-4380-AAA3-21E3B57270A1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -97,10 +101,18 @@ Global
 		{8646C178-65FF-40D3-8F51-5C21A5D75B3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8646C178-65FF-40D3-8F51-5C21A5D75B3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8646C178-65FF-40D3-8F51-5C21A5D75B3B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ED06CC6F-D2DF-4E24-A4DB-504714F77FEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ED06CC6F-D2DF-4E24-A4DB-504714F77FEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ED06CC6F-D2DF-4E24-A4DB-504714F77FEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ED06CC6F-D2DF-4E24-A4DB-504714F77FEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E70A298-A0BB-440B-ADB0-975F3EAFE0A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E70A298-A0BB-440B-ADB0-975F3EAFE0A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E70A298-A0BB-440B-ADB0-975F3EAFE0A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E70A298-A0BB-440B-ADB0-975F3EAFE0A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E41CBAE-25D9-4DDB-9D9E-4494F1856C88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E41CBAE-25D9-4DDB-9D9E-4494F1856C88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E41CBAE-25D9-4DDB-9D9E-4494F1856C88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E41CBAE-25D9-4DDB-9D9E-4494F1856C88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08294FBE-5861-4380-AAA3-21E3B57270A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08294FBE-5861-4380-AAA3-21E3B57270A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08294FBE-5861-4380-AAA3-21E3B57270A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08294FBE-5861-4380-AAA3-21E3B57270A1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

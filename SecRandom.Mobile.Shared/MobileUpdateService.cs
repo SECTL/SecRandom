@@ -15,7 +15,7 @@ using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile;
 
-public sealed class MobileUpdateService(HttpClient httpClient) : INotifyPropertyChanged
+public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInstaller installer) : INotifyPropertyChanged
 {
     private const string Repository = "SECTL/SecRandom";
     private const string ManifestFileName = "SecRandom-update-manifest.v1.json";
@@ -98,9 +98,9 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
             Status = LR.M_DownloadingUpdate;
             var bytes = await DownloadWithFallbackAsync(_artifact.AssetName, cancellationToken);
             VerifyArtifact(bytes, _artifact);
-            var path = await WritePackageAsync(bytes, _artifact.AssetName, cancellationToken);
+            var path = await installer.StagePackageAsync(bytes, _artifact.AssetName, cancellationToken);
             Status = LR.M_OpeningInstaller;
-            OpenSystemInstaller(path);
+            installer.OpenInstaller(path);
             Status = LR.M_InstallerOpened;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -203,59 +203,8 @@ public sealed class MobileUpdateService(HttpClient httpClient) : INotifyProperty
         return Convert.FromBase64String(reader.ReadToEnd().Trim());
     }
 
-    private static async Task<string> WritePackageAsync(byte[] bytes, string assetName, CancellationToken cancellationToken)
-    {
-#if ANDROID
-#pragma warning disable CA1416
-        return await WriteAndroidPackageAsync(bytes, assetName, cancellationToken);
-#pragma warning restore CA1416
-#else
-        var directory = Path.Combine(Path.GetTempPath(), "SecRandom", "updates");
-        Directory.CreateDirectory(directory);
-        var path = Path.Combine(directory, assetName);
-        await File.WriteAllBytesAsync(path + ".partial", bytes, cancellationToken);
-        File.Move(path + ".partial", path, true);
-        return path;
-#endif
-    }
-
-    private static void OpenSystemInstaller(string path)
-    {
-#if ANDROID
-#pragma warning disable CA1416
-        OpenAndroidSystemInstaller(path);
-#pragma warning restore CA1416
-#else
-        throw new PlatformNotSupportedException(LR.M_AndroidOnlyInstaller);
-#endif
-    }
-
-#if ANDROID
-    [System.Runtime.Versioning.SupportedOSPlatform("android24.0")]
-    private static async Task<string> WriteAndroidPackageAsync(byte[] bytes, string assetName, CancellationToken cancellationToken)
-    {
-        var directory = Path.Combine(Android.App.Application.Context!.CacheDir!.AbsolutePath!, "updates");
-        Directory.CreateDirectory(directory);
-        var path = Path.Combine(directory, assetName);
-        await File.WriteAllBytesAsync(path + ".partial", bytes, cancellationToken);
-        File.Move(path + ".partial", path, true);
-        return path;
-    }
-
-    [System.Runtime.Versioning.SupportedOSPlatform("android24.0")]
-    private static void OpenAndroidSystemInstaller(string path)
-    {
-        var context = Android.App.Application.Context ?? throw new InvalidOperationException(LR.M_AndroidContextUnavailable);
-        var uri = AndroidX.Core.Content.FileProvider.GetUriForFile(context,
-            $"{context.PackageName}.updatefileprovider", new Java.IO.File(path));
-        var intent = new Android.Content.Intent(Android.Content.Intent.ActionView)
-            .SetDataAndType(uri, "application/vnd.android.package-archive")
-            .AddFlags(Android.Content.ActivityFlags.GrantReadUriPermission | Android.Content.ActivityFlags.NewTask);
-        context.StartActivity(intent);
-    }
-#endif
-
-    private static string GetCurrentVersion() => typeof(MobileUpdateService).Assembly
+    // The GitInfo version attributes live on the Android/iOS head assemblies, not on this shared library.
+    private static string GetCurrentVersion() => (Assembly.GetEntryAssembly() ?? typeof(MobileUpdateService).Assembly)
         .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0]
         ?? "0.0.0";
 

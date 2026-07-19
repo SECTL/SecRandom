@@ -9,6 +9,7 @@ using SecRandom.Core.Icons;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 using AvaloniaButton = Avalonia.Controls.Button;
 using AvaloniaOrientation = Avalonia.Layout.Orientation;
+using AvaloniaRadioButton = Avalonia.Controls.RadioButton;
 
 namespace SecRandom.Mobile.Views;
 
@@ -96,10 +97,10 @@ internal static class MobileUi
             Content = text,
             IsClickEnabled = true,
             ActionIconSource = new FluentIconSource(FluentIcons.CheckmarkFilled),
-            Footer = new RadioButton { IsChecked = selected, GroupName = "mobile-choice" }
+            Footer = new AvaloniaRadioButton { IsChecked = selected, GroupName = "mobile-choice" }
         };
         option.Click += (_, _) => select();
-        ((RadioButton)option.Footer).Click += (_, _) => select();
+        ((AvaloniaRadioButton)option.Footer).Click += (_, _) => select();
         return option;
     }
 

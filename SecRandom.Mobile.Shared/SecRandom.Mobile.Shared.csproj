@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <!-- Neutral library TFM: mobile workloads are only required by the SecRandom.Android/SecRandom.iOS heads. -->
+        <TargetFramework>net10.0</TargetFramework>
+        <!-- Assembly identity must stay SecRandom.Mobile: Core InternalsVisibleTo and avares://SecRandom.Mobile/ URIs depend on it. -->
+        <AssemblyName>SecRandom.Mobile</AssemblyName>
+        <RootNamespace>SecRandom.Mobile</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <GenerateResourceDesigner>true</GenerateResourceDesigner>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\SecRandom.Platforms\SecRandom.Platforms.csproj" />
+        <ProjectReference Include="..\SecRandom.Platforms.Abstractions\SecRandom.Platforms.Abstractions.csproj" />
+        <ProjectReference Include="..\SecRandom.Shared\SecRandom.Shared.csproj" />
+        <ProjectReference Include="..\SecRandom.Core\SecRandom.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+        <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.1" />
+        <PackageReference Include="FluentAvaloniaUI" Version="3.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+        <PackageReference Include="YamlDotNet" Version="16.3.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <AvaloniaResource Include="..\SecRandom\Assets\AppLogo.png" Link="Assets\AppLogo.png" />
+        <AvaloniaResource Include="..\SecRandom\Assets\Updates\release-public-key.txt" Link="Assets\Updates\release-public-key.txt" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Update="Langs\Mobile\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Langs\Mobile\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+    </ItemGroup>
+
+    <Import Project="..\Global.props" />
+</Project>

@@ -77,6 +77,9 @@ public sealed class MobileApp : Avalonia.Application
                         .AddView<MobileUpdateSettingsPage>(MobileRoutes.Update)
                         .AddView<MobileAboutSettingsPage>(MobileRoutes.About);
                     services.AddHttpClient<MobileUpdateService>();
+                    services.AddSingleton<IMobileUpdateInstaller>(
+                        (PlatformStartupContext.Current as MobilePlatformServiceRoot)?.UpdateInstaller
+                        ?? new UnsupportedMobileUpdateInstaller());
                     services.AddSingleton<MobileDeviceUuidStore>();
                     services.AddHostedService<MobileOnlineStatusService>();
                     services.AddSingleton<MobileRootView>();
@@ -94,10 +97,7 @@ public sealed class MobileApp : Avalonia.Application
         catch (Exception exception)
         {
             System.Diagnostics.Debug.WriteLine(exception);
-#if ANDROID
-            if (OperatingSystem.IsAndroidVersionAtLeast(24))
-                Android.Util.Log.Error("SecRandom.Mobile", exception.ToString());
-#endif
+            (PlatformStartupContext.Current as MobilePlatformServiceRoot)?.StartupErrorLogger?.Invoke(exception);
             if (ReferenceEquals(IAppHost.Host, _host))
                 IAppHost.Host = null;
             _host?.Dispose();

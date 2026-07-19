@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup Condition="'$(BuildMobile)' != 'true'">
+        <TargetFramework>net10.0</TargetFramework>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(BuildMobile)' == 'true'">
+        <TargetFramework>net10.0-ios</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <ApplicationTitle>SecRandom</ApplicationTitle>
+        <ApplicationId>cn.sectl.secrandom.mobile</ApplicationId>
+        <RuntimeIdentifier>ios-arm64</RuntimeIdentifier>
+        <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\SecRandom.Mobile.Shared\SecRandom.Mobile.Shared.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(BuildMobile)' == 'true'">
+        <PackageReference Include="Avalonia.iOS" Version="$(AvaloniaVersion)" />
+    </ItemGroup>
+
+    <Import Project="..\Global.props" />
+
+    <Target Name="SetMobileApplicationDisplayVersion"
+            DependsOnTargets="GetGitInfoForSourceGenerator"
+            BeforeTargets="_GetAndroidPackageName;_CompileAppManifestInputs"
+            Condition="'$(BuildMobile)' == 'true'">
+        <PropertyGroup>
+            <_MobileApplicationDisplayVersion>$(GitTag)</_MobileApplicationDisplayVersion>
+            <_MobileApplicationDisplayVersion Condition="$([System.String]::Copy('$(_MobileApplicationDisplayVersion)').StartsWith('v'))">$([System.String]::Copy('$(_MobileApplicationDisplayVersion)').Substring(1))</_MobileApplicationDisplayVersion>
+            <!-- versionCode stays monotonic for Android updates; versionName follows the desktop Git tag. -->
+            <ApplicationDisplayVersion>$(_MobileApplicationDisplayVersion)</ApplicationDisplayVersion>
+        </PropertyGroup>
+    </Target>
+</Project>
