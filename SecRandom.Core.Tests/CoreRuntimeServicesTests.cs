@@ -8,6 +8,7 @@ using SecRandom.Core.Models;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Models.Draw;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
 
@@ -134,6 +135,58 @@ public sealed class CoreRuntimeServicesTests : IDisposable
         Assert.Equal("Lin", item.DisplayName);
         Assert.False(item.IsPrize);
         Assert.Same(activeStudentList, profile.StudentListConfig);
+    }
+
+    [Fact]
+    public void RollCallSession_UsesFixedMobileFairPolicyAndCommitsBothRecords()
+    {
+        using var provider = CreateProvider();
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        config.Data.RollCallSettings.DefaultClass = "session-class";
+        config.Data.RollCallSettings.DrawMode = DrawMode.Repeat;
+        config.Data.RollCallSettings.DrawType = DrawType.Fair;
+        config.Save();
+
+        var profile = provider.GetRequiredService<IProfileService>();
+        var student = new Student { Name = "Kai", RecordId = Guid.NewGuid() };
+        profile.CurrentStudentList!.Students.Add(student);
+        profile.SaveProfile();
+
+        var session = provider.GetRequiredService<IRollCallSession>();
+        var result = session.DrawOnce();
+        var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(student.RecordId, Assert.Single(result.Result).RecordId);
+        Assert.Single(profile.CurrentStudentHistory!.Students.Values.Single().Histories);
+        var listName = profile.StudentListConfig!.Name;
+        Assert.Equal(1, temporary.GetStudentCounts(listName, string.Empty, string.Empty)[student.RecordId.ToString("D")]);
+    }
+
+    [Fact]
+    public void LotterySession_CountModeUsesInventoryAndCommitsBothRecords()
+    {
+        using var provider = CreateProvider();
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        config.Data.LotterySettings.DrawType = LotteryDrawType.Count;
+        config.Data.LotterySettings.DrawMode = DrawMode.Repeat;
+        config.Save();
+
+        var profile = provider.GetRequiredService<IProfileService>();
+        var prize = new Prize { Name = "Notebook", Count = 1, RecordId = Guid.NewGuid() };
+        profile.CurrentPrizeList!.Prizes.Add(prize);
+        profile.SaveProfile();
+
+        var session = provider.GetRequiredService<ILotterySession>();
+        var first = session.DrawOnce();
+        var second = session.DrawOnce();
+        var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
+
+        Assert.True(first.IsSuccess);
+        Assert.Equal(DrawStatus.NoEligibleCandidates, second.Status);
+        Assert.Single(profile.CurrentPrizeHistory!.Prizes.Values.Single().Histories);
+        var listName = profile.PrizeListConfig!.Name;
+        Assert.Equal(1, temporary.GetPrizeCounts(listName)[prize.RecordId.ToString("D")]);
     }
 
     public void Dispose()

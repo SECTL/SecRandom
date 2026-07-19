@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Shared;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared.Models.Profile;
+using Resources = SecRandom.Langs.SettingsPages.Home.Resources;
 
 namespace SecRandom.ViewModels.SettingsPages;
 
@@ -104,19 +106,19 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
     {
         var lastDrawnTime = times.DefaultIfEmpty(DateTime.MinValue).Max();
         if (lastDrawnTime == DateTime.MinValue)
-            return "暂无记录";
+            return Resources.M_NoDrawHistory;
 
         var elapsed = DateTime.Now - lastDrawnTime;
         if (elapsed < TimeSpan.FromMinutes(1))
-            return "刚刚";
+            return Resources.M_JustNow;
         if (elapsed < TimeSpan.FromHours(1))
-            return $"{(int)elapsed.TotalMinutes} 分钟前";
+            return string.Format(Resources.M_MinutesAgo, (int)elapsed.TotalMinutes);
         if (lastDrawnTime.Date == DateTime.Today)
-            return $"今天 {lastDrawnTime:HH:mm}";
+            return string.Format(Resources.M_TodayAt, lastDrawnTime.ToString("t", CultureInfo.CurrentCulture));
         if (lastDrawnTime.Date == DateTime.Today.AddDays(-1))
-            return $"昨天 {lastDrawnTime:HH:mm}";
+            return string.Format(Resources.M_YesterdayAt, lastDrawnTime.ToString("t", CultureInfo.CurrentCulture));
 
-        return lastDrawnTime.ToString("yyyy-MM-dd HH:mm");
+        return lastDrawnTime.ToString("g", CultureInfo.CurrentCulture);
     }
 }
 

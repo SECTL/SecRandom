@@ -24,6 +24,7 @@ using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
 using SecRandom.Shared;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using AvaloniaButton = Avalonia.Controls.Button;
 
 namespace SecRandom.Mobile;
 
@@ -183,10 +184,10 @@ public sealed class MobileRootView : UserControl
     private readonly ViewHostControl _viewHost;
     private readonly IViewEngine _viewEngine;
     private readonly TextBlock _pageTitle;
-    private readonly Button _drawTab;
-    private readonly Button _historyTab;
-    private readonly Button _overviewTab;
-    private readonly Button _settingsTab;
+    private readonly AvaloniaButton _drawTab;
+    private readonly AvaloniaButton _historyTab;
+    private readonly AvaloniaButton _overviewTab;
+    private readonly AvaloniaButton _settingsTab;
     private readonly Border _header;
     private readonly Border _bottomBar;
     private readonly Grid _root;

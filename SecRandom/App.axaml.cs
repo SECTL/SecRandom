@@ -391,7 +391,8 @@ public partial class App : Application
                 var pluginStateStore = new PluginStateStore();
 
                 services.AddPlatformServices(platform);
-                services.AddViewEngine();
+                services.AddViewEngine()
+                    .AddView<HistoryPage>("main.history");
                 services.AddSingleton<DesktopViewHostProvider>();
                 services.AddSingleton<IViewHostProvider>(serviceProvider =>
                     serviceProvider.GetRequiredService<DesktopViewHostProvider>());

@@ -20,6 +20,8 @@ internal sealed class MobileDrawPage : UserControl
     private readonly IDrawTemporaryRecordService _temporaryRecordService;
     private readonly MainConfigHandler _configHandler;
     private readonly DrawEngine _drawEngine;
+    private readonly IRollCallSession _rollCallSession;
+    private readonly ILotterySession _lotterySession;
 
     internal MobileDrawPage(
         IProfileService profileService,
@@ -27,6 +29,8 @@ internal sealed class MobileDrawPage : UserControl
         IFeatureAvailabilityService featureAvailabilityService,
         MainConfigHandler configHandler,
         DrawEngine drawEngine,
+        IRollCallSession rollCallSession,
+        ILotterySession lotterySession,
         DrawSurface drawSurface,
         Action<DrawSurface> selectSurface,
         Action openListManagement)
@@ -35,6 +39,8 @@ internal sealed class MobileDrawPage : UserControl
         _temporaryRecordService = temporaryRecordService;
         _configHandler = configHandler;
         _drawEngine = drawEngine;
+        _rollCallSession = rollCallSession;
+        _lotterySession = lotterySession;
         EnsureRestartTemporaryRecordsCleared();
 
         var rollCall = MobileUi.CreateSegmentButton(LR.C_RollCall, drawSurface == DrawSurface.RollCall, true);
@@ -137,26 +143,7 @@ internal sealed class MobileDrawPage : UserControl
         draw.IsEnabled = false;
         try
         {
-            // The prepared pool already reflects mobile temporary-repeat records.
-            var currentCandidates = GetEligibleStudents();
-            if (currentCandidates.Count == 0)
-            {
-                result.Text = LR.M_NoEligibleCandidates;
-                detail.Text = LR.M_RepeatLimitExhausted;
-                return;
-            }
-
-            var drawType = _configHandler.Data.RollCallSettings.DrawType;
-            var prepared = drawType == DrawType.Fair
-                ? _drawEngine.PrepareStudentsForMobileDesktopDefaults(
-                    1,
-                    currentCandidates,
-                    DrawSettingsType.RollCall,
-                    DrawType.Fair)
-                : null;
-            var output = drawType == DrawType.Fair
-                ? _drawEngine.DrawPreparedStudents(prepared!, 1)
-                : _drawEngine.DrawPreparedStudents(1, currentCandidates, DrawSettingsType.RollCall);
+            var output = _rollCallSession.DrawOnce();
             if (!output.IsSuccess || output.Result.Count == 0)
             {
                 result.Text = GetDrawFailureText(output.Status);
@@ -165,16 +152,6 @@ internal sealed class MobileDrawPage : UserControl
             }
 
             var student = output.Result[0];
-            var weights = drawType == DrawType.Fair
-                ? prepared!.WeightedCandidates.ToDictionary(candidate => candidate.Candidate, candidate => candidate.Weight)
-                : new Dictionary<Student, double> { [student] = 1 };
-            _profileService.RecordStudentHistory(
-                output.Result,
-                DateTime.Now,
-                1,
-                drawMethod: (int)_configHandler.Data.RollCallSettings.DrawType,
-                weights: weights);
-            _temporaryRecordService.RecordStudents(GetStudentListName(), string.Empty, string.Empty, output.Result);
             result.Text = string.IsNullOrWhiteSpace(student.Name) ? student.Id : student.Name;
             detail.Text = string.IsNullOrWhiteSpace(student.Id)
                 ? LR.M_DrawCompleted
@@ -191,9 +168,7 @@ internal sealed class MobileDrawPage : UserControl
         draw.IsEnabled = false;
         try
         {
-            var listName = GetPrizeListName();
-            var temporaryCounts = _temporaryRecordService.GetPrizeCounts(listName);
-            var output = _drawEngine.DrawPrizeWithTemporaryCounts(1, prize => candidates.Contains(prize), temporaryCounts);
+            var output = _lotterySession.DrawOnce();
             if (!output.IsSuccess || output.Result.Count == 0)
             {
                 result.Text = GetDrawFailureText(output.Status);
@@ -202,8 +177,6 @@ internal sealed class MobileDrawPage : UserControl
             }
 
             var prize = output.Result[0];
-            _profileService.RecordPrizeHistory(output.Result, DateTime.Now, 1);
-            _temporaryRecordService.RecordPrizes(listName, output.Result);
             result.Text = string.IsNullOrWhiteSpace(prize.Name) ? prize.Id : prize.Name;
             detail.Text = string.IsNullOrWhiteSpace(prize.Id)
                 ? LR.M_DrawCompleted

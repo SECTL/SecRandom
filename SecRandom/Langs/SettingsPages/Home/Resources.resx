@@ -66,4 +66,19 @@
   <data name="M_NoLotteryPools" xml:space="preserve">
     <value>尚未创建奖品池。</value>
   </data>
+  <data name="M_NoDrawHistory" xml:space="preserve">
+    <value>暂无记录</value>
+  </data>
+  <data name="M_JustNow" xml:space="preserve">
+    <value>刚刚</value>
+  </data>
+  <data name="M_MinutesAgo" xml:space="preserve">
+    <value>{0} 分钟前</value>
+  </data>
+  <data name="M_TodayAt" xml:space="preserve">
+    <value>今天 {0}</value>
+  </data>
+  <data name="M_YesterdayAt" xml:space="preserve">
+    <value>昨天 {0}</value>
+  </data>
 </root>

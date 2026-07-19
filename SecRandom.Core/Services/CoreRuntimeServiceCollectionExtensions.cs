@@ -17,6 +17,8 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         services.AddSingleton<MainConfigHandler>();
         services.AddSingleton<IProfileService, ProfileService>();
         services.AddSingleton<IDrawTemporaryRecordService, DrawTemporaryRecordService>();
+        services.AddTransient<IRollCallSession, RollCallSession>();
+        services.AddTransient<ILotterySession, LotterySession>();
         services.AddSingleton<IHistoryQueryService, HistoryQueryService>();
         services.AddTransient<DrawEngine>();
         services.AddSingleton<IFeatureAvailabilityService, FeatureAvailabilityService>();

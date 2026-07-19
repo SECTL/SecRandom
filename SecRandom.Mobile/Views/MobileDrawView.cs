@@ -16,6 +16,8 @@ public sealed class MobileDrawView : ViewBase
     private readonly IFeatureAvailabilityService _featureAvailabilityService;
     private readonly MainConfigHandler _configHandler;
     private readonly DrawEngine _drawEngine;
+    private readonly IRollCallSession _rollCallSession;
+    private readonly ILotterySession _lotterySession;
     private DrawSurface _surface = DrawSurface.RollCall;
 
     public MobileDrawView(
@@ -23,13 +25,17 @@ public sealed class MobileDrawView : ViewBase
         IDrawTemporaryRecordService temporaryRecordService,
         IFeatureAvailabilityService featureAvailabilityService,
         MainConfigHandler configHandler,
-        DrawEngine drawEngine)
+        DrawEngine drawEngine,
+        IRollCallSession rollCallSession,
+        ILotterySession lotterySession)
     {
         _profileService = profileService;
         _temporaryRecordService = temporaryRecordService;
         _featureAvailabilityService = featureAvailabilityService;
         _configHandler = configHandler;
         _drawEngine = drawEngine;
+        _rollCallSession = rollCallSession;
+        _lotterySession = lotterySession;
         Render();
     }
 
@@ -41,6 +47,8 @@ public sealed class MobileDrawView : ViewBase
             _featureAvailabilityService,
             _configHandler,
             _drawEngine,
+            _rollCallSession,
+            _lotterySession,
             _surface,
             SelectSurface,
             static () => { });

@@ -277,8 +277,7 @@ public partial class FloatingWindow : Window
                         FontSize = System.Math.Max(8, size * 0.16),
                         TextAlignment = TextAlignment.Center,
                         TextWrapping = TextWrapping.Wrap,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        MaxWidth = size - padding.Left - padding.Right
+                        HorizontalAlignment = HorizontalAlignment.Center
                     }
                 }
             }
@@ -289,16 +288,22 @@ public partial class FloatingWindow : Window
 
     private void UpdateButtonsPanelWidth(FloatingWindowSettingsConfig settings)
     {
-        if (settings.FloatingWindowPlacement != 0)
-            return;
-
-        var widestButtons = ButtonsPanel.Children
+        var buttons = ButtonsPanel.Children
             .OfType<Button>()
-            .Select(button => button.Width + button.Margin.Left + button.Margin.Right)
-            .OrderDescending()
-            .Take(2)
             .ToArray();
-        ButtonsPanel.Width = widestButtons.Length == 0 ? double.NaN : widestButtons.Sum();
+        if (buttons.Length == 0)
+        {
+            ButtonsPanel.Width = double.NaN;
+            return;
+        }
+
+        var buttonWidth = buttons.Max(button => button.Width);
+        foreach (var button in buttons)
+            button.Width = buttonWidth;
+
+        ButtonsPanel.Width = settings.FloatingWindowPlacement == 0
+            ? (buttonWidth + buttons[0].Margin.Left + buttons[0].Margin.Right) * Math.Min(2, buttons.Length)
+            : double.NaN;
     }
 
     private static double GetButtonWidth(int size, string label, int displayStyle, Thickness padding)

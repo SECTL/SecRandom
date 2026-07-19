@@ -711,8 +711,8 @@ jobs:
   publish:
     name: Publish_Release
     runs-on: windows-2022
-    needs: [build_desktop, build_mobile_shell]
-    if: ${{ always() && success('build_desktop') && success('build_mobile_shell') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
+    needs: [build_desktop, build_mobile_shell, build_mobile_ios]
+    if: ${{ always() && success('build_desktop') && success('build_mobile_shell') && success('build_mobile_ios') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
     permissions:
       contents: write
     concurrency:
@@ -735,7 +735,7 @@ jobs:
         run: |
           $releaseOutput = './artifacts/release/output'
           New-Item -ItemType Directory -Path $releaseOutput -Force | Out-Null
-          Get-ChildItem ./artifacts/release/downloaded -Recurse -File -Include *.zip,*.exe,*.deb,*.pkg,*.apk | ForEach-Object {
+          Get-ChildItem ./artifacts/release/downloaded -Recurse -File -Include *.zip,*.exe,*.deb,*.pkg,*.apk,*.ipa | ForEach-Object {
             Copy-Item $_.FullName $releaseOutput -Force
           }
           Write-Host "Combined files:"
@@ -786,6 +786,8 @@ jobs:
                 @('macos-app', 'self-contained', 'macos', $Matches.arch)
               } elseif ($name -match '^SecRandom-v.+-Android-(?<arch>arm64)\.apk$') {
                 @('android-apk', 'self-contained', 'android', $Matches.arch)
+               } elseif ($name -match '^SecRandom-v.+-iOS-(?<arch>arm64)-unsigned\.ipa$') {
+                @('ios-ipa', 'self-contained', 'ios', $Matches.arch)
               } else {
                 throw "Unrecognized release artifact name: $name"
               }
@@ -830,7 +832,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           name: SecRandom ${{ github.event.inputs.release_tag }}
-          artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/*.apk,./artifacts/release/output/SecRandom-update-manifest.v1.json,./artifacts/release/output/SecRandom-update-manifest.v1.sig"
+          artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/*.apk,./artifacts/release/output/*.ipa,./artifacts/release/output/SecRandom-update-manifest.v1.json,./artifacts/release/output/SecRandom-update-manifest.v1.sig"
           draft: true
           bodyFile: ./release-note.md
           token: ${{ secrets.GITHUB_TOKEN }}

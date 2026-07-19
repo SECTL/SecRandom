@@ -230,7 +230,7 @@ public partial class MainView : UserControl, IFANavigationPageFactory
         ViewModel.IsDrawerOpen = false;
     }
 
-    private void CoreNavigate(PageInfo info)
+    private async void CoreNavigate(PageInfo info)
     {
         if (info.Id == "settings")
         {
@@ -238,6 +238,19 @@ public partial class MainView : UserControl, IFANavigationPageFactory
             return;
         }
 
+        if (info.Id == "main.history")
+        {
+            ViewModel.FrameContent = null;
+            SelectNavigationItem(info);
+            ViewModel.SelectedPageInfo = info;
+            _navigationFrame?.Navigate(null);
+            await IAppHost.GetService<IViewEngine>()
+                .ShowAsync(info.Id, new ViewShowOptions { HostId = EmbeddedHostId })
+                .ConfigureAwait(true);
+            return;
+        }
+
+        await IAppHost.GetService<IViewEngine>().CloseAsync("main.history").ConfigureAwait(true);
         ViewModel.FrameContent = null;
         SelectNavigationItem(info);
         ViewModel.SelectedPageInfo = info;
