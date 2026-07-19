@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using SecRandom.Shared.Interfaces;
 
 namespace SecRandom.Shared.Extensions;
@@ -11,7 +12,11 @@ public static class AttachableSettingsObjectExtensions
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
     };
 
-    public static T? GetAttachedObject<T>(this IAttachableSettingsObject obj, Guid id)
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "Attached settings types are application-owned DTOs and their public properties and parameterless constructors are preserved by the generic annotation.")]
+    public static T? GetAttachedObject<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] T>(this IAttachableSettingsObject obj, Guid id)
     {
         obj.AttachedObjects.TryGetValue(id, out var o);
         if (o is JsonElement o1) return o1.Deserialize<T>(AttachedSettingsJsonOptions);
@@ -24,7 +29,7 @@ public static class AttachableSettingsObjectExtensions
         obj.AttachedObjects[id] = o;
     }
 
-    public static T GetAttachedObject<T>(this IAttachableSettingsObject obj, Guid id, T defaultValue)
+    public static T GetAttachedObject<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] T>(this IAttachableSettingsObject obj, Guid id, T defaultValue)
     {
         var r = obj.GetAttachedObject<T>(id);
         if (r != null)
