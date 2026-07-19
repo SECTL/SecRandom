@@ -7,6 +7,7 @@ using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Icons;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using AvaloniaButton = Avalonia.Controls.Button;
 
 namespace SecRandom.Mobile.Controls;
 
@@ -44,9 +45,9 @@ public sealed class MobileSettingsPageFrame : UserControl
         };
     }
 
-    private static Button CreateBackButton(Action goBack) 
+    private static AvaloniaButton CreateBackButton(Action goBack)
     {
-        var button = new Button
+        var button = new AvaloniaButton
         {
             Content = new IconText { Glyph = FluentIcons.ArrowLeftFilled, Text = LR.C_Back, Spacing = 6 },
             HorizontalAlignment = HorizontalAlignment.Left,
