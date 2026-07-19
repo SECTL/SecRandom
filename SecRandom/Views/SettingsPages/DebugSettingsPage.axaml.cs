@@ -186,7 +186,11 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
         var result = await new FAContentDialog
         {
             Title = DebugResources.Get("M_InternalSettings_ConfirmTitle"),
-            Content = DebugResources.Get("M_InternalSettings"),
+            Content = new TextBlock
+            {
+                Text = DebugResources.Get("M_InternalSettings"),
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap
+            },
             PrimaryButtonText = DebugResources.Get("C_Enable"),
             CloseButtonText = DebugResources.Get("C_Cancel"),
             DefaultButton = FAContentDialogButton.Close
