@@ -8,12 +8,14 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using System.ComponentModel;
 using FluentAvalonia.Styling;
+using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
+using SecRandom.Core.Controls;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
@@ -192,13 +194,10 @@ public sealed class MobileRootView : UserControl
     private readonly ViewHostControl _viewHost;
     private readonly IViewEngine _viewEngine;
     private readonly TextBlock _pageTitle;
-    private readonly AvaloniaButton _drawTab;
-    private readonly AvaloniaButton _historyTab;
-    private readonly AvaloniaButton _overviewTab;
-    private readonly AvaloniaButton _settingsTab;
     private readonly Border _header;
     private readonly Border _bottomBar;
     private readonly Grid _root;
+    private readonly FANavigationView _bottomNavigation;
     private MobileDestination _destination = MobileDestination.Draw;
 
     public MobileRootView(
@@ -219,15 +218,6 @@ public sealed class MobileRootView : UserControl
             Foreground = MobileTheme.Text,
             VerticalAlignment = VerticalAlignment.Center
         };
-        _drawTab = MobileUi.CreateNavigationButton(LR.N_Draw, FluentIcons.PeopleFilled);
-        _historyTab = MobileUi.CreateNavigationButton(LR.N_History, FluentIcons.HistoryFilled);
-        _overviewTab = MobileUi.CreateNavigationButton(LR.N_Overview, FluentIcons.HomeFilled);
-        _settingsTab = MobileUi.CreateNavigationButton(LR.N_Settings, FluentIcons.SettingsFilled);
-        _drawTab.Click += async (_, _) => await ShowDrawAsync();
-        _historyTab.Click += async (_, _) => await ShowHistoryAsync();
-        _overviewTab.Click += async (_, _) => await ShowOverviewAsync();
-        _settingsTab.Click += async (_, _) => await ShowSettingsAsync();
-
         _header = new Border
         {
             Padding = new Thickness(20, 14),
@@ -253,22 +243,42 @@ public sealed class MobileRootView : UserControl
         };
         Grid.SetColumn(_pageTitle, 1);
 
+        _bottomNavigation = new FANavigationView
+        {
+            PaneDisplayMode = FANavigationViewPaneDisplayMode.Top,
+            IsPaneToggleButtonVisible = false,
+            IsBackButtonVisible = false,
+            IsSettingsVisible = false,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            MenuItems =
+            {
+                new FANavigationViewItem { Content = LR.N_Draw, IconSource = new FluentIconSource(FluentIcons.PeopleFilled), Tag = MobileDestination.Draw },
+                new FANavigationViewItem { Content = LR.N_History, IconSource = new FluentIconSource(FluentIcons.HistoryFilled), Tag = MobileDestination.History },
+                new FANavigationViewItem { Content = LR.N_Overview, IconSource = new FluentIconSource(FluentIcons.HomeFilled), Tag = MobileDestination.Overview },
+                new FANavigationViewItem { Content = LR.N_Settings, IconSource = new FluentIconSource(FluentIcons.SettingsFilled), Tag = MobileDestination.Settings }
+            }
+        };
+        _bottomNavigation.SelectionChanged += (_, args) =>
+        {
+            if (args.SelectedItem is FANavigationViewItem { Tag: MobileDestination destination })
+                _ = ShowPrimaryRouteAsync(destination, destination switch
+                {
+                    MobileDestination.Draw => MobileRoutes.Draw,
+                    MobileDestination.History => MobileRoutes.History,
+                    MobileDestination.Overview => MobileRoutes.Overview,
+                    MobileDestination.Settings => MobileRoutes.Settings,
+                    _ => MobileRoutes.Draw
+                });
+        };
+
         _bottomBar = new Border
         {
-            Padding = new Thickness(8, 8, 8, 10),
             Background = MobileTheme.Surface,
             BorderBrush = MobileTheme.Border,
             BorderThickness = new Thickness(0, 1, 0, 0),
-            Child = new Grid
-            {
-                ColumnDefinitions = new ColumnDefinitions("*,*,*,*"),
-                Children = { _drawTab, _historyTab, _overviewTab, _settingsTab }
-            }
+            Child = _bottomNavigation
         };
-        Grid.SetColumn(_historyTab, 1);
-        Grid.SetColumn(_overviewTab, 2);
-        Grid.SetColumn(_settingsTab, 3);
-
         _root = new Grid
         {
             RowDefinitions = new RowDefinitions("Auto,*,Auto"),
@@ -331,10 +341,6 @@ public sealed class MobileRootView : UserControl
 
     private void RenderCurrentDestination()
     {
-        _drawTab.Foreground = _destination == MobileDestination.Draw ? MobileTheme.Primary : MobileTheme.MutedText;
-        _historyTab.Foreground = _destination == MobileDestination.History ? MobileTheme.Primary : MobileTheme.MutedText;
-        _overviewTab.Foreground = _destination == MobileDestination.Overview ? MobileTheme.Primary : MobileTheme.MutedText;
-        _settingsTab.Foreground = _destination == MobileDestination.Settings ? MobileTheme.Primary : MobileTheme.MutedText;
         _pageTitle.Text = _destination switch
         {
             MobileDestination.Draw => LR.P_Draw,
@@ -343,7 +349,9 @@ public sealed class MobileRootView : UserControl
             MobileDestination.Settings => LR.P_Settings,
             _ => throw new ArgumentOutOfRangeException()
         };
-
+        _bottomNavigation.SelectedItem = _bottomNavigation.MenuItems
+            .OfType<FANavigationViewItem>()
+            .FirstOrDefault(item => item.Tag is MobileDestination destination && destination == _destination);
     }
 
     private void AppearanceOnPropertyChanged(object? sender, PropertyChangedEventArgs e)

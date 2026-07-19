@@ -3,7 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Controls;
+using SecRandom.Core.Icons;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 using AvaloniaButton = Avalonia.Controls.Button;
 using AvaloniaOrientation = Avalonia.Layout.Orientation;
@@ -25,9 +27,7 @@ internal static class MobileUi
                 new TextBlock { Text = text, HorizontalAlignment = HorizontalAlignment.Center }
             }
         },
-        Padding = new Thickness(2, 4),
-        Background = Brushes.Transparent,
-        BorderThickness = new Thickness(0),
+        Padding = new Thickness(8, 6),
         FontSize = 12,
         HorizontalContentAlignment = HorizontalAlignment.Center,
         VerticalContentAlignment = VerticalAlignment.Center
@@ -37,9 +37,8 @@ internal static class MobileUi
     {
         Content = text,
         Padding = new Thickness(18, 7),
-        Background = selected ? MobileTheme.Surface : Brushes.Transparent,
+        Classes = { selected ? "accent" : "compact" },
         Foreground = selected ? MobileTheme.Primary : MobileTheme.MutedText,
-        BorderThickness = new Thickness(0),
         CornerRadius = left ? new CornerRadius(15, 4, 4, 15) : new CornerRadius(4, 15, 15, 4),
         FontWeight = selected ? FontWeight.SemiBold : FontWeight.Normal
     };
@@ -62,9 +61,15 @@ internal static class MobileUi
         var content = new List<Control>
         {
             CreateSecondaryButton(LR.C_Back, goBack),
-            CreateLabel(title),
-            CreateTitle(title),
-            new TextBlock { Text = description, Foreground = MobileTheme.MutedText, TextWrapping = TextWrapping.Wrap }
+            new FAInfoBar
+            {
+                Title = title,
+                Message = description,
+                Severity = FAInfoBarSeverity.Informational,
+                IsOpen = true,
+                IsClosable = false,
+                IconSource = new FluentIconSource(FluentIcons.InfoFilled)
+            }
         };
         content.AddRange(items);
         return CreateScroll(content);
@@ -72,30 +77,13 @@ internal static class MobileUi
 
     internal static Control CreateNavigationRow(string title, string description, Action open)
     {
-        var row = new AvaloniaButton
+        var row = new FASettingsExpander
         {
-            Background = MobileTheme.Surface,
-            BorderBrush = MobileTheme.Border,
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(14, 12),
-            HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            Content = new Grid
-            {
-                ColumnDefinitions = new ColumnDefinitions("*"),
-                Children =
-                {
-                    new StackPanel
-                    {
-                        Spacing = 2,
-                        Children =
-                        {
-                            new TextBlock { Text = title, FontWeight = FontWeight.Medium, Foreground = MobileTheme.Text, TextWrapping = TextWrapping.Wrap },
-                            new TextBlock { Text = description, FontSize = 12, Foreground = MobileTheme.MutedText, TextWrapping = TextWrapping.Wrap }
-                        }
-                    }
-                }
-            }
+            Header = title,
+            Description = description,
+            IsClickEnabled = true,
+            ActionIconSource = new FluentIconSource(FluentIcons.OpenFilled),
+            IconSource = new FluentIconSource(FluentIcons.AppsFilled)
         };
         row.Click += (_, _) => open();
         return row;
@@ -103,20 +91,16 @@ internal static class MobileUi
 
     internal static Control CreateChoiceRow(string text, bool selected, Action select)
     {
-        var button = new AvaloniaButton
+        var option = new FASettingsExpanderItem
         {
             Content = text,
-            Background = selected ? MobileTheme.PrimaryWash : MobileTheme.Surface,
-            Foreground = selected ? MobileTheme.Primary : MobileTheme.Text,
-            BorderBrush = selected ? MobileTheme.Primary : MobileTheme.Border,
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(14, 10),
-            HorizontalContentAlignment = HorizontalAlignment.Left,
-            FontWeight = selected ? FontWeight.SemiBold : FontWeight.Normal
+            IsClickEnabled = true,
+            ActionIconSource = new FluentIconSource(FluentIcons.CheckmarkFilled),
+            Footer = new RadioButton { IsChecked = selected, GroupName = "mobile-choice" }
         };
-        button.Click += (_, _) => select();
-        return button;
+        option.Click += (_, _) => select();
+        ((RadioButton)option.Footer).Click += (_, _) => select();
+        return option;
     }
 
     internal static Control CreateToggleRow(string label, bool value, Action<bool> setValue)
@@ -129,7 +113,12 @@ internal static class MobileUi
             VerticalAlignment = VerticalAlignment.Center
         };
         toggle.IsCheckedChanged += (_, _) => setValue(toggle.IsChecked == true);
-        return CreateRow(label, value ? LR.M_Enabled : LR.M_Disabled, toggle);
+        return new FASettingsExpanderItem
+        {
+            Content = label,
+            Description = value ? LR.M_Enabled : LR.M_Disabled,
+            Footer = toggle
+        };
     }
 
     internal static Control CreateIntegerRow(string label, int value, int minimum, Action<int> setValue)
@@ -150,15 +139,19 @@ internal static class MobileUi
             editor.Text = parsed.ToString(System.Globalization.CultureInfo.CurrentCulture);
             setValue(parsed);
         };
-        return CreateRow(label, string.Empty, editor);
+        return new FASettingsExpanderItem
+        {
+            Content = label,
+            Footer = editor
+        };
     }
 
-    internal static TextBlock CreateLabel(string text) => new()
+    internal static Control CreateLabel(string text) => new IconText
     {
         Text = text,
-        FontSize = 12,
-        FontWeight = FontWeight.SemiBold,
-        Foreground = MobileTheme.Primary
+        Glyph = FluentIcons.AppsListFilled,
+        Spacing = 6,
+        Margin = new Thickness(0, 6, 0, 0)
     };
 
     internal static TextBlock CreateTitle(string text) => new()
@@ -170,12 +163,17 @@ internal static class MobileUi
         TextWrapping = TextWrapping.Wrap
     };
 
-    internal static Border CreateResultPanel(Control result, Control detail, IBrush color) => new()
+    internal static Control CreateResultPanel(Control result, Control detail, IBrush color) => new FASettingsExpanderItem
     {
-        Background = color,
-        CornerRadius = new CornerRadius(12),
-        Padding = new Thickness(24, 38),
-        Child = new StackPanel { Spacing = 12, Children = { result, detail } }
+        Content = new Border
+        {
+            Background = color,
+            Padding = new Thickness(24, 28),
+            Child = result
+        },
+        Description = LR.M_DrawCompleted,
+        IsClickEnabled = false,
+        Footer = detail
     };
 
     internal static AvaloniaButton CreatePrimaryButton(string text, bool enabled, Action? onClick = null)
@@ -185,9 +183,7 @@ internal static class MobileUi
             Content = text,
             IsEnabled = enabled,
             MinHeight = 48,
-            Background = MobileTheme.Primary,
-            Foreground = MobileTheme.Surface,
-            BorderThickness = new Thickness(0),
+            Classes = { "accent" },
             FontWeight = FontWeight.SemiBold,
             HorizontalContentAlignment = HorizontalAlignment.Center
         };
@@ -202,10 +198,6 @@ internal static class MobileUi
         {
             Content = text,
             MinHeight = 44,
-            Background = Brushes.Transparent,
-            Foreground = MobileTheme.Primary,
-            BorderBrush = MobileTheme.Primary,
-            BorderThickness = new Thickness(1),
             FontWeight = FontWeight.SemiBold,
             HorizontalContentAlignment = HorizontalAlignment.Center
         };
@@ -230,13 +222,8 @@ internal static class MobileUi
         return new Border { Background = color, CornerRadius = new CornerRadius(10), Padding = new Thickness(16), Child = grid };
     }
 
-    internal static Border CreateRow(string title, string detail, Control? trailing = null, Action? remove = null)
+    internal static Control CreateRow(string title, string detail, Control? trailing = null, Action? remove = null)
     {
-        var text = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
-        text.Children.Add(new TextBlock { Text = title, FontWeight = FontWeight.Medium, Foreground = MobileTheme.Text, TextWrapping = TextWrapping.Wrap });
-        if (!string.IsNullOrWhiteSpace(detail))
-            text.Children.Add(new TextBlock { Text = detail, FontSize = 12, Foreground = MobileTheme.MutedText, TextWrapping = TextWrapping.Wrap });
-
         var actions = new StackPanel { Orientation = AvaloniaOrientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
         if (trailing is not null)
             actions.Children.Add(trailing);
@@ -244,28 +231,19 @@ internal static class MobileUi
         {
             var removeButton = new AvaloniaButton
             {
-                Content = LR.C_Remove,
-                Background = Brushes.Transparent,
-                Foreground = MobileTheme.Danger,
-                BorderThickness = new Thickness(0),
-                Padding = new Thickness(8, 4)
+                Content = new FluentIcon(FluentIcons.DeleteFilled, 18),
+                [ToolTip.TipProperty] = LR.C_Remove,
+                Classes = { "compact" }
             };
             removeButton.Click += (_, _) => remove();
             actions.Children.Add(removeButton);
         }
 
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-        grid.Children.Add(text);
-        grid.Children.Add(actions);
-        Grid.SetColumn(actions, 1);
-        return new Border
+        return new FASettingsExpanderItem
         {
-            Background = MobileTheme.Surface,
-            BorderBrush = MobileTheme.Border,
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(14, 12),
-            Child = grid
+            Content = title,
+            Description = detail,
+            Footer = actions
         };
     }
 

@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Net;
 using System.Net.Http.Json;
 using System.Net.Sockets;
+using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums.Configs;
@@ -152,7 +153,7 @@ internal sealed class MobileOnlineStatusService(
             response = await _httpClient.GetFromJsonAsync(uri, MobileJsonContext.Default.MobileIpInfoResponse, cancellationToken)
                 .ConfigureAwait(false);
         }
-        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or JsonException)
         {
             logger.LogDebug(exception, "Mobile IP location lookup failed.");
             return MobileIpLocationCache.ForIp(ipAddress);
