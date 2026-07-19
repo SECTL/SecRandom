@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -101,11 +102,12 @@ public partial class FloatingWindow : Window
             if (control != null)
                 ButtonsPanel.Children.Add(control);
         }
+
+        UpdateButtonsPanelWidth(settings);
     }
 
     private void ApplyWindowSettings(FloatingWindowSettingsConfig settings)
     {
-        var size = GetButtonSize(settings.FloatingWindowSize);
         WindowBorder.Opacity = System.Math.Clamp(settings.FloatingWindowOpacity, 20, 100) / 100.0;
         var topmost = settings.FloatingWindowTopmostMode is TopmostMode.Topmost or TopmostMode.UiAccess;
         Topmost = topmost;
@@ -114,9 +116,7 @@ public partial class FloatingWindow : Window
         ButtonsPanel.Orientation = settings.FloatingWindowPlacement == 1
             ? Orientation.Vertical
             : Orientation.Horizontal;
-        ButtonsPanel.Width = settings.FloatingWindowPlacement == 0
-            ? (size + 4) * 2
-            : double.NaN;
+        ButtonsPanel.Width = double.NaN;
 
         if (!settings.StickToEdge && _isDocked)
             RestoreFromDock();
@@ -132,6 +132,17 @@ public partial class FloatingWindow : Window
         return value <= 6
             ? value switch { 0 => 28, 1 => 32, 2 => 40, 3 => 48, 4 => 56, 5 => 64, _ => 72 }
             : System.Math.Clamp(value, 32, 160);
+    }
+
+    private static int GetEffectiveButtonSize(FloatingWindowSettingsConfig settings)
+    {
+        var size = GetButtonSize(settings.FloatingWindowSize);
+        return settings.FloatingWindowDisplayStyle switch
+        {
+            0 => Math.Max(size, 72),
+            2 => Math.Max(size, 48),
+            _ => size
+        };
     }
 
     private static IEnumerable<string> GetVisibleButtonNames(FloatingWindowSettingsConfig settings, bool isLotteryEnabled)
@@ -232,14 +243,15 @@ public partial class FloatingWindow : Window
         string label,
         FloatingWindowSettingsConfig settings)
     {
-        var size = GetButtonSize(settings.FloatingWindowSize);
+        var size = GetEffectiveButtonSize(settings);
         var displayStyle = settings.FloatingWindowDisplayStyle;
+        var padding = new Thickness(System.Math.Max(2, size * 0.08));
         var button = new Button
         {
             Height = size,
-            Width = size,
+            Width = GetButtonWidth(size, label, displayStyle, padding),
             Margin = new Thickness(2),
-            Padding = new Thickness(System.Math.Max(2, size * 0.08)),
+            Padding = padding,
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center
         };
@@ -268,16 +280,48 @@ public partial class FloatingWindow : Window
                     new TextBlock
                     {
                         Text = label,
-                        FontSize = System.Math.Max(9, size * 0.22),
+                        FontSize = System.Math.Max(8, size * 0.16),
                         TextAlignment = TextAlignment.Center,
                         TextWrapping = TextWrapping.Wrap,
-                        HorizontalAlignment = HorizontalAlignment.Center
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        MaxWidth = size - padding.Left - padding.Right
                     }
                 }
             }
         };
 
         return button;
+    }
+
+    private void UpdateButtonsPanelWidth(FloatingWindowSettingsConfig settings)
+    {
+        if (settings.FloatingWindowPlacement != 0)
+            return;
+
+        var widestButtons = ButtonsPanel.Children
+            .OfType<Button>()
+            .Select(button => button.Width + button.Margin.Left + button.Margin.Right)
+            .OrderDescending()
+            .Take(2)
+            .ToArray();
+        ButtonsPanel.Width = widestButtons.Length == 0 ? double.NaN : widestButtons.Sum();
+    }
+
+    private static double GetButtonWidth(int size, string label, int displayStyle, Thickness padding)
+    {
+        if (displayStyle == 1)
+            return size;
+
+        var fontSize = displayStyle == 2
+            ? System.Math.Max(10, size * 0.28)
+            : System.Math.Max(9, size * 0.22);
+        var textWidth = label.Sum(character => character switch
+        {
+            ' ' => fontSize * 0.35,
+            >= '\u2E80' => fontSize,
+            _ => fontSize * 0.62
+        });
+        return System.Math.Max(size, System.Math.Ceiling(textWidth + padding.Left + padding.Right + 2));
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)

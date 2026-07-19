@@ -1,12 +1,13 @@
 using Avalonia.Controls;
+using SecRandom.Core.Views;
 using SecRandom.Core.Abstraction.Services;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Views;
 
-internal sealed class MobileOverviewPage : UserControl
+public sealed class MobileOverviewPage : ViewBase
 {
-    internal MobileOverviewPage(IProfileService profileService)
+    public MobileOverviewPage(IProfileService profileService)
     {
         var studentCount = profileService.CurrentStudentList?.Students.Count(student => student.IsCandidate) ?? 0;
         var prizeCount = profileService.CurrentPrizeList?.Prizes.Count(prize => prize.IsCandidate) ?? 0;

@@ -60,7 +60,9 @@ public sealed class MobileApp : Avalonia.Application
                         serviceProvider.GetRequiredService<SingleViewHostProvider>());
                     services.AddViewEngine()
                         .AddView<MobileDrawView>("main.rollCall")
-                        .AddView<MobileHistoryPage>("main.history");
+                        .AddView<MobileHistoryPage>("main.history")
+                        .AddView<MobileOverviewPage>("main.overview")
+                        .AddView<MobileSettingsView>("settings.mobile");
                     services.AddHttpClient<MobileUpdateService>();
                     services.AddSingleton<MobileDeviceUuidStore>();
                     services.AddHostedService<MobileOnlineStatusService>();
@@ -176,14 +178,7 @@ public sealed class MobileApp : Avalonia.Application
 
 public sealed class MobileRootView : UserControl
 {
-    private readonly IProfileService _profileService;
-    private readonly IHistoryQueryService _historyQueryService;
-    private readonly IDrawTemporaryRecordService _temporaryRecordService;
-    private readonly IFeatureAvailabilityService _featureAvailabilityService;
     private readonly MainConfigHandler _configHandler;
-    private readonly DrawEngine _drawEngine;
-    private readonly MobileUpdateService _updateService;
-    private readonly EventHandler _featureAvailabilityChanged;
     private readonly ViewHostControl _viewHost;
     private readonly IViewEngine _viewEngine;
     private readonly Grid _pageHost;
@@ -194,41 +189,17 @@ public sealed class MobileRootView : UserControl
     private readonly Button _overviewTab;
     private readonly Button _settingsTab;
     private MobileDestination _destination = MobileDestination.Draw;
-    private DrawSurface _drawSurface = DrawSurface.RollCall;
-    private MobileSettingsSection? _settingsSection;
 
     public MobileRootView(
-        IProfileService profileService,
-        IHistoryQueryService historyQueryService,
-        IDrawTemporaryRecordService temporaryRecordService,
-        IFeatureAvailabilityService featureAvailabilityService,
         MainConfigHandler configHandler,
-        DrawEngine drawEngine,
-        MobileUpdateService updateService,
         SingleViewHostProvider singleViewHostProvider,
         IViewEngine viewEngine)
     {
-        _profileService = profileService;
-        _historyQueryService = historyQueryService;
-        _temporaryRecordService = temporaryRecordService;
-        _featureAvailabilityService = featureAvailabilityService;
         _configHandler = configHandler;
-        _drawEngine = drawEngine;
-        _updateService = updateService;
         _viewEngine = viewEngine;
         _viewHost = new ViewHostControl("mobile.root");
         singleViewHostProvider.Attach(_viewHost);
         MobileTheme.Apply(_configHandler.Data.Appearance.Theme);
-
-        _featureAvailabilityChanged = (_, _) => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-        {
-            if (!_featureAvailabilityService.IsLotteryEnabled && _drawSurface == DrawSurface.Lottery)
-                _drawSurface = DrawSurface.RollCall;
-            if (_destination == MobileDestination.Draw)
-                RenderCurrentDestination();
-        });
-        _featureAvailabilityService.Changed += _featureAvailabilityChanged;
-        DetachedFromVisualTree += (_, _) => _featureAvailabilityService.Changed -= _featureAvailabilityChanged;
 
         _pageTitle = new TextBlock
         {
@@ -246,8 +217,8 @@ public sealed class MobileRootView : UserControl
         _settingsTab = MobileUi.CreateNavigationButton(LR.N_Settings);
         _drawTab.Click += async (_, _) => await ShowDrawAsync();
         _historyTab.Click += async (_, _) => await ShowHistoryAsync();
-        _overviewTab.Click += (_, _) => NavigateTo(MobileDestination.Overview);
-        _settingsTab.Click += (_, _) => NavigateTo(MobileDestination.Settings);
+        _overviewTab.Click += async (_, _) => await ShowOverviewAsync();
+        _settingsTab.Click += async (_, _) => await ShowSettingsAsync();
 
         var header = new Border
         {
@@ -315,19 +286,10 @@ public sealed class MobileRootView : UserControl
 
     public ViewHostControl InnerViewHost => _viewHost;
 
-    private async void NavigateTo(MobileDestination destination)
-    {
-        await CloseMainViewsAsync().ConfigureAwait(true);
-        _destination = destination;
-        _settingsSection = null;
-        RenderCurrentDestination();
-    }
-
     private async Task ShowHistoryAsync()
     {
         await _viewEngine.CloseAsync("main.rollCall").ConfigureAwait(true);
         _destination = MobileDestination.History;
-        _settingsSection = null;
         RenderCurrentDestination();
         await _viewEngine.ShowAsync("main.history").ConfigureAwait(true);
     }
@@ -336,40 +298,32 @@ public sealed class MobileRootView : UserControl
     {
         await _viewEngine.CloseAsync("main.history").ConfigureAwait(true);
         _destination = MobileDestination.Draw;
-        _settingsSection = null;
         RenderCurrentDestination();
         await _viewEngine.ShowAsync("main.rollCall").ConfigureAwait(true);
+    }
+
+    private async Task ShowSettingsAsync()
+    {
+        await CloseMainViewsAsync().ConfigureAwait(true);
+        _destination = MobileDestination.Settings;
+        RenderCurrentDestination();
+        await _viewEngine.ShowAsync("settings.mobile").ConfigureAwait(true);
+    }
+
+    private async Task ShowOverviewAsync()
+    {
+        await CloseMainViewsAsync().ConfigureAwait(true);
+        _destination = MobileDestination.Overview;
+        RenderCurrentDestination();
+        await _viewEngine.ShowAsync("main.overview").ConfigureAwait(true);
     }
 
     private async Task CloseMainViewsAsync()
     {
         await _viewEngine.CloseAsync("main.rollCall").ConfigureAwait(true);
         await _viewEngine.CloseAsync("main.history").ConfigureAwait(true);
-    }
-
-    private void OpenSettings(MobileSettingsSection section)
-    {
-        _destination = MobileDestination.Settings;
-        _settingsSection = section;
-        RenderCurrentDestination();
-    }
-
-    private void SelectDrawSurface(DrawSurface surface)
-    {
-        if (surface == DrawSurface.Lottery && !_featureAvailabilityService.IsLotteryEnabled)
-            return;
-
-        _drawSurface = surface;
-        RenderCurrentDestination();
-    }
-
-    private void ApplyTheme(ThemeMode theme)
-    {
-        _configHandler.Data.Appearance.Theme = theme;
-        _configHandler.Save();
-        MobileTheme.Apply(theme);
-        _pageTitle.Foreground = MobileTheme.Text;
-        RenderCurrentDestination();
+        await _viewEngine.CloseAsync("main.overview").ConfigureAwait(true);
+        await _viewEngine.CloseAsync("settings.mobile").ConfigureAwait(true);
     }
 
     private void RenderCurrentDestination()
@@ -392,35 +346,10 @@ public sealed class MobileRootView : UserControl
         {
             MobileDestination.Draw => new Grid(),
             MobileDestination.History => new Grid(),
-            MobileDestination.Overview => new MobileOverviewPage(_profileService),
-            MobileDestination.Settings => CreateSettingsPage(),
+            MobileDestination.Overview => new Grid(),
+            MobileDestination.Settings => new Grid(),
             _ => throw new ArgumentOutOfRangeException()
         });
     }
 
-    private Control CreateSettingsPage()
-    {
-        return _settingsSection switch
-        {
-            null => new MobileSettingsCatalogPage(OpenSettings),
-            MobileSettingsSection.General => new MobileGeneralSettingsPage(_configHandler, ReturnToSettingsCatalog),
-            MobileSettingsSection.Personalization => new MobilePersonalizationSettingsPage(
-                _configHandler, ReturnToSettingsCatalog, ApplyTheme),
-            MobileSettingsSection.ListManagement => new MobileListManagementSettingsPage(
-                _profileService, ReturnToSettingsCatalog, RenderCurrentDestination),
-            MobileSettingsSection.Draw => new MobileDrawSettingsPage(
-                _configHandler, _temporaryRecordService, _profileService, ReturnToSettingsCatalog, RenderCurrentDestination),
-            MobileSettingsSection.Backup => new MobileBackupSettingsPage(ReturnToSettingsCatalog),
-            MobileSettingsSection.Update => new MobileUpdateSettingsPage(
-                _updateService, ReturnToSettingsCatalog, RenderCurrentDestination),
-            MobileSettingsSection.About => new MobileAboutSettingsPage(ReturnToSettingsCatalog),
-            _ => throw new ArgumentOutOfRangeException()
-        };
-    }
-
-    private void ReturnToSettingsCatalog()
-    {
-        _settingsSection = null;
-        RenderCurrentDestination();
-    }
 }
