@@ -9,6 +9,7 @@ using Avalonia.Themes.Fluent;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using SecRandom.Mobile.Controls;
+using SecRandom.Mobile.Views;
 
 [assembly: AvaloniaTestApplication(typeof(SecRandom.Mobile.Tests.MobileTestAppBuilder))]
 
@@ -76,6 +77,30 @@ public sealed class MobileShellSmokeTests
         Assert.True(app.TryGetResource("MobileCanvasBrush", ThemeVariant.Dark, out _));
         Assert.True(navigation.Bounds.Height >= 56);
 
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void MobileAnimationsRemainSafeWhenControlsAttach()
+    {
+        var animated = new Border
+        {
+            Child = new TextBlock { Text = "SecRandom" }
+        };
+        var window = new Window
+        {
+            Width = 390,
+            Height = 844,
+            Content = animated
+        };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        MobileAnimations.PlayPageEnter(animated);
+        MobileAnimations.PlayResultReveal(animated);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(animated.IsAttachedToVisualTree());
         window.Close();
     }
 }

@@ -67,11 +67,11 @@ The initial workflow supports local student/prize editing, theme selection, sing
 
 ## Animation Primitives
 
-`MobileAnimations` provides the mobile motion vocabulary (light Fluent-style transitions, not the desktop rolling animation). Every primitive is interruptible: starting a new animation on a control cancels the previous one, and detaching from the visual tree cancels automatically.
+`MobileAnimations` provides the mobile motion vocabulary (light Fluent-style opacity transitions, not the desktop rolling animation). Every primitive is interruptible: starting a new animation on a control cancels the previous one, and detaching from the visual tree cancels automatically. Visual animation failures are non-fatal and must not terminate the app.
 
 ```csharp
-MobileAnimations.PlayPageEnter(scroll);                        // page enter: fade in + rise (320 ms)
-MobileAnimations.PlayResultReveal(resultText);                 // result reveal: scale + fade (250-400 ms, CircleEaseOut)
+MobileAnimations.PlayPageEnter(scroll);                        // page enter: opacity fade (320 ms)
+MobileAnimations.PlayResultReveal(resultText);                 // result reveal: opacity fade (250-400 ms, CircleEaseOut)
 CancellationTokenSource roll = MobileAnimations.StartNameRoll(resultText, names);  // rapid candidate rolling while drawing
 MobileAnimations.Cancel(resultText);                           // stop rolling/animations on a control
 MobileAnimations.CrossFade(button, () => button.IsEnabled = false);  // state-change cross fade

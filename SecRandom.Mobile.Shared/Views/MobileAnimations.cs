@@ -3,7 +3,6 @@ using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
-using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -35,56 +34,31 @@ internal static class MobileAnimations
     }
 
     /// <summary>
-    /// 页面内容进入过渡：淡入 + 自下方上移。用于各页面首次渲染与设置页进入。
+    /// 页面内容进入过渡：淡入。用于各页面首次渲染与设置页进入。
     /// 控件尚未附加到可视树时会推迟到首次附加后再播放。
     /// </summary>
-    internal static void PlayPageEnter(Control control, double distance = 14, int durationMs = 320)
+    internal static void PlayPageEnter(Control control, int durationMs = 320)
     {
         RunWhenAttached(control, () =>
         {
             CancellationToken token = Begin(control);
-            var translate = new TranslateTransform(0, distance);
-            control.RenderTransform = translate;
             TimeSpan duration = TimeSpan.FromMilliseconds(durationMs);
             var easing = new CircularEaseOut();
-            _ = RunAll(control, token,
-                Fade(control, 0, 1, duration, easing, token),
-                Run(new Animation
-                {
-                    Duration = duration,
-                    Easing = easing,
-                    Children = { Frame(0, TranslateTransform.YProperty, distance), Frame(1, TranslateTransform.YProperty, 0d) }
-                }, translate, token));
+            _ = RunAll(control, token, Fade(control, 0, 1, duration, easing, token));
         });
     }
 
     /// <summary>
-    /// 抽取结果揭示动效：结果文本/卡片轻微放大 + 淡入（默认 300ms，CircleEaseOut）。
+    /// 抽取结果揭示动效：结果文本/卡片淡入（默认 300ms，CircleEaseOut）。
     /// </summary>
-    internal static void PlayResultReveal(Control control, int durationMs = 300, double fromScale = 0.92)
+    internal static void PlayResultReveal(Control control, int durationMs = 300)
     {
         RunWhenAttached(control, () =>
         {
             CancellationToken token = Begin(control);
-            control.RenderTransformOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative);
-            var scale = new ScaleTransform(fromScale, fromScale);
-            control.RenderTransform = scale;
             TimeSpan duration = TimeSpan.FromMilliseconds(durationMs);
             var easing = new CircularEaseOut();
-            _ = RunAll(control, token,
-                Fade(control, 0, 1, duration, easing, token),
-                Run(new Animation
-                {
-                    Duration = duration,
-                    Easing = easing,
-                    Children = { Frame(0, ScaleTransform.ScaleXProperty, fromScale), Frame(1, ScaleTransform.ScaleXProperty, 1d) }
-                }, scale, token),
-                Run(new Animation
-                {
-                    Duration = duration,
-                    Easing = easing,
-                    Children = { Frame(0, ScaleTransform.ScaleYProperty, fromScale), Frame(1, ScaleTransform.ScaleYProperty, 1d) }
-                }, scale, token));
+            _ = RunAll(control, token, Fade(control, 0, 1, duration, easing, token));
         });
     }
 
@@ -108,6 +82,10 @@ internal static class MobileAnimations
         catch (OperationCanceledException)
         {
             // 被新动画打断，由新动画负责最终状态。
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(exception);
         }
         finally
         {
@@ -214,6 +192,10 @@ internal static class MobileAnimations
         {
             // 被新动画打断，由新动画负责最终状态。
         }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(exception);
+        }
         finally
         {
             FinishOnUi(control, token);
@@ -245,8 +227,18 @@ internal static class MobileAnimations
             Children = { Frame(0, Visual.OpacityProperty, from), Frame(1, Visual.OpacityProperty, to) }
         }, target, token);
 
-    private static Task Run(Animation animation, Animatable target, CancellationToken token)
-        => animation.RunAsync(target, token);
+    private static async Task Run(Animation animation, Animatable target, CancellationToken token)
+    {
+        try
+        {
+            await animation.RunAsync(target, token).ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            // A decorative animation must never take down the application.
+            System.Diagnostics.Debug.WriteLine(exception);
+        }
+    }
 
     private static KeyFrame Frame(double cue, AvaloniaProperty property, object value)
     {
