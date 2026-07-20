@@ -17,7 +17,7 @@ This is an Android/iOS SingleView application for education random draws. It is 
 
 ## Accessibility
 
-- Navigation and draw-mode selection have visible labels, not icon-only controls.
+- Navigation and draw-mode selection have visible labels, not icon-only controls. The bottom bar uses native Avalonia `ToggleButton` controls in four equal columns; mobile surfaces do not use FluentAvalonia templates.
 - Primary actions are at least `48px` high and secondary actions are at least `44px` high.
 - Content wraps and scrolls at phone widths; enabled state, text, and color together communicate state.
 

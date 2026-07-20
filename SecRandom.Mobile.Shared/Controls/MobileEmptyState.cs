@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Layout;
 using Avalonia.Media;
-using SecRandom.Core.Controls;
 using SecRandom.Mobile.Views;
 using AvaloniaButton = Avalonia.Controls.Button;
 
@@ -17,12 +16,9 @@ public sealed class MobileEmptyState : UserControl
 {
     public MobileEmptyState(string glyph, string title, string? description = null, string? actionText = null, Action? action = null)
     {
-        var icon = new FluentIcon(glyph, 40)
-        {
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Opacity = 0.72
-        };
-        MobileTheme.BindBrush(icon, TextElement.ForegroundProperty, MobileTheme.Keys.MutedText);
+        var icon = MobileUi.CreateIcon(glyph, 40, HorizontalAlignment.Center);
+        icon.Opacity = 0.72;
+        MobileTheme.BindBrush(icon, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
 
         var titleBlock = new TextBlock
         {

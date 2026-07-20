@@ -26,6 +26,7 @@
 
     <ItemGroup Condition="'$(BuildMobile)' == 'true'">
         <PackageReference Include="Avalonia.Android" Version="$(AvaloniaVersion)" />
+        <PackageReference Include="Xamarin.AndroidX.Lifecycle.Common.Java8" Version="2.10.0.2" />
         <AndroidResource Include="..\SecRandom\Assets\AppLogo.png" Link="Resources\mipmap\app_logo.png" />
         <AndroidResource Include="Platforms\Android\update_paths.xml" Link="Resources\xml\update_paths.xml" />
     </ItemGroup>

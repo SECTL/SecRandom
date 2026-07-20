@@ -39,6 +39,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecRandom.Platforms.MacOs",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SecRandom.Mobile.Shared", "SecRandom.Mobile.Shared\SecRandom.Mobile.Shared.csproj", "{5E70A298-A0BB-440B-ADB0-975F3EAFE0A1}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SecRandom.Mobile.Tests", "SecRandom.Mobile.Tests\SecRandom.Mobile.Tests.csproj", "{ED0CD63A-322D-4B55-9C01-EFCFC8EEB1F2}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SecRandom.Android", "SecRandom.Android\SecRandom.Android.csproj", "{8E41CBAE-25D9-4DDB-9D9E-4494F1856C88}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SecRandom.iOS", "SecRandom.iOS\SecRandom.iOS.csproj", "{08294FBE-5861-4380-AAA3-21E3B57270A1}"
@@ -105,6 +107,10 @@ Global
 		{5E70A298-A0BB-440B-ADB0-975F3EAFE0A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5E70A298-A0BB-440B-ADB0-975F3EAFE0A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5E70A298-A0BB-440B-ADB0-975F3EAFE0A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED0CD63A-322D-4B55-9C01-EFCFC8EEB1F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED0CD63A-322D-4B55-9C01-EFCFC8EEB1F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED0CD63A-322D-4B55-9C01-EFCFC8EEB1F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED0CD63A-322D-4B55-9C01-EFCFC8EEB1F2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8E41CBAE-25D9-4DDB-9D9E-4494F1856C88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8E41CBAE-25D9-4DDB-9D9E-4494F1856C88}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8E41CBAE-25D9-4DDB-9D9E-4494F1856C88}.Release|Any CPU.ActiveCfg = Release|Any CPU

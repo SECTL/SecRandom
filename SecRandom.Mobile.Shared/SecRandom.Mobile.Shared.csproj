@@ -19,8 +19,8 @@
 
     <ItemGroup>
         <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
         <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.1" />
-        <PackageReference Include="FluentAvaloniaUI" Version="3.0.2" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
         <PackageReference Include="Sentry" Version="6.6.0" />
@@ -42,6 +42,7 @@
 
     <ItemGroup>
         <AvaloniaResource Include="..\SecRandom\Assets\AppLogo.png" Link="Assets\AppLogo.png" />
+        <AvaloniaResource Include="..\SecRandom\Assets\Fonts\FluentSystemIcons-Resizable.ttf" Link="Assets\Fonts\FluentSystemIcons-Resizable.ttf" />
         <AvaloniaResource Include="..\SecRandom\Assets\Updates\release-public-key.txt" Link="Assets\Updates\release-public-key.txt" />
     </ItemGroup>
 

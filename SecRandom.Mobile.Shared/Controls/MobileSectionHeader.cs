@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Layout;
 using Avalonia.Media;
-using SecRandom.Core.Controls;
 using SecRandom.Core.Icons;
 using SecRandom.Mobile.Views;
 
@@ -16,11 +15,8 @@ public sealed class MobileSectionHeader : UserControl
 {
     public MobileSectionHeader(string text, string? glyph = null)
     {
-        var icon = new FluentIcon(glyph ?? FluentIcons.AppsListFilled, 16)
-        {
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        MobileTheme.BindBrush(icon, TextElement.ForegroundProperty, MobileTheme.Keys.Primary);
+        var icon = MobileUi.CreateIcon(glyph ?? FluentIcons.AppsListFilled, 16);
+        MobileTheme.BindBrush(icon, TextBlock.ForegroundProperty, MobileTheme.Keys.Primary);
 
         var title = new TextBlock
         {

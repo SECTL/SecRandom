@@ -4,7 +4,6 @@ using Avalonia.Controls.Documents;
 using Avalonia.Layout;
 using Avalonia.Media;
 using SecRandom.Core.Abstraction.Services;
-using SecRandom.Core.Controls;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Views;
 using SecRandom.Mobile.Controls;
@@ -86,12 +85,11 @@ public sealed class MobileHistoryPage : ViewBase
 
     private static Control CreateHistoryCard(HistoryQueryItem item)
     {
-        var icon = new FluentIcon(item.IsPrize ? FluentIcons.GiftFilled : FluentIcons.PersonFilled, 18)
-        {
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        MobileTheme.BindBrush(icon, TextElement.ForegroundProperty, MobileTheme.Keys.Primary);
+        var icon = MobileUi.CreateIcon(
+            item.IsPrize ? FluentIcons.GiftFilled : FluentIcons.PersonFilled,
+            18,
+            HorizontalAlignment.Center);
+        MobileTheme.BindBrush(icon, TextBlock.ForegroundProperty, MobileTheme.Keys.Primary);
         var iconBadge = new Border
         {
             Width = 36,

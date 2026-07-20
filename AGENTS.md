@@ -32,6 +32,7 @@ SecRandom-C/
 ├── SecRandom.Platforms.Linux/ # Linux-native window feature implementation boundary
 ├── SecRandom.Platforms.MacOs/ # macOS-native window feature implementation boundary
 ├── SecRandom.Mobile.Shared/ # Neutral net10.0 mobile shared library (assembly/namespace stay SecRandom.Mobile): SingleView shell, views, mobile-only UI
+├── SecRandom.Mobile.Tests/  # Avalonia Headless tests for mobile styles, native controls, and phone-size layout
 ├── SecRandom.Android/       # Android entry head: net10.0-android Exe with BuildMobile=true, otherwise empty neutral library
 ├── SecRandom.iOS/           # iOS entry head: net10.0-ios Exe with BuildMobile=true, otherwise empty neutral library
 ├── SecRandom.Core.Tests/  # xUnit v3 test project; currently covers legacy privacy/telemetry migration
@@ -59,6 +60,7 @@ Nested instruction files:
 | Platform capability contracts | `SecRandom.Platforms.Abstractions/`, `SecRandom.Platforms/` | App-internal platform root, window feature requests/results, startup context, and DI bridge. |
 | Native window features | `SecRandom.Platforms.Windows/`, `SecRandom.Platforms.Linux/`, `SecRandom.Platforms.MacOs/` | Each platform owns native feature handling; views must not add platform API calls. |
 | Mobile startup | `SecRandom.Mobile.Shared/`, `SecRandom.Android/`, `SecRandom.iOS/` | Shared library holds the independent SingleView shell (`MobileApp` owns its minimal Host and root view; it does not reference desktop `SecRandom`); the Android/iOS heads own platform entry points and platform seams. |
+| Mobile UI tests | `SecRandom.Mobile.Tests/` | Avalonia Headless smoke tests load mobile styles and lay out native shell controls at phone dimensions. |
 | App composition / DI | `SecRandom/App.axaml.cs` | `BuildHost()` is the registration source of truth. |
 | Main navigation | `SecRandom/Views/MainView.axaml.cs` | Default page `main.rollCall`; keyed DI page factory. Built-in draw pages are `main.rollCall` and `main.lottery`; quick draw opens from the floating window instead of the main sidebar. |
 | Settings navigation | `SecRandom/Views/SettingsView.axaml.cs` | Default page `settings.overview`; has back stack + restart dialog. General group now includes `settings.general.basic`, `settings.general.privacy`, and `settings.general.backup`. |

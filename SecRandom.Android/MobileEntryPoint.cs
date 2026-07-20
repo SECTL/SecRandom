@@ -52,11 +52,18 @@ public class MobileApplication : AvaloniaAndroidApplication<MobileApp>
             if (e.ExceptionObject is Exception ex)
                 Capture(ex);
         };
-        TaskScheduler.UnobservedTaskException += (_, e) => Capture(e.Exception);
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            e.SetObserved();
+            Capture(e.Exception);
+        };
     }
 
     private static void Capture(Exception exception)
     {
+        if (OperatingSystem.IsAndroidVersionAtLeast(24))
+            global::Android.Util.Log.Error("SecRandom.Mobile", exception.ToString());
+
         TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
         if (telemetry is not null)
             _ = telemetry.CaptureExceptionAsync(exception);

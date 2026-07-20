@@ -6,16 +6,14 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Avalonia.Threading;
 using System.ComponentModel;
-using FluentAvalonia.Styling;
-using FluentAvalonia.UI.Controls;
+using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums.Configs;
-using SecRandom.Core.Icons;
-using SecRandom.Core.Controls;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
@@ -36,24 +34,17 @@ using AvaloniaButton = Avalonia.Controls.Button;
 
 namespace SecRandom.Mobile;
 
-public sealed class MobileApp : Avalonia.Application
+public sealed partial class MobileApp : Avalonia.Application
 {
     private IHost? _host;
     private MobileRootView? _rootView;
     private ISingleViewApplicationLifetime? _singleView;
     private bool _stopping;
+    private bool _startupFailureShown;
 
     public override void Initialize()
     {
-        Styles.Add(new FluentAvaloniaTheme
-        {
-            PreferSystemTheme = true,
-            UseSystemFontOnWindows = true
-        });
-        Styles.Add(new Avalonia.Markup.Xaml.Styling.StyleInclude(new Uri("avares://SecRandom.Mobile/Styles/MobileStyles.axaml"))
-        {
-            Source = new Uri("avares://SecRandom.Mobile/Styles/MobileStyles.axaml")
-        });
+        AvaloniaXamlLoader.Load(this);
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -61,13 +52,14 @@ public sealed class MobileApp : Avalonia.Application
         if (ApplicationLifetime is not ISingleViewApplicationLifetime singleView)
             throw new PlatformNotSupportedException("SecRandom.Mobile requires an Avalonia single-view lifetime.");
 
+        _singleView = singleView;
+        Dispatcher.UIThread.UnhandledException += DispatcherOnUnhandledException;
         try
         {
             ConfigureMobileDataRoot();
             // Host 构建前的最小 culture 初始化：此时 MainConfigHandler 尚未由容器构造，
             // 与桌面 Initialize 等价地直接读取 settings.json，必须早于任何视图创建。
             InitializeMobileLanguage();
-            _singleView = singleView;
             _host = Host
                 .CreateDefaultBuilder()
                 .ConfigureServices(services =>
@@ -111,23 +103,48 @@ public sealed class MobileApp : Avalonia.Application
         }
         catch (Exception exception)
         {
-            System.Diagnostics.Debug.WriteLine(exception);
-            (PlatformStartupContext.Current as MobilePlatformServiceRoot)?.StartupErrorLogger?.Invoke(exception);
+            ReportException(exception);
             if (ReferenceEquals(IAppHost.Host, _host))
                 IAppHost.Host = null;
             _host?.Dispose();
             _host = null;
-            string startupFailedText;
-            try
-            {
-                startupFailedText = LR.M_StartupFailed;
-            }
-            catch (Exception resourceException)
-            {
-                // The startup error page must not crash when the resource lookup itself fails.
-                startupFailedText = "SecRandom startup failed: " + resourceException.GetType().Name;
-            }
-            singleView.MainView = new TextBlock
+            ShowStartupFailure(exception);
+        }
+        base.OnFrameworkInitializationCompleted();
+    }
+
+    private void DispatcherOnUnhandledException(object? sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        ReportException(e.Exception);
+        e.Handled = true;
+        ShowStartupFailure(e.Exception);
+    }
+
+    private void ReportException(Exception exception)
+    {
+        System.Diagnostics.Debug.WriteLine(exception);
+        (PlatformStartupContext.Current as MobilePlatformServiceRoot)?.StartupErrorLogger?.Invoke(exception);
+    }
+
+    private void ShowStartupFailure(Exception exception)
+    {
+        if (_startupFailureShown || _singleView is null)
+            return;
+
+        _startupFailureShown = true;
+        string startupFailedText;
+        try
+        {
+            startupFailedText = LR.M_StartupFailed;
+        }
+        catch (Exception resourceException)
+        {
+            startupFailedText = "SecRandom startup failed: " + resourceException.GetType().Name;
+        }
+
+        _singleView.MainView = new ScrollViewer
+        {
+            Content = new TextBlock
             {
                 Text = startupFailedText + "\n" + exception,
                 Margin = new Thickness(32),
@@ -135,9 +152,8 @@ public sealed class MobileApp : Avalonia.Application
                 TextWrapping = TextWrapping.Wrap,
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-            };
-        }
-        base.OnFrameworkInitializationCompleted();
+            }
+        };
     }
 
     private async Task StopHostAsync()
@@ -160,6 +176,10 @@ public sealed class MobileApp : Avalonia.Application
                 .ShutdownAsync()
                 .ConfigureAwait(false);
             await host.StopAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            ReportException(exception);
         }
         finally
         {
@@ -276,24 +296,20 @@ public sealed class MobileApp : Avalonia.Application
         }
         catch (Exception exception)
         {
-            System.Diagnostics.Debug.WriteLine(exception);
+            ReportException(exception);
             if (_stopping || !ReferenceEquals(host, _host))
                 return;
 
-            await StopHostAsync().ConfigureAwait(false);
-
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            try
             {
-                singleView.MainView = new TextBlock
-                {
-                    Text = LR.M_StartupFailed,
-                    Margin = new Thickness(32),
-                    TextAlignment = TextAlignment.Center,
-                    TextWrapping = TextWrapping.Wrap,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-                };
-            }).GetTask();
+                await StopHostAsync().ConfigureAwait(false);
+            }
+            catch (Exception cleanupException)
+            {
+                ReportException(cleanupException);
+            }
+
+            await Dispatcher.UIThread.InvokeAsync(() => ShowStartupFailure(exception)).GetTask();
         }
     }
 }
@@ -306,6 +322,7 @@ public sealed class MobileRootView : UserControl
     private readonly MobilePageHeader _header;
     private readonly MobileNavigationBar _bottomBar;
     private readonly Grid _root;
+    private readonly SemaphoreSlim _navigationGate = new(1, 1);
     private MobileDestination _destination = MobileDestination.Draw;
 
     public MobileRootView(
@@ -321,18 +338,7 @@ public sealed class MobileRootView : UserControl
 
         _header = new MobilePageHeader();
         _bottomBar = new MobileNavigationBar();
-        _bottomBar.NavigationView.SelectionChanged += (_, args) =>
-        {
-            if (args.SelectedItem is FANavigationViewItem { Tag: MobileDestination destination })
-                _ = ShowPrimaryRouteAsync(destination, destination switch
-                {
-                    MobileDestination.Draw => MobileRoutes.Draw,
-                    MobileDestination.History => MobileRoutes.History,
-                    MobileDestination.Overview => MobileRoutes.Overview,
-                    MobileDestination.Settings => MobileRoutes.Settings,
-                    _ => MobileRoutes.Draw
-                });
-        };
+        _bottomBar.DestinationSelected += BottomBarOnDestinationSelected;
 
         _root = new Grid
         {
@@ -383,15 +389,43 @@ public sealed class MobileRootView : UserControl
 
     private async Task ShowPrimaryRouteAsync(MobileDestination destination, string routeId)
     {
-        foreach (var activeRoute in PrimaryRouteIds)
+        await _navigationGate.WaitAsync().ConfigureAwait(true);
+        var previousDestination = _destination;
+        var previousRoute = GetRouteId(previousDestination);
+        try
         {
-            if (!string.Equals(activeRoute, routeId, StringComparison.Ordinal))
-                await _viewEngine.CloseAsync(activeRoute).ConfigureAwait(true);
-        }
+            foreach (var activeRoute in PrimaryRouteIds)
+            {
+                if (!string.Equals(activeRoute, routeId, StringComparison.Ordinal))
+                    await _viewEngine.CloseAsync(activeRoute).ConfigureAwait(true);
+            }
 
-        _destination = destination;
-        RenderCurrentDestination();
-        await _viewEngine.ShowAsync(routeId).ConfigureAwait(true);
+            await _viewEngine.ShowAsync(routeId).ConfigureAwait(true);
+            _destination = destination;
+            RenderCurrentDestination();
+        }
+        catch
+        {
+            if (!string.Equals(previousRoute, routeId, StringComparison.Ordinal))
+            {
+                try
+                {
+                    await _viewEngine.ShowAsync(previousRoute).ConfigureAwait(true);
+                }
+                catch (Exception restoreException)
+                {
+                    System.Diagnostics.Debug.WriteLine(restoreException);
+                }
+            }
+
+            _destination = previousDestination;
+            RenderCurrentDestination();
+            throw;
+        }
+        finally
+        {
+            _navigationGate.Release();
+        }
     }
 
     private void RenderCurrentDestination()
@@ -418,6 +452,35 @@ public sealed class MobileRootView : UserControl
         _bottomBar.RefreshTheme();
         RenderCurrentDestination();
     }
+
+    private async void BottomBarOnDestinationSelected(object? sender, MobileDestination destination)
+    {
+        try
+        {
+            await ShowPrimaryRouteAsync(destination, destination switch
+            {
+                MobileDestination.Draw => MobileRoutes.Draw,
+                MobileDestination.History => MobileRoutes.History,
+                MobileDestination.Overview => MobileRoutes.Overview,
+                MobileDestination.Settings => MobileRoutes.Settings,
+                _ => MobileRoutes.Draw
+            }).ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(exception);
+            _bottomBar.Select(_destination);
+        }
+    }
+
+    private static string GetRouteId(MobileDestination destination) => destination switch
+    {
+        MobileDestination.Draw => MobileRoutes.Draw,
+        MobileDestination.History => MobileRoutes.History,
+        MobileDestination.Overview => MobileRoutes.Overview,
+        MobileDestination.Settings => MobileRoutes.Settings,
+        _ => MobileRoutes.Draw
+    };
 
     private static IReadOnlyList<string> PrimaryRouteIds => MobileRoutes.All;
 

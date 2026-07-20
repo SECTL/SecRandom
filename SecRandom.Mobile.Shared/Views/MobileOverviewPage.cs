@@ -4,7 +4,6 @@ using Avalonia.Controls.Documents;
 using Avalonia.Layout;
 using Avalonia.Media;
 using SecRandom.Core.Abstraction.Services;
-using SecRandom.Core.Controls;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Views;
 using SecRandom.Mobile.Controls;
@@ -72,8 +71,8 @@ public sealed class MobileOverviewPage : ViewBase
 
     private static Control CreateMetricCard((string Label, string Value, string Glyph, string WashKey) metric)
     {
-        var icon = new FluentIcon(metric.Glyph, 20);
-        MobileTheme.BindBrush(icon, TextElement.ForegroundProperty, MobileTheme.Keys.Primary);
+        var icon = MobileUi.CreateIcon(metric.Glyph, 20);
+        MobileTheme.BindBrush(icon, TextBlock.ForegroundProperty, MobileTheme.Keys.Primary);
         var value = new TextBlock
         {
             Text = metric.Value,

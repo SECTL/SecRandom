@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using SecRandom.Core.Controls;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Views;
 using SecRandom.Mobile.Views;
@@ -47,7 +46,16 @@ public abstract class MobileSettingsPageBase : ViewBase
 
         var backButton = new AvaloniaButton
         {
-            Content = new IconText { Glyph = FluentIcons.ArrowLeftFilled, Text = LR.C_Back, Spacing = 6 },
+            Content = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                Children =
+                {
+                    MobileUi.CreateIcon(FluentIcons.ArrowLeftFilled, 16),
+                    new TextBlock { Text = LR.C_Back, VerticalAlignment = VerticalAlignment.Center }
+                }
+            },
             HorizontalAlignment = HorizontalAlignment.Left,
             MinHeight = MobileTheme.FindDouble("MobileMinHeightSecondary", 44)
         };

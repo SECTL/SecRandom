@@ -3,8 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
-using FluentAvalonia.UI.Controls;
-using SecRandom.Core.Controls;
 using SecRandom.Core.Icons;
 using SecRandom.Mobile.Controls;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
@@ -14,6 +12,23 @@ namespace SecRandom.Mobile.Views;
 
 internal static class MobileUi
 {
+    private static readonly FontFamily IconFont =
+        new("avares://SecRandom.Mobile/Assets/Fonts/#FluentSystemIcons-Resizable");
+
+    internal static TextBlock CreateIcon(
+        string glyph,
+        double size,
+        HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left) => new()
+    {
+        Text = glyph,
+        FontFamily = IconFont,
+        FontSize = size,
+        LineHeight = size,
+        HorizontalAlignment = horizontalAlignment,
+        VerticalAlignment = VerticalAlignment.Center,
+        TextAlignment = TextAlignment.Center
+    };
+
     internal static AvaloniaButton CreateSegmentButton(string text, bool selected, bool left)
     {
         var button = new AvaloniaButton
@@ -48,17 +63,31 @@ internal static class MobileUi
 
     internal static Control CreateSettingsScroll(string title, string description, Action goBack, IEnumerable<Control> items)
     {
+        var titleBlock = new TextBlock
+        {
+            Text = title,
+            FontSize = MobileTheme.FindDouble("MobileFontSizeSection", 20),
+            FontWeight = FontWeight.SemiBold,
+            TextWrapping = TextWrapping.Wrap
+        };
+        MobileTheme.BindBrush(titleBlock, TextBlock.ForegroundProperty, MobileTheme.Keys.Text);
+        var descriptionBlock = new TextBlock
+        {
+            Text = description,
+            TextWrapping = TextWrapping.Wrap
+        };
+        MobileTheme.BindBrush(descriptionBlock, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
         var content = new List<Control>
         {
             CreateSecondaryButton(LR.C_Back, goBack),
-            new FAInfoBar
+            new MobileCard(MobileTheme.Keys.PrimaryWash)
             {
-                Title = title,
-                Message = description,
-                Severity = FAInfoBarSeverity.Informational,
-                IsOpen = true,
-                IsClosable = false,
-                IconSource = new FluentIconSource(FluentIcons.InfoFilled)
+                BorderThickness = new Thickness(0),
+                Content = new StackPanel
+                {
+                    Spacing = MobileTheme.FindDouble("MobileSpacingXs", 4),
+                    Children = { titleBlock, descriptionBlock }
+                }
             }
         };
         content.AddRange(items);

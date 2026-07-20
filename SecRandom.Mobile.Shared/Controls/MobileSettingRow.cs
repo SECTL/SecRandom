@@ -5,7 +5,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
-using SecRandom.Core.Controls;
 using SecRandom.Core.Icons;
 using SecRandom.Mobile.Views;
 using AvaloniaButton = Avalonia.Controls.Button;
@@ -187,12 +186,8 @@ public class MobileSettingRow : UserControl
 
     internal static MobileSettingRow Navigation(string title, string? description, Action open)
     {
-        var chevron = new FluentIcon(FluentIcons.ChevronRightFilled, 16)
-        {
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        // FAFontIcon 经由可继承的 TextElement.Foreground 取色，因此不直接设置图标自身画刷。
-        MobileTheme.BindBrush(chevron, TextElement.ForegroundProperty, MobileTheme.Keys.MutedText);
+        var chevron = MobileUi.CreateIcon(FluentIcons.ChevronRightFilled, 16);
+        MobileTheme.BindBrush(chevron, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
         var row = new MobileSettingRow { Title = title, Description = description, Footer = chevron, IsClickEnabled = true };
         row.Click += (_, _) => open();
         return row;
@@ -213,7 +208,7 @@ public class MobileSettingRow : UserControl
                 actions.Children.Add(trailing);
             var removeButton = new AvaloniaButton
             {
-                Content = new FluentIcon(FluentIcons.DeleteFilled, 18),
+                Content = MobileUi.CreateIcon(FluentIcons.DeleteFilled, 18, HorizontalAlignment.Center),
                 [ToolTip.TipProperty] = LR.C_Remove,
                 Classes = { "compact" }
             };

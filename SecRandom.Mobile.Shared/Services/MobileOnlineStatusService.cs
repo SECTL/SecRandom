@@ -44,8 +44,19 @@ internal sealed class MobileOnlineStatusService(
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                if (privacy.OnlineStatusMode != OnlineStatusMode.Off)
-                    await ReportAsync(privacy.OnlineStatusMode, stoppingToken).ConfigureAwait(false);
+                try
+                {
+                    if (privacy.OnlineStatusMode != OnlineStatusMode.Off)
+                        await ReportAsync(privacy.OnlineStatusMode, stoppingToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception exception)
+                {
+                    logger.LogWarning(exception, "Mobile online status report failed.");
+                }
 
                 await Task.Delay(Interval, stoppingToken).ConfigureAwait(false);
             }
