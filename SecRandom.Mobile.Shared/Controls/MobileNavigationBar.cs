@@ -2,14 +2,14 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Markup.Xaml;
 using SecRandom.Core.Icons;
 using SecRandom.Mobile.Views;
 
 namespace SecRandom.Mobile.Controls;
 
-public sealed class MobileNavigationBar : UserControl
+public sealed partial class MobileNavigationBar : UserControl
 {
     private readonly Border _root;
     private readonly Dictionary<MobileDestination,
@@ -18,28 +18,20 @@ public sealed class MobileNavigationBar : UserControl
 
     public MobileNavigationBar()
     {
-        var destinations = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("*,*,*,*"),
-            HorizontalAlignment = HorizontalAlignment.Stretch
-        };
-        AddItem(destinations, 0, Langs.Mobile.Resources.N_Draw,
-            FluentIcons.PeopleRegular, FluentIcons.PeopleFilled, MobileDestination.Draw);
-        AddItem(destinations, 1, Langs.Mobile.Resources.N_History,
-            FluentIcons.HistoryRegular, FluentIcons.HistoryFilled, MobileDestination.History);
-        AddItem(destinations, 2, Langs.Mobile.Resources.N_Overview,
-            FluentIcons.HomeRegular, FluentIcons.HomeFilled, MobileDestination.Overview);
-        AddItem(destinations, 3, Langs.Mobile.Resources.N_Settings,
-            FluentIcons.SettingsRegular, FluentIcons.SettingsFilled, MobileDestination.Settings);
-
-        _root = new Border
-        {
-            BorderThickness = new Thickness(0, 1, 0, 0),
-            Padding = new Thickness(6, 4),
-            MinHeight = 64,
-            Child = destinations
-        };
-        Content = _root;
+        InitializeComponent();
+        _root = this.FindControl<Border>("Root")!;
+        AddItem(this.FindControl<ToggleButton>("DrawButton")!,
+            this.FindControl<TextBlock>("DrawIcon")!, this.FindControl<TextBlock>("DrawLabel")!,
+            Langs.Mobile.Resources.N_Draw, FluentIcons.PeopleRegular, FluentIcons.PeopleFilled, MobileDestination.Draw, 1);
+        AddItem(this.FindControl<ToggleButton>("HistoryButton")!,
+            this.FindControl<TextBlock>("HistoryIcon")!, this.FindControl<TextBlock>("HistoryLabel")!,
+            Langs.Mobile.Resources.N_History, FluentIcons.HistoryRegular, FluentIcons.HistoryFilled, MobileDestination.History, 2);
+        AddItem(this.FindControl<ToggleButton>("OverviewButton")!,
+            this.FindControl<TextBlock>("OverviewIcon")!, this.FindControl<TextBlock>("OverviewLabel")!,
+            Langs.Mobile.Resources.N_Overview, FluentIcons.HomeRegular, FluentIcons.HomeFilled, MobileDestination.Overview, 3);
+        AddItem(this.FindControl<ToggleButton>("SettingsButton")!,
+            this.FindControl<TextBlock>("SettingsIcon")!, this.FindControl<TextBlock>("SettingsLabel")!,
+            Langs.Mobile.Resources.N_Settings, FluentIcons.SettingsRegular, FluentIcons.SettingsFilled, MobileDestination.Settings, 4);
         RefreshTheme();
         Select(MobileDestination.Draw);
     }
@@ -60,47 +52,23 @@ public sealed class MobileNavigationBar : UserControl
     }
 
     private void AddItem(
-        Grid destinations,
-        int column,
+        ToggleButton button,
+        TextBlock icon,
+        TextBlock label,
         string text,
         string regularGlyph,
         string filledGlyph,
-        MobileDestination destination)
+        MobileDestination destination,
+        int position)
     {
-        var icon = MobileUi.CreateIcon(regularGlyph, 22, HorizontalAlignment.Center);
-        var label = new TextBlock
-        {
-            Text = text,
-            FontSize = 12,
-            TextAlignment = TextAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        var button = new ToggleButton
-        {
-            Tag = destination,
-            MinHeight = 56,
-            Margin = new Thickness(2, 0),
-            Padding = new Thickness(4, 5),
-            CornerRadius = new CornerRadius(10),
-            BorderThickness = new Thickness(0),
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            Content = new StackPanel
-            {
-                Spacing = 2,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Children = { icon, label }
-            }
-        };
+        button.Tag = destination;
+        icon.Text = regularGlyph;
+        label.Text = text;
         AutomationProperties.SetName(button, text);
-        AutomationProperties.SetPositionInSet(button, column + 1);
+        AutomationProperties.SetPositionInSet(button, position);
         AutomationProperties.SetSizeOfSet(button, 4);
         button.Click += (_, _) => SelectFromInput(destination);
         _items.Add(destination, (button, icon, label, regularGlyph, filledGlyph));
-        destinations.Children.Add(button);
-        Grid.SetColumn(button, column);
     }
 
     private void SelectFromInput(MobileDestination destination)
@@ -128,4 +96,6 @@ public sealed class MobileNavigationBar : UserControl
             item.Label.FontWeight = isSelected ? FontWeight.SemiBold : FontWeight.Normal;
         }
     }
+
+    private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }

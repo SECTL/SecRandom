@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core;
@@ -26,7 +27,7 @@ using AvaloniaButton = Avalonia.Controls.Button;
 
 namespace SecRandom.Mobile.Views;
 
-public sealed class MobileDrawPage : ViewBase
+public sealed partial class MobileDrawPage : ViewBase
 {
     private const int RollDurationMs = 800;
 
@@ -63,6 +64,7 @@ public sealed class MobileDrawPage : ViewBase
         _lotterySession = lotterySession;
         _drawMedia = drawMedia;
         _viewEngine = viewEngine;
+        InitializeComponent();
         EnsureRestartTemporaryRecordsCleared();
         Render();
     }
@@ -92,7 +94,7 @@ public sealed class MobileDrawPage : ViewBase
         ScrollViewer scroll = _drawSurface == DrawSurface.RollCall
             ? CreateRollCallContent(selector)
             : CreateLotteryContent(selector);
-        Content = scroll;
+        this.FindControl<ContentControl>("PageContent")!.Content = scroll;
         if (_firstRender)
         {
             _firstRender = false;
@@ -739,4 +741,6 @@ public sealed class MobileDrawPage : ViewBase
         DrawStatus.InvalidWeight => LR.M_InvalidWeight,
         _ => LR.M_DrawFailed
     };
+
+    private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }

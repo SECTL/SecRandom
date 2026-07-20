@@ -15,7 +15,7 @@ namespace SecRandom.Mobile.Views.Settings;
 /// 版本取入口程序集的 InformationalVersion（GitInfo 版本特性生成在 Android/iOS 头程序集上）。
 /// 链接经 TopLevel Launcher 打开系统浏览器；Launcher 不可用或打开失败时给状态提示。
 /// </summary>
-public sealed class MobileAboutSettingsPage : MobileSettingsPageBase
+public sealed partial class MobileAboutSettingsPage : MobileSettingsPageBase
 {
     private static readonly Uri ProjectUri = new("https://github.com/SECTL/SecRandom");
 
@@ -23,6 +23,7 @@ public sealed class MobileAboutSettingsPage : MobileSettingsPageBase
 
     public MobileAboutSettingsPage()
     {
+        InitializeComponent();
         var version = (Assembly.GetEntryAssembly() ?? typeof(MobileAboutSettingsPage).Assembly)
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0]
             ?? "0.0.0";
@@ -59,7 +60,7 @@ public sealed class MobileAboutSettingsPage : MobileSettingsPageBase
 
         _statusText = CreateCaption(string.Empty, centered: true);
 
-        Content = BuildPage(LR.S_About, LR.S_About_D, [
+        RenderPage([
             brandCard,
             MobileSettingRow.Navigation(LR.C_ViewOnGitHub, "github.com/SECTL/SecRandom", () => _ = OpenProjectLinkAsync()),
             _statusText

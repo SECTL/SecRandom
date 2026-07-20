@@ -15,7 +15,7 @@ namespace SecRandom.Mobile.Views.Settings;
 /// 抽奖组整体按 <see cref="MobileCapabilities.IsLotteryEnabled"/> 投影，关闭时不渲染。
 /// 配置存取与 Save 模式（变更 → Save → 重渲染）与原实现等价。
 /// </summary>
-public sealed class MobileDrawSettingsPage : MobileSettingsPageBase
+public sealed partial class MobileDrawSettingsPage : MobileSettingsPageBase
 {
     private readonly MainConfigHandler _configHandler;
     private readonly MobileDrawMediaService _drawMedia;
@@ -29,6 +29,7 @@ public sealed class MobileDrawSettingsPage : MobileSettingsPageBase
         _configHandler = configHandler;
         _drawMedia = drawMedia;
         _mediaLibrary = mediaLibrary;
+        InitializeComponent();
         Render();
     }
 
@@ -115,7 +116,7 @@ public sealed class MobileDrawSettingsPage : MobileSettingsPageBase
                 value => Save(() => voice.SpeechRate = Math.Clamp(value, 50, 200))));
         }
 
-        Content = BuildPage(LR.S_DrawSettings, LR.S_DrawSettings_D, items);
+        RenderPage(items);
     }
 
     private Control CreateDrawModeRow(string text, bool selected, Action setMode) =>

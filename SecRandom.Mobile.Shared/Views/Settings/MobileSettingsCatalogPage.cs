@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Views;
 using SecRandom.Mobile.Controls;
@@ -12,10 +13,11 @@ namespace SecRandom.Mobile.Views.Settings;
 /// 更新入口按 <see cref="MobileCapabilities.SupportsInAppUpdate"/> 投影（iOS 不显示）。
 /// 目录是底部导航的根级目的地，因此不显示返回按钮。
 /// </summary>
-public sealed class MobileSettingsCatalogPage : MobileSettingsPageBase
+public sealed partial class MobileSettingsCatalogPage : MobileSettingsPageBase
 {
     public MobileSettingsCatalogPage(IViewEngine viewEngine)
     {
+        InitializeComponent();
         var items = new List<Control>
         {
             new MobileSectionHeader(LR.S_GroupPreferences, FluentIcons.ColorFilled),
@@ -31,9 +33,15 @@ public sealed class MobileSettingsCatalogPage : MobileSettingsPageBase
             items.Add(MobileSettingRow.Navigation(LR.S_AppUpdates, LR.S_AppUpdates_D, () => Show(viewEngine, MobileRoutes.Update)));
         items.Add(MobileSettingRow.Navigation(LR.S_About, LR.S_About_D, () => Show(viewEngine, MobileRoutes.About)));
 
-        Content = BuildPage(LR.P_Settings, LR.S_SettingsCategories, items, showBackButton: false);
+        var settingsItems = this.FindControl<StackPanel>("SettingsItems")!;
+        foreach (var item in items)
+            settingsItems.Children.Add(item);
+
+        MobileAnimations.PlayPageEnter(this.FindControl<ScrollViewer>("PageScroll")!);
     }
 
     private static void Show(IViewEngine viewEngine, string routeId) =>
         _ = viewEngine.ShowAsync(routeId);
+
+    private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }

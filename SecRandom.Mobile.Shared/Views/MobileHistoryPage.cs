@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Markup.Xaml;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
@@ -16,7 +17,7 @@ using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Views;
 
-public sealed class MobileHistoryPage : ViewBase
+public sealed partial class MobileHistoryPage : ViewBase
 {
     private readonly IProfileService _profileService;
     private readonly IHistoryQueryService _historyQueryService;
@@ -40,6 +41,7 @@ public sealed class MobileHistoryPage : ViewBase
         _catalogManager = catalogManager;
         _configHandler = configHandler;
         _drawEngine = drawEngine;
+        InitializeComponent();
         Render();
     }
 
@@ -106,7 +108,7 @@ public sealed class MobileHistoryPage : ViewBase
             table,
             refresh
         ]);
-        Content = scroll;
+        this.FindControl<ContentControl>("PageContent")!.Content = scroll;
         if (_firstRender)
         {
             _firstRender = false;
@@ -408,4 +410,6 @@ public sealed class MobileHistoryPage : ViewBase
         public string Scope { get; init; } = string.Empty;
         public string Weight { get; init; } = string.Empty;
     }
+
+    private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }

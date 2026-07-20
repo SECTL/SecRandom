@@ -1,0 +1,32 @@
+<local:MobileOverviewPage xmlns="https://github.com/avaloniaui"
+                          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                          xmlns:local="clr-namespace:SecRandom.Mobile.Views"
+                          xmlns:langs="clr-namespace:SecRandom.Mobile.Langs.Mobile"
+                          x:Class="SecRandom.Mobile.Views.MobileOverviewPage">
+    <ScrollViewer x:Name="PageScroll"
+                  Padding="{DynamicResource MobilePagePadding}"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto"
+                  IsScrollChainingEnabled="False"
+                  IsScrollInertiaEnabled="True">
+        <StackPanel Spacing="{DynamicResource MobileSpacingMd}"
+                    MaxWidth="720">
+            <TextBlock Text="{x:Static langs:Resources.S_DataOverview}"
+                       FontSize="12"
+                       Foreground="{DynamicResource MobileMutedTextBrush}"
+                       TextWrapping="Wrap" />
+            <TextBlock Text="{x:Static langs:Resources.P_Overview}"
+                       FontSize="24"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource MobileTextBrush}"
+                       TextWrapping="Wrap" />
+            <Grid x:Name="MetricsGrid"
+                  ColumnDefinitions="*,*"
+                  RowDefinitions="Auto,Auto"
+                  ColumnSpacing="14"
+                  RowSpacing="14" />
+        </StackPanel>
+    </ScrollViewer>
+</local:MobileOverviewPage>

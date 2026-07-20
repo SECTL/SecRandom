@@ -12,7 +12,7 @@ namespace SecRandom.Mobile.Views.Settings;
 /// 个性化设置页：主题三档。主题选择立即保存并应用到 RequestedThemeVariant，
 /// 页面内容颜色全部走 DynamicResource，由资源系统随主题刷新。
 /// </summary>
-public sealed class MobilePersonalizationSettingsPage : MobileSettingsPageBase
+public sealed partial class MobilePersonalizationSettingsPage : MobileSettingsPageBase
 {
     private readonly MainConfigHandler _configHandler;
     private readonly MobileMediaLibraryService _mediaLibrary;
@@ -26,6 +26,7 @@ public sealed class MobilePersonalizationSettingsPage : MobileSettingsPageBase
         _configHandler = configHandler;
         _mediaLibrary = mediaLibrary;
         _drawMedia = drawMedia;
+        InitializeComponent();
         Render();
     }
 
@@ -47,7 +48,7 @@ public sealed class MobilePersonalizationSettingsPage : MobileSettingsPageBase
                 items.Add(MobileSettingRow.Simple(track.DisplayName, null,
                     CreateTrackPreview(track.Id), () => RemoveTrack(track.Id)));
         }
-        Content = BuildPage(LR.S_Personalization, LR.S_Personalization_D, items);
+        RenderPage(items);
     }
 
     private void ApplyTheme(ThemeMode theme)

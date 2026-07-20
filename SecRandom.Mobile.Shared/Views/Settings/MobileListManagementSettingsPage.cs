@@ -21,7 +21,7 @@ using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Views.Settings;
 
-public sealed class MobileListManagementSettingsPage : MobileSettingsPageBase
+public sealed partial class MobileListManagementSettingsPage : MobileSettingsPageBase
 {
     private readonly IProfileCatalogManager _catalogManager;
     private readonly IProfileService _profileService;
@@ -43,6 +43,7 @@ public sealed class MobileListManagementSettingsPage : MobileSettingsPageBase
         _profileService = profileService;
         _mediaLibrary = mediaLibrary;
         _drawMedia = drawMedia;
+        InitializeComponent();
         Render();
     }
 
@@ -68,7 +69,7 @@ public sealed class MobileListManagementSettingsPage : MobileSettingsPageBase
 
         var items = new List<Control> { segmented };
         items.AddRange(_segment == 0 ? BuildStudentSurface() : BuildPrizeSurface());
-        Content = BuildPage(LR.S_ListManagement, LR.S_ListManagement_D, items);
+        RenderPage(items);
     }
 
     private IEnumerable<Control> BuildStudentSurface()

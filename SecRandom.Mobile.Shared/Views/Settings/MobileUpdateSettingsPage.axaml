@@ -1,0 +1,16 @@
+<local:MobileUpdateSettingsPage xmlns="https://github.com/avaloniaui"
+                                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                                  xmlns:local="clr-namespace:SecRandom.Mobile.Views.Settings"
+                                  xmlns:langs="clr-namespace:SecRandom.Mobile.Langs.Mobile"
+                                  x:Class="SecRandom.Mobile.Views.Settings.MobileUpdateSettingsPage">
+    <ScrollViewer x:Name="PageScroll" Padding="{DynamicResource MobilePagePadding}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" IsScrollChainingEnabled="False" IsScrollInertiaEnabled="True">
+        <StackPanel Spacing="{DynamicResource MobileSpacingMd}" MaxWidth="720">
+            <Button Content="{x:Static langs:Resources.C_Back}" HorizontalAlignment="Left" MinHeight="{DynamicResource MobileMinHeightSecondary}" Click="OnBackButtonClick" />
+            <StackPanel Spacing="{DynamicResource MobileSpacingXs}">
+                <TextBlock Text="{x:Static langs:Resources.S_AppUpdates}" FontSize="{DynamicResource MobileFontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource MobileTextBrush}" TextWrapping="Wrap" />
+                <TextBlock Text="{x:Static langs:Resources.S_AppUpdates_D}" FontSize="{DynamicResource MobileFontSizeCaption}" Foreground="{DynamicResource MobileMutedTextBrush}" TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel x:Name="SettingsBody" Spacing="{DynamicResource MobileSpacingMd}" />
+        </StackPanel>
+    </ScrollViewer>
+</local:MobileUpdateSettingsPage>

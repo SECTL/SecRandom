@@ -1,0 +1,33 @@
+<local:MobileEmptyState xmlns="https://github.com/avaloniaui"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                       xmlns:local="clr-namespace:SecRandom.Mobile.Controls"
+                       x:Class="SecRandom.Mobile.Controls.MobileEmptyState">
+    <StackPanel Spacing="{DynamicResource MobileSpacingMd}"
+                HorizontalAlignment="Center"
+                Margin="0,48,0,24">
+        <TextBlock x:Name="Icon"
+                   FontFamily="avares://SecRandom.Mobile/Assets/Fonts/#FluentSystemIcons-Resizable"
+                   FontSize="40"
+                   LineHeight="40"
+                   HorizontalAlignment="Center"
+                   TextAlignment="Center"
+                   Opacity="0.72"
+                   Foreground="{DynamicResource MobileMutedTextBrush}" />
+        <TextBlock x:Name="TitleText"
+                   FontSize="{DynamicResource MobileFontSizeBody}"
+                   FontWeight="SemiBold"
+                   TextAlignment="Center"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource MobileTextBrush}" />
+        <TextBlock x:Name="DescriptionText"
+                   FontSize="{DynamicResource MobileFontSizeCaption}"
+                   TextAlignment="Center"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource MobileMutedTextBrush}" />
+        <Button x:Name="ActionButton"
+                MinHeight="{DynamicResource MobileMinHeightPrimary}"
+                Classes="accent"
+                FontWeight="SemiBold"
+                HorizontalContentAlignment="Center" />
+    </StackPanel>
+</local:MobileEmptyState>

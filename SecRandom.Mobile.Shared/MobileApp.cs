@@ -324,7 +324,7 @@ public sealed partial class MobileApp : Avalonia.Application
     }
 }
 
-public sealed class MobileRootView : UserControl
+public sealed partial class MobileRootView : UserControl
 {
     private readonly MainConfigHandler _configHandler;
     private readonly ViewHostControl _viewHost;
@@ -346,19 +346,15 @@ public sealed class MobileRootView : UserControl
         singleViewHostProvider.Attach(_viewHost);
         MobileTheme.Apply(_configHandler.Data.Appearance.Theme);
 
-        _header = new MobilePageHeader();
-        _bottomBar = new MobileNavigationBar();
+        InitializeComponent();
+        _header = this.FindControl<MobilePageHeader>("PageHeader")!;
+        _bottomBar = this.FindControl<MobileNavigationBar>("BottomBar")!;
         _bottomBar.DestinationSelected += BottomBarOnDestinationSelected;
 
-        _root = new Grid
-        {
-            RowDefinitions = new RowDefinitions("Auto,*,Auto"),
-            Background = MobileTheme.Canvas,
-            Children = { _header, _viewHost, _bottomBar }
-        };
+        _root = this.FindControl<Grid>("RootLayout")!;
+        _root.Background = MobileTheme.Canvas;
+        _root.Children.Add(_viewHost);
         Grid.SetRow(_viewHost, 1);
-        Grid.SetRow(_bottomBar, 2);
-        Content = _root;
 
         AddHandler(TopLevel.BackRequestedEvent, OnBackRequested, RoutingStrategies.Bubble);
         _configHandler.Data.Appearance.PropertyChanged += AppearanceOnPropertyChanged;
@@ -493,5 +489,7 @@ public sealed class MobileRootView : UserControl
     };
 
     private static IReadOnlyList<string> PrimaryRouteIds => MobileRoutes.All;
+
+    private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 
 }

@@ -13,13 +13,14 @@ namespace SecRandom.Mobile.Views.Settings;
 /// 语言绑定桌面同一字段 <c>MainConfigModel.General.Basic.Language</c>；
 /// 切换后立即应用 culture 并重建 <see cref="MobileRootView"/> 可视树，无需重启。
 /// </summary>
-public sealed class MobileGeneralSettingsPage : MobileSettingsPageBase
+public sealed partial class MobileGeneralSettingsPage : MobileSettingsPageBase
 {
     private readonly MainConfigHandler _configHandler;
 
     public MobileGeneralSettingsPage(MainConfigHandler configHandler)
     {
         _configHandler = configHandler;
+        InitializeComponent();
         Render();
     }
 
@@ -45,7 +46,7 @@ public sealed class MobileGeneralSettingsPage : MobileSettingsPageBase
                 _ = app.ReloadRootViewAsync();
         }
 
-        Content = BuildPage(LR.S_General, LR.S_General_D, [
+        RenderPage([
             CreateCaption(LR.M_GeneralMobileOnly),
             new MobileSectionHeader(LR.S_OnlineStatus, FluentIcons.CloudArrowUpFilled),
             MobileSettingRow.Choice(LR.O_Off, privacy.OnlineStatusMode == OnlineStatusMode.Off,

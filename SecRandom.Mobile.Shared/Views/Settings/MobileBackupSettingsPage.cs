@@ -19,7 +19,7 @@ namespace SecRandom.Mobile.Views.Settings;
 /// 导入先复制流到临时文件再校验（v3 manifest），确认后才执行导入。
 /// 忙时禁用全部操作按钮并显示进度文案；StorageProvider 不可用时优雅降级提示。
 /// </summary>
-public sealed class MobileBackupSettingsPage : MobileSettingsPageBase
+public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
 {
     private enum PendingImportKind
     {
@@ -44,6 +44,7 @@ public sealed class MobileBackupSettingsPage : MobileSettingsPageBase
 
     public MobileBackupSettingsPage()
     {
+        InitializeComponent();
         _exportAllButton = MobileUi.CreatePrimaryButton(LR.C_ExportAllData, true, () => _ = ExportAllDataAsync());
         _importAllButton = MobileUi.CreateSecondaryButton(LR.C_ImportAllData, () => _ = PickImportAsync(PendingImportKind.AllData));
         _exportSettingsButton = MobileUi.CreateSecondaryButton(LR.C_ExportSettings, () => _ = ExportSettingsAsync());
@@ -62,7 +63,7 @@ public sealed class MobileBackupSettingsPage : MobileSettingsPageBase
             TryDeleteFile(tempPath);
         };
 
-        Content = BuildPage(LR.S_Backup, LR.S_Backup_D, [
+        RenderPage([
             CreateCaption(LR.M_BackupPickerHint),
             new MobileSectionHeader(LR.S_AllData, FluentIcons.DatabaseFilled),
             CreateCaption(LR.S_AllData_D),

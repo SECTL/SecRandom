@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Layout;
+using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Icons;
@@ -15,10 +16,11 @@ namespace SecRandom.Mobile.Views;
 /// 概览页：2×2 指标网格（学生数 / 奖品数 / 点名轮次 / 抽奖轮次）。
 /// 抽奖相关两项按 <see cref="MobileCapabilities.IsLotteryEnabled"/> 投影，关闭时不占位。
 /// </summary>
-public sealed class MobileOverviewPage : ViewBase
+public sealed partial class MobileOverviewPage : ViewBase
 {
     public MobileOverviewPage(IProfileService profileService)
     {
+        InitializeComponent();
         var metrics = new List<(string Label, string Value, string Glyph, string WashKey)>
         {
             (LR.M_Students,
@@ -41,13 +43,7 @@ public sealed class MobileOverviewPage : ViewBase
                 FluentIcons.TrophyFilled, MobileTheme.Keys.SurfaceMuted));
         }
 
-        var grid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("*,*"),
-            RowDefinitions = new RowDefinitions("Auto,Auto"),
-            ColumnSpacing = MobileTheme.FindDouble("MobileSpacingMd", 14),
-            RowSpacing = MobileTheme.FindDouble("MobileSpacingMd", 14)
-        };
+        var grid = this.FindControl<Grid>("MetricsGrid")!;
         // 按行优先顺序填充：抽奖关闭时剩余两项自动重排为一行，不留空位。
         for (var i = 0; i < metrics.Count; i++)
         {
@@ -57,13 +53,7 @@ public sealed class MobileOverviewPage : ViewBase
             Grid.SetColumn(card, i % 2);
         }
 
-        ScrollViewer scroll = MobileUi.CreateScroll([
-            MobileUi.CreateLabel(LR.S_DataOverview),
-            MobileUi.CreateTitle(LR.P_Overview),
-            grid
-        ]);
-        Content = scroll;
-        MobileAnimations.PlayPageEnter(scroll);
+        MobileAnimations.PlayPageEnter(this.FindControl<ScrollViewer>("PageScroll")!);
     }
 
     private static string FormatCount(int value) =>
@@ -99,4 +89,6 @@ public sealed class MobileOverviewPage : ViewBase
             }
         };
     }
+
+    private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }

@@ -1,0 +1,30 @@
+<local:MobileSettingsCatalogPage xmlns="https://github.com/avaloniaui"
+                                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                                  xmlns:local="clr-namespace:SecRandom.Mobile.Views.Settings"
+                                  xmlns:langs="clr-namespace:SecRandom.Mobile.Langs.Mobile"
+                                  x:Class="SecRandom.Mobile.Views.Settings.MobileSettingsCatalogPage">
+    <ScrollViewer x:Name="PageScroll"
+                  Padding="{DynamicResource MobilePagePadding}"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto"
+                  IsScrollChainingEnabled="False"
+                  IsScrollInertiaEnabled="True">
+        <StackPanel x:Name="SettingsItems"
+                    Spacing="{DynamicResource MobileSpacingMd}"
+                    MaxWidth="720">
+            <StackPanel Spacing="{DynamicResource MobileSpacingXs}">
+                <TextBlock Text="{x:Static langs:Resources.P_Settings}"
+                           FontSize="{DynamicResource MobileFontSizeTitle}"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource MobileTextBrush}"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="{x:Static langs:Resources.S_SettingsCategories}"
+                           FontSize="{DynamicResource MobileFontSizeCaption}"
+                           Foreground="{DynamicResource MobileMutedTextBrush}"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</local:MobileSettingsCatalogPage>

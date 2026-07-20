@@ -13,7 +13,7 @@ namespace SecRandom.Mobile.Views.Settings;
 /// iOS 与中性构建为 <see cref="UnsupportedMobileUpdateInstaller"/>）。不支持应用内更新时
 /// 显示空态风格说明，而不是误导性的「已是最新版本」。
 /// </summary>
-public sealed class MobileUpdateSettingsPage : MobileSettingsPageBase
+public sealed partial class MobileUpdateSettingsPage : MobileSettingsPageBase
 {
     private readonly MobileUpdateService _updateService;
     private readonly bool _installerSupported;
@@ -23,6 +23,7 @@ public sealed class MobileUpdateSettingsPage : MobileSettingsPageBase
         _updateService = updateService;
         // 构造函数签名保持稳定；安装器投影经 IAppHost 解析，Host 未就绪时按不支持处理。
         _installerSupported = IAppHost.TryGetService<IMobileUpdateInstaller>()?.IsSupported ?? false;
+        InitializeComponent();
         Render();
     }
 
@@ -30,7 +31,7 @@ public sealed class MobileUpdateSettingsPage : MobileSettingsPageBase
     {
         if (!_installerSupported)
         {
-            Content = BuildPage(LR.S_AppUpdates, LR.S_AppUpdates_D, [
+            RenderPage([
                 new MobileEmptyState(
                     FluentIcons.InfoFilled,
                     LR.M_InAppUpdateUnsupported,
@@ -48,7 +49,7 @@ public sealed class MobileUpdateSettingsPage : MobileSettingsPageBase
         };
         MobileTheme.BindBrush(status, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
 
-        Content = BuildPage(LR.S_AppUpdates, LR.S_AppUpdates_D, [
+        RenderPage([
             MobileUi.CreateSecondaryButton(LR.C_CheckUpdates, async () =>
             {
                 await _updateService.CheckAsync();

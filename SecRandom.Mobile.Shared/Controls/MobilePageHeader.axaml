@@ -1,0 +1,19 @@
+<local:MobilePageHeader xmlns="https://github.com/avaloniaui"
+                        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                        xmlns:local="clr-namespace:SecRandom.Mobile.Controls"
+                        x:Class="SecRandom.Mobile.Controls.MobilePageHeader">
+    <Border x:Name="Root" Padding="20,14" BorderThickness="0,0,0,1">
+        <Grid ColumnDefinitions="Auto,*">
+            <Image Source="avares://SecRandom.Mobile/Assets/AppLogo.png"
+                   Width="32"
+                   Height="32"
+                   Margin="0,0,10,0"
+                   VerticalAlignment="Center" />
+            <TextBlock x:Name="TitleText"
+                       Grid.Column="1"
+                       FontSize="20"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center" />
+        </Grid>
+    </Border>
+</local:MobilePageHeader>

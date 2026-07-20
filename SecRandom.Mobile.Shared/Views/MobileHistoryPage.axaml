@@ -1,0 +1,6 @@
+<local:MobileHistoryPage xmlns="https://github.com/avaloniaui"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                       xmlns:local="clr-namespace:SecRandom.Mobile.Views"
+                       x:Class="SecRandom.Mobile.Views.MobileHistoryPage">
+    <ContentControl x:Name="PageContent" />
+</local:MobileHistoryPage>
