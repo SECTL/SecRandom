@@ -10,20 +10,20 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
-using SecRandom.Core.Views;
 using SecRandom.Mobile.Controls;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Views;
 
-public sealed partial class MobileHistoryPage : ViewBase
+public sealed partial class MobileHistoryPage : UserControl
 {
     private readonly IProfileService _profileService;
     private readonly IHistoryQueryService _historyQueryService;
     private readonly IProfileCatalogManager _catalogManager;
     private readonly MainConfigHandler _configHandler;
     private readonly DrawEngine _drawEngine;
+    private readonly IMobileCapabilities _capabilities;
     private int _segment;
     private string? _profileName;
     private bool _recordsMode;
@@ -34,27 +34,29 @@ public sealed partial class MobileHistoryPage : ViewBase
         IHistoryQueryService historyQueryService,
         IProfileCatalogManager catalogManager,
         MainConfigHandler configHandler,
-        DrawEngine drawEngine)
+        DrawEngine drawEngine,
+        IMobileCapabilities capabilities)
     {
         _profileService = profileService;
         _historyQueryService = historyQueryService;
         _catalogManager = catalogManager;
         _configHandler = configHandler;
         _drawEngine = drawEngine;
+        _capabilities = capabilities;
         InitializeComponent();
         Render();
     }
 
     private void Render()
     {
-        if (_segment == 1 && !MobileCapabilities.IsLotteryEnabled)
+        if (_segment == 1 && !_capabilities.IsLotteryEnabled)
             _segment = 0;
 
         var segmented = MobileViewFactory.CreateTabSplit(
             _segment,
             [
                 (LR.C_RollCall, true),
-                (LR.C_Lottery, MobileCapabilities.IsLotteryEnabled)
+                (LR.C_Lottery, _capabilities.IsLotteryEnabled)
             ],
             segment =>
             {

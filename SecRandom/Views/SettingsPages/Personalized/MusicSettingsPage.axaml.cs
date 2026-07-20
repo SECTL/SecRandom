@@ -8,7 +8,6 @@ using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
-using SecRandom.Core.Views;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Services.Draw;
@@ -18,7 +17,7 @@ using LR = SecRandom.Langs.SettingsPages.Personalized.Music.Resources;
 namespace SecRandom.Views.SettingsPages.Personalized;
 
 [PageInfo("settings.personalized.music", FluentIcons.Speaker2Filled, "settings.personalized")]
-public partial class MusicSettingsPage : ViewBase, INotifyPropertyChanged
+public partial class MusicSettingsPage : UserControl, INotifyPropertyChanged
 {
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
 

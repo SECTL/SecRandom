@@ -21,7 +21,8 @@ public sealed partial class MobileAboutSettingsPage : MobileSettingsPageBase
 
     private readonly TextBlock _statusText;
 
-    public MobileAboutSettingsPage()
+    public MobileAboutSettingsPage(IMobileNavigator navigator, IMobileCapabilities capabilities)
+        : base(navigator, capabilities)
     {
         InitializeComponent();
         var version = (Assembly.GetEntryAssembly() ?? typeof(MobileAboutSettingsPage).Assembly)

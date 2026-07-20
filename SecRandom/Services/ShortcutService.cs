@@ -165,15 +165,13 @@ public sealed class ShortcutService(
         switch (action)
         {
             case ShortcutAction.OpenRollCallPage:
-                App.ShowMainWindow();
-                MainView.Current?.SelectNavigationItemById("main.rollCall");
+                App.ShowMainWindow("main.rollCall");
                 break;
             case ShortcutAction.QuickDraw:
                 App.ShowQuickDrawWindow();
                 break;
             case ShortcutAction.OpenLotteryPage:
-                App.ShowMainWindow();
-                MainView.Current?.SelectNavigationItemById("main.lottery");
+                App.ShowMainWindow("main.lottery");
                 break;
             case ShortcutAction.IncreaseRollCallCount:
                 if (rollCallViewModel.IncreaseCountCommand.CanExecute(null))

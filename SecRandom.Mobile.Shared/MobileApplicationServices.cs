@@ -30,20 +30,23 @@ public static class MobileApplicationServices
         services.AddSingleton<MobileDeviceUuidStore>();
         services.AddHostedService<MobileOnlineStatusService>();
         services.AddSingleton<IMobileRootViewReloader>(_ => new MobileRootViewReloader(reloadRoot));
+        services.AddSingleton<IMobileCapabilities, MobileCapabilities>();
+        services.AddSingleton<IMobileNavigator, MobileNavigator>();
         services.AddSingleton<SingleViewHostProvider>();
         services.AddSingleton<IViewHostProvider>(provider => provider.GetRequiredService<SingleViewHostProvider>());
-        services.AddViewEngine()
-            .AddView<MobileDrawPage>(MobileRoutes.Draw)
-            .AddView<MobileHistoryPage>(MobileRoutes.History)
-            .AddView<MobileOverviewPage>(MobileRoutes.Overview)
-            .AddView<MobileSettingsCatalogPage>(MobileRoutes.Settings)
-            .AddView<MobileGeneralSettingsPage>(MobileRoutes.General)
-            .AddView<MobilePersonalizationSettingsPage>(MobileRoutes.Personalization)
-            .AddView<MobileListManagementSettingsPage>(MobileRoutes.ListManagement)
-            .AddView<MobileDrawSettingsPage>(MobileRoutes.DrawSettings)
-            .AddView<MobileBackupSettingsPage>(MobileRoutes.Backup)
-            .AddView<MobileUpdateSettingsPage>(MobileRoutes.Update)
-            .AddView<MobileAboutSettingsPage>(MobileRoutes.About);
+        services.AddViewEngine();
+        services.AddKeyedTransient<UserControl, MobileDrawPage>(MobilePageIds.Draw);
+        services.AddKeyedTransient<UserControl, MobileHistoryPage>(MobilePageIds.History);
+        services.AddKeyedTransient<UserControl, MobileOverviewPage>(MobilePageIds.Overview);
+        services.AddKeyedTransient<UserControl, MobileSettingsCatalogPage>(MobilePageIds.Settings);
+        services.AddKeyedTransient<UserControl, MobileGeneralSettingsPage>(MobilePageIds.General);
+        services.AddKeyedTransient<UserControl, MobilePersonalizationSettingsPage>(MobilePageIds.Personalization);
+        services.AddKeyedTransient<UserControl, MobileListManagementSettingsPage>(MobilePageIds.ListManagement);
+        services.AddKeyedTransient<UserControl, MobileDrawSettingsPage>(MobilePageIds.DrawSettings);
+        services.AddKeyedTransient<UserControl, MobileBackupSettingsPage>(MobilePageIds.Backup);
+        if (platform.UpdateInstaller.IsSupported)
+            services.AddKeyedTransient<UserControl, MobileUpdateSettingsPage>(MobilePageIds.Update);
+        services.AddKeyedTransient<UserControl, MobileAboutSettingsPage>(MobilePageIds.About);
         services.AddTransient<MobileRootView>();
         return services;
     }

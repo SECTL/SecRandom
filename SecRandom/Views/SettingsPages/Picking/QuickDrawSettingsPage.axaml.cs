@@ -6,7 +6,6 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
-using SecRandom.Core.Views;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.Picking;
@@ -18,7 +17,7 @@ using SecRandom.Services.Music;
 namespace SecRandom.Views.SettingsPages.Picking;
 
 [PageInfo("settings.picking.quickDraw", FluentIcons.FlashFilled, "settings.picking")]
-public partial class QuickDrawSettingsPage : ViewBase
+public partial class QuickDrawSettingsPage : UserControl
 {
     private bool _normalizingSettings;
     private bool _isSubscribed;

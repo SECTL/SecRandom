@@ -13,7 +13,6 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
-using SecRandom.Core.Views;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Plugins;
@@ -24,7 +23,7 @@ using LR = SecRandom.Langs.SettingsPages.Plugins.Overview.Resources;
 namespace SecRandom.Views.SettingsPages.Plugins.Overview;
 
 [PageInfo("settings.plugin", FluentIcons.AppsListFilled, isHide: true, useFullWidth: true, hidePageTitle: true)]
-public partial class PluginsSettingsPage : ViewBase, INotifyPropertyChanged
+public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
 {
     private readonly IPluginManager _pluginManager = IAppHost.GetService<IPluginManager>();
     private readonly IPluginCatalogService _pluginCatalog = IAppHost.GetService<IPluginCatalogService>();

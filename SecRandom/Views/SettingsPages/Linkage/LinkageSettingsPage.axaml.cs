@@ -11,7 +11,6 @@ using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
-using SecRandom.Core.Views;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
@@ -23,7 +22,7 @@ using LR = SecRandom.Langs.SettingsPages.Linkage.Resources;
 namespace SecRandom.Views.SettingsPages.Linkage;
 
 [PageInfo("settings.linkage", FluentIcons.CalendarLtrFilled)]
-public partial class LinkageSettingsPage : ViewBase
+public partial class LinkageSettingsPage : UserControl
 {
     private bool _isSubscribed;
     public static readonly StyledProperty<string> CsesSummaryProperty =

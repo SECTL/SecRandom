@@ -37,7 +37,10 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         IProfileCatalogManager catalogManager,
         IProfileService profileService,
         MobileMediaLibraryService mediaLibrary,
-        MobileDrawMediaService drawMedia)
+        MobileDrawMediaService drawMedia,
+        IMobileNavigator navigator,
+        IMobileCapabilities capabilities)
+        : base(navigator, capabilities)
     {
         _catalogManager = catalogManager;
         _profileService = profileService;

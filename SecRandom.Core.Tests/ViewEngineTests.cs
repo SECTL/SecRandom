@@ -175,54 +175,22 @@ public sealed class ViewEngineTests
     }
 
     [Fact]
-    public async Task ShowExclusiveAsync_ClosesSiblingPagesOnTheSameHost()
-    {
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var host = new TestHost("exclusive-host");
-        var services = new ServiceCollection();
-        services.AddSingleton<TestViewState>();
-        services.AddSingleton<IViewHostProvider>(new SequenceHostProvider(host));
-        services.AddViewEngine()
-            .AddView<TestView>("test.view")
-            .AddView<TestView>("test.other");
-        await using var provider = services.BuildServiceProvider();
-        var engine = provider.GetRequiredService<IViewEngine>();
-
-        var first = await engine.ShowExclusiveAsync("exclusive-host", "test.view", cancellationToken: cancellationToken);
-        await engine.ShowExclusiveAsync("exclusive-host", "test.other", cancellationToken: cancellationToken);
-
-        var firstResult = await first.Completion.WaitAsync(TimeSpan.FromSeconds(2), cancellationToken);
-        Assert.True(firstResult.WasClosed);
-        Assert.Equal(ViewCloseReason.Programmatic, firstResult.Reason);
-        Assert.Equal(1, host.CloseCount);
-        Assert.Equal(2, host.PageShowCount);
-        var activeView = Assert.Single(host.PageStack);
-        Assert.Equal("test.other", activeView.ViewId);
-
-        // 再次以独占模式打开同一视图：复用激活，不重复入栈。
-        await engine.ShowExclusiveAsync("exclusive-host", "test.other", cancellationToken: cancellationToken);
-        Assert.Equal(2, host.PageShowCount);
-        Assert.Equal(1, host.ActivateCount);
-        Assert.Single(host.PageStack);
-    }
-
-    [Fact]
-    public async Task DesktopProvider_RoutesNamedEmbeddedHost()
+    public async Task DesktopProvider_RoutesNamedPhysicalHost()
     {
         var provider = new DesktopViewHostProvider();
-        var embeddedHost = new TestHost("desktop.main");
-        await provider.RegisterEmbeddedHostAsync(embeddedHost, TestContext.Current.CancellationToken);
+        var host = new TestHost("desktop.main");
+        provider.RegisterHost(host);
 
         var selection = await provider.GetHostAsync(
             new ViewShowOptions { HostId = "desktop.main" },
             TestContext.Current.CancellationToken);
 
         Assert.True(selection.IsSuccess);
-        Assert.Same(embeddedHost, selection.Host);
+        Assert.Same(host, selection.Host);
     }
 
     [Fact]
-    public async Task DesktopProvider_RejectsUnknownNamedEmbeddedHostWithoutCreatingWindow()
+    public async Task DesktopProvider_RejectsUnknownNamedPhysicalHostWithoutCreatingWindow()
     {
         var provider = new DesktopViewHostProvider();
 
@@ -236,16 +204,16 @@ public sealed class ViewEngineTests
     }
 
     [Fact]
-    public async Task DesktopProvider_ReregisteringEmbeddedHostDestroysTheStaleInstance()
+    public async Task DesktopProvider_ReregisteringPhysicalHostUsesReplacement()
     {
         var provider = new DesktopViewHostProvider();
         var stale = new TestHost("desktop.main");
-        await provider.RegisterEmbeddedHostAsync(stale, TestContext.Current.CancellationToken);
+        provider.RegisterHost(stale);
 
         var replacement = new TestHost("desktop.main");
-        await provider.RegisterEmbeddedHostAsync(replacement, TestContext.Current.CancellationToken);
+        provider.RegisterHost(replacement);
 
-        Assert.Equal(1, stale.DestroyCount);
+        Assert.Equal(0, stale.DestroyCount);
         var selection = await provider.GetHostAsync(
             new ViewShowOptions { HostId = "desktop.main" },
             TestContext.Current.CancellationToken);
@@ -254,11 +222,11 @@ public sealed class ViewEngineTests
     }
 
     [Fact]
-    public async Task DesktopProvider_UnregistersDestroyedEmbeddedHost()
+    public async Task DesktopProvider_UnregistersDestroyedPhysicalHost()
     {
         var provider = new DesktopViewHostProvider();
         var host = new TestHost("desktop.main");
-        await provider.RegisterEmbeddedHostAsync(host, TestContext.Current.CancellationToken);
+        provider.RegisterHost(host);
 
         host.RaiseDestroyed();
         var selection = await provider.GetHostAsync(
@@ -270,10 +238,10 @@ public sealed class ViewEngineTests
     }
 
     [Fact]
-    public async Task DesktopProvider_RejectsNewHostForNamedEmbeddedHost()
+    public async Task DesktopProvider_RejectsNewHostForNamedPhysicalHost()
     {
         var provider = new DesktopViewHostProvider();
-        await provider.RegisterEmbeddedHostAsync(new TestHost("desktop.main"), TestContext.Current.CancellationToken);
+        provider.RegisterHost(new TestHost("desktop.main"));
 
         var selection = await provider.GetHostAsync(
             new ViewShowOptions

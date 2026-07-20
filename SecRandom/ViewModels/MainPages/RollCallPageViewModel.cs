@@ -399,15 +399,13 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private void OpenRollCallSettings()
     {
-        App.ShowSettingsWindow();
-        Views.SettingsView.Current?.SelectNavigationItemById("settings.picking.rollCall");
+        App.ShowSettingsWindow("settings.picking.rollCall");
     }
 
     [RelayCommand]
     private void OpenListSettings()
     {
-        App.ShowSettingsWindow();
-        Views.SettingsView.Current?.SelectNavigationItemById("settings.listManagement.rollCallList");
+        App.ShowSettingsWindow("settings.listManagement.rollCallList");
     }
 
     public void RefreshLists()

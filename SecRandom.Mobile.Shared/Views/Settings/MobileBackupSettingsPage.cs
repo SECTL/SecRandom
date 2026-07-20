@@ -42,7 +42,8 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
     private AvaloniaButton? _confirmButton;
     private AvaloniaButton? _cancelButton;
 
-    public MobileBackupSettingsPage()
+    public MobileBackupSettingsPage(IMobileNavigator navigator, IMobileCapabilities capabilities)
+        : base(navigator, capabilities)
     {
         InitializeComponent();
         _exportAllButton = MobileViewFactory.CreatePrimaryButton(LR.C_ExportAllData, true, () => _ = ExportAllDataAsync());

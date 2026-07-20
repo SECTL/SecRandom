@@ -4,7 +4,6 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
-using SecRandom.Core.Views;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
@@ -14,7 +13,7 @@ using SecRandom.Services.Music;
 namespace SecRandom.Views.SettingsPages.Picking;
 
 [PageInfo("settings.picking.default", FluentIcons.DocumentBulletListCubeFilled, "settings.picking")]
-public partial class DefaultDrawSettingsPage : ViewBase
+public partial class DefaultDrawSettingsPage : UserControl
 {
     private bool _isSubscribed;
 

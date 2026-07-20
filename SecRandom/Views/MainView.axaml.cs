@@ -1,7 +1,5 @@
 using System;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
@@ -23,21 +21,16 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Services;
 using SecRandom.Core.Views;
 using SecRandom.Services;
-using SecRandom.Services.ViewEngine;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
 
-public partial class MainView : UserControl, IFANavigationPageFactory
+public partial class MainView : ViewBase, IFANavigationPageFactory
 {
     private const string DefaultMainPageId = "main.rollCall";
-    private const string EmbeddedHostId = "desktop.main";
 
     private readonly FAFrame? _navigationFrame;
     private readonly FANavigationView? _navigationView;
-    private readonly ContentControl? _embeddedViewHostPresenter;
-    private readonly ViewHostControl _embeddedViewHost;
-    private readonly DesktopViewHostProvider _desktopViewHostProvider = IAppHost.GetService<DesktopViewHostProvider>();
 
     private AppToastAdorner? _appToastAdorner;
     private bool _isAdornerAdded;
@@ -48,19 +41,19 @@ public partial class MainView : UserControl, IFANavigationPageFactory
     {
         Current = this;
         DataContext = this;
-        _embeddedViewHost = new ViewHostControl(EmbeddedHostId);
         InitializeComponent();
 
         _navigationFrame = this.FindControl<FAFrame>("NavigationFrame");
         _navigationView = this.FindControl<FANavigationView>("NavigationView");
-        _embeddedViewHostPresenter = this.FindControl<ContentControl>("EmbeddedViewHostPresenter");
-        if (_embeddedViewHostPresenter is not null)
-            _embeddedViewHostPresenter.Content = _embeddedViewHost;
 
         _navigationFrame?.NavigationPageFactory = this;
-        _desktopViewHostProvider.RegisterEmbeddedHost(_embeddedViewHost);
         BuildNavigationMenuItems();
         SelectNavigationItemById(DefaultMainPageId);
+        Closed += (_, _) =>
+        {
+            if (ReferenceEquals(Current, this))
+                Current = null;
+        };
 
         TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
         RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
@@ -122,13 +115,6 @@ public partial class MainView : UserControl, IFANavigationPageFactory
             _isFeatureAvailabilitySubscribed = false;
         }
         DataContext = null;
-    }
-
-    public async Task CloseEmbeddedHostAsync(ViewCloseReason reason, CancellationToken cancellationToken = default)
-    {
-        var viewEngine = IAppHost.GetService<IViewEngine>();
-        await viewEngine.CloseHostAsync(_embeddedViewHost, reason, cancellationToken).ConfigureAwait(false);
-        await _embeddedViewHost.DestroyAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private void BuildNavigationMenuItems()
@@ -230,7 +216,7 @@ public partial class MainView : UserControl, IFANavigationPageFactory
         ViewModel.IsDrawerOpen = false;
     }
 
-    private async void CoreNavigate(PageInfo info)
+    private void CoreNavigate(PageInfo info)
     {
         if (info.Id == "settings")
         {
@@ -238,39 +224,10 @@ public partial class MainView : UserControl, IFANavigationPageFactory
             return;
         }
 
-        var viewEngine = IAppHost.GetService<IViewEngine>();
-        if (IAppHost.GetService<IViewRegistry>().TryGet(info.Id, out _))
-        {
-            // MVE 页：清掉 Frame 并显式互斥（隐藏 + 禁命中测试），embedded host 独占内容区。
-            ViewModel.FrameContent = null;
-            SelectNavigationItem(info);
-            ViewModel.SelectedPageInfo = info;
-            _navigationFrame?.Navigate(null);
-            SetEmbeddedMode(true);
-            await viewEngine
-                .ShowExclusiveAsync(EmbeddedHostId, info.Id)
-                .ConfigureAwait(true);
-            return;
-        }
-
-        // Frame 页：关闭 embedded host 上的全部 MVE 会话，恢复 Frame 显示与命中测试。
-        await viewEngine.CloseHostAsync(_embeddedViewHost, ViewCloseReason.Programmatic).ConfigureAwait(true);
-        SetEmbeddedMode(false);
         ViewModel.FrameContent = null;
         SelectNavigationItem(info);
         ViewModel.SelectedPageInfo = info;
         _navigationFrame?.NavigateFromObject(info);
-    }
-
-    private void SetEmbeddedMode(bool isEmbedded)
-    {
-        if (_navigationFrame is null)
-            return;
-
-        // 与 ViewHostControl 自治可见性配合形成显式互斥：MVE 模式下 Frame 不可见，
-        // 避免 ViewHostControl 根 Grid 无背景时下层 Frame 内容透出。
-        _navigationFrame.IsVisible = !isEmbedded;
-        _navigationFrame.IsHitTestVisible = !isEmbedded;
     }
 
     private void NavigationView_OnItemInvoked(object? sender, FANavigationViewItemInvokedEventArgs e)

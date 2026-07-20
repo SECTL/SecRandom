@@ -235,7 +235,7 @@ public partial class App : Application
             _ = host.Services.GetRequiredService<IDrawTemporaryRecordService>();
             _ = host.Services.GetRequiredService<IFeatureAvailabilityService>();
             _ = host.Services.GetRequiredService<DrawEngine>();
-            await host.Services.GetRequiredService<IViewEngine>().ShowAsync(MobileRoutes.Draw).ConfigureAwait(false);
+            await host.Services.GetRequiredService<IMobileNavigator>().ResetToDrawAsync().ConfigureAwait(false);
             if (_mobileStopping || !ReferenceEquals(host, _mobileHost))
                 return;
 
@@ -264,18 +264,18 @@ public partial class App : Application
             return;
 
         MobileRootView? oldRoot = _mobileRootView;
-        var engine = host.Services.GetRequiredService<IViewEngine>();
         if (oldRoot is not null)
         {
-            await engine.CloseHostAsync(oldRoot.InnerViewHost, ViewCloseReason.Programmatic).ConfigureAwait(false);
-            await oldRoot.InnerViewHost.DestroyAsync().ConfigureAwait(false);
-            host.Services.GetRequiredService<SingleViewHostProvider>().Detach(oldRoot.InnerViewHost);
+            var engine = host.Services.GetRequiredService<IViewEngine>();
+            await engine.CloseHostAsync(oldRoot.ModalViewHost, ViewCloseReason.Programmatic).ConfigureAwait(false);
+            await oldRoot.ModalViewHost.DestroyAsync().ConfigureAwait(false);
+            await oldRoot.DetachAsync().ConfigureAwait(false);
         }
 
         var newRoot = ActivatorUtilities.CreateInstance<MobileRootView>(host.Services);
         _mobileRootView = newRoot;
         await Dispatcher.UIThread.InvokeAsync(() => singleView.MainView = newRoot);
-        await engine.ShowAsync(MobileRoutes.Draw).ConfigureAwait(false);
+        await newRoot.ResetNavigationAsync().ConfigureAwait(false);
     }
 
     private async Task StopMobileHostAsync()
@@ -290,9 +290,10 @@ public partial class App : Application
             if (_mobileRootView is not null)
             {
                 await host.Services.GetRequiredService<IViewEngine>()
-                    .CloseHostAsync(_mobileRootView.InnerViewHost, ViewCloseReason.ApplicationShutdown)
+                    .CloseHostAsync(_mobileRootView.ModalViewHost, ViewCloseReason.ApplicationShutdown)
                     .ConfigureAwait(false);
-                await _mobileRootView.InnerViewHost.DestroyAsync().ConfigureAwait(false);
+                await _mobileRootView.ModalViewHost.DestroyAsync().ConfigureAwait(false);
+                await _mobileRootView.DetachAsync().ConfigureAwait(false);
             }
 
             IMobileMediaPlayer mediaPlayer = host.Services.GetRequiredService<IMobileMediaPlayer>();
@@ -575,39 +576,8 @@ public partial class App : Application
 
                 services.AddPlatformServices(platform);
                 services.AddViewEngine()
-                    .AddView<HistoryPage>("main.history")
-                    .AddView<RollCallPage>("main.rollCall")
-                    .AddView<LotteryPage>("main.lottery")
-                    .AddView<HomeSettingsPage>("settings.overview")
-                    .AddView<BasicSettingsPage>("settings.general.basic")
-                    .AddView<SecuritySettingsPage>("settings.general.security")
-                    .AddView<PrivacySettingsPage>("settings.general.privacy")
-                    .AddView<VerificationSettingsPage>("settings.general.verification")
-                    .AddView<BackupSettingsPage>("settings.general.backup")
-                    .AddView<AppearanceSettingsPage>("settings.personalized.appearance")
-                    .AddView<FloatingWindowSettingsPage>("settings.personalized.floatingWindow")
-                    .AddView<MusicSettingsPage>("settings.personalized.music")
-                    .AddView<LinkageSettingsPage>("settings.linkage")
-                    .AddView<MoreSettingsPage>("settings.more")
-                    .AddView<RollCallListSettingsPage>("settings.listManagement.rollCallList")
-                    .AddView<LotteryListSettingsPage>("settings.listManagement.lotteryList")
-                    .AddView<DefaultDrawSettingsPage>("settings.picking.default")
-                    .AddView<RollCallDrawSettingsPage>("settings.picking.rollCall")
-                    .AddView<QuickDrawSettingsPage>("settings.picking.quickDraw")
-                    .AddView<LotteryDrawSettingsPage>("settings.picking.lottery")
-                    .AddView<VoiceSettingsPage>("settings.notification.voiceMusic")
-                    .AddView<DefaultNotificationSettingsPage>("settings.notification.default")
-                    .AddView<RollCallNotificationSettingsPage>("settings.notification.rollCall")
-                    .AddView<QuickDrawNotificationSettingsPage>("settings.notification.quickDraw")
-                    .AddView<LotteryNotificationSettingsPage>("settings.notification.lottery")
-                    .AddView<HistoryManagementSettingsPage>("settings.history.management")
-                    .AddView<RollCallHistorySettingsPage>("settings.history.rollCall")
-                    .AddView<LotteryHistorySettingsPage>("settings.history.lottery")
-                    .AddView<PluginsSettingsPage>("settings.plugin")
-                    .AddView<UpdateSettingsPage>("settings.update")
-                    .AddView<AboutSettingsPage>("settings.about")
-                    .AddView<DebugSettingsPage>("settings.debug")
-                    .AddView<LogViewerSettingsPage>("settings.logs");
+                    .AddView<MainView>(DesktopViewIds.Main)
+                    .AddView<SettingsView>(DesktopViewIds.Settings);
                 services.AddSingleton<DesktopViewHostProvider>();
                 services.AddSingleton<IViewHostProvider>(serviceProvider =>
                     serviceProvider.GetRequiredService<DesktopViewHostProvider>());
@@ -696,10 +666,8 @@ public partial class App : Application
                 services.AddSingleton<ISecurityService, SecurityService>();
 
                 // 窗口
-                services.AddTransient<MainView>();
                 services.AddTransient<MainViewModel>();
 
-                services.AddTransient<SettingsView>();
                 services.AddTransient<SettingsViewModel>();
 
                 services.AddSingleton<FirstRunOobeViewModel>();
@@ -1202,39 +1170,28 @@ public partial class App : Application
 
     #region Windows
 
-    public static void ShowMainWindow()
+    public static void ShowMainWindow() => ShowMainWindow(null);
+
+    public static void ShowMainWindow(string? pageId)
+    {
+        ObserveTask(ShowMainWindowCoreAsync(pageId), "Failed to show main window.");
+    }
+
+    private static async Task ShowMainWindowCoreAsync(string? pageId = null)
     {
         TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
         using var transaction = telemetry?.StartTransaction("ui.main_window", "ui.navigation");
 
         try
         {
-            if (_mainWindow is { IsVisible: true })
+            if (_mainWindow is null)
             {
-                RestoreAndActivate(_mainWindow);
-                transaction?.Finish(SpanStatus.Ok);
-                return;
-            }
-
-            if (_mainWindow is not { IsLoaded: true })
-            {
-                _mainWindow = new MainWindow(MainWindowSettingsScope.Primary)
+                var mainWindow = _mainWindow = new MainWindow(MainWindowSettingsScope.Primary)
                 {
-                    Content = IAppHost.GetService<MainView>(),
                     Title = @"SecRandom"
                 };
-                var mainWindow = _mainWindow;
-                var mainView = (MainView)mainWindow.Content;
-                mainWindow.Closing += (_, e) =>
-                {
-                    // 后台驻留/退出请求会取消本次关闭并复用窗口，此时不得清理 embedded host。
-                    if (e.Cancel)
-                        return;
-
-                    // Closing 阶段同步发起清理：UI 线程上的同步段立即完成，
-                    // 避免窗口重开时新 MainView 注册同 ID host 与旧实例竞争。
-                    ObserveTask(mainView.CloseEmbeddedHostAsync(ViewCloseReason.HostDestroyed), "Main embedded host cleanup failed.");
-                };
+                var host = new DesktopWindowViewHost(mainWindow, DesktopViewIds.Main);
+                IAppHost.GetService<DesktopViewHostProvider>().RegisterHost(host);
                 mainWindow.Closed += (_, _) =>
                 {
                     if (ReferenceEquals(_mainWindow, mainWindow))
@@ -1242,7 +1199,11 @@ public partial class App : Application
                 };
             }
 
-            RestoreAndActivate(_mainWindow);
+            await IAppHost.GetService<IViewEngine>().ShowAsync(
+                DesktopViewIds.Main,
+                new ViewShowOptions { HostId = DesktopViewIds.Main }).ConfigureAwait(true);
+            if (!string.IsNullOrWhiteSpace(pageId))
+                MainView.Current?.SelectNavigationItemById(pageId);
             transaction?.Finish(SpanStatus.Ok);
         }
         catch (Exception ex)
@@ -1260,16 +1221,15 @@ public partial class App : Application
 
         ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeAsync(
             SecurityOperation.ToggleMainWindow,
-            () =>
-            {
-                ShowMainWindow();
-                if (!string.IsNullOrWhiteSpace(pageId))
-                    MainView.Current?.SelectNavigationItemById(pageId);
-                return Task.CompletedTask;
-            }), "Main window authorization failed.");
+            () => ShowMainWindowCoreAsync(pageId)), "Main window authorization failed.");
     }
 
     public static void SetMainWindowVisibility(string action, string? pageId = null)
+    {
+        ObserveTask(SetMainWindowVisibilityCoreAsync(action, pageId), "Main window visibility update failed.");
+    }
+
+    private static async Task SetMainWindowVisibilityCoreAsync(string action, string? pageId)
     {
         if (pageId == "main.lottery" && !IAppHost.GetService<IFeatureAvailabilityService>().IsLotteryEnabled)
             return;
@@ -1282,9 +1242,7 @@ public partial class App : Application
         };
         if (shouldShow)
         {
-            ShowMainWindow();
-            if (!string.IsNullOrWhiteSpace(pageId))
-                MainView.Current?.SelectNavigationItemById(pageId);
+            await ShowMainWindowCoreAsync(pageId);
         }
         else
         {
@@ -1347,24 +1305,31 @@ public partial class App : Application
         Current.RefreshTrayWindowMenuItems();
     }
 
-    public static void ShowSettingsWindow()
+    public static void ShowSettingsWindow() => ShowSettingsWindow(null);
+
+    public static void ShowSettingsWindow(string? pageId)
     {
         ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeSettingsAsync(
-            () =>
+            async () =>
             {
-                ShowSettingsWindowCore();
+                await ShowSettingsWindowCoreAsync();
                 SettingsView.Current?.ExitPreview();
-                return Task.CompletedTask;
+                if (!string.IsNullOrWhiteSpace(pageId))
+                    SettingsView.Current?.NavigateToPage(pageId);
             },
-            () =>
+            async () =>
             {
-                ShowSettingsWindowCore();
-                SettingsView.Current?.NavigateToPreviewPage("settings.general.basic");
-                return Task.CompletedTask;
+                await ShowSettingsWindowCoreAsync();
+                SettingsView.Current?.NavigateToPreviewPage(pageId ?? "settings.general.basic");
             }), "Settings window authorization failed.");
     }
 
     public static void SetSettingsWindowVisibility(string action, string pageId, bool preview)
+    {
+        ObserveTask(SetSettingsWindowVisibilityCoreAsync(action, pageId, preview), "Settings window visibility update failed.");
+    }
+
+    private static async Task SetSettingsWindowVisibilityCoreAsync(string action, string pageId, bool preview)
     {
         var shouldShow = action switch
         {
@@ -1374,7 +1339,7 @@ public partial class App : Application
         };
         if (shouldShow)
         {
-            ShowSettingsWindowCore();
+            await ShowSettingsWindowCoreAsync();
             if (preview)
                 SettingsView.Current?.NavigateToPreviewPage(pageId);
             else
@@ -1386,38 +1351,21 @@ public partial class App : Application
         }
     }
 
-    private static void ShowSettingsWindowCore()
+    private static async Task ShowSettingsWindowCoreAsync()
     {
         TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
         using var transaction = telemetry?.StartTransaction("ui.settings_window", "ui.navigation");
 
         try
         {
-            if (_settingsWindow is { IsVisible: true })
+            if (_settingsWindow is null)
             {
-                RestoreAndActivate(_settingsWindow);
-                transaction?.Finish(SpanStatus.Ok);
-                return;
-            }
-
-            if (_settingsWindow is not { IsLoaded: true })
-            {
-                _settingsWindow = new MainWindow(MainWindowSettingsScope.Settings)
+                var settingsWindow = _settingsWindow = new MainWindow(MainWindowSettingsScope.Settings)
                 {
-                    Content = IAppHost.GetService<SettingsView>(),
                     Title = @"SecRandom"
                 };
-                var settingsWindow = _settingsWindow;
-                var settingsView = (SettingsView)settingsWindow.Content;
-                settingsWindow.Closing += (_, e) =>
-                {
-                    // 与主窗口一致：取消关闭（如后台驻留）时保留 embedded host 供窗口复用。
-                    if (e.Cancel)
-                        return;
-
-                    // Closing 阶段同步发起清理，避免重开设置窗口时同 ID host 注册竞争。
-                    ObserveTask(settingsView.CloseEmbeddedHostAsync(ViewCloseReason.HostDestroyed), "Settings embedded host cleanup failed.");
-                };
+                var host = new DesktopWindowViewHost(settingsWindow, DesktopViewIds.Settings);
+                IAppHost.GetService<DesktopViewHostProvider>().RegisterHost(host);
                 settingsWindow.Closed += (_, _) =>
                 {
                     if (ReferenceEquals(_settingsWindow, settingsWindow))
@@ -1425,7 +1373,9 @@ public partial class App : Application
                 };
             }
 
-            RestoreAndActivate(_settingsWindow);
+            await IAppHost.GetService<IViewEngine>().ShowAsync(
+                DesktopViewIds.Settings,
+                new ViewShowOptions { HostId = DesktopViewIds.Settings }).ConfigureAwait(true);
             transaction?.Finish(SpanStatus.Ok);
         }
         catch (Exception ex)
@@ -1716,8 +1666,7 @@ public partial class App : Application
 
     private void MenuItemAbout_OnClick(object? sender, EventArgs e)
     {
-        ShowSettingsWindow();
-        SettingsView.Current?.SelectNavigationItemById(@"settings.about");
+        ShowSettingsWindow(@"settings.about");
     }
 
     private void MenuItemOpenMainWindow_OnClick(object? sender, EventArgs e)

@@ -17,6 +17,7 @@
 - 导航页面必须：
   - 类上标注 `[PageInfo(...)]`
   - 在 `SecRandom/App.axaml.cs` 的 `BuildHost()` 里用 `services.AddMainPage<T>() / AddSettingsPage<T>()` 注册
+- 桌面主/设置子页和移动业务/设置子页都是普通 `UserControl`，不得继承 `ViewBase`。MVE 只承载独立逻辑视图（桌面 `MainView` / `SettingsView`、崩溃恢复和插件 `PluginViewRegistration`）；平台 UI 差异在对应 Host 的条件 DI 注册阶段决定，不通过 MVE 路由表替换页面类型。
 - 本地化必须按“每页一个文件夹”拆分，不要混在一起。
 - 文件路径统一用 `Utils.GetFilePath(...)`。桌面和便携包数据落在 package root 的 `data/...`；仅 `SecRandom.Mobile.MobileApp` 可以在任何路径首次读取前调用一次 `Utils.ConfigureMobileDataRoot()`，它固定选择 app-private `LocalApplicationData/SecRandom/data`，其他代码不得运行中改写根目录。
 - 不要在页面里随意 `new` 可复用服务；需要复用/单例/可测试的服务必须进 Host。

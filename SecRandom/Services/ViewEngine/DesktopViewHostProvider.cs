@@ -13,7 +13,7 @@ namespace SecRandom.Services.ViewEngine;
 public sealed class DesktopViewHostProvider : IViewHostProvider
 {
     private readonly List<DesktopViewHostWindow> _hosts = [];
-    private readonly Dictionary<string, IViewHost> _embeddedHosts = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, IViewHost> _registeredHosts = new(StringComparer.Ordinal);
     private int _nextHostNumber;
 
     public Task<ViewHostSelection> GetHostAsync(
@@ -28,8 +28,8 @@ public sealed class DesktopViewHostProvider : IViewHostProvider
                 if (options.ActivationPreference == ViewActivationPreference.NewHost)
                     return ViewHostSelection.Unsupported("A named host cannot be combined with creating a new host.");
 
-                return _embeddedHosts.TryGetValue(options.HostId, out var embeddedHost)
-                    ? ViewHostSelection.Success(embeddedHost)
+                return _registeredHosts.TryGetValue(options.HostId, out var registeredHost)
+                    ? ViewHostSelection.Success(registeredHost)
                     : ViewHostSelection.Failed($"Desktop view host '{options.HostId}' is not registered.");
             }
 
@@ -51,38 +51,22 @@ public sealed class DesktopViewHostProvider : IViewHostProvider
         });
     }
 
-    public Task RegisterEmbeddedHostAsync(IViewHost host, CancellationToken cancellationToken = default)
+    public void RegisterHost(IViewHost host)
     {
         ArgumentNullException.ThrowIfNull(host);
-        return RunOnUiThreadAsync(() => RegisterEmbeddedHost(host));
-    }
-
-    public void RegisterEmbeddedHost(IViewHost host)
-    {
-        ArgumentNullException.ThrowIfNull(host);
-        // 无 Avalonia 应用（单元测试）时跳过 UI 线程强制检查，与 RunOnUiThreadAsync 的内联执行一致。
         if (Application.Current is not null && !Dispatcher.UIThread.CheckAccess())
-            throw new InvalidOperationException("Desktop embedded hosts must be registered on the UI thread.");
+            throw new InvalidOperationException("Desktop window hosts must be registered on the UI thread.");
 
-        if (_embeddedHosts.TryGetValue(host.HostId, out var existing))
+        if (_registeredHosts.TryGetValue(host.HostId, out var existing))
         {
             if (ReferenceEquals(existing, host))
                 return;
 
-            // 自愈：同 ID 旧实例（关窗清理竞态中的残留）先同步销毁注销，再注册新实例，
-            // 替代直接抛异常导致整个窗口创建失败。DestroyAsync 的 UI 线程段同步完成。
-            existing.DestroyAsync().GetAwaiter().GetResult();
-            UnregisterEmbeddedHost(existing);
+            existing.Destroyed -= RegisteredHostOnDestroyed;
         }
 
-        _embeddedHosts.Add(host.HostId, host);
-        host.Destroyed += EmbeddedHostOnDestroyed;
-    }
-
-    public Task UnregisterEmbeddedHostAsync(IViewHost host, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(host);
-        return RunOnUiThreadAsync(() => UnregisterEmbeddedHost(host));
+        _registeredHosts[host.HostId] = host;
+        host.Destroyed += RegisteredHostOnDestroyed;
     }
 
     private void HostOnDestroyed(object? sender, EventArgs e)
@@ -94,19 +78,19 @@ public sealed class DesktopViewHostProvider : IViewHostProvider
         }
     }
 
-    private void EmbeddedHostOnDestroyed(object? sender, EventArgs e)
+    private void RegisteredHostOnDestroyed(object? sender, EventArgs e)
     {
         if (sender is IViewHost host)
-            UnregisterEmbeddedHost(host);
+            UnregisterHost(host);
     }
 
-    private void UnregisterEmbeddedHost(IViewHost host)
+    private void UnregisterHost(IViewHost host)
     {
-        if (!_embeddedHosts.TryGetValue(host.HostId, out var existing) || !ReferenceEquals(existing, host))
+        if (!_registeredHosts.TryGetValue(host.HostId, out var existing) || !ReferenceEquals(existing, host))
             return;
 
-        existing.Destroyed -= EmbeddedHostOnDestroyed;
-        _embeddedHosts.Remove(host.HostId);
+        existing.Destroyed -= RegisteredHostOnDestroyed;
+        _registeredHosts.Remove(host.HostId);
     }
 
     private static Task<T> RunOnUiThreadAsync<T>(Func<T> action)

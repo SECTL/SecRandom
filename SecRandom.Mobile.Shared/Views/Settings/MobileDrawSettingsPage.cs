@@ -12,7 +12,7 @@ namespace SecRandom.Mobile.Views.Settings;
 
 /// <summary>
 /// 抽取设置页：点名 / 抽奖两组规则（抽取类型、重复规则、半重复阈值、清除记录）。
-/// 抽奖组整体按 <see cref="MobileCapabilities.IsLotteryEnabled"/> 投影，关闭时不渲染。
+/// 抽奖组整体按启动时注入的功能能力投影，关闭时不渲染。
 /// 配置存取与 Save 模式（变更 → Save → 重渲染）与原实现等价。
 /// </summary>
 public sealed partial class MobileDrawSettingsPage : MobileSettingsPageBase
@@ -24,7 +24,10 @@ public sealed partial class MobileDrawSettingsPage : MobileSettingsPageBase
     public MobileDrawSettingsPage(
         MainConfigHandler configHandler,
         MobileDrawMediaService drawMedia,
-        MobileMediaLibraryService mediaLibrary)
+        MobileMediaLibraryService mediaLibrary,
+        IMobileNavigator navigator,
+        IMobileCapabilities capabilities)
+        : base(navigator, capabilities)
     {
         _configHandler = configHandler;
         _drawMedia = drawMedia;

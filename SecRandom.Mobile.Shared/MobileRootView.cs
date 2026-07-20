@@ -14,40 +14,65 @@ namespace SecRandom.Mobile;
 public sealed partial class MobileRootView : UserControl
 {
     private readonly MainConfigHandler _configHandler;
-    private readonly ViewHostControl _viewHost;
-    private readonly IViewEngine _viewEngine;
+    private readonly ViewHostControl _modalViewHost;
+    private readonly SingleViewHostProvider _singleViewHostProvider;
+    private readonly IMobileNavigator _navigator;
     private readonly MobilePageHeader _header;
     private readonly MobileNavigationBar _bottomBar;
-    private readonly Grid _root;
-    private readonly SemaphoreSlim _navigationGate = new(1, 1);
-    private MobileDestination _destination = MobileDestination.Draw;
+    private readonly ContentControl _pageOutlet;
 
     public MobileRootView(
         MainConfigHandler configHandler,
         SingleViewHostProvider singleViewHostProvider,
-        IViewEngine viewEngine)
+        IMobileNavigator navigator)
     {
         _configHandler = configHandler;
-        _viewEngine = viewEngine;
-        _viewHost = new ViewHostControl("mobile.root");
-        singleViewHostProvider.Attach(_viewHost);
+        _singleViewHostProvider = singleViewHostProvider;
+        _navigator = navigator;
+        _modalViewHost = new ViewHostControl("mobile.modal");
+        _singleViewHostProvider.Attach(_modalViewHost);
 
         InitializeComponent();
         _header = this.FindControl<MobilePageHeader>("PageHeader")!;
         _bottomBar = this.FindControl<MobileNavigationBar>("BottomBar")!;
         _bottomBar.DestinationSelected += BottomBarOnDestinationSelected;
-        _root = this.FindControl<Grid>("RootLayout")!;
-        _root.Children.Add(_viewHost);
-        Grid.SetRow(_viewHost, 1);
+        _pageOutlet = this.FindControl<ContentControl>("PageOutlet")!;
+        _navigator.Attach(_pageOutlet);
+        var root = this.FindControl<Grid>("RootLayout")!;
+        root.Children.Add(_modalViewHost);
+        Grid.SetRow(_modalViewHost, 1);
+        Grid.SetRowSpan(_modalViewHost, 3);
+        _modalViewHost.ZIndex = 1;
 
         AddHandler(TopLevel.BackRequestedEvent, OnBackRequested, RoutingStrategies.Bubble);
         _configHandler.Data.Appearance.PropertyChanged += AppearanceOnPropertyChanged;
         DetachedFromVisualTree += (_, _) => _configHandler.Data.Appearance.PropertyChanged -= AppearanceOnPropertyChanged;
+        _navigator.DestinationChanged += NavigatorOnDestinationChanged;
         ApplyTheme();
         RenderCurrentDestination();
     }
 
-    public ViewHostControl InnerViewHost => _viewHost;
+    public ViewHostControl ModalViewHost => _modalViewHost;
+
+    public Task ResetNavigationAsync() => _navigator.ResetToDrawAsync();
+
+    public Task DetachAsync()
+    {
+        if (Application.Current is null || Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+        {
+            DetachCore();
+            return Task.CompletedTask;
+        }
+
+        return Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(DetachCore).GetTask();
+    }
+
+    private void DetachCore()
+    {
+        _navigator.DestinationChanged -= NavigatorOnDestinationChanged;
+        _navigator.Detach(_pageOutlet);
+        _singleViewHostProvider.Detach(_modalViewHost);
+    }
 
     private void OnBackRequested(object? sender, RoutedEventArgs e)
     {
@@ -55,53 +80,18 @@ public sealed partial class MobileRootView : UserControl
             return;
 
         e.Handled = true;
-        _ = _viewHost.RequestBackAsync();
-    }
-
-    private async Task ShowPrimaryRouteAsync(MobileDestination destination, string routeId)
-    {
-        await _navigationGate.WaitAsync().ConfigureAwait(true);
-        MobileDestination previousDestination = _destination;
-        string previousRoute = GetRouteId(previousDestination);
-        try
+        if (_modalViewHost.ActiveModalView is not null)
         {
-            foreach (string activeRoute in MobileRoutes.All)
-            {
-                if (!string.Equals(activeRoute, routeId, StringComparison.Ordinal))
-                    await _viewEngine.CloseAsync(activeRoute).ConfigureAwait(true);
-            }
+            _ = _modalViewHost.CloseActiveViewAsync();
+            return;
+        }
 
-            await _viewEngine.ShowAsync(routeId).ConfigureAwait(true);
-            _destination = destination;
-            RenderCurrentDestination();
-        }
-        catch
-        {
-            if (!string.Equals(previousRoute, routeId, StringComparison.Ordinal))
-            {
-                try
-                {
-                    await _viewEngine.ShowAsync(previousRoute).ConfigureAwait(true);
-                }
-                catch (Exception restoreException)
-                {
-                    System.Diagnostics.Debug.WriteLine(restoreException);
-                }
-            }
-
-            _destination = previousDestination;
-            RenderCurrentDestination();
-            throw;
-        }
-        finally
-        {
-            _navigationGate.Release();
-        }
+        _ = _navigator.GoBackAsync();
     }
 
     private void RenderCurrentDestination()
     {
-        _header.Title = _destination switch
+        _header.Title = _navigator.CurrentDestination switch
         {
             MobileDestination.Draw => LR.P_Draw,
             MobileDestination.History => LR.P_History,
@@ -109,7 +99,7 @@ public sealed partial class MobileRootView : UserControl
             MobileDestination.Settings => LR.P_Settings,
             _ => throw new ArgumentOutOfRangeException()
         };
-        _bottomBar.Select(_destination);
+        _bottomBar.Select(_navigator.CurrentDestination);
     }
 
     private void AppearanceOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -128,27 +118,21 @@ public sealed partial class MobileRootView : UserControl
         };
     }
 
+    private void NavigatorOnDestinationChanged(object? sender, EventArgs e) => RenderCurrentDestination();
+
     private async void BottomBarOnDestinationSelected(object? sender, MobileDestination destination)
     {
         try
         {
-            await ShowPrimaryRouteAsync(destination, GetRouteId(destination)).ConfigureAwait(true);
+            if (!await _navigator.NavigateRootAsync(destination).ConfigureAwait(true))
+                _bottomBar.Select(_navigator.CurrentDestination);
         }
         catch (Exception exception)
         {
             System.Diagnostics.Debug.WriteLine(exception);
-            _bottomBar.Select(_destination);
+            _bottomBar.Select(_navigator.CurrentDestination);
         }
     }
-
-    private static string GetRouteId(MobileDestination destination) => destination switch
-    {
-        MobileDestination.Draw => MobileRoutes.Draw,
-        MobileDestination.History => MobileRoutes.History,
-        MobileDestination.Overview => MobileRoutes.Overview,
-        MobileDestination.Settings => MobileRoutes.Settings,
-        _ => MobileRoutes.Draw
-    };
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }

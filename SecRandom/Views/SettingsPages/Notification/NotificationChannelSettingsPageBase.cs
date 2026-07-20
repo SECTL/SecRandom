@@ -4,7 +4,6 @@ using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
-using SecRandom.Core.Views;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.Notification;
@@ -13,7 +12,7 @@ using LR = SecRandom.Langs.SettingsPages.Notification.Resources;
 
 namespace SecRandom.Views.SettingsPages.Notification;
 
-public abstract class NotificationChannelSettingsPageBase : ViewBase, INotifyPropertyChanged
+public abstract class NotificationChannelSettingsPageBase : UserControl, INotifyPropertyChanged
 {
     protected NotificationChannelSettingsPageBase()
     {

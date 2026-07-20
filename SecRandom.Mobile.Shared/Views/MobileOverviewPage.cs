@@ -6,7 +6,6 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Icons;
-using SecRandom.Core.Views;
 using SecRandom.Mobile.Controls;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
@@ -14,11 +13,11 @@ namespace SecRandom.Mobile.Views;
 
 /// <summary>
 /// 概览页：2×2 指标网格（学生数 / 奖品数 / 点名轮次 / 抽奖轮次）。
-/// 抽奖相关两项按 <see cref="MobileCapabilities.IsLotteryEnabled"/> 投影，关闭时不占位。
+/// 抽奖相关两项按启动时注入的功能能力投影，关闭时不占位。
 /// </summary>
-public sealed partial class MobileOverviewPage : ViewBase
+public sealed partial class MobileOverviewPage : UserControl
 {
-    public MobileOverviewPage(IProfileService profileService)
+    public MobileOverviewPage(IProfileService profileService, IMobileCapabilities capabilities)
     {
         InitializeComponent();
         var metrics = new List<(string Label, string Value, string Glyph, string WashKey)>
@@ -27,7 +26,7 @@ public sealed partial class MobileOverviewPage : ViewBase
                 FormatCount(profileService.CurrentStudentList?.Students.Count(student => student.IsCandidate) ?? 0),
                 FluentIcons.PeopleFilled, MobileResources.Keys.PrimaryWash)
         };
-        if (MobileCapabilities.IsLotteryEnabled)
+        if (capabilities.IsLotteryEnabled)
         {
             metrics.Add((LR.M_Prizes,
                 FormatCount(profileService.CurrentPrizeList?.Prizes.Count(prize => prize.IsCandidate) ?? 0),
@@ -36,7 +35,7 @@ public sealed partial class MobileOverviewPage : ViewBase
         metrics.Add((LR.M_RollCallRounds,
             FormatCount(profileService.CurrentStudentHistory?.TotalRounds ?? 0),
             FluentIcons.TargetFilled, MobileResources.Keys.SurfaceMuted));
-        if (MobileCapabilities.IsLotteryEnabled)
+        if (capabilities.IsLotteryEnabled)
         {
             metrics.Add((LR.M_LotteryRounds,
                 FormatCount(profileService.CurrentPrizeHistory?.TotalRounds ?? 0),

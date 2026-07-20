@@ -5,7 +5,6 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
-using SecRandom.Core.Views;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
@@ -18,7 +17,7 @@ using LR = SecRandom.Langs.SettingsPages.General.Basic.Resources;
 namespace SecRandom.Views.SettingsPages.General;
 
 [PageInfo("settings.general.basic", FluentIcons.WrenchSettingsFilled, "settings.general")]
-public partial class BasicSettingsPage : ViewBase
+public partial class BasicSettingsPage : UserControl
 {
     private bool _isApplyingProgrammaticChange;
     private bool _isSubscribed;

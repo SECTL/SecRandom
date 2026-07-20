@@ -1,15 +1,15 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-             xmlns:fa="using:FluentAvalonia.UI.Controls"
-             xmlns:views="using:SecRandom.Views"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.MainView"
-             x:DataType="views:MainView"
-             Loaded="OnLoaded"
-             Unloaded="OnUnloaded">
+<views:MainView xmlns="https://github.com/avaloniaui"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                xmlns:fa="using:FluentAvalonia.UI.Controls"
+                xmlns:views="using:SecRandom.Views"
+                mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                x:Class="SecRandom.Views.MainView"
+                x:DataType="views:MainView"
+                Loaded="OnLoaded"
+                Unloaded="OnUnloaded">
     <Grid RowDefinitions="Auto *">
         <Border Grid.Row="0" Height="48">
             <StackPanel Orientation="Horizontal" Margin="8" Spacing="8">
@@ -62,18 +62,12 @@
                                    Theme="{StaticResource TitleTextBlockStyle}" />
                     </Grid>
 
-                    <Grid Grid.Row="1">
-                        <!-- FAFrame 残余职责：插件页（plugin.<id>.* 未注册进 IViewRegistry）及极少数未迁移控件的兜底路由；
-                             内置页一律走 MVE（EmbeddedViewHostPresenter + ShowExclusiveAsync）。请勿再向 Frame 新增内置页。 -->
-                        <fa:FAFrame x:Name="NavigationFrame"
-                                    IsNavigationStackEnabled="False" CacheSize="0"
-                                    Content="{Binding ViewModel.FrameContent}" />
-                        <ContentControl x:Name="EmbeddedViewHostPresenter"
-                                        HorizontalAlignment="Stretch"
-                                        VerticalAlignment="Stretch" />
-                    </Grid>
+                    <fa:FAFrame Grid.Row="1"
+                                x:Name="NavigationFrame"
+                                IsNavigationStackEnabled="False" CacheSize="0"
+                                Content="{Binding ViewModel.FrameContent}" />
                 </Grid>
             </sr:DrawerHost>
         </fa:FANavigationView>
     </Grid>
-</UserControl>
+</views:MainView>

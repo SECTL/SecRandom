@@ -4,7 +4,6 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
-using SecRandom.Core.Views;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
@@ -16,7 +15,7 @@ using SecRandom.ViewModels;
 namespace SecRandom.Views.SettingsPages.Update;
 
 [PageInfo("settings.update", FluentIcons.ArrowSyncFilled, location: PageLocation.Bottom)]
-public partial class UpdateSettingsPage : ViewBase
+public partial class UpdateSettingsPage : UserControl
 {
     public UpdateSettingsPage()
     {

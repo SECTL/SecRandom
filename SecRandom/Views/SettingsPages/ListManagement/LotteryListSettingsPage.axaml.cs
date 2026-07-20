@@ -13,7 +13,6 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
-using SecRandom.Core.Views;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Shared.Models.Profile;
@@ -22,7 +21,7 @@ using LR = SecRandom.Langs.SettingsPages.ListManagement.LotteryList.Resources;
 namespace SecRandom.Views.SettingsPages.ListManagement;
 
 [PageInfo("settings.listManagement.lotteryList", FluentIcons.LotteryFilled, "settings.listManagement")]
-public partial class LotteryListSettingsPage : ViewBase, INotifyPropertyChanged
+public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChanged
 {
     private string _selectedPrizeListName = string.Empty;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;

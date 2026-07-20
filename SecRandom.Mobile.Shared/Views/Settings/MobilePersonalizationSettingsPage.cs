@@ -21,7 +21,10 @@ public sealed partial class MobilePersonalizationSettingsPage : MobileSettingsPa
     public MobilePersonalizationSettingsPage(
         MainConfigHandler configHandler,
         MobileMediaLibraryService mediaLibrary,
-        MobileDrawMediaService drawMedia)
+        MobileDrawMediaService drawMedia,
+        IMobileNavigator navigator,
+        IMobileCapabilities capabilities)
+        : base(navigator, capabilities)
     {
         _configHandler = configHandler;
         _mediaLibrary = mediaLibrary;

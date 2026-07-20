@@ -18,7 +18,12 @@ public sealed partial class MobileGeneralSettingsPage : MobileSettingsPageBase
     private readonly MainConfigHandler _configHandler;
     private readonly IMobileRootViewReloader _rootViewReloader;
 
-    public MobileGeneralSettingsPage(MainConfigHandler configHandler, IMobileRootViewReloader rootViewReloader)
+    public MobileGeneralSettingsPage(
+        MainConfigHandler configHandler,
+        IMobileRootViewReloader rootViewReloader,
+        IMobileNavigator navigator,
+        IMobileCapabilities capabilities)
+        : base(navigator, capabilities)
     {
         _configHandler = configHandler;
         _rootViewReloader = rootViewReloader;

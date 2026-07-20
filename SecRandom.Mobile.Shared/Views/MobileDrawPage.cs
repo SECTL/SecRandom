@@ -16,7 +16,6 @@ using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
-using SecRandom.Core.Views;
 using SecRandom.Mobile.Controls;
 using SecRandom.Mobile.Services;
 using SecRandom.Shared.Extensions;
@@ -27,7 +26,7 @@ using AvaloniaButton = Avalonia.Controls.Button;
 
 namespace SecRandom.Mobile.Views;
 
-public sealed partial class MobileDrawPage : ViewBase
+public sealed partial class MobileDrawPage : UserControl
 {
     private const int RollDurationMs = 800;
 
@@ -36,7 +35,8 @@ public sealed partial class MobileDrawPage : ViewBase
     private readonly MainConfigHandler _configHandler;
     private readonly MobileRollCallService _rollCallService;
     private readonly ILotterySession _lotterySession;
-    private readonly IViewEngine _viewEngine;
+    private readonly IMobileNavigator _navigator;
+    private readonly IMobileCapabilities _capabilities;
     private readonly MobileDrawMediaService _drawMedia;
     private DrawSurface _drawSurface = DrawSurface.RollCall;
     private string _group = string.Empty;
@@ -55,7 +55,8 @@ public sealed partial class MobileDrawPage : ViewBase
         MobileRollCallService rollCallService,
         ILotterySession lotterySession,
         MobileDrawMediaService drawMedia,
-        IViewEngine viewEngine)
+        IMobileNavigator navigator,
+        IMobileCapabilities capabilities)
     {
         _profileService = profileService;
         _temporaryRecordService = temporaryRecordService;
@@ -63,7 +64,8 @@ public sealed partial class MobileDrawPage : ViewBase
         _rollCallService = rollCallService;
         _lotterySession = lotterySession;
         _drawMedia = drawMedia;
-        _viewEngine = viewEngine;
+        _navigator = navigator;
+        _capabilities = capabilities;
         InitializeComponent();
         EnsureRestartTemporaryRecordsCleared();
         Render();
@@ -71,14 +73,14 @@ public sealed partial class MobileDrawPage : ViewBase
 
     private void Render()
     {
-        if (_drawSurface == DrawSurface.Lottery && !MobileCapabilities.IsLotteryEnabled)
+        if (_drawSurface == DrawSurface.Lottery && !_capabilities.IsLotteryEnabled)
             _drawSurface = DrawSurface.RollCall;
 
         var selector = MobileViewFactory.CreateTabSplit(
             (int)_drawSurface,
             [
                 (LR.C_RollCall, true),
-                (LR.C_Lottery, MobileCapabilities.IsLotteryEnabled)
+                (LR.C_Lottery, _capabilities.IsLotteryEnabled)
             ],
             selectedIndex =>
             {
@@ -508,7 +510,7 @@ public sealed partial class MobileDrawPage : ViewBase
         var settings = MobileViewFactory.CreateSecondaryButton(LR.C_DrawSettings, () =>
         {
             dialog.Hide();
-            _ = _viewEngine.ShowAsync(MobileRoutes.DrawSettings);
+            _ = _navigator.NavigateAsync(MobilePageIds.DrawSettings);
         });
         dialog.Content = new StackPanel { Spacing = 8, Children = { reset, clear, manage, settings } };
         await dialog.ShowAsync(TopLevel.GetTopLevel(this));
@@ -731,7 +733,7 @@ public sealed partial class MobileDrawPage : ViewBase
     private string GetStudentListName() => _profileService.StudentListConfig?.Name ?? MobileDefaults.ProfileName;
     private string GetPrizeListName() => _profileService.PrizeListConfig?.Name ?? MobileDefaults.ProfileName;
 
-    private void OpenListManagement() => _ = _viewEngine.ShowAsync(MobileRoutes.ListManagement);
+    private void OpenListManagement() => _ = _navigator.NavigateAsync(MobilePageIds.ListManagement);
 
     private static string GetDrawFailureText(DrawStatus status) => status switch
     {

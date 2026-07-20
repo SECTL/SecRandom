@@ -7,7 +7,6 @@ using Avalonia.Interactivity;
 using Ursa.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
-using SecRandom.Core.Views;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
@@ -20,7 +19,7 @@ using SR = SecRandom.Langs.SettingsPages.Security.Resources;
 namespace SecRandom.Views.SettingsPages.General;
 
 [PageInfo("settings.general.security", FluentIcons.ShieldKeyholeFilled, "settings.general")]
-public partial class SecuritySettingsPage : ViewBase, INotifyPropertyChanged
+public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
 {
     private readonly ISecurityService _securityService = IAppHost.GetService<ISecurityService>();
     private bool _refreshing;

@@ -16,7 +16,6 @@ using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
-using SecRandom.Core.Views;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
@@ -27,7 +26,7 @@ using LR = SecRandom.Langs.SettingsPages.LogViewer.Resources;
 namespace SecRandom.Views.SettingsPages.LogViewer;
 
 [PageInfo("settings.logs", FluentIcons.DocumentFilled, location: PageLocation.Bottom, isHide: true, useFullWidth: true)]
-public partial class LogViewerSettingsPage : ViewBase, INotifyPropertyChanged
+public partial class LogViewerSettingsPage : UserControl, INotifyPropertyChanged
 {
     private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
     private const int MaxLoadedLines = 2000;

@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Media;
-using SecRandom.Core.Abstraction;
 using SecRandom.Core.Icons;
 using SecRandom.Mobile.Controls;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
@@ -18,11 +17,15 @@ public sealed partial class MobileUpdateSettingsPage : MobileSettingsPageBase
     private readonly MobileUpdateService _updateService;
     private readonly bool _installerSupported;
 
-    public MobileUpdateSettingsPage(MobileUpdateService updateService)
+    public MobileUpdateSettingsPage(
+        MobileUpdateService updateService,
+        IMobileUpdateInstaller updateInstaller,
+        IMobileNavigator navigator,
+        IMobileCapabilities capabilities)
+        : base(navigator, capabilities)
     {
         _updateService = updateService;
-        // 构造函数签名保持稳定；安装器投影经 IAppHost 解析，Host 未就绪时按不支持处理。
-        _installerSupported = IAppHost.TryGetService<IMobileUpdateInstaller>()?.IsSupported ?? false;
+        _installerSupported = updateInstaller.IsSupported;
         InitializeComponent();
         Render();
     }

@@ -17,7 +17,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
-using SecRandom.Core.Views;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
@@ -31,7 +30,7 @@ using DebugResources = SecRandom.Langs.SettingsPages.Debug.DebugStrings;
 namespace SecRandom.Views.SettingsPages.About;
 
 [PageInfo("settings.about", FluentIcons.InfoFilled, location: PageLocation.Bottom, hidePageTitle: true)]
-public partial class AboutSettingsPage : ViewBase, INotifyPropertyChanged
+public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
 {
     private const string ContributorsEndpoint = "https://api.github.com/repos/SECTL/SecRandom/contributors?per_page=30";
     private const int InternalSettingsActivationClickCount = 20;

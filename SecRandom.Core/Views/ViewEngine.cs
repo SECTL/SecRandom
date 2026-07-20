@@ -80,40 +80,6 @@ internal sealed class ViewEngine(IServiceProvider services, IViewRegistry regist
         }
     }
 
-    public async Task<IViewHandle> ShowExclusiveAsync(string hostId, string viewId, ViewShowOptions? options = null, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(hostId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(viewId);
-
-        List<ViewSession> siblingPages;
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            siblingPages = _sessionsById.Values
-                .Where(session => !string.Equals(session.ViewId, viewId, StringComparison.Ordinal)
-                                  && session.Presentation == ViewPresentation.Page
-                                  && string.Equals(session.Host.HostId, hostId, StringComparison.Ordinal))
-                .ToList();
-        }
-        finally
-        {
-            _gate.Release();
-        }
-
-        foreach (var session in siblingPages)
-            await CloseSessionAsync(session, new ViewCloseRequest(ViewCloseReason.Programmatic, null, false), cancellationToken)
-                .ConfigureAwait(false);
-
-        var exclusiveOptions = new ViewShowOptions
-        {
-            ActivationPreference = options?.ActivationPreference ?? ViewActivationPreference.Default,
-            HostId = hostId,
-            Presentation = options?.Presentation,
-            ReuseExistingView = options?.ReuseExistingView ?? true
-        };
-        return await ShowAsync(viewId, exclusiveOptions, cancellationToken).ConfigureAwait(false);
-    }
-
     public async Task<ViewCloseResult> ShowModalAsync(string viewId, ViewShowOptions? options = null, CancellationToken cancellationToken = default)
     {
         options = options is null
