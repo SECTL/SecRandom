@@ -50,7 +50,7 @@ public sealed class MobileApp : Avalonia.Application
             PreferSystemTheme = true,
             UseSystemFontOnWindows = true
         });
-        Styles.Add(new Avalonia.Markup.Xaml.Styling.StyleInclude(new Uri("avares://SecRandom.Mobile/Styles/MobileStyles.axaml")) { Source = new Uri("avares://SecRandom.Mobile/Styles/MobileStyles.axaml") });
+        Styles.Add(new Avalonia.Markup.Xaml.Styling.StyleInclude(new Uri("avares://SecRandom.Mobile")) { Source = new Uri("avares://SecRandom.Mobile/Styles/MobileStyles.axaml") });
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -251,6 +251,16 @@ public sealed class MobileApp : Avalonia.Application
     {
         try
         {
+            _ = host.Services.GetRequiredService<IProfileService>();
+            _ = host.Services.GetRequiredService<IDrawTemporaryRecordService>();
+            _ = host.Services.GetRequiredService<IFeatureAvailabilityService>();
+            _ = host.Services.GetRequiredService<DrawEngine>();
+            await host.Services.GetRequiredService<IViewEngine>()
+                .ShowAsync(MobileRoutes.Draw)
+                .ConfigureAwait(false);
+            if (_stopping || !ReferenceEquals(host, _host))
+                return;
+
             await host.StartAsync().ConfigureAwait(false);
             if (_stopping || !ReferenceEquals(host, _host))
                 return;
@@ -260,14 +270,6 @@ public sealed class MobileApp : Avalonia.Application
                 .ConfigureAwait(false);
             if (_stopping || !ReferenceEquals(host, _host))
                 return;
-
-            _ = host.Services.GetRequiredService<IProfileService>();
-            _ = host.Services.GetRequiredService<IDrawTemporaryRecordService>();
-            _ = host.Services.GetRequiredService<IFeatureAvailabilityService>();
-            _ = host.Services.GetRequiredService<DrawEngine>();
-            await host.Services.GetRequiredService<IViewEngine>()
-                .ShowAsync(MobileRoutes.Draw)
-                .ConfigureAwait(false);
         }
         catch (Exception exception)
         {
