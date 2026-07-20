@@ -5,9 +5,10 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
-using Avalonia.Themes.Fluent;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using FluentAvalonia.Styling;
+using FluentAvalonia.UI.Controls;
 using SecRandom.Mobile.Controls;
 using SecRandom.Mobile.Views;
 
@@ -26,7 +27,11 @@ public sealed class MobileTestApplication : Application
     public override void Initialize()
     {
         RequestedThemeVariant = ThemeVariant.Light;
-        Styles.Add(new FluentTheme());
+        Styles.Add(new FluentAvaloniaTheme
+        {
+            PreferSystemTheme = true,
+            UseSystemFontOnWindows = true
+        });
         Styles.Add(new StyleInclude(new Uri("avares://SecRandom.Mobile/Styles/MobileStyles.axaml"))
         {
             Source = new Uri("avares://SecRandom.Mobile/Styles/MobileStyles.axaml")
@@ -66,11 +71,11 @@ public sealed class MobileShellSmokeTests
         Assert.True(navigation.Bounds.Height >= 56);
 
         var controls = root.GetVisualDescendants().OfType<Control>().ToList();
-        var destinationButtons = controls.OfType<ToggleButton>().ToList();
-        Assert.Equal(4, destinationButtons.Count);
-        Assert.Single(destinationButtons, button => button.IsChecked == true);
-        Assert.DoesNotContain(controls, control =>
-            string.Equals(control.GetType().Assembly.GetName().Name, "FluentAvalonia", StringComparison.Ordinal));
+        var navigationView = Assert.Single(controls.OfType<FANavigationView>());
+        var destinationItems = controls.OfType<FANavigationViewItem>().ToList();
+        Assert.Equal(4, navigationView.MenuItems.Count);
+        Assert.NotEmpty(destinationItems);
+        Assert.NotNull(navigationView.SelectedItem);
 
         app.RequestedThemeVariant = ThemeVariant.Dark;
         Dispatcher.UIThread.RunJobs();
@@ -101,6 +106,44 @@ public sealed class MobileShellSmokeTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(animated.IsAttachedToVisualTree());
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void MobilePageScrollHasFiniteViewportAndMovableOffset()
+    {
+        var items = Enumerable.Range(0, 24)
+            .Select(index => (Control)new MobileCard
+            {
+                MinHeight = 72,
+                Content = new TextBlock { Text = $"Item {index}" }
+            });
+        var scroll = MobileUi.CreateScroll(items);
+        var window = new Window
+        {
+            Width = 390,
+            Height = 844,
+            Content = new Grid
+            {
+                RowDefinitions = new RowDefinitions("Auto,*,Auto"),
+                Children =
+                {
+                    new MobilePageHeader { Title = "Settings" },
+                    scroll,
+                    new MobileNavigationBar()
+                }
+            }
+        };
+        Grid.SetRow(scroll, 1);
+        Grid.SetRow(((Grid)window.Content).Children[2], 2);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(scroll.Extent.Height > scroll.Viewport.Height);
+        scroll.Offset = new Vector(0, 240);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(scroll.Offset.Y > 0);
+
         window.Close();
     }
 }

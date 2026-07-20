@@ -1,8 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
-using Avalonia.Media;
+using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Icons;
 using SecRandom.Mobile.Views;
 
@@ -11,99 +10,77 @@ namespace SecRandom.Mobile.Controls;
 public sealed class MobileNavigationBar : UserControl
 {
     private readonly Border _root;
-    private readonly Dictionary<Views.MobileDestination, ToggleButton> _buttons = [];
-    private Views.MobileDestination _selectedDestination = Views.MobileDestination.Draw;
+    private MobileDestination _selectedDestination = MobileDestination.Draw;
 
     public MobileNavigationBar()
     {
-        var navigation = new Grid
+        NavigationView = new FANavigationView
         {
-            ColumnDefinitions = new ColumnDefinitions("*,*,*,*"),
-            ColumnSpacing = 4,
-            Margin = new Thickness(8, 6)
+            PaneDisplayMode = FANavigationViewPaneDisplayMode.Top,
+            IsPaneToggleButtonVisible = false,
+            IsBackButtonVisible = false,
+            IsSettingsVisible = false,
+            AlwaysShowHeader = false,
+            SelectionFollowsFocus = false,
+            MinHeight = 64,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch
         };
-
-        AddButton(navigation, 0, Langs.Mobile.Resources.N_Draw, FluentIcons.PeopleFilled, Views.MobileDestination.Draw);
-        AddButton(navigation, 1, Langs.Mobile.Resources.N_History, FluentIcons.HistoryFilled, Views.MobileDestination.History);
-        AddButton(navigation, 2, Langs.Mobile.Resources.N_Overview, FluentIcons.HomeFilled, Views.MobileDestination.Overview);
-        AddButton(navigation, 3, Langs.Mobile.Resources.N_Settings, FluentIcons.SettingsFilled, Views.MobileDestination.Settings);
+        NavigationView.MenuItems.Add(CreateItem(
+            Langs.Mobile.Resources.N_Draw, FluentIcons.PeopleFilled, MobileDestination.Draw));
+        NavigationView.MenuItems.Add(CreateItem(
+            Langs.Mobile.Resources.N_History, FluentIcons.HistoryFilled, MobileDestination.History));
+        NavigationView.MenuItems.Add(CreateItem(
+            Langs.Mobile.Resources.N_Overview, FluentIcons.HomeFilled, MobileDestination.Overview));
+        NavigationView.MenuItems.Add(CreateItem(
+            Langs.Mobile.Resources.N_Settings, FluentIcons.SettingsFilled, MobileDestination.Settings));
+        NavigationView.ItemInvoked += NavigationViewOnItemInvoked;
 
         _root = new Border
         {
             BorderThickness = new Thickness(0, 1, 0, 0),
-            Child = navigation
+            Child = NavigationView
         };
         Content = _root;
         RefreshTheme();
-        Select(Views.MobileDestination.Draw);
+        Select(MobileDestination.Draw);
     }
 
-    internal event EventHandler<Views.MobileDestination>? DestinationSelected;
+    internal event EventHandler<MobileDestination>? DestinationSelected;
 
-    internal void Select(Views.MobileDestination destination)
+    internal FANavigationView NavigationView { get; }
+
+    internal void Select(MobileDestination destination)
     {
         _selectedDestination = destination;
-        foreach (var (buttonDestination, button) in _buttons)
-        {
-            bool selected = buttonDestination == destination;
-            button.IsChecked = selected;
-            button.Background = selected ? Views.MobileTheme.PrimaryWash : Brushes.Transparent;
-            button.Foreground = selected ? Views.MobileTheme.Primary : Views.MobileTheme.MutedText;
-        }
+        NavigationView.SelectedItem = NavigationView.MenuItems
+            .OfType<FANavigationViewItem>()
+            .FirstOrDefault(item => item.Tag is MobileDestination value && value == destination);
     }
 
     public void RefreshTheme()
     {
-        _root.Background = Views.MobileTheme.Surface;
-        _root.BorderBrush = Views.MobileTheme.Border;
-        Select(_selectedDestination);
+        _root.Background = MobileTheme.Surface;
+        _root.BorderBrush = MobileTheme.Border;
     }
 
-    private void AddButton(
-        Grid navigation,
-        int column,
+    private void NavigationViewOnItemInvoked(object? sender, FANavigationViewItemInvokedEventArgs e)
+    {
+        if (e.InvokedItemContainer is not FANavigationViewItem { Tag: MobileDestination destination }
+            || destination == _selectedDestination)
+            return;
+
+        Select(destination);
+        DestinationSelected?.Invoke(this, destination);
+    }
+
+    private static FANavigationViewItem CreateItem(
         string text,
         string glyph,
-        Views.MobileDestination destination)
+        MobileDestination destination) => new()
     {
-        var button = new ToggleButton
-        {
-            Content = new StackPanel
-            {
-                Spacing = 2,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Children =
-                {
-                    MobileUi.CreateIcon(glyph, 20, HorizontalAlignment.Center),
-                    new TextBlock
-                    {
-                        Text = text,
-                        FontSize = 12,
-                        TextAlignment = TextAlignment.Center,
-                        TextWrapping = TextWrapping.NoWrap
-                    }
-                }
-            },
-            MinHeight = 56,
-            Padding = new Thickness(4, 5),
-            CornerRadius = new CornerRadius(10),
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center
-        };
-        button.Click += (_, _) =>
-        {
-            if (destination == _selectedDestination)
-            {
-                button.IsChecked = true;
-                return;
-            }
-
-            Select(destination);
-            DestinationSelected?.Invoke(this, destination);
-        };
-        _buttons.Add(destination, button);
-        navigation.Children.Add(button);
-        Grid.SetColumn(button, column);
-    }
+        Content = text,
+        IconSource = MobileUi.CreateIconSource(glyph),
+        Tag = destination
+    };
 }

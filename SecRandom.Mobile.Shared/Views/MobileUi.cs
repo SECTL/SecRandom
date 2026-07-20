@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Icons;
 using SecRandom.Mobile.Controls;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
@@ -14,6 +15,12 @@ internal static class MobileUi
 {
     private static readonly FontFamily IconFont =
         new("avares://SecRandom.Mobile/Assets/Fonts/#FluentSystemIcons-Resizable");
+
+    internal static FAFontIconSource CreateIconSource(string glyph) => new()
+    {
+        Glyph = glyph,
+        FontFamily = IconFont
+    };
 
     internal static TextBlock CreateIcon(
         string glyph,
@@ -57,7 +64,12 @@ internal static class MobileUi
         {
             Content = panel,
             Padding = MobileTheme.FindThickness("MobilePagePadding", new Thickness(20, 20, 20, 28)),
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            IsScrollChainingEnabled = false,
+            IsScrollInertiaEnabled = true
         };
     }
 

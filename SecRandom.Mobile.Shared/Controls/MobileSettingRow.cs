@@ -1,10 +1,8 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Documents;
-using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Icons;
 using SecRandom.Mobile.Views;
 using AvaloniaButton = Avalonia.Controls.Button;
@@ -13,125 +11,49 @@ using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 namespace SecRandom.Mobile.Controls;
 
 /// <summary>
-/// 设置行三段式控件：标题 / 描述 / Footer。收敛旧 MobileUi 的
-/// CreateToggleRow / CreateIntegerRow / CreateChoiceRow / CreateNavigationRow / CreateRow。
+/// Mobile compatibility wrapper over FluentAvalonia's Windows-style settings item.
 /// </summary>
 public class MobileSettingRow : UserControl
 {
-    private readonly Border _root;
-    private readonly TextBlock _title;
-    private readonly TextBlock _description;
-    private readonly Border _footerHost;
-    private bool _isClickEnabled;
+    private readonly FASettingsExpanderItem _item;
 
     public MobileSettingRow()
     {
-        _title = new TextBlock
+        _item = new FASettingsExpanderItem
         {
-            FontSize = MobileTheme.FindDouble("MobileFontSizeBody", 16),
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center
+            MinHeight = 64,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch
         };
-        MobileTheme.BindBrush(_title, TextBlock.ForegroundProperty, MobileTheme.Keys.Text);
-
-        _description = new TextBlock
-        {
-            FontSize = MobileTheme.FindDouble("MobileFontSizeCaption", 12),
-            TextWrapping = TextWrapping.Wrap,
-            IsVisible = false
-        };
-        MobileTheme.BindBrush(_description, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
-
-        _footerHost = new Border
-        {
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(12, 0, 0, 0),
-            IsVisible = false
-        };
-
-        var grid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
-            RowDefinitions = new RowDefinitions("Auto,Auto"),
-            Children = { _title, _description, _footerHost }
-        };
-        Grid.SetRow(_description, 1);
-        Grid.SetColumn(_footerHost, 1);
-        Grid.SetRowSpan(_footerHost, 2);
-
-        _root = new Border
-        {
-            CornerRadius = MobileTheme.FindCornerRadius("MobileCornerRadiusMedium", new CornerRadius(15)),
-            Padding = MobileTheme.FindThickness("MobileCardPadding", new Thickness(16)),
-            BorderThickness = new Thickness(1),
-            Child = grid
-        };
-        MobileTheme.BindBrush(_root, Border.BackgroundProperty, MobileTheme.Keys.Surface);
-        MobileTheme.BindBrush(_root, Border.BorderBrushProperty, MobileTheme.Keys.Border);
-
-        Content = _root;
+        _item.Click += (_, args) => Click?.Invoke(this, args);
+        Content = _item;
     }
 
     public string Title
     {
-        get => _title.Text ?? string.Empty;
-        set => _title.Text = value;
+        get => _item.Content?.ToString() ?? string.Empty;
+        set => _item.Content = value;
     }
 
     public string? Description
     {
-        get => _description.Text;
-        set
-        {
-            _description.Text = value;
-            _description.IsVisible = !string.IsNullOrEmpty(value);
-        }
+        get => _item.Description;
+        set => _item.Description = value;
     }
 
     public Control? Footer
     {
-        get => _footerHost.Child;
-        set
-        {
-            _footerHost.Child = value;
-            _footerHost.IsVisible = value is not null;
-        }
+        get => _item.Footer as Control;
+        set => _item.Footer = value;
     }
 
     public bool IsClickEnabled
     {
-        get => _isClickEnabled;
-        set
-        {
-            _isClickEnabled = value;
-            _root.Cursor = value ? new Cursor(StandardCursorType.Hand) : null;
-        }
+        get => _item.IsClickEnabled;
+        set => _item.IsClickEnabled = value;
     }
 
     public event EventHandler<RoutedEventArgs>? Click;
-
-    protected override void OnPointerPressed(PointerPressedEventArgs e)
-    {
-        base.OnPointerPressed(e);
-        if (_isClickEnabled)
-            _root.Opacity = 0.72;
-    }
-
-    protected override void OnPointerReleased(PointerReleasedEventArgs e)
-    {
-        base.OnPointerReleased(e);
-        if (!_isClickEnabled)
-            return;
-        _root.Opacity = 1;
-        Click?.Invoke(this, new RoutedEventArgs());
-    }
-
-    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
-    {
-        base.OnPointerCaptureLost(e);
-        if (_isClickEnabled)
-            _root.Opacity = 1;
-    }
 
     internal static MobileSettingRow Toggle(string title, string? description, bool value, Action<bool> setValue)
     {
@@ -169,13 +91,10 @@ public class MobileSettingRow : UserControl
 
     internal static MobileSettingRow Choice(string text, bool selected, Action select, string? groupName = null)
     {
-        // 每次调用默认生成唯一组名：历史实现共用固定 GroupName，导致同屏不同设置组的
-        // RadioButton 跨组互相取消勾选（视觉选中态与实际配置不一致）。
         var radio = new RadioButton
         {
             IsChecked = selected,
             GroupName = groupName ?? "mobile-choice-" + Guid.NewGuid().ToString("N"),
-            // 命中测试交给整行处理，行点击即选中，避免 RadioButton 自身的独立切换与行行为分裂。
             IsHitTestVisible = false,
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -186,9 +105,8 @@ public class MobileSettingRow : UserControl
 
     internal static MobileSettingRow Navigation(string title, string? description, Action open)
     {
-        var chevron = MobileUi.CreateIcon(FluentIcons.ChevronRightFilled, 16);
-        MobileTheme.BindBrush(chevron, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
-        var row = new MobileSettingRow { Title = title, Description = description, Footer = chevron, IsClickEnabled = true };
+        var row = new MobileSettingRow { Title = title, Description = description, IsClickEnabled = true };
+        row._item.ActionIconSource = MobileUi.CreateIconSource(FluentIcons.ChevronRightFilled);
         row.Click += (_, _) => open();
         return row;
     }

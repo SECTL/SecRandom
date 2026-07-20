@@ -17,9 +17,10 @@ This is an Android/iOS SingleView application for education random draws. It is 
 
 ## Accessibility
 
-- Navigation and draw-mode selection have visible labels, not icon-only controls. The bottom bar uses native Avalonia `ToggleButton` controls in four equal columns; mobile surfaces do not use FluentAvalonia templates.
+- Navigation and draw-mode selection have visible labels, not icon-only controls. The bottom bar uses a four-item FluentAvalonia `FANavigationView`, and settings rows use `FASettingsExpanderItem` so mobile and desktop share one Fluent visual language.
 - Primary actions are at least `48px` high and secondary actions are at least `44px` high.
 - Content wraps and scrolls at phone widths; enabled state, text, and color together communicate state.
+- Page content owns one vertically inertial scroll surface between the fixed app bar and bottom navigation. Dragging a navigation/settings row scrolls the page and never activates the row after movement.
 
 ## Voice & Tone
 
@@ -58,12 +59,13 @@ The initial workflow supports local student/prize editing, theme selection, sing
 ## Component Inventory
 
 - `MobileCard`: rounded surface container; its default look comes from the type-keyed ControlTheme in `MobileStyles.axaml`, and a wash resource key (`MobileTheme.Keys.PrimaryWash` / `WarmWash`) produces tinted result/metric cards.
-- `MobileSettingRow`: title/description/footer settings row with factories `Toggle`, `Integer`, `Choice` (unique radio group per row by default, fixing the old cross-group `GroupName` interference), `Navigation`, and `Simple`.
+- `MobileSettingRow`: compatibility wrapper over FluentAvalonia `FASettingsExpanderItem`, with factories `Toggle`, `Integer`, `Choice` (unique radio group per row by default), `Navigation`, and `Simple`.
 - `MobileSegmentedControl`: capsule segmented selector with primary-wash selection visuals, replacing the hand-assembled segment buttons.
 - `MobileEmptyState`: icon + title + optional description + optional guidance button that routes to the matching management surface.
 - `MobileSectionHeader`: primary-tinted icon + semibold section title, replacing the `CreateLabel` IconText usage.
 - `MobileSettingsPageBase`: settings-page skeleton (lightweight title/description header instead of an FAInfoBar, optional back button, scroll, and page-enter transition) with capability projection pass-throughs; root-level destinations such as the settings catalog pass `showBackButton: false`.
-- The old `MobileUi` factory methods keep their signatures and delegate to these controls, so existing pages keep working until their staged reskin.
+- `MobileNavigationBar`: four-item `FANavigationView` hosted in the fixed bottom row; mobile-owned `FAFontIconSource` instances point at `avares://SecRandom.Mobile/Assets/Fonts/`.
+- The old `MobileUi` factory methods keep their signatures and delegate to these controls, so existing pages keep working through the FluentAvalonia migration.
 
 ## Animation Primitives
 

@@ -19,8 +19,16 @@ public class ViewHostControl : UserControl, IViewHost
     public ViewHostControl(string hostId)
     {
         HostId = hostId;
-        _pagePresenter = new ContentControl();
-        _modalPresenter = new ContentControl();
+        _pagePresenter = new ContentControl
+        {
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Stretch
+        };
+        _modalPresenter = new ContentControl
+        {
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Stretch
+        };
         _modalOverlay = new Border
         {
             IsVisible = false,

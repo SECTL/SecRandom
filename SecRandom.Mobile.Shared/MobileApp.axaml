@@ -1,8 +1,11 @@
 <Application xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="SecRandom.Mobile.MobileApp">
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:styling="using:FluentAvalonia.Styling"
+              x:Class="SecRandom.Mobile.MobileApp">
     <Application.Styles>
-        <FluentTheme />
+        <styling:FluentAvaloniaTheme PreferSystemTheme="True"
+                                     UseSystemFontOnWindows="True"
+                                     TextVerticalAlignmentOverrideBehavior="Disabled" />
         <StyleInclude Source="avares://SecRandom.Mobile/Styles/MobileStyles.axaml" />
     </Application.Styles>
 </Application>
