@@ -52,6 +52,66 @@
                 </Setter>
             </ControlTheme>
 
+            <ControlTheme x:Key="TabSplitItemTheme" TargetType="TabStripItem">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="{DynamicResource MobileBorderBrush}" />
+                <Setter Property="BorderThickness" Value="0,0,0,2" />
+                <Setter Property="Foreground" Value="{DynamicResource MobileMutedTextBrush}" />
+                <Setter Property="FontWeight" Value="Normal" />
+                <Setter Property="MinHeight" Value="{DynamicResource MobileMinHeightSecondary}" />
+                <Setter Property="Padding" Value="12,10" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Template">
+                    <ControlTemplate>
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"
+                                              TextElement.FontWeight="{TemplateBinding FontWeight}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter>
+
+                <Style Selector="^:pointerover">
+                    <Setter Property="Background" Value="{DynamicResource MobilePrimaryWashBrush}" />
+                </Style>
+                <Style Selector="^:selected">
+                    <Setter Property="Foreground" Value="{DynamicResource MobilePrimaryBrush}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource MobilePrimaryBrush}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </Style>
+                <Style Selector="^:disabled">
+                    <Setter Property="Opacity" Value="0.45" />
+                </Style>
+            </ControlTheme>
+
+            <ControlTheme x:Key="TabSplitTheme" TargetType="TabStrip">
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="{DynamicResource MobileBorderBrush}" />
+                <Setter Property="BorderThickness" Value="0,0,0,1" />
+                <Setter Property="ItemContainerTheme" Value="{StaticResource TabSplitItemTheme}" />
+                <Setter Property="ItemsPanel">
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="1" />
+                    </ItemsPanelTemplate>
+                </Setter>
+                <Setter Property="Template">
+                    <ControlTemplate>
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ItemsPresenter ItemsPanel="{TemplateBinding ItemsPanel}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter>
+            </ControlTheme>
+
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="MobileCanvasBrush" Color="#F7F8FA" />

@@ -92,6 +92,38 @@ public sealed class MobileShellSmokeTests
     }
 
     [AvaloniaFact]
+    public void TabSplitThemeLoadsAndSwitchesTabsAtPhoneSize()
+    {
+        var selectedIndex = -1;
+        var tabs = MobileUi.CreateTabSplit(
+            1,
+            [("Roll call", true), ("Lottery", true)],
+            index => selectedIndex = index);
+        var window = new Window
+        {
+            Width = 390,
+            Height = 844,
+            Content = tabs
+        };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var app = Assert.IsType<MobileTestApplication>(Application.Current);
+        Assert.True(app.TryGetResource("TabSplitTheme", ThemeVariant.Light, out _));
+        Assert.Equal(1, tabs.SelectedIndex);
+
+        var items = tabs.GetVisualDescendants().OfType<TabStripItem>().ToArray();
+        Assert.Equal(2, items.Length);
+        Assert.InRange(Math.Abs(items[0].Bounds.Width - items[1].Bounds.Width), 0, 1);
+
+        tabs.SelectedIndex = 0;
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(0, selectedIndex);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void MobileNavigationAutomationTreeCanBeEnumerated()
     {
         var navigation = new MobileNavigationBar();

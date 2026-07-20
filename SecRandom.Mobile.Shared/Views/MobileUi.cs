@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Styling;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Icons;
 using SecRandom.Mobile.Controls;
@@ -36,19 +37,33 @@ internal static class MobileUi
         TextAlignment = TextAlignment.Center
     };
 
-    internal static AvaloniaButton CreateSegmentButton(string text, bool selected, bool left)
+    internal static TabStrip CreateTabSplit(
+        int selectedIndex,
+        IReadOnlyList<(string Text, bool Enabled)> items,
+        Action<int> selectionChanged)
     {
-        var button = new AvaloniaButton
+        if (Application.Current?.TryFindResource("TabSplitTheme", out var resource) != true
+            || resource is not ControlTheme theme)
         {
-            Content = text,
-            Padding = new Thickness(18, 7),
-            Classes = { selected ? "accent" : "compact" },
-            CornerRadius = left ? new CornerRadius(15, 4, 4, 15) : new CornerRadius(4, 15, 15, 4),
-            FontWeight = selected ? FontWeight.SemiBold : FontWeight.Normal
+            throw new InvalidOperationException("TabSplitTheme is not available.");
+        }
+
+        var tabStrip = new TabStrip
+        {
+            Theme = theme
         };
-        MobileTheme.BindBrush(button, AvaloniaButton.ForegroundProperty,
-            selected ? MobileTheme.Keys.Primary : MobileTheme.Keys.MutedText);
-        return button;
+        foreach (var (text, enabled) in items)
+        {
+            tabStrip.Items.Add(new TabStripItem
+            {
+                Content = text,
+                IsEnabled = enabled
+            });
+        }
+
+        tabStrip.SelectedIndex = selectedIndex;
+        tabStrip.SelectionChanged += (_, _) => selectionChanged(tabStrip.SelectedIndex);
+        return tabStrip;
     }
 
     internal static ScrollViewer CreateScroll(IEnumerable<Control> items)

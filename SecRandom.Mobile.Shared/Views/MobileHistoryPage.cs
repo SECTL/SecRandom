@@ -21,7 +21,6 @@ public sealed class MobileHistoryPage : ViewBase
     private readonly IProfileService _profileService;
     private readonly IHistoryQueryService _historyQueryService;
     private readonly IProfileCatalogManager _catalogManager;
-    private readonly IDrawTemporaryRecordService _temporaryRecordService;
     private readonly MainConfigHandler _configHandler;
     private readonly DrawEngine _drawEngine;
     private int _segment;
@@ -33,14 +32,12 @@ public sealed class MobileHistoryPage : ViewBase
         IProfileService profileService,
         IHistoryQueryService historyQueryService,
         IProfileCatalogManager catalogManager,
-        IDrawTemporaryRecordService temporaryRecordService,
         MainConfigHandler configHandler,
         DrawEngine drawEngine)
     {
         _profileService = profileService;
         _historyQueryService = historyQueryService;
         _catalogManager = catalogManager;
-        _temporaryRecordService = temporaryRecordService;
         _configHandler = configHandler;
         _drawEngine = drawEngine;
         Render();
@@ -51,23 +48,22 @@ public sealed class MobileHistoryPage : ViewBase
         if (_segment == 1 && !MobileCapabilities.IsLotteryEnabled)
             _segment = 0;
 
-        var segmented = new MobileSegmentedControl();
-        segmented.SetItems([
-            (LR.C_RollCall, (object)0, true),
-            (LR.C_Lottery, (object)1, MobileCapabilities.IsLotteryEnabled)
-        ]);
-        if (_segment == 1)
-            segmented.Select(1);
-        segmented.SelectionChanged += (_, _) =>
-        {
-            if (segmented.SelectedTag is int segment && segment != _segment)
+        var segmented = MobileUi.CreateTabSplit(
+            _segment,
+            [
+                (LR.C_RollCall, true),
+                (LR.C_Lottery, MobileCapabilities.IsLotteryEnabled)
+            ],
+            segment =>
             {
+                if (segment == _segment)
+                    return;
+
                 _segment = segment;
                 _profileName = null;
                 _recordsMode = false;
                 Render();
-            }
-        };
+            });
 
         var profileNames = GetProfileNames();
         _profileName = ResolveProfileName(profileNames);
@@ -103,20 +99,12 @@ public sealed class MobileHistoryPage : ViewBase
             : CreateHistoryGrid(rows);
 
         var refresh = MobileUi.CreateSecondaryButton(LR.C_Refresh, Render);
-        var clear = MobileUi.CreateSecondaryButton(LR.C_ClearTemporaryRecords, ClearTemporaryRecords);
-        var actions = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("*,*"),
-            ColumnSpacing = 8,
-            Children = { refresh, clear }
-        };
-        Grid.SetColumn(clear, 1);
 
         ScrollViewer scroll = MobileUi.CreateScroll([
             segmented,
             filters,
             table,
-            actions
+            refresh
         ]);
         Content = scroll;
         if (_firstRender)
@@ -352,18 +340,6 @@ public sealed class MobileHistoryPage : ViewBase
         var text = new TextBlock { Text = label, FontSize = 12 };
         MobileTheme.BindBrush(text, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
         return new StackPanel { Spacing = 4, Children = { text, control } };
-    }
-
-    private void ClearTemporaryRecords()
-    {
-        if (string.IsNullOrWhiteSpace(_profileName))
-            return;
-
-        if (_segment == 0)
-            _temporaryRecordService.ClearStudentList(_profileName);
-        else
-            _temporaryRecordService.ClearPrizeList(_profileName);
-        Render();
     }
 
     private static string FormatScope(string group, string gender)

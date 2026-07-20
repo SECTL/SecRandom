@@ -72,22 +72,22 @@ public sealed class MobileDrawPage : ViewBase
         if (_drawSurface == DrawSurface.Lottery && !MobileCapabilities.IsLotteryEnabled)
             _drawSurface = DrawSurface.RollCall;
 
-        var selector = new MobileSegmentedControl();
-        selector.SetItems([
-            (LR.C_RollCall, (object)DrawSurface.RollCall, true),
-            (LR.C_Lottery, (object)DrawSurface.Lottery, MobileCapabilities.IsLotteryEnabled)
-        ]);
-        if (_drawSurface == DrawSurface.Lottery)
-            selector.Select(1);
-        selector.IsEnabled = !_drawing;
-        selector.SelectionChanged += (_, _) =>
-        {
-            if (selector.SelectedTag is DrawSurface surface && surface != _drawSurface)
+        var selector = MobileUi.CreateTabSplit(
+            (int)_drawSurface,
+            [
+                (LR.C_RollCall, true),
+                (LR.C_Lottery, MobileCapabilities.IsLotteryEnabled)
+            ],
+            selectedIndex =>
             {
+                var surface = (DrawSurface)selectedIndex;
+                if (surface == _drawSurface)
+                    return;
+
                 _drawSurface = surface;
                 Render();
-            }
-        };
+            });
+        selector.IsEnabled = !_drawing;
 
         ScrollViewer scroll = _drawSurface == DrawSurface.RollCall
             ? CreateRollCallContent(selector)
@@ -489,6 +489,15 @@ public sealed class MobileDrawPage : ViewBase
             _studentResult = [];
             Render();
         });
+        var clear = MobileUi.CreateSecondaryButton(LR.C_ClearTemporaryRecords, () =>
+        {
+            dialog.Hide();
+            _temporaryRecordService.ClearStudentList(GetStudentListName());
+            _temporaryRecordService.ClearPrizeList(GetPrizeListName());
+            _studentResult = [];
+            _prizeResult = null;
+            Render();
+        });
         var manage = MobileUi.CreateSecondaryButton(LR.C_ManageStudentList, () =>
         {
             dialog.Hide();
@@ -499,7 +508,7 @@ public sealed class MobileDrawPage : ViewBase
             dialog.Hide();
             _ = _viewEngine.ShowAsync(MobileRoutes.DrawSettings);
         });
-        dialog.Content = new StackPanel { Spacing = 8, Children = { reset, manage, settings } };
+        dialog.Content = new StackPanel { Spacing = 8, Children = { reset, clear, manage, settings } };
         await dialog.ShowAsync(TopLevel.GetTopLevel(this));
     }
 

@@ -51,21 +51,20 @@ public sealed class MobileListManagementSettingsPage : MobileSettingsPageBase
         if (_segment == 1 && !IsLotteryEnabled)
             _segment = 0;
 
-        var segmented = new MobileSegmentedControl();
-        segmented.SetItems([
-            (LR.S_StudentList, (object)0, true),
-            (LR.S_PrizePool, (object)1, IsLotteryEnabled)
-        ]);
-        if (_segment == 1)
-            segmented.Select(1);
-        segmented.SelectionChanged += (_, _) =>
-        {
-            if (segmented.SelectedTag is int segment && segment != _segment)
+        var segmented = MobileUi.CreateTabSplit(
+            _segment,
+            [
+                (LR.S_StudentList, true),
+                (LR.S_PrizePool, IsLotteryEnabled)
+            ],
+            segment =>
             {
+                if (segment == _segment)
+                    return;
+
                 _segment = segment;
                 Render();
-            }
-        };
+            });
 
         var items = new List<Control> { segmented };
         items.AddRange(_segment == 0 ? BuildStudentSurface() : BuildPrizeSurface());

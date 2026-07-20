@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
@@ -19,21 +18,15 @@ namespace SecRandom.Mobile.Views.Settings;
 public sealed class MobileDrawSettingsPage : MobileSettingsPageBase
 {
     private readonly MainConfigHandler _configHandler;
-    private readonly IDrawTemporaryRecordService _temporaryRecordService;
-    private readonly IProfileService _profileService;
     private readonly MobileDrawMediaService _drawMedia;
     private readonly MobileMediaLibraryService _mediaLibrary;
 
     public MobileDrawSettingsPage(
         MainConfigHandler configHandler,
-        IDrawTemporaryRecordService temporaryRecordService,
-        IProfileService profileService,
         MobileDrawMediaService drawMedia,
         MobileMediaLibraryService mediaLibrary)
     {
         _configHandler = configHandler;
-        _temporaryRecordService = temporaryRecordService;
-        _profileService = profileService;
         _drawMedia = drawMedia;
         _mediaLibrary = mediaLibrary;
         Render();
@@ -74,7 +67,7 @@ public sealed class MobileDrawSettingsPage : MobileSettingsPageBase
         items.Add(MobileSettingRow.Choice(LR.O_Cleared, rollCall.ClearRecord == ClearRecordMode.Cleared,
             () => Save(() => rollCall.ClearRecord = ClearRecordMode.Cleared)));
 
-        // 抽奖能力关闭时整组隐藏；清空临时记录按钮同时覆盖点名临时记录，保持在组外。
+        // 抽奖能力关闭时整组隐藏。
         if (IsLotteryEnabled)
         {
             items.Add(new MobileSectionHeader(LR.S_Lottery, FluentIcons.GiftFilled));
@@ -122,7 +115,6 @@ public sealed class MobileDrawSettingsPage : MobileSettingsPageBase
                 value => Save(() => voice.SpeechRate = Math.Clamp(value, 50, 200))));
         }
 
-        items.Add(MobileUi.CreateSecondaryButton(LR.C_ClearTemporaryRecords, ClearTemporaryRecords));
         Content = BuildPage(LR.S_DrawSettings, LR.S_DrawSettings_D, items);
     }
 
@@ -197,10 +189,4 @@ public sealed class MobileDrawSettingsPage : MobileSettingsPageBase
         Render();
     }
 
-    private void ClearTemporaryRecords()
-    {
-        _temporaryRecordService.ClearStudentList(_profileService.StudentListConfig?.Name ?? MobileDefaults.ProfileName);
-        _temporaryRecordService.ClearPrizeList(_profileService.PrizeListConfig?.Name ?? MobileDefaults.ProfileName);
-        Render();
-    }
 }
