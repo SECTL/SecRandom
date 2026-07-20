@@ -52,7 +52,7 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         if (_segment == 1 && !IsLotteryEnabled)
             _segment = 0;
 
-        var segmented = MobileUi.CreateTabSplit(
+        var segmented = MobileViewFactory.CreateTabSplit(
             _segment,
             [
                 (LR.S_StudentList, true),
@@ -359,7 +359,7 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
     private async void RemoveStudent(Guid recordId)
     {
         var student = _studentList?.Students.FirstOrDefault(item => item.RecordId == recordId);
-        if (student is null || !await ConfirmRemoveAsync(MobileUi.Format(student.Id, student.Name)))
+        if (student is null || !await ConfirmRemoveAsync(MobileViewFactory.Format(student.Id, student.Name)))
             return;
         _studentList!.Students.Remove(student);
         SaveStudentList();
@@ -368,7 +368,7 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
     private async void RemovePrize(Guid recordId)
     {
         var prize = _prizeList?.Prizes.FirstOrDefault(item => item.RecordId == recordId);
-        if (prize is null || !await ConfirmRemoveAsync(MobileUi.Format(prize.Id, prize.Name)))
+        if (prize is null || !await ConfirmRemoveAsync(MobileViewFactory.Format(prize.Id, prize.Name)))
             return;
         _prizeList!.Prizes.Remove(prize);
         SavePrizeList();
@@ -387,10 +387,10 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         var imageEnabled = CreateToggle(image.IsAttachSettingsEnabled);
         var imagePreview = CreateImagePreview(image.ImagePath);
         var imagePath = new TextBlock { Text = string.IsNullOrWhiteSpace(image.ImagePath) ? LR.M_NoImageSelected : Path.GetFileName(image.ImagePath), TextWrapping = TextWrapping.Wrap };
-        MobileTheme.BindBrush(imagePath, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+        MobileResources.BindBrush(imagePath, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         var imagePanel = new StackPanel { Spacing = 8, Children = { imageEnabled, imagePreview, imagePath } };
-        var selectImage = MobileUi.CreateSecondaryButton(LR.C_SelectImage, () => _ = SelectImageAsync(image, imagePreview, imagePath, importedImages));
-        var removeImage = MobileUi.CreateSecondaryButton(LR.C_RemoveImage, () =>
+        var selectImage = MobileViewFactory.CreateSecondaryButton(LR.C_SelectImage, () => _ = SelectImageAsync(image, imagePreview, imagePath, importedImages));
+        var removeImage = MobileViewFactory.CreateSecondaryButton(LR.C_RemoveImage, () =>
         {
             image.ImagePath = string.Empty;
             imagePreview.Source = null;
@@ -409,9 +409,9 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         var selections = _mediaLibrary.GetSelections();
         var animationMusic = CreateMusicSelector(selections, music.AnimationMusic);
         var resultMusic = CreateMusicSelector(selections, music.ResultMusic);
-        var importMusic = MobileUi.CreateSecondaryButton(LR.C_ImportMusic, () => _ = ImportMusicAsync(animationMusic, resultMusic));
-        var previewMusic = MobileUi.CreateSecondaryButton(LR.C_Preview, () => _ = PreviewMusicAsync(animationMusic));
-        var stopMusic = MobileUi.CreateSecondaryButton(LR.C_Stop, () => _ = _drawMedia.StopAsync());
+        var importMusic = MobileViewFactory.CreateSecondaryButton(LR.C_ImportMusic, () => _ = ImportMusicAsync(animationMusic, resultMusic));
+        var previewMusic = MobileViewFactory.CreateSecondaryButton(LR.C_Preview, () => _ = PreviewMusicAsync(animationMusic));
+        var stopMusic = MobileViewFactory.CreateSecondaryButton(LR.C_Stop, () => _ = _drawMedia.StopAsync());
         var musicPanel = new StackPanel
         {
             Spacing = 8,
@@ -814,7 +814,7 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         TextBox idBox,
         Action add)
     {
-        var addButton = MobileUi.CreatePrimaryButton(title, true, add);
+        var addButton = MobileViewFactory.CreatePrimaryButton(title, true, add);
         return new MobileCard
         {
             Content = new StackPanel
@@ -828,14 +828,14 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
     private static TextBlock CreateTableHint()
     {
         var hint = new TextBlock { Text = LR.M_ListTableHint, FontSize = 12, TextWrapping = TextWrapping.Wrap };
-        MobileTheme.BindBrush(hint, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+        MobileResources.BindBrush(hint, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         return hint;
     }
 
     private static Control CreateLabeledControl(string label, Control control)
     {
         var text = new TextBlock { Text = label, FontSize = 12 };
-        MobileTheme.BindBrush(text, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+        MobileResources.BindBrush(text, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         return new StackPanel { Spacing = 4, Children = { text, control } };
     }
 
@@ -856,7 +856,7 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
     {
         var button = new Button
         {
-            Content = MobileUi.CreateIcon(glyph, 18, HorizontalAlignment.Center),
+            Content = MobileViewFactory.CreateIcon(glyph, 18, HorizontalAlignment.Center),
             MinWidth = 44,
             MinHeight = 40,
             Padding = new Thickness(8),

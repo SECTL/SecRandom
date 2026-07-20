@@ -43,7 +43,7 @@ public sealed partial class MobilePersonalizationSettingsPage : MobileSettingsPa
         if (_drawMedia.IsSupported)
         {
             items.Add(new MobileSectionHeader(LR.S_AttachedMusic, FluentIcons.Speaker2Filled));
-            items.Add(MobileUi.CreateSecondaryButton(LR.C_ImportMusic, () => _ = ImportMusicAsync()));
+            items.Add(MobileViewFactory.CreateSecondaryButton(LR.C_ImportMusic, () => _ = ImportMusicAsync()));
             foreach (var track in _mediaLibrary.GetTracks())
                 items.Add(MobileSettingRow.Simple(track.DisplayName, null,
                     CreateTrackPreview(track.Id), () => RemoveTrack(track.Id)));
@@ -55,7 +55,7 @@ public sealed partial class MobilePersonalizationSettingsPage : MobileSettingsPa
     {
         _configHandler.Data.Appearance.Theme = theme;
         _configHandler.Save();
-        MobileTheme.Apply(theme);
+        MobileResources.Apply(theme);
         Render();
     }
 
@@ -98,7 +98,7 @@ public sealed partial class MobilePersonalizationSettingsPage : MobileSettingsPa
 
     private Control CreateTrackPreview(string id)
     {
-        var button = MobileUi.CreateSecondaryButton(LR.C_Preview, () => _ = _drawMedia.PreviewAsync(id));
+        var button = MobileViewFactory.CreateSecondaryButton(LR.C_Preview, () => _ = _drawMedia.PreviewAsync(id));
         button.MinHeight = 40;
         return button;
     }

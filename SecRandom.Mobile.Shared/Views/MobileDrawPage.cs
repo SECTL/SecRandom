@@ -74,7 +74,7 @@ public sealed partial class MobileDrawPage : ViewBase
         if (_drawSurface == DrawSurface.Lottery && !MobileCapabilities.IsLotteryEnabled)
             _drawSurface = DrawSurface.RollCall;
 
-        var selector = MobileUi.CreateTabSplit(
+        var selector = MobileViewFactory.CreateTabSplit(
             (int)_drawSurface,
             [
                 (LR.C_RollCall, true),
@@ -111,7 +111,7 @@ public sealed partial class MobileDrawPage : ViewBase
         var lockableControls = new List<Control> { selector };
         var controls = CreateRollCallControls(snapshot, result, detail, resultCard, lockableControls);
 
-        return MobileUi.CreateScroll([
+        return MobileViewFactory.CreateScroll([
             selector,
             resultCard,
             controls
@@ -174,7 +174,7 @@ public sealed partial class MobileDrawPage : ViewBase
                 snapshot.RemainingCount),
             TextWrapping = TextWrapping.Wrap
         };
-        MobileTheme.BindBrush(summary, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+        MobileResources.BindBrush(summary, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
 
         var countText = new TextBlock
         {
@@ -185,7 +185,7 @@ public sealed partial class MobileDrawPage : ViewBase
             TextAlignment = TextAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center
         };
-        MobileTheme.BindBrush(countText, TextBlock.ForegroundProperty, MobileTheme.Keys.Text);
+        MobileResources.BindBrush(countText, TextBlock.ForegroundProperty, MobileResources.Keys.Text);
         var minus = CreateIconButton(FluentIcons.SubtractFilled, LR.S_DrawCount);
         var plus = CreateIconButton(FluentIcons.AddFilled, LR.S_DrawCount);
         void UpdateStepper()
@@ -213,7 +213,7 @@ public sealed partial class MobileDrawPage : ViewBase
             Children = { minus, countText, plus }
         };
 
-        var start = MobileUi.CreatePrimaryButton(LR.C_StartDraw, snapshot.RemainingCount > 0 && !_drawing);
+        var start = MobileViewFactory.CreatePrimaryButton(LR.C_StartDraw, snapshot.RemainingCount > 0 && !_drawing);
         start.MinWidth = 150;
         start.Click += async (_, _) => await DrawStudentsAsync(snapshot, result, detail, resultCard, start, lockableControls);
         var actions = new Grid
@@ -226,9 +226,9 @@ public sealed partial class MobileDrawPage : ViewBase
         start.HorizontalAlignment = HorizontalAlignment.Stretch;
         start.VerticalAlignment = VerticalAlignment.Bottom;
 
-        var remaining = MobileUi.CreateSecondaryButton(LR.C_RemainingList, () => ShowRemainingList(snapshot.Remaining));
+        var remaining = MobileViewFactory.CreateSecondaryButton(LR.C_RemainingList, () => ShowRemainingList(snapshot.Remaining));
         remaining.IsEnabled = !_drawing;
-        var more = MobileUi.CreateSecondaryButton(LR.C_More, ShowMoreActions);
+        var more = MobileViewFactory.CreateSecondaryButton(LR.C_More, ShowMoreActions);
         more.IsEnabled = !_drawing;
         var secondaryActions = new Grid
         {
@@ -281,7 +281,7 @@ public sealed partial class MobileDrawPage : ViewBase
                 : hasStudents ? LR.M_RepeatLimitExhausted : LR.M_AddStudentsPrompt;
         }
 
-        return CreateResultCard(resultText, detailText, MobileTheme.Keys.PrimaryWash,
+        return CreateResultCard(resultText, detailText, MobileResources.Keys.PrimaryWash,
             ShouldShowStudentImages() ? CreateImageStrip(_studentResult) : null);
     }
 
@@ -294,17 +294,17 @@ public sealed partial class MobileDrawPage : ViewBase
             candidates.Count > 0
                 ? string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_CandidatePrizes, candidates.Count)
                 : hasPrizes ? LR.M_RepeatLimitExhausted : LR.M_AddPrizesPrompt,
-            MobileTheme.Keys.WarmWash,
+            MobileResources.Keys.WarmWash,
             _configHandler.Data.LotterySettings.LotteryImage ? CreateImageStrip(_prizeResult is null ? [] : [_prizeResult]) : null);
-        var draw = MobileUi.CreatePrimaryButton(LR.C_DrawPrize, candidates.Count > 0);
-        var manage = MobileUi.CreateSecondaryButton(LR.C_ManagePrizePool, OpenListManagement);
+        var draw = MobileViewFactory.CreatePrimaryButton(LR.C_DrawPrize, candidates.Count > 0);
+        var manage = MobileViewFactory.CreateSecondaryButton(LR.C_ManagePrizePool, OpenListManagement);
         var lockableControls = new List<Control> { selector, draw, manage };
         draw.Click += async (_, _) => await DrawPrizeAsync(candidates, result, detail, card, draw, lockableControls);
 
-        return MobileUi.CreateScroll([
+        return MobileViewFactory.CreateScroll([
             selector,
-            MobileUi.CreateLabel(LR.S_CurrentPool),
-            MobileUi.CreateTitle(_profileService.PrizeListConfig?.Name ?? LR.M_DefaultPool),
+            MobileViewFactory.CreateLabel(LR.S_CurrentPool),
+            MobileViewFactory.CreateTitle(_profileService.PrizeListConfig?.Name ?? LR.M_DefaultPool),
             card,
             draw,
             manage
@@ -484,14 +484,14 @@ public sealed partial class MobileDrawPage : ViewBase
             CloseButtonText = LR.C_Close,
             DefaultButton = FAContentDialogButton.Close
         };
-        var reset = MobileUi.CreateSecondaryButton(LR.C_ResetRange, () =>
+        var reset = MobileViewFactory.CreateSecondaryButton(LR.C_ResetRange, () =>
         {
             dialog.Hide();
             _rollCallService.ClearTemporaryRecords(_group, _gender);
             _studentResult = [];
             Render();
         });
-        var clear = MobileUi.CreateSecondaryButton(LR.C_ClearTemporaryRecords, () =>
+        var clear = MobileViewFactory.CreateSecondaryButton(LR.C_ClearTemporaryRecords, () =>
         {
             dialog.Hide();
             _temporaryRecordService.ClearStudentList(GetStudentListName());
@@ -500,12 +500,12 @@ public sealed partial class MobileDrawPage : ViewBase
             _prizeResult = null;
             Render();
         });
-        var manage = MobileUi.CreateSecondaryButton(LR.C_ManageStudentList, () =>
+        var manage = MobileViewFactory.CreateSecondaryButton(LR.C_ManageStudentList, () =>
         {
             dialog.Hide();
             OpenListManagement();
         });
-        var settings = MobileUi.CreateSecondaryButton(LR.C_DrawSettings, () =>
+        var settings = MobileViewFactory.CreateSecondaryButton(LR.C_DrawSettings, () =>
         {
             dialog.Hide();
             _ = _viewEngine.ShowAsync(MobileRoutes.DrawSettings);
@@ -560,7 +560,7 @@ public sealed partial class MobileDrawPage : ViewBase
     private static Control CreateLabeledControl(string label, Control control)
     {
         var text = new TextBlock { Text = label, FontSize = 12 };
-        MobileTheme.BindBrush(text, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+        MobileResources.BindBrush(text, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         return new StackPanel { Spacing = 4, Children = { text, control } };
     }
 
@@ -568,7 +568,7 @@ public sealed partial class MobileDrawPage : ViewBase
     {
         return new AvaloniaButton
         {
-            Content = MobileUi.CreateIcon(glyph, 18, HorizontalAlignment.Center),
+            Content = MobileViewFactory.CreateIcon(glyph, 18, HorizontalAlignment.Center),
             MinWidth = 44,
             MinHeight = 44,
             [ToolTip.TipProperty] = tooltip
@@ -584,20 +584,20 @@ public sealed partial class MobileDrawPage : ViewBase
         var result = new TextBlock
         {
             Text = resultText,
-            FontSize = MobileTheme.FindDouble("MobileFontSizeResult", 34),
+            FontSize = MobileResources.FindDouble("MobileFontSizeResult", 34),
             FontWeight = FontWeight.SemiBold,
             TextAlignment = TextAlignment.Center,
             TextWrapping = TextWrapping.Wrap
         };
-        MobileTheme.BindBrush(result, TextBlock.ForegroundProperty, MobileTheme.Keys.Text);
+        MobileResources.BindBrush(result, TextBlock.ForegroundProperty, MobileResources.Keys.Text);
         var detail = new TextBlock
         {
             Text = detailText,
             TextAlignment = TextAlignment.Center,
             TextWrapping = TextWrapping.Wrap
         };
-        MobileTheme.BindBrush(detail, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
-        return (result, detail, MobileUi.CreateResultPanel(result, detail, washResourceKey, media));
+        MobileResources.BindBrush(detail, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
+        return (result, detail, MobileViewFactory.CreateResultPanel(result, detail, washResourceKey, media));
     }
 
     private bool ShouldShowStudentImages() => _configHandler.Data
@@ -727,7 +727,7 @@ public sealed partial class MobileDrawPage : ViewBase
             _temporaryRecordService.ClearPrizeListOnce(GetPrizeListName());
     }
 
-    private static string FormatStudent(Student student) => MobileUi.Format(student.Id, student.Name);
+    private static string FormatStudent(Student student) => MobileViewFactory.Format(student.Id, student.Name);
     private string GetStudentListName() => _profileService.StudentListConfig?.Name ?? MobileDefaults.ProfileName;
     private string GetPrizeListName() => _profileService.PrizeListConfig?.Name ?? MobileDefaults.ProfileName;
 

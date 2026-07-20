@@ -17,7 +17,7 @@ public sealed partial class MobileSettingsCatalogPage : MobileSettingsPageBase
 {
     public MobileSettingsCatalogPage(IViewEngine viewEngine)
     {
-        InitializeComponent();
+        LoadSettingsLayout();
         var items = new List<Control>
         {
             new MobileSectionHeader(LR.S_GroupPreferences, FluentIcons.ColorFilled),

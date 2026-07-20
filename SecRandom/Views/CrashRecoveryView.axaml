@@ -1,0 +1,49 @@
+<local:CrashRecoveryView xmlns="https://github.com/avaloniaui"
+                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                          xmlns:local="clr-namespace:SecRandom.Views"
+                          xmlns:lcr="clr-namespace:SecRandom.Langs.CrashRecovery"
+                          x:Class="SecRandom.Views.CrashRecoveryView"
+                          x:DataType="local:CrashRecoveryView">
+    <Grid Margin="24" RowDefinitions="Auto,*,Auto">
+        <StackPanel>
+            <TextBlock Text="{x:Static lcr:Resources.Title}"
+                       FontSize="24"
+                       FontWeight="SemiBold" />
+            <TextBlock Text="{x:Static lcr:Resources.Description}"
+                       TextWrapping="Wrap"
+                       Margin="0,8,0,16" />
+        </StackPanel>
+
+        <TextBox Grid.Row="1"
+                 Text="{Binding CrashReport}"
+                 IsReadOnly="True"
+                 AcceptsReturn="True"
+                 TextWrapping="NoWrap"
+                 FontFamily="Consolas"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto" />
+
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="8"
+                    Margin="0,16,0,0">
+            <Button Content="{x:Static lcr:Resources.C_CopyReport}"
+                    MinWidth="96"
+                    Click="CopyReport_OnClick" />
+            <Button Content="{x:Static lcr:Resources.C_ReportIssue}"
+                    MinWidth="96"
+                    Click="ReportIssue_OnClick" />
+            <Button Content="{x:Static lcr:Resources.C_Ignore}"
+                    MinWidth="80"
+                    IsVisible="{Binding CanIgnore}"
+                    Click="Ignore_OnClick" />
+            <Button Content="{Binding RestartButtonText}"
+                    MinWidth="96"
+                    Click="Restart_OnClick" />
+            <Button Content="{x:Static lcr:Resources.C_Close}"
+                    MinWidth="80"
+                    Click="Close_OnClick" />
+        </StackPanel>
+    </Grid>
+</local:CrashRecoveryView>

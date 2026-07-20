@@ -6,6 +6,7 @@
              RequestedThemeVariant="Default">
     <Application.Styles>
         <StyleInclude Source="/Styles.axaml" />
+        <StyleInclude Source="avares://SecRandom.Mobile/Styles/MobileStyles.axaml" />
 
         <Style Selector=":is(Window)">
             <Setter Property="Icon" Value="/Assets/AppLogo.png" />

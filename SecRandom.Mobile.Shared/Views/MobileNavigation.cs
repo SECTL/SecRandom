@@ -1,6 +1,6 @@
 namespace SecRandom.Mobile.Views;
 
-internal static class MobileRoutes
+public static class MobileRoutes
 {
     public const string Draw = "main.rollCall";
     public const string History = "main.history";
@@ -30,7 +30,7 @@ internal static class MobileRoutes
     ];
 }
 
-internal enum MobileDestination
+public enum MobileDestination
 {
     Draw,
     History,

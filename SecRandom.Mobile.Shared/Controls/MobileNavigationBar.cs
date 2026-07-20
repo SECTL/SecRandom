@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Media;
 using Avalonia.Markup.Xaml;
 using SecRandom.Core.Icons;
 using SecRandom.Mobile.Views;
@@ -20,6 +19,8 @@ public sealed partial class MobileNavigationBar : UserControl
     {
         InitializeComponent();
         _root = this.FindControl<Border>("Root")!;
+        MobileResources.BindBrush(_root, Border.BackgroundProperty, MobileResources.Keys.Surface);
+        MobileResources.BindBrush(_root, Border.BorderBrushProperty, MobileResources.Keys.Border);
         AddItem(this.FindControl<ToggleButton>("DrawButton")!,
             this.FindControl<TextBlock>("DrawIcon")!, this.FindControl<TextBlock>("DrawLabel")!,
             Langs.Mobile.Resources.N_Draw, FluentIcons.PeopleRegular, FluentIcons.PeopleFilled, MobileDestination.Draw, 1);
@@ -32,7 +33,6 @@ public sealed partial class MobileNavigationBar : UserControl
         AddItem(this.FindControl<ToggleButton>("SettingsButton")!,
             this.FindControl<TextBlock>("SettingsIcon")!, this.FindControl<TextBlock>("SettingsLabel")!,
             Langs.Mobile.Resources.N_Settings, FluentIcons.SettingsRegular, FluentIcons.SettingsFilled, MobileDestination.Settings, 4);
-        RefreshTheme();
         Select(MobileDestination.Draw);
     }
 
@@ -41,13 +41,6 @@ public sealed partial class MobileNavigationBar : UserControl
     internal void Select(MobileDestination destination)
     {
         _selectedDestination = destination;
-        RefreshSelection();
-    }
-
-    public void RefreshTheme()
-    {
-        _root.Background = MobileTheme.Surface;
-        _root.BorderBrush = MobileTheme.Border;
         RefreshSelection();
     }
 
@@ -89,11 +82,16 @@ public sealed partial class MobileNavigationBar : UserControl
         {
             var isSelected = destination == _selectedDestination;
             item.Button.IsChecked = isSelected;
-            item.Button.Background = isSelected ? MobileTheme.PrimaryWash : Brushes.Transparent;
+            if (isSelected)
+                MobileResources.BindBrush(item.Button, ToggleButton.BackgroundProperty, MobileResources.Keys.PrimaryWash);
+            else
+                item.Button.ClearValue(ToggleButton.BackgroundProperty);
             item.Icon.Text = isSelected ? item.FilledGlyph : item.RegularGlyph;
-            item.Icon.Foreground = isSelected ? MobileTheme.Primary : MobileTheme.MutedText;
-            item.Label.Foreground = isSelected ? MobileTheme.Primary : MobileTheme.MutedText;
-            item.Label.FontWeight = isSelected ? FontWeight.SemiBold : FontWeight.Normal;
+            MobileResources.BindBrush(item.Icon, TextBlock.ForegroundProperty,
+                isSelected ? MobileResources.Keys.Primary : MobileResources.Keys.MutedText);
+            MobileResources.BindBrush(item.Label, TextBlock.ForegroundProperty,
+                isSelected ? MobileResources.Keys.Primary : MobileResources.Keys.MutedText);
+            item.Label.FontWeight = isSelected ? Avalonia.Media.FontWeight.SemiBold : Avalonia.Media.FontWeight.Normal;
         }
     }
 

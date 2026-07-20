@@ -25,22 +25,22 @@ public sealed partial class MobileOverviewPage : ViewBase
         {
             (LR.M_Students,
                 FormatCount(profileService.CurrentStudentList?.Students.Count(student => student.IsCandidate) ?? 0),
-                FluentIcons.PeopleFilled, MobileTheme.Keys.PrimaryWash)
+                FluentIcons.PeopleFilled, MobileResources.Keys.PrimaryWash)
         };
         if (MobileCapabilities.IsLotteryEnabled)
         {
             metrics.Add((LR.M_Prizes,
                 FormatCount(profileService.CurrentPrizeList?.Prizes.Count(prize => prize.IsCandidate) ?? 0),
-                FluentIcons.GiftFilled, MobileTheme.Keys.WarmWash));
+                FluentIcons.GiftFilled, MobileResources.Keys.WarmWash));
         }
         metrics.Add((LR.M_RollCallRounds,
             FormatCount(profileService.CurrentStudentHistory?.TotalRounds ?? 0),
-            FluentIcons.TargetFilled, MobileTheme.Keys.SurfaceMuted));
+            FluentIcons.TargetFilled, MobileResources.Keys.SurfaceMuted));
         if (MobileCapabilities.IsLotteryEnabled)
         {
             metrics.Add((LR.M_LotteryRounds,
                 FormatCount(profileService.CurrentPrizeHistory?.TotalRounds ?? 0),
-                FluentIcons.TrophyFilled, MobileTheme.Keys.SurfaceMuted));
+                FluentIcons.TrophyFilled, MobileResources.Keys.SurfaceMuted));
         }
 
         var grid = this.FindControl<Grid>("MetricsGrid")!;
@@ -61,8 +61,8 @@ public sealed partial class MobileOverviewPage : ViewBase
 
     private static Control CreateMetricCard((string Label, string Value, string Glyph, string WashKey) metric)
     {
-        var icon = MobileUi.CreateIcon(metric.Glyph, 20);
-        MobileTheme.BindBrush(icon, TextBlock.ForegroundProperty, MobileTheme.Keys.Primary);
+        var icon = MobileViewFactory.CreateIcon(metric.Glyph, 20);
+        MobileResources.BindBrush(icon, TextBlock.ForegroundProperty, MobileResources.Keys.Primary);
         var value = new TextBlock
         {
             Text = metric.Value,
@@ -70,21 +70,21 @@ public sealed partial class MobileOverviewPage : ViewBase
             FontSize = 28,
             FontWeight = FontWeight.SemiBold
         };
-        MobileTheme.BindBrush(value, TextBlock.ForegroundProperty, MobileTheme.Keys.Text);
+        MobileResources.BindBrush(value, TextBlock.ForegroundProperty, MobileResources.Keys.Text);
         var label = new TextBlock
         {
             Text = metric.Label,
-            FontSize = MobileTheme.FindDouble("MobileFontSizeCaption", 12),
+            FontSize = MobileResources.FindDouble("MobileFontSizeCaption", 12),
             TextWrapping = TextWrapping.Wrap
         };
-        MobileTheme.BindBrush(label, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+        MobileResources.BindBrush(label, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
 
         return new MobileCard(metric.WashKey)
         {
             BorderThickness = new Thickness(0),
             Content = new StackPanel
             {
-                Spacing = MobileTheme.FindDouble("MobileSpacingXs", 4),
+                Spacing = MobileResources.FindDouble("MobileSpacingXs", 4),
                 Children = { icon, value, label }
             }
         };

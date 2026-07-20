@@ -3,7 +3,9 @@
                       xmlns:local="clr-namespace:SecRandom.Mobile"
                       xmlns:controls="clr-namespace:SecRandom.Mobile.Controls"
                       x:Class="SecRandom.Mobile.MobileRootView">
-    <Grid x:Name="RootLayout" RowDefinitions="Auto,*,Auto">
+    <Grid x:Name="RootLayout"
+          RowDefinitions="Auto,*,Auto"
+          Background="{DynamicResource MobileCanvasBrush}">
         <controls:MobilePageHeader x:Name="PageHeader" />
         <controls:MobileNavigationBar x:Name="BottomBar" Grid.Row="2" />
     </Grid>

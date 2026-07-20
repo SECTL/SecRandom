@@ -16,7 +16,12 @@
         <ProjectReference Include="..\SecRandom4Ci.Interface\SecRandom4Ci.Interface.csproj" />
         <ProjectReference Include="..\SecRandom.Platforms\SecRandom.Platforms.csproj" />
         <ProjectReference Include="..\SecRandom.Platforms.Abstractions\SecRandom.Platforms.Abstractions.csproj" />
+        <ProjectReference Include="..\SecRandom.Mobile.Shared\SecRandom.Mobile.Shared.csproj" />
     </ItemGroup>
+
+    <PropertyGroup Condition="'$(BuildMobile)' == 'true'">
+        <DefineConstants>$(DefineConstants);SECRANDOM_MOBILE</DefineConstants>
+    </PropertyGroup>
 
     <ItemGroup>
         <EmbeddedResource Update="Langs\Common\Resources.resx">
@@ -424,7 +429,7 @@
         <PackageReference Include="Sentry" Version="6.6.0" />
         <PackageReference Include="Sentry.AspNetCore" Version="6.6.0" />
         <PackageReference Include="Sentry.Extensions.Logging" Version="6.6.0" />
-        <PackageReference Include="Sentry.Profiling" Version="6.6.0" />
+        <PackageReference Include="Sentry.Profiling" Version="6.6.0" Condition="'$(BuildMobile)' != 'true'" />
         <PackageReference Include="QRCoder" Version="1.7.0" />
         <PackageReference Include="SoundFlow" Version="[1.2.1.3]" />
         <PackageReference Include="ClassIsland.Shared.IPC" Version="2.1.0.1" />

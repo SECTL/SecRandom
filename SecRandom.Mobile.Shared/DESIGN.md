@@ -56,18 +56,18 @@ The workflow supports tabular student/prize editing, desktop-compatible per-reco
 
 - Color tokens live in `Styles/MobileStyles.axaml` as Light/Dark theme dictionaries: `MobileCanvasBrush`, `MobileSurfaceBrush`, `MobileSurfaceMutedBrush`, `MobileBorderBrush`, `MobilePrimaryBrush` (`#006E5B` light / `#72D8C2` dark), `MobilePrimaryWashBrush`, `MobileWarmWashBrush`, `MobileMutedTextBrush`, `MobileDangerBrush`, and `MobileTextBrush`.
 - Metric tokens: spacing `MobileSpacingXs/Sm/Md/Lg/Xl` = 4/8/14/20/28; corner radii `MobileCornerRadiusSmall/Medium/Large` = 10/15/18; font sizes `MobileFontSizeCaption/Body/Section/Title/Result` = 12/16/20/24/34; touch heights `MobileMinHeightSecondary/Primary` = 44/48; `MobilePagePadding` = 20,20,20,28; `MobileCardPadding` = 16.
-- Pages and factories consume colors only through `MobileTheme.BindBrush(...)` / `MobileTheme.Resource(key)` DynamicResource bindings, so a theme switch refreshes page content automatically. The legacy `MobileTheme.*` snapshot brushes remain only for the shell (`MobileRootView`, `MobilePageHeader`, `MobileNavigationBar`), which already re-reads them in `RefreshTheme()` on theme change. Page content must not use the snapshot brushes.
+- Pages and factories consume colors through `DynamicResource` bindings or `MobileResources` token helpers, so a theme switch refreshes page content automatically. Static theme brush snapshots are not used.
 
 ## Component Inventory
 
-- `MobileCard`: rounded surface container; its default look comes from the type-keyed ControlTheme in `MobileStyles.axaml`, and a wash resource key (`MobileTheme.Keys.PrimaryWash` / `WarmWash`) produces tinted result/metric cards.
+- `MobileCard`: rounded surface container; its default look comes from the type-keyed ControlTheme in `MobileStyles.axaml`, and a wash resource key (`MobileResources.Keys.PrimaryWash` / `WarmWash`) produces tinted result/metric cards.
 - `MobileSettingRow`: compatibility wrapper over FluentAvalonia `FASettingsExpanderItem`, with factories `Toggle`, `Integer`, `Choice` (unique radio group per row by default), `Navigation`, and `Simple`.
 - `MobileSegmentedControl`: capsule segmented selector with primary-wash selection visuals, replacing the hand-assembled segment buttons.
 - `MobileEmptyState`: icon + title + optional description + optional guidance button that routes to the matching management surface.
 - `MobileSectionHeader`: primary-tinted icon + semibold section title, replacing the `CreateLabel` IconText usage.
 - `MobileSettingsPageBase`: settings-page skeleton (lightweight title/description header instead of an FAInfoBar, optional back button, scroll, and page-enter transition) with capability projection pass-throughs; root-level destinations such as the settings catalog pass `showBackButton: false`.
 - `MobileNavigationBar`: four equal native Avalonia toggle buttons hosted in the fixed bottom row, switching each Fluent icon from Regular to Filled when selected; glyphs load from `avares://SecRandom.Mobile/Assets/Fonts/`. Native controls keep Android accessibility traversal and touch dispatch out of FluentAvalonia's repeater implementation.
-- The old `MobileUi` factory methods keep their signatures and delegate to these controls, so existing pages keep working through the FluentAvalonia migration.
+- `MobileViewFactory` is a small code-behind construction helper; page shells and styles remain in AXAML.
 
 ## Animation Primitives
 

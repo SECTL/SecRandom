@@ -17,7 +17,7 @@ namespace SecRandom.Mobile.Android;
 
 [Application(Icon = "@mipmap/app_logo")]
 [SupportedOSPlatform("android24.0")]
-public class MobileApplication : AvaloniaAndroidApplication<MobileApp>
+public class MobileApplication : AvaloniaAndroidApplication<global::SecRandom.App>
 {
     protected MobileApplication(nint javaReference, JniHandleOwnership transfer)
         : base(javaReference, transfer)

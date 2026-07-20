@@ -16,10 +16,12 @@ namespace SecRandom.Mobile.Views.Settings;
 public sealed partial class MobileGeneralSettingsPage : MobileSettingsPageBase
 {
     private readonly MainConfigHandler _configHandler;
+    private readonly IMobileRootViewReloader _rootViewReloader;
 
-    public MobileGeneralSettingsPage(MainConfigHandler configHandler)
+    public MobileGeneralSettingsPage(MainConfigHandler configHandler, IMobileRootViewReloader rootViewReloader)
     {
         _configHandler = configHandler;
+        _rootViewReloader = rootViewReloader;
         InitializeComponent();
         Render();
     }
@@ -41,9 +43,14 @@ public sealed partial class MobileGeneralSettingsPage : MobileSettingsPageBase
         {
             basic.Language = mode;
             _configHandler.Save();
-            MobileApp.ApplyMobileCulture(mode);
-            if (Avalonia.Application.Current is MobileApp app)
-                _ = app.ReloadRootViewAsync();
+            MobileApplicationServices.ApplyCulture(new System.Globalization.CultureInfo(mode switch
+            {
+                LanguageMode.ChineseSimplified => "zh-Hans",
+                LanguageMode.English => "en-US",
+                LanguageMode.Japanese => "ja-JP",
+                _ => "zh-Hans"
+            }));
+            _ = _rootViewReloader.ReloadAsync();
         }
 
         RenderPage([
@@ -77,10 +84,10 @@ public sealed partial class MobileGeneralSettingsPage : MobileSettingsPageBase
         var caption = new TextBlock
         {
             Text = text,
-            FontSize = MobileTheme.FindDouble("MobileFontSizeCaption", 12),
+            FontSize = MobileResources.FindDouble("MobileFontSizeCaption", 12),
             TextWrapping = TextWrapping.Wrap
         };
-        MobileTheme.BindBrush(caption, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+        MobileResources.BindBrush(caption, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         return caption;
     }
 }

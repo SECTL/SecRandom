@@ -6,7 +6,7 @@ using SecRandom.Mobile.Views;
 namespace SecRandom.Mobile.Controls;
 
 /// <summary>
-/// 段落页眉：主色小图标 + 加粗标题（替代旧 MobileUi.CreateLabel 的 IconText 用法）。
+/// 段落页眉：主色小图标 + 加粗标题（替代旧 MobileViewFactory.CreateLabel 的 IconText 用法）。
 /// </summary>
 public sealed partial class MobileSectionHeader : UserControl
 {

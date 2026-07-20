@@ -50,7 +50,7 @@ public sealed partial class MobileHistoryPage : ViewBase
         if (_segment == 1 && !MobileCapabilities.IsLotteryEnabled)
             _segment = 0;
 
-        var segmented = MobileUi.CreateTabSplit(
+        var segmented = MobileViewFactory.CreateTabSplit(
             _segment,
             [
                 (LR.C_RollCall, true),
@@ -100,9 +100,9 @@ public sealed partial class MobileHistoryPage : ViewBase
                 LR.M_NoHistoryPrompt)
             : CreateHistoryGrid(rows);
 
-        var refresh = MobileUi.CreateSecondaryButton(LR.C_Refresh, Render);
+        var refresh = MobileViewFactory.CreateSecondaryButton(LR.C_Refresh, Render);
 
-        ScrollViewer scroll = MobileUi.CreateScroll([
+        ScrollViewer scroll = MobileViewFactory.CreateScroll([
             segmented,
             filters,
             table,
@@ -340,7 +340,7 @@ public sealed partial class MobileHistoryPage : ViewBase
     private static Control CreateLabeledControl(string label, Control control)
     {
         var text = new TextBlock { Text = label, FontSize = 12 };
-        MobileTheme.BindBrush(text, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+        MobileResources.BindBrush(text, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         return new StackPanel { Spacing = 4, Children = { text, control } };
     }
 

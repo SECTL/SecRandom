@@ -60,7 +60,7 @@ SecRandom.Shared/
 - Prefer small extension methods and plain contracts here; richer behavior belongs in `SecRandom.Core`.
 - `ConfigBase` / `ProfileConfigBase` define paths and identity for persisted files; handlers and desktop storage live
   outside Shared.
-- `Utils.GetFilePath(...)` is the expected route for data/config paths. Its default desktop/portable root remains `<PackageRoot>/data`. `Utils.ConfigureMobileDataRoot()` is a startup-only Android/iOS operation with a fixed `LocalApplicationData/SecRandom/data` target; `SecRandom.Mobile.MobileApp` (in the `SecRandom.Mobile.Shared` library) calls it exactly once before any path is read. No Shared model, Core service, plugin, or desktop flow may change the root.
+- `Utils.GetFilePath(...)` is the expected route for data/config paths. Its default desktop/portable root remains `<PackageRoot>/data`. `Utils.ConfigureMobileDataRoot()` is a startup-only Android/iOS operation with a fixed `LocalApplicationData/SecRandom/data` target; shared `SecRandom.App` calls it exactly once in its mobile branch before any path is read. No Shared model, Core service, plugin, or desktop flow may change the root.
 - If adding a shared model that will be persisted, consider backward-compatible defaults and nullable behavior first.
 - Comments should document serialization/backward-compatibility constraints, not obvious property names.
 

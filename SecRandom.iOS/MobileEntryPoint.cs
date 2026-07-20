@@ -22,7 +22,7 @@ public static class MobileEntryPoint
 
 [SupportedOSPlatform("ios13.0")]
 [Register("AppDelegate")]
-public sealed class AppDelegate : AvaloniaAppDelegate<MobileApp>
+public sealed class AppDelegate : AvaloniaAppDelegate<global::SecRandom.App>
 {
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {

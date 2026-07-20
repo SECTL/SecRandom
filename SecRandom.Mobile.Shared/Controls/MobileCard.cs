@@ -17,7 +17,7 @@ public class MobileCard : ContentControl
     public MobileCard(string? backgroundResourceKey, Control? content = null)
     {
         if (backgroundResourceKey is not null)
-            MobileTheme.BindBrush(this, BackgroundProperty, backgroundResourceKey);
+            MobileResources.BindBrush(this, BackgroundProperty, backgroundResourceKey);
         if (content is not null)
             Content = content;
     }

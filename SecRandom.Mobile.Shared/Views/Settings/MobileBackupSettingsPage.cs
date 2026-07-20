@@ -45,13 +45,13 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
     public MobileBackupSettingsPage()
     {
         InitializeComponent();
-        _exportAllButton = MobileUi.CreatePrimaryButton(LR.C_ExportAllData, true, () => _ = ExportAllDataAsync());
-        _importAllButton = MobileUi.CreateSecondaryButton(LR.C_ImportAllData, () => _ = PickImportAsync(PendingImportKind.AllData));
-        _exportSettingsButton = MobileUi.CreateSecondaryButton(LR.C_ExportSettings, () => _ = ExportSettingsAsync());
-        _importSettingsButton = MobileUi.CreateSecondaryButton(LR.C_ImportSettings, () => _ = PickImportAsync(PendingImportKind.Settings));
+        _exportAllButton = MobileViewFactory.CreatePrimaryButton(LR.C_ExportAllData, true, () => _ = ExportAllDataAsync());
+        _importAllButton = MobileViewFactory.CreateSecondaryButton(LR.C_ImportAllData, () => _ = PickImportAsync(PendingImportKind.AllData));
+        _exportSettingsButton = MobileViewFactory.CreateSecondaryButton(LR.C_ExportSettings, () => _ = ExportSettingsAsync());
+        _importSettingsButton = MobileViewFactory.CreateSecondaryButton(LR.C_ImportSettings, () => _ = PickImportAsync(PendingImportKind.Settings));
 
         _statusText = new TextBlock { TextWrapping = TextWrapping.Wrap };
-        MobileTheme.BindBrush(_statusText, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+        MobileResources.BindBrush(_statusText, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
 
         _confirmHost = new Border { IsVisible = false };
 
@@ -83,10 +83,10 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
         var caption = new TextBlock
         {
             Text = text,
-            FontSize = MobileTheme.FindDouble("MobileFontSizeCaption", 12),
+            FontSize = MobileResources.FindDouble("MobileFontSizeCaption", 12),
             TextWrapping = TextWrapping.Wrap
         };
-        MobileTheme.BindBrush(caption, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+        MobileResources.BindBrush(caption, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         return caption;
     }
 
@@ -246,11 +246,11 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
             Text = string.Format(LR.M_SourceVersion, string.IsNullOrWhiteSpace(inspection.ProducerVersion) ? LR.M_UnrecognizedVersion : inspection.ProducerVersion) + "\n"
                    + string.Format(LR.M_ImportFileCount, inspection.FileCount, (inspection.UncompressedBytes / 1024d / 1024d).ToString("F1"))
         };
-        MobileTheme.BindBrush(detail, TextBlock.ForegroundProperty, MobileTheme.Keys.Text);
+        MobileResources.BindBrush(detail, TextBlock.ForegroundProperty, MobileResources.Keys.Text);
 
         var stack = new StackPanel
         {
-            Spacing = MobileTheme.FindDouble("MobileSpacingSm", 8),
+            Spacing = MobileResources.FindDouble("MobileSpacingSm", 8),
             Children =
             {
                 new MobileSectionHeader(LR.S_ConfirmImport, FluentIcons.WarningFilled),
@@ -265,16 +265,16 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
                 Text = string.Join("\n", inspection.Warnings),
                 TextWrapping = TextWrapping.Wrap
             };
-            MobileTheme.BindBrush(warnings, TextBlock.ForegroundProperty, MobileTheme.Keys.Danger);
+            MobileResources.BindBrush(warnings, TextBlock.ForegroundProperty, MobileResources.Keys.Danger);
             stack.Children.Add(warnings);
         }
 
-        _confirmButton = MobileUi.CreatePrimaryButton(LR.C_ConfirmImport, inspection.IsSupportedV3, () => _ = ConfirmImportAsync());
-        _cancelButton = MobileUi.CreateSecondaryButton(LR.C_Cancel, CancelPendingImport);
+        _confirmButton = MobileViewFactory.CreatePrimaryButton(LR.C_ConfirmImport, inspection.IsSupportedV3, () => _ = ConfirmImportAsync());
+        _cancelButton = MobileViewFactory.CreateSecondaryButton(LR.C_Cancel, CancelPendingImport);
         stack.Children.Add(_confirmButton);
         stack.Children.Add(_cancelButton);
 
-        _confirmHost.Child = new MobileCard(MobileTheme.Keys.WarmWash) { Content = stack };
+        _confirmHost.Child = new MobileCard(MobileResources.Keys.WarmWash) { Content = stack };
         _confirmHost.IsVisible = true;
         MobileAnimations.PlayResultReveal(_confirmHost);
     }

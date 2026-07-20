@@ -106,7 +106,7 @@ public class MobileSettingRow : UserControl
     internal static MobileSettingRow Navigation(string title, string? description, Action open)
     {
         var row = new MobileSettingRow { Title = title, Description = description, IsClickEnabled = true };
-        row._item.ActionIconSource = MobileUi.CreateIconSource(FluentIcons.ChevronRightFilled);
+        row._item.ActionIconSource = MobileViewFactory.CreateIconSource(FluentIcons.ChevronRightFilled);
         row.Click += (_, _) => open();
         return row;
     }
@@ -119,14 +119,14 @@ public class MobileSettingRow : UserControl
             var actions = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = MobileTheme.FindDouble("MobileSpacingXs", 4),
+                Spacing = MobileResources.FindDouble("MobileSpacingXs", 4),
                 VerticalAlignment = VerticalAlignment.Center
             };
             if (trailing is not null)
                 actions.Children.Add(trailing);
             var removeButton = new AvaloniaButton
             {
-                Content = MobileUi.CreateIcon(FluentIcons.DeleteFilled, 18, HorizontalAlignment.Center),
+                Content = MobileViewFactory.CreateIcon(FluentIcons.DeleteFilled, 18, HorizontalAlignment.Center),
                 [ToolTip.TipProperty] = LR.C_Remove,
                 Classes = { "compact" }
             };

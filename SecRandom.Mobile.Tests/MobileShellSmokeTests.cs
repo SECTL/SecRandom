@@ -95,10 +95,17 @@ public sealed class MobileShellSmokeTests
     public void TabSplitThemeLoadsAndSwitchesTabsAtPhoneSize()
     {
         var selectedIndex = -1;
-        var tabs = MobileUi.CreateTabSplit(
-            1,
-            [("Roll call", true), ("Lottery", true)],
-            index => selectedIndex = index);
+        var tabs = new TabStrip
+        {
+            Theme = Assert.IsType<ControlTheme>(Application.Current!.FindResource("TabSplitTheme")),
+            Items =
+            {
+                new TabStripItem { Content = "Roll call" },
+                new TabStripItem { Content = "Lottery" }
+            },
+            SelectedIndex = 1
+        };
+        tabs.SelectionChanged += (_, _) => selectedIndex = tabs.SelectedIndex;
         var window = new Window
         {
             Width = 390,
@@ -195,7 +202,17 @@ public sealed class MobileShellSmokeTests
                 MinHeight = 72,
                 Content = new TextBlock { Text = $"Item {index}" }
             });
-        var scroll = MobileUi.CreateScroll(items);
+        var scroll = new ScrollViewer
+        {
+            Content = new StackPanel { Spacing = 14, Children = { } },
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            IsScrollChainingEnabled = false,
+            IsScrollInertiaEnabled = true
+        };
+        var panel = Assert.IsType<StackPanel>(scroll.Content);
+        foreach (var item in items)
+            panel.Children.Add(item);
         var window = new Window
         {
             Width = 390,

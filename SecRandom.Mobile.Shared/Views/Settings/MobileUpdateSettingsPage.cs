@@ -47,16 +47,16 @@ public sealed partial class MobileUpdateSettingsPage : MobileSettingsPageBase
                 : _updateService.Status,
             TextWrapping = TextWrapping.Wrap
         };
-        MobileTheme.BindBrush(status, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+        MobileResources.BindBrush(status, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
 
         RenderPage([
-            MobileUi.CreateSecondaryButton(LR.C_CheckUpdates, async () =>
+            MobileViewFactory.CreateSecondaryButton(LR.C_CheckUpdates, async () =>
             {
                 await _updateService.CheckAsync();
                 Render();
             }),
             status,
-            MobileUi.CreatePrimaryButton(LR.C_InstallUpdate, _updateService.IsUpdateAvailable && !_updateService.IsBusy, async () =>
+            MobileViewFactory.CreatePrimaryButton(LR.C_InstallUpdate, _updateService.IsUpdateAvailable && !_updateService.IsBusy, async () =>
             {
                 await _updateService.DownloadAndInstallAsync();
                 Render();

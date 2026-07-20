@@ -12,7 +12,7 @@ using AvaloniaButton = Avalonia.Controls.Button;
 
 namespace SecRandom.Mobile.Views;
 
-internal static class MobileUi
+internal static class MobileViewFactory
 {
     private static readonly FontFamily IconFont =
         new("avares://SecRandom.Mobile/Assets/Fonts/#FluentSystemIcons-Resizable");
@@ -70,7 +70,7 @@ internal static class MobileUi
     {
         var panel = new StackPanel
         {
-            Spacing = MobileTheme.FindDouble("MobileSpacingMd", 14),
+            Spacing = MobileResources.FindDouble("MobileSpacingMd", 14),
             MaxWidth = 720
         };
         foreach (var item in items)
@@ -78,7 +78,7 @@ internal static class MobileUi
         return new ScrollViewer
         {
             Content = panel,
-            Padding = MobileTheme.FindThickness("MobilePagePadding", new Thickness(20, 20, 20, 28)),
+            Padding = MobileResources.FindThickness("MobilePagePadding", new Thickness(20, 20, 20, 28)),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
@@ -93,26 +93,26 @@ internal static class MobileUi
         var titleBlock = new TextBlock
         {
             Text = title,
-            FontSize = MobileTheme.FindDouble("MobileFontSizeSection", 20),
+            FontSize = MobileResources.FindDouble("MobileFontSizeSection", 20),
             FontWeight = FontWeight.SemiBold,
             TextWrapping = TextWrapping.Wrap
         };
-        MobileTheme.BindBrush(titleBlock, TextBlock.ForegroundProperty, MobileTheme.Keys.Text);
+        MobileResources.BindBrush(titleBlock, TextBlock.ForegroundProperty, MobileResources.Keys.Text);
         var descriptionBlock = new TextBlock
         {
             Text = description,
             TextWrapping = TextWrapping.Wrap
         };
-        MobileTheme.BindBrush(descriptionBlock, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+        MobileResources.BindBrush(descriptionBlock, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         var content = new List<Control>
         {
             CreateSecondaryButton(LR.C_Back, goBack),
-            new MobileCard(MobileTheme.Keys.PrimaryWash)
+            new MobileCard(MobileResources.Keys.PrimaryWash)
             {
                 BorderThickness = new Thickness(0),
                 Content = new StackPanel
                 {
-                    Spacing = MobileTheme.FindDouble("MobileSpacingXs", 4),
+                    Spacing = MobileResources.FindDouble("MobileSpacingXs", 4),
                     Children = { titleBlock, descriptionBlock }
                 }
             }
@@ -140,11 +140,11 @@ internal static class MobileUi
         var title = new TextBlock
         {
             Text = text,
-            FontSize = MobileTheme.FindDouble("MobileFontSizeTitle", 24),
+            FontSize = MobileResources.FindDouble("MobileFontSizeTitle", 24),
             FontWeight = FontWeight.SemiBold,
             TextWrapping = TextWrapping.Wrap
         };
-        MobileTheme.BindBrush(title, TextBlock.ForegroundProperty, MobileTheme.Keys.Text);
+        MobileResources.BindBrush(title, TextBlock.ForegroundProperty, MobileResources.Keys.Text);
         return title;
     }
 
@@ -154,7 +154,7 @@ internal static class MobileUi
         {
             Background = color,
             BorderThickness = new Thickness(0),
-            CornerRadius = MobileTheme.FindCornerRadius("MobileCornerRadiusLarge", new CornerRadius(18)),
+            CornerRadius = MobileResources.FindCornerRadius("MobileCornerRadiusLarge", new CornerRadius(18)),
             Padding = new Thickness(24, 28)
         };
         card.Content = CreateResultStack(result, detail);
@@ -167,7 +167,7 @@ internal static class MobileUi
         var card = new MobileCard(washResourceKey)
         {
             BorderThickness = new Thickness(0),
-            CornerRadius = MobileTheme.FindCornerRadius("MobileCornerRadiusLarge", new CornerRadius(18)),
+            CornerRadius = MobileResources.FindCornerRadius("MobileCornerRadiusLarge", new CornerRadius(18)),
             Padding = new Thickness(24, 28)
         };
         card.Content = CreateResultStack(result, detail, media);
@@ -178,7 +178,7 @@ internal static class MobileUi
     {
         var stack = new StackPanel
         {
-            Spacing = MobileTheme.FindDouble("MobileSpacingSm", 8),
+            Spacing = MobileResources.FindDouble("MobileSpacingSm", 8),
             Children = { result, detail }
         };
         if (media is not null)
@@ -196,7 +196,7 @@ internal static class MobileUi
         {
             Content = text,
             IsEnabled = enabled,
-            MinHeight = MobileTheme.FindDouble("MobileMinHeightPrimary", 48),
+            MinHeight = MobileResources.FindDouble("MobileMinHeightPrimary", 48),
             Classes = { "accent" },
             FontWeight = FontWeight.SemiBold,
             HorizontalContentAlignment = HorizontalAlignment.Center
@@ -211,7 +211,7 @@ internal static class MobileUi
         var button = new AvaloniaButton
         {
             Content = text,
-            MinHeight = MobileTheme.FindDouble("MobileMinHeightSecondary", 44),
+            MinHeight = MobileResources.FindDouble("MobileMinHeightSecondary", 44),
             FontWeight = FontWeight.SemiBold,
             HorizontalContentAlignment = HorizontalAlignment.Center
         };
@@ -224,7 +224,7 @@ internal static class MobileUi
         return new Border
         {
             Background = color,
-            CornerRadius = MobileTheme.FindCornerRadius("MobileCornerRadiusSmall", new CornerRadius(10)),
+            CornerRadius = MobileResources.FindCornerRadius("MobileCornerRadiusSmall", new CornerRadius(10)),
             Padding = new Thickness(16),
             Child = CreateMetricGrid(label, value)
         };
@@ -236,7 +236,7 @@ internal static class MobileUi
         var card = new MobileCard(washResourceKey)
         {
             BorderThickness = new Thickness(0),
-            CornerRadius = MobileTheme.FindCornerRadius("MobileCornerRadiusSmall", new CornerRadius(10)),
+            CornerRadius = MobileResources.FindCornerRadius("MobileCornerRadiusSmall", new CornerRadius(10)),
             Padding = new Thickness(16)
         };
         card.Content = CreateMetricGrid(label, value);
@@ -253,13 +253,13 @@ internal static class MobileUi
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center
         };
-        MobileTheme.BindBrush(valueText, TextBlock.ForegroundProperty, MobileTheme.Keys.Text);
+        MobileResources.BindBrush(valueText, TextBlock.ForegroundProperty, MobileResources.Keys.Text);
         var labelText = new TextBlock
         {
             Text = label,
             VerticalAlignment = VerticalAlignment.Center
         };
-        MobileTheme.BindBrush(labelText, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+        MobileResources.BindBrush(labelText, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
         grid.Children.Add(labelText);
         grid.Children.Add(valueText);

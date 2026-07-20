@@ -17,7 +17,7 @@ internal static class MobileCapabilities
 
     internal static bool IsLotteryEnabled => FeatureAvailability?.IsLotteryEnabled ?? true;
 
-    // IAppHost.Host 是过渡性 Core 消费入口，由 MobileApp 在 Host 建立后赋值、退出时清空；
+    // IAppHost.Host 是过渡性 Core 消费入口，由共享 App 在 Host 建立后赋值、退出时清空；
     // Host 未就绪时按功能可用处理，避免预热期误隐藏入口。
     internal static IFeatureAvailabilityService? FeatureAvailability =>
         IAppHost.Host?.Services.GetService<IFeatureAvailabilityService>();

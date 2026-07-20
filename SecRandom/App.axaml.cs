@@ -64,6 +64,9 @@ using SecRandom.Services.Verification;
 using SecRandom.Services.Voice;
 using SecRandom.Services.Updates;
 using SecRandom.Services.ViewEngine;
+using SecRandom.Mobile;
+using SecRandom.Mobile.Services;
+using SecRandom.Mobile.Views;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
 using SecRandom.ViewModels;
@@ -103,6 +106,11 @@ public partial class App : Application
     private static MainWindow? _settingsWindow;
     private NativeMenuItem? _floatingWindowMenuItem;
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
+    private IHost? _mobileHost;
+    private ISingleViewApplicationLifetime? _singleViewLifetime;
+    private MobileRootView? _mobileRootView;
+    private bool _mobileStopping;
+    private bool _mobileStartupFailureShown;
     private readonly object _shutdownGate = new();
     private bool _isStopping;
     private bool _isOobeActive;
@@ -115,6 +123,9 @@ public partial class App : Application
 
     public override void Initialize()
     {
+        if (PlatformStartupContext.Current is MobilePlatformServiceRoot)
+            Utils.ConfigureMobileDataRoot();
+
         // 初始化语言
         var mainConfig = new MainConfigModel();
         var settings = LoadStartupSettings(mainConfig);
@@ -126,6 +137,8 @@ public partial class App : Application
             _ => @"zh-Hans"
         };
         InitializeLanguages(new CultureInfo(culture));
+        if (PlatformStartupContext.Current is MobilePlatformServiceRoot)
+            MobileApplicationServices.ApplyCulture(new CultureInfo(culture));
 
         // 初始化 Avalonia App
         AvaloniaXamlLoader.Load(this);
@@ -179,13 +192,167 @@ public partial class App : Application
 
             ContinueDesktopStartup(desktop, startupProtocolUri);
         }
-        else if (ApplicationLifetime is ISingleViewApplicationLifetime)
+        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
         {
-            throw new PlatformNotSupportedException(
-                "SecRandom.App is the desktop application host. Mobile startup is owned by SecRandom.Mobile.MobileApp.");
+            StartMobileApplication(singleView);
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private void StartMobileApplication(ISingleViewApplicationLifetime singleView)
+    {
+        _singleViewLifetime = singleView;
+        Dispatcher.UIThread.UnhandledException += MobileDispatcherOnUnhandledException;
+        try
+        {
+            BuildHost(PlatformStartupContext.Current);
+            _mobileHost = IAppHost.Host;
+            _mobileRootView = ActivatorUtilities.CreateInstance<MobileRootView>(_mobileHost!.Services);
+            singleView.MainView = _mobileRootView;
+
+            if (singleView is IControlledApplicationLifetime controlled)
+                controlled.Exit += (_, _) => _ = StopMobileHostAsync();
+
+            ObserveTask(StartMobileHostAsync(_mobileHost), "Mobile runtime service startup failed.");
+        }
+        catch (Exception exception)
+        {
+            ReportMobileException(exception);
+            if (ReferenceEquals(IAppHost.Host, _mobileHost))
+                IAppHost.Host = null;
+            _mobileHost?.Dispose();
+            _mobileHost = null;
+            ShowMobileStartupFailure(exception);
+        }
+    }
+
+    private async Task StartMobileHostAsync(IHost host)
+    {
+        try
+        {
+            _ = host.Services.GetRequiredService<IProfileService>();
+            _ = host.Services.GetRequiredService<IDrawTemporaryRecordService>();
+            _ = host.Services.GetRequiredService<IFeatureAvailabilityService>();
+            _ = host.Services.GetRequiredService<DrawEngine>();
+            await host.Services.GetRequiredService<IViewEngine>().ShowAsync(MobileRoutes.Draw).ConfigureAwait(false);
+            if (_mobileStopping || !ReferenceEquals(host, _mobileHost))
+                return;
+
+            await host.StartAsync().ConfigureAwait(false);
+            if (_mobileStopping || !ReferenceEquals(host, _mobileHost))
+                return;
+
+            await host.Services.GetRequiredService<TelemetryRuntimeService>().InitializeAsync().ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            ReportMobileException(exception);
+            if (_mobileStopping || !ReferenceEquals(host, _mobileHost))
+                return;
+
+            await StopMobileHostAsync().ConfigureAwait(false);
+            await Dispatcher.UIThread.InvokeAsync(() => ShowMobileStartupFailure(exception));
+        }
+    }
+
+    private async Task ReloadMobileRootViewAsync()
+    {
+        IHost? host = _mobileHost;
+        ISingleViewApplicationLifetime? singleView = _singleViewLifetime;
+        if (_mobileStopping || host is null || singleView is null)
+            return;
+
+        MobileRootView? oldRoot = _mobileRootView;
+        var engine = host.Services.GetRequiredService<IViewEngine>();
+        if (oldRoot is not null)
+        {
+            await engine.CloseHostAsync(oldRoot.InnerViewHost, ViewCloseReason.Programmatic).ConfigureAwait(false);
+            await oldRoot.InnerViewHost.DestroyAsync().ConfigureAwait(false);
+            host.Services.GetRequiredService<SingleViewHostProvider>().Detach(oldRoot.InnerViewHost);
+        }
+
+        var newRoot = ActivatorUtilities.CreateInstance<MobileRootView>(host.Services);
+        _mobileRootView = newRoot;
+        await Dispatcher.UIThread.InvokeAsync(() => singleView.MainView = newRoot);
+        await engine.ShowAsync(MobileRoutes.Draw).ConfigureAwait(false);
+    }
+
+    private async Task StopMobileHostAsync()
+    {
+        IHost? host = _mobileHost;
+        if (_mobileStopping || host is null)
+            return;
+
+        _mobileStopping = true;
+        try
+        {
+            if (_mobileRootView is not null)
+            {
+                await host.Services.GetRequiredService<IViewEngine>()
+                    .CloseHostAsync(_mobileRootView.InnerViewHost, ViewCloseReason.ApplicationShutdown)
+                    .ConfigureAwait(false);
+                await _mobileRootView.InnerViewHost.DestroyAsync().ConfigureAwait(false);
+            }
+
+            IMobileMediaPlayer mediaPlayer = host.Services.GetRequiredService<IMobileMediaPlayer>();
+            await mediaPlayer.StopAsync().ConfigureAwait(false);
+            if (mediaPlayer is IDisposable disposableMediaPlayer)
+                disposableMediaPlayer.Dispose();
+            await host.Services.GetRequiredService<TelemetryRuntimeService>().ShutdownAsync().ConfigureAwait(false);
+            await host.StopAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            ReportMobileException(exception);
+        }
+        finally
+        {
+            if (ReferenceEquals(IAppHost.Host, host))
+                IAppHost.Host = null;
+            host.Dispose();
+            if (ReferenceEquals(_mobileHost, host))
+                _mobileHost = null;
+            _mobileRootView = null;
+        }
+    }
+
+    private void MobileDispatcherOnUnhandledException(object? sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        TrySaveConfigForCrashRecovery();
+        ReportMobileException(e.Exception);
+        ObserveTask(CaptureUnhandledExceptionAsync(e.Exception), "Mobile unhandled exception telemetry capture failed.");
+        e.Handled = true;
+
+        CrashRecoveryPromptOptions? options = CrashRecoveryRuntime.TryCreateCurrentProcessPromptOptions(e.Exception);
+        if (options is not null)
+            ShowMobileCrashRecovery(options);
+    }
+
+    private void ShowMobileCrashRecovery(CrashRecoveryPromptOptions options)
+    {
+        CrashRecoveryViewState? state = IAppHost.TryGetService<CrashRecoveryViewState>();
+        IViewEngine? engine = IAppHost.TryGetService<IViewEngine>();
+        if (state is null || engine is null)
+            return;
+
+        state.Configure(options, static () => false, canIgnore: true);
+        ObserveTask(engine.ShowModalAsync("system.crashRecovery"), "Mobile crash recovery display failed.");
+    }
+
+    private void ShowMobileStartupFailure(Exception exception)
+    {
+        if (_mobileStartupFailureShown || _singleViewLifetime is null)
+            return;
+
+        _mobileStartupFailureShown = true;
+        _singleViewLifetime.MainView = MobileApplicationServices.CreateStartupFailureView(exception);
+    }
+
+    private static void ReportMobileException(Exception exception)
+    {
+        System.Diagnostics.Debug.WriteLine(exception);
+        (PlatformStartupContext.Current as MobilePlatformServiceRoot)?.StartupErrorLogger?.Invoke(exception);
     }
 
     private void ContinueDesktopStartup(IClassicDesktopStyleApplicationLifetime desktop, string? startupProtocolUri)
@@ -382,12 +549,28 @@ public partial class App : Application
     private void BuildHost(IPlatformServiceRoot platform)
     {
         if (IAppHost.Host is not null) return;
+        MobilePlatformServiceRoot? mobilePlatform = platform as MobilePlatformServiceRoot;
+        bool isMobile = mobilePlatform is not null;
 
         IAppHost.Host = Host
             .CreateDefaultBuilder()
             .UseContentRoot(AppContext.BaseDirectory)
             .ConfigureServices(services =>
             {
+                if (isMobile)
+                {
+                    MobilePlatformServiceRoot currentMobilePlatform = mobilePlatform!;
+                    services.AddPlatformServices(platform);
+                    services.AddCoreRuntimeServices();
+                    services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
+                    services.AddSingleton<TelemetryRuntimeService>();
+                    services.AddSingleton<CrashRecoveryViewState>();
+                    services.AddTransient<CrashRecoveryView>();
+                    services.AddMobileRuntimeServices(currentMobilePlatform, ReloadMobileRootViewAsync);
+                    services.AddViewRegistration<CrashRecoveryView>("system.crashRecovery", ViewPresentation.Modal);
+                    return;
+                }
+
                 var pluginStateStore = new PluginStateStore();
 
                 services.AddPlatformServices(platform);

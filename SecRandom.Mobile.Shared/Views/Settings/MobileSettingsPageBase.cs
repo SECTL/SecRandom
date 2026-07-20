@@ -32,5 +32,5 @@ public abstract class MobileSettingsPageBase : ViewBase
 
     protected void OnBackButtonClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => CloseView();
 
-    protected void InitializeComponent() => AvaloniaXamlLoader.Load(this);
+    protected void LoadSettingsLayout() => AvaloniaXamlLoader.Load(this);
 }

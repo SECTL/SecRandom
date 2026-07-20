@@ -9,7 +9,9 @@ namespace SecRandom.Services.Telemetry;
 
 public sealed class SentryTelemetrySdkAdapter : ITelemetrySdkAdapter
 {
+#if !SECRANDOM_MOBILE
     private static readonly TimeSpan ProfilingStartupTimeout = TimeSpan.FromMilliseconds(500);
+#endif
 
     private readonly object _gate = new();
     private readonly ILogger<SentryTelemetrySdkAdapter> _logger;
@@ -160,9 +162,11 @@ public sealed class SentryTelemetrySdkAdapter : ITelemetrySdkAdapter
             return sentryEvent;
         });
 
-        // 加载性能分析集成（需 Sentry.Profiling 包，仅桌面平台支持；Android/iOS 复用本适配器时不得加载）
+        // Sentry.Profiling 的 Android/iOS build targets 不受支持；移动构建只保留异常与事务遥测。
+#if !SECRANDOM_MOBILE
         if (policy.EnableProfiles && (OperatingSystem.IsWindows() || OperatingSystem.IsLinux() || OperatingSystem.IsMacOS()))
             options.AddProfilingIntegration(ProfilingStartupTimeout);
+#endif
     }
 
     /// <summary>
