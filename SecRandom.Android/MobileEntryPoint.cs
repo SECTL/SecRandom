@@ -30,6 +30,7 @@ public class MobileApplication : AvaloniaAndroidApplication<MobileApp>
         PlatformStartupContext.Set(new MobilePlatformServiceRoot(PlatformKind.Android)
         {
             UpdateInstaller = new AndroidUpdateInstaller(),
+            MediaPlayer = new AndroidMobileMediaPlayer(),
             StartupErrorLogger = exception =>
             {
                 if (OperatingSystem.IsAndroidVersionAtLeast(24))

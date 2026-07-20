@@ -68,6 +68,12 @@ public sealed partial class MobileApp : Avalonia.Application
                     services.AddCoreRuntimeServices();
                     services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
                     services.AddSingleton<TelemetryRuntimeService>();
+                    services.AddTransient<MobileRollCallService>();
+                    services.AddSingleton<MobileMediaLibraryService>();
+                    services.AddSingleton<IMobileMediaPlayer>(
+                        (PlatformStartupContext.Current as MobilePlatformServiceRoot)?.MediaPlayer
+                        ?? new UnsupportedMobileMediaPlayer());
+                    services.AddSingleton<MobileDrawMediaService>();
                     services.AddSingleton<SingleViewHostProvider>();
                     services.AddSingleton<IViewHostProvider>(serviceProvider =>
                         serviceProvider.GetRequiredService<SingleViewHostProvider>());
@@ -172,6 +178,10 @@ public sealed partial class MobileApp : Avalonia.Application
                     .ConfigureAwait(false);
                 await _rootView.InnerViewHost.DestroyAsync().ConfigureAwait(false);
             }
+            var mediaPlayer = host.Services.GetRequiredService<IMobileMediaPlayer>();
+            await mediaPlayer.StopAsync().ConfigureAwait(false);
+            if (mediaPlayer is IDisposable disposableMediaPlayer)
+                disposableMediaPlayer.Dispose();
             await host.Services.GetRequiredService<TelemetryRuntimeService>()
                 .ShutdownAsync()
                 .ConfigureAwait(false);

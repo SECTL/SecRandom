@@ -27,7 +27,10 @@ public sealed class AppDelegate : AvaloniaAppDelegate<MobileApp>
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
         RegisterUnhandledExceptionHooks();
-        PlatformStartupContext.Set(new MobilePlatformServiceRoot(PlatformKind.Ios));
+        PlatformStartupContext.Set(new MobilePlatformServiceRoot(PlatformKind.Ios)
+        {
+            MediaPlayer = new IosMobileMediaPlayer()
+        });
         return base.CustomizeAppBuilder(builder);
     }
 

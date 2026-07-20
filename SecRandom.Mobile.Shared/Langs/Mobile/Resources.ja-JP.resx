@@ -566,4 +566,74 @@
     <data name="M_UpdateSecurityNote" xml:space="preserve">
         <value>更新パッケージは Ed25519 署名マニフェストで長さとハッシュを検証した後、システムインストーラーに引き渡されます。</value>
     </data>
+    <data name="C_StartDraw" xml:space="preserve"><value>開始</value></data>
+    <data name="C_RemainingList" xml:space="preserve"><value>残りの名簿を表示</value></data>
+    <data name="C_More" xml:space="preserve"><value>その他</value></data>
+    <data name="C_ResetRange" xml:space="preserve"><value>現在の範囲をリセット</value></data>
+    <data name="C_DrawSettings" xml:space="preserve"><value>抽選設定</value></data>
+    <data name="C_Close" xml:space="preserve"><value>閉じる</value></data>
+    <data name="C_Save" xml:space="preserve"><value>保存</value></data>
+    <data name="C_Edit" xml:space="preserve"><value>編集</value></data>
+    <data name="C_Refresh" xml:space="preserve"><value>更新</value></data>
+    <data name="S_DrawCount" xml:space="preserve"><value>抽選人数</value></data>
+    <data name="S_Group" xml:space="preserve"><value>グループ</value></data>
+    <data name="S_Gender" xml:space="preserve"><value>性別</value></data>
+    <data name="S_Profile" xml:space="preserve"><value>名簿 / 賞品プール</value></data>
+    <data name="S_HistoryMode" xml:space="preserve"><value>表示方法</value></data>
+    <data name="S_Tags" xml:space="preserve"><value>タグ</value></data>
+    <data name="S_Weight" xml:space="preserve"><value>重み</value></data>
+    <data name="S_Inventory" xml:space="preserve"><value>在庫</value></data>
+    <data name="O_All" xml:space="preserve"><value>すべて</value></data>
+    <data name="O_HistoryOverview" xml:space="preserve"><value>集計</value></data>
+    <data name="O_HistoryRecords" xml:space="preserve"><value>記録</value></data>
+    <data name="M_CountSummary" xml:space="preserve"><value>メンバー数：{0}  |  残り：{1}</value></data>
+    <data name="M_RemainingTitle" xml:space="preserve"><value>残りの名簿</value></data>
+    <data name="M_NoRemaining" xml:space="preserve"><value>現在の範囲に残りのメンバーはいません</value></data>
+    <data name="M_DrawResultCount" xml:space="preserve"><value>{0} 人を抽選しました</value></data>
+    <data name="M_ListTableHint" xml:space="preserve"><value>表を横にスワイプすると、その他の項目を表示できます。</value></data>
+    <data name="M_MoreStudentTitle" xml:space="preserve"><value>メンバーの詳細設定</value></data>
+    <data name="M_MorePrizeTitle" xml:space="preserve"><value>賞品の詳細設定</value></data>
+    <data name="H_Enabled" xml:space="preserve"><value>有効</value></data>
+    <data name="H_Id" xml:space="preserve"><value>番号</value></data>
+    <data name="H_Name" xml:space="preserve"><value>名前</value></data>
+    <data name="H_Gender" xml:space="preserve"><value>性別</value></data>
+    <data name="H_Group" xml:space="preserve"><value>グループ</value></data>
+    <data name="H_Tags" xml:space="preserve"><value>タグ</value></data>
+    <data name="H_Weight" xml:space="preserve"><value>重み</value></data>
+    <data name="H_Inventory" xml:space="preserve"><value>在庫</value></data>
+    <data name="H_Time" xml:space="preserve"><value>時刻</value></data>
+    <data name="H_Count" xml:space="preserve"><value>回数 / 数量</value></data>
+    <data name="H_DrawScope" xml:space="preserve"><value>抽選範囲</value></data>
+    <data name="H_Operations" xml:space="preserve"><value>操作</value></data>
+    <data name="H_AttachedSettings" xml:space="preserve"><value>追加設定</value></data>
+    <data name="S_AttachedImage" xml:space="preserve"><value>表示画像</value></data>
+    <data name="S_AttachedMusic" xml:space="preserve"><value>専用音楽</value></data>
+    <data name="S_AttachedVoice" xml:space="preserve"><value>専用音声</value></data>
+    <data name="S_AnimationMusic" xml:space="preserve"><value>アニメーション音楽</value></data>
+    <data name="S_ResultMusic" xml:space="preserve"><value>結果音楽</value></data>
+    <data name="S_Music" xml:space="preserve"><value>音楽</value></data>
+    <data name="S_UseCustomMusic" xml:space="preserve"><value>この抽選の音楽を使用</value></data>
+    <data name="S_AnimationMusicLoop" xml:space="preserve"><value>アニメーション音楽をループ</value></data>
+    <data name="S_AnimationMusicVolume" xml:space="preserve"><value>アニメーション音楽の音量</value></data>
+    <data name="S_ResultMusicVolume" xml:space="preserve"><value>結果音楽の音量</value></data>
+    <data name="S_VoiceAlias" xml:space="preserve"><value>読み上げ別名</value></data>
+    <data name="S_VoicePrefix" xml:space="preserve"><value>読み上げ接頭辞</value></data>
+    <data name="S_VoiceSuffix" xml:space="preserve"><value>読み上げ接尾辞</value></data>
+    <data name="S_VoiceAnnouncements" xml:space="preserve"><value>音声読み上げ</value></data>
+    <data name="S_AnnounceId" xml:space="preserve"><value>番号を読み上げる</value></data>
+    <data name="S_AnnounceName" xml:space="preserve"><value>名前を読み上げる</value></data>
+    <data name="S_VoiceVolume" xml:space="preserve"><value>読み上げ音量</value></data>
+    <data name="S_VoiceRate" xml:space="preserve"><value>読み上げ速度</value></data>
+    <data name="C_SelectImage" xml:space="preserve"><value>画像を選択</value></data>
+    <data name="C_RemoveImage" xml:space="preserve"><value>画像を削除</value></data>
+    <data name="C_ImportMusic" xml:space="preserve"><value>音楽をインポート</value></data>
+    <data name="C_Preview" xml:space="preserve"><value>試聴</value></data>
+    <data name="C_Stop" xml:space="preserve"><value>停止</value></data>
+    <data name="M_NoImageSelected" xml:space="preserve"><value>画像が選択されていません</value></data>
+    <data name="M_RecordRequiresName" xml:space="preserve"><value>番号または名前を入力してください。</value></data>
+    <data name="M_InvalidPrizeValues" xml:space="preserve"><value>重みと在庫は 0 以上である必要があります。</value></data>
+    <data name="M_MediaImportFailed" xml:space="preserve"><value>選択したメディアファイルをインポートできませんでした。</value></data>
+    <data name="M_SaveFailed" xml:space="preserve"><value>変更を保存できませんでした。</value></data>
+    <data name="O_NoMusic" xml:space="preserve"><value>音楽を再生しない</value></data>
+    <data name="O_RandomMusic" xml:space="preserve"><value>ランダム再生</value></data>
 </root>

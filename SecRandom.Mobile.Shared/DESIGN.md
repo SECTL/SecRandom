@@ -13,11 +13,13 @@ This is an Android/iOS SingleView application for education random draws. It is 
 - Palette: ink `#1D2939`, muted text `#667085`, canvas `#F7F8FA`, primary `#006E5B`, primary wash `#E8F4F0`, warm draw wash `#FFF4E5`, rules `#E4E7EC`.
 - Layout: a quiet top app bar, one scrollable content column, and a fixed bottom bar for `抽取`, `历史记录`, `概览`, and `设置`.
 - The `抽取` page has a top-left capsule switcher: `点名` on the left and `抽奖` on the right.
+- The point-call surface keeps a large result area, then a compact operation panel with list/group/gender selectors, remaining counts, a count stepper, Start, Remaining List, and More. It preserves desktop behavior without importing desktop left/right panel geometry.
+- History and list management use horizontally scrollable tables: history offers profile plus overview/records modes; list rows expose common fields, a desktop-compatible attached-settings column, and a distinct More/delete operation column.
 - The `设置` page is a catalog with exactly seven destinations: `通用`, `个性化`, `名单管理`, `抽取`, `备份`, `更新`, and `关于`, grouped under `偏好` / `数据` / `应用` section headers. The `更新` destination is capability-projected and hidden when in-app update is unsupported (iOS).
 
 ## Accessibility
 
-- Navigation and draw-mode selection have visible labels, not icon-only controls. The bottom bar uses a four-item FluentAvalonia `FANavigationView`, and settings rows use `FASettingsExpanderItem` so mobile and desktop share one Fluent visual language.
+- Navigation and draw-mode selection have visible labels, not icon-only controls. The bottom bar uses four fixed Avalonia buttons with Fluent icons, while settings rows use `FASettingsExpanderItem`; this preserves the Fluent visual language without exposing Android accessibility to FluentAvalonia's repeater peer defect.
 - Primary actions are at least `48px` high and secondary actions are at least `44px` high.
 - Content wraps and scrolls at phone widths; enabled state, text, and color together communicate state.
 - Page content owns one vertically inertial scroll surface between the fixed app bar and bottom navigation. Dragging a navigation/settings row scrolls the page and never activates the row after movement.
@@ -30,7 +32,7 @@ This is an Android/iOS SingleView application for education random draws. It is 
 ## Implementation Practices
 
 - `MobileRootView` owns mobile-only fixed chrome; business destinations and every mobile settings page are independent MVE sessions shown through its inner host.
-- Profile mutations save through `IProfileService`; draws record both persistent history and temporary records.
+- Profile mutations save through `IProfileCatalogManager` / `IProfileService`; draws record both persistent history and temporary records. Multi-member mobile point-call orchestration stays in `MobileRollCallService` and composes the existing Core filtering, sampling, and commit services without changing the Core session contract.
 - The `LotteryEnabled` Core capability remains the only decision for whether the lottery segment can be selected.
 - Theme selection applies the saved `Appearance.Theme` immediately. Mobile keeps the `公平抽取` / `随机抽取` choice in roll-call settings, but when `公平抽取` is selected it runs the Core algorithm with the fixed `MobileDesktopDefaultsV1` policy snapshot and ignores persisted `MainConfigModel.FairDrawSettings` values.
 - The backup section exports/imports full-data ZIP archives and settings envelopes through the system StorageProvider pickers (stream-only, SAF-safe on Android); Core `DataArchiveService` validates the SecRandom v3 manifest before any import is confirmed, and busy operations disable all actions with progress text.
@@ -44,11 +46,11 @@ This is an Android/iOS SingleView application for education random draws. It is 
 
 - A fixed four-item bottom bar makes mobile destinations stable without duplicating desktop navigation.
 - Combining point-call and lottery into `抽取` keeps the primary classroom task in one place while the capsule switcher makes the mode explicit before drawing.
-- The large result panel gives the selected record classroom prominence without importing desktop preview, audio, or notification behavior.
+- The large result panel gives the selected record classroom prominence. When enabled by the mobile draw setting, it renders per-record display images; native media playback and TTS stay behind the mobile platform seam.
 
 ## Workflow
 
-The initial workflow supports local student/prize editing, theme selection, single-record Core draws, repeat/fairness rules, history review, temporary record clearing, overview, StorageProvider-based backup/restore, and Android update checks. Spreadsheet import, multi-record draw, proof export, audio, notifications, and desktop integrations remain separate work.
+The workflow supports tabular student/prize editing, desktop-compatible per-record image/music/voice settings, profile-aware history tables, theme selection, scoped multi-member point-call, single-prize lottery, repeat/fairness rules, remaining-list review, temporary record clearing, overview, StorageProvider-based backup/restore, and Android update checks. Spreadsheet import, proof export, notifications, and desktop integrations remain separate work.
 
 ## UI Foundation Tokens
 
@@ -64,7 +66,7 @@ The initial workflow supports local student/prize editing, theme selection, sing
 - `MobileEmptyState`: icon + title + optional description + optional guidance button that routes to the matching management surface.
 - `MobileSectionHeader`: primary-tinted icon + semibold section title, replacing the `CreateLabel` IconText usage.
 - `MobileSettingsPageBase`: settings-page skeleton (lightweight title/description header instead of an FAInfoBar, optional back button, scroll, and page-enter transition) with capability projection pass-throughs; root-level destinations such as the settings catalog pass `showBackButton: false`.
-- `MobileNavigationBar`: four-item `FANavigationView` hosted in the fixed bottom row; mobile-owned `FAFontIconSource` instances point at `avares://SecRandom.Mobile/Assets/Fonts/`.
+- `MobileNavigationBar`: four equal native Avalonia toggle buttons hosted in the fixed bottom row, switching each Fluent icon from Regular to Filled when selected; glyphs load from `avares://SecRandom.Mobile/Assets/Fonts/`. Native controls keep Android accessibility traversal and touch dispatch out of FluentAvalonia's repeater implementation.
 - The old `MobileUi` factory methods keep their signatures and delegate to these controls, so existing pages keep working through the FluentAvalonia migration.
 
 ## Animation Primitives

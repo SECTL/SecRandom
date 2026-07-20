@@ -34,6 +34,12 @@ public sealed class MobilePlatformServiceRoot : IPlatformServiceRoot, IWindowFea
     public IMobileUpdateInstaller UpdateInstaller { get; set; } = new UnsupportedMobileUpdateInstaller();
 
     /// <summary>
+    /// Platform heads provide native local-media and TTS playback before startup.
+    /// The neutral library uses the unsupported implementation for headless/test hosts.
+    /// </summary>
+    public IMobileMediaPlayer MediaPlayer { get; set; } = new UnsupportedMobileMediaPlayer();
+
+    /// <summary>
     /// Platform heads may attach a startup error sink (for example Android.Util.Log) for Host-build failures.
     /// </summary>
     public Action<Exception>? StartupErrorLogger { get; set; }

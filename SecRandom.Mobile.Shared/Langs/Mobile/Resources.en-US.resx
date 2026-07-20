@@ -566,4 +566,74 @@
     <data name="M_UpdateSecurityNote" xml:space="preserve">
         <value>Update packages are verified for length and hash against an Ed25519-signed manifest, then handed to the system installer.</value>
     </data>
+    <data name="C_StartDraw" xml:space="preserve"><value>Start</value></data>
+    <data name="C_RemainingList" xml:space="preserve"><value>View Remaining</value></data>
+    <data name="C_More" xml:space="preserve"><value>More</value></data>
+    <data name="C_ResetRange" xml:space="preserve"><value>Reset Current Scope</value></data>
+    <data name="C_DrawSettings" xml:space="preserve"><value>Draw Settings</value></data>
+    <data name="C_Close" xml:space="preserve"><value>Close</value></data>
+    <data name="C_Save" xml:space="preserve"><value>Save</value></data>
+    <data name="C_Edit" xml:space="preserve"><value>Edit</value></data>
+    <data name="C_Refresh" xml:space="preserve"><value>Refresh</value></data>
+    <data name="S_DrawCount" xml:space="preserve"><value>Draw Count</value></data>
+    <data name="S_Group" xml:space="preserve"><value>Group</value></data>
+    <data name="S_Gender" xml:space="preserve"><value>Gender</value></data>
+    <data name="S_Profile" xml:space="preserve"><value>List / Pool</value></data>
+    <data name="S_HistoryMode" xml:space="preserve"><value>View</value></data>
+    <data name="S_Tags" xml:space="preserve"><value>Tags</value></data>
+    <data name="S_Weight" xml:space="preserve"><value>Weight</value></data>
+    <data name="S_Inventory" xml:space="preserve"><value>Inventory</value></data>
+    <data name="O_All" xml:space="preserve"><value>All</value></data>
+    <data name="O_HistoryOverview" xml:space="preserve"><value>Overview</value></data>
+    <data name="O_HistoryRecords" xml:space="preserve"><value>Records</value></data>
+    <data name="M_CountSummary" xml:space="preserve"><value>Members: {0}  |  Remaining: {1}</value></data>
+    <data name="M_RemainingTitle" xml:space="preserve"><value>Remaining Members</value></data>
+    <data name="M_NoRemaining" xml:space="preserve"><value>No members remain in the current scope</value></data>
+    <data name="M_DrawResultCount" xml:space="preserve"><value>{0} members drawn</value></data>
+    <data name="M_ListTableHint" xml:space="preserve"><value>Swipe the table horizontally to view more fields.</value></data>
+    <data name="M_MoreStudentTitle" xml:space="preserve"><value>More Member Settings</value></data>
+    <data name="M_MorePrizeTitle" xml:space="preserve"><value>More Prize Settings</value></data>
+    <data name="H_Enabled" xml:space="preserve"><value>Enabled</value></data>
+    <data name="H_Id" xml:space="preserve"><value>ID</value></data>
+    <data name="H_Name" xml:space="preserve"><value>Name</value></data>
+    <data name="H_Gender" xml:space="preserve"><value>Gender</value></data>
+    <data name="H_Group" xml:space="preserve"><value>Group</value></data>
+    <data name="H_Tags" xml:space="preserve"><value>Tags</value></data>
+    <data name="H_Weight" xml:space="preserve"><value>Weight</value></data>
+    <data name="H_Inventory" xml:space="preserve"><value>Inventory</value></data>
+    <data name="H_Time" xml:space="preserve"><value>Time</value></data>
+    <data name="H_Count" xml:space="preserve"><value>Count / Quantity</value></data>
+    <data name="H_DrawScope" xml:space="preserve"><value>Draw Scope</value></data>
+    <data name="H_Operations" xml:space="preserve"><value>Actions</value></data>
+    <data name="H_AttachedSettings" xml:space="preserve"><value>Attached settings</value></data>
+    <data name="S_AttachedImage" xml:space="preserve"><value>Display image</value></data>
+    <data name="S_AttachedMusic" xml:space="preserve"><value>Custom music</value></data>
+    <data name="S_AttachedVoice" xml:space="preserve"><value>Custom voice</value></data>
+    <data name="S_AnimationMusic" xml:space="preserve"><value>Animation music</value></data>
+    <data name="S_ResultMusic" xml:space="preserve"><value>Result music</value></data>
+    <data name="S_Music" xml:space="preserve"><value>Music</value></data>
+    <data name="S_UseCustomMusic" xml:space="preserve"><value>Use music for this draw</value></data>
+    <data name="S_AnimationMusicLoop" xml:space="preserve"><value>Loop animation music</value></data>
+    <data name="S_AnimationMusicVolume" xml:space="preserve"><value>Animation music volume</value></data>
+    <data name="S_ResultMusicVolume" xml:space="preserve"><value>Result music volume</value></data>
+    <data name="S_VoiceAlias" xml:space="preserve"><value>Announcement alias</value></data>
+    <data name="S_VoicePrefix" xml:space="preserve"><value>Announcement prefix</value></data>
+    <data name="S_VoiceSuffix" xml:space="preserve"><value>Announcement suffix</value></data>
+    <data name="S_VoiceAnnouncements" xml:space="preserve"><value>Voice announcements</value></data>
+    <data name="S_AnnounceId" xml:space="preserve"><value>Announce ID</value></data>
+    <data name="S_AnnounceName" xml:space="preserve"><value>Announce name</value></data>
+    <data name="S_VoiceVolume" xml:space="preserve"><value>Voice volume</value></data>
+    <data name="S_VoiceRate" xml:space="preserve"><value>Voice rate</value></data>
+    <data name="C_SelectImage" xml:space="preserve"><value>Select image</value></data>
+    <data name="C_RemoveImage" xml:space="preserve"><value>Remove image</value></data>
+    <data name="C_ImportMusic" xml:space="preserve"><value>Import music</value></data>
+    <data name="C_Preview" xml:space="preserve"><value>Preview</value></data>
+    <data name="C_Stop" xml:space="preserve"><value>Stop</value></data>
+    <data name="M_NoImageSelected" xml:space="preserve"><value>No image selected</value></data>
+    <data name="M_RecordRequiresName" xml:space="preserve"><value>Enter an ID or name.</value></data>
+    <data name="M_InvalidPrizeValues" xml:space="preserve"><value>Weight and inventory must be non-negative.</value></data>
+    <data name="M_MediaImportFailed" xml:space="preserve"><value>The selected media file could not be imported.</value></data>
+    <data name="M_SaveFailed" xml:space="preserve"><value>The changes could not be saved.</value></data>
+    <data name="O_NoMusic" xml:space="preserve"><value>No music</value></data>
+    <data name="O_RandomMusic" xml:space="preserve"><value>Play randomly</value></data>
 </root>

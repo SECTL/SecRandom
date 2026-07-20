@@ -147,7 +147,7 @@ internal static class MobileUi
     }
 
     // 主题感知重载：wash 底色走 DynamicResource，切主题时随资源系统刷新。
-    internal static Control CreateResultPanel(Control result, Control detail, string washResourceKey)
+    internal static Control CreateResultPanel(Control result, Control detail, string washResourceKey, Control? media = null)
     {
         var card = new MobileCard(washResourceKey)
         {
@@ -155,17 +155,19 @@ internal static class MobileUi
             CornerRadius = MobileTheme.FindCornerRadius("MobileCornerRadiusLarge", new CornerRadius(18)),
             Padding = new Thickness(24, 28)
         };
-        card.Content = CreateResultStack(result, detail);
+        card.Content = CreateResultStack(result, detail, media);
         return card;
     }
 
-    private static Control CreateResultStack(Control result, Control detail)
+    private static Control CreateResultStack(Control result, Control detail, Control? media = null)
     {
         var stack = new StackPanel
         {
             Spacing = MobileTheme.FindDouble("MobileSpacingSm", 8),
             Children = { result, detail }
         };
+        if (media is not null)
+            stack.Children.Add(media);
         if (result is Layoutable layoutableResult)
             layoutableResult.HorizontalAlignment = HorizontalAlignment.Center;
         if (detail is Layoutable layoutableDetail)

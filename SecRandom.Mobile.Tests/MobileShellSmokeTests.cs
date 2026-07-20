@@ -1,4 +1,6 @@
 using Avalonia;
+using Avalonia.Automation;
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -9,6 +11,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using FluentAvalonia.Styling;
 using FluentAvalonia.UI.Controls;
+using SecRandom.Core.Icons;
 using SecRandom.Mobile.Controls;
 using SecRandom.Mobile.Views;
 
@@ -71,16 +74,58 @@ public sealed class MobileShellSmokeTests
         Assert.True(navigation.Bounds.Height >= 56);
 
         var controls = root.GetVisualDescendants().OfType<Control>().ToList();
-        var navigationView = Assert.Single(controls.OfType<FANavigationView>());
-        var destinationItems = controls.OfType<FANavigationViewItem>().ToList();
-        Assert.Equal(4, navigationView.MenuItems.Count);
-        Assert.NotEmpty(destinationItems);
-        Assert.NotNull(navigationView.SelectedItem);
+        var destinationItems = controls.OfType<ToggleButton>()
+            .Where(button => button.Tag is MobileDestination)
+            .ToList();
+        Assert.Equal(4, destinationItems.Count);
+        Assert.Single(destinationItems, button => button.IsChecked == true);
+        Assert.All(destinationItems, button => Assert.False(
+            string.IsNullOrWhiteSpace(AutomationProperties.GetName(button))));
+        Assert.Empty(controls.OfType<FAItemsRepeater>());
 
         app.RequestedThemeVariant = ThemeVariant.Dark;
         Dispatcher.UIThread.RunJobs();
         Assert.True(app.TryGetResource("MobileCanvasBrush", ThemeVariant.Dark, out _));
         Assert.True(navigation.Bounds.Height >= 56);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void MobileNavigationAutomationTreeCanBeEnumerated()
+    {
+        var navigation = new MobileNavigationBar();
+        var window = new Window
+        {
+            Width = 390,
+            Height = 844,
+            Content = navigation
+        };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var rootPeer = ControlAutomationPeer.CreatePeerForElement(window);
+        Assert.NotNull(rootPeer);
+        foreach (var destination in Enum.GetValues<MobileDestination>())
+        {
+            navigation.Select(destination);
+            Dispatcher.UIThread.RunJobs();
+            TraverseAutomationTree(rootPeer, []);
+
+            var buttons = navigation.GetVisualDescendants().OfType<ToggleButton>()
+                .Where(button => button.Tag is MobileDestination)
+                .ToList();
+            var selectedButton = Assert.Single(buttons,
+                button => button.IsChecked == true && Equals(button.Tag, destination));
+            var selectedIcon = Assert.IsType<TextBlock>(
+                Assert.IsType<StackPanel>(selectedButton.Content).Children[0]);
+            Assert.Equal(GetFilledGlyph(destination), selectedIcon.Text);
+            Assert.All(buttons.Where(button => !ReferenceEquals(button, selectedButton)), button =>
+            {
+                var icon = Assert.IsType<TextBlock>(Assert.IsType<StackPanel>(button.Content).Children[0]);
+                Assert.Equal(GetRegularGlyph((MobileDestination)button.Tag!), icon.Text);
+            });
+        }
 
         window.Close();
     }
@@ -146,4 +191,79 @@ public sealed class MobileShellSmokeTests
 
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void MobileTableSupportsPhoneLayoutAndAutomationTraversal()
+    {
+        var rows = Enumerable.Range(0, 8)
+            .Select(index => new TableRow($"S{index}", $"Student {index}", $"Group {index % 2}"))
+            .ToArray();
+        var table = new DataGrid
+        {
+            AutoGenerateColumns = false,
+            CanUserResizeColumns = true,
+            HeadersVisibility = DataGridHeadersVisibility.Column,
+            ItemsSource = rows,
+            Height = 520,
+            RowHeight = 48
+        };
+        table.Columns.Add(new DataGridTextColumn
+        {
+            Header = "ID",
+            Binding = new Avalonia.Data.Binding(nameof(TableRow.Id)),
+            Width = new DataGridLength(120)
+        });
+        table.Columns.Add(new DataGridTextColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding(nameof(TableRow.Name)),
+            Width = new DataGridLength(260)
+        });
+        table.Columns.Add(new DataGridTextColumn
+        {
+            Header = "Group",
+            Binding = new Avalonia.Data.Binding(nameof(TableRow.Group)),
+            Width = new DataGridLength(180)
+        });
+        var window = new Window { Width = 390, Height = 844, Content = table };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(table.Bounds.Width > 0);
+        Assert.True(table.Columns.Sum(column => column.ActualWidth) > table.Bounds.Width);
+        var rootPeer = ControlAutomationPeer.CreatePeerForElement(window);
+        Assert.NotNull(rootPeer);
+        TraverseAutomationTree(rootPeer, []);
+
+        window.Close();
+    }
+
+    private static void TraverseAutomationTree(AutomationPeer peer, HashSet<AutomationPeer> visited)
+    {
+        if (!visited.Add(peer))
+            return;
+
+        foreach (var child in peer.GetChildren())
+            TraverseAutomationTree(child, visited);
+    }
+
+    private static string GetFilledGlyph(MobileDestination destination) => destination switch
+    {
+        MobileDestination.Draw => FluentIcons.PeopleFilled,
+        MobileDestination.History => FluentIcons.HistoryFilled,
+        MobileDestination.Overview => FluentIcons.HomeFilled,
+        MobileDestination.Settings => FluentIcons.SettingsFilled,
+        _ => throw new ArgumentOutOfRangeException(nameof(destination))
+    };
+
+    private static string GetRegularGlyph(MobileDestination destination) => destination switch
+    {
+        MobileDestination.Draw => FluentIcons.PeopleRegular,
+        MobileDestination.History => FluentIcons.HistoryRegular,
+        MobileDestination.Overview => FluentIcons.HomeRegular,
+        MobileDestination.Settings => FluentIcons.SettingsRegular,
+        _ => throw new ArgumentOutOfRangeException(nameof(destination))
+    };
+
+    private sealed record TableRow(string Id, string Name, string Group);
 }
