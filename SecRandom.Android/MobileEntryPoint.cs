@@ -45,7 +45,6 @@ public class MobileApplication : AvaloniaAndroidApplication<MobileApp>
     {
         AndroidEnvironment.UnhandledExceptionRaiser += (_, e) =>
         {
-            e.Handled = true;
             Capture(e.Exception);
         };
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
