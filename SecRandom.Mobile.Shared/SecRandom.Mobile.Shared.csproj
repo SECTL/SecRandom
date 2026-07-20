@@ -43,7 +43,6 @@
     <ItemGroup>
         <AvaloniaResource Include="..\SecRandom\Assets\AppLogo.png" Link="Assets\AppLogo.png" />
         <AvaloniaResource Include="..\SecRandom\Assets\Updates\release-public-key.txt" Link="Assets\Updates\release-public-key.txt" />
-        <AvaloniaResource Include="Styles\MobileStyles.axaml" />
     </ItemGroup>
 
     <ItemGroup>
