@@ -47,6 +47,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly DrawEngine _drawEngine;
     private readonly IProfileService _profileService;
     private readonly IDrawTemporaryRecordService _temporaryRecordService;
+    private readonly IDrawCommitService _drawCommitService;
     private readonly MainConfigHandler _configHandler;
     private readonly DrawAudioService _drawAudioService;
     private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
@@ -81,6 +82,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         DrawEngine drawEngine,
         IProfileService profileService,
         IDrawTemporaryRecordService temporaryRecordService,
+        IDrawCommitService drawCommitService,
         DrawAudioService drawAudioService,
         ILogger<LotteryPageViewModel> logger,
         ISecurityService securityService,
@@ -95,6 +97,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         _drawEngine = drawEngine;
         _profileService = profileService;
         _temporaryRecordService = temporaryRecordService;
+        _drawCommitService = drawCommitService;
         _drawAudioService = drawAudioService;
         _voiceAnnouncementService = voiceAnnouncementService;
         _logger = logger;
@@ -329,24 +332,19 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                 return;
             }
 
-            _profileService.RecordPrizeHistory(drawn, DateTime.Now, count);
-            _temporaryRecordService.RecordPrizes(SelectedPrizeListName, drawn);
-            if (assignedStudents.Count > 0)
-            {
-                _profileService.RecordStudentHistory(
-                    assignedStudents,
-                    DateTime.Now,
-                    assignedStudents.Count,
-                    SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup,
-                    SelectedGender == AllGendersOption ? string.Empty : SelectedGender,
-                    (int)Config.RollCallSettings.DrawType,
-                    courseName: courseName);
-                _temporaryRecordService.RecordStudents(
-                    SelectedStudentListName,
-                    CurrentGenderScope,
-                    CurrentGroupScope,
-                    assignedStudents);
-            }
+            // 奖品与获奖学生共用单一 DrawRoundId，一次性事务提交。
+            _drawCommitService.CommitLotteryDraw(new LotteryDrawCommit(
+                drawn,
+                DateTime.Now,
+                count,
+                SelectedPrizeListName,
+                AssignedStudents: assignedStudents.Count > 0 ? assignedStudents : null,
+                StudentListName: SelectedStudentListName,
+                StudentGroupScope: CurrentGroupScope,
+                StudentGenderScope: CurrentGenderScope,
+                PrizeDrawMethod: (int)Config.LotterySettings.DrawType,
+                StudentDrawMethod: (int)Config.RollCallSettings.DrawType,
+                CourseName: courseName));
 
             _lastResultPrizes = BuildDisplayPrizes(drawn, assignedStudents);
             ReplaceResults(_lastResultPrizes);
@@ -615,13 +613,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         if (Config.LotterySettings.DrawType == LotteryDrawType.Count)
             return prizes.Sum(prize => Math.Max(0, prize.Count - GetTemporaryPrizeCount(prize, temporaryCounts)));
 
-        var threshold = Config.LotterySettings.DrawMode switch
-        {
-            DrawMode.Repeat => 0,
-            DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, Config.LotterySettings.HalfRepeat),
-            _ => 1
-        };
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.LotterySettings.DrawMode, Config.LotterySettings.HalfRepeat);
 
         return threshold <= 0
             ? prizes.Count
@@ -646,13 +638,9 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
     private int GetLotteryRepeatThreshold()
     {
-        return Config.LotterySettings.DrawMode switch
-        {
-            DrawMode.Repeat => int.MaxValue,
-            DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, Config.LotterySettings.HalfRepeat),
-            _ => 1
-        };
+        // 展示口径：Repeat 视为无限剩余，对应抽取阈值 helper 的 0（不限制）。
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.LotterySettings.DrawMode, Config.LotterySettings.HalfRepeat);
+        return threshold <= 0 ? int.MaxValue : threshold;
     }
 
     private async Task ShowPreviewAsync(IReadOnlyList<Prize> prizes, int count, string animationMusic)
@@ -823,29 +811,14 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         if (!IsStudentAssignmentEnabled)
             return [];
 
-        return (_profileService.CurrentStudentList?.Students ?? [])
-            .Where(student => student.IsCandidate)
-            .Where(student => SelectedGroup == AllGroupsOption || student.Group == SelectedGroup)
-            .Where(student => SelectedGender == AllGendersOption || student.Gender == SelectedGender)
-            .Where(student => !HasReachedStudentRepeatLimit(student));
-    }
-
-    private bool HasReachedStudentRepeatLimit(Student student)
-    {
-        var threshold = Config.RollCallSettings.DrawMode switch
-        {
-            DrawMode.Repeat => 0,
-            DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, Config.RollCallSettings.HalfRepeat),
-            _ => 1
-        };
-
-        if (threshold <= 0)
-            return false;
-
-        var recordId = ProfileRecordIdentity.EnsureRecordId(student);
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.RollCallSettings.DrawMode, Config.RollCallSettings.HalfRepeat);
         var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
-        return counts.GetValueOrDefault(recordId) >= threshold;
+        return DrawCandidateFilter.FilterEligibleStudents(
+            _profileService.CurrentStudentList?.Students ?? [],
+            CurrentGroupScope,
+            CurrentGenderScope,
+            counts,
+            threshold);
     }
 
     private void EnsureRestartPrizeRecordsCleared(string listName)

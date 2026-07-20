@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Views;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
@@ -14,7 +15,7 @@ using SecRandom.ViewModels;
 namespace SecRandom.Views.SettingsPages.More;
 
 [PageInfo("settings.more", FluentIcons.MoreHorizontalFilled)]
-public partial class MoreSettingsPage : UserControl, INotifyPropertyChanged
+public partial class MoreSettingsPage : ViewBase, INotifyPropertyChanged
 {
     private static readonly string[] ShortcutConflictPropertyNames =
     [

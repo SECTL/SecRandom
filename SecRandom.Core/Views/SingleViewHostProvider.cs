@@ -16,6 +16,18 @@ public sealed class SingleViewHostProvider : IViewHostProvider
         _host = host;
     }
 
+    /// <summary>
+    /// Releases a previously attached host so a replacement root view can attach its own
+    /// host (used by the mobile restart-free language rebuild). Detaching an unknown host
+    /// is a no-op.
+    /// </summary>
+    public void Detach(IViewHost host)
+    {
+        ArgumentNullException.ThrowIfNull(host);
+        if (ReferenceEquals(_host, host))
+            _host = null;
+    }
+
     public Task<ViewHostSelection> GetHostAsync(
         ViewShowOptions options,
         CancellationToken cancellationToken = default)

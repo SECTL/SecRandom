@@ -33,6 +33,7 @@ using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Views;
 using SecRandom.Models;
 using SecRandom.Services.Desktop;
+using SecRandom.Core.Services.Archive;
 using SecRandom.Services.ImportExport;
 using SecRandom.Services.Security;
 using SecRandom.Services.ViewEngine;
@@ -48,6 +49,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
 
     private readonly ILogger<SettingsView> _logger = IAppHost.GetService<ILogger<SettingsView>>();
     private readonly ViewHostControl _embeddedViewHost;
+    private readonly ContentControl? _embeddedViewHostPresenter;
     private readonly DesktopViewHostProvider _desktopViewHostProvider = IAppHost.GetService<DesktopViewHostProvider>();
     private AppToastAdorner? _appToastAdorner;
 
@@ -64,9 +66,9 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         _embeddedViewHost = new ViewHostControl(EmbeddedHostId);
         InitializeComponent();
 
-        var embeddedViewHostPresenter = this.FindControl<ContentControl>("EmbeddedViewHostPresenter");
-        if (embeddedViewHostPresenter is not null)
-            embeddedViewHostPresenter.Content = _embeddedViewHost;
+        _embeddedViewHostPresenter = this.FindControl<ContentControl>("EmbeddedViewHostPresenter");
+        if (_embeddedViewHostPresenter is not null)
+            _embeddedViewHostPresenter.Content = _embeddedViewHost;
 
         NavigationFrame.NavigationPageFactory = this;
         _desktopViewHostProvider.RegisterEmbeddedHost(_embeddedViewHost);
@@ -118,7 +120,8 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
 
         if (settings.IsPage) return;
 
-        var pageRoot = NavigationFrame.Content as Control;
+        // Frame 与 MVE 两态：embedded host 有活动页时从其取根，否则回退 Frame 内容。
+        Control? pageRoot = _embeddedViewHost.PageStack.LastOrDefault() ?? NavigationFrame.Content as Control;
 
         var settingsControl = pageRoot?.FindControl<Control>(settings.Id);
         _logger.LogInformation("设置控件: {Control}", settingsControl);
@@ -633,7 +636,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
     }
 
-    private void CoreNavigate(PageInfo info, bool isBack = false)
+    private async void CoreNavigate(PageInfo info, bool isBack = false)
     {
         if (ViewModel.SelectedPageInfo?.Id == info.Id) return;
 
@@ -644,10 +647,37 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         }
 
         var item = ViewModel.FlattenNavigationItems.FirstOrDefault(item => Equals(item.Tag, info));
+        var viewEngine = IAppHost.GetService<IViewEngine>();
+
+        if (IAppHost.GetService<IViewRegistry>().TryGet(info.Id, out _))
+        {
+            // MVE 页：清掉 Frame 并显式互斥（隐藏 + 禁命中测试），embedded host 独占内容区。
+            ViewModel.FrameContent = null;
+            ViewModel.SelectedNavigationViewItem = item;
+            ViewModel.SelectedPageInfo = info;
+            NavigationFrame.Navigate(null);
+            SetEmbeddedMode(true);
+            await viewEngine
+                .ShowExclusiveAsync(EmbeddedHostId, info.Id)
+                .ConfigureAwait(true);
+            return;
+        }
+
+        // Frame 页：关闭 embedded host 上的全部 MVE 会话，恢复 Frame 显示与命中测试。
+        await viewEngine.CloseHostAsync(_embeddedViewHost, ViewCloseReason.Programmatic).ConfigureAwait(true);
+        SetEmbeddedMode(false);
         ViewModel.FrameContent = null;
         ViewModel.SelectedNavigationViewItem = item;
         ViewModel.SelectedPageInfo = info;
         NavigationFrame.NavigateFromObject(info);
+    }
+
+    private void SetEmbeddedMode(bool isEmbedded)
+    {
+        // 与 ViewHostControl 自治可见性配合形成显式互斥：MVE 模式下 Frame 不可见，
+        // 避免 ViewHostControl 根 Grid 无背景时下层 Frame 内容透出。
+        NavigationFrame.IsVisible = !isEmbedded;
+        NavigationFrame.IsHitTestVisible = !isEmbedded && !_isPreviewMode;
     }
 
     public void SelectNavigationItemById(string id, bool isBack = false)
@@ -723,6 +753,10 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     {
         NavigationFrame.IsEnabled = !_isPreviewMode;
         NavigationFrame.IsHitTestVisible = !_isPreviewMode;
+        // 冻结父容器而非 ViewHostControl 本身：host 的自治可见性更新会重置自身 IsHitTestVisible，
+        // 父容器冻结对整个子树生效且不会被解除，保证预览模式下页面内容不可交互。
+        if (_embeddedViewHostPresenter is not null)
+            _embeddedViewHostPresenter.IsHitTestVisible = !_isPreviewMode;
     }
 
     public void ExitPreview()

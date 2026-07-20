@@ -15,11 +15,13 @@ using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Views;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Models;
 using SecRandom.Services.Desktop;
+using SecRandom.Core.Services.Archive;
 using SecRandom.Services.ImportExport;
 using SecRandom.Shared;
 using SecRandom.ViewModels;
@@ -28,7 +30,7 @@ using LR = SecRandom.Langs.SettingsPages.General.Backup.Resources;
 namespace SecRandom.Views.SettingsPages.General;
 
 [PageInfo("settings.general.backup", FluentIcons.ArchiveFilled, "settings.general")]
-public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
+public partial class BackupSettingsPage : ViewBase, INotifyPropertyChanged
 {
     private const string BackupDirectoryName = "backup";
 

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Views;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.Personalized;
 using SecRandom.ViewModels;
@@ -10,7 +11,7 @@ using SecRandom.ViewModels;
 namespace SecRandom.Views.SettingsPages.Personalized;
 
 [PageInfo("settings.personalized.appearance", FluentIcons.LayerDiagonalSparkleFilled, "settings.personalized")]
-public partial class AppearanceSettingsPage : UserControl
+public partial class AppearanceSettingsPage : ViewBase
 {
     public AppearanceSettingsPage()
     {

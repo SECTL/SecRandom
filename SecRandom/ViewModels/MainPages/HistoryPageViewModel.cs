@@ -5,8 +5,6 @@ using System.Globalization;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.Logging;
-using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Models;
@@ -23,8 +21,6 @@ namespace SecRandom.ViewModels.MainPages;
 /// </summary>
 public partial class HistoryPageViewModel : ViewModelBase
 {
-    private readonly ILogger<HistoryPageViewModel> _logger =
-        IAppHost.GetService<ILogger<HistoryPageViewModel>>();
     private readonly IHistoryQueryService _historyQueryService;
 
     private StudentHistory? _rollCallHistory;
@@ -102,15 +98,7 @@ public partial class HistoryPageViewModel : ViewModelBase
             return;
         }
 
-        try
-        {
-            _rollCallHistory = new StudentHistoryConfig(SelectedRollCallClassName).Data;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "读取点名历史失败：班级={ClassName}。", SelectedRollCallClassName);
-            _rollCallHistory = null;
-        }
+        _rollCallHistory = _historyQueryService.LoadStudentHistory(SelectedRollCallClassName);
 
         RebuildRollCallModeOptions();
         BuildRollCallRows();
@@ -182,15 +170,7 @@ public partial class HistoryPageViewModel : ViewModelBase
             return;
         }
 
-        try
-        {
-            _lotteryHistory = new PrizeHistoryConfig(SelectedLotteryPoolName).Data;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "读取抽奖历史失败：奖池={PoolName}。", SelectedLotteryPoolName);
-            _lotteryHistory = null;
-        }
+        _lotteryHistory = _historyQueryService.LoadPrizeHistory(SelectedLotteryPoolName);
 
         RebuildLotteryModeOptions();
         BuildLotteryRows();

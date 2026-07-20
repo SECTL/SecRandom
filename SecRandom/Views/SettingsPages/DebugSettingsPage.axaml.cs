@@ -11,6 +11,7 @@ using FluentAvalonia.UI.Controls;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Views;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Extensions.Registry;
 using SecRandom.Core.Helpers.UI;
@@ -28,7 +29,7 @@ using LinkageResources = SecRandom.Langs.SettingsPages.Linkage.Resources;
 namespace SecRandom.Views.SettingsPages;
 
 [PageInfo("settings.debug", FluentIcons.BugFilled, location: PageLocation.Bottom, isHide: true)]
-public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
+public partial class DebugSettingsPage : ViewBase, INotifyPropertyChanged
 {
     private readonly MainConfigHandler _configHandler = IAppHost.GetService<MainConfigHandler>();
     private readonly CourseLinkageService _courseLinkage = IAppHost.GetService<CourseLinkageService>();

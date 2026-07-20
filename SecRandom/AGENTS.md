@@ -28,7 +28,7 @@ SecRandom/
 │   ├── Desktop/         # TaskBarIconService, GlobalShortcutService
 │   ├── Platform/        # App-side neutral window-handle adapter for platform feature requests
 │   ├── Draw/            # DrawAudioService
-│   ├── ImportExport/    # Strict v3 settings/data archives, diagnostics, recovery snapshots
+│   ├── ImportExport/    # Desktop shell + post-import hooks over Core Archive services; diagnostics export
 │   ├── Linkage/         # CSES/ClassIsland sources, course state runtime, draw authorization, pre-class reset
 │   ├── Music/            # Managed local draw-music library and stable track selection resolution
 │   ├── Notification/     # ClassIsland SecRandom4Ci notification bridge
@@ -37,7 +37,7 @@ SecRandom/
 │   ├── Profiles/        # Non-mutating ProfileQueryService snapshots
 │   ├── Settings/        # SettingsSearchService
 │   ├── Security/        # Credential store, verification prompts, factor/operation authorization
-│   ├── Telemetry/       # SentryTelemetrySdkAdapter, TelemetryRuntimeService
+│   ├── Telemetry/       # ITelemetryTransaction/ITelemetrySdkAdapter seam; Sentry adapter + desktop-only Sentry shim; Sentry-free TelemetryRuntimeService
 │   ├── Updates/         # Signed manifest discovery, complete-artifact deployment, update scheduler
 │   ├── ViewEngine/      # Desktop Avalonia view-host provider for Core logical views
 │   ├── Voice/           # VoiceAnnouncementService
@@ -68,7 +68,7 @@ SecRandom/
 | Log viewer                   | `Views/SettingsPages/LogViewer/LogViewerSettingsPage.axaml(.cs)`       | Hidden settings page `settings.logs`; opened from the settings more-options menu. Reads `.log` and `.log.gz` files from `data/logs`. |
 | App config JSON              | `../SecRandom.Core/Services/Config/FileConfigService.cs`                 | Desktop registers the host-internal Core JSON storage; its default package-root path remains unchanged.                    |
 | Device UUID                  | `Services/Config/DeviceUuidStore.cs`                                    | Persists the pseudo-anonymous online/witness client identity in `data/config/device-uuid.json`.                         |
-| Settings/data import-export  | `Services/ImportExport/`, `Views/SettingsView.axaml(.cs)`               | `IImportExportService` owns strict v3 ZIP/JSON transfer, diagnostics, manual/automatic backups, and mandatory pre-import snapshots; `AutomaticBackupService` is Host-managed and checks configured backup cadence. Draw-verification proof files live under `data/proofs` and are included by default in both manual and automatic backups. The settings shell owns pickers, preview/confirmation, feedback, and restart requests. |
+| Settings/data import-export  | `Services/ImportExport/`, `../SecRandom.Core/Services/Archive/`, `Views/SettingsView.axaml(.cs)` | Core `DataArchiveService` owns strict v3 ZIP/JSON transfer, manifest/SHA-256 validation, manual/automatic backups, staging commit/rollback, and mandatory pre-import snapshots; platform follow-up work goes through `IArchivePostImportHooks` (desktop implementation: runtime refresh + desktop-integration sync + plugin refresh). Desktop `IImportExportService` is a thin shell that adds diagnostics export and delegates everything else; `AutomaticBackupService` is Host-managed and checks configured backup cadence. Draw-verification proof files live under `data/proofs` and are included by default in both manual and automatic backups. The settings shell owns pickers, preview/confirmation, feedback, and restart requests. |
 | Searchable settings metadata | `Services/Settings/SettingsSearchService.cs`                            | Reflects `Langs.SettingsPages.*` resources and registered settings pages. Matches by `Type.Name` so pages in subdirectories are found correctly. |
 | Plugin runtime               | `Services/Plugins/`                                                     | Imports `.srpx` packages, scans `data/plugins`, stores enable/restart state, starts enabled plugins, filters plugin logs, and exposes restricted host invokers. |
 | ClassIsland notifications    | `Services/Notification/`, `../SecRandom4Ci.Interface/`                 | Sends draw-result DTOs to the optional ClassIsland `SecRandom4Ci` plugin through v2 IPC. |
@@ -81,7 +81,7 @@ SecRandom/
 | Platform feature calls       | `Services/Platform/`, `../SecRandom.Platforms.Abstractions/`            | Views obtain `IWindowFeatureService` through Host; native implementations stay outside the app project.                 |
 | Cross-platform view host     | `Services/ViewEngine/`                                                    | Desktop physical host provider for `SecRandom.Core.Views`; it owns ordinary Avalonia windows only.                       |
 | Mobile root                  | `../SecRandom.Mobile.Shared/MobileApp.cs`; entry points `../SecRandom.Android/MobileEntryPoint.cs`, `../SecRandom.iOS/MobileEntryPoint.cs` | Independent SingleView shell only; it owns a minimal Host and never starts desktop windows or desktop hosted services. |
-| Telemetry runtime seam       | `Services/Telemetry/`                                                   | App-layer-only Sentry policy/runtime lifecycle boundary; reads and live-applies `PrivacySettings.SentryTelemetryEnabled`.  |
+| Telemetry runtime seam       | `Services/Telemetry/`                                                   | App-layer-only telemetry policy/runtime boundary behind the `ITelemetryTransaction`/`ITelemetrySdkAdapter` seam; Sentry types stay inside the adapter and the desktop-only shim. Reads and live-applies `PrivacySettings.SentryTelemetryEnabled`. |
 | Online status reporting      | `Services/OnlineStatusService.cs`                                       | Host-managed SECTL online status reporter; reads `PrivacySettings.OnlineStatusMode`.                                      |
 | Update center                | `Services/Updates/`, `Views/SettingsPages/Update/`                       | Signed full-artifact checks, portable staging/Launcher restart, or native installer handoff.                              |
 | Security authorization       | `Services/Security/`                                                     | Separate credential storage, password/TOTP/USB factors, lockout state, and operation authorization gateway.               |
@@ -89,14 +89,15 @@ SecRandom/
 
 ## CONVENTIONS
 
-- `BuildHost()` registers logging, config, services, windows/views, ViewModels, attached settings controls, and
-  navigation pages.
+- `BuildHost()` registers logging, config, services, windows/views, ViewModels, attached settings controls,
+  navigation pages, and view-engine registrations: every built-in main/settings page is also registered with
+  `AddView<T>(pageId)` alongside its `AddMainPage`/`AddSettingsPage` navigation metadata so `MainView`/`SettingsView` can host it in the embedded MVE host; plugin `plugin.<id>.*` pages intentionally keep the FAFrame fallback.
 - Desktop `BuildHost()` receives the root selected by `SecRandom.Desktop` through `PlatformStartupContext` and registers it with `AddPlatformServices`. App code may adapt an Avalonia `TopLevel` into a neutral handle, but it must not contain Win32/X11/AppKit operations or platform selection logic. `SecRandom.Mobile.MobileApp` owns a separate minimal Host and must not call desktop `BuildHost()`.
-- `BuildHost()` registers the desktop `IViewHostProvider` after `AddViewEngine()`. The provider may create ordinary Avalonia windows for logical Core views, but it must not replace the existing `MainView`, `SettingsView`, floating-window, or tray ownership paths until their dedicated migration phase.
+- `BuildHost()` registers the desktop `IViewHostProvider` after `AddViewEngine()`. The provider owns ordinary Avalonia windows plus the embedded hosts used by `MainView`/`SettingsView`; `RegisterEmbeddedHost` self-heals on re-registration and guards a null `Application.Current`, and both shell windows synchronously tear down embedded hosts in `Closing` (respecting `e.Cancel`).
 - `MainWindow` and `FloatingWindow` retain their presentation and configuration behavior but request topmost through `IWindowFeatureService`; `FloatingWindow` requests `ToolWindow` during construction while its native handle is available but before its first show, then requests task-switcher exclusion after opening where supported. Its transparent composition hint must be set during construction. Floating-window restoration must preserve `ShowActivated=False` and not steal focus. Linux implements tool/task-switcher semantics through X11 EWMH when `DISPLAY` is available, including XWayland sessions; native Wayland remains out of scope. macOS maps `ToolWindow` to an `NSWindow` utility window that joins all Spaces; Command-Tab remains application-level and is not modeled as a per-window task-switcher exclusion.
 - `App` is desktop-only. Its SingleView branch must reject misuse and direct callers to `SecRandom.Mobile.MobileApp`; the independent mobile shell must not route through desktop single-instance, OOBE, floating-window, tray, shortcut, update, plugin, or protocol startup paths.
 - Crash recovery startup prompt handling runs before single-instance acquisition; normal app restart must release `SingleInstanceService` before launching the replacement process.
-- Telemetry runtime policy belongs in app-layer services and should live-apply `MainConfigHandler.Data.General.PrivacySettings.SentryTelemetryEnabled`; do not move SDK-specific wiring into Core or Shared. The concrete Sentry adapter stays under `SecRandom/Services/Telemetry/SentryTelemetrySdkAdapter.cs`.
+- Telemetry runtime policy belongs in app-layer services and should live-apply `MainConfigHandler.Data.General.PrivacySettings.SentryTelemetryEnabled`; do not move SDK-specific wiring into Core or Shared. Runtime code talks to the Sentry-free `ITelemetryTransaction` / `ITelemetrySdkAdapter` seam (`TelemetryRuntimeService` has no Sentry reference; the DSN comes from `GlobalConstants.SentryDsn`). The concrete Sentry adapter stays under `SecRandom/Services/Telemetry/SentryTelemetrySdkAdapter.cs`, with Sentry transaction extensions isolated in the desktop-only `TelemetryTransactionSentryExtensions` shim that mobile-linked builds exclude.
 - Background app services such as `OnlineStatusService` are registered through Host and must honor `PrivacySettings.OnlineStatusMode` before doing network work.
 - `UpdateCenterService` is the only update transaction entry point. It must verify raw manifest bytes with the embedded Ed25519 key and verify artifact length/SHA-512 before a complete ZIP deployment or native installer handoff; `UpdateScheduler` only checks and never downloads in the background.
 - Security services are Host singletons. Keep secrets out of normal config and route protected window, tray, draw, linkage, and plugin operations through `ISecurityService` instead of duplicating checks in UI event handlers.

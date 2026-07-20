@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared.Models.Profile;
@@ -30,9 +30,10 @@ public interface IProfileService
         string drawGender = "",
         int drawMethod = 0,
         IReadOnlyDictionary<Student, double>? weights = null,
-        string courseName = "");
+        string courseName = "",
+        string? drawRoundId = null);
 
-    public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount);
+    public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount, int drawMethod = 0, string? drawRoundId = null);
 
     public void ClearCurrentStudentHistory();
     public void ClearCurrentPrizeHistory();

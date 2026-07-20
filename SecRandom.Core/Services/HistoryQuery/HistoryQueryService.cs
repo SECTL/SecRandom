@@ -4,6 +4,7 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
+using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.HistoryQuery;
 
@@ -23,6 +24,41 @@ internal sealed class HistoryQueryService(ConfigServiceBase configService, ILogg
         AppendStudentItems(items);
         AppendPrizeItems(items);
         return items.OrderByDescending(item => item.DrawTime).Take(maximumCount).ToArray();
+    }
+
+    public StudentHistory? LoadStudentHistory(string name)
+    {
+        // 缺失时先按文件存在性拦截，避免配置处理器为不存在的档案落盘空文件。
+        if (string.IsNullOrWhiteSpace(name) ||
+            !File.Exists(Utils.GetFilePath("history", "roll_call_history", $"{name}.json")))
+            return null;
+
+        try
+        {
+            return new StudentHistoryConfig(name, logger, configService).Data;
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "读取点名历史失败：班级={ClassName}。", name);
+            return null;
+        }
+    }
+
+    public PrizeHistory? LoadPrizeHistory(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name) ||
+            !File.Exists(Utils.GetFilePath("history", "lottery_history", $"{name}.json")))
+            return null;
+
+        try
+        {
+            return new PrizeHistoryConfig(name, logger, configService).Data;
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "读取抽奖历史失败：奖池={PoolName}。", name);
+            return null;
+        }
     }
 
     private IReadOnlyList<string> GetProfileNames(string directory)

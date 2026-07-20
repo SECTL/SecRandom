@@ -1,8 +1,6 @@
 using SecRandom.Core.Abstraction.Services;
-using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Services.Config;
-using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.Draw;
@@ -11,19 +9,22 @@ internal sealed class LotterySession(
     MainConfigHandler configHandler,
     IProfileService profileService,
     IDrawTemporaryRecordService temporaryRecordService,
+    IDrawCommitService drawCommitService,
     DrawEngine drawEngine) : ILotterySession
 {
+    // 公平策略口径与 RollCallSession 对齐：两端都从配置读取结构性设置（DrawType/DrawMode/HalfRepeat），
+    // 移动端固定的只是学生公平权重算法（MobileDesktopDefaultsV1）。奖品不存在公平权重算法——Pan 模式权重
+    // 来自奖品自身 Weight，Count 模式为等概率库存置换——因此奖品侧没有可固定的公平策略快照，无需对齐差异。
     public IReadOnlyList<Prize> GetEligiblePrizes()
     {
-        var prizes = profileService.CurrentPrizeList?.Prizes.Where(prize => prize.IsCandidate).ToList() ?? [];
+        var prizes = profileService.CurrentPrizeList?.Prizes ?? [];
         var counts = temporaryRecordService.GetPrizeCounts(GetListName());
-        if (configHandler.Data.LotterySettings.DrawType == LotteryDrawType.Count)
-            return prizes.Where(prize => prize.Count - counts.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(prize)) > 0).ToArray();
-
-        var threshold = GetRepeatThreshold(configHandler.Data.LotterySettings.DrawMode, configHandler.Data.LotterySettings.HalfRepeat);
-        return threshold <= 0
-            ? prizes
-            : prizes.Where(prize => counts.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(prize)) < threshold).ToArray();
+        var settings = configHandler.Data.LotterySettings;
+        return DrawCandidateFilter.FilterEligiblePrizes(
+            prizes,
+            counts,
+            settings.DrawType,
+            DrawRepeatPolicy.ResolveThreshold(settings.DrawMode, settings.HalfRepeat));
     }
 
     public DrawResult<Prize> DrawOnce()
@@ -39,18 +40,14 @@ internal sealed class LotterySession(
         if (!output.IsSuccess || output.Result.Count == 0)
             return output;
 
-        profileService.RecordPrizeHistory(output.Result, DateTime.Now, 1);
-        temporaryRecordService.RecordPrizes(GetListName(), output.Result);
+        drawCommitService.CommitLotteryDraw(new LotteryDrawCommit(
+            output.Result,
+            DateTime.Now,
+            1,
+            GetListName(),
+            PrizeDrawMethod: (int)configHandler.Data.LotterySettings.DrawType));
         return output;
     }
 
     private string GetListName() => profileService.PrizeListConfig?.Name ?? "default";
-
-    private static int GetRepeatThreshold(DrawMode mode, int halfRepeat) => mode switch
-    {
-        DrawMode.Repeat => 0,
-        DrawMode.NoRepeat => 1,
-        DrawMode.HalfRepeat => Math.Max(1, halfRepeat),
-        _ => 1
-    };
 }

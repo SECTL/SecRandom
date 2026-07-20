@@ -1,5 +1,5 @@
 using System.Reflection;
-using SecRandom.Services.ImportExport;
+using SecRandom.Core.Services.Archive;
 
 namespace SecRandom.Core.Tests;
 
@@ -13,7 +13,7 @@ public class ImportExportArchiveTests
     [InlineData("list/invalid?.json")]
     public void ArchivePathNormalizer_RejectsUnsafePaths(string path)
     {
-        var method = typeof(ImportExportService).GetMethod("NormalizePath", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var method = typeof(DataArchiveService).GetMethod("NormalizePath", BindingFlags.NonPublic | BindingFlags.Static)!;
 
         var exception = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, [path]));
 
@@ -23,7 +23,7 @@ public class ImportExportArchiveTests
     [Fact]
     public void ArchivePathNormalizer_NormalizesDirectorySeparators()
     {
-        var method = typeof(ImportExportService).GetMethod("NormalizePath", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var method = typeof(DataArchiveService).GetMethod("NormalizePath", BindingFlags.NonPublic | BindingFlags.Static)!;
 
         var normalized = (string)method.Invoke(null, ["list\\roll_call_list\\class.json"])!;
 
@@ -38,7 +38,7 @@ public class ImportExportArchiveTests
     [InlineData("", false)]
     public void V3ProducerVersionValidator_AcceptsOnlyV3(string producerVersion, bool expected)
     {
-        var method = typeof(ImportExportService).GetMethod("IsSupportedV3ProducerVersion", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var method = typeof(DataArchiveService).GetMethod("IsSupportedV3ProducerVersion", BindingFlags.NonPublic | BindingFlags.Static)!;
 
         var result = (bool)method.Invoke(null, [producerVersion])!;
 

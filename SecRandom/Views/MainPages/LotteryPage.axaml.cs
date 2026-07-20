@@ -9,6 +9,7 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Icons;
+using SecRandom.Core.Views;
 using SecRandom.Helpers;
 using SecRandom.ViewModels.MainPages;
 using SR = SecRandom.Langs.MainPages.Lottery.Resources;
@@ -16,7 +17,7 @@ using SR = SecRandom.Langs.MainPages.Lottery.Resources;
 namespace SecRandom.Views.MainPages;
 
 [PageInfo("main.lottery", FluentIcons.GiftFilled, location: PageLocation.Bottom, useFullWidth: true, hidePageTitle: true)]
-public partial class LotteryPage : UserControl
+public partial class LotteryPage : ViewBase
 {
     private bool _isUnloaded;
     private bool _isViewModelSubscribed;
@@ -29,6 +30,7 @@ public partial class LotteryPage : UserControl
         InitializeComponent();
         _resultPresenter = this.FindControl<ItemsControl>("ResultPresenter");
         AttachViewModel();
+        Closed += OnViewClosed;
     }
 
     public LotteryPageViewModel ViewModel { get; }
@@ -39,7 +41,13 @@ public partial class LotteryPage : UserControl
         AttachViewModel();
     }
 
-    private void OnUnloaded(object? sender, RoutedEventArgs e)
+    private void OnUnloaded(object? sender, RoutedEventArgs e) => DetachViewModel();
+
+    // ViewModel 是单例且被快捷键/协议等 UI 无关路径复用，视图关闭只做渲染层解绑，
+    // 绝不能在这里 Dispose ViewModel 或中断进行中的抽取（后台停止由 Shortcut/Protocol 负责）。
+    private void OnViewClosed(object? sender, ViewClosedEventArgs e) => DetachViewModel();
+
+    private void DetachViewModel()
     {
         _isUnloaded = true;
         if (_isViewModelSubscribed)

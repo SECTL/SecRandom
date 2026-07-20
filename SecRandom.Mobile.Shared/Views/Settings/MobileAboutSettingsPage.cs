@@ -1,24 +1,94 @@
+using System.Reflection;
 using Avalonia.Controls;
-using SecRandom.Core.Views;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
+using SecRandom.Core.Icons;
+using SecRandom.Mobile.Controls;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Views.Settings;
 
-public sealed class MobileAboutSettingsPage : ViewBase
+/// <summary>
+/// 关于页：居中的品牌卡片（Logo + 名称 + 版本 + GPLv3 许可证说明）+ 项目链接。
+/// 版本取入口程序集的 InformationalVersion（GitInfo 版本特性生成在 Android/iOS 头程序集上）。
+/// 链接经 TopLevel Launcher 打开系统浏览器；Launcher 不可用或打开失败时给状态提示。
+/// </summary>
+public sealed class MobileAboutSettingsPage : MobileSettingsPageBase
 {
+    private static readonly Uri ProjectUri = new("https://github.com/SECTL/SecRandom");
+
+    private readonly TextBlock _statusText;
+
     public MobileAboutSettingsPage()
     {
-        var version = typeof(MobileAboutSettingsPage).Assembly.GetName().Version?.ToString() ?? "0.0.0";
-        Content = MobileUi.CreateSettingsScroll(LR.S_About, LR.S_About_D, CloseView, [
-            MobileUi.CreateMetric(LR.S_Version, version, MobileTheme.SurfaceMuted),
-            new TextBlock
+        var version = (Assembly.GetEntryAssembly() ?? typeof(MobileAboutSettingsPage).Assembly)
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0]
+            ?? "0.0.0";
+
+        var logo = new Image
+        {
+            Source = new Bitmap(AssetLoader.Open(new Uri("avares://SecRandom.Mobile/Assets/AppLogo.png"))),
+            Width = 64,
+            Height = 64,
+            HorizontalAlignment = HorizontalAlignment.Center
+        };
+
+        var name = new TextBlock
+        {
+            Text = "SecRandom",
+            FontSize = MobileTheme.FindDouble("MobileFontSizeSection", 20),
+            FontWeight = FontWeight.SemiBold,
+            TextAlignment = TextAlignment.Center
+        };
+        MobileTheme.BindBrush(name, TextBlock.ForegroundProperty, MobileTheme.Keys.Text);
+
+        var versionText = CreateCaption($"{LR.S_Version} {version}", centered: true);
+        var license = CreateCaption(LR.M_AboutLicense, centered: true);
+
+        var brandCard = new MobileCard
+        {
+            Content = new StackPanel
             {
-                Text = LR.M_AboutLicense,
-                Foreground = MobileTheme.MutedText,
-                TextWrapping = Avalonia.Media.TextWrapping.Wrap
+                Spacing = MobileTheme.FindDouble("MobileSpacingSm", 8),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Children = { logo, name, versionText, license }
             }
+        };
+
+        _statusText = CreateCaption(string.Empty, centered: true);
+
+        Content = BuildPage(LR.S_About, LR.S_About_D, [
+            brandCard,
+            MobileSettingRow.Navigation(LR.C_ViewOnGitHub, "github.com/SECTL/SecRandom", () => _ = OpenProjectLinkAsync()),
+            _statusText
         ]);
     }
 
-    private void CloseView() => _ = CloseAsync(reason: ViewCloseReason.Back);
+    private static TextBlock CreateCaption(string text, bool centered)
+    {
+        var caption = new TextBlock
+        {
+            Text = text,
+            FontSize = MobileTheme.FindDouble("MobileFontSizeCaption", 12),
+            TextWrapping = TextWrapping.Wrap,
+            TextAlignment = centered ? TextAlignment.Center : TextAlignment.Left
+        };
+        MobileTheme.BindBrush(caption, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+        return caption;
+    }
+
+    private async Task OpenProjectLinkAsync()
+    {
+        var launcher = TopLevel.GetTopLevel(this)?.Launcher;
+        if (launcher is null)
+        {
+            _statusText.Text = LR.M_BrowserUnavailable;
+            return;
+        }
+
+        if (!await launcher.LaunchUriAsync(ProjectUri))
+            _statusText.Text = LR.M_OpenBrowserFailed;
+    }
 }

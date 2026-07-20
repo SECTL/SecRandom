@@ -11,6 +11,7 @@ using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Views;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
@@ -22,7 +23,7 @@ using LR = SecRandom.Langs.SettingsPages.Linkage.Resources;
 namespace SecRandom.Views.SettingsPages.Linkage;
 
 [PageInfo("settings.linkage", FluentIcons.CalendarLtrFilled)]
-public partial class LinkageSettingsPage : UserControl
+public partial class LinkageSettingsPage : ViewBase
 {
     private bool _isSubscribed;
     public static readonly StyledProperty<string> CsesSummaryProperty =
@@ -116,7 +117,7 @@ public partial class LinkageSettingsPage : UserControl
             CsesSummary = FormatCsesSummary(schedule);
             this.ShowSuccessToast(string.Format(CultureInfo.CurrentCulture, LR.M_CsesImported, CsesSummary));
         }
-        catch (CsesScheduleException exception)
+        catch (InvalidDataException exception)
         {
             this.ShowErrorToast(FormatCsesError(exception));
         }
@@ -175,9 +176,12 @@ public partial class LinkageSettingsPage : UserControl
         schedule.Earliest,
         schedule.Latest);
 
-    private static string FormatCsesError(CsesScheduleException exception)
+    private static string FormatCsesError(InvalidDataException exception)
     {
-        var key = exception.Error switch
+        if (!CsesScheduleException.TryGetError(exception, out var error, out var argument))
+            return exception.Message;
+
+        var key = error switch
         {
             CsesScheduleError.Empty => "M_CsesErrorEmpty",
             CsesScheduleError.RootNotObject => "M_CsesErrorRoot",
@@ -188,8 +192,8 @@ public partial class LinkageSettingsPage : UserControl
             _ => throw new ArgumentOutOfRangeException(nameof(exception))
         };
         var format = LR.ResourceManager.GetString(key, LR.Culture) ?? key;
-        return exception.Argument is null
+        return argument is null
             ? format
-            : string.Format(CultureInfo.CurrentCulture, format, exception.Argument);
+            : string.Format(CultureInfo.CurrentCulture, format, argument);
     }
 }

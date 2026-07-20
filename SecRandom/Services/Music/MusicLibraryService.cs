@@ -22,7 +22,8 @@ public sealed class MusicLibraryService(
     MainConfigHandler configHandler,
     ILogger<MusicLibraryService> logger,
     string? musicDirectory = null,
-    IProfileService? attachedSettingsProfileService = null)
+    IProfileService? attachedSettingsProfileService = null,
+    IProfileCatalogManager? profileCatalogManager = null)
 {
     public const string NoMusicTrackId = "$none";
     public const string RandomTrackId = "$random";
@@ -361,7 +362,7 @@ public sealed class MusicLibraryService(
             foreach (var name in GetListNames("roll_call_list"))
             {
                 if (name != studentListConfig.Name)
-                    changed |= TryClearStudentListReferences(trackId, new StudentListConfig(name));
+                    changed |= TryClearStudentListReferences(trackId, name);
             }
         }
 
@@ -370,7 +371,7 @@ public sealed class MusicLibraryService(
             foreach (var name in GetListNames("lottery_list"))
             {
                 if (name != prizeListConfig.Name)
-                    changed |= TryClearPrizeListReferences(trackId, new PrizeListConfig(name));
+                    changed |= TryClearPrizeListReferences(trackId, name);
             }
         }
 
@@ -379,6 +380,12 @@ public sealed class MusicLibraryService(
 
     private IEnumerable<string> GetListNames(string directoryName)
     {
+        // 优先走名单目录管理器；未注入时（如测试桩）退回目录枚举。
+        if (profileCatalogManager is not null)
+            return directoryName == "roll_call_list"
+                ? profileCatalogManager.GetStudentListNames()
+                : profileCatalogManager.GetPrizeListNames();
+
         try
         {
             var directory = Utils.GetDirectoryPath("list", directoryName);
@@ -395,28 +402,53 @@ public sealed class MusicLibraryService(
         }
     }
 
-    private bool TryClearStudentListReferences(string trackId, StudentListConfig config)
+    private bool TryClearStudentListReferences(string trackId, string name)
     {
         try
         {
-            return ClearStudentListReferences(trackId, config);
+            // 优先经目录管理器加载/保存快照（规范化并同步活跃档案）；未注入时退回直构造。
+            if (profileCatalogManager is not null)
+            {
+                var list = profileCatalogManager.LoadStudentList(name);
+                if (list is null)
+                    return false;
+
+                var listChanged = ClearStudentReferences(list.Students, trackId);
+                if (listChanged)
+                    profileCatalogManager.SaveStudentList(list);
+                return listChanged;
+            }
+
+            return ClearStudentListReferences(trackId, new StudentListConfig(name));
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "清除学生名单音乐引用失败：名单={ListName}。", config.Name);
+            logger.LogWarning(ex, "清除学生名单音乐引用失败：名单={ListName}。", name);
             return false;
         }
     }
 
-    private bool TryClearPrizeListReferences(string trackId, PrizeListConfig config)
+    private bool TryClearPrizeListReferences(string trackId, string name)
     {
         try
         {
-            return ClearPrizeListReferences(trackId, config);
+            if (profileCatalogManager is not null)
+            {
+                var list = profileCatalogManager.LoadPrizeList(name);
+                if (list is null)
+                    return false;
+
+                var listChanged = ClearPrizeReferences(list.Prizes, trackId);
+                if (listChanged)
+                    profileCatalogManager.SavePrizeList(list);
+                return listChanged;
+            }
+
+            return ClearPrizeListReferences(trackId, new PrizeListConfig(name));
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "清除奖品池音乐引用失败：奖品池={ListName}。", config.Name);
+            logger.LogWarning(ex, "清除奖品池音乐引用失败：奖品池={ListName}。", name);
             return false;
         }
     }
@@ -425,7 +457,10 @@ public sealed class MusicLibraryService(
     {
         try
         {
-            return GetStudentSelections(new StudentListConfig(name).Data.Students).ToArray();
+            var students = profileCatalogManager is not null
+                ? profileCatalogManager.LoadStudentList(name)?.Students
+                : new StudentListConfig(name).Data.Students;
+            return GetStudentSelections(students).ToArray();
         }
         catch (Exception ex)
         {
@@ -438,7 +473,10 @@ public sealed class MusicLibraryService(
     {
         try
         {
-            return GetPrizeSelections(new PrizeListConfig(name).Data.Prizes).ToArray();
+            var prizes = profileCatalogManager is not null
+                ? profileCatalogManager.LoadPrizeList(name)?.Prizes
+                : new PrizeListConfig(name).Data.Prizes;
+            return GetPrizeSelections(prizes).ToArray();
         }
         catch (Exception ex)
         {

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Views;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Enums.Configs;
@@ -15,7 +16,7 @@ using LR = SecRandom.Langs.SettingsPages.General.Verification.Resources;
 namespace SecRandom.Views.SettingsPages.General;
 
 [PageInfo("settings.general.verification", FluentIcons.DocumentCheckmarkFilled, "settings.general")]
-public partial class VerificationSettingsPage : UserControl
+public partial class VerificationSettingsPage : ViewBase
 {
     private static readonly int[] RetentionOptions = [7, 15, 30, 60, 90, 0];
     private static readonly long[] StorageOptions = [16L * 1024 * 1024, 32L * 1024 * 1024, 64L * 1024 * 1024, 128L * 1024 * 1024, 256L * 1024 * 1024, 512L * 1024 * 1024, 1024L * 1024 * 1024];

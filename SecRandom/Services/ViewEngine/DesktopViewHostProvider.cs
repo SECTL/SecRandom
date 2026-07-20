@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using SecRandom.Core.Views;
@@ -59,14 +60,20 @@ public sealed class DesktopViewHostProvider : IViewHostProvider
     public void RegisterEmbeddedHost(IViewHost host)
     {
         ArgumentNullException.ThrowIfNull(host);
-        if (!Dispatcher.UIThread.CheckAccess())
+        // 无 Avalonia 应用（单元测试）时跳过 UI 线程强制检查，与 RunOnUiThreadAsync 的内联执行一致。
+        if (Application.Current is not null && !Dispatcher.UIThread.CheckAccess())
             throw new InvalidOperationException("Desktop embedded hosts must be registered on the UI thread.");
 
-        if (_embeddedHosts.TryGetValue(host.HostId, out var existing) && !ReferenceEquals(existing, host))
-            throw new InvalidOperationException($"Desktop embedded host '{host.HostId}' is already registered.");
+        if (_embeddedHosts.TryGetValue(host.HostId, out var existing))
+        {
+            if (ReferenceEquals(existing, host))
+                return;
 
-        if (_embeddedHosts.ContainsKey(host.HostId))
-            return;
+            // 自愈：同 ID 旧实例（关窗清理竞态中的残留）先同步销毁注销，再注册新实例，
+            // 替代直接抛异常导致整个窗口创建失败。DestroyAsync 的 UI 线程段同步完成。
+            existing.DestroyAsync().GetAwaiter().GetResult();
+            UnregisterEmbeddedHost(existing);
+        }
 
         _embeddedHosts.Add(host.HostId, host);
         host.Destroyed += EmbeddedHostOnDestroyed;
@@ -104,7 +111,9 @@ public sealed class DesktopViewHostProvider : IViewHostProvider
 
     private static Task<T> RunOnUiThreadAsync<T>(Func<T> action)
     {
-        if (Dispatcher.UIThread.CheckAccess())
+        // Application.Current 为 null（如单元测试无 Avalonia 应用）时直接内联执行，
+        // 避免向不存在/未 pumping 的 UI 调度器投递任务而永久悬挂。
+        if (Application.Current is null || Dispatcher.UIThread.CheckAccess())
             return Task.FromResult(action());
 
         return Dispatcher.UIThread.InvokeAsync(action).GetTask();
@@ -112,7 +121,7 @@ public sealed class DesktopViewHostProvider : IViewHostProvider
 
     private static Task RunOnUiThreadAsync(Action action)
     {
-        if (Dispatcher.UIThread.CheckAccess())
+        if (Application.Current is null || Dispatcher.UIThread.CheckAccess())
         {
             action();
             return Task.CompletedTask;
@@ -263,7 +272,7 @@ internal sealed class DesktopViewHostWindow : Window, IViewHost
 
     private static Task RunOnUiThreadAsync(Action action)
     {
-        if (Dispatcher.UIThread.CheckAccess())
+        if (Application.Current is null || Dispatcher.UIThread.CheckAccess())
         {
             action();
             return Task.CompletedTask;

@@ -26,7 +26,8 @@ SecRandom.Core/
 ├── Views/                # Plugin-facing logical view/session contracts; app shells provide physical hosts
 ├── Styles/               # Modular shared style files
 ├── StylesBase.axaml      # Shared style hub imported by app
-├── Services/Draw/        # Fair/random draw engine and filters
+├── Services/Draw/        # Fair/random draw engine, filters, commit coordinator, shared repeat/candidate rules
+├── Services/Archive/     # Platform-neutral v3 backup/archive engine (DataArchiveService + post-import hooks)
 ├── Services/Config/      # Config handlers over Shared config models
 ├── Services/Profiles/    # Host-internal profile persistence runtime shared by desktop/mobile
 ├── Services/Ipc/         # Strict URL/IPC request parsing and normalization
@@ -50,11 +51,15 @@ SecRandom.Core/
 | Plugin contracts           | `Plugins/`                                                                       | Manifest, `PluginInfo`, runtime context, page registration DTOs, and restricted draw invocation contracts. |
 | Navigation registry        | `Services/PagesRegistryService.cs`                                               | Static main/settings/group collections.                                 |
 | Attached-settings registry | `Services/AttachedSettingsRegistryService.cs`                                    | Static attached-settings control collections.                           |
-| Draw algorithm             | `Services/Draw/DrawEngine*.cs`, `WeightedDrawEngine.cs`, `CryptoRandomSource.cs` | Fairness, filters, weighted sampling; history lookup uses `RecordId`.    |
+| Draw algorithm             | `Services/Draw/DrawEngine*.cs`, `WeightedDrawEngine.cs`, `CryptoRandomSource.cs` | Fairness, filters, weighted sampling; history lookup uses `RecordId`. Repeat thresholds and candidate filtering live in the shared `DrawRepeatPolicy`/`DrawCandidateFilter`. |
+| Draw commit boundary       | `Services/Draw/DrawCommitCoordinator.cs`, `Abstraction/Services/IDrawCommitService.cs` | Single-`DrawRoundId` transactional commit: temporary records before history, failure snapshot compensation, serialized commit gate. |
 | Config handlers            | `Services/Config/`                                                               | `FileConfigService`, `MainConfigHandler`, and `ProfileConfigs` implement host-internal JSON persistence. |
 | Profile runtime            | `Services/Profiles/ProfileService.cs`                                            | Injected current-list/history runtime shared by desktop and mobile hosts. |
+| Profile catalog            | `Services/Profiles/ProfileCatalogManager.cs`                                     | List/profile CRUD and student/prize history clearing behind `IProfileCatalogManager`. |
+| Roster import              | `Services/Profiles/RosterImportParser.cs`                                        | Shared roster spreadsheet parsing/column mapping used by desktop and mobile import flows. |
 | Temporary draw records     | `Services/Draw/DrawTemporaryRecordService.cs`                                   | Host-internal student/prize temporary records shared by desktop and mobile hosts. |
 | Feature availability       | `Services/FeatureAvailabilityService.cs`                                        | `MoreSettings.LotteryEnabled` runtime gate behind `IFeatureAvailabilityService`. |
+| Data archive runtime       | `Services/Archive/`                                                              | `DataArchiveService` (v3 settings/data transfer, manifest/SHA-256, staging commit/rollback, snapshots) with `IArchivePostImportHooks` seam for platform follow-up; registered by `AddCoreRuntimeServices`. |
 | Protocol parsing           | `Services/Ipc/ProtocolRequestParser.cs`                                          | Bounded route/query parser shared by URL and IPC routing. |
 | Logging providers          | `Services/Logging/`                                                              | Console/file logging; file logs live under `data/logs`, current log path is exposed by `FileLoggerProvider` for viewer/diagnostics. |
 | Config schema              | `Enums/Configs/`, `Models/SubConfigs/`                                           | Many settings model types live here, including v2-parity models for floating window, notification, security, linkage, voice, history, update, and more settings. |
@@ -79,11 +84,13 @@ SecRandom.Core/
 - Weighted drawing validates count, candidates, and weights before sampling; preserve explicit `DrawStatus` returns over
   exceptions at public boundary.
 - Draw fairness/repeat history for students and prizes must use `ProfileRecordIdentity`/`RecordId` first. Legacy `Id`/`Name` history fallback is only for backward compatibility and must stay ambiguity-safe.
+- Draw commits are coordinator-only: app sessions, page ViewModels, and the plugin draw invoker must call `IDrawCommitService` (`DrawCommitCoordinator`) instead of pairing temporary-record writes with `IProfileService.Record*History`. The optional `drawRoundId` (and `drawMethod` on `RecordPrizeHistory`) parameters exist for coordinator use; a mid-commit failure rolls back through snapshot compensation, and commits serialize behind the coordinator gate.
 - Student fair-draw execution must support explicit internal policy snapshots. Desktop public `DrawEngine` methods stay byte-compatible by deriving a `DesktopConfigured` snapshot from live `MainConfigModel.FairDrawSettings`; mobile fair draws use the fixed `MobileDesktopDefaultsV1` snapshot and must not read persisted fair-setting values.
 - Verification proof inputs commit a `VerificationSamplingMode` and `VerificationAlgorithmProfile`. The profile must match the draw kind and sampler: fair/random students use history-balanced or unit-weight sampling when no behind-scene rule is active, student behind-scene weighting uses a dedicated profile, Count lottery uses equal-probability partial inventory permutation without behind-scene rules, and Pan or an internal-rule fallback uses weighted-without-replacement. Any internal rule, including zero-probability exclusions, must stay visible in the anonymous audit payload.
 - Config handlers derive from `ConfigHandlerBase<TModel>`; config model defaults should be safe without existing data
   files.
 - `FileConfigService`, `ProfileService`, `DrawTemporaryRecordService`, and the concrete feature-availability service are private implementation details behind `AddCoreRuntimeServices()`, not plugin API. Desktop and mobile call that registration extension from their composition roots while exposing only the established narrow contracts to consumers.
+- `Services/Archive/` owns all v3 settings/data ZIP and settings-JSON transfer: `DataArchiveService` performs producer-version/manifest/SHA-256 validation, staging commit/rollback, and mandatory pre-import snapshots. Platform-specific follow-up stays behind `IArchivePostImportHooks`; `AddCoreRuntimeServices()` registers the Null hooks and shells override them (desktop: `DesktopArchivePostImportHooks`).
 - IPC parser code is UI-free and must reject ambiguous routes, malformed percent escapes, control characters, oversized frames, and unsupported schemes. Keep route execution in the app layer.
 - File logging should keep user-facing log messages in Chinese for app events. Avoid logging student/prize names or full config payloads; prefer counts, status, file names, and operation names.
 - V2-parity settings models that are shared by app settings pages but not yet backed by services live directly under `Models/SubConfigs/` and hang off `MainConfigModel` until their runtime service boundaries settle. `MoreSettingsConfig` also owns built-in draw page chrome toggles such as roll-call/lottery control panel placement and visibility.

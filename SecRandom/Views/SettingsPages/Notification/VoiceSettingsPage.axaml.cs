@@ -10,6 +10,7 @@ using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Views;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
@@ -19,7 +20,7 @@ using SecRandom.ViewModels;
 namespace SecRandom.Views.SettingsPages.Notification;
 
 [PageInfo("settings.notification.voiceMusic", FluentIcons.PersonVoiceFilled, "settings.notification")]
-public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
+public partial class VoiceSettingsPage : ViewBase, INotifyPropertyChanged
 {
     private bool _isLoadingSystemVoices;
     private bool _isLoadingEdgeVoices;

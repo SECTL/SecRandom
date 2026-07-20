@@ -24,10 +24,10 @@ public sealed class MobileNavigationBar : UserControl
             HorizontalContentAlignment = HorizontalAlignment.Stretch
         };
 
-        NavigationView.MenuItems.Add(CreateItem("抽取", FluentIcons.PeopleFilled, Views.MobileDestination.Draw));
-        NavigationView.MenuItems.Add(CreateItem("历史记录", FluentIcons.HistoryFilled, Views.MobileDestination.History));
-        NavigationView.MenuItems.Add(CreateItem("概览", FluentIcons.HomeFilled, Views.MobileDestination.Overview));
-        NavigationView.MenuItems.Add(CreateItem("设置", FluentIcons.SettingsFilled, Views.MobileDestination.Settings));
+        NavigationView.MenuItems.Add(CreateItem(Langs.Mobile.Resources.N_Draw, FluentIcons.PeopleFilled, Views.MobileDestination.Draw));
+        NavigationView.MenuItems.Add(CreateItem(Langs.Mobile.Resources.N_History, FluentIcons.HistoryFilled, Views.MobileDestination.History));
+        NavigationView.MenuItems.Add(CreateItem(Langs.Mobile.Resources.N_Overview, FluentIcons.HomeFilled, Views.MobileDestination.Overview));
+        NavigationView.MenuItems.Add(CreateItem(Langs.Mobile.Resources.N_Settings, FluentIcons.SettingsFilled, Views.MobileDestination.Settings));
 
         _root = new Border
         {

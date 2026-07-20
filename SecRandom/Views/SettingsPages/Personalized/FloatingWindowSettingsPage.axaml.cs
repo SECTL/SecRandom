@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Views;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
@@ -21,7 +22,7 @@ using LR = SecRandom.Langs.SettingsPages.FloatingWindow.Resources;
 namespace SecRandom.Views.SettingsPages.Personalized;
 
 [PageInfo("settings.personalized.floatingWindow", FluentIcons.WindowAppsFilled, "settings.personalized")]
-public partial class FloatingWindowSettingsPage : UserControl
+public partial class FloatingWindowSettingsPage : ViewBase
 {
     private bool _isSettingsSubscribed;
 

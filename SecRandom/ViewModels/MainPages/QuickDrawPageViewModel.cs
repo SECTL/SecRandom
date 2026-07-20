@@ -37,6 +37,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private readonly DrawEngine _drawEngine;
     private readonly IProfileService _profileService;
     private readonly IDrawTemporaryRecordService _temporaryRecordService;
+    private readonly IDrawCommitService _drawCommitService;
     private readonly MainConfigHandler _configHandler;
     private readonly DrawAudioService _drawAudioService;
     private readonly ILogger<QuickDrawPageViewModel> _logger;
@@ -64,6 +65,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         DrawEngine drawEngine,
         IProfileService profileService,
         IDrawTemporaryRecordService temporaryRecordService,
+        IDrawCommitService drawCommitService,
         DrawAudioService drawAudioService,
         ILogger<QuickDrawPageViewModel> logger,
         ISecurityService securityService,
@@ -77,6 +79,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         _drawEngine = drawEngine;
         _profileService = profileService;
         _temporaryRecordService = temporaryRecordService;
+        _drawCommitService = drawCommitService;
         _drawAudioService = drawAudioService;
         _logger = logger;
         _securityService = securityService;
@@ -235,10 +238,12 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                 ? Task.CompletedTask
                 : ShowPreviewAsync(candidates, count, MusicSettings.AnimationMusic);
             List<Student> drawn;
+            VerificationDrawOutcome<Student> drawOutcome;
             try
             {
                 var drawCompletedFirst = await Task.WhenAny(verificationDrawTask, previewTask).ConfigureAwait(true) == verificationDrawTask;
-                drawn = (await verificationDrawTask.ConfigureAwait(true)).Winners.ToList();
+                drawOutcome = await verificationDrawTask.ConfigureAwait(true);
+                drawn = drawOutcome.Winners.ToList();
                 if (drawCompletedFirst && !previewTask.IsCompleted)
                     await _drawAudioService.StartAnimationMusicAsync(
                         DrawMusicAttachedSettingsResolver.GetAnimationMusic(drawn.FirstOrDefault(), MusicSettings.AnimationMusic),
@@ -261,10 +266,15 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                 return;
             }
 
-            var weights = BuildWeightSnapshot(drawn, courseName);
-            _profileService.RecordStudentHistory(drawn, DateTime.Now, count,
-                drawMethod: (int)Config.QuickDrawSettings.DrawType, weights: weights, courseName: courseName);
-            _temporaryRecordService.RecordStudents(SelectedStudentListName, string.Empty, string.Empty, drawn);
+            var weights = BuildWeightSnapshot(drawn, drawOutcome.FrozenWeights);
+            _drawCommitService.CommitStudentDraw(new StudentDrawCommit(
+                drawn,
+                DateTime.Now,
+                count,
+                SelectedStudentListName,
+                DrawMethod: (int)Config.QuickDrawSettings.DrawType,
+                Weights: weights,
+                CourseName: courseName));
             LastDrawnStudent = drawn[0];
             _notificationAutoCloseTime = showBuiltInNotificationAnimation
                 ? ResolveNotificationAutoCloseTime()
@@ -384,27 +394,14 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
     private IEnumerable<Student> GetEligibleCandidates()
     {
-        return (_profileService.CurrentStudentList?.Students ?? [])
-            .Where(student => student.IsCandidate)
-            .Where(student => !HasReachedRepeatLimit(student));
-    }
-
-    private bool HasReachedRepeatLimit(Student student)
-    {
-        var threshold = Config.QuickDrawSettings.DrawMode switch
-        {
-            DrawMode.Repeat => 0,
-            DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, Config.QuickDrawSettings.HalfRepeat),
-            _ => 1
-        };
-
-        if (threshold <= 0)
-            return false;
-
-        var recordId = ProfileRecordIdentity.EnsureRecordId(student);
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.QuickDrawSettings.DrawMode, Config.QuickDrawSettings.HalfRepeat);
         var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, string.Empty, string.Empty);
-        return counts.GetValueOrDefault(recordId) >= threshold;
+        return DrawCandidateFilter.FilterEligibleStudents(
+            _profileService.CurrentStudentList?.Students ?? [],
+            string.Empty,
+            string.Empty,
+            counts,
+            threshold);
     }
 
     private async Task ShowPreviewAsync(IReadOnlyList<Student> candidates, int count, string animationMusic)
@@ -544,14 +541,19 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         ClearHistoryCore();
     }
 
-    private Dictionary<Student, double> BuildWeightSnapshot(IReadOnlyCollection<Student> drawnStudents, string courseName = "")
+    private static Dictionary<Student, double> BuildWeightSnapshot(
+        IReadOnlyCollection<Student> drawnStudents,
+        IReadOnlyDictionary<Guid, double> frozenWeights)
     {
-        if (Config.QuickDrawSettings.DrawType != DrawType.Fair)
-            return drawnStudents.ToDictionary(student => student, _ => 1.0);
+        // 权重快照取自 proof 冻结输入，避免提交时重算与证明分叉。
+        Dictionary<Student, double> snapshot = [];
+        foreach (var student in drawnStudents)
+        {
+            ProfileRecordIdentity.EnsureRecordId(student);
+            snapshot[student] = frozenWeights.GetValueOrDefault(student.RecordId, 1.0);
+        }
 
-        return _drawEngine.CalculateStudentWeight((_profileService.CurrentStudentList?.Students ?? []).Where(s => s.IsCandidate).ToList(), courseName: courseName)
-            .Where(candidate => drawnStudents.Contains(candidate.Candidate))
-            .ToDictionary(candidate => candidate.Candidate, candidate => candidate.Weight);
+        return snapshot;
     }
 
     private QuickDrawResultItem CreateResultItem(Student student)

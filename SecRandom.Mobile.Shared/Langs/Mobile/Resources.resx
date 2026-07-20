@@ -17,24 +17,6 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
-    <data name="Title" xml:space="preserve">
-        <value>SecRandom</value>
-    </data>
-    <data name="Subtitle" xml:space="preserve">
-        <value>移动端基础运行框架</value>
-    </data>
-    <data name="Description" xml:space="preserve">
-        <value>移动端平台服务已就绪。抽签与桌面集成功能会在完成移动端服务边界验证后逐步开放。</value>
-    </data>
-    <data name="PlatformSummary" xml:space="preserve">
-        <value>当前平台：{0}。此版本采用单视图模式。</value>
-    </data>
-    <data name="CheckUpdates" xml:space="preserve">
-        <value>检查更新</value>
-    </data>
-    <data name="InstallUpdate" xml:space="preserve">
-        <value>下载并安装更新</value>
-    </data>
     <data name="M_CheckingUpdates" xml:space="preserve">
         <value>正在检查更新</value>
     </data>
@@ -370,5 +352,218 @@
     </data>
     <data name="S_ClearRecord" xml:space="preserve">
         <value>清除记录</value>
+    </data>
+    <data name="M_Drawing" xml:space="preserve">
+        <value>正在抽取…</value>
+    </data>
+    <data name="C_GoToDraw" xml:space="preserve">
+        <value>去抽取</value>
+    </data>
+    <data name="M_NoHistoryPrompt" xml:space="preserve">
+        <value>完成一次点名或抽奖后，结果会显示在这里。</value>
+    </data>
+    <data name="M_TimeJustNow" xml:space="preserve">
+        <value>刚刚</value>
+    </data>
+    <data name="M_TimeMinutesAgo" xml:space="preserve">
+        <value>{0} 分钟前</value>
+    </data>
+    <data name="M_TimeHoursAgo" xml:space="preserve">
+        <value>{0} 小时前</value>
+    </data>
+    <data name="M_TimeDaysAgo" xml:space="preserve">
+        <value>{0} 天前</value>
+    </data>
+    <data name="M_Unknown" xml:space="preserve">
+        <value>未知</value>
+    </data>
+    <data name="S_OnlineStatus" xml:space="preserve">
+        <value>在线状态上报</value>
+    </data>
+    <data name="O_Off" xml:space="preserve">
+        <value>关闭</value>
+    </data>
+    <data name="O_Anonymous" xml:space="preserve">
+        <value>匿名</value>
+    </data>
+    <data name="O_Full" xml:space="preserve">
+        <value>完整</value>
+    </data>
+    <data name="S_Telemetry" xml:space="preserve">
+        <value>错误与性能遥测</value>
+    </data>
+    <data name="S_SentryTelemetry" xml:space="preserve">
+        <value>Sentry 遥测</value>
+    </data>
+    <data name="S_SentryTelemetry_D" xml:space="preserve">
+        <value>匿名上传崩溃与性能数据，不包含个人身份信息。</value>
+    </data>
+    <data name="S_Language" xml:space="preserve">
+        <value>语言</value>
+    </data>
+    <data name="S_Language_D" xml:space="preserve">
+        <value>切换语言后立即生效，无需重启应用。</value>
+    </data>
+    <data name="S_GroupPreferences" xml:space="preserve">
+        <value>偏好</value>
+    </data>
+    <data name="S_GroupData" xml:space="preserve">
+        <value>数据</value>
+    </data>
+    <data name="S_GroupApp" xml:space="preserve">
+        <value>应用</value>
+    </data>
+    <data name="M_EmptyStudentList" xml:space="preserve">
+        <value>名单为空</value>
+    </data>
+    <data name="M_EmptyStudentListHint" xml:space="preserve">
+        <value>添加成员后即可开始点名。</value>
+    </data>
+    <data name="M_EmptyPrizePool" xml:space="preserve">
+        <value>奖池为空</value>
+    </data>
+    <data name="M_EmptyPrizePoolHint" xml:space="preserve">
+        <value>添加奖品后即可开始抽奖。</value>
+    </data>
+    <data name="C_ExportAllData" xml:space="preserve">
+        <value>导出全量数据</value>
+    </data>
+    <data name="C_ImportAllData" xml:space="preserve">
+        <value>导入 / 恢复全量数据</value>
+    </data>
+    <data name="C_ExportSettings" xml:space="preserve">
+        <value>导出设置</value>
+    </data>
+    <data name="C_ImportSettings" xml:space="preserve">
+        <value>导入设置</value>
+    </data>
+    <data name="M_BackupPickerHint" xml:space="preserve">
+        <value>通过系统文件选择器导出与导入；导入前会校验 SecRandom v3 格式，不受支持的文件不会改动任何数据。</value>
+    </data>
+    <data name="S_AllData" xml:space="preserve">
+        <value>全量数据</value>
+    </data>
+    <data name="S_AllData_D" xml:space="preserve">
+        <value>名单、历史、配置等全部数据打包为 ZIP 归档。</value>
+    </data>
+    <data name="S_SettingsSection" xml:space="preserve">
+        <value>设置</value>
+    </data>
+    <data name="S_SettingsSection_D" xml:space="preserve">
+        <value>仅导出 / 导入应用设置（settings envelope）。</value>
+    </data>
+    <data name="M_ExportingAllData" xml:space="preserve">
+        <value>正在导出全量数据…</value>
+    </data>
+    <data name="M_SaveAllDataTitle" xml:space="preserve">
+        <value>保存全量数据备份</value>
+    </data>
+    <data name="M_DataArchiveFileType" xml:space="preserve">
+        <value>SecRandom 数据归档</value>
+    </data>
+    <data name="M_ExportCancelled" xml:space="preserve">
+        <value>已取消导出。</value>
+    </data>
+    <data name="M_WritingToTarget" xml:space="preserve">
+        <value>正在写入所选位置…</value>
+    </data>
+    <data name="M_AllDataExported" xml:space="preserve">
+        <value>全量数据已导出到所选位置。</value>
+    </data>
+    <data name="M_ExportFailed" xml:space="preserve">
+        <value>导出失败：{0}</value>
+    </data>
+    <data name="M_ExportingSettings" xml:space="preserve">
+        <value>正在导出设置…</value>
+    </data>
+    <data name="M_SaveSettingsTitle" xml:space="preserve">
+        <value>保存设置备份</value>
+    </data>
+    <data name="M_SettingsFileType" xml:space="preserve">
+        <value>SecRandom 设置文件</value>
+    </data>
+    <data name="M_SettingsExported" xml:space="preserve">
+        <value>设置已导出到所选位置。</value>
+    </data>
+    <data name="M_PickingBackupFile" xml:space="preserve">
+        <value>正在选择备份文件…</value>
+    </data>
+    <data name="M_PickAllDataTitle" xml:space="preserve">
+        <value>选择全量数据备份</value>
+    </data>
+    <data name="M_PickSettingsTitle" xml:space="preserve">
+        <value>选择设置备份</value>
+    </data>
+    <data name="M_ImportCancelled" xml:space="preserve">
+        <value>已取消导入。</value>
+    </data>
+    <data name="M_ReadingBackup" xml:space="preserve">
+        <value>正在读取备份文件…</value>
+    </data>
+    <data name="M_ValidatingBackup" xml:space="preserve">
+        <value>正在校验备份…</value>
+    </data>
+    <data name="M_ValidationPassed" xml:space="preserve">
+        <value>校验通过，确认后开始导入。</value>
+    </data>
+    <data name="M_ValidationUnsupported" xml:space="preserve">
+        <value>该文件不是受支持的 SecRandom v3 导出，无法导入。</value>
+    </data>
+    <data name="M_ReadOrValidateFailed" xml:space="preserve">
+        <value>读取或校验失败：{0}</value>
+    </data>
+    <data name="M_SourceVersion" xml:space="preserve">
+        <value>来源版本：{0}</value>
+    </data>
+    <data name="M_UnrecognizedVersion" xml:space="preserve">
+        <value>未识别</value>
+    </data>
+    <data name="M_ImportFileCount" xml:space="preserve">
+        <value>包含文件：{0} 个（{1} MB）</value>
+    </data>
+    <data name="S_ConfirmImport" xml:space="preserve">
+        <value>确认导入</value>
+    </data>
+    <data name="C_ConfirmImport" xml:space="preserve">
+        <value>确认导入</value>
+    </data>
+    <data name="C_Cancel" xml:space="preserve">
+        <value>取消</value>
+    </data>
+    <data name="M_BackupServiceUnavailable" xml:space="preserve">
+        <value>备份服务不可用。</value>
+    </data>
+    <data name="M_Importing" xml:space="preserve">
+        <value>正在导入…</value>
+    </data>
+    <data name="M_ImportCompleted" xml:space="preserve">
+        <value>导入完成，共导入 {0} 个文件。</value>
+    </data>
+    <data name="M_ImportFailed" xml:space="preserve">
+        <value>导入失败：{0}</value>
+    </data>
+    <data name="M_PendingImportExists" xml:space="preserve">
+        <value>请先完成或取消当前的导入确认。</value>
+    </data>
+    <data name="M_StorageUnavailable" xml:space="preserve">
+        <value>当前平台不支持系统文件选择，无法执行备份操作。</value>
+    </data>
+    <data name="C_ViewOnGitHub" xml:space="preserve">
+        <value>在 GitHub 查看项目</value>
+    </data>
+    <data name="M_BrowserUnavailable" xml:space="preserve">
+        <value>当前平台无法打开浏览器。</value>
+    </data>
+    <data name="M_OpenBrowserFailed" xml:space="preserve">
+        <value>无法打开浏览器，请手动访问 github.com/SECTL/SecRandom。</value>
+    </data>
+    <data name="M_InAppUpdateUnsupported" xml:space="preserve">
+        <value>当前平台不支持应用内更新</value>
+    </data>
+    <data name="M_IosUpdateDeferred" xml:space="preserve">
+        <value>iOS 的分发与更新将随后续版本提供；请前往项目发布页获取新版本。</value>
+    </data>
+    <data name="M_UpdateSecurityNote" xml:space="preserve">
+        <value>更新包经 Ed25519 签名清单校验长度与哈希后，交给系统安装器。</value>
     </data>
 </root>

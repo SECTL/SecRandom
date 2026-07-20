@@ -46,6 +46,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private readonly DrawEngine _drawEngine;
     private readonly IProfileService _profileService;
     private readonly IDrawTemporaryRecordService _temporaryRecordService;
+    private readonly IDrawCommitService _drawCommitService;
     private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
     private readonly DrawAudioService? _drawAudioService;
     private readonly MainConfigHandler _configHandler;
@@ -77,6 +78,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         DrawEngine drawEngine,
         IProfileService profileService,
         IDrawTemporaryRecordService temporaryRecordService,
+        IDrawCommitService drawCommitService,
         ILogger<RollCallPageViewModel> logger,
         ISecurityService securityService,
         LinkageDrawCoordinator linkageDrawCoordinator,
@@ -90,6 +92,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         _drawEngine = drawEngine;
         _profileService = profileService;
         _temporaryRecordService = temporaryRecordService;
+        _drawCommitService = drawCommitService;
         _logger = logger;
         _securityService = securityService;
         _linkageDrawCoordinator = linkageDrawCoordinator;
@@ -313,10 +316,12 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
                 cancellationToken: default);
             var previewTask = ShowPreviewAsync(candidates, count, MusicSettings.AnimationMusic);
             List<Student> drawnStudents;
+            VerificationDrawOutcome<Student> drawOutcome;
             try
             {
                 var drawCompletedFirst = await Task.WhenAny(verificationDrawTask, previewTask).ConfigureAwait(true) == verificationDrawTask;
-                drawnStudents = (await verificationDrawTask.ConfigureAwait(true)).Winners.ToList();
+                drawOutcome = await verificationDrawTask.ConfigureAwait(true);
+                drawnStudents = drawOutcome.Winners.ToList();
                 if (drawCompletedFirst && !previewTask.IsCompleted)
                     await PlayAnimationMusicAsync(DrawMusicAttachedSettingsResolver.GetAnimationMusic(
                         drawnStudents.FirstOrDefault(), MusicSettings.AnimationMusic)).ConfigureAwait(true);
@@ -334,17 +339,17 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
                 return;
             }
 
-            var weightSnapshot = BuildWeightSnapshot(drawnStudents, courseName);
-            _profileService.RecordStudentHistory(
+            var weightSnapshot = BuildWeightSnapshot(drawnStudents, drawOutcome.FrozenWeights);
+            _drawCommitService.CommitStudentDraw(new StudentDrawCommit(
                 drawnStudents,
                 now,
                 count,
-                SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup,
-                SelectedGender == AllGendersOption ? string.Empty : SelectedGender,
+                SelectedStudentListName,
+                CurrentGroupScope,
+                CurrentGenderScope,
                 (int)Config.RollCallSettings.DrawType,
                 weightSnapshot,
-                courseName);
-            _temporaryRecordService.RecordStudents(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope, drawnStudents);
+                courseName));
 
             ResultItems.Clear();
             _lastResultStudents = drawnStudents;
@@ -680,40 +685,19 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     private IEnumerable<Student> GetEligibleCandidates(IEnumerable<Student>? candidates = null)
     {
-        var source = candidates ?? GetCandidates();
-        return source.Where(student => !HasReachedRepeatLimit(student));
+        var source = candidates ?? GetVisibleStudents();
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.RollCallSettings.DrawMode, Config.RollCallSettings.HalfRepeat);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
+        return DrawCandidateFilter.FilterEligibleStudents(source, CurrentGroupScope, CurrentGenderScope, counts, threshold);
     }
 
-    private bool MatchesSelection(Student student)
-    {
-        if (!student.IsCandidate)
-            return false;
-
-        if (SelectedGroup != AllGroupsOption && student.Group != SelectedGroup)
-            return false;
-
-        if (SelectedGender != AllGendersOption && student.Gender != SelectedGender)
-            return false;
-
-        return true;
-    }
+    private bool MatchesSelection(Student student) => DrawCandidateFilter.MatchesScope(student, CurrentGroupScope, CurrentGenderScope);
 
     private bool HasReachedRepeatLimit(Student student)
     {
-        var threshold = Config.RollCallSettings.DrawMode switch
-        {
-            DrawMode.Repeat => 0,
-            DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, Config.RollCallSettings.HalfRepeat),
-            _ => 1
-        };
-
-        if (threshold <= 0)
-            return false;
-
-        var recordId = ProfileRecordIdentity.EnsureRecordId(student);
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.RollCallSettings.DrawMode, Config.RollCallSettings.HalfRepeat);
         var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
-        return counts.GetValueOrDefault(recordId) >= threshold;
+        return DrawRepeatPolicy.HasReachedLimit(counts.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(student)), threshold);
     }
 
     public void ResetForCourseLinkage()
@@ -721,14 +705,19 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         ResetDrawHistoryCore();
     }
 
-    private Dictionary<Student, double> BuildWeightSnapshot(IReadOnlyCollection<Student> drawnStudents, string courseName = "")
+    private static Dictionary<Student, double> BuildWeightSnapshot(
+        IReadOnlyCollection<Student> drawnStudents,
+        IReadOnlyDictionary<Guid, double> frozenWeights)
     {
-        if (Config.RollCallSettings.DrawType != DrawType.Fair)
-            return drawnStudents.ToDictionary(student => student, _ => 1.0);
+        // 权重快照取自 proof 冻结输入，避免提交时重算与证明分叉。
+        Dictionary<Student, double> snapshot = [];
+        foreach (var student in drawnStudents)
+        {
+            ProfileRecordIdentity.EnsureRecordId(student);
+            snapshot[student] = frozenWeights.GetValueOrDefault(student.RecordId, 1.0);
+        }
 
-        return _drawEngine.CalculateStudentWeight(GetVisibleStudents().ToList(), courseName: courseName)
-            .Where(candidate => drawnStudents.Contains(candidate.Candidate))
-            .ToDictionary(candidate => candidate.Candidate, candidate => candidate.Weight);
+        return snapshot;
     }
 
     private RollCallResultItem CreateResultItem(Student student)

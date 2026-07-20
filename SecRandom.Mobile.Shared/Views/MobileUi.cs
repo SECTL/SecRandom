@@ -6,53 +6,42 @@ using Avalonia.Media;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Icons;
+using SecRandom.Mobile.Controls;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 using AvaloniaButton = Avalonia.Controls.Button;
-using AvaloniaOrientation = Avalonia.Layout.Orientation;
-using AvaloniaRadioButton = Avalonia.Controls.RadioButton;
 
 namespace SecRandom.Mobile.Views;
 
 internal static class MobileUi
 {
-    internal static AvaloniaButton CreateNavigationButton(string text, string icon) => new()
+    internal static AvaloniaButton CreateSegmentButton(string text, bool selected, bool left)
     {
-        Content = new StackPanel
+        var button = new AvaloniaButton
         {
-            Spacing = 2,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            Children =
-            {
-                new FluentIcon(icon, 20) { HorizontalAlignment = HorizontalAlignment.Center },
-                new TextBlock { Text = text, HorizontalAlignment = HorizontalAlignment.Center }
-            }
-        },
-        Padding = new Thickness(8, 6),
-        FontSize = 12,
-        HorizontalContentAlignment = HorizontalAlignment.Center,
-        VerticalContentAlignment = VerticalAlignment.Center
-    };
-
-    internal static AvaloniaButton CreateSegmentButton(string text, bool selected, bool left) => new()
-    {
-        Content = text,
-        Padding = new Thickness(18, 7),
-        Classes = { selected ? "accent" : "compact" },
-        Foreground = selected ? MobileTheme.Primary : MobileTheme.MutedText,
-        CornerRadius = left ? new CornerRadius(15, 4, 4, 15) : new CornerRadius(4, 15, 15, 4),
-        FontWeight = selected ? FontWeight.SemiBold : FontWeight.Normal
-    };
+            Content = text,
+            Padding = new Thickness(18, 7),
+            Classes = { selected ? "accent" : "compact" },
+            CornerRadius = left ? new CornerRadius(15, 4, 4, 15) : new CornerRadius(4, 15, 15, 4),
+            FontWeight = selected ? FontWeight.SemiBold : FontWeight.Normal
+        };
+        MobileTheme.BindBrush(button, AvaloniaButton.ForegroundProperty,
+            selected ? MobileTheme.Keys.Primary : MobileTheme.Keys.MutedText);
+        return button;
+    }
 
     internal static ScrollViewer CreateScroll(IEnumerable<Control> items)
     {
-        var panel = new StackPanel { Spacing = 14, MaxWidth = 720 };
+        var panel = new StackPanel
+        {
+            Spacing = MobileTheme.FindDouble("MobileSpacingMd", 14),
+            MaxWidth = 720
+        };
         foreach (var item in items)
             panel.Children.Add(item);
         return new ScrollViewer
         {
             Content = panel,
-            Padding = new Thickness(20, 20, 20, 28),
+            Padding = MobileTheme.FindThickness("MobilePagePadding", new Thickness(20, 20, 20, 28)),
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
         };
     }
@@ -76,106 +65,72 @@ internal static class MobileUi
         return CreateScroll(content);
     }
 
-    internal static Control CreateNavigationRow(string title, string description, Action open)
+    internal static Control CreateNavigationRow(string title, string description, Action open) =>
+        MobileSettingRow.Navigation(title, description, open);
+
+    internal static Control CreateChoiceRow(string text, bool selected, Action select, string? groupName = null) =>
+        MobileSettingRow.Choice(text, selected, select, groupName);
+
+    internal static Control CreateToggleRow(string label, bool value, Action<bool> setValue) =>
+        MobileSettingRow.Toggle(label, value ? LR.M_Enabled : LR.M_Disabled, value, setValue);
+
+    internal static Control CreateIntegerRow(string label, int value, int minimum, Action<int> setValue) =>
+        MobileSettingRow.Integer(label, null, value, minimum, setValue);
+
+    internal static Control CreateLabel(string text) => new MobileSectionHeader(text);
+
+    internal static TextBlock CreateTitle(string text)
     {
-        var row = new FASettingsExpander
+        var title = new TextBlock
         {
-            Header = title,
-            Description = description,
-            IsClickEnabled = true,
-            ActionIconSource = new FluentIconSource(FluentIcons.OpenFilled),
-            IconSource = new FluentIconSource(FluentIcons.AppsFilled)
+            Text = text,
+            FontSize = MobileTheme.FindDouble("MobileFontSizeTitle", 24),
+            FontWeight = FontWeight.SemiBold,
+            TextWrapping = TextWrapping.Wrap
         };
-        row.Click += (_, _) => open();
-        return row;
+        MobileTheme.BindBrush(title, TextBlock.ForegroundProperty, MobileTheme.Keys.Text);
+        return title;
     }
 
-    internal static Control CreateChoiceRow(string text, bool selected, Action select)
+    internal static Control CreateResultPanel(Control result, Control detail, IBrush color)
     {
-        var option = new FASettingsExpanderItem
-        {
-            Content = text,
-            IsClickEnabled = true,
-            ActionIconSource = new FluentIconSource(FluentIcons.CheckmarkFilled),
-            Footer = new AvaloniaRadioButton { IsChecked = selected, GroupName = "mobile-choice" }
-        };
-        option.Click += (_, _) => select();
-        ((AvaloniaRadioButton)option.Footer).Click += (_, _) => select();
-        return option;
-    }
-
-    internal static Control CreateToggleRow(string label, bool value, Action<bool> setValue)
-    {
-        var toggle = new ToggleSwitch
-        {
-            IsChecked = value,
-            OnContent = string.Empty,
-            OffContent = string.Empty,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        toggle.IsCheckedChanged += (_, _) => setValue(toggle.IsChecked == true);
-        return new FASettingsExpanderItem
-        {
-            Content = label,
-            Description = value ? LR.M_Enabled : LR.M_Disabled,
-            Footer = toggle
-        };
-    }
-
-    internal static Control CreateIntegerRow(string label, int value, int minimum, Action<int> setValue)
-    {
-        var editor = new TextBox
-        {
-            Text = value.ToString(System.Globalization.CultureInfo.CurrentCulture),
-            Width = 84,
-            MinHeight = 40,
-            TextAlignment = TextAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center
-        };
-        editor.LostFocus += (_, _) =>
-        {
-            if (!int.TryParse(editor.Text, out var parsed))
-                parsed = value;
-            parsed = Math.Max(minimum, parsed);
-            editor.Text = parsed.ToString(System.Globalization.CultureInfo.CurrentCulture);
-            setValue(parsed);
-        };
-        return new FASettingsExpanderItem
-        {
-            Content = label,
-            Footer = editor
-        };
-    }
-
-    internal static Control CreateLabel(string text) => new IconText
-    {
-        Text = text,
-        Glyph = FluentIcons.AppsListFilled,
-        Spacing = 6,
-        Margin = new Thickness(0, 6, 0, 0)
-    };
-
-    internal static TextBlock CreateTitle(string text) => new()
-    {
-        Text = text,
-        FontSize = 24,
-        FontWeight = FontWeight.SemiBold,
-        Foreground = MobileTheme.Text,
-        TextWrapping = TextWrapping.Wrap
-    };
-
-    internal static Control CreateResultPanel(Control result, Control detail, IBrush color) => new FASettingsExpanderItem
-    {
-        Content = new Border
+        var card = new MobileCard
         {
             Background = color,
-            Padding = new Thickness(24, 28),
-            Child = result
-        },
-        Description = LR.M_DrawCompleted,
-        IsClickEnabled = false,
-        Footer = detail
-    };
+            BorderThickness = new Thickness(0),
+            CornerRadius = MobileTheme.FindCornerRadius("MobileCornerRadiusLarge", new CornerRadius(18)),
+            Padding = new Thickness(24, 28)
+        };
+        card.Content = CreateResultStack(result, detail);
+        return card;
+    }
+
+    // 主题感知重载：wash 底色走 DynamicResource，切主题时随资源系统刷新。
+    internal static Control CreateResultPanel(Control result, Control detail, string washResourceKey)
+    {
+        var card = new MobileCard(washResourceKey)
+        {
+            BorderThickness = new Thickness(0),
+            CornerRadius = MobileTheme.FindCornerRadius("MobileCornerRadiusLarge", new CornerRadius(18)),
+            Padding = new Thickness(24, 28)
+        };
+        card.Content = CreateResultStack(result, detail);
+        return card;
+    }
+
+    private static Control CreateResultStack(Control result, Control detail)
+    {
+        var stack = new StackPanel
+        {
+            Spacing = MobileTheme.FindDouble("MobileSpacingSm", 8),
+            Children = { result, detail }
+        };
+        if (result is Layoutable layoutableResult)
+            layoutableResult.HorizontalAlignment = HorizontalAlignment.Center;
+        if (detail is Layoutable layoutableDetail)
+            layoutableDetail.HorizontalAlignment = HorizontalAlignment.Center;
+        return stack;
+    }
 
     internal static AvaloniaButton CreatePrimaryButton(string text, bool enabled, Action? onClick = null)
     {
@@ -183,7 +138,7 @@ internal static class MobileUi
         {
             Content = text,
             IsEnabled = enabled,
-            MinHeight = 48,
+            MinHeight = MobileTheme.FindDouble("MobileMinHeightPrimary", 48),
             Classes = { "accent" },
             FontWeight = FontWeight.SemiBold,
             HorizontalContentAlignment = HorizontalAlignment.Center
@@ -198,7 +153,7 @@ internal static class MobileUi
         var button = new AvaloniaButton
         {
             Content = text,
-            MinHeight = 44,
+            MinHeight = MobileTheme.FindDouble("MobileMinHeightSecondary", 44),
             FontWeight = FontWeight.SemiBold,
             HorizontalContentAlignment = HorizontalAlignment.Center
         };
@@ -208,45 +163,54 @@ internal static class MobileUi
 
     internal static Border CreateMetric(string label, string value, IBrush color)
     {
+        return new Border
+        {
+            Background = color,
+            CornerRadius = MobileTheme.FindCornerRadius("MobileCornerRadiusSmall", new CornerRadius(10)),
+            Padding = new Thickness(16),
+            Child = CreateMetricGrid(label, value)
+        };
+    }
+
+    // 主题感知重载：wash 底色走 DynamicResource，切主题时随资源系统刷新。
+    internal static Control CreateMetric(string label, string value, string washResourceKey)
+    {
+        var card = new MobileCard(washResourceKey)
+        {
+            BorderThickness = new Thickness(0),
+            CornerRadius = MobileTheme.FindCornerRadius("MobileCornerRadiusSmall", new CornerRadius(10)),
+            Padding = new Thickness(16)
+        };
+        card.Content = CreateMetricGrid(label, value);
+        return card;
+    }
+
+    private static Grid CreateMetricGrid(string label, string value)
+    {
         var valueText = new TextBlock
         {
             Text = value,
+            // 指标数值沿用历史 28pt，比结果页 34pt 低一级。
             FontSize = 28,
             FontWeight = FontWeight.SemiBold,
-            Foreground = MobileTheme.Text,
             VerticalAlignment = VerticalAlignment.Center
         };
+        MobileTheme.BindBrush(valueText, TextBlock.ForegroundProperty, MobileTheme.Keys.Text);
+        var labelText = new TextBlock
+        {
+            Text = label,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        MobileTheme.BindBrush(labelText, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-        grid.Children.Add(new TextBlock { Text = label, Foreground = MobileTheme.MutedText, VerticalAlignment = VerticalAlignment.Center });
+        grid.Children.Add(labelText);
         grid.Children.Add(valueText);
         Grid.SetColumn(valueText, 1);
-        return new Border { Background = color, CornerRadius = new CornerRadius(10), Padding = new Thickness(16), Child = grid };
+        return grid;
     }
 
-    internal static Control CreateRow(string title, string detail, Control? trailing = null, Action? remove = null)
-    {
-        var actions = new StackPanel { Orientation = AvaloniaOrientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
-        if (trailing is not null)
-            actions.Children.Add(trailing);
-        if (remove is not null)
-        {
-            var removeButton = new AvaloniaButton
-            {
-                Content = new FluentIcon(FluentIcons.DeleteFilled, 18),
-                [ToolTip.TipProperty] = LR.C_Remove,
-                Classes = { "compact" }
-            };
-            removeButton.Click += (_, _) => remove();
-            actions.Children.Add(removeButton);
-        }
-
-        return new FASettingsExpanderItem
-        {
-            Content = title,
-            Description = detail,
-            Footer = actions
-        };
-    }
+    internal static Control CreateRow(string title, string detail, Control? trailing = null, Action? remove = null) =>
+        MobileSettingRow.Simple(title, detail, trailing, remove);
 
     internal static string Format(string id, string name) => string.IsNullOrWhiteSpace(id)
         ? name

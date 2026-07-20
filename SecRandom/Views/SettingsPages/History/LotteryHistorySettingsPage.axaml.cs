@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Views;
 using SecRandom.Core.Icons;
 using SecRandom.Models;
 using SecRandom.ViewModels.SettingsPages.History;
@@ -10,7 +11,7 @@ using SecRandom.ViewModels.SettingsPages.History;
 namespace SecRandom.Views.SettingsPages.History;
 
 [PageInfo("settings.history.lottery", FluentIcons.LotteryFilled, "settings.history")]
-public partial class LotteryHistorySettingsPage : UserControl
+public partial class LotteryHistorySettingsPage : ViewBase
 {
     public LotteryHistorySettingsPage()
     {

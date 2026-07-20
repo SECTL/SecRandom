@@ -1,0 +1,569 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+                id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true" />
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="M_CheckingUpdates" xml:space="preserve">
+        <value>Checking for updates</value>
+    </data>
+    <data name="M_UpToDate" xml:space="preserve">
+        <value>You're on the latest version</value>
+    </data>
+    <data name="M_UpdateAvailable" xml:space="preserve">
+        <value>New version {0} available</value>
+    </data>
+    <data name="M_CheckUpdatesFailed" xml:space="preserve">
+        <value>Failed to check for updates: {0}</value>
+    </data>
+    <data name="M_DownloadingUpdate" xml:space="preserve">
+        <value>Downloading update</value>
+    </data>
+    <data name="M_OpeningInstaller" xml:space="preserve">
+        <value>Opening the system installer</value>
+    </data>
+    <data name="M_StartupFailed" xml:space="preserve">
+        <value>Mobile initialization failed. Please restart the app; if the problem persists, submit the Android log.</value>
+    </data>
+    <data name="M_InstallerOpened" xml:space="preserve">
+        <value>Handed off to the system installer</value>
+    </data>
+    <data name="M_InstallUpdateFailed" xml:space="preserve">
+        <value>Failed to install the update: {0}</value>
+    </data>
+    <data name="M_EmptyMetadata" xml:space="preserve">
+        <value>Update metadata is empty.</value>
+    </data>
+    <data name="M_MissingReleaseChannel" xml:space="preserve">
+        <value>Update metadata is missing the release channel.</value>
+    </data>
+    <data name="M_ManifestUnavailable" xml:space="preserve">
+        <value>Unable to fetch the update manifest.</value>
+    </data>
+    <data name="M_PackageUnavailable" xml:space="preserve">
+        <value>Unable to download the update package.</value>
+    </data>
+    <data name="M_PackageLengthInvalid" xml:space="preserve">
+        <value>Update package length verification failed.</value>
+    </data>
+    <data name="M_PackageHashInvalid" xml:space="preserve">
+        <value>Update package hash verification failed.</value>
+    </data>
+    <data name="M_ManifestSignatureInvalid" xml:space="preserve">
+        <value>The update manifest signature is invalid.</value>
+    </data>
+    <data name="M_ManifestInvalid" xml:space="preserve">
+        <value>The update manifest is invalid.</value>
+    </data>
+    <data name="M_ManifestTagMismatch" xml:space="preserve">
+        <value>The update manifest does not match the release tag.</value>
+    </data>
+    <data name="M_AndroidContextUnavailable" xml:space="preserve">
+        <value>The Android context is unavailable.</value>
+    </data>
+    <data name="M_AndroidOnlyInstaller" xml:space="preserve">
+        <value>System installation is only available on Android.</value>
+    </data>
+    <data name="N_Draw" xml:space="preserve">
+        <value>Draw</value>
+    </data>
+    <data name="N_History" xml:space="preserve">
+        <value>History</value>
+    </data>
+    <data name="N_Overview" xml:space="preserve">
+        <value>Overview</value>
+    </data>
+    <data name="N_Settings" xml:space="preserve">
+        <value>Settings</value>
+    </data>
+    <data name="C_RollCall" xml:space="preserve">
+        <value>Roll Call</value>
+    </data>
+    <data name="C_Lottery" xml:space="preserve">
+        <value>Lottery</value>
+    </data>
+    <data name="C_DrawOne" xml:space="preserve">
+        <value>Draw One</value>
+    </data>
+    <data name="C_DrawPrize" xml:space="preserve">
+        <value>Draw a Prize</value>
+    </data>
+    <data name="C_ManageStudentList" xml:space="preserve">
+        <value>Manage Member List</value>
+    </data>
+    <data name="C_ManagePrizePool" xml:space="preserve">
+        <value>Manage Prize Pool</value>
+    </data>
+    <data name="C_ClearTemporaryRecords" xml:space="preserve">
+        <value>Clear Temporary Draw Records</value>
+    </data>
+    <data name="C_AddStudent" xml:space="preserve">
+        <value>Add Member</value>
+    </data>
+    <data name="C_AddPrize" xml:space="preserve">
+        <value>Add Prize</value>
+    </data>
+    <data name="C_Remove" xml:space="preserve">
+        <value>Remove</value>
+    </data>
+    <data name="C_CheckUpdates" xml:space="preserve">
+        <value>Check for Updates</value>
+    </data>
+    <data name="C_InstallUpdate" xml:space="preserve">
+        <value>Download and Install Update</value>
+    </data>
+    <data name="S_CurrentList" xml:space="preserve">
+        <value>Current List</value>
+    </data>
+    <data name="S_CurrentPool" xml:space="preserve">
+        <value>Current Pool</value>
+    </data>
+    <data name="S_RecentDraws" xml:space="preserve">
+        <value>Recent Draws</value>
+    </data>
+    <data name="S_DataOverview" xml:space="preserve">
+        <value>Data Overview</value>
+    </data>
+    <data name="S_StudentList" xml:space="preserve">
+        <value>Member List</value>
+    </data>
+    <data name="S_PrizePool" xml:space="preserve">
+        <value>Prize Pool</value>
+    </data>
+    <data name="S_AppUpdates" xml:space="preserve">
+        <value>App Updates</value>
+    </data>
+    <data name="P_Draw" xml:space="preserve">
+        <value>Draw</value>
+    </data>
+    <data name="P_History" xml:space="preserve">
+        <value>History</value>
+    </data>
+    <data name="P_Overview" xml:space="preserve">
+        <value>Overview</value>
+    </data>
+    <data name="P_Settings" xml:space="preserve">
+        <value>Settings</value>
+    </data>
+    <data name="W_StudentName" xml:space="preserve">
+        <value>Member name</value>
+    </data>
+    <data name="W_StudentId" xml:space="preserve">
+        <value>ID (optional)</value>
+    </data>
+    <data name="W_PrizeName" xml:space="preserve">
+        <value>Prize name</value>
+    </data>
+    <data name="W_PrizeId" xml:space="preserve">
+        <value>Prize ID (optional)</value>
+    </data>
+    <data name="M_Ready" xml:space="preserve">
+        <value>Ready to start</value>
+    </data>
+    <data name="M_DefaultList" xml:space="preserve">
+        <value>Default list</value>
+    </data>
+    <data name="M_DefaultPool" xml:space="preserve">
+        <value>Default pool</value>
+    </data>
+    <data name="M_NoStudents" xml:space="preserve">
+        <value>No members available for roll call yet</value>
+    </data>
+    <data name="M_AddStudentsPrompt" xml:space="preserve">
+        <value>Add members in Settings</value>
+    </data>
+    <data name="M_NoPrizes" xml:space="preserve">
+        <value>No prizes available to draw yet</value>
+    </data>
+    <data name="M_AddPrizesPrompt" xml:space="preserve">
+        <value>Add prizes in Settings</value>
+    </data>
+    <data name="M_CandidateStudents" xml:space="preserve">
+        <value>{0} members available</value>
+    </data>
+    <data name="M_CandidatePrizes" xml:space="preserve">
+        <value>{0} prizes available</value>
+    </data>
+    <data name="M_DrawCompleted" xml:space="preserve">
+        <value>Draw completed</value>
+    </data>
+    <data name="M_StudentId" xml:space="preserve">
+        <value>ID: {0}</value>
+    </data>
+    <data name="M_PrizeId" xml:space="preserve">
+        <value>ID: {0}</value>
+    </data>
+    <data name="M_NoHistory" xml:space="preserve">
+        <value>No draw records yet</value>
+    </data>
+    <data name="M_Students" xml:space="preserve">
+        <value>Members</value>
+    </data>
+    <data name="M_Prizes" xml:space="preserve">
+        <value>Prizes</value>
+    </data>
+    <data name="M_RollCallRounds" xml:space="preserve">
+        <value>Roll call rounds</value>
+    </data>
+    <data name="M_LotteryRounds" xml:space="preserve">
+        <value>Lottery rounds</value>
+    </data>
+    <data name="M_Enabled" xml:space="preserve">
+        <value>Enabled</value>
+    </data>
+    <data name="M_Disabled" xml:space="preserve">
+        <value>Disabled</value>
+    </data>
+    <data name="M_NoCandidates" xml:space="preserve">
+        <value>No candidates available to draw</value>
+    </data>
+    <data name="M_NoEligibleCandidates" xml:space="preserve">
+        <value>No eligible candidates</value>
+    </data>
+    <data name="M_RepeatLimitExhausted" xml:space="preserve">
+        <value>No candidates available under the current repeat limit</value>
+    </data>
+    <data name="M_InvalidWeight" xml:space="preserve">
+        <value>Invalid candidate weights</value>
+    </data>
+    <data name="M_DrawFailed" xml:space="preserve">
+        <value>The draw could not be completed</value>
+    </data>
+    <data name="M_GeneralMobileOnly" xml:space="preserve">
+        <value>The mobile app adapts to the system language, window, and background policies automatically; desktop-only options are not shown here.</value>
+    </data>
+    <data name="M_BackupMobileUnavailable" xml:space="preserve">
+        <value>Mobile backup and restore will become available once a full transaction with system file access authorization is provided.</value>
+    </data>
+    <data name="M_AboutLicense" xml:space="preserve">
+        <value>SecRandom is a fair drawing tool for events and organizations, released under the GPLv3 license.</value>
+    </data>
+    <data name="C_Back" xml:space="preserve">
+        <value>Back to Settings</value>
+    </data>
+    <data name="S_SettingsCategories" xml:space="preserve">
+        <value>Settings Categories</value>
+    </data>
+    <data name="S_General" xml:space="preserve">
+        <value>General</value>
+    </data>
+    <data name="S_General_D" xml:space="preserve">
+        <value>System adaptation and basic behavior on mobile</value>
+    </data>
+    <data name="S_Personalization" xml:space="preserve">
+        <value>Personalization</value>
+    </data>
+    <data name="S_Personalization_D" xml:space="preserve">
+        <value>Theme and appearance</value>
+    </data>
+    <data name="S_ListManagement" xml:space="preserve">
+        <value>List Management</value>
+    </data>
+    <data name="S_ListManagement_D" xml:space="preserve">
+        <value>Member list and prize pool</value>
+    </data>
+    <data name="S_DrawSettings" xml:space="preserve">
+        <value>Draw</value>
+    </data>
+    <data name="S_DrawSettings_D" xml:space="preserve">
+        <value>Roll call and lottery rules</value>
+    </data>
+    <data name="S_Backup" xml:space="preserve">
+        <value>Backup</value>
+    </data>
+    <data name="S_Backup_D" xml:space="preserve">
+        <value>Data backup and restore</value>
+    </data>
+    <data name="S_AppUpdates_D" xml:space="preserve">
+        <value>Check for signed app updates</value>
+    </data>
+    <data name="S_About" xml:space="preserve">
+        <value>About</value>
+    </data>
+    <data name="S_About_D" xml:space="preserve">
+        <value>Version and license</value>
+    </data>
+    <data name="S_Theme" xml:space="preserve">
+        <value>Theme</value>
+    </data>
+    <data name="S_RollCall" xml:space="preserve">
+        <value>Roll Call</value>
+    </data>
+    <data name="S_Lottery" xml:space="preserve">
+        <value>Lottery</value>
+    </data>
+    <data name="S_RepeatMode" xml:space="preserve">
+        <value>Repeat Rule</value>
+    </data>
+    <data name="S_Version" xml:space="preserve">
+        <value>Version</value>
+    </data>
+    <data name="O_ThemeAuto" xml:space="preserve">
+        <value>System</value>
+    </data>
+    <data name="O_ThemeLight" xml:space="preserve">
+        <value>Light</value>
+    </data>
+    <data name="O_ThemeDark" xml:space="preserve">
+        <value>Dark</value>
+    </data>
+    <data name="O_Fair" xml:space="preserve">
+        <value>Fair Draw</value>
+    </data>
+    <data name="O_Random" xml:space="preserve">
+        <value>Random Draw</value>
+    </data>
+    <data name="O_NoRepeat" xml:space="preserve">
+        <value>No Repeat</value>
+    </data>
+    <data name="O_Repeat" xml:space="preserve">
+        <value>Allow Repeats</value>
+    </data>
+    <data name="O_Count" xml:space="preserve">
+        <value>By Stock Count</value>
+    </data>
+    <data name="O_Pan" xml:space="preserve">
+        <value>Wheel Weights</value>
+    </data>
+    <data name="O_HalfRepeat" xml:space="preserve">
+        <value>Half Repeat</value>
+    </data>
+    <data name="O_Restarted" xml:space="preserve">
+        <value>Clear After Restart</value>
+    </data>
+    <data name="O_Cleared" xml:space="preserve">
+        <value>Clear Manually</value>
+    </data>
+    <data name="S_HalfRepeat" xml:space="preserve">
+        <value>Half-Repeat Threshold</value>
+    </data>
+    <data name="S_ClearRecord" xml:space="preserve">
+        <value>Clear Records</value>
+    </data>
+    <data name="M_Drawing" xml:space="preserve">
+        <value>Drawing…</value>
+    </data>
+    <data name="C_GoToDraw" xml:space="preserve">
+        <value>Go to Draw</value>
+    </data>
+    <data name="M_NoHistoryPrompt" xml:space="preserve">
+        <value>Results will appear here after you finish a roll call or lottery.</value>
+    </data>
+    <data name="M_TimeJustNow" xml:space="preserve">
+        <value>Just now</value>
+    </data>
+    <data name="M_TimeMinutesAgo" xml:space="preserve">
+        <value>{0} min ago</value>
+    </data>
+    <data name="M_TimeHoursAgo" xml:space="preserve">
+        <value>{0} hr ago</value>
+    </data>
+    <data name="M_TimeDaysAgo" xml:space="preserve">
+        <value>{0} days ago</value>
+    </data>
+    <data name="M_Unknown" xml:space="preserve">
+        <value>Unknown</value>
+    </data>
+    <data name="S_OnlineStatus" xml:space="preserve">
+        <value>Online Status Reporting</value>
+    </data>
+    <data name="O_Off" xml:space="preserve">
+        <value>Off</value>
+    </data>
+    <data name="O_Anonymous" xml:space="preserve">
+        <value>Anonymous</value>
+    </data>
+    <data name="O_Full" xml:space="preserve">
+        <value>Full</value>
+    </data>
+    <data name="S_Telemetry" xml:space="preserve">
+        <value>Error &amp; Performance Telemetry</value>
+    </data>
+    <data name="S_SentryTelemetry" xml:space="preserve">
+        <value>Sentry Telemetry</value>
+    </data>
+    <data name="S_SentryTelemetry_D" xml:space="preserve">
+        <value>Anonymously uploads crash and performance data. No personal information is included.</value>
+    </data>
+    <data name="S_Language" xml:space="preserve">
+        <value>Language</value>
+    </data>
+    <data name="S_Language_D" xml:space="preserve">
+        <value>Language changes take effect immediately; no restart required.</value>
+    </data>
+    <data name="S_GroupPreferences" xml:space="preserve">
+        <value>Preferences</value>
+    </data>
+    <data name="S_GroupData" xml:space="preserve">
+        <value>Data</value>
+    </data>
+    <data name="S_GroupApp" xml:space="preserve">
+        <value>App</value>
+    </data>
+    <data name="M_EmptyStudentList" xml:space="preserve">
+        <value>The list is empty</value>
+    </data>
+    <data name="M_EmptyStudentListHint" xml:space="preserve">
+        <value>Add members to start a roll call.</value>
+    </data>
+    <data name="M_EmptyPrizePool" xml:space="preserve">
+        <value>The prize pool is empty</value>
+    </data>
+    <data name="M_EmptyPrizePoolHint" xml:space="preserve">
+        <value>Add prizes to start a lottery.</value>
+    </data>
+    <data name="C_ExportAllData" xml:space="preserve">
+        <value>Export All Data</value>
+    </data>
+    <data name="C_ImportAllData" xml:space="preserve">
+        <value>Import / Restore All Data</value>
+    </data>
+    <data name="C_ExportSettings" xml:space="preserve">
+        <value>Export Settings</value>
+    </data>
+    <data name="C_ImportSettings" xml:space="preserve">
+        <value>Import Settings</value>
+    </data>
+    <data name="M_BackupPickerHint" xml:space="preserve">
+        <value>Export and import through the system file picker. Files are validated against the SecRandom v3 format before import; unsupported files will not change any data.</value>
+    </data>
+    <data name="S_AllData" xml:space="preserve">
+        <value>All Data</value>
+    </data>
+    <data name="S_AllData_D" xml:space="preserve">
+        <value>Packages lists, history, configuration, and all other data into a ZIP archive.</value>
+    </data>
+    <data name="S_SettingsSection" xml:space="preserve">
+        <value>Settings</value>
+    </data>
+    <data name="S_SettingsSection_D" xml:space="preserve">
+        <value>Export / import app settings only (settings envelope).</value>
+    </data>
+    <data name="M_ExportingAllData" xml:space="preserve">
+        <value>Exporting all data…</value>
+    </data>
+    <data name="M_SaveAllDataTitle" xml:space="preserve">
+        <value>Save All-Data Backup</value>
+    </data>
+    <data name="M_DataArchiveFileType" xml:space="preserve">
+        <value>SecRandom Data Archive</value>
+    </data>
+    <data name="M_ExportCancelled" xml:space="preserve">
+        <value>Export cancelled.</value>
+    </data>
+    <data name="M_WritingToTarget" xml:space="preserve">
+        <value>Writing to the selected location…</value>
+    </data>
+    <data name="M_AllDataExported" xml:space="preserve">
+        <value>All data exported to the selected location.</value>
+    </data>
+    <data name="M_ExportFailed" xml:space="preserve">
+        <value>Export failed: {0}</value>
+    </data>
+    <data name="M_ExportingSettings" xml:space="preserve">
+        <value>Exporting settings…</value>
+    </data>
+    <data name="M_SaveSettingsTitle" xml:space="preserve">
+        <value>Save Settings Backup</value>
+    </data>
+    <data name="M_SettingsFileType" xml:space="preserve">
+        <value>SecRandom Settings File</value>
+    </data>
+    <data name="M_SettingsExported" xml:space="preserve">
+        <value>Settings exported to the selected location.</value>
+    </data>
+    <data name="M_PickingBackupFile" xml:space="preserve">
+        <value>Choosing a backup file…</value>
+    </data>
+    <data name="M_PickAllDataTitle" xml:space="preserve">
+        <value>Choose an All-Data Backup</value>
+    </data>
+    <data name="M_PickSettingsTitle" xml:space="preserve">
+        <value>Choose a Settings Backup</value>
+    </data>
+    <data name="M_ImportCancelled" xml:space="preserve">
+        <value>Import cancelled.</value>
+    </data>
+    <data name="M_ReadingBackup" xml:space="preserve">
+        <value>Reading the backup file…</value>
+    </data>
+    <data name="M_ValidatingBackup" xml:space="preserve">
+        <value>Validating the backup…</value>
+    </data>
+    <data name="M_ValidationPassed" xml:space="preserve">
+        <value>Validation passed. Confirm to start importing.</value>
+    </data>
+    <data name="M_ValidationUnsupported" xml:space="preserve">
+        <value>This file is not a supported SecRandom v3 export and cannot be imported.</value>
+    </data>
+    <data name="M_ReadOrValidateFailed" xml:space="preserve">
+        <value>Failed to read or validate: {0}</value>
+    </data>
+    <data name="M_SourceVersion" xml:space="preserve">
+        <value>Source version: {0}</value>
+    </data>
+    <data name="M_UnrecognizedVersion" xml:space="preserve">
+        <value>Unrecognized</value>
+    </data>
+    <data name="M_ImportFileCount" xml:space="preserve">
+        <value>Contains {0} files ({1} MB)</value>
+    </data>
+    <data name="S_ConfirmImport" xml:space="preserve">
+        <value>Confirm Import</value>
+    </data>
+    <data name="C_ConfirmImport" xml:space="preserve">
+        <value>Confirm Import</value>
+    </data>
+    <data name="C_Cancel" xml:space="preserve">
+        <value>Cancel</value>
+    </data>
+    <data name="M_BackupServiceUnavailable" xml:space="preserve">
+        <value>The backup service is unavailable.</value>
+    </data>
+    <data name="M_Importing" xml:space="preserve">
+        <value>Importing…</value>
+    </data>
+    <data name="M_ImportCompleted" xml:space="preserve">
+        <value>Import completed. {0} files imported.</value>
+    </data>
+    <data name="M_ImportFailed" xml:space="preserve">
+        <value>Import failed: {0}</value>
+    </data>
+    <data name="M_PendingImportExists" xml:space="preserve">
+        <value>Please confirm or cancel the current import first.</value>
+    </data>
+    <data name="M_StorageUnavailable" xml:space="preserve">
+        <value>This platform does not support the system file picker, so backup operations are unavailable.</value>
+    </data>
+    <data name="C_ViewOnGitHub" xml:space="preserve">
+        <value>View Project on GitHub</value>
+    </data>
+    <data name="M_BrowserUnavailable" xml:space="preserve">
+        <value>A browser cannot be opened on this platform.</value>
+    </data>
+    <data name="M_OpenBrowserFailed" xml:space="preserve">
+        <value>Unable to open a browser. Please visit github.com/SECTL/SecRandom manually.</value>
+    </data>
+    <data name="M_InAppUpdateUnsupported" xml:space="preserve">
+        <value>In-app updates are not supported on this platform</value>
+    </data>
+    <data name="M_IosUpdateDeferred" xml:space="preserve">
+        <value>iOS distribution and updates will be provided in a future release. Please get new versions from the project release page.</value>
+    </data>
+    <data name="M_UpdateSecurityNote" xml:space="preserve">
+        <value>Update packages are verified for length and hash against an Ed25519-signed manifest, then handed to the system installer.</value>
+    </data>
+</root>

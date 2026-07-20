@@ -19,13 +19,17 @@ using SecRandom.Core.Controls;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Models;
 using SecRandom.Core.Views;
+using System.Globalization;
+using System.Text.Json;
 using SecRandom.Mobile.Views;
 using SecRandom.Mobile.Services;
 using SecRandom.Mobile.Views.Settings;
 using SecRandom.Mobile.Controls;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
+using SecRandom.Services.Telemetry;
 using SecRandom.Shared;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 using AvaloniaButton = Avalonia.Controls.Button;
@@ -36,6 +40,7 @@ public sealed class MobileApp : Avalonia.Application
 {
     private IHost? _host;
     private MobileRootView? _rootView;
+    private ISingleViewApplicationLifetime? _singleView;
     private bool _stopping;
 
     public override void Initialize()
@@ -45,6 +50,7 @@ public sealed class MobileApp : Avalonia.Application
             PreferSystemTheme = true,
             UseSystemFontOnWindows = true
         });
+        Styles.Add(new Avalonia.Markup.Xaml.Styling.StyleInclude(new Uri("avares://SecRandom.Mobile/Styles/MobileStyles.axaml")) { Source = new Uri("avares://SecRandom.Mobile/Styles/MobileStyles.axaml") });
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -55,12 +61,18 @@ public sealed class MobileApp : Avalonia.Application
         try
         {
             ConfigureMobileDataRoot();
+            // Host 构建前的最小 culture 初始化：此时 MainConfigHandler 尚未由容器构造，
+            // 与桌面 Initialize 等价地直接读取 settings.json，必须早于任何视图创建。
+            InitializeMobileLanguage();
+            _singleView = singleView;
             _host = Host
                 .CreateDefaultBuilder()
                 .ConfigureServices(services =>
                 {
                     services.AddPlatformServices(PlatformStartupContext.Current);
                     services.AddCoreRuntimeServices();
+                    services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
+                    services.AddSingleton<TelemetryRuntimeService>();
                     services.AddSingleton<SingleViewHostProvider>();
                     services.AddSingleton<IViewHostProvider>(serviceProvider =>
                         serviceProvider.GetRequiredService<SingleViewHostProvider>());
@@ -141,6 +153,9 @@ public sealed class MobileApp : Avalonia.Application
                     .ConfigureAwait(false);
                 await _rootView.InnerViewHost.DestroyAsync().ConfigureAwait(false);
             }
+            await host.Services.GetRequiredService<TelemetryRuntimeService>()
+                .ShutdownAsync()
+                .ConfigureAwait(false);
             await host.StopAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         }
         finally
@@ -159,11 +174,90 @@ public sealed class MobileApp : Avalonia.Application
         Utils.ConfigureMobileDataRoot();
     }
 
+    /// <summary>
+    /// 与桌面 LoadStartupSettings 等价的最小读取路径：MainConfigModel 自带 legacy basic
+    /// 桥接，直接反序列化 settings.json 即可同时覆盖 canonical general 与旧版 basic 布局。
+    /// </summary>
+    private static void InitializeMobileLanguage()
+    {
+        var mainConfig = new MainConfigModel();
+        if (File.Exists(mainConfig.ConfigFilePath))
+        {
+            try
+            {
+                mainConfig = JsonSerializer.Deserialize<MainConfigModel>(
+                    File.ReadAllText(mainConfig.ConfigFilePath),
+                    ConfigServiceBase.JsonOptions) ?? mainConfig;
+            }
+            catch
+            {
+                // 配置损坏时退回默认语言，不阻塞启动。
+            }
+        }
+
+        ApplyMobileCulture(mainConfig.General.Basic.Language);
+    }
+
+    /// <summary>
+    /// 与桌面 InitializeLanguages 对齐：四项 culture + 移动端资源类的显式 Culture。
+    /// 语言设置页切换后也会调用此方法，再重建根视图完成免重启刷新。
+    /// </summary>
+    internal static void ApplyMobileCulture(LanguageMode mode)
+    {
+        var cultureInfo = new CultureInfo(mode switch
+        {
+            LanguageMode.ChineseSimplified => @"zh-Hans",
+            LanguageMode.English => @"en-US",
+            LanguageMode.Japanese => @"ja-JP",
+            _ => @"zh-Hans"
+        });
+        CultureInfo.CurrentCulture = cultureInfo;
+        CultureInfo.CurrentUICulture = cultureInfo;
+        CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+        CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+        Langs.Mobile.Resources.Culture = cultureInfo;
+    }
+
+    /// <summary>
+    /// 语言切换的免重启重建：先关闭并销毁当前根视图的 host 会话（参考 StopHostAsync 的
+    /// 清理顺序），再替换 SingleView 主视图为新的 <see cref="MobileRootView"/> 并恢复默认
+    /// 抽取路由。移动页面全是命令式 Render，重建根视图即全面刷新。DI 中 MobileRootView
+    /// 是单例，这里用 ActivatorUtilities 显式构造新实例，保证会话状态干净。
+    /// </summary>
+    internal async Task ReloadRootViewAsync()
+    {
+        var host = _host;
+        var singleView = _singleView;
+        if (_stopping || host is null || singleView is null)
+            return;
+
+        var viewEngine = host.Services.GetRequiredService<IViewEngine>();
+        var oldRoot = _rootView;
+        if (oldRoot is not null)
+        {
+            await viewEngine.CloseHostAsync(oldRoot.InnerViewHost, ViewCloseReason.Programmatic)
+                .ConfigureAwait(false);
+            await oldRoot.InnerViewHost.DestroyAsync().ConfigureAwait(false);
+            host.Services.GetRequiredService<SingleViewHostProvider>().Detach(oldRoot.InnerViewHost);
+        }
+
+        var newRoot = ActivatorUtilities.CreateInstance<MobileRootView>(host.Services);
+        _rootView = newRoot;
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => singleView.MainView = newRoot);
+        await viewEngine.ShowAsync(MobileRoutes.Draw).ConfigureAwait(false);
+    }
+
     private async Task StartMobileHostAsync(IHost host, ISingleViewApplicationLifetime singleView)
     {
         try
         {
             await host.StartAsync().ConfigureAwait(false);
+            if (_stopping || !ReferenceEquals(host, _host))
+                return;
+
+            await host.Services.GetRequiredService<TelemetryRuntimeService>()
+                .InitializeAsync()
+                .ConfigureAwait(false);
             if (_stopping || !ReferenceEquals(host, _host))
                 return;
 

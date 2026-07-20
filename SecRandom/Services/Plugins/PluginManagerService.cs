@@ -291,6 +291,7 @@ public sealed class PluginManagerService : IPluginManager
                     provider.GetRequiredService<MainConfigHandler>(),
                     provider.GetRequiredService<DrawEngine>(),
                     provider.GetRequiredService<IProfileService>(),
+                    provider.GetRequiredService<IDrawCommitService>(),
                     provider.GetRequiredService<IFeatureAvailabilityService>());
                 var dataDirectory = pluginInfo.ConfigDirectory;
                 var viewService = provider.GetService<IViewEngine>() is { } viewEngine

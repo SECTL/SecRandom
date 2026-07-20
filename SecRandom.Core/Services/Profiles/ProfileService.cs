@@ -1,7 +1,9 @@
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Draw;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
 
@@ -9,7 +11,7 @@ namespace SecRandom.Core.Services;
 
 public static partial class CoreRuntimeServiceCollectionExtensions
 {
-    private sealed class ProfileService : IProfileService
+    private sealed class ProfileService : IProfileService, IDrawHistorySnapshotCompensation
     {
     private readonly ILogger<ProfileService> _logger;
     private readonly MainConfigHandler _configHandler;
@@ -133,7 +135,8 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         string drawGender = "",
         int drawMethod = 0,
         IReadOnlyDictionary<Student, double>? weights = null,
-        string courseName = "")
+        string courseName = "",
+        string? drawRoundId = null)
     {
         var history = CurrentStudentHistory;
         if (history is null || students.Count == 0)
@@ -141,7 +144,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
 
         history.TotalRounds++;
         history.TotalStats += students.Count;
-        var drawRoundId = Guid.NewGuid().ToString("N");
+        var roundId = string.IsNullOrWhiteSpace(drawRoundId) ? Guid.NewGuid().ToString("N") : drawRoundId;
         var allStudents = CurrentStudentList?.Students ?? [];
         var uniqueLegacyKeys = ProfileRecordIdentity.BuildUniqueStudentLegacyKeySet(allStudents);
         HashSet<string> drawnKeys = [];
@@ -169,7 +172,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
                 RecordGender = student.Gender,
                 RecordGroup = student.Group,
                 DrawTime = now,
-                DrawRoundId = drawRoundId,
+                DrawRoundId = roundId,
                 DrawNumbers = requestedCount,
                 DrawGroup = drawGroup,
                 DrawGender = drawGender,
@@ -203,7 +206,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
             students.Count);
     }
 
-    public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount)
+    public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount, int drawMethod = 0, string? drawRoundId = null)
     {
         var history = CurrentPrizeHistory;
         if (history is null || prizes.Count == 0)
@@ -211,7 +214,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
 
         history.TotalRounds++;
         history.TotalStats += prizes.Count;
-        var drawRoundId = Guid.NewGuid().ToString("N");
+        var roundId = string.IsNullOrWhiteSpace(drawRoundId) ? Guid.NewGuid().ToString("N") : drawRoundId;
         var allPrizes = CurrentPrizeList?.Prizes ?? [];
         var uniqueLegacyKeys = ProfileRecordIdentity.BuildUniquePrizeLegacyKeySet(allPrizes);
         HashSet<string> drawnKeys = [];
@@ -237,11 +240,11 @@ public static partial class CoreRuntimeServiceCollectionExtensions
                 RecordNumber = prize.Id,
                 RecordName = prize.Name,
                 DrawTime = now,
-                DrawRoundId = drawRoundId,
+                DrawRoundId = roundId,
                 DrawNumbers = requestedCount,
                 DrawGroup = string.Empty,
                 DrawGender = string.Empty,
-                DrawMethod = 0,
+                DrawMethod = drawMethod,
                 Weight = prize.Weight
             });
         }
@@ -295,6 +298,58 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         PrizeHistoryConfig?.Save();
 
         _logger.LogInformation("已清空当前抽奖历史：奖品池={PrizeListName}。", PrizeHistoryConfig?.Name);
+    }
+
+    public string CaptureStudentHistorySnapshot()
+    {
+        return JsonSerializer.Serialize(CurrentStudentHistory ?? new StudentHistory(), ConfigServiceBase.JsonOptions);
+    }
+
+    public void RestoreStudentHistorySnapshot(string snapshotJson)
+    {
+        var history = CurrentStudentHistory;
+        var snapshot = JsonSerializer.Deserialize<StudentHistory>(snapshotJson, ConfigServiceBase.JsonOptions);
+        if (history is null || snapshot is null)
+            return;
+
+        history.TotalRounds = snapshot.TotalRounds;
+        history.TotalStats = snapshot.TotalStats;
+        history.Students.Clear();
+        foreach (var pair in snapshot.Students)
+            history.Students[pair.Key] = pair.Value;
+        history.GroupStats.Clear();
+        foreach (var pair in snapshot.GroupStats)
+            history.GroupStats[pair.Key] = pair.Value;
+        history.GenderStatus.Clear();
+        foreach (var pair in snapshot.GenderStatus)
+            history.GenderStatus[pair.Key] = pair.Value;
+        StudentHistoryConfig?.Save();
+    }
+
+    public string CapturePrizeHistorySnapshot()
+    {
+        return JsonSerializer.Serialize(CurrentPrizeHistory ?? new PrizeHistory(), ConfigServiceBase.JsonOptions);
+    }
+
+    public void RestorePrizeHistorySnapshot(string snapshotJson)
+    {
+        var history = CurrentPrizeHistory;
+        var snapshot = JsonSerializer.Deserialize<PrizeHistory>(snapshotJson, ConfigServiceBase.JsonOptions);
+        if (history is null || snapshot is null)
+            return;
+
+        history.TotalRounds = snapshot.TotalRounds;
+        history.TotalStats = snapshot.TotalStats;
+        history.Prizes.Clear();
+        foreach (var pair in snapshot.Prizes)
+            history.Prizes[pair.Key] = pair.Value;
+        history.GroupStats.Clear();
+        foreach (var pair in snapshot.GroupStats)
+            history.GroupStats[pair.Key] = pair.Value;
+        history.GenderStatus.Clear();
+        foreach (var pair in snapshot.GenderStatus)
+            history.GenderStatus[pair.Key] = pair.Value;
+        PrizeHistoryConfig?.Save();
     }
 
     private StudentListConfig CreateStudentListConfig(string name) => new(name, _logger, _configService);

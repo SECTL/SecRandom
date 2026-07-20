@@ -63,11 +63,12 @@
                     </Grid>
 
                     <Grid Grid.Row="1">
+                        <!-- FAFrame 残余职责：插件页（plugin.<id>.* 未注册进 IViewRegistry）及极少数未迁移控件的兜底路由；
+                             内置页一律走 MVE（EmbeddedViewHostPresenter + ShowExclusiveAsync）。请勿再向 Frame 新增内置页。 -->
                         <fa:FAFrame x:Name="NavigationFrame"
                                     IsNavigationStackEnabled="False" CacheSize="0"
                                     Content="{Binding ViewModel.FrameContent}" />
                         <ContentControl x:Name="EmbeddedViewHostPresenter"
-                                        IsHitTestVisible="False"
                                         HorizontalAlignment="Stretch"
                                         VerticalAlignment="Stretch" />
                     </Grid>

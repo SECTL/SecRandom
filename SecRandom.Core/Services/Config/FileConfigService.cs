@@ -48,7 +48,10 @@ public static partial class CoreRuntimeServiceCollectionExtensions
             var filePath = config.ConfigFilePath;
             logger.LogInformation("Saving config file: {Path}", filePath);
             EnsureDirectory(filePath);
-            File.WriteAllText(filePath, JsonSerializer.Serialize(config, JsonOptions));
+            // 写临时文件再原子替换，避免进程中途被杀留下截断 JSON。
+            var temporaryPath = $"{filePath}.{Guid.NewGuid():N}.tmp";
+            File.WriteAllText(temporaryPath, JsonSerializer.Serialize(config, JsonOptions));
+            File.Move(temporaryPath, filePath, overwrite: true);
         }
 
         public override void DeleteConfig<T>(T config)

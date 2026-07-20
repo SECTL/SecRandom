@@ -9,7 +9,6 @@ namespace SecRandom.Services.Telemetry;
 
 public sealed class SentryTelemetrySdkAdapter : ITelemetrySdkAdapter
 {
-    private const string Dsn = "https://7614b2b2fd46a451e7cb3ed670279e75@o4510689230192640.ingest.us.sentry.io/4511675887910912";
     private static readonly TimeSpan ProfilingStartupTimeout = TimeSpan.FromMilliseconds(500);
 
     private readonly object _gate = new();
@@ -60,6 +59,17 @@ public sealed class SentryTelemetrySdkAdapter : ITelemetrySdkAdapter
 
         SentrySdk.CaptureException(exception);
         await SentrySdk.FlushAsync(flushTimeout).WaitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// 启动性能追踪事务，采样率由初始化选项中的 TracesSampleRate 决定。
+    /// </summary>
+    public ITelemetryTransaction? StartTransaction(string name, string operation)
+    {
+        if (!IsInitialized)
+            return null;
+
+        return new SentryTelemetryTransaction(SentrySdk.StartTransaction(name, operation));
     }
 
     public async Task ShutdownAsync(TimeSpan timeout, CancellationToken cancellationToken = default)
@@ -116,7 +126,7 @@ public sealed class SentryTelemetrySdkAdapter : ITelemetrySdkAdapter
     /// </summary>
     private static void ConfigureOptions(SentryOptions options, TelemetryPolicySnapshot policy)
     {
-        options.Dsn = Dsn;
+        options.Dsn = GlobalConstants.SentryDsn;
         options.Release = GlobalConstants.VersionLong;
         options.Environment = GlobalConstants.IsDevelopment ? "development" : "production";
         options.Debug = true;
@@ -150,8 +160,36 @@ public sealed class SentryTelemetrySdkAdapter : ITelemetrySdkAdapter
             return sentryEvent;
         });
 
-        // 加载性能分析集成（需 Sentry.Profiling 包）
-        if (policy.EnableProfiles)
+        // 加载性能分析集成（需 Sentry.Profiling 包，仅桌面平台支持；Android/iOS 复用本适配器时不得加载）
+        if (policy.EnableProfiles && (OperatingSystem.IsWindows() || OperatingSystem.IsLinux() || OperatingSystem.IsMacOS()))
             options.AddProfilingIntegration(ProfilingStartupTimeout);
+    }
+
+    /// <summary>
+    /// 将 Sentry ISpan 适配为 SDK 中立的 <see cref="ITelemetryTransaction"/>。
+    /// </summary>
+    private sealed class SentryTelemetryTransaction(ISpan span) : ITelemetryTransaction
+    {
+        public void Finish(TelemetryTransactionStatus status)
+        {
+            span.Finish(ToSpanStatus(status));
+        }
+
+        public void Finish(Exception exception, TelemetryTransactionStatus status)
+        {
+            span.Finish(exception, ToSpanStatus(status));
+        }
+
+        public void Dispose()
+        {
+            span.Dispose();
+        }
+
+        private static SpanStatus ToSpanStatus(TelemetryTransactionStatus status) => status switch
+        {
+            TelemetryTransactionStatus.Ok => SpanStatus.Ok,
+            TelemetryTransactionStatus.PermissionDenied => SpanStatus.PermissionDenied,
+            _ => SpanStatus.InternalError
+        };
     }
 }

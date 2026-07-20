@@ -144,6 +144,69 @@ public sealed class ViewEngineTests
     }
 
     [Fact]
+    public async Task ShowAsync_ReusingSessionOnDisposedHostDropsStaleSessionAndRecreatesView()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var staleHost = new TestHost("host.stale");
+        var replacementHost = new TestHost("host.replacement");
+        var services = new ServiceCollection();
+        services.AddSingleton<TestViewState>();
+        services.AddSingleton<IViewHostProvider>(new SequenceHostProvider(staleHost, replacementHost));
+        services.AddViewEngine().AddView<TestView>("test.view");
+        await using var provider = services.BuildServiceProvider();
+        var engine = provider.GetRequiredService<IViewEngine>();
+        var state = provider.GetRequiredService<TestViewState>();
+
+        var firstHandle = await engine.ShowAsync("test.view", cancellationToken: cancellationToken);
+        var firstView = Assert.IsType<TestView>(state.LastCreated);
+
+        // 模拟桌面关窗清理竞态：host 已销毁（激活抛 ObjectDisposedException），
+        // 但 Destroyed 通知尚未把会话从引擎摘掉。
+        staleHost.ThrowOnActivate = true;
+
+        await engine.ShowAsync("test.view", cancellationToken: cancellationToken);
+
+        var staleResult = await firstHandle.Completion.WaitAsync(TimeSpan.FromSeconds(2), cancellationToken);
+        Assert.True(staleResult.WasClosed);
+        Assert.Equal(ViewCloseReason.HostDestroyed, staleResult.Reason);
+        Assert.True(firstView.IsClosed);
+        Assert.NotSame(firstView, state.LastCreated);
+        Assert.Equal(1, replacementHost.PageShowCount);
+    }
+
+    [Fact]
+    public async Task ShowExclusiveAsync_ClosesSiblingPagesOnTheSameHost()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var host = new TestHost("exclusive-host");
+        var services = new ServiceCollection();
+        services.AddSingleton<TestViewState>();
+        services.AddSingleton<IViewHostProvider>(new SequenceHostProvider(host));
+        services.AddViewEngine()
+            .AddView<TestView>("test.view")
+            .AddView<TestView>("test.other");
+        await using var provider = services.BuildServiceProvider();
+        var engine = provider.GetRequiredService<IViewEngine>();
+
+        var first = await engine.ShowExclusiveAsync("exclusive-host", "test.view", cancellationToken: cancellationToken);
+        await engine.ShowExclusiveAsync("exclusive-host", "test.other", cancellationToken: cancellationToken);
+
+        var firstResult = await first.Completion.WaitAsync(TimeSpan.FromSeconds(2), cancellationToken);
+        Assert.True(firstResult.WasClosed);
+        Assert.Equal(ViewCloseReason.Programmatic, firstResult.Reason);
+        Assert.Equal(1, host.CloseCount);
+        Assert.Equal(2, host.PageShowCount);
+        var activeView = Assert.Single(host.PageStack);
+        Assert.Equal("test.other", activeView.ViewId);
+
+        // 再次以独占模式打开同一视图：复用激活，不重复入栈。
+        await engine.ShowExclusiveAsync("exclusive-host", "test.other", cancellationToken: cancellationToken);
+        Assert.Equal(2, host.PageShowCount);
+        Assert.Equal(1, host.ActivateCount);
+        Assert.Single(host.PageStack);
+    }
+
+    [Fact]
     public async Task DesktopProvider_RoutesNamedEmbeddedHost()
     {
         var provider = new DesktopViewHostProvider();
@@ -173,14 +236,21 @@ public sealed class ViewEngineTests
     }
 
     [Fact]
-    public async Task DesktopProvider_RejectsDuplicateEmbeddedHostIds()
+    public async Task DesktopProvider_ReregisteringEmbeddedHostDestroysTheStaleInstance()
     {
         var provider = new DesktopViewHostProvider();
-        await provider.RegisterEmbeddedHostAsync(new TestHost("desktop.main"), TestContext.Current.CancellationToken);
+        var stale = new TestHost("desktop.main");
+        await provider.RegisterEmbeddedHostAsync(stale, TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => provider.RegisterEmbeddedHostAsync(
-            new TestHost("desktop.main"),
-            TestContext.Current.CancellationToken));
+        var replacement = new TestHost("desktop.main");
+        await provider.RegisterEmbeddedHostAsync(replacement, TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, stale.DestroyCount);
+        var selection = await provider.GetHostAsync(
+            new ViewShowOptions { HostId = "desktop.main" },
+            TestContext.Current.CancellationToken);
+        Assert.True(selection.IsSuccess);
+        Assert.Same(replacement, selection.Host);
     }
 
     [Fact]
@@ -279,6 +349,17 @@ public sealed class ViewEngineTests
         public TestView? LastCreated { get; set; }
     }
 
+    private sealed class SequenceHostProvider(params IViewHost[] hosts) : IViewHostProvider
+    {
+        private int _index;
+
+        public Task<ViewHostSelection> GetHostAsync(ViewShowOptions options, CancellationToken cancellationToken = default)
+        {
+            var host = hosts[Math.Min(_index++, hosts.Length - 1)];
+            return Task.FromResult(ViewHostSelection.Success(host));
+        }
+    }
+
     private sealed class TestHost(string hostId) : IViewHost
     {
         private readonly List<ViewBase> _pages = [];
@@ -289,6 +370,9 @@ public sealed class ViewEngineTests
         public int PageShowCount { get; private set; }
         public int ModalShowCount { get; private set; }
         public int CloseCount { get; private set; }
+        public int ActivateCount { get; private set; }
+        public int DestroyCount { get; private set; }
+        public bool ThrowOnActivate { get; set; }
         public event EventHandler? Destroyed;
 
         public Task ShowPageAsync(ViewBase view, CancellationToken cancellationToken = default)
@@ -305,7 +389,14 @@ public sealed class ViewEngineTests
             return Task.CompletedTask;
         }
 
-        public Task ActivateAsync(ViewBase view, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task ActivateAsync(ViewBase view, CancellationToken cancellationToken = default)
+        {
+            if (ThrowOnActivate)
+                throw new ObjectDisposedException(HostId, "The view host has been destroyed.");
+
+            ActivateCount++;
+            return Task.CompletedTask;
+        }
 
         public Task CloseAsync(ViewBase view, CancellationToken cancellationToken = default)
         {
@@ -318,6 +409,7 @@ public sealed class ViewEngineTests
 
         public Task DestroyAsync(CancellationToken cancellationToken = default)
         {
+            DestroyCount++;
             RaiseDestroyed();
             return Task.CompletedTask;
         }

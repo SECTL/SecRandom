@@ -14,6 +14,7 @@ using FluentAvalonia.UI.Controls;
 using MiniExcelLibs;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Services.Profiles;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.LotteryList.Resources;
 
@@ -247,40 +248,19 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
 
     private void AutoMapColumns()
     {
-        IdColumn = FindBestColumn(GetKeywords(LR.K_IdColumns)) ?? LR.C_NoneColumn;
-        NameColumn = FindBestColumn(GetKeywords(LR.K_NameColumns)) ?? NameColumn;
-        WeightColumn = FindBestColumn(GetKeywords(LR.K_WeightColumns)) ?? LR.C_NoneColumn;
-        CountColumn = FindBestColumn(GetKeywords(LR.K_CountColumns)) ?? LR.C_NoneColumn;
-        TagsColumn = FindBestColumn(GetKeywords(LR.K_TagsColumns)) ?? LR.C_NoneColumn;
+        IdColumn = RosterImportParser.FindBestColumn(RequiredColumnOptions, RosterImportParser.SplitKeywords(LR.K_IdColumns)) ?? LR.C_NoneColumn;
+        NameColumn = RosterImportParser.FindBestColumn(RequiredColumnOptions, RosterImportParser.SplitKeywords(LR.K_NameColumns)) ?? NameColumn;
+        WeightColumn = RosterImportParser.FindBestColumn(RequiredColumnOptions, RosterImportParser.SplitKeywords(LR.K_WeightColumns)) ?? LR.C_NoneColumn;
+        CountColumn = RosterImportParser.FindBestColumn(RequiredColumnOptions, RosterImportParser.SplitKeywords(LR.K_CountColumns)) ?? LR.C_NoneColumn;
+        TagsColumn = RosterImportParser.FindBestColumn(RequiredColumnOptions, RosterImportParser.SplitKeywords(LR.K_TagsColumns)) ?? LR.C_NoneColumn;
     }
 
-    private static string[] GetKeywords(string keywords)
-    {
-        return keywords.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-    }
-
-    private string? FindBestColumn(IReadOnlyList<string> keywords)
-    {
-        var bestScore = 0;
-        string? bestColumn = null;
-
-        foreach (var column in RequiredColumnOptions)
-        {
-            var normalizedColumn = column.ToLowerInvariant();
-            for (var i = 0; i < keywords.Count; i++)
-            {
-                var keyword = keywords[i].ToLowerInvariant();
-                var score = normalizedColumn == keyword ? 100 - i : normalizedColumn.Contains(keyword) ? 50 - i : 0;
-                if (score <= bestScore)
-                    continue;
-
-                bestScore = score;
-                bestColumn = column;
-            }
-        }
-
-        return bestColumn;
-    }
+    private PrizeRosterColumnMapping CurrentMapping => new(
+        IsSelectedColumn(IdColumn) ? IdColumn : null,
+        IsSelectedColumn(NameColumn) ? NameColumn : null,
+        IsSelectedColumn(WeightColumn) ? WeightColumn : null,
+        IsSelectedColumn(CountColumn) ? CountColumn : null,
+        IsSelectedColumn(TagsColumn) ? TagsColumn : null);
 
     private void RefreshPreview()
     {
@@ -298,34 +278,20 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
 
     private ImportPreviewRow CreatePreviewRow(IReadOnlyDictionary<string, string> row)
     {
+        var mapping = CurrentMapping;
         return new ImportPreviewRow(
-            GetColumnValue(row, IdColumn),
-            GetColumnValue(row, NameColumn),
-            GetColumnValue(row, WeightColumn),
-            GetColumnValue(row, CountColumn),
-            string.Join(' ', SplitTags(GetColumnValue(row, TagsColumn))));
+            RosterImportParser.GetValue(row, mapping.Id),
+            RosterImportParser.GetValue(row, mapping.Name),
+            RosterImportParser.GetValue(row, mapping.Weight),
+            RosterImportParser.GetValue(row, mapping.Count),
+            string.Join(' ', RosterImportParser.SplitTags(RosterImportParser.GetValue(row, mapping.Tags))));
     }
 
     private void ImportButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        var prizes = _rows
-            .Select(row => new Prize
-            {
-                Id = GetColumnValue(row, IdColumn),
-                Name = GetColumnValue(row, NameColumn),
-                Weight = ParseDouble(GetColumnValue(row, WeightColumn), 1),
-                Count = Math.Max(0, ParseInt(GetColumnValue(row, CountColumn), 1)),
-                Tags = string.Join(' ', SplitTags(GetColumnValue(row, TagsColumn))),
-                Exists = true
-            })
-            .Where(prize => prize.IsCandidate)
-            .ToList();
-
-        var duplicatedNames = prizes.Where(prize => !string.IsNullOrWhiteSpace(prize.Name))
-            .GroupBy(prize => prize.Name)
-            .Where(group => group.Count() > 1)
-            .Select(group => group.Key)
-            .ToList();
+        var parseResult = RosterImportParser.ParsePrizes(_rows, CurrentMapping);
+        var prizes = parseResult.Items;
+        var duplicatedNames = parseResult.DuplicatedNames;
 
         if (duplicatedNames.Count > 0)
         {
@@ -362,23 +328,9 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
 
         if (result == FAContentDialogResult.Secondary)
         {
-            RenameDuplicatedPrizes(prizes);
+            RosterImportParser.RenameDuplicatedPrizes(prizes);
             _logger.LogInformation("奖品池导入已自动处理重复名称：有效行数={Count}。", prizes.Count);
             _importHandler(prizes);
-        }
-    }
-
-    private static void RenameDuplicatedPrizes(IEnumerable<Prize> prizes)
-    {
-        var counts = new Dictionary<string, int>();
-
-        foreach (var prize in prizes)
-        {
-            var baseName = prize.Name;
-            counts.TryAdd(baseName, 0);
-            counts[baseName]++;
-            if (counts[baseName] > 1)
-                prize.Name = $"{baseName} ({counts[baseName]})";
         }
     }
 
@@ -395,27 +347,6 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
         return !string.IsNullOrWhiteSpace(column) && column != LR.C_NoneColumn;
     }
 
-    private static string GetColumnValue(IReadOnlyDictionary<string, string> row, string? column)
-    {
-        return IsSelectedColumn(column) && column != null
-            ? row.GetValueOrDefault(column, string.Empty).Trim()
-            : string.Empty;
-    }
-
-    private static int ParseInt(string value, int fallback)
-    {
-        return int.TryParse(value, NumberStyles.Integer, CultureInfo.CurrentCulture, out var result)
-            ? result
-            : fallback;
-    }
-
-    private static double ParseDouble(string value, double fallback)
-    {
-        return double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out var result)
-            ? result
-            : fallback;
-    }
-
     private static string ConvertCell(object? value)
     {
         return value switch
@@ -424,17 +355,6 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
             DateTime dateTime => dateTime.ToString(CultureInfo.CurrentCulture),
             _ => Convert.ToString(value, CultureInfo.CurrentCulture) ?? string.Empty
         };
-    }
-
-    private static IEnumerable<string> SplitTags(string rawTags)
-    {
-        if (string.IsNullOrWhiteSpace(rawTags))
-            return [];
-
-        foreach (var separator in new[] { '，', ',', '；', ';', '|', '/', '\\', '\n', '\t' })
-            rawTags = rawTags.Replace(separator, ' ');
-
-        return rawTags.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct();
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

@@ -218,13 +218,7 @@ public partial class DrawEngine
             _ => (ConfigData.RollCallSettings.DrawMode, ConfigData.RollCallSettings.HalfRepeat)
         };
 
-        return drawMode switch
-        {
-            DrawMode.Repeat => 0,
-            DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, halfRepeat),
-            _ => 1
-        };
+        return DrawRepeatPolicy.ResolveThreshold(drawMode, halfRepeat);
     }
 
     private DrawType GetStudentDrawType(DrawSettingsType drawSettingsType)
@@ -253,13 +247,7 @@ public partial class DrawEngine
 
     private int GetLotteryRepeatThreshold()
     {
-        return ConfigData.LotterySettings.DrawMode switch
-        {
-            DrawMode.Repeat => 0,
-            DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, ConfigData.LotterySettings.HalfRepeat),
-            _ => 1
-        };
+        return DrawRepeatPolicy.ResolveThreshold(ConfigData.LotterySettings.DrawMode, ConfigData.LotterySettings.HalfRepeat);
     }
 
     public DrawResult<Prize> DrawPrize(int count, Func<Prize, bool> filter)

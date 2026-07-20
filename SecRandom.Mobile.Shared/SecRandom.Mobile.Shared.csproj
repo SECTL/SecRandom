@@ -23,7 +23,21 @@
         <PackageReference Include="FluentAvaloniaUI" Version="3.0.2" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+        <PackageReference Include="Sentry" Version="6.6.0" />
+        <!-- 不引用 Sentry.Profiling：其 buildTransitive targets 在 android/ios 上硬报错。
+             共享编译的 SentryTelemetrySdkAdapter 对 AddProfilingIntegration 的引用由
+             Services/Telemetry/MobileProfilingIntegrationStub.cs 的 no-op 扩展满足，
+             且适配器自身的 OS 门保证移动平台永远不会执行该调用。 -->
         <PackageReference Include="YamlDotNet" Version="16.3.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Link the desktop telemetry seam sources (namespace SecRandom.Services.Telemetry stays unchanged)
+             instead of copying them, so both ends share one implementation. The desktop-only
+             TelemetryTransactionSentryExtensions shim must stay excluded on mobile. -->
+        <Compile Include="..\SecRandom\Services\Telemetry\*.cs"
+                 Link="Telemetry\%(Filename)%(Extension)"
+                 Exclude="..\SecRandom\Services\Telemetry\TelemetryTransactionSentryExtensions.cs" />
     </ItemGroup>
 
     <ItemGroup>

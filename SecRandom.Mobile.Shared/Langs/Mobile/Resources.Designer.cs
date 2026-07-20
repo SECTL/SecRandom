@@ -35,12 +35,6 @@ public class Resources
         set => resourceCulture = value;
     }
 
-    public static string Description => ResourceManager.GetString("Description", resourceCulture)!;
-
-    public static string CheckUpdates => ResourceManager.GetString("CheckUpdates", resourceCulture)!;
-
-    public static string InstallUpdate => ResourceManager.GetString("InstallUpdate", resourceCulture)!;
-
     public static string M_AndroidContextUnavailable => ResourceManager.GetString("M_AndroidContextUnavailable", resourceCulture)!;
 
     public static string M_AndroidOnlyInstaller => ResourceManager.GetString("M_AndroidOnlyInstaller", resourceCulture)!;
@@ -265,9 +259,145 @@ public class Resources
 
     public static string W_StudentName => ResourceManager.GetString("W_StudentName", resourceCulture)!;
 
-    public static string PlatformSummary => ResourceManager.GetString("PlatformSummary", resourceCulture)!;
+    public static string M_Drawing => ResourceManager.GetString("M_Drawing", resourceCulture)!;
 
-    public static string Subtitle => ResourceManager.GetString("Subtitle", resourceCulture)!;
+    public static string C_GoToDraw => ResourceManager.GetString("C_GoToDraw", resourceCulture)!;
 
-    public static string Title => ResourceManager.GetString("Title", resourceCulture)!;
+    public static string M_NoHistoryPrompt => ResourceManager.GetString("M_NoHistoryPrompt", resourceCulture)!;
+
+    public static string M_TimeJustNow => ResourceManager.GetString("M_TimeJustNow", resourceCulture)!;
+
+    public static string M_TimeMinutesAgo => ResourceManager.GetString("M_TimeMinutesAgo", resourceCulture)!;
+
+    public static string M_TimeHoursAgo => ResourceManager.GetString("M_TimeHoursAgo", resourceCulture)!;
+
+    public static string M_TimeDaysAgo => ResourceManager.GetString("M_TimeDaysAgo", resourceCulture)!;
+
+    public static string M_Unknown => ResourceManager.GetString("M_Unknown", resourceCulture)!;
+
+    public static string S_OnlineStatus => ResourceManager.GetString("S_OnlineStatus", resourceCulture)!;
+
+    public static string O_Off => ResourceManager.GetString("O_Off", resourceCulture)!;
+
+    public static string O_Anonymous => ResourceManager.GetString("O_Anonymous", resourceCulture)!;
+
+    public static string O_Full => ResourceManager.GetString("O_Full", resourceCulture)!;
+
+    public static string S_Telemetry => ResourceManager.GetString("S_Telemetry", resourceCulture)!;
+
+    public static string S_SentryTelemetry => ResourceManager.GetString("S_SentryTelemetry", resourceCulture)!;
+
+    public static string S_SentryTelemetry_D => ResourceManager.GetString("S_SentryTelemetry_D", resourceCulture)!;
+
+    public static string S_Language => ResourceManager.GetString("S_Language", resourceCulture)!;
+
+    public static string S_Language_D => ResourceManager.GetString("S_Language_D", resourceCulture)!;
+
+    public static string S_GroupPreferences => ResourceManager.GetString("S_GroupPreferences", resourceCulture)!;
+
+    public static string S_GroupData => ResourceManager.GetString("S_GroupData", resourceCulture)!;
+
+    public static string S_GroupApp => ResourceManager.GetString("S_GroupApp", resourceCulture)!;
+
+    public static string M_EmptyStudentList => ResourceManager.GetString("M_EmptyStudentList", resourceCulture)!;
+
+    public static string M_EmptyStudentListHint => ResourceManager.GetString("M_EmptyStudentListHint", resourceCulture)!;
+
+    public static string M_EmptyPrizePool => ResourceManager.GetString("M_EmptyPrizePool", resourceCulture)!;
+
+    public static string M_EmptyPrizePoolHint => ResourceManager.GetString("M_EmptyPrizePoolHint", resourceCulture)!;
+
+    public static string C_ExportAllData => ResourceManager.GetString("C_ExportAllData", resourceCulture)!;
+
+    public static string C_ImportAllData => ResourceManager.GetString("C_ImportAllData", resourceCulture)!;
+
+    public static string C_ExportSettings => ResourceManager.GetString("C_ExportSettings", resourceCulture)!;
+
+    public static string C_ImportSettings => ResourceManager.GetString("C_ImportSettings", resourceCulture)!;
+
+    public static string M_BackupPickerHint => ResourceManager.GetString("M_BackupPickerHint", resourceCulture)!;
+
+    public static string S_AllData => ResourceManager.GetString("S_AllData", resourceCulture)!;
+
+    public static string S_AllData_D => ResourceManager.GetString("S_AllData_D", resourceCulture)!;
+
+    public static string S_SettingsSection => ResourceManager.GetString("S_SettingsSection", resourceCulture)!;
+
+    public static string S_SettingsSection_D => ResourceManager.GetString("S_SettingsSection_D", resourceCulture)!;
+
+    public static string M_ExportingAllData => ResourceManager.GetString("M_ExportingAllData", resourceCulture)!;
+
+    public static string M_SaveAllDataTitle => ResourceManager.GetString("M_SaveAllDataTitle", resourceCulture)!;
+
+    public static string M_DataArchiveFileType => ResourceManager.GetString("M_DataArchiveFileType", resourceCulture)!;
+
+    public static string M_ExportCancelled => ResourceManager.GetString("M_ExportCancelled", resourceCulture)!;
+
+    public static string M_WritingToTarget => ResourceManager.GetString("M_WritingToTarget", resourceCulture)!;
+
+    public static string M_AllDataExported => ResourceManager.GetString("M_AllDataExported", resourceCulture)!;
+
+    public static string M_ExportFailed => ResourceManager.GetString("M_ExportFailed", resourceCulture)!;
+
+    public static string M_ExportingSettings => ResourceManager.GetString("M_ExportingSettings", resourceCulture)!;
+
+    public static string M_SaveSettingsTitle => ResourceManager.GetString("M_SaveSettingsTitle", resourceCulture)!;
+
+    public static string M_SettingsFileType => ResourceManager.GetString("M_SettingsFileType", resourceCulture)!;
+
+    public static string M_SettingsExported => ResourceManager.GetString("M_SettingsExported", resourceCulture)!;
+
+    public static string M_PickingBackupFile => ResourceManager.GetString("M_PickingBackupFile", resourceCulture)!;
+
+    public static string M_PickAllDataTitle => ResourceManager.GetString("M_PickAllDataTitle", resourceCulture)!;
+
+    public static string M_PickSettingsTitle => ResourceManager.GetString("M_PickSettingsTitle", resourceCulture)!;
+
+    public static string M_ImportCancelled => ResourceManager.GetString("M_ImportCancelled", resourceCulture)!;
+
+    public static string M_ReadingBackup => ResourceManager.GetString("M_ReadingBackup", resourceCulture)!;
+
+    public static string M_ValidatingBackup => ResourceManager.GetString("M_ValidatingBackup", resourceCulture)!;
+
+    public static string M_ValidationPassed => ResourceManager.GetString("M_ValidationPassed", resourceCulture)!;
+
+    public static string M_ValidationUnsupported => ResourceManager.GetString("M_ValidationUnsupported", resourceCulture)!;
+
+    public static string M_ReadOrValidateFailed => ResourceManager.GetString("M_ReadOrValidateFailed", resourceCulture)!;
+
+    public static string M_SourceVersion => ResourceManager.GetString("M_SourceVersion", resourceCulture)!;
+
+    public static string M_UnrecognizedVersion => ResourceManager.GetString("M_UnrecognizedVersion", resourceCulture)!;
+
+    public static string M_ImportFileCount => ResourceManager.GetString("M_ImportFileCount", resourceCulture)!;
+
+    public static string S_ConfirmImport => ResourceManager.GetString("S_ConfirmImport", resourceCulture)!;
+
+    public static string C_ConfirmImport => ResourceManager.GetString("C_ConfirmImport", resourceCulture)!;
+
+    public static string C_Cancel => ResourceManager.GetString("C_Cancel", resourceCulture)!;
+
+    public static string M_BackupServiceUnavailable => ResourceManager.GetString("M_BackupServiceUnavailable", resourceCulture)!;
+
+    public static string M_Importing => ResourceManager.GetString("M_Importing", resourceCulture)!;
+
+    public static string M_ImportCompleted => ResourceManager.GetString("M_ImportCompleted", resourceCulture)!;
+
+    public static string M_ImportFailed => ResourceManager.GetString("M_ImportFailed", resourceCulture)!;
+
+    public static string M_PendingImportExists => ResourceManager.GetString("M_PendingImportExists", resourceCulture)!;
+
+    public static string M_StorageUnavailable => ResourceManager.GetString("M_StorageUnavailable", resourceCulture)!;
+
+    public static string C_ViewOnGitHub => ResourceManager.GetString("C_ViewOnGitHub", resourceCulture)!;
+
+    public static string M_BrowserUnavailable => ResourceManager.GetString("M_BrowserUnavailable", resourceCulture)!;
+
+    public static string M_OpenBrowserFailed => ResourceManager.GetString("M_OpenBrowserFailed", resourceCulture)!;
+
+    public static string M_InAppUpdateUnsupported => ResourceManager.GetString("M_InAppUpdateUnsupported", resourceCulture)!;
+
+    public static string M_IosUpdateDeferred => ResourceManager.GetString("M_IosUpdateDeferred", resourceCulture)!;
+
+    public static string M_UpdateSecurityNote => ResourceManager.GetString("M_UpdateSecurityNote", resourceCulture)!;
 }

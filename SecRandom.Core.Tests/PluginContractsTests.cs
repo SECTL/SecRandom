@@ -234,6 +234,12 @@ public class PluginContractsTests
             throw new NotSupportedException();
         }
 
+        public Task<IViewHandle> ShowExclusiveAsync(string hostId, string viewId, ViewShowOptions? options = null, CancellationToken cancellationToken = default)
+        {
+            LastShownViewId = viewId;
+            throw new NotSupportedException();
+        }
+
         public Task<ViewCloseResult> ShowModalAsync(string viewId, ViewShowOptions? options = null, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 

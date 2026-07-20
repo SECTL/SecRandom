@@ -392,7 +392,39 @@ public partial class App : Application
 
                 services.AddPlatformServices(platform);
                 services.AddViewEngine()
-                    .AddView<HistoryPage>("main.history");
+                    .AddView<HistoryPage>("main.history")
+                    .AddView<RollCallPage>("main.rollCall")
+                    .AddView<LotteryPage>("main.lottery")
+                    .AddView<HomeSettingsPage>("settings.overview")
+                    .AddView<BasicSettingsPage>("settings.general.basic")
+                    .AddView<SecuritySettingsPage>("settings.general.security")
+                    .AddView<PrivacySettingsPage>("settings.general.privacy")
+                    .AddView<VerificationSettingsPage>("settings.general.verification")
+                    .AddView<BackupSettingsPage>("settings.general.backup")
+                    .AddView<AppearanceSettingsPage>("settings.personalized.appearance")
+                    .AddView<FloatingWindowSettingsPage>("settings.personalized.floatingWindow")
+                    .AddView<MusicSettingsPage>("settings.personalized.music")
+                    .AddView<LinkageSettingsPage>("settings.linkage")
+                    .AddView<MoreSettingsPage>("settings.more")
+                    .AddView<RollCallListSettingsPage>("settings.listManagement.rollCallList")
+                    .AddView<LotteryListSettingsPage>("settings.listManagement.lotteryList")
+                    .AddView<DefaultDrawSettingsPage>("settings.picking.default")
+                    .AddView<RollCallDrawSettingsPage>("settings.picking.rollCall")
+                    .AddView<QuickDrawSettingsPage>("settings.picking.quickDraw")
+                    .AddView<LotteryDrawSettingsPage>("settings.picking.lottery")
+                    .AddView<VoiceSettingsPage>("settings.notification.voiceMusic")
+                    .AddView<DefaultNotificationSettingsPage>("settings.notification.default")
+                    .AddView<RollCallNotificationSettingsPage>("settings.notification.rollCall")
+                    .AddView<QuickDrawNotificationSettingsPage>("settings.notification.quickDraw")
+                    .AddView<LotteryNotificationSettingsPage>("settings.notification.lottery")
+                    .AddView<HistoryManagementSettingsPage>("settings.history.management")
+                    .AddView<RollCallHistorySettingsPage>("settings.history.rollCall")
+                    .AddView<LotteryHistorySettingsPage>("settings.history.lottery")
+                    .AddView<PluginsSettingsPage>("settings.plugin")
+                    .AddView<UpdateSettingsPage>("settings.update")
+                    .AddView<AboutSettingsPage>("settings.about")
+                    .AddView<DebugSettingsPage>("settings.debug")
+                    .AddView<LogViewerSettingsPage>("settings.logs");
                 services.AddSingleton<DesktopViewHostProvider>();
                 services.AddSingleton<IViewHostProvider>(serviceProvider =>
                     serviceProvider.GetRequiredService<DesktopViewHostProvider>());
@@ -432,6 +464,7 @@ public partial class App : Application
                 services.AddSingleton<SettingsSearchService>();
                 services.AddSingleton<FirstRunOobeService>();
                 services.AddSingleton<OobeDataSetupService>();
+                services.AddSingleton<SecRandom.Core.Services.Archive.IArchivePostImportHooks, Services.ImportExport.DesktopArchivePostImportHooks>();
                 services.AddSingleton<IImportExportService, Services.ImportExport.ImportExportService>();
                 services.AddHostedService<AutomaticBackupService>();
                 services.AddSingleton(pluginStateStore);
@@ -464,7 +497,8 @@ public partial class App : Application
                 services.AddSingleton(serviceProvider => new MusicLibraryService(
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
                     serviceProvider.GetRequiredService<ILogger<MusicLibraryService>>(),
-                    attachedSettingsProfileService: serviceProvider.GetRequiredService<IProfileService>()));
+                    attachedSettingsProfileService: serviceProvider.GetRequiredService<IProfileService>(),
+                    profileCatalogManager: serviceProvider.GetRequiredService<IProfileCatalogManager>()));
                 services.AddSingleton<DrawAudioService>();
                 services.AddSingleton<CsesScheduleParser>();
                 services.AddSingleton<ICsesScheduleStore, CsesScheduleStore>();
@@ -1008,9 +1042,18 @@ public partial class App : Application
                 };
                 var mainWindow = _mainWindow;
                 var mainView = (MainView)mainWindow.Content;
+                mainWindow.Closing += (_, e) =>
+                {
+                    // 后台驻留/退出请求会取消本次关闭并复用窗口，此时不得清理 embedded host。
+                    if (e.Cancel)
+                        return;
+
+                    // Closing 阶段同步发起清理：UI 线程上的同步段立即完成，
+                    // 避免窗口重开时新 MainView 注册同 ID host 与旧实例竞争。
+                    ObserveTask(mainView.CloseEmbeddedHostAsync(ViewCloseReason.HostDestroyed), "Main embedded host cleanup failed.");
+                };
                 mainWindow.Closed += (_, _) =>
                 {
-                    ObserveTask(mainView.CloseEmbeddedHostAsync(ViewCloseReason.HostDestroyed), "Main embedded host cleanup failed.");
                     if (ReferenceEquals(_mainWindow, mainWindow))
                         _mainWindow = null;
                 };
@@ -1183,9 +1226,17 @@ public partial class App : Application
                 };
                 var settingsWindow = _settingsWindow;
                 var settingsView = (SettingsView)settingsWindow.Content;
+                settingsWindow.Closing += (_, e) =>
+                {
+                    // 与主窗口一致：取消关闭（如后台驻留）时保留 embedded host 供窗口复用。
+                    if (e.Cancel)
+                        return;
+
+                    // Closing 阶段同步发起清理，避免重开设置窗口时同 ID host 注册竞争。
+                    ObserveTask(settingsView.CloseEmbeddedHostAsync(ViewCloseReason.HostDestroyed), "Settings embedded host cleanup failed.");
+                };
                 settingsWindow.Closed += (_, _) =>
                 {
-                    ObserveTask(settingsView.CloseEmbeddedHostAsync(ViewCloseReason.HostDestroyed), "Settings embedded host cleanup failed.");
                     if (ReferenceEquals(_settingsWindow, settingsWindow))
                         _settingsWindow = null;
                 };

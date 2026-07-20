@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -17,13 +18,13 @@ public sealed class CsesScheduleParser
     public CsesSchedule Parse(string content)
     {
         if (string.IsNullOrWhiteSpace(content))
-            throw new CsesScheduleException(CsesScheduleError.Empty);
+            throw CsesScheduleException.Create(CsesScheduleError.Empty);
 
         var root = AsMap(_deserializer.Deserialize<object>(content))
-            ?? throw new CsesScheduleException(CsesScheduleError.RootNotObject);
+            ?? throw CsesScheduleException.Create(CsesScheduleError.RootNotObject);
         var courses = ParseTimeslots(root).ToList();
         if (courses.Count == 0)
-            throw new CsesScheduleException(CsesScheduleError.NoValidItems);
+            throw CsesScheduleException.Create(CsesScheduleError.NoValidItems);
 
         ValidateCourses(courses);
         var normalized = string.Join("\n", courses
@@ -45,7 +46,7 @@ public sealed class CsesScheduleParser
                 foreach (var item in timeslots)
                 {
                     if (AsMap(item) is not { } slot || !TryCreateCourse(slot, subjects, out var course))
-                        throw new CsesScheduleException(CsesScheduleError.InvalidItem);
+                        throw CsesScheduleException.Create(CsesScheduleError.InvalidItem);
                     yield return course;
                 }
 
@@ -63,7 +64,7 @@ public sealed class CsesScheduleParser
                 foreach (var classItem in AsList(daySchedule.TryGetValue("classes", out var classes) ? classes : null))
                 {
                     if (AsMap(classItem) is not { } @class)
-                        throw new CsesScheduleException(CsesScheduleError.InvalidItem);
+                        throw CsesScheduleException.Create(CsesScheduleError.InvalidItem);
                     var mapped = new Dictionary<string, object?>(@class, StringComparer.OrdinalIgnoreCase)
                     {
                         ["day_of_week"] = day
@@ -73,7 +74,7 @@ public sealed class CsesScheduleParser
                     if (!mapped.ContainsKey("location") && mapped.TryGetValue("room", out var room))
                         mapped["location"] = room;
                     if (!TryCreateCourse(mapped, subjects, out var course))
-                        throw new CsesScheduleException(CsesScheduleError.InvalidItem);
+                        throw CsesScheduleException.Create(CsesScheduleError.InvalidItem);
                     yield return course;
                 }
             }
@@ -125,7 +126,7 @@ public sealed class CsesScheduleParser
         foreach (var course in courses)
         {
             if (course.StartTime >= course.EndTime)
-                throw new CsesScheduleException(CsesScheduleError.InvalidTime, course.Name);
+                throw CsesScheduleException.Create(CsesScheduleError.InvalidTime, course.Name);
         }
 
         foreach (var group in courses.GroupBy(course => course.DayOfWeek))
@@ -133,7 +134,7 @@ public sealed class CsesScheduleParser
             var ordered = group.OrderBy(course => course.StartTime).ToArray();
             for (var i = 1; i < ordered.Length; i++)
                 if (ordered[i].StartTime < ordered[i - 1].EndTime)
-                    throw new CsesScheduleException(CsesScheduleError.OverlappingItems, group.Key);
+                    throw CsesScheduleException.Create(CsesScheduleError.OverlappingItems, group.Key);
         }
     }
 
@@ -216,9 +217,48 @@ public enum CsesScheduleError
     OverlappingItems
 }
 
-public sealed class CsesScheduleException(CsesScheduleError error, object? argument = null)
-    : Exception
+// InvalidDataException 是密封类型，CsesScheduleException 无法作为异常继承它；
+// 改为工厂方法：生成固定中文 Message 的 InvalidDataException，并把结构化错误码/参数
+// 存入 Data，UI 层用 TryGetError 取回后按资源本地化（与 Message 的文化无关性解耦）。
+public static class CsesScheduleException
 {
-    public CsesScheduleError Error { get; } = error;
-    public object? Argument { get; } = argument;
+    private const string ErrorKey = nameof(CsesScheduleError);
+    private const string ArgumentKey = "Argument";
+
+    public static InvalidDataException Create(CsesScheduleError error, object? argument = null)
+    {
+        var exception = new InvalidDataException(Describe(error, argument));
+        exception.Data[ErrorKey] = error;
+        if (argument is not null)
+            exception.Data[ArgumentKey] = argument;
+        return exception;
+    }
+
+    public static bool TryGetError(
+        InvalidDataException exception,
+        out CsesScheduleError error,
+        out object? argument)
+    {
+        if (exception.Data[ErrorKey] is CsesScheduleError value)
+        {
+            error = value;
+            argument = exception.Data[ArgumentKey];
+            return true;
+        }
+
+        error = default;
+        argument = null;
+        return false;
+    }
+
+    private static string Describe(CsesScheduleError error, object? argument) => error switch
+    {
+        CsesScheduleError.Empty => "课表内容为空。",
+        CsesScheduleError.RootNotObject => "课表根节点不是对象。",
+        CsesScheduleError.NoValidItems => "课表不包含任何有效课程。",
+        CsesScheduleError.InvalidItem => "课表包含无效课程项。",
+        CsesScheduleError.InvalidTime => $"课程时间无效：{argument}。",
+        CsesScheduleError.OverlappingItems => $"课程时间重叠：{argument}。",
+        _ => "课表数据无效。"
+    };
 }

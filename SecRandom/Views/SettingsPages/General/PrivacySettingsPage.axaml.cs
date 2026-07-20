@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Views;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.ViewModels;
@@ -8,7 +9,7 @@ using SecRandom.ViewModels;
 namespace SecRandom.Views.SettingsPages.General;
 
 [PageInfo("settings.general.privacy", FluentIcons.EyeFilled, "settings.general")]
-public partial class PrivacySettingsPage : UserControl
+public partial class PrivacySettingsPage : ViewBase
 {
     public PrivacySettingsPage()
     {

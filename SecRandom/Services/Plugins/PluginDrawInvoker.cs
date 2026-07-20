@@ -6,6 +6,7 @@ using SecRandom.Core.Abstraction.Services;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Plugins;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.Security;
@@ -22,6 +23,7 @@ public sealed class PluginDrawInvoker(
     MainConfigHandler configHandler,
     DrawEngine drawEngine,
     IProfileService profileService,
+    IDrawCommitService drawCommitService,
     IFeatureAvailabilityService featureAvailability) : IPluginDrawInvoker
 {
     public async Task<PluginDrawResult> DrawStudentsAsync(PluginStudentDrawRequest request)
@@ -30,20 +32,29 @@ public sealed class PluginDrawInvoker(
         await linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.RollCallStart, () =>
         {
             var studentListName = profileService.CurrentStudentList?.Name ?? string.Empty;
+            var courseName = linkageDrawCoordinator.GetCourseName();
+            var settings = configHandler.Data.RollCallSettings;
+            var threshold = DrawRepeatPolicy.ResolveThreshold(settings.DrawMode, settings.HalfRepeat);
             var temporaryCounts = temporaryRecordService.GetStudentCounts(studentListName, string.Empty, string.Empty);
-            var result = drawEngine.DrawStudent(Math.Max(1, request.Count), student =>
-                MatchesTags(student.Tags, request) && !HasReachedStudentRepeatLimit(student, temporaryCounts),
-                linkageDrawCoordinator.GetCourseName());
+            // 重复阈值只按临时记录口径过滤一次（与页面一致），不再叠加 DrawEngine 的历史制阈值。
+            var eligible = DrawCandidateFilter.FilterEligibleStudents(
+                profileService.CurrentStudentList?.Students ?? [],
+                string.Empty,
+                string.Empty,
+                temporaryCounts,
+                threshold,
+                student => MatchesTags(student.Tags, request));
+            var requestedCount = Math.Max(1, request.Count);
+            var result = drawEngine.DrawPreparedStudents(requestedCount, eligible, DrawSettingsType.RollCall, courseName);
             if (result.IsSuccess && result.Result.Count > 0)
             {
-                var courseName = linkageDrawCoordinator.GetCourseName();
-                profileService.RecordStudentHistory(
+                drawCommitService.CommitStudentDraw(new StudentDrawCommit(
                     result.Result,
                     DateTime.Now,
-                    Math.Max(1, request.Count),
-                    drawMethod: (int)configHandler.Data.RollCallSettings.DrawType,
-                    courseName: courseName);
-                temporaryRecordService.RecordStudents(studentListName, string.Empty, string.Empty, result.Result);
+                    requestedCount,
+                    studentListName,
+                    DrawMethod: (int)settings.DrawType,
+                    CourseName: courseName));
             }
             logger.LogInformation(
                 "Plugin draw invoked: plugin={PluginId}, type=student, count={Count}, includeTags={IncludeTags}, excludeTags={ExcludeTags}, status={Status}, resultCount={ResultCount}.",
@@ -81,8 +92,12 @@ public sealed class PluginDrawInvoker(
                 temporaryRecordService.GetPrizeCounts(prizeListName));
             if (result.IsSuccess && result.Result.Count > 0)
             {
-                profileService.RecordPrizeHistory(result.Result, DateTime.Now, requestedCount);
-                temporaryRecordService.RecordPrizes(prizeListName, result.Result);
+                drawCommitService.CommitLotteryDraw(new LotteryDrawCommit(
+                    result.Result,
+                    DateTime.Now,
+                    requestedCount,
+                    prizeListName,
+                    PrizeDrawMethod: (int)configHandler.Data.LotterySettings.DrawType));
             }
             logger.LogInformation(
                 "Plugin draw invoked: plugin={PluginId}, type=prize, count={Count}, status={Status}, resultCount={ResultCount}.",
@@ -102,19 +117,5 @@ public sealed class PluginDrawInvoker(
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         return request.IncludeTags.All(tagSet.Contains) && !request.ExcludeTags.Any(tagSet.Contains);
-    }
-
-    private bool HasReachedStudentRepeatLimit(Student student, IReadOnlyDictionary<string, int> temporaryCounts)
-    {
-        var settings = configHandler.Data.RollCallSettings;
-        var mode = settings.DrawMode;
-        var threshold = mode switch
-        {
-            DrawMode.Repeat => 0,
-            DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, settings.HalfRepeat),
-            _ => 1
-        };
-        return threshold > 0 && temporaryCounts.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(student)) >= threshold;
     }
 }

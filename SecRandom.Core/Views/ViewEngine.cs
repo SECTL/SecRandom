@@ -24,8 +24,22 @@ internal sealed class ViewEngine(IServiceProvider services, IViewRegistry regist
                 if (!options.ReuseExistingView)
                     throw new InvalidOperationException($"View '{viewId}' is already active.");
 
-                await existingSession.Host.ActivateAsync(existingSession.View, cancellationToken).ConfigureAwait(false);
-                return new ViewHandle(existingSession, CloseSessionAsync);
+                try
+                {
+                    await existingSession.Host.ActivateAsync(existingSession.View, cancellationToken).ConfigureAwait(false);
+                    return new ViewHandle(existingSession, CloseSessionAsync);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // host 已销毁但会话尚未摘除（桌面关窗清理竞态）：按 HostDestroyed 结束残留会话，
+                    // 然后落到下面的新建路径重建视图，而不是把异常抛给调用方。
+                    _sessionsById.Remove(viewId);
+                    _sessionsByView.Remove(existingSession.View);
+                    var staleResult = ViewCloseResult.AlreadyClosed(ViewCloseReason.HostDestroyed);
+                    await RunOnUiThreadAsync(() => existingSession.View.CompleteClose(staleResult), cancellationToken)
+                        .ConfigureAwait(false);
+                    existingSession.TryComplete(staleResult);
+                }
             }
 
             if (!registry.TryGet(viewId, out var registration) || registration is null)
@@ -64,6 +78,40 @@ internal sealed class ViewEngine(IServiceProvider services, IViewRegistry regist
         {
             _gate.Release();
         }
+    }
+
+    public async Task<IViewHandle> ShowExclusiveAsync(string hostId, string viewId, ViewShowOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(hostId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(viewId);
+
+        List<ViewSession> siblingPages;
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            siblingPages = _sessionsById.Values
+                .Where(session => !string.Equals(session.ViewId, viewId, StringComparison.Ordinal)
+                                  && session.Presentation == ViewPresentation.Page
+                                  && string.Equals(session.Host.HostId, hostId, StringComparison.Ordinal))
+                .ToList();
+        }
+        finally
+        {
+            _gate.Release();
+        }
+
+        foreach (var session in siblingPages)
+            await CloseSessionAsync(session, new ViewCloseRequest(ViewCloseReason.Programmatic, null, false), cancellationToken)
+                .ConfigureAwait(false);
+
+        var exclusiveOptions = new ViewShowOptions
+        {
+            ActivationPreference = options?.ActivationPreference ?? ViewActivationPreference.Default,
+            HostId = hostId,
+            Presentation = options?.Presentation,
+            ReuseExistingView = options?.ReuseExistingView ?? true
+        };
+        return await ShowAsync(viewId, exclusiveOptions, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<ViewCloseResult> ShowModalAsync(string viewId, ViewShowOptions? options = null, CancellationToken cancellationToken = default)

@@ -1,0 +1,569 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+                id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true" />
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="M_CheckingUpdates" xml:space="preserve">
+        <value>更新を確認しています</value>
+    </data>
+    <data name="M_UpToDate" xml:space="preserve">
+        <value>最新バージョンです</value>
+    </data>
+    <data name="M_UpdateAvailable" xml:space="preserve">
+        <value>新しいバージョン {0} があります</value>
+    </data>
+    <data name="M_CheckUpdatesFailed" xml:space="preserve">
+        <value>更新の確認に失敗しました: {0}</value>
+    </data>
+    <data name="M_DownloadingUpdate" xml:space="preserve">
+        <value>更新をダウンロードしています</value>
+    </data>
+    <data name="M_OpeningInstaller" xml:space="preserve">
+        <value>システムインストーラーを開いています</value>
+    </data>
+    <data name="M_StartupFailed" xml:space="preserve">
+        <value>モバイル版の初期化に失敗しました。アプリを再起動してください。問題が解決しない場合は Android ログを提出してください。</value>
+    </data>
+    <data name="M_InstallerOpened" xml:space="preserve">
+        <value>システムインストーラーに引き渡しました</value>
+    </data>
+    <data name="M_InstallUpdateFailed" xml:space="preserve">
+        <value>更新のインストールに失敗しました: {0}</value>
+    </data>
+    <data name="M_EmptyMetadata" xml:space="preserve">
+        <value>更新メタデータが空です。</value>
+    </data>
+    <data name="M_MissingReleaseChannel" xml:space="preserve">
+        <value>更新メタデータに release チャネルがありません。</value>
+    </data>
+    <data name="M_ManifestUnavailable" xml:space="preserve">
+        <value>更新マニフェストを取得できません。</value>
+    </data>
+    <data name="M_PackageUnavailable" xml:space="preserve">
+        <value>更新パッケージをダウンロードできません。</value>
+    </data>
+    <data name="M_PackageLengthInvalid" xml:space="preserve">
+        <value>更新パッケージの長さ検証に失敗しました。</value>
+    </data>
+    <data name="M_PackageHashInvalid" xml:space="preserve">
+        <value>更新パッケージのハッシュ検証に失敗しました。</value>
+    </data>
+    <data name="M_ManifestSignatureInvalid" xml:space="preserve">
+        <value>更新マニフェストの署名が無効です。</value>
+    </data>
+    <data name="M_ManifestInvalid" xml:space="preserve">
+        <value>更新マニフェストが無効です。</value>
+    </data>
+    <data name="M_ManifestTagMismatch" xml:space="preserve">
+        <value>更新マニフェストがリリースタグと一致しません。</value>
+    </data>
+    <data name="M_AndroidContextUnavailable" xml:space="preserve">
+        <value>Android コンテキストを利用できません。</value>
+    </data>
+    <data name="M_AndroidOnlyInstaller" xml:space="preserve">
+        <value>システムインストールは Android のみ対応しています。</value>
+    </data>
+    <data name="N_Draw" xml:space="preserve">
+        <value>抽選</value>
+    </data>
+    <data name="N_History" xml:space="preserve">
+        <value>履歴</value>
+    </data>
+    <data name="N_Overview" xml:space="preserve">
+        <value>概要</value>
+    </data>
+    <data name="N_Settings" xml:space="preserve">
+        <value>設定</value>
+    </data>
+    <data name="C_RollCall" xml:space="preserve">
+        <value>点呼</value>
+    </data>
+    <data name="C_Lottery" xml:space="preserve">
+        <value>抽選</value>
+    </data>
+    <data name="C_DrawOne" xml:space="preserve">
+        <value>1人を抽選</value>
+    </data>
+    <data name="C_DrawPrize" xml:space="preserve">
+        <value>賞品を抽選</value>
+    </data>
+    <data name="C_ManageStudentList" xml:space="preserve">
+        <value>名簿を管理</value>
+    </data>
+    <data name="C_ManagePrizePool" xml:space="preserve">
+        <value>賞品プールを管理</value>
+    </data>
+    <data name="C_ClearTemporaryRecords" xml:space="preserve">
+        <value>一時的な抽選記録をクリア</value>
+    </data>
+    <data name="C_AddStudent" xml:space="preserve">
+        <value>メンバーを追加</value>
+    </data>
+    <data name="C_AddPrize" xml:space="preserve">
+        <value>賞品を追加</value>
+    </data>
+    <data name="C_Remove" xml:space="preserve">
+        <value>削除</value>
+    </data>
+    <data name="C_CheckUpdates" xml:space="preserve">
+        <value>更新を確認</value>
+    </data>
+    <data name="C_InstallUpdate" xml:space="preserve">
+        <value>更新をダウンロードしてインストール</value>
+    </data>
+    <data name="S_CurrentList" xml:space="preserve">
+        <value>現在の名簿</value>
+    </data>
+    <data name="S_CurrentPool" xml:space="preserve">
+        <value>現在の賞品プール</value>
+    </data>
+    <data name="S_RecentDraws" xml:space="preserve">
+        <value>最近の抽選</value>
+    </data>
+    <data name="S_DataOverview" xml:space="preserve">
+        <value>データ概要</value>
+    </data>
+    <data name="S_StudentList" xml:space="preserve">
+        <value>名簿</value>
+    </data>
+    <data name="S_PrizePool" xml:space="preserve">
+        <value>賞品プール</value>
+    </data>
+    <data name="S_AppUpdates" xml:space="preserve">
+        <value>アプリの更新</value>
+    </data>
+    <data name="P_Draw" xml:space="preserve">
+        <value>抽選</value>
+    </data>
+    <data name="P_History" xml:space="preserve">
+        <value>履歴</value>
+    </data>
+    <data name="P_Overview" xml:space="preserve">
+        <value>概要</value>
+    </data>
+    <data name="P_Settings" xml:space="preserve">
+        <value>設定</value>
+    </data>
+    <data name="W_StudentName" xml:space="preserve">
+        <value>メンバー名</value>
+    </data>
+    <data name="W_StudentId" xml:space="preserve">
+        <value>番号（任意）</value>
+    </data>
+    <data name="W_PrizeName" xml:space="preserve">
+        <value>賞品名</value>
+    </data>
+    <data name="W_PrizeId" xml:space="preserve">
+        <value>賞品番号（任意）</value>
+    </data>
+    <data name="M_Ready" xml:space="preserve">
+        <value>開始の準備ができました</value>
+    </data>
+    <data name="M_DefaultList" xml:space="preserve">
+        <value>既定の名簿</value>
+    </data>
+    <data name="M_DefaultPool" xml:space="preserve">
+        <value>既定の賞品プール</value>
+    </data>
+    <data name="M_NoStudents" xml:space="preserve">
+        <value>名簿に点呼できるメンバーがまだいません</value>
+    </data>
+    <data name="M_AddStudentsPrompt" xml:space="preserve">
+        <value>設定でメンバーを追加してください</value>
+    </data>
+    <data name="M_NoPrizes" xml:space="preserve">
+        <value>賞品プールに抽選できる賞品がまだありません</value>
+    </data>
+    <data name="M_AddPrizesPrompt" xml:space="preserve">
+        <value>設定で賞品を追加してください</value>
+    </data>
+    <data name="M_CandidateStudents" xml:space="preserve">
+        <value>現在 {0} 人が点呼可能です</value>
+    </data>
+    <data name="M_CandidatePrizes" xml:space="preserve">
+        <value>現在 {0} 件が抽選可能です</value>
+    </data>
+    <data name="M_DrawCompleted" xml:space="preserve">
+        <value>抽選が完了しました</value>
+    </data>
+    <data name="M_StudentId" xml:space="preserve">
+        <value>番号：{0}</value>
+    </data>
+    <data name="M_PrizeId" xml:space="preserve">
+        <value>番号：{0}</value>
+    </data>
+    <data name="M_NoHistory" xml:space="preserve">
+        <value>抽選記録はまだありません</value>
+    </data>
+    <data name="M_Students" xml:space="preserve">
+        <value>メンバー</value>
+    </data>
+    <data name="M_Prizes" xml:space="preserve">
+        <value>賞品</value>
+    </data>
+    <data name="M_RollCallRounds" xml:space="preserve">
+        <value>点呼ラウンド</value>
+    </data>
+    <data name="M_LotteryRounds" xml:space="preserve">
+        <value>抽選ラウンド</value>
+    </data>
+    <data name="M_Enabled" xml:space="preserve">
+        <value>有効</value>
+    </data>
+    <data name="M_Disabled" xml:space="preserve">
+        <value>無効</value>
+    </data>
+    <data name="M_NoCandidates" xml:space="preserve">
+        <value>抽選できる候補がありません</value>
+    </data>
+    <data name="M_NoEligibleCandidates" xml:space="preserve">
+        <value>条件に合う候補がありません</value>
+    </data>
+    <data name="M_RepeatLimitExhausted" xml:space="preserve">
+        <value>現在の繰り返し制限では抽選できる候補がありません</value>
+    </data>
+    <data name="M_InvalidWeight" xml:space="preserve">
+        <value>候補の重みが無効です</value>
+    </data>
+    <data name="M_DrawFailed" xml:space="preserve">
+        <value>抽選を完了できませんでした</value>
+    </data>
+    <data name="M_GeneralMobileOnly" xml:space="preserve">
+        <value>モバイル版はシステムの言語・ウィンドウ・バックグラウンドポリシーに自動的に適応します。デスクトップ専用のオプションはここに表示されません。</value>
+    </data>
+    <data name="M_BackupMobileUnavailable" xml:space="preserve">
+        <value>モバイル版のバックアップと復元は、システムのファイルアクセス権限を伴う完全なトランザクションが提供され次第公開されます。</value>
+    </data>
+    <data name="M_AboutLicense" xml:space="preserve">
+        <value>SecRandom はイベントや組織の場面向けの公平な抽選ツールで、GPLv3 ライセンスで公開されています。</value>
+    </data>
+    <data name="C_Back" xml:space="preserve">
+        <value>設定に戻る</value>
+    </data>
+    <data name="S_SettingsCategories" xml:space="preserve">
+        <value>設定カテゴリ</value>
+    </data>
+    <data name="S_General" xml:space="preserve">
+        <value>一般</value>
+    </data>
+    <data name="S_General_D" xml:space="preserve">
+        <value>モバイルでのシステム適応と基本動作</value>
+    </data>
+    <data name="S_Personalization" xml:space="preserve">
+        <value>個人設定</value>
+    </data>
+    <data name="S_Personalization_D" xml:space="preserve">
+        <value>テーマと外観</value>
+    </data>
+    <data name="S_ListManagement" xml:space="preserve">
+        <value>名簿管理</value>
+    </data>
+    <data name="S_ListManagement_D" xml:space="preserve">
+        <value>名簿と賞品プール</value>
+    </data>
+    <data name="S_DrawSettings" xml:space="preserve">
+        <value>抽選</value>
+    </data>
+    <data name="S_DrawSettings_D" xml:space="preserve">
+        <value>点呼と抽選のルール</value>
+    </data>
+    <data name="S_Backup" xml:space="preserve">
+        <value>バックアップ</value>
+    </data>
+    <data name="S_Backup_D" xml:space="preserve">
+        <value>データのバックアップと復元</value>
+    </data>
+    <data name="S_AppUpdates_D" xml:space="preserve">
+        <value>署名済みアプリの更新を確認</value>
+    </data>
+    <data name="S_About" xml:space="preserve">
+        <value>このアプリについて</value>
+    </data>
+    <data name="S_About_D" xml:space="preserve">
+        <value>バージョンとライセンス</value>
+    </data>
+    <data name="S_Theme" xml:space="preserve">
+        <value>テーマ</value>
+    </data>
+    <data name="S_RollCall" xml:space="preserve">
+        <value>点呼</value>
+    </data>
+    <data name="S_Lottery" xml:space="preserve">
+        <value>抽選</value>
+    </data>
+    <data name="S_RepeatMode" xml:space="preserve">
+        <value>繰り返しルール</value>
+    </data>
+    <data name="S_Version" xml:space="preserve">
+        <value>バージョン</value>
+    </data>
+    <data name="O_ThemeAuto" xml:space="preserve">
+        <value>システムに従う</value>
+    </data>
+    <data name="O_ThemeLight" xml:space="preserve">
+        <value>ライト</value>
+    </data>
+    <data name="O_ThemeDark" xml:space="preserve">
+        <value>ダーク</value>
+    </data>
+    <data name="O_Fair" xml:space="preserve">
+        <value>公平な抽選</value>
+    </data>
+    <data name="O_Random" xml:space="preserve">
+        <value>ランダム抽選</value>
+    </data>
+    <data name="O_NoRepeat" xml:space="preserve">
+        <value>繰り返さない</value>
+    </data>
+    <data name="O_Repeat" xml:space="preserve">
+        <value>繰り返しを許可</value>
+    </data>
+    <data name="O_Count" xml:space="preserve">
+        <value>在庫数で決定</value>
+    </data>
+    <data name="O_Pan" xml:space="preserve">
+        <value>ルーレットの重み</value>
+    </data>
+    <data name="O_HalfRepeat" xml:space="preserve">
+        <value>半繰り返し</value>
+    </data>
+    <data name="O_Restarted" xml:space="preserve">
+        <value>再起動後にクリア</value>
+    </data>
+    <data name="O_Cleared" xml:space="preserve">
+        <value>手動でクリア</value>
+    </data>
+    <data name="S_HalfRepeat" xml:space="preserve">
+        <value>半繰り返しのしきい値</value>
+    </data>
+    <data name="S_ClearRecord" xml:space="preserve">
+        <value>記録をクリア</value>
+    </data>
+    <data name="M_Drawing" xml:space="preserve">
+        <value>抽選中…</value>
+    </data>
+    <data name="C_GoToDraw" xml:space="preserve">
+        <value>抽選へ移動</value>
+    </data>
+    <data name="M_NoHistoryPrompt" xml:space="preserve">
+        <value>点呼または抽選を完了すると、結果がここに表示されます。</value>
+    </data>
+    <data name="M_TimeJustNow" xml:space="preserve">
+        <value>たった今</value>
+    </data>
+    <data name="M_TimeMinutesAgo" xml:space="preserve">
+        <value>{0} 分前</value>
+    </data>
+    <data name="M_TimeHoursAgo" xml:space="preserve">
+        <value>{0} 時間前</value>
+    </data>
+    <data name="M_TimeDaysAgo" xml:space="preserve">
+        <value>{0} 日前</value>
+    </data>
+    <data name="M_Unknown" xml:space="preserve">
+        <value>不明</value>
+    </data>
+    <data name="S_OnlineStatus" xml:space="preserve">
+        <value>オンラインステータスの報告</value>
+    </data>
+    <data name="O_Off" xml:space="preserve">
+        <value>オフ</value>
+    </data>
+    <data name="O_Anonymous" xml:space="preserve">
+        <value>匿名</value>
+    </data>
+    <data name="O_Full" xml:space="preserve">
+        <value>完全</value>
+    </data>
+    <data name="S_Telemetry" xml:space="preserve">
+        <value>エラーとパフォーマンスのテレメトリ</value>
+    </data>
+    <data name="S_SentryTelemetry" xml:space="preserve">
+        <value>Sentry テレメトリ</value>
+    </data>
+    <data name="S_SentryTelemetry_D" xml:space="preserve">
+        <value>クラッシュとパフォーマンスのデータを匿名でアップロードします。個人情報は含まれません。</value>
+    </data>
+    <data name="S_Language" xml:space="preserve">
+        <value>言語</value>
+    </data>
+    <data name="S_Language_D" xml:space="preserve">
+        <value>言語の切り替えはすぐに反映されます。再起動は不要です。</value>
+    </data>
+    <data name="S_GroupPreferences" xml:space="preserve">
+        <value>環境設定</value>
+    </data>
+    <data name="S_GroupData" xml:space="preserve">
+        <value>データ</value>
+    </data>
+    <data name="S_GroupApp" xml:space="preserve">
+        <value>アプリ</value>
+    </data>
+    <data name="M_EmptyStudentList" xml:space="preserve">
+        <value>名簿が空です</value>
+    </data>
+    <data name="M_EmptyStudentListHint" xml:space="preserve">
+        <value>メンバーを追加すると点呼を開始できます。</value>
+    </data>
+    <data name="M_EmptyPrizePool" xml:space="preserve">
+        <value>賞品プールが空です</value>
+    </data>
+    <data name="M_EmptyPrizePoolHint" xml:space="preserve">
+        <value>賞品を追加すると抽選を開始できます。</value>
+    </data>
+    <data name="C_ExportAllData" xml:space="preserve">
+        <value>すべてのデータをエクスポート</value>
+    </data>
+    <data name="C_ImportAllData" xml:space="preserve">
+        <value>すべてのデータをインポート / 復元</value>
+    </data>
+    <data name="C_ExportSettings" xml:space="preserve">
+        <value>設定をエクスポート</value>
+    </data>
+    <data name="C_ImportSettings" xml:space="preserve">
+        <value>設定をインポート</value>
+    </data>
+    <data name="M_BackupPickerHint" xml:space="preserve">
+        <value>システムのファイルピッカーでエクスポートとインポートを行います。インポート前に SecRandom v3 形式を検証し、サポートされていないファイルはデータを一切変更しません。</value>
+    </data>
+    <data name="S_AllData" xml:space="preserve">
+        <value>すべてのデータ</value>
+    </data>
+    <data name="S_AllData_D" xml:space="preserve">
+        <value>名簿・履歴・設定などの全データを ZIP アーカイブにまとめます。</value>
+    </data>
+    <data name="S_SettingsSection" xml:space="preserve">
+        <value>設定</value>
+    </data>
+    <data name="S_SettingsSection_D" xml:space="preserve">
+        <value>アプリ設定のみをエクスポート / インポートします（settings envelope）。</value>
+    </data>
+    <data name="M_ExportingAllData" xml:space="preserve">
+        <value>すべてのデータをエクスポートしています…</value>
+    </data>
+    <data name="M_SaveAllDataTitle" xml:space="preserve">
+        <value>全データのバックアップを保存</value>
+    </data>
+    <data name="M_DataArchiveFileType" xml:space="preserve">
+        <value>SecRandom データアーカイブ</value>
+    </data>
+    <data name="M_ExportCancelled" xml:space="preserve">
+        <value>エクスポートをキャンセルしました。</value>
+    </data>
+    <data name="M_WritingToTarget" xml:space="preserve">
+        <value>選択した場所に書き込んでいます…</value>
+    </data>
+    <data name="M_AllDataExported" xml:space="preserve">
+        <value>すべてのデータを選択した場所にエクスポートしました。</value>
+    </data>
+    <data name="M_ExportFailed" xml:space="preserve">
+        <value>エクスポートに失敗しました：{0}</value>
+    </data>
+    <data name="M_ExportingSettings" xml:space="preserve">
+        <value>設定をエクスポートしています…</value>
+    </data>
+    <data name="M_SaveSettingsTitle" xml:space="preserve">
+        <value>設定のバックアップを保存</value>
+    </data>
+    <data name="M_SettingsFileType" xml:space="preserve">
+        <value>SecRandom 設定ファイル</value>
+    </data>
+    <data name="M_SettingsExported" xml:space="preserve">
+        <value>設定を選択した場所にエクスポートしました。</value>
+    </data>
+    <data name="M_PickingBackupFile" xml:space="preserve">
+        <value>バックアップファイルを選択しています…</value>
+    </data>
+    <data name="M_PickAllDataTitle" xml:space="preserve">
+        <value>全データのバックアップを選択</value>
+    </data>
+    <data name="M_PickSettingsTitle" xml:space="preserve">
+        <value>設定のバックアップを選択</value>
+    </data>
+    <data name="M_ImportCancelled" xml:space="preserve">
+        <value>インポートをキャンセルしました。</value>
+    </data>
+    <data name="M_ReadingBackup" xml:space="preserve">
+        <value>バックアップファイルを読み込んでいます…</value>
+    </data>
+    <data name="M_ValidatingBackup" xml:space="preserve">
+        <value>バックアップを検証しています…</value>
+    </data>
+    <data name="M_ValidationPassed" xml:space="preserve">
+        <value>検証に合格しました。確認するとインポートを開始します。</value>
+    </data>
+    <data name="M_ValidationUnsupported" xml:space="preserve">
+        <value>このファイルはサポートされている SecRandom v3 のエクスポートではないため、インポートできません。</value>
+    </data>
+    <data name="M_ReadOrValidateFailed" xml:space="preserve">
+        <value>読み込みまたは検証に失敗しました：{0}</value>
+    </data>
+    <data name="M_SourceVersion" xml:space="preserve">
+        <value>エクスポート元バージョン：{0}</value>
+    </data>
+    <data name="M_UnrecognizedVersion" xml:space="preserve">
+        <value>不明</value>
+    </data>
+    <data name="M_ImportFileCount" xml:space="preserve">
+        <value>含まれるファイル：{0} 件（{1} MB）</value>
+    </data>
+    <data name="S_ConfirmImport" xml:space="preserve">
+        <value>インポートの確認</value>
+    </data>
+    <data name="C_ConfirmImport" xml:space="preserve">
+        <value>インポートを確定</value>
+    </data>
+    <data name="C_Cancel" xml:space="preserve">
+        <value>キャンセル</value>
+    </data>
+    <data name="M_BackupServiceUnavailable" xml:space="preserve">
+        <value>バックアップサービスを利用できません。</value>
+    </data>
+    <data name="M_Importing" xml:space="preserve">
+        <value>インポートしています…</value>
+    </data>
+    <data name="M_ImportCompleted" xml:space="preserve">
+        <value>インポートが完了しました。{0} 個のファイルをインポートしました。</value>
+    </data>
+    <data name="M_ImportFailed" xml:space="preserve">
+        <value>インポートに失敗しました：{0}</value>
+    </data>
+    <data name="M_PendingImportExists" xml:space="preserve">
+        <value>現在のインポート確認を先に完了またはキャンセルしてください。</value>
+    </data>
+    <data name="M_StorageUnavailable" xml:space="preserve">
+        <value>このプラットフォームはシステムのファイル選択に対応していないため、バックアップ操作を実行できません。</value>
+    </data>
+    <data name="C_ViewOnGitHub" xml:space="preserve">
+        <value>GitHub でプロジェクトを見る</value>
+    </data>
+    <data name="M_BrowserUnavailable" xml:space="preserve">
+        <value>このプラットフォームではブラウザーを開けません。</value>
+    </data>
+    <data name="M_OpenBrowserFailed" xml:space="preserve">
+        <value>ブラウザーを開けませんでした。github.com/SECTL/SecRandom に手動でアクセスしてください。</value>
+    </data>
+    <data name="M_InAppUpdateUnsupported" xml:space="preserve">
+        <value>このプラットフォームはアプリ内更新に対応していません</value>
+    </data>
+    <data name="M_IosUpdateDeferred" xml:space="preserve">
+        <value>iOS の配布と更新は今後のバージョンで提供予定です。新しいバージョンはプロジェクトのリリースページから入手してください。</value>
+    </data>
+    <data name="M_UpdateSecurityNote" xml:space="preserve">
+        <value>更新パッケージは Ed25519 署名マニフェストで長さとハッシュを検証した後、システムインストーラーに引き渡されます。</value>
+    </data>
+</root>

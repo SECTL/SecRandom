@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Views;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.Picking;
@@ -17,7 +18,7 @@ using SecRandom.Services.Music;
 namespace SecRandom.Views.SettingsPages.Picking;
 
 [PageInfo("settings.picking.lottery", FluentIcons.LotteryFilled, "settings.picking")]
-public partial class LotteryDrawSettingsPage : UserControl
+public partial class LotteryDrawSettingsPage : ViewBase
 {
     private bool _normalizingSettings;
     private bool _isSubscribed;

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Views;
 using SecRandom.Core.Icons;
 using SecRandom.Models;
 using SecRandom.ViewModels.SettingsPages.History;
@@ -11,7 +12,7 @@ using SR = SecRandom.Langs.MainPages.History.Resources;
 namespace SecRandom.Views.SettingsPages.History;
 
 [PageInfo("settings.history.rollCall", FluentIcons.PersonFilled, "settings.history")]
-public partial class RollCallHistorySettingsPage : UserControl
+public partial class RollCallHistorySettingsPage : ViewBase
 {
     public RollCallHistorySettingsPage()
     {

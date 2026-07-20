@@ -238,23 +238,39 @@ public partial class MainView : UserControl, IFANavigationPageFactory
             return;
         }
 
-        if (info.Id == "main.history")
+        var viewEngine = IAppHost.GetService<IViewEngine>();
+        if (IAppHost.GetService<IViewRegistry>().TryGet(info.Id, out _))
         {
+            // MVE 页：清掉 Frame 并显式互斥（隐藏 + 禁命中测试），embedded host 独占内容区。
             ViewModel.FrameContent = null;
             SelectNavigationItem(info);
             ViewModel.SelectedPageInfo = info;
             _navigationFrame?.Navigate(null);
-            await IAppHost.GetService<IViewEngine>()
-                .ShowAsync(info.Id, new ViewShowOptions { HostId = EmbeddedHostId })
+            SetEmbeddedMode(true);
+            await viewEngine
+                .ShowExclusiveAsync(EmbeddedHostId, info.Id)
                 .ConfigureAwait(true);
             return;
         }
 
-        await IAppHost.GetService<IViewEngine>().CloseAsync("main.history").ConfigureAwait(true);
+        // Frame 页：关闭 embedded host 上的全部 MVE 会话，恢复 Frame 显示与命中测试。
+        await viewEngine.CloseHostAsync(_embeddedViewHost, ViewCloseReason.Programmatic).ConfigureAwait(true);
+        SetEmbeddedMode(false);
         ViewModel.FrameContent = null;
         SelectNavigationItem(info);
         ViewModel.SelectedPageInfo = info;
         _navigationFrame?.NavigateFromObject(info);
+    }
+
+    private void SetEmbeddedMode(bool isEmbedded)
+    {
+        if (_navigationFrame is null)
+            return;
+
+        // 与 ViewHostControl 自治可见性配合形成显式互斥：MVE 模式下 Frame 不可见，
+        // 避免 ViewHostControl 根 Grid 无背景时下层 Frame 内容透出。
+        _navigationFrame.IsVisible = !isEmbedded;
+        _navigationFrame.IsHitTestVisible = !isEmbedded;
     }
 
     private void NavigationView_OnItemInvoked(object? sender, FANavigationViewItemInvokedEventArgs e)

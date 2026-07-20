@@ -1,23 +1,20 @@
 using System;
-using System.IO;
-using System.Linq;
+using System.Collections.Generic;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Views;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Abstraction.Services;
-using SecRandom.Core.Services.Config;
-using SecRandom.Shared;
-using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.HistoryManagement.Resources;
 
 namespace SecRandom.Views.SettingsPages.History;
 
 [PageInfo("settings.history.management", FluentIcons.HistoryFilled, "settings.history")]
-public partial class HistoryManagementSettingsPage : UserControl
+public partial class HistoryManagementSettingsPage : ViewBase
 {
     public HistoryManagementSettingsPage()
     {
@@ -28,17 +25,15 @@ public partial class HistoryManagementSettingsPage : UserControl
 
     private void RefreshClearCombos()
     {
-        PopulateCombo(RollCallClassCombo, "roll_call_history");
-        PopulateCombo(LotteryPoolCombo, "lottery_history");
+        var historyQueryService = IAppHost.GetService<IHistoryQueryService>();
+        PopulateCombo(RollCallClassCombo, historyQueryService.GetStudentHistoryNames());
+        PopulateCombo(LotteryPoolCombo, historyQueryService.GetPrizeHistoryNames());
     }
 
-    private static void PopulateCombo(ComboBox combo, string subDir)
+    private static void PopulateCombo(ComboBox combo, IReadOnlyList<string> names)
     {
         combo.Items.Clear();
-        var dir = Utils.GetDirectoryPath("history", subDir);
-        foreach (var name in Directory.GetFiles(dir, "*.json")
-                     .Select(Path.GetFileNameWithoutExtension)
-                     .OrderBy(n => n))
+        foreach (var name in names)
             combo.Items.Add(name);
 
         if (combo.Items.Count > 0)
@@ -58,16 +53,8 @@ public partial class HistoryManagementSettingsPage : UserControl
 
         try
         {
-            var profileService = IAppHost.GetService<IProfileService>();
-            if (string.Equals(profileService.StudentHistoryConfig?.Name, name, StringComparison.OrdinalIgnoreCase))
-                profileService.ClearCurrentStudentHistory();
-            else
-            {
-                var historyConfig = new StudentHistoryConfig(name);
-                Clear(historyConfig.Data);
-                historyConfig.Save();
-            }
-            PopulateCombo(RollCallClassCombo, "roll_call_history");
+            IAppHost.GetService<IProfileCatalogManager>().ClearStudentHistory(name);
+            PopulateCombo(RollCallClassCombo, IAppHost.GetService<IHistoryQueryService>().GetStudentHistoryNames());
             this.ShowSuccessToast(string.Format(LR.M_ClearSuccess, name));
         }
         catch (Exception ex)
@@ -89,16 +76,8 @@ public partial class HistoryManagementSettingsPage : UserControl
 
         try
         {
-            var profileService = IAppHost.GetService<IProfileService>();
-            if (string.Equals(profileService.PrizeHistoryConfig?.Name, name, StringComparison.OrdinalIgnoreCase))
-                profileService.ClearCurrentPrizeHistory();
-            else
-            {
-                var historyConfig = new PrizeHistoryConfig(name);
-                Clear(historyConfig.Data);
-                historyConfig.Save();
-            }
-            PopulateCombo(LotteryPoolCombo, "lottery_history");
+            IAppHost.GetService<IProfileCatalogManager>().ClearPrizeHistory(name);
+            PopulateCombo(LotteryPoolCombo, IAppHost.GetService<IHistoryQueryService>().GetPrizeHistoryNames());
             this.ShowSuccessToast(string.Format(LR.M_ClearSuccess, name));
         }
         catch (Exception ex)
@@ -121,21 +100,4 @@ public partial class HistoryManagementSettingsPage : UserControl
         return result == FAContentDialogResult.Primary;
     }
 
-    private static void Clear(StudentHistory history)
-    {
-        history.TotalRounds = 0;
-        history.TotalStats = 0;
-        history.Students.Clear();
-        history.GroupStats.Clear();
-        history.GenderStatus.Clear();
-    }
-
-    private static void Clear(PrizeHistory history)
-    {
-        history.TotalRounds = 0;
-        history.TotalStats = 0;
-        history.Prizes.Clear();
-        history.GroupStats.Clear();
-        history.GenderStatus.Clear();
-    }
 }

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Services.Draw;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
 
@@ -8,7 +9,7 @@ namespace SecRandom.Core.Services;
 
 public static partial class CoreRuntimeServiceCollectionExtensions
 {
-    private sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordService> logger) : IDrawTemporaryRecordService
+    private sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordService> logger) : IDrawTemporaryRecordService, IDrawTemporaryRecordCompensation
     {
     private const string PrizeScopeKey = "prizes";
     private readonly HashSet<string> _clearedStudentLists = new(StringComparer.OrdinalIgnoreCase);
@@ -197,7 +198,63 @@ public static partial class CoreRuntimeServiceCollectionExtensions
     private static void SaveState(string path, TemporaryRecordState state)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, JsonSerializer.Serialize(state, JsonOptions));
+        // 写临时文件再原子替换，避免进程中途被杀留下截断 JSON。
+        var temporaryPath = $"{path}.{Guid.NewGuid():N}.tmp";
+        File.WriteAllText(temporaryPath, JsonSerializer.Serialize(state, JsonOptions));
+        File.Move(temporaryPath, path, overwrite: true);
+    }
+
+    public string? CaptureStudentScopeSnapshot(string listName, string gender, string group)
+    {
+        lock (_gate)
+        {
+            var state = LoadStudentState(listName);
+            return state.Scopes.TryGetValue(BuildScopeKey(gender, group), out var scope)
+                ? JsonSerializer.Serialize(scope, JsonOptions)
+                : null;
+        }
+    }
+
+    public void RestoreStudentScopeSnapshot(string listName, string gender, string group, string? snapshotJson)
+    {
+        lock (_gate)
+        {
+            var state = LoadStudentState(listName);
+            var scopeKey = BuildScopeKey(gender, group);
+            if (snapshotJson is null)
+                state.Scopes.Remove(scopeKey);
+            else
+                state.Scopes[scopeKey] = JsonSerializer.Deserialize<TemporaryRecordScope>(snapshotJson, JsonOptions)
+                                         ?? new TemporaryRecordScope();
+            state.UpdatedAt = DateTimeOffset.Now;
+            SaveStudentState(listName, state);
+        }
+    }
+
+    public string? CapturePrizeScopeSnapshot(string listName)
+    {
+        lock (_gate)
+        {
+            var state = LoadPrizeState(listName);
+            return state.Scopes.TryGetValue(PrizeScopeKey, out var scope)
+                ? JsonSerializer.Serialize(scope, JsonOptions)
+                : null;
+        }
+    }
+
+    public void RestorePrizeScopeSnapshot(string listName, string? snapshotJson)
+    {
+        lock (_gate)
+        {
+            var state = LoadPrizeState(listName);
+            if (snapshotJson is null)
+                state.Scopes.Remove(PrizeScopeKey);
+            else
+                state.Scopes[PrizeScopeKey] = JsonSerializer.Deserialize<TemporaryRecordScope>(snapshotJson, JsonOptions)
+                                              ?? new TemporaryRecordScope();
+            state.UpdatedAt = DateTimeOffset.Now;
+            SavePrizeState(listName, state);
+        }
     }
 
     private static string GetStudentPath(string listName) =>

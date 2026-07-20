@@ -1,36 +1,41 @@
-using Avalonia.Controls;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Config;
-using SecRandom.Core.Views;
+using SecRandom.Mobile.Controls;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Views.Settings;
 
-public sealed class MobilePersonalizationSettingsPage : ViewBase
+/// <summary>
+/// 个性化设置页：主题三档。主题选择立即保存并应用到 RequestedThemeVariant，
+/// 页面内容颜色全部走 DynamicResource，由资源系统随主题刷新。
+/// </summary>
+public sealed class MobilePersonalizationSettingsPage : MobileSettingsPageBase
 {
+    private readonly MainConfigHandler _configHandler;
+
     public MobilePersonalizationSettingsPage(MainConfigHandler configHandler)
     {
-        Render(configHandler);
+        _configHandler = configHandler;
+        Render();
     }
 
-    private void Render(MainConfigHandler configHandler)
+    private void Render()
     {
-        var appearance = configHandler.Data.Appearance;
-        Content = MobileUi.CreateSettingsScroll(LR.S_Personalization, LR.S_Personalization_D, CloseView, [
-            MobileUi.CreateLabel(LR.S_Theme),
-            MobileUi.CreateChoiceRow(LR.O_ThemeAuto, appearance.Theme == ThemeMode.Auto, () => ApplyTheme(configHandler, ThemeMode.Auto)),
-            MobileUi.CreateChoiceRow(LR.O_ThemeLight, appearance.Theme == ThemeMode.Light, () => ApplyTheme(configHandler, ThemeMode.Light)),
-            MobileUi.CreateChoiceRow(LR.O_ThemeDark, appearance.Theme == ThemeMode.Dark, () => ApplyTheme(configHandler, ThemeMode.Dark))
+        var appearance = _configHandler.Data.Appearance;
+        Content = BuildPage(LR.S_Personalization, LR.S_Personalization_D, [
+            new MobileSectionHeader(LR.S_Theme, FluentIcons.ColorFilled),
+            MobileSettingRow.Choice(LR.O_ThemeAuto, appearance.Theme == ThemeMode.Auto, () => ApplyTheme(ThemeMode.Auto)),
+            MobileSettingRow.Choice(LR.O_ThemeLight, appearance.Theme == ThemeMode.Light, () => ApplyTheme(ThemeMode.Light)),
+            MobileSettingRow.Choice(LR.O_ThemeDark, appearance.Theme == ThemeMode.Dark, () => ApplyTheme(ThemeMode.Dark))
         ]);
     }
 
-    private void ApplyTheme(MainConfigHandler configHandler, ThemeMode theme)
+    private void ApplyTheme(ThemeMode theme)
     {
-        configHandler.Data.Appearance.Theme = theme;
-        configHandler.Save();
+        _configHandler.Data.Appearance.Theme = theme;
+        _configHandler.Save();
         MobileTheme.Apply(theme);
-        Render(configHandler);
+        Render();
     }
-
-    private void CloseView() => _ = CloseAsync(reason: ViewCloseReason.Back);
 }

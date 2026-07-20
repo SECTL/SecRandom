@@ -10,6 +10,7 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Icons;
+using SecRandom.Core.Views;
 using SecRandom.Helpers;
 using SecRandom.ViewModels.MainPages;
 using SR = SecRandom.Langs.MainPages.RollCall.Resources;
@@ -17,7 +18,7 @@ using SR = SecRandom.Langs.MainPages.RollCall.Resources;
 namespace SecRandom.Views.MainPages;
 
 [PageInfo("main.rollCall", FluentIcons.PeopleFilled, location: PageLocation.Bottom, useFullWidth: true, hidePageTitle: true)]
-public partial class RollCallPage : UserControl
+public partial class RollCallPage : ViewBase
 {
     private bool _isUnloaded;
     private bool _isViewModelSubscribed;
@@ -30,6 +31,7 @@ public partial class RollCallPage : UserControl
         InitializeComponent();
         _resultPresenter = this.FindControl<ItemsControl>("ResultPresenter");
         AttachViewModel();
+        Closed += OnViewClosed;
     }
 
     public RollCallPageViewModel ViewModel { get; }
@@ -40,7 +42,13 @@ public partial class RollCallPage : UserControl
         AttachViewModel();
     }
 
-    private void OnUnloaded(object? sender, RoutedEventArgs e)
+    private void OnUnloaded(object? sender, RoutedEventArgs e) => DetachViewModel();
+
+    // ViewModel 是单例且被快捷键/协议等 UI 无关路径复用，视图关闭只做渲染层解绑，
+    // 绝不能在这里 Dispose ViewModel 或中断进行中的抽取（后台停止由 Shortcut/Protocol 负责）。
+    private void OnViewClosed(object? sender, ViewClosedEventArgs e) => DetachViewModel();
+
+    private void DetachViewModel()
     {
         _isUnloaded = true;
         if (_isViewModelSubscribed)

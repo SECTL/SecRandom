@@ -1,33 +1,60 @@
 using Avalonia.Controls;
-using SecRandom.Core.Views;
+using Avalonia.Media;
+using SecRandom.Core.Abstraction;
+using SecRandom.Core.Icons;
+using SecRandom.Mobile.Controls;
 using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Views.Settings;
 
-public sealed class MobileUpdateSettingsPage : ViewBase
+/// <summary>
+/// 更新页：保留 <see cref="MobileUpdateService"/> 的检查/下载/安装逻辑。
+/// 安装能力投影来自 DI 的 <see cref="IMobileUpdateInstaller"/>（平台头注入；
+/// iOS 与中性构建为 <see cref="UnsupportedMobileUpdateInstaller"/>）。不支持应用内更新时
+/// 显示空态风格说明，而不是误导性的「已是最新版本」。
+/// </summary>
+public sealed class MobileUpdateSettingsPage : MobileSettingsPageBase
 {
     private readonly MobileUpdateService _updateService;
+    private readonly bool _installerSupported;
 
     public MobileUpdateSettingsPage(MobileUpdateService updateService)
     {
         _updateService = updateService;
+        // 构造函数签名保持稳定；安装器投影经 IAppHost 解析，Host 未就绪时按不支持处理。
+        _installerSupported = IAppHost.TryGetService<IMobileUpdateInstaller>()?.IsSupported ?? false;
         Render();
     }
 
     private void Render()
     {
-        Content = MobileUi.CreateSettingsScroll(LR.S_AppUpdates, LR.S_AppUpdates_D, CloseView, [
+        if (!_installerSupported)
+        {
+            Content = BuildPage(LR.S_AppUpdates, LR.S_AppUpdates_D, [
+                new MobileEmptyState(
+                    FluentIcons.InfoFilled,
+                    LR.M_InAppUpdateUnsupported,
+                    LR.M_IosUpdateDeferred)
+            ]);
+            return;
+        }
+
+        var status = new TextBlock
+        {
+            Text = string.IsNullOrEmpty(_updateService.Status)
+                ? LR.M_UpdateSecurityNote
+                : _updateService.Status,
+            TextWrapping = TextWrapping.Wrap
+        };
+        MobileTheme.BindBrush(status, TextBlock.ForegroundProperty, MobileTheme.Keys.MutedText);
+
+        Content = BuildPage(LR.S_AppUpdates, LR.S_AppUpdates_D, [
             MobileUi.CreateSecondaryButton(LR.C_CheckUpdates, async () =>
             {
                 await _updateService.CheckAsync();
                 Render();
             }),
-            new TextBlock
-            {
-                Text = _updateService.Status,
-                Foreground = MobileTheme.MutedText,
-                TextWrapping = Avalonia.Media.TextWrapping.Wrap
-            },
+            status,
             MobileUi.CreatePrimaryButton(LR.C_InstallUpdate, _updateService.IsUpdateAvailable && !_updateService.IsBusy, async () =>
             {
                 await _updateService.DownloadAndInstallAsync();
@@ -35,6 +62,4 @@ public sealed class MobileUpdateSettingsPage : ViewBase
             })
         ]);
     }
-
-    private void CloseView() => _ = CloseAsync(reason: ViewCloseReason.Back);
 }

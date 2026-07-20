@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
+using LR = SecRandom.Mobile.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile.Services;
 
@@ -233,7 +234,7 @@ internal sealed class MobileOnlineStatusService(
         return false;
     }
 
-    private static string RegionPart(IReadOnlyList<string> regions, int index) => index < regions.Count ? regions[index] : "未知";
+    private static string RegionPart(IReadOnlyList<string> regions, int index) => index < regions.Count ? regions[index] : LR.M_Unknown;
 
     private sealed record MobileIpLocationCache(
         string IpAddress,
@@ -243,8 +244,9 @@ internal sealed class MobileOnlineStatusService(
         string District,
         DateTimeOffset UpdatedAt)
     {
-        public static MobileIpLocationCache Anonymous { get; } = new("0.0.0.0", "未知", "未知", "未知", "未知", DateTimeOffset.MinValue);
+        // 每次访问时再取资源，保证免重启语言切换后上报文本跟随新语言。
+        public static MobileIpLocationCache Anonymous => new("0.0.0.0", LR.M_Unknown, LR.M_Unknown, LR.M_Unknown, LR.M_Unknown, DateTimeOffset.MinValue);
 
-        public static MobileIpLocationCache ForIp(string ipAddress) => new(ipAddress, "未知", "未知", "未知", "未知", DateTimeOffset.UtcNow);
+        public static MobileIpLocationCache ForIp(string ipAddress) => new(ipAddress, LR.M_Unknown, LR.M_Unknown, LR.M_Unknown, LR.M_Unknown, DateTimeOffset.UtcNow);
     }
 }

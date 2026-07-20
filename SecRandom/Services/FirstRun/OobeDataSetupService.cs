@@ -8,56 +8,40 @@ using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Services.FirstRun;
 
-public sealed class OobeDataSetupService(MainConfigHandler configHandler, IProfileService profileService)
+public sealed class OobeDataSetupService(
+    MainConfigHandler configHandler,
+    IProfileService profileService,
+    IProfileCatalogManager catalogManager)
 {
     public void SaveStudentList(string name, IReadOnlyList<Student> students)
     {
         name = ValidateName(name);
-        var listConfig = new StudentListConfig(name);
-        listConfig.Data.Students.Clear();
-        foreach (var student in students)
-        {
-            student.RecordId = student.RecordId == Guid.Empty ? Guid.NewGuid() : student.RecordId;
-            listConfig.Data.Students.Add(student);
-        }
-        listConfig.Save();
-        configHandler.Data.RollCallSettings.DefaultClass = name;
-        configHandler.Save();
+        // ReplaceStudents 负责 RecordId 规范化、排序与落盘；SetDefaultStudentList 持久化默认班级。
+        catalogManager.ReplaceStudents(name, students);
+        catalogManager.SetDefaultStudentList(name);
         profileService.LoadStudentProfile(name, saveCurrent: false);
     }
 
     public void SavePrizeList(string name, IReadOnlyList<Prize> prizes)
     {
         name = ValidateName(name);
-        var listConfig = new PrizeListConfig(name);
-        listConfig.Data.Prizes.Clear();
-        foreach (var prize in prizes)
-        {
-            prize.RecordId = prize.RecordId == Guid.Empty ? Guid.NewGuid() : prize.RecordId;
-            listConfig.Data.Prizes.Add(prize);
-        }
-        listConfig.Save();
-        configHandler.Data.LotterySettings.DefaultPool = name;
-        configHandler.Save();
+        catalogManager.ReplacePrizes(name, prizes);
+        catalogManager.SetDefaultPrizePool(name);
         profileService.LoadPrizeProfile(name, saveCurrent: false);
     }
 
     public void CreateStudentList(string name)
     {
         name = ValidateName(name);
-        if (File.Exists(new StudentList(name).ConfigFilePath))
+        if (!catalogManager.CreateStudentList(name))
             throw new OobeDataSetupException(OobeDataSetupError.ListAlreadyExists);
-
-        new StudentListConfig(name).Save();
     }
 
     public void CreatePrizeList(string name)
     {
         name = ValidateName(name);
-        if (File.Exists(new PrizeList(name).ConfigFilePath))
+        if (!catalogManager.CreatePrizeList(name))
             throw new InvalidOperationException("同名奖品池已存在。");
-
-        new PrizeListConfig(name).Save();
     }
 
     public void RenameStudentList(string oldName, string newName)

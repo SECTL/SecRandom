@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SecRandom.Services.ImportExport;
+namespace SecRandom.Core.Services.Archive;
 
 public enum ArchiveKind
 {
@@ -39,7 +39,7 @@ public sealed record ImportResult(
     IReadOnlyList<string> Warnings,
     IReadOnlyList<string> PreservedLegacyFiles);
 
-internal sealed class ArchiveManifest
+public sealed class ArchiveManifest
 {
     [JsonPropertyName("format")] public string Format { get; set; } = "secrandom-archive";
     [JsonPropertyName("schema_version")] public int SchemaVersion { get; set; } = 1;
@@ -49,14 +49,14 @@ internal sealed class ArchiveManifest
     [JsonPropertyName("files")] public List<ArchiveFileEntry> Files { get; set; } = [];
 }
 
-internal sealed class ArchiveFileEntry
+public sealed class ArchiveFileEntry
 {
     [JsonPropertyName("path")] public string Path { get; set; } = string.Empty;
     [JsonPropertyName("length")] public long Length { get; set; }
     [JsonPropertyName("sha256")] public string Sha256 { get; set; } = string.Empty;
 }
 
-internal sealed class SettingsEnvelope
+public sealed class SettingsEnvelope
 {
     [JsonPropertyName("format")] public string Format { get; set; } = "secrandom-settings";
     [JsonPropertyName("schema_version")] public int SchemaVersion { get; set; } = 1;
