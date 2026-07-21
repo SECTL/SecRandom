@@ -1,7 +1,7 @@
 <local:MobileNavigationBar xmlns="https://github.com/avaloniaui"
                            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                           xmlns:local="clr-namespace:SecRandom.Mobile.Controls"
-                           x:Class="SecRandom.Mobile.Controls.MobileNavigationBar">
+                            xmlns:local="clr-namespace:SecRandom.Controls.Mobile"
+                            x:Class="SecRandom.Controls.Mobile.MobileNavigationBar">
     <Border x:Name="Root" BorderThickness="0,1,0,0" Padding="6,4" MinHeight="64">
         <Grid ColumnDefinitions="*,*,*,*" HorizontalAlignment="Stretch">
             <ToggleButton x:Name="DrawButton"
@@ -14,7 +14,7 @@
                           HorizontalContentAlignment="Center"
                           VerticalContentAlignment="Center">
                 <StackPanel Spacing="2" HorizontalAlignment="Center">
-                    <TextBlock x:Name="DrawIcon" FontFamily="avares://SecRandom.Mobile/Assets/Fonts/#FluentSystemIcons-Resizable" FontSize="22" LineHeight="22" HorizontalAlignment="Center" TextAlignment="Center" />
+                    <TextBlock x:Name="DrawIcon" FontFamily="avares://SecRandom/Assets/Fonts/#FluentSystemIcons-Resizable" FontSize="22" LineHeight="22" HorizontalAlignment="Center" TextAlignment="Center" />
                     <TextBlock x:Name="DrawLabel" FontSize="12" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </StackPanel>
             </ToggleButton>
@@ -29,7 +29,7 @@
                           HorizontalContentAlignment="Center"
                           VerticalContentAlignment="Center">
                 <StackPanel Spacing="2" HorizontalAlignment="Center">
-                    <TextBlock x:Name="HistoryIcon" FontFamily="avares://SecRandom.Mobile/Assets/Fonts/#FluentSystemIcons-Resizable" FontSize="22" LineHeight="22" HorizontalAlignment="Center" TextAlignment="Center" />
+                    <TextBlock x:Name="HistoryIcon" FontFamily="avares://SecRandom/Assets/Fonts/#FluentSystemIcons-Resizable" FontSize="22" LineHeight="22" HorizontalAlignment="Center" TextAlignment="Center" />
                     <TextBlock x:Name="HistoryLabel" FontSize="12" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </StackPanel>
             </ToggleButton>
@@ -44,7 +44,7 @@
                           HorizontalContentAlignment="Center"
                           VerticalContentAlignment="Center">
                 <StackPanel Spacing="2" HorizontalAlignment="Center">
-                    <TextBlock x:Name="OverviewIcon" FontFamily="avares://SecRandom.Mobile/Assets/Fonts/#FluentSystemIcons-Resizable" FontSize="22" LineHeight="22" HorizontalAlignment="Center" TextAlignment="Center" />
+                    <TextBlock x:Name="OverviewIcon" FontFamily="avares://SecRandom/Assets/Fonts/#FluentSystemIcons-Resizable" FontSize="22" LineHeight="22" HorizontalAlignment="Center" TextAlignment="Center" />
                     <TextBlock x:Name="OverviewLabel" FontSize="12" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </StackPanel>
             </ToggleButton>
@@ -59,7 +59,7 @@
                           HorizontalContentAlignment="Center"
                           VerticalContentAlignment="Center">
                 <StackPanel Spacing="2" HorizontalAlignment="Center">
-                    <TextBlock x:Name="SettingsIcon" FontFamily="avares://SecRandom.Mobile/Assets/Fonts/#FluentSystemIcons-Resizable" FontSize="22" LineHeight="22" HorizontalAlignment="Center" TextAlignment="Center" />
+                    <TextBlock x:Name="SettingsIcon" FontFamily="avares://SecRandom/Assets/Fonts/#FluentSystemIcons-Resizable" FontSize="22" LineHeight="22" HorizontalAlignment="Center" TextAlignment="Center" />
                     <TextBlock x:Name="SettingsLabel" FontSize="12" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </StackPanel>
             </ToggleButton>

@@ -3,16 +3,18 @@
                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                     xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-                    xmlns:fa="using:FluentAvalonia.UI.Controls"
-                    xmlns:core="using:SecRandom.Core"
-                    xmlns:ls="clr-namespace:SecRandom.Langs.SettingsView"
+                     xmlns:fa="using:FluentAvalonia.UI.Controls"
+                     xmlns:core="using:SecRandom.Core"
+                     xmlns:ls="clr-namespace:SecRandom.Langs.SettingsView"
+                     xmlns:ml="clr-namespace:SecRandom.Langs.Mobile"
                     xmlns:views="using:SecRandom.Views"
                     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
                     x:Class="SecRandom.Views.SettingsView"
                     x:DataType="views:SettingsView"
                     Loaded="OnLoaded"
                     Unloaded="OnUnloaded">
-    <Grid RowDefinitions="Auto *">
+    <Grid>
+    <Grid x:Name="DesktopLayout" RowDefinitions="Auto *">
         <Border Grid.Row="0" Height="48">
             <Grid ColumnDefinitions="Auto * 3* * Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="8" Spacing="8">
@@ -171,5 +173,56 @@
                 </Grid>
             </sr:DrawerHost>
         </fa:FANavigationView>
+    </Grid>
+
+    <Grid x:Name="MobileLayout"
+          IsVisible="False"
+          RowDefinitions="Auto,*">
+        <Border Grid.Row="0"
+                Padding="12,10"
+                BorderThickness="0,0,0,1"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+            <Grid ColumnDefinitions="Auto,Auto,*">
+                <Button x:Name="MobileBackButton"
+                        Grid.Column="0"
+                        IsVisible="False"
+                        MinWidth="44"
+                        MinHeight="44"
+                        ToolTip.Tip="{x:Static ml:Resources.C_Back}"
+                        AutomationProperties.Name="{x:Static ml:Resources.C_Back}"
+                        Click="MobileBackButton_OnClick">
+                    <sr:FluentIcon Glyph="{sr:Fi ArrowLeftFilled}" />
+                </Button>
+                <Button x:Name="MobileHomeButton"
+                        Grid.Column="1"
+                        MinWidth="44"
+                        MinHeight="44"
+                        ToolTip.Tip="{x:Static ml:Resources.C_Home}"
+                        AutomationProperties.Name="{x:Static ml:Resources.C_Home}"
+                        Click="MobileHomeButton_OnClick">
+                    <sr:FluentIcon Glyph="{sr:Fi HomeFilled}" />
+                </Button>
+                <StackPanel Grid.Column="2"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            VerticalAlignment="Center">
+                    <Image Source="/Assets/AppLogo.png"
+                           Width="20"
+                           Height="20" />
+                    <TextBlock Text="SecRandom"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="{x:Static ml:Resources.P_Settings}"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+        </Border>
+        <fa:FAFrame Grid.Row="1"
+                    x:Name="MobilePageHost"
+                    IsNavigationStackEnabled="False"
+                    CacheSize="0" />
+    </Grid>
     </Grid>
 </views:SettingsView>

@@ -16,7 +16,6 @@
         <ProjectReference Include="..\SecRandom4Ci.Interface\SecRandom4Ci.Interface.csproj" />
         <ProjectReference Include="..\SecRandom.Platforms\SecRandom.Platforms.csproj" />
         <ProjectReference Include="..\SecRandom.Platforms.Abstractions\SecRandom.Platforms.Abstractions.csproj" />
-        <ProjectReference Include="..\SecRandom.Mobile.Shared\SecRandom.Mobile.Shared.csproj" />
     </ItemGroup>
 
     <PropertyGroup Condition="'$(BuildMobile)' == 'true'">
@@ -180,6 +179,11 @@
         </EmbeddedResource>
 
         <EmbeddedResource Update="Langs\SettingsPages\Home\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
+        <EmbeddedResource Update="Langs\Mobile\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
@@ -367,6 +371,12 @@
         </Compile>
 
         <Compile Update="Langs\SettingsPages\Home\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+
+        <Compile Update="Langs\Mobile\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>

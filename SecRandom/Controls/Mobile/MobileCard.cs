@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace SecRandom.Mobile.Controls;
+namespace SecRandom.Controls.Mobile;
 
 public class MobileCard : ContentControl
 {

@@ -254,6 +254,9 @@
     <data name="C_Back" xml:space="preserve">
         <value>返回设置</value>
     </data>
+    <data name="C_Home" xml:space="preserve">
+        <value>主页</value>
+    </data>
     <data name="S_SettingsCategories" xml:space="preserve">
         <value>设置分类</value>
     </data>
@@ -388,6 +391,15 @@
     </data>
     <data name="O_Full" xml:space="preserve">
         <value>完整</value>
+    </data>
+    <data name="O_LanguageChinese" xml:space="preserve">
+        <value>简体中文</value>
+    </data>
+    <data name="O_LanguageEnglish" xml:space="preserve">
+        <value>English</value>
+    </data>
+    <data name="O_LanguageJapanese" xml:space="preserve">
+        <value>日本語</value>
     </data>
     <data name="S_Telemetry" xml:space="preserve">
         <value>错误与性能遥测</value>

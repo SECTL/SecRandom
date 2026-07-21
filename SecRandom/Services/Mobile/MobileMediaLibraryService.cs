@@ -6,7 +6,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
 using SecRandom.Shared.Extensions;
 
-namespace SecRandom.Mobile.Services;
+namespace SecRandom.Services.Mobile;
 
 /// <summary>
 /// Owns mobile-private music files and removes dangling track references before a

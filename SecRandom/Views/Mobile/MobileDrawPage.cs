@@ -1,30 +1,26 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Markup.Xaml;
-using Avalonia.VisualTree;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
-using SecRandom.Core.Icons;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
-using SecRandom.Mobile.Controls;
-using SecRandom.Mobile.Services;
+using SecRandom.Controls.Mobile;
+using SecRandom.Services.Mobile;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Interfaces;
 using SecRandom.Shared.Models.Profile;
-using LR = SecRandom.Mobile.Langs.Mobile.Resources;
-using AvaloniaButton = Avalonia.Controls.Button;
+using LR = SecRandom.Langs.Mobile.Resources;
 
-namespace SecRandom.Mobile.Views;
+namespace SecRandom.Views.Mobile;
 
 public sealed partial class MobileDrawPage : UserControl
 {
@@ -35,7 +31,7 @@ public sealed partial class MobileDrawPage : UserControl
     private readonly MainConfigHandler _configHandler;
     private readonly MobileRollCallService _rollCallService;
     private readonly ILotterySession _lotterySession;
-    private readonly IMobileNavigator _navigator;
+    private readonly IMobileSettingsNavigator _settingsNavigator;
     private readonly IMobileCapabilities _capabilities;
     private readonly MobileDrawMediaService _drawMedia;
     private DrawSurface _drawSurface = DrawSurface.RollCall;
@@ -43,19 +39,22 @@ public sealed partial class MobileDrawPage : UserControl
     private string _gender = string.Empty;
     private int _drawCount = 1;
     private bool _drawing;
-    private bool _firstRender = true;
+    private MobileRollCallSnapshot? _rollCallSnapshot;
+    private IReadOnlyList<Prize> _lotteryCandidates = [];
     private IReadOnlyList<Student> _studentResult = [];
     private Prize? _prizeResult;
+    private string? _resultStatusText;
+    private string? _resultStatusDetail;
+    private bool _synchronizingSurface;
 
     public MobileDrawPage(
         IProfileService profileService,
         IDrawTemporaryRecordService temporaryRecordService,
-        IFeatureAvailabilityService featureAvailabilityService,
         MainConfigHandler configHandler,
         MobileRollCallService rollCallService,
         ILotterySession lotterySession,
         MobileDrawMediaService drawMedia,
-        IMobileNavigator navigator,
+        IMobileSettingsNavigator settingsNavigator,
         IMobileCapabilities capabilities)
     {
         _profileService = profileService;
@@ -64,272 +63,77 @@ public sealed partial class MobileDrawPage : UserControl
         _rollCallService = rollCallService;
         _lotterySession = lotterySession;
         _drawMedia = drawMedia;
-        _navigator = navigator;
+        _settingsNavigator = settingsNavigator;
         _capabilities = capabilities;
         InitializeComponent();
         EnsureRestartTemporaryRecordsCleared();
-        Render();
+        RefreshSurface();
     }
 
-    private void Render()
+    private void RefreshSurface()
     {
         if (_drawSurface == DrawSurface.Lottery && !_capabilities.IsLotteryEnabled)
             _drawSurface = DrawSurface.RollCall;
 
-        var selector = MobileViewFactory.CreateTabSplit(
-            (int)_drawSurface,
-            [
-                (LR.C_RollCall, true),
-                (LR.C_Lottery, _capabilities.IsLotteryEnabled)
-            ],
-            selectedIndex =>
-            {
-                var surface = (DrawSurface)selectedIndex;
-                if (surface == _drawSurface)
-                    return;
-
-                _drawSurface = surface;
-                Render();
-            });
-        selector.IsEnabled = !_drawing;
-
-        ScrollViewer scroll = _drawSurface == DrawSurface.RollCall
-            ? CreateRollCallContent(selector)
-            : CreateLotteryContent(selector);
-        this.FindControl<ContentControl>("PageContent")!.Content = scroll;
-        if (_firstRender)
+        _synchronizingSurface = true;
+        try
         {
-            _firstRender = false;
-            MobileAnimations.PlayPageEnter(scroll);
+            var snapshot = _rollCallService.GetSnapshot(_group, _gender);
+            _rollCallSnapshot = snapshot;
+            _drawCount = Math.Clamp(_drawCount, 1, Math.Max(1, snapshot.RemainingCount));
+            var hasStudents = _profileService.CurrentStudentList?.Students.Any(student => student.IsCandidate) ?? false;
+            _lotteryCandidates = _lotterySession.GetEligiblePrizes().ToList();
+            var hasPrizes = _profileService.CurrentPrizeList?.Prizes.Any(prize => prize.IsCandidate) ?? false;
+            DrawSurfaceTabs.SelectedIndex = (int)_drawSurface;
+            LotteryTab.IsVisible = _capabilities.IsLotteryEnabled;
+            DrawSurfaceTabs.IsEnabled = !_drawing;
+            RollCallPanel.IsVisible = _drawSurface == DrawSurface.RollCall;
+            LotteryPanel.IsVisible = _drawSurface == DrawSurface.Lottery;
+            StudentListSelector.ItemsSource = _rollCallService.GetListNames();
+            StudentListSelector.SelectedItem = GetStudentListName();
+            GroupSelector.ItemsSource = new[] { LR.O_All }.Concat(_rollCallService.GetGroups()).ToArray();
+            GroupSelector.SelectedItem = string.IsNullOrEmpty(_group) ? LR.O_All : _group;
+            GenderSelector.ItemsSource = new[] { LR.O_All }.Concat(_rollCallService.GetGenders()).ToArray();
+            GenderSelector.SelectedItem = string.IsNullOrEmpty(_gender) ? LR.O_All : _gender;
+            StudentListSelector.IsEnabled = !_drawing;
+            GroupSelector.IsEnabled = !_drawing;
+            GenderSelector.IsEnabled = !_drawing;
+            RollCallSummary.Text = string.Format(System.Globalization.CultureInfo.CurrentCulture,
+                LR.M_CountSummary, snapshot.TotalCount, snapshot.RemainingCount);
+            DrawCountText.Text = _drawCount.ToString(System.Globalization.CultureInfo.CurrentCulture);
+            DecreaseCountButton.IsEnabled = _drawCount > 1 && !_drawing;
+            IncreaseCountButton.IsEnabled = _drawCount < snapshot.RemainingCount && !_drawing;
+            DrawStudentsButton.Content = _drawing ? LR.M_Drawing : LR.C_StartDraw;
+            DrawStudentsButton.IsEnabled = snapshot.RemainingCount > 0 && !_drawing;
+            RemainingButton.IsEnabled = !_drawing;
+            MoreButton.IsEnabled = !_drawing;
+            PrizePoolName.Text = _profileService.PrizeListConfig?.Name ?? LR.M_DefaultPool;
+            DrawPrizeButton.Content = _drawing ? LR.M_Drawing : LR.C_DrawPrize;
+            DrawPrizeButton.IsEnabled = _lotteryCandidates.Count > 0 && !_drawing;
+            ManagePrizeButton.IsEnabled = !_drawing;
+            UpdateResult(snapshot, hasStudents, hasPrizes);
+        }
+        finally
+        {
+            _synchronizingSurface = false;
         }
     }
 
-    private ScrollViewer CreateRollCallContent(Control selector)
-    {
-        var snapshot = _rollCallService.GetSnapshot(_group, _gender);
-        _drawCount = Math.Clamp(_drawCount, 1, Math.Max(1, snapshot.RemainingCount));
-        var hasStudents = _profileService.CurrentStudentList?.Students.Any(student => student.IsCandidate) ?? false;
-        var (result, detail, resultCard) = CreateStudentResultCard(snapshot, hasStudents);
-        var lockableControls = new List<Control> { selector };
-        var controls = CreateRollCallControls(snapshot, result, detail, resultCard, lockableControls);
-
-        return MobileViewFactory.CreateScroll([
-            selector,
-            resultCard,
-            controls
-        ]);
-    }
-
-    private MobileCard CreateRollCallControls(
-        MobileRollCallSnapshot snapshot,
-        TextBlock result,
-        TextBlock detail,
-        Control resultCard,
-        ICollection<Control> lockableControls)
-    {
-        var list = CreateComboBox(_rollCallService.GetListNames(), GetStudentListName(), selected =>
-        {
-            _rollCallService.SwitchList(selected);
-            _group = string.Empty;
-            _gender = string.Empty;
-            _drawCount = 1;
-            _studentResult = [];
-            _prizeResult = null;
-            Render();
-        });
-        var group = CreateScopeComboBox(_rollCallService.GetGroups(), _group, selected =>
-        {
-            _group = selected;
-            _drawCount = 1;
-            Render();
-        });
-        var gender = CreateScopeComboBox(_rollCallService.GetGenders(), _gender, selected =>
-        {
-            _gender = selected;
-            _drawCount = 1;
-            Render();
-        });
-        list.IsEnabled = !_drawing;
-        group.IsEnabled = !_drawing;
-        gender.IsEnabled = !_drawing;
-
-        var filters = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("1.2*,*,*"),
-            ColumnSpacing = 8,
-            Children =
-            {
-                CreateLabeledControl(LR.S_CurrentList, list),
-                CreateLabeledControl(LR.S_Group, group),
-                CreateLabeledControl(LR.S_Gender, gender)
-            }
-        };
-        Grid.SetColumn(filters.Children[1], 1);
-        Grid.SetColumn(filters.Children[2], 2);
-
-        var summary = new TextBlock
-        {
-            Text = string.Format(
-                System.Globalization.CultureInfo.CurrentCulture,
-                LR.M_CountSummary,
-                snapshot.TotalCount,
-                snapshot.RemainingCount),
-            TextWrapping = TextWrapping.Wrap
-        };
-
-        var countText = new TextBlock
-        {
-            Text = _drawCount.ToString(System.Globalization.CultureInfo.CurrentCulture),
-            FontSize = 18,
-            FontWeight = FontWeight.SemiBold,
-            MinWidth = 40,
-            TextAlignment = TextAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        var minus = CreateIconButton(FluentIcons.SubtractFilled, LR.S_DrawCount);
-        var plus = CreateIconButton(FluentIcons.AddFilled, LR.S_DrawCount);
-        void UpdateStepper()
-        {
-            countText.Text = _drawCount.ToString(System.Globalization.CultureInfo.CurrentCulture);
-            minus.IsEnabled = _drawCount > 1 && !_drawing;
-            plus.IsEnabled = _drawCount < snapshot.RemainingCount && !_drawing;
-        }
-        minus.Click += (_, _) =>
-        {
-            _drawCount = Math.Max(1, _drawCount - 1);
-            UpdateStepper();
-        };
-        plus.Click += (_, _) =>
-        {
-            _drawCount = Math.Min(Math.Max(1, snapshot.RemainingCount), _drawCount + 1);
-            UpdateStepper();
-        };
-        UpdateStepper();
-        var stepper = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 4,
-            VerticalAlignment = VerticalAlignment.Bottom,
-            Children = { minus, countText, plus }
-        };
-
-        var start = MobileViewFactory.CreatePrimaryButton(LR.C_StartDraw, snapshot.RemainingCount > 0 && !_drawing);
-        start.MinWidth = 150;
-        start.Click += async (_, _) => await DrawStudentsAsync(snapshot, result, detail, resultCard, start, lockableControls);
-        var actions = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("Auto,*"),
-            ColumnSpacing = 10,
-            Children = { CreateLabeledControl(LR.S_DrawCount, stepper), start }
-        };
-        Grid.SetColumn(start, 1);
-        start.HorizontalAlignment = HorizontalAlignment.Stretch;
-        start.VerticalAlignment = VerticalAlignment.Bottom;
-
-        var remaining = MobileViewFactory.CreateSecondaryButton(LR.C_RemainingList, () => ShowRemainingList(snapshot.Remaining));
-        remaining.IsEnabled = !_drawing;
-        var more = MobileViewFactory.CreateSecondaryButton(LR.C_More, ShowMoreActions);
-        more.IsEnabled = !_drawing;
-        var secondaryActions = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("*,*"),
-            ColumnSpacing = 8,
-            Children = { remaining, more }
-        };
-        Grid.SetColumn(more, 1);
-
-        lockableControls.Add(list);
-        lockableControls.Add(group);
-        lockableControls.Add(gender);
-        lockableControls.Add(minus);
-        lockableControls.Add(plus);
-        lockableControls.Add(start);
-        lockableControls.Add(remaining);
-        lockableControls.Add(more);
-
-        return new MobileCard
-        {
-            Content = new StackPanel
-            {
-                Spacing = 12,
-                Children = { filters, summary, actions, secondaryActions }
-            }
-        };
-    }
-
-    private (TextBlock Result, TextBlock Detail, Control Card) CreateStudentResultCard(
-        MobileRollCallSnapshot snapshot,
-        bool hasStudents)
-    {
-        string resultText;
-        string detailText;
-        if (_studentResult.Count > 0)
-        {
-            resultText = string.Join("\n", _studentResult.Select(FormatStudent));
-            detailText = string.Format(
-                System.Globalization.CultureInfo.CurrentCulture,
-                LR.M_DrawResultCount,
-                _studentResult.Count);
-        }
-        else
-        {
-            resultText = snapshot.RemainingCount > 0
-                ? LR.M_Ready
-                : hasStudents ? LR.M_NoEligibleCandidates : LR.M_NoStudents;
-            detailText = snapshot.RemainingCount > 0
-                ? string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_CandidateStudents, snapshot.RemainingCount)
-                : hasStudents ? LR.M_RepeatLimitExhausted : LR.M_AddStudentsPrompt;
-        }
-
-        return CreateResultCard(resultText, detailText,
-            ShouldShowStudentImages() ? CreateImageStrip(_studentResult) : null);
-    }
-
-    private ScrollViewer CreateLotteryContent(Control selector)
-    {
-        var candidates = _lotterySession.GetEligiblePrizes().ToList();
-        var hasPrizes = _profileService.CurrentPrizeList?.Prizes.Any(prize => prize.IsCandidate) ?? false;
-        var (result, detail, card) = CreateResultCard(
-            candidates.Count > 0 ? LR.M_Ready : hasPrizes ? LR.M_NoEligibleCandidates : LR.M_NoPrizes,
-            candidates.Count > 0
-                ? string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_CandidatePrizes, candidates.Count)
-                : hasPrizes ? LR.M_RepeatLimitExhausted : LR.M_AddPrizesPrompt,
-            _configHandler.Data.LotterySettings.LotteryImage ? CreateImageStrip(_prizeResult is null ? [] : [_prizeResult]) : null);
-        var draw = MobileViewFactory.CreatePrimaryButton(LR.C_DrawPrize, candidates.Count > 0);
-        var manage = MobileViewFactory.CreateSecondaryButton(LR.C_ManagePrizePool, OpenListManagement);
-        var lockableControls = new List<Control> { selector, draw, manage };
-        draw.Click += async (_, _) => await DrawPrizeAsync(candidates, result, detail, card, draw, lockableControls);
-
-        return MobileViewFactory.CreateScroll([
-            selector,
-            MobileViewFactory.CreateLabel(LR.S_CurrentPool),
-            MobileViewFactory.CreateTitle(_profileService.PrizeListConfig?.Name ?? LR.M_DefaultPool),
-            card,
-            draw,
-            manage
-        ]);
-    }
-
-    private async Task DrawStudentsAsync(
-        MobileRollCallSnapshot snapshot,
-        TextBlock result,
-        TextBlock detail,
-        Control card,
-        AvaloniaButton start,
-        IEnumerable<Control> lockableControls)
+    private async Task DrawStudentsAsync(MobileRollCallSnapshot snapshot)
     {
         if (_drawing)
             return;
 
         _drawing = true;
-        SetControlsEnabled(lockableControls, false);
-        start.Content = LR.M_Drawing;
-        HideResultMedia(card);
+        _resultStatusText = null;
+        _resultStatusDetail = null;
+        RefreshSurface();
+        ResultImages.IsVisible = false;
         await StopMediaSafelyAsync();
         IReadOnlyList<Student>? resultMediaStudents = null;
         var names = snapshot.Remaining.Select(FormatStudent).Where(name => name.Length > 0).ToList();
         if (names.Count > 0)
-            MobileAnimations.StartNameRoll(result, names);
+            MobileAnimations.StartNameRoll(ResultText, names);
 
         try
         {
@@ -340,61 +144,51 @@ public sealed partial class MobileDrawPage : UserControl
             if (!output.IsSuccess || output.Result.Count == 0)
             {
                 _studentResult = [];
-                result.Text = GetDrawFailureText(output.Status);
-                detail.Text = string.Empty;
+                _resultStatusText = GetDrawFailureText(output.Status);
+                _resultStatusDetail = string.Empty;
             }
             else
             {
                 _studentResult = output.Result;
-                result.Text = string.Join("\n", output.Result.Select(FormatStudent));
-                detail.Text = string.Format(
-                    System.Globalization.CultureInfo.CurrentCulture,
-                    LR.M_DrawResultCount,
-                    output.Result.Count);
                 resultMediaStudents = output.Result;
             }
         }
         catch
-        {
-            _studentResult = [];
-            result.Text = LR.M_DrawFailed;
-            detail.Text = string.Empty;
-            await StopMediaSafelyAsync();
+            {
+                _studentResult = [];
+                _resultStatusText = LR.M_DrawFailed;
+                _resultStatusDetail = string.Empty;
+                await StopMediaSafelyAsync();
         }
         finally
         {
-            MobileAnimations.Cancel(result);
+            MobileAnimations.Cancel(ResultText);
             _drawing = false;
         }
 
-        MobileAnimations.PlayResultReveal(card);
+        RefreshSurface();
+        MobileAnimations.PlayResultReveal(DrawResultCard);
         if (resultMediaStudents is not null)
             await PlayStudentResultMediaAsync(resultMediaStudents);
         await Task.Delay(300);
-        Render();
     }
 
-    private async Task DrawPrizeAsync(
-        IReadOnlyList<Prize> candidates,
-        TextBlock result,
-        TextBlock detail,
-        Control card,
-        AvaloniaButton draw,
-        IReadOnlyCollection<Control> lockableControls)
+    private async Task DrawPrizeAsync(IReadOnlyList<Prize> candidates)
     {
         if (_drawing)
             return;
 
         _drawing = true;
-        SetControlsEnabled(lockableControls, false);
-        draw.Content = LR.M_Drawing;
-        HideResultMedia(card);
+        _resultStatusText = null;
+        _resultStatusDetail = null;
+        RefreshSurface();
+        ResultImages.IsVisible = false;
         await StopMediaSafelyAsync();
         Prize? resultMediaPrize = null;
         var names = candidates.Select(prize => string.IsNullOrWhiteSpace(prize.Name) ? prize.Id : prize.Name)
             .Where(name => !string.IsNullOrWhiteSpace(name)).ToList();
         if (names.Count > 0)
-            MobileAnimations.StartNameRoll(result, names);
+            MobileAnimations.StartNameRoll(ResultText, names);
 
         try
         {
@@ -405,38 +199,34 @@ public sealed partial class MobileDrawPage : UserControl
             if (!output.IsSuccess || output.Result.Count == 0)
             {
                 _prizeResult = null;
-                result.Text = GetDrawFailureText(output.Status);
-                detail.Text = string.Empty;
+                _resultStatusText = GetDrawFailureText(output.Status);
+                _resultStatusDetail = string.Empty;
             }
             else
             {
                 var prize = output.Result[0];
                 _prizeResult = prize;
-                result.Text = string.IsNullOrWhiteSpace(prize.Name) ? prize.Id : prize.Name;
-                detail.Text = string.IsNullOrWhiteSpace(prize.Id)
-                    ? LR.M_DrawCompleted
-                    : string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_PrizeId, prize.Id);
                 resultMediaPrize = prize;
             }
         }
         catch
-        {
-            _prizeResult = null;
-            result.Text = LR.M_DrawFailed;
-            detail.Text = string.Empty;
-            await StopMediaSafelyAsync();
+            {
+                _prizeResult = null;
+                _resultStatusText = LR.M_DrawFailed;
+                _resultStatusDetail = string.Empty;
+                await StopMediaSafelyAsync();
         }
         finally
         {
-            MobileAnimations.Cancel(result);
+            MobileAnimations.Cancel(ResultText);
             _drawing = false;
         }
 
-        MobileAnimations.PlayResultReveal(card);
+        RefreshSurface();
+        MobileAnimations.PlayResultReveal(DrawResultCard);
         if (resultMediaPrize is not null)
             await PlayPrizeResultMediaAsync(resultMediaPrize);
         await Task.Delay(300);
-        Render();
     }
 
     private async void ShowRemainingList(IReadOnlyList<Student> remaining)
@@ -451,11 +241,14 @@ public sealed partial class MobileDrawPage : UserControl
             var rows = new StackPanel { Spacing = 6 };
             foreach (var student in remaining)
             {
-                rows.Children.Add(new MobileSettingRow
+                rows.Children.Add(new FASettingsExpanderItem
                 {
-                    Title = FormatStudent(student),
+                    Content = FormatStudent(student),
                     Description = string.Join(" · ", new[] { student.Gender, student.Group, student.Tags }
-                        .Where(value => !string.IsNullOrWhiteSpace(value)))
+                        .Where(value => !string.IsNullOrWhiteSpace(value))),
+                    MinHeight = 64,
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
                 });
             }
 
@@ -483,116 +276,186 @@ public sealed partial class MobileDrawPage : UserControl
             CloseButtonText = LR.C_Close,
             DefaultButton = FAContentDialogButton.Close
         };
-        var reset = MobileViewFactory.CreateSecondaryButton(LR.C_ResetRange, () =>
+        Button CreateDialogButton(string text, Action onClick)
+        {
+            var button = new Button
+            {
+                Content = text,
+                MinHeight = 44,
+                FontWeight = FontWeight.SemiBold,
+                HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center
+            };
+            button.Click += (_, _) => onClick();
+            return button;
+        }
+
+        var reset = CreateDialogButton(LR.C_ResetRange, () =>
         {
             dialog.Hide();
             _rollCallService.ClearTemporaryRecords(_group, _gender);
-            _studentResult = [];
-            Render();
+            ClearResult();
+            RefreshSurface();
         });
-        var clear = MobileViewFactory.CreateSecondaryButton(LR.C_ClearTemporaryRecords, () =>
-        {
-            dialog.Hide();
-            _temporaryRecordService.ClearStudentList(GetStudentListName());
-            _temporaryRecordService.ClearPrizeList(GetPrizeListName());
-            _studentResult = [];
-            _prizeResult = null;
-            Render();
-        });
-        var manage = MobileViewFactory.CreateSecondaryButton(LR.C_ManageStudentList, () =>
+        var clear = CreateDialogButton(LR.C_ClearTemporaryRecords,
+            () => _ = ConfirmClearTemporaryRecordsAsync(dialog));
+        var manage = CreateDialogButton(LR.C_ManageStudentList, () =>
         {
             dialog.Hide();
             OpenListManagement();
         });
-        var settings = MobileViewFactory.CreateSecondaryButton(LR.C_DrawSettings, () =>
+        var settings = CreateDialogButton(LR.C_DrawSettings, () =>
         {
             dialog.Hide();
-            _ = _navigator.NavigateAsync(MobilePageIds.DrawSettings);
+            _ = _settingsNavigator.NavigateAsync(MobilePageIds.DrawSettings);
         });
         dialog.Content = new StackPanel { Spacing = 8, Children = { reset, clear, manage, settings } };
         await dialog.ShowAsync(TopLevel.GetTopLevel(this));
     }
 
-    private static ComboBox CreateComboBox(
-        IReadOnlyList<string> values,
-        string selected,
-        Action<string> changed)
+    private async Task ConfirmClearTemporaryRecordsAsync(FAContentDialog parent)
     {
-        var combo = new ComboBox
+        parent.Hide();
+        var result = await new FAContentDialog
         {
-            ItemsSource = values,
-            SelectedItem = values.FirstOrDefault(value => string.Equals(value, selected, StringComparison.Ordinal))
-                           ?? values.FirstOrDefault(),
-            MinHeight = 44,
-            HorizontalAlignment = HorizontalAlignment.Stretch
-        };
-        combo.SelectionChanged += (_, _) =>
-        {
-            if (combo.SelectedItem is string value && !string.Equals(value, selected, StringComparison.Ordinal))
-                changed(value);
-        };
-        return combo;
+            Title = LR.C_ClearTemporaryRecords,
+            Content = LR.C_ClearTemporaryRecords,
+            PrimaryButtonText = LR.C_ClearTemporaryRecords,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+        if (result != FAContentDialogResult.Primary)
+            return;
+
+        _temporaryRecordService.ClearStudentList(GetStudentListName());
+        _temporaryRecordService.ClearPrizeList(GetPrizeListName());
+        ClearResult();
+        RefreshSurface();
     }
 
-    private static ComboBox CreateScopeComboBox(
-        IReadOnlyList<string> values,
-        string selected,
-        Action<string> changed)
+    private void DrawSurfaceTabs_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        var options = new[] { LR.O_All }.Concat(values).ToArray();
-        var combo = new ComboBox
-        {
-            ItemsSource = options,
-            SelectedIndex = string.IsNullOrEmpty(selected) ? 0 : Math.Max(0, Array.IndexOf(options, selected)),
-            MinHeight = 44,
-            HorizontalAlignment = HorizontalAlignment.Stretch
-        };
-        combo.SelectionChanged += (_, _) =>
-        {
-            var value = combo.SelectedIndex <= 0 ? string.Empty : options[combo.SelectedIndex];
-            if (!string.Equals(value, selected, StringComparison.Ordinal))
-                changed(value);
-        };
-        return combo;
+        if (sender is not TabStrip tabs || _synchronizingSurface || tabs.SelectedIndex < 0)
+            return;
+
+        var surface = (DrawSurface)tabs.SelectedIndex;
+        if (surface == _drawSurface || surface == DrawSurface.Lottery && !_capabilities.IsLotteryEnabled)
+            return;
+
+        _drawSurface = surface;
+        _resultStatusText = null;
+        _resultStatusDetail = null;
+        RefreshSurface();
     }
 
-    private static Control CreateLabeledControl(string label, Control control)
+    private void StudentListSelector_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        var text = new TextBlock { Text = label, FontSize = 12 };
-        return new StackPanel { Spacing = 4, Children = { text, control } };
+        if (_synchronizingSurface || StudentListSelector.SelectedItem is not string selected ||
+            string.Equals(selected, GetStudentListName(), StringComparison.Ordinal))
+            return;
+
+        _rollCallService.SwitchList(selected);
+        _group = string.Empty;
+        _gender = string.Empty;
+        _drawCount = 1;
+        ClearResult();
+        RefreshSurface();
     }
 
-    private static AvaloniaButton CreateIconButton(string glyph, string tooltip)
+    private void GroupSelector_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        return new AvaloniaButton
-        {
-            Content = MobileViewFactory.CreateIcon(glyph, 18, HorizontalAlignment.Center),
-            MinWidth = 44,
-            MinHeight = 44,
-            [ToolTip.TipProperty] = tooltip
-        };
+        if (_synchronizingSurface || GroupSelector.SelectedItem is not string selected)
+            return;
+
+        var value = string.Equals(selected, LR.O_All, StringComparison.Ordinal) ? string.Empty : selected;
+        if (string.Equals(value, _group, StringComparison.Ordinal))
+            return;
+
+        _group = value;
+        _drawCount = 1;
+        ClearResult();
+        RefreshSurface();
     }
 
-    private static (TextBlock Result, TextBlock Detail, Control Card) CreateResultCard(
-        string resultText,
-        string detailText,
-        Control? media = null)
+    private void GenderSelector_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        var result = new TextBlock
+        if (_synchronizingSurface || GenderSelector.SelectedItem is not string selected)
+            return;
+
+        var value = string.Equals(selected, LR.O_All, StringComparison.Ordinal) ? string.Empty : selected;
+        if (string.Equals(value, _gender, StringComparison.Ordinal))
+            return;
+
+        _gender = value;
+        _drawCount = 1;
+        ClearResult();
+        RefreshSurface();
+    }
+
+    private void DecreaseCountButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        _drawCount = Math.Max(1, _drawCount - 1);
+        RefreshSurface();
+    }
+
+    private void IncreaseCountButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var maximum = Math.Max(1, _rollCallSnapshot?.RemainingCount ?? 1);
+        _drawCount = Math.Min(maximum, _drawCount + 1);
+        RefreshSurface();
+    }
+
+    private async void DrawStudentsButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_rollCallSnapshot is not null)
+            await DrawStudentsAsync(_rollCallSnapshot);
+    }
+
+    private void RemainingButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_rollCallSnapshot is not null)
+            ShowRemainingList(_rollCallSnapshot.Remaining);
+    }
+
+    private void MoreButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => ShowMoreActions();
+
+    private async void DrawPrizeButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        await DrawPrizeAsync(_lotteryCandidates);
+
+    private void ManagePrizeButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => OpenListManagement();
+
+    private void UpdateResult(MobileRollCallSnapshot snapshot, bool hasStudents, bool hasPrizes)
+    {
+        if (_drawSurface == DrawSurface.RollCall)
         {
-            Text = resultText,
-            FontSize = 34,
-            FontWeight = FontWeight.SemiBold,
-            TextAlignment = TextAlignment.Center,
-            TextWrapping = TextWrapping.Wrap
-        };
-        var detail = new TextBlock
-        {
-            Text = detailText,
-            TextAlignment = TextAlignment.Center,
-            TextWrapping = TextWrapping.Wrap
-        };
-        return (result, detail, MobileViewFactory.CreateResultPanel(result, detail, media));
+            ResultText.Text = _resultStatusText ?? (_studentResult.Count > 0
+                ? string.Join("\n", _studentResult.Select(FormatStudent))
+                : snapshot.RemainingCount > 0
+                    ? LR.M_Ready
+                    : hasStudents ? LR.M_NoEligibleCandidates : LR.M_NoStudents);
+            ResultDetail.Text = _resultStatusDetail ?? (_studentResult.Count > 0
+                ? string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_DrawResultCount, _studentResult.Count)
+                : snapshot.RemainingCount > 0
+                    ? string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_CandidateStudents, snapshot.RemainingCount)
+                    : hasStudents ? LR.M_RepeatLimitExhausted : LR.M_AddStudentsPrompt);
+            UpdateResultImages(ShouldShowStudentImages() ? _studentResult : []);
+            return;
+        }
+
+        ResultText.Text = _resultStatusText ?? (_prizeResult is not null
+            ? string.IsNullOrWhiteSpace(_prizeResult.Name) ? _prizeResult.Id : _prizeResult.Name
+            : _lotteryCandidates.Count > 0
+                ? LR.M_Ready
+                : hasPrizes ? LR.M_NoEligibleCandidates : LR.M_NoPrizes);
+        ResultDetail.Text = _resultStatusDetail ?? (_prizeResult is not null
+            ? string.IsNullOrWhiteSpace(_prizeResult.Id)
+                ? LR.M_DrawCompleted
+                : string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_PrizeId, _prizeResult.Id)
+            : _lotteryCandidates.Count > 0
+                ? string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_CandidatePrizes, _lotteryCandidates.Count)
+                : hasPrizes ? LR.M_RepeatLimitExhausted : LR.M_AddPrizesPrompt);
+        UpdateResultImages(_configHandler.Data.LotterySettings.LotteryImage && _prizeResult is not null
+            ? [_prizeResult]
+            : []);
     }
 
     private bool ShouldShowStudentImages() => _configHandler.Data
@@ -675,21 +538,9 @@ public sealed partial class MobileDrawPage : UserControl
         catch { }
     }
 
-    private static void SetControlsEnabled(IEnumerable<Control> controls, bool enabled)
+    private void UpdateResultImages(IEnumerable<IAttachableSettingsObject> records)
     {
-        foreach (var control in controls)
-            control.IsEnabled = enabled;
-    }
-
-    private static void HideResultMedia(Control card)
-    {
-        foreach (var image in card.GetVisualDescendants().OfType<Image>())
-            image.IsVisible = false;
-    }
-
-    private static Control? CreateImageStrip(IEnumerable<IAttachableSettingsObject> records)
-    {
-        var images = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Center };
+        ResultImages.Children.Clear();
         foreach (var record in records)
         {
             var settings = record.GetAttachedObject<DrawImageAttachedSettings>(
@@ -699,7 +550,7 @@ public sealed partial class MobileDrawPage : UserControl
                 continue;
             try
             {
-                images.Children.Add(new Border
+                ResultImages.Children.Add(new Border
                 {
                     Width = 88,
                     Height = 88,
@@ -711,7 +562,15 @@ public sealed partial class MobileDrawPage : UserControl
             }
             catch { }
         }
-        return images.Children.Count == 0 ? null : images;
+        ResultImages.IsVisible = ResultImages.Children.Count != 0;
+    }
+
+    private void ClearResult()
+    {
+        _studentResult = [];
+        _prizeResult = null;
+        _resultStatusText = null;
+        _resultStatusDetail = null;
     }
 
     private void EnsureRestartTemporaryRecordsCleared()
@@ -722,11 +581,13 @@ public sealed partial class MobileDrawPage : UserControl
             _temporaryRecordService.ClearPrizeListOnce(GetPrizeListName());
     }
 
-    private static string FormatStudent(Student student) => MobileViewFactory.Format(student.Id, student.Name);
+    private static string FormatStudent(Student student) => string.IsNullOrWhiteSpace(student.Id)
+        ? student.Name
+        : string.IsNullOrWhiteSpace(student.Name) ? student.Id : $"{student.Id}  {student.Name}";
     private string GetStudentListName() => _profileService.StudentListConfig?.Name ?? MobileDefaults.ProfileName;
     private string GetPrizeListName() => _profileService.PrizeListConfig?.Name ?? MobileDefaults.ProfileName;
 
-    private void OpenListManagement() => _ = _navigator.NavigateAsync(MobilePageIds.ListManagement);
+    private void OpenListManagement() => _ = _settingsNavigator.NavigateAsync(MobilePageIds.ListManagement);
 
     private static string GetDrawFailureText(DrawStatus status) => status switch
     {

@@ -1,94 +1,40 @@
 using System.Reflection;
 using Avalonia.Controls;
-using Avalonia.Layout;
-using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
+using SecRandom.Core.Attributes;
 using SecRandom.Core.Icons;
-using SecRandom.Mobile.Controls;
-using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using LR = SecRandom.Langs.Mobile.Resources;
 
-namespace SecRandom.Mobile.Views.Settings;
+namespace SecRandom.Views.Mobile.Settings;
 
 /// <summary>
-/// 关于页：居中的品牌卡片（Logo + 名称 + 版本 + GPLv3 许可证说明）+ 项目链接。
-/// 版本取入口程序集的 InformationalVersion（GitInfo 版本特性生成在 Android/iOS 头程序集上）。
-/// 链接经 TopLevel Launcher 打开系统浏览器；Launcher 不可用或打开失败时给状态提示。
+/// About metadata is static AXAML chrome; code-behind only resolves the entry version
+/// and delegates the external URL to the platform launcher.
 /// </summary>
+[PageInfo(MobilePageIds.About, FluentIcons.InfoFilled, "settings.mobile.application")]
 public sealed partial class MobileAboutSettingsPage : MobileSettingsPageBase
 {
     private static readonly Uri ProjectUri = new("https://github.com/SECTL/SecRandom");
 
-    private readonly TextBlock _statusText;
-
-    public MobileAboutSettingsPage(IMobileNavigator navigator, IMobileCapabilities capabilities)
-        : base(navigator, capabilities)
+    public MobileAboutSettingsPage(IMobileCapabilities capabilities)
+        : base(capabilities)
     {
         InitializeComponent();
         var version = (Assembly.GetEntryAssembly() ?? typeof(MobileAboutSettingsPage).Assembly)
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0]
             ?? "0.0.0";
-
-        var logo = new Image
-        {
-            Source = new Bitmap(AssetLoader.Open(new Uri("avares://SecRandom.Mobile/Assets/AppLogo.png"))),
-            Width = 64,
-            Height = 64,
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
-
-        var name = new TextBlock
-        {
-            Text = "SecRandom",
-            FontSize = 20,
-            FontWeight = FontWeight.SemiBold,
-            TextAlignment = TextAlignment.Center
-        };
-
-        var versionText = CreateCaption($"{LR.S_Version} {version}", centered: true);
-        var license = CreateCaption(LR.M_AboutLicense, centered: true);
-
-        var brandCard = new MobileCard
-        {
-            Content = new StackPanel
-            {
-                Spacing = 8,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Children = { logo, name, versionText, license }
-            }
-        };
-
-        _statusText = CreateCaption(string.Empty, centered: true);
-
-        RenderPage([
-            brandCard,
-            MobileSettingRow.Navigation(LR.C_ViewOnGitHub, "github.com/SECTL/SecRandom", () => _ = OpenProjectLinkAsync()),
-            _statusText
-        ]);
+        VersionText.Text = $"{LR.S_Version} {version}";
     }
 
-    private static TextBlock CreateCaption(string text, bool centered)
-    {
-        var caption = new TextBlock
-        {
-            Text = text,
-            FontSize = 12,
-            TextWrapping = TextWrapping.Wrap,
-            TextAlignment = centered ? TextAlignment.Center : TextAlignment.Left
-        };
-        return caption;
-    }
-
-    private async Task OpenProjectLinkAsync()
+    private async void ProjectLinkButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         var launcher = TopLevel.GetTopLevel(this)?.Launcher;
         if (launcher is null)
         {
-            _statusText.Text = LR.M_BrowserUnavailable;
+            AboutStatusText.Text = LR.M_BrowserUnavailable;
             return;
         }
 
         if (!await launcher.LaunchUriAsync(ProjectUri))
-            _statusText.Text = LR.M_OpenBrowserFailed;
+            AboutStatusText.Text = LR.M_OpenBrowserFailed;
     }
 }

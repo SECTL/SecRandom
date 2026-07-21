@@ -1,14 +1,13 @@
 using Avalonia.Controls;
-using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using SecRandom.Core.Attributes;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Archive;
-using SecRandom.Mobile.Controls;
-using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using LR = SecRandom.Langs.Mobile.Resources;
 using AvaloniaButton = Avalonia.Controls.Button;
 
-namespace SecRandom.Mobile.Views.Settings;
+namespace SecRandom.Views.Mobile.Settings;
 
 /// <summary>
 /// 备份页：全量数据 ZIP 与设置 envelope 的导出/导入，引擎为 Core 的
@@ -19,6 +18,7 @@ namespace SecRandom.Mobile.Views.Settings;
 /// 导入先复制流到临时文件再校验（v3 manifest），确认后才执行导入。
 /// 忙时禁用全部操作按钮并显示进度文案；StorageProvider 不可用时优雅降级提示。
 /// </summary>
+[PageInfo(MobilePageIds.Backup, FluentIcons.ArchiveFilled, "settings.mobile.data")]
 public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
 {
     private enum PendingImportKind
@@ -33,27 +33,30 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
     private readonly AvaloniaButton _exportSettingsButton;
     private readonly AvaloniaButton _importSettingsButton;
     private readonly TextBlock _statusText;
-    private readonly Border _confirmHost;
+    private readonly AvaloniaButton _confirmButton;
+    private readonly AvaloniaButton _cancelButton;
+    private readonly TextBlock _confirmDetail;
+    private readonly TextBlock _confirmWarnings;
+    private readonly Control _confirmHost;
 
     private bool _busy;
     private PendingImportKind _pendingKind = PendingImportKind.None;
     private string? _pendingTempPath;
     private bool _confirmAllowed;
-    private AvaloniaButton? _confirmButton;
-    private AvaloniaButton? _cancelButton;
-
-    public MobileBackupSettingsPage(IMobileNavigator navigator, IMobileCapabilities capabilities)
-        : base(navigator, capabilities)
+    public MobileBackupSettingsPage(IMobileCapabilities capabilities)
+        : base(capabilities)
     {
         InitializeComponent();
-        _exportAllButton = MobileViewFactory.CreatePrimaryButton(LR.C_ExportAllData, true, () => _ = ExportAllDataAsync());
-        _importAllButton = MobileViewFactory.CreateSecondaryButton(LR.C_ImportAllData, () => _ = PickImportAsync(PendingImportKind.AllData));
-        _exportSettingsButton = MobileViewFactory.CreateSecondaryButton(LR.C_ExportSettings, () => _ = ExportSettingsAsync());
-        _importSettingsButton = MobileViewFactory.CreateSecondaryButton(LR.C_ImportSettings, () => _ = PickImportAsync(PendingImportKind.Settings));
-
-        _statusText = new TextBlock { TextWrapping = TextWrapping.Wrap };
-
-        _confirmHost = new Border { IsVisible = false };
+        _exportAllButton = this.FindControl<AvaloniaButton>("ExportAllButton")!;
+        _importAllButton = this.FindControl<AvaloniaButton>("ImportAllButton")!;
+        _exportSettingsButton = this.FindControl<AvaloniaButton>("ExportSettingsButton")!;
+        _importSettingsButton = this.FindControl<AvaloniaButton>("ImportSettingsButton")!;
+        _statusText = this.FindControl<TextBlock>("BackupStatusText")!;
+        _confirmHost = this.FindControl<Control>("ImportConfirmationHost")!;
+        _confirmButton = this.FindControl<AvaloniaButton>("ConfirmImportButton")!;
+        _cancelButton = this.FindControl<AvaloniaButton>("CancelImportButton")!;
+        _confirmDetail = this.FindControl<TextBlock>("ImportConfirmationDetail")!;
+        _confirmWarnings = this.FindControl<TextBlock>("ImportConfirmationWarnings")!;
 
         // 页面在待确认导入期间被关闭（如返回/切换目的地）时清理临时文件，避免泄露。
         DetachedFromVisualTree += (_, _) =>
@@ -63,31 +66,25 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
             TryDeleteFile(tempPath);
         };
 
-        RenderPage([
-            CreateCaption(LR.M_BackupPickerHint),
-            new MobileSectionHeader(LR.S_AllData, FluentIcons.DatabaseFilled),
-            CreateCaption(LR.S_AllData_D),
-            _exportAllButton,
-            _importAllButton,
-            new MobileSectionHeader(LR.S_SettingsSection, FluentIcons.SettingsFilled),
-            CreateCaption(LR.S_SettingsSection_D),
-            _exportSettingsButton,
-            _importSettingsButton,
-            _confirmHost,
-            _statusText
-        ]);
     }
 
-    private static TextBlock CreateCaption(string text)
-    {
-        var caption = new TextBlock
-        {
-            Text = text,
-            FontSize = 12,
-            TextWrapping = TextWrapping.Wrap
-        };
-        return caption;
-    }
+    private async void ExportAllButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        await ExportAllDataAsync();
+
+    private async void ImportAllButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        await PickImportAsync(PendingImportKind.AllData);
+
+    private async void ExportSettingsButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        await ExportSettingsAsync();
+
+    private async void ImportSettingsButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        await PickImportAsync(PendingImportKind.Settings);
+
+    private async void ConfirmImportButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        await ConfirmImportAsync();
+
+    private void CancelImportButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        CancelPendingImport();
 
     // ---- 导出 ----
 
@@ -239,39 +236,18 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
         _pendingTempPath = tempPath;
         _confirmAllowed = inspection.IsSupportedV3;
 
-        var detail = new TextBlock
-        {
-            TextWrapping = TextWrapping.Wrap,
-            Text = string.Format(LR.M_SourceVersion, string.IsNullOrWhiteSpace(inspection.ProducerVersion) ? LR.M_UnrecognizedVersion : inspection.ProducerVersion) + "\n"
-                   + string.Format(LR.M_ImportFileCount, inspection.FileCount, (inspection.UncompressedBytes / 1024d / 1024d).ToString("F1"))
-        };
-
-        var stack = new StackPanel
-        {
-            Spacing = 8,
-            Children =
-            {
-                new MobileSectionHeader(LR.S_ConfirmImport, FluentIcons.WarningFilled),
-                detail
-            }
-        };
-
-        if (inspection.Warnings.Count > 0)
-        {
-            var warnings = new TextBlock
-            {
-                Text = string.Join("\n", inspection.Warnings),
-                TextWrapping = TextWrapping.Wrap
-            };
-            stack.Children.Add(warnings);
-        }
-
-        _confirmButton = MobileViewFactory.CreatePrimaryButton(LR.C_ConfirmImport, inspection.IsSupportedV3, () => _ = ConfirmImportAsync());
-        _cancelButton = MobileViewFactory.CreateSecondaryButton(LR.C_Cancel, CancelPendingImport);
-        stack.Children.Add(_confirmButton);
-        stack.Children.Add(_cancelButton);
-
-        _confirmHost.Child = new MobileCard { Content = stack };
+        _confirmDetail.Text = string.Format(
+            LR.M_SourceVersion,
+            string.IsNullOrWhiteSpace(inspection.ProducerVersion) ? LR.M_UnrecognizedVersion : inspection.ProducerVersion)
+            + "\n"
+            + string.Format(
+                LR.M_ImportFileCount,
+                inspection.FileCount,
+                (inspection.UncompressedBytes / 1024d / 1024d).ToString("F1"));
+        _confirmWarnings.Text = string.Join("\n", inspection.Warnings);
+        _confirmWarnings.IsVisible = inspection.Warnings.Count > 0;
+        _confirmButton.IsEnabled = inspection.IsSupportedV3;
+        _cancelButton.IsEnabled = true;
         _confirmHost.IsVisible = true;
         MobileAnimations.PlayResultReveal(_confirmHost);
     }
@@ -327,9 +303,9 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
         _pendingKind = PendingImportKind.None;
         _pendingTempPath = null;
         _confirmAllowed = false;
-        _confirmButton = null;
-        _cancelButton = null;
-        _confirmHost.Child = null;
+        _confirmDetail.Text = string.Empty;
+        _confirmWarnings.Text = string.Empty;
+        _confirmWarnings.IsVisible = false;
         _confirmHost.IsVisible = false;
     }
 
@@ -375,10 +351,8 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
         _importAllButton.IsEnabled = !busy;
         _exportSettingsButton.IsEnabled = !busy;
         _importSettingsButton.IsEnabled = !busy;
-        if (_confirmButton is not null)
-            _confirmButton.IsEnabled = !busy && _confirmAllowed;
-        if (_cancelButton is not null)
-            _cancelButton.IsEnabled = !busy;
+        _confirmButton.IsEnabled = !busy && _confirmAllowed;
+        _cancelButton.IsEnabled = !busy;
         if (status is not null)
             SetStatus(status);
     }

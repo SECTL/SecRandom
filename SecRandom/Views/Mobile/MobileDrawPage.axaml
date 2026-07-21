@@ -1,6 +1,146 @@
 <local:MobileDrawPage xmlns="https://github.com/avaloniaui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:local="clr-namespace:SecRandom.Mobile.Views"
-                    x:Class="SecRandom.Mobile.Views.MobileDrawPage">
-    <ContentControl x:Name="PageContent" />
+                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                      xmlns:controls="clr-namespace:SecRandom.Controls.Mobile"
+                      xmlns:local="clr-namespace:SecRandom.Views.Mobile"
+                      xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+                      xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                      x:Class="SecRandom.Views.Mobile.MobileDrawPage">
+    <ScrollViewer x:Name="PageScroll"
+                  Padding="20,20,20,28"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto"
+                  IsScrollChainingEnabled="False"
+                  IsScrollInertiaEnabled="True">
+        <StackPanel Spacing="14" MaxWidth="720">
+            <TabStrip x:Name="DrawSurfaceTabs"
+                      SelectionChanged="DrawSurfaceTabs_OnSelectionChanged">
+                <TabStripItem x:Name="RollCallTab" Content="{x:Static langs:Resources.C_RollCall}" />
+                <TabStripItem x:Name="LotteryTab" Content="{x:Static langs:Resources.C_Lottery}" />
+            </TabStrip>
+
+            <controls:MobileCard x:Name="DrawResultCard"
+                                 Padding="24,28"
+                                 CornerRadius="18"
+                                 BorderThickness="0">
+                <StackPanel Spacing="8">
+                    <TextBlock x:Name="ResultText"
+                               FontSize="34"
+                               FontWeight="SemiBold"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               HorizontalAlignment="Center" />
+                    <TextBlock x:Name="ResultDetail"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               HorizontalAlignment="Center" />
+                    <WrapPanel x:Name="ResultImages"
+                               HorizontalAlignment="Center"
+                               IsVisible="False" />
+                </StackPanel>
+            </controls:MobileCard>
+
+            <controls:MobileCard x:Name="RollCallPanel">
+                <StackPanel Spacing="12">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{x:Static langs:Resources.S_CurrentList}" FontSize="12" />
+                        <ComboBox x:Name="StudentListSelector"
+                                  MinHeight="44"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="StudentListSelector_OnSelectionChanged" />
+                    </StackPanel>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{x:Static langs:Resources.S_Group}" FontSize="12" />
+                            <ComboBox x:Name="GroupSelector"
+                                      MinHeight="44"
+                                      HorizontalAlignment="Stretch"
+                                      SelectionChanged="GroupSelector_OnSelectionChanged" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock Text="{x:Static langs:Resources.S_Gender}" FontSize="12" />
+                            <ComboBox x:Name="GenderSelector"
+                                      MinHeight="44"
+                                      HorizontalAlignment="Stretch"
+                                      SelectionChanged="GenderSelector_OnSelectionChanged" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock x:Name="RollCallSummary" TextWrapping="Wrap" />
+
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <StackPanel Spacing="4" VerticalAlignment="Bottom">
+                            <TextBlock Text="{x:Static langs:Resources.S_DrawCount}" FontSize="12" />
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Button x:Name="DecreaseCountButton"
+                                        MinWidth="44"
+                                        MinHeight="44"
+                                        ToolTip.Tip="{x:Static langs:Resources.S_DrawCount}"
+                                        AutomationProperties.Name="{x:Static langs:Resources.S_DrawCount}"
+                                        Click="DecreaseCountButton_OnClick">
+                                    <sr:FluentIcon Glyph="{sr:Fi SubtractFilled}" />
+                                </Button>
+                                <TextBlock x:Name="DrawCountText"
+                                           MinWidth="40"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           TextAlignment="Center"
+                                           VerticalAlignment="Center" />
+                                <Button x:Name="IncreaseCountButton"
+                                        MinWidth="44"
+                                        MinHeight="44"
+                                        ToolTip.Tip="{x:Static langs:Resources.S_DrawCount}"
+                                        AutomationProperties.Name="{x:Static langs:Resources.S_DrawCount}"
+                                        Click="IncreaseCountButton_OnClick">
+                                    <sr:FluentIcon Glyph="{sr:Fi AddFilled}" />
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                        <Button x:Name="DrawStudentsButton"
+                                Grid.Column="1"
+                                Classes="accent"
+                                MinHeight="48"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                FontWeight="SemiBold"
+                                Click="DrawStudentsButton_OnClick" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button x:Name="RemainingButton"
+                                MinHeight="44"
+                                Content="{x:Static langs:Resources.C_RemainingList}"
+                                Click="RemainingButton_OnClick" />
+                        <Button x:Name="MoreButton"
+                                Grid.Column="1"
+                                MinHeight="44"
+                                Content="{x:Static langs:Resources.C_More}"
+                                Click="MoreButton_OnClick" />
+                    </Grid>
+                </StackPanel>
+            </controls:MobileCard>
+
+            <StackPanel x:Name="LotteryPanel" Spacing="14" IsVisible="False">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="{x:Static langs:Resources.S_CurrentPool}" FontSize="12" />
+                    <TextBlock x:Name="PrizePoolName"
+                               FontSize="24"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+                <Button x:Name="DrawPrizeButton"
+                        Classes="accent"
+                        MinHeight="48"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        FontWeight="SemiBold"
+                        Content="{x:Static langs:Resources.C_DrawPrize}"
+                        Click="DrawPrizeButton_OnClick" />
+                <Button x:Name="ManagePrizeButton"
+                        MinHeight="44"
+                        Content="{x:Static langs:Resources.C_ManagePrizePool}"
+                        Click="ManagePrizeButton_OnClick" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
 </local:MobileDrawPage>

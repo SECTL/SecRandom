@@ -1,4 +1,4 @@
-namespace SecRandom.Mobile.Views;
+namespace SecRandom.Views.Mobile;
 
 internal static class MobileDefaults
 {

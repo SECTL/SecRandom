@@ -6,7 +6,7 @@
 
 #nullable enable
 
-namespace SecRandom.Mobile.Langs.Mobile;
+namespace SecRandom.Langs.Mobile;
 
 [global::System.CodeDom.Compiler.GeneratedCodeAttribute(
     "System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
@@ -25,7 +25,7 @@ public class Resources
         global::System.ComponentModel.EditorBrowsableState.Advanced)]
     public static global::System.Resources.ResourceManager ResourceManager =>
         resourceMan ??= new global::System.Resources.ResourceManager(
-            "SecRandom.Mobile.Langs.Mobile.Resources", typeof(Resources).Assembly);
+            "SecRandom.Langs.Mobile.Resources", typeof(Resources).Assembly);
 
     [global::System.ComponentModel.EditorBrowsableAttribute(
         global::System.ComponentModel.EditorBrowsableState.Advanced)]
@@ -42,6 +42,8 @@ public class Resources
     public static string C_AddPrize => ResourceManager.GetString("C_AddPrize", resourceCulture)!;
 
     public static string C_Back => ResourceManager.GetString("C_Back", resourceCulture)!;
+
+    public static string C_Home => ResourceManager.GetString("C_Home", resourceCulture)!;
 
     public static string C_AddStudent => ResourceManager.GetString("C_AddStudent", resourceCulture)!;
 
@@ -282,6 +284,12 @@ public class Resources
     public static string O_Anonymous => ResourceManager.GetString("O_Anonymous", resourceCulture)!;
 
     public static string O_Full => ResourceManager.GetString("O_Full", resourceCulture)!;
+
+    public static string O_LanguageChinese => ResourceManager.GetString("O_LanguageChinese", resourceCulture)!;
+
+    public static string O_LanguageEnglish => ResourceManager.GetString("O_LanguageEnglish", resourceCulture)!;
+
+    public static string O_LanguageJapanese => ResourceManager.GetString("O_LanguageJapanese", resourceCulture)!;
 
     public static string S_Telemetry => ResourceManager.GetString("S_Telemetry", resourceCulture)!;
 

@@ -22,7 +22,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\SecRandom\SecRandom.csproj" />
-        <ProjectReference Include="..\SecRandom.Mobile.Shared\SecRandom.Mobile.Shared.csproj" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(BuildMobile)' == 'true'">

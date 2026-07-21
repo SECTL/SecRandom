@@ -1,8 +1,8 @@
 <local:MobileRootView xmlns="https://github.com/avaloniaui"
-                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                      xmlns:local="clr-namespace:SecRandom.Mobile"
-                      xmlns:controls="clr-namespace:SecRandom.Mobile.Controls"
-                      x:Class="SecRandom.Mobile.MobileRootView">
+                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                       xmlns:local="clr-namespace:SecRandom.Views.Mobile"
+                       xmlns:controls="clr-namespace:SecRandom.Controls.Mobile"
+                       x:Class="SecRandom.Views.Mobile.MobileRootView">
     <Grid x:Name="RootLayout"
           RowDefinitions="Auto,*,Auto">
         <controls:MobilePageHeader x:Name="PageHeader" />

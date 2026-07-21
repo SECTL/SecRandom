@@ -4,11 +4,11 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
-using SecRandom.Mobile.Views;
+using SecRandom.Views.Mobile;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Models.Profile;
 
-namespace SecRandom.Mobile.Services;
+namespace SecRandom.Services.Mobile;
 
 internal sealed record MobileRollCallSnapshot(
     IReadOnlyList<Student> Candidates,

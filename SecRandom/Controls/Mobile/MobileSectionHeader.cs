@@ -1,12 +1,12 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using SecRandom.Core.Icons;
-using SecRandom.Mobile.Views;
+using SecRandom.Views.Mobile;
 
-namespace SecRandom.Mobile.Controls;
+namespace SecRandom.Controls.Mobile;
 
 /// <summary>
-/// 段落页眉：主色小图标 + 加粗标题（替代旧 MobileViewFactory.CreateLabel 的 IconText 用法）。
+/// 段落页眉：主色小图标 + 加粗标题。
 /// </summary>
 public sealed partial class MobileSectionHeader : UserControl
 {

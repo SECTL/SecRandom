@@ -1,46 +1,32 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Microsoft.Extensions.DependencyInjection;
-using SecRandom.Mobile.Views;
+using SecRandom.Views.Mobile;
 
 namespace SecRandom.Mobile.Tests;
 
 public sealed class MobileNavigatorTests
 {
     [AvaloniaFact]
-    public async Task SettingsChildBackReturnsToTheCatalog()
+    public async Task RootNavigationReplacesTheCurrentPage()
     {
         await using var provider = CreateProvider();
         var navigator = provider.GetRequiredService<IMobileNavigator>();
         var outlet = new ContentControl();
         navigator.Attach(outlet);
 
-        Assert.True(await navigator.NavigateAsync(MobilePageIds.General));
-        Assert.IsType<GeneralPage>(outlet.Content);
-        Assert.Equal(MobileDestination.Settings, navigator.CurrentDestination);
-
-        Assert.True(await navigator.GoBackAsync());
-        Assert.IsType<SettingsPage>(outlet.Content);
-        Assert.False(await navigator.GoBackAsync());
-    }
-
-    [AvaloniaFact]
-    public async Task RootNavigationClearsSettingsHistory()
-    {
-        await using var provider = CreateProvider();
-        var navigator = provider.GetRequiredService<IMobileNavigator>();
-        var outlet = new ContentControl();
-        navigator.Attach(outlet);
-
-        Assert.True(await navigator.NavigateAsync(MobilePageIds.General));
         Assert.True(await navigator.NavigateRootAsync(MobileDestination.History));
         Assert.IsType<HistoryPage>(outlet.Content);
         Assert.Equal(MobileDestination.History, navigator.CurrentDestination);
+
+        Assert.True(await navigator.NavigateRootAsync(MobileDestination.Overview));
+        Assert.IsType<OverviewPage>(outlet.Content);
+        Assert.Equal(MobileDestination.Overview, navigator.CurrentDestination);
         Assert.False(await navigator.GoBackAsync());
     }
 
     [AvaloniaFact]
-    public async Task MissingConditionalPageDoesNotChangeTheCurrentPage()
+    public async Task SettingsIsNotANormalNavigatorRoute()
     {
         await using var provider = CreateProvider();
         var navigator = provider.GetRequiredService<IMobileNavigator>();
@@ -50,8 +36,22 @@ public sealed class MobileNavigatorTests
         Assert.True(await navigator.NavigateRootAsync(MobileDestination.Draw));
         var current = outlet.Content;
 
-        Assert.False(await navigator.NavigateAsync(MobilePageIds.Update));
+        Assert.False(await navigator.NavigateRootAsync(MobileDestination.Settings));
         Assert.Same(current, outlet.Content);
+        Assert.Equal(MobileDestination.Draw, navigator.CurrentDestination);
+    }
+
+    [AvaloniaFact]
+    public async Task ResetReturnsToDrawRoot()
+    {
+        await using var provider = CreateProvider();
+        var navigator = provider.GetRequiredService<IMobileNavigator>();
+        var outlet = new ContentControl();
+        navigator.Attach(outlet);
+
+        Assert.True(await navigator.NavigateRootAsync(MobileDestination.History));
+        await navigator.ResetToDrawAsync();
+        Assert.IsType<DrawPage>(outlet.Content);
         Assert.Equal(MobileDestination.Draw, navigator.CurrentDestination);
     }
 
@@ -62,8 +62,6 @@ public sealed class MobileNavigatorTests
         services.AddKeyedTransient<UserControl, DrawPage>(MobilePageIds.Draw);
         services.AddKeyedTransient<UserControl, HistoryPage>(MobilePageIds.History);
         services.AddKeyedTransient<UserControl, OverviewPage>(MobilePageIds.Overview);
-        services.AddKeyedTransient<UserControl, SettingsPage>(MobilePageIds.Settings);
-        services.AddKeyedTransient<UserControl, GeneralPage>(MobilePageIds.General);
         return services.BuildServiceProvider();
     }
 
@@ -79,11 +77,4 @@ public sealed class MobileNavigatorTests
     {
     }
 
-    private sealed class SettingsPage : UserControl
-    {
-    }
-
-    private sealed class GeneralPage : UserControl
-    {
-    }
 }

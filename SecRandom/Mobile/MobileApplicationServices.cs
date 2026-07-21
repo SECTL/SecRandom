@@ -1,12 +1,16 @@
 using System.Globalization;
 using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using SecRandom.Core.Attributes;
+using SecRandom.Core.Extensions.Registry;
+using SecRandom.Core.Icons;
+using SecRandom.Core.Models;
 using SecRandom.Core.Views;
-using SecRandom.Mobile.Services;
-using SecRandom.Mobile.Views;
-using SecRandom.Mobile.Views.Settings;
+using SecRandom.Services.Mobile;
+using SecRandom.Views.Mobile;
+using SecRandom.Views.Mobile.Settings;
 using SecRandom.Platforms.Abstractions;
-using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using LR = SecRandom.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile;
 
@@ -32,21 +36,26 @@ public static class MobileApplicationServices
         services.AddSingleton<IMobileRootViewReloader>(_ => new MobileRootViewReloader(reloadRoot));
         services.AddSingleton<IMobileCapabilities, MobileCapabilities>();
         services.AddSingleton<IMobileNavigator, MobileNavigator>();
+        services.AddSingleton<IMobileSettingsNavigator, MobileSettingsNavigator>();
         services.AddSingleton<SingleViewHostProvider>();
         services.AddSingleton<IViewHostProvider>(provider => provider.GetRequiredService<SingleViewHostProvider>());
-        services.AddViewEngine();
+        services.AddViewEngine()
+            .AddView<global::SecRandom.Views.SettingsView>(MobilePageIds.Settings);
         services.AddKeyedTransient<UserControl, MobileDrawPage>(MobilePageIds.Draw);
         services.AddKeyedTransient<UserControl, MobileHistoryPage>(MobilePageIds.History);
         services.AddKeyedTransient<UserControl, MobileOverviewPage>(MobilePageIds.Overview);
-        services.AddKeyedTransient<UserControl, MobileSettingsCatalogPage>(MobilePageIds.Settings);
-        services.AddKeyedTransient<UserControl, MobileGeneralSettingsPage>(MobilePageIds.General);
-        services.AddKeyedTransient<UserControl, MobilePersonalizationSettingsPage>(MobilePageIds.Personalization);
-        services.AddKeyedTransient<UserControl, MobileListManagementSettingsPage>(MobilePageIds.ListManagement);
-        services.AddKeyedTransient<UserControl, MobileDrawSettingsPage>(MobilePageIds.DrawSettings);
-        services.AddKeyedTransient<UserControl, MobileBackupSettingsPage>(MobilePageIds.Backup);
+        services.AddSettingsPage<MobileSettingsCatalogPage>(LR.P_Settings);
+        services.AddGroup(new PageGroupInfo(LR.S_GroupPreferences, "settings.mobile.preferences", FluentIcons.ColorFilled));
+        services.AddGroup(new PageGroupInfo(LR.S_GroupData, "settings.mobile.data", FluentIcons.DatabaseFilled));
+        services.AddGroup(new PageGroupInfo(LR.S_GroupApp, "settings.mobile.application", FluentIcons.InfoFilled));
+        services.AddSettingsPage<MobileGeneralSettingsPage>(LR.S_General);
+        services.AddSettingsPage<MobilePersonalizationSettingsPage>(LR.S_Personalization);
+        services.AddSettingsPage<MobileDrawSettingsPage>(LR.S_DrawSettings);
+        services.AddSettingsPage<MobileListManagementSettingsPage>(LR.S_ListManagement);
+        services.AddSettingsPage<MobileBackupSettingsPage>(LR.S_Backup);
         if (platform.UpdateInstaller.IsSupported)
-            services.AddKeyedTransient<UserControl, MobileUpdateSettingsPage>(MobilePageIds.Update);
-        services.AddKeyedTransient<UserControl, MobileAboutSettingsPage>(MobilePageIds.About);
+            services.AddSettingsPage<MobileUpdateSettingsPage>(LR.S_AppUpdates);
+        services.AddSettingsPage<MobileAboutSettingsPage>(LR.S_About);
         services.AddTransient<MobileRootView>();
         return services;
     }

@@ -3,20 +3,21 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using SecRandom.Controls.Mobile;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Views;
-using SecRandom.Mobile.Controls;
-using SecRandom.Mobile.Views;
-using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using SecRandom.Services.Mobile;
+using LR = SecRandom.Langs.Mobile.Resources;
 
-namespace SecRandom.Mobile;
+namespace SecRandom.Views.Mobile;
 
 public sealed partial class MobileRootView : UserControl
 {
     private readonly MainConfigHandler _configHandler;
-    private readonly ViewHostControl _modalViewHost;
+    private readonly ViewHostControl _viewHost;
     private readonly SingleViewHostProvider _singleViewHostProvider;
     private readonly IMobileNavigator _navigator;
+    private readonly IMobileSettingsNavigator _settingsNavigator;
     private readonly MobilePageHeader _header;
     private readonly MobileNavigationBar _bottomBar;
     private readonly ContentControl _pageOutlet;
@@ -24,13 +25,15 @@ public sealed partial class MobileRootView : UserControl
     public MobileRootView(
         MainConfigHandler configHandler,
         SingleViewHostProvider singleViewHostProvider,
-        IMobileNavigator navigator)
+        IMobileNavigator navigator,
+        IMobileSettingsNavigator settingsNavigator)
     {
         _configHandler = configHandler;
         _singleViewHostProvider = singleViewHostProvider;
         _navigator = navigator;
-        _modalViewHost = new ViewHostControl("mobile.modal");
-        _singleViewHostProvider.Attach(_modalViewHost);
+        _settingsNavigator = settingsNavigator;
+        _viewHost = new ViewHostControl("mobile.root");
+        _singleViewHostProvider.Attach(_viewHost);
 
         InitializeComponent();
         _header = this.FindControl<MobilePageHeader>("PageHeader")!;
@@ -39,10 +42,10 @@ public sealed partial class MobileRootView : UserControl
         _pageOutlet = this.FindControl<ContentControl>("PageOutlet")!;
         _navigator.Attach(_pageOutlet);
         var root = this.FindControl<Grid>("RootLayout")!;
-        root.Children.Add(_modalViewHost);
-        Grid.SetRow(_modalViewHost, 1);
-        Grid.SetRowSpan(_modalViewHost, 3);
-        _modalViewHost.ZIndex = 1;
+        root.Children.Add(_viewHost);
+        Grid.SetRow(_viewHost, 0);
+        Grid.SetRowSpan(_viewHost, 3);
+        _viewHost.ZIndex = 1;
 
         AddHandler(TopLevel.BackRequestedEvent, OnBackRequested, RoutingStrategies.Bubble);
         _configHandler.Data.Appearance.PropertyChanged += AppearanceOnPropertyChanged;
@@ -52,7 +55,7 @@ public sealed partial class MobileRootView : UserControl
         RenderCurrentDestination();
     }
 
-    public ViewHostControl ModalViewHost => _modalViewHost;
+    public ViewHostControl ViewHost => _viewHost;
 
     public Task ResetNavigationAsync() => _navigator.ResetToDrawAsync();
 
@@ -71,7 +74,7 @@ public sealed partial class MobileRootView : UserControl
     {
         _navigator.DestinationChanged -= NavigatorOnDestinationChanged;
         _navigator.Detach(_pageOutlet);
-        _singleViewHostProvider.Detach(_modalViewHost);
+        _singleViewHostProvider.Detach(_viewHost);
     }
 
     private void OnBackRequested(object? sender, RoutedEventArgs e)
@@ -80,9 +83,9 @@ public sealed partial class MobileRootView : UserControl
             return;
 
         e.Handled = true;
-        if (_modalViewHost.ActiveModalView is not null)
+        if (_viewHost.HasActiveView)
         {
-            _ = _modalViewHost.CloseActiveViewAsync();
+            _ = _viewHost.CloseActiveViewAsync();
             return;
         }
 
@@ -96,7 +99,6 @@ public sealed partial class MobileRootView : UserControl
             MobileDestination.Draw => LR.P_Draw,
             MobileDestination.History => LR.P_History,
             MobileDestination.Overview => LR.P_Overview,
-            MobileDestination.Settings => LR.P_Settings,
             _ => throw new ArgumentOutOfRangeException()
         };
         _bottomBar.Select(_navigator.CurrentDestination);
@@ -124,6 +126,23 @@ public sealed partial class MobileRootView : UserControl
     {
         try
         {
+            if (destination == MobileDestination.Settings)
+            {
+                await _settingsNavigator.OpenAsync().ConfigureAwait(true);
+                _bottomBar.Select(_navigator.CurrentDestination);
+                return;
+            }
+
+            var wasSettingsOpen = _settingsNavigator.IsOpen;
+            if (wasSettingsOpen)
+                await _settingsNavigator.CloseAsync().ConfigureAwait(true);
+
+            if (destination == _navigator.CurrentDestination)
+            {
+                _bottomBar.Select(_navigator.CurrentDestination);
+                return;
+            }
+
             if (!await _navigator.NavigateRootAsync(destination).ConfigureAwait(true))
                 _bottomBar.Select(_navigator.CurrentDestination);
         }

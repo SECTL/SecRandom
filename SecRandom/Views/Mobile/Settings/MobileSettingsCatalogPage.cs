@@ -1,46 +1,56 @@
-using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using SecRandom.Core.Attributes;
 using SecRandom.Core.Icons;
-using SecRandom.Mobile.Controls;
-using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using SecRandom.Core.Services;
+using SecRandom.Services.Mobile;
 
-namespace SecRandom.Mobile.Views.Settings;
+namespace SecRandom.Views.Mobile.Settings;
 
 /// <summary>
-/// 设置目录页：七个设置目的地按「偏好 / 数据 / 应用」分组，目录项用
-/// <see cref="MobileSettingRow"/> 导航行，分组用 <see cref="MobileSectionHeader"/>。
-/// 更新入口由平台 DI 注册的能力投影决定（iOS 不显示）。
-/// 目录是底部导航的根级目的地，因此不显示返回按钮。
+/// SettingsView 的隐藏目录页。SettingsView 依据注册元数据生成分组和入口。
 /// </summary>
+[PageInfo(MobilePageIds.Settings, FluentIcons.SettingsFilled, isHide: true)]
 public sealed partial class MobileSettingsCatalogPage : MobileSettingsPageBase
 {
-    public MobileSettingsCatalogPage(IMobileNavigator navigator, IMobileCapabilities capabilities)
-        : base(navigator, capabilities)
+    private readonly IMobileSettingsNavigator _settingsNavigator;
+
+    public MobileSettingsCatalogPage(
+        IMobileCapabilities capabilities,
+        IMobileSettingsNavigator settingsNavigator)
+        : base(capabilities)
     {
+        _settingsNavigator = settingsNavigator;
         LoadSettingsLayout();
-        var items = new List<Control>
-        {
-            new MobileSectionHeader(LR.S_GroupPreferences, FluentIcons.ColorFilled),
-            MobileSettingRow.Navigation(LR.S_General, LR.S_General_D, () => Navigate(MobilePageIds.General)),
-            MobileSettingRow.Navigation(LR.S_Personalization, LR.S_Personalization_D, () => Navigate(MobilePageIds.Personalization)),
-            MobileSettingRow.Navigation(LR.S_DrawSettings, LR.S_DrawSettings_D, () => Navigate(MobilePageIds.DrawSettings)),
-            new MobileSectionHeader(LR.S_GroupData, FluentIcons.DatabaseFilled),
-            MobileSettingRow.Navigation(LR.S_ListManagement, LR.S_ListManagement_D, () => Navigate(MobilePageIds.ListManagement)),
-            MobileSettingRow.Navigation(LR.S_Backup, LR.S_Backup_D, () => Navigate(MobilePageIds.Backup)),
-            new MobileSectionHeader(LR.S_GroupApp, FluentIcons.InfoFilled)
-        };
-        if (Capabilities.SupportsInAppUpdate)
-            items.Add(MobileSettingRow.Navigation(LR.S_AppUpdates, LR.S_AppUpdates_D, () => Navigate(MobilePageIds.Update)));
-        items.Add(MobileSettingRow.Navigation(LR.S_About, LR.S_About_D, () => Navigate(MobilePageIds.About)));
-
-        var settingsItems = this.FindControl<StackPanel>("SettingsItems")!;
-        foreach (var item in items)
-            settingsItems.Children.Add(item);
-
-        MobileAnimations.PlayPageEnter(this.FindControl<ScrollViewer>("PageScroll")!);
+        Groups = PagesRegistryService.GroupItems
+            .Where(group => group.Id.StartsWith("settings.mobile.", StringComparison.Ordinal))
+            .Select(group => new MobileSettingsCatalogGroup(
+                group.Name,
+                group.IconGlyph,
+                PagesRegistryService.SettingsItems
+                    .Where(page => !page.IsSeparator && !page.IsHide && page.GroupId == group.Id)
+                    .Select(page => new MobileSettingsCatalogEntry(page.Id, page.Name, page.IconGlyph))
+                    .ToArray()))
+            .Where(group => group.Pages.Count != 0)
+            .ToArray();
+        DataContext = this;
     }
 
-    private void Navigate(string pageId) => _ = Navigator.NavigateAsync(pageId);
+    public IReadOnlyList<MobileSettingsCatalogGroup> Groups { get; }
+
+    private async void CatalogItem_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (sender is not Avalonia.Controls.Control { Tag: string pageId })
+            return;
+
+        await _settingsNavigator.NavigateAsync(pageId);
+    }
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }
+
+public sealed record MobileSettingsCatalogGroup(
+    string Name,
+    string IconGlyph,
+    IReadOnlyList<MobileSettingsCatalogEntry> Pages);
+
+public sealed record MobileSettingsCatalogEntry(string Id, string Name, string IconGlyph);

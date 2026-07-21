@@ -7,7 +7,7 @@ using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
-namespace SecRandom.Mobile.Views;
+namespace SecRandom.Views.Mobile;
 
 /// <summary>
 /// 移动端轻量动画原语（FluentAvalonia 风格的过渡与结果动效，非桌面重型滚动动画）。

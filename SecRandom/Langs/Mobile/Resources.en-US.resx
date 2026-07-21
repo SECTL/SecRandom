@@ -254,6 +254,9 @@
     <data name="C_Back" xml:space="preserve">
         <value>Back to Settings</value>
     </data>
+    <data name="C_Home" xml:space="preserve">
+        <value>Home</value>
+    </data>
     <data name="S_SettingsCategories" xml:space="preserve">
         <value>Settings Categories</value>
     </data>
@@ -388,6 +391,15 @@
     </data>
     <data name="O_Full" xml:space="preserve">
         <value>Full</value>
+    </data>
+    <data name="O_LanguageChinese" xml:space="preserve">
+        <value>Chinese (Simplified)</value>
+    </data>
+    <data name="O_LanguageEnglish" xml:space="preserve">
+        <value>English</value>
+    </data>
+    <data name="O_LanguageJapanese" xml:space="preserve">
+        <value>Japanese</value>
     </data>
     <data name="S_Telemetry" xml:space="preserve">
         <value>Error &amp; Performance Telemetry</value>

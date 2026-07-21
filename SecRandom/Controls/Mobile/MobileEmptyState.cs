@@ -2,7 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using AvaloniaButton = Avalonia.Controls.Button;
 
-namespace SecRandom.Mobile.Controls;
+namespace SecRandom.Controls.Mobile;
 
 /// <summary>
 /// 空态占位：图标 + 标题 + 可选描述 + 可选引导按钮。引导按钮应跳转到对应管理界面，

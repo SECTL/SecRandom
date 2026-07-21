@@ -1,3 +1,4 @@
+using SecRandom.Mobile;
 using SecRandom.Core;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.SubConfigs.Picking;
@@ -5,7 +6,7 @@ using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Interfaces;
 using SecRandom.Shared.Models.Profile;
 
-namespace SecRandom.Mobile.Services;
+namespace SecRandom.Services.Mobile;
 
 /// <summary>
 /// Applies record-level music and voice settings around a completed mobile draw.

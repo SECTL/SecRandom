@@ -17,7 +17,8 @@ localization.
 SecRandom/
 ├── App.axaml(.cs)       # Application bootstrap, Host registration, windows, shutdown/restart
 ├── App.Consts.cs        # App UI constants/support flags
-├── Views/               # Main shell, settings shell, pages, windows
+├── Mobile/              # Mobile composition, platform-neutral seams, mobile design/assembly rules
+├── Views/               # Main shell, settings shell, desktop and mobile pages, windows
 ├── ViewModels/          # App VM state; root holds shell/profile bases
 │   ├── MainPages/       # Page-specific VMs for built-in main pages and floating-window quick draw
 │   └── SettingsPages/
@@ -36,6 +37,7 @@ SecRandom/
 │   ├── Plugins/         # Plugin runtime: manager, catalog, invoker, state
 │   ├── Profiles/        # Non-mutating ProfileQueryService snapshots
 │   ├── Settings/        # SettingsSearchService
+│   ├── Mobile/          # Mobile navigation, draw/media, update, profile helpers
 │   ├── Security/        # Credential store, verification prompts, factor/operation authorization
 │   ├── Telemetry/       # ITelemetryTransaction/ITelemetrySdkAdapter seam; Sentry adapter + desktop-only Sentry shim; Sentry-free TelemetryRuntimeService
 │   ├── Updates/         # Signed manifest discovery, complete-artifact deployment, update scheduler
@@ -48,7 +50,7 @@ SecRandom/
 ├── Converters/          # App-local Avalonia converters
 ├── Langs/               # Per-page resx plus app-level IPC response localization
 ├── Assets/              # Avalonia resources, icons, MiSans font, banners
-├── Controls/            # App-specific controls; shared controls belong in Core
+├── Controls/            # App-specific controls, including Mobile/; shared controls belong in Core
 └── Styles.axaml         # Includes Core style bundle
 ```
 
@@ -58,7 +60,7 @@ SecRandom/
 |------------------------------|-------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Register VM/service/page     | `App.axaml.cs` `BuildHost()`                                            | Strong convention; Host is source of truth.                                                                              |
 | Main app window flow         | `App.ShowMainWindow()`, `App.ShowQuickDrawWindow()`, `Views/MainView.axaml.cs` | `FloatingWindow` is desktop main window; main view opens separately. `QuickDrawPage` is resolved directly from Host for its standalone, draggable, topmost quick-draw window and must stay registered. The quick-draw window sizes to its content, caps itself to the current display work area, and scrolls result content when needed. Roll-call and lottery remaining lists open a shared resizable `RemainingListWindow` at `1000x600`. |
-| Settings flow                | `App.ShowSettingsWindow()`, `Views/SettingsView.axaml.cs`               | Settings has navigation history and restart prompt.                                                                      |
+| Settings flow                | `App.ShowSettingsWindow()`, `Views/SettingsView.axaml.cs`               | Desktop uses navigation/search/restart; mobile uses the same independent SettingsView MVE with a hidden catalog, child Back-to-catalog, and Home-to-root behavior. |
 | Crash recovery               | `Services/CrashRecovery/`, `Views/CrashRecoveryWindow.axaml(.cs)`, `Langs/CrashRecovery/` | Desktop fatal/dispatcher crash restart, crash report prompt, and feedback issue helpers.                                  |
 | Add main page                | `Views/MainPages/`, `BuildHost()`                                       | `[PageInfo]` + `AddMainPage<T>()`; built-in main navigation includes roll-call, lottery, and history. Quick draw opens from the floating window. |
 | Main page ViewModels         | `ViewModels/MainPages/`                                                 | Page-specific VMs for built-in main pages and floating-window quick draw; XAML compiled bindings must use this namespace. |
@@ -80,7 +82,7 @@ SecRandom/
 | Desktop integration          | `Services/Desktop/`                                                     | Taskbar lifecycle, Windows native global shortcuts, cross-platform autostart, and `secrandom://` registration.          |
 | Platform feature calls       | `Services/Platform/`, `../SecRandom.Platforms.Abstractions/`            | Views obtain `IWindowFeatureService` through Host; native implementations stay outside the app project.                 |
 | Cross-platform view host     | `Services/ViewEngine/`                                                    | Desktop physical host provider for `SecRandom.Core.Views`; it owns ordinary Avalonia windows only.                       |
-| Mobile root                  | `App.axaml.cs`, `../SecRandom.Mobile.Shared/MobileRootView.cs`; entry points `../SecRandom.Android/MobileEntryPoint.cs`, `../SecRandom.iOS/MobileEntryPoint.cs` | Shared App selects a SingleView Host branch; mobile root supplies shell chrome and must not start desktop-only services. |
+| Mobile root                  | `App.axaml.cs`, `Mobile/`, `Views/Mobile/MobileRootView.cs`; entry points `../SecRandom.Android/MobileEntryPoint.cs`, `../SecRandom.iOS/MobileEntryPoint.cs` | Shared App selects a SingleView Host branch; one root `ViewHostControl` hosts SettingsView pages/modals while native bottom-bar routes remain in `IMobileNavigator`. |
 | Telemetry runtime seam       | `Services/Telemetry/`                                                   | App-layer-only telemetry policy/runtime boundary behind the `ITelemetryTransaction`/`ITelemetrySdkAdapter` seam; Sentry types stay inside the adapter and the desktop-only shim. Reads and live-applies `PrivacySettings.SentryTelemetryEnabled`. |
 | Online status reporting      | `Services/OnlineStatusService.cs`                                       | Host-managed SECTL online status reporter; reads `PrivacySettings.OnlineStatusMode`.                                      |
 | Update center                | `Services/Updates/`, `Views/SettingsPages/Update/`                       | Signed full-artifact checks, portable staging/Launcher restart, or native installer handoff.                              |
@@ -97,6 +99,9 @@ SecRandom/
 - `BuildHost()` registers the desktop `IViewHostProvider` after `AddViewEngine()`. Named physical hosts are registered by `App` when a main/settings window is created; the provider also owns standalone plugin windows. It does not manage embedded shell regions.
 - `MainWindow` and `FloatingWindow` retain their presentation and configuration behavior but request topmost through `IWindowFeatureService`; `FloatingWindow` requests `ToolWindow` during construction while its native handle is available but before its first show, then requests task-switcher exclusion after opening where supported. Its transparent composition hint must be set during construction. Floating-window restoration must preserve `ShowActivated=False` and not steal focus. Linux implements tool/task-switcher semantics through X11 EWMH when `DISPLAY` is available, including XWayland sessions; native Wayland remains out of scope. macOS maps `ToolWindow` to an `NSWindow` utility window that joins all Spaces; Command-Tab remains application-level and is not modeled as a per-window task-switcher exclusion.
 - `App` is shared by desktop and mobile. Its SingleView branch initializes only mobile routes, `MobileRootView`, mobile media/update/status services, and the `SingleViewHostProvider`; it must not route through desktop single-instance, OOBE, floating-window, tray, shortcut, update scheduler, plugin, or protocol startup paths.
+- Mobile code belongs to this project: `Mobile/` owns composition and neutral platform contracts, `Views/Mobile/`, `Controls/Mobile/`, `Services/Mobile/`, and `Langs/Mobile/` own their corresponding app-layer responsibilities. Do not recreate a separate mobile UI assembly.
+- Mobile fixed layout is AXAML-first. Keep code-behind for runtime data, StorageProvider, dialogs, DataGrid setup, media, and service orchestration; do not add a second mobile style/token layer, `NavigationView`, or generic C# setting-row factory as the primary page layout.
+- Mobile SettingsView is its own MVE page in the root `ViewHostControl`, not `IMobileNavigator` destination state. Only mobile registers hidden `settings.mobile`; its catalog reflects registered mobile groups/pages. Back from a child returns to that catalog, Back from the catalog closes SettingsView, and Home closes it immediately.
 - Crash recovery startup prompt handling runs before single-instance acquisition; normal app restart must release `SingleInstanceService` before launching the replacement process.
 - Telemetry runtime policy belongs in app-layer services and should live-apply `MainConfigHandler.Data.General.PrivacySettings.SentryTelemetryEnabled`; do not move SDK-specific wiring into Core or Shared. Runtime code talks to the Sentry-free `ITelemetryTransaction` / `ITelemetrySdkAdapter` seam (`TelemetryRuntimeService` has no Sentry reference; the DSN comes from `GlobalConstants.SentryDsn`). The concrete Sentry adapter stays under `SecRandom/Services/Telemetry/SentryTelemetrySdkAdapter.cs`, with Sentry transaction extensions isolated in the desktop-only `TelemetryTransactionSentryExtensions` shim that mobile-linked builds exclude. `Sentry.AspNetCore` is desktop-only because it brings `Microsoft.AspNetCore.App`; mobile builds use `Sentry` and `Sentry.Extensions.Logging` without that framework reference.
 - Background app services such as `OnlineStatusService` are registered through Host and must honor `PrivacySettings.OnlineStatusMode` before doing network work.

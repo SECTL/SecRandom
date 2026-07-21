@@ -1,30 +1,82 @@
 <local:MobileOverviewPage xmlns="https://github.com/avaloniaui"
-                          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                          xmlns:local="clr-namespace:SecRandom.Mobile.Views"
-                          xmlns:langs="clr-namespace:SecRandom.Mobile.Langs.Mobile"
-                          x:Class="SecRandom.Mobile.Views.MobileOverviewPage">
+                           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                           xmlns:controls="clr-namespace:SecRandom.Controls.Mobile"
+                           xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                           xmlns:local="clr-namespace:SecRandom.Views.Mobile"
+                           xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+                           x:Class="SecRandom.Views.Mobile.MobileOverviewPage">
     <ScrollViewer x:Name="PageScroll"
-                   Padding="20,20,20,28"
-                  HorizontalAlignment="Stretch"
-                  VerticalAlignment="Stretch"
+                  Padding="20,20,20,28"
                   HorizontalScrollBarVisibility="Disabled"
                   VerticalScrollBarVisibility="Auto"
                   IsScrollChainingEnabled="False"
                   IsScrollInertiaEnabled="True">
-        <StackPanel Spacing="14"
-                    MaxWidth="720">
+        <StackPanel Spacing="14" MaxWidth="720">
             <TextBlock Text="{x:Static langs:Resources.S_DataOverview}"
-                        FontSize="12"
+                       FontSize="12"
                        TextWrapping="Wrap" />
             <TextBlock Text="{x:Static langs:Resources.P_Overview}"
-                        FontSize="24"
-                        FontWeight="SemiBold"
+                       FontSize="24"
+                       FontWeight="SemiBold"
                        TextWrapping="Wrap" />
             <Grid x:Name="MetricsGrid"
                   ColumnDefinitions="*,*"
                   RowDefinitions="Auto,Auto"
                   ColumnSpacing="14"
-                  RowSpacing="14" />
+                  RowSpacing="14">
+                <controls:MobileCard x:Name="StudentMetricCard"
+                                     Grid.Row="0"
+                                     Grid.Column="0">
+                    <StackPanel Spacing="4">
+                        <sr:FluentIcon Glyph="{sr:Fi PeopleFilled}" FontSize="20" />
+                        <TextBlock x:Name="StudentMetricValue"
+                                   FontSize="28"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{x:Static langs:Resources.M_Students}"
+                                   FontSize="12"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </controls:MobileCard>
+                <controls:MobileCard x:Name="PrizeMetricCard"
+                                     Grid.Row="0"
+                                     Grid.Column="1">
+                    <StackPanel Spacing="4">
+                        <sr:FluentIcon Glyph="{sr:Fi GiftFilled}" FontSize="20" />
+                        <TextBlock x:Name="PrizeMetricValue"
+                                   FontSize="28"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{x:Static langs:Resources.M_Prizes}"
+                                   FontSize="12"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </controls:MobileCard>
+                <controls:MobileCard x:Name="RollCallRoundsMetricCard"
+                                     Grid.Row="1"
+                                     Grid.Column="0">
+                    <StackPanel Spacing="4">
+                        <sr:FluentIcon Glyph="{sr:Fi TargetFilled}" FontSize="20" />
+                        <TextBlock x:Name="RollCallRoundsMetricValue"
+                                   FontSize="28"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{x:Static langs:Resources.M_RollCallRounds}"
+                                   FontSize="12"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </controls:MobileCard>
+                <controls:MobileCard x:Name="LotteryRoundsMetricCard"
+                                     Grid.Row="1"
+                                     Grid.Column="1">
+                    <StackPanel Spacing="4">
+                        <sr:FluentIcon Glyph="{sr:Fi TrophyFilled}" FontSize="20" />
+                        <TextBlock x:Name="LotteryRoundsMetricValue"
+                                   FontSize="28"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{x:Static langs:Resources.M_LotteryRounds}"
+                                   FontSize="12"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </controls:MobileCard>
+            </Grid>
         </StackPanel>
     </ScrollViewer>
 </local:MobileOverviewPage>

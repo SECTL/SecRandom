@@ -4,9 +4,10 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Markup.Xaml;
 using SecRandom.Core.Icons;
-using SecRandom.Mobile.Views;
+using SecRandom.Views.Mobile;
+using LR = SecRandom.Langs.Mobile.Resources;
 
-namespace SecRandom.Mobile.Controls;
+namespace SecRandom.Controls.Mobile;
 
 public sealed partial class MobileNavigationBar : UserControl
 {
@@ -19,16 +20,16 @@ public sealed partial class MobileNavigationBar : UserControl
         InitializeComponent();
         AddItem(this.FindControl<ToggleButton>("DrawButton")!,
             this.FindControl<TextBlock>("DrawIcon")!, this.FindControl<TextBlock>("DrawLabel")!,
-            Langs.Mobile.Resources.N_Draw, FluentIcons.PeopleRegular, FluentIcons.PeopleFilled, MobileDestination.Draw, 1);
+            LR.N_Draw, FluentIcons.PeopleRegular, FluentIcons.PeopleFilled, MobileDestination.Draw, 1);
         AddItem(this.FindControl<ToggleButton>("HistoryButton")!,
             this.FindControl<TextBlock>("HistoryIcon")!, this.FindControl<TextBlock>("HistoryLabel")!,
-            Langs.Mobile.Resources.N_History, FluentIcons.HistoryRegular, FluentIcons.HistoryFilled, MobileDestination.History, 2);
+            LR.N_History, FluentIcons.HistoryRegular, FluentIcons.HistoryFilled, MobileDestination.History, 2);
         AddItem(this.FindControl<ToggleButton>("OverviewButton")!,
             this.FindControl<TextBlock>("OverviewIcon")!, this.FindControl<TextBlock>("OverviewLabel")!,
-            Langs.Mobile.Resources.N_Overview, FluentIcons.HomeRegular, FluentIcons.HomeFilled, MobileDestination.Overview, 3);
+            LR.N_Overview, FluentIcons.HomeRegular, FluentIcons.HomeFilled, MobileDestination.Overview, 3);
         AddItem(this.FindControl<ToggleButton>("SettingsButton")!,
             this.FindControl<TextBlock>("SettingsIcon")!, this.FindControl<TextBlock>("SettingsLabel")!,
-            Langs.Mobile.Resources.N_Settings, FluentIcons.SettingsRegular, FluentIcons.SettingsFilled, MobileDestination.Settings, 4);
+            LR.N_Settings, FluentIcons.SettingsRegular, FluentIcons.SettingsFilled, MobileDestination.Settings, 4);
         Select(MobileDestination.Draw);
     }
 
@@ -65,10 +66,12 @@ public sealed partial class MobileNavigationBar : UserControl
         if (destination == _selectedDestination)
         {
             RefreshSelection();
-            return;
+        }
+        else
+        {
+            Select(destination);
         }
 
-        Select(destination);
         DestinationSelected?.Invoke(this, destination);
     }
 

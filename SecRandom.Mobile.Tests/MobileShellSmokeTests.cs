@@ -11,8 +11,8 @@ using Avalonia.VisualTree;
 using FluentAvalonia.Styling;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Icons;
-using SecRandom.Mobile.Controls;
-using SecRandom.Mobile.Views;
+using SecRandom.Controls.Mobile;
+using SecRandom.Views.Mobile;
 
 [assembly: AvaloniaTestApplication(typeof(SecRandom.Mobile.Tests.MobileTestAppBuilder))]
 
@@ -29,6 +29,7 @@ public sealed class MobileTestApplication : Application
     public override void Initialize()
     {
         RequestedThemeVariant = ThemeVariant.Light;
+        Resources["PageContainerWidth"] = 960d;
         Styles.Add(new FluentAvaloniaTheme
         {
             PreferSystemTheme = true,

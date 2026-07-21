@@ -10,11 +10,11 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
-using SecRandom.Mobile.Controls;
+using SecRandom.Controls.Mobile;
 using SecRandom.Shared.Models.Profile;
-using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using LR = SecRandom.Langs.Mobile.Resources;
 
-namespace SecRandom.Mobile.Views;
+namespace SecRandom.Views.Mobile;
 
 public sealed partial class MobileHistoryPage : UserControl
 {
@@ -28,6 +28,7 @@ public sealed partial class MobileHistoryPage : UserControl
     private string? _profileName;
     private bool _recordsMode;
     private bool _firstRender = true;
+    private bool _synchronizing;
 
     public MobileHistoryPage(
         IProfileService profileService,
@@ -52,71 +53,75 @@ public sealed partial class MobileHistoryPage : UserControl
         if (_segment == 1 && !_capabilities.IsLotteryEnabled)
             _segment = 0;
 
-        var segmented = MobileViewFactory.CreateTabSplit(
-            _segment,
-            [
-                (LR.C_RollCall, true),
-                (LR.C_Lottery, _capabilities.IsLotteryEnabled)
-            ],
-            segment =>
-            {
-                if (segment == _segment)
-                    return;
-
-                _segment = segment;
-                _profileName = null;
-                _recordsMode = false;
-                Render();
-            });
-
         var profileNames = GetProfileNames();
         _profileName = ResolveProfileName(profileNames);
-        var profile = CreateComboBox(profileNames, _profileName, value =>
-        {
-            _profileName = value;
-            Render();
-        });
-        var modes = new[] { LR.O_HistoryOverview, LR.O_HistoryRecords };
-        var mode = CreateComboBox(modes, _recordsMode ? modes[1] : modes[0], value =>
-        {
-            _recordsMode = string.Equals(value, modes[1], StringComparison.Ordinal);
-            Render();
-        });
-        var filters = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("*,*"),
-            ColumnSpacing = 8,
-            Children =
-            {
-                CreateLabeledControl(LR.S_Profile, profile),
-                CreateLabeledControl(LR.S_HistoryMode, mode)
-            }
-        };
-        Grid.SetColumn(filters.Children[1], 1);
-
         var rows = _segment == 0 ? BuildStudentRows() : BuildPrizeRows();
-        Control table = rows.Count == 0
+        Control content = rows.Count == 0
             ? new MobileEmptyState(
                 FluentIcons.HistoryFilled,
                 LR.M_NoHistory,
                 LR.M_NoHistoryPrompt)
             : CreateHistoryGrid(rows);
 
-        var refresh = MobileViewFactory.CreateSecondaryButton(LR.C_Refresh, Render);
+        _synchronizing = true;
+        try
+        {
+            var tabs = this.FindControl<TabStrip>("HistoryTabs")!;
+            tabs.SelectedIndex = _segment;
+            this.FindControl<TabStripItem>("LotteryTab")!.IsVisible = _capabilities.IsLotteryEnabled;
+            var profiles = this.FindControl<ComboBox>("ProfileSelector")!;
+            profiles.ItemsSource = profileNames;
+            profiles.SelectedItem = _profileName;
+            this.FindControl<ComboBox>("HistoryModeSelector")!.SelectedIndex = _recordsMode ? 1 : 0;
+            this.FindControl<ContentControl>("HistoryContent")!.Content = content;
+        }
+        finally
+        {
+            _synchronizing = false;
+        }
 
-        ScrollViewer scroll = MobileViewFactory.CreateScroll([
-            segmented,
-            filters,
-            table,
-            refresh
-        ]);
-        this.FindControl<ContentControl>("PageContent")!.Content = scroll;
         if (_firstRender)
         {
             _firstRender = false;
-            MobileAnimations.PlayPageEnter(scroll);
+            MobileAnimations.PlayPageEnter(this.FindControl<ScrollViewer>("PageScroll")!);
         }
     }
+
+    private void HistoryTabs_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not TabStrip tabs || _synchronizing || tabs.SelectedIndex < 0 || tabs.SelectedIndex == _segment)
+            return;
+
+        _segment = tabs.SelectedIndex;
+        _profileName = null;
+        _recordsMode = false;
+        Render();
+    }
+
+    private void ProfileSelector_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (!_synchronizing && sender is ComboBox profiles && profiles.SelectedItem is string profile &&
+            !string.Equals(profile, _profileName, StringComparison.Ordinal))
+        {
+            _profileName = profile;
+            Render();
+        }
+    }
+
+    private void HistoryModeSelector_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ComboBox modes)
+            return;
+
+        var recordsMode = modes.SelectedIndex == 1;
+        if (!_synchronizing && recordsMode != _recordsMode)
+        {
+            _recordsMode = recordsMode;
+            Render();
+        }
+    }
+
+    private void RefreshButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => Render();
 
     private IReadOnlyList<string> GetProfileNames() => (_segment == 0
             ? _catalogManager.GetStudentListNames().Concat(_historyQueryService.GetStudentHistoryNames())
@@ -318,32 +323,6 @@ public sealed partial class MobileHistoryPage : UserControl
         Binding = new Binding(path),
         Width = new DataGridLength(width)
     };
-
-    private static ComboBox CreateComboBox(
-        IReadOnlyList<string> values,
-        string? selected,
-        Action<string> changed)
-    {
-        var combo = new ComboBox
-        {
-            ItemsSource = values,
-            SelectedItem = selected,
-            MinHeight = 44,
-            HorizontalAlignment = HorizontalAlignment.Stretch
-        };
-        combo.SelectionChanged += (_, _) =>
-        {
-            if (combo.SelectedItem is string value && !string.Equals(value, selected, StringComparison.Ordinal))
-                changed(value);
-        };
-        return combo;
-    }
-
-    private static Control CreateLabeledControl(string label, Control control)
-    {
-        var text = new TextBlock { Text = label, FontSize = 12 };
-        return new StackPanel { Spacing = 4, Children = { text, control } };
-    }
 
     private static string FormatScope(string group, string gender)
     {

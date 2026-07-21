@@ -254,6 +254,9 @@
     <data name="C_Back" xml:space="preserve">
         <value>設定に戻る</value>
     </data>
+    <data name="C_Home" xml:space="preserve">
+        <value>ホーム</value>
+    </data>
     <data name="S_SettingsCategories" xml:space="preserve">
         <value>設定カテゴリ</value>
     </data>
@@ -388,6 +391,15 @@
     </data>
     <data name="O_Full" xml:space="preserve">
         <value>完全</value>
+    </data>
+    <data name="O_LanguageChinese" xml:space="preserve">
+        <value>中国語（簡体字）</value>
+    </data>
+    <data name="O_LanguageEnglish" xml:space="preserve">
+        <value>英語</value>
+    </data>
+    <data name="O_LanguageJapanese" xml:space="preserve">
+        <value>日本語</value>
     </data>
     <data name="S_Telemetry" xml:space="preserve">
         <value>エラーとパフォーマンスのテレメトリ</value>

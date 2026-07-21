@@ -8,9 +8,9 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
-using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using LR = SecRandom.Langs.Mobile.Resources;
 
-namespace SecRandom.Mobile.Services;
+namespace SecRandom.Services.Mobile;
 
 /// <summary>
 /// Mobile-only online counter reporter. It never performs network work while disabled.

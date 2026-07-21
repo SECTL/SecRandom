@@ -1,16 +1,76 @@
 <local:MobileGeneralSettingsPage xmlns="https://github.com/avaloniaui"
-                                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                                  xmlns:local="clr-namespace:SecRandom.Mobile.Views.Settings"
-                                  xmlns:langs="clr-namespace:SecRandom.Mobile.Langs.Mobile"
-                                  x:Class="SecRandom.Mobile.Views.Settings.MobileGeneralSettingsPage">
-    <ScrollViewer x:Name="PageScroll" Padding="20,20,20,28" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" IsScrollChainingEnabled="False" IsScrollInertiaEnabled="True">
+                                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                                   xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+                                   xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                                   xmlns:enums="clr-namespace:SecRandom.Core.Enums.Configs;assembly=SecRandom.Core"
+                                   xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
+                                   xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+                                   x:Class="SecRandom.Views.Mobile.Settings.MobileGeneralSettingsPage">
+    <ScrollViewer x:Name="PageScroll"
+                  Padding="20,20,20,28"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto"
+                  IsScrollChainingEnabled="False"
+                  IsScrollInertiaEnabled="True">
         <StackPanel Spacing="14" MaxWidth="720">
-            <Button Content="{x:Static langs:Resources.C_Back}" HorizontalAlignment="Left" MinHeight="44" Click="OnBackButtonClick" />
             <StackPanel Spacing="4">
                 <TextBlock Text="{x:Static langs:Resources.S_General}" FontSize="24" FontWeight="SemiBold" TextWrapping="Wrap" />
                 <TextBlock Text="{x:Static langs:Resources.S_General_D}" FontSize="12" TextWrapping="Wrap" />
             </StackPanel>
-            <StackPanel x:Name="SettingsBody" Spacing="14" />
+
+            <TextBlock Text="{x:Static langs:Resources.M_GeneralMobileOnly}"
+                       FontSize="12"
+                       TextWrapping="Wrap" />
+
+            <fa:FASettingsExpander Header="{x:Static langs:Resources.S_OnlineStatus}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi CloudArrowUpFilled}}"
+                                   IsExpanded="True">
+                <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_OnlineStatus}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ComboBox x:Name="OnlineStatusSelector"
+                                  MinWidth="160"
+                                  SelectionChanged="OnlineStatusSelector_OnSelectionChanged">
+                            <ComboBoxItem Tag="{x:Static enums:OnlineStatusMode.Off}" Content="{x:Static langs:Resources.O_Off}" />
+                            <ComboBoxItem Tag="{x:Static enums:OnlineStatusMode.Anonymous}" Content="{x:Static langs:Resources.O_Anonymous}" />
+                            <ComboBoxItem Tag="{x:Static enums:OnlineStatusMode.Full}" Content="{x:Static langs:Resources.O_Full}" />
+                        </ComboBox>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{x:Static langs:Resources.S_Telemetry}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ShieldCheckmarkFilled}}"
+                                   IsExpanded="True">
+                <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_SentryTelemetry}"
+                                            Description="{x:Static langs:Resources.S_SentryTelemetry_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch x:Name="SentryTelemetryToggle"
+                                      OnContent=""
+                                      OffContent=""
+                                      IsCheckedChanged="SentryTelemetryToggle_OnIsCheckedChanged" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{x:Static langs:Resources.S_Language}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LocalLanguageFilled}}"
+                                   IsExpanded="True">
+                <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_Language}"
+                                            Description="{x:Static langs:Resources.S_Language_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ComboBox x:Name="LanguageSelector"
+                                  MinWidth="160"
+                                  SelectionChanged="LanguageSelector_OnSelectionChanged">
+                            <ComboBoxItem Tag="{x:Static enums:LanguageMode.ChineseSimplified}"
+                                          Content="{x:Static langs:Resources.O_LanguageChinese}" />
+                            <ComboBoxItem Tag="{x:Static enums:LanguageMode.English}"
+                                          Content="{x:Static langs:Resources.O_LanguageEnglish}" />
+                            <ComboBoxItem Tag="{x:Static enums:LanguageMode.Japanese}"
+                                          Content="{x:Static langs:Resources.O_LanguageJapanese}" />
+                        </ComboBox>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
         </StackPanel>
     </ScrollViewer>
 </local:MobileGeneralSettingsPage>

@@ -11,9 +11,10 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
 using SecRandom.Shared.Updates;
 using YamlDotNet.Serialization;
-using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using SecRandom.Mobile;
+using LR = SecRandom.Langs.Mobile.Resources;
 
-namespace SecRandom.Mobile;
+namespace SecRandom.Services.Mobile;
 
 public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInstaller installer) : INotifyPropertyChanged
 {
@@ -198,7 +199,7 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
 
     private static byte[] ReadPublicKey()
     {
-        using var stream = AssetLoader.Open(new Uri("avares://SecRandom.Mobile/Assets/Updates/release-public-key.txt"));
+        using var stream = AssetLoader.Open(new Uri("avares://SecRandom/Assets/Updates/release-public-key.txt"));
         using var reader = new StreamReader(stream, Encoding.UTF8);
         return Convert.FromBase64String(reader.ReadToEnd().Trim());
     }

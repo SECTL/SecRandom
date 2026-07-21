@@ -28,6 +28,6 @@
 
 各目标平台的原生实现边界。Win32、X11/EWMH、AppKit 等 API 只能放在各自项目中，App 的窗口和服务只能经已注册的窄平台接口调用。
 
-## SecRandom.Mobile / SecRandom.Mobile.Shared / SecRandom.Android / SecRandom.iOS
+## SecRandom.Mobile / SecRandom.Android / SecRandom.iOS
 
-移动端拆分为共享库加两个平台入口头。`SecRandom.Mobile.Shared` 是纯 net10.0 共享库，AssemblyName/RootNamespace 保持 `SecRandom.Mobile`（保住 Core InternalsVisibleTo 与 avares URI），承载 Android/iOS 的独立 Avalonia SingleView 启动壳 `MobileApp`：它在移动平台上设置平台根、在任何持久化路径被读取前选择 app-private local-data root，并启动最小移动 Host；它不引用桌面 `SecRandom` 应用程序集，也不复用桌面窗口、桌面 Host 或桌面后台服务。该 Host 可复用 Core 的配置、档案、临时记录、功能开关和抽取后端，但移动 UI 仅显示已经实现的流程。`SecRandom.Android` 与 `SecRandom.iOS` 是仅含平台入口的 Exe 头项目（`BuildMobile=true` 时分别以 net10.0-android / net10.0-ios 构建，否则为中性 net10.0 空库），引用共享库并挂接平台专用 seam（如 Android 更新安装器、启动诊断钩子）。
+移动前端归并进主 `SecRandom` 应用程序集：`SecRandom.Mobile` 是组合和平台中立契约命名空间，页面、控件、服务和本地化分别位于 `SecRandom.Views.Mobile`、`SecRandom.Controls.Mobile`、`SecRandom.Services.Mobile`、`SecRandom.Langs.Mobile`。共享 `App` 在移动生命周期下先选择 app-private data root，再构建只含 Core/mobile 服务的 SingleView Host，并以 `MobileRootView` 启动；它不注册桌面窗口、托盘、快捷键、OOBE、插件或协议服务。`SecRandom.Android` 与 `SecRandom.iOS` 是仅含平台入口的 Exe 头项目（`BuildMobile=true` 时分别以 net10.0-android / net10.0-ios 构建，否则为中性 net10.0 空库），只挂接 Android/iOS 原生 seam，例如更新安装器、媒体播放器和启动诊断。

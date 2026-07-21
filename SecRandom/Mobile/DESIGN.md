@@ -6,13 +6,12 @@ Provide a usable mobile-first SecRandom workflow for roster management, fair poi
 
 ## Product Context
 
-This is an Android/iOS SingleView application for education random draws. It is independent from the desktop application assembly and uses only the Core runtime service boundary.
+This is an Android/iOS SingleView application built by the shared `SecRandom.App` Host. Mobile code is organized under the main app assembly and uses the same Core runtime services without starting desktop-only workflows.
 
 ## Visual Foundations
 
-- Palette: ink `#1D2939`, muted text `#667085`, canvas `#F7F8FA`, primary `#006E5B`, primary wash `#E8F4F0`, warm draw wash `#FFF4E5`, rules `#E4E7EC`.
 - Layout: a quiet top app bar, one scrollable content column, and a fixed bottom bar for `抽取`, `历史记录`, `概览`, and `设置`.
-- The `抽取` page has a top-left capsule switcher: `点名` on the left and `抽奖` on the right.
+- The `抽取` page uses a native tab strip for `点名` and `抽奖`, a result-first surface, then the narrow-screen action panel.
 - The point-call surface keeps a large result area, then a compact operation panel with list/group/gender selectors, remaining counts, a count stepper, Start, Remaining List, and More. It preserves desktop behavior without importing desktop left/right panel geometry.
 - History and list management use horizontally scrollable tables: history offers profile plus overview/records modes; list rows expose common fields, a desktop-compatible attached-settings column, and a distinct More/delete operation column.
 - The `设置` page is a catalog with exactly seven destinations: `通用`, `个性化`, `名单管理`, `抽取`, `备份`, `更新`, and `关于`, grouped under `偏好` / `数据` / `应用` section headers. The `更新` destination is capability-projected and hidden when in-app update is unsupported (iOS).
@@ -31,7 +30,8 @@ This is an Android/iOS SingleView application for education random draws. It is 
 
 ## Implementation Practices
 
-- `MobileRootView` owns mobile-only fixed chrome; business destinations and every mobile settings page are independent MVE sessions shown through its inner host.
+- `MobileRootView` owns fixed chrome and one full-screen `ViewHostControl`. The regular draw/history/overview pages are native keyed routes; SettingsView is the independent MVE page on that host, with modals layered above it.
+- `settings.mobile` is a hidden mobile-only catalog generated from registered mobile groups/pages. Child Back returns to that catalog, catalog Back closes SettingsView, and Home closes SettingsView immediately.
 - Profile mutations save through `IProfileCatalogManager` / `IProfileService`; draws record both persistent history and temporary records. Multi-member mobile point-call orchestration stays in `MobileRollCallService` and composes the existing Core filtering, sampling, and commit services without changing the Core session contract.
 - The `LotteryEnabled` Core capability remains the only decision for whether the lottery segment can be selected.
 - Theme selection applies the saved `Appearance.Theme` immediately. Mobile keeps the `公平抽取` / `随机抽取` choice in roll-call settings, but when `公平抽取` is selected it runs the Core algorithm with the fixed `MobileDesktopDefaultsV1` policy snapshot and ignores persisted `MainConfigModel.FairDrawSettings` values.
@@ -60,13 +60,12 @@ The workflow supports tabular student/prize editing, desktop-compatible per-reco
 ## Component Inventory
 
 - `MobileCard`: lightweight content container that uses the default control appearance; an optional application-resource key can supply a result/metric background.
-- `MobileSettingRow`: compatibility wrapper over FluentAvalonia `FASettingsExpanderItem`, with factories `Toggle`, `Integer`, `Choice` (unique radio group per row by default), `Navigation`, and `Simple`.
-- `MobileSegmentedControl`: capsule segmented selector with primary-wash selection visuals, replacing the hand-assembled segment buttons.
+- `FASettingsExpander` / `FASettingsExpanderItem`: fixed settings layouts and catalog entries are declared in AXAML. Runtime code only projects capability-dependent data, storage/file flows, dialogs, tables, and media operations.
 - `MobileEmptyState`: icon + title + optional description + optional guidance button that routes to the matching management surface.
 - `MobileSectionHeader`: primary-tinted icon + semibold section title, replacing the `CreateLabel` IconText usage.
-- `MobileSettingsPageBase`: settings-page skeleton (lightweight title/description header instead of an FAInfoBar, optional back button, scroll, and page-enter transition) with capability projection pass-throughs; root-level destinations such as the settings catalog pass `showBackButton: false`.
-- `MobileNavigationBar`: four equal native Avalonia toggle buttons hosted in the fixed bottom row, switching each Fluent icon from Regular to Filled when selected; glyphs load from `avares://SecRandom.Mobile/Assets/Fonts/`. Native controls keep Android accessibility traversal and touch dispatch out of FluentAvalonia's repeater implementation.
-- `MobileViewFactory` is a small code-behind construction helper; page shells and styles remain in AXAML.
+- `MobileSettingsPageBase`: capability projection and optional page-enter helper; SettingsView owns the mobile Back/Home controls rather than individual child pages.
+- `MobileNavigationBar`: four equal native Avalonia toggle buttons hosted in the fixed bottom row, switching each Fluent icon from Regular to Filled when selected; glyphs load from `avares://SecRandom/Assets/Fonts/`. Native controls keep Android accessibility traversal and touch dispatch out of FluentAvalonia's repeater implementation.
+- No generic mobile view factory remains. Stable page hierarchy belongs in AXAML; runtime construction is limited to DataGrid, dialogs, media, and StorageProvider workflows.
 
 ## Animation Primitives
 

@@ -1,16 +1,76 @@
 <local:MobileListManagementSettingsPage xmlns="https://github.com/avaloniaui"
-                                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                                         xmlns:local="clr-namespace:SecRandom.Mobile.Views.Settings"
-                                         xmlns:langs="clr-namespace:SecRandom.Mobile.Langs.Mobile"
-                                         x:Class="SecRandom.Mobile.Views.Settings.MobileListManagementSettingsPage">
-    <ScrollViewer x:Name="PageScroll" Padding="20,20,20,28" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" IsScrollChainingEnabled="False" IsScrollInertiaEnabled="True">
+                                          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                                          xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                                          xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
+                                          xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+                                          x:Class="SecRandom.Views.Mobile.Settings.MobileListManagementSettingsPage">
+    <ScrollViewer x:Name="PageScroll"
+                  Padding="20,20,20,28"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto"
+                  IsScrollChainingEnabled="False"
+                  IsScrollInertiaEnabled="True">
         <StackPanel Spacing="14" MaxWidth="720">
-            <Button Content="{x:Static langs:Resources.C_Back}" HorizontalAlignment="Left" MinHeight="44" Click="OnBackButtonClick" />
             <StackPanel Spacing="4">
                 <TextBlock Text="{x:Static langs:Resources.S_ListManagement}" FontSize="24" FontWeight="SemiBold" TextWrapping="Wrap" />
                 <TextBlock Text="{x:Static langs:Resources.S_ListManagement_D}" FontSize="12" TextWrapping="Wrap" />
             </StackPanel>
-            <StackPanel x:Name="SettingsBody" Spacing="14" />
+
+            <TabStrip x:Name="ListSurfaceTabs"
+                      SelectionChanged="ListSurfaceTabs_OnSelectionChanged">
+                <TabStripItem x:Name="StudentListTab" Content="{x:Static langs:Resources.S_StudentList}" />
+                <TabStripItem x:Name="PrizePoolTab" Content="{x:Static langs:Resources.S_PrizePool}" />
+            </TabStrip>
+
+            <StackPanel x:Name="StudentSurface" Spacing="14">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="{x:Static langs:Resources.S_Profile}" FontSize="12" />
+                    <ComboBox x:Name="StudentProfileSelector"
+                              MinHeight="44"
+                              SelectionChanged="StudentProfileSelector_OnSelectionChanged" />
+                </StackPanel>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <TextBox x:Name="StudentNameBox" PlaceholderText="{x:Static langs:Resources.W_StudentName}" MinHeight="44" />
+                    <TextBox x:Name="StudentIdBox" Grid.Column="1" PlaceholderText="{x:Static langs:Resources.W_StudentId}" MinHeight="44" />
+                </Grid>
+                <Button x:Name="AddStudentButton"
+                        Classes="accent"
+                        MinHeight="44"
+                        HorizontalContentAlignment="Center"
+                        Click="AddStudentButton_OnClick">
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <sr:FluentIcon Glyph="{sr:Fi PersonAddFilled}" />
+                        <TextBlock Text="{x:Static langs:Resources.C_AddStudent}" />
+                    </StackPanel>
+                </Button>
+                <TextBlock Text="{x:Static langs:Resources.M_ListTableHint}" FontSize="12" TextWrapping="Wrap" />
+                <ContentControl x:Name="StudentGridHost" />
+            </StackPanel>
+
+            <StackPanel x:Name="PrizeSurface" Spacing="14" IsVisible="False">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="{x:Static langs:Resources.S_Profile}" FontSize="12" />
+                    <ComboBox x:Name="PrizeProfileSelector"
+                              MinHeight="44"
+                              SelectionChanged="PrizeProfileSelector_OnSelectionChanged" />
+                </StackPanel>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <TextBox x:Name="PrizeNameBox" PlaceholderText="{x:Static langs:Resources.W_PrizeName}" MinHeight="44" />
+                    <TextBox x:Name="PrizeIdBox" Grid.Column="1" PlaceholderText="{x:Static langs:Resources.W_PrizeId}" MinHeight="44" />
+                </Grid>
+                <Button x:Name="AddPrizeButton"
+                        Classes="accent"
+                        MinHeight="44"
+                        HorizontalContentAlignment="Center"
+                        Click="AddPrizeButton_OnClick">
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <sr:FluentIcon Glyph="{sr:Fi GiftFilled}" />
+                        <TextBlock Text="{x:Static langs:Resources.C_AddPrize}" />
+                    </StackPanel>
+                </Button>
+                <TextBlock Text="{x:Static langs:Resources.M_ListTableHint}" FontSize="12" TextWrapping="Wrap" />
+                <ContentControl x:Name="PrizeGridHost" />
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </local:MobileListManagementSettingsPage>

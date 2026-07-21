@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using SecRandom.Core.Attributes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
@@ -10,17 +11,19 @@ using Avalonia.Media;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Controls;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.AttachedSettings;
-using SecRandom.Mobile.Controls;
-using SecRandom.Mobile.Services;
+using SecRandom.Controls.Mobile;
+using SecRandom.Services.Mobile;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Interfaces;
 using SecRandom.Shared.Models.Profile;
-using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using LR = SecRandom.Langs.Mobile.Resources;
 
-namespace SecRandom.Mobile.Views.Settings;
+namespace SecRandom.Views.Mobile.Settings;
 
+[PageInfo(MobilePageIds.ListManagement, FluentIcons.PeopleListFilled, "settings.mobile.data")]
 public sealed partial class MobileListManagementSettingsPage : MobileSettingsPageBase
 {
     private readonly IProfileCatalogManager _catalogManager;
@@ -38,9 +41,8 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         IProfileService profileService,
         MobileMediaLibraryService mediaLibrary,
         MobileDrawMediaService drawMedia,
-        IMobileNavigator navigator,
         IMobileCapabilities capabilities)
-        : base(navigator, capabilities)
+        : base(capabilities)
     {
         _catalogManager = catalogManager;
         _profileService = profileService;
@@ -55,27 +57,19 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         if (_segment == 1 && !IsLotteryEnabled)
             _segment = 0;
 
-        var segmented = MobileViewFactory.CreateTabSplit(
-            _segment,
-            [
-                (LR.S_StudentList, true),
-                (LR.S_PrizePool, IsLotteryEnabled)
-            ],
-            segment =>
-            {
-                if (segment == _segment)
-                    return;
+        StudentListTab.IsVisible = true;
+        PrizePoolTab.IsVisible = IsLotteryEnabled;
+        ListSurfaceTabs.SelectedIndex = _segment;
+        StudentSurface.IsVisible = _segment == 0;
+        PrizeSurface.IsVisible = _segment == 1;
 
-                _segment = segment;
-                Render();
-            });
-
-        var items = new List<Control> { segmented };
-        items.AddRange(_segment == 0 ? BuildStudentSurface() : BuildPrizeSurface());
-        RenderPage(items);
+        if (_segment == 0)
+            RefreshStudentSurface();
+        else
+            RefreshPrizeSurface();
     }
 
-    private IEnumerable<Control> BuildStudentSurface()
+    private void RefreshStudentSurface()
     {
         var names = _catalogManager.GetStudentListNames();
         _studentListName = ResolveProfileName(
@@ -84,26 +78,14 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
             _profileService.StudentListConfig?.Name);
         _studentList = _studentListName is null ? null : _catalogManager.LoadStudentList(_studentListName);
 
-        var selector = CreateProfileSelector(names, _studentListName, name =>
-        {
-            _studentListName = name;
-            _profileService.LoadStudentProfile(name);
-            _catalogManager.SetDefaultStudentList(name);
-            Render();
-        });
-        var nameBox = new TextBox { PlaceholderText = LR.W_StudentName, MinHeight = 44 };
-        var idBox = new TextBox { PlaceholderText = LR.W_StudentId, MinHeight = 44 };
-
-        yield return CreateLabeledControl(LR.S_Profile, selector);
-        yield return CreateAddForm(LR.C_AddStudent, FluentIcons.PersonAddFilled, nameBox, idBox,
-            () => AddStudent(nameBox, idBox));
-        yield return CreateTableHint();
-        yield return _studentList is { Students.Count: > 0 }
+        StudentProfileSelector.ItemsSource = names;
+        StudentProfileSelector.SelectedItem = _studentListName;
+        StudentGridHost.Content = _studentList is { Students.Count: > 0 }
             ? CreateStudentGrid(_studentList.Students.OrderForList().ToArray())
             : new MobileEmptyState(FluentIcons.PeopleFilled, LR.M_EmptyStudentList, LR.M_EmptyStudentListHint);
     }
 
-    private IEnumerable<Control> BuildPrizeSurface()
+    private void RefreshPrizeSurface()
     {
         var names = _catalogManager.GetPrizeListNames();
         _prizeListName = ResolveProfileName(
@@ -112,24 +94,53 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
             _profileService.PrizeListConfig?.Name);
         _prizeList = _prizeListName is null ? null : _catalogManager.LoadPrizeList(_prizeListName);
 
-        var selector = CreateProfileSelector(names, _prizeListName, name =>
-        {
-            _prizeListName = name;
-            _profileService.LoadPrizeProfile(name);
-            _catalogManager.SetDefaultPrizePool(name);
-            Render();
-        });
-        var nameBox = new TextBox { PlaceholderText = LR.W_PrizeName, MinHeight = 44 };
-        var idBox = new TextBox { PlaceholderText = LR.W_PrizeId, MinHeight = 44 };
-
-        yield return CreateLabeledControl(LR.S_Profile, selector);
-        yield return CreateAddForm(LR.C_AddPrize, FluentIcons.GiftFilled, nameBox, idBox,
-            () => AddPrize(nameBox, idBox));
-        yield return CreateTableHint();
-        yield return _prizeList is { Prizes.Count: > 0 }
+        PrizeProfileSelector.ItemsSource = names;
+        PrizeProfileSelector.SelectedItem = _prizeListName;
+        PrizeGridHost.Content = _prizeList is { Prizes.Count: > 0 }
             ? CreatePrizeGrid(_prizeList.Prizes.OrderForList().ToArray())
             : new MobileEmptyState(FluentIcons.GiftFilled, LR.M_EmptyPrizePool, LR.M_EmptyPrizePoolHint);
     }
+
+    private void ListSurfaceTabs_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not TabStrip tabs)
+            return;
+
+        var selected = tabs.SelectedIndex;
+        if (selected >= 0 && selected != _segment)
+        {
+            _segment = selected;
+            Render();
+        }
+    }
+
+    private void StudentProfileSelector_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (StudentProfileSelector.SelectedItem is not string name || string.Equals(name, _studentListName, StringComparison.Ordinal))
+            return;
+
+        _studentListName = name;
+        _profileService.LoadStudentProfile(name);
+        _catalogManager.SetDefaultStudentList(name);
+        Render();
+    }
+
+    private void PrizeProfileSelector_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (PrizeProfileSelector.SelectedItem is not string name || string.Equals(name, _prizeListName, StringComparison.Ordinal))
+            return;
+
+        _prizeListName = name;
+        _profileService.LoadPrizeProfile(name);
+        _catalogManager.SetDefaultPrizePool(name);
+        Render();
+    }
+
+    private void AddStudentButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        AddStudent(StudentNameBox, StudentIdBox);
+
+    private void AddPrizeButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        AddPrize(PrizeNameBox, PrizeIdBox);
 
     private DataGrid CreateStudentGrid(IReadOnlyList<Student> students)
     {
@@ -341,7 +352,11 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         };
         ProfileRecordIdentity.EnsureRecordId(student);
         _studentList.Students.Add(student);
-        SaveStudentList();
+        if (SaveStudentList())
+        {
+            name.Text = string.Empty;
+            id.Text = string.Empty;
+        }
     }
 
     private void AddPrize(TextBox name, TextBox id)
@@ -356,13 +371,17 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         };
         ProfileRecordIdentity.EnsureRecordId(prize);
         _prizeList.Prizes.Add(prize);
-        SavePrizeList();
+        if (SavePrizeList())
+        {
+            name.Text = string.Empty;
+            id.Text = string.Empty;
+        }
     }
 
     private async void RemoveStudent(Guid recordId)
     {
         var student = _studentList?.Students.FirstOrDefault(item => item.RecordId == recordId);
-        if (student is null || !await ConfirmRemoveAsync(MobileViewFactory.Format(student.Id, student.Name)))
+        if (student is null || !await ConfirmRemoveAsync(FormatRecord(student.Id, student.Name)))
             return;
         _studentList!.Students.Remove(student);
         SaveStudentList();
@@ -371,7 +390,7 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
     private async void RemovePrize(Guid recordId)
     {
         var prize = _prizeList?.Prizes.FirstOrDefault(item => item.RecordId == recordId);
-        if (prize is null || !await ConfirmRemoveAsync(MobileViewFactory.Format(prize.Id, prize.Name)))
+        if (prize is null || !await ConfirmRemoveAsync(FormatRecord(prize.Id, prize.Name)))
             return;
         _prizeList!.Prizes.Remove(prize);
         SavePrizeList();
@@ -387,12 +406,25 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         var voice = CopyVoiceSettings(current.GetAttachedObject<SpecificAnnouncementAttachedSettings>(Guid.Parse(GlobalConstants.SpecificAnnouncementAttachedSettings)));
         var importedImages = new List<string>();
 
+        Button CreateDialogButton(string text, Action onClick)
+        {
+            var button = new Button
+            {
+                Content = text,
+                MinHeight = 44,
+                FontWeight = FontWeight.SemiBold,
+                HorizontalContentAlignment = HorizontalAlignment.Center
+            };
+            button.Click += (_, _) => onClick();
+            return button;
+        }
+
         var imageEnabled = CreateToggle(image.IsAttachSettingsEnabled);
         var imagePreview = CreateImagePreview(image.ImagePath);
         var imagePath = new TextBlock { Text = string.IsNullOrWhiteSpace(image.ImagePath) ? LR.M_NoImageSelected : Path.GetFileName(image.ImagePath), TextWrapping = TextWrapping.Wrap };
         var imagePanel = new StackPanel { Spacing = 8, Children = { imageEnabled, imagePreview, imagePath } };
-        var selectImage = MobileViewFactory.CreateSecondaryButton(LR.C_SelectImage, () => _ = SelectImageAsync(image, imagePreview, imagePath, importedImages));
-        var removeImage = MobileViewFactory.CreateSecondaryButton(LR.C_RemoveImage, () =>
+        var selectImage = CreateDialogButton(LR.C_SelectImage, () => _ = SelectImageAsync(image, imagePreview, imagePath, importedImages));
+        var removeImage = CreateDialogButton(LR.C_RemoveImage, () =>
         {
             image.ImagePath = string.Empty;
             imagePreview.Source = null;
@@ -411,9 +443,9 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         var selections = _mediaLibrary.GetSelections();
         var animationMusic = CreateMusicSelector(selections, music.AnimationMusic);
         var resultMusic = CreateMusicSelector(selections, music.ResultMusic);
-        var importMusic = MobileViewFactory.CreateSecondaryButton(LR.C_ImportMusic, () => _ = ImportMusicAsync(animationMusic, resultMusic));
-        var previewMusic = MobileViewFactory.CreateSecondaryButton(LR.C_Preview, () => _ = PreviewMusicAsync(animationMusic));
-        var stopMusic = MobileViewFactory.CreateSecondaryButton(LR.C_Stop, () => _ = _drawMedia.StopAsync());
+        var importMusic = CreateDialogButton(LR.C_ImportMusic, () => _ = ImportMusicAsync(animationMusic, resultMusic));
+        var previewMusic = CreateDialogButton(LR.C_Preview, () => _ = PreviewMusicAsync(animationMusic));
+        var stopMusic = CreateDialogButton(LR.C_Stop, () => _ = _drawMedia.StopAsync());
         var musicPanel = new StackPanel
         {
             Spacing = 8,
@@ -737,16 +769,20 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
             record.AttachedObjects.Remove(settingsId);
     }
 
-    private void SaveStudentList(bool render = true)
+    private bool SaveStudentList(bool render = true)
     {
-        if (_studentList is not null && _catalogManager.SaveStudentList(_studentList) && render)
+        var saved = _studentList is not null && _catalogManager.SaveStudentList(_studentList);
+        if (saved && render)
             Render();
+        return saved;
     }
 
-    private void SavePrizeList(bool render = true)
+    private bool SavePrizeList(bool render = true)
     {
-        if (_prizeList is not null && _catalogManager.SavePrizeList(_prizeList) && render)
+        var saved = _prizeList is not null && _catalogManager.SavePrizeList(_prizeList);
+        if (saved && render)
             Render();
+        return saved;
     }
 
     private static DataGrid CreateGrid(int rowCount) => new()
@@ -777,26 +813,6 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         Width = new DataGridLength(width)
     };
 
-    private static ComboBox CreateProfileSelector(
-        IReadOnlyList<string> names,
-        string? selected,
-        Action<string> changed)
-    {
-        var combo = new ComboBox
-        {
-            ItemsSource = names,
-            SelectedItem = selected,
-            MinHeight = 44,
-            HorizontalAlignment = HorizontalAlignment.Stretch
-        };
-        combo.SelectionChanged += (_, _) =>
-        {
-            if (combo.SelectedItem is string value && !string.Equals(value, selected, StringComparison.Ordinal))
-                changed(value);
-        };
-        return combo;
-    }
-
     private static string? ResolveProfileName(
         IReadOnlyList<string> names,
         string? selected,
@@ -809,29 +825,9 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         return names.FirstOrDefault();
     }
 
-    private static MobileCard CreateAddForm(
-        string title,
-        string glyph,
-        TextBox nameBox,
-        TextBox idBox,
-        Action add)
-    {
-        var addButton = MobileViewFactory.CreatePrimaryButton(title, true, add);
-        return new MobileCard
-        {
-            Content = new StackPanel
-            {
-                Spacing = 8,
-                Children = { new MobileSectionHeader(title, glyph), nameBox, idBox, addButton }
-            }
-        };
-    }
-
-    private static TextBlock CreateTableHint()
-    {
-        var hint = new TextBlock { Text = LR.M_ListTableHint, FontSize = 12, TextWrapping = TextWrapping.Wrap };
-        return hint;
-    }
+    private static string FormatRecord(string id, string name) => string.IsNullOrWhiteSpace(id)
+        ? name
+        : string.IsNullOrWhiteSpace(name) ? id : $"{id}  {name}";
 
     private static Control CreateLabeledControl(string label, Control control)
     {
@@ -856,7 +852,11 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
     {
         var button = new Button
         {
-            Content = MobileViewFactory.CreateIcon(glyph, 18, HorizontalAlignment.Center),
+            Content = new FluentIcon(glyph, 18)
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            },
             MinWidth = 44,
             MinHeight = 40,
             Padding = new Thickness(8),

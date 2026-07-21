@@ -1,4 +1,4 @@
-using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using LR = SecRandom.Langs.Mobile.Resources;
 
 namespace SecRandom.Mobile;
 

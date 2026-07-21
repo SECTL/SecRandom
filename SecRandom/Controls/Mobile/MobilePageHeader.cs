@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace SecRandom.Mobile.Controls;
+namespace SecRandom.Controls.Mobile;
 
 public sealed partial class MobilePageHeader : UserControl
 {

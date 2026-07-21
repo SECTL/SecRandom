@@ -1,12 +1,12 @@
 <local:MobileEmptyState xmlns="https://github.com/avaloniaui"
                        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                       xmlns:local="clr-namespace:SecRandom.Mobile.Controls"
-                       x:Class="SecRandom.Mobile.Controls.MobileEmptyState">
+                       xmlns:local="clr-namespace:SecRandom.Controls.Mobile"
+                       x:Class="SecRandom.Controls.Mobile.MobileEmptyState">
     <StackPanel Spacing="14"
                 HorizontalAlignment="Center"
                 Margin="0,48,0,24">
         <TextBlock x:Name="Icon"
-                   FontFamily="avares://SecRandom.Mobile/Assets/Fonts/#FluentSystemIcons-Resizable"
+                    FontFamily="avares://SecRandom/Assets/Fonts/#FluentSystemIcons-Resizable"
                    FontSize="40"
                    LineHeight="40"
                    HorizontalAlignment="Center"

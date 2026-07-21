@@ -22,10 +22,10 @@ public partial class SettingsViewModel : ObservableRecipient
     [ObservableProperty] private PageInfo? _selectedPageInfo;
     [ObservableProperty] private SettingsMetadata? _selectedSettings;
 
-    public SettingsViewModel(SettingsSearchService settingsSearchService)
+    public SettingsViewModel(SettingsSearchService? settingsSearchService = null)
     {
         SettingsSearchService = settingsSearchService;
-        SettingsMetadata = SettingsSearchService.SettingsMetadata;
+        SettingsMetadata = settingsSearchService?.SettingsMetadata ?? [];
     }
 
     public bool IsWindows => OperatingSystem.IsWindows();
@@ -35,6 +35,6 @@ public partial class SettingsViewModel : ObservableRecipient
 
     public ObservableCollection<string> NavigationHistory { get; } = [];
 
-    public SettingsSearchService SettingsSearchService { get; }
+    public SettingsSearchService? SettingsSearchService { get; }
     public List<SettingsMetadata> SettingsMetadata { get; }
 }

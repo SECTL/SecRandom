@@ -1,10 +1,10 @@
 <local:MobilePageHeader xmlns="https://github.com/avaloniaui"
                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                        xmlns:local="clr-namespace:SecRandom.Mobile.Controls"
-                        x:Class="SecRandom.Mobile.Controls.MobilePageHeader">
+                         xmlns:local="clr-namespace:SecRandom.Controls.Mobile"
+                         x:Class="SecRandom.Controls.Mobile.MobilePageHeader">
     <Border x:Name="Root" Padding="20,14" BorderThickness="0,0,0,1">
         <Grid ColumnDefinitions="Auto,*">
-            <Image Source="avares://SecRandom.Mobile/Assets/AppLogo.png"
+            <Image Source="avares://SecRandom/Assets/AppLogo.png"
                    Width="32"
                    Height="32"
                    Margin="0,0,10,0"

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using SecRandom.Shared;
 
-namespace SecRandom.Mobile.Services;
+namespace SecRandom.Services.Mobile;
 
 internal sealed class MobileDeviceUuidStore
 {

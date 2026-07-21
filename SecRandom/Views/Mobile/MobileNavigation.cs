@@ -3,8 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Mobile;
 
-namespace SecRandom.Mobile.Views;
+namespace SecRandom.Views.Mobile;
 
 /// <summary>
 /// Stable mobile navigation keys. Platform composition chooses which keys have a keyed control registration.
@@ -51,7 +52,7 @@ internal sealed class MobileCapabilities(
 }
 
 /// <summary>
-/// Mobile-shell navigation boundary for keyed child controls. It deliberately excludes MVE host/session APIs.
+/// Mobile-shell navigation boundary for the three persistent root pages. Settings uses the independent MVE view.
 /// </summary>
 public interface IMobileNavigator
 {
@@ -61,7 +62,6 @@ public interface IMobileNavigator
     void Attach(ContentControl outlet);
     void Detach(ContentControl outlet);
     Task<bool> NavigateRootAsync(MobileDestination destination);
-    Task<bool> NavigateAsync(string pageId);
     Task<bool> GoBackAsync();
     Task ResetToDrawAsync();
 }
@@ -100,6 +100,9 @@ internal sealed class MobileNavigator(IServiceProvider services) : IMobileNaviga
 
     public async Task<bool> NavigateRootAsync(MobileDestination destination)
     {
+        if (destination == MobileDestination.Settings)
+            return false;
+
         await _gate.WaitAsync().ConfigureAwait(false);
         try
         {
@@ -115,55 +118,6 @@ internal sealed class MobileNavigator(IServiceProvider services) : IMobileNaviga
                 _outlet.Content = page;
                 var destinationChanged = _destination != destination;
                 _destination = destination;
-                if (destinationChanged)
-                    DestinationChanged?.Invoke(this, EventArgs.Empty);
-                return true;
-            }).ConfigureAwait(false);
-        }
-        finally
-        {
-            _gate.Release();
-        }
-    }
-
-    public async Task<bool> NavigateAsync(string pageId)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pageId);
-        if (TryGetDestination(pageId, out var destination))
-            return await NavigateRootAsync(destination).ConfigureAwait(false);
-
-        if (!IsSettingsChild(pageId))
-            return false;
-
-        await _gate.WaitAsync().ConfigureAwait(false);
-        try
-        {
-            return await RunOnUiThreadAsync(() =>
-            {
-                var page = CreatePage(pageId);
-                if (page is null || _outlet is null)
-                    return false;
-
-                var destinationChanged = _destination != MobileDestination.Settings;
-                if (destinationChanged)
-                {
-                    var catalog = CreatePage(MobilePageIds.Settings);
-                    if (catalog is null)
-                        return false;
-
-                    _history.Clear();
-                    _history.Add(new MobilePageEntry(MobilePageIds.Settings, catalog));
-                    _destination = MobileDestination.Settings;
-                }
-
-                if (_history.Count > 0 && string.Equals(_history[^1].PageId, pageId, StringComparison.Ordinal))
-                {
-                    _outlet.Content = _history[^1].Page;
-                    return true;
-                }
-
-                _history.Add(new MobilePageEntry(pageId, page));
-                _outlet.Content = page;
                 if (destinationChanged)
                     DestinationChanged?.Invoke(this, EventArgs.Empty);
                 return true;
@@ -205,10 +159,9 @@ internal sealed class MobileNavigator(IServiceProvider services) : IMobileNaviga
             MobilePageIds.Draw => MobileDestination.Draw,
             MobilePageIds.History => MobileDestination.History,
             MobilePageIds.Overview => MobileDestination.Overview,
-            MobilePageIds.Settings => MobileDestination.Settings,
             _ => default
         };
-        return pageId is MobilePageIds.Draw or MobilePageIds.History or MobilePageIds.Overview or MobilePageIds.Settings;
+        return pageId is MobilePageIds.Draw or MobilePageIds.History or MobilePageIds.Overview;
     }
 
     private static string GetRootPageId(MobileDestination destination) => destination switch
@@ -216,18 +169,8 @@ internal sealed class MobileNavigator(IServiceProvider services) : IMobileNaviga
         MobileDestination.Draw => MobilePageIds.Draw,
         MobileDestination.History => MobilePageIds.History,
         MobileDestination.Overview => MobilePageIds.Overview,
-        MobileDestination.Settings => MobilePageIds.Settings,
         _ => throw new ArgumentOutOfRangeException(nameof(destination))
     };
-
-    private static bool IsSettingsChild(string pageId) => pageId is
-        MobilePageIds.General or
-        MobilePageIds.Personalization or
-        MobilePageIds.ListManagement or
-        MobilePageIds.DrawSettings or
-        MobilePageIds.Backup or
-        MobilePageIds.Update or
-        MobilePageIds.About;
 
     private static Task<T> RunOnUiThreadAsync<T>(Func<T> action)
     {

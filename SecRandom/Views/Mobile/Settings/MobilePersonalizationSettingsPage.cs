@@ -1,70 +1,76 @@
 using Avalonia.Controls;
+using FluentAvalonia.UI.Controls;
+using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Config;
-using SecRandom.Mobile.Controls;
-using SecRandom.Mobile.Services;
-using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using SecRandom.Services.Mobile;
+using LR = SecRandom.Langs.Mobile.Resources;
 
-namespace SecRandom.Mobile.Views.Settings;
+namespace SecRandom.Views.Mobile.Settings;
 
 /// <summary>
-/// 个性化设置页：主题三档。主题选择立即保存并应用到 RequestedThemeVariant，
-/// 页面内容颜色全部走 DynamicResource，由资源系统随主题刷新。
+/// Mobile appearance and managed music-library settings. AXAML owns the stable form;
+/// code-behind only projects the runtime music collection and StorageProvider actions.
 /// </summary>
+[PageInfo(MobilePageIds.Personalization, FluentIcons.ColorFilled, "settings.mobile.preferences")]
 public sealed partial class MobilePersonalizationSettingsPage : MobileSettingsPageBase
 {
     private readonly MainConfigHandler _configHandler;
     private readonly MobileMediaLibraryService _mediaLibrary;
     private readonly MobileDrawMediaService _drawMedia;
+    private bool _synchronizing;
 
     public MobilePersonalizationSettingsPage(
         MainConfigHandler configHandler,
         MobileMediaLibraryService mediaLibrary,
         MobileDrawMediaService drawMedia,
-        IMobileNavigator navigator,
         IMobileCapabilities capabilities)
-        : base(navigator, capabilities)
+        : base(capabilities)
     {
         _configHandler = configHandler;
         _mediaLibrary = mediaLibrary;
         _drawMedia = drawMedia;
         InitializeComponent();
-        Render();
+        RefreshSurface();
     }
 
-    private void Render()
+    private void RefreshSurface()
     {
-        var appearance = _configHandler.Data.Appearance;
-        var items = new List<Control>
+        _synchronizing = true;
+        try
         {
-            new MobileSectionHeader(LR.S_Theme, FluentIcons.ColorFilled),
-            MobileSettingRow.Choice(LR.O_ThemeAuto, appearance.Theme == ThemeMode.Auto, () => ApplyTheme(ThemeMode.Auto)),
-            MobileSettingRow.Choice(LR.O_ThemeLight, appearance.Theme == ThemeMode.Light, () => ApplyTheme(ThemeMode.Light)),
-            MobileSettingRow.Choice(LR.O_ThemeDark, appearance.Theme == ThemeMode.Dark, () => ApplyTheme(ThemeMode.Dark))
-        };
-        if (_drawMedia.IsSupported)
-        {
-            items.Add(new MobileSectionHeader(LR.S_AttachedMusic, FluentIcons.Speaker2Filled));
-            items.Add(MobileViewFactory.CreateSecondaryButton(LR.C_ImportMusic, () => _ = ImportMusicAsync()));
-            foreach (var track in _mediaLibrary.GetTracks())
-                items.Add(MobileSettingRow.Simple(track.DisplayName, null,
-                    CreateTrackPreview(track.Id), () => RemoveTrack(track.Id)));
+            ThemeSelector.SelectedItem = ThemeSelector.Items
+                .OfType<ComboBoxItem>()
+                .FirstOrDefault(item => item.Tag is ThemeMode mode && mode == _configHandler.Data.Appearance.Theme);
+            MusicLibrarySection.IsVisible = _drawMedia.IsSupported;
+            if (!_drawMedia.IsSupported)
+            {
+                TrackItems.ItemsSource = null;
+                return;
+            }
+
+            TrackItems.ItemsSource = _mediaLibrary.GetTracks();
         }
-        RenderPage(items);
+        finally
+        {
+            _synchronizing = false;
+        }
     }
 
-    private void ApplyTheme(ThemeMode theme)
+    private void ThemeSelector_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
+        if (_synchronizing || (ThemeSelector.SelectedItem as ComboBoxItem)?.Tag is not ThemeMode theme ||
+            theme == _configHandler.Data.Appearance.Theme)
+            return;
+
         _configHandler.Data.Appearance.Theme = theme;
         _configHandler.Save();
-        MobileResources.Apply(theme);
-        Render();
     }
 
-    private async Task ImportMusicAsync()
+    private async void ImportMusic_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        var storage = Avalonia.Controls.TopLevel.GetTopLevel(this)?.StorageProvider;
+        var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
         if (storage is null)
             return;
 
@@ -81,39 +87,41 @@ public sealed partial class MobilePersonalizationSettingsPage : MobileSettingsPa
         });
         if (files.FirstOrDefault() is { } file && await _mediaLibrary.ImportMusicAsync(file) is null)
             await ShowMediaErrorAsync();
-        Render();
+        RefreshSurface();
     }
 
-    private async void RemoveTrack(string id)
+    private async void PreviewTrack_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        var result = await new FluentAvalonia.UI.Controls.FAContentDialog
+        if ((sender as Button)?.Tag is string id)
+            await _drawMedia.PreviewAsync(id);
+    }
+
+    private async void RemoveTrack_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if ((sender as Button)?.Tag is string id)
+            await RemoveTrackAsync(id);
+    }
+
+    private async Task RemoveTrackAsync(string id)
+    {
+        var result = await new FAContentDialog
         {
             Title = LR.C_Remove,
             Content = id,
             PrimaryButtonText = LR.C_Remove,
             CloseButtonText = LR.C_Cancel,
-            DefaultButton = FluentAvalonia.UI.Controls.FAContentDialogButton.Primary
-        }.ShowAsync(Avalonia.Controls.TopLevel.GetTopLevel(this));
-        if (result == FluentAvalonia.UI.Controls.FAContentDialogResult.Primary && !_mediaLibrary.DeleteMusic(id))
+            DefaultButton = FAContentDialogButton.Primary
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+        if (result == FAContentDialogResult.Primary && !_mediaLibrary.DeleteMusic(id))
             await ShowMediaErrorAsync();
-        Render();
+        RefreshSurface();
     }
 
-    private Control CreateTrackPreview(string id)
+    private Task ShowMediaErrorAsync() => new FAContentDialog
     {
-        var button = MobileViewFactory.CreateSecondaryButton(LR.C_Preview, () => _ = _drawMedia.PreviewAsync(id));
-        button.MinHeight = 40;
-        return button;
-    }
-
-    private async Task ShowMediaErrorAsync()
-    {
-        await new FluentAvalonia.UI.Controls.FAContentDialog
-        {
-            Title = LR.S_AttachedMusic,
-            Content = LR.M_MediaImportFailed,
-            CloseButtonText = LR.C_Close,
-            DefaultButton = FluentAvalonia.UI.Controls.FAContentDialogButton.Close
-        }.ShowAsync(Avalonia.Controls.TopLevel.GetTopLevel(this));
-    }
+        Title = LR.S_AttachedMusic,
+        Content = LR.M_MediaImportFailed,
+        CloseButtonText = LR.C_Close,
+        DefaultButton = FAContentDialogButton.Close
+    }.ShowAsync(TopLevel.GetTopLevel(this));
 }

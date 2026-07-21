@@ -1,17 +1,17 @@
 using Avalonia.Controls;
-using Avalonia.Media;
+using SecRandom.Core.Attributes;
 using SecRandom.Core.Icons;
-using SecRandom.Mobile.Controls;
-using LR = SecRandom.Mobile.Langs.Mobile.Resources;
+using SecRandom.Mobile;
+using SecRandom.Services.Mobile;
+using LR = SecRandom.Langs.Mobile.Resources;
 
-namespace SecRandom.Mobile.Views.Settings;
+namespace SecRandom.Views.Mobile.Settings;
 
 /// <summary>
-/// 更新页：保留 <see cref="MobileUpdateService"/> 的检查/下载/安装逻辑。
-/// 安装能力投影来自 DI 的 <see cref="IMobileUpdateInstaller"/>（平台头注入；
-/// iOS 与中性构建为 <see cref="UnsupportedMobileUpdateInstaller"/>）。不支持应用内更新时
-/// 显示空态风格说明，而不是误导性的「已是最新版本」。
+/// Native update availability is decided by the platform installer. The stable surface
+/// stays in AXAML while update service state is synchronized after each operation.
 /// </summary>
+[PageInfo(MobilePageIds.Update, FluentIcons.ArrowSyncFilled, "settings.mobile.application")]
 public sealed partial class MobileUpdateSettingsPage : MobileSettingsPageBase
 {
     private readonly MobileUpdateService _updateService;
@@ -20,48 +20,38 @@ public sealed partial class MobileUpdateSettingsPage : MobileSettingsPageBase
     public MobileUpdateSettingsPage(
         MobileUpdateService updateService,
         IMobileUpdateInstaller updateInstaller,
-        IMobileNavigator navigator,
         IMobileCapabilities capabilities)
-        : base(navigator, capabilities)
+        : base(capabilities)
     {
         _updateService = updateService;
         _installerSupported = updateInstaller.IsSupported;
         InitializeComponent();
-        Render();
+        RefreshSurface();
     }
 
-    private void Render()
+    private void RefreshSurface()
     {
+        SupportedUpdateSurface.IsVisible = _installerSupported;
+        UnsupportedUpdateSurface.IsVisible = !_installerSupported;
         if (!_installerSupported)
-        {
-            RenderPage([
-                new MobileEmptyState(
-                    FluentIcons.InfoFilled,
-                    LR.M_InAppUpdateUnsupported,
-                    LR.M_IosUpdateDeferred)
-            ]);
             return;
-        }
 
-        var status = new TextBlock
-        {
-            Text = string.IsNullOrEmpty(_updateService.Status)
-                ? LR.M_UpdateSecurityNote
-                : _updateService.Status,
-            TextWrapping = TextWrapping.Wrap
-        };
-        RenderPage([
-            MobileViewFactory.CreateSecondaryButton(LR.C_CheckUpdates, async () =>
-            {
-                await _updateService.CheckAsync();
-                Render();
-            }),
-            status,
-            MobileViewFactory.CreatePrimaryButton(LR.C_InstallUpdate, _updateService.IsUpdateAvailable && !_updateService.IsBusy, async () =>
-            {
-                await _updateService.DownloadAndInstallAsync();
-                Render();
-            })
-        ]);
+        UpdateStatusText.Text = string.IsNullOrEmpty(_updateService.Status)
+            ? LR.M_UpdateSecurityNote
+            : _updateService.Status;
+        CheckUpdatesButton.IsEnabled = !_updateService.IsBusy;
+        InstallUpdateButton.IsEnabled = _updateService.IsUpdateAvailable && !_updateService.IsBusy;
+    }
+
+    private async void CheckUpdatesButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        await _updateService.CheckAsync();
+        RefreshSurface();
+    }
+
+    private async void InstallUpdateButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        await _updateService.DownloadAndInstallAsync();
+        RefreshSurface();
     }
 }

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace SecRandom.Mobile.Services;
+namespace SecRandom.Services.Mobile;
 
 [JsonSerializable(typeof(DeviceUuidFile))]
 [JsonSerializable(typeof(MobileOnlineStatusPayload))]
