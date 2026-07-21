@@ -10,27 +10,44 @@ namespace SecRandom.Views.Mobile;
 /// </summary>
 public sealed partial class MobileOverviewPage : UserControl
 {
+    private readonly ScrollViewer _pageScroll;
+    private readonly TextBlock _studentMetricValue;
+    private readonly TextBlock _rollCallRoundsMetricValue;
+    private readonly Control _prizeMetricCard;
+    private readonly TextBlock _prizeMetricValue;
+    private readonly Control _rollCallRoundsMetricCard;
+    private readonly Control _lotteryRoundsMetricCard;
+    private readonly TextBlock _lotteryRoundsMetricValue;
+
     public MobileOverviewPage(IProfileService profileService, IMobileCapabilities capabilities)
     {
         InitializeComponent();
+        _pageScroll = this.FindControl<ScrollViewer>("PageScroll")!;
+        _studentMetricValue = this.FindControl<TextBlock>("StudentMetricValue")!;
+        _rollCallRoundsMetricValue = this.FindControl<TextBlock>("RollCallRoundsMetricValue")!;
+        _prizeMetricCard = this.FindControl<Control>("PrizeMetricCard")!;
+        _prizeMetricValue = this.FindControl<TextBlock>("PrizeMetricValue")!;
+        _rollCallRoundsMetricCard = this.FindControl<Control>("RollCallRoundsMetricCard")!;
+        _lotteryRoundsMetricCard = this.FindControl<Control>("LotteryRoundsMetricCard")!;
+        _lotteryRoundsMetricValue = this.FindControl<TextBlock>("LotteryRoundsMetricValue")!;
 
-        StudentMetricValue.Text = FormatCount(profileService.CurrentStudentList?.Students.Count(student => student.IsCandidate) ?? 0);
-        RollCallRoundsMetricValue.Text = FormatCount(profileService.CurrentStudentHistory?.TotalRounds ?? 0);
+        _studentMetricValue.Text = FormatCount(profileService.CurrentStudentList?.Students.Count(student => student.IsCandidate) ?? 0);
+        _rollCallRoundsMetricValue.Text = FormatCount(profileService.CurrentStudentHistory?.TotalRounds ?? 0);
 
-        PrizeMetricCard.IsVisible = capabilities.IsLotteryEnabled;
-        LotteryRoundsMetricCard.IsVisible = capabilities.IsLotteryEnabled;
+        _prizeMetricCard.IsVisible = capabilities.IsLotteryEnabled;
+        _lotteryRoundsMetricCard.IsVisible = capabilities.IsLotteryEnabled;
         if (capabilities.IsLotteryEnabled)
         {
-            PrizeMetricValue.Text = FormatCount(profileService.CurrentPrizeList?.Prizes.Count(prize => prize.IsCandidate) ?? 0);
-            LotteryRoundsMetricValue.Text = FormatCount(profileService.CurrentPrizeHistory?.TotalRounds ?? 0);
+            _prizeMetricValue.Text = FormatCount(profileService.CurrentPrizeList?.Prizes.Count(prize => prize.IsCandidate) ?? 0);
+            _lotteryRoundsMetricValue.Text = FormatCount(profileService.CurrentPrizeHistory?.TotalRounds ?? 0);
         }
         else
         {
-            Grid.SetRow(RollCallRoundsMetricCard, 0);
-            Grid.SetColumn(RollCallRoundsMetricCard, 1);
+            Grid.SetRow(_rollCallRoundsMetricCard, 0);
+            Grid.SetColumn(_rollCallRoundsMetricCard, 1);
         }
 
-        MobileAnimations.PlayPageEnter(PageScroll);
+        MobileAnimations.PlayPageEnter(_pageScroll);
     }
 
     private static string FormatCount(int value) =>

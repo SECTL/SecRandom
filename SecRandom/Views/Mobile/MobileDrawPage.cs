@@ -34,6 +34,27 @@ public sealed partial class MobileDrawPage : UserControl
     private readonly IMobileSettingsNavigator _settingsNavigator;
     private readonly IMobileCapabilities _capabilities;
     private readonly MobileDrawMediaService _drawMedia;
+    private readonly TabStrip _drawSurfaceTabs;
+    private readonly TabStripItem _lotteryTab;
+    private readonly Control _rollCallPanel;
+    private readonly Control _lotteryPanel;
+    private readonly ComboBox _studentListSelector;
+    private readonly ComboBox _groupSelector;
+    private readonly ComboBox _genderSelector;
+    private readonly TextBlock _rollCallSummary;
+    private readonly TextBlock _drawCountText;
+    private readonly Button _decreaseCountButton;
+    private readonly Button _increaseCountButton;
+    private readonly Button _drawStudentsButton;
+    private readonly Button _remainingButton;
+    private readonly Button _moreButton;
+    private readonly TextBlock _prizePoolName;
+    private readonly Button _drawPrizeButton;
+    private readonly Button _managePrizeButton;
+    private readonly Control _drawResultCard;
+    private readonly TextBlock _resultText;
+    private readonly TextBlock _resultDetail;
+    private readonly WrapPanel _resultImages;
     private DrawSurface _drawSurface = DrawSurface.RollCall;
     private string _group = string.Empty;
     private string _gender = string.Empty;
@@ -66,6 +87,27 @@ public sealed partial class MobileDrawPage : UserControl
         _settingsNavigator = settingsNavigator;
         _capabilities = capabilities;
         InitializeComponent();
+        _drawSurfaceTabs = this.FindControl<TabStrip>("DrawSurfaceTabs")!;
+        _lotteryTab = this.FindControl<TabStripItem>("LotteryTab")!;
+        _rollCallPanel = this.FindControl<Control>("RollCallPanel")!;
+        _lotteryPanel = this.FindControl<Control>("LotteryPanel")!;
+        _studentListSelector = this.FindControl<ComboBox>("StudentListSelector")!;
+        _groupSelector = this.FindControl<ComboBox>("GroupSelector")!;
+        _genderSelector = this.FindControl<ComboBox>("GenderSelector")!;
+        _rollCallSummary = this.FindControl<TextBlock>("RollCallSummary")!;
+        _drawCountText = this.FindControl<TextBlock>("DrawCountText")!;
+        _decreaseCountButton = this.FindControl<Button>("DecreaseCountButton")!;
+        _increaseCountButton = this.FindControl<Button>("IncreaseCountButton")!;
+        _drawStudentsButton = this.FindControl<Button>("DrawStudentsButton")!;
+        _remainingButton = this.FindControl<Button>("RemainingButton")!;
+        _moreButton = this.FindControl<Button>("MoreButton")!;
+        _prizePoolName = this.FindControl<TextBlock>("PrizePoolName")!;
+        _drawPrizeButton = this.FindControl<Button>("DrawPrizeButton")!;
+        _managePrizeButton = this.FindControl<Button>("ManagePrizeButton")!;
+        _drawResultCard = this.FindControl<Control>("DrawResultCard")!;
+        _resultText = this.FindControl<TextBlock>("ResultText")!;
+        _resultDetail = this.FindControl<TextBlock>("ResultDetail")!;
+        _resultImages = this.FindControl<WrapPanel>("ResultImages")!;
         EnsureRestartTemporaryRecordsCleared();
         RefreshSurface();
     }
@@ -84,33 +126,33 @@ public sealed partial class MobileDrawPage : UserControl
             var hasStudents = _profileService.CurrentStudentList?.Students.Any(student => student.IsCandidate) ?? false;
             _lotteryCandidates = _lotterySession.GetEligiblePrizes().ToList();
             var hasPrizes = _profileService.CurrentPrizeList?.Prizes.Any(prize => prize.IsCandidate) ?? false;
-            DrawSurfaceTabs.SelectedIndex = (int)_drawSurface;
-            LotteryTab.IsVisible = _capabilities.IsLotteryEnabled;
-            DrawSurfaceTabs.IsEnabled = !_drawing;
-            RollCallPanel.IsVisible = _drawSurface == DrawSurface.RollCall;
-            LotteryPanel.IsVisible = _drawSurface == DrawSurface.Lottery;
-            StudentListSelector.ItemsSource = _rollCallService.GetListNames();
-            StudentListSelector.SelectedItem = GetStudentListName();
-            GroupSelector.ItemsSource = new[] { LR.O_All }.Concat(_rollCallService.GetGroups()).ToArray();
-            GroupSelector.SelectedItem = string.IsNullOrEmpty(_group) ? LR.O_All : _group;
-            GenderSelector.ItemsSource = new[] { LR.O_All }.Concat(_rollCallService.GetGenders()).ToArray();
-            GenderSelector.SelectedItem = string.IsNullOrEmpty(_gender) ? LR.O_All : _gender;
-            StudentListSelector.IsEnabled = !_drawing;
-            GroupSelector.IsEnabled = !_drawing;
-            GenderSelector.IsEnabled = !_drawing;
-            RollCallSummary.Text = string.Format(System.Globalization.CultureInfo.CurrentCulture,
+            _drawSurfaceTabs.SelectedIndex = (int)_drawSurface;
+            _lotteryTab.IsVisible = _capabilities.IsLotteryEnabled;
+            _drawSurfaceTabs.IsEnabled = !_drawing;
+            _rollCallPanel.IsVisible = _drawSurface == DrawSurface.RollCall;
+            _lotteryPanel.IsVisible = _drawSurface == DrawSurface.Lottery;
+            _studentListSelector.ItemsSource = _rollCallService.GetListNames();
+            _studentListSelector.SelectedItem = GetStudentListName();
+            _groupSelector.ItemsSource = new[] { LR.O_All }.Concat(_rollCallService.GetGroups()).ToArray();
+            _groupSelector.SelectedItem = string.IsNullOrEmpty(_group) ? LR.O_All : _group;
+            _genderSelector.ItemsSource = new[] { LR.O_All }.Concat(_rollCallService.GetGenders()).ToArray();
+            _genderSelector.SelectedItem = string.IsNullOrEmpty(_gender) ? LR.O_All : _gender;
+            _studentListSelector.IsEnabled = !_drawing;
+            _groupSelector.IsEnabled = !_drawing;
+            _genderSelector.IsEnabled = !_drawing;
+            _rollCallSummary.Text = string.Format(System.Globalization.CultureInfo.CurrentCulture,
                 LR.M_CountSummary, snapshot.TotalCount, snapshot.RemainingCount);
-            DrawCountText.Text = _drawCount.ToString(System.Globalization.CultureInfo.CurrentCulture);
-            DecreaseCountButton.IsEnabled = _drawCount > 1 && !_drawing;
-            IncreaseCountButton.IsEnabled = _drawCount < snapshot.RemainingCount && !_drawing;
-            DrawStudentsButton.Content = _drawing ? LR.M_Drawing : LR.C_StartDraw;
-            DrawStudentsButton.IsEnabled = snapshot.RemainingCount > 0 && !_drawing;
-            RemainingButton.IsEnabled = !_drawing;
-            MoreButton.IsEnabled = !_drawing;
-            PrizePoolName.Text = _profileService.PrizeListConfig?.Name ?? LR.M_DefaultPool;
-            DrawPrizeButton.Content = _drawing ? LR.M_Drawing : LR.C_DrawPrize;
-            DrawPrizeButton.IsEnabled = _lotteryCandidates.Count > 0 && !_drawing;
-            ManagePrizeButton.IsEnabled = !_drawing;
+            _drawCountText.Text = _drawCount.ToString(System.Globalization.CultureInfo.CurrentCulture);
+            _decreaseCountButton.IsEnabled = _drawCount > 1 && !_drawing;
+            _increaseCountButton.IsEnabled = _drawCount < snapshot.RemainingCount && !_drawing;
+            _drawStudentsButton.Content = _drawing ? LR.M_Drawing : LR.C_StartDraw;
+            _drawStudentsButton.IsEnabled = snapshot.RemainingCount > 0 && !_drawing;
+            _remainingButton.IsEnabled = !_drawing;
+            _moreButton.IsEnabled = !_drawing;
+            _prizePoolName.Text = _profileService.PrizeListConfig?.Name ?? LR.M_DefaultPool;
+            _drawPrizeButton.Content = _drawing ? LR.M_Drawing : LR.C_DrawPrize;
+            _drawPrizeButton.IsEnabled = _lotteryCandidates.Count > 0 && !_drawing;
+            _managePrizeButton.IsEnabled = !_drawing;
             UpdateResult(snapshot, hasStudents, hasPrizes);
         }
         finally
@@ -128,12 +170,12 @@ public sealed partial class MobileDrawPage : UserControl
         _resultStatusText = null;
         _resultStatusDetail = null;
         RefreshSurface();
-        ResultImages.IsVisible = false;
+        _resultImages.IsVisible = false;
         await StopMediaSafelyAsync();
         IReadOnlyList<Student>? resultMediaStudents = null;
         var names = snapshot.Remaining.Select(FormatStudent).Where(name => name.Length > 0).ToList();
         if (names.Count > 0)
-            MobileAnimations.StartNameRoll(ResultText, names);
+            MobileAnimations.StartNameRoll(_resultText, names);
 
         try
         {
@@ -162,12 +204,12 @@ public sealed partial class MobileDrawPage : UserControl
         }
         finally
         {
-            MobileAnimations.Cancel(ResultText);
+            MobileAnimations.Cancel(_resultText);
             _drawing = false;
         }
 
         RefreshSurface();
-        MobileAnimations.PlayResultReveal(DrawResultCard);
+        MobileAnimations.PlayResultReveal(_drawResultCard);
         if (resultMediaStudents is not null)
             await PlayStudentResultMediaAsync(resultMediaStudents);
         await Task.Delay(300);
@@ -182,13 +224,13 @@ public sealed partial class MobileDrawPage : UserControl
         _resultStatusText = null;
         _resultStatusDetail = null;
         RefreshSurface();
-        ResultImages.IsVisible = false;
+        _resultImages.IsVisible = false;
         await StopMediaSafelyAsync();
         Prize? resultMediaPrize = null;
         var names = candidates.Select(prize => string.IsNullOrWhiteSpace(prize.Name) ? prize.Id : prize.Name)
             .Where(name => !string.IsNullOrWhiteSpace(name)).ToList();
         if (names.Count > 0)
-            MobileAnimations.StartNameRoll(ResultText, names);
+            MobileAnimations.StartNameRoll(_resultText, names);
 
         try
         {
@@ -218,12 +260,12 @@ public sealed partial class MobileDrawPage : UserControl
         }
         finally
         {
-            MobileAnimations.Cancel(ResultText);
+            MobileAnimations.Cancel(_resultText);
             _drawing = false;
         }
 
         RefreshSurface();
-        MobileAnimations.PlayResultReveal(DrawResultCard);
+        MobileAnimations.PlayResultReveal(_drawResultCard);
         if (resultMediaPrize is not null)
             await PlayPrizeResultMediaAsync(resultMediaPrize);
         await Task.Delay(300);
@@ -349,7 +391,7 @@ public sealed partial class MobileDrawPage : UserControl
 
     private void StudentListSelector_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (_synchronizingSurface || StudentListSelector.SelectedItem is not string selected ||
+        if (_synchronizingSurface || _studentListSelector.SelectedItem is not string selected ||
             string.Equals(selected, GetStudentListName(), StringComparison.Ordinal))
             return;
 
@@ -363,7 +405,7 @@ public sealed partial class MobileDrawPage : UserControl
 
     private void GroupSelector_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (_synchronizingSurface || GroupSelector.SelectedItem is not string selected)
+        if (_synchronizingSurface || _groupSelector.SelectedItem is not string selected)
             return;
 
         var value = string.Equals(selected, LR.O_All, StringComparison.Ordinal) ? string.Empty : selected;
@@ -378,7 +420,7 @@ public sealed partial class MobileDrawPage : UserControl
 
     private void GenderSelector_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (_synchronizingSurface || GenderSelector.SelectedItem is not string selected)
+        if (_synchronizingSurface || _genderSelector.SelectedItem is not string selected)
             return;
 
         var value = string.Equals(selected, LR.O_All, StringComparison.Ordinal) ? string.Empty : selected;
@@ -427,12 +469,12 @@ public sealed partial class MobileDrawPage : UserControl
     {
         if (_drawSurface == DrawSurface.RollCall)
         {
-            ResultText.Text = _resultStatusText ?? (_studentResult.Count > 0
+            _resultText.Text = _resultStatusText ?? (_studentResult.Count > 0
                 ? string.Join("\n", _studentResult.Select(FormatStudent))
                 : snapshot.RemainingCount > 0
                     ? LR.M_Ready
                     : hasStudents ? LR.M_NoEligibleCandidates : LR.M_NoStudents);
-            ResultDetail.Text = _resultStatusDetail ?? (_studentResult.Count > 0
+            _resultDetail.Text = _resultStatusDetail ?? (_studentResult.Count > 0
                 ? string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_DrawResultCount, _studentResult.Count)
                 : snapshot.RemainingCount > 0
                     ? string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_CandidateStudents, snapshot.RemainingCount)
@@ -441,12 +483,12 @@ public sealed partial class MobileDrawPage : UserControl
             return;
         }
 
-        ResultText.Text = _resultStatusText ?? (_prizeResult is not null
+        _resultText.Text = _resultStatusText ?? (_prizeResult is not null
             ? string.IsNullOrWhiteSpace(_prizeResult.Name) ? _prizeResult.Id : _prizeResult.Name
             : _lotteryCandidates.Count > 0
                 ? LR.M_Ready
                 : hasPrizes ? LR.M_NoEligibleCandidates : LR.M_NoPrizes);
-        ResultDetail.Text = _resultStatusDetail ?? (_prizeResult is not null
+        _resultDetail.Text = _resultStatusDetail ?? (_prizeResult is not null
             ? string.IsNullOrWhiteSpace(_prizeResult.Id)
                 ? LR.M_DrawCompleted
                 : string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_PrizeId, _prizeResult.Id)
@@ -540,7 +582,7 @@ public sealed partial class MobileDrawPage : UserControl
 
     private void UpdateResultImages(IEnumerable<IAttachableSettingsObject> records)
     {
-        ResultImages.Children.Clear();
+        _resultImages.Children.Clear();
         foreach (var record in records)
         {
             var settings = record.GetAttachedObject<DrawImageAttachedSettings>(
@@ -550,7 +592,7 @@ public sealed partial class MobileDrawPage : UserControl
                 continue;
             try
             {
-                ResultImages.Children.Add(new Border
+                _resultImages.Children.Add(new Border
                 {
                     Width = 88,
                     Height = 88,
@@ -562,7 +604,7 @@ public sealed partial class MobileDrawPage : UserControl
             }
             catch { }
         }
-        ResultImages.IsVisible = ResultImages.Children.Count != 0;
+        _resultImages.IsVisible = _resultImages.Children.Count != 0;
     }
 
     private void ClearResult()
