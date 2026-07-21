@@ -157,7 +157,7 @@ public sealed class AndroidMobileMediaPlayer : IMobileMediaPlayer, IDisposable
                 if (status == OperationResult.Success)
                 {
                     owner._speechReady = true;
-                    owner._speechInitialization?.TrySetResult();
+                    owner._speechInitialization?.TrySetResult(true);
                 }
                 else
                 {
