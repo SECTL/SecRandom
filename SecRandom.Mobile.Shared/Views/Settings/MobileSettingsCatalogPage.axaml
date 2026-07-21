@@ -4,7 +4,7 @@
                                   xmlns:langs="clr-namespace:SecRandom.Mobile.Langs.Mobile"
                                   x:Class="SecRandom.Mobile.Views.Settings.MobileSettingsCatalogPage">
     <ScrollViewer x:Name="PageScroll"
-                  Padding="{DynamicResource MobilePagePadding}"
+                   Padding="20,20,20,28"
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch"
                   HorizontalScrollBarVisibility="Disabled"
@@ -12,17 +12,15 @@
                   IsScrollChainingEnabled="False"
                   IsScrollInertiaEnabled="True">
         <StackPanel x:Name="SettingsItems"
-                    Spacing="{DynamicResource MobileSpacingMd}"
+                     Spacing="14"
                     MaxWidth="720">
-            <StackPanel Spacing="{DynamicResource MobileSpacingXs}">
+            <StackPanel Spacing="4">
                 <TextBlock Text="{x:Static langs:Resources.P_Settings}"
-                           FontSize="{DynamicResource MobileFontSizeTitle}"
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource MobileTextBrush}"
+                            FontSize="24"
+                            FontWeight="SemiBold"
                            TextWrapping="Wrap" />
                 <TextBlock Text="{x:Static langs:Resources.S_SettingsCategories}"
-                           FontSize="{DynamicResource MobileFontSizeCaption}"
-                           Foreground="{DynamicResource MobileMutedTextBrush}"
+                            FontSize="12"
                            TextWrapping="Wrap" />
             </StackPanel>
         </StackPanel>

@@ -390,7 +390,6 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         var imageEnabled = CreateToggle(image.IsAttachSettingsEnabled);
         var imagePreview = CreateImagePreview(image.ImagePath);
         var imagePath = new TextBlock { Text = string.IsNullOrWhiteSpace(image.ImagePath) ? LR.M_NoImageSelected : Path.GetFileName(image.ImagePath), TextWrapping = TextWrapping.Wrap };
-        MobileResources.BindBrush(imagePath, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         var imagePanel = new StackPanel { Spacing = 8, Children = { imageEnabled, imagePreview, imagePath } };
         var selectImage = MobileViewFactory.CreateSecondaryButton(LR.C_SelectImage, () => _ = SelectImageAsync(image, imagePreview, imagePath, importedImages));
         var removeImage = MobileViewFactory.CreateSecondaryButton(LR.C_RemoveImage, () =>
@@ -831,14 +830,12 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
     private static TextBlock CreateTableHint()
     {
         var hint = new TextBlock { Text = LR.M_ListTableHint, FontSize = 12, TextWrapping = TextWrapping.Wrap };
-        MobileResources.BindBrush(hint, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         return hint;
     }
 
     private static Control CreateLabeledControl(string label, Control control)
     {
         var text = new TextBlock { Text = label, FontSize = 12 };
-        MobileResources.BindBrush(text, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         return new StackPanel { Spacing = 4, Children = { text, control } };
     }
 

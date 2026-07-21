@@ -3,18 +3,16 @@
                            xmlns:local="clr-namespace:SecRandom.Mobile.Controls"
                            xmlns:views="clr-namespace:SecRandom.Mobile.Views"
                            x:Class="SecRandom.Mobile.Controls.MobileSectionHeader">
-    <StackPanel Orientation="Horizontal" Spacing="{DynamicResource MobileSpacingSm}" Margin="0,6,0,0">
+    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
         <TextBlock x:Name="Icon"
                    FontFamily="avares://SecRandom.Mobile/Assets/Fonts/#FluentSystemIcons-Resizable"
                    FontSize="16"
                    LineHeight="16"
-                   VerticalAlignment="Center"
-                   Foreground="{DynamicResource MobilePrimaryBrush}" />
+                    VerticalAlignment="Center" />
         <TextBlock x:Name="TitleText"
-                   FontSize="{DynamicResource MobileFontSizeBody}"
+                    FontSize="16"
                    FontWeight="SemiBold"
-                   VerticalAlignment="Center"
-                   Foreground="{DynamicResource MobileTextBrush}"
+                    VerticalAlignment="Center"
                    TextWrapping="Wrap" />
     </StackPanel>
 </local:MobileSectionHeader>

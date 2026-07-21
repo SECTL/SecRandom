@@ -10,7 +10,6 @@ namespace SecRandom.Mobile.Controls;
 
 public sealed partial class MobileNavigationBar : UserControl
 {
-    private readonly Border _root;
     private readonly Dictionary<MobileDestination,
         (ToggleButton Button, TextBlock Icon, TextBlock Label, string RegularGlyph, string FilledGlyph)> _items = [];
     private MobileDestination _selectedDestination = MobileDestination.Draw;
@@ -18,9 +17,6 @@ public sealed partial class MobileNavigationBar : UserControl
     public MobileNavigationBar()
     {
         InitializeComponent();
-        _root = this.FindControl<Border>("Root")!;
-        MobileResources.BindBrush(_root, Border.BackgroundProperty, MobileResources.Keys.Surface);
-        MobileResources.BindBrush(_root, Border.BorderBrushProperty, MobileResources.Keys.Border);
         AddItem(this.FindControl<ToggleButton>("DrawButton")!,
             this.FindControl<TextBlock>("DrawIcon")!, this.FindControl<TextBlock>("DrawLabel")!,
             Langs.Mobile.Resources.N_Draw, FluentIcons.PeopleRegular, FluentIcons.PeopleFilled, MobileDestination.Draw, 1);
@@ -82,15 +78,7 @@ public sealed partial class MobileNavigationBar : UserControl
         {
             var isSelected = destination == _selectedDestination;
             item.Button.IsChecked = isSelected;
-            if (isSelected)
-                MobileResources.BindBrush(item.Button, ToggleButton.BackgroundProperty, MobileResources.Keys.PrimaryWash);
-            else
-                item.Button.ClearValue(ToggleButton.BackgroundProperty);
             item.Icon.Text = isSelected ? item.FilledGlyph : item.RegularGlyph;
-            MobileResources.BindBrush(item.Icon, TextBlock.ForegroundProperty,
-                isSelected ? MobileResources.Keys.Primary : MobileResources.Keys.MutedText);
-            MobileResources.BindBrush(item.Label, TextBlock.ForegroundProperty,
-                isSelected ? MobileResources.Keys.Primary : MobileResources.Keys.MutedText);
             item.Label.FontWeight = isSelected ? Avalonia.Media.FontWeight.SemiBold : Avalonia.Media.FontWeight.Normal;
         }
     }

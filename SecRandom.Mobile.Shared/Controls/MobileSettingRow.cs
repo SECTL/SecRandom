@@ -119,7 +119,7 @@ public class MobileSettingRow : UserControl
             var actions = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = MobileResources.FindDouble("MobileSpacingXs", 4),
+                Spacing = 4,
                 VerticalAlignment = VerticalAlignment.Center
             };
             if (trailing is not null)

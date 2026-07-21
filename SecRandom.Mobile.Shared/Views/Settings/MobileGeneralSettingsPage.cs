@@ -89,10 +89,9 @@ public sealed partial class MobileGeneralSettingsPage : MobileSettingsPageBase
         var caption = new TextBlock
         {
             Text = text,
-            FontSize = MobileResources.FindDouble("MobileFontSizeCaption", 12),
+            FontSize = 12,
             TextWrapping = TextWrapping.Wrap
         };
-        MobileResources.BindBrush(caption, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         return caption;
     }
 }

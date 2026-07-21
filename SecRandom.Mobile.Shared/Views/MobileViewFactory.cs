@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Styling;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Icons;
 using SecRandom.Mobile.Controls;
@@ -42,16 +41,7 @@ internal static class MobileViewFactory
         IReadOnlyList<(string Text, bool Enabled)> items,
         Action<int> selectionChanged)
     {
-        if (Application.Current?.TryFindResource("TabSplitTheme", out var resource) != true
-            || resource is not ControlTheme theme)
-        {
-            throw new InvalidOperationException("TabSplitTheme is not available.");
-        }
-
-        var tabStrip = new TabStrip
-        {
-            Theme = theme
-        };
+        var tabStrip = new TabStrip();
         foreach (var (text, enabled) in items)
         {
             tabStrip.Items.Add(new TabStripItem
@@ -70,7 +60,7 @@ internal static class MobileViewFactory
     {
         var panel = new StackPanel
         {
-            Spacing = MobileResources.FindDouble("MobileSpacingMd", 14),
+            Spacing = 14,
             MaxWidth = 720
         };
         foreach (var item in items)
@@ -78,7 +68,7 @@ internal static class MobileViewFactory
         return new ScrollViewer
         {
             Content = panel,
-            Padding = MobileResources.FindThickness("MobilePagePadding", new Thickness(20, 20, 20, 28)),
+            Padding = new Thickness(20, 20, 20, 28),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
@@ -93,26 +83,24 @@ internal static class MobileViewFactory
         var titleBlock = new TextBlock
         {
             Text = title,
-            FontSize = MobileResources.FindDouble("MobileFontSizeSection", 20),
+            FontSize = 20,
             FontWeight = FontWeight.SemiBold,
             TextWrapping = TextWrapping.Wrap
         };
-        MobileResources.BindBrush(titleBlock, TextBlock.ForegroundProperty, MobileResources.Keys.Text);
         var descriptionBlock = new TextBlock
         {
             Text = description,
             TextWrapping = TextWrapping.Wrap
         };
-        MobileResources.BindBrush(descriptionBlock, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         var content = new List<Control>
         {
             CreateSecondaryButton(LR.C_Back, goBack),
-            new MobileCard(MobileResources.Keys.PrimaryWash)
+            new MobileCard
             {
                 BorderThickness = new Thickness(0),
                 Content = new StackPanel
                 {
-                    Spacing = MobileResources.FindDouble("MobileSpacingXs", 4),
+                    Spacing = 4,
                     Children = { titleBlock, descriptionBlock }
                 }
             }
@@ -140,11 +128,10 @@ internal static class MobileViewFactory
         var title = new TextBlock
         {
             Text = text,
-            FontSize = MobileResources.FindDouble("MobileFontSizeTitle", 24),
+            FontSize = 24,
             FontWeight = FontWeight.SemiBold,
             TextWrapping = TextWrapping.Wrap
         };
-        MobileResources.BindBrush(title, TextBlock.ForegroundProperty, MobileResources.Keys.Text);
         return title;
     }
 
@@ -154,20 +141,19 @@ internal static class MobileViewFactory
         {
             Background = color,
             BorderThickness = new Thickness(0),
-            CornerRadius = MobileResources.FindCornerRadius("MobileCornerRadiusLarge", new CornerRadius(18)),
+            CornerRadius = new CornerRadius(18),
             Padding = new Thickness(24, 28)
         };
         card.Content = CreateResultStack(result, detail);
         return card;
     }
 
-    // 主题感知重载：wash 底色走 DynamicResource，切主题时随资源系统刷新。
-    internal static Control CreateResultPanel(Control result, Control detail, string washResourceKey, Control? media = null)
+    internal static Control CreateResultPanel(Control result, Control detail, Control? media = null)
     {
-        var card = new MobileCard(washResourceKey)
+        var card = new MobileCard
         {
             BorderThickness = new Thickness(0),
-            CornerRadius = MobileResources.FindCornerRadius("MobileCornerRadiusLarge", new CornerRadius(18)),
+            CornerRadius = new CornerRadius(18),
             Padding = new Thickness(24, 28)
         };
         card.Content = CreateResultStack(result, detail, media);
@@ -178,7 +164,7 @@ internal static class MobileViewFactory
     {
         var stack = new StackPanel
         {
-            Spacing = MobileResources.FindDouble("MobileSpacingSm", 8),
+            Spacing = 8,
             Children = { result, detail }
         };
         if (media is not null)
@@ -196,7 +182,7 @@ internal static class MobileViewFactory
         {
             Content = text,
             IsEnabled = enabled,
-            MinHeight = MobileResources.FindDouble("MobileMinHeightPrimary", 48),
+            MinHeight = 48,
             Classes = { "accent" },
             FontWeight = FontWeight.SemiBold,
             HorizontalContentAlignment = HorizontalAlignment.Center
@@ -211,7 +197,7 @@ internal static class MobileViewFactory
         var button = new AvaloniaButton
         {
             Content = text,
-            MinHeight = MobileResources.FindDouble("MobileMinHeightSecondary", 44),
+            MinHeight = 44,
             FontWeight = FontWeight.SemiBold,
             HorizontalContentAlignment = HorizontalAlignment.Center
         };
@@ -224,19 +210,18 @@ internal static class MobileViewFactory
         return new Border
         {
             Background = color,
-            CornerRadius = MobileResources.FindCornerRadius("MobileCornerRadiusSmall", new CornerRadius(10)),
+            CornerRadius = new CornerRadius(10),
             Padding = new Thickness(16),
             Child = CreateMetricGrid(label, value)
         };
     }
 
-    // 主题感知重载：wash 底色走 DynamicResource，切主题时随资源系统刷新。
-    internal static Control CreateMetric(string label, string value, string washResourceKey)
+    internal static Control CreateMetric(string label, string value)
     {
-        var card = new MobileCard(washResourceKey)
+        var card = new MobileCard
         {
             BorderThickness = new Thickness(0),
-            CornerRadius = MobileResources.FindCornerRadius("MobileCornerRadiusSmall", new CornerRadius(10)),
+            CornerRadius = new CornerRadius(10),
             Padding = new Thickness(16)
         };
         card.Content = CreateMetricGrid(label, value);
@@ -253,13 +238,11 @@ internal static class MobileViewFactory
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center
         };
-        MobileResources.BindBrush(valueText, TextBlock.ForegroundProperty, MobileResources.Keys.Text);
         var labelText = new TextBlock
         {
             Text = label,
             VerticalAlignment = VerticalAlignment.Center
         };
-        MobileResources.BindBrush(labelText, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
         grid.Children.Add(labelText);
         grid.Children.Add(valueText);

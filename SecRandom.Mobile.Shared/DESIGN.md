@@ -54,13 +54,12 @@ The workflow supports tabular student/prize editing, desktop-compatible per-reco
 
 ## UI Foundation Tokens
 
-- Color tokens live in `Styles/MobileStyles.axaml` as Light/Dark theme dictionaries: `MobileCanvasBrush`, `MobileSurfaceBrush`, `MobileSurfaceMutedBrush`, `MobileBorderBrush`, `MobilePrimaryBrush` (`#006E5B` light / `#72D8C2` dark), `MobilePrimaryWashBrush`, `MobileWarmWashBrush`, `MobileMutedTextBrush`, `MobileDangerBrush`, and `MobileTextBrush`.
-- Metric tokens: spacing `MobileSpacingXs/Sm/Md/Lg/Xl` = 4/8/14/20/28; corner radii `MobileCornerRadiusSmall/Medium/Large` = 10/15/18; font sizes `MobileFontSizeCaption/Body/Section/Title/Result` = 12/16/20/24/34; touch heights `MobileMinHeightSecondary/Primary` = 44/48; `MobilePagePadding` = 20,20,20,28; `MobileCardPadding` = 16.
-- Pages and factories consume colors through `DynamicResource` bindings or `MobileResources` token helpers, so a theme switch refreshes page content automatically. Static theme brush snapshots are not used.
+- Mobile uses the shared application resources and the default Avalonia/Fluent control themes. It has no independent mobile style bundle or mobile-specific theme tokens.
+- Page layout values are defined directly by each AXAML page or by code-behind fallback values. A page can bind a shared application resource through `DynamicResource`, but must remain usable when that resource is absent.
 
 ## Component Inventory
 
-- `MobileCard`: rounded surface container; its default look comes from the type-keyed ControlTheme in `MobileStyles.axaml`, and a wash resource key (`MobileResources.Keys.PrimaryWash` / `WarmWash`) produces tinted result/metric cards.
+- `MobileCard`: lightweight content container that uses the default control appearance; an optional application-resource key can supply a result/metric background.
 - `MobileSettingRow`: compatibility wrapper over FluentAvalonia `FASettingsExpanderItem`, with factories `Toggle`, `Integer`, `Choice` (unique radio group per row by default), `Navigation`, and `Simple`.
 - `MobileSegmentedControl`: capsule segmented selector with primary-wash selection visuals, replacing the hand-assembled segment buttons.
 - `MobileEmptyState`: icon + title + optional description + optional guidance button that routes to the matching management surface.

@@ -4,8 +4,7 @@
                       xmlns:controls="clr-namespace:SecRandom.Mobile.Controls"
                       x:Class="SecRandom.Mobile.MobileRootView">
     <Grid x:Name="RootLayout"
-          RowDefinitions="Auto,*,Auto"
-          Background="{DynamicResource MobileCanvasBrush}">
+          RowDefinitions="Auto,*,Auto">
         <controls:MobilePageHeader x:Name="PageHeader" />
         <ContentControl x:Name="PageOutlet"
                         Grid.Row="1"

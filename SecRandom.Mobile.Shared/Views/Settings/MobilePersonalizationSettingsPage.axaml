@@ -3,14 +3,14 @@
                                           xmlns:local="clr-namespace:SecRandom.Mobile.Views.Settings"
                                           xmlns:langs="clr-namespace:SecRandom.Mobile.Langs.Mobile"
                                           x:Class="SecRandom.Mobile.Views.Settings.MobilePersonalizationSettingsPage">
-    <ScrollViewer x:Name="PageScroll" Padding="{DynamicResource MobilePagePadding}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" IsScrollChainingEnabled="False" IsScrollInertiaEnabled="True">
-        <StackPanel Spacing="{DynamicResource MobileSpacingMd}" MaxWidth="720">
-            <Button Content="{x:Static langs:Resources.C_Back}" HorizontalAlignment="Left" MinHeight="{DynamicResource MobileMinHeightSecondary}" Click="OnBackButtonClick" />
-            <StackPanel Spacing="{DynamicResource MobileSpacingXs}">
-                <TextBlock Text="{x:Static langs:Resources.S_Personalization}" FontSize="{DynamicResource MobileFontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource MobileTextBrush}" TextWrapping="Wrap" />
-                <TextBlock Text="{x:Static langs:Resources.S_Personalization_D}" FontSize="{DynamicResource MobileFontSizeCaption}" Foreground="{DynamicResource MobileMutedTextBrush}" TextWrapping="Wrap" />
+    <ScrollViewer x:Name="PageScroll" Padding="20,20,20,28" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" IsScrollChainingEnabled="False" IsScrollInertiaEnabled="True">
+        <StackPanel Spacing="14" MaxWidth="720">
+            <Button Content="{x:Static langs:Resources.C_Back}" HorizontalAlignment="Left" MinHeight="44" Click="OnBackButtonClick" />
+            <StackPanel Spacing="4">
+                <TextBlock Text="{x:Static langs:Resources.S_Personalization}" FontSize="24" FontWeight="SemiBold" TextWrapping="Wrap" />
+                <TextBlock Text="{x:Static langs:Resources.S_Personalization_D}" FontSize="12" TextWrapping="Wrap" />
             </StackPanel>
-            <StackPanel x:Name="SettingsBody" Spacing="{DynamicResource MobileSpacingMd}" />
+            <StackPanel x:Name="SettingsBody" Spacing="14" />
         </StackPanel>
     </ScrollViewer>
 </local:MobilePersonalizationSettingsPage>

@@ -40,11 +40,10 @@ public sealed partial class MobileAboutSettingsPage : MobileSettingsPageBase
         var name = new TextBlock
         {
             Text = "SecRandom",
-            FontSize = MobileResources.FindDouble("MobileFontSizeSection", 20),
+            FontSize = 20,
             FontWeight = FontWeight.SemiBold,
             TextAlignment = TextAlignment.Center
         };
-        MobileResources.BindBrush(name, TextBlock.ForegroundProperty, MobileResources.Keys.Text);
 
         var versionText = CreateCaption($"{LR.S_Version} {version}", centered: true);
         var license = CreateCaption(LR.M_AboutLicense, centered: true);
@@ -53,7 +52,7 @@ public sealed partial class MobileAboutSettingsPage : MobileSettingsPageBase
         {
             Content = new StackPanel
             {
-                Spacing = MobileResources.FindDouble("MobileSpacingSm", 8),
+                Spacing = 8,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Children = { logo, name, versionText, license }
             }
@@ -73,11 +72,10 @@ public sealed partial class MobileAboutSettingsPage : MobileSettingsPageBase
         var caption = new TextBlock
         {
             Text = text,
-            FontSize = MobileResources.FindDouble("MobileFontSizeCaption", 12),
+            FontSize = 12,
             TextWrapping = TextWrapping.Wrap,
             TextAlignment = centered ? TextAlignment.Center : TextAlignment.Left
         };
-        MobileResources.BindBrush(caption, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         return caption;
     }
 

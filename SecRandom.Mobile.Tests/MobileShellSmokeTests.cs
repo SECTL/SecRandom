@@ -5,7 +5,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
-using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -35,17 +34,13 @@ public sealed class MobileTestApplication : Application
             PreferSystemTheme = true,
             UseSystemFontOnWindows = true
         });
-        Styles.Add(new StyleInclude(new Uri("avares://SecRandom.Mobile/Styles/MobileStyles.axaml"))
-        {
-            Source = new Uri("avares://SecRandom.Mobile/Styles/MobileStyles.axaml")
-        });
     }
 }
 
 public sealed class MobileShellSmokeTests
 {
     [AvaloniaFact]
-    public void NativeShellControlsLoadStylesAndLayoutAtPhoneSize()
+    public void NativeShellControlsLayoutAtPhoneSize()
     {
         var navigation = new MobileNavigationBar();
         var card = new MobileCard
@@ -68,8 +63,6 @@ public sealed class MobileShellSmokeTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        var app = Assert.IsType<MobileTestApplication>(Application.Current);
-        Assert.True(app.TryGetResource("MobileCanvasBrush", ThemeVariant.Light, out _));
         Assert.True(card.Bounds.Width > 0);
         Assert.True(navigation.Bounds.Height >= 56);
 
@@ -83,21 +76,19 @@ public sealed class MobileShellSmokeTests
             string.IsNullOrWhiteSpace(AutomationProperties.GetName(button))));
         Assert.Empty(controls.OfType<FAItemsRepeater>());
 
-        app.RequestedThemeVariant = ThemeVariant.Dark;
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
         Dispatcher.UIThread.RunJobs();
-        Assert.True(app.TryGetResource("MobileCanvasBrush", ThemeVariant.Dark, out _));
         Assert.True(navigation.Bounds.Height >= 56);
 
         window.Close();
     }
 
     [AvaloniaFact]
-    public void TabSplitThemeLoadsAndSwitchesTabsAtPhoneSize()
+    public void TabStripSwitchesTabsAtPhoneSize()
     {
         var selectedIndex = -1;
         var tabs = new TabStrip
         {
-            Theme = Assert.IsType<ControlTheme>(Application.Current!.FindResource("TabSplitTheme")),
             Items =
             {
                 new TabStripItem { Content = "Roll call" },
@@ -115,13 +106,10 @@ public sealed class MobileShellSmokeTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        var app = Assert.IsType<MobileTestApplication>(Application.Current);
-        Assert.True(app.TryGetResource("TabSplitTheme", ThemeVariant.Light, out _));
         Assert.Equal(1, tabs.SelectedIndex);
 
         var items = tabs.GetVisualDescendants().OfType<TabStripItem>().ToArray();
         Assert.Equal(2, items.Length);
-        Assert.InRange(Math.Abs(items[0].Bounds.Width - items[1].Bounds.Width), 0, 1);
 
         tabs.SelectedIndex = 0;
         Dispatcher.UIThread.RunJobs();

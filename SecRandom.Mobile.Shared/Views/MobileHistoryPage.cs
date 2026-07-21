@@ -342,7 +342,6 @@ public sealed partial class MobileHistoryPage : UserControl
     private static Control CreateLabeledControl(string label, Control control)
     {
         var text = new TextBlock { Text = label, FontSize = 12 };
-        MobileResources.BindBrush(text, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         return new StackPanel { Spacing = 4, Children = { text, control } };
     }
 

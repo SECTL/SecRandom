@@ -50,8 +50,6 @@ public sealed partial class MobileUpdateSettingsPage : MobileSettingsPageBase
                 : _updateService.Status,
             TextWrapping = TextWrapping.Wrap
         };
-        MobileResources.BindBrush(status, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
-
         RenderPage([
             MobileViewFactory.CreateSecondaryButton(LR.C_CheckUpdates, async () =>
             {

@@ -176,7 +176,6 @@ public sealed partial class MobileDrawPage : UserControl
                 snapshot.RemainingCount),
             TextWrapping = TextWrapping.Wrap
         };
-        MobileResources.BindBrush(summary, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
 
         var countText = new TextBlock
         {
@@ -187,7 +186,6 @@ public sealed partial class MobileDrawPage : UserControl
             TextAlignment = TextAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center
         };
-        MobileResources.BindBrush(countText, TextBlock.ForegroundProperty, MobileResources.Keys.Text);
         var minus = CreateIconButton(FluentIcons.SubtractFilled, LR.S_DrawCount);
         var plus = CreateIconButton(FluentIcons.AddFilled, LR.S_DrawCount);
         void UpdateStepper()
@@ -283,7 +281,7 @@ public sealed partial class MobileDrawPage : UserControl
                 : hasStudents ? LR.M_RepeatLimitExhausted : LR.M_AddStudentsPrompt;
         }
 
-        return CreateResultCard(resultText, detailText, MobileResources.Keys.PrimaryWash,
+        return CreateResultCard(resultText, detailText,
             ShouldShowStudentImages() ? CreateImageStrip(_studentResult) : null);
     }
 
@@ -296,7 +294,6 @@ public sealed partial class MobileDrawPage : UserControl
             candidates.Count > 0
                 ? string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_CandidatePrizes, candidates.Count)
                 : hasPrizes ? LR.M_RepeatLimitExhausted : LR.M_AddPrizesPrompt,
-            MobileResources.Keys.WarmWash,
             _configHandler.Data.LotterySettings.LotteryImage ? CreateImageStrip(_prizeResult is null ? [] : [_prizeResult]) : null);
         var draw = MobileViewFactory.CreatePrimaryButton(LR.C_DrawPrize, candidates.Count > 0);
         var manage = MobileViewFactory.CreateSecondaryButton(LR.C_ManagePrizePool, OpenListManagement);
@@ -562,7 +559,6 @@ public sealed partial class MobileDrawPage : UserControl
     private static Control CreateLabeledControl(string label, Control control)
     {
         var text = new TextBlock { Text = label, FontSize = 12 };
-        MobileResources.BindBrush(text, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         return new StackPanel { Spacing = 4, Children = { text, control } };
     }
 
@@ -580,26 +576,23 @@ public sealed partial class MobileDrawPage : UserControl
     private static (TextBlock Result, TextBlock Detail, Control Card) CreateResultCard(
         string resultText,
         string detailText,
-        string washResourceKey,
         Control? media = null)
     {
         var result = new TextBlock
         {
             Text = resultText,
-            FontSize = MobileResources.FindDouble("MobileFontSizeResult", 34),
+            FontSize = 34,
             FontWeight = FontWeight.SemiBold,
             TextAlignment = TextAlignment.Center,
             TextWrapping = TextWrapping.Wrap
         };
-        MobileResources.BindBrush(result, TextBlock.ForegroundProperty, MobileResources.Keys.Text);
         var detail = new TextBlock
         {
             Text = detailText,
             TextAlignment = TextAlignment.Center,
             TextWrapping = TextWrapping.Wrap
         };
-        MobileResources.BindBrush(detail, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
-        return (result, detail, MobileViewFactory.CreateResultPanel(result, detail, washResourceKey, media));
+        return (result, detail, MobileViewFactory.CreateResultPanel(result, detail, media));
     }
 
     private bool ShouldShowStudentImages() => _configHandler.Data

@@ -52,7 +52,6 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
         _importSettingsButton = MobileViewFactory.CreateSecondaryButton(LR.C_ImportSettings, () => _ = PickImportAsync(PendingImportKind.Settings));
 
         _statusText = new TextBlock { TextWrapping = TextWrapping.Wrap };
-        MobileResources.BindBrush(_statusText, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
 
         _confirmHost = new Border { IsVisible = false };
 
@@ -84,10 +83,9 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
         var caption = new TextBlock
         {
             Text = text,
-            FontSize = MobileResources.FindDouble("MobileFontSizeCaption", 12),
+            FontSize = 12,
             TextWrapping = TextWrapping.Wrap
         };
-        MobileResources.BindBrush(caption, TextBlock.ForegroundProperty, MobileResources.Keys.MutedText);
         return caption;
     }
 
@@ -247,11 +245,10 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
             Text = string.Format(LR.M_SourceVersion, string.IsNullOrWhiteSpace(inspection.ProducerVersion) ? LR.M_UnrecognizedVersion : inspection.ProducerVersion) + "\n"
                    + string.Format(LR.M_ImportFileCount, inspection.FileCount, (inspection.UncompressedBytes / 1024d / 1024d).ToString("F1"))
         };
-        MobileResources.BindBrush(detail, TextBlock.ForegroundProperty, MobileResources.Keys.Text);
 
         var stack = new StackPanel
         {
-            Spacing = MobileResources.FindDouble("MobileSpacingSm", 8),
+            Spacing = 8,
             Children =
             {
                 new MobileSectionHeader(LR.S_ConfirmImport, FluentIcons.WarningFilled),
@@ -266,7 +263,6 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
                 Text = string.Join("\n", inspection.Warnings),
                 TextWrapping = TextWrapping.Wrap
             };
-            MobileResources.BindBrush(warnings, TextBlock.ForegroundProperty, MobileResources.Keys.Danger);
             stack.Children.Add(warnings);
         }
 
@@ -275,7 +271,7 @@ public sealed partial class MobileBackupSettingsPage : MobileSettingsPageBase
         stack.Children.Add(_confirmButton);
         stack.Children.Add(_cancelButton);
 
-        _confirmHost.Child = new MobileCard(MobileResources.Keys.WarmWash) { Content = stack };
+        _confirmHost.Child = new MobileCard { Content = stack };
         _confirmHost.IsVisible = true;
         MobileAnimations.PlayResultReveal(_confirmHost);
     }
