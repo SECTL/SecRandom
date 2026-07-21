@@ -430,7 +430,9 @@
         <PackageReference Include="Sentry.Extensions.Logging" Version="6.6.0" />
         <PackageReference Include="Sentry.Profiling" Version="6.6.0" Condition="'$(BuildMobile)' != 'true'" />
         <PackageReference Include="QRCoder" Version="1.7.0" />
-        <PackageReference Include="SoundFlow" Version="[1.2.1.3]" />
+        <PackageReference Include="SoundFlow" Version="[1.2.1.3]" Condition="'$(BuildMobile)' != 'true'" />
+        <!-- Android/iOS playback uses IMobileMediaPlayer; retain the managed dependency but omit SoundFlow's unused native runtime asset. -->
+        <PackageReference Include="SoundFlow" Version="[1.2.1.3]" Condition="'$(BuildMobile)' == 'true'" ExcludeAssets="native" />
         <PackageReference Include="ClassIsland.Shared.IPC" Version="2.1.0.1" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
