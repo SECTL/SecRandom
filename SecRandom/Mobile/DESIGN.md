@@ -30,8 +30,8 @@ This is an Android/iOS SingleView application built by the shared `SecRandom.App
 
 ## Implementation Practices
 
-- `MobileRootView` owns fixed chrome and one full-screen `ViewHostControl`. The regular draw/history/overview pages are native keyed routes; SettingsView is the independent MVE page on that host, with modals layered above it.
-- `settings.mobile` is a hidden mobile-only catalog generated from registered mobile groups/pages. Child Back returns to that catalog, catalog Back closes SettingsView, and Home closes SettingsView immediately.
+- `MobileViewHost` owns the one `NavigationPage`; it presents `MobileRootView` and independent MVE pages. `MobileRootView` owns the bottom navigation and displays the regular draw/history/overview keyed `UserControl` routes directly.
+- `settings.mobile` is a hidden mobile-only catalog generated from registered mobile groups/pages. `SettingsView` is an independent MVE page and currently reuses the desktop settings layout, starting at that catalog.
 - Profile mutations save through `IProfileCatalogManager` / `IProfileService`; draws record both persistent history and temporary records. Multi-member mobile point-call orchestration stays in `MobileRollCallService` and composes the existing Core filtering, sampling, and commit services without changing the Core session contract.
 - The `LotteryEnabled` Core capability remains the only decision for whether the lottery segment can be selected.
 - Theme selection applies the saved `Appearance.Theme` immediately. Mobile keeps the `公平抽取` / `随机抽取` choice in roll-call settings, but when `公平抽取` is selected it runs the Core algorithm with the fixed `MobileDesktopDefaultsV1` policy snapshot and ignores persisted `MainConfigModel.FairDrawSettings` values.

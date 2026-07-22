@@ -9,47 +9,42 @@
     <local:MobileSettingsPageBase.DataTemplates>
         <DataTemplate x:DataType="local:MobileSettingsCatalogEntry">
             <fa:FASettingsExpanderItem Content="{Binding Name}"
-                                        Tag="{Binding Id}"
-                                        IsClickEnabled="True"
-                                        AutomationProperties.Name="{Binding Name}"
-                                        ActionIconSource="{sr:FluentIconSource {sr:Fi ChevronRightFilled}}"
-                                        Click="CatalogItem_OnClick">
+                                       Tag="{Binding Id}"
+                                       IsClickEnabled="True"
+                                       AutomationProperties.Name="{Binding Name}"
+                                       ActionIconSource="{sr:FluentIconSource {sr:Fi ChevronRightFilled}}"
+                                       Click="CatalogItem_OnClick">
                 <fa:FASettingsExpanderItem.IconSource>
                     <sr:FluentIconSource Glyph="{Binding IconGlyph}" />
                 </fa:FASettingsExpanderItem.IconSource>
             </fa:FASettingsExpanderItem>
         </DataTemplate>
+        
         <DataTemplate x:DataType="local:MobileSettingsCatalogGroup">
-            <fa:FASettingsExpander Header="{Binding Name}"
-                                   IsExpanded="True">
+            <fa:FASettingsExpander Header="{Binding Name}" IsExpanded="True">
                 <fa:FASettingsExpander.IconSource>
                     <sr:FluentIconSource Glyph="{Binding IconGlyph}" />
                 </fa:FASettingsExpander.IconSource>
+                
                 <ItemsControl ItemsSource="{Binding Pages}" />
             </fa:FASettingsExpander>
         </DataTemplate>
     </local:MobileSettingsPageBase.DataTemplates>
+    
     <ScrollViewer x:Name="PageScroll"
-                   Padding="20,20,20,28"
+                  Padding="20,20,20,28"
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch"
                   HorizontalScrollBarVisibility="Disabled"
                   VerticalScrollBarVisibility="Auto"
                   IsScrollChainingEnabled="False"
                   IsScrollInertiaEnabled="True">
-        <StackPanel
-                      Spacing="14"
-                     MaxWidth="720">
-            <StackPanel Spacing="4">
-                <TextBlock Text="{x:Static langs:Resources.P_Settings}"
-                            FontSize="24"
-                            FontWeight="SemiBold"
-                           TextWrapping="Wrap" />
-                <TextBlock Text="{x:Static langs:Resources.S_SettingsCategories}"
-                             FontSize="12"
-                            TextWrapping="Wrap" />
-            </StackPanel>
-            <ItemsControl ItemsSource="{Binding Groups}" />
-        </StackPanel>
+        <ItemsControl ItemsSource="{Binding Groups}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Vertical" Spacing="8" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
     </ScrollViewer>
 </local:MobileSettingsPageBase>

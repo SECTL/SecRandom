@@ -46,11 +46,8 @@ namespace SecRandom.Views;
 public partial class SettingsView : ViewBase, IFANavigationPageFactory
 {
     private const string DefaultDesktopPageId = "settings.overview";
-    private const string DefaultMobilePageId = "settings.mobile";
-
     private readonly ILogger<SettingsView>? _logger;
     private readonly bool _isMobile;
-    private readonly IMobileSettingsNavigator? _mobileNavigator;
     private AppToastAdorner? _appToastAdorner;
 
     private Border? _currentHighlight;
@@ -58,44 +55,28 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
     private bool _isAdornerAdded;
     private bool _isShowingRestartDialog;
     private bool _isPreviewMode;
-    private string? _mobileCurrentPageId;
 
     public SettingsView(
         IPlatformServiceRoot platform,
         SettingsViewModel? viewModel = null,
-        IMobileSettingsNavigator? mobileNavigator = null,
         ILogger<SettingsView>? logger = null)
     {
         _isMobile = platform.Capabilities.SupportsSingleView;
-        _mobileNavigator = mobileNavigator;
         _logger = logger;
         ViewModel = viewModel ?? new SettingsViewModel();
         DataContext = this;
         InitializeComponent();
 
-        if (_isMobile)
-        {
-            DesktopLayout.IsVisible = false;
-            MobileLayout.IsVisible = true;
-            _mobileNavigator?.Attach(this);
-            InitializeMobileNavigation();
-            Closing += MobileSettingsViewOnClosing;
-        }
-        else
-        {
-            NavigationFrame.NavigationPageFactory = this;
-            Current = this;
-            if (GlobalConstants.IsDevelopment)
-                ShowDebugNavigationItem();
-            BuildNavigationMenuItems();
-            SelectNavigationItemById(DefaultDesktopPageId);
-        }
+        NavigationFrame.NavigationPageFactory = this;
+        Current = this;
+        if (GlobalConstants.IsDevelopment)
+            ShowDebugNavigationItem();
+        BuildNavigationMenuItems();
+        SelectNavigationItemById(_isMobile ? MobilePageIds.Settings : DefaultDesktopPageId);
         Closed += (_, _) =>
         {
             if (ReferenceEquals(Current, this))
                 Current = null;
-            if (_isMobile)
-                _mobileNavigator?.Detach(this);
         };
 
         TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
@@ -270,11 +251,8 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        if (!_isMobile && ViewModel.SelectedPageInfo is null)
-            SelectNavigationItemById(DefaultDesktopPageId);
-
-        if (_isMobile)
-            return;
+        if (ViewModel.SelectedPageInfo is null)
+            SelectNavigationItemById(_isMobile ? MobilePageIds.Settings : DefaultDesktopPageId);
 
         if (Content is not Control element || _isAdornerAdded) return;
 
@@ -727,7 +705,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
         ExitPreview();
         var info = PagesRegistryService.SettingsItems.FirstOrDefault(item => item.Id == id);
         if (info is not null)
-            CoreNavigate(info, isBack: true);
+            CoreNavigate(info);
     }
 
     public void NavigateToPreviewPage(string id)
@@ -735,7 +713,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
         _isPreviewMode = true;
         var info = PagesRegistryService.SettingsItems.FirstOrDefault(item => item.Id == id);
         if (info is not null)
-            CoreNavigate(info, isBack: true);
+            CoreNavigate(info);
         UpdatePreviewState();
     }
 
@@ -775,7 +753,8 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
         if (e.InvokedItemContainer is FANavigationViewItem { Tag: PageInfo containerInfo })
             info = containerInfo;
-        else if (e.InvokedItem is PageInfo invokedInfo) info = invokedInfo;
+        else if (e.InvokedItem is PageInfo invokedInfo)
+            info = invokedInfo;
 
         if (info != null) CoreNavigate(info);
     }
@@ -795,82 +774,6 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
             return new TextBlock { Text = string.Format(Langs.SettingsView.Resources.M_PageNotFound, info.Id) };
 
         return page;
-    }
-
-    private void InitializeMobileNavigation()
-    {
-        NavigateMobilePageCore(DefaultMobilePageId);
-    }
-
-    internal Task NavigateMobilePageAsync(string pageId)
-    {
-        if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
-        {
-            NavigateMobilePageCore(pageId);
-            return Task.CompletedTask;
-        }
-
-        return Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(
-            () => NavigateMobilePageCore(pageId)).GetTask();
-    }
-
-    internal Task NavigateMobileBackAsync()
-    {
-        if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
-        {
-            NavigateMobilePageCore(DefaultMobilePageId);
-            return Task.CompletedTask;
-        }
-
-        return Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(
-            () => NavigateMobilePageCore(DefaultMobilePageId)).GetTask();
-    }
-
-    private void MobileSettingsViewOnClosing(object? sender, ViewClosingEventArgs e)
-    {
-        if (e.Reason != ViewCloseReason.Back || !e.IsCancelable ||
-            string.Equals(_mobileCurrentPageId, DefaultMobilePageId, StringComparison.Ordinal))
-            return;
-
-        NavigateMobilePageCore(DefaultMobilePageId);
-        e.Cancel = true;
-    }
-
-    private void NavigateMobilePageCore(string pageId)
-    {
-        if (!_isMobile)
-            return;
-
-        if (string.Equals(_mobileCurrentPageId, pageId, StringComparison.Ordinal))
-            return;
-
-        _mobileCurrentPageId = pageId;
-        var isCatalog = string.Equals(pageId, DefaultMobilePageId, StringComparison.Ordinal);
-        MobileBackButton.IsVisible = !isCatalog;
-
-        Control? page = IAppHost.Host?.Services.GetKeyedService<UserControl>(pageId);
-        MobilePageHost.Content = page ?? new TextBlock
-        {
-            Text = string.Format(Langs.SettingsView.Resources.M_PageNotFound, pageId)
-        };
-    }
-
-    private void MobileBackButton_OnClick(object? sender, RoutedEventArgs e) =>
-        NavigateMobilePageCore(DefaultMobilePageId);
-
-    private async void MobileHomeButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        if (_mobileNavigator is null)
-            return;
-
-        try
-        {
-            await _mobileNavigator.CloseAsync();
-        }
-        catch (Exception exception)
-        {
-            System.Diagnostics.Debug.WriteLine(exception);
-        }
     }
 
     #endregion

@@ -91,8 +91,8 @@ internal sealed class MobileNavigator(IServiceProvider services) : IMobileNaviga
         if (!ReferenceEquals(_outlet, outlet))
             return;
 
-        outlet.Content = null;
         _history.Clear();
+        outlet.Content = null;
         _outlet = null;
     }
 
@@ -115,11 +115,11 @@ internal sealed class MobileNavigator(IServiceProvider services) : IMobileNaviga
 
                 _history.Clear();
                 _history.Add(new MobilePageEntry(pageId, page));
-                _outlet.Content = page;
                 var destinationChanged = _destination != destination;
                 _destination = destination;
                 if (destinationChanged)
                     DestinationChanged?.Invoke(this, EventArgs.Empty);
+                _outlet.Content = page;
                 return true;
             }).ConfigureAwait(false);
         }

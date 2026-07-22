@@ -108,7 +108,7 @@ public partial class App : Application
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     private IHost? _mobileHost;
     private ISingleViewApplicationLifetime? _singleViewLifetime;
-    private MobileRootView? _mobileRootView;
+    private MobileViewHost? _mobileViewHost;
     private bool _mobileStopping;
     private bool _mobileStartupFailureShown;
     private readonly object _shutdownGate = new();
@@ -162,6 +162,7 @@ public partial class App : Application
         var startupProtocolUri = ProtocolActivation.ConsumeStartupUri();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            WriteDesktopStartupDiagnostic("Desktop framework initialization started.");
             _desktopLifetime = desktop;
             IsDesktop = true;
 
@@ -186,7 +187,17 @@ public partial class App : Application
             SingleInstanceService.Instance.RequestReceived += OnIpcRequestReceived;
 
             // 启动服务主机
-            BuildHost(PlatformStartupContext.Current);
+            try
+            {
+                WriteDesktopStartupDiagnostic("Building desktop Host.");
+                BuildHost(PlatformStartupContext.Current);
+                WriteDesktopStartupDiagnostic("Desktop Host built.");
+            }
+            catch (Exception exception)
+            {
+                WriteDesktopStartupDiagnostic("Desktop Host build failed.", exception);
+                throw;
+            }
 
             if (IAppHost.GetService<FirstRunOobeService>().IsRequired())
             {
@@ -195,7 +206,17 @@ public partial class App : Application
                 return;
             }
 
-            ContinueDesktopStartup(desktop, startupProtocolUri);
+            try
+            {
+                WriteDesktopStartupDiagnostic("Continuing desktop startup.");
+                ContinueDesktopStartup(desktop, startupProtocolUri);
+                WriteDesktopStartupDiagnostic("Desktop startup initialized.");
+            }
+            catch (Exception exception)
+            {
+                WriteDesktopStartupDiagnostic("Desktop startup initialization failed.", exception);
+                throw;
+            }
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
         {
@@ -213,8 +234,10 @@ public partial class App : Application
         {
             BuildHost(PlatformStartupContext.Current);
             _mobileHost = IAppHost.Host;
-            _mobileRootView = ActivatorUtilities.CreateInstance<MobileRootView>(_mobileHost!.Services);
-            singleView.MainView = _mobileRootView;
+            _mobileViewHost = ActivatorUtilities.CreateInstance<MobileViewHost>(_mobileHost!.Services);
+            singleView.MainView = _mobileViewHost;
+            ObserveTask(_mobileHost.Services.GetRequiredService<IViewEngine>().ShowAsync("mobile.root"),
+                "Mobile root view activation failed.");
 
             if (singleView is IControlledApplicationLifetime controlled)
                 controlled.Exit += (_, _) => _ = StopMobileHostAsync();
@@ -268,19 +291,19 @@ public partial class App : Application
         if (_mobileStopping || host is null || singleView is null)
             return;
 
-        MobileRootView? oldRoot = _mobileRootView;
-        if (oldRoot is not null)
+        MobileViewHost? oldHost = _mobileViewHost;
+        if (oldHost is not null)
         {
             var engine = host.Services.GetRequiredService<IViewEngine>();
-                await engine.CloseHostAsync(oldRoot.ViewHost, ViewCloseReason.Programmatic).ConfigureAwait(false);
-                await oldRoot.ViewHost.DestroyAsync().ConfigureAwait(false);
-            await oldRoot.DetachAsync().ConfigureAwait(false);
+            await engine.CloseHostAsync(oldHost, ViewCloseReason.Programmatic).ConfigureAwait(false);
+            await oldHost.DestroyAsync().ConfigureAwait(false);
+            await oldHost.DetachAsync().ConfigureAwait(false);
         }
 
-        var newRoot = ActivatorUtilities.CreateInstance<MobileRootView>(host.Services);
-        _mobileRootView = newRoot;
-        await Dispatcher.UIThread.InvokeAsync(() => singleView.MainView = newRoot);
-        await newRoot.ResetNavigationAsync().ConfigureAwait(false);
+        var newHost = ActivatorUtilities.CreateInstance<MobileViewHost>(host.Services);
+        _mobileViewHost = newHost;
+        await Dispatcher.UIThread.InvokeAsync(() => singleView.MainView = newHost);
+        await host.Services.GetRequiredService<IViewEngine>().ShowAsync("mobile.root").ConfigureAwait(false);
     }
 
     private async Task StopMobileHostAsync()
@@ -292,13 +315,13 @@ public partial class App : Application
         _mobileStopping = true;
         try
         {
-            if (_mobileRootView is not null)
+            if (_mobileViewHost is not null)
             {
                 await host.Services.GetRequiredService<IViewEngine>()
-                    .CloseHostAsync(_mobileRootView.ViewHost, ViewCloseReason.ApplicationShutdown)
+                    .CloseHostAsync(_mobileViewHost, ViewCloseReason.ApplicationShutdown)
                     .ConfigureAwait(false);
-                await _mobileRootView.ViewHost.DestroyAsync().ConfigureAwait(false);
-                await _mobileRootView.DetachAsync().ConfigureAwait(false);
+                await _mobileViewHost.DestroyAsync().ConfigureAwait(false);
+                await _mobileViewHost.DetachAsync().ConfigureAwait(false);
             }
 
             IMobileMediaPlayer mediaPlayer = host.Services.GetRequiredService<IMobileMediaPlayer>();
@@ -319,7 +342,7 @@ public partial class App : Application
             host.Dispose();
             if (ReferenceEquals(_mobileHost, host))
                 _mobileHost = null;
-            _mobileRootView = null;
+            _mobileViewHost = null;
         }
     }
 
@@ -364,7 +387,9 @@ public partial class App : Application
     private void ContinueDesktopStartup(IClassicDesktopStyleApplicationLifetime desktop, string? startupProtocolUri)
     {
         _desktopLifetime = desktop;
+        WriteDesktopStartupDiagnostic("Scheduling desktop runtime services.");
         ObserveTask(StartRuntimeServicesAsync(), "Runtime service startup failed.");
+        WriteDesktopStartupDiagnostic("Creating floating window.");
         _floatingWindow = new FloatingWindow();
         _floatingWindow.Opened += (_, _) => RefreshTrayWindowMenuItems();
         _floatingWindow.Closed += (_, _) => _floatingWindow = null;
@@ -375,7 +400,9 @@ public partial class App : Application
         }
         desktop.MainWindow = _floatingWindow;
 
+        WriteDesktopStartupDiagnostic("Initializing desktop application chrome.");
         InitializeApp();
+        WriteDesktopStartupDiagnostic("Desktop application chrome initialized.");
         if (startupProtocolUri is not null)
             Dispatcher.UIThread.Post(() => HandleProtocolUri(startupProtocolUri), DispatcherPriority.Render);
 
@@ -1036,8 +1063,26 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
+            WriteDesktopStartupDiagnostic(failureMessage, ex);
             IAppHost.TryGetService<ILogger<App>>()?
                 .LogError(ex, failureMessage);
+        }
+    }
+
+    private static void WriteDesktopStartupDiagnostic(string message, Exception? exception = null)
+    {
+        try
+        {
+            string directory = Utils.GetFilePath("logs");
+            Directory.CreateDirectory(directory);
+            string entry = $"{DateTimeOffset.Now:O} [desktop-startup] {message}{Environment.NewLine}";
+            if (exception is not null)
+                entry += exception + Environment.NewLine;
+            File.AppendAllText(Path.Combine(directory, "desktop-startup.log"), entry);
+        }
+        catch
+        {
+            System.Diagnostics.Debug.WriteLine($"[desktop-startup] {message}\n{exception}");
         }
     }
 
@@ -1134,6 +1179,8 @@ public partial class App : Application
             fluentAvaloniaTheme.PreferUserAccentColor = false;
             fluentAvaloniaTheme.CustomAccentColor = settings.ThemeColor;
         }
+
+        Resources[@"NavigationViewItemOnLeftIconBoxHeight"] = 20.0;
     }
 
     public void RefreshPersonalizedSettings()
@@ -1197,8 +1244,10 @@ public partial class App : Application
 
         try
         {
+            WriteDesktopStartupDiagnostic("Showing main window.");
             if (_mainWindow is null)
             {
+                WriteDesktopStartupDiagnostic("Creating main window and view host.");
                 var mainWindow = _mainWindow = new MainWindow(MainWindowSettingsScope.Primary)
                 {
                     Title = @"SecRandom"
@@ -1215,12 +1264,14 @@ public partial class App : Application
             await IAppHost.GetService<IViewEngine>().ShowAsync(
                 DesktopViewIds.Main,
                 new ViewShowOptions { HostId = DesktopViewIds.Main }).ConfigureAwait(true);
+            WriteDesktopStartupDiagnostic("Main window view displayed.");
             if (!string.IsNullOrWhiteSpace(pageId))
                 MainView.Current?.SelectNavigationItemById(pageId);
             transaction?.Finish(SpanStatus.Ok);
         }
         catch (Exception ex)
         {
+            WriteDesktopStartupDiagnostic("Main window display failed.", ex);
             transaction?.Finish(ex, SpanStatus.InternalError);
             IAppHost.TryGetService<ILogger<App>>()?.LogError(ex, "Failed to show main window.");
             throw;

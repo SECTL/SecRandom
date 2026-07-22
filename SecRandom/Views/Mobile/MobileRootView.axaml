@@ -1,14 +1,15 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:controls="clr-namespace:SecRandom.Controls.Mobile"
-             x:Class="SecRandom.Views.Mobile.MobileRootView">
-    <Grid x:Name="RootLayout"
-          RowDefinitions="Auto,*,Auto">
-        <controls:MobilePageHeader x:Name="PageHeader" />
+<local:MobileRootView xmlns="https://github.com/avaloniaui"
+                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                      xmlns:controls="clr-namespace:SecRandom.Controls.Mobile"
+                      xmlns:local="clr-namespace:SecRandom.Views.Mobile"
+                       x:Class="SecRandom.Views.Mobile.MobileRootView"
+                       Header="{x:Static local:MobileRootView.HeaderText}"
+                       NavigationPage.HasBackButton="False"
+                       Loaded="OnLoaded">
+    <Grid RowDefinitions="*,Auto">
         <ContentControl x:Name="PageOutlet"
-                        Grid.Row="1"
                         HorizontalContentAlignment="Stretch"
                         VerticalContentAlignment="Stretch" />
-        <controls:MobileNavigationBar x:Name="BottomBar" Grid.Row="2" />
+        <controls:MobileNavigationBar x:Name="BottomBar" Grid.Row="1" />
     </Grid>
-</UserControl>
+</local:MobileRootView>

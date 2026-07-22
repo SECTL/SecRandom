@@ -15,32 +15,13 @@ public interface IMobileSettingsNavigator
 
     Task NavigateAsync(string pageId);
 
-    Task GoBackAsync();
-
     Task CloseAsync();
-
-    void Attach(SettingsView view);
-
-    void Detach(SettingsView view);
 }
 
 internal sealed class MobileSettingsNavigator(IViewEngine viewEngine) : IMobileSettingsNavigator
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
-    private SettingsView? _view;
-
-    public bool IsOpen => _view is { IsClosed: false };
-
-    public void Attach(SettingsView view)
-    {
-        _view = view;
-    }
-
-    public void Detach(SettingsView view)
-    {
-        if (ReferenceEquals(_view, view))
-            _view = null;
-    }
+    public bool IsOpen => SettingsView.Current is { IsClosed: false };
 
     public async Task OpenAsync(string? pageId = null)
     {
@@ -51,12 +32,7 @@ internal sealed class MobileSettingsNavigator(IViewEngine viewEngine) : IMobileS
             if (string.IsNullOrWhiteSpace(pageId))
                 return;
 
-            // ViewEngine creates views on the UI dispatcher, but Attach runs before ShowAsync
-            // completes. Keep the coordinator serialized until that live view can receive its route.
-            if (_view is not { IsClosed: false } view)
-                throw new InvalidOperationException("The mobile settings view did not attach to the view engine.");
-
-            await view.NavigateMobilePageAsync(pageId).ConfigureAwait(false);
+            SettingsView.Current?.NavigateToPage(pageId);
         }
         finally
         {
@@ -65,10 +41,6 @@ internal sealed class MobileSettingsNavigator(IViewEngine viewEngine) : IMobileS
     }
 
     public Task NavigateAsync(string pageId) => OpenAsync(pageId);
-
-    public Task GoBackAsync() => _view is { IsClosed: false } view
-        ? view.NavigateMobileBackAsync()
-        : Task.CompletedTask;
 
     public async Task CloseAsync() => await viewEngine.CloseAsync(MobilePageIds.Settings, ViewCloseReason.User);
 }

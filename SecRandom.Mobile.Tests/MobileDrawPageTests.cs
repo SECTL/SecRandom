@@ -70,4 +70,5 @@ public sealed class MobileDrawPageTests : IDisposable
         return typeof(Utils).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)
                ?? throw new InvalidOperationException($"Utils.{name} was not found.");
     }
+
 }

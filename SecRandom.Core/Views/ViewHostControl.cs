@@ -9,7 +9,7 @@ namespace SecRandom.Core.Views;
 public class ViewHostControl : UserControl, IViewHost
 {
     private readonly Grid _root;
-    private readonly ContentControl _pagePresenter;
+    private readonly NavigationPage _navigationPage;
     private readonly Border _modalOverlay;
     private readonly ContentControl _modalPresenter;
     private readonly List<ViewBase> _pageStack = [];
@@ -19,11 +19,7 @@ public class ViewHostControl : UserControl, IViewHost
     public ViewHostControl(string hostId)
     {
         HostId = hostId;
-        _pagePresenter = new ContentControl
-        {
-            HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            VerticalContentAlignment = VerticalAlignment.Stretch
-        };
+        _navigationPage = new NavigationPage();
         _modalPresenter = new ContentControl
         {
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
@@ -38,7 +34,7 @@ public class ViewHostControl : UserControl, IViewHost
             Child = _modalPresenter
         };
         _root = new Grid();
-        _root.Children.Add(_pagePresenter);
+        _root.Children.Add(_navigationPage);
         _root.Children.Add(_modalOverlay);
         Content = _root;
         IsVisible = false;
@@ -51,16 +47,20 @@ public class ViewHostControl : UserControl, IViewHost
     public bool HasActiveView => ActiveModalView is not null || _pageStack.Count != 0;
     public event EventHandler? Destroyed;
 
-    public Task ShowPageAsync(ViewBase view, CancellationToken cancellationToken = default)
+    public async Task ShowPageAsync(ViewBase view, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(view);
-        return RunOnUiThreadAsync(() =>
+        await RunOnUiThreadAsync(async () =>
         {
             ThrowIfDestroyed();
+            var isFirstPage = _pageStack.Count == 0;
             _pageStack.Add(view);
-            _pagePresenter.Content = view;
+            if (isFirstPage)
+                await _navigationPage.ReplaceAsync(view).ConfigureAwait(true);
+            else
+                await _navigationPage.PushAsync(view).ConfigureAwait(true);
             UpdateVisibility();
-        });
+        }).ConfigureAwait(false);
     }
 
     public Task ShowModalAsync(ViewBase view, CancellationToken cancellationToken = default)
@@ -95,15 +95,14 @@ public class ViewHostControl : UserControl, IViewHost
             if (!_pageStack.Contains(view))
                 throw new InvalidOperationException("The view is not active in this host.");
 
-            _pagePresenter.Content = view;
             UpdateVisibility();
         });
     }
 
-    public Task CloseAsync(ViewBase view, CancellationToken cancellationToken = default)
+    public async Task CloseAsync(ViewBase view, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(view);
-        return RunOnUiThreadAsync(() =>
+        await RunOnUiThreadAsync(async () =>
         {
             if (_modalStack.Remove(view))
             {
@@ -115,10 +114,16 @@ public class ViewHostControl : UserControl, IViewHost
 
             if (_pageStack.Remove(view))
             {
-                _pagePresenter.Content = _pageStack.Count == 0 ? null : _pageStack[^1];
+                if (ReferenceEquals(_navigationPage.CurrentPage, view))
+                {
+                    if (_pageStack.Count == 0)
+                        await _navigationPage.ReplaceAsync(new ContentPage()).ConfigureAwait(true);
+                    else
+                        await _navigationPage.PopAsync().ConfigureAwait(true);
+                }
                 UpdateVisibility();
             }
-        });
+        }).ConfigureAwait(false);
     }
 
     public Task<bool> RequestBackAsync(CancellationToken cancellationToken = default) => CloseActiveViewAsync(cancellationToken);
@@ -152,12 +157,19 @@ public class ViewHostControl : UserControl, IViewHost
             _isDestroyed = true;
             _pageStack.Clear();
             _modalStack.Clear();
-            _pagePresenter.Content = null;
             _modalPresenter.Content = null;
             _modalOverlay.IsVisible = false;
             UpdateVisibility();
             Destroyed?.Invoke(this, EventArgs.Empty);
         });
+    }
+
+    private static Task RunOnUiThreadAsync(Func<Task> action)
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+            return action();
+
+        return Dispatcher.UIThread.InvokeAsync(action);
     }
 
     private static Task RunOnUiThreadAsync(Action action)

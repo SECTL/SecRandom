@@ -40,6 +40,7 @@ public static class MobileApplicationServices
         services.AddSingleton<SingleViewHostProvider>();
         services.AddSingleton<IViewHostProvider>(provider => provider.GetRequiredService<SingleViewHostProvider>());
         services.AddViewEngine()
+            .AddView<MobileRootView>("mobile.root")
             .AddView<global::SecRandom.Views.SettingsView>(MobilePageIds.Settings);
         services.AddKeyedTransient<UserControl, MobileDrawPage>(MobilePageIds.Draw);
         services.AddKeyedTransient<UserControl, MobileHistoryPage>(MobilePageIds.History);
@@ -56,7 +57,7 @@ public static class MobileApplicationServices
         if (platform.UpdateInstaller.IsSupported)
             services.AddSettingsPage<MobileUpdateSettingsPage>(LR.S_AppUpdates);
         services.AddSettingsPage<MobileAboutSettingsPage>(LR.S_About);
-        services.AddTransient<MobileRootView>();
+        services.AddTransient<MobileViewHost>();
         return services;
     }
 

@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <EnableGitInfoGenerator>false</EnableGitInfoGenerator>
+        <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
     </PropertyGroup>
 
     <PropertyGroup>

@@ -11,7 +11,7 @@ namespace SecRandom.Views.Mobile.Settings;
 /// <summary>
 /// 通用设置页：在线状态上报三档、Sentry 遥测开关、语言三档。
 /// 语言绑定桌面同一字段 <c>MainConfigModel.General.Basic.Language</c>；
-/// 切换后立即应用 culture 并重建 <see cref="MobileRootView"/> 可视树，无需重启。
+/// 切换后立即应用 culture 并重建 <see cref="MobileViewHost"/> 可视树，无需重启。
 /// </summary>
 [PageInfo(MobilePageIds.General, FluentIcons.SettingsFilled, "settings.mobile.preferences")]
 public sealed partial class MobileGeneralSettingsPage : MobileSettingsPageBase

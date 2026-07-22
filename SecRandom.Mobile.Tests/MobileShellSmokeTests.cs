@@ -208,17 +208,15 @@ public sealed class MobileShellSmokeTests
             Height = 844,
             Content = new Grid
             {
-                RowDefinitions = new RowDefinitions("Auto,*,Auto"),
+                RowDefinitions = new RowDefinitions("*,Auto"),
                 Children =
                 {
-                    new MobilePageHeader { Title = "Settings" },
                     scroll,
                     new MobileNavigationBar()
                 }
             }
         };
-        Grid.SetRow(scroll, 1);
-        Grid.SetRow(((Grid)window.Content).Children[2], 2);
+        Grid.SetRow(((Grid)window.Content).Children[1], 1);
         window.Show();
         Dispatcher.UIThread.RunJobs();
 

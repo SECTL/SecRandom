@@ -2,7 +2,7 @@ using Avalonia.Controls;
 
 namespace SecRandom.Core.Views;
 
-public abstract class ViewBase : UserControl
+public abstract class ViewBase : ContentPage
 {
     private Func<ViewCloseRequest, CancellationToken, Task<ViewCloseResult>>? _closeHandler;
 

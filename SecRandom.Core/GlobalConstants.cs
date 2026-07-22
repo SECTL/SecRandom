@@ -52,7 +52,8 @@ public static class GlobalConstants
 
         var separator = version.IndexOf('+');
         var generatedGitInfo = VersionAssembly.GetType("SecRandom.GitInfo");
-        var branch = generatedGitInfo?.GetProperty("Branch", BindingFlags.Public | BindingFlags.Static)?.GetValue(null) as string
+        var branch = generatedGitInfo?.GetField("Branch", BindingFlags.Public | BindingFlags.Static)?.GetValue(null) as string
+                     ?? generatedGitInfo?.GetProperty("Branch", BindingFlags.Public | BindingFlags.Static)?.GetValue(null) as string
                      ?? "Unknown";
         return separator < 0
             ? (version, branch, "Unknown")

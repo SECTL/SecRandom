@@ -38,6 +38,7 @@ internal sealed class DesktopWindowViewHost : IViewHost
 
     public async Task ShowPageAsync(ViewBase view, CancellationToken cancellationToken = default)
     {
+        NavigationPage.SetHasNavigationBar(view, false);
         await _contentHost.ShowPageAsync(view, cancellationToken).ConfigureAwait(false);
         await EnsureVisibleAsync().ConfigureAwait(false);
     }
@@ -76,7 +77,7 @@ internal sealed class DesktopWindowViewHost : IViewHost
     {
         _isClosed = true;
         _window.Closed -= WindowOnClosed;
-        _contentHost.DestroyAsync().GetAwaiter().GetResult();
+        _ = _contentHost.DestroyAsync();
     }
 
     private static Task RunOnUiThreadAsync(Action action)

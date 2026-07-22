@@ -1,11 +1,14 @@
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.Logging;
 using SecRandom.Controls.Mobile;
+using SecRandom.Core;
+using SecRandom.Core.Controls;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Views;
 using SecRandom.Services.Mobile;
@@ -13,100 +16,99 @@ using LR = SecRandom.Langs.Mobile.Resources;
 
 namespace SecRandom.Views.Mobile;
 
-public sealed partial class MobileRootView : UserControl
+public sealed partial class MobileRootView : ViewBase
 {
     private readonly MainConfigHandler _configHandler;
-    private readonly ViewHostControl _viewHost;
-    private readonly SingleViewHostProvider _singleViewHostProvider;
     private readonly IMobileNavigator _navigator;
     private readonly IMobileSettingsNavigator _settingsNavigator;
-    private readonly MobilePageHeader _header;
+    private readonly ILogger<MobileRootView>? _logger;
     private readonly MobileNavigationBar _bottomBar;
     private readonly ContentControl _pageOutlet;
-    private readonly ILogger<MobileRootView>? _logger;
+    private bool _isAdornerAdded;
 
-    public MobileRootView(
-        MainConfigHandler configHandler,
-        SingleViewHostProvider singleViewHostProvider,
-        IMobileNavigator navigator,
-        IMobileSettingsNavigator settingsNavigator,
-        ILogger<MobileRootView>? logger = null)
+    public MobileRootView(MainConfigHandler configHandler, IMobileNavigator navigator,
+        IMobileSettingsNavigator settingsNavigator, ILogger<MobileRootView>? logger = null)
     {
         _configHandler = configHandler;
-        _singleViewHostProvider = singleViewHostProvider;
         _navigator = navigator;
         _settingsNavigator = settingsNavigator;
         _logger = logger;
-        _viewHost = new ViewHostControl("mobile.root");
-        _singleViewHostProvider.Attach(_viewHost);
-
         InitializeComponent();
-        _header = this.FindControl<MobilePageHeader>("PageHeader")!;
         _bottomBar = this.FindControl<MobileNavigationBar>("BottomBar")!;
-        _bottomBar.DestinationSelected += BottomBarOnDestinationSelected;
         _pageOutlet = this.FindControl<ContentControl>("PageOutlet")!;
+        _bottomBar.DestinationSelected += BottomBarOnDestinationSelected;
         _navigator.Attach(_pageOutlet);
-        var root = this.FindControl<Grid>("RootLayout")!;
-        root.Children.Add(_viewHost);
-        Grid.SetRow(_viewHost, 0);
-        Grid.SetRowSpan(_viewHost, 3);
-        _viewHost.ZIndex = 1;
-
-        AddHandler(TopLevel.BackRequestedEvent, OnBackRequested, RoutingStrategies.Bubble);
-        _configHandler.Data.Appearance.PropertyChanged += AppearanceOnPropertyChanged;
-        DetachedFromVisualTree += (_, _) => _configHandler.Data.Appearance.PropertyChanged -= AppearanceOnPropertyChanged;
         _navigator.DestinationChanged += NavigatorOnDestinationChanged;
+        _configHandler.Data.Appearance.PropertyChanged += AppearanceOnPropertyChanged;
+        Closed += (_, _) =>
+        {
+            _navigator.DestinationChanged -= NavigatorOnDestinationChanged;
+            _navigator.Detach(_pageOutlet);
+            _configHandler.Data.Appearance.PropertyChanged -= AppearanceOnPropertyChanged;
+        };
         ApplyTheme();
-        RenderCurrentDestination();
+        UpdateDestinationChrome();
     }
 
-    public ViewHostControl ViewHost => _viewHost;
+    public static string HeaderText => LR.P_Draw;
 
-    public Task ResetNavigationAsync() => _navigator.ResetToDrawAsync();
-
-    public Task DetachAsync()
+    private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        if (Application.Current is null || Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
-        {
-            DetachCore();
-            return Task.CompletedTask;
-        }
-
-        return Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(DetachCore).GetTask();
-    }
-
-    private void DetachCore()
-    {
-        _navigator.DestinationChanged -= NavigatorOnDestinationChanged;
-        _navigator.Detach(_pageOutlet);
-        _singleViewHostProvider.Detach(_viewHost);
-    }
-
-    private void OnBackRequested(object? sender, RoutedEventArgs e)
-    {
-        if (e.Handled)
+        if (!GlobalConstants.IsDevelopment || _isAdornerAdded || Content is not Control element)
             return;
 
-        e.Handled = true;
-        if (_viewHost.HasActiveView)
-        {
-            _ = _viewHost.CloseActiveViewAsync();
+        var layer = AdornerLayer.GetAdornerLayer(element);
+        if (layer is null)
             return;
-        }
 
-        _ = _navigator.GoBackAsync();
+        var adorner = new DevelopmentBuildAdorner();
+        layer.Children.Add(adorner);
+        AdornerLayer.SetAdornedElement(adorner, this);
+        _isAdornerAdded = true;
     }
 
-    private void RenderCurrentDestination()
+    private async void BottomBarOnDestinationSelected(object? sender, MobileDestination destination)
     {
-        _header.Title = _navigator.CurrentDestination switch
+        try
+        {
+            if (destination == MobileDestination.Settings)
+            {
+                await _settingsNavigator.OpenAsync();
+                _bottomBar.Select(_navigator.CurrentDestination);
+                return;
+            }
+
+            if (_settingsNavigator.IsOpen)
+                await _settingsNavigator.CloseAsync();
+            if (!await _navigator.NavigateRootAsync(destination))
+                _bottomBar.Select(_navigator.CurrentDestination);
+        }
+        catch (Exception exception)
+        {
+            _logger?.LogError(exception, "无法打开移动端设置界面。");
+            await new FAContentDialog
+            {
+                Title = LR.M_OpenSettingsFailed,
+                Content = exception.Message,
+                CloseButtonText = LR.C_Close,
+                DefaultButton = FAContentDialogButton.Close
+            }.ShowAsync(TopLevel.GetTopLevel(this));
+            _bottomBar.Select(_navigator.CurrentDestination);
+        }
+    }
+
+    private void NavigatorOnDestinationChanged(object? sender, EventArgs e) => UpdateDestinationChrome();
+
+    private void UpdateDestinationChrome()
+    {
+        _bottomBar.Select(_navigator.CurrentDestination);
+        Header = _navigator.CurrentDestination switch
         {
             MobileDestination.Draw => LR.P_Draw,
             MobileDestination.History => LR.P_History,
             MobileDestination.Overview => LR.P_Overview,
-            _ => throw new ArgumentOutOfRangeException()
+            _ => LR.P_Draw
         };
-        _bottomBar.Select(_navigator.CurrentDestination);
     }
 
     private void AppearanceOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -124,52 +126,6 @@ public sealed partial class MobileRootView : UserControl
             _ => Avalonia.Styling.ThemeVariant.Default
         };
     }
-
-    private void NavigatorOnDestinationChanged(object? sender, EventArgs e) => RenderCurrentDestination();
-
-    private async void BottomBarOnDestinationSelected(object? sender, MobileDestination destination)
-    {
-        try
-        {
-            if (destination == MobileDestination.Settings)
-            {
-                await _settingsNavigator.OpenAsync().ConfigureAwait(true);
-                _bottomBar.Select(_navigator.CurrentDestination);
-                return;
-            }
-
-            var wasSettingsOpen = _settingsNavigator.IsOpen;
-            if (wasSettingsOpen)
-                await _settingsNavigator.CloseAsync().ConfigureAwait(true);
-
-            if (destination == _navigator.CurrentDestination)
-            {
-                _bottomBar.Select(_navigator.CurrentDestination);
-                return;
-            }
-
-            if (!await _navigator.NavigateRootAsync(destination).ConfigureAwait(true))
-                _bottomBar.Select(_navigator.CurrentDestination);
-        }
-        catch (Exception exception)
-        {
-            _logger?.LogError(exception, "无法打开移动端设置界面。");
-            await ShowOpenSettingsErrorAsync(exception);
-            _bottomBar.Select(_navigator.CurrentDestination);
-        }
-    }
-
-    private Task ShowOpenSettingsErrorAsync(Exception exception) => new FAContentDialog
-    {
-        Title = LR.M_OpenSettingsFailed,
-        Content = new TextBlock
-        {
-            Text = exception.Message,
-            TextWrapping = Avalonia.Media.TextWrapping.Wrap
-        },
-        CloseButtonText = LR.C_Close,
-        DefaultButton = FAContentDialogButton.Close
-    }.ShowAsync(TopLevel.GetTopLevel(this));
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }

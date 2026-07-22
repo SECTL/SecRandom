@@ -1,9 +1,11 @@
 <local:CrashRecoveryView xmlns="https://github.com/avaloniaui"
                          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                           xmlns:local="clr-namespace:SecRandom.Views"
-                          xmlns:lcr="clr-namespace:SecRandom.Langs.CrashRecovery"
-                          x:Class="SecRandom.Views.CrashRecoveryView"
-                          x:DataType="local:CrashRecoveryView">
+                           xmlns:lcr="clr-namespace:SecRandom.Langs.CrashRecovery"
+                           x:Class="SecRandom.Views.CrashRecoveryView"
+                           x:DataType="local:CrashRecoveryView"
+                           Header="{x:Static lcr:Resources.Title}"
+                           NavigationPage.HasBackButton="False">
     <Grid Margin="24" RowDefinitions="Auto,*,Auto">
         <StackPanel>
             <TextBlock Text="{x:Static lcr:Resources.Title}"

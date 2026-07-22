@@ -6,9 +6,11 @@
                 xmlns:fa="using:FluentAvalonia.UI.Controls"
                 xmlns:views="using:SecRandom.Views"
                 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-                x:Class="SecRandom.Views.MainView"
-                x:DataType="views:MainView"
-                Loaded="OnLoaded"
+                 x:Class="SecRandom.Views.MainView"
+                 x:DataType="views:MainView"
+                 Header="SecRandom"
+                 NavigationPage.HasBackButton="False"
+                 Loaded="OnLoaded"
                 Unloaded="OnUnloaded">
     <Grid RowDefinitions="Auto *">
         <Border Grid.Row="0" Height="48">

@@ -14,11 +14,10 @@ namespace SecRandom.Mobile.Tests;
 
 public sealed class MobileSettingsViewTests
 {
-    private const string ChildPageId = "settings.mobile.test";
     private static readonly SemaphoreSlim HostGate = new(1, 1);
 
     [AvaloniaFact]
-    public async Task BackReturnsToCatalogBeforeClosingSettingsView()
+    public async Task SettingsUsesTheSharedDesktopLayout()
     {
         await HostGate.WaitAsync();
         ServiceProvider? provider = null;
@@ -31,17 +30,10 @@ public sealed class MobileSettingsViewTests
             provider.GetRequiredService<SingleViewHostProvider>().Attach(viewHost);
             var navigator = provider.GetRequiredService<IMobileSettingsNavigator>();
 
-            await navigator.OpenAsync(ChildPageId);
+            await navigator.OpenAsync();
 
             var settings = Assert.IsType<SettingsView>(Assert.Single(viewHost.PageStack));
-            var pageHost = settings.FindControl<ContentControl>("MobilePageHost")!;
-            var back = settings.FindControl<Button>("MobileBackButton")!;
-            Assert.IsType<TestChildPage>(pageHost.Content);
-            Assert.True(back.IsVisible);
-
-            Assert.False(await viewHost.CloseActiveViewAsync());
-            Assert.IsType<TestCatalogPage>(pageHost.Content);
-            Assert.False(back.IsVisible);
+            Assert.NotNull(settings.FindControl<FluentAvalonia.UI.Controls.FANavigationView>("NavigationView"));
             Assert.True(navigator.IsOpen);
 
             Assert.True(await viewHost.CloseActiveViewAsync());
@@ -59,7 +51,7 @@ public sealed class MobileSettingsViewTests
     }
 
     [AvaloniaFact]
-    public async Task HomeClosesSettingsViewFromAChildPage()
+    public async Task SettingsNavigatorClosesTheIndependentView()
     {
         await HostGate.WaitAsync();
         ServiceProvider? provider = null;
@@ -72,13 +64,12 @@ public sealed class MobileSettingsViewTests
             provider.GetRequiredService<SingleViewHostProvider>().Attach(viewHost);
             var navigator = provider.GetRequiredService<IMobileSettingsNavigator>();
 
-            await navigator.OpenAsync(ChildPageId);
+            await navigator.OpenAsync();
             var settings = Assert.IsType<SettingsView>(Assert.Single(viewHost.PageStack));
             var completion = new TaskCompletionSource<ViewCloseReason>(TaskCreationOptions.RunContinuationsAsynchronously);
             settings.Closed += (_, args) => completion.TrySetResult(args.CloseResult.Reason);
 
-            settings.FindControl<Button>("MobileHomeButton")!
-                .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            await navigator.CloseAsync();
 
             Assert.Equal(ViewCloseReason.User, await completion.Task.WaitAsync(TimeSpan.FromSeconds(2)));
             Assert.False(navigator.IsOpen);
@@ -103,14 +94,8 @@ public sealed class MobileSettingsViewTests
         services.AddSingleton<SingleViewHostProvider>();
         services.AddSingleton<IViewHostProvider>(provider => provider.GetRequiredService<SingleViewHostProvider>());
         services.AddViewEngine().AddView<SettingsView>(MobilePageIds.Settings);
-        services.AddKeyedTransient<UserControl, TestCatalogPage>(MobilePageIds.Settings);
-        services.AddKeyedTransient<UserControl, TestChildPage>(ChildPageId);
         return services.BuildServiceProvider();
     }
-
-    private sealed class TestCatalogPage : UserControl;
-
-    private sealed class TestChildPage : UserControl;
 
     private sealed class TestHost(IServiceProvider services) : IHost
     {

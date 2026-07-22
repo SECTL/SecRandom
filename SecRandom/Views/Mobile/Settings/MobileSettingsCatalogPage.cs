@@ -1,4 +1,5 @@
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services;
@@ -20,6 +21,7 @@ public sealed partial class MobileSettingsCatalogPage : MobileSettingsPageBase
         : base(capabilities)
     {
         _settingsNavigator = settingsNavigator;
+        InitializeComponent();
         Groups = PagesRegistryService.GroupItems
             .Where(group => group.Id.StartsWith("settings.mobile.", StringComparison.Ordinal))
             .Select(group => new MobileSettingsCatalogGroup(
@@ -36,12 +38,16 @@ public sealed partial class MobileSettingsCatalogPage : MobileSettingsPageBase
 
     public IReadOnlyList<MobileSettingsCatalogGroup> Groups { get; }
 
-    private async void CatalogItem_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void CatalogItem_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (sender is not Avalonia.Controls.Control { Tag: string pageId })
             return;
 
-        await _settingsNavigator.NavigateAsync(pageId);
+        Dispatcher.UIThread.Post(async () =>
+        {
+            await Task.Delay(100);
+            SettingsView.Current?.NavigateToPage(pageId);
+        });
     }
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
