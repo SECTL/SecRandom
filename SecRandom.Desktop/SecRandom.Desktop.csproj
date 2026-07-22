@@ -6,6 +6,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+        <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
         <ApplicationIcon>..\SecRandom\Assets\AppLogo.ico</ApplicationIcon>
     </PropertyGroup>
 

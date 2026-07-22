@@ -11,6 +11,7 @@
     <PropertyGroup>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
     </PropertyGroup>
 
     <ItemGroup>

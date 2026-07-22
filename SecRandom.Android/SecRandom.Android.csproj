@@ -5,6 +5,7 @@
         <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
 
         <ApplicationTitle>SecRandom</ApplicationTitle>
         <ApplicationId>cn.sectl.secrandom.mobile</ApplicationId>
