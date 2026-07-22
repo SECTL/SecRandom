@@ -89,6 +89,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
     public bool IsPreviewMode => _isPreviewMode;
     public SettingsViewModel ViewModel { get; }
+    public bool IsMobile => _isMobile;
     private IImportExportService ImportExportService => IAppHost.GetService<IImportExportService>();
     private IExternalLauncher ExternalLauncher => IAppHost.GetService<IExternalLauncher>();
 
@@ -777,4 +778,10 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
     }
 
     #endregion
+
+    private void MobileHomeButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var viewEngine = IAppHost.GetService<IViewEngine>();
+        _ =  viewEngine.CloseAsync(MobilePageIds.Settings, ViewCloseReason.Back);
+    }
 }

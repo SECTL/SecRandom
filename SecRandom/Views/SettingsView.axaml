@@ -12,7 +12,7 @@
                      x:Class="SecRandom.Views.SettingsView"
                      x:DataType="views:SettingsView"
                      Header="{x:Static ml:Resources.P_Settings}"
-                     NavigationPage.HasBackButton="False"
+                    NavigationPage.HasNavigationBar="False"
                      Loaded="OnLoaded"
                     Unloaded="OnUnloaded">
     <Grid RowDefinitions="Auto *">
@@ -36,20 +36,32 @@
                             Classes="nav-back"
                             IsHitTestVisible="True" />
 
+                    <Button HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Width="48" Height="40" IsHitTestVisible="True"
+                            IsVisible="{Binding IsMobile}"
+                            Theme="{DynamicResource TransparentButton}"
+                            Click="MobileHomeButton_OnClick">
+                        <sr:FluentIcon Glyph="{sr:Fi HomeFilled}" FontSize="20"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Button>
+                    
                     <Image Source="/Assets/AppLogo.png"
                            Width="18" Height="18"
                            VerticalAlignment="Center"
                            Margin="8 0 0 0"
-                           IsHitTestVisible="False" />
+                           IsHitTestVisible="False"
+                           IsVisible="{Binding !IsMobile}" />
 
                     <TextBlock Text="SecRandom"
                                FontSize="12"
                                VerticalAlignment="Center"
-                               IsHitTestVisible="False" />
+                               IsHitTestVisible="False"
+                               IsVisible="{Binding !IsMobile}" />
                 </StackPanel>
 
                 <AutoCompleteBox Grid.Column="2"
                                  VerticalAlignment="Center" MaxWidth="420"
+                                 IsVisible="{Binding !IsMobile}"
                                  FilterMode="Custom"
                                  MaxDropDownHeight="480"
                                  ItemsSource="{Binding ViewModel.SettingsMetadata}"
