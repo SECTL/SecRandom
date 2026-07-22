@@ -97,6 +97,8 @@ public class Resources
 
     public static string M_DrawFailed => ResourceManager.GetString("M_DrawFailed", resourceCulture)!;
 
+    public static string M_OpenSettingsFailed => ResourceManager.GetString("M_OpenSettingsFailed", resourceCulture)!;
+
     public static string M_InstallerOpened => ResourceManager.GetString("M_InstallerOpened", resourceCulture)!;
 
     public static string M_ManifestInvalid => ResourceManager.GetString("M_ManifestInvalid", resourceCulture)!;

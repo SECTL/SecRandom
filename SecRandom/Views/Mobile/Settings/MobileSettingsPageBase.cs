@@ -16,6 +16,4 @@ public abstract class MobileSettingsPageBase : UserControl
 
     protected IMobileCapabilities Capabilities { get; }
     protected bool IsLotteryEnabled => Capabilities.IsLotteryEnabled;
-
-    protected void LoadSettingsLayout() => AvaloniaXamlLoader.Load(this);
 }

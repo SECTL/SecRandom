@@ -242,6 +242,9 @@
     <data name="M_DrawFailed" xml:space="preserve">
         <value>抽選を完了できませんでした</value>
     </data>
+    <data name="M_OpenSettingsFailed" xml:space="preserve">
+        <value>設定を開けません</value>
+    </data>
     <data name="M_GeneralMobileOnly" xml:space="preserve">
         <value>モバイル版はシステムの言語・ウィンドウ・バックグラウンドポリシーに自動的に適応します。デスクトップ専用のオプションはここに表示されません。</value>
     </data>

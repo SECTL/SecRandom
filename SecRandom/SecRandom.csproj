@@ -454,18 +454,5 @@
         <EmbeddedResource Include="..\vendors\EdgeTtsSharp\Edge_tts_sharp\Source\VoiceList.json" Link="ThirdParty\EdgeTtsSharp\Source\VoiceList.json" LogicalName="Edge_tts_sharp.Source.VoiceList.json" />
     </ItemGroup>
 
-    <ItemGroup>
-      <AdditionalFiles Include="Views\SettingsPages\General\SecuritySettingsPage.axaml" />
-      <AdditionalFiles Include="Views\SettingsPages\Notification\DefaultNotificationSettingsPage.axaml" />
-      <AdditionalFiles Include="Views\SettingsPages\Notification\LotteryNotificationSettingsPage.axaml" />
-      <AdditionalFiles Include="Views\SettingsPages\Notification\NotificationChannelSettingsContent.axaml" />
-      <AdditionalFiles Include="Views\SettingsPages\Notification\QuickDrawNotificationSettingsPage.axaml" />
-      <AdditionalFiles Include="Views\SettingsPages\Notification\RollCallNotificationSettingsPage.axaml" />
-      <AdditionalFiles Include="Views\SettingsPages\Notification\VoiceSettingsPage.axaml" />
-      <AdditionalFiles Include="Views\SettingsPages\Personalized\FloatingWindowSettingsPage.axaml" />
-      <AdditionalFiles Include="Views\SettingsPages\Personalized\MusicSettingsPage.axaml" />
-      <AdditionalFiles Include="Views\SettingsPages\Plugins\Overview\PluginsSettingsPage.axaml" />
-    </ItemGroup>
-
     <Import Project="..\Global.props" />
 </Project>

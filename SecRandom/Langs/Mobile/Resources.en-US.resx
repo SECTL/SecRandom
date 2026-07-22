@@ -242,6 +242,9 @@
     <data name="M_DrawFailed" xml:space="preserve">
         <value>The draw could not be completed</value>
     </data>
+    <data name="M_OpenSettingsFailed" xml:space="preserve">
+        <value>Could not open Settings</value>
+    </data>
     <data name="M_GeneralMobileOnly" xml:space="preserve">
         <value>The mobile app adapts to the system language, window, and background policies automatically; desktop-only options are not shown here.</value>
     </data>

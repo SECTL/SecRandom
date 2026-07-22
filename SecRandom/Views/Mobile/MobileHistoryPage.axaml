@@ -1,10 +1,10 @@
-<local:MobileHistoryPage xmlns="https://github.com/avaloniaui"
-                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                         xmlns:controls="clr-namespace:SecRandom.Controls.Mobile"
-                         xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
-                         xmlns:local="clr-namespace:SecRandom.Views.Mobile"
-                         xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-                         x:Class="SecRandom.Views.Mobile.MobileHistoryPage">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:SecRandom.Controls.Mobile"
+             xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+             xmlns:local="clr-namespace:SecRandom.Views.Mobile"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             x:Class="SecRandom.Views.Mobile.MobileHistoryPage">
     <ScrollViewer x:Name="PageScroll"
                   Padding="20,20,20,28"
                   HorizontalAlignment="Stretch"
@@ -43,4 +43,4 @@
                     Click="RefreshButton_OnClick" />
         </StackPanel>
     </ScrollViewer>
-</local:MobileHistoryPage>
+</UserControl>

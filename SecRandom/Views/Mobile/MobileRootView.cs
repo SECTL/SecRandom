@@ -3,6 +3,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using FluentAvalonia.UI.Controls;
+using Microsoft.Extensions.Logging;
 using SecRandom.Controls.Mobile;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Views;
@@ -21,17 +23,20 @@ public sealed partial class MobileRootView : UserControl
     private readonly MobilePageHeader _header;
     private readonly MobileNavigationBar _bottomBar;
     private readonly ContentControl _pageOutlet;
+    private readonly ILogger<MobileRootView>? _logger;
 
     public MobileRootView(
         MainConfigHandler configHandler,
         SingleViewHostProvider singleViewHostProvider,
         IMobileNavigator navigator,
-        IMobileSettingsNavigator settingsNavigator)
+        IMobileSettingsNavigator settingsNavigator,
+        ILogger<MobileRootView>? logger = null)
     {
         _configHandler = configHandler;
         _singleViewHostProvider = singleViewHostProvider;
         _navigator = navigator;
         _settingsNavigator = settingsNavigator;
+        _logger = logger;
         _viewHost = new ViewHostControl("mobile.root");
         _singleViewHostProvider.Attach(_viewHost);
 
@@ -148,10 +153,23 @@ public sealed partial class MobileRootView : UserControl
         }
         catch (Exception exception)
         {
-            System.Diagnostics.Debug.WriteLine(exception);
+            _logger?.LogError(exception, "无法打开移动端设置界面。");
+            await ShowOpenSettingsErrorAsync(exception);
             _bottomBar.Select(_navigator.CurrentDestination);
         }
     }
+
+    private Task ShowOpenSettingsErrorAsync(Exception exception) => new FAContentDialog
+    {
+        Title = LR.M_OpenSettingsFailed,
+        Content = new TextBlock
+        {
+            Text = exception.Message,
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap
+        },
+        CloseButtonText = LR.C_Close,
+        DefaultButton = FAContentDialogButton.Close
+    }.ShowAsync(TopLevel.GetTopLevel(this));
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }

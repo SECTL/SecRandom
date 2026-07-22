@@ -1,10 +1,10 @@
-<local:MobileDrawPage xmlns="https://github.com/avaloniaui"
-                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                      xmlns:controls="clr-namespace:SecRandom.Controls.Mobile"
-                      xmlns:local="clr-namespace:SecRandom.Views.Mobile"
-                      xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
-                      xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-                      x:Class="SecRandom.Views.Mobile.MobileDrawPage">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:SecRandom.Controls.Mobile"
+             xmlns:local="clr-namespace:SecRandom.Views.Mobile"
+             xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             x:Class="SecRandom.Views.Mobile.MobileDrawPage">
     <ScrollViewer x:Name="PageScroll"
                   Padding="20,20,20,28"
                   HorizontalScrollBarVisibility="Disabled"
@@ -143,4 +143,4 @@
             </StackPanel>
         </StackPanel>
     </ScrollViewer>
-</local:MobileDrawPage>
+</UserControl>

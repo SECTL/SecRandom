@@ -1,12 +1,12 @@
-<local:MobileSettingsCatalogPage xmlns="https://github.com/avaloniaui"
-                                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                                   xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
-                                    xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-                                    xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
-                                    xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
-                                    x:Class="SecRandom.Views.Mobile.Settings.MobileSettingsCatalogPage"
-                                    x:DataType="local:MobileSettingsCatalogPage">
-    <local:MobileSettingsCatalogPage.DataTemplates>
+<local:MobileSettingsPageBase xmlns="https://github.com/avaloniaui"
+                              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+                              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                              xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
+                              xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+                              x:Class="SecRandom.Views.Mobile.Settings.MobileSettingsCatalogPage"
+                              x:DataType="local:MobileSettingsCatalogPage">
+    <local:MobileSettingsPageBase.DataTemplates>
         <DataTemplate x:DataType="local:MobileSettingsCatalogEntry">
             <fa:FASettingsExpanderItem Content="{Binding Name}"
                                         Tag="{Binding Id}"
@@ -28,7 +28,7 @@
                 <ItemsControl ItemsSource="{Binding Pages}" />
             </fa:FASettingsExpander>
         </DataTemplate>
-    </local:MobileSettingsCatalogPage.DataTemplates>
+    </local:MobileSettingsPageBase.DataTemplates>
     <ScrollViewer x:Name="PageScroll"
                    Padding="20,20,20,28"
                   HorizontalAlignment="Stretch"
@@ -52,4 +52,4 @@
             <ItemsControl ItemsSource="{Binding Groups}" />
         </StackPanel>
     </ScrollViewer>
-</local:MobileSettingsCatalogPage>
+</local:MobileSettingsPageBase>

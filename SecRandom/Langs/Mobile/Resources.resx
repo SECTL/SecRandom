@@ -242,6 +242,9 @@
     <data name="M_DrawFailed" xml:space="preserve">
         <value>抽取未完成</value>
     </data>
+    <data name="M_OpenSettingsFailed" xml:space="preserve">
+        <value>无法打开设置</value>
+    </data>
     <data name="M_GeneralMobileOnly" xml:space="preserve">
         <value>移动端会自动适配系统语言、窗口和后台策略；桌面专属选项不会在此显示。</value>
     </data>

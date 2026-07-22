@@ -1,12 +1,12 @@
-<local:MobilePersonalizationSettingsPage xmlns="https://github.com/avaloniaui"
-                                           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                                           xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
-                                            xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-                                            xmlns:enums="clr-namespace:SecRandom.Core.Enums.Configs;assembly=SecRandom.Core"
-                                            xmlns:media="clr-namespace:SecRandom.Services.Mobile"
-                                            xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
-                                           xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
-                                           x:Class="SecRandom.Views.Mobile.Settings.MobilePersonalizationSettingsPage">
+<local:MobileSettingsPageBase xmlns="https://github.com/avaloniaui"
+                              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+                              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                              xmlns:enums="clr-namespace:SecRandom.Core.Enums.Configs;assembly=SecRandom.Core"
+                              xmlns:media="clr-namespace:SecRandom.Services.Mobile"
+                              xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
+                              xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+                              x:Class="SecRandom.Views.Mobile.Settings.MobilePersonalizationSettingsPage">
     <ScrollViewer x:Name="PageScroll"
                   Padding="20,20,20,28"
                   HorizontalScrollBarVisibility="Disabled"
@@ -78,4 +78,4 @@
             </StackPanel>
         </StackPanel>
     </ScrollViewer>
-</local:MobilePersonalizationSettingsPage>
+</local:MobileSettingsPageBase>

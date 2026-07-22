@@ -1,11 +1,11 @@
-<local:MobileGeneralSettingsPage xmlns="https://github.com/avaloniaui"
-                                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                                   xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
-                                   xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-                                   xmlns:enums="clr-namespace:SecRandom.Core.Enums.Configs;assembly=SecRandom.Core"
-                                   xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
-                                   xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
-                                   x:Class="SecRandom.Views.Mobile.Settings.MobileGeneralSettingsPage">
+<local:MobileSettingsPageBase xmlns="https://github.com/avaloniaui"
+                              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+                              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                              xmlns:enums="clr-namespace:SecRandom.Core.Enums.Configs;assembly=SecRandom.Core"
+                              xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
+                              xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+                              x:Class="SecRandom.Views.Mobile.Settings.MobileGeneralSettingsPage">
     <ScrollViewer x:Name="PageScroll"
                   Padding="20,20,20,28"
                   HorizontalScrollBarVisibility="Disabled"
@@ -73,4 +73,4 @@
             </fa:FASettingsExpander>
         </StackPanel>
     </ScrollViewer>
-</local:MobileGeneralSettingsPage>
+</local:MobileSettingsPageBase>
