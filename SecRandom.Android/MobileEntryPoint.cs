@@ -1,5 +1,3 @@
-#if ANDROID
-using Android.App;
 using Android.Content;
 using Android.Runtime;
 using Avalonia;
@@ -9,15 +7,13 @@ using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
 using SecRandom.Services.Telemetry;
 using System.Runtime.Versioning;
+using SecRandom.Mobile;
 
-[assembly: UsesPermission(Android.Manifest.Permission.RequestInstallPackages)]
-[assembly: UsesPermission(Android.Manifest.Permission.Internet)]
+namespace SecRandom.Android;
 
-namespace SecRandom.Mobile.Android;
-
-[Application(Icon = "@mipmap/app_logo")]
+[Application]
 [SupportedOSPlatform("android24.0")]
-public class MobileApplication : AvaloniaAndroidApplication<global::SecRandom.App>
+public class MobileApplication : AvaloniaAndroidApplication<App>
 {
     protected MobileApplication(nint javaReference, JniHandleOwnership transfer)
         : base(javaReference, transfer)
@@ -84,4 +80,3 @@ public sealed class UpdateFileProvider : global::AndroidX.Core.Content.FileProvi
 public sealed class MainActivity : AvaloniaMainActivity
 {
 }
-#endif

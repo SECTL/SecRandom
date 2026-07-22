@@ -1,42 +1,37 @@
 <Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup Condition="'$(BuildMobile)' != 'true'">
-        <TargetFramework>net10.0</TargetFramework>
-        <OutputType>Library</OutputType>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(BuildMobile)' == 'true'">
-        <TargetFramework>net10.0-android</TargetFramework>
+    <PropertyGroup>
         <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0-android36.0</TargetFramework>
+        <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+
         <ApplicationTitle>SecRandom</ApplicationTitle>
         <ApplicationId>cn.sectl.secrandom.mobile</ApplicationId>
-        <RuntimeIdentifier>android-arm64</RuntimeIdentifier>
         <AndroidPackageFormats>apk</AndroidPackageFormats>
-        <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+        <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
-    </PropertyGroup>
+    <ItemGroup>
+        <AndroidResource Include="Icon.png">
+            <Link>Resources\drawable\Icon.png</Link>
+        </AndroidResource>
+    </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\SecRandom\SecRandom.csproj" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(BuildMobile)' == 'true'">
+    <ItemGroup>
         <PackageReference Include="Avalonia.Android" Version="$(AvaloniaVersion)" />
-        <PackageReference Include="Xamarin.AndroidX.Lifecycle.Common.Java8" Version="2.10.0.2" />
-        <AndroidResource Include="..\SecRandom\Assets\AppLogo.png" Link="Resources\mipmap\app_logo.png" />
-        <AndroidResource Include="Platforms\Android\update_paths.xml" Link="Resources\xml\update_paths.xml" />
+        <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.2.0.2" />
     </ItemGroup>
 
     <Import Project="..\Global.props" />
 
     <Target Name="SetMobileApplicationDisplayVersion"
             DependsOnTargets="GetGitInfoForSourceGenerator"
-            BeforeTargets="_GetAndroidPackageName;_CompileAppManifestInputs"
-            Condition="'$(BuildMobile)' == 'true'">
+            BeforeTargets="_GetAndroidPackageName;_CompileAppManifestInputs">
         <PropertyGroup>
             <_MobileApplicationDisplayVersion>$(GitTag)</_MobileApplicationDisplayVersion>
             <_MobileApplicationDisplayVersion Condition="$([System.String]::Copy('$(_MobileApplicationDisplayVersion)').StartsWith('v'))">$([System.String]::Copy('$(_MobileApplicationDisplayVersion)').Substring(1))</_MobileApplicationDisplayVersion>

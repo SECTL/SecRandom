@@ -1,10 +1,9 @@
-#if ANDROID
-using Android.Content;
 using Android.Media;
 using Android.Speech.Tts;
 using System.Runtime.Versioning;
+using SecRandom.Mobile;
 
-namespace SecRandom.Mobile.Android;
+namespace SecRandom.Android;
 
 /// <summary>
 /// Android-only local media and speech implementation. The shared mobile library
@@ -191,4 +190,3 @@ public sealed class AndroidMobileMediaPlayer : IMobileMediaPlayer, IDisposable
         player.Dispose();
     }
 }
-#endif

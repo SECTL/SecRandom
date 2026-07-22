@@ -28,7 +28,7 @@
 
 ## Host/依赖注入（怎么写才符合本项目）
 
-- Host 构建与注册入口：`SecRandom/App.axaml.cs` 的 `BuildHost()`。共享 `App` 按生命周期注册互斥的桌面或 SingleView 移动服务；移动前端源码位于 `SecRandom/Mobile/`、`Views/Mobile/`、`Controls/Mobile/`、`Services/Mobile/` 与 `Langs/Mobile/`，不保留独立移动 UI 程序集。`SecRandom.Android` / `SecRandom.iOS` 只提供平台入口与原生实现；移动端构建用 `-p:BuildMobile=true` 直接构建对应入口头项目。
+- Host 构建与注册入口：`SecRandom/App.axaml.cs` 的 `BuildHost()`。共享 `App` 按生命周期注册互斥的桌面或 SingleView 移动服务；移动前端源码位于 `SecRandom/Mobile/`、`Views/Mobile/`、`Controls/Mobile/`、`Services/Mobile/` 与 `Langs/Mobile/`，不保留独立移动 UI 程序集。`SecRandom.Android` / `SecRandom.iOS` 只提供平台入口与原生实现。
 - 取服务统一走静态入口：
   - `IAppHost.GetService<T>()`（拿不到会抛异常）
   - `IAppHost.TryGetService<T>()`（拿不到返回 null）

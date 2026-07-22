@@ -15,7 +15,6 @@
     <ItemGroup>
         <CompilerVisibleProperty Include="FluentIconMappingFile"/>
         <AdditionalFiles Include="$(MSBuildProjectDirectory)\$(FluentIconMappingFile)"/>
-        <CompilerVisibleProperty Include="LucideIconMappingFile"/>
     </ItemGroup>
 
     <ItemGroup>

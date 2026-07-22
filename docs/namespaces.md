@@ -30,4 +30,4 @@
 
 ## SecRandom.Mobile / SecRandom.Android / SecRandom.iOS
 
-移动前端归并进主 `SecRandom` 应用程序集：`SecRandom.Mobile` 是组合和平台中立契约命名空间，页面、控件、服务和本地化分别位于 `SecRandom.Views.Mobile`、`SecRandom.Controls.Mobile`、`SecRandom.Services.Mobile`、`SecRandom.Langs.Mobile`。共享 `App` 在移动生命周期下先选择 app-private data root，再构建只含 Core/mobile 服务的 SingleView Host，并以 `MobileRootView` 启动；它不注册桌面窗口、托盘、快捷键、OOBE、插件或协议服务。`SecRandom.Android` 与 `SecRandom.iOS` 是仅含平台入口的 Exe 头项目（`BuildMobile=true` 时分别以 net10.0-android / net10.0-ios 构建，否则为中性 net10.0 空库），只挂接 Android/iOS 原生 seam，例如更新安装器、媒体播放器和启动诊断。
+移动前端归并进主 `SecRandom` 应用程序集：`SecRandom.Mobile` 是组合和平台中立契约命名空间，页面、控件、服务和本地化分别位于 `SecRandom.Views.Mobile`、`SecRandom.Controls.Mobile`、`SecRandom.Services.Mobile`、`SecRandom.Langs.Mobile`。共享 `App` 在移动生命周期下先选择 app-private data root，再构建只含 Core/mobile 服务的 SingleView Host，并以 `MobileRootView` 启动；它不注册桌面窗口、托盘、快捷键、OOBE、插件或协议服务。`SecRandom.Android` 与 `SecRandom.iOS` 是仅含平台入口的 Exe 头项目，只挂接 Android/iOS 原生 seam，例如更新安装器、媒体播放器和启动诊断。

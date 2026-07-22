@@ -5,7 +5,6 @@
         See https://docs.avaloniaui.net/docs/guides/platforms/platform-specific-code/dotnet for more details.-->
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
-        <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <ApplicationIcon>..\SecRandom\Assets\AppLogo.ico</ApplicationIcon>
     </PropertyGroup>

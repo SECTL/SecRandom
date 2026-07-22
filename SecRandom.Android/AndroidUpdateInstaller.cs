@@ -1,11 +1,11 @@
-#if ANDROID
 using System.Runtime.Versioning;
 using Android.App;
 using Android.Content;
 using AndroidX.Core.Content;
+using SecRandom.Mobile;
 using LR = SecRandom.Langs.Mobile.Resources;
 
-namespace SecRandom.Mobile.Android;
+namespace SecRandom.Android;
 
 [SupportedOSPlatform("android24.0")]
 public sealed class AndroidUpdateInstaller : IMobileUpdateInstaller
@@ -33,4 +33,3 @@ public sealed class AndroidUpdateInstaller : IMobileUpdateInstaller
         context.StartActivity(intent);
     }
 }
-#endif
