@@ -23,7 +23,6 @@ public sealed partial class MobileSettingsCatalogPage : MobileSettingsPageBase
         _settingsNavigator = settingsNavigator;
         InitializeComponent();
         Groups = PagesRegistryService.GroupItems
-            .Where(group => group.Id.StartsWith("settings.mobile.", StringComparison.Ordinal))
             .Select(group => new MobileSettingsCatalogGroup(
                 group.Name,
                 group.IconGlyph,

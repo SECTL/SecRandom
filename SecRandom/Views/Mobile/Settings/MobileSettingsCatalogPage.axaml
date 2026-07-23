@@ -6,31 +6,6 @@
                               xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
                               x:Class="SecRandom.Views.Mobile.Settings.MobileSettingsCatalogPage"
                               x:DataType="local:MobileSettingsCatalogPage">
-    <local:MobileSettingsPageBase.DataTemplates>
-        <DataTemplate x:DataType="local:MobileSettingsCatalogEntry">
-            <fa:FASettingsExpanderItem Content="{Binding Name}"
-                                       Tag="{Binding Id}"
-                                       IsClickEnabled="True"
-                                       AutomationProperties.Name="{Binding Name}"
-                                       ActionIconSource="{sr:FluentIconSource {sr:Fi ChevronRightFilled}}"
-                                       Click="CatalogItem_OnClick">
-                <fa:FASettingsExpanderItem.IconSource>
-                    <sr:FluentIconSource Glyph="{Binding IconGlyph}" />
-                </fa:FASettingsExpanderItem.IconSource>
-            </fa:FASettingsExpanderItem>
-        </DataTemplate>
-        
-        <DataTemplate x:DataType="local:MobileSettingsCatalogGroup">
-            <fa:FASettingsExpander Header="{Binding Name}" IsExpanded="True">
-                <fa:FASettingsExpander.IconSource>
-                    <sr:FluentIconSource Glyph="{Binding IconGlyph}" />
-                </fa:FASettingsExpander.IconSource>
-                
-                <ItemsControl ItemsSource="{Binding Pages}" />
-            </fa:FASettingsExpander>
-        </DataTemplate>
-    </local:MobileSettingsPageBase.DataTemplates>
-    
     <ScrollViewer x:Name="PageScroll"
                   Padding="20,20,20,28"
                   HorizontalAlignment="Stretch"
@@ -45,6 +20,33 @@
                     <StackPanel Orientation="Vertical" Spacing="8" />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
+            
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <fa:FASettingsExpander ItemsSource="{Binding Pages}"
+                                           Header="{Binding Name}"
+                                           IsExpanded="True">
+                        <fa:FASettingsExpander.IconSource>
+                            <sr:FluentIconSource Glyph="{Binding IconGlyph}" />
+                        </fa:FASettingsExpander.IconSource>
+                                    
+                        <fa:FASettingsExpander.ItemTemplate>
+                            <DataTemplate>
+                                <fa:FASettingsExpanderItem Content="{Binding Name}"
+                                                           Tag="{Binding Id}"
+                                                           IsClickEnabled="True"
+                                                           AutomationProperties.Name="{Binding Name}"
+                                                           ActionIconSource="{sr:FluentIconSource {sr:Fi ChevronRightFilled}}"
+                                                           Click="CatalogItem_OnClick">
+                                    <fa:FASettingsExpanderItem.IconSource>
+                                        <sr:FluentIconSource Glyph="{Binding IconGlyph}" />
+                                    </fa:FASettingsExpanderItem.IconSource>
+                                </fa:FASettingsExpanderItem>
+                            </DataTemplate>
+                        </fa:FASettingsExpander.ItemTemplate>
+                    </fa:FASettingsExpander>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
         </ItemsControl>
     </ScrollViewer>
 </local:MobileSettingsPageBase>
