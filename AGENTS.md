@@ -10,9 +10,9 @@ Maintenance contract:
 - `docs/project_rules.md` is the source of truth when a convention conflicts with this summary.
 -->
 
-**Last Update:** 2026-07-20
-**Last Submit:** 8547cddf
-**Last modified model:** Kimi
+**Last Update:** 2026-07-23
+**Last Submit:** 51f7f7fd
+**Last modified model:** MiMoCode
 
 ## OVERVIEW
 SecRandom is a GPLv3 C#/.NET desktop app for fair random drawing in education scenarios. Stack: .NET solution, Avalonia + FluentAvalonia UI, Microsoft.Extensions.Hosting DI, xUnit v3 tests.
@@ -232,7 +232,7 @@ dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj -c Release -r <rid> --
 CI RIDs: `win-x64`, `win-x86`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`.
 
 ## NOTES
-- Build workflow uses .NET SDK `10.0.100`; publish job currently uses `9.0.311`; CodeQL uses `10.0.x`.
+- Build workflow and CodeQL use .NET SDK `10.0.x`. The iOS job on `macos-26` pins Xcode `26.6` through `maxim-lobanov/setup-xcode@v1`; do not override that selection with `DEVELOPER_DIR`, and retain its `xcode-select` / `xcrun --find strip` checks to catch mixed toolchains.
 - Release workflow triggers on tags `v*`, manual dispatch, PR/push build, or commit message containing `开始构建`.
 - Test project currently includes `UnitTest1.cs` coverage for legacy privacy/telemetry migration behavior.
 - `vendors/EdgeTtsSharp/` is the Edge TTS synthesis submodule. Its embedded voice list and synthesis source are compiled by the app; `Services/Voice/EdgeTtsSharpCompatibility.cs` supplies the cross-platform transport seam, and all playback remains in ClassIsland's `SoundFlow` MiniAudio package from the repository-wide MyGet source.

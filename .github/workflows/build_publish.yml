@@ -595,8 +595,6 @@ jobs:
   build_ios:
     name: Build_iOS
     runs-on: macos-26
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
 
     steps:
       - name: Checkout
@@ -610,7 +608,7 @@ jobs:
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest
+          xcode-version: '26.6'
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -627,8 +625,9 @@ jobs:
         shell: bash
         run: |
           test "$(uname -m)" = arm64
-          test -d "$DEVELOPER_DIR"
+          xcode-select -p
           xcodebuild -version
+          xcrun --find strip
           dotnet --version
 
       - name: Install iOS workload
