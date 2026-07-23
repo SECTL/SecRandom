@@ -594,8 +594,8 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-  build_mobile_ios:
-    name: Build_Mobile_iOS
+  build_ios:
+    name: Build_iOS
     runs-on: macos-26
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
@@ -695,8 +695,8 @@ jobs:
   publish:
     name: Publish_Release
     runs-on: windows-2022
-    needs: [build_desktop, build_mobile_shell, build_mobile_ios]
-    if: ${{ always() && success('build_desktop') && success('build_mobile_shell') && success('build_mobile_ios') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
+    needs: [build_desktop, build_android, build_ios]
+    if: ${{ always() && success('build_desktop') && success('build_android') && success('build_ios') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
     permissions:
       contents: write
     concurrency:
