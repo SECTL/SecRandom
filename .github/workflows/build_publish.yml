@@ -649,7 +649,6 @@ jobs:
             -p:CodesignRequireProvisioningProfile=false \
             -p:BuildIpa=true \
             -p:ArchiveOnBuild=false \
-            -p:PublishTrimmed=false \
             -p:IpaPackagePath="$GITHUB_WORKSPACE/$output"
           test -s "$output"
           unzip -l "$output" | grep -q 'Payload/.*\.app/Info.plist'
