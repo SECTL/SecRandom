@@ -1,0 +1,22 @@
+﻿{
+  "solution": {
+    "path": "SecRandom.sln",
+    "projects": [
+      "roslyn\\IconsMappingGenerator\\IconsMappingGenerator.csproj",
+      "SecRandom.Android\\SecRandom.Android.csproj",
+      "SecRandom.Core.Tests\\SecRandom.Core.Tests.csproj",
+      "SecRandom.Core\\SecRandom.Core.csproj",
+      "SecRandom.Desktop\\SecRandom.Desktop.csproj",
+      "SecRandom.Launcher\\SecRandom.Launcher.csproj",
+      "SecRandom.Mobile.Tests\\SecRandom.Mobile.Tests.csproj",
+      "SecRandom.Platforms.Abstractions\\SecRandom.Platforms.Abstractions.csproj",
+      "SecRandom.Platforms.Linux\\SecRandom.Platforms.Linux.csproj",
+      "SecRandom.Platforms.MacOs\\SecRandom.Platforms.MacOs.csproj",
+      "SecRandom.Platforms.Windows\\SecRandom.Platforms.Windows.csproj",
+      "SecRandom.Platforms\\SecRandom.Platforms.csproj",
+      "SecRandom.Shared\\SecRandom.Shared.csproj",
+      "SecRandom4Ci.Interface\\SecRandom4Ci.Interface.csproj",
+      "SecRandom\\SecRandom.csproj"
+    ]
+  }
+}

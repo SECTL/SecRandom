@@ -43,11 +43,11 @@ public sealed partial class MobileSettingsCatalogPage : MobileSettingsPageBase
         if (sender is not Avalonia.Controls.Control { Tag: string pageId })
             return;
 
-        Dispatcher.UIThread.Post(async () =>
-        {
-            await Task.Delay(100);
-            SettingsView.Current?.NavigateToPage(pageId);
-        });
+        // FASettingsExpanderItem keeps processing its routed click after this handler returns.
+        // Replacing the FAFrame content must wait until that input cycle has completed.
+        Dispatcher.UIThread.Post(
+            () => _ = _settingsNavigator.NavigateAsync(pageId),
+            DispatcherPriority.Background);
     }
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);

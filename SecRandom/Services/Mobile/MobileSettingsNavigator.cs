@@ -40,7 +40,16 @@ internal sealed class MobileSettingsNavigator(IViewEngine viewEngine) : IMobileS
         }
     }
 
-    public Task NavigateAsync(string pageId) => OpenAsync(pageId);
+    public Task NavigateAsync(string pageId)
+    {
+        if (SettingsView.Current is { IsClosed: false } settingsView)
+        {
+            settingsView.NavigateToPage(pageId);
+            return Task.CompletedTask;
+        }
+
+        return OpenAsync(pageId);
+    }
 
     public async Task CloseAsync() => await viewEngine.CloseAsync(MobilePageIds.Settings, ViewCloseReason.User);
 }

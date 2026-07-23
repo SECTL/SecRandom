@@ -8,6 +8,9 @@
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
         <ApplicationIcon>..\SecRandom\Assets\AppLogo.ico</ApplicationIcon>
+        <!-- Arch Linux reports an unsupported arch-x64 RID when no RID is specified. -->
+        <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and $([System.OperatingSystem]::IsLinux()) and $([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture) == 'X64'">linux-x64</RuntimeIdentifier>
+        <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and $([System.OperatingSystem]::IsLinux()) and $([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture) == 'Arm64'">linux-arm64</RuntimeIdentifier>
     </PropertyGroup>
 
     <Import Project="..\Platforms.props" />

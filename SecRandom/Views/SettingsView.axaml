@@ -38,7 +38,6 @@
 
                     <Button HorizontalAlignment="Center" VerticalAlignment="Center"
                             Width="40" Height="36" IsHitTestVisible="True"
-                            Margin="8 0 0 0"
                             Theme="{DynamicResource TransparentButton}"
                             IsVisible="{Binding IsMobile}"
                             Click="MobileHomeButton_OnClick">

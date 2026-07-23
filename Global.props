@@ -9,6 +9,8 @@
         <NullabilityInfoContextSupport>True</NullabilityInfoContextSupport>
         <ErrorOnDuplicatePublishOutputFiles>False</ErrorOnDuplicatePublishOutputFiles>
         <CheckEolWorkloads>false</CheckEolWorkloads>
+        <!-- Some Linux SDK packages omit framework pruning metadata. -->
+        <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
     </PropertyGroup>
 
     <ItemGroup>

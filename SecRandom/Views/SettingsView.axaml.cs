@@ -632,7 +632,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
     }
 
-    private void CoreNavigate(PageInfo info, bool isBack = false)
+    private void CoreNavigate(PageInfo info, bool isBack = false, bool updateNavigationSelection = true)
     {
         if (ViewModel.SelectedPageInfo?.Id == info.Id) return;
 
@@ -644,7 +644,8 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
         var item = ViewModel.FlattenNavigationItems.FirstOrDefault(item => Equals(item.Tag, info));
         ViewModel.FrameContent = null;
-        ViewModel.SelectedNavigationViewItem = item;
+        if (updateNavigationSelection)
+            ViewModel.SelectedNavigationViewItem = item;
         ViewModel.SelectedPageInfo = info;
         NavigationFrame.NavigateFromObject(info);
     }
@@ -706,7 +707,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
         ExitPreview();
         var info = PagesRegistryService.SettingsItems.FirstOrDefault(item => item.Id == id);
         if (info is not null)
-            CoreNavigate(info);
+            CoreNavigate(info, updateNavigationSelection: !_isMobile);
     }
 
     public void NavigateToPreviewPage(string id)
