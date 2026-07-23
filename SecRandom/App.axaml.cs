@@ -352,7 +352,8 @@ public partial class App : Application
     {
         TrySaveConfigForCrashRecovery();
         ReportMobileException(e.Exception);
-        ObserveTask(CaptureUnhandledExceptionAsync(e.Exception), "Mobile unhandled exception telemetry capture failed.");
+        ObserveTask(CaptureUnhandledExceptionAsync(e.Exception),
+            "Mobile unhandled exception telemetry capture failed.");
         e.Handled = true;
 
         CrashRecoveryPromptOptions? options = CrashRecoveryRuntime.TryCreateCurrentProcessPromptOptions(e.Exception);
@@ -432,6 +433,7 @@ public partial class App : Application
             _floatingWindow.Hide();
             _floatingWindow.SetUserVisibilityIntent(false);
         }
+
         desktop.MainWindow = _floatingWindow;
 
         WriteDesktopStartupDiagnostic("Initializing desktop application chrome.");
@@ -503,7 +505,8 @@ public partial class App : Application
         {
             if (startupProtocolUri is not null)
             {
-                var sent = await SingleInstanceService.SendCommandAsync(SingleInstanceCommand.UrlPrefix + startupProtocolUri);
+                var sent = await SingleInstanceService.SendCommandAsync(SingleInstanceCommand.UrlPrefix +
+                                                                        startupProtocolUri);
                 if (sent)
                 {
                     host.Close();
@@ -581,7 +584,8 @@ public partial class App : Application
         });
     }
 
-    private Task<IpcResponseEnvelope> OnIpcRequestReceived(IpcRequestEnvelope request, CancellationToken cancellationToken)
+    private Task<IpcResponseEnvelope> OnIpcRequestReceived(IpcRequestEnvelope request,
+        CancellationToken cancellationToken)
     {
         if (_isOobeActive)
             return Task.FromResult(new IpcResponseEnvelope(true, "url",
@@ -592,7 +596,8 @@ public partial class App : Application
 
     private void HandleProtocolUri(string value)
     {
-        ObserveTask(IAppHost.GetService<ProtocolCommandRouter>().HandleUrlAsync(value), "Protocol URL handling failed.");
+        ObserveTask(IAppHost.GetService<ProtocolCommandRouter>().HandleUrlAsync(value),
+            "Protocol URL handling failed.");
     }
 
     private static Window ShowCrashRecoveryPromptOnly(CrashRecoveryPromptOptions promptOptions)
@@ -624,70 +629,41 @@ public partial class App : Application
             .UseContentRoot(AppContext.BaseDirectory)
             .ConfigureServices(services =>
             {
+                PluginStateStore? pluginStateStore = null;
+
                 if (isMobile)
                 {
-                    MobilePlatformServiceRoot currentMobilePlatform = mobilePlatform!;
                     services.AddPlatformServices(platform);
-                    services.AddCoreRuntimeServices();
-                    services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
-                    services.AddSingleton<TelemetryRuntimeService>();
-                    services.AddSingleton<CrashRecoveryViewState>();
-                    services.AddTransient<CrashRecoveryView>();
-                    services.AddTransient<MobileRollCallService>();
-                    services.AddSingleton<MobileMediaLibraryService>();
-                    services.AddSingleton<IMobileMediaPlayer>(currentMobilePlatform.MediaPlayer);
-                    services.AddSingleton<MobileDrawMediaService>();
-                    services.AddSingleton<IMobileUpdateInstaller>(currentMobilePlatform.UpdateInstaller);
-                    services.AddHttpClient<MobileUpdateService>();
-                    services.AddSingleton<MobileDeviceUuidStore>();
-                    services.AddHostedService<MobileOnlineStatusService>();
-                    services.AddSingleton<IMobileRootViewReloader>(_ => new MobileRootViewReloader(ReloadMobileRootViewAsync));
-                    services.AddSingleton<IMobileCapabilities, MobileCapabilities>();
-                    services.AddSingleton<IMobileNavigator, MobileNavigator>();
-                    services.AddSingleton<IMobileSettingsNavigator, MobileSettingsNavigator>();
                     services.AddSingleton<SingleViewHostProvider>();
-                    services.AddSingleton<IViewHostProvider>(provider => provider.GetRequiredService<SingleViewHostProvider>());
+                    services.AddSingleton<IViewHostProvider>(provider =>
+                        provider.GetRequiredService<SingleViewHostProvider>());
                     services.AddViewEngine()
                         .AddView<MobileRootView>("mobile.root")
                         .AddView<SettingsView>(MobilePageIds.Settings);
-                    services.AddKeyedTransient<UserControl, MobileDrawPage>(MobilePageIds.Draw);
-                    services.AddKeyedTransient<UserControl, MobileHistoryPage>(MobilePageIds.History);
-                    services.AddKeyedTransient<UserControl, MobileOverviewPage>(MobilePageIds.Overview);
-                    services.AddSettingsPage<MobileSettingsCatalogPage>(MobileResources.P_Settings);
-                    services.AddGroup(new PageGroupInfo(
-                        MobileResources.S_GroupPreferences, "settings.mobile.preferences", FluentIcons.ColorFilled));
-                    services.AddGroup(new PageGroupInfo(
-                        MobileResources.S_GroupData, "settings.mobile.data", FluentIcons.DatabaseFilled));
-                    services.AddGroup(new PageGroupInfo(
-                        MobileResources.S_GroupApp, "settings.mobile.application", FluentIcons.InfoFilled));
-                    services.AddSettingsPage<MobileGeneralSettingsPage>(MobileResources.S_General);
-                    services.AddSettingsPage<MobilePersonalizationSettingsPage>(MobileResources.S_Personalization);
-                    services.AddSettingsPage<MobileDrawSettingsPage>(MobileResources.S_DrawSettings);
-                    services.AddSettingsPage<MobileListManagementSettingsPage>(MobileResources.S_ListManagement);
-                    services.AddSettingsPage<MobileBackupSettingsPage>(MobileResources.S_Backup);
-                    if (currentMobilePlatform.UpdateInstaller.IsSupported)
-                        services.AddSettingsPage<MobileUpdateSettingsPage>(MobileResources.S_AppUpdates);
-                    services.AddSettingsPage<MobileAboutSettingsPage>(MobileResources.S_About);
                     services.AddTransient<MobileViewHost>();
-                    services.AddViewRegistration<CrashRecoveryView>("system.crashRecovery", ViewPresentation.Modal);
-                    return;
                 }
+                else
+                {
+                    pluginStateStore = new PluginStateStore();
 
-                var pluginStateStore = new PluginStateStore();
-
-                services.AddPlatformServices(platform);
-                services.AddViewEngine()
-                    .AddView<MainView>(DesktopViewIds.Main)
-                    .AddView<SettingsView>(DesktopViewIds.Settings);
-                services.AddSingleton<DesktopViewHostProvider>();
-                services.AddSingleton<IViewHostProvider>(serviceProvider =>
-                    serviceProvider.GetRequiredService<DesktopViewHostProvider>());
+                    services.AddPlatformServices(platform);
+                    services.AddSingleton<DesktopViewHostProvider>();
+                    services.AddSingleton<IViewHostProvider>(serviceProvider =>
+                        serviceProvider.GetRequiredService<DesktopViewHostProvider>());
+                    services.AddViewEngine()
+                        .AddView<MainView>(DesktopViewIds.Main)
+                        .AddView<SettingsView>(DesktopViewIds.Settings);
+                }
 
                 // 日志
                 services.AddLogging(builder =>
                 {
-                    builder.AddConsoleFormatter<LoggingConsoleFormatter, ConsoleFormatterOptions>();
-                    builder.AddConsole(console => { console.FormatterName = @"secrandom"; });
+                    if (!isMobile)
+                    {
+                        builder.AddConsoleFormatter<LoggingConsoleFormatter, ConsoleFormatterOptions>();
+                        builder.AddConsole(console => { console.FormatterName = @"secrandom"; });
+                    }
+                    
                     builder.AddSentry(options =>
                     {
                         // SDK 生命周期由 TelemetryRuntimeService 按隐私开关统一控制，日志 Provider 只复用已初始化的 SDK。
@@ -700,172 +676,260 @@ public partial class App : Application
                     builder.SetMinimumLevel(LogLevel.Trace);
 #endif
                 });
-
                 services.AddSingleton<ILoggerProvider, FileLoggerProvider>();
 
                 // 配置
                 services.AddCoreRuntimeServices();
                 services.AddSingleton<DeviceUuidStore>();
 
-                // 服务
-                services.AddSingleton<IProfileQueryService, ProfileQueryService>();
-                services.AddSingleton<DrawProofExportService>();
-                services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
-                services.AddHttpClient<IWitnessClient, WitnessClient>(client => client.Timeout = TimeSpan.FromSeconds(3));
-                services.AddSingleton<DrawProofAttestationService>();
-                services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<DrawProofAttestationService>());
-                services.AddTransient<VerificationDrawCoordinator>();
-                services.AddSingleton<SettingsSearchService>();
-                services.AddSingleton<FirstRunOobeService>();
-                services.AddSingleton<OobeDataSetupService>();
-                services.AddSingleton<SecRandom.Core.Services.Archive.IArchivePostImportHooks, Services.ImportExport.DesktopArchivePostImportHooks>();
-                services.AddSingleton<IImportExportService, Services.ImportExport.ImportExportService>();
-                services.AddHostedService<AutomaticBackupService>();
-                services.AddSingleton(pluginStateStore);
-                services.AddSingleton<PluginSelectionState>();
-                services.AddSingleton<IPluginManager, PluginManagerService>();
-                services.AddSingleton<IPluginCatalogService, PluginCatalogService>();
-                services.AddHostedService<PluginCatalogHostedService>();
-                services.AddHostedService<PluginHostedService>();
                 services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
                 services.AddSingleton<TelemetryRuntimeService>();
                 services.AddHostedService<OnlineStatusService>();
-                services.AddHostedService<TaskBarIconService>();
-                services.AddSingleton<GlobalShortcutService>();
-                services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<GlobalShortcutService>());
-                services.AddSingleton<DesktopIntegrationService>();
-                services.AddSingleton<IExternalLauncher, ExternalLauncher>();
-                services.AddHttpClient("updates", client => client.Timeout = TimeSpan.FromSeconds(30));
-                services.AddSingleton<UpdateCenterService>(serviceProvider => new UpdateCenterService(
-                    serviceProvider.GetRequiredService<MainConfigHandler>(),
-                    serviceProvider.GetRequiredService<ILogger<UpdateCenterService>>(),
-                    serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("updates")));
-                services.AddSingleton<IUpdateNotificationService, UpdateNotificationService>();
-                services.AddHostedService<UpdateScheduler>();
-                services.AddSingleton<ProtocolCommandRouter>();
-                services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
-                services.AddSingleton<ISpeechProvider, EdgeTtsSpeechProvider>();
-                services.AddSingleton<ISpeechAudioPlayer, SpeechAudioPlayer>();
-                services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
-                services.AddSingleton<NotificationService>();
-                services.AddSingleton(serviceProvider => new MusicLibraryService(
-                    serviceProvider.GetRequiredService<MainConfigHandler>(),
-                    serviceProvider.GetRequiredService<ILogger<MusicLibraryService>>(),
-                    attachedSettingsProfileService: serviceProvider.GetRequiredService<IProfileService>(),
-                    profileCatalogManager: serviceProvider.GetRequiredService<IProfileCatalogManager>()));
-                services.AddSingleton<DrawAudioService>();
-                services.AddSingleton<CsesScheduleParser>();
-                services.AddSingleton<ICsesScheduleStore, CsesScheduleStore>();
-                services.AddSingleton<CsesScheduleSource>();
-                services.AddSingleton<ClassIslandScheduleSource>();
-                services.AddSingleton<CourseLinkageService>();
-                services.AddSingleton<LinkageDrawCoordinator>();
-                services.AddHostedService<CourseLinkageHostedService>();
-                services.AddSingleton<ICredentialKeyProtector, CredentialKeyProtector>();
-                services.AddSingleton<SecurityCredentialStore>();
-                services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
-                services.AddSingleton<ISecurityService, SecurityService>();
 
-                // 窗口
-                services.AddTransient<MainViewModel>();
+                // 服务
+                if (isMobile)
+                {
+                    MobilePlatformServiceRoot currentMobilePlatform = mobilePlatform!;
+                    services.AddTransient<MobileRollCallService>();
+                    services.AddSingleton<MobileMediaLibraryService>();
+                    services.AddSingleton<IMobileMediaPlayer>(currentMobilePlatform.MediaPlayer);
+                    services.AddSingleton<MobileDrawMediaService>();
+                    services.AddSingleton<IMobileUpdateInstaller>(currentMobilePlatform.UpdateInstaller);
+                    services.AddHttpClient<MobileUpdateService>();
+                }
+                else
+                {
+                    services.AddSingleton<IProfileQueryService, ProfileQueryService>();
+                    services.AddSingleton<DrawProofExportService>();
+                    services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
+                    services.AddHttpClient<IWitnessClient, WitnessClient>(client =>
+                        client.Timeout = TimeSpan.FromSeconds(3));
+                    services.AddSingleton<DrawProofAttestationService>();
+                    services.AddHostedService(serviceProvider =>
+                        serviceProvider.GetRequiredService<DrawProofAttestationService>());
+                    services.AddTransient<VerificationDrawCoordinator>();
+                    services.AddSingleton<SettingsSearchService>();
+                    services.AddSingleton<FirstRunOobeService>();
+                    services.AddSingleton<OobeDataSetupService>();
+                    services
+                        .AddSingleton<SecRandom.Core.Services.Archive.IArchivePostImportHooks,
+                            Services.ImportExport.DesktopArchivePostImportHooks>();
+                    services.AddSingleton<IImportExportService, Services.ImportExport.ImportExportService>();
+                    services.AddHostedService<AutomaticBackupService>();
+                    services.AddSingleton(pluginStateStore!);
+                    services.AddSingleton<PluginSelectionState>();
+                    services.AddSingleton<IPluginManager, PluginManagerService>();
+                    services.AddSingleton<IPluginCatalogService, PluginCatalogService>();
+                    services.AddHostedService<PluginCatalogHostedService>();
+                    services.AddHostedService<PluginHostedService>();
+                    services.AddHostedService<TaskBarIconService>();
+                    services.AddSingleton<GlobalShortcutService>();
+                    services.AddHostedService(serviceProvider =>
+                        serviceProvider.GetRequiredService<GlobalShortcutService>());
+                    services.AddSingleton<DesktopIntegrationService>();
+                    services.AddSingleton<IExternalLauncher, ExternalLauncher>();
+                    services.AddHttpClient("updates", client => client.Timeout = TimeSpan.FromSeconds(30));
+                    services.AddSingleton<UpdateCenterService>(serviceProvider => new UpdateCenterService(
+                        serviceProvider.GetRequiredService<MainConfigHandler>(),
+                        serviceProvider.GetRequiredService<ILogger<UpdateCenterService>>(),
+                        serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("updates")));
+                    services.AddSingleton<IUpdateNotificationService, UpdateNotificationService>();
+                    services.AddHostedService<UpdateScheduler>();
+                    services.AddSingleton<ProtocolCommandRouter>();
+                    services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
+                    services.AddSingleton<ISpeechProvider, EdgeTtsSpeechProvider>();
+                    services.AddSingleton<ISpeechAudioPlayer, SpeechAudioPlayer>();
+                    services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
+                    services.AddSingleton<NotificationService>();
+                    services.AddSingleton(serviceProvider => new MusicLibraryService(
+                        serviceProvider.GetRequiredService<MainConfigHandler>(),
+                        serviceProvider.GetRequiredService<ILogger<MusicLibraryService>>(),
+                        attachedSettingsProfileService: serviceProvider.GetRequiredService<IProfileService>(),
+                        profileCatalogManager: serviceProvider.GetRequiredService<IProfileCatalogManager>()));
+                    services.AddSingleton<DrawAudioService>();
+                    services.AddSingleton<CsesScheduleParser>();
+                    services.AddSingleton<ICsesScheduleStore, CsesScheduleStore>();
+                    services.AddSingleton<CsesScheduleSource>();
+                    services.AddSingleton<ClassIslandScheduleSource>();
+                    services.AddSingleton<CourseLinkageService>();
+                    services.AddSingleton<LinkageDrawCoordinator>();
+                    services.AddHostedService<CourseLinkageHostedService>();
+                    services.AddSingleton<ICredentialKeyProtector, CredentialKeyProtector>();
+                    services.AddSingleton<SecurityCredentialStore>();
+                    services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
+                    services.AddSingleton<ISecurityService, SecurityService>();
+                }
 
-                services.AddTransient<SettingsViewModel>();
-
-                services.AddSingleton<FirstRunOobeViewModel>();
-                services.AddTransient<QuickDrawPage>();
-
-                // 附加设置
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
                 services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");
                 services.AddAttachedSettingsControl<SpecificAnnouncementAttachedSettingsControl>(
                     Langs.AttachedSettings.Resources.C_SpecificVoice);
-
-                // 界面 Views
-                services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
-                services.AddMainPage<LotteryPage>(Langs.Common.Resources.Feat_Lottery);
-                services.AddMainPage<HistoryPage>(Langs.Common.Resources.Feat_History);
-
-                // 设置界面 Views
-                
-                // 顶部
-                services.AddSettingsPage<HomeSettingsPage>(Langs.Common.Resources.Settings_Home);
-                services.AddSettingsPageSeparator();
-
-                services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_General, "settings.general", FluentIcons.SettingsFilled));
-                services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
-                services.AddSettingsPage<SecuritySettingsPage>(Langs.Common.Resources.Settings_Security);
-                services.AddSettingsPage<PrivacySettingsPage>(Langs.SettingsPages.General.Privacy.Resources.Page_Title);
-                services.AddSettingsPage<VerificationSettingsPage>(Langs.SettingsPages.General.Verification.Resources.Page_Title);
-                services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
-
-                services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_Personalized, "settings.personalized", FluentIcons.ColorFilled));
-                services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
-                services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources.Settings_FloatingWindow);
-                services.AddSettingsPage<MusicSettingsPage>(Langs.SettingsPages.Personalized.Music.Resources.Page_Title);
-
-                services.AddSettingsPage<LinkageSettingsPage>(Langs.Common.Resources.Settings_Linkage);
-                services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
-
-                services.AddSettingsPageSeparator();
-
-                services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_RosterManagement, "settings.listManagement", FluentIcons.PeopleListFilled));
-                services.AddSettingsPage<RollCallListSettingsPage>(Langs.SettingsPages.ListManagement.RollCallList
-                    .Resources.Page_Title);
-                services.AddSettingsPage<LotteryListSettingsPage>(Langs.SettingsPages.ListManagement.LotteryList
-                    .Resources.Page_Title);
-
-                services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_Draw, "settings.picking", FluentIcons.SettingsFilled));
-                services.AddSettingsPage<DefaultDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_Default);
-                services.AddSettingsPage<RollCallDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_RollCall);
-                services.AddSettingsPage<QuickDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
-                services.AddSettingsPage<LotteryDrawSettingsPage>(Langs.SettingsPages.Picking.Resources.Page_Lottery);
-
-                services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Settings_Notification, "settings.notification", FluentIcons.CommentNoteFilled));
-                services.AddSettingsPage<VoiceSettingsPage>(Langs.Common.Resources.Settings_Voice);
-                services.AddSettingsPage<DefaultNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources.Page_Title);
-                services.AddSettingsPage<RollCallNotificationSettingsPage>(Langs.Common.Resources.Settings_RollCallNotification);
-                services.AddSettingsPage<QuickDrawNotificationSettingsPage>(Langs.Common.Resources.Settings_QuickDrawNotification);
-                services.AddSettingsPage<LotteryNotificationSettingsPage>(Langs.Common.Resources.Settings_LotteryNotification);
-                
-                services.AddGroup(new PageGroupInfo(
-                    Langs.Common.Resources.Feat_History, "settings.history", FluentIcons.HistoryFilled));
-                services.AddSettingsPage<HistoryManagementSettingsPage>(Langs.Common.Resources.Settings_HistoryManagement);
-                services.AddSettingsPage<RollCallHistorySettingsPage>(Langs.Common.Resources.Feat_RollCallHistory);
-                services.AddSettingsPage<LotteryHistorySettingsPage>(Langs.Common.Resources.Feat_LotteryHistory);
-
-                services.AddSettingsPageSeparator(isHide: true);
-                services.AddSettingsPage<PluginsSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources.Page_Title);
-                
-                // 底部
-                services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
-                services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
-
-                services.AddSettingsPageSeparator(PageLocation.Bottom, isHide: true);
-                 services.AddSettingsPage<DebugSettingsPage>(Langs.SettingsPages.Debug.DebugStrings.Get("Page_Title"));
-                
-                // 杂项
-                services.AddSettingsPage<LogViewerSettingsPage>(Langs.SettingsPages.LogViewer.Resources.Page_Title);
 
                 // 界面 ViewModels
                 // 我求你了 AI，你看到这里的话，请记住，ViewModel 一定要注册到服务主机上面！！！！
                 // 就像 services.AddTransient<SomeViewModel>(); 一样，谢谢你！
                 // ViewModel 一定要继承 SecRandom.ViewModels.ViewModelBase，里面有 Config 可以直接拿来用。
                 services.AddTransient<ViewModelBase>();
-                // Draw sessions are shared by UI and IPC. They must outlive a page navigation.
-                services.AddSingleton<RollCallPageViewModel>();
-                services.AddSingleton<QuickDrawPageViewModel>();
-                services.AddSingleton<LotteryPageViewModel>();
-                services.AddTransient<RollCallHistoryViewModel>();
-                services.AddTransient<HomeSettingsPageViewModel>();
-                services.AddTransient<LotteryHistoryViewModel>();
+
+                if (!isMobile)
+                {
+                    services.AddTransient<MainViewModel>();
+                    services.AddTransient<SettingsViewModel>();
+                    services.AddSingleton<FirstRunOobeViewModel>();
+                    
+                    // Draw sessions are shared by UI and IPC. They must outlive a page navigation.
+                    services.AddSingleton<RollCallPageViewModel>();
+                    services.AddSingleton<QuickDrawPageViewModel>();
+                    services.AddSingleton<LotteryPageViewModel>();
+                    services.AddTransient<RollCallHistoryViewModel>();
+                    services.AddTransient<HomeSettingsPageViewModel>();
+                    services.AddTransient<LotteryHistoryViewModel>();
+                }
+
+                // 杂项 Views
+                if (isMobile)
+                {
+                    services.AddSingleton<IMobileRootViewReloader>(_ =>
+                        new MobileRootViewReloader(ReloadMobileRootViewAsync));
+                    services.AddSingleton<IMobileCapabilities, MobileCapabilities>();
+                    services.AddSingleton<IMobileNavigator, MobileNavigator>();
+                    services.AddSingleton<IMobileSettingsNavigator, MobileSettingsNavigator>();
+                    services.AddSingleton<CrashRecoveryViewState>();
+                    services.AddTransient<CrashRecoveryView>();
+                    services.AddViewRegistration<CrashRecoveryView>("system.crashRecovery", ViewPresentation.Modal);
+                }
+                else
+                {
+                    services.AddTransient<QuickDrawPage>();
+                }
+
+                // 界面 Views
+                if (isMobile)
+                {
+                    services.AddKeyedTransient<UserControl, MobileDrawPage>(MobilePageIds.Draw);
+                    services.AddKeyedTransient<UserControl, MobileHistoryPage>(MobilePageIds.History);
+                    services.AddKeyedTransient<UserControl, MobileOverviewPage>(MobilePageIds.Overview);
+                }
+                else
+                {
+                    services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
+                    services.AddMainPage<LotteryPage>(Langs.Common.Resources.Feat_Lottery);
+                    services.AddMainPage<HistoryPage>(Langs.Common.Resources.Feat_History);
+                }
+
+                // 设置界面 Views
+                if (isMobile)
+                {
+                    // 顶部和偏好
+                    services.AddSettingsPage<MobileSettingsCatalogPage>(MobileResources.P_Settings);
+                    services.AddGroup(new PageGroupInfo(
+                        MobileResources.S_GroupPreferences, "settings.mobile.preferences", FluentIcons.ColorFilled));
+                    services.AddSettingsPage<MobileGeneralSettingsPage>(MobileResources.S_General);
+                    services.AddSettingsPage<MobilePersonalizationSettingsPage>(MobileResources.S_Personalization);
+                    services.AddSettingsPage<MobileDrawSettingsPage>(MobileResources.S_DrawSettings);
+
+                    // 数据
+                    services.AddGroup(new PageGroupInfo(
+                        MobileResources.S_GroupData, "settings.mobile.data", FluentIcons.DatabaseFilled));
+                    services.AddSettingsPage<MobileListManagementSettingsPage>(MobileResources.S_ListManagement);
+                    services.AddSettingsPage<MobileBackupSettingsPage>(MobileResources.S_Backup);
+
+                    // 应用
+                    services.AddGroup(new PageGroupInfo(
+                        MobileResources.S_GroupApp, "settings.mobile.application", FluentIcons.InfoFilled));
+                    if (mobilePlatform!.UpdateInstaller.IsSupported)
+                        services.AddSettingsPage<MobileUpdateSettingsPage>(MobileResources.S_AppUpdates);
+                    services.AddSettingsPage<MobileAboutSettingsPage>(MobileResources.S_About);
+                }
+                else
+                {
+                    // 顶部
+                    services.AddSettingsPage<HomeSettingsPage>(Langs.Common.Resources.Settings_Home);
+                    services.AddSettingsPageSeparator();
+
+                    services.AddGroup(new PageGroupInfo(
+                        Langs.Common.Resources.Settings_General, "settings.general", FluentIcons.SettingsFilled));
+                    services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
+                    services.AddSettingsPage<SecuritySettingsPage>(Langs.Common.Resources.Settings_Security);
+                    services.AddSettingsPage<PrivacySettingsPage>(Langs.SettingsPages.General.Privacy.Resources
+                        .Page_Title);
+                    services.AddSettingsPage<VerificationSettingsPage>(Langs.SettingsPages.General.Verification
+                        .Resources.Page_Title);
+                    services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
+
+                    services.AddGroup(new PageGroupInfo(
+                        Langs.Common.Resources.Settings_Personalized, "settings.personalized",
+                        FluentIcons.ColorFilled));
+                    services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
+                    services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources
+                        .Settings_FloatingWindow);
+                    services.AddSettingsPage<MusicSettingsPage>(Langs.SettingsPages.Personalized.Music.Resources
+                        .Page_Title);
+                    services.AddSettingsPage<LinkageSettingsPage>(Langs.Common.Resources.Settings_Linkage);
+                    services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
+
+                    services.AddSettingsPageSeparator();
+
+                    services.AddGroup(new PageGroupInfo(
+                        Langs.Common.Resources.Settings_RosterManagement, "settings.listManagement",
+                        FluentIcons.PeopleListFilled));
+                    services.AddSettingsPage<RollCallListSettingsPage>(Langs.SettingsPages.ListManagement.RollCallList
+                        .Resources.Page_Title);
+                    services.AddSettingsPage<LotteryListSettingsPage>(Langs.SettingsPages.ListManagement.LotteryList
+                        .Resources.Page_Title);
+
+                    services.AddGroup(new PageGroupInfo(
+                        Langs.Common.Resources.Settings_Draw, "settings.picking", FluentIcons.SettingsFilled));
+                    services.AddSettingsPage<DefaultDrawSettingsPage>(
+                        Langs.SettingsPages.Picking.Resources.Page_Default);
+                    services.AddSettingsPage<RollCallDrawSettingsPage>(Langs.SettingsPages.Picking.Resources
+                        .Page_RollCall);
+                    services.AddSettingsPage<QuickDrawSettingsPage>(
+                        Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
+                    services.AddSettingsPage<LotteryDrawSettingsPage>(
+                        Langs.SettingsPages.Picking.Resources.Page_Lottery);
+
+                    services.AddGroup(new PageGroupInfo(
+                        Langs.Common.Resources.Settings_Notification, "settings.notification",
+                        FluentIcons.CommentNoteFilled));
+                    services.AddSettingsPage<VoiceSettingsPage>(Langs.Common.Resources.Settings_Voice);
+                    services.AddSettingsPage<DefaultNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources
+                        .Page_Title);
+                    services.AddSettingsPage<RollCallNotificationSettingsPage>(Langs.Common.Resources
+                        .Settings_RollCallNotification);
+                    services.AddSettingsPage<QuickDrawNotificationSettingsPage>(Langs.Common.Resources
+                        .Settings_QuickDrawNotification);
+                    services.AddSettingsPage<LotteryNotificationSettingsPage>(Langs.Common.Resources
+                        .Settings_LotteryNotification);
+
+                    services.AddGroup(new PageGroupInfo(
+                        Langs.Common.Resources.Feat_History, "settings.history", FluentIcons.HistoryFilled));
+                    services.AddSettingsPage<HistoryManagementSettingsPage>(Langs.Common.Resources
+                        .Settings_HistoryManagement);
+                    services.AddSettingsPage<RollCallHistorySettingsPage>(Langs.Common.Resources.Feat_RollCallHistory);
+                    services.AddSettingsPage<LotteryHistorySettingsPage>(Langs.Common.Resources.Feat_LotteryHistory);
+
+                    services.AddSettingsPageSeparator(isHide: true);
+                    services.AddSettingsPage<PluginsSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources
+                        .Page_Title);
+
+                    // 底部
+                    services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
+                    services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
+
+                    services.AddSettingsPageSeparator(PageLocation.Bottom, isHide: true);
+                    services.AddSettingsPage<DebugSettingsPage>(
+                        Langs.SettingsPages.Debug.DebugStrings.Get("Page_Title"));
+
+                    // 杂项
+                    services.AddSettingsPage<LogViewerSettingsPage>(Langs.SettingsPages.LogViewer.Resources.Page_Title);
+                }
 
                 // 配置插件
-                PluginManagerService.ConfigureEnabledPlugins(services, pluginStateStore);
+                if (!isMobile)
+                {
+                    PluginManagerService.ConfigureEnabledPlugins(services, pluginStateStore!);
+                }
             })
             .Build();
 
@@ -1411,6 +1475,7 @@ public partial class App : Application
                     if (!_floatingWindow.IsHiddenByCourseLinkage)
                         RestoreWithoutActivating(_floatingWindow);
                 }
+
                 Current.RefreshTrayWindowMenuItems();
                 return Task.CompletedTask;
             }), "Floating window authorization failed.");
@@ -1435,6 +1500,7 @@ public partial class App : Application
             _floatingWindow?.Hide();
             _floatingWindow?.SetUserVisibilityIntent(false);
         }
+
         Current.RefreshTrayWindowMenuItems();
     }
 
@@ -1459,7 +1525,8 @@ public partial class App : Application
 
     public static void SetSettingsWindowVisibility(string action, string pageId, bool preview)
     {
-        ObserveTask(SetSettingsWindowVisibilityCoreAsync(action, pageId, preview), "Settings window visibility update failed.");
+        ObserveTask(SetSettingsWindowVisibilityCoreAsync(action, pageId, preview),
+            "Settings window visibility update failed.");
     }
 
     private static async Task SetSettingsWindowVisibilityCoreAsync(string action, string pageId, bool preview)
@@ -1533,7 +1600,8 @@ public partial class App : Application
         bool showPreview)
     {
         Dispatcher.UIThread.Post(() => ObserveTask(
-            ShowQuickDrawNotificationWindowAsync(items, autoCloseTime, animate, preserveQuickDrawResult, windowSettings, showPreview),
+            ShowQuickDrawNotificationWindowAsync(items, autoCloseTime, animate, preserveQuickDrawResult, windowSettings,
+                showPreview),
             "Quick draw notification window action failed."));
     }
 
@@ -1585,6 +1653,7 @@ public partial class App : Application
             quickDraw.ShowNotificationPreview(items, preserveQuickDrawResult);
             await Task.Delay(quickDraw.PreviewAnimationDuration);
         }
+
         quickDraw.ShowNotificationResult(items, autoCloseTime, animate, preserveQuickDrawResult);
         Dispatcher.UIThread.Post(
             () => PositionQuickDrawNotificationWindow(window, windowSettings),
@@ -1691,17 +1760,19 @@ public partial class App : Application
 
         var nativeNames = WindowsMonitorNameProvider.GetNames();
         var screen = window.Screens.All.FirstOrDefault(candidate =>
-        {
-            nativeNames.TryGetValue(candidate.Bounds.Position, out var nativeName);
-            var displayName = string.IsNullOrWhiteSpace(candidate.DisplayName) ? nativeName : candidate.DisplayName;
-            return !string.IsNullOrWhiteSpace(settings.EnabledMonitor)
-                   && NotificationMonitorIdentifier.Matches(
-                       displayName,
-                       candidate.Bounds,
-                       settings.EnabledMonitor);
-        })
-            ?? window.Screens.Primary
-            ?? window.Screens.All.FirstOrDefault();
+                     {
+                         nativeNames.TryGetValue(candidate.Bounds.Position, out var nativeName);
+                         var displayName = string.IsNullOrWhiteSpace(candidate.DisplayName)
+                             ? nativeName
+                             : candidate.DisplayName;
+                         return !string.IsNullOrWhiteSpace(settings.EnabledMonitor)
+                                && NotificationMonitorIdentifier.Matches(
+                                    displayName,
+                                    candidate.Bounds,
+                                    settings.EnabledMonitor);
+                     })
+                     ?? window.Screens.Primary
+                     ?? window.Screens.All.FirstOrDefault();
         if (screen is null)
             return;
 
@@ -1821,6 +1892,7 @@ public partial class App : Application
             else
                 window.WindowState = WindowState.Normal;
         }
+
         window.Show();
         window.Activate();
     }
