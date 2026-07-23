@@ -582,13 +582,13 @@ jobs:
             throw 'The Android build did not produce a signed APK.'
           }
           New-Item -ItemType Directory -Path 'artifacts/mobile' -Force | Out-Null
-          Copy-Item $apk "artifacts/mobile/SecRandom-v$($env:VERSION.TrimStart('v', 'V'))-Android-${{ matrix.arch }}.apk"
+          Copy-Item $apk "artifacts/mobile/SecRandom-v$($env:VERSION.TrimStart('v', 'V'))-android-${{ matrix.arch }}.apk"
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v7
         with:
-          name: SecRandom-Android-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
-          path: artifacts/mobile/SecRandom-v*-Android-${{ matrix.arch }}.apk
+          name: android-${{ matrix.arch }}_apk
+          path: artifacts/mobile/*.apk
           retention-days: 14
           if-no-files-found: error
 
@@ -610,26 +610,13 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.102
+          dotnet-version: 10.0.x
 
       - name: Get Latest Tag
         id: get_tag
         if: ${{ github.event_name != 'workflow_dispatch' }}
         shell: bash
         run: echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
-
-      - name: Pin iOS SDK version
-        shell: bash
-        run: |
-          cat > global.json <<'EOF'
-          {
-            "sdk": {
-              "version": "10.0.102",
-              "rollForward": "disable"
-            }
-          }
-          EOF
-          dotnet --version
 
       - name: Verify iOS toolchain
         shell: bash
@@ -641,22 +628,7 @@ jobs:
 
       - name: Install iOS workload
         shell: bash
-        run: dotnet workload install ios --version 10.0.101.1
-
-      - name: Build iOS simulator target
-        shell: bash
-        env:
-          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
-        run: >
-          dotnet build SecRandom.iOS/SecRandom.iOS.csproj
-          -c Release
-          -r iossimulator-arm64
-          -p:Version=${VERSION#v}
-          -p:EnableCodeSigning=false
-          -p:CodesignRequireProvisioningProfile=false
-          -p:BuildIpa=false
-          -p:ArchiveOnBuild=false
-          -p:EnableAssemblyILStripping=false
+        run: dotnet workload install ios
 
       - name: Publish unsigned iOS arm64 IPA
         shell: bash
@@ -665,7 +637,7 @@ jobs:
         run: |
           version="${VERSION#v}"
           version="${version#V}"
-          output="artifacts/mobile/SecRandom-v${version}-iOS-arm64-unsigned.ipa"
+          output="artifacts/mobile/SecRandom-v${version}-ios-arm64-unsigned.ipa"
           mkdir -p artifacts/mobile
           dotnet publish SecRandom.iOS/SecRandom.iOS.csproj \
             -c Release \
@@ -677,7 +649,7 @@ jobs:
             -p:CodesignRequireProvisioningProfile=false \
             -p:BuildIpa=true \
             -p:ArchiveOnBuild=false \
-            -p:EnableAssemblyILStripping=false \
+            -p:PublishTrimmed=false \
             -p:IpaPackagePath="$GITHUB_WORKSPACE/$output"
           test -s "$output"
           unzip -l "$output" | grep -q 'Payload/.*\.app/Info.plist'
@@ -685,8 +657,8 @@ jobs:
       - name: Upload unsigned iOS IPA
         uses: actions/upload-artifact@v7
         with:
-          name: SecRandom-iOS-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}-unsigned
-          path: artifacts/mobile/SecRandom-v*-iOS-arm64-unsigned.ipa
+          name: ios-arm64_unsigned_ipa
+          path: artifacts/mobile/*.ipa
           retention-days: 14
           if-no-files-found: error
 
