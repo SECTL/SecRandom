@@ -67,8 +67,10 @@ using SecRandom.Services.ViewEngine;
 using SecRandom.Mobile;
 using SecRandom.Services.Mobile;
 using SecRandom.Views.Mobile;
+using SecRandom.Views.Mobile.Settings;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
+using MobileResources = SecRandom.Langs.Mobile.Resources;
 using SecRandom.ViewModels;
 using SecRandom.ViewModels.MainPages;
 using SecRandom.ViewModels.SettingsPages;
@@ -138,7 +140,7 @@ public partial class App : Application
         };
         InitializeLanguages(new CultureInfo(culture));
         if (PlatformStartupContext.Current is MobilePlatformServiceRoot)
-            MobileApplicationServices.ApplyCulture(new CultureInfo(culture));
+            ApplyMobileCulture(new CultureInfo(culture));
 
         // 初始化 Avalonia App
         AvaloniaXamlLoader.Load(this);
@@ -375,7 +377,39 @@ public partial class App : Application
             return;
 
         _mobileStartupFailureShown = true;
-        _singleViewLifetime.MainView = MobileApplicationServices.CreateStartupFailureView(exception);
+        _singleViewLifetime.MainView = CreateMobileStartupFailureView(exception);
+    }
+
+    internal static void ApplyMobileCulture(CultureInfo culture)
+    {
+        ArgumentNullException.ThrowIfNull(culture);
+        MobileResources.Culture = culture;
+    }
+
+    private static Control CreateMobileStartupFailureView(Exception exception)
+    {
+        string startupFailedText;
+        try
+        {
+            startupFailedText = MobileResources.M_StartupFailed;
+        }
+        catch (Exception resourceException)
+        {
+            startupFailedText = "SecRandom startup failed: " + resourceException.GetType().Name;
+        }
+
+        return new ScrollViewer
+        {
+            Content = new TextBlock
+            {
+                Text = startupFailedText + "\n" + exception,
+                Margin = new Thickness(32),
+                TextAlignment = TextAlignment.Center,
+                TextWrapping = TextWrapping.Wrap,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            }
+        };
     }
 
     private static void ReportMobileException(Exception exception)
@@ -599,7 +633,42 @@ public partial class App : Application
                     services.AddSingleton<TelemetryRuntimeService>();
                     services.AddSingleton<CrashRecoveryViewState>();
                     services.AddTransient<CrashRecoveryView>();
-                    services.AddMobileRuntimeServices(currentMobilePlatform, ReloadMobileRootViewAsync);
+                    services.AddTransient<MobileRollCallService>();
+                    services.AddSingleton<MobileMediaLibraryService>();
+                    services.AddSingleton<IMobileMediaPlayer>(currentMobilePlatform.MediaPlayer);
+                    services.AddSingleton<MobileDrawMediaService>();
+                    services.AddSingleton<IMobileUpdateInstaller>(currentMobilePlatform.UpdateInstaller);
+                    services.AddHttpClient<MobileUpdateService>();
+                    services.AddSingleton<MobileDeviceUuidStore>();
+                    services.AddHostedService<MobileOnlineStatusService>();
+                    services.AddSingleton<IMobileRootViewReloader>(_ => new MobileRootViewReloader(ReloadMobileRootViewAsync));
+                    services.AddSingleton<IMobileCapabilities, MobileCapabilities>();
+                    services.AddSingleton<IMobileNavigator, MobileNavigator>();
+                    services.AddSingleton<IMobileSettingsNavigator, MobileSettingsNavigator>();
+                    services.AddSingleton<SingleViewHostProvider>();
+                    services.AddSingleton<IViewHostProvider>(provider => provider.GetRequiredService<SingleViewHostProvider>());
+                    services.AddViewEngine()
+                        .AddView<MobileRootView>("mobile.root")
+                        .AddView<SettingsView>(MobilePageIds.Settings);
+                    services.AddKeyedTransient<UserControl, MobileDrawPage>(MobilePageIds.Draw);
+                    services.AddKeyedTransient<UserControl, MobileHistoryPage>(MobilePageIds.History);
+                    services.AddKeyedTransient<UserControl, MobileOverviewPage>(MobilePageIds.Overview);
+                    services.AddSettingsPage<MobileSettingsCatalogPage>(MobileResources.P_Settings);
+                    services.AddGroup(new PageGroupInfo(
+                        MobileResources.S_GroupPreferences, "settings.mobile.preferences", FluentIcons.ColorFilled));
+                    services.AddGroup(new PageGroupInfo(
+                        MobileResources.S_GroupData, "settings.mobile.data", FluentIcons.DatabaseFilled));
+                    services.AddGroup(new PageGroupInfo(
+                        MobileResources.S_GroupApp, "settings.mobile.application", FluentIcons.InfoFilled));
+                    services.AddSettingsPage<MobileGeneralSettingsPage>(MobileResources.S_General);
+                    services.AddSettingsPage<MobilePersonalizationSettingsPage>(MobileResources.S_Personalization);
+                    services.AddSettingsPage<MobileDrawSettingsPage>(MobileResources.S_DrawSettings);
+                    services.AddSettingsPage<MobileListManagementSettingsPage>(MobileResources.S_ListManagement);
+                    services.AddSettingsPage<MobileBackupSettingsPage>(MobileResources.S_Backup);
+                    if (currentMobilePlatform.UpdateInstaller.IsSupported)
+                        services.AddSettingsPage<MobileUpdateSettingsPage>(MobileResources.S_AppUpdates);
+                    services.AddSettingsPage<MobileAboutSettingsPage>(MobileResources.S_About);
+                    services.AddTransient<MobileViewHost>();
                     services.AddViewRegistration<CrashRecoveryView>("system.crashRecovery", ViewPresentation.Modal);
                     return;
                 }

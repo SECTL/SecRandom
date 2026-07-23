@@ -64,7 +64,7 @@ public sealed partial class MobileGeneralSettingsPage : MobileSettingsPageBase
 
         BasicSettings.Language = mode;
         _configHandler.Save();
-        MobileApplicationServices.ApplyCulture(new System.Globalization.CultureInfo(mode switch
+        global::SecRandom.App.ApplyMobileCulture(new System.Globalization.CultureInfo(mode switch
         {
             LanguageMode.ChineseSimplified => "zh-Hans",
             LanguageMode.English => "en-US",

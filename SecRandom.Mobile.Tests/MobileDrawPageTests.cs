@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Services;
 using SecRandom.Mobile;
-using SecRandom.Platforms.Abstractions;
+using SecRandom.Services.Mobile;
 using SecRandom.Shared;
 using SecRandom.Views.Mobile;
 
@@ -51,8 +51,34 @@ public sealed class MobileDrawPageTests : IDisposable
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.None));
         services.AddCoreRuntimeServices();
-        services.AddMobileRuntimeServices(new MobilePlatformServiceRoot(PlatformKind.Android), () => Task.CompletedTask);
+        services.AddTransient<MobileRollCallService>();
+        services.AddSingleton<IMobileMediaPlayer, UnsupportedMobileMediaPlayer>();
+        services.AddSingleton<MobileMediaLibraryService>();
+        services.AddSingleton<MobileDrawMediaService>();
+        services.AddSingleton<IMobileCapabilities, TestCapabilities>();
+        services.AddSingleton<IMobileSettingsNavigator, TestSettingsNavigator>();
+        services.AddSingleton<IMobileNavigator, MobileNavigator>();
+        services.AddKeyedTransient<UserControl, MobileDrawPage>(MobilePageIds.Draw);
+        services.AddKeyedTransient<UserControl, MobileHistoryPage>(MobilePageIds.History);
+        services.AddKeyedTransient<UserControl, MobileOverviewPage>(MobilePageIds.Overview);
         return services.BuildServiceProvider();
+    }
+
+    private sealed class TestCapabilities : IMobileCapabilities
+    {
+        public bool IsLotteryEnabled => true;
+        public bool SupportsInAppUpdate => false;
+    }
+
+    private sealed class TestSettingsNavigator : IMobileSettingsNavigator
+    {
+        public bool IsOpen => false;
+
+        public Task OpenAsync(string? pageId = null) => Task.CompletedTask;
+
+        public Task NavigateAsync(string pageId) => Task.CompletedTask;
+
+        public Task CloseAsync() => Task.CompletedTask;
     }
 
     private static void ConfigureDataRootForTests(string dataRoot)

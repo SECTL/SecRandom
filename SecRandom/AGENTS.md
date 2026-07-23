@@ -17,7 +17,7 @@ localization.
 SecRandom/
 ├── App.axaml(.cs)       # Application bootstrap, Host registration, windows, shutdown/restart
 ├── App.Consts.cs        # App UI constants/support flags
-├── Mobile/              # Mobile composition, platform-neutral seams, mobile design/assembly rules
+├── Mobile/              # Mobile platform-neutral contracts and lifecycle support
 ├── Views/               # Main shell, settings shell, desktop and mobile pages, windows
 ├── ViewModels/          # App VM state; root holds shell/profile bases
 │   ├── MainPages/       # Page-specific VMs for built-in main pages and floating-window quick draw
@@ -95,11 +95,15 @@ SecRandom/
   navigation pages, and real view-engine registrations. Built-in main/settings child pages use only
   `AddMainPage<T>()` / `AddSettingsPage<T>()` keyed `UserControl` registration and `FAFrame` navigation. Only
   independent lifecycle views such as `MainView`, `SettingsView`, crash recovery, and plugin view registrations use MVE.
+  Its mobile branch directly registers mobile services, navigation, routes, settings pages, and the single-view host;
+  do not move those registrations to a separate application-service extension.
 - `BuildHost()` receives the root selected through `PlatformStartupContext` and registers it with `AddPlatformServices`. The shared App selects mutually exclusive desktop or mobile registrations; app code may adapt an Avalonia `TopLevel` into a neutral handle, but it must not contain Win32/X11/AppKit operations or platform selection logic.
 - `BuildHost()` registers the desktop `IViewHostProvider` after `AddViewEngine()`. Named physical hosts are registered by `App` when a main/settings window is created; the provider also owns standalone plugin windows. It does not manage embedded shell regions.
 - `MainWindow` and `FloatingWindow` retain their presentation and configuration behavior but request topmost through `IWindowFeatureService`; `FloatingWindow` requests `ToolWindow` during construction while its native handle is available but before its first show, then requests task-switcher exclusion after opening where supported. Its transparent composition hint must be set during construction. Floating-window restoration must preserve `ShowActivated=False` and not steal focus. Linux implements tool/task-switcher semantics through X11 EWMH when `DISPLAY` is available, including XWayland sessions; native Wayland remains out of scope. macOS maps `ToolWindow` to an `NSWindow` utility window that joins all Spaces; Command-Tab remains application-level and is not modeled as a per-window task-switcher exclusion.
 - `App` is shared by desktop and mobile. Its SingleView branch initializes only `MobileViewHost`, `MobileRootView`, mobile routes/media/update/status services, and the `SingleViewHostProvider`; it must not route through desktop single-instance, OOBE, floating-window, tray, shortcut, update scheduler, plugin, or protocol startup paths.
-- Mobile code belongs to this project: `Mobile/` owns composition and neutral platform contracts, `Views/Mobile/`, `Controls/Mobile/`, `Services/Mobile/`, and `Langs/Mobile/` own their corresponding app-layer responsibilities. Do not recreate a separate mobile UI assembly.
+- Mobile code belongs to this project: `Mobile/` owns neutral platform contracts and lifecycle support, while `BuildHost()`
+  owns mobile composition. `Views/Mobile/`, `Controls/Mobile/`, `Services/Mobile/`, and `Langs/Mobile/` own their corresponding
+  app-layer responsibilities. Do not recreate a separate mobile UI assembly.
 - Mobile fixed layout is AXAML-first. Keep code-behind for runtime data, StorageProvider, dialogs, DataGrid setup, media, and service orchestration; do not add a second mobile style/token layer, `NavigationView`, or generic C# setting-row factory as the primary page layout.
 - Mobile SettingsView is its own MVE page in `MobileViewHost`'s `NavigationPage`, not `IMobileNavigator` destination state. It currently reuses the desktop settings layout and starts at hidden `settings.mobile`, whose catalog reflects registered mobile groups/pages. Catalog navigation must not programmatically set the desktop `FANavigationView` selection because the hidden catalog has no corresponding sidebar item; navigate only its `FAFrame` content.
 - Crash recovery startup prompt handling runs before single-instance acquisition; normal app restart must release `SingleInstanceService` before launching the replacement process.
