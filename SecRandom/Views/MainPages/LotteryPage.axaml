@@ -128,7 +128,6 @@
                     </ComboBox>
 
                     <Button Content="{x:Static langs:Resources.C_ShowRemainingList}"
-                            FontSize="18"
                             IsVisible="{Binding MoreSettings.LotteryRemainingButton}"
                             Click="RemainingListButton_OnClick" />
             

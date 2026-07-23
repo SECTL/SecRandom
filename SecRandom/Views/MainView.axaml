@@ -1,17 +1,16 @@
-<views:MainView xmlns="https://github.com/avaloniaui"
-                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-                xmlns:fa="using:FluentAvalonia.UI.Controls"
-                xmlns:views="using:SecRandom.Views"
-                mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-                 x:Class="SecRandom.Views.MainView"
-                 x:DataType="views:MainView"
-                 Header="SecRandom"
-                 NavigationPage.HasBackButton="False"
-                 Loaded="OnLoaded"
-                Unloaded="OnUnloaded">
+<ContentPage xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:fa="using:FluentAvalonia.UI.Controls"
+             xmlns:views="using:SecRandom.Views"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SecRandom.Views.MainView"
+             x:DataType="views:MainView"
+             Header="SecRandom"
+             Loaded="OnLoaded"
+             Unloaded="OnUnloaded">
     <Grid RowDefinitions="Auto *">
         <Border Grid.Row="0" Height="48">
             <StackPanel Orientation="Horizontal" Margin="8" Spacing="8">
@@ -72,4 +71,4 @@
             </sr:DrawerHost>
         </fa:FANavigationView>
     </Grid>
-</views:MainView>
+</ContentPage>
