@@ -577,7 +577,7 @@ jobs:
         env:
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
         run: |
-          $apk = Get-ChildItem 'SecRandom.Android/bin/Release/net10.0-android/android-${{ matrix.arch }}' -Filter '*-Signed.apk' |
+          $apk = Get-ChildItem 'SecRandom.Android/bin/Release/net10.0-android36.0/android-${{ matrix.arch }}' -Filter '*-Signed.apk' |
             Select-Object -First 1 -ExpandProperty FullName
           if ([string]::IsNullOrWhiteSpace($apk)) {
             throw 'The Android build did not produce a signed APK.'

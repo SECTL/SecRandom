@@ -43,7 +43,7 @@ jobs:
 
       - name: 还原解决方案
         if: ${{ matrix.language == 'csharp' }}
-        run: dotnet restore
+        run: dotnet restore ./SecRandom.Desktop/SecRandom.Desktop.csproj
 
       - name: 初始化 CodeQL
         uses: github/codeql-action/init@v4
@@ -53,7 +53,7 @@ jobs:
 
       - name: 构建
         if: ${{ matrix.language == 'csharp' }}
-        run: dotnet build SecRandom.sln -c Release
+        run: dotnet build ./SecRandom.Desktop/SecRandom.Desktop.csproj -c Release
 
       - name: 执行 CodeQL 分析
         uses: github/codeql-action/analyze@v4
