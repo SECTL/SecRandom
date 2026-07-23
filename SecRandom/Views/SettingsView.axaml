@@ -37,11 +37,12 @@
                             IsHitTestVisible="True" />
 
                     <Button HorizontalAlignment="Center" VerticalAlignment="Center"
-                            Width="48" Height="40" IsHitTestVisible="True"
-                            IsVisible="{Binding IsMobile}"
+                            Width="40" Height="36" IsHitTestVisible="True"
+                            Margin="8 0 0 0"
                             Theme="{DynamicResource TransparentButton}"
+                            IsVisible="{Binding IsMobile}"
                             Click="MobileHomeButton_OnClick">
-                        <sr:FluentIcon Glyph="{sr:Fi HomeFilled}" FontSize="20"
+                        <sr:FluentIcon Glyph="{sr:Fi HomeFilled}" FontSize="16"
                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Button>
                     

@@ -497,13 +497,15 @@ jobs:
           path: artifacts/release/dist/*.pkg
           if-no-files-found: ignore
 
-  build_mobile_shell:
-    name: Build_Mobile_Android
+  build_android:
+    name: Build_Android_${{ matrix.arch }}
     runs-on: ubuntu-24.04
+    env:
+      arch: ${{ matrix.arch }}
     strategy:
       fail-fast: false
       matrix:
-        target: [android]
+        arch: ['arm64', 'x64']
 
     steps:
       - name: Checkout
@@ -516,20 +518,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.102
-
-      - name: Pin Android SDK version
-        shell: pwsh
-        run: |
-          @'
-          {
-            "sdk": {
-              "version": "10.0.102",
-              "rollForward": "disable"
-            }
-          }
-          '@ | Set-Content -LiteralPath global.json -NoNewline
-          dotnet --version
+          dotnet-version: 10.0.x
 
       - name: Get Latest Tag
         id: get_tag
@@ -539,8 +528,7 @@ jobs:
           $latestTag = git describe --tags --abbrev=0
           "LATEST_TAG=$latestTag" >> $env:GITHUB_OUTPUT
 
-      - name: Setup Android build tools
-        if: ${{ matrix.target == 'android' }}
+      - name: Setup JDK 21
         uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -552,11 +540,11 @@ jobs:
         run: |
           & "$env:ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Install mobile workload
+      - name: Install Android workload
         shell: pwsh
-        run: dotnet workload install ${{ matrix.target }}
+        run: dotnet workload install android
 
-      - name: Build mobile shell
+      - name: Build Android APK
         shell: pwsh
         env:
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
@@ -566,7 +554,7 @@ jobs:
           ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         run: |
           $version = $env:VERSION.TrimStart('v', 'V')
-          $arguments = @('build', 'SecRandom.Android/SecRandom.Android.csproj', '-c', 'Release', '-r', 'android-arm64', "-p:Version=$version", '-p:ApplicationVersion=${{ github.run_number }}')
+          $arguments = @('build', 'SecRandom.Android/SecRandom.Android.csproj', '-c', 'Release', '-r', 'android-${{ matrix.arch }}', "-p:Version=$version", '-p:ApplicationVersion=${{ github.run_number }}')
           $hasSigningSecrets = @($env:ANDROID_SIGNING_KEYSTORE_BASE64, $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, $env:ANDROID_SIGNING_KEY_ALIAS, $env:ANDROID_SIGNING_KEY_PASSWORD) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
           if ($hasSigningSecrets.Count -gt 0 -and $hasSigningSecrets.Count -ne 4) {
             throw 'All Android signing secrets must be configured together.'
@@ -589,20 +577,20 @@ jobs:
         env:
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
         run: |
-          $apk = Get-ChildItem 'SecRandom.Android/bin/Release/net10.0-android/android-arm64' -Filter '*-Signed.apk' |
+          $apk = Get-ChildItem 'SecRandom.Android/bin/Release/net10.0-android/android-${{ matrix.arch }}' -Filter '*-Signed.apk' |
             Select-Object -First 1 -ExpandProperty FullName
           if ([string]::IsNullOrWhiteSpace($apk)) {
             throw 'The Android build did not produce a signed APK.'
           }
           New-Item -ItemType Directory -Path 'artifacts/mobile' -Force | Out-Null
-          Copy-Item $apk "artifacts/mobile/SecRandom-v$($env:VERSION.TrimStart('v', 'V'))-Android-arm64.apk"
+          Copy-Item $apk "artifacts/mobile/SecRandom-v$($env:VERSION.TrimStart('v', 'V'))-Android-${{ matrix.arch }}.apk"
 
       - name: Upload Android APK
         if: ${{ matrix.target == 'android' }}
         uses: actions/upload-artifact@v7
         with:
           name: SecRandom-Android-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
-          path: artifacts/mobile/SecRandom-v*-Android-arm64.apk
+          path: artifacts/mobile/SecRandom-v*-Android-${{ matrix.arch }}.apk
           retention-days: 14
           if-no-files-found: error
 

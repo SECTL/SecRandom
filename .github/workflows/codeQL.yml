@@ -37,6 +37,14 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: 还原工作负载
+        if: ${{ matrix.language == 'csharp' }}
+        run: dotnet workload restore
+
+      - name: 还原解决方案
+        if: ${{ matrix.language == 'csharp' }}
+        run: dotnet restore
+
       - name: 初始化 CodeQL
         uses: github/codeql-action/init@v4
         with:
