@@ -535,7 +535,6 @@ jobs:
           java-version: '21'
 
       - name: Install Android SDK packages
-        if: ${{ matrix.target == 'android' }}
         shell: pwsh
         run: |
           & "$env:ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
@@ -586,7 +585,6 @@ jobs:
           Copy-Item $apk "artifacts/mobile/SecRandom-v$($env:VERSION.TrimStart('v', 'V'))-Android-${{ matrix.arch }}.apk"
 
       - name: Upload Android APK
-        if: ${{ matrix.target == 'android' }}
         uses: actions/upload-artifact@v7
         with:
           name: SecRandom-Android-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
