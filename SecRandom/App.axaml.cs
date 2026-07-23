@@ -369,7 +369,7 @@ public partial class App : Application
             return;
 
         state.Configure(options, static () => false, canIgnore: true);
-        ObserveTask(engine.ShowModalAsync("system.crashRecovery"), "Mobile crash recovery display failed.");
+        ObserveTask(engine.ShowAsync("system.crashRecovery"), "Mobile crash recovery display failed.");
     }
 
     private void ShowMobileStartupFailure(Exception exception)
@@ -796,7 +796,7 @@ public partial class App : Application
                     services.AddSingleton<IMobileSettingsNavigator, MobileSettingsNavigator>();
                     services.AddSingleton<CrashRecoveryViewState>();
                     services.AddTransient<CrashRecoveryView>();
-                    services.AddViewRegistration<CrashRecoveryView>("system.crashRecovery", ViewPresentation.Modal);
+                    services.AddViewRegistration<CrashRecoveryView>("system.crashRecovery");
                 }
                 else
                 {
@@ -827,13 +827,13 @@ public partial class App : Application
                     services.AddSettingsPage<MobileGeneralSettingsPage>(MobileResources.S_General);
                     services.AddSettingsPage<MobilePersonalizationSettingsPage>(MobileResources.S_Personalization);
                     services.AddSettingsPage<MobileDrawSettingsPage>(MobileResources.S_DrawSettings);
-
+                
                     // 数据
                     services.AddGroup(new PageGroupInfo(
                         MobileResources.S_GroupData, "settings.mobile.data", FluentIcons.DatabaseFilled));
                     services.AddSettingsPage<MobileListManagementSettingsPage>(MobileResources.S_ListManagement);
                     services.AddSettingsPage<MobileBackupSettingsPage>(MobileResources.S_Backup);
-
+                
                     // 应用
                     services.AddGroup(new PageGroupInfo(
                         MobileResources.S_GroupApp, "settings.mobile.application", FluentIcons.InfoFilled));
