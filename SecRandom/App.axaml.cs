@@ -818,6 +818,8 @@ public partial class App : Application
                 }
 
                 // 设置界面 Views
+                services.AddSettingsPage<LogViewerSettingsPage>(Langs.SettingsPages.LogViewer.Resources.Page_Title);
+                
                 if (isMobile)
                 {
                     // 顶部和偏好
@@ -920,9 +922,6 @@ public partial class App : Application
                     services.AddSettingsPageSeparator(PageLocation.Bottom, isHide: true);
                     services.AddSettingsPage<DebugSettingsPage>(
                         Langs.SettingsPages.Debug.DebugStrings.Get("Page_Title"));
-
-                    // 杂项
-                    services.AddSettingsPage<LogViewerSettingsPage>(Langs.SettingsPages.LogViewer.Resources.Page_Title);
                 }
 
                 // 配置插件

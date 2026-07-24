@@ -24,7 +24,6 @@ public sealed partial class CrashRecoveryView : ViewBase, INotifyPropertyChanged
     private readonly Func<bool> _restartApp;
     private DispatcherTimer? _restartTimer;
     private int _remainingSeconds;
-    private bool _isDismissing;
 
     public CrashRecoveryView(
         CrashRecoveryPromptOptions options,
@@ -92,20 +91,13 @@ public sealed partial class CrashRecoveryView : ViewBase, INotifyPropertyChanged
 
     private async void Ignore_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (!CanIgnore || _isDismissing)
+        if (!CanIgnore)
             return;
 
-        _isDismissing = true;
         _restartTimer?.Stop();
         await Task.Delay(100).ConfigureAwait(true);
-        var closeResult = await CloseAsync(CrashRecoveryResult.Ignored, ViewCloseReason.User).ConfigureAwait(true);
-        if (closeResult.WasClosed)
-        {
-            WasIgnored = true;
-            Dismissed?.Invoke(this, EventArgs.Empty);
-        }
-        else
-            _isDismissing = false;
+        await CloseAsync(CrashRecoveryResult.Ignored, ViewCloseReason.User).ConfigureAwait(true);
+        Dismissed?.Invoke(this, EventArgs.Empty);
     }
 
     private async void Close_OnClick(object? sender, RoutedEventArgs e)
