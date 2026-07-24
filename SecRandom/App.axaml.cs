@@ -72,6 +72,7 @@ using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
 using MobileResources = SecRandom.Langs.Mobile.Resources;
 using SecRandom.ViewModels;
+using SecRandom.ViewModels.Mobile;
 using SecRandom.ViewModels.MainPages;
 using SecRandom.ViewModels.SettingsPages;
 using SecRandom.ViewModels.SettingsPages.History;
@@ -789,6 +790,7 @@ public partial class App : Application
                 // 杂项 Views
                 if (isMobile)
                 {
+                    services.AddTransient<MobileDrawPageViewModel>();
                     services.AddSingleton<IMobileRootViewReloader>(_ =>
                         new MobileRootViewReloader(ReloadMobileRootViewAsync));
                     services.AddSingleton<IMobileCapabilities, MobileCapabilities>();

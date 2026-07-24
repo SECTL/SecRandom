@@ -21,6 +21,7 @@ SecRandom/
 ├── Views/               # Main shell, settings shell, desktop and mobile pages, windows
 ├── ViewModels/          # App VM state; root holds shell/profile bases
 │   ├── MainPages/       # Page-specific VMs for built-in main pages and floating-window quick draw
+│   ├── Mobile/          # Mobile route ViewModels, including mobile draw state and commands
 │   └── SettingsPages/
 │       └── History/     # History settings VMs (RollCallHistoryViewModel, LotteryHistoryViewModel)
 ├── Services/            # App-only services
@@ -64,6 +65,7 @@ SecRandom/
 | Crash recovery               | `Services/CrashRecovery/`, `Views/CrashRecoveryWindow.axaml(.cs)`, `Langs/CrashRecovery/` | Desktop fatal/dispatcher crash restart, crash report prompt, and feedback issue helpers.                                  |
 | Add main page                | `Views/MainPages/`, `BuildHost()`                                       | `[PageInfo]` + `AddMainPage<T>()`; built-in main navigation includes roll-call, lottery, and history. Quick draw opens from the floating window. |
 | Main page ViewModels         | `ViewModels/MainPages/`                                                 | Page-specific VMs for built-in main pages and floating-window quick draw; XAML compiled bindings must use this namespace. |
+| Mobile draw ViewModel        | `ViewModels/Mobile/MobileDrawPageViewModel.cs`                          | Owns mobile draw state, commands, media orchestration, and dialog/animation requests; the page hosts only Avalonia visuals. |
 | Quick draw localization      | `Langs/MainPages/QuickDraw/`                                            | Floating quick-draw status and command text use their own resource set. |
 | History settings ViewModels  | `ViewModels/SettingsPages/History/`                                     | VMs used by roll-call/lottery history settings pages embedded in settings and main history views.                          |
 | Add settings page            | `Views/SettingsPages/`, `Langs/SettingsPages/`, `App.axaml.cs`          | `[PageInfo]` + localization folder + `AddSettingsPage<T>()`; update title/resource wiring if language refresh is needed. General pages currently include `Basic`, `Privacy`, and `Backup`; v2-parity root entries include floating window, notification, security, linkage, voice, history, update, logs, and more settings. |
@@ -128,6 +130,7 @@ SecRandom/
 - `MusicLibraryService` owns `data/audio/music` and new selection IDs. Student/prize attached music settings can override only animation/result selections; a multi-record draw uses the first drawn record as the music source. Deleting a track clears global and per-record references. Keep SoundFlow types private to `DrawAudioService`; each resolved draw music setting owns `AnimationMusicLoop`, process playback must stop immediately on cancellation/disposal, and transitions to result music without delaying draw results. Mobile builds retain SoundFlow's managed assembly for the shared app but exclude its unused native assets; `IMobileMediaPlayer` owns Android/iOS playback. Legacy absolute paths are read-only compatibility entries; do not create new external-path selections.
 - ViewModels must be registered in Host and inherit `ViewModelBase`; `ViewModelBase` exposes `Config`.
 - Keep shell/profile/base ViewModels in `ViewModels/`; page-specific main ViewModels belong in `ViewModels/MainPages/`, and history settings page ViewModels belong in `ViewModels/SettingsPages/History/`.
+- Mobile route ViewModels belong in `ViewModels/Mobile/`; register them in the mobile branch of `BuildHost()` and keep page code-behind limited to visual-host responsibilities such as dialogs and animations.
 - Use `IAppHost.GetService<T>()` for existing service resolution patterns in views and services.
 - Views usually set `DataContext = this` and expose a `ViewModel` property.
 - Main default page: `main.rollCall`; settings default page: `settings.overview`, which separates aggregate roll-call list statistics from aggregate lottery-pool statistics.
