@@ -12,13 +12,8 @@
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
             <fa:FAInfoBar Severity="Informational" IsOpen="True" IsClosable="False"
-                           Title="{x:Static lv:Resources.C_WitnessNoticeTitle}"
-                           MinHeight="104"
-                           Padding="16 14">
-                <TextBlock Text="{x:Static lv:Resources.M_WitnessModeNotice}"
-                           TextWrapping="Wrap"
-                           LineHeight="20" />
-            </fa:FAInfoBar>
+                          Title="{x:Static lv:Resources.C_WitnessNoticeTitle}"
+                          Message="{x:Static lv:Resources.M_WitnessModeNotice}" />
 
             <fa:FASettingsExpander Header="{x:Static lv:Resources.S_VerificationMode}"
                                     Description="{x:Static lv:Resources.S_VerificationMode_D}"
