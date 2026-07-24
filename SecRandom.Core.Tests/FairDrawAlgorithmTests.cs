@@ -254,6 +254,34 @@ public sealed class FairDrawAlgorithmTests
     }
 
     [Fact]
+    public void StudentVerification_CanIgnoreInternalRules()
+    {
+        var student = new Student { Name = "First", RecordId = Guid.NewGuid() };
+        student.AttachedObjects[Guid.Parse(GlobalConstants.BehindSceneAttachedSettings)] = new BehindSceneAttachedSettings
+        {
+            IsAttachSettingsEnabled = true,
+            Probability = 50
+        };
+        var config = CreateConfig(new FairDrawSettingsConfig());
+        config.RollCallSettings.DrawType = DrawType.Random;
+        config.RollCallSettings.DrawMode = DrawMode.NoRepeat;
+
+        using var host = CreateHost(config, new TestProfileService(new StudentHistory(), new StudentList { Students = [student] }));
+
+        var input = CreateEngine(host).CreateStudentVerificationInput(
+            1,
+            [student],
+            DrawSettingsType.RollCall,
+            courseName: "",
+            includeInternalRules: false);
+
+        Assert.Equal(VerificationAlgorithmProfile.StudentRandomNoRepeat, input.AlgorithmProfile);
+        Assert.Equal(1_000_000, input.Candidates.Single().WeightMicros);
+        using var audit = JsonDocument.Parse(input.AuditPayload);
+        Assert.False(audit.RootElement.GetProperty("internalSettingsApplied").GetBoolean());
+    }
+
+    [Fact]
     public void CountLottery_UsesInventoryPermutationRatherThanPrizeWeights()
     {
         var first = new Prize { Name = "First", RecordId = Guid.NewGuid(), Count = 2, Weight = 100 };
@@ -302,6 +330,35 @@ public sealed class FairDrawAlgorithmTests
         Assert.True(audit.RootElement.GetProperty("internalSettingsApplied").GetBoolean());
         Assert.Equal(0, audit.RootElement.GetProperty("internalCandidateCount").GetInt32());
         Assert.Equal(1, audit.RootElement.GetProperty("internalExcludedCandidateCount").GetInt32());
+    }
+
+    [Fact]
+    public void CountLotteryVerification_CanIgnoreInternalRules()
+    {
+        var blocked = new Prize { Name = "Blocked", RecordId = Guid.NewGuid(), Count = 1 };
+        blocked.AttachedObjects[Guid.Parse(GlobalConstants.BehindSceneAttachedSettings)] = new BehindSceneAttachedSettings
+        {
+            IsAttachSettingsEnabled = true,
+            Probability = 0
+        };
+        var available = new Prize { Name = "Available", RecordId = Guid.NewGuid(), Count = 1 };
+        var config = CreateConfig(new FairDrawSettingsConfig());
+        config.LotterySettings = new LotterySettingsConfig { DrawType = LotteryDrawType.Count };
+
+        using var host = CreateHost(config, new TestProfileService(
+            new StudentHistory(), new StudentList(), new PrizeList { Prizes = [blocked, available] }));
+
+        var input = CreateEngine(host).CreatePrizeVerificationInput(
+            1,
+            new Dictionary<string, int>(),
+            includeInternalRules: false);
+
+        Assert.Equal(VerificationAlgorithmProfile.LotteryInventoryCount, input.AlgorithmProfile);
+        Assert.Equal(2, input.Candidates.Count);
+        Assert.All(input.Candidates, candidate => Assert.Equal(1_000_000, candidate.WeightMicros));
+        using var audit = JsonDocument.Parse(input.AuditPayload);
+        Assert.False(audit.RootElement.GetProperty("internalSettingsApplied").GetBoolean());
+        Assert.Equal(0, audit.RootElement.GetProperty("internalExcludedCandidateCount").GetInt32());
     }
 
     private static MainConfigModel CreateConfig(FairDrawSettingsConfig fairSettings)

@@ -189,7 +189,7 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
             Title = DebugResources.Get("M_InternalSettings_ConfirmTitle"),
             Content = new TextBlock
             {
-                Text = DebugResources.Get("M_InternalSettings"),
+                Text = $"{DebugResources.Get("M_InternalSettings")}{Environment.NewLine}{Environment.NewLine}{DebugResources.Get("M_InternalSettings_FormalNotarization")}",
                 TextWrapping = Avalonia.Media.TextWrapping.Wrap
             },
             PrimaryButtonText = DebugResources.Get("C_Enable"),
