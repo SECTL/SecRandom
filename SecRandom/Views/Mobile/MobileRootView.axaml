@@ -1,15 +1,106 @@
 <local:MobileRootView xmlns="https://github.com/avaloniaui"
-                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                      xmlns:controls="clr-namespace:SecRandom.Controls.Mobile"
-                      xmlns:local="clr-namespace:SecRandom.Views.Mobile"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                       xmlns:local="clr-namespace:SecRandom.Views.Mobile"
+                       xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+                       xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                       xmlns:system="clr-namespace:System;assembly=System.Runtime"
                        x:Class="SecRandom.Views.Mobile.MobileRootView"
-                       Header="{x:Static local:MobileRootView.HeaderText}"
-                       NavigationPage.HasBackButton="False"
-                       Loaded="OnLoaded">
-    <Grid RowDefinitions="*,Auto">
+                        Header="{x:Static local:MobileRootView.HeaderText}"
+                        NavigationPage.HasBackButton="False"
+                        Loaded="OnLoaded">
+    <Grid RowDefinitions="*,Auto,Auto">
         <ContentControl x:Name="PageOutlet"
-                        HorizontalContentAlignment="Stretch"
-                        VerticalContentAlignment="Stretch" />
-        <controls:MobileNavigationBar x:Name="BottomBar" Grid.Row="1" />
+                         HorizontalContentAlignment="Stretch"
+                         VerticalContentAlignment="Stretch" />
+        
+        <Separator Grid.Row="1" />
+        
+        <TabStrip x:Name="BottomNavigation"
+                  Grid.Row="2"
+                  MinHeight="64"
+                  Padding="6,4"
+                  HorizontalAlignment="Stretch"
+                  SelectionChanged="BottomNavigation_OnSelectionChanged">
+            <TabStrip.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Rows="1" Columns="4" />
+                </ItemsPanelTemplate>
+            </TabStrip.ItemsPanel>
+            
+            <TabStrip.Styles>
+                <Style Selector="TabStripItem">
+                    <Setter Property="MinHeight" Value="56" />
+                    <Setter Property="HorizontalAlignment" Value="Stretch" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    
+                    <Setter Property="Template">
+                        <ControlTemplate>
+                            <Border Name="PART_LayoutRoot"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{TemplateBinding CornerRadius}"
+                                    Padding="{TemplateBinding Padding}"
+                                    Background="{Binding $parent[TabStripItem].Background}">
+                                <Panel>
+                                    <ContentPresenter Name="PART_ContentPresenter"
+                                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                      Content="{TemplateBinding Content}"
+                                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      FontFamily="{TemplateBinding FontFamily}"
+                                                      FontSize="{TemplateBinding FontSize}"
+                                                      FontWeight="{TemplateBinding FontWeight}" />
+                                    <Rectangle Name="PART_SelectedPipe"
+                                               Fill="{DynamicResource PivotHeaderItemSelectedPipeFill}"
+                                               RadiusX="2"
+                                               RadiusY="2"
+                                               VerticalAlignment="Top"
+                                               IsVisible="False"
+                                               Height="{DynamicResource TabItemPipeThickness}"
+                                               Margin="0 0 0 2"
+                                               HorizontalAlignment="Stretch"/>
+                                </Panel>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter>
+                    
+                    <Setter Property="ContentTemplate">
+                        <Setter.Value>
+                            <DataTemplate x:DataType="system:String">
+                                <StackPanel Spacing="2" HorizontalAlignment="Center">
+                                    <sr:FluentIcon Glyph="{Binding $parent[TabStripItem].Tag}"
+                                                   FontSize="22"
+                                                   HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+                
+                <Style Selector="TabStripItem:selected">
+                    <Setter Property="ContentTemplate">
+                        <Setter.Value>
+                            <DataTemplate x:DataType="system:String">
+                                <StackPanel Spacing="2" HorizontalAlignment="Center">
+                                    <sr:FluentIcon Glyph="{Binding $parent[TabStripItem].Tag}"
+                                                   FontSize="22"
+                                                   HorizontalAlignment="Center" />
+                                    
+                                    <TextBlock Text="{Binding}"
+                                               FontSize="14"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </TabStrip.Styles>
+            
+            <TabStripItem Content="{x:Static langs:Resources.N_Draw}" Tag="{sr:Fi PeopleFilled}" />
+            <TabStripItem Content="{x:Static langs:Resources.N_History}" Tag="{sr:Fi HistoryFilled}" />
+            <TabStripItem Content="{x:Static langs:Resources.N_Overview}" Tag="{sr:Fi HomeFilled}" />
+            <TabStripItem Content="{x:Static langs:Resources.N_Settings}" Tag="{sr:Fi SettingsFilled}" />
+        </TabStrip>
     </Grid>
 </local:MobileRootView>

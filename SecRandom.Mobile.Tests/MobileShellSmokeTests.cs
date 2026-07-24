@@ -10,7 +10,6 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using FluentAvalonia.Styling;
 using FluentAvalonia.UI.Controls;
-using SecRandom.Core.Icons;
 using SecRandom.Controls.Mobile;
 using SecRandom.Views.Mobile;
 
@@ -43,7 +42,17 @@ public sealed class MobileShellSmokeTests
     [AvaloniaFact]
     public void NativeShellControlsLayoutAtPhoneSize()
     {
-        var navigation = new MobileNavigationBar();
+        var navigation = new TabStrip
+        {
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+            Items =
+            {
+                new TabStripItem { Content = "Draw" },
+                new TabStripItem { Content = "History" },
+                new TabStripItem { Content = "Overview" },
+                new TabStripItem { Content = "Settings" }
+            }
+        };
         var card = new MobileCard
         {
             Content = new TextBlock { Text = "SecRandom" }
@@ -67,15 +76,10 @@ public sealed class MobileShellSmokeTests
         Assert.True(card.Bounds.Width > 0);
         Assert.True(navigation.Bounds.Height >= 56);
 
-        var controls = root.GetVisualDescendants().OfType<Control>().ToList();
-        var destinationItems = controls.OfType<ToggleButton>()
-            .Where(button => button.Tag is MobileDestination)
-            .ToList();
+        var destinationItems = navigation.GetVisualDescendants().OfType<TabStripItem>().ToList();
         Assert.Equal(4, destinationItems.Count);
-        Assert.Single(destinationItems, button => button.IsChecked == true);
-        Assert.All(destinationItems, button => Assert.False(
-            string.IsNullOrWhiteSpace(AutomationProperties.GetName(button))));
-        Assert.Empty(controls.OfType<FAItemsRepeater>());
+        Assert.All(destinationItems, item => Assert.True(item.Bounds.Width > 0));
+        Assert.Empty(root.GetVisualDescendants().OfType<FAItemsRepeater>());
 
         Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
         Dispatcher.UIThread.RunJobs();
@@ -115,45 +119,6 @@ public sealed class MobileShellSmokeTests
         tabs.SelectedIndex = 0;
         Dispatcher.UIThread.RunJobs();
         Assert.Equal(0, selectedIndex);
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void MobileNavigationAutomationTreeCanBeEnumerated()
-    {
-        var navigation = new MobileNavigationBar();
-        var window = new Window
-        {
-            Width = 390,
-            Height = 844,
-            Content = navigation
-        };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        var rootPeer = ControlAutomationPeer.CreatePeerForElement(window);
-        Assert.NotNull(rootPeer);
-        foreach (var destination in Enum.GetValues<MobileDestination>())
-        {
-            navigation.Select(destination);
-            Dispatcher.UIThread.RunJobs();
-            TraverseAutomationTree(rootPeer, []);
-
-            var buttons = navigation.GetVisualDescendants().OfType<ToggleButton>()
-                .Where(button => button.Tag is MobileDestination)
-                .ToList();
-            var selectedButton = Assert.Single(buttons,
-                button => button.IsChecked == true && Equals(button.Tag, destination));
-            var selectedIcon = Assert.IsType<TextBlock>(
-                Assert.IsType<StackPanel>(selectedButton.Content).Children[0]);
-            Assert.Equal(GetFilledGlyph(destination), selectedIcon.Text);
-            Assert.All(buttons.Where(button => !ReferenceEquals(button, selectedButton)), button =>
-            {
-                var icon = Assert.IsType<TextBlock>(Assert.IsType<StackPanel>(button.Content).Children[0]);
-                Assert.Equal(GetRegularGlyph((MobileDestination)button.Tag!), icon.Text);
-            });
-        }
 
         window.Close();
     }
@@ -212,7 +177,14 @@ public sealed class MobileShellSmokeTests
                 Children =
                 {
                     scroll,
-                    new MobileNavigationBar()
+                    new TabStrip
+                    {
+                        Items =
+                        {
+                            new TabStripItem { Content = "Draw" },
+                            new TabStripItem { Content = "History" }
+                        }
+                    }
                 }
             }
         };
@@ -282,24 +254,6 @@ public sealed class MobileShellSmokeTests
         foreach (var child in peer.GetChildren())
             TraverseAutomationTree(child, visited);
     }
-
-    private static string GetFilledGlyph(MobileDestination destination) => destination switch
-    {
-        MobileDestination.Draw => FluentIcons.PeopleFilled,
-        MobileDestination.History => FluentIcons.HistoryFilled,
-        MobileDestination.Overview => FluentIcons.HomeFilled,
-        MobileDestination.Settings => FluentIcons.SettingsFilled,
-        _ => throw new ArgumentOutOfRangeException(nameof(destination))
-    };
-
-    private static string GetRegularGlyph(MobileDestination destination) => destination switch
-    {
-        MobileDestination.Draw => FluentIcons.PeopleRegular,
-        MobileDestination.History => FluentIcons.HistoryRegular,
-        MobileDestination.Overview => FluentIcons.HomeRegular,
-        MobileDestination.Settings => FluentIcons.SettingsRegular,
-        _ => throw new ArgumentOutOfRangeException(nameof(destination))
-    };
 
     private sealed record TableRow(string Id, string Name, string Group);
 }

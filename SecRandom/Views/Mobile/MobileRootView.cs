@@ -6,7 +6,6 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.Logging;
-using SecRandom.Controls.Mobile;
 using SecRandom.Core;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Services.Config;
@@ -22,9 +21,10 @@ public sealed partial class MobileRootView : ViewBase
     private readonly IMobileNavigator _navigator;
     private readonly IMobileSettingsNavigator _settingsNavigator;
     private readonly ILogger<MobileRootView>? _logger;
-    private readonly MobileNavigationBar _bottomBar;
+    private readonly TabStrip _bottomNavigation;
     private readonly ContentControl _pageOutlet;
     private bool _isAdornerAdded;
+    private bool _synchronizingBottomNavigation;
 
     public MobileRootView(MainConfigHandler configHandler, IMobileNavigator navigator,
         IMobileSettingsNavigator settingsNavigator, ILogger<MobileRootView>? logger = null)
@@ -34,9 +34,8 @@ public sealed partial class MobileRootView : ViewBase
         _settingsNavigator = settingsNavigator;
         _logger = logger;
         InitializeComponent();
-        _bottomBar = this.FindControl<MobileNavigationBar>("BottomBar")!;
+        _bottomNavigation = this.FindControl<TabStrip>("BottomNavigation")!;
         _pageOutlet = this.FindControl<ContentControl>("PageOutlet")!;
-        _bottomBar.DestinationSelected += BottomBarOnDestinationSelected;
         _navigator.Attach(_pageOutlet);
         _navigator.DestinationChanged += NavigatorOnDestinationChanged;
         _configHandler.Data.Appearance.PropertyChanged += AppearanceOnPropertyChanged;
@@ -67,21 +66,25 @@ public sealed partial class MobileRootView : ViewBase
         _isAdornerAdded = true;
     }
 
-    private async void BottomBarOnDestinationSelected(object? sender, MobileDestination destination)
+    private async void BottomNavigation_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
+        if (_synchronizingBottomNavigation || e.Source != _bottomNavigation ||
+            !TryGetDestination(_bottomNavigation.SelectedIndex, out var destination))
+            return;
+
         try
         {
             if (destination == MobileDestination.Settings)
             {
                 await _settingsNavigator.OpenAsync();
-                _bottomBar.Select(_navigator.CurrentDestination);
+                SynchronizeBottomNavigation();
                 return;
             }
 
             if (_settingsNavigator.IsOpen)
                 await _settingsNavigator.CloseAsync();
             if (!await _navigator.NavigateRootAsync(destination))
-                _bottomBar.Select(_navigator.CurrentDestination);
+                SynchronizeBottomNavigation();
         }
         catch (Exception exception)
         {
@@ -93,7 +96,7 @@ public sealed partial class MobileRootView : ViewBase
                 CloseButtonText = LR.C_Close,
                 DefaultButton = FAContentDialogButton.Close
             }.ShowAsync(TopLevel.GetTopLevel(this));
-            _bottomBar.Select(_navigator.CurrentDestination);
+            SynchronizeBottomNavigation();
         }
     }
 
@@ -101,7 +104,7 @@ public sealed partial class MobileRootView : ViewBase
 
     private void UpdateDestinationChrome()
     {
-        _bottomBar.Select(_navigator.CurrentDestination);
+        SynchronizeBottomNavigation();
         Header = _navigator.CurrentDestination switch
         {
             MobileDestination.Draw => LR.P_Draw,
@@ -110,6 +113,45 @@ public sealed partial class MobileRootView : ViewBase
             _ => LR.P_Draw
         };
     }
+
+    private void SynchronizeBottomNavigation()
+    {
+        var selectedIndex = GetDestinationIndex(_navigator.CurrentDestination);
+        if (_bottomNavigation.SelectedIndex == selectedIndex)
+            return;
+
+        _synchronizingBottomNavigation = true;
+        try
+        {
+            _bottomNavigation.SelectedIndex = selectedIndex;
+        }
+        finally
+        {
+            _synchronizingBottomNavigation = false;
+        }
+    }
+
+    private static bool TryGetDestination(int selectedIndex, out MobileDestination destination)
+    {
+        destination = selectedIndex switch
+        {
+            0 => MobileDestination.Draw,
+            1 => MobileDestination.History,
+            2 => MobileDestination.Overview,
+            3 => MobileDestination.Settings,
+            _ => default
+        };
+        return selectedIndex is >= 0 and <= 3;
+    }
+
+    private static int GetDestinationIndex(MobileDestination destination) => destination switch
+    {
+        MobileDestination.Draw => 0,
+        MobileDestination.History => 1,
+        MobileDestination.Overview => 2,
+        MobileDestination.Settings => 0,
+        _ => throw new ArgumentOutOfRangeException(nameof(destination))
+    };
 
     private void AppearanceOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
