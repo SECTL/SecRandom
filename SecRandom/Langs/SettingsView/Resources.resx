@@ -171,4 +171,7 @@
     <data name="M_PageNotFound" xml:space="preserve">
         <value>页面 {0} 未找到</value>
     </data>
+    <data name="M_NavigateFailed" xml:space="preserve">
+        <value>导航时出现错误</value>
+    </data>
 </root>

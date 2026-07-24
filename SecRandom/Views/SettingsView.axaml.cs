@@ -1,14 +1,9 @@
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Timers;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -26,6 +21,7 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Extensions;
 using SecRandom.Core.Helpers.UI;
+using SecRandom.Core.Icons;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Logging;
@@ -35,7 +31,6 @@ using SecRandom.Services.Desktop;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Services.ImportExport;
 using SecRandom.Services.Security;
-using SecRandom.Services.Mobile;
 using SecRandom.Shared;
 using SecRandom.ViewModels;
 using SecRandom.Views.Mobile;
@@ -94,6 +89,12 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
     private IExternalLauncher ExternalLauncher => IAppHost.GetService<IExternalLauncher>();
 
     #region Misc
+
+    private void MobileHomeButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var viewEngine = IAppHost.GetService<IViewEngine>();
+        _ =  viewEngine.CloseAsync(MobilePageIds.Settings, ViewCloseReason.Back);
+    }
 
     public static bool SearchFilter(string? search, object? item)
     {
@@ -642,12 +643,20 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
             ViewModel.CanGoBack = true;
         }
 
-        var item = ViewModel.FlattenNavigationItems.FirstOrDefault(item => Equals(item.Tag, info));
-        ViewModel.FrameContent = null;
-        if (updateNavigationSelection)
-            ViewModel.SelectedNavigationViewItem = item;
-        ViewModel.SelectedPageInfo = info;
-        NavigationFrame.NavigateFromObject(info);
+        try
+        {
+            var item = ViewModel.FlattenNavigationItems.FirstOrDefault(item => Equals(item.Tag, info));
+            ViewModel.FrameContent = null;
+            if (updateNavigationSelection)
+                ViewModel.SelectedNavigationViewItem = item;
+            ViewModel.SelectedPageInfo = info;
+            NavigationFrame.NavigateFromObject(info);
+        }
+        catch (Exception e)
+        {
+            _logger?.LogError(e, "Failed navigating to page {PageId}", info.Id);
+            NavigationFrame.NavigateFromObject(e);
+        }
     }
 
     public void SelectNavigationItemById(string id, bool isBack = false)
@@ -768,6 +777,33 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
     public Control? GetPageFromObject(object target)
     {
+        if (target is Exception exception)
+        {
+            return new StackPanel
+            {
+                Spacing = 4,
+                Margin = new Thickness(8),
+                Children =
+                {
+                    new FluentIcon
+                    {
+                        Glyph = FluentIcons.ErrorCircleFilled,
+                        FontSize = 48
+                    },
+                    new TextBlock
+                    {
+                        Text = Langs.SettingsView.Resources.M_NavigateFailed,
+                        HorizontalAlignment = HorizontalAlignment.Center
+                    },
+                    new TextBox
+                    {
+                        IsReadOnly = true,
+                        Text = exception.ToString(),
+                    }
+                }
+            };
+        }
+        
         if (target is not PageInfo info) return null;
 
         var page = IAppHost.Host!.Services.GetKeyedService<UserControl>(info.Id);
@@ -779,10 +815,4 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
     }
 
     #endregion
-
-    private void MobileHomeButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        var viewEngine = IAppHost.GetService<IViewEngine>();
-        _ =  viewEngine.CloseAsync(MobilePageIds.Settings, ViewCloseReason.Back);
-    }
 }

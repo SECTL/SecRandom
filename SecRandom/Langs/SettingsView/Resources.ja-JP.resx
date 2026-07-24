@@ -53,4 +53,7 @@
   <data name="M_ImportFailed" xml:space="preserve"><value>置き換えを完了できず、インポートに失敗しました。</value></data>
   <data name="M_OpenDirectoryFailed" xml:space="preserve"><value>フォルダーを開けませんでした。</value></data>
   <data name="M_PageNotFound" xml:space="preserve"><value>ページ {0} が見つかりません</value></data>
+    <data name="M_NavigateFailed" xml:space="preserve">
+        <value>ナビゲーション中にエラーが発生しました</value>
+    </data>
 </root>
