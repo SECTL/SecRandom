@@ -266,7 +266,6 @@ public partial class App : Application
             _ = host.Services.GetRequiredService<IDrawTemporaryRecordService>();
             _ = host.Services.GetRequiredService<IFeatureAvailabilityService>();
             _ = host.Services.GetRequiredService<DrawEngine>();
-            await host.Services.GetRequiredService<IMobileNavigator>().ResetToDrawAsync().ConfigureAwait(false);
             if (_mobileStopping || !ReferenceEquals(host, _mobileHost))
                 return;
 
@@ -794,7 +793,6 @@ public partial class App : Application
                     services.AddSingleton<IMobileRootViewReloader>(_ =>
                         new MobileRootViewReloader(ReloadMobileRootViewAsync));
                     services.AddSingleton<IMobileCapabilities, MobileCapabilities>();
-                    services.AddSingleton<IMobileNavigator, MobileNavigator>();
                     services.AddSingleton<IMobileSettingsNavigator, MobileSettingsNavigator>();
                     services.AddSingleton<CrashRecoveryViewState>();
                     services.AddTransient<CrashRecoveryView>();

@@ -1,8 +1,6 @@
 using System.Reflection;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
-using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Services;
@@ -24,33 +22,6 @@ public sealed class MobileDrawPageTests : IDisposable
         ConfigureDataRootForTests(_dataRoot);
     }
 
-    [AvaloniaFact]
-    public async Task RootNavigation_InitializesDrawAndOverviewPages()
-    {
-        using var provider = CreateProvider();
-        var navigator = provider.GetRequiredService<IMobileNavigator>();
-        var outlet = new ContentControl();
-        var window = new Window
-        {
-            Width = 390,
-            Height = 844,
-            Content = outlet
-        };
-        window.Show();
-        navigator.Attach(outlet);
-
-        Assert.True(await navigator.NavigateRootAsync(MobileDestination.Draw));
-        Dispatcher.UIThread.RunJobs();
-        var drawPage = Assert.IsType<MobileDrawPage>(outlet.Content);
-        Assert.NotNull(drawPage.FindControl<TabStrip>("DrawSurfaceTabs"));
-        Assert.Equal(0, drawPage.FindControl<Carousel>("DrawSurfaceCarousel")!.SelectedIndex);
-
-        Assert.True(await navigator.NavigateRootAsync(MobileDestination.Overview));
-        var overviewPage = Assert.IsType<MobileOverviewPage>(outlet.Content);
-        Assert.NotNull(overviewPage.FindControl<TextBlock>("StudentMetricValue"));
-        window.Close();
-    }
-
     public void Dispose()
     {
         ResetDataRootForTests();
@@ -69,7 +40,6 @@ public sealed class MobileDrawPageTests : IDisposable
         services.AddSingleton<MobileDrawMediaService>();
         services.AddSingleton<IMobileCapabilities, TestCapabilities>();
         services.AddSingleton<IMobileSettingsNavigator, TestSettingsNavigator>();
-        services.AddSingleton<IMobileNavigator, MobileNavigator>();
         services.AddTransient<MobileDrawPageViewModel>();
         services.AddKeyedTransient<UserControl, MobileDrawPage>(MobilePageIds.Draw);
         services.AddKeyedTransient<UserControl, MobileHistoryPage>(MobilePageIds.History);

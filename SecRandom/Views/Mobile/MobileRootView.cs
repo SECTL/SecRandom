@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using FluentAvalonia.UI.Controls;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Controls;
@@ -15,41 +16,50 @@ using LR = SecRandom.Langs.Mobile.Resources;
 
 namespace SecRandom.Views.Mobile;
 
-public sealed partial class MobileRootView : ViewBase
+public sealed partial class MobileRootView : ViewBase, IFANavigationPageFactory
 {
     private readonly MainConfigHandler _configHandler;
-    private readonly IMobileNavigator _navigator;
+    private readonly IServiceProvider _services;
     private readonly IMobileSettingsNavigator _settingsNavigator;
     private readonly ILogger<MobileRootView>? _logger;
     private readonly TabStrip _bottomNavigation;
-    private readonly ContentControl _pageOutlet;
+    private readonly FAFrame _pageOutlet;
     private bool _isAdornerAdded;
     private bool _synchronizingBottomNavigation;
+    private MobileDestination _destination = MobileDestination.Draw;
 
-    public MobileRootView(MainConfigHandler configHandler, IMobileNavigator navigator,
+    public MobileRootView(MainConfigHandler configHandler, IServiceProvider services,
         IMobileSettingsNavigator settingsNavigator, ILogger<MobileRootView>? logger = null)
     {
         _configHandler = configHandler;
-        _navigator = navigator;
+        _services = services;
         _settingsNavigator = settingsNavigator;
         _logger = logger;
         InitializeComponent();
-        _bottomNavigation = this.FindControl<TabStrip>("BottomNavigation")!;
-        _pageOutlet = this.FindControl<ContentControl>("PageOutlet")!;
-        _navigator.Attach(_pageOutlet);
-        _navigator.DestinationChanged += NavigatorOnDestinationChanged;
+        _bottomNavigation = this.FindControl<TabStrip>(@"BottomNavigation")!;
+        _pageOutlet = this.FindControl<FAFrame>(@"PageOutlet")!;
+        _pageOutlet.NavigationPageFactory = this;
         _configHandler.Data.Appearance.PropertyChanged += AppearanceOnPropertyChanged;
         Closed += (_, _) =>
         {
-            _navigator.DestinationChanged -= NavigatorOnDestinationChanged;
-            _navigator.Detach(_pageOutlet);
             _configHandler.Data.Appearance.PropertyChanged -= AppearanceOnPropertyChanged;
         };
         ApplyTheme();
+        NavigateRoot(MobileDestination.Draw);
         UpdateDestinationChrome();
     }
 
     public static string HeaderText => LR.P_Draw;
+
+    public Control? GetPage(Type srcType) => Activator.CreateInstance(srcType) as Control;
+
+    public Control? GetPageFromObject(object target)
+    {
+        if (target is not string pageId)
+            return null;
+
+        return _services.GetKeyedService<UserControl>(pageId);
+    }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
@@ -83,7 +93,7 @@ public sealed partial class MobileRootView : ViewBase
 
             if (_settingsNavigator.IsOpen)
                 await _settingsNavigator.CloseAsync();
-            if (!await _navigator.NavigateRootAsync(destination))
+            if (!NavigateRoot(destination))
                 SynchronizeBottomNavigation();
         }
         catch (Exception exception)
@@ -100,12 +110,10 @@ public sealed partial class MobileRootView : ViewBase
         }
     }
 
-    private void NavigatorOnDestinationChanged(object? sender, EventArgs e) => UpdateDestinationChrome();
-
     private void UpdateDestinationChrome()
     {
         SynchronizeBottomNavigation();
-        Header = _navigator.CurrentDestination switch
+        Header = _destination switch
         {
             MobileDestination.Draw => LR.P_Draw,
             MobileDestination.History => LR.P_History,
@@ -116,7 +124,7 @@ public sealed partial class MobileRootView : ViewBase
 
     private void SynchronizeBottomNavigation()
     {
-        var selectedIndex = GetDestinationIndex(_navigator.CurrentDestination);
+        var selectedIndex = GetDestinationIndex(_destination);
         if (_bottomNavigation.SelectedIndex == selectedIndex)
             return;
 
@@ -153,6 +161,25 @@ public sealed partial class MobileRootView : ViewBase
         _ => throw new ArgumentOutOfRangeException(nameof(destination))
     };
 
+    private bool NavigateRoot(MobileDestination destination)
+    {
+        if (destination == MobileDestination.Settings)
+            return false;
+
+        _destination = destination;
+        _pageOutlet.NavigateFromObject(GetRootPageId(destination));
+        UpdateDestinationChrome();
+        return true;
+    }
+
+    private static string GetRootPageId(MobileDestination destination) => destination switch
+    {
+        MobileDestination.Draw => MobilePageIds.Draw,
+        MobileDestination.History => MobilePageIds.History,
+        MobileDestination.Overview => MobilePageIds.Overview,
+        _ => throw new ArgumentOutOfRangeException(nameof(destination))
+    };
+
     private void AppearanceOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(_configHandler.Data.Appearance.Theme))
@@ -163,8 +190,8 @@ public sealed partial class MobileRootView : ViewBase
     {
         Application.Current!.RequestedThemeVariant = _configHandler.Data.Appearance.Theme switch
         {
-            SecRandom.Core.Enums.Configs.ThemeMode.Light => Avalonia.Styling.ThemeVariant.Light,
-            SecRandom.Core.Enums.Configs.ThemeMode.Dark => Avalonia.Styling.ThemeVariant.Dark,
+            Core.Enums.Configs.ThemeMode.Light => Avalonia.Styling.ThemeVariant.Light,
+            Core.Enums.Configs.ThemeMode.Dark => Avalonia.Styling.ThemeVariant.Dark,
             _ => Avalonia.Styling.ThemeVariant.Default
         };
     }

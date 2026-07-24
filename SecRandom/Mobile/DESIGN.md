@@ -30,7 +30,7 @@ This is an Android/iOS SingleView application built by the shared `SecRandom.App
 
 ## Implementation Practices
 
-- `MobileViewHost` owns the one `NavigationPage`; it presents `MobileRootView` and independent MVE pages. `MobileRootView` owns the bottom navigation and displays the regular draw/history/overview keyed `UserControl` routes directly.
+- `MobileViewHost` owns the one `NavigationPage`; it presents `MobileRootView` and independent MVE pages. `MobileRootView` owns the bottom navigation and navigates its history-disabled, uncached `FAFrame` to the regular draw/history/overview keyed `UserControl` routes.
 - `settings.mobile` is a hidden mobile-only catalog generated from registered mobile groups/pages. `SettingsView` is an independent MVE page and currently reuses the desktop settings layout, starting at that catalog.
 - Profile mutations save through `IProfileCatalogManager` / `IProfileService`; draws record both persistent history and temporary records. Multi-member mobile point-call orchestration stays in `MobileRollCallService` and composes the existing Core filtering, sampling, and commit services without changing the Core session contract.
 - The `LotteryEnabled` Core capability remains the only decision for whether the lottery segment can be selected.

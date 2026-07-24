@@ -1,17 +1,21 @@
-<local:MobileRootView xmlns="https://github.com/avaloniaui"
-                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                       xmlns:local="clr-namespace:SecRandom.Views.Mobile"
-                       xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
-                       xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-                       xmlns:system="clr-namespace:System;assembly=System.Runtime"
-                       x:Class="SecRandom.Views.Mobile.MobileRootView"
-                        Header="{x:Static local:MobileRootView.HeaderText}"
-                        NavigationPage.HasBackButton="False"
-                        Loaded="OnLoaded">
+<views:ViewBase xmlns="https://github.com/avaloniaui"
+          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+          xmlns:local="clr-namespace:SecRandom.Views.Mobile"
+          xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+          xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+          xmlns:fa="using:FluentAvalonia.UI.Controls"
+          xmlns:system="clr-namespace:System;assembly=System.Runtime"
+          xmlns:views="clr-namespace:SecRandom.Core.Views;assembly=SecRandom.Core"
+          x:Class="SecRandom.Views.Mobile.MobileRootView"
+          Header="{x:Static local:MobileRootView.HeaderText}"
+          NavigationPage.HasBackButton="False"
+          Loaded="OnLoaded">
     <Grid RowDefinitions="*,Auto,Auto">
-        <ContentControl x:Name="PageOutlet"
-                         HorizontalContentAlignment="Stretch"
-                         VerticalContentAlignment="Stretch" />
+        <fa:FAFrame x:Name="PageOutlet"
+                    IsNavigationStackEnabled="False"
+                    CacheSize="0"
+                    HorizontalContentAlignment="Stretch"
+                    VerticalContentAlignment="Stretch" />
         
         <Separator Grid.Row="1" />
         
@@ -103,4 +107,4 @@
             <TabStripItem Content="{x:Static langs:Resources.N_Settings}" Tag="{sr:Fi SettingsFilled}" />
         </TabStrip>
     </Grid>
-</local:MobileRootView>
+</views:ViewBase>
