@@ -20,7 +20,19 @@ public partial class DrawEngine
         int count,
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType,
-        string courseName = "")
+        string courseName = "") => CreateStudentVerificationInput(
+        count,
+        candidates,
+        drawSettingsType,
+        courseName,
+        includeInternalRules: true);
+
+    public VerificationDrawInput CreateStudentVerificationInput(
+        int count,
+        IReadOnlyCollection<Student> candidates,
+        DrawSettingsType drawSettingsType,
+        string courseName,
+        bool includeInternalRules)
     {
         var preparedCandidates = candidates.Where(student => student.IsCandidate).ToList();
         if (preparedCandidates.Count == 0 || count <= 0 || count > preparedCandidates.Count)
@@ -39,10 +51,11 @@ public partial class DrawEngine
             throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.", exception);
         }
 
-        var frozen = FreezeCandidates(prepared.WeightedCandidates);
+        var frozen = FreezeCandidates(prepared.WeightedCandidates, includeInternalRules);
         if (count > frozen.Count)
             throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.");
-        var hasInternalRules = prepared.WeightedCandidates.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
+        var hasInternalRules = includeInternalRules
+                               && prepared.WeightedCandidates.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
         var algorithmProfile = GetStudentAlgorithmProfile(drawType, drawMode, hasInternalRules);
         return new VerificationDrawInput
         {
@@ -53,7 +66,7 @@ public partial class DrawEngine
             AlgorithmProfile = algorithmProfile,
             Count = count,
             Candidates = frozen,
-            AuditPayload = CreateAuditPayload("student", count, frozen, prepared.WeightedCandidates, prepared.HistoryCache, new
+            AuditPayload = CreateAuditPayload("student", count, frozen, prepared.WeightedCandidates, prepared.HistoryCache, includeInternalRules, new
             {
                 fairDraw = drawType == DrawType.Fair,
                 algorithmProfile = algorithmProfile.ToString(),
@@ -71,7 +84,15 @@ public partial class DrawEngine
     /// </summary>
     public VerificationDrawInput CreatePrizeVerificationInput(
         int count,
-        IReadOnlyDictionary<string, int> temporaryCounts)
+        IReadOnlyDictionary<string, int> temporaryCounts) => CreatePrizeVerificationInput(
+        count,
+        temporaryCounts,
+        includeInternalRules: true);
+
+    public VerificationDrawInput CreatePrizeVerificationInput(
+        int count,
+        IReadOnlyDictionary<string, int> temporaryCounts,
+        bool includeInternalRules)
     {
         var historyCache = BuildPrizeTemporaryHistoryCache(PrizeList.Prizes, temporaryCounts);
         var usable = FilterPrizes(_ => true, count, historyCache);
@@ -79,10 +100,11 @@ public partial class DrawEngine
         if (count <= 0 || count > weighted.Count)
             throw new InvalidOperationException("The prepared prize pool cannot satisfy this draw.");
 
-        var frozen = FreezeCandidates(weighted);
+        var frozen = FreezeCandidates(weighted, includeInternalRules);
         if (count > frozen.Count)
             throw new InvalidOperationException("The prepared prize pool cannot satisfy this draw.");
-        var hasInternalRules = weighted.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
+        var hasInternalRules = includeInternalRules
+                               && weighted.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
         var lotteryDrawType = ConfigData.LotterySettings.DrawType;
         var lotteryDrawMode = ConfigData.LotterySettings.DrawMode;
         var samplingMode = lotteryDrawType == LotteryDrawType.Count && !hasInternalRules
@@ -95,7 +117,7 @@ public partial class DrawEngine
             AlgorithmProfile = GetLotteryAlgorithmProfile(lotteryDrawType, lotteryDrawMode, hasInternalRules),
             Count = count,
             Candidates = frozen,
-            AuditPayload = CreateAuditPayload("prize", count, frozen, weighted, historyCache, new
+            AuditPayload = CreateAuditPayload("prize", count, frozen, weighted, historyCache, includeInternalRules, new
             {
                 samplingAlgorithm = samplingMode == VerificationSamplingMode.InventoryPermutation
                     ? "inventory-partial-permutation"
@@ -177,7 +199,8 @@ public partial class DrawEngine
     };
 
     private static IReadOnlyList<VerificationCandidate> FreezeCandidates<TCandidate>(
-        IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates)
+        IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates,
+        bool includeInternalRules)
         where TCandidate : IAttachableSettingsObject
     {
         Dictionary<Guid, uint> occurrences = [];
@@ -189,7 +212,7 @@ public partial class DrawEngine
             var occurrence = occurrences.GetValueOrDefault(recordId);
             occurrences[recordId] = checked(occurrence + 1);
 
-            var settings = GetBehindSceneSettings(weighted.Candidate);
+            var settings = includeInternalRules ? GetBehindSceneSettings(weighted.Candidate) : null;
             var probability = settings is { IsAttachSettingsEnabled: true }
                 ? Math.Clamp(settings.Probability, 0d, 100d)
                 : 100d;
@@ -251,6 +274,7 @@ public partial class DrawEngine
         IReadOnlyList<VerificationCandidate> candidates,
         IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates,
         IReadOnlyDictionary<TCandidate, History> historyCache,
+        bool includeInternalRules,
         object? fairness = null)
         where TCandidate : IAttachableSettingsObject
     {
@@ -260,7 +284,7 @@ public partial class DrawEngine
         foreach (var weighted in weightedCandidates)
         {
             var recordId = GetRecordId(weighted.Candidate);
-            var settings = GetBehindSceneSettings(weighted.Candidate);
+            var settings = includeInternalRules ? GetBehindSceneSettings(weighted.Candidate) : null;
             if (settings is not { IsAttachSettingsEnabled: true })
             {
                 internalSettingsByRecordId[recordId] = null;

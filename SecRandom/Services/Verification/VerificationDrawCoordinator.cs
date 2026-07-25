@@ -36,8 +36,10 @@ public sealed class VerificationDrawCoordinator(
         string courseName = "",
         CancellationToken cancellationToken = default)
     {
-        var input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName);
-        return DrawAsync(input, candidates, exportContext, parentProofId, cancellationToken);
+        var verificationMode = configHandler.Data.General.Verification.Mode;
+        var includeInternalRules = verificationMode != VerificationMode.FormalNotarized;
+        var input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName, includeInternalRules);
+        return DrawAsync(input, candidates, exportContext, parentProofId, verificationMode, cancellationToken);
     }
 
     public Task<VerificationDrawOutcome<Prize>> DrawPrizesAsync(
@@ -47,8 +49,10 @@ public sealed class VerificationDrawCoordinator(
         DrawProofExportContext exportContext,
         CancellationToken cancellationToken = default)
     {
-        var input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts);
-        return DrawAsync(input, prizes, exportContext, null, cancellationToken);
+        var verificationMode = configHandler.Data.General.Verification.Mode;
+        var includeInternalRules = verificationMode != VerificationMode.FormalNotarized;
+        var input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts, includeInternalRules);
+        return DrawAsync(input, prizes, exportContext, null, verificationMode, cancellationToken);
     }
 
     private async Task<VerificationDrawOutcome<TCandidate>> DrawAsync<TCandidate>(
@@ -56,6 +60,7 @@ public sealed class VerificationDrawCoordinator(
         IReadOnlyCollection<TCandidate> records,
         DrawProofExportContext exportContext,
         Guid? parentProofId,
+        VerificationMode verificationMode,
         CancellationToken cancellationToken)
         where TCandidate : class
     {
@@ -64,7 +69,7 @@ public sealed class VerificationDrawCoordinator(
         var inputHash = VerificationWireCodec.ComputeInputHash(input);
         DrawProof proof;
         VerificationKernelResult result;
-        if (configHandler.Data.General.Verification.Mode == VerificationMode.FormalNotarized)
+        if (verificationMode == VerificationMode.FormalNotarized)
         {
             var request = new FormalNotarizationRequest
             {

@@ -28,6 +28,9 @@ public sealed class PluginDrawInvoker(
 {
     public async Task<PluginDrawResult> DrawStudentsAsync(PluginStudentDrawRequest request)
     {
+        if (IsFormalNotarizationEnabled())
+            return RejectFormalNotarizationDraw("student");
+
         PluginDrawResult? response = null;
         await linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.RollCallStart, () =>
         {
@@ -68,6 +71,9 @@ public sealed class PluginDrawInvoker(
 
     public async Task<PluginDrawResult> DrawPrizesAsync(PluginPrizeDrawRequest request)
     {
+        if (IsFormalNotarizationEnabled())
+            return RejectFormalNotarizationDraw("prize");
+
         if (!featureAvailability.IsLotteryEnabled)
         {
             logger.LogInformation("Plugin draw rejected because lottery is disabled: plugin={PluginId}.", pluginId);
@@ -117,5 +123,17 @@ public sealed class PluginDrawInvoker(
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         return request.IncludeTags.All(tagSet.Contains) && !request.ExcludeTags.Any(tagSet.Contains);
+    }
+
+    private bool IsFormalNotarizationEnabled() =>
+        configHandler.Data.General.Verification.Mode == VerificationMode.FormalNotarized;
+
+    private PluginDrawResult RejectFormalNotarizationDraw(string drawType)
+    {
+        logger.LogInformation(
+            "Plugin draw rejected because formal notarization does not support plugin draws: plugin={PluginId}, type={DrawType}.",
+            pluginId,
+            drawType);
+        return new PluginDrawResult { Status = "FormalNotarizationUnsupported", ResultCount = 0 };
     }
 }

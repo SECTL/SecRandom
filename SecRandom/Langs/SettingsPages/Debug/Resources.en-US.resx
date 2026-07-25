@@ -84,9 +84,12 @@
   <data name="M_InternalSettings" xml:space="preserve">
     <value>Insider settings are now shown in the attached-settings menu for each member or prize on the list-management pages. This is active only for the current run and is hidden after restart.
 
-Insider settings affect candidate weights and are not suitable for draws that need to be fair, public, or auditable. If a person with insider settings is selected, uploading the verification file may show a related notice and reveal that the settings were used.
+Insider settings affect candidate weights and are not suitable for draws that need to be fair, public, or auditable. In ordinary verification mode, if a person with insider settings is selected, uploading the verification file may show a related notice and reveal that the settings were used.
 
 Insider settings have lower priority than fair-draw rules. Selecting a member or prize with these settings does not guarantee a future selection.</value>
+  </data>
+  <data name="M_InternalSettings_FormalNotarization" xml:space="preserve">
+    <value>Formal notarization ignores insider settings. Even when enabled, a formal notarized draw uses a candidate pool and weights without insider settings.</value>
   </data>
   <data name="C_Enable" xml:space="preserve">
     <value>Enable</value>

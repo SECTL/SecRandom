@@ -42,7 +42,8 @@
   <data name="C_Show" xml:space="preserve"><value>显示</value></data>
   <data name="C_Cancel" xml:space="preserve"><value>取消</value></data>
   <data name="M_InternalSettings_ConfirmTitle" xml:space="preserve"><value>启用内幕设置？</value></data>
-  <data name="M_InternalSettings" xml:space="preserve"><value>已在名单管理页面每位成员或奖品右侧的“附加设置”菜单中显示“内幕设置”。此显示仅对本次运行有效，重新启动软件后会自动隐藏。&#xA;&#xA;内幕设置会影响候选项权重，不适用于需要公平、公开或可审计的公开活动抽取。启用内幕设置的人员若被抽中，可验证文件上传至验证网站时会显示相应提醒；这可能使设置行为被发现。&#xA;&#xA;内幕设置的优先级低于公平抽取规则。已设置内幕的成员或奖品即使本次被抽中，也不代表下次一定会被抽中。</value></data>
+  <data name="M_InternalSettings" xml:space="preserve"><value>已在名单管理页面每位成员或奖品右侧的“附加设置”菜单中显示“内幕设置”。此显示仅对本次运行有效，重新启动软件后会自动隐藏。&#xA;&#xA;内幕设置会影响候选项权重，不适用于需要公平、公开或可审计的公开活动抽取。在普通验证模式下，启用内幕设置的人员若被抽中，可验证文件上传至验证网站时会显示相应提醒；这可能使设置行为被发现。&#xA;&#xA;内幕设置的优先级低于公平抽取规则。已设置内幕的成员或奖品即使本次被抽中，也不代表下次一定会被抽中。</value></data>
+  <data name="M_InternalSettings_FormalNotarization" xml:space="preserve"><value>正式公证模式不会纳入内幕设置；即使已启用，本次正式公证仍会按不含内幕设置的候选池和权重执行。</value></data>
   <data name="C_Enable" xml:space="preserve"><value>启用</value></data>
   <data name="C_CurrentVersion" xml:space="preserve"><value>当前版本</value></data>
   <data name="C_UpdateChannel" xml:space="preserve"><value>更新通道</value></data>
