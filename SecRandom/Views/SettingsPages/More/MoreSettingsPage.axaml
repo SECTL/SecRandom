@@ -168,7 +168,8 @@
             <fa:FASettingsExpander x:Name="S_Shortcut_Card"
                                     Header="{x:Static lsp:Resources.S_Shortcut}"
                                     Description="{x:Static lsp:Resources.S_Shortcut_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi KeyboardFilled}}">
+                                    IconSource="{sr:FluentIconSource {sr:Fi KeyboardFilled}}"
+                                    IsExpanded="{Binding Settings.EnableShortcut, Mode=OneWay}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.EnableShortcut}" />
                 </fa:FASettingsExpander.Footer>

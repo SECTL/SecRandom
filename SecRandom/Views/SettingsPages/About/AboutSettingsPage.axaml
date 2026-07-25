@@ -242,7 +242,7 @@
 
                 <fa:FASettingsExpanderItem Content="{x:Static lsa:Resources.S_Ack_Contributors}"
                                            Description="{x:Static lsa:Resources.S_Ack_Contributors_D}"
-                                           IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}"
+                                           IsClickEnabled="True"
                                            Click="Contributors_OnClick" />
             </fa:FASettingsExpander>
         </StackPanel>

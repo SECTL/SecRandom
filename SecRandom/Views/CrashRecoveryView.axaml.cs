@@ -96,6 +96,7 @@ public sealed partial class CrashRecoveryView : ViewBase, INotifyPropertyChanged
 
         _restartTimer?.Stop();
         await Task.Delay(100).ConfigureAwait(true);
+        WasIgnored = true;
         await CloseAsync(CrashRecoveryResult.Ignored, ViewCloseReason.User).ConfigureAwait(true);
         Dismissed?.Invoke(this, EventArgs.Empty);
     }

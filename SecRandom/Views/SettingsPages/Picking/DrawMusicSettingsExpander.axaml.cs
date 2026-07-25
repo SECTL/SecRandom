@@ -1,20 +1,21 @@
 ﻿using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
+using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Services.Music;
 
 namespace SecRandom.Views.SettingsPages.Picking;
 
-public partial class DrawMusicSettingsContent : UserControl
+public partial class DrawMusicSettingsExpander : FASettingsExpander
 {
     public static readonly StyledProperty<DrawSettingsConfigBase?> SettingsProperty =
-        AvaloniaProperty.Register<DrawMusicSettingsContent, DrawSettingsConfigBase?>(nameof(Settings));
+        AvaloniaProperty.Register<DrawMusicSettingsExpander, DrawSettingsConfigBase?>(nameof(Settings));
 
     public static readonly StyledProperty<ObservableCollection<MusicSelection>?> MusicSelectionsProperty =
-        AvaloniaProperty.Register<DrawMusicSettingsContent, ObservableCollection<MusicSelection>?>(nameof(MusicSelections));
+        AvaloniaProperty.Register<DrawMusicSettingsExpander, ObservableCollection<MusicSelection>?>(nameof(MusicSelections));
 
-    public DrawMusicSettingsContent()
+    public DrawMusicSettingsExpander()
     {
         InitializeComponent();
     }

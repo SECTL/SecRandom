@@ -82,8 +82,7 @@
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.C_ForceCheckUpdates}"
                                            Description="{x:Static lsp:Resources.C_ForceCheckUpdates_D}"
                                            IsClickEnabled="True"
-                                           Click="ForceCheckForUpdates"
-                                           ActionIconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}" />
+                                           Click="ForceCheckForUpdates" />
             </fa:FASettingsExpander>
         </StackPanel>
     </ScrollViewer>

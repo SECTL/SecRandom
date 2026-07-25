@@ -19,25 +19,35 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <TextBlock Text="{x:Static lm:Resources.M_Empty}" IsVisible="{Binding IsEmpty}" Margin="0 16" HorizontalAlignment="Center" Opacity="0.7" />
-            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1" CornerRadius="4" IsVisible="{Binding HasTracks}">
-                <DataGrid AutoGenerateColumns="False" CanUserSortColumns="False" IsReadOnly="True" ItemsSource="{Binding Library.Tracks}" GridLinesVisibility="Horizontal">
+            <TextBlock Text="{x:Static lm:Resources.M_Empty}" IsVisible="{Binding IsEmpty}" Margin="0 16"
+                       HorizontalAlignment="Center" Opacity="0.7" />
+            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1"
+                    CornerRadius="4 4 0 0" IsVisible="{Binding HasTracks}">
+                <DataGrid AutoGenerateColumns="False" CanUserSortColumns="False" IsReadOnly="True"
+                          ItemsSource="{Binding Library.Tracks}" GridLinesVisibility="Horizontal">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Width="3*" Header="{x:Static lm:Resources.C_FileName}" Binding="{Binding DisplayName}" />
-                        <DataGridTextColumn Width="*" Header="{x:Static lm:Resources.C_Format}" Binding="{Binding Format}" />
+                        <DataGridTextColumn Width="3*" Header="{x:Static lm:Resources.C_FileName}"
+                                            Binding="{Binding DisplayName}" />
+                        <DataGridTextColumn Width="*" Header="{x:Static lm:Resources.C_Format}"
+                                            Binding="{Binding Format}" />
                         <DataGridTextColumn Width="*" Header="{x:Static lm:Resources.C_Size}" Binding="{Binding Size}" />
                         <DataGridTemplateColumn Header="{x:Static lm:Resources.C_Operations}">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
-                                        <Button Theme="{StaticResource TransparentButton}" Click="Preview_OnClick" CommandParameter="{Binding}">
-                                            <sr:IconText Text="{x:Static lm:Resources.C_Preview}" Glyph="{sr:Fi PlayFilled}" />
+                                        <Button Theme="{StaticResource TransparentButton}" Click="Preview_OnClick"
+                                                CommandParameter="{Binding}">
+                                            <sr:IconText Text="{x:Static lm:Resources.C_Preview}"
+                                                         Glyph="{sr:Fi PlayFilled}" />
                                         </Button>
                                         <Button Theme="{StaticResource TransparentButton}" Click="StopPreview_OnClick">
-                                            <sr:IconText Text="{x:Static lm:Resources.C_Stop}" Glyph="{sr:Fi DismissCircleFilled}" />
+                                            <sr:IconText Text="{x:Static lm:Resources.C_Stop}"
+                                                         Glyph="{sr:Fi DismissCircleFilled}" />
                                         </Button>
-                                        <Button Theme="{StaticResource TransparentButton}" Foreground="Red" Click="Delete_OnClick" CommandParameter="{Binding}">
-                                            <sr:IconText Text="{x:Static lm:Resources.C_Delete}" Glyph="{sr:Fi DeleteFilled}" />
+                                        <Button Theme="{StaticResource TransparentButton}" Foreground="Red"
+                                                Click="Delete_OnClick" CommandParameter="{Binding}">
+                                            <sr:IconText Text="{x:Static lm:Resources.C_Delete}"
+                                                         Glyph="{sr:Fi DeleteFilled}" />
                                         </Button>
                                     </StackPanel>
                                 </DataTemplate>

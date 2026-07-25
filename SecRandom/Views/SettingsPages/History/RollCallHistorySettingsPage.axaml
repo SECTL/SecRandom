@@ -37,7 +37,8 @@
 
         <Border Grid.Row="1"
                 BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                BorderThickness="1" CornerRadius="4" ClipToBounds="True">
+                BorderThickness="1"
+                CornerRadius="4 4 0 0" ClipToBounds="True">
             <DataGrid x:Name="HistoryGrid"
                       AutoGenerateColumns="False"
                       CanUserSortColumns="True"

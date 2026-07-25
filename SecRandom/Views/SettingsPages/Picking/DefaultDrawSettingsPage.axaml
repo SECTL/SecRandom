@@ -185,9 +185,12 @@
 
             <Separator Margin="0 12 0 4" />
             <sr:IconText Text="{x:Static lp:Resources.Section_Music}" Glyph="{sr:Fi Speaker2Filled}" Margin="0 0 0 4" />
-            <fa:FASettingsExpander Header="{x:Static lp:Resources.Section_Music}" Description="{x:Static lp:Resources.Section_Music}" IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}">
-                <local:DrawMusicSettingsContent Settings="{Binding Settings}" MusicSelections="{Binding MusicSelections}" />
-            </fa:FASettingsExpander>
+            <local:DrawMusicSettingsExpander Header="{x:Static lp:Resources.Section_Music}"
+                                             Description="{x:Static lp:Resources.Section_Music}"
+                                             IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}"
+                                             IsExpanded="True"
+                                             Settings="{Binding Settings}"
+                                             MusicSelections="{Binding MusicSelections}" />
 
             <Separator Margin="0 12 0 4" />
             <sr:IconText Text="{x:Static lp:Resources.Section_VoiceAnnouncement}" Glyph="{sr:Fi PersonVoiceFilled}" Margin="0 0 0 4" />

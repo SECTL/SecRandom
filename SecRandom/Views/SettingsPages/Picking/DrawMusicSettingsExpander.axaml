@@ -1,0 +1,123 @@
+﻿<fa:FASettingsExpander xmlns="https://github.com/avaloniaui"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                       xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+                       xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Picking"
+                       xmlns:lp="clr-namespace:SecRandom.Langs.SettingsPages.Picking"
+                       xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                       xmlns:music="clr-namespace:SecRandom.Services.Music"
+                       x:Class="SecRandom.Views.SettingsPages.Picking.DrawMusicSettingsExpander"
+                       x:Name="Root"
+                       Theme="{DynamicResource {x:Type fa:FASettingsExpander}}">
+    <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationMusic}"
+                               Description="{x:Static lp:Resources.S_AnimationMusic_D}">
+        <fa:FASettingsExpanderItem.Footer>
+            <ComboBox Width="220"
+                      ItemsSource="{Binding #Root.MusicSelections}"
+                      SelectedValue="{Binding #Root.Settings.AnimationMusic, Mode=TwoWay}"
+                      SelectedValueBinding="{Binding Id, x:DataType=music:MusicSelection}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="music:MusicSelection">
+                        <TextBlock MaxWidth="184" Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="{Binding DisplayName}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </fa:FASettingsExpanderItem.Footer>
+    </fa:FASettingsExpanderItem>
+
+    <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultMusic}"
+                               Description="{x:Static lp:Resources.S_ResultMusic_D}">
+        <fa:FASettingsExpanderItem.Footer>
+            <ComboBox Width="220" HorizontalAlignment="Right"
+                      ItemsSource="{Binding #Root.MusicSelections}"
+                      SelectedValue="{Binding #Root.Settings.ResultMusic, Mode=TwoWay}"
+                      SelectedValueBinding="{Binding Id, x:DataType=music:MusicSelection}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="music:MusicSelection">
+                        <TextBlock MaxWidth="184" Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="{Binding DisplayName}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </fa:FASettingsExpanderItem.Footer>
+    </fa:FASettingsExpanderItem>
+
+    <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationMusicLoop}"
+                               Description="{x:Static lp:Resources.S_AnimationMusicLoop_D}">
+        <fa:FASettingsExpanderItem.Footer>
+            <ToggleSwitch HorizontalAlignment="Right"
+                          IsChecked="{Binding #Root.Settings.AnimationMusicLoop, Mode=TwoWay}" />
+        </fa:FASettingsExpanderItem.Footer>
+    </fa:FASettingsExpanderItem>
+
+    <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationMusicVolume}"
+                               Description="{x:Static lp:Resources.S_AnimationMusicVolume_D}">
+        <fa:FASettingsExpanderItem.Footer>
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <Slider Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Width="180"
+                        Value="{Binding #Root.Settings.AnimationMusicVolume, Mode=TwoWay}" />
+                <TextBlock VerticalAlignment="Center"
+                           TextAlignment="Right"
+                           Text="{Binding #Root.Settings.AnimationMusicVolume, StringFormat={}{0}%}" />
+            </StackPanel>
+        </fa:FASettingsExpanderItem.Footer>
+    </fa:FASettingsExpanderItem>
+
+    <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultMusicVolume}"
+                               Description="{x:Static lp:Resources.S_ResultMusicVolume_D}">
+        <fa:FASettingsExpanderItem.Footer>
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <Slider Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Width="180"
+                        Value="{Binding #Root.Settings.ResultMusicVolume, Mode=TwoWay}" />
+                <TextBlock VerticalAlignment="Center" TextAlignment="Right"
+                           Text="{Binding #Root.Settings.ResultMusicVolume, StringFormat={}{0}%}" />
+            </StackPanel>
+        </fa:FASettingsExpanderItem.Footer>
+    </fa:FASettingsExpanderItem>
+
+    <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationMusicFade}"
+                               Description="{x:Static lp:Resources.S_AnimationMusicFade_D}">
+        <fa:FASettingsExpanderItem.Footer>
+            <StackPanel Spacing="4">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="{x:Static lp:Resources.C_FadeIn}" VerticalAlignment="Center" />
+                    <Slider Minimum="0" Maximum="10000" TickFrequency="100" IsSnapToTickEnabled="True" Width="180"
+                            Value="{Binding #Root.Settings.AnimationMusicFadeIn, Mode=TwoWay}" />
+                    <TextBlock VerticalAlignment="Center" TextAlignment="Right"
+                               Text="{Binding #Root.Settings.AnimationMusicFadeIn, StringFormat={}{0} ms}" />
+                </StackPanel>
+                
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="{x:Static lp:Resources.C_FadeOut}" VerticalAlignment="Center" />
+                    <Slider Minimum="0" Maximum="10000" TickFrequency="100" IsSnapToTickEnabled="True" Width="180"
+                            Value="{Binding #Root.Settings.AnimationMusicFadeOut, Mode=TwoWay}" />
+                    <TextBlock VerticalAlignment="Center" TextAlignment="Right"
+                               Text="{Binding #Root.Settings.AnimationMusicFadeOut, StringFormat={}{0} ms}" />
+                </StackPanel>
+            </StackPanel>
+        </fa:FASettingsExpanderItem.Footer>
+    </fa:FASettingsExpanderItem>
+
+    <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultMusicFade}"
+                               Description="{x:Static lp:Resources.S_ResultMusicFade_D}">
+        <fa:FASettingsExpanderItem.Footer>
+            <StackPanel Spacing="4">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="{x:Static lp:Resources.C_FadeIn}" VerticalAlignment="Center" />
+                    <Slider Minimum="0" Maximum="10000" TickFrequency="100" IsSnapToTickEnabled="True" Width="180"
+                            Value="{Binding #Root.Settings.ResultMusicFadeIn, Mode=TwoWay}" />
+                    <TextBlock VerticalAlignment="Center" TextAlignment="Right"
+                               Text="{Binding #Root.Settings.ResultMusicFadeIn, StringFormat={}{0} ms}" />
+                </StackPanel>
+                
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="{x:Static lp:Resources.C_FadeOut}" VerticalAlignment="Center" />
+                    <Slider Minimum="0" Maximum="10000" TickFrequency="100" IsSnapToTickEnabled="True" Width="180"
+                            Value="{Binding #Root.Settings.ResultMusicFadeOut, Mode=TwoWay}" />
+                    <TextBlock VerticalAlignment="Center" TextAlignment="Right"
+                               Text="{Binding #Root.Settings.ResultMusicFadeOut, StringFormat={}{0} ms}" />
+                </StackPanel>
+            </StackPanel>
+        </fa:FASettingsExpanderItem.Footer>
+    </fa:FASettingsExpanderItem>
+</fa:FASettingsExpander>

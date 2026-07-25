@@ -48,7 +48,7 @@
 
             <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                     BorderThickness="1"
-                    CornerRadius="4"
+                    CornerRadius="4 4 0 0"
                     ClipToBounds="True">
                 <DataGrid MinHeight="320"
                           AutoGenerateColumns="False"

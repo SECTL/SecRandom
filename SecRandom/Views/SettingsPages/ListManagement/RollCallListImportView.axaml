@@ -9,64 +9,56 @@
              x:Class="SecRandom.Views.SettingsPages.ListManagement.RollCallListImportView"
              x:DataType="local:RollCallListImportView">
     <ScrollViewer Width="460">
-        <StackPanel Margin="20" Spacing="14">
+        <StackPanel Margin="16" Spacing="8">
             <TextBlock Text="{x:Static lr:Resources.C_ImportTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
             <TextBlock Text="{Binding TargetListDescription}" TextWrapping="Wrap"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
-            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                    BorderThickness="1" CornerRadius="6" Padding="12">
-                <StackPanel Spacing="8">
-                    <TextBlock Text="{x:Static lr:Resources.C_SelectFile}" FontWeight="SemiBold" />
+            <GroupBox Header="{x:Static lr:Resources.C_SelectFile}">
+                <StackPanel Spacing="4">
+                    <Button Content="{x:Static lr:Resources.C_SelectFileButton}" Click="SelectFileButton_OnClick" />
+                    
                     <TextBlock Text="{Binding SelectedFileName}"
                                TextWrapping="Wrap"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <Button Content="{x:Static lr:Resources.C_SelectFileButton}" Click="SelectFileButton_OnClick" />
+                    
                     <TextBlock Text="{x:Static lr:Resources.C_SupportedFormats}"
                                TextWrapping="Wrap"
-                               FontSize="12"
                                Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                 </StackPanel>
-            </Border>
-
-            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                    BorderThickness="1" CornerRadius="6" Padding="12">
-                <StackPanel Spacing="8">
-                    <TextBlock Text="{x:Static lr:Resources.C_ColumnMapping}" FontWeight="SemiBold" />
+            </GroupBox>
+            
+            <GroupBox Header="{x:Static lr:Resources.C_ColumnMapping}">
+                <StackPanel Spacing="4">
                     <TextBlock Text="{x:Static lr:Resources.C_ColumnMapping_D}"
                                TextWrapping="Wrap"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
                     <sr:Field Label="{x:Static lr:Resources.C_StudentIdColumn}">
-                        <ComboBox MaxWidth="360"
-                                  ItemsSource="{Binding OptionalColumnOptions}"
+                        <ComboBox ItemsSource="{Binding OptionalColumnOptions}"
                                   SelectedItem="{Binding IdColumn, Mode=TwoWay}" />
                     </sr:Field>
                     <sr:Field Label="{x:Static lr:Resources.C_NameColumn}">
-                        <ComboBox MaxWidth="360"
-                                  ItemsSource="{Binding OptionalColumnOptions}"
+                        <ComboBox ItemsSource="{Binding OptionalColumnOptions}"
                                   SelectedItem="{Binding NameColumn, Mode=TwoWay}" />
                     </sr:Field>
                     <sr:Field Label="{x:Static lr:Resources.C_GenderColumn}">
-                        <ComboBox MaxWidth="360"
-                                  ItemsSource="{Binding OptionalColumnOptions}"
+                        <ComboBox ItemsSource="{Binding OptionalColumnOptions}"
                                   SelectedItem="{Binding GenderColumn, Mode=TwoWay}" />
                     </sr:Field>
                     <sr:Field Label="{x:Static lr:Resources.C_GroupColumn}">
-                        <ComboBox MaxWidth="360"
-                                  ItemsSource="{Binding OptionalColumnOptions}"
+                        <ComboBox ItemsSource="{Binding OptionalColumnOptions}"
                                   SelectedItem="{Binding GroupColumn, Mode=TwoWay}" />
                     </sr:Field>
                     <sr:Field Label="{x:Static lr:Resources.C_TagsColumn}">
-                        <ComboBox MaxWidth="360"
-                                  ItemsSource="{Binding OptionalColumnOptions}"
+                        <ComboBox ItemsSource="{Binding OptionalColumnOptions}"
                                   SelectedItem="{Binding TagsColumn, Mode=TwoWay}" />
                     </sr:Field>
                 </StackPanel>
-            </Border>
+            </GroupBox>
 
             <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                    BorderThickness="1" CornerRadius="6" ClipToBounds="True">
+                    BorderThickness="1" CornerRadius="4 4 0 0" ClipToBounds="True">
                 <DataGrid Height="150"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
@@ -74,25 +66,28 @@
                           GridLinesVisibility="Horizontal"
                           ItemsSource="{Binding PreviewRows}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="{x:Static lr:Resources.C_StudentId}" Binding="{Binding Id}" />
+                        <DataGridTextColumn Width="*" Header="{x:Static lr:Resources.C_StudentId}" Binding="{Binding Id}" />
                         <DataGridTextColumn Width="2*" Header="{x:Static lr:Resources.C_Name}" Binding="{Binding Name}" />
-                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Gender}" Binding="{Binding Gender}" />
-                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Group}" Binding="{Binding Group}" />
-                        <DataGridTextColumn Header="{x:Static lr:Resources.C_Tags}" Binding="{Binding Tags}" />
+                        <DataGridTextColumn Width="*" Header="{x:Static lr:Resources.C_Gender}" Binding="{Binding Gender}" />
+                        <DataGridTextColumn Width="*" Header="{x:Static lr:Resources.C_Group}" Binding="{Binding Group}" />
+                        <DataGridTextColumn Width="*" Header="{x:Static lr:Resources.C_Tags}" Binding="{Binding Tags}" />
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>
 
-            <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap"
-                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-
-            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                <Button Content="{x:Static lr:Resources.C_Cancel}" Click="CancelButton_OnClick" />
-                <Button Classes="accent"
-                        Content="{x:Static lr:Resources.C_Import}"
-                        IsEnabled="{Binding CanImport}"
-                        Click="ImportButton_OnClick" />
-            </StackPanel>
+            <Grid ColumnDefinitions="* Auto">
+                <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                           Text="{Binding StatusText}" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
+                    <Button Content="{x:Static lr:Resources.C_Cancel}" Click="CancelButton_OnClick" />
+                    <Button Classes="accent"
+                            Content="{x:Static lr:Resources.C_Import}"
+                            IsEnabled="{Binding CanImport}"
+                            Click="ImportButton_OnClick" />
+                </StackPanel>
+            </Grid>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
