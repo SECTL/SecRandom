@@ -273,8 +273,6 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
         new MobileDrawDialogRequest(MobileDrawDialogKind.Remaining, _rollCallSnapshot?.Remaining ?? []));
 
     [RelayCommand]
-    private void ShowMore() => DialogRequested?.Invoke(this, new MobileDrawDialogRequest(MobileDrawDialogKind.More));
-
     public void ResetScope()
     {
         _rollCallService.ClearTemporaryRecords(GroupScope, GenderScope);
@@ -282,6 +280,7 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
         RefreshSurface();
     }
 
+    [RelayCommand]
     public void ClearTemporaryRecords()
     {
         _temporaryRecordService.ClearStudentList(GetStudentListName());
@@ -496,8 +495,7 @@ public sealed record MobileDrawAnimationRequest(IReadOnlyList<string> Names, boo
 
 public enum MobileDrawDialogKind
 {
-    Remaining,
-    More
+    Remaining
 }
 
 public sealed record MobileDrawDialogRequest(

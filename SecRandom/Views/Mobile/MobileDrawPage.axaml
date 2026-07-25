@@ -1,174 +1,227 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:SecRandom.Controls.Mobile"
-             xmlns:local="clr-namespace:SecRandom.Views.Mobile"
              xmlns:vm="clr-namespace:SecRandom.ViewModels.Mobile"
              xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:system="clr-namespace:System;assembly=System.Runtime"
+             xmlns:configs="clr-namespace:SecRandom.Core.Enums.Configs;assembly=SecRandom.Core"
              x:Class="SecRandom.Views.Mobile.MobileDrawPage"
              x:DataType="vm:MobileDrawPageViewModel">
-    <ScrollViewer x:Name="PageScroll"
-                  Padding="20,20,20,28"
-                  HorizontalScrollBarVisibility="Disabled"
-                  VerticalScrollBarVisibility="Auto"
-                  IsScrollChainingEnabled="False"
-                  IsScrollInertiaEnabled="True">
-        <StackPanel Spacing="14" MaxWidth="720">
+    <Grid RowDefinitions="Auto Auto *" RowSpacing="8" MaxWidth="720" Margin="16" Classes="animated-intro">
+        <Viewbox Grid.Row="0" Height="36">
             <TabStrip x:Name="DrawSurfaceTabs"
                       IsEnabled="{Binding CanChangeSurface}"
-                      SelectedIndex="{Binding SelectedSurface, Mode=TwoWay}">
-                <TabStripItem Content="{x:Static langs:Resources.C_RollCall}" />
-                <TabStripItem x:Name="LotteryTab"
+                      SelectedIndex="{Binding SelectedSurface, Mode=TwoWay}"
+                      HorizontalAlignment="Center"
+                      Theme="{DynamicResource TabStripStyle}">
+                <TabStripItem Content="{x:Static langs:Resources.C_RollCall}"
+                              Width="96"/>
+                <TabStripItem x:Name="LotteryTab" Width="96"
                               Content="{x:Static langs:Resources.C_Lottery}"
                               IsVisible="{Binding IsLotteryEnabled}" />
             </TabStrip>
+        </Viewbox>
 
-            <controls:MobileCard x:Name="DrawResultCard"
-                                 Padding="24,28"
-                                 CornerRadius="18"
-                                 BorderThickness="0">
-                <StackPanel Spacing="8">
-                    <TextBlock x:Name="ResultText"
-                               FontSize="34"
-                               FontWeight="SemiBold"
-                               Text="{Binding ResultText}"
-                               TextAlignment="Center"
+        <controls:MobileCard Grid.Row="1"
+                             x:Name="DrawResultCard"
+                             Padding="24,28"
+                             CornerRadius="18"
+                             BorderThickness="0">
+            <StackPanel Spacing="8">
+                <TextBlock x:Name="ResultText"
+                           FontSize="34"
+                           FontWeight="SemiBold"
+                           Text="{Binding ResultText}"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding ResultDetail}"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center" />
+                <ItemsControl ItemsSource="{Binding ResultImages}"
+                              HorizontalAlignment="Center"
+                              IsVisible="{Binding HasResultImages}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel HorizontalAlignment="Center" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:MobileDrawResultImage">
+                            <Border Width="88"
+                                    Height="88"
+                                    Margin="4"
+                                    CornerRadius="12"
+                                    ClipToBounds="True">
+                                <Image Source="{Binding Source}" Stretch="UniformToFill" />
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </controls:MobileCard>
+
+        <Carousel Grid.Row="2"
+                  x:Name="DrawSurfaceCarousel"
+                  Classes="animated"
+                  SelectedIndex="{Binding SelectedSurface, Mode=TwoWay}">
+            <Carousel.Resources>
+                <ResourceDictionary>
+                    <system:Double x:Key="SizeBase">48</system:Double>
+                </ResourceDictionary>
+            </Carousel.Resources>
+                    
+            <Carousel.Styles>
+                <Style Selector="StackPanel.draw-page">
+                    <Style Selector="^ :is(TextElement)">
+                        <Setter Property="FontSize" Value="14" />
+                    </Style>
+                        
+                    <Style Selector="^ Button">
+                        <Setter Property="Height" Value="{DynamicResource SizeBase}" />
+                        <Setter Property="HorizontalAlignment" Value="Stretch" />
+                    </Style>
+                        
+                    <Style Selector="^ NumericUpDown">
+                        <Setter Property="Height" Value="{DynamicResource SizeBase}" />
+                        <Setter Property="HorizontalAlignment" Value="Stretch" />
+                    </Style>
+                        
+                    <Style Selector="^ ComboBox">
+                        <Setter Property="Height" Value="{DynamicResource SizeBase}" />
+                        <Setter Property="HorizontalAlignment" Value="Stretch" />
+                        <Setter Property="MaxDropDownHeight" Value="360" />
+                        <Setter Property="ItemTemplate">
+                            <Setter.Value>
+                                <DataTemplate x:DataType="system:String">
+                                    <TextBlock Text="{Binding}"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               TextAlignment="Center" />
+                                </DataTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Style>
+            </Carousel.Styles>
+            
+            <ScrollViewer>
+                <StackPanel Spacing="8" VerticalAlignment="Bottom" Classes="draw-page animated-intro">
+                    <TextBlock Text="{Binding RollCallSummary}"
                                TextWrapping="Wrap"
                                HorizontalAlignment="Center" />
-                    <TextBlock Text="{Binding ResultDetail}"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"
-                               HorizontalAlignment="Center" />
-                    <ItemsControl ItemsSource="{Binding ResultImages}"
-                                  HorizontalAlignment="Center"
-                                  IsVisible="{Binding HasResultImages}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel HorizontalAlignment="Center" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:MobileDrawResultImage">
-                                <Border Width="88"
-                                        Height="88"
-                                        Margin="4"
-                                        CornerRadius="12"
-                                        ClipToBounds="True">
-                                    <Image Source="{Binding Source}" Stretch="UniformToFill" />
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    
+                    <sr:Field Label="{x:Static langs:Resources.S_CurrentList}">
+                        <ComboBox ItemsSource="{Binding StudentLists}"
+                                  SelectedItem="{Binding SelectedStudentList, Mode=TwoWay}" />
+                    </sr:Field>
+                    
+                    <Grid HorizontalAlignment="Stretch"
+                          ColumnDefinitions="* Auto Auto"
+                          ColumnSpacing="8">
+                        <Grid.Styles>
+                            <Style Selector="Grid > Button">
+                                <Setter Property="Width" Value="{DynamicResource SizeBase}" />
+                                <Setter Property="Height" Value="{DynamicResource SizeBase}" />
+                                <Setter Property="Margin" Value="0" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="FontSize" Value="24" />
+                            </Style>
+                        </Grid.Styles>
+                        
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding DrawCount}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="18" />
+                        
+                        <Button Grid.Column="1"
+                                Content="+"
+                                IsEnabled="{Binding CanIncreaseCount}"
+                                Command="{Binding IncreaseCountCommand}" />
+                        
+                        <Button Grid.Column="2"
+                                Content="-"
+                                IsEnabled="{Binding CanDecreaseCount}"
+                                Command="{Binding DecreaseCountCommand}"/>
+                    </Grid>
+                    
+                    <Button Content="{x:Static langs:Resources.C_More}"
+                            IsEnabled="{Binding CanChangeSurface}">
+                        <Button.Flyout>
+                            <Flyout>
+                                <Grid RowDefinitions="Auto Auto Auto Auto"
+                                      RowSpacing="8"
+                                      ColumnDefinitions="* *"
+                                      ColumnSpacing="8"
+                                      Width="300">
+                                    <sr:Field Grid.Row="0" Grid.Column="0"
+                                              Label="{x:Static langs:Resources.S_Group}">
+                                        <ComboBox ItemsSource="{Binding GroupOptions}"
+                                                  SelectedItem="{Binding SelectedGroup, Mode=TwoWay}" />
+                                    </sr:Field>
+                        
+                                    <sr:Field Grid.Row="0" Grid.Column="1"
+                                              Label="{x:Static langs:Resources.S_Gender}">
+                                        <ComboBox ItemsSource="{Binding GenderOptions}"
+                                                  SelectedItem="{Binding SelectedGender, Mode=TwoWay}" />
+                                    </sr:Field>
+                                    
+                                    <Button Grid.Row="1" Grid.Column="0"
+                                            Content="{x:Static langs:Resources.C_ResetRange}"
+                                            Command="{Binding ResetScopeCommand}" />
+                                
+                                    <Button Grid.Row="1" Grid.Column="1"
+                                            Content="{x:Static langs:Resources.C_ClearTemporaryRecords}"
+                                            Click="ClearTemporaryRecords_OnClick" />
+                                
+                                    <Button Grid.Row="2" Grid.Column="0"
+                                            Content="{x:Static langs:Resources.C_ManageStudentList}"
+                                            Command="{Binding OpenListManagementCommand}" />
+                                
+                                    <Button Grid.Row="2" Grid.Column="1"
+                                            Content="{x:Static langs:Resources.C_DrawSettings}"
+                                            Command="{Binding OpenDrawSettingsCommand}" />
+                            
+                                    <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                                            VerticalAlignment="Bottom"
+                                            Content="{x:Static langs:Resources.C_RemainingList}"
+                                            Command="{Binding ShowRemainingCommand}"
+                                            IsEnabled="{Binding CanChangeSurface}" />
+                                </Grid>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                    
+                    <Button Classes="accent"
+                            HorizontalContentAlignment="Center"
+                            Content="{Binding DrawStudentsText}"
+                            Command="{Binding DrawStudentsCommand}"
+                            IsEnabled="{Binding CanDrawStudents}" />
                 </StackPanel>
-            </controls:MobileCard>
+            </ScrollViewer>
 
-            <Carousel x:Name="DrawSurfaceCarousel"
-                      Classes="animated"
-                      SelectedIndex="{Binding SelectedSurface, Mode=TwoWay}">
-                <controls:MobileCard>
-                    <StackPanel Spacing="12">
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="{x:Static langs:Resources.S_CurrentList}" FontSize="12" />
-                            <ComboBox MinHeight="44"
-                                      HorizontalAlignment="Stretch"
-                                      ItemsSource="{Binding StudentLists}"
-                                      SelectedItem="{Binding SelectedStudentList, Mode=TwoWay}" />
-                        </StackPanel>
-
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{x:Static langs:Resources.S_Group}" FontSize="12" />
-                                <ComboBox MinHeight="44"
-                                          HorizontalAlignment="Stretch"
-                                          ItemsSource="{Binding GroupOptions}"
-                                          SelectedItem="{Binding SelectedGroup, Mode=TwoWay}" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Spacing="4">
-                                <TextBlock Text="{x:Static langs:Resources.S_Gender}" FontSize="12" />
-                                <ComboBox MinHeight="44"
-                                          HorizontalAlignment="Stretch"
-                                          ItemsSource="{Binding GenderOptions}"
-                                          SelectedItem="{Binding SelectedGender, Mode=TwoWay}" />
-                            </StackPanel>
-                        </Grid>
-
-                        <TextBlock Text="{Binding RollCallSummary}" TextWrapping="Wrap" />
-
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                            <StackPanel Spacing="4" VerticalAlignment="Bottom">
-                                <TextBlock Text="{x:Static langs:Resources.S_DrawCount}" FontSize="12" />
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <Button MinWidth="44"
-                                            MinHeight="44"
-                                            ToolTip.Tip="{x:Static langs:Resources.S_DrawCount}"
-                                            AutomationProperties.Name="{x:Static langs:Resources.S_DrawCount}"
-                                            Command="{Binding DecreaseCountCommand}"
-                                            IsEnabled="{Binding CanDecreaseCount}">
-                                        <sr:FluentIcon Glyph="{sr:Fi SubtractFilled}" />
-                                    </Button>
-                                    <TextBlock MinWidth="40"
-                                               FontSize="18"
-                                               FontWeight="SemiBold"
-                                               Text="{Binding DrawCount}"
-                                               TextAlignment="Center"
-                                               VerticalAlignment="Center" />
-                                    <Button MinWidth="44"
-                                            MinHeight="44"
-                                            ToolTip.Tip="{x:Static langs:Resources.S_DrawCount}"
-                                            AutomationProperties.Name="{x:Static langs:Resources.S_DrawCount}"
-                                            Command="{Binding IncreaseCountCommand}"
-                                            IsEnabled="{Binding CanIncreaseCount}">
-                                        <sr:FluentIcon Glyph="{sr:Fi AddFilled}" />
-                                    </Button>
-                                </StackPanel>
-                            </StackPanel>
-                            <Button Grid.Column="1"
-                                    Classes="accent"
-                                    MinHeight="48"
-                                    HorizontalAlignment="Stretch"
-                                    HorizontalContentAlignment="Center"
-                                    FontWeight="SemiBold"
-                                    Content="{Binding DrawStudentsText}"
-                                    Command="{Binding DrawStudentsCommand}"
-                                    IsEnabled="{Binding CanDrawStudents}" />
-                        </Grid>
-
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                            <Button MinHeight="44"
-                                    Content="{x:Static langs:Resources.C_RemainingList}"
-                                    Command="{Binding ShowRemainingCommand}"
-                                    IsEnabled="{Binding CanChangeSurface}" />
-                            <Button Grid.Column="1"
-                                    MinHeight="44"
-                                    Content="{x:Static langs:Resources.C_More}"
-                                    Command="{Binding ShowMoreCommand}"
-                                    IsEnabled="{Binding CanChangeSurface}" />
-                        </Grid>
-                    </StackPanel>
-                </controls:MobileCard>
-
-                <StackPanel Spacing="14">
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="{x:Static langs:Resources.S_CurrentPool}" FontSize="12" />
+            <ScrollViewer>
+                <StackPanel Spacing="8" VerticalAlignment="Bottom" Classes="draw-page">
+                    <sr:Field Label="{x:Static langs:Resources.S_CurrentPool}">
                         <TextBlock FontSize="24"
-                                   FontWeight="SemiBold"
                                    Text="{Binding PrizePoolName}"
                                    TextWrapping="Wrap" />
-                    </StackPanel>
+                    </sr:Field>
+                    
+                    <Button Content="{x:Static langs:Resources.C_ManagePrizePool}"
+                            Command="{Binding OpenListManagementCommand}"
+                            IsEnabled="{Binding CanChangeSurface}" />
+                    
                     <Button Classes="accent"
-                            MinHeight="48"
-                            HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
-                            FontWeight="SemiBold"
                             Content="{Binding DrawPrizeText}"
                             Command="{Binding DrawPrizeCommand}"
                             IsEnabled="{Binding CanDrawPrize}" />
-                    <Button MinHeight="44"
-                            Content="{x:Static langs:Resources.C_ManagePrizePool}"
-                            Command="{Binding OpenListManagementCommand}"
-                            IsEnabled="{Binding CanChangeSurface}" />
                 </StackPanel>
-            </Carousel>
-        </StackPanel>
-    </ScrollViewer>
+            </ScrollViewer>
+        </Carousel>
+    </Grid>
 </UserControl>

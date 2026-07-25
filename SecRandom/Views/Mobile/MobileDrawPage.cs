@@ -1,8 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Markup.Xaml;
+using Avalonia.Markup.Xaml.MarkupExtensions;
 using FluentAvalonia.UI.Controls;
 using SecRandom.ViewModels.Mobile;
 using LR = SecRandom.Langs.Mobile.Resources;
@@ -51,7 +54,6 @@ public sealed partial class MobileDrawPage : UserControl
         _ = request.Kind switch
         {
             MobileDrawDialogKind.Remaining => ShowRemainingListAsync(request.Remaining ?? []),
-            MobileDrawDialogKind.More => ShowMoreActionsAsync(),
             _ => Task.CompletedTask
         };
     }
@@ -65,17 +67,16 @@ public sealed partial class MobileDrawPage : UserControl
         }
         else
         {
-            var rows = new StackPanel { Spacing = 6 };
+            var rows = new StackPanel { Spacing = 4 };
             foreach (var student in remaining)
             {
-                rows.Children.Add(new FASettingsExpanderItem
+                rows.Children.Add(new FASettingsExpander
                 {
-                    Content = FormatStudent(student),
-                    Description = string.Join(" · ", new[] { student.Gender, student.Group, student.Tags }
+                    Header = FormatStudent(student),
+                    Description = string.Join(" | ", new[] { student.Gender, student.Group, student.Tags }
                         .Where(value => !string.IsNullOrWhiteSpace(value))),
                     MinHeight = 64,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
-                    HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
+                    HorizontalAlignment = HorizontalAlignment.Stretch
                 });
             }
 
@@ -96,43 +97,13 @@ public sealed partial class MobileDrawPage : UserControl
         }.ShowAsync(TopLevel.GetTopLevel(this));
     }
 
-    private async Task ShowMoreActionsAsync()
+    private void ClearTemporaryRecords_OnClick(object? sender, RoutedEventArgs e)
     {
-        var dialog = new FAContentDialog
-        {
-            Title = LR.C_More,
-            CloseButtonText = LR.C_Close,
-            DefaultButton = FAContentDialogButton.Close
-        };
-        dialog.Content = new StackPanel
-        {
-            Spacing = 8,
-            Children =
-            {
-                CreateDialogButton(LR.C_ResetRange, () =>
-                {
-                    dialog.Hide();
-                    ViewModel.ResetScope();
-                }),
-                CreateDialogButton(LR.C_ClearTemporaryRecords, () => _ = ConfirmClearTemporaryRecordsAsync(dialog)),
-                CreateDialogButton(LR.C_ManageStudentList, () =>
-                {
-                    dialog.Hide();
-                    ViewModel.OpenListManagementCommand.Execute(null);
-                }),
-                CreateDialogButton(LR.C_DrawSettings, () =>
-                {
-                    dialog.Hide();
-                    ViewModel.OpenDrawSettingsCommand.Execute(null);
-                })
-            }
-        };
-        await dialog.ShowAsync(TopLevel.GetTopLevel(this));
+        _ = ConfirmClearTemporaryRecordsAsync();
     }
 
-    private async Task ConfirmClearTemporaryRecordsAsync(FAContentDialog parent)
+    private async Task ConfirmClearTemporaryRecordsAsync()
     {
-        parent.Hide();
         var result = await new FAContentDialog
         {
             Title = LR.C_ClearTemporaryRecords,
@@ -143,19 +114,6 @@ public sealed partial class MobileDrawPage : UserControl
         }.ShowAsync(TopLevel.GetTopLevel(this));
         if (result == FAContentDialogResult.Primary)
             ViewModel.ClearTemporaryRecords();
-    }
-
-    private static Button CreateDialogButton(string text, Action onClick)
-    {
-        var button = new Button
-        {
-            Content = text,
-            MinHeight = 44,
-            FontWeight = FontWeight.SemiBold,
-            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center
-        };
-        button.Click += (_, _) => onClick();
-        return button;
     }
 
     private static string FormatStudent(SecRandom.Shared.Models.Profile.Student student) => string.IsNullOrWhiteSpace(student.Id)

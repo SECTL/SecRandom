@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using SecRandom.Core.Views;
 using SecRandom.Views;
 using SecRandom.Views.Mobile;
@@ -32,7 +33,10 @@ internal sealed class MobileSettingsNavigator(IViewEngine viewEngine) : IMobileS
             if (string.IsNullOrWhiteSpace(pageId))
                 return;
 
-            SettingsView.Current?.NavigateToPage(pageId);
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                SettingsView.Current?.NavigateToPage(pageId);
+            });
         }
         finally
         {
@@ -42,9 +46,12 @@ internal sealed class MobileSettingsNavigator(IViewEngine viewEngine) : IMobileS
 
     public Task NavigateAsync(string pageId)
     {
-        if (SettingsView.Current is { IsClosed: false } settingsView)
+        if (SettingsView.Current is { IsClosed: false })
         {
-            settingsView.NavigateToPage(pageId);
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                SettingsView.Current.NavigateToPage(pageId);
+            });
             return Task.CompletedTask;
         }
 

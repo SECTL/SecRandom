@@ -24,7 +24,8 @@
                   MinHeight="64"
                   Padding="6,4"
                   HorizontalAlignment="Stretch"
-                  SelectionChanged="BottomNavigation_OnSelectionChanged">
+                  SelectionChanged="BottomNavigation_OnSelectionChanged"
+                  Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
             <TabStrip.ItemsPanel>
                 <ItemsPanelTemplate>
                     <UniformGrid Rows="1" Columns="4" />
