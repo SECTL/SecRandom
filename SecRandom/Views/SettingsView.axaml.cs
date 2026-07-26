@@ -341,6 +341,14 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
         SelectNavigationItemById("settings.logs");
     }
 
+    private void FeedbackMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        FeedbackDrawer drawer = ViewModel.DrawerContent as FeedbackDrawer
+            ?? IAppHost.GetService<FeedbackDrawer>();
+        drawer.Configure(CloseDrawer);
+        OpenDrawer(drawer);
+    }
+
     private void OpenLogDirectoryMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
         OpenDirectory(FileLoggerProvider.LogDirectory);

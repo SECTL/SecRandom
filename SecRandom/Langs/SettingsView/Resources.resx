@@ -174,4 +174,88 @@
     <data name="M_NavigateFailed" xml:space="preserve">
         <value>导航时出现错误</value>
     </data>
+    <data name="C_MoreOptions_Feedback" xml:space="preserve">
+        <value>反馈</value>
+    </data>
+    <data name="C_Feedback_Title" xml:space="preserve">
+        <value>反馈</value>
+    </data>
+    <data name="C_Feedback_CloseTemporary" xml:space="preserve">
+        <value>暂时关闭</value>
+    </data>
+    <data name="C_Feedback_Bug" xml:space="preserve">
+        <value>Bug</value>
+    </data>
+    <data name="C_Feedback_Feature" xml:space="preserve">
+        <value>新功能 / 优化体验</value>
+    </data>
+    <data name="C_Feedback_Summary" xml:space="preserve">
+        <value>简要标题</value>
+    </data>
+    <data name="C_Feedback_SummaryPlaceholder" xml:space="preserve">
+        <value>用一句话概括问题或建议</value>
+    </data>
+    <data name="C_Feedback_ContactEmail" xml:space="preserve">
+        <value>联系邮箱（可选）</value>
+    </data>
+    <data name="C_Feedback_ContactEmailPlaceholder" xml:space="preserve">
+        <value>用于在需要时回复你</value>
+    </data>
+    <data name="C_Feedback_CrashReport" xml:space="preserve">
+        <value>崩溃报告</value>
+    </data>
+    <data name="C_Feedback_Expected" xml:space="preserve">
+        <value>期望行为</value>
+    </data>
+    <data name="C_Feedback_ExpectedPlaceholder" xml:space="preserve">
+        <value>描述你期望发生的行为。</value>
+    </data>
+    <data name="C_Feedback_Actual" xml:space="preserve">
+        <value>实际结果</value>
+    </data>
+    <data name="C_Feedback_ActualPlaceholder" xml:space="preserve">
+        <value>描述实际发生的行为。</value>
+    </data>
+    <data name="C_Feedback_Reproduce" xml:space="preserve">
+        <value>重现步骤</value>
+    </data>
+    <data name="C_Feedback_ReproducePlaceholder" xml:space="preserve">
+        <value>1. 首先……&#10;2. 然后……&#10;3. ……。</value>
+    </data>
+    <data name="C_Feedback_Motivation" xml:space="preserve">
+        <value>背景与动机</value>
+    </data>
+    <data name="C_Feedback_MotivationPlaceholder" xml:space="preserve">
+        <value>为什么需要这个功能？它解决了什么场景？</value>
+    </data>
+    <data name="C_Feedback_Request" xml:space="preserve">
+        <value>想要实现或优化的功能</value>
+    </data>
+    <data name="C_Feedback_RequestPlaceholder" xml:space="preserve">
+        <value>尽量具体地说明期望的功能、流程或体验改进。</value>
+    </data>
+    <data name="C_Feedback_DiagnosticNotice" xml:space="preserve">
+        <value>提交时自动生成并上传与“导出诊断数据”相同的脱敏 ZIP 附件，用于问题定位。</value>
+    </data>
+    <data name="C_Feedback_Cancel" xml:space="preserve">
+        <value>取消反馈</value>
+    </data>
+    <data name="C_Feedback_Submit" xml:space="preserve">
+        <value>提交反馈</value>
+    </data>
+    <data name="M_Feedback_Required" xml:space="preserve">
+        <value>请填写所有必填项后再提交反馈。</value>
+    </data>
+    <data name="M_Feedback_InvalidEmail" xml:space="preserve">
+        <value>请填写有效的联系邮箱，或将其留空。</value>
+    </data>
+    <data name="M_Feedback_Success" xml:space="preserve">
+        <value>反馈已提交，感谢你的帮助。</value>
+    </data>
+    <data name="M_Feedback_DiagnosticTooLarge" xml:space="preserve">
+        <value>诊断 ZIP 超过上传限制，未提交反馈。请清理日志后重试，或使用 GitHub。</value>
+    </data>
+    <data name="M_Feedback_Failed" xml:space="preserve">
+        <value>反馈提交失败，请稍后重试或使用 GitHub。</value>
+    </data>
 </root>

@@ -174,18 +174,7 @@ public sealed class ImportExportService(
         }
     }
 
-    private static string RedactDiagnosticText(string text)
-    {
-        text = System.Text.RegularExpressions.Regex.Replace(text,
-            "(?i)\\bBearer\\s+[A-Za-z0-9._~+/-]+=*", "Bearer <redacted>");
-        text = System.Text.RegularExpressions.Regex.Replace(text,
-            "(?i)(\\\"?(?:password|secret|token)\\\"?\\s*[:=]\\s*)(\\\"[^\\\"]*\\\"|[^\\s,;}\\]]+)", "$1<redacted>");
-        text = System.Text.RegularExpressions.Regex.Replace(text,
-            "(?i)(authorization\\s*[:=]\\s*)(\\\"?Bearer\\s+)?(\\\"[^\\\"]*\\\"|[^\\s,;}\\]]+)", "$1$2<redacted>");
-        text = System.Text.RegularExpressions.Regex.Replace(text, "[A-Za-z]:\\\\[^\\s\"]+|/[^\\s\"]+", "<path>");
-        text = System.Text.RegularExpressions.Regex.Replace(text, "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", "<email>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        return text;
-    }
+    private static string RedactDiagnosticText(string text) => DiagnosticTextRedactor.Redact(text);
 
     private static void EnsureParents(string path)
     {
