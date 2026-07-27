@@ -1,16 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Avalonia.Threading;
 using ClassIsland.Shared.IPC;
 using dotnetCampus.Ipc.CompilerServices.GeneratedProxies;
-using dotnetCampus.Ipc.Pipes;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Draw;
 using SecRandom.Shared.Models.Profile;
 using SecRandom4Ci.Interface.Enums;
 using SecRandom4Ci.Interface.Models;
@@ -29,6 +24,7 @@ public sealed class NotificationService : IDisposable
 
     private readonly MainConfigHandler _configHandler;
     private readonly ILogger<NotificationService> _logger;
+    private readonly CryptoRandomSource _previewRandom = new();
     private readonly SemaphoreSlim _sendGate = new(1, 1);
     private IpcClient? _classIslandClient;
     private ISecRandomService? _classIslandService;
@@ -69,12 +65,13 @@ public sealed class NotificationService : IDisposable
         if (!basicSettings.Enabled || !basicSettings.Animation || !serviceSettings.UsesExternalNotificationService)
             return Task.CompletedTask;
 
+        var selectedCandidates = DrawPreviewItems(candidates, drawCount);
         return SendToClassIslandAsync(
             new NotificationData
             {
                 ClassName = className,
-                Items = candidates.Select(CreateStudentItem).ToList(),
-                DrawCount = Math.Max(drawCount, 1),
+                Items = selectedCandidates.Select(CreateStudentItem).ToList(),
+                DrawCount = selectedCandidates.Count,
                 DisplayDuration = Math.Clamp(serviceSettings.DisplayDuration, 1, 60),
                 Animation = true,
                 ResultType = GetPartialResultType(type)
@@ -100,17 +97,18 @@ public sealed class NotificationService : IDisposable
         if (!basicSettings.Enabled || !basicSettings.Animation || !serviceSettings.UsesExternalNotificationService)
             return Task.CompletedTask;
 
+        var selectedPrizes = DrawLotteryPreviewItems(candidates, drawCount);
         return SendToClassIslandAsync(
             new NotificationData
             {
                 ClassName = className,
-                Items = candidates.Select(prize => new NotificationItem
+                Items = selectedPrizes.Select(prize => new NotificationItem
                 {
                     IsLottery = true,
                     LotteryName = DisplayValue(prize.Name, prize.Id),
                     Exists = prize.Exists
                 }).ToList(),
-                DrawCount = Math.Max(drawCount, 1),
+                DrawCount = selectedPrizes.Count,
                 DisplayDuration = Math.Clamp(serviceSettings.DisplayDuration, 1, 60),
                 Animation = true,
                 ResultType = ResultType.PartialLottery
@@ -329,7 +327,7 @@ public sealed class NotificationService : IDisposable
                 return null;
             }
 
-            var service = GeneratedIpcFactory.CreateIpcProxy<ISecRandomService>(client.Provider, client.PeerProxy);
+            var service = client.Provider.CreateIpcProxy<ISecRandomService>(client.PeerProxy);
             var pluginVersion = await InvokeClassIslandAsync(service.GetPluginVersion).ConfigureAwait(false);
             if (pluginVersion is null || pluginVersion < MinimumPluginVersion ||
                 !string.Equals(
@@ -367,6 +365,35 @@ public sealed class NotificationService : IDisposable
             StudentName = DisplayValue(student.Name, student.Id),
             Exists = student.Exists
         };
+    }
+
+    private List<ProfileStudent> DrawPreviewItems(IReadOnlyCollection<ProfileStudent> candidates, int drawCount)
+    {
+        return DrawPreviewItems(candidates.ToList(), drawCount);
+    }
+
+    private List<Prize> DrawLotteryPreviewItems(IReadOnlyCollection<Prize> candidates, int drawCount)
+    {
+        var inventory = candidates
+            .Where(prize => prize.Exists)
+            .SelectMany(prize => Enumerable.Repeat(prize, Math.Max(prize.Count, 1)))
+            .ToList();
+        return DrawPreviewItems(inventory, drawCount);
+    }
+
+    private List<T> DrawPreviewItems<T>(List<T> candidates, int drawCount)
+    {
+        if (candidates.Count == 0)
+            return [];
+
+        var count = Math.Clamp(drawCount, 1, candidates.Count);
+        for (var index = 0; index < count; index++)
+        {
+            var selectedIndex = index + _previewRandom.NextInt32(candidates.Count - index);
+            (candidates[index], candidates[selectedIndex]) = (candidates[selectedIndex], candidates[index]);
+        }
+
+        return candidates.Take(count).ToList();
     }
 
     private void InvalidateClassIslandConnection()
