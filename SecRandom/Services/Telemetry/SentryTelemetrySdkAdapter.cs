@@ -146,7 +146,27 @@ public sealed class SentryTelemetrySdkAdapter : ITelemetrySdkAdapter
 
         // SDK 关闭超时，确保事件在应用退出前发送
         options.ShutdownTimeout = TimeSpan.FromSeconds(5);
+        ConfigureSensitiveEventScrubber(options);
+    }
 
+    internal static void ConfigureFeedbackOptions(SentryOptions options)
+    {
+        options.Dsn = GlobalConstants.SentryDsn;
+        options.Release = GlobalConstants.VersionLong;
+        options.Environment = GlobalConstants.IsDevelopment ? "development" : "production";
+        options.Debug = true;
+        options.AutoSessionTracking = false;
+        options.EnableLogs = false;
+        options.SendDefaultPii = false;
+        options.TracesSampleRate = 0;
+        options.ProfilesSampleRate = 0;
+        options.TracePropagationTargets.Clear();
+        options.ShutdownTimeout = TimeSpan.FromSeconds(5);
+        ConfigureSensitiveEventScrubber(options);
+    }
+
+    private static void ConfigureSensitiveEventScrubber(SentryOptions options)
+    {
         // 清理事件敏感数据：移除服务器名称和用户标识
         options.SetBeforeSend((sentryEvent, hint) =>
         {
@@ -162,31 +182,31 @@ public sealed class SentryTelemetrySdkAdapter : ITelemetrySdkAdapter
         //     options.AddProfilingIntegration(ProfilingStartupTimeout);
     }
 
-    /// <summary>
-    /// 将 Sentry ISpan 适配为 SDK 中立的 <see cref="ITelemetryTransaction"/>。
-    /// </summary>
-    private sealed class SentryTelemetryTransaction(ISpan span) : ITelemetryTransaction
-    {
-        public void Finish(TelemetryTransactionStatus status)
+        /// <summary>
+        /// 将 Sentry ISpan 适配为 SDK 中立的 <see cref="ITelemetryTransaction"/>。
+        /// </summary>
+        private sealed class SentryTelemetryTransaction(ISpan span) : ITelemetryTransaction
         {
-            span.Finish(ToSpanStatus(status));
-        }
+            public void Finish(TelemetryTransactionStatus status)
+            {
+                span.Finish(ToSpanStatus(status));
+            }
 
-        public void Finish(Exception exception, TelemetryTransactionStatus status)
-        {
-            span.Finish(exception, ToSpanStatus(status));
-        }
+            public void Finish(Exception exception, TelemetryTransactionStatus status)
+            {
+                span.Finish(exception, ToSpanStatus(status));
+            }
 
-        public void Dispose()
-        {
-            span.Dispose();
-        }
+            public void Dispose()
+            {
+                span.Dispose();
+            }
 
-        private static SpanStatus ToSpanStatus(TelemetryTransactionStatus status) => status switch
-        {
-            TelemetryTransactionStatus.Ok => SpanStatus.Ok,
-            TelemetryTransactionStatus.PermissionDenied => SpanStatus.PermissionDenied,
-            _ => SpanStatus.InternalError
-        };
+            private static SpanStatus ToSpanStatus(TelemetryTransactionStatus status) => status switch
+            {
+                TelemetryTransactionStatus.Ok => SpanStatus.Ok,
+                TelemetryTransactionStatus.PermissionDenied => SpanStatus.PermissionDenied,
+                _ => SpanStatus.InternalError
+            };
+        }
     }
-}

@@ -200,11 +200,24 @@ public class SettingsMarkupTests
         {
             string expandedBinding = $"{{Binding Settings.{overrideName}, Mode=OneWay}}";
             var section = document.Descendants().SingleOrDefault(element =>
-                element.Name.LocalName == "FASettingsExpander"
+                element.Name.LocalName is "FASettingsExpander" or "DrawMusicSettingsExpander"
                 && (string?)element.Attribute("IsExpanded") == expandedBinding);
             Assert.True(section is not null, $"{relativePath} is missing the {overrideName} override expander.");
 
-            var rows = section!.Elements()
+            // 自定义 DrawMusicSettingsExpander 的行定义在其自身的 axaml 中，单独校验。
+            if (section!.Name.LocalName == "DrawMusicSettingsExpander")
+            {
+                var controlDocument = System.Xml.Linq.XDocument.Load(GetRepositoryPath(
+                    "SecRandom/Views/SettingsPages/Picking/DrawMusicSettingsExpander.axaml"));
+                var controlRows = controlDocument.Root!.Elements()
+                    .Where(element => !element.Name.LocalName.EndsWith(".Footer", StringComparison.Ordinal))
+                    .ToList();
+                Assert.NotEmpty(controlRows);
+                Assert.All(controlRows, row => Assert.Equal("FASettingsExpanderItem", row.Name.LocalName));
+                continue;
+            }
+
+            var rows = section.Elements()
                 .Where(element => element.Name.LocalName != "FASettingsExpander.Footer")
                 .ToList();
             Assert.NotEmpty(rows);

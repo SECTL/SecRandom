@@ -22,15 +22,15 @@ namespace SecRandom.Langs.CrashRecovery {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -44,7 +44,7 @@ namespace SecRandom.Langs.CrashRecovery {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -58,7 +58,7 @@ namespace SecRandom.Langs.CrashRecovery {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 关闭.
         /// </summary>
@@ -67,7 +67,7 @@ namespace SecRandom.Langs.CrashRecovery {
                 return ResourceManager.GetString("C_Close", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 已复制.
         /// </summary>
@@ -76,7 +76,7 @@ namespace SecRandom.Langs.CrashRecovery {
                 return ResourceManager.GetString("C_CopyDone", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 复制失败.
         /// </summary>
@@ -85,7 +85,7 @@ namespace SecRandom.Langs.CrashRecovery {
                 return ResourceManager.GetString("C_CopyFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 复制报告.
         /// </summary>
@@ -94,7 +94,7 @@ namespace SecRandom.Langs.CrashRecovery {
                 return ResourceManager.GetString("C_CopyReport", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 忽略.
         /// </summary>
@@ -103,7 +103,7 @@ namespace SecRandom.Langs.CrashRecovery {
                 return ResourceManager.GetString("C_Ignore", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 打开失败.
         /// </summary>
@@ -112,7 +112,25 @@ namespace SecRandom.Langs.CrashRecovery {
                 return ResourceManager.GetString("C_ReportFailed", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to GitHub.
+        /// </summary>
+        public static string C_ReportGitHub {
+            get {
+                return ResourceManager.GetString("C_ReportGitHub", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 应用内反馈.
+        /// </summary>
+        public static string C_ReportInApp {
+            get {
+                return ResourceManager.GetString("C_ReportInApp", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 反馈问题.
         /// </summary>
@@ -121,7 +139,7 @@ namespace SecRandom.Langs.CrashRecovery {
                 return ResourceManager.GetString("C_ReportIssue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 重新启动.
         /// </summary>
@@ -130,7 +148,7 @@ namespace SecRandom.Langs.CrashRecovery {
                 return ResourceManager.GetString("C_Restart", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} 秒后重启.
         /// </summary>
@@ -139,7 +157,7 @@ namespace SecRandom.Langs.CrashRecovery {
                 return ResourceManager.GetString("C_RestartCountdown", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SecRandom 遇到了未处理的错误。下面是本次崩溃报告，可复制后反馈问题，或重新启动程序。.
         /// </summary>
@@ -148,7 +166,16 @@ namespace SecRandom.Langs.CrashRecovery {
                 return ResourceManager.GetString("Description", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to 应用发生未处理异常并进入崩溃恢复。.
+        /// </summary>
+        public static string FeedbackActual {
+            get {
+                return ResourceManager.GetString("FeedbackActual", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to ## 崩溃报告
         ///
@@ -161,7 +188,25 @@ namespace SecRandom.Langs.CrashRecovery {
                 return ResourceManager.GetString("FeedbackBody", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to 应用应稳定运行，不应发生未处理异常。.
+        /// </summary>
+        public static string FeedbackExpected {
+            get {
+                return ResourceManager.GetString("FeedbackExpected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 崩溃报告已自动收集，请参考随附诊断信息。.
+        /// </summary>
+        public static string FeedbackReproduction {
+            get {
+                return ResourceManager.GetString("FeedbackReproduction", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to SecRandom 崩溃报告.
         /// </summary>
@@ -170,7 +215,25 @@ namespace SecRandom.Langs.CrashRecovery {
                 return ResourceManager.GetString("FeedbackTitle", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to 应用内反馈提交失败，请使用 GitHub 反馈。.
+        /// </summary>
+        public static string M_ReportFailed {
+            get {
+                return ResourceManager.GetString("M_ReportFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 崩溃报告已通过应用内反馈提交。.
+        /// </summary>
+        public static string M_ReportSuccess {
+            get {
+                return ResourceManager.GetString("M_ReportSuccess", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 无堆栈信息.
         /// </summary>
@@ -179,7 +242,7 @@ namespace SecRandom.Langs.CrashRecovery {
                 return ResourceManager.GetString("NoStackTrace", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 无法读取崩溃报告：{0}.
         /// </summary>
@@ -188,7 +251,7 @@ namespace SecRandom.Langs.CrashRecovery {
                 return ResourceManager.GetString("ReportUnavailable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SecRandom 崩溃恢复.
         /// </summary>

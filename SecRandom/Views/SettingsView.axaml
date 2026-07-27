@@ -137,6 +137,12 @@
                                  <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
                                            Header="{x:Static ls:Resources.C_MoreOptions_OpenAppDirectory}"
                                            Click="OpenAppDirectoryMenuItem_OnClick" />
+
+                                 <Separator />
+
+                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi CommentNoteFilled}}"
+                                           Header="{x:Static ls:Resources.C_MoreOptions_Feedback}"
+                                           Click="FeedbackMenuItem_OnClick" />
                              </MenuFlyout>
                         </Button.Flyout>
                     </Button>

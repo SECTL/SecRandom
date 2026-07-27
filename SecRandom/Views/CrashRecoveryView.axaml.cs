@@ -7,8 +7,10 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using SecRandom.Core.Abstraction;
 using SecRandom.Core.Views;
 using SecRandom.Services.CrashRecovery;
+using SecRandom.Services.Feedback;
 using CrashResources = SecRandom.Langs.CrashRecovery.Resources;
 
 namespace SecRandom.Views;
@@ -24,6 +26,11 @@ public sealed partial class CrashRecoveryView : ViewBase, INotifyPropertyChanged
     private readonly Func<bool> _restartApp;
     private DispatcherTimer? _restartTimer;
     private int _remainingSeconds;
+    private bool _isCrashFeedbackDraftLoaded;
+    private bool _isFeedbackDrawerOpen;
+    private bool _restartPausedByFeedback;
+    private FeedbackDrawer? _feedbackDrawer;
+    private string _feedbackStatus = string.Empty;
 
     public CrashRecoveryView(
         CrashRecoveryPromptOptions options,
@@ -51,8 +58,66 @@ public sealed partial class CrashRecoveryView : ViewBase, INotifyPropertyChanged
 
     public string CrashReport { get; }
     public bool CanIgnore { get; }
+    public bool CanSubmitInAppFeedback => IAppHost.TryGetService<IUserFeedbackService>() is not null;
+    public FeedbackDrawer? FeedbackDrawer
+    {
+        get => _feedbackDrawer;
+        private set
+        {
+            if (_feedbackDrawer == value)
+                return;
+
+            _feedbackDrawer = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool IsFeedbackDrawerOpen
+    {
+        get => _isFeedbackDrawerOpen;
+        set
+        {
+            if (_isFeedbackDrawerOpen == value)
+                return;
+
+            _isFeedbackDrawerOpen = value;
+            OnPropertyChanged();
+
+            // 反馈抽屉打开时暂停自动重启倒计时，关闭后从剩余秒数继续。
+            if (value)
+            {
+                if (_restartTimer?.IsEnabled == true)
+                {
+                    _restartTimer.Stop();
+                    _restartPausedByFeedback = true;
+                }
+            }
+            else if (_restartPausedByFeedback)
+            {
+                _restartPausedByFeedback = false;
+                _restartTimer?.Start();
+            }
+        }
+    }
+
     public bool WasIgnored { get; private set; }
     public event EventHandler? Dismissed;
+
+    public string FeedbackStatus
+    {
+        get => _feedbackStatus;
+        private set
+        {
+            if (_feedbackStatus == value)
+                return;
+
+            _feedbackStatus = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasFeedbackStatus));
+        }
+    }
+
+    public bool HasFeedbackStatus => !string.IsNullOrWhiteSpace(FeedbackStatus);
 
     public string RestartButtonText => _remainingSeconds > 0
         ? string.Format(CrashResources.C_RestartCountdown, _remainingSeconds)
@@ -74,7 +139,45 @@ public sealed partial class CrashRecoveryView : ViewBase, INotifyPropertyChanged
         }
     }
 
-    private void ReportIssue_OnClick(object? sender, RoutedEventArgs e)
+    private void ReportInApp_OnClick(object? sender, RoutedEventArgs e)
+    {
+        FeedbackStatus = string.Empty;
+        FeedbackDrawer? drawer = FeedbackDrawer ?? IAppHost.TryGetService<FeedbackDrawer>();
+        if (drawer is null)
+        {
+            FeedbackStatus = CrashResources.M_ReportFailed;
+            return;
+        }
+
+        if (FeedbackDrawer is null)
+        {
+            FeedbackDrawer = drawer;
+            drawer.Configure(CloseFeedbackDrawer);
+            drawer.DraftCleared += (_, _) => _isCrashFeedbackDraftLoaded = false;
+            drawer.SubmissionSucceeded += (_, _) => FeedbackStatus = CrashResources.M_ReportSuccess;
+        }
+
+        if (!_isCrashFeedbackDraftLoaded)
+        {
+            drawer.LoadDraft(new UserFeedbackSubmission(
+                UserFeedbackCategory.Bug,
+                CrashResources.FeedbackTitle,
+                CrashResources.FeedbackExpected,
+                CrashResources.FeedbackActual,
+                CrashResources.FeedbackReproduction,
+                CrashReport: CrashReport));
+            _isCrashFeedbackDraftLoaded = true;
+        }
+
+        IsFeedbackDrawerOpen = true;
+    }
+
+    private void CloseFeedbackDrawer()
+    {
+        IsFeedbackDrawerOpen = false;
+    }
+
+    private void ReportGitHub_OnClick(object? sender, RoutedEventArgs e)
     {
         try
         {
@@ -82,8 +185,7 @@ public sealed partial class CrashRecoveryView : ViewBase, INotifyPropertyChanged
         }
         catch
         {
-            if (sender is Button button)
-                button.Content = CrashResources.C_ReportFailed;
+            FeedbackStatus = CrashResources.C_ReportFailed;
         }
     }
 

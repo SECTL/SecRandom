@@ -55,6 +55,7 @@ using SecRandom.Services.Profiles;
 using SecRandom.Services.Ipc;
 using SecRandom.Services.ImportExport;
 using SecRandom.Services.FirstRun;
+using SecRandom.Services.Feedback;
 using SecRandom.Services.Linkage;
 using SecRandom.Services.Music;
 using SecRandom.Services.Settings;
@@ -171,6 +172,16 @@ public partial class App : Application
 
             if (CrashRecoveryRuntime.StartupPromptOptions is { } promptOptions)
             {
+                // 保持崩溃提示在单实例获取前，但建立 Host 以提供诊断导出和应用内反馈。
+                try
+                {
+                    BuildHost(PlatformStartupContext.Current);
+                }
+                catch (Exception exception)
+                {
+                    WriteDesktopStartupDiagnostic("Crash-recovery Host build failed.", exception);
+                }
+
                 desktop.MainWindow = ShowCrashRecoveryPromptOnly(promptOptions);
                 base.OnFrameworkInitializationCompleted();
                 return;
@@ -715,6 +726,9 @@ public partial class App : Application
                         .AddSingleton<SecRandom.Core.Services.Archive.IArchivePostImportHooks,
                             Services.ImportExport.DesktopArchivePostImportHooks>();
                     services.AddSingleton<IImportExportService, Services.ImportExport.ImportExportService>();
+                    // 反馈依赖桌面的诊断导出与外部启动器，仅在桌面分支注册。
+                    services.AddSingleton<ISentryFeedbackClient, SentryFeedbackClient>();
+                    services.AddSingleton<IUserFeedbackService, UserFeedbackService>();
                     services.AddHostedService<AutomaticBackupService>();
                     services.AddSingleton(pluginStateStore!);
                     services.AddSingleton<PluginSelectionState>();
@@ -775,6 +789,8 @@ public partial class App : Application
                 {
                     services.AddTransient<MainViewModel>();
                     services.AddTransient<SettingsViewModel>();
+                    services.AddTransient<FeedbackDrawerViewModel>();
+                    services.AddTransient<FeedbackDrawer>();
                     services.AddSingleton<FirstRunOobeViewModel>();
                     
                     // Draw sessions are shared by UI and IPC. They must outlive a page navigation.

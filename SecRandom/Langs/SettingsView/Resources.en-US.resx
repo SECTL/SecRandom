@@ -143,4 +143,32 @@
     <data name="M_NavigateFailed" xml:space="preserve">
         <value>An error occurred during navigation.</value>
     </data>
+    <data name="C_MoreOptions_Feedback"><value>Feedback</value></data>
+    <data name="C_Feedback_Title"><value>Feedback</value></data>
+    <data name="C_Feedback_CloseTemporary"><value>Close for now</value></data>
+    <data name="C_Feedback_Bug"><value>Bug</value></data>
+    <data name="C_Feedback_Feature"><value>Feature / experience improvement</value></data>
+    <data name="C_Feedback_Summary"><value>Summary</value></data>
+    <data name="C_Feedback_SummaryPlaceholder"><value>Summarize the issue or suggestion in one sentence</value></data>
+    <data name="C_Feedback_ContactEmail"><value>Contact email (optional)</value></data>
+    <data name="C_Feedback_ContactEmailPlaceholder"><value>Used only if we need to reply</value></data>
+    <data name="C_Feedback_CrashReport"><value>Crash report</value></data>
+    <data name="C_Feedback_Expected"><value>Expected behavior</value></data>
+    <data name="C_Feedback_ExpectedPlaceholder"><value>Describe what you expected to happen.</value></data>
+    <data name="C_Feedback_Actual"><value>Actual result</value></data>
+    <data name="C_Feedback_ActualPlaceholder"><value>Describe what actually happened.</value></data>
+    <data name="C_Feedback_Reproduce"><value>Steps to reproduce</value></data>
+    <data name="C_Feedback_ReproducePlaceholder"><value>1. First...&#10;2. Then...&#10;3. ...</value></data>
+    <data name="C_Feedback_Motivation"><value>Background and motivation</value></data>
+    <data name="C_Feedback_MotivationPlaceholder"><value>Why is this needed? What situation would it help with?</value></data>
+    <data name="C_Feedback_Request"><value>Feature or improvement requested</value></data>
+    <data name="C_Feedback_RequestPlaceholder"><value>Describe the desired feature, workflow, or experience improvement as specifically as possible.</value></data>
+    <data name="C_Feedback_DiagnosticNotice"><value>A redacted ZIP attachment equivalent to Export diagnostic data is generated and uploaded automatically when you submit, to help investigate the issue.</value></data>
+    <data name="C_Feedback_Cancel"><value>Cancel feedback</value></data>
+    <data name="C_Feedback_Submit"><value>Submit feedback</value></data>
+    <data name="M_Feedback_Required"><value>Fill in all required fields before submitting feedback.</value></data>
+    <data name="M_Feedback_InvalidEmail"><value>Enter a valid contact email or leave it blank.</value></data>
+    <data name="M_Feedback_Success"><value>Feedback submitted. Thank you for your help.</value></data>
+    <data name="M_Feedback_DiagnosticTooLarge"><value>The diagnostic ZIP exceeds the upload limit, so feedback was not submitted. Clear logs and try again, or use GitHub.</value></data>
+    <data name="M_Feedback_Failed"><value>Feedback submission failed. Try again later or use GitHub.</value></data>
 </root>
