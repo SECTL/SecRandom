@@ -30,7 +30,7 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
         _singleViewHostProvider.Attach(this);
     }
 
-    public string HostId => "mobile.root";
+    public string HostId => MobilePageIds.Root;
     public IReadOnlyList<ViewBase> PageStack => _pageStack;
     public ViewBase? ActiveModalView => _modalStack.LastOrDefault();
     public event EventHandler? Destroyed;

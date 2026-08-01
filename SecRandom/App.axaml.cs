@@ -36,6 +36,7 @@ using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services;
+using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Services.SingleInstance;
@@ -250,7 +251,7 @@ public partial class App : Application
             _mobileHost = IAppHost.Host;
             _mobileViewHost = ActivatorUtilities.CreateInstance<MobileViewHost>(_mobileHost!.Services);
             singleView.MainView = _mobileViewHost;
-            ObserveTask(_mobileHost.Services.GetRequiredService<IViewEngine>().ShowAsync("mobile.root"),
+            ObserveTask(_mobileHost.Services.GetRequiredService<IViewEngine>().ShowAsync(MobilePageIds.Root),
                 "Mobile root view activation failed.");
 
             if (singleView is IControlledApplicationLifetime controlled)
@@ -316,7 +317,7 @@ public partial class App : Application
         var newHost = ActivatorUtilities.CreateInstance<MobileViewHost>(host.Services);
         _mobileViewHost = newHost;
         await Dispatcher.UIThread.InvokeAsync(() => singleView.MainView = newHost);
-        await host.Services.GetRequiredService<IViewEngine>().ShowAsync("mobile.root").ConfigureAwait(false);
+        await host.Services.GetRequiredService<IViewEngine>().ShowAsync(MobilePageIds.Root).ConfigureAwait(false);
     }
 
     private async Task StopMobileHostAsync()
@@ -632,16 +633,15 @@ public partial class App : Application
     private void BuildHost(IPlatformServiceRoot platform)
     {
         if (IAppHost.Host is not null) return;
-        MobilePlatformServiceRoot? mobilePlatform = platform as MobilePlatformServiceRoot;
-        bool isMobile = mobilePlatform is not null;
+        var mobilePlatform = platform as MobilePlatformServiceRoot;
+        var isMobile = mobilePlatform is not null;
+        var useMobileUI = isMobile;
 
         IAppHost.Host = Host
             .CreateDefaultBuilder()
             .UseContentRoot(AppContext.BaseDirectory)
             .ConfigureServices(services =>
             {
-                PluginStateStore? pluginStateStore = null;
-
                 if (isMobile)
                 {
                     services.AddPlatformServices(platform);
@@ -649,14 +649,13 @@ public partial class App : Application
                     services.AddSingleton<IViewHostProvider>(provider =>
                         provider.GetRequiredService<SingleViewHostProvider>());
                     services.AddViewEngine()
-                        .AddView<MobileRootView>("mobile.root")
+                        .AddView<MobileRootView>(MobilePageIds.Root)
+                        .AddView<MainView>(DesktopViewIds.Main)
                         .AddView<SettingsView>(MobilePageIds.Settings);
                     services.AddTransient<MobileViewHost>();
                 }
                 else
                 {
-                    pluginStateStore = new PluginStateStore();
-
                     services.AddPlatformServices(platform);
                     services.AddSingleton<DesktopViewHostProvider>();
                     services.AddSingleton<IViewHostProvider>(serviceProvider =>
@@ -708,71 +707,60 @@ public partial class App : Application
                     services.AddSingleton<IMobileUpdateInstaller>(currentMobilePlatform.UpdateInstaller);
                     services.AddHttpClient<MobileUpdateService>();
                 }
-                else
-                {
-                    services.AddSingleton<IProfileQueryService, ProfileQueryService>();
-                    services.AddSingleton<DrawProofExportService>();
-                    services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
-                    services.AddHttpClient<IWitnessClient, WitnessClient>(client =>
-                        client.Timeout = TimeSpan.FromSeconds(3));
-                    services.AddSingleton<DrawProofAttestationService>();
-                    services.AddHostedService(serviceProvider =>
-                        serviceProvider.GetRequiredService<DrawProofAttestationService>());
-                    services.AddTransient<VerificationDrawCoordinator>();
-                    services.AddSingleton<SettingsSearchService>();
-                    services.AddSingleton<FirstRunOobeService>();
-                    services.AddSingleton<OobeDataSetupService>();
-                    services
-                        .AddSingleton<SecRandom.Core.Services.Archive.IArchivePostImportHooks,
-                            Services.ImportExport.DesktopArchivePostImportHooks>();
-                    services.AddSingleton<IImportExportService, Services.ImportExport.ImportExportService>();
-                    // 反馈依赖桌面的诊断导出与外部启动器，仅在桌面分支注册。
-                    services.AddSingleton<ISentryFeedbackClient, SentryFeedbackClient>();
-                    services.AddSingleton<IUserFeedbackService, UserFeedbackService>();
-                    services.AddHostedService<AutomaticBackupService>();
-                    services.AddSingleton(pluginStateStore!);
-                    services.AddSingleton<PluginSelectionState>();
-                    services.AddSingleton<IPluginManager, PluginManagerService>();
-                    services.AddSingleton<IPluginCatalogService, PluginCatalogService>();
-                    services.AddHostedService<PluginCatalogHostedService>();
-                    services.AddHostedService<PluginHostedService>();
-                    services.AddHostedService<TaskBarIconService>();
-                    services.AddSingleton<GlobalShortcutService>();
-                    services.AddHostedService(serviceProvider =>
-                        serviceProvider.GetRequiredService<GlobalShortcutService>());
-                    services.AddSingleton<DesktopIntegrationService>();
-                    services.AddSingleton<IExternalLauncher, ExternalLauncher>();
-                    services.AddHttpClient("updates", client => client.Timeout = TimeSpan.FromSeconds(30));
-                    services.AddSingleton<UpdateCenterService>(serviceProvider => new UpdateCenterService(
-                        serviceProvider.GetRequiredService<MainConfigHandler>(),
-                        serviceProvider.GetRequiredService<ILogger<UpdateCenterService>>(),
-                        serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("updates")));
-                    services.AddSingleton<IUpdateNotificationService, UpdateNotificationService>();
-                    services.AddHostedService<UpdateScheduler>();
-                    services.AddSingleton<ProtocolCommandRouter>();
-                    services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
-                    services.AddSingleton<ISpeechProvider, EdgeTtsSpeechProvider>();
-                    services.AddSingleton<ISpeechAudioPlayer, SpeechAudioPlayer>();
-                    services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
-                    services.AddSingleton<NotificationService>();
-                    services.AddSingleton(serviceProvider => new MusicLibraryService(
-                        serviceProvider.GetRequiredService<MainConfigHandler>(),
-                        serviceProvider.GetRequiredService<ILogger<MusicLibraryService>>(),
-                        attachedSettingsProfileService: serviceProvider.GetRequiredService<IProfileService>(),
-                        profileCatalogManager: serviceProvider.GetRequiredService<IProfileCatalogManager>()));
-                    services.AddSingleton<DrawAudioService>();
-                    services.AddSingleton<CsesScheduleParser>();
-                    services.AddSingleton<ICsesScheduleStore, CsesScheduleStore>();
-                    services.AddSingleton<CsesScheduleSource>();
-                    services.AddSingleton<ClassIslandScheduleSource>();
-                    services.AddSingleton<CourseLinkageService>();
-                    services.AddSingleton<LinkageDrawCoordinator>();
-                    services.AddHostedService<CourseLinkageHostedService>();
-                    services.AddSingleton<ICredentialKeyProtector, CredentialKeyProtector>();
-                    services.AddSingleton<SecurityCredentialStore>();
-                    services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
-                    services.AddSingleton<ISecurityService, SecurityService>();
-                }
+                
+                services.AddSingleton<IProfileQueryService, ProfileQueryService>();
+                services.AddSingleton<DrawProofExportService>();
+                services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
+                services.AddHttpClient<IWitnessClient, WitnessClient>(client =>
+                    client.Timeout = TimeSpan.FromSeconds(3));
+                services.AddSingleton<DrawProofAttestationService>();
+                services.AddHostedService(serviceProvider =>
+                    serviceProvider.GetRequiredService<DrawProofAttestationService>());
+                services.AddTransient<VerificationDrawCoordinator>();
+                services.AddSingleton<SettingsSearchService>();
+                services.AddSingleton<FirstRunOobeService>();
+                services.AddSingleton<OobeDataSetupService>();
+                services.AddSingleton<IArchivePostImportHooks, DesktopArchivePostImportHooks>();
+                services.AddSingleton<IImportExportService, ImportExportService>();
+                services.AddSingleton<ISentryFeedbackClient, SentryFeedbackClient>();
+                services.AddSingleton<IUserFeedbackService, UserFeedbackService>();
+                services.AddHostedService<AutomaticBackupService>();
+                services.AddHostedService<TaskBarIconService>();
+                services.AddSingleton<GlobalShortcutService>();
+                services.AddHostedService(serviceProvider =>
+                    serviceProvider.GetRequiredService<GlobalShortcutService>());
+                services.AddSingleton<DesktopIntegrationService>();
+                services.AddSingleton<IExternalLauncher, ExternalLauncher>();
+                services.AddHttpClient("updates", client => client.Timeout = TimeSpan.FromSeconds(30));
+                services.AddSingleton<UpdateCenterService>(serviceProvider => new UpdateCenterService(
+                    serviceProvider.GetRequiredService<MainConfigHandler>(),
+                    serviceProvider.GetRequiredService<ILogger<UpdateCenterService>>(),
+                    serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("updates")));
+                services.AddSingleton<IUpdateNotificationService, UpdateNotificationService>();
+                services.AddHostedService<UpdateScheduler>();
+                services.AddSingleton<ProtocolCommandRouter>();
+                services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
+                services.AddSingleton<ISpeechProvider, EdgeTtsSpeechProvider>();
+                services.AddSingleton<ISpeechAudioPlayer, SpeechAudioPlayer>();
+                services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
+                services.AddSingleton<NotificationService>();
+                services.AddSingleton(serviceProvider => new MusicLibraryService(
+                    serviceProvider.GetRequiredService<MainConfigHandler>(),
+                    serviceProvider.GetRequiredService<ILogger<MusicLibraryService>>(),
+                    attachedSettingsProfileService: serviceProvider.GetRequiredService<IProfileService>(),
+                    profileCatalogManager: serviceProvider.GetRequiredService<IProfileCatalogManager>()));
+                services.AddSingleton<DrawAudioService>();
+                services.AddSingleton<CsesScheduleParser>();
+                services.AddSingleton<ICsesScheduleStore, CsesScheduleStore>();
+                services.AddSingleton<CsesScheduleSource>();
+                services.AddSingleton<ClassIslandScheduleSource>();
+                services.AddSingleton<CourseLinkageService>();
+                services.AddSingleton<LinkageDrawCoordinator>();
+                services.AddHostedService<CourseLinkageHostedService>();
+                services.AddSingleton<ICredentialKeyProtector, CredentialKeyProtector>();
+                services.AddSingleton<SecurityCredentialStore>();
+                services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
+                services.AddSingleton<ISecurityService, SecurityService>();
 
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
                 services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");
@@ -785,22 +773,17 @@ public partial class App : Application
                 // ViewModel 一定要继承 SecRandom.ViewModels.ViewModelBase，里面有 Config 可以直接拿来用。
                 services.AddTransient<ViewModelBase>();
 
-                if (!isMobile)
-                {
-                    services.AddTransient<MainViewModel>();
-                    services.AddTransient<SettingsViewModel>();
-                    services.AddTransient<FeedbackDrawerViewModel>();
-                    services.AddTransient<FeedbackDrawer>();
-                    services.AddSingleton<FirstRunOobeViewModel>();
-                    
-                    // Draw sessions are shared by UI and IPC. They must outlive a page navigation.
-                    services.AddSingleton<RollCallPageViewModel>();
-                    services.AddSingleton<QuickDrawPageViewModel>();
-                    services.AddSingleton<LotteryPageViewModel>();
-                    services.AddTransient<RollCallHistoryViewModel>();
-                    services.AddTransient<HomeSettingsPageViewModel>();
-                    services.AddTransient<LotteryHistoryViewModel>();
-                }
+                services.AddTransient<MainViewModel>();
+                services.AddTransient<SettingsViewModel>();
+                services.AddTransient<FeedbackDrawerViewModel>();
+                services.AddTransient<FeedbackDrawer>();
+                services.AddSingleton<FirstRunOobeViewModel>();
+                services.AddSingleton<RollCallPageViewModel>();
+                services.AddSingleton<QuickDrawPageViewModel>();
+                services.AddSingleton<LotteryPageViewModel>();
+                services.AddTransient<RollCallHistoryViewModel>();
+                services.AddTransient<HomeSettingsPageViewModel>();
+                services.AddTransient<LotteryHistoryViewModel>();
 
                 // 杂项 Views
                 if (isMobile)
@@ -820,7 +803,7 @@ public partial class App : Application
                 }
 
                 // 界面 Views
-                if (isMobile)
+                if (useMobileUI)
                 {
                     services.AddKeyedTransient<UserControl, MobileDrawPage>(MobilePageIds.Draw);
                     services.AddKeyedTransient<UserControl, MobileHistoryPage>(MobilePageIds.History);
@@ -838,8 +821,9 @@ public partial class App : Application
                 
                 if (isMobile)
                 {
-                    // 顶部和偏好
                     services.AddSettingsPage<MobileSettingsCatalogPage>(MobileResources.P_Settings);
+                    
+                    // 顶部和偏好
                     services.AddGroup(new PageGroupInfo(
                         MobileResources.S_GroupPreferences, "settings.mobile.preferences", FluentIcons.ColorFilled));
                     services.AddSettingsPage<MobileGeneralSettingsPage>(MobileResources.S_General);
@@ -861,6 +845,8 @@ public partial class App : Application
                 }
                 else
                 {
+                    // services.AddSettingsPage<MobileSettingsCatalogPage>(MobileResources.P_Settings);
+                    
                     // 顶部
                     services.AddSettingsPage<HomeSettingsPage>(Langs.Common.Resources.Settings_Home);
                     services.AddSettingsPageSeparator();
@@ -941,9 +927,16 @@ public partial class App : Application
                 }
 
                 // 配置插件
+                var pluginStateStore = new PluginStateStore();
+                services.AddSingleton(pluginStateStore);
+                services.AddSingleton<PluginSelectionState>();
+                services.AddSingleton<IPluginManager, PluginManagerService>();
+                services.AddSingleton<IPluginCatalogService, PluginCatalogService>();
+                services.AddHostedService<PluginCatalogHostedService>();
+                services.AddHostedService<PluginHostedService>();
                 if (!isMobile)
                 {
-                    PluginManagerService.ConfigureEnabledPlugins(services, pluginStateStore!);
+                    PluginManagerService.ConfigureEnabledPlugins(services, pluginStateStore);
                 }
             })
             .Build();

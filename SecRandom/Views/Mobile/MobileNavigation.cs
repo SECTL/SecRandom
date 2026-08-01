@@ -9,10 +9,11 @@ namespace SecRandom.Views.Mobile;
 /// </summary>
 public static class MobilePageIds
 {
+    public const string Root = "root.mobile";
     public const string Draw = "main.rollCall";
     public const string History = "main.history";
     public const string Overview = "main.overview";
-    public const string Settings = "settings.mobile";
+    public const string Settings = "root.settings";
     public const string General = "settings.mobile.general";
     public const string Personalization = "settings.mobile.personalization";
     public const string ListManagement = "settings.mobile.listManagement";
