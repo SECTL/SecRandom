@@ -250,7 +250,7 @@ public partial class App : Application
             _mobileHost = IAppHost.Host;
             _mobileViewHost = ActivatorUtilities.CreateInstance<MobileViewHost>(_mobileHost!.Services);
             singleView.MainView = _mobileViewHost;
-            ObserveTask(_mobileHost.Services.GetRequiredService<IViewEngine>().ShowAsync(MobilePageIds.Root),
+            ObserveTask(_mobileHost.Services.GetRequiredService<IViewEngine>().ShowAsync(GetMobileInitialViewId()),
                 "Mobile root view activation failed.");
 
             if (singleView is IControlledApplicationLifetime controlled)
@@ -316,8 +316,13 @@ public partial class App : Application
         var newHost = ActivatorUtilities.CreateInstance<MobileViewHost>(host.Services);
         _mobileViewHost = newHost;
         await Dispatcher.UIThread.InvokeAsync(() => singleView.MainView = newHost);
-        await host.Services.GetRequiredService<IViewEngine>().ShowAsync(MobilePageIds.Root).ConfigureAwait(false);
+        await host.Services.GetRequiredService<IViewEngine>().ShowAsync(GetMobileInitialViewId()).ConfigureAwait(false);
     }
+
+    private static string GetMobileInitialViewId() =>
+        (PlatformStartupContext.Current as MobilePlatformServiceRoot)?.UsesDesktopMainView == true
+            ? DesktopViewIds.Main
+            : MobilePageIds.Root;
 
     private async Task StopMobileHostAsync()
     {
@@ -634,7 +639,7 @@ public partial class App : Application
         if (IAppHost.Host is not null) return;
         var mobilePlatform = platform as MobilePlatformServiceRoot;
         var isMobile = mobilePlatform is not null;
-        var useMobileUI = isMobile;
+        var useMobileUI = isMobile && !mobilePlatform!.UsesDesktopMainView;
 
         IAppHost.Host = Host
             .CreateDefaultBuilder()
@@ -802,7 +807,7 @@ public partial class App : Application
                 }
 
                 // 界面 Views
-                if (useMobileUI)
+                 if (useMobileUI)
                 {
                     services.AddKeyedTransient<UserControl, MobileDrawPage>(MobilePageIds.Draw);
                     services.AddKeyedTransient<UserControl, MobileHistoryPage>(MobilePageIds.History);

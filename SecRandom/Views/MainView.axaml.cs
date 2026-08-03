@@ -21,6 +21,7 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Services;
 using SecRandom.Core.Views;
 using SecRandom.Services;
+using SecRandom.Services.Mobile;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
@@ -220,7 +221,10 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
     {
         if (info.Id == "settings")
         {
-            App.ShowSettingsWindow();
+            if (!App.IsDesktop && IAppHost.TryGetService<IMobileSettingsNavigator>() is { } mobileSettings)
+                _ = mobileSettings.OpenAsync();
+            else
+                App.ShowSettingsWindow();
             return;
         }
 

@@ -29,7 +29,8 @@ public sealed class AppDelegate : AvaloniaAppDelegate<global::SecRandom.App>
         RegisterUnhandledExceptionHooks();
         PlatformStartupContext.Set(new MobilePlatformServiceRoot(PlatformKind.Ios)
         {
-            MediaPlayer = new IosMobileMediaPlayer()
+            MediaPlayer = new IosMobileMediaPlayer(),
+            UsesDesktopMainView = UIDevice.CurrentDevice.UserInterfaceIdiom == UIUserInterfaceIdiom.Pad
         });
         return base.CustomizeAppBuilder(builder);
     }

@@ -95,6 +95,8 @@ SecRandom/
 
 ## CONVENTIONS
 
+- iPadOS is detected by the iOS entry head through `UIDevice.CurrentDevice.UserInterfaceIdiom`. It uses the original `MainView` and desktop main-page registrations inside the mobile single-view host, while its settings command opens the existing mobile `SettingsView` MVE rather than creating a desktop window. iPhone and Android retain `MobileRootView`.
+
 - `BuildHost()` registers logging, config, services, windows/views, ViewModels, attached settings controls,
   navigation pages, and real view-engine registrations. Built-in main/settings child pages use only
   `AddMainPage<T>()` / `AddSettingsPage<T>()` keyed `UserControl` registration and `FAFrame` navigation. Only

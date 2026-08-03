@@ -26,6 +26,12 @@ public sealed class MobilePlatformServiceRoot : IPlatformServiceRoot, IWindowFea
 
     public PlatformKind Kind { get; }
 
+    /// <summary>
+    /// Uses the desktop main navigation surface inside the mobile single-view host.
+    /// iPadOS enables this because its larger layout can use the original main view.
+    /// </summary>
+    public bool UsesDesktopMainView { get; set; }
+
     public PlatformCapabilities Capabilities { get; }
 
     /// <summary>
