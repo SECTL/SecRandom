@@ -1,14 +1,7 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -18,6 +11,7 @@ using Avalonia.Platform;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using FluentAvalonia.Styling;
+using HotAvalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -154,6 +148,11 @@ public partial class App : Application
         {
             Resources[@"ContentControlThemeFontFamily"] = Resources[@"AppFontFamily"] = FontFamily.Default;
             Resources[@"AppFontWeight"] = FontWeight.Normal;
+        }
+        
+        if (!Design.IsDesignMode && !OperatingSystem.IsMacOS() && !OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS())
+        {
+            this.UseHotReload();
         }
 
 #if DEBUG

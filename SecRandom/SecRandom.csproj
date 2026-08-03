@@ -5,6 +5,12 @@
         <LangVersion>latest</LangVersion>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <GenerateResourceDesigner>true</GenerateResourceDesigner>
+        <HotAvaloniaIncludeExtensions>True</HotAvaloniaIncludeExtensions>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <HotAvaloniaAutoEnable>False</HotAvaloniaAutoEnable>
+        <HotAvalonia Condition="'$(Configuration)' == 'Debug'">True</HotAvalonia>
     </PropertyGroup>
 
     <ItemGroup>
@@ -430,12 +436,13 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Avalonia.Markup.Xaml.Loader" Version="$(AvaloniaVersion)" />
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
         <PackageReference Include="ClassIsland.Markdown.Avalonia" Version="12.0.0" />
+        <PackageReference Include="HotAvalonia" Version="3.1.4" />
+        <PackageReference Include="HotAvalonia.Core" Version="3.1.4" />
         <PackageReference Include="Sentry" Version="6.7.0" />
         <PackageReference Include="Sentry.Extensions.Logging" Version="6.7.0" />
-<!--        <PackageReference Include="Sentry.Profiling" Version="6.7.0"-->
-<!--                          Condition="'$(TargetPlatformIdentifier)' != 'android'" />-->
         <PackageReference Include="QRCoder" Version="1.8.0" />
         <PackageReference Include="SoundFlow" Version="[1.2.1.3]" />
         <PackageReference Include="ClassIsland.Shared.IPC" Version="2.1.0.1" />
