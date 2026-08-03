@@ -12,7 +12,7 @@
               Loaded="OnLoaded"
               Unloaded="OnUnloaded">
     <ScrollViewer>
-        <StackPanel Classes="page-container animated-intro">
+        <StackPanel Classes="page-container animated-intro settings">
             <sr:IconText Text="{x:Static lsp:Resources.S_Credentials}" Glyph="{sr:Fi ShieldKeyholeFilled}" Margin="0 0 0 4" />
             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Enabled}" Description="{x:Static lsp:Resources.S_Enabled_D}" IconSource="{sr:FluentIconSource {sr:Fi ShieldKeyholeFilled}}">
                 <fa:FASettingsExpander.Footer><ToggleSwitch IsChecked="{Binding Settings.SecurityEnabled}" IsEnabled="{Binding CanEnableSecurity}" /></fa:FASettingsExpander.Footer>

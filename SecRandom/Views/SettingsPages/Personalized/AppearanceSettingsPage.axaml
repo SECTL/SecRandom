@@ -13,7 +13,7 @@
              x:DataType="local:AppearanceSettingsPage"
              Unloaded="OnUnloaded">
     <ScrollViewer>
-        <StackPanel Classes="page-container">
+        <StackPanel Classes="page-container settings">
             <sr:IconText x:Name="S_Theme"
                          Text="{x:Static lspa:Resources.S_Theme}"
                          Glyph="{sr:Fi ColorFilled}"

@@ -10,7 +10,7 @@
              x:Class="SecRandom.Views.SettingsPages.General.PrivacySettingsPage"
              x:DataType="local:PrivacySettingsPage">
     <ScrollViewer>
-        <StackPanel Classes="page-container animated-intro">
+        <StackPanel Classes="page-container animated-intro settings">
             <sr:IconText x:Name="S_SentryTelemetry"
                          Text="{x:Static lsp:Resources.S_SentryTelemetry}"
                          Glyph="{sr:Fi PulseSquareFilled}"

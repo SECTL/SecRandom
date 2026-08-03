@@ -10,7 +10,7 @@
               x:DataType="local:VerificationSettingsPage"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450">
     <ScrollViewer>
-        <StackPanel Classes="page-container animated-intro">
+        <StackPanel Classes="page-container animated-intro settings">
             <fa:FAInfoBar Severity="Informational" IsOpen="True" IsClosable="False"
                           Title="{x:Static lv:Resources.C_WitnessNoticeTitle}"
                           Message="{x:Static lv:Resources.M_WitnessModeNotice}" />

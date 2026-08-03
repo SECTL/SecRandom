@@ -13,7 +13,7 @@
              x:DataType="local:RollCallListSettingsPage"
              Unloaded="OnUnloaded">
     <ScrollViewer>
-        <StackPanel Classes="page-container animated-intro" Spacing="8">
+        <StackPanel Classes="page-container animated-intro settings" Spacing="8">
             <fa:FAInfoBar Title="{x:Static lr:Resources.C_InfoTitle}"
                           Message="{x:Static lr:Resources.C_InfoMessage}"
                           Severity="Informational"

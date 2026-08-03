@@ -7,7 +7,8 @@
                        xmlns:music="clr-namespace:SecRandom.Services.Music"
                        x:Class="SecRandom.Views.SettingsPages.Picking.DrawMusicSettingsExpander"
                        x:Name="Root"
-                       Theme="{DynamicResource {x:Type fa:FASettingsExpander}}">
+                       Theme="{DynamicResource {x:Type fa:FASettingsExpander}}"
+                       Classes="settings">
     <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationMusic}"
                                Description="{x:Static lp:Resources.S_AnimationMusic_D}">
         <fa:FASettingsExpanderItem.Footer>

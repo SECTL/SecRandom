@@ -7,7 +7,7 @@
              x:Class="SecRandom.Views.SettingsPages.Personalized.MusicSettingsPage"
              x:DataType="local:MusicSettingsPage">
     <ScrollViewer>
-        <StackPanel Classes="page-container animated-intro">
+        <StackPanel Classes="page-container animated-intro settings">
             <fa:FASettingsExpander x:Name="S_Library"
                                    Header="{x:Static lm:Resources.S_Library}"
                                    Description="{x:Static lm:Resources.S_Library_D}"

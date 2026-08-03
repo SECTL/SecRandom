@@ -14,7 +14,7 @@
              Loaded="OnLoaded"
              Unloaded="OnUnloaded">
     <ScrollViewer>
-        <StackPanel Classes="page-container animated-intro">
+        <StackPanel Classes="page-container animated-intro settings">
             <sr:IconText Text="{x:Static lp:Resources.Section_Draw}" Glyph="{sr:Fi FlashFilled}" Margin="0 0 0 4" />
 
             <fa:FASettingsExpander Header="{x:Static lp:Resources.S_DrawMode}"

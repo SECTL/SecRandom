@@ -11,7 +11,7 @@
              x:DataType="local:UpdateSettingsPage"
              Unloaded="OnUnloaded">
     <ScrollViewer>
-        <StackPanel Classes="page-container animated-intro">
+        <StackPanel Classes="page-container animated-intro settings">
             <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" Margin="0 0 0 12">
                 <sr:FluentIcon Grid.RowSpan="2"
                                 Glyph="{sr:Fi ArrowSyncFilled}"

@@ -177,4 +177,22 @@
     <Style Selector="WindowDrawnDecorations /template/ Panel#PART_TitleBar">
         <Setter Property="Background" Value="Transparent" />
     </Style>
+    
+    <Style Selector="Panel.settings">
+        <Style Selector="^ fa|FANumberBox">
+            <Setter Property="MinWidth" Value="128" />
+        </Style>
+    
+        <Style Selector="^ NumericUpDown">
+            <Setter Property="MinWidth" Value="128" />
+        </Style>
+    
+        <Style Selector="^ ComboBox">
+            <Setter Property="MinWidth" Value="96" />
+        </Style>
+    
+        <Style Selector="^ TextBox">
+            <Setter Property="MinWidth" Value="128" />
+        </Style>
+    </Style>
 </Styles>

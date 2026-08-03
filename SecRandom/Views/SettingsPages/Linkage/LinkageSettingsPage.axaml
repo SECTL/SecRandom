@@ -12,7 +12,7 @@
               Loaded="OnLoaded"
               Unloaded="OnUnloaded">
     <ScrollViewer>
-        <StackPanel Classes="page-container animated-intro">
+        <StackPanel Classes="page-container animated-intro settings">
             <sr:IconText x:Name="S_External"
                          Text="{x:Static lsp:Resources.S_External}"
                          Glyph="{sr:Fi LinkFilled}"

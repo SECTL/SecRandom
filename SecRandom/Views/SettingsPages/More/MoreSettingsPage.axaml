@@ -12,7 +12,7 @@
               Focusable="True"
               Unloaded="OnUnloaded">
     <ScrollViewer>
-        <StackPanel Classes="page-container animated-intro">
+        <StackPanel Classes="page-container animated-intro settings">
             <sr:IconText Text="{x:Static lsp:Resources.S_PageManagement}"
                           Glyph="{sr:Fi PanelRightFilled}"
                           Margin="0 0 0 4" />
@@ -31,52 +31,44 @@
             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_RollCallControls}"
                                     Description="{x:Static lsp:Resources.S_RollCallControls_D}"
                                     IconSource="{sr:FluentIconSource {sr:Fi AppsListFilled}}">
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_RollCallResetButton}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.RollCallResetButton}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallResetButton}"
+                              IsChecked="{Binding Settings.RollCallResetButton}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_RollCallQuantityControl}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.RollCallQuantityControl}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallQuantityControl}"
+                              IsChecked="{Binding Settings.RollCallQuantityControl}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_RollCallStartButton}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.RollCallStartButton}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallStartButton}"
+                              IsChecked="{Binding Settings.RollCallStartButton}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_RollCallListSelector}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.RollCallListSelector}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallListSelector}"
+                              IsChecked="{Binding Settings.RollCallListSelector}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_RollCallRangeSelector}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.RollCallRangeSelector}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallRangeSelector}"
+                              IsChecked="{Binding Settings.RollCallRangeSelector}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_RollCallGenderSelector}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.RollCallGenderSelector}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallGenderSelector}"
+                              IsChecked="{Binding Settings.RollCallGenderSelector}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_RollCallRemainingButton}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.RollCallRemainingButton}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallRemainingButton}"
+                              IsChecked="{Binding Settings.RollCallRemainingButton}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_RollCallQuantityLabel}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.RollCallQuantityLabel}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallQuantityLabel}"
+                              IsChecked="{Binding Settings.RollCallQuantityLabel}" />
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
@@ -104,58 +96,49 @@
                                     Description="{x:Static lsp:Resources.S_LotteryControls_D}"
                                     IconSource="{sr:FluentIconSource {sr:Fi AppsListFilled}}"
                                     IsVisible="{Binding Settings.LotteryEnabled}">
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryResetButton}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.LotteryResetButton}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryResetButton}"
+                              IsChecked="{Binding Settings.LotteryResetButton}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryQuantityControl}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.LotteryQuantityControl}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryQuantityControl}"
+                              IsChecked="{Binding Settings.LotteryQuantityControl}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryStartButton}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.LotteryStartButton}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryStartButton}"
+                              IsChecked="{Binding Settings.LotteryStartButton}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryListSelector}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.LotteryListSelector}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryListSelector}"
+                              IsChecked="{Binding Settings.LotteryListSelector}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryStudentListSelector}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.LotteryStudentListSelector}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryStudentListSelector}"
+                              IsChecked="{Binding Settings.LotteryStudentListSelector}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryRangeSelector}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.LotteryRangeSelector}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryRangeSelector}"
+                              IsChecked="{Binding Settings.LotteryRangeSelector}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryGenderSelector}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.LotteryGenderSelector}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryGenderSelector}"
+                              IsChecked="{Binding Settings.LotteryGenderSelector}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryRemainingButton}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.LotteryRemainingButton}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryRemainingButton}"
+                              IsChecked="{Binding Settings.LotteryRemainingButton}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_LotteryQuantityLabel}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.LotteryQuantityLabel}" />
-                    </fa:FASettingsExpanderItem.Footer>
+                <fa:FASettingsExpanderItem>
+                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryQuantityLabel}"
+                              IsChecked="{Binding Settings.LotteryQuantityLabel}" />
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
