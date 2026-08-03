@@ -55,7 +55,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly NotificationService? _notificationService;
-    private readonly FileSystemWatcher _studentListWatcher;
+    private readonly FileSystemWatcher? _studentListWatcher;
     private List<Student> _lastResultStudents = [];
     private int _studentIdPadWidth;
     private bool _isRefreshingLists;
@@ -102,7 +102,10 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         _notificationService = notificationService;
 
         ResultText = ReminderSettings.ReminderText;
-        _studentListWatcher = CreateStudentListWatcher();
+        if (!OperatingSystem.IsIOS())
+        {
+            _studentListWatcher = CreateStudentListWatcher();
+        }
 
         StudentListNames.CollectionChanged += StudentListNamesOnCollectionChanged;
         ResultItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ResultText));
@@ -457,7 +460,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         Config.DefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.MoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged -= SettingsOnPropertyChanged;
-        _studentListWatcher.Dispose();
+        _studentListWatcher?.Dispose();
     }
 
     private void StudentListNamesOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

@@ -57,8 +57,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly NotificationService? _notificationService;
     private readonly IFeatureAvailabilityService _featureAvailability;
-    private readonly FileSystemWatcher _prizeListWatcher;
-    private readonly FileSystemWatcher _studentListWatcher;
+    private readonly FileSystemWatcher? _prizeListWatcher;
+    private readonly FileSystemWatcher? _studentListWatcher;
     private bool _isDrawCommandRunning;
     private bool _isRefreshingLists;
     private bool _isPrizeListRefreshQueued;
@@ -106,8 +106,11 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         _verificationDrawCoordinator = verificationDrawCoordinator;
         _featureAvailability = featureAvailability;
         _notificationService = notificationService;
-        _prizeListWatcher = CreatePrizeListWatcher();
-        _studentListWatcher = CreateStudentListWatcher();
+        if (!OperatingSystem.IsIOS())
+        {
+            _prizeListWatcher = CreatePrizeListWatcher();
+            _studentListWatcher = CreateStudentListWatcher();
+        }
         PrizeListNames.CollectionChanged += PrizeListNamesOnCollectionChanged;
         StudentListNames.CollectionChanged += StudentListNamesOnCollectionChanged;
         Config.LotterySettings.PropertyChanged += SettingsOnPropertyChanged;
@@ -912,8 +915,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         Config.DefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.MoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged -= SettingsOnPropertyChanged;
-        _prizeListWatcher.Dispose();
-        _studentListWatcher.Dispose();
+        _prizeListWatcher?.Dispose();
+        _studentListWatcher?.Dispose();
     }
 
     private IBrush BuildReminderBrush()
