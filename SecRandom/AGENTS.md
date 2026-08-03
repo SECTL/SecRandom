@@ -165,6 +165,8 @@ SecRandom/
 
 ## LOCALIZATION
 
+- On Android, `MobileViewHost` handles `TopLevel.BackRequested` only when an independent MVE is above `MobileRootView`, closing that MVE back to the root. Back requests at the root remain unhandled so Android performs its normal exit behavior; the event does not alter the settings shell's internal page history or bottom-bar routes.
+
 - Each page has its own folder under `Langs/`.
 - Crash recovery has an app-level localization folder at `Langs/CrashRecovery/` because the prompt is a top-level window, not a settings page.
 - Privacy settings localization lives under `Langs/SettingsPages/General/Privacy/` and follows the same base `.resx` + designer registration pattern as other settings pages.

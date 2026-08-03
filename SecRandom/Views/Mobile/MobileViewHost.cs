@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using SecRandom.Core.Views;
@@ -17,8 +18,10 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
     private readonly Dictionary<Page, ViewBase> _viewsByPage = [];
     private readonly Dictionary<ViewBase, Page> _pagesByView = [];
     private NavigationPage _navigationPage = null!;
+    private TopLevel? _backRequestTopLevel;
     private bool _isDestroyed;
     private bool _isSynchronizingNavigation;
+    private bool _isHandlingBackRequest;
 
     public MobileViewHost(SingleViewHostProvider singleViewHostProvider)
     {
@@ -126,8 +129,32 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
 
     private void DetachCore()
     {
+        if (_backRequestTopLevel is not null)
+            _backRequestTopLevel.BackRequested -= TopLevel_OnBackRequested;
+        _backRequestTopLevel = null;
         _singleViewHostProvider.Detach(this);
     }
+
+    public Task<bool> RequestBackAsync(CancellationToken cancellationToken = default) =>
+        RunOnUiThreadAsync(async () =>
+        {
+            if (_isDestroyed || _pageStack.Count <= 1 || _isHandlingBackRequest)
+                return false;
+
+            _isHandlingBackRequest = true;
+            try
+            {
+                var view = _pageStack[^1];
+                var result = await view.CloseAsync(
+                    reason: ViewCloseReason.Back,
+                    cancellationToken: cancellationToken);
+                return result.WasClosed;
+            }
+            finally
+            {
+                _isHandlingBackRequest = false;
+            }
+        });
 
     private Page RegisterView(ViewBase view)
     {
@@ -159,6 +186,34 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
         _ = view.CloseAsync(reason: ViewCloseReason.Back);
     }
 
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        if (!OperatingSystem.IsAndroid())
+            return;
+
+        _backRequestTopLevel = TopLevel.GetTopLevel(this);
+        if (_backRequestTopLevel is not null)
+            _backRequestTopLevel.BackRequested += TopLevel_OnBackRequested;
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        if (_backRequestTopLevel is not null)
+            _backRequestTopLevel.BackRequested -= TopLevel_OnBackRequested;
+        _backRequestTopLevel = null;
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    private async void TopLevel_OnBackRequested(object? sender, RoutedEventArgs e)
+    {
+        if (_isDestroyed || _pageStack.Count <= 1 || _isHandlingBackRequest)
+            return;
+
+        e.Handled = true;
+        await RequestBackAsync();
+    }
+
     private void ThrowIfDestroyed()
     {
         if (_isDestroyed)
@@ -166,6 +221,14 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
     }
 
     private static Task RunOnUiThreadAsync(Func<Task> action)
+    {
+        if (Application.Current is null || Dispatcher.UIThread.CheckAccess())
+            return action();
+
+        return Dispatcher.UIThread.InvokeAsync(action);
+    }
+
+    private static Task<T> RunOnUiThreadAsync<T>(Func<Task<T>> action)
     {
         if (Application.Current is null || Dispatcher.UIThread.CheckAccess())
             return action();
