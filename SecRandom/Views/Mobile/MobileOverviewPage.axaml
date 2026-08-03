@@ -11,71 +11,69 @@
                   VerticalScrollBarVisibility="Auto"
                   IsScrollChainingEnabled="False"
                   IsScrollInertiaEnabled="True">
-        <StackPanel Spacing="14" MaxWidth="720">
-            <TextBlock Text="{x:Static langs:Resources.S_DataOverview}"
-                       FontSize="12"
-                       TextWrapping="Wrap" />
-            <TextBlock Text="{x:Static langs:Resources.P_Overview}"
-                       FontSize="24"
-                       FontWeight="SemiBold"
-                       TextWrapping="Wrap" />
+        <StackPanel Spacing="8" MaxWidth="720">
             <Grid x:Name="MetricsGrid"
                   ColumnDefinitions="*,*"
                   RowDefinitions="Auto,Auto"
-                  ColumnSpacing="14"
-                  RowSpacing="14">
-                <controls:MobileCard x:Name="StudentMetricCard"
-                                     Grid.Row="0"
-                                     Grid.Column="0">
+                  ColumnSpacing="8"
+                  RowSpacing="8">
+                <Grid.Styles>
+                    <Style Selector="Border.section">
+                        <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
+                        <Setter Property="BorderThickness" Value="1" />
+                        <Setter Property="CornerRadius" Value="4" />
+                        <Setter Property="Padding" Value="8" />
+                    </Style>
+                </Grid.Styles>
+                
+                <Border x:Name="StudentMetricCard"
+                        Classes="section"
+                        Grid.Row="0" Grid.Column="0">
                     <StackPanel Spacing="4">
-                        <sr:FluentIcon Glyph="{sr:Fi PeopleFilled}" FontSize="20" />
+                        <sr:IconText Glyph="{sr:Fi PeopleFilled}"
+                                     Text="{x:Static langs:Resources.M_Students}" FontSize="20" />
                         <TextBlock x:Name="StudentMetricValue"
                                    FontSize="28"
                                    FontWeight="SemiBold" />
-                        <TextBlock Text="{x:Static langs:Resources.M_Students}"
-                                   FontSize="12"
-                                   TextWrapping="Wrap" />
                     </StackPanel>
-                </controls:MobileCard>
-                <controls:MobileCard x:Name="PrizeMetricCard"
-                                     Grid.Row="0"
-                                     Grid.Column="1">
+                </Border>
+                
+                <Border x:Name="PrizeMetricCard"
+                        Classes="section"
+                        Grid.Row="0" Grid.Column="1">
                     <StackPanel Spacing="4">
-                        <sr:FluentIcon Glyph="{sr:Fi GiftFilled}" FontSize="20" />
+                        <sr:IconText Glyph="{sr:Fi GiftFilled}"
+                                     Text="{x:Static langs:Resources.M_Prizes}" FontSize="20" />
                         <TextBlock x:Name="PrizeMetricValue"
                                    FontSize="28"
                                    FontWeight="SemiBold" />
-                        <TextBlock Text="{x:Static langs:Resources.M_Prizes}"
-                                   FontSize="12"
-                                   TextWrapping="Wrap" />
                     </StackPanel>
-                </controls:MobileCard>
-                <controls:MobileCard x:Name="RollCallRoundsMetricCard"
-                                     Grid.Row="1"
-                                     Grid.Column="0">
+                </Border>
+                
+                <Border x:Name="RollCallRoundsMetricCard"
+                        Classes="section"
+                        Grid.Row="1" Grid.Column="0">
                     <StackPanel Spacing="4">
-                        <sr:FluentIcon Glyph="{sr:Fi TargetFilled}" FontSize="20" />
+                        <sr:IconText Glyph="{sr:Fi TargetFilled}"
+                                     Text="{x:Static langs:Resources.M_RollCallRounds}" FontSize="20" />
                         <TextBlock x:Name="RollCallRoundsMetricValue"
                                    FontSize="28"
                                    FontWeight="SemiBold" />
-                        <TextBlock Text="{x:Static langs:Resources.M_RollCallRounds}"
-                                   FontSize="12"
-                                   TextWrapping="Wrap" />
                     </StackPanel>
-                </controls:MobileCard>
-                <controls:MobileCard x:Name="LotteryRoundsMetricCard"
-                                     Grid.Row="1"
-                                     Grid.Column="1">
+                </Border>
+                
+                <Border x:Name="LotteryRoundsMetricCard"
+                        Classes="section"
+                        Grid.Row="1" Grid.Column="1">
                     <StackPanel Spacing="4">
-                        <sr:FluentIcon Glyph="{sr:Fi TrophyFilled}" FontSize="20" />
+                        <sr:IconText Glyph="{sr:Fi TrophyFilled}"
+                                     Text="{x:Static langs:Resources.M_LotteryRounds}" FontSize="20" />
                         <TextBlock x:Name="LotteryRoundsMetricValue"
                                    FontSize="28"
                                    FontWeight="SemiBold" />
-                        <TextBlock Text="{x:Static langs:Resources.M_LotteryRounds}"
-                                   FontSize="12"
-                                   TextWrapping="Wrap" />
                     </StackPanel>
-                </controls:MobileCard>
+                </Border>
             </Grid>
         </StackPanel>
     </ScrollViewer>

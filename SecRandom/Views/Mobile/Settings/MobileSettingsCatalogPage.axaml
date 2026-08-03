@@ -6,18 +6,11 @@
                               xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
                               x:Class="SecRandom.Views.Mobile.Settings.MobileSettingsCatalogPage"
                               x:DataType="local:MobileSettingsCatalogPage">
-    <ScrollViewer x:Name="PageScroll"
-                  Padding="20,20,20,28"
-                  HorizontalAlignment="Stretch"
-                  VerticalAlignment="Stretch"
-                  HorizontalScrollBarVisibility="Disabled"
-                  VerticalScrollBarVisibility="Auto"
-                  IsScrollChainingEnabled="False"
-                  IsScrollInertiaEnabled="True">
+    <ScrollViewer x:Name="PageScroll">
         <ItemsControl ItemsSource="{Binding Groups}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <StackPanel Orientation="Vertical" Spacing="8" />
+                    <StackPanel Orientation="Vertical" Classes="page-container" />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             

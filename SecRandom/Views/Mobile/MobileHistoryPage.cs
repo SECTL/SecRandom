@@ -27,7 +27,6 @@ public sealed partial class MobileHistoryPage : UserControl
     private int _segment;
     private string? _profileName;
     private bool _recordsMode;
-    private bool _firstRender = true;
     private bool _synchronizing;
 
     public MobileHistoryPage(
@@ -78,12 +77,6 @@ public sealed partial class MobileHistoryPage : UserControl
         finally
         {
             _synchronizing = false;
-        }
-
-        if (_firstRender)
-        {
-            _firstRender = false;
-            MobileAnimations.PlayPageEnter(this.FindControl<ScrollViewer>("PageScroll")!);
         }
     }
 
@@ -311,10 +304,7 @@ public sealed partial class MobileHistoryPage : UserControl
         HeadersVisibility = DataGridHeadersVisibility.Column,
         IsReadOnly = true,
         ItemsSource = rows,
-        Height = 58 + rows.Count() * 48,
-        RowHeight = 48,
         HorizontalAlignment = HorizontalAlignment.Stretch,
-        VerticalScrollBarVisibility = ScrollBarVisibility.Disabled
     };
 
     private static DataGridTextColumn TextColumn(string header, string path, double width) => new()
