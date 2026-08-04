@@ -280,6 +280,7 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
 
         _logger?.LogDebug("Mobile input pane changed to {State}; occluded rectangle: {OccludedRect}",
             e.NewState, e.EndRect);
+
         UpdateFocusedTextPresenter();
         _isInputPaneOffsetUpdatePending = false;
         if (e.NewState == InputPaneState.Open)
@@ -331,6 +332,15 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
     {
         if (_inputPane is not { State: InputPaneState.Open } || _inputPaneAnimationEasing is null)
             return;
+
+        // When a button or another control is tapped, focus leaves the TextBox before the
+        // keyboard reports Closed. Keep the current offset until that event arrives; resetting
+        // here causes a visible down/up jump during the keyboard dismissal gesture.
+        if (TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() is not Visual focusedElement ||
+            (focusedElement is not TextBox &&
+             focusedElement.GetVisualAncestors().OfType<TextBox>().FirstOrDefault() is null))
+            return;
+
         if (_inputPaneAnimationCancellation is not null)
         {
             _isInputPaneOffsetUpdatePending = true;

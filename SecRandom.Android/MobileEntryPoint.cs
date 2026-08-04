@@ -84,6 +84,7 @@ public sealed class MainActivity : AvaloniaMainActivity
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
-        Window?.SetSoftInputMode(SoftInput.AdjustResize);
+        // Keep the viewport stable; MobileViewHost shifts only the obscured content region.
+        Window?.SetSoftInputMode(SoftInput.AdjustNothing);
     }
 }

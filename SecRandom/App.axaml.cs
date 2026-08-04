@@ -21,6 +21,7 @@ using SecRandom.Controls.AttachedSettings;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Controls;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Extensions.Registry;
@@ -122,6 +123,7 @@ public partial class App : Application
 
     public override void Initialize()
     {
+        TouchInputModeAssist.Initialize();
         if (PlatformStartupContext.Current is MobilePlatformServiceRoot)
             Utils.ConfigureMobileDataRoot();
 

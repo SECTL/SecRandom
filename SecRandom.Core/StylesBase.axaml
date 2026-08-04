@@ -28,6 +28,7 @@
     <StyleInclude Source="/Styles/PopupAnimations.axaml" />
     <StyleInclude Source="/Styles/StackPanelIntroAnimation.axaml" />
     <StyleInclude Source="/Styles/TabStrip.axaml" />
+    <StyleInclude Source="/Styles/TouchTextCommandBarFlyout.axaml" />
     <StyleInclude Source="/Controls/StickyScrollViewer.axaml" />
     <StyleInclude Source="/Controls/DrawerHost.axaml" />
     <StyleInclude Source="/Controls/Empty.axaml" />
