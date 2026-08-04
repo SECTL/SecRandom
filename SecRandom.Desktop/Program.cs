@@ -53,6 +53,7 @@ internal sealed class Program
     private static void ConfigurePlatformServices()
     {
 #if SEC_RANDOM_PLATFORM_WINDOWS
+        WindowsTouchKeyboardIntegration.Initialize();
         PlatformStartupContext.Set(new WindowsPlatformServiceRoot());
 #elif SEC_RANDOM_PLATFORM_LINUX
         PlatformStartupContext.Set(new LinuxPlatformServiceRoot());

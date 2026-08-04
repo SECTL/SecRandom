@@ -10,5 +10,9 @@
         <ProjectReference Include="..\SecRandom.Platforms.Abstractions\SecRandom.Platforms.Abstractions.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+    </ItemGroup>
+
     <Import Project="..\Global.props" />
 </Project>

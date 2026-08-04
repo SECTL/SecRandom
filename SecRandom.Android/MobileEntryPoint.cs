@@ -1,5 +1,7 @@
 using Android.Content;
+using Android.OS;
 using Android.Runtime;
+using Android.Views;
 using Avalonia;
 using Avalonia.Android;
 using SecRandom.Core.Abstraction;
@@ -79,4 +81,9 @@ public sealed class UpdateFileProvider : global::AndroidX.Core.Content.FileProvi
                            global::Android.Content.PM.ConfigChanges.ScreenSize)]
 public sealed class MainActivity : AvaloniaMainActivity
 {
+    protected override void OnCreate(Bundle? savedInstanceState)
+    {
+        base.OnCreate(savedInstanceState);
+        Window?.SetSoftInputMode(SoftInput.AdjustResize);
+    }
 }

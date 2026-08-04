@@ -3,7 +3,12 @@
                       xmlns:local="clr-namespace:SecRandom.Views.Mobile"
                       x:Class="SecRandom.Views.Mobile.MobileViewHost">
     <Grid>
-        <NavigationPage x:Name="NavigationPage"
-                        Popped="NavigationPage_OnPopped" />
+        <Grid x:Name="PageContentRoot">
+            <Grid.RenderTransform>
+                <TranslateTransform />
+            </Grid.RenderTransform>
+            <NavigationPage x:Name="NavigationPage"
+                            Popped="NavigationPage_OnPopped" />
+        </Grid>
     </Grid>
 </local:MobileViewHost>

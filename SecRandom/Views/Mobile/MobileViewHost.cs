@@ -1,8 +1,17 @@
 using Avalonia;
+using Avalonia.Animation;
+using Avalonia.Animation.Easings;
 using Avalonia.Controls;
+using Avalonia.Controls.Platform;
+using Avalonia.Controls.Presenters;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
+using Microsoft.Extensions.Logging;
 using SecRandom.Core.Views;
 
 namespace SecRandom.Views.Mobile;
@@ -18,17 +27,27 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
     private readonly Dictionary<Page, ViewBase> _viewsByPage = [];
     private readonly Dictionary<ViewBase, Page> _pagesByView = [];
     private NavigationPage _navigationPage = null!;
+    private Control _pageContentRoot = null!;
     private TopLevel? _backRequestTopLevel;
+    private readonly ILogger<MobileViewHost>? _logger;
+    private IInputPane? _inputPane;
+    private TextPresenter? _focusedTextPresenter;
+    private CancellationTokenSource? _inputPaneAnimationCancellation;
+    private TimeSpan _inputPaneAnimationDuration;
+    private IEasing? _inputPaneAnimationEasing;
+    private bool _isInputPaneOffsetUpdatePending;
     private bool _isDestroyed;
     private bool _isSynchronizingNavigation;
     private bool _isHandlingBackRequest;
 
-    public MobileViewHost(SingleViewHostProvider singleViewHostProvider)
+    public MobileViewHost(SingleViewHostProvider singleViewHostProvider, ILogger<MobileViewHost>? logger = null)
     {
         _singleViewHostProvider = singleViewHostProvider;
+        _logger = logger;
 
         InitializeComponent();
         _navigationPage = this.FindControl<NavigationPage>("NavigationPage")!;
+        _pageContentRoot = this.FindControl<Control>("PageContentRoot")!;
         _navigationPage.ModalPopped += NavigationPage_OnModalPopped;
         _singleViewHostProvider.Attach(this);
     }
@@ -212,6 +231,206 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
 
         e.Handled = true;
         await RequestBackAsync();
+    }
+
+    protected override void OnLoaded(RoutedEventArgs e)
+    {
+        base.OnLoaded(e);
+        AttachInputPane();
+        AddHandler(GotFocusEvent, OnDescendantGotFocus, RoutingStrategies.Bubble, true);
+        SizeChanged += OnHostSizeChanged;
+    }
+
+    protected override void OnUnloaded(RoutedEventArgs e)
+    {
+        RemoveHandler(GotFocusEvent, OnDescendantGotFocus);
+        SizeChanged -= OnHostSizeChanged;
+        DetachInputPane();
+        ResetPageContentOffset();
+        base.OnUnloaded(e);
+    }
+
+    private void AttachInputPane()
+    {
+        DetachInputPane();
+        _inputPane = TopLevel.GetTopLevel(this)?.InputPane;
+        if (_inputPane is null)
+        {
+            _logger?.LogWarning("Mobile input pane is unavailable after the view host loaded.");
+            return;
+        }
+
+        _inputPane.StateChanged += InputPane_OnStateChanged;
+        UpdateFocusedTextPresenter();
+    }
+
+    private void DetachInputPane()
+    {
+        if (_inputPane is not null)
+            _inputPane.StateChanged -= InputPane_OnStateChanged;
+        _inputPane = null;
+        DetachFocusedTextPresenter();
+        CancelInputPaneAnimation();
+    }
+
+    private void InputPane_OnStateChanged(object? sender, InputPaneStateEventArgs e)
+    {
+        if (!ReferenceEquals(sender, _inputPane))
+            return;
+
+        _logger?.LogDebug("Mobile input pane changed to {State}; occluded rectangle: {OccludedRect}",
+            e.NewState, e.EndRect);
+        UpdateFocusedTextPresenter();
+        _isInputPaneOffsetUpdatePending = false;
+        if (e.NewState == InputPaneState.Open)
+        {
+            _inputPaneAnimationDuration = e.AnimationDuration;
+            _inputPaneAnimationEasing = e.Easing;
+        }
+
+        _ = AnimatePageContentOffsetAsync(
+            e.NewState == InputPaneState.Open ? CalculatePageContentOffset(e.EndRect) : 0,
+            e.AnimationDuration,
+            e.Easing ?? new LinearEasing());
+    }
+
+    private void OnDescendantGotFocus(object? sender, FocusChangedEventArgs e)
+    {
+        UpdateFocusedTextPresenter();
+        UpdatePageContentOffsetForOpenInputPane();
+    }
+
+    private void OnHostSizeChanged(object? sender, SizeChangedEventArgs e) =>
+        UpdatePageContentOffsetForOpenInputPane();
+
+    private void UpdateFocusedTextPresenter()
+    {
+        var focusedElement = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Visual;
+        var textBox = focusedElement as TextBox ?? focusedElement?.GetVisualAncestors().OfType<TextBox>().FirstOrDefault();
+        var textPresenter = textBox?.GetVisualDescendants().OfType<TextPresenter>().FirstOrDefault();
+        if (ReferenceEquals(_focusedTextPresenter, textPresenter))
+            return;
+
+        DetachFocusedTextPresenter();
+        _focusedTextPresenter = textPresenter;
+        if (_focusedTextPresenter is not null)
+            _focusedTextPresenter.CaretBoundsChanged += FocusedTextPresenter_OnCaretBoundsChanged;
+    }
+
+    private void DetachFocusedTextPresenter()
+    {
+        if (_focusedTextPresenter is not null)
+            _focusedTextPresenter.CaretBoundsChanged -= FocusedTextPresenter_OnCaretBoundsChanged;
+        _focusedTextPresenter = null;
+    }
+
+    private void FocusedTextPresenter_OnCaretBoundsChanged(object? sender, EventArgs e) =>
+        UpdatePageContentOffsetForOpenInputPane();
+
+    private void UpdatePageContentOffsetForOpenInputPane()
+    {
+        if (_inputPane is not { State: InputPaneState.Open } || _inputPaneAnimationEasing is null)
+            return;
+        if (_inputPaneAnimationCancellation is not null)
+        {
+            _isInputPaneOffsetUpdatePending = true;
+            return;
+        }
+
+        _ = AnimatePageContentOffsetAsync(
+            CalculatePageContentOffset(_inputPane.OccludedRect),
+            _inputPaneAnimationDuration,
+            _inputPaneAnimationEasing);
+    }
+
+    private double CalculatePageContentOffset(Rect occludedRect)
+    {
+        if (occludedRect.Width <= 0 || occludedRect.Height <= 0)
+            return 0;
+
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel?.FocusManager?.GetFocusedElement() is not Visual focusedElement ||
+            !_pageContentRoot.IsVisualAncestorOf(focusedElement))
+            return 0;
+
+        var avoidanceElement = focusedElement as TextBox ??
+                               focusedElement.GetVisualAncestors().OfType<TextBox>().FirstOrDefault() ?? focusedElement;
+        var focusedBottom = avoidanceElement.TranslatePoint(
+            new Point(0, avoidanceElement.Bounds.Height), topLevel);
+        if (focusedBottom is null)
+            return 0;
+
+        return Math.Min(0, occludedRect.Top - 12 - focusedBottom.Value.Y);
+    }
+
+    private async Task AnimatePageContentOffsetAsync(double targetOffset, TimeSpan duration, IEasing easing)
+    {
+        if (_pageContentRoot.RenderTransform is not TranslateTransform transform)
+            return;
+
+        var startOffset = transform.Y;
+        CancelInputPaneAnimation();
+        if (duration <= TimeSpan.Zero || Math.Abs(startOffset - targetOffset) < 0.01)
+        {
+            transform.Y = targetOffset;
+            return;
+        }
+
+        var cancellation = new CancellationTokenSource();
+        _inputPaneAnimationCancellation = cancellation;
+        var animation = new Animation
+        {
+            Duration = duration,
+            Easing = new InputPaneAnimationEasing(easing),
+            FillMode = FillMode.Forward,
+            Children =
+            {
+                new KeyFrame { Cue = new Cue(0), Setters = { new Setter(TranslateTransform.YProperty, startOffset) } },
+                new KeyFrame { Cue = new Cue(1), Setters = { new Setter(TranslateTransform.YProperty, targetOffset) } }
+            }
+        };
+
+        try
+        {
+            await animation.RunAsync(transform, cancellation.Token);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            var updatePendingOffset = ReferenceEquals(_inputPaneAnimationCancellation, cancellation) &&
+                                      _isInputPaneOffsetUpdatePending;
+            if (ReferenceEquals(_inputPaneAnimationCancellation, cancellation))
+            {
+                _inputPaneAnimationCancellation = null;
+                _isInputPaneOffsetUpdatePending = false;
+                if (!cancellation.IsCancellationRequested)
+                    transform.Y = targetOffset;
+            }
+            cancellation.Dispose();
+            if (updatePendingOffset)
+                UpdatePageContentOffsetForOpenInputPane();
+        }
+    }
+
+    private void CancelInputPaneAnimation()
+    {
+        _inputPaneAnimationCancellation?.Cancel();
+        _inputPaneAnimationCancellation = null;
+    }
+
+    private void ResetPageContentOffset()
+    {
+        _isInputPaneOffsetUpdatePending = false;
+        CancelInputPaneAnimation();
+        if (_pageContentRoot.RenderTransform is TranslateTransform transform)
+            transform.Y = 0;
+    }
+
+    private sealed class InputPaneAnimationEasing(IEasing easing) : Easing
+    {
+        public override double Ease(double progress) => easing.Ease(progress);
     }
 
     private void ThrowIfDestroyed()
