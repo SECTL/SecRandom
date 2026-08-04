@@ -120,7 +120,7 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 
     private void BuildNavigationMenuItems()
     {
-        
+        var applySampleNav = App.IsDesktop || OperatingSystem.IsBrowser() || OperatingSystem.IsIOS();
         
         ViewModel.NavigationViewItems.Clear();
         ViewModel.NavigationViewFooterItems.Clear();
@@ -132,7 +132,7 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
                 .Select(x =>
                 {
-                    if (App.IsDesktop || OperatingSystem.IsBrowser())
+                    if (applySampleNav)
                     {
                         x.Classes.Add(@"SampleAppNav");
                     }
@@ -147,7 +147,7 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
                 .Select(x =>
                 {
-                    if (App.IsDesktop || OperatingSystem.IsBrowser())
+                    if (applySampleNav)
                     {
                         x.Classes.Add(@"SampleAppNav");
                     }
@@ -160,14 +160,14 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
             Name = Langs.Common.Resources.Feat_Settings
         };
         var settingsItem = settingsPageInfo.ToNavigationViewItemBase();
-        if (App.IsDesktop || OperatingSystem.IsBrowser())
+        if (applySampleNav)
         {
             settingsItem.Classes.Add(@"SampleAppNav");
         }
         
         ViewModel.NavigationViewFooterItems.Add(settingsItem);
         
-        if (App.IsDesktop || OperatingSystem.IsBrowser())
+        if (applySampleNav)
         {
             _navigationView?.Classes.Add(@"SampleAppNav");
         }

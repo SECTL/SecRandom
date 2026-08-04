@@ -823,7 +823,7 @@ public partial class App : Application
                 // 设置界面 Views
                 services.AddSettingsPage<LogViewerSettingsPage>(Langs.SettingsPages.LogViewer.Resources.Page_Title);
                 
-                if (isMobile)
+                if (isMobile && useMobileUI)
                 {
                     services.AddSettingsPage<MobileSettingsCatalogPage>(MobileResources.P_Settings);
                     

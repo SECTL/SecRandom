@@ -9,6 +9,7 @@
              x:Class="SecRandom.Views.MainView"
              x:DataType="views:MainView"
              Header="SecRandom"
+             NavigationPage.HasNavigationBar="False"
              Loaded="OnLoaded"
              Unloaded="OnUnloaded">
     <Grid RowDefinitions="Auto *">
