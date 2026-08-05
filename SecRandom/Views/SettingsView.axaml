@@ -3,17 +3,17 @@
                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                     xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-                     xmlns:fa="using:FluentAvalonia.UI.Controls"
-                      xmlns:core="using:SecRandom.Core"
-                      xmlns:ls="clr-namespace:SecRandom.Langs.SettingsView"
-                      xmlns:ml="clr-namespace:SecRandom.Langs.Mobile"
-                      xmlns:views="using:SecRandom.Views"
+                    xmlns:fa="using:FluentAvalonia.UI.Controls"
+                    xmlns:core="using:SecRandom.Core"
+                    xmlns:ls="clr-namespace:SecRandom.Langs.SettingsView"
+                    xmlns:ml="clr-namespace:SecRandom.Langs.Mobile"
+                    xmlns:views="using:SecRandom.Views"
                     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-                     x:Class="SecRandom.Views.SettingsView"
-                     x:DataType="views:SettingsView"
-                     Header="{x:Static ml:Resources.P_Settings}"
+                    x:Class="SecRandom.Views.SettingsView"
+                    x:DataType="views:SettingsView"
+                    Header="{x:Static ml:Resources.P_Settings}"
                     NavigationPage.HasNavigationBar="False"
-                     Loaded="OnLoaded"
+                    Loaded="OnLoaded"
                     Unloaded="OnUnloaded">
     <Grid RowDefinitions="Auto *">
         <Border Grid.Row="0" Height="48">
@@ -39,12 +39,12 @@
                     <Button HorizontalAlignment="Center" VerticalAlignment="Center"
                             Width="40" Height="36" IsHitTestVisible="True"
                             Theme="{DynamicResource TransparentButton}"
-                            IsVisible="{Binding IsMobile}"
+                            IsVisible="{Binding HomeButtonVisible}"
                             Click="MobileHomeButton_OnClick">
                         <sr:FluentIcon Glyph="{sr:Fi HomeFilled}" FontSize="16"
                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Button>
-                    
+
                     <Image Source="/Assets/AppLogo.png"
                            Width="18" Height="18"
                            VerticalAlignment="Center"
@@ -70,27 +70,28 @@
                                  SelectedItem="{Binding ViewModel.SelectedSettings}"
                                  KeyUp="SearchBox_OnKeyUp">
                     <AutoCompleteBox.InnerRightContent>
-                         <sr:FluentIcon Glyph="{sr:Fi SearchFilled}" Margin="6"
+                        <sr:FluentIcon Glyph="{sr:Fi SearchFilled}" Margin="6"
                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     </AutoCompleteBox.InnerRightContent>
                 </AutoCompleteBox>
 
-                 <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
-                     <Button Classes="accent"
+                <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
+                    <Button Classes="accent"
                             Margin="0 -8" VerticalAlignment="Center"
                             IsVisible="{Binding ViewModel.IsRequestedRestart}"
                             ToolTip.Tip="{x:Static ls:Resources.M_NeedsRestarting_Tooltip}"
                             Click="ButtonRestartApp_OnClick">
-                         <sr:IconText Glyph="{sr:Fi ArrowCounterclockwiseFilled}" Text="{x:Static ls:Resources.M_NeedsRestarting}" />
-                     </Button>
+                        <sr:IconText Glyph="{sr:Fi ArrowCounterclockwiseFilled}"
+                                     Text="{x:Static ls:Resources.M_NeedsRestarting}" />
+                    </Button>
 
-                     <TextBlock Text="{x:Static core:GlobalConstants.Version}"
-                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                FontSize="12"
-                                VerticalAlignment="Center"
-                                IsHitTestVisible="False" />
+                    <TextBlock Text="{x:Static core:GlobalConstants.Version}"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               IsHitTestVisible="False" />
 
-                     <Button Theme="{StaticResource TransparentButton}"
+                    <Button Theme="{StaticResource TransparentButton}"
                             ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions}"
                             VerticalAlignment="Center" HorizontalAlignment="Right"
                             Margin="0 0 4 0">
@@ -102,48 +103,48 @@
                                           Header="{x:Static ls:Resources.C_MoreOptions_LogViewer}"
                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_LogViewer_D}"
                                           Click="LogViewerMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseArrowDownFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData}"
-                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData_D}"
-                                           Click="ExportDiagnosticDataMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseArrowDownFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData}"
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData_D}"
+                                          Click="ExportDiagnosticDataMenuItem_OnClick" />
 
                                 <Separator />
 
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_ExportSettings}"
-                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportSettings_D}"
-                                           Click="ExportSettingsMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_ImportSettings}"
-                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportSettings_D}"
-                                           Click="ImportSettingsMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_ExportAllData}"
-                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportAllData_D}"
-                                           Click="ExportAllDataMenuItem_OnClick" />
-                                  <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowFilled}}"
-                                            Header="{x:Static ls:Resources.C_MoreOptions_ImportAllData}"
-                                            ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportAllData_D}"
-                                            Click="ImportAllDataMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_ExportSettings}"
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportSettings_D}"
+                                          Click="ExportSettingsMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_ImportSettings}"
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportSettings_D}"
+                                          Click="ImportSettingsMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_ExportAllData}"
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportAllData_D}"
+                                          Click="ExportAllDataMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_ImportAllData}"
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportAllData_D}"
+                                          Click="ImportAllDataMenuItem_OnClick" />
 
-                                 <Separator />
+                                <Separator />
 
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_OpenLogDirectory}"
-                                           Click="OpenLogDirectoryMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_OpenDataDirectory}"
-                                           Click="OpenDataDirectoryMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_OpenAppDirectory}"
-                                           Click="OpenAppDirectoryMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_OpenLogDirectory}"
+                                          Click="OpenLogDirectoryMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_OpenDataDirectory}"
+                                          Click="OpenDataDirectoryMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_OpenAppDirectory}"
+                                          Click="OpenAppDirectoryMenuItem_OnClick" />
 
-                                 <Separator />
+                                <Separator />
 
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi CommentNoteFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_Feedback}"
-                                           Click="FeedbackMenuItem_OnClick" />
-                             </MenuFlyout>
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi CommentNoteFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_Feedback}"
+                                          Click="FeedbackMenuItem_OnClick" />
+                            </MenuFlyout>
                         </Button.Flyout>
                     </Button>
 

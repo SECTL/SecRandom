@@ -84,4 +84,5 @@ MobileAnimations.CrossFade(button, () => button.IsEnabled = false);  // state-ch
 
 ## Font Decision
 
-Mobile keeps the platform system font. Linking the desktop MiSans family would add ~78 MB of TTF payloads (about 23 MB even for a Regular/Medium/Semibold subset) to every APK/IPA, which is unacceptable for mobile distribution. Android (Noto Sans CJK) and iOS (PingFang) system fonts provide adequate CJK rendering and match each platform's look. Revisit only if a glyph-subsetting pipeline becomes available.
+Mobile uses the same configurable application font path as desktop. The default is the embedded MiSans
+family, and the appearance settings can change both font family and weight at runtime.

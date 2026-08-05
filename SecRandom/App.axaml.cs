@@ -146,11 +146,6 @@ public partial class App : Application
 
         // 在 XAML 资源加载完成后立即应用外观设置（早于 BuildHost，确保重复实例对话框也能跟随主题）
         ApplyStartupAppearance(settings.Appearance);
-        if (PlatformStartupContext.Current is MobilePlatformServiceRoot)
-        {
-            Resources[@"ContentControlThemeFontFamily"] = Resources[@"AppFontFamily"] = FontFamily.Default;
-            Resources[@"AppFontWeight"] = FontWeight.Normal;
-        }
         
         if (!Design.IsDesignMode && !OperatingSystem.IsMacOS() && !OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS())
         {
@@ -1364,17 +1359,8 @@ public partial class App : Application
             fluentAvaloniaTheme?.CustomAccentColor = settings.ThemeColor;
         }
 
-        // 移动端始终保留平台系统字体，桌面才应用用户的字体选择。
-        if (PlatformStartupContext.Current is MobilePlatformServiceRoot)
-        {
-            Resources[@"ContentControlThemeFontFamily"] = Resources[@"AppFontFamily"] = FontFamily.Default;
-            Resources[@"AppFontWeight"] = FontWeight.Normal;
-        }
-        else
-        {
-            Resources[@"ContentControlThemeFontFamily"] = Resources[@"AppFontFamily"] = new FontFamily(fontFamily);
-            Resources[@"AppFontWeight"] = Enum.Parse<FontWeight>(settings.FontWeight.ToString());
-        }
+        Resources[@"ContentControlThemeFontFamily"] = Resources[@"AppFontFamily"] = new FontFamily(fontFamily);
+        Resources[@"AppFontWeight"] = Enum.Parse<FontWeight>(settings.FontWeight.ToString());
     }
 
     #region Windows

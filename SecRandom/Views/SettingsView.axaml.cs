@@ -51,12 +51,14 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
     private bool _isAdornerAdded;
     private bool _isShowingRestartDialog;
     private bool _isPreviewMode;
+    private IPlatformServiceRoot _platformServiceRoot;
 
     public SettingsView(
         IPlatformServiceRoot platform,
         SettingsViewModel? viewModel = null,
         ILogger<SettingsView>? logger = null)
     {
+        _platformServiceRoot = platform;
         _isMobile = platform.Capabilities.SupportsSingleView;
         if (platform is MobilePlatformServiceRoot root)
         {
@@ -90,6 +92,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
     public bool IsPreviewMode => _isPreviewMode;
     public SettingsViewModel ViewModel { get; }
     public bool IsMobile => _isMobile;
+    public bool HomeButtonVisible => _platformServiceRoot.Capabilities.SupportsSingleView;
     private IImportExportService ImportExportService => IAppHost.GetService<IImportExportService>();
     private IExternalLauncher ExternalLauncher => IAppHost.GetService<IExternalLauncher>();
 
