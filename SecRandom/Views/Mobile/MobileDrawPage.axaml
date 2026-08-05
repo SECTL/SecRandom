@@ -8,7 +8,7 @@
              xmlns:configs="clr-namespace:SecRandom.Core.Enums.Configs;assembly=SecRandom.Core"
              x:Class="SecRandom.Views.Mobile.MobileDrawPage"
              x:DataType="vm:MobileDrawPageViewModel">
-    <Grid RowDefinitions="Auto Auto *" RowSpacing="8" MaxWidth="720" Margin="16" Classes="animated-intro">
+    <Grid RowDefinitions="Auto Auto Auto *" RowSpacing="8" MaxWidth="720" Margin="16" Classes="animated-intro">
         <Viewbox Grid.Row="0" Height="36">
             <TabStrip x:Name="DrawSurfaceTabs"
                       IsEnabled="{Binding CanChangeSurface}"
@@ -22,6 +22,7 @@
                               IsVisible="{Binding IsLotteryEnabled}" />
             </TabStrip>
         </Viewbox>
+
 
         <controls:MobileCard Grid.Row="1"
                              x:Name="DrawResultCard"
@@ -113,11 +114,6 @@
                                TextWrapping="Wrap"
                                HorizontalAlignment="Center" />
                     
-                    <sr:Field Label="{x:Static langs:Resources.S_CurrentList}">
-                        <ComboBox ItemsSource="{Binding StudentLists}"
-                                  SelectedItem="{Binding SelectedStudentList, Mode=TwoWay}" />
-                    </sr:Field>
-                    
                     <Grid HorizontalAlignment="Stretch"
                           ColumnDefinitions="* Auto Auto"
                           ColumnSpacing="8">
@@ -147,6 +143,11 @@
                                 IsEnabled="{Binding CanDecreaseCount}"
                                 Command="{Binding DecreaseCountCommand}"/>
                     </Grid>
+                    
+                    <sr:Field Label="{x:Static langs:Resources.S_CurrentList}">
+                        <ComboBox ItemsSource="{Binding StudentLists}"
+                                  SelectedItem="{Binding SelectedStudentList, Mode=TwoWay}" />
+                    </sr:Field>
                     
                     <Button Content="{x:Static langs:Resources.C_More}"
                             IsEnabled="{Binding CanChangeSurface}">
