@@ -94,8 +94,9 @@ internal sealed class IosKeyboardOcclusionSource : IMobileKeyboardOcclusionSourc
 
         // Convert the screen-space keyboard frame into the app window's local coordinates.
         var keyboardFrame = window.ConvertRectFromView(frameValue.CGRectValue, null);
-        var intersection = CGRect.Intersection(window.Bounds, keyboardFrame);
-        var occludedHeight = intersection.IsNull ? 0 : intersection.Height;
+        var intersectionTop = Math.Max(window.Bounds.Top, keyboardFrame.Top);
+        var intersectionBottom = Math.Min(window.Bounds.Bottom, keyboardFrame.Bottom);
+        var occludedHeight = Math.Max(0, intersectionBottom - intersectionTop);
         var duration = userInfo[UIKeyboard.AnimationDurationUserInfoKey] is NSNumber durationValue
             ? TimeSpan.FromSeconds(durationValue.DoubleValue)
             : TimeSpan.Zero;
