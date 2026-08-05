@@ -4,6 +4,7 @@
         <OutputType>Exe</OutputType>
         <ApplicationTitle>SecRandom</ApplicationTitle>
         <ApplicationId>cn.sectl.secrandom.mobile</ApplicationId>
+        <InfoPlist>Info.plist</InfoPlist>
         <RuntimeIdentifier>ios-arm64</RuntimeIdentifier>
         <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
     </PropertyGroup>
