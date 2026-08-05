@@ -35,10 +35,11 @@
             DependsOnTargets="GetGitInfoForSourceGenerator"
             BeforeTargets="_GetAndroidPackageName;_CompileAppManifestInputs">
         <PropertyGroup>
-            <_MobileApplicationDisplayVersion>$(GitTag)</_MobileApplicationDisplayVersion>
+            <_MobileApplicationDisplayVersion>$(Version)</_MobileApplicationDisplayVersion>
+            <_MobileApplicationDisplayVersion Condition="'$(_MobileApplicationDisplayVersion)' == '' OR '$(_MobileApplicationDisplayVersion)' == '1.0'">$(GitTag)</_MobileApplicationDisplayVersion>
             <_MobileApplicationDisplayVersion Condition="$([System.String]::Copy('$(_MobileApplicationDisplayVersion)').StartsWith('v'))">$([System.String]::Copy('$(_MobileApplicationDisplayVersion)').Substring(1))</_MobileApplicationDisplayVersion>
-            <!-- versionCode stays monotonic for Android updates; versionName follows the desktop Git tag. -->
             <ApplicationDisplayVersion>$(_MobileApplicationDisplayVersion)</ApplicationDisplayVersion>
+            <ApplicationVersion Condition="'$(ApplicationVersion)' == '' OR '$(ApplicationVersion)' == '1.0'">$(_MobileApplicationDisplayVersion)</ApplicationVersion>
         </PropertyGroup>
     </Target>
 </Project>

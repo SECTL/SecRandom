@@ -659,6 +659,8 @@ jobs:
           unzip -p "$output" 'Payload/*.app/Info.plist' > "$RUNNER_TEMP/SecRandom-iOS-Info.plist"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'SecRandom'
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'AppIcon'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = "$version"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = "${{ github.run_number }}"
 
       - name: Upload unsigned iOS IPA
         uses: actions/upload-artifact@v7
