@@ -80,8 +80,10 @@ internal sealed class IosKeyboardOcclusionSource : IMobileKeyboardOcclusionSourc
         if (window is null || userInfo?[UIKeyboard.FrameEndUserInfoKey] is not NSValue frameValue)
             return;
 
-        var keyboardFrame = window.ConvertRectFromScreen(frameValue.CGRectValue);
-        var occludedHeight = Math.Max(0, window.Bounds.Bottom - Math.Max(window.Bounds.Top, keyboardFrame.Top));
+        // UIKeyboard reports the frame in screen coordinates, as does UIWindow.Frame.
+        var keyboardFrame = frameValue.CGRectValue;
+        var occludedHeight = Math.Max(0,
+            Math.Min(window.Frame.Bottom, keyboardFrame.Bottom) - Math.Max(window.Frame.Top, keyboardFrame.Top));
         var duration = userInfo[UIKeyboard.AnimationDurationUserInfoKey] is NSNumber durationValue
             ? TimeSpan.FromSeconds(durationValue.DoubleValue)
             : TimeSpan.Zero;
