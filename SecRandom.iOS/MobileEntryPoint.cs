@@ -6,6 +6,7 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
 using SecRandom.Services.Telemetry;
+using SecRandom.Mobile;
 using System.Runtime.Versioning;
 using UIKit;
 
@@ -30,6 +31,7 @@ public sealed class AppDelegate : AvaloniaAppDelegate<global::SecRandom.App>
         PlatformStartupContext.Set(new MobilePlatformServiceRoot(PlatformKind.Ios)
         {
             MediaPlayer = new IosMobileMediaPlayer(),
+            KeyboardOcclusionSource = new IosKeyboardOcclusionSource(),
             UsesDesktopMainView = UIDevice.CurrentDevice.UserInterfaceIdiom == UIUserInterfaceIdiom.Pad
         });
         return base.CustomizeAppBuilder(builder);
@@ -52,6 +54,38 @@ public sealed class AppDelegate : AvaloniaAppDelegate<global::SecRandom.App>
         TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
         if (telemetry is not null)
             _ = telemetry.CaptureExceptionAsync(exception);
+    }
+}
+
+[SupportedOSPlatform("ios13.0")]
+internal sealed class IosKeyboardOcclusionSource : IMobileKeyboardOcclusionSource
+{
+    private readonly NSObject _willChangeFrameObserver;
+
+    public IosKeyboardOcclusionSource()
+    {
+        _willChangeFrameObserver = NSNotificationCenter.DefaultCenter.AddObserver(
+            UIKeyboard.WillChangeFrameNotification,
+            notification => Publish(notification.UserInfo));
+    }
+
+    public event EventHandler<MobileKeyboardOcclusionChangedEventArgs>? Changed;
+
+    private void Publish(NSDictionary? userInfo)
+    {
+        var window = UIApplication.SharedApplication.ConnectedScenes
+            .OfType<UIWindowScene>()
+            .SelectMany(scene => scene.Windows)
+            .FirstOrDefault(candidate => !candidate.Hidden && candidate.Bounds.Height > 0);
+        if (window is null || userInfo?[UIKeyboard.FrameEndUserInfoKey] is not NSValue frameValue)
+            return;
+
+        var keyboardFrame = window.ConvertRectFromScreen(frameValue.CGRectValue);
+        var occludedHeight = Math.Max(0, window.Bounds.Bottom - Math.Max(window.Bounds.Top, keyboardFrame.Top));
+        var duration = userInfo[UIKeyboard.AnimationDurationUserInfoKey] is NSNumber durationValue
+            ? TimeSpan.FromSeconds(durationValue.DoubleValue)
+            : TimeSpan.Zero;
+        Changed?.Invoke(this, new MobileKeyboardOcclusionChangedEventArgs(occludedHeight, duration));
     }
 }
 #endif

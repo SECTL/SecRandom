@@ -46,6 +46,11 @@ public sealed class MobilePlatformServiceRoot : IPlatformServiceRoot, IWindowFea
     public IMobileMediaPlayer MediaPlayer { get; set; } = new UnsupportedMobileMediaPlayer();
 
     /// <summary>
+    /// Platform heads may provide native keyboard occlusion notifications when Avalonia's input pane is unavailable.
+    /// </summary>
+    public IMobileKeyboardOcclusionSource? KeyboardOcclusionSource { get; set; }
+
+    /// <summary>
     /// Platform heads may attach a startup error sink (for example Android.Util.Log) for Host-build failures.
     /// </summary>
     public Action<Exception>? StartupErrorLogger { get; set; }

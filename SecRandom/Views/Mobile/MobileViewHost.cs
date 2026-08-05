@@ -13,6 +13,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Views;
+using SecRandom.Mobile;
 
 namespace SecRandom.Views.Mobile;
 
@@ -30,20 +31,25 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
     private Control _pageContentRoot = null!;
     private TopLevel? _backRequestTopLevel;
     private readonly ILogger<MobileViewHost>? _logger;
+    private readonly IMobileKeyboardOcclusionSource? _keyboardOcclusionSource;
     private IInputPane? _inputPane;
     private TextPresenter? _focusedTextPresenter;
     private CancellationTokenSource? _inputPaneAnimationCancellation;
     private TimeSpan _inputPaneAnimationDuration;
     private IEasing? _inputPaneAnimationEasing;
     private bool _isInputPaneOffsetUpdatePending;
+    private double _nativeKeyboardOccludedHeight;
+    private TimeSpan _nativeKeyboardAnimationDuration;
     private bool _isDestroyed;
     private bool _isSynchronizingNavigation;
     private bool _isHandlingBackRequest;
 
-    public MobileViewHost(SingleViewHostProvider singleViewHostProvider, ILogger<MobileViewHost>? logger = null)
+    public MobileViewHost(SingleViewHostProvider singleViewHostProvider, ILogger<MobileViewHost>? logger = null,
+        IMobileKeyboardOcclusionSource? keyboardOcclusionSource = null)
     {
         _singleViewHostProvider = singleViewHostProvider;
         _logger = logger;
+        _keyboardOcclusionSource = keyboardOcclusionSource;
 
         InitializeComponent();
         _navigationPage = this.FindControl<NavigationPage>("NavigationPage")!;
@@ -254,20 +260,23 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
     {
         DetachInputPane();
         _inputPane = TopLevel.GetTopLevel(this)?.InputPane;
-        if (_inputPane is null)
+        if (_inputPane is null && _keyboardOcclusionSource is null)
         {
             _logger?.LogWarning("Mobile input pane is unavailable after the view host loaded.");
-            return;
         }
-
-        _inputPane.StateChanged += InputPane_OnStateChanged;
+        if (_keyboardOcclusionSource is not null)
+            _keyboardOcclusionSource.Changed += KeyboardOcclusionSource_OnChanged;
+        else if (_inputPane is not null)
+            _inputPane.StateChanged += InputPane_OnStateChanged;
         UpdateFocusedTextPresenter();
     }
 
     private void DetachInputPane()
     {
-        if (_inputPane is not null)
+        if (_keyboardOcclusionSource is null && _inputPane is not null)
             _inputPane.StateChanged -= InputPane_OnStateChanged;
+        if (_keyboardOcclusionSource is not null)
+            _keyboardOcclusionSource.Changed -= KeyboardOcclusionSource_OnChanged;
         _inputPane = null;
         DetachFocusedTextPresenter();
         CancelInputPaneAnimation();
@@ -293,6 +302,17 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
             e.NewState == InputPaneState.Open ? CalculatePageContentOffset(e.EndRect) : 0,
             e.AnimationDuration,
             e.Easing ?? new LinearEasing());
+    }
+
+    private void KeyboardOcclusionSource_OnChanged(object? sender, MobileKeyboardOcclusionChangedEventArgs e)
+    {
+        _isInputPaneOffsetUpdatePending = false;
+        _nativeKeyboardOccludedHeight = e.OccludedHeight;
+        _nativeKeyboardAnimationDuration = e.AnimationDuration;
+        _ = AnimatePageContentOffsetAsync(
+            e.OccludedHeight > 0 ? CalculatePageContentOffset(CreateNativeKeyboardOccludedRect()) : 0,
+            e.AnimationDuration,
+            new LinearEasing());
     }
 
     private void OnDescendantGotFocus(object? sender, FocusChangedEventArgs e)
@@ -330,8 +350,16 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
 
     private void UpdatePageContentOffsetForOpenInputPane()
     {
-        if (_inputPane is not { State: InputPaneState.Open } || _inputPaneAnimationEasing is null)
+        var usingNativeKeyboardSource = _keyboardOcclusionSource is not null;
+        if (usingNativeKeyboardSource)
+        {
+            if (_nativeKeyboardOccludedHeight <= 0)
+                return;
+        }
+        else if (_inputPane is not { State: InputPaneState.Open } || _inputPaneAnimationEasing is null)
+        {
             return;
+        }
 
         // When a button or another control is tapped, focus leaves the TextBox before the
         // keyboard reports Closed. Keep the current offset until that event arrives; resetting
@@ -348,9 +376,18 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
         }
 
         _ = AnimatePageContentOffsetAsync(
-            CalculatePageContentOffset(_inputPane.OccludedRect),
-            _inputPaneAnimationDuration,
-            _inputPaneAnimationEasing);
+            usingNativeKeyboardSource
+                ? CalculatePageContentOffset(CreateNativeKeyboardOccludedRect())
+                : CalculatePageContentOffset(_inputPane!.OccludedRect),
+            usingNativeKeyboardSource ? _nativeKeyboardAnimationDuration : _inputPaneAnimationDuration,
+            usingNativeKeyboardSource ? new LinearEasing() : _inputPaneAnimationEasing!);
+    }
+
+    private Rect CreateNativeKeyboardOccludedRect()
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        var keyboardTop = Math.Max(0, topLevel?.Bounds.Height - _nativeKeyboardOccludedHeight ?? 0);
+        return new Rect(0, keyboardTop, Bounds.Width, _nativeKeyboardOccludedHeight);
     }
 
     private double CalculatePageContentOffset(Rect occludedRect)
@@ -433,6 +470,8 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
     private void ResetPageContentOffset()
     {
         _isInputPaneOffsetUpdatePending = false;
+        _nativeKeyboardOccludedHeight = 0;
+        _nativeKeyboardAnimationDuration = TimeSpan.Zero;
         CancelInputPaneAnimation();
         if (_pageContentRoot.RenderTransform is TranslateTransform transform)
             transform.Y = 0;

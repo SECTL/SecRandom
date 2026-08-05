@@ -709,6 +709,8 @@ public partial class App : Application
                     services.AddTransient<MobileRollCallService>();
                     services.AddSingleton<MobileMediaLibraryService>();
                     services.AddSingleton<IMobileMediaPlayer>(currentMobilePlatform.MediaPlayer);
+                    if (currentMobilePlatform.KeyboardOcclusionSource is { } keyboardOcclusionSource)
+                        services.AddSingleton<IMobileKeyboardOcclusionSource>(keyboardOcclusionSource);
                     services.AddSingleton<MobileDrawMediaService>();
                     services.AddSingleton<IMobileUpdateInstaller>(currentMobilePlatform.UpdateInstaller);
                     services.AddHttpClient<MobileUpdateService>();
