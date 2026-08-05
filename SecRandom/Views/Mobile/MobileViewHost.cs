@@ -386,8 +386,9 @@ public sealed partial class MobileViewHost : UserControl, IViewHost
     private Rect CreateNativeKeyboardOccludedRect()
     {
         var topLevel = TopLevel.GetTopLevel(this);
-        var keyboardTop = Math.Max(0, topLevel?.Bounds.Height - _nativeKeyboardOccludedHeight ?? 0);
-        return new Rect(0, keyboardTop, Bounds.Width, _nativeKeyboardOccludedHeight);
+        var viewportHeight = topLevel?.Bounds.Height ?? Bounds.Height;
+        var keyboardTop = Math.Max(0, viewportHeight - _nativeKeyboardOccludedHeight);
+        return new Rect(0, keyboardTop, topLevel?.Bounds.Width ?? Bounds.Width, _nativeKeyboardOccludedHeight);
     }
 
     private double CalculatePageContentOffset(Rect occludedRect)

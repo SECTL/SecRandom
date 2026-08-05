@@ -658,6 +658,7 @@ jobs:
           unzip -l "$output" | grep -q 'Payload/.*\.app/Info.plist'
           unzip -p "$output" 'Payload/*.app/Info.plist' > "$RUNNER_TEMP/SecRandom-iOS-Info.plist"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'SecRandom'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'AppIcon'
 
       - name: Upload unsigned iOS IPA
         uses: actions/upload-artifact@v7
