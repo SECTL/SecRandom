@@ -22,6 +22,10 @@
         <PackageReference Include="Avalonia.iOS" Version="$(AvaloniaVersion)" />
     </ItemGroup>
 
+    <ItemGroup>
+        <ImageAsset Include="Resources\Assets.xcassets\**\*" />
+    </ItemGroup>
+
     <Import Project="..\Global.props" />
 
     <Target Name="SetMobileApplicationDisplayVersion"
