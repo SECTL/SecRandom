@@ -29,6 +29,7 @@ using SecRandom.Core.Views;
 using SecRandom.Models;
 using SecRandom.Services.Desktop;
 using SecRandom.Core.Services.Archive;
+using SecRandom.Mobile;
 using SecRandom.Services.ImportExport;
 using SecRandom.Services.Security;
 using SecRandom.Shared;
@@ -57,6 +58,10 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
         ILogger<SettingsView>? logger = null)
     {
         _isMobile = platform.Capabilities.SupportsSingleView;
+        if (platform is MobilePlatformServiceRoot root)
+        {
+            _isMobile = _isMobile && !root.UsesDesktopMainView;
+        }
         _logger = logger;
         ViewModel = viewModel ?? new SettingsViewModel();
         DataContext = this;

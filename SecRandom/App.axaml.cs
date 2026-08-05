@@ -809,7 +809,7 @@ public partial class App : Application
                 }
 
                 // 界面 Views
-                 if (useMobileUI)
+                if (useMobileUI)
                 {
                     services.AddKeyedTransient<UserControl, MobileDrawPage>(MobilePageIds.Draw);
                     services.AddKeyedTransient<UserControl, MobileHistoryPage>(MobilePageIds.History);
