@@ -115,7 +115,6 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
             _featureAvailability.Changed -= FeatureAvailabilityOnChanged;
             _isFeatureAvailabilitySubscribed = false;
         }
-        DataContext = null;
     }
 
     private void BuildNavigationMenuItems()
