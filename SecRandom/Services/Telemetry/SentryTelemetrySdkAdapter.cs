@@ -126,7 +126,6 @@ public sealed class SentryTelemetrySdkAdapter : ITelemetrySdkAdapter
         options.Dsn = GlobalConstants.SentryDsn;
         options.Release = GlobalConstants.VersionLong;
         options.Environment = GlobalConstants.IsDevelopment ? "development" : "production";
-        options.Debug = true;
 
         // 桌面应用启用全局模式，跨线程共享同一作用域
         options.IsGlobalModeEnabled = true;
@@ -154,7 +153,6 @@ public sealed class SentryTelemetrySdkAdapter : ITelemetrySdkAdapter
         options.Dsn = GlobalConstants.SentryDsn;
         options.Release = GlobalConstants.VersionLong;
         options.Environment = GlobalConstants.IsDevelopment ? "development" : "production";
-        options.Debug = true;
         options.AutoSessionTracking = false;
         options.EnableLogs = false;
         options.SendDefaultPii = false;

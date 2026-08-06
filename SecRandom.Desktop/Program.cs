@@ -1,6 +1,7 @@
 ﻿using System;
 using Avalonia;
 using Avalonia.Media;
+using SecRandom.Extensions;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
 using SecRandom.Platforms;
@@ -79,6 +80,7 @@ internal sealed class Program
             {
                 DefaultFamilyName = "avares://SecRandom/Assets/Fonts/MiSans/#MiSans"
             })
-            .LogToTrace();
+            .LogToTrace()
+            .LogToHostSink();
     }
 }
