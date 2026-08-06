@@ -712,21 +712,6 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
         BuildNavigationMenuItems();
     }
 
-    public void SetPluginSettingsNavigationVisible(bool isVisible)
-    {
-        var pluginPage = PagesRegistryService.SettingsItems.FirstOrDefault(info => info.Id == "settings.plugin");
-        if (pluginPage is null || pluginPage.IsHide == !isVisible)
-            return;
-
-        pluginPage.IsHide = !isVisible;
-        var pluginSeparator = PagesRegistryService.SettingsItems
-            .TakeWhile(info => info != pluginPage)
-            .LastOrDefault(info => info.IsSeparator && info.Location == PageLocation.Top);
-        if (pluginSeparator is not null)
-            pluginSeparator.IsHide = !isVisible;
-        BuildNavigationMenuItems();
-    }
-
     public void NavigateToPage(string id)
     {
         ExitPreview();

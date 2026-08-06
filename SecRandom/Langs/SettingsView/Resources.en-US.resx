@@ -58,7 +58,7 @@
         <value>Export all data</value>
     </data>
     <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve">
-        <value>Export non-credential data, plugins, and plugin private configuration now</value>
+        <value>Export all non-credential data and settings now</value>
     </data>
     <data name="C_MoreOptions_ImportAllData" xml:space="preserve">
         <value>Import all data</value>
@@ -106,7 +106,7 @@
         <value>Export diagnostic data</value>
     </data>
     <data name="M_DiagnosticExportContent" xml:space="preserve">
-        <value>The standard package contains all redacted logs and runtime information. The extended package also contains a redacted settings snapshot, plugin and profile counts, and redacted crash reports. Neither package includes profile or history contents, plugin private configuration, or security credentials.</value>
+        <value>The standard package contains all redacted logs and runtime information. The extended package also contains a redacted settings snapshot, profile counts, and redacted crash reports. Neither package includes profile or history contents or security credentials.</value>
     </data>
     <data name="M_ImportTitle" xml:space="preserve">
         <value>Confirm import</value>
@@ -115,7 +115,7 @@
         <value>All non-credential settings, including window, startup, theme, draw, and desktop integration settings, will be replaced. A recovery snapshot is created first; import is cancelled if it fails. Passwords, TOTP, USB bindings, and lockout state are not imported.</value>
     </data>
     <data name="M_ImportAllDataContent" xml:space="preserve">
-        <value>All non-credential data, settings, profiles, history, resources, plugins, and plugin private configuration will be replaced. A full recovery snapshot is created first; import is cancelled if it fails. Unrepresentable v2 history is retained as raw data. Security credentials are not imported.</value>
+        <value>All non-credential data, settings, profiles, history, and resources will be replaced. A full recovery snapshot is created first; import is cancelled if it fails. Unrepresentable v2 history is retained as raw data. Security credentials are not imported.</value>
     </data>
     <data name="M_ExportSuccess" xml:space="preserve">
         <value>Exported: {0}</value>

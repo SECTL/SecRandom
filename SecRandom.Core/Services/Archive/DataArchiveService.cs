@@ -37,7 +37,7 @@ public sealed class DataArchiveService(
     private static readonly string[] AllDataRoots =
     [
         "config/settings.json", "config/device-uuid.json", "list", "history", "TEMP", "proofs", "audio", "CSES", "images", "themes",
-        "theme", "Language", "plugins", "configs/plugins", "logs"
+        "theme", "Language", "logs"
     ];
 
     private readonly string _dataDirectory = Utils.DataRoot;
@@ -596,9 +596,7 @@ public sealed class DataArchiveService(
                 ? path.Equals("config/device-uuid.json", StringComparison.OrdinalIgnoreCase)
                     ? "config/device-uuid.json"
                     : "config/settings.json"
-                : path.StartsWith("configs/plugins", StringComparison.OrdinalIgnoreCase)
-                    ? "configs/plugins"
-                    : path.Split('/')[0])
+                : path.Split('/')[0])
             .Where(IsManagedPath).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 

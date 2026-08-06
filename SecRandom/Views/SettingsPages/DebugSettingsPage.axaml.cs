@@ -38,16 +38,13 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
     private string _platformDiagnostics = string.Empty;
     private string _dataAndPathDiagnostics = string.Empty;
     private bool _isInternalSettingsEnabled;
-    private bool _isPluginSettingsVisible;
     private bool _isUpdatingInternalSettingsToggle;
-    private bool _isUpdatingPluginSettingsToggle;
 
     public DebugSettingsPage()
     {
         DataContext = this;
         InitializeComponent();
         InternalSettingsToggle.IsCheckedChanged += InternalSettingsToggle_OnIsCheckedChanged;
-        PluginSettingsToggle.IsCheckedChanged += PluginSettingsToggle_OnIsCheckedChanged;
         RefreshDiagnostics();
     }
 
@@ -79,12 +76,6 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
     {
         get => _isInternalSettingsEnabled;
         private set => SetDiagnostic(ref _isInternalSettingsEnabled, value, nameof(IsInternalSettingsEnabled));
-    }
-
-    public bool IsPluginSettingsVisible
-    {
-        get => _isPluginSettingsVisible;
-        private set => SetDiagnostic(ref _isPluginSettingsVisible, value, nameof(IsPluginSettingsVisible));
     }
 
     public DebugResources Strings { get; } = new();
@@ -137,39 +128,6 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
     {
         SettingsView.Current?.HideDebugNavigationItem();
         SettingsView.Current?.NavigateToPage("settings.about");
-    }
-
-    private async void PluginSettingsToggle_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
-    {
-        if (_isUpdatingPluginSettingsToggle || sender is not ToggleSwitch toggle)
-            return;
-
-        if (toggle.IsChecked != true)
-        {
-            SettingsView.Current?.SetPluginSettingsNavigationVisible(false);
-            IsPluginSettingsVisible = false;
-            return;
-        }
-
-        var result = await new FAContentDialog
-        {
-            Title = DebugResources.Get("M_ShowPluginSettings_Title"),
-            Content = DebugResources.Get("M_ShowPluginSettings"),
-            PrimaryButtonText = DebugResources.Get("C_Show"),
-            CloseButtonText = DebugResources.Get("C_Cancel"),
-            DefaultButton = FAContentDialogButton.Close
-        }.ShowAsync(TopLevel.GetTopLevel(this));
-
-        if (result != FAContentDialogResult.Primary)
-        {
-            _isUpdatingPluginSettingsToggle = true;
-            toggle.IsChecked = false;
-            _isUpdatingPluginSettingsToggle = false;
-            return;
-        }
-
-        SettingsView.Current?.SetPluginSettingsNavigationVisible(true);
-        IsPluginSettingsVisible = true;
     }
 
     private async void InternalSettingsToggle_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
@@ -259,9 +217,7 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
                                  + FormatPath(T("C_DataDirectory"), dataRoot, isDirectory: true)
                                  + FormatPath(T("C_LogDirectory"), Path.Combine(dataRoot, "logs"), isDirectory: true)
                                  + FormatPath(T("C_BackupDirectory"), Path.Combine(dataRoot, "backup"), isDirectory: true)
-                                 + FormatPath(T("C_PluginDirectory"), Path.Combine(dataRoot, "plugins"), isDirectory: true)
-                                 + FormatPath(T("C_PluginConfigDirectory"), Path.Combine(dataRoot, "configs", "plugins"), isDirectory: true)
-                                 + FormatPath(T("C_ProofDirectory"), Path.Combine(dataRoot, "proofs"), isDirectory: true)
+                                  + FormatPath(T("C_ProofDirectory"), Path.Combine(dataRoot, "proofs"), isDirectory: true)
                                  + FormatPath(T("C_UpdateDownloadDirectory"), Path.Combine(dataRoot, "updates", "downloads"), isDirectory: true)
                                  + FormatPath(T("C_CourseLinkageDirectory"), Path.Combine(dataRoot, "CSES"), isDirectory: true)
                                  + FormatPath(T("C_CrashDirectory"), Path.Combine(dataRoot, "crashes"), isDirectory: true);

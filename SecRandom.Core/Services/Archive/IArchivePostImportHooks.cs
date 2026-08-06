@@ -6,7 +6,7 @@ namespace SecRandom.Core.Services.Archive;
 ///     Platform-specific follow-up work after an import has been committed.
 ///     <see cref="DataArchiveService" /> reloads the main configuration and the configured
 ///     profiles before invoking these hooks; implementations refresh platform runtime services
-///     (shortcuts, telemetry, desktop integrations, plugins, course linkage, ...) and return
+///     (shortcuts, telemetry, desktop integrations, course linkage, ...) and return
 ///     non-fatal warning messages that are appended to the import result.
 ///     Hooks run synchronously under the archive operation lock and must not block.
 /// </summary>

@@ -15,6 +15,7 @@
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**" />
+        <AvaloniaResource Remove="Views\SettingsPages\Plugins\Overview\PluginsSettingsPage.axaml" />
     </ItemGroup>
 
     <ItemGroup>

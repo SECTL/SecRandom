@@ -235,13 +235,6 @@ internal sealed class ViewEngine(IServiceProvider services, IViewRegistry regist
     {
         ViewBase Create()
         {
-            if (!string.IsNullOrWhiteSpace(registration.PluginId))
-            {
-                return Activator.CreateInstance(registration.ViewType) as ViewBase
-                       ?? throw new InvalidOperationException(
-                           $"Plugin view '{registration.Id}' could not be created as a ViewBase.");
-            }
-
             return ActivatorUtilities.CreateInstance(services, registration.ViewType) as ViewBase
                    ?? throw new InvalidOperationException($"View '{registration.Id}' could not be created as a ViewBase.");
         }

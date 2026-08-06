@@ -1,14 +1,14 @@
 # SecRandom.Core/ AGENTS.md
 
 <!--
-Core supplement to ../AGENTS.md. Update this file when plugin-facing contracts,
+Core supplement to ../AGENTS.md. Update this file when
 draw/config/logging services, shared controls/styles, or registry helpers move.
 AI agents touching those areas must update this file in the same task.
 -->
 
 ## OVERVIEW
 
-Core module for domain logic, plugin-facing contracts, config/logging services, shared Avalonia controls/styles,
+Core module for domain logic, config/logging services, shared Avalonia controls/styles,
 behaviors, enums, and models.
 
 ## STRUCTURE
@@ -23,7 +23,7 @@ SecRandom.Core/
 ├── Assets/               # Icon mapping JSON inputs for generated Fluent/Lucide icon enums
 ├── Helpers/              # Core helper utilities
 ├── Interfaces/           # Core-facing interfaces
-├── Views/                # Plugin-facing logical view/session contracts; app shells provide physical hosts
+├── Views/                # Logical view/session contracts; app shells provide physical hosts
 ├── Styles/               # Modular shared style files
 ├── StylesBase.axaml      # Shared style hub imported by app
 ├── Services/Draw/        # Fair/random draw engine, filters, commit coordinator, shared repeat/candidate rules
@@ -35,7 +35,6 @@ SecRandom.Core/
 ├── Extensions/Registry/  # DI/page registration helpers
 ├── Enums/                 # Draw settings types, page location, config model trees
 ├── Models/               # Page info, draw models, subconfig models
-├── Plugins/              # Stable public plugin contracts, runtime context, page registration DTOs
 ├── GlobalConstants.cs     # Version/platform/development constants
 └── Langs/                # Core common localization resources
 ```
@@ -48,7 +47,6 @@ SecRandom.Core/
 | Profile contract           | `Abstraction/Services/IProfileService.cs`                                        | Current profile/list/history boundary, including active student-profile switching. |
 | Page metadata              | `Attributes/PageInfoAttribute.cs`, `Models/PageInfo.cs`                          | Used by registration extensions.                                        |
 | Page registration          | `Extensions/Registry/`                                                           | `AddMainPage`, `AddSettingsPage`, group/separator helpers.              |
-| Plugin contracts           | `Plugins/`                                                                       | Manifest, `PluginInfo`, runtime context, page registration DTOs, and restricted draw invocation contracts. |
 | Navigation registry        | `Services/PagesRegistryService.cs`                                               | Static main/settings/group collections.                                 |
 | Attached-settings registry | `Services/AttachedSettingsRegistryService.cs`                                    | Static attached-settings control collections.                           |
 | Draw algorithm             | `Services/Draw/DrawEngine*.cs`, `WeightedDrawEngine.cs`, `CryptoRandomSource.cs` | Fairness, filters, weighted sampling; history lookup uses `RecordId`. Repeat thresholds and candidate filtering live in the shared `DrawRepeatPolicy`/`DrawCandidateFilter`. |
@@ -70,12 +68,7 @@ SecRandom.Core/
 
 ## CONVENTIONS
 
-- Core is plugin-facing per `docs/namespaces.md`; avoid app-only dependencies and unstable public contracts.
-- Plugin-facing contracts belong under `SecRandom.Core/Plugins`; keep them DTO/interface based and avoid app-layer service types.
-- `Views/` is the public logical view-engine boundary. It may use Avalonia `Control` but must not expose `Window`, application lifetimes, native platform APIs, raw `IServiceProvider`, or app-layer services to plugins. Physical desktop/mobile hosts are registered by their application shells through DI.
-- `PluginInfo` exposes plugin manifest, installed plugin directory, and private config directory. Plugins should persist their own config under `data/configs/plugins/<plugin-id>`.
-- Plugin page registration uses runtime `Type` registration through `AddPluginMainPage` / `AddPluginSettingsPage`; plugin page IDs must start with `plugin.<plugin-id>.`.
-- Plugin draw access must remain invocation-only through `IPluginDrawInvoker`; never add `DrawEngine`, `WeightedDrawEngine<T>`, `IRandomSource`, writable history, or draw config to plugin contracts.
+- `Views/` is the public logical view-engine boundary. It may use Avalonia `Control` but must not expose `Window`, application lifetimes, native platform APIs, or raw `IServiceProvider`. Physical desktop/mobile hosts are registered by their application shells through DI.
 - Existing Core services may use `IAppHost.GetService<T>()` during the transition, but `DrawEngine` and new reusable runtime services use constructor injection. Construct `DrawEngine` with `MainConfigHandler`, `IProfileService`, and `ILogger<DrawEngine>`; do not add a new static-Host dependency.
 - `IProfileService.LoadStudentProfile(name)` switches the app-layer active point-call student list and matching history; callers should use it instead of constructing profile configs directly when changing the active roll-call list.
 - Registration helpers are responsible for both keyed DI and `PagesRegistryService` metadata.
@@ -84,12 +77,12 @@ SecRandom.Core/
 - Weighted drawing validates count, candidates, and weights before sampling; preserve explicit `DrawStatus` returns over
   exceptions at public boundary.
 - Draw fairness/repeat history for students and prizes must use `ProfileRecordIdentity`/`RecordId` first. Legacy `Id`/`Name` history fallback is only for backward compatibility and must stay ambiguity-safe.
-- Draw commits are coordinator-only: app sessions, page ViewModels, and the plugin draw invoker must call `IDrawCommitService` (`DrawCommitCoordinator`) instead of pairing temporary-record writes with `IProfileService.Record*History`. The optional `drawRoundId` (and `drawMethod` on `RecordPrizeHistory`) parameters exist for coordinator use; a mid-commit failure rolls back through snapshot compensation, and commits serialize behind the coordinator gate.
+- Draw commits are coordinator-only: app sessions and page ViewModels must call `IDrawCommitService` (`DrawCommitCoordinator`) instead of pairing temporary-record writes with `IProfileService.Record*History`. The optional `drawRoundId` (and `drawMethod` on `RecordPrizeHistory`) parameters exist for coordinator use; a mid-commit failure rolls back through snapshot compensation, and commits serialize behind the coordinator gate.
 - Student fair-draw execution must support explicit internal policy snapshots. Desktop public `DrawEngine` methods stay byte-compatible by deriving a `DesktopConfigured` snapshot from live `MainConfigModel.FairDrawSettings`; mobile fair draws use the fixed `MobileDesktopDefaultsV1` snapshot and must not read persisted fair-setting values.
 - Verification proof inputs commit a `VerificationSamplingMode` and `VerificationAlgorithmProfile`. The profile must match the draw kind and sampler: fair/random students use history-balanced or unit-weight sampling when no behind-scene rule is active, student behind-scene weighting uses a dedicated profile, Count lottery uses equal-probability partial inventory permutation without behind-scene rules, and Pan or an internal-rule fallback uses weighted-without-replacement. Any internal rule, including zero-probability exclusions, must stay visible in the ordinary verification draw's anonymous audit payload. Formal notarization is the explicit exception: it must ignore internal rules completely and omit them from its locked input and audit payload.
 - Config handlers derive from `ConfigHandlerBase<TModel>`; config model defaults should be safe without existing data
   files.
-- `FileConfigService`, `ProfileService`, `DrawTemporaryRecordService`, and the concrete feature-availability service are private implementation details behind `AddCoreRuntimeServices()`, not plugin API. Desktop and mobile call that registration extension from their composition roots while exposing only the established narrow contracts to consumers.
+- `FileConfigService`, `ProfileService`, `DrawTemporaryRecordService`, and the concrete feature-availability service are private implementation details behind `AddCoreRuntimeServices()`. Desktop and mobile call that registration extension from their composition roots while exposing only the established narrow contracts to consumers.
 - `Services/Archive/` owns all v3 settings/data ZIP and settings-JSON transfer: `DataArchiveService` performs producer-version/manifest/SHA-256 validation, staging commit/rollback, and mandatory pre-import snapshots. Platform-specific follow-up stays behind `IArchivePostImportHooks`; `AddCoreRuntimeServices()` registers the Null hooks and shells override them (desktop: `DesktopArchivePostImportHooks`).
 - IPC parser code is UI-free and must reject ambiguous routes, malformed percent escapes, control characters, oversized frames, and unsupported schemes. Keep route execution in the app layer.
 - File logging should keep user-facing log messages in Chinese for app events. Avoid logging student/prize names or full config payloads; prefer counts, status, file names, and operation names.
@@ -113,6 +106,5 @@ SecRandom.Core/
 - Do not put app-window or desktop-launcher behavior in Core.
 - Do not bypass draw status handling with uncaught exceptions for normal no-candidate/repeat-limit outcomes.
 - Do not add page registration logic outside `Extensions/Registry/` unless changing the navigation architecture.
-- Do not expand plugin contracts by leaking app-layer services, raw DI/Host access, or fair-draw internals.
 - Do not break `SecRandom.Shared` contract assumptions from Core models/services.
 - Do not duplicate app-only localization; Core has only common/shared resources.

@@ -40,8 +40,7 @@ public static class ViewServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(registration);
         registration.Validate();
 
-        if (string.IsNullOrWhiteSpace(registration.PluginId))
-            services.AddTransient(registration.ViewType);
+        services.AddTransient(registration.ViewType);
         services.AddSingleton<IHostedViewRegistration>(_ => new HostedViewRegistration(registration));
         return services;
     }

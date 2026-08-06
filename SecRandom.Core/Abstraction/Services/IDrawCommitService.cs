@@ -38,7 +38,7 @@ public sealed record LotteryDrawCommit(
     string? DrawRoundId = null);
 
 /// <summary>
-///     Transactional commit boundary for every draw channel (pages, quick draw, plugin invocations, mobile
+///     Transactional commit boundary for every draw channel (pages, quick draw, mobile
 ///     sessions): one DrawRoundId per logical draw, temporary records before persistent history, and
 ///     compensating rollback (history snapshot restore + temporary-record scope restore) when any step fails.
 /// </summary>

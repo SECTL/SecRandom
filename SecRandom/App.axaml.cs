@@ -46,7 +46,6 @@ using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Notification;
-using SecRandom.Services.Plugins;
 using SecRandom.Services.Profiles;
 using SecRandom.Services.Ipc;
 using SecRandom.Services.ImportExport;
@@ -85,7 +84,7 @@ using SecRandom.Views.SettingsPages.LogViewer;
 using SecRandom.Views.SettingsPages.More;
 using SecRandom.Views.SettingsPages.Personalized;
 using SecRandom.Views.SettingsPages.Picking;
-using SecRandom.Views.SettingsPages.Plugins.Overview;
+// using SecRandom.Views.SettingsPages.Plugins.Overview;
 using SecRandom.Views.SettingsPages.Update;
 using DefaultNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.DefaultNotificationSettingsPage;
 using FloatingWindowSettingsPage = SecRandom.Views.SettingsPages.Personalized.FloatingWindowSettingsPage;
@@ -917,8 +916,8 @@ public partial class App : Application
                     services.AddSettingsPage<LotteryHistorySettingsPage>(Langs.Common.Resources.Feat_LotteryHistory);
 
                     services.AddSettingsPageSeparator(isHide: true);
-                    services.AddSettingsPage<PluginsSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources
-                        .Page_Title);
+                    // services.AddSettingsPage<PluginsSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources
+                    //     .Page_Title);
 
                     // 底部
                     services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
@@ -929,18 +928,6 @@ public partial class App : Application
                         Langs.SettingsPages.Debug.DebugStrings.Get("Page_Title"));
                 }
 
-                // 配置插件
-                var pluginStateStore = new PluginStateStore();
-                services.AddSingleton(pluginStateStore);
-                services.AddSingleton<PluginSelectionState>();
-                services.AddSingleton<IPluginManager, PluginManagerService>();
-                services.AddSingleton<IPluginCatalogService, PluginCatalogService>();
-                services.AddHostedService<PluginCatalogHostedService>();
-                services.AddHostedService<PluginHostedService>();
-                if (!isMobile)
-                {
-                    PluginManagerService.ConfigureEnabledPlugins(services, pluginStateStore);
-                }
             })
             .Build();
 

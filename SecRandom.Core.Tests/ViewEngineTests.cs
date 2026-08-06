@@ -19,17 +19,6 @@ public sealed class ViewEngineTests
     }
 
     [Fact]
-    public void ViewRegistrationRequiresTheReservedPluginPrefix()
-    {
-        Assert.Throws<ArgumentException>(() => new ViewRegistration
-        {
-            Id = "main.rollCall",
-            PluginId = "demo",
-            ViewType = typeof(TestView)
-        }.Validate());
-    }
-
-    [Fact]
     public async Task ClosingEventCanCancelUserCloseButNotHostDestruction()
     {
         var cancellationToken = TestContext.Current.CancellationToken;

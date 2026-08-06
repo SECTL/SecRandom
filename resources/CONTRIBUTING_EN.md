@@ -59,7 +59,6 @@ Read the root [AGENTS.md](../AGENTS.md) and [project rules](../docs/project_rule
 - Use `RecordId` for student, prize, and history identity. Displayed IDs and names are not required unique identifiers.
 - Direct dictionary and collection changes do not automatically persist configuration; the owning code must save at the appropriate lifecycle boundary.
 - All security authorization goes through `ISecurityService`. Credentials must never appear in ordinary settings, logs, exports, or diagnostics.
-- Plugins may depend only on stable contracts under `SecRandom.Core/Plugins`; they must not receive draw internals, writable configuration/history, or the full host service provider.
 - New application icons must use the project's Fluent Filled icon system, not raw Unicode Fluent glyphs.
 
 ## Scope and testing
