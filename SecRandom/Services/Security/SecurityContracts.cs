@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Controls;
 using SecRandom.Core.Enums.Configs;
 
 namespace SecRandom.Services.Security;
@@ -60,7 +61,8 @@ public enum SecurityFactor
 
 public interface ISecurityVerificationPrompt
 {
-    Task<SecurityVerificationResponse> RequestAsync(SecurityVerificationRequest request, CancellationToken cancellationToken = default);
+    Task<SecurityVerificationResponse> RequestAsync(TopLevel xamlRoot, SecurityVerificationRequest request,
+        CancellationToken cancellationToken = default);
 }
 
 public interface ISecurityService

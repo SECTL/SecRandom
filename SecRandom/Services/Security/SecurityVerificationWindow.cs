@@ -3,87 +3,64 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Layout;
-using Avalonia.Media;
+using FluentAvalonia.UI.Controls;
 using SR = SecRandom.Langs.SettingsPages.Security.Resources;
 
 namespace SecRandom.Services.Security;
 
-internal sealed class SecurityVerificationWindow : Window
+internal static class SecurityVerificationDialog
 {
-    private readonly SecurityVerificationRequest _request;
-    private readonly TextBox _password = new()
+    public static async Task<SecurityVerificationResponse> ShowAsync(TopLevel xamlRoot, SecurityVerificationRequest request)
     {
-        PasswordChar = '●',
-        PlaceholderText = SR.C_PasswordPlaceholder
-    };
-    private readonly TextBox _totp = new();
-    private readonly CheckBox _usb = new() { Content = SR.M_UsbPresent };
-    private readonly TaskCompletionSource<SecurityVerificationResponse> _completion = new();
-
-    public Task<SecurityVerificationResponse> Completion => _completion.Task;
-    public SecurityVerificationWindow(SecurityVerificationRequest request)
-    {
-        _request = request;
-        Title = SR.M_VerificationDialogTitle;
-        Width = 420;
-        MinHeight = 250;
-        SizeToContent = SizeToContent.Height;
-        CanResize = false;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-
-        var panel = new StackPanel { Margin = new Thickness(24), Spacing = 12 };
+        var password = new TextBox
+        {
+            PasswordChar = '●',
+            PlaceholderText = SR.C_PasswordPlaceholder
+        };
+        var totp = new TextBox { PlaceholderText = SR.C_TotpPlaceholder, MaxLength = 6 };
+        var usb = new CheckBox { Content = SR.M_UsbPresent };
+        var panel = new StackPanel { Spacing = 12 };
         panel.Children.Add(new TextBlock
         {
             Text = request.LockoutRemaining is { } remaining
                 ? string.Format(SR.M_VerificationLockedFormat, Math.Ceiling(remaining.TotalSeconds))
                 : request.RequireAllSelectedFactors ? SR.M_VerificationAllFactors : SR.M_VerificationAnyFactor,
-            TextWrapping = TextWrapping.Wrap
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap
         });
 
         if (request.RequiredFactors.Contains(SecurityFactor.Password))
         {
             panel.Children.Add(new TextBlock { Text = SR.S_Password });
-            panel.Children.Add(_password);
+            panel.Children.Add(password);
         }
 
         if (request.RequiredFactors.Contains(SecurityFactor.Totp))
         {
             panel.Children.Add(new TextBlock { Text = SR.S_Totp });
-            _totp.PlaceholderText = SR.C_TotpPlaceholder;
-            panel.Children.Add(_totp);
+            panel.Children.Add(totp);
         }
 
         if (request.RequiredFactors.Contains(SecurityFactor.Usb))
-            panel.Children.Add(_usb);
+            panel.Children.Add(usb);
 
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8 };
-        var cancel = new Button { Content = SR.C_Cancel };
-        cancel.Click += (_, _) => Complete(new SecurityVerificationResponse(string.Empty, string.Empty, false, true));
-        if (request.AllowPreview)
+        var dialog = new FATaskDialog
         {
-            var preview = new Button { Content = SR.C_Preview };
-            preview.Click += (_, _) => Complete(new SecurityVerificationResponse(string.Empty, string.Empty, false, PreviewRequested: true));
-            buttons.Children.Add(preview);
-        }
-        var confirm = new Button { Content = SR.C_Verify };
-        confirm.Click += (_, _) => Complete(new SecurityVerificationResponse(_password.Text ?? string.Empty, _totp.Text ?? string.Empty, _usb.IsChecked == true));
-        buttons.Children.Add(cancel);
-        buttons.Children.Add(confirm);
-        panel.Children.Add(buttons);
-        Content = panel;
-    }
+            XamlRoot = xamlRoot,
+            Title = SR.M_VerificationDialogTitle,
+            Header = SR.M_VerificationDialogTitle,
+            Content = panel
+        };
+        dialog.Buttons.Add(new FATaskDialogButton(SR.C_Cancel, "cancel"));
+        if (request.AllowPreview)
+            dialog.Buttons.Add(new FATaskDialogButton(SR.C_Preview, "preview"));
+        dialog.Buttons.Add(new FATaskDialogButton(SR.C_Verify, "verify") { IsDefault = true });
 
-    protected override void OnClosed(EventArgs e)
-    {
-        _completion.TrySetResult(new SecurityVerificationResponse(string.Empty, string.Empty, false, true));
-        base.OnClosed(e);
+        return await dialog.ShowAsync() switch
+        {
+            "preview" => new SecurityVerificationResponse(string.Empty, string.Empty, false, PreviewRequested: true),
+            "verify" => new SecurityVerificationResponse(password.Text ?? string.Empty, totp.Text ?? string.Empty,
+                usb.IsChecked == true),
+            _ => new SecurityVerificationResponse(string.Empty, string.Empty, false, Cancelled: true)
+        };
     }
-
-    private void Complete(SecurityVerificationResponse response)
-    {
-        _completion.TrySetResult(response);
-        Close();
-    }
-
 }

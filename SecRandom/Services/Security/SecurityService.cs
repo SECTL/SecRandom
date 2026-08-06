@@ -108,7 +108,7 @@ internal sealed class SecurityService(
                 GetRequiredFactors(credentials),
                 Settings.RequireAllSelectedFactors,
                 GetLockoutRemaining(credentials));
-            var response = await prompt.RequestAsync(request, cancellationToken);
+            var response = await prompt.RequestAsync(App.Current.GetRootWindow(), request, cancellationToken);
             var result = await VerifyAsync(response, cancellationToken);
             if (!result.IsAuthorized)
             {
@@ -156,7 +156,7 @@ internal sealed class SecurityService(
                 Settings.RequireAllSelectedFactors,
                 GetLockoutRemaining(credentials),
                 Settings.AllowSettingsPreview);
-            var response = await prompt.RequestAsync(request, cancellationToken);
+            var response = await prompt.RequestAsync(App.Current.GetRootWindow(), request, cancellationToken);
             if (response.PreviewRequested && request.AllowPreview)
             {
                 await previewAction();

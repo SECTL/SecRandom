@@ -56,13 +56,12 @@
             <sr:IconText Text="{x:Static lsp:Resources.S_Factors}" Glyph="{sr:Fi PasswordFilled}" Margin="0 0 0 4" />
 
             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Factors}"
-                                   Description="{x:Static lsp:Resources.S_Factors_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PasswordFilled}}">
+                                    Description="{x:Static lsp:Resources.S_Factors_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi PasswordFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <u:MultiComboBox MinWidth="260" ItemsSource="{Binding FactorOptions}"
-                                     SelectedItems="{Binding SelectedFactorOptions}"
-                                     SelectionChanged="FactorSelection_OnSelectionChanged"
-                                     IsEnabled="{Binding CanEditFactorSelection}" />
+                                      SelectedItems="{Binding SelectedFactorOptions}"
+                                      IsEnabled="{Binding CanEditFactorSelection}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

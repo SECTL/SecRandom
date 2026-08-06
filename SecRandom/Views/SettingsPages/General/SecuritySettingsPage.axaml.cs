@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using Avalonia.Collections;
@@ -37,6 +38,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
         ];
         SelectedFactorOptions =
             new AvaloniaList<MultiSelectSettingOption>(FactorOptions.Where(option => option.IsSelected));
+        SelectedFactorOptions.CollectionChanged += SelectedFactorOptionsOnCollectionChanged;
         DataContext = this;
         InitializeComponent();
         SubscribeSettings();
@@ -77,6 +79,30 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
 
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
         _isSettingsSubscribed = false;
+    }
+
+    private void SelectedFactorOptionsOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (_refreshing)
+            return;
+
+        _refreshing = true;
+        try
+        {
+            var hasPassword = _securityService.GetUiState().HasPassword;
+            if (hasPassword && !SelectedFactorOptions.Contains(FactorOptions[0]))
+                SelectedFactorOptions.Insert(0, FactorOptions[0]);
+
+            foreach (var option in FactorOptions)
+                option.SetSelected(SelectedFactorOptions.Contains(option));
+        }
+        finally
+        {
+            _refreshing = false;
+        }
+
+        ConfigHandler.Save();
+        RefreshSecurityState();
     }
 
     private void SubscribeSettings()
@@ -125,30 +151,10 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
         }
     }
 
-    private void FactorSelection_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        if (_refreshing) return;
-
-        var hasPassword = _securityService.GetUiState().HasPassword;
-        foreach (var option in e.AddedItems.OfType<MultiSelectSettingOption>())
-        {
-            if (option != FactorOptions[0]) option.SetSelected(true);
-        }
-
-        foreach (var option in e.RemovedItems.OfType<MultiSelectSettingOption>())
-        {
-            if (option != FactorOptions[0]) option.SetSelected(false);
-        }
-
-        if (hasPassword && !SelectedFactorOptions.Contains(FactorOptions[0]))
-            SelectedFactorOptions.Insert(0, FactorOptions[0]);
-    }
-
     private async void ManagePassword_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (TopLevel.GetTopLevel(this) is not Window owner) return;
-        var dialog = new PasswordEditorWindow(_securityService.GetUiState().HasPassword);
-        var result = await dialog.ShowDialog<PasswordEditorResult?>(owner);
+        if (TopLevel.GetTopLevel(this) is not { } xamlRoot) return;
+        var result = await SecuritySetupDialogs.ShowPasswordEditorAsync(xamlRoot, _securityService.GetUiState().HasPassword);
         if (result is null) return;
         var saved = result.Remove
             ? await _securityService.RemovePasswordAsync(result.CurrentPassword)
@@ -160,7 +166,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
 
     private async void ManageTotp_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (TopLevel.GetTopLevel(this) is not Window owner) return;
+        if (TopLevel.GetTopLevel(this) is not { } xamlRoot) return;
         var secret = await _securityService.BeginTotpSetupAsync();
         if (secret is null)
         {
@@ -168,7 +174,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             return;
         }
 
-        var code = await new TotpSetupWindow(secret).ShowDialog<string?>(owner);
+        var code = await SecuritySetupDialogs.ShowTotpSetupAsync(xamlRoot, secret);
         if (code is not null && await _securityService.ConfirmTotpAsync(secret, code))
             this.ShowSuccessToast(SR.M_TotpSaved);
         else if (code is not null) this.ShowErrorToast(SR.M_TotpSaveFailed);
@@ -177,9 +183,9 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
 
     private async void ManageUsb_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (TopLevel.GetTopLevel(this) is not Window owner) return;
-        var result = await new UsbBindingWindow(await _securityService.GetUsbBindingsAsync())
-            .ShowDialog<UsbBindingResult?>(owner);
+        if (TopLevel.GetTopLevel(this) is not { } xamlRoot) return;
+        var result = await SecuritySetupDialogs.ShowUsbBindingAsync(xamlRoot,
+            await _securityService.GetUsbBindingsAsync());
         if (result is null) return;
         var success = result.UnbindId is not null
             ? await _securityService.UnbindUsbAsync(result.UnbindId)

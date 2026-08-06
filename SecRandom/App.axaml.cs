@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using Avalonia;
@@ -116,6 +117,27 @@ public partial class App : Application
     public new static App Current => (Application.Current as App)!;
     internal bool IsStopping => _isStopping;
     public static bool IsDesktop;
+
+    public TopLevel GetRootWindow()
+    {
+        if (_desktopLifetime?.Windows
+                .Where(window => window.GetType().Name != "TrayPopupRoot"
+                    && window is { IsActive: true, IsVisible: true, PlatformImpl: not null })
+                .OrderBy(window => ReferenceEquals(window, _floatingWindow) ? 1 : 0)
+                .FirstOrDefault() is TopLevel desktopRoot)
+            return desktopRoot;
+
+        if (_mobileViewHost is not null && TopLevel.GetTopLevel(_mobileViewHost) is { } mobileRoot)
+            return mobileRoot;
+
+        if (_floatingWindow is { PlatformImpl: not null } floatingRoot)
+        {
+            floatingRoot.Activate();
+            return floatingRoot;
+        }
+
+        throw new InvalidOperationException("No active application TopLevel is available.");
+    }
 
     public event EventHandler? AppStarted;
     public event EventHandler? AppStopping;
@@ -1500,14 +1522,16 @@ public partial class App : Application
         ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeSettingsAsync(
             async () =>
             {
-                await ShowSettingsWindowCoreAsync();
+                if (SettingsView.Current is null || _settingsWindow is not { IsVisible: true })
+                    await ShowSettingsWindowCoreAsync();
                 SettingsView.Current?.ExitPreview();
                 if (!string.IsNullOrWhiteSpace(pageId))
                     SettingsView.Current?.NavigateToPage(pageId);
             },
             async () =>
             {
-                await ShowSettingsWindowCoreAsync();
+                if (SettingsView.Current is null || _settingsWindow is not { IsVisible: true })
+                    await ShowSettingsWindowCoreAsync();
                 SettingsView.Current?.NavigateToPreviewPage(pageId ?? "settings.general.basic");
             }), "Settings window authorization failed.");
     }
