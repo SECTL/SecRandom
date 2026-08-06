@@ -1522,18 +1522,29 @@ public partial class App : Application
         ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeSettingsAsync(
             async () =>
             {
-                if (SettingsView.Current is null || _settingsWindow is not { IsVisible: true })
-                    await ShowSettingsWindowCoreAsync();
+                await ShowSettingsWindowCoreAsync();
                 SettingsView.Current?.ExitPreview();
                 if (!string.IsNullOrWhiteSpace(pageId))
                     SettingsView.Current?.NavigateToPage(pageId);
             },
-            async () =>
+            () =>
             {
-                if (SettingsView.Current is null || _settingsWindow is not { IsVisible: true })
-                    await ShowSettingsWindowCoreAsync();
-                SettingsView.Current?.NavigateToPreviewPage(pageId ?? "settings.general.basic");
+                Dispatcher.UIThread.Post(() =>
+                {
+                    ObserveTask(ShowSettingsPreviewAsync(pageId),
+                        "Settings preview display failed.");
+                }, DispatcherPriority.Background);
+                return Task.CompletedTask;
             }), "Settings window authorization failed.");
+    }
+
+    private static async Task ShowSettingsPreviewAsync(string? pageId)
+    {
+        await ShowSettingsWindowCoreAsync();
+        if (!string.IsNullOrWhiteSpace(pageId))
+            SettingsView.Current?.NavigateToPreviewPage(pageId);
+        else
+            SettingsView.Current?.EnterPreview();
     }
 
     public static void SetSettingsWindowVisibility(string action, string pageId, bool preview)
@@ -1553,10 +1564,7 @@ public partial class App : Application
         if (shouldShow)
         {
             await ShowSettingsWindowCoreAsync();
-            if (preview)
-                SettingsView.Current?.NavigateToPreviewPage(pageId);
-            else
-                SettingsView.Current?.NavigateToPage(pageId);
+            SettingsView.Current?.NavigateToPage(pageId);
         }
         else
         {

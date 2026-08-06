@@ -11,6 +11,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using DynamicData;
 using FluentAvalonia.UI.Controls;
+using FluentAvalonia.UI.Navigation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
@@ -51,6 +52,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
     private bool _isAdornerAdded;
     private bool _isShowingRestartDialog;
     private bool _isPreviewMode;
+    private readonly List<(Control Control, bool IsEnabled)> _previewDisabledControls = [];
     private IPlatformServiceRoot _platformServiceRoot;
 
     public SettingsView(
@@ -70,6 +72,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
         InitializeComponent();
 
         NavigationFrame.NavigationPageFactory = this;
+        NavigationFrame.Navigated += NavigationFrame_OnNavigated;
         Current = this;
         if (GlobalConstants.IsDevelopment)
             ShowDebugNavigationItem();
@@ -77,6 +80,8 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
         SelectNavigationItemById(_isMobile ? MobilePageIds.Settings : DefaultDesktopPageId);
         Closed += (_, _) =>
         {
+            NavigationFrame.Navigated -= NavigationFrame_OnNavigated;
+            RestorePreviewControls();
             if (ReferenceEquals(Current, this))
                 Current = null;
         };
@@ -313,7 +318,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
     private async Task ShowRestartDialog()
     {
-        if (_isPreviewMode || _isShowingRestartDialog) return;
+        if (_isShowingRestartDialog) return;
         _isShowingRestartDialog = true;
 
         var r = await new FAContentDialog
@@ -616,10 +621,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
     private bool CanTransferData()
     {
-        if (!_isPreviewMode)
-            return true;
-        this.ShowWarningToast("预览模式下不能导入或导出数据。");
-        return false;
+        return true;
     }
 
     private static string GetResource(string key)
@@ -723,23 +725,63 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
     public void NavigateToPreviewPage(string id)
     {
-        _isPreviewMode = true;
-        var info = PagesRegistryService.SettingsItems.FirstOrDefault(item => item.Id == id);
-        if (info is not null)
-            CoreNavigate(info);
-        UpdatePreviewState();
+        if (ViewModel.SelectedPageInfo?.Id != id)
+        {
+            var info = PagesRegistryService.SettingsItems.FirstOrDefault(item => item.Id == id);
+            if (info is not null)
+                CoreNavigate(info);
+        }
+
+        EnterPreview();
     }
 
-    private void UpdatePreviewState()
+    public void EnterPreview()
     {
-        NavigationFrame.IsEnabled = !_isPreviewMode;
-        NavigationFrame.IsHitTestVisible = !_isPreviewMode;
+        _isPreviewMode = true;
+        QueuePreviewPageDisable();
     }
 
     public void ExitPreview()
     {
         _isPreviewMode = false;
-        UpdatePreviewState();
+        RestorePreviewControls();
+    }
+
+    private void NavigationFrame_OnNavigated(object? sender, FANavigationEventArgs e)
+    {
+        if (_isPreviewMode)
+            QueuePreviewPageDisable();
+    }
+
+    private void QueuePreviewPageDisable()
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!_isPreviewMode || NavigationFrame.Content is not Control page)
+                return;
+
+            RestorePreviewControls();
+            if (!_isMobile && ViewModel.SelectedPageInfo?.Id == "settings.about")
+                return;
+
+            Control[] targets = page is UserControl userControl
+                && userControl.Content is ScrollViewer scrollViewer
+                && scrollViewer.Content is Control content
+                ? [content]
+                : [page];
+            foreach (var target in targets)
+            {
+                _previewDisabledControls.Add((target, target.IsEnabled));
+                target.IsEnabled = false;
+            }
+        }, DispatcherPriority.Render);
+    }
+
+    private void RestorePreviewControls()
+    {
+        foreach (var (control, isEnabled) in _previewDisabledControls)
+            control.IsEnabled = isEnabled;
+        _previewDisabledControls.Clear();
     }
 
     private void TogglePaneButton_OnClick(object? sender, RoutedEventArgs e)
