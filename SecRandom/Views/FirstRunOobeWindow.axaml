@@ -208,8 +208,7 @@
                                                Description="{x:Static langs:Resources.C_ThemeDescription}"
                                                IconSource="{sr:FluentIconSource {sr:Fi DarkThemeFilled}}">
                             <fa:FASettingsExpander.Footer>
-                                <ComboBox SelectedIndex="{Binding ViewModel.Appearance.Theme}"
-                                          SelectionChanged="Appearance_OnChanged">
+                                <ComboBox SelectedIndex="{Binding ViewModel.Appearance.Theme}">
                                     <ComboBoxItem Content="{x:Static langs:Resources.O_ThemeLight}" />
                                     <ComboBoxItem Content="{x:Static langs:Resources.O_ThemeDark}" />
                                     <ComboBoxItem Content="{x:Static langs:Resources.O_ThemeAuto}" />
@@ -223,8 +222,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <ColorPicker Color="{Binding ViewModel.Appearance.ThemeColor}"
                                                  IsVisible="{Binding ViewModel.Appearance.ThemeColorMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:ThemeColorMode.Custom}}" />
-                                    <ComboBox SelectedIndex="{Binding ViewModel.Appearance.ThemeColorMode}"
-                                              SelectionChanged="Appearance_OnChanged">
+                                    <ComboBox SelectedIndex="{Binding ViewModel.Appearance.ThemeColorMode}">
                                         <ComboBoxItem Content="{x:Static langs:Resources.O_SystemColor}" />
                                         <ComboBoxItem Content="{x:Static langs:Resources.O_CustomColor}" />
                                     </ComboBox>

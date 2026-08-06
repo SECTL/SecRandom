@@ -83,11 +83,6 @@ public partial class FirstRunOobeWindow : FAAppWindow
         Close();
     }
 
-    private void Appearance_OnChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        ViewModel.RefreshAppearance();
-    }
-
     private void Language_OnChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (!_isLanguageSelectionReady)
