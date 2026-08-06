@@ -284,7 +284,6 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
         IAppHost.TryGetService<MainConfigHandler>()?.Save();
-        DataContext = null;
     }
 
     #endregion

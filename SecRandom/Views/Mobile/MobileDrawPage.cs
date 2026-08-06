@@ -1,12 +1,11 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Markup.Xaml;
-using Avalonia.Markup.Xaml.MarkupExtensions;
 using FluentAvalonia.UI.Controls;
+using SecRandom.Core.Helpers.UI;
 using SecRandom.ViewModels.Mobile;
 using LR = SecRandom.Langs.Mobile.Resources;
 
@@ -60,6 +59,8 @@ public sealed partial class MobileDrawPage : UserControl
 
     private async Task ShowRemainingListAsync(IReadOnlyList<SecRandom.Shared.Models.Profile.Student> remaining)
     {
+        FlyoutHelper.CloseAncestorFlyout(FlyoutGrid);
+        
         Control content;
         if (remaining.Count == 0)
         {
@@ -119,6 +120,4 @@ public sealed partial class MobileDrawPage : UserControl
     private static string FormatStudent(SecRandom.Shared.Models.Profile.Student student) => string.IsNullOrWhiteSpace(student.Id)
         ? student.Name
         : string.IsNullOrWhiteSpace(student.Name) ? student.Id : $"{student.Id}  {student.Name}";
-
-    private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }
