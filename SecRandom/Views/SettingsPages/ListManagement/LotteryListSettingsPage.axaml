@@ -12,91 +12,111 @@
              x:Class="SecRandom.Views.SettingsPages.ListManagement.LotteryListSettingsPage"
              x:DataType="local:LotteryListSettingsPage"
              Unloaded="OnUnloaded">
-    <ScrollViewer>
-        <StackPanel Classes="page-container animated-intro settings" Spacing="8">
-            <fa:FAInfoBar Title="{x:Static lr:Resources.C_InfoTitle}"
-                          Message="{x:Static lr:Resources.C_InfoMessage}"
-                          Severity="Informational"
-                          IsClosable="False"
-                          IsOpen="True" />
+    <UserControl.Resources>
+        <!-- ReSharper disable once Xaml.RedundantResource -->
+        <Grid x:Key="ChangeCurrentListDrawer" Width="320" RowDefinitions="Auto *" RowSpacing="8" Margin="16">
+            <StackPanel Grid.Row="0" Orientation="Vertical" Spacing="4">
+                <TextBlock Theme="{StaticResource SubtitleTextBlockStyle}"
+                           Text="{x:Static lr:Resources.C_CurrentList}" />
 
-            <fa:FASettingsExpander Header="{x:Static lr:Resources.S_CurrentList}"
-                                   Description="{x:Static lr:Resources.S_CurrentList_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryFilled}}"
-                                   IsExpanded="True">
-                <fa:FASettingsExpander.Footer>
-                    <ComboBox MinWidth="220"
-                              ItemsSource="{Binding PrizeListNames}"
-                              SelectedItem="{Binding SelectedPrizeListName, Mode=TwoWay}"
-                              SelectionChanged="PrizeListComboBox_OnSelectionChanged" />
-                </fa:FASettingsExpander.Footer>
+                <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                           Text="{x:Static lr:Resources.C_CurrentList_D}" />
 
-                <fa:FASettingsExpanderItem>
-                    <fa:FASettingsExpanderItem.Footer>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                             <Button Content="{x:Static lr:Resources.C_Refresh}" Click="RefreshButton_OnClick" />
-                             <Button Content="{x:Static lr:Resources.C_DeleteList}" Click="DeleteListButton_OnClick" />
-                             <Button Content="{x:Static lr:Resources.C_AddList}" Click="AddListButton_OnClick" />
-                            <Button Classes="accent" Content="{x:Static lr:Resources.C_AddPrize}"
-                                    Click="AddPrizeButton_OnClick" />
-                            <Button Classes="accent" Content="{x:Static lr:Resources.C_ImportList}"
-                                    Click="ImportButton_OnClick" />
-                        </StackPanel>
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-            </fa:FASettingsExpander>
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Button Content="{x:Static lr:Resources.C_AddList}" Click="AddListButton_OnClick" />
+                    <Button Content="{x:Static lr:Resources.C_DeleteList}" Click="DeleteListButton_OnClick" />
+                </StackPanel>
+            </StackPanel>
 
-            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="4 4 0 0"
-                    ClipToBounds="True">
-                <DataGrid MinHeight="320"
-                          AutoGenerateColumns="False"
-                          CanUserSortColumns="True"
-                          CanUserResizeColumns="True"
-                          GridLinesVisibility="Horizontal"
-                          IsReadOnly="False"
-                          SelectionMode="Single"
-                          ItemsSource="{Binding SelectedPrizeList.Prizes}">
-                    <DataGrid.Columns>
-                        <DataGridCheckBoxColumn Width="0.55*" Header="{x:Static lr:Resources.C_Exists}" Binding="{Binding Exists}" />
-                        <DataGridTextColumn Width="1.1*" Header="{x:Static lr:Resources.C_PrizeId}" Binding="{Binding Id}" />
-                        <DataGridTextColumn Width="1.35*" Header="{x:Static lr:Resources.C_Name}" Binding="{Binding Name}" />
-                        <DataGridTextColumn Width="0.9*" Header="{x:Static lr:Resources.C_Weight}" Binding="{Binding Weight}" />
-                        <DataGridTextColumn Width="0.9*" Header="{x:Static lr:Resources.C_Count}" Binding="{Binding Count}" />
-                        <DataGridTextColumn Width="1.2*" Header="{x:Static lr:Resources.C_Tags}" Binding="{Binding Tags}" />
-                        <DataGridTemplateColumn Width="120" Header="{x:Static corelr:Resources.C_AttachedSettings}">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <sr:AttachedSettingsFlyoutButton
-                                        TargetObject="{Binding}"
-                                        ControlInfos="{x:Static services:AttachedSettingsRegistryService.PrizeAttachedSettingsControls}"
-                                        SettingsChanged="AttachedSettings_OnSettingsChanged" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Width="80" Header="{x:Static lr:Resources.C_Operations}">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Width="32"
-                                            Height="32"
-                                            Padding="0"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            Theme="{StaticResource TransparentButton}"
-                                            Foreground="Red"
-                                            ToolTip.Tip="{x:Static lr:Resources.C_DeletePrize}"
-                                            AutomationProperties.Name="{x:Static lr:Resources.C_DeletePrize}"
-                                            CommandParameter="{Binding}"
-                                            Click="DeletePrizeButton_OnClick">
-                                        <sr:FluentIcon Glyph="{sr:Fi DeleteFilled}" />
-                                    </Button>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Border>
-        </StackPanel>
-    </ScrollViewer>
+            <ListBox Grid.Row="1"
+                     ItemsSource="{Binding PrizeListNames}"
+                     SelectedItem="{Binding SelectedPrizeListName, Mode=TwoWay}"
+                     SelectionChanged="PrizeListListBox_OnSelectionChanged" />
+        </Grid>
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="Auto *" RowSpacing="8" Classes="page-container animated-intro">
+        <Border Grid.Row="0"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4">
+            <fa:FACommandBar DefaultLabelPosition="Right">
+                <fa:FACommandBar.PrimaryCommands>
+                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi PeopleListFilled}}"
+                                           Label="{Binding SelectedPrizeListName}"
+                                           ToolTip.Tip="{x:Static lr:Resources.C_CurrentList_D}"
+                                           Click="ChangeCurrentListButton_OnClick" />
+
+                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi ArrowClockwiseFilled}}"
+                                           Label="{x:Static lr:Resources.C_Refresh}"
+                                           Click="RefreshButton_OnClick" />
+
+                    <fa:FACommandBarSeparator />
+
+                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi PersonAddFilled}}"
+                                           Label="{x:Static lr:Resources.C_AddPrize}"
+                                           Click="AddPrizeButton_OnClick" />
+
+                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi PeopleAddFilled}}"
+                                           Label="{x:Static lr:Resources.C_ImportList}"
+                                           Click="ImportButton_OnClick" />
+                </fa:FACommandBar.PrimaryCommands>
+            </fa:FACommandBar>
+        </Border>
+
+        <Border Grid.Row="1" BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4 4 0 0"
+                ClipToBounds="True">
+            <DataGrid MinHeight="320"
+                      AutoGenerateColumns="False"
+                      CanUserSortColumns="True"
+                      CanUserResizeColumns="True"
+                      GridLinesVisibility="Horizontal"
+                      IsReadOnly="False"
+                      SelectionMode="Single"
+                      ItemsSource="{Binding SelectedPrizeList.Prizes}">
+                <DataGrid.Columns>
+                    <DataGridCheckBoxColumn Width="0.55*" Header="{x:Static lr:Resources.C_Exists}"
+                                            Binding="{Binding Exists}" />
+                    <DataGridTextColumn Width="1.1*" Header="{x:Static lr:Resources.C_PrizeId}" Binding="{Binding Id}" />
+                    <DataGridTextColumn Width="1.35*" Header="{x:Static lr:Resources.C_Name}" Binding="{Binding Name}" />
+                    <DataGridTextColumn Width="0.9*" Header="{x:Static lr:Resources.C_Weight}"
+                                        Binding="{Binding Weight}" />
+                    <DataGridTextColumn Width="0.9*" Header="{x:Static lr:Resources.C_Count}" Binding="{Binding Count}" />
+                    <DataGridTextColumn Width="1.2*" Header="{x:Static lr:Resources.C_Tags}" Binding="{Binding Tags}" />
+                    <DataGridTemplateColumn Width="120" Header="{x:Static corelr:Resources.C_AttachedSettings}">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <sr:AttachedSettingsFlyoutButton
+                                    TargetObject="{Binding}"
+                                    ControlInfos="{x:Static services:AttachedSettingsRegistryService.PrizeAttachedSettingsControls}"
+                                    SettingsChanged="AttachedSettings_OnSettingsChanged" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Width="80" Header="{x:Static lr:Resources.C_Operations}">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Width="32"
+                                        Height="32"
+                                        Padding="0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Theme="{StaticResource TransparentButton}"
+                                        Foreground="Red"
+                                        ToolTip.Tip="{x:Static lr:Resources.C_DeletePrize}"
+                                        AutomationProperties.Name="{x:Static lr:Resources.C_DeletePrize}"
+                                        CommandParameter="{Binding}"
+                                        Click="DeletePrizeButton_OnClick">
+                                    <sr:FluentIcon Glyph="{sr:Fi DeleteFilled}" />
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
 </UserControl>

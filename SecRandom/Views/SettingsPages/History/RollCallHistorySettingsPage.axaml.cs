@@ -20,10 +20,14 @@ public partial class RollCallHistorySettingsPage : UserControl
         InitializeComponent();
         ViewModel.PropertyChanged += ViewModelOnPropertyChanged;
         ViewModel.Config.LinkageSettings.PropertyChanged += LinkageSettingsOnPropertyChanged;
-        UpdateColumns();
     }
 
     public RollCallHistoryViewModel ViewModel { get; }
+
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        UpdateColumns();
+    }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {

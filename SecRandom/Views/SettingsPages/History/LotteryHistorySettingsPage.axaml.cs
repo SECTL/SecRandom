@@ -18,10 +18,14 @@ public partial class LotteryHistorySettingsPage : UserControl
         DataContext = ViewModel;
         InitializeComponent();
         ViewModel.PropertyChanged += ViewModelOnPropertyChanged;
-        UpdateColumns();
     }
 
     public LotteryHistoryViewModel ViewModel { get; }
+
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        UpdateColumns();
+    }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {

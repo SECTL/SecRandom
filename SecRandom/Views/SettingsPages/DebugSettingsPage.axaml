@@ -18,7 +18,8 @@
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
             <fa:FASettingsExpander Header="{Binding Strings.C_HideDebugEntry}"
-                                   Description="{Binding Strings.C_HideDebugEntry_D}">
+                                   Description="{Binding Strings.C_HideDebugEntry_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi BugFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <Button Content="{Binding Strings.C_Hide}" Click="HideDebugNavigation_OnClick" />
                 </fa:FASettingsExpander.Footer>

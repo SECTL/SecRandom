@@ -33,10 +33,10 @@
     <data name="C_InfoMessage" xml:space="preserve">
         <value>从 Excel 或 CSV 文件导入序号/编号、名称、性别和分组，导入后会保存到当前选择的成员名单。</value>
     </data>
-    <data name="S_CurrentList" xml:space="preserve">
+    <data name="C_CurrentList" xml:space="preserve">
         <value>当前名单</value>
     </data>
-    <data name="S_CurrentList_D" xml:space="preserve">
+    <data name="C_CurrentList_D" xml:space="preserve">
         <value>选择要查看或导入的成员名单</value>
     </data>
     <data name="C_Refresh" xml:space="preserve">

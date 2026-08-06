@@ -104,7 +104,9 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
 
     private void OpenDrawer_Test(object? sender, RoutedEventArgs e)
     {
-        SettingsView.Current?.OpenDrawer(this.FindResource("DrawerTest")!);
+        var content = (Control)this.FindResource("DrawerTest")!;
+        content.DataContext = this;
+        SettingsView.Current?.OpenDrawer(content);
     }
 
     private void ShowCrashRecoveryWindow_OnClick(object? sender, RoutedEventArgs e)
@@ -265,6 +267,7 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
                                  + FormatPath(T("C_UpdateDownloadDirectory"), Path.Combine(dataRoot, "updates", "downloads"), isDirectory: true)
                                  + FormatPath(T("C_CourseLinkageDirectory"), Path.Combine(dataRoot, "CSES"), isDirectory: true)
                                  + FormatPath(T("C_CrashDirectory"), Path.Combine(dataRoot, "crashes"), isDirectory: true);
+        DataAndPathDiagnostics = DataAndPathDiagnostics.Trim();
     }
 
     private static string? FormatScheduleError(string? error)

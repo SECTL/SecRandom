@@ -37,6 +37,8 @@ public partial class DefaultDrawSettingsPage : UserControl
     {
         MusicLibrary.Refresh();
         SubscribeSettings();
+
+        MusicSettingsExpander.IsExpanded = true;
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)

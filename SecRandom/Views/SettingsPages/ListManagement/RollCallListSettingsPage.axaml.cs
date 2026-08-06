@@ -112,7 +112,7 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         SaveSelectedStudentList();
     }
 
-    private void StudentListComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void StudentListListBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         LoadSelectedStudentList();
     }
@@ -142,6 +142,13 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         OnPropertyChanged(nameof(SelectedStudentList));
         _logger.LogInformation("已删除点名名单成员：名单={ListName}，记录={RecordId}。", SelectedStudentListName, student.RecordId);
         this.ShowSuccessToast(string.Format(LR.M_DeleteMemberSuccess, displayName));
+    }
+
+    private void ChangeCurrentListButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var control = (Control)Resources["ChangeCurrentListDrawer"]!;
+        control.DataContext = this;
+        SettingsView.Current?.OpenDrawer(control);
     }
 
     private async void AddListButton_OnClick(object? sender, RoutedEventArgs e)

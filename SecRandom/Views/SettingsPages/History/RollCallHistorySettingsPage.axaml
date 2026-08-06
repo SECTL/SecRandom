@@ -8,6 +8,7 @@
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
              x:Class="SecRandom.Views.SettingsPages.History.RollCallHistorySettingsPage"
              x:DataType="vm:RollCallHistoryViewModel"
+             Loaded="OnLoaded"
              Unloaded="OnUnloaded">
     <UserControl.Resources>
         <conv:HistoryModeNameConverter x:Key="ModeNameConverter" />

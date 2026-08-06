@@ -111,7 +111,7 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         SaveSelectedPrizeList();
     }
 
-    private void PrizeListComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void PrizeListListBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         LoadSelectedPrizeList();
     }
@@ -141,6 +141,13 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         OnPropertyChanged(nameof(SelectedPrizeList));
         _logger.LogInformation("已删除奖品池条目：奖品池={ListName}，记录={RecordId}。", SelectedPrizeListName, prize.RecordId);
         this.ShowSuccessToast(string.Format(LR.M_DeletePrizeSuccess, displayName));
+    }
+
+    private void ChangeCurrentListButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var control = (Control)Resources["ChangeCurrentListDrawer"]!;
+        control.DataContext = this;
+        SettingsView.Current?.OpenDrawer(control);
     }
 
     private async void AddListButton_OnClick(object? sender, RoutedEventArgs e)

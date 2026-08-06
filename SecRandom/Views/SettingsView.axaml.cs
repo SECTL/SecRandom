@@ -672,6 +672,8 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
             _logger?.LogError(e, "Failed navigating to page {PageId}", info.Id);
             NavigationFrame.NavigateFromObject(e);
         }
+
+        CloseDrawer();
     }
 
     public void SelectNavigationItemById(string id, bool isBack = false)

@@ -12,8 +12,9 @@
     <Grid Width="460" MaxWidth="460" RowDefinitions="Auto,*,Auto,Auto">
         <Grid Grid.Row="0" Margin="20,18,18,14" ColumnDefinitions="*,Auto">
             <TextBlock Text="{x:Static ls:Resources.C_Feedback_Title}"
-                       Theme="{StaticResource TitleTextBlockStyle}"
+                       Theme="{StaticResource SubtitleTextBlockStyle}"
                        VerticalAlignment="Center" />
+            
             <Button Grid.Column="1"
                     Theme="{StaticResource TransparentButton}"
                     ToolTip.Tip="{x:Static ls:Resources.C_Feedback_CloseTemporary}"
@@ -25,7 +26,7 @@
             </Button>
         </Grid>
 
-        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" Padding="0 0 0 8">
             <StackPanel Margin="20,0" Spacing="16">
                 <TabStrip Theme="{DynamicResource TabStripStyle}"
                           HorizontalAlignment="Center"
@@ -88,13 +89,18 @@
         <Grid Grid.Row="3" Margin="20,14" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
             <Button Click="GitHub_OnClick">
                 <StackPanel Orientation="Horizontal" Spacing="7">
-                    <Image Source="/Assets/GitHub-Mark.png" Width="16" Height="16" />
+                    <Border Width="16" Height="16" CornerRadius="4" ClipToBounds="True">
+                        <Image Source="/Assets/GitHub-Mark.png" />
+                    </Border>
+                    
                     <TextBlock Text="GitHub" />
                 </StackPanel>
             </Button>
+            
             <Button Grid.Column="2" Content="{x:Static ls:Resources.C_Feedback_Cancel}"
                     IsEnabled="{Binding !ViewModel.IsSubmitting}"
                     Click="CancelFeedback_OnClick" />
+            
             <Button Grid.Column="3" Classes="accent"
                     Content="{x:Static ls:Resources.C_Feedback_Submit}"
                     IsEnabled="{Binding !ViewModel.IsSubmitting}"

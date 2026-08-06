@@ -99,7 +99,7 @@
                                             Header="{x:Static lsb:Resources.C_Backups_FileName}"
                                             Binding="{Binding FileName}" />
 
-                        <DataGridTextColumn Width="*"
+                        <DataGridTextColumn Width="1.2*"
                                             Header="{x:Static lsb:Resources.C_Backups_DateTime}"
                                             Binding="{Binding DateTime}" />
 

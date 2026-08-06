@@ -19,12 +19,19 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <TextBlock Text="{x:Static lm:Resources.M_Empty}" IsVisible="{Binding IsEmpty}" Margin="0 16"
-                       HorizontalAlignment="Center" Opacity="0.7" />
-            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1"
-                    CornerRadius="4 4 0 0" IsVisible="{Binding HasTracks}">
-                <DataGrid AutoGenerateColumns="False" CanUserSortColumns="False" IsReadOnly="True"
-                          ItemsSource="{Binding Library.Tracks}" GridLinesVisibility="Horizontal">
+            <TextBlock Text="{x:Static lm:Resources.M_Empty}"
+                       IsVisible="{Binding IsEmpty}"
+                       Margin="0 16" HorizontalAlignment="Center" Opacity="0.7" />
+            
+            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                    BorderThickness="1 1 1 0"
+                    CornerRadius="4 4 0 0"
+                    IsVisible="{Binding HasTracks}">
+                <DataGrid AutoGenerateColumns="False"
+                          CanUserSortColumns="False"
+                          IsReadOnly="True"
+                          ItemsSource="{Binding Library.Tracks}"
+                          GridLinesVisibility="Horizontal">
                     <DataGrid.Columns>
                         <DataGridTextColumn Width="3*" Header="{x:Static lm:Resources.C_FileName}"
                                             Binding="{Binding DisplayName}" />

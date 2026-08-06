@@ -3,7 +3,6 @@
         xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
         xmlns:styling="clr-namespace:FluentAvalonia.Styling;assembly=FluentAvalonia"
         xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
-        xmlns:system="clr-namespace:System;assembly=System.Runtime"
         xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia">
     <Styles.Resources>
         <ResourceDictionary>
@@ -13,7 +12,7 @@
                 <MergeResourceInclude Source="/Controls/DevelopmentBuildAdorner.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <system:Double x:Key="PageContainerWidth">960</system:Double>
+            <x:Double x:Key="PageContainerWidth">960</x:Double>
 
             <styling:FluentAvaloniaTheme x:Key="FluentAvaloniaTheme"
                                          PreferSystemTheme="True"
@@ -179,21 +178,15 @@
         <Setter Property="Background" Value="Transparent" />
     </Style>
     
-    <Style Selector="Panel.settings">
-        <Style Selector="^ fa|FANumberBox">
-            <Setter Property="MinWidth" Value="128" />
-        </Style>
+    <Style Selector=".settings fa|FANumberBox">
+        <Setter Property="MinWidth" Value="128" />
+    </Style>
     
-        <Style Selector="^ NumericUpDown">
-            <Setter Property="MinWidth" Value="128" />
-        </Style>
+    <Style Selector=".settings NumericUpDown">
+        <Setter Property="MinWidth" Value="128" />
+    </Style>
     
-        <Style Selector="^ ComboBox">
-            <Setter Property="MinWidth" Value="96" />
-        </Style>
-    
-        <Style Selector="^ TextBox">
-            <Setter Property="MinWidth" Value="128" />
-        </Style>
+    <Style Selector=".settings TextBox">
+        <Setter Property="MinWidth" Value="128" />
     </Style>
 </Styles>

@@ -231,6 +231,7 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
         SelectNavigationItem(info);
         ViewModel.SelectedPageInfo = info;
         _navigationFrame?.NavigateFromObject(info);
+        CloseDrawer();
     }
 
     private void NavigationView_OnItemInvoked(object? sender, FANavigationViewItemInvokedEventArgs e)

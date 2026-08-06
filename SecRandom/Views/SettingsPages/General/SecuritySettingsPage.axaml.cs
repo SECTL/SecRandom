@@ -35,7 +35,8 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             new(SR.S_Totp, () => Settings.TotpEnabled, value => Settings.TotpEnabled = value),
             new(SR.S_Usb, () => Settings.UsbBindingEnabled, value => Settings.UsbBindingEnabled = value)
         ];
-        SelectedFactorOptions = new AvaloniaList<MultiSelectSettingOption>(FactorOptions.Where(option => option.IsSelected));
+        SelectedFactorOptions =
+            new AvaloniaList<MultiSelectSettingOption>(FactorOptions.Where(option => option.IsSelected));
         DataContext = this;
         InitializeComponent();
         SubscribeSettings();
@@ -55,7 +56,12 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
     public bool IsLockedOut { get; private set; }
     public string LockoutText { get; private set; } = string.Empty;
 
-    event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged { add => NotifyPropertyChanged += value; remove => NotifyPropertyChanged -= value; }
+    event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
+    {
+        add => NotifyPropertyChanged += value;
+        remove => NotifyPropertyChanged -= value;
+    }
+
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
@@ -102,12 +108,19 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             PasswordButtonText = state.HasPassword ? SR.C_ManagePassword : SR.C_SetPassword;
             TotpButtonText = state.HasTotp ? SR.C_ResetTotp : SR.C_SetTotp;
             IsLockedOut = state.LockoutRemaining is not null;
-            LockoutText = state.LockoutRemaining is { } remaining ? string.Format(SR.M_LockoutFormat, Math.Ceiling(remaining.TotalSeconds)) : string.Empty;
+            LockoutText = state.LockoutRemaining is { } remaining
+                ? string.Format(SR.M_LockoutFormat, Math.Ceiling(remaining.TotalSeconds))
+                : string.Empty;
         }
         finally
         {
             _refreshing = false;
-            foreach (var name in new[] { nameof(CanEnableSecurity), nameof(CanConfigureAdditionalFactors), nameof(CanEditFactorSelection), nameof(CanEditProtectedOperations), nameof(PasswordButtonText), nameof(TotpButtonText), nameof(IsLockedOut), nameof(LockoutText) })
+            foreach (var name in new[]
+                     {
+                         nameof(CanEnableSecurity), nameof(CanConfigureAdditionalFactors),
+                         nameof(CanEditFactorSelection), nameof(CanEditProtectedOperations), nameof(PasswordButtonText),
+                         nameof(TotpButtonText), nameof(IsLockedOut), nameof(LockoutText)
+                     })
                 NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
     }
@@ -137,8 +150,11 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
         var dialog = new PasswordEditorWindow(_securityService.GetUiState().HasPassword);
         var result = await dialog.ShowDialog<PasswordEditorResult?>(owner);
         if (result is null) return;
-        var saved = result.Remove ? await _securityService.RemovePasswordAsync(result.CurrentPassword) : await _securityService.SetPasswordAsync(result.NewPassword, result.CurrentPassword);
-        if (saved) this.ShowSuccessToast(result.Remove ? SR.M_PasswordRemoved : SR.M_PasswordSaved); else this.ShowErrorToast(SR.M_PasswordSaveFailed);
+        var saved = result.Remove
+            ? await _securityService.RemovePasswordAsync(result.CurrentPassword)
+            : await _securityService.SetPasswordAsync(result.NewPassword, result.CurrentPassword);
+        if (saved) this.ShowSuccessToast(result.Remove ? SR.M_PasswordRemoved : SR.M_PasswordSaved);
+        else this.ShowErrorToast(SR.M_PasswordSaveFailed);
         RefreshSecurityState();
     }
 
@@ -146,9 +162,15 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
     {
         if (TopLevel.GetTopLevel(this) is not Window owner) return;
         var secret = await _securityService.BeginTotpSetupAsync();
-        if (secret is null) { this.ShowWarningToast(SR.M_SetPasswordFirst); return; }
+        if (secret is null)
+        {
+            this.ShowWarningToast(SR.M_SetPasswordFirst);
+            return;
+        }
+
         var code = await new TotpSetupWindow(secret).ShowDialog<string?>(owner);
-        if (code is not null && await _securityService.ConfirmTotpAsync(secret, code)) this.ShowSuccessToast(SR.M_TotpSaved);
+        if (code is not null && await _securityService.ConfirmTotpAsync(secret, code))
+            this.ShowSuccessToast(SR.M_TotpSaved);
         else if (code is not null) this.ShowErrorToast(SR.M_TotpSaveFailed);
         RefreshSecurityState();
     }
@@ -156,10 +178,14 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
     private async void ManageUsb_OnClick(object? sender, RoutedEventArgs e)
     {
         if (TopLevel.GetTopLevel(this) is not Window owner) return;
-        var result = await new UsbBindingWindow(await _securityService.GetUsbBindingsAsync()).ShowDialog<UsbBindingResult?>(owner);
+        var result = await new UsbBindingWindow(await _securityService.GetUsbBindingsAsync())
+            .ShowDialog<UsbBindingResult?>(owner);
         if (result is null) return;
-        var success = result.UnbindId is not null ? await _securityService.UnbindUsbAsync(result.UnbindId) : await _securityService.BindUsbAsync(result.RootPath!);
-        if (success) this.ShowSuccessToast(SR.M_UsbUpdated); else this.ShowErrorToast(SR.M_UsbUpdateFailed);
+        var success = result.UnbindId is not null
+            ? await _securityService.UnbindUsbAsync(result.UnbindId)
+            : await _securityService.BindUsbAsync(result.RootPath!);
+        if (success) this.ShowSuccessToast(SR.M_UsbUpdated);
+        else this.ShowErrorToast(SR.M_UsbUpdateFailed);
         RefreshSecurityState();
     }
 }
