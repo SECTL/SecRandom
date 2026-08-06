@@ -6,7 +6,7 @@ public static class GZipHelper
 {
     public static void CompressFileAndDelete(string path)
     {
-        using var originalFileStream = File.Open(path, FileMode.Open);
+        using var originalFileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
         using var compressedFileStream = File.Create(path + ".gz");
         using var compressor = new GZipStream(compressedFileStream, CompressionMode.Compress);
         originalFileStream.CopyTo(compressor);

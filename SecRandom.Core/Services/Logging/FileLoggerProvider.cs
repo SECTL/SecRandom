@@ -93,9 +93,11 @@ public class FileLoggerProvider : ILoggerProvider
             }
 
         var now = DateTime.Now;
-        foreach (var i in logs.Where(x => (now - File.GetLastWriteTime(x)).TotalDays > LogRetentionDays &&
-                                          Path.GetFileName(x) != currentLogFile &&
-                                          (x.EndsWith(".log") || x.EndsWith(".log.gz"))))
+        foreach (var i in logs.Where(x => 
+                     Path.GetFileName(x) != currentLogFile && 
+                     File.Exists(x) &&
+                     (now - File.GetLastWriteTime(x)).TotalDays > LogRetentionDays &&
+                     (x.EndsWith(@".log") || x.EndsWith(@".log.gz"))))
             try
             {
                 File.Delete(i);
