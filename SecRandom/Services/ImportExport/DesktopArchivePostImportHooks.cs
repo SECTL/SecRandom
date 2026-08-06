@@ -7,7 +7,6 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Services.Config;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Linkage;
-using SecRandom.Services.Plugins;
 using SecRandom.Services.Telemetry;
 
 namespace SecRandom.Services.ImportExport;
@@ -21,20 +20,19 @@ namespace SecRandom.Services.ImportExport;
 public sealed class DesktopArchivePostImportHooks(
     MainConfigHandler configHandler,
     DesktopIntegrationService desktopIntegrationService,
-    DeviceUuidStore deviceUuidStore,
-    IPluginManager pluginManager) : IArchivePostImportHooks
+    DeviceUuidStore deviceUuidStore) : IArchivePostImportHooks
 {
     public IReadOnlyList<string> OnSettingsImported()
     {
-        return RefreshDesktopRuntime(refreshPlugins: false);
+        return RefreshDesktopRuntime();
     }
 
     public IReadOnlyList<string> OnAllDataImported()
     {
-        return RefreshDesktopRuntime(refreshPlugins: true);
+        return RefreshDesktopRuntime();
     }
 
-    private List<string> RefreshDesktopRuntime(bool refreshPlugins)
+    private List<string> RefreshDesktopRuntime()
     {
         deviceUuidStore.Reload();
         IAppHost.TryGetService<IFeatureAvailabilityService>()?.Refresh();
@@ -43,9 +41,6 @@ public sealed class DesktopArchivePostImportHooks(
         _ = IAppHost.TryGetService<TelemetryRuntimeService>()?.RefreshAsync();
         IAppHost.TryGetService<OnlineStatusService>()?.Refresh();
         _ = IAppHost.TryGetService<CourseLinkageService>()?.RefreshAsync();
-        if (refreshPlugins)
-            pluginManager.Refresh();
-
         var warnings = new List<string>();
         desktopIntegrationService.EnsureConfiguredIntegrations();
         if (!configHandler.Data.General.Basic.Autostart && !desktopIntegrationService.TrySetAutostart(false, out var autostartError))

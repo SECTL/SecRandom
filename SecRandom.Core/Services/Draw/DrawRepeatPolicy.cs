@@ -5,7 +5,7 @@ namespace SecRandom.Core.Services.Draw;
 /// <summary>
 ///     Single source of truth for DrawMode → repeat-threshold semantics. Repeat returns 0 (no limit),
 ///     NoRepeat returns 1, HalfRepeat returns Max(1, configured value). All draw channels (pages, quick draw,
-///     plugin invoker, sessions, engine internals) must resolve thresholds through this helper.
+///     sessions, engine internals) must resolve thresholds through this helper.
 /// </summary>
 public static class DrawRepeatPolicy
 {

@@ -17,14 +17,12 @@
 - 导航页面必须：
   - 类上标注 `[PageInfo(...)]`
   - 在 `SecRandom/App.axaml.cs` 的 `BuildHost()` 里用 `services.AddMainPage<T>() / AddSettingsPage<T>()` 注册
-- 桌面主/设置子页和移动业务/设置子页都是普通 `UserControl`，不得继承 `ViewBase`。MVE 只承载独立逻辑视图（桌面 `MainView` / `SettingsView`、崩溃恢复和插件 `PluginViewRegistration`）；平台 UI 差异在对应 Host 的条件 DI 注册阶段决定，不通过 MVE 路由表替换页面类型。
+- 桌面主/设置子页和移动业务/设置子页都是普通 `UserControl`，不得继承 `ViewBase`。MVE 只承载独立逻辑视图（桌面 `MainView` / `SettingsView` 和崩溃恢复）；平台 UI 差异在对应 Host 的条件 DI 注册阶段决定，不通过 MVE 路由表替换页面类型。
 - 本地化必须按“每页一个文件夹”拆分，不要混在一起。
 - 文件路径统一用 `Utils.GetFilePath(...)`。桌面和便携包数据落在 package root 的 `data/...`；移动端由共享 `SecRandom.App` 在任何路径首次读取前调用一次 `Utils.ConfigureMobileDataRoot()`，选择 app-private `LocalApplicationData/SecRandom/data`，其他代码不得运行中改写根目录。
 - 不要在页面里随意 `new` 可复用服务；需要复用/单例/可测试的服务必须进 Host。
 - 平台功能必须使用 `SecRandom.Platforms.Abstractions` 的窄接口，经 `App.BuildHost()` 注册后调用。窗口类只能声明所需特性，不得直接添加 Win32/X11/AppKit 调用或散落的 `OperatingSystem.Is*` 分支。
-- 插件只能使用 `SecRandom.Core/Plugins` 中的稳定契约；运行时加载、启用状态和管理 UI 放在 `SecRandom/Services/Plugins`。
 - 课程联动的数据源固定为 `0=关闭`、`1=CSES`、`2=ClassIsland`。CSES 文件由 app 层服务管理在 `data/CSES/cses_schedule.yml`，ClassIsland IPC 仅能在 app 层适配器中引用。数据源失效或状态未知时必须允许抽取；只有确认的课间状态可触发限制、浮窗隐藏或课前重置。
-- 公平抽取不能开放算法接口给插件；插件只能通过 `IPluginDrawInvoker` 发起宿主抽取调用，不能拿到 `DrawEngine`、权重计算、随机源、历史写入或抽取配置。
 
 ## Host/依赖注入（怎么写才符合本项目）
 
@@ -66,16 +64,6 @@ services.AddSettingsPage<LotteryTablePreviewPage>(
 - 主界面：`main.xxx`
 - 设置页：`settings.xxx`
 - 设置子页：`settings.group.xxx`
-- 插件页：`plugin.<plugin-id>.main.xxx` 或 `plugin.<plugin-id>.settings.xxx`，不能占用内置 `main.*` / `settings.*`。
-
-## 插件系统
-
-- 插件清单放在 `data/plugins/<plugin-id>/plugin.json`，插件私有数据放在 `data/plugins/<plugin-id>/data/`。
-- 插件启用/禁用默认需要重启；设置页应调用 `SettingsView.RequestRestartApp()`。
-- 插件日志必须接入原有 `ILogger` / `FileLoggerProvider`，分类前缀固定为 `SecRandom.Plugin[<plugin-id>].`。
-- 插件详情页只能按自己的分类前缀筛选日志，不能展示其他插件或宿主日志。
-- 不要向插件暴露 `IAppHost.Host`、完整 `IServiceProvider`、可写 `MainConfigHandler`、可写 `IProfileService`、shell/process 能力、遥测/在线状态服务或任意文件系统访问。
-
 ## 本地化（必须）
 
 - 每个页面的本地化拆分到独立文件夹，结构固定：

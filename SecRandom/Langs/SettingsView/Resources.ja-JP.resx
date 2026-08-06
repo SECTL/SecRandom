@@ -20,7 +20,7 @@
   <data name="C_MoreOptions_ImportSettings" xml:space="preserve"><value>設定をインポート</value></data>
   <data name="C_MoreOptions_ImportSettings_D" xml:space="preserve"><value>SecRandom v3 設定ファイルから設定のみをインポートし、現在の設定を置き換えます</value></data>
   <data name="C_MoreOptions_ExportAllData" xml:space="preserve"><value>すべてのデータをエクスポート</value></data>
-  <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve"><value>資格情報を除くデータ、設定、プラグイン、プラグインの個別設定を今すぐエクスポートします</value></data>
+   <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve"><value>資格情報を除くすべてのデータと設定を今すぐエクスポートします</value></data>
   <data name="C_MoreOptions_ImportAllData" xml:space="preserve"><value>すべてのデータをインポート</value></data>
   <data name="C_MoreOptions_ImportAllData_D" xml:space="preserve"><value>SecRandom v3 バックアップからすべてのデータをインポートします。インポート前に復元スナップショットを作成します</value></data>
    <data name="C_MoreOptions_OpenLogDirectory" xml:space="preserve"><value>ログフォルダーを開く</value></data>
@@ -39,10 +39,10 @@
   <data name="C_DiagnosticStandard" xml:space="preserve"><value>標準診断パッケージ</value></data>
   <data name="C_DiagnosticExtended" xml:space="preserve"><value>拡張診断パッケージ</value></data>
   <data name="M_DiagnosticExportTitle" xml:space="preserve"><value>診断データをエクスポート</value></data>
-  <data name="M_DiagnosticExportContent" xml:space="preserve"><value>標準パッケージには匿名化したログと実行情報が含まれます。拡張パッケージには匿名化した設定スナップショット、プラグインとプロファイル数の概要、匿名化したクラッシュレポートも含まれます。どちらにもリストや履歴の内容、プラグインの個別設定、安全資格情報は含まれません</value></data>
+   <data name="M_DiagnosticExportContent" xml:space="preserve"><value>標準パッケージには匿名化したログと実行情報が含まれます。拡張パッケージには匿名化した設定スナップショット、プロファイル数の概要、匿名化したクラッシュレポートも含まれます。どちらにもリストや履歴の内容、安全資格情報は含まれません</value></data>
   <data name="M_ImportTitle" xml:space="preserve"><value>インポートの確認</value></data>
   <data name="M_ImportSettingsContent" xml:space="preserve"><value>ウィンドウ、起動、テーマ、抽選、デスクトップ連携を含む、資格情報以外のすべての設定が置き換えられます。先に復元スナップショットを作成し、失敗した場合はインポートを中止します。パスワード、TOTP、USB バインド、ロックアウト状態はインポートされません。</value></data>
-  <data name="M_ImportAllDataContent" xml:space="preserve"><value>資格情報以外のデータ、設定、プロファイル、履歴、リソース、プラグイン、プラグインの個別設定が置き換えられます。先に完全な復元スナップショットを作成し、失敗した場合はインポートを中止します。安全資格情報はインポートされません。</value></data>
+   <data name="M_ImportAllDataContent" xml:space="preserve"><value>資格情報以外のデータ、設定、プロファイル、履歴、リソースが置き換えられます。先に完全な復元スナップショットを作成し、失敗した場合はインポートを中止します。安全資格情報はインポートされません。</value></data>
   <data name="M_ImportUnsupportedTitle" xml:space="preserve"><value>サポートされていないインポートファイル</value></data>
   <data name="M_ImportUnsupportedContent" xml:space="preserve"><value>このファイルはサポートされている SecRandom v3 エクスポートファイルではありません。</value></data>
   <data name="M_ImportUnsupportedUnknownVersion" xml:space="preserve"><value>不明</value></data>

@@ -43,17 +43,6 @@
                                            Click="RestartProgram_OnClick" />
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi PuzzlePieceFilled}}"
-                                   Header="{Binding Strings.S_Plugins}" IsExpanded="False">
-                <fa:FASettingsExpanderItem Content="{Binding Strings.C_ShowPluginSettings}"
-                                           Description="{Binding Strings.C_ShowPluginSettings_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch x:Name="PluginSettingsToggle"
-                                      IsChecked="{Binding IsPluginSettingsVisible}" />
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-            </fa:FASettingsExpander>
-
             <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi ShieldLockFilled}}"
                                    Header="{Binding Strings.S_InternalSettings}" IsExpanded="False">
                 <fa:FASettingsExpanderItem Content="{Binding Strings.C_EnableInternalSettings}"

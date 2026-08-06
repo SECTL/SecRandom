@@ -10,7 +10,6 @@ using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Config;
-using SecRandom.Services.Plugins;
 using SecRandom.Shared;
 
 namespace SecRandom.Services.ImportExport;
@@ -18,12 +17,11 @@ namespace SecRandom.Services.ImportExport;
 /// <summary>
 ///     Desktop shell over the Core <see cref="DataArchiveService" />. All backup/restore and
 ///     settings transfer behavior lives in Core; this class only owns the desktop-only
-///     diagnostic export (logs, crashes, plugin inventory) and delegates everything else.
+///     diagnostic export (logs and crashes) and delegates everything else.
 /// </summary>
 public sealed class ImportExportService(
     MainConfigHandler configHandler,
-    DataArchiveService dataArchiveService,
-    IPluginManager pluginManager) : IImportExportService
+    DataArchiveService dataArchiveService) : IImportExportService
 {
     private readonly string _dataDirectory = Utils.DataRoot;
 
@@ -127,14 +125,7 @@ public sealed class ImportExportService(
             roll_call_lists = CountFiles("list", "roll_call_list"),
             lottery_pools = CountFiles("list", "lottery_list"),
             roll_call_histories = CountFiles("history", "roll_call_history"),
-            lottery_histories = CountFiles("history", "lottery_history"),
-            plugins = pluginManager.Plugins.Select(plugin => new
-            {
-                id = plugin.Manifest.Id,
-                version = plugin.Manifest.Version,
-                enabled = plugin.IsEnabled,
-                status = plugin.Status.ToString()
-            })
+            lottery_histories = CountFiles("history", "lottery_history")
         }, ConfigServiceBase.JsonOptions), entries);
 
         var crashesDirectory = Path.Combine(_dataDirectory, "crashes");
