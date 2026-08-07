@@ -8,7 +8,7 @@ using SecRandom.Services.Mobile;
 namespace SecRandom.Views.Mobile.Settings;
 
 /// <summary>
-/// SettingsView 的隐藏目录页。SettingsView 依据注册元数据生成分组和入口。
+/// SettingsView 的隐藏目录页。目录顺序与 SettingsView 的导航栏保持一致。
 /// </summary>
 [PageInfo(MobilePageIds.Settings, FluentIcons.SettingsFilled, isHide: true)]
 public sealed partial class MobileSettingsCatalogPage : MobileSettingsPageBase
@@ -22,20 +22,44 @@ public sealed partial class MobileSettingsCatalogPage : MobileSettingsPageBase
     {
         _settingsNavigator = settingsNavigator;
         InitializeComponent();
-        Groups = PagesRegistryService.GroupItems
-            .Select(group => new MobileSettingsCatalogGroup(
-                group.Name,
-                group.IconGlyph,
-                PagesRegistryService.SettingsItems
-                    .Where(page => !page.IsSeparator && !page.IsHide && page.GroupId == group.Id)
-                    .Select(page => new MobileSettingsCatalogEntry(page.Id, page.Name, page.IconGlyph))
-                    .ToArray()))
-            .Where(group => group.Pages.Count != 0)
+        var pages = PagesRegistryService.SettingsItems
+            .Where(page => !page.IsSeparator && !page.IsHide)
             .ToArray();
+        var addedGroups = new HashSet<string>();
+        var items = new List<MobileSettingsCatalogItem>();
+
+        foreach (var page in pages)
+        {
+            if (page.GroupId is { } groupId && addedGroups.Add(groupId))
+            {
+                var group = PagesRegistryService.GroupItems.FirstOrDefault(item => item.Id == groupId);
+                if (group is not null)
+                {
+                    items.Add(new MobileSettingsCatalogItem(
+                        group.Name,
+                        group.IconGlyph,
+                        null,
+                        pages
+                            .Where(item => item.GroupId == groupId)
+                            .Select(CreateEntry)
+                            .ToArray()));
+                    continue;
+                }
+            }
+
+            // This is also the fallback used by the desktop navigation when a group is unknown.
+            if (page.GroupId is null || PagesRegistryService.GroupItems.All(item => item.Id != page.GroupId))
+                items.Add(new MobileSettingsCatalogItem(page.Name, page.IconGlyph, page.Id, []));
+        }
+
+        Items = items;
         DataContext = this;
     }
 
-    public IReadOnlyList<MobileSettingsCatalogGroup> Groups { get; }
+    public IReadOnlyList<MobileSettingsCatalogItem> Items { get; }
+
+    private static MobileSettingsCatalogEntry CreateEntry(PageInfo page) =>
+        new(page.Id, page.Name, page.IconGlyph);
 
     private void CatalogItem_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
@@ -52,9 +76,13 @@ public sealed partial class MobileSettingsCatalogPage : MobileSettingsPageBase
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }
 
-public sealed record MobileSettingsCatalogGroup(
+public sealed record MobileSettingsCatalogItem(
     string Name,
     string IconGlyph,
-    IReadOnlyList<MobileSettingsCatalogEntry> Pages);
+    string? PageId,
+    IReadOnlyList<MobileSettingsCatalogEntry> Pages)
+{
+    public bool IsPage => PageId is not null;
+}
 
 public sealed record MobileSettingsCatalogEntry(string Id, string Name, string IconGlyph);

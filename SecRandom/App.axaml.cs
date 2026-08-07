@@ -865,7 +865,8 @@ public partial class App : Application
                         MobileResources.S_GroupApp, "settings.mobile.application", FluentIcons.InfoFilled));
                     if (mobilePlatform!.UpdateInstaller.IsSupported)
                         services.AddSettingsPage<MobileUpdateSettingsPage>(MobileResources.S_AppUpdates);
-                    services.AddSettingsPage<MobileAboutSettingsPage>(MobileResources.S_About);
+                    // services.AddSettingsPage<MobileAboutSettingsPage>(MobileResources.S_About);
+                    services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
                 }
                 else
                 {

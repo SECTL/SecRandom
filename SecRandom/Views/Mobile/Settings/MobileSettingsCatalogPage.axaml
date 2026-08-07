@@ -2,15 +2,14 @@
                               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                               xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
                               xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-                              xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
-                              xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
-                              x:Class="SecRandom.Views.Mobile.Settings.MobileSettingsCatalogPage"
+                               xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
+                               x:Class="SecRandom.Views.Mobile.Settings.MobileSettingsCatalogPage"
                               x:DataType="local:MobileSettingsCatalogPage">
-    <ScrollViewer x:Name="PageScroll">
-        <ItemsControl ItemsSource="{Binding Groups}">
+    <ScrollViewer x:Name="PageScroll" HorizontalScrollBarVisibility="Disabled">
+        <ItemsControl ItemsSource="{Binding Items}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <StackPanel Orientation="Vertical" Classes="page-container" />
+                    <StackPanel Classes="page-container" Orientation="Vertical" />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             
@@ -18,6 +17,9 @@
                 <DataTemplate>
                     <fa:FASettingsExpander ItemsSource="{Binding Pages}"
                                            Header="{Binding Name}"
+                                           Tag="{Binding PageId}"
+                                           IsClickEnabled="{Binding IsPage}"
+                                           Click="CatalogItem_OnClick"
                                            IsExpanded="True">
                         <fa:FASettingsExpander.IconSource>
                             <sr:FluentIconSource Glyph="{Binding IconGlyph}" />
