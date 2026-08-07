@@ -142,13 +142,13 @@
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
-            <Separator Margin="0 12 0 4" />
-            <sr:IconText x:Name="S_Shortcut"
+            <Separator Margin="0 12 0 4" IsVisible="{Binding IsDesktop}" />
+            <sr:IconText x:Name="S_Shortcut" IsVisible="{Binding IsDesktop}"
                          Text="{x:Static lsp:Resources.S_Shortcut}"
                          Glyph="{sr:Fi FlashFilled}"
                          Margin="0 0 0 4" />
 
-            <fa:FASettingsExpander x:Name="S_Shortcut_Card"
+            <fa:FASettingsExpander x:Name="S_Shortcut_Card" IsVisible="{Binding IsDesktop}"
                                     Header="{x:Static lsp:Resources.S_Shortcut}"
                                     Description="{x:Static lsp:Resources.S_Shortcut_D}"
                                     IconSource="{sr:FluentIconSource {sr:Fi KeyboardFilled}}"

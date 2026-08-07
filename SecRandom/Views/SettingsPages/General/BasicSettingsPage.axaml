@@ -44,7 +44,8 @@
             <fa:FASettingsExpander x:Name="S_Behavior_Autostart"
                                    Header="{x:Static lsb:Resources.S_Behavior_Autostart}"
                                    Description="{x:Static lsb:Resources.S_Behavior_Autostart_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}"
+                                   IsVisible="{Binding IsDesktop}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.Autostart}" />
                 </fa:FASettingsExpander.Footer>
@@ -53,7 +54,8 @@
             <fa:FASettingsExpander x:Name="S_Behavior_ShowStartupWindow"
                                    Header="{x:Static lsb:Resources.S_Behavior_ShowStartupWindow}"
                                    Description="{x:Static lsb:Resources.S_Behavior_ShowStartupWindow_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}"
+                                   IsVisible="{Binding IsDesktop}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.ShowStartupWindow}" />
                 </fa:FASettingsExpander.Footer>
@@ -62,7 +64,8 @@
             <fa:FASettingsExpander x:Name="S_Behavior_AutoSaveWindowSize"
                                    Header="{x:Static lsb:Resources.S_Behavior_AutoSaveWindowSize}"
                                    Description="{x:Static lsb:Resources.S_Behavior_AutoSaveWindowSize_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi SaveFilled}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi SaveFilled}}"
+                                   IsVisible="{Binding IsDesktop}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.AutoSaveWindowSize}" />
                 </fa:FASettingsExpander.Footer>
@@ -71,7 +74,8 @@
             <fa:FASettingsExpander x:Name="S_Behavior_MainWindowTopmostMode"
                                    Header="{x:Static lsb:Resources.S_Behavior_MainWindowTopmostMode}"
                                    Description="{Binding MainWindowTopmostModeDescription}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PinFilled}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi PinFilled}}"
+                                   IsVisible="{Binding IsDesktop}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.MainWindowTopmostMode}">
                         <ComboBoxItem Content="{x:Static lsb:Resources.O_MainWindowTopmostMode_None}" />
@@ -85,7 +89,8 @@
             <fa:FASettingsExpander x:Name="S_Behavior_BackgroundResident"
                                    Header="{x:Static lsb:Resources.S_Behavior_BackgroundResident}"
                                    Description="{x:Static lsb:Resources.S_Behavior_BackgroundResident_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ResizeFilled}}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi ResizeFilled}}"
+                                   IsVisible="{Binding IsDesktop}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.BackgroundResident}" />
                 </fa:FASettingsExpander.Footer>
@@ -94,7 +99,8 @@
             <fa:FASettingsExpander x:Name="S_Behavior_UrlProtocol"
                                     Header="{x:Static lsb:Resources.S_Behavior_UrlProtocol}"
                                     Description="{x:Static lsb:Resources.S_Behavior_UrlProtocol_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi LinkFilled}}">
+                                    IconSource="{sr:FluentIconSource {sr:Fi LinkFilled}}"
+                                    IsVisible="{Binding IsDesktop}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.UrlProtocol}" />
                 </fa:FASettingsExpander.Footer>

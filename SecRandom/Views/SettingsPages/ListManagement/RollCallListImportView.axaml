@@ -6,10 +6,10 @@
              xmlns:lr="clr-namespace:SecRandom.Langs.SettingsPages.ListManagement.RollCallList"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
-             mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="720"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="720"
              x:Class="SecRandom.Views.SettingsPages.ListManagement.RollCallListImportView"
              x:DataType="local:RollCallListImportView">
-    <ScrollViewer Width="460">
+    <ScrollViewer Width="400">
         <StackPanel Margin="16" Spacing="8">
             <TextBlock Text="{x:Static lr:Resources.C_ImportTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
             <TextBlock Text="{Binding TargetListDescription}" TextWrapping="Wrap"
@@ -73,11 +73,21 @@
                           GridLinesVisibility="Horizontal"
                           ItemsSource="{Binding PreviewRows}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Width="*" Header="{x:Static lr:Resources.C_StudentId}" Binding="{Binding Id}" />
-                        <DataGridTextColumn Width="2*" Header="{x:Static lr:Resources.C_Name}" Binding="{Binding Name}" />
-                        <DataGridTextColumn Width="*" Header="{x:Static lr:Resources.C_Gender}" Binding="{Binding Gender}" />
-                        <DataGridTextColumn Width="*" Header="{x:Static lr:Resources.C_Group}" Binding="{Binding Group}" />
-                        <DataGridTextColumn Width="*" Header="{x:Static lr:Resources.C_Tags}" Binding="{Binding Tags}" />
+                        <DataGridTextColumn Width="*" MinWidth="50"
+                                            Header="{x:Static lr:Resources.C_StudentId}"
+                                            Binding="{Binding Id}" />
+                        <DataGridTextColumn Width="2*" MinWidth="100"
+                                            Header="{x:Static lr:Resources.C_Name}"
+                                            Binding="{Binding Name}" />
+                        <DataGridTextColumn Width="*" MinWidth="50"
+                                            Header="{x:Static lr:Resources.C_Gender}"
+                                            Binding="{Binding Gender}" />
+                        <DataGridTextColumn Width="*" MinWidth="50"
+                                            Header="{x:Static lr:Resources.C_Group}"
+                                            Binding="{Binding Group}" />
+                        <DataGridTextColumn Width="*" MinWidth="50"
+                                            Header="{x:Static lr:Resources.C_Tags}"
+                                            Binding="{Binding Tags}" />
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>

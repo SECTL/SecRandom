@@ -95,15 +95,15 @@
                           SelectionMode="Single"
                           ItemsSource="{Binding Backups}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Width="3*"
+                        <DataGridTextColumn Width="3*" MinWidth="360"
                                             Header="{x:Static lsb:Resources.C_Backups_FileName}"
                                             Binding="{Binding FileName}" />
 
-                        <DataGridTextColumn Width="1.2*"
+                        <DataGridTextColumn Width="1.2*" MinWidth="160"
                                             Header="{x:Static lsb:Resources.C_Backups_DateTime}"
                                             Binding="{Binding DateTime}" />
 
-                        <DataGridTextColumn Width="*"
+                        <DataGridTextColumn Width="*" MinWidth="96"
                                             Header="{x:Static lsb:Resources.C_Backups_Size}"
                                             Binding="{Binding Size}" />
 

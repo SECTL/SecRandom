@@ -79,15 +79,32 @@
                       SelectionMode="Single"
                       ItemsSource="{Binding SelectedPrizeList.Prizes}">
                 <DataGrid.Columns>
-                    <DataGridCheckBoxColumn Width="0.55*" Header="{x:Static lr:Resources.C_Exists}"
+                    <DataGridCheckBoxColumn MinWidth="64"
+                                            Header="{x:Static lr:Resources.C_Exists}"
                                             Binding="{Binding Exists}" />
-                    <DataGridTextColumn Width="1.1*" Header="{x:Static lr:Resources.C_PrizeId}" Binding="{Binding Id}" />
-                    <DataGridTextColumn Width="1.35*" Header="{x:Static lr:Resources.C_Name}" Binding="{Binding Name}" />
-                    <DataGridTextColumn Width="0.9*" Header="{x:Static lr:Resources.C_Weight}"
+                    
+                    <DataGridTextColumn Width="0.8*" MinWidth="80"
+                                        Header="{x:Static lr:Resources.C_PrizeId}"
+                                        Binding="{Binding Id}" />
+                    
+                    <DataGridTextColumn Width="1.5*" MinWidth="150"
+                                        Header="{x:Static lr:Resources.C_Name}"
+                                        Binding="{Binding Name}" />
+                    
+                    <DataGridTextColumn Width="1*" MinWidth="100"
+                                        Header="{x:Static lr:Resources.C_Weight}"
                                         Binding="{Binding Weight}" />
-                    <DataGridTextColumn Width="0.9*" Header="{x:Static lr:Resources.C_Count}" Binding="{Binding Count}" />
-                    <DataGridTextColumn Width="1.2*" Header="{x:Static lr:Resources.C_Tags}" Binding="{Binding Tags}" />
-                    <DataGridTemplateColumn Width="120" Header="{x:Static corelr:Resources.C_AttachedSettings}">
+                    
+                    <DataGridTextColumn Width="1*" MinWidth="100"
+                                        Header="{x:Static lr:Resources.C_Count}"
+                                        Binding="{Binding Count}" />
+                    
+                    <DataGridTextColumn Width="1.2*" MinWidth="120"
+                                        Header="{x:Static lr:Resources.C_Tags}"
+                                        Binding="{Binding Tags}" />
+                    
+                    <DataGridTemplateColumn MinWidth="96"
+                                            Header="{x:Static corelr:Resources.C_AttachedSettings}">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <sr:AttachedSettingsFlyoutButton
@@ -97,7 +114,9 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Width="80" Header="{x:Static lr:Resources.C_Operations}">
+                    
+                    <DataGridTemplateColumn MinWidth="64"
+                                            Header="{x:Static lr:Resources.C_Operations}">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Width="32"

@@ -80,17 +80,32 @@
                       SelectionMode="Single"
                       ItemsSource="{Binding SelectedStudentList.Students}">
                 <DataGrid.Columns>
-                    <DataGridCheckBoxColumn Width="0.55*" Header="{x:Static lr:Resources.C_Exists}"
+                    <DataGridCheckBoxColumn MinWidth="64"
+                                            Header="{x:Static lr:Resources.C_Exists}"
                                             Binding="{Binding Exists}" />
-                    <DataGridTextColumn Width="1.1*" Header="{x:Static lr:Resources.C_StudentId}"
+                    
+                    <DataGridTextColumn Width="0.8*" MinWidth="80"
+                                        Header="{x:Static lr:Resources.C_StudentId}"
                                         Binding="{Binding Id}" />
-                    <DataGridTextColumn Width="1.35*" Header="{x:Static lr:Resources.C_Name}" Binding="{Binding Name}" />
-                    <DataGridTextColumn Width="0.8*" Header="{x:Static lr:Resources.C_Gender}"
+                    
+                    <DataGridTextColumn Width="1.5*" MinWidth="150"
+                                        Header="{x:Static lr:Resources.C_Name}"
+                                        Binding="{Binding Name}" />
+                    
+                    <DataGridTextColumn Width="1*" MinWidth="100"
+                                        Header="{x:Static lr:Resources.C_Gender}"
                                         Binding="{Binding Gender}" />
-                    <DataGridTextColumn Width="1.25*" Header="{x:Static lr:Resources.C_Group}"
+                    
+                    <DataGridTextColumn Width="1*" MinWidth="100"
+                                        Header="{x:Static lr:Resources.C_Group}"
                                         Binding="{Binding Group}" />
-                    <DataGridTextColumn Width="1*" Header="{x:Static lr:Resources.C_Tags}" Binding="{Binding Tags}" />
-                    <DataGridTemplateColumn Width="120" Header="{x:Static corelr:Resources.C_AttachedSettings}">
+                    
+                    <DataGridTextColumn Width="1.2*" MinWidth="120"
+                                        Header="{x:Static lr:Resources.C_Tags}"
+                                        Binding="{Binding Tags}" />
+                    
+                    <DataGridTemplateColumn MinWidth="96"
+                                            Header="{x:Static corelr:Resources.C_AttachedSettings}">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <sr:AttachedSettingsFlyoutButton
@@ -100,7 +115,9 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Width="80" Header="{x:Static lr:Resources.C_Operations}">
+                    
+                    <DataGridTemplateColumn MinWidth="64"
+                                            Header="{x:Static lr:Resources.C_Operations}">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Width="32"

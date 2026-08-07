@@ -846,27 +846,61 @@ public partial class App : Application
                 if (isMobile && useMobileUI)
                 {
                     services.AddSettingsPage<MobileSettingsCatalogPage>(MobileResources.P_Settings);
+
+                    // 顶部
+                    services.AddGroup(new PageGroupInfo(
+                        Langs.Common.Resources.Settings_General, "settings.general", FluentIcons.SettingsFilled));
+                    services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
+                    services.AddSettingsPage<PrivacySettingsPage>(Langs.SettingsPages.General.Privacy.Resources
+                        .Page_Title);
+                    services.AddSettingsPage<VerificationSettingsPage>(Langs.SettingsPages.General.Verification
+                        .Resources.Page_Title);
+                    services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
                     
-                    // 顶部和偏好
                     services.AddGroup(new PageGroupInfo(
-                        MobileResources.S_GroupPreferences, "settings.mobile.preferences", FluentIcons.ColorFilled));
-                    services.AddSettingsPage<MobileGeneralSettingsPage>(MobileResources.S_General);
-                    services.AddSettingsPage<MobilePersonalizationSettingsPage>(MobileResources.S_Personalization);
-                    services.AddSettingsPage<MobileDrawSettingsPage>(MobileResources.S_DrawSettings);
-                
-                    // 数据
+                        Langs.Common.Resources.Settings_Personalized, "settings.personalized",
+                        FluentIcons.ColorFilled));
+                    services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
+                    services.AddSettingsPage<MusicSettingsPage>(Langs.SettingsPages.Personalized.Music.Resources
+                        .Page_Title);
+                    
+                    services.AddSettingsPage<LinkageSettingsPage>(Langs.Common.Resources.Settings_Linkage);
+                    services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
+
+                    services.AddSettingsPageSeparator();
+
                     services.AddGroup(new PageGroupInfo(
-                        MobileResources.S_GroupData, "settings.mobile.data", FluentIcons.DatabaseFilled));
-                    services.AddSettingsPage<MobileListManagementSettingsPage>(MobileResources.S_ListManagement);
-                    services.AddSettingsPage<MobileBackupSettingsPage>(MobileResources.S_Backup);
-                
-                    // 应用
+                        Langs.Common.Resources.Settings_RosterManagement, "settings.listManagement",
+                        FluentIcons.PeopleListFilled));
+                    services.AddSettingsPage<RollCallListSettingsPage>(Langs.SettingsPages.ListManagement.RollCallList
+                        .Resources.Page_Title);
+                    services.AddSettingsPage<LotteryListSettingsPage>(Langs.SettingsPages.ListManagement.LotteryList
+                        .Resources.Page_Title);
+
                     services.AddGroup(new PageGroupInfo(
-                        MobileResources.S_GroupApp, "settings.mobile.application", FluentIcons.InfoFilled));
-                    if (mobilePlatform!.UpdateInstaller.IsSupported)
-                        services.AddSettingsPage<MobileUpdateSettingsPage>(MobileResources.S_AppUpdates);
-                    // services.AddSettingsPage<MobileAboutSettingsPage>(MobileResources.S_About);
+                        Langs.Common.Resources.Settings_Draw, "settings.picking", FluentIcons.SettingsFilled));
+                    services.AddSettingsPage<DefaultDrawSettingsPage>(
+                        Langs.SettingsPages.Picking.Resources.Page_Default);
+                    services.AddSettingsPage<RollCallDrawSettingsPage>(Langs.SettingsPages.Picking.Resources
+                        .Page_RollCall);
+                    services.AddSettingsPage<QuickDrawSettingsPage>(
+                        Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
+                    services.AddSettingsPage<LotteryDrawSettingsPage>(
+                        Langs.SettingsPages.Picking.Resources.Page_Lottery);
+
+                    services.AddGroup(new PageGroupInfo(
+                        Langs.Common.Resources.Feat_History, "settings.history", FluentIcons.HistoryFilled));
+                    services.AddSettingsPage<HistoryManagementSettingsPage>(Langs.Common.Resources
+                        .Settings_HistoryManagement);
+                    services.AddSettingsPage<RollCallHistorySettingsPage>(Langs.Common.Resources.Feat_RollCallHistory);
+                    services.AddSettingsPage<LotteryHistorySettingsPage>(Langs.Common.Resources.Feat_LotteryHistory);
+                    
+                    
+                    // 底部
                     services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
+                    services.AddSettingsPageSeparator(PageLocation.Bottom, isHide: true);
+                    services.AddSettingsPage<DebugSettingsPage>(
+                        Langs.SettingsPages.Debug.DebugStrings.Get("Page_Title"));
                 }
                 else
                 {
@@ -890,10 +924,13 @@ public partial class App : Application
                         Langs.Common.Resources.Settings_Personalized, "settings.personalized",
                         FluentIcons.ColorFilled));
                     services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
-                    services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources
-                        .Settings_FloatingWindow);
+                    if (!isMobile)
+                    {
+                        services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources.Settings_FloatingWindow);
+                    }
                     services.AddSettingsPage<MusicSettingsPage>(Langs.SettingsPages.Personalized.Music.Resources
                         .Page_Title);
+                    
                     services.AddSettingsPage<LinkageSettingsPage>(Langs.Common.Resources.Settings_Linkage);
                     services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
 

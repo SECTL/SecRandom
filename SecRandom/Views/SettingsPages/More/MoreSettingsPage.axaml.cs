@@ -51,6 +51,7 @@ public partial class MoreSettingsPage : UserControl, INotifyPropertyChanged
     public bool IsDecreaseLotteryCountShortcutConflicted => IsShortcutConflicted(nameof(MoreSettingsConfig.DecreaseLotteryCountShortcut));
     public bool IsStartRollCallShortcutConflicted => IsShortcutConflicted(nameof(MoreSettingsConfig.StartRollCallShortcut));
     public bool IsStartLotteryShortcutConflicted => IsShortcutConflicted(nameof(MoreSettingsConfig.StartLotteryShortcut));
+    public bool IsDesktop => App.IsDesktop;
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
 
