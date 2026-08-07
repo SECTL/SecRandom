@@ -30,6 +30,8 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
     private readonly IProfileCatalogManager _catalogManager =
         IAppHost.GetService<IProfileCatalogManager>();
 
+    public bool IsDesktop => App.IsDesktop;
+
     public LotteryListSettingsPage()
     {
         DataContext = this;
@@ -121,6 +123,56 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         RefreshPrizeLists();
     }
 
+    private async void EditPrizeButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { CommandParameter: Prize prize } || SelectedPrizeList == null)
+            return;
+
+        var form = new StackPanel { Spacing = 8 };
+        var exists = new CheckBox { IsChecked = prize.Exists, Content = LR.C_Exists };
+        form.Children.Add(exists);
+        var id = AddInputField(form, LR.C_PrizeId, prize.Id);
+        var name = AddInputField(form, LR.C_Name, prize.Name);
+        var weight = AddInputField(form, LR.C_Weight, prize.Weight.ToString(System.Globalization.CultureInfo.CurrentCulture));
+        var count = AddInputField(form, LR.C_Count, prize.Count.ToString(System.Globalization.CultureInfo.CurrentCulture));
+        var tags = AddInputField(form, LR.C_Tags, prize.Tags);
+
+        var result = await new FAContentDialog
+        {
+            Title = LR.C_Edit,
+            Content = form,
+            PrimaryButtonText = LR.M_ListNameDialogPrimary_Rename,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Primary
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+        if (result != FAContentDialogResult.Primary)
+            return;
+
+        var prizeId = id.Text?.Trim() ?? string.Empty;
+        var prizeName = name.Text?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(prizeId) && string.IsNullOrWhiteSpace(prizeName))
+        {
+            this.ShowWarningToast(LR.M_AddPrizeRequired);
+            return;
+        }
+
+        if (!double.TryParse(weight.Text, out var prizeWeight) || prizeWeight < 0 ||
+            !int.TryParse(count.Text, out var prizeCount) || prizeCount < 0)
+        {
+            this.ShowWarningToast(LR.M_AddPrizeInvalidValues);
+            return;
+        }
+
+        prize.Exists = exists.IsChecked == true;
+        prize.Id = prizeId;
+        prize.Name = prizeName;
+        prize.Weight = prizeWeight;
+        prize.Count = prizeCount;
+        prize.Tags = tags.Text?.Trim() ?? string.Empty;
+        SaveSelectedPrizeList();
+        OnPropertyChanged(nameof(SelectedPrizeList));
+    }
+
     private async void DeletePrizeButton_OnClick(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button { CommandParameter: Prize prize } || SelectedPrizeList == null)
@@ -190,6 +242,29 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
 
         _logger.LogInformation("已删除奖品池：奖品池={ListName}。", deleteName);
         this.ShowSuccessToast(string.Format(LR.M_DeleteListSuccess, deleteName));
+    }
+
+    private async void RenameListButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(SelectedPrizeListName) || SelectedPrizeList == null)
+        {
+            this.ShowWarningToast(LR.M_SelectListFirst);
+            return;
+        }
+
+        var oldName = SelectedPrizeListName;
+        var newName = await ShowListNameDialogAsync(LR.M_ListNameDialogTitle_Rename,
+            LR.M_ListNameDialogPrimary_Rename, oldName);
+        if (newName == null || string.Equals(oldName, newName, StringComparison.Ordinal))
+            return;
+
+        if (!ValidateNewListName(newName) || !_catalogManager.RenamePrizeList(oldName, newName))
+            return;
+
+        SelectedPrizeList = null;
+        RefreshPrizeLists(newName);
+        _logger.LogInformation("已重命名奖品池：旧奖品池={OldListName}，新奖品池={NewListName}。", oldName, newName);
+        this.ShowSuccessToast(string.Format(LR.M_RenameListSuccess, newName));
     }
 
     private void ImportButton_OnClick(object? sender, RoutedEventArgs e)

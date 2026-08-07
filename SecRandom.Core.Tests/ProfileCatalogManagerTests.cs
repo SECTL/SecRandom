@@ -162,6 +162,46 @@ public sealed class ProfileCatalogManagerTests : IDisposable
         Assert.Equal(fallbackName, profile.PrizeListConfig!.Name);
     }
 
+    [Fact]
+    public void RenameStudentList_MovesDataHistoryTemporaryRecordsAndUpdatesActiveProfile()
+    {
+        using var provider = CreateProvider();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var manager = provider.GetRequiredService<IProfileCatalogManager>();
+        var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
+        var oldName = profile.StudentListConfig!.Name;
+        var newName = "renamed-class";
+        profile.CurrentStudentList!.Students.Add(new Student { Name = "Alice" });
+        var student = profile.CurrentStudentList.Students[0];
+        profile.RecordStudentHistory([student], DateTime.Now, 1);
+        temporary.RecordStudents(oldName, string.Empty, string.Empty, [student]);
+
+        Assert.True(manager.RenameStudentList(oldName, newName));
+        Assert.Equal(newName, profile.StudentListConfig!.Name);
+        Assert.True(manager.StudentListExists(newName));
+        Assert.False(manager.StudentListExists(oldName));
+        Assert.True(File.Exists(Utils.GetFilePath("history", "roll_call_history", $"{newName}.json")));
+        Assert.False(File.Exists(Utils.GetFilePath("TEMP", $"roll_call_record_{oldName}.json")));
+        Assert.NotEmpty(temporary.GetStudentCounts(newName, string.Empty, string.Empty));
+    }
+
+    [Fact]
+    public void RenamePrizeList_RejectsDuplicateAndUpdatesDefaultPool()
+    {
+        using var provider = CreateProvider();
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var manager = provider.GetRequiredService<IProfileCatalogManager>();
+        var oldName = profile.PrizeListConfig!.Name;
+        manager.SetDefaultPrizePool(oldName);
+        Assert.True(manager.CreatePrizeList("existing-pool"));
+
+        Assert.False(manager.RenamePrizeList(oldName, "existing-pool"));
+        Assert.True(manager.RenamePrizeList(oldName, "renamed-pool"));
+        Assert.Equal("renamed-pool", config.Data.LotterySettings.DefaultPool);
+        Assert.Equal("renamed-pool", profile.PrizeListConfig!.Name);
+    }
+
     public void Dispose()
     {
         ResetDataRootForTests();

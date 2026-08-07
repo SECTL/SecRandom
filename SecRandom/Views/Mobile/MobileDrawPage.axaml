@@ -71,23 +71,23 @@
                     <system:Double x:Key="SizeBase">48</system:Double>
                 </ResourceDictionary>
             </Carousel.Resources>
-                    
+
             <Carousel.Styles>
                 <Style Selector="StackPanel.draw-page">
                     <Style Selector="^ :is(TextElement)">
                         <Setter Property="FontSize" Value="14" />
                     </Style>
-                        
+
                     <Style Selector="^ Button">
                         <Setter Property="Height" Value="{DynamicResource SizeBase}" />
                         <Setter Property="HorizontalAlignment" Value="Stretch" />
                     </Style>
-                        
+
                     <Style Selector="^ NumericUpDown">
                         <Setter Property="Height" Value="{DynamicResource SizeBase}" />
                         <Setter Property="HorizontalAlignment" Value="Stretch" />
                     </Style>
-                        
+
                     <Style Selector="^ ComboBox">
                         <Setter Property="Height" Value="{DynamicResource SizeBase}" />
                         <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -105,15 +105,55 @@
                     </Style>
                 </Style>
             </Carousel.Styles>
-            
+
             <ScrollViewer>
                 <StackPanel Spacing="8" VerticalAlignment="Bottom" Classes="draw-page animated-intro">
-                    <Grid ColumnDefinitions="* *" ColumnSpacing="8">
+                    <Grid ColumnDefinitions="* *" ColumnSpacing="8"
+                          IsVisible="{Binding DrawPanelPositionLeft}">
+                        <Grid Grid.Column="0"
+                              VerticalAlignment="Bottom"
+                              ColumnDefinitions="Auto Auto *"
+                              ColumnSpacing="8">
+                            <Grid.Styles>
+                                <Style Selector="Grid > Button">
+                                    <Setter Property="Width" Value="{DynamicResource SizeBase}" />
+                                    <Setter Property="Height" Value="{DynamicResource SizeBase}" />
+                                    <Setter Property="Margin" Value="0" />
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="FontSize" Value="24" />
+                                </Style>
+                            </Grid.Styles>
+
+                            <Button Grid.Column="0"
+                                    Content="+"
+                                    IsEnabled="{Binding CanIncreaseCount}"
+                                    Command="{Binding IncreaseCountCommand}" />
+
+                            <Button Grid.Column="1"
+                                    Content="-"
+                                    IsEnabled="{Binding CanDecreaseCount}"
+                                    Command="{Binding DecreaseCountCommand}"/>
+
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding DrawCount}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontSize="18" />
+                        </Grid>
+
+                        <sr:Field Grid.Column="1" Label="{x:Static langs:Resources.S_CurrentList}">
+                            <ComboBox ItemsSource="{Binding StudentLists}"
+                                      SelectedItem="{Binding SelectedStudentList, Mode=TwoWay}" />
+                        </sr:Field>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="* *" ColumnSpacing="8"
+                          IsVisible="{Binding !DrawPanelPositionLeft}">
                         <sr:Field Grid.Column="0" Label="{x:Static langs:Resources.S_CurrentList}">
                             <ComboBox ItemsSource="{Binding StudentLists}"
                                       SelectedItem="{Binding SelectedStudentList, Mode=TwoWay}" />
                         </sr:Field>
-                    
+
                         <Grid Grid.Column="1"
                               VerticalAlignment="Bottom"
                               ColumnDefinitions="* Auto Auto"
@@ -127,25 +167,25 @@
                                     <Setter Property="FontSize" Value="24" />
                                 </Style>
                             </Grid.Styles>
-                        
+
                             <TextBlock Grid.Column="0"
                                        Text="{Binding DrawCount}"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
                                        FontSize="18" />
-                        
+
                             <Button Grid.Column="1"
                                     Content="+"
                                     IsEnabled="{Binding CanIncreaseCount}"
                                     Command="{Binding IncreaseCountCommand}" />
-                        
+
                             <Button Grid.Column="2"
                                     Content="-"
                                     IsEnabled="{Binding CanDecreaseCount}"
                                     Command="{Binding DecreaseCountCommand}"/>
                         </Grid>
                     </Grid>
-                    
+
                     <Button Content="{x:Static langs:Resources.C_More}"
                             IsEnabled="{Binding CanChangeSurface}">
                         <Button.Flyout>
@@ -161,29 +201,29 @@
                                         <ComboBox ItemsSource="{Binding GroupOptions}"
                                                   SelectedItem="{Binding SelectedGroup, Mode=TwoWay}" />
                                     </sr:Field>
-                        
+
                                     <sr:Field Grid.Row="0" Grid.Column="1"
                                               Label="{x:Static langs:Resources.S_Gender}">
                                         <ComboBox ItemsSource="{Binding GenderOptions}"
                                                   SelectedItem="{Binding SelectedGender, Mode=TwoWay}" />
                                     </sr:Field>
-                                    
+
                                     <Button Grid.Row="1" Grid.Column="0"
                                             Content="{x:Static langs:Resources.C_ResetRange}"
                                             Command="{Binding ResetScopeCommand}" />
-                                
+
                                     <Button Grid.Row="1" Grid.Column="1"
                                             Content="{x:Static langs:Resources.C_ClearTemporaryRecords}"
                                             Click="ClearTemporaryRecords_OnClick" />
-                                
+
                                     <Button Grid.Row="2" Grid.Column="0"
                                             Content="{x:Static langs:Resources.C_ManageStudentList}"
                                             Command="{Binding OpenListManagementCommand}" />
-                                
+
                                     <Button Grid.Row="2" Grid.Column="1"
                                             Content="{x:Static langs:Resources.C_DrawSettings}"
                                             Command="{Binding OpenDrawSettingsCommand}" />
-                            
+
                                     <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
                                             VerticalAlignment="Bottom"
                                             Content="{x:Static langs:Resources.C_RemainingList}"
@@ -193,13 +233,13 @@
                             </Flyout>
                         </Button.Flyout>
                     </Button>
-                    
+
                     <Button Classes="accent"
                             HorizontalContentAlignment="Center"
                             Content="{Binding DrawStudentsText}"
                             Command="{Binding DrawStudentsCommand}"
                             IsEnabled="{Binding CanDrawStudents}" />
-                    
+
                     <TextBlock Text="{Binding RollCallSummary}"
                                TextWrapping="Wrap"
                                HorizontalAlignment="Center" />
@@ -213,11 +253,11 @@
                                    Text="{Binding PrizePoolName}"
                                    TextWrapping="Wrap" />
                     </sr:Field>
-                    
+
                     <Button Content="{x:Static langs:Resources.C_ManagePrizePool}"
                             Command="{Binding OpenListManagementCommand}"
                             IsEnabled="{Binding CanChangeSurface}" />
-                    
+
                     <Button Classes="accent"
                             HorizontalContentAlignment="Center"
                             Content="{Binding DrawPrizeText}"

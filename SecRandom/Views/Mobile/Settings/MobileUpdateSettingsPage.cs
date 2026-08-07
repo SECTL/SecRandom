@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Icons;
 using SecRandom.Mobile;
 using SecRandom.Services.Mobile;
@@ -11,7 +12,7 @@ namespace SecRandom.Views.Mobile.Settings;
 /// Native update availability is decided by the platform installer. The stable surface
 /// stays in AXAML while update service state is synchronized after each operation.
 /// </summary>
-[PageInfo(MobilePageIds.Update, FluentIcons.ArrowSyncFilled, "settings.mobile.application")]
+[PageInfo(MobilePageIds.Update, FluentIcons.ArrowSyncFilled, location: PageLocation.Bottom)]
 public sealed partial class MobileUpdateSettingsPage : MobileSettingsPageBase
 {
     private readonly MobileUpdateService _updateService;

@@ -9,7 +9,10 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Mobile;
+using SecRandom.Platforms.Abstractions;
 using SecRandom.ViewModels;
+using SecRandom.Views.Mobile;
 
 namespace SecRandom.Views.SettingsPages.More;
 
@@ -51,6 +54,9 @@ public partial class MoreSettingsPage : UserControl, INotifyPropertyChanged
     public bool IsDecreaseLotteryCountShortcutConflicted => IsShortcutConflicted(nameof(MoreSettingsConfig.DecreaseLotteryCountShortcut));
     public bool IsStartRollCallShortcutConflicted => IsShortcutConflicted(nameof(MoreSettingsConfig.StartRollCallShortcut));
     public bool IsStartLotteryShortcutConflicted => IsShortcutConflicted(nameof(MoreSettingsConfig.StartLotteryShortcut));
+    public bool IsDesktop => App.IsDesktop;
+    public bool UseDesktopUI =>
+        (IAppHost.TryGetService<IPlatformServiceRoot>() as MobilePlatformServiceRoot)?.UsesDesktopMainView ?? IsDesktop;
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
 

@@ -248,6 +248,12 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.LotteryList {
                 return ResourceManager.GetString("C_Cancel", resourceCulture);
             }
         }
+
+        public static string C_Edit {
+            get {
+                return ResourceManager.GetString("C_Edit", resourceCulture);
+            }
+        }
         
         public static string C_Import {
             get {

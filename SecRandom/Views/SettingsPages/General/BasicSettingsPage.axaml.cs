@@ -38,6 +38,7 @@ public partial class BasicSettingsPage : UserControl
         : LR.S_Behavior_MainWindowTopmostMode_NonWindows_D;
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private DesktopIntegrationService DesktopIntegration { get; } = IAppHost.GetService<DesktopIntegrationService>();
+    public bool IsDesktop => App.IsDesktop;
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {

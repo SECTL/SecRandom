@@ -126,6 +126,9 @@
     <data name="C_Cancel" xml:space="preserve">
         <value>取消</value>
     </data>
+    <data name="C_Edit" xml:space="preserve">
+        <value>编辑</value>
+    </data>
     <data name="C_Import" xml:space="preserve">
         <value>导入</value>
     </data>

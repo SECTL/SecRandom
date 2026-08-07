@@ -30,6 +30,8 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
     private readonly IProfileCatalogManager _catalogManager =
         IAppHost.GetService<IProfileCatalogManager>();
 
+    public bool IsDesktop => App.IsDesktop;
+
     public RollCallListSettingsPage()
     {
         DataContext = this;
@@ -122,6 +124,49 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         RefreshStudentLists();
     }
 
+    private async void EditStudentButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { CommandParameter: Student student } || SelectedStudentList == null)
+            return;
+
+        var form = new StackPanel { Spacing = 8 };
+        var exists = new CheckBox { IsChecked = student.Exists, Content = LR.C_Exists };
+        form.Children.Add(exists);
+        var id = AddInputField(form, LR.C_StudentId, student.Id);
+        var name = AddInputField(form, LR.C_Name, student.Name);
+        var gender = AddInputField(form, LR.C_Gender, student.Gender);
+        var group = AddInputField(form, LR.C_Group, student.Group);
+        var tags = AddInputField(form, LR.C_Tags, student.Tags);
+
+        var result = await new FAContentDialog
+        {
+            Title = LR.C_Edit,
+            Content = form,
+            PrimaryButtonText = LR.M_ListNameDialogPrimary_Rename,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Primary
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+        if (result != FAContentDialogResult.Primary)
+            return;
+
+        var studentId = id.Text?.Trim() ?? string.Empty;
+        var studentName = name.Text?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(studentId) && string.IsNullOrWhiteSpace(studentName))
+        {
+            this.ShowWarningToast(LR.M_AddMemberRequired);
+            return;
+        }
+
+        student.Exists = exists.IsChecked == true;
+        student.Id = studentId;
+        student.Name = studentName;
+        student.Gender = gender.Text?.Trim() ?? string.Empty;
+        student.Group = group.Text?.Trim() ?? string.Empty;
+        student.Tags = tags.Text?.Trim() ?? string.Empty;
+        SaveSelectedStudentList();
+        OnPropertyChanged(nameof(SelectedStudentList));
+    }
+
     private async void DeleteStudentButton_OnClick(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button { CommandParameter: Student student } || SelectedStudentList == null)
@@ -194,6 +239,29 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
 
         _logger.LogInformation("已删除点名名单：名单={ListName}。", deleteName);
         this.ShowSuccessToast(string.Format(LR.M_DeleteListSuccess, deleteName));
+    }
+
+    private async void RenameListButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(SelectedStudentListName) || SelectedStudentList == null)
+        {
+            this.ShowWarningToast(LR.M_SelectListFirst);
+            return;
+        }
+
+        var oldName = SelectedStudentListName;
+        var newName = await ShowListNameDialogAsync(LR.M_ListNameDialogTitle_Rename,
+            LR.M_ListNameDialogPrimary_Rename, oldName);
+        if (newName == null || string.Equals(oldName, newName, StringComparison.Ordinal))
+            return;
+
+        if (!ValidateNewListName(newName) || !_catalogManager.RenameStudentList(oldName, newName))
+            return;
+
+        SelectedStudentList = null;
+        RefreshStudentLists(newName);
+        _logger.LogInformation("已重命名点名名单：旧名单={OldListName}，新名单={NewListName}。", oldName, newName);
+        this.ShowSuccessToast(string.Format(LR.M_RenameListSuccess, newName));
     }
 
     private void ImportButton_OnClick(object? sender, RoutedEventArgs e)

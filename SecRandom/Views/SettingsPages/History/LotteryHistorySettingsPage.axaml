@@ -15,13 +15,15 @@
     </UserControl.Resources>
 
     <Grid RowDefinitions="Auto,*" RowSpacing="8" Classes="page-container">
-
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
-            <ComboBox MinWidth="200"
-                      PlaceholderText="{x:Static langs:Resources.C_SelectPool}"
+        <Grid Grid.Row="0" ColumnDefinitions="* * Auto" ColumnSpacing="4">
+            <ComboBox Grid.Column="0"
+                      HorizontalAlignment="Stretch"
+                      PlaceholderText="{x:Static langs:Resources.C_SelectClass}"
                       ItemsSource="{Binding PoolNames}"
                       SelectedItem="{Binding SelectedPoolName, Mode=TwoWay}" />
-            <ComboBox MinWidth="160"
+
+            <ComboBox Grid.Column="1"
+                      HorizontalAlignment="Stretch"
                       PlaceholderText="{x:Static langs:Resources.C_SelectMode}"
                       ItemsSource="{Binding ModeOptions}"
                       SelectedValue="{Binding SelectedMode, Mode=TwoWay}"
@@ -32,9 +34,11 @@
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
-            <Button Content="{x:Static langs:Resources.C_Refresh}"
+
+            <Button Grid.Column="2"
+                    Content="{x:Static langs:Resources.C_Refresh}"
                     Command="{Binding RefreshCommand}" />
-        </StackPanel>
+        </Grid>
 
         <Border Grid.Row="1"
                 BorderBrush="{DynamicResource ControlElevationBorderBrush}"
@@ -60,27 +64,32 @@
                     </Style>
                 </DataGrid.Styles>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Width="180" MinWidth="170" IsVisible="False"
+                    <DataGridTextColumn Width="1.5*" MinWidth="180" IsVisible="False"
                                         Header="{x:Static langs:Resources.H_LotteryTime}"
                                         SortMemberPath="SortTime"
                                         Binding="{Binding DrawTime}" />
-                    <DataGridTextColumn Width="*" IsVisible="True"
+
+                    <DataGridTextColumn Width="0.8*" MinWidth="80" IsVisible="False"
                                         Header="{x:Static langs:Resources.H_Serial}"
                                         SortMemberPath="IdSortValue"
                                         Binding="{Binding Id}" />
-                    <DataGridTextColumn Width="1.5*" IsVisible="True"
+
+                    <DataGridTextColumn Width="1.5*" MinWidth="150" IsVisible="False"
                                         Header="{x:Static langs:Resources.H_PrizeName}"
                                         SortMemberPath="Name"
                                         Binding="{Binding Name}" />
-                    <DataGridTextColumn Width="*" IsVisible="False"
+
+                    <DataGridTextColumn Width="1*" MinWidth="100" IsVisible="False"
                                         Header="{x:Static langs:Resources.H_LotteryNumbers}"
                                         SortMemberPath="DrawNumbers"
                                         Binding="{Binding DrawNumbers}" />
-                    <DataGridTextColumn Width="*" IsVisible="True"
+
+                    <DataGridTextColumn Width="1*" MinWidth="100" IsVisible="False"
                                         Header="{x:Static langs:Resources.H_TotalCountLottery}"
                                         SortMemberPath="TotalCount"
                                         Binding="{Binding TotalCount}" />
-                    <DataGridTextColumn Width="*" IsVisible="True"
+
+                    <DataGridTextColumn Width="1*" MinWidth="100" IsVisible="False"
                                         Header="{x:Static langs:Resources.H_Weight}"
                                         SortMemberPath="WeightSortValue"
                                         Binding="{Binding Weight}" />

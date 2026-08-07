@@ -11,6 +11,7 @@
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="560"
              x:Class="SecRandom.Views.SettingsPages.ListManagement.RollCallListSettingsPage"
              x:DataType="local:RollCallListSettingsPage"
+             x:Name="Root"
              Unloaded="OnUnloaded">
     <UserControl.Resources>
         <!-- ReSharper disable once Xaml.RedundantResource -->
@@ -18,23 +19,24 @@
             <StackPanel Grid.Row="0" Orientation="Vertical" Spacing="4">
                 <TextBlock Theme="{StaticResource SubtitleTextBlockStyle}"
                            Text="{x:Static lr:Resources.C_CurrentList}" />
-                
+
                 <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                            Text="{x:Static lr:Resources.C_CurrentList_D}" />
-                
+
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <Button Content="{x:Static lr:Resources.C_AddList}" Click="AddListButton_OnClick" />
+                    <Button Content="{x:Static lr:Resources.C_RenameList}" Click="RenameListButton_OnClick" />
                     <Button Content="{x:Static lr:Resources.C_DeleteList}" Click="DeleteListButton_OnClick" />
                 </StackPanel>
             </StackPanel>
-            
+
             <ListBox Grid.Row="1"
                      ItemsSource="{Binding StudentListNames}"
                      SelectedItem="{Binding SelectedStudentListName, Mode=TwoWay}"
                      SelectionChanged="StudentListListBox_OnSelectionChanged" />
         </Grid>
     </UserControl.Resources>
-    
+
     <Grid RowDefinitions="Auto *" RowSpacing="8" Classes="page-container animated-intro">
         <Border Grid.Row="0"
                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
@@ -47,7 +49,7 @@
                                            Label="{Binding SelectedStudentListName}"
                                            ToolTip.Tip="{x:Static lr:Resources.C_CurrentList_D}"
                                            Click="ChangeCurrentListButton_OnClick" />
-                    
+
                     <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi ArrowClockwiseFilled}}"
                                            Label="{x:Static lr:Resources.C_Refresh}"
                                            Click="RefreshButton_OnClick" />
@@ -75,21 +77,57 @@
                       CanUserSortColumns="True"
                       CanUserResizeColumns="True"
                       GridLinesVisibility="Horizontal"
-                      IsReadOnly="False"
                       SelectionMode="Single"
-                      ItemsSource="{Binding SelectedStudentList.Students}">
+                      ItemsSource="{Binding SelectedStudentList.Students}"
+                      IsReadOnly="{Binding !#Root.IsDesktop}">
                 <DataGrid.Columns>
-                    <DataGridCheckBoxColumn Width="0.55*" Header="{x:Static lr:Resources.C_Exists}"
+                    <DataGridTemplateColumn MinWidth="64"
+                                            Header="{x:Static lr:Resources.C_Edit}"
+                                            IsVisible="{Binding !#Root.IsDesktop}">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Width="32"
+                                        Height="32"
+                                        Padding="0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Theme="{StaticResource TransparentButton}"
+                                        ToolTip.Tip="{x:Static lr:Resources.C_Edit}"
+                                        AutomationProperties.Name="{x:Static lr:Resources.C_Edit}"
+                                        CommandParameter="{Binding}"
+                                        Click="EditStudentButton_OnClick">
+                                    <sr:FluentIcon Glyph="{sr:Fi EditFilled}" />
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridCheckBoxColumn MinWidth="64"
+                                            Header="{x:Static lr:Resources.C_Exists}"
                                             Binding="{Binding Exists}" />
-                    <DataGridTextColumn Width="1.1*" Header="{x:Static lr:Resources.C_StudentId}"
+
+                    <DataGridTextColumn Width="0.8*" MinWidth="80"
+                                        Header="{x:Static lr:Resources.C_StudentId}"
                                         Binding="{Binding Id}" />
-                    <DataGridTextColumn Width="1.35*" Header="{x:Static lr:Resources.C_Name}" Binding="{Binding Name}" />
-                    <DataGridTextColumn Width="0.8*" Header="{x:Static lr:Resources.C_Gender}"
+
+                    <DataGridTextColumn Width="1.5*" MinWidth="150"
+                                        Header="{x:Static lr:Resources.C_Name}"
+                                        Binding="{Binding Name}" />
+
+                    <DataGridTextColumn Width="1*" MinWidth="100"
+                                        Header="{x:Static lr:Resources.C_Gender}"
                                         Binding="{Binding Gender}" />
-                    <DataGridTextColumn Width="1.25*" Header="{x:Static lr:Resources.C_Group}"
+
+                    <DataGridTextColumn Width="1*" MinWidth="100"
+                                        Header="{x:Static lr:Resources.C_Group}"
                                         Binding="{Binding Group}" />
-                    <DataGridTextColumn Width="1*" Header="{x:Static lr:Resources.C_Tags}" Binding="{Binding Tags}" />
-                    <DataGridTemplateColumn Width="120" Header="{x:Static corelr:Resources.C_AttachedSettings}">
+
+                    <DataGridTextColumn Width="1.2*" MinWidth="120"
+                                        Header="{x:Static lr:Resources.C_Tags}"
+                                        Binding="{Binding Tags}" />
+
+                    <DataGridTemplateColumn MinWidth="96"
+                                            Header="{x:Static corelr:Resources.C_AttachedSettings}">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <sr:AttachedSettingsFlyoutButton
@@ -99,7 +137,9 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Width="80" Header="{x:Static lr:Resources.C_Operations}">
+
+                    <DataGridTemplateColumn MinWidth="64"
+                                            Header="{x:Static lr:Resources.C_Operations}">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Width="32"

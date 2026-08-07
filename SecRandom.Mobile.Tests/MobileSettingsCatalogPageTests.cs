@@ -14,6 +14,7 @@ public sealed class MobileSettingsCatalogPageTests
         var page = new MobileSettingsCatalogPage(new TestCapabilities(), new TestSettingsNavigator());
 
         Assert.NotNull(page.FindControl<Avalonia.Controls.ScrollViewer>("PageScroll"));
+        Assert.NotNull(page.Items);
     }
 
     private sealed class TestCapabilities : IMobileCapabilities

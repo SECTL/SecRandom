@@ -167,7 +167,7 @@ public partial class App : Application
 
         // 在 XAML 资源加载完成后立即应用外观设置（早于 BuildHost，确保重复实例对话框也能跟随主题）
         ApplyStartupAppearance(settings.Appearance);
-        
+
         if (!Design.IsDesignMode && !OperatingSystem.IsMacOS() && !OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS())
         {
             this.UseHotReload();
@@ -695,7 +695,7 @@ public partial class App : Application
                         builder.AddConsoleFormatter<LoggingConsoleFormatter, ConsoleFormatterOptions>();
                         builder.AddConsole(console => { console.FormatterName = @"secrandom"; });
                     }
-                    
+
                     builder.AddSentry(options =>
                     {
                         // SDK 生命周期由 TelemetryRuntimeService 按隐私开关统一控制，日志 Provider 只复用已初始化的 SDK。
@@ -731,7 +731,7 @@ public partial class App : Application
                     services.AddSingleton<IMobileUpdateInstaller>(currentMobilePlatform.UpdateInstaller);
                     services.AddHttpClient<MobileUpdateService>();
                 }
-                
+
                 services.AddSingleton<IProfileQueryService, ProfileQueryService>();
                 services.AddSingleton<DrawProofExportService>();
                 services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
@@ -842,35 +842,71 @@ public partial class App : Application
 
                 // 设置界面 Views
                 services.AddSettingsPage<LogViewerSettingsPage>(Langs.SettingsPages.LogViewer.Resources.Page_Title);
-                
+
                 if (isMobile && useMobileUI)
                 {
                     services.AddSettingsPage<MobileSettingsCatalogPage>(MobileResources.P_Settings);
-                    
-                    // 顶部和偏好
+
+                    // 顶部
                     services.AddGroup(new PageGroupInfo(
-                        MobileResources.S_GroupPreferences, "settings.mobile.preferences", FluentIcons.ColorFilled));
-                    services.AddSettingsPage<MobileGeneralSettingsPage>(MobileResources.S_General);
-                    services.AddSettingsPage<MobilePersonalizationSettingsPage>(MobileResources.S_Personalization);
-                    services.AddSettingsPage<MobileDrawSettingsPage>(MobileResources.S_DrawSettings);
-                
-                    // 数据
+                        Langs.Common.Resources.Settings_General, "settings.general", FluentIcons.SettingsFilled));
+                    services.AddSettingsPage<BasicSettingsPage>(Langs.Common.Resources.Settings_Basic);
+                    services.AddSettingsPage<PrivacySettingsPage>(Langs.SettingsPages.General.Privacy.Resources
+                        .Page_Title);
+                    services.AddSettingsPage<VerificationSettingsPage>(Langs.SettingsPages.General.Verification
+                        .Resources.Page_Title);
+                    services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
+
                     services.AddGroup(new PageGroupInfo(
-                        MobileResources.S_GroupData, "settings.mobile.data", FluentIcons.DatabaseFilled));
-                    services.AddSettingsPage<MobileListManagementSettingsPage>(MobileResources.S_ListManagement);
-                    services.AddSettingsPage<MobileBackupSettingsPage>(MobileResources.S_Backup);
-                
-                    // 应用
+                        Langs.Common.Resources.Settings_Personalized, "settings.personalized",
+                        FluentIcons.ColorFilled));
+                    services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
+                    services.AddSettingsPage<MusicSettingsPage>(Langs.SettingsPages.Personalized.Music.Resources
+                        .Page_Title);
+
+                    services.AddSettingsPage<LinkageSettingsPage>(Langs.Common.Resources.Settings_Linkage);
+                    services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
+
+                    services.AddSettingsPageSeparator();
+
                     services.AddGroup(new PageGroupInfo(
-                        MobileResources.S_GroupApp, "settings.mobile.application", FluentIcons.InfoFilled));
-                    if (mobilePlatform!.UpdateInstaller.IsSupported)
-                        services.AddSettingsPage<MobileUpdateSettingsPage>(MobileResources.S_AppUpdates);
-                    services.AddSettingsPage<MobileAboutSettingsPage>(MobileResources.S_About);
+                        Langs.Common.Resources.Settings_RosterManagement, "settings.listManagement",
+                        FluentIcons.PeopleListFilled));
+                    services.AddSettingsPage<RollCallListSettingsPage>(Langs.SettingsPages.ListManagement.RollCallList
+                        .Resources.Page_Title);
+                    services.AddSettingsPage<LotteryListSettingsPage>(Langs.SettingsPages.ListManagement.LotteryList
+                        .Resources.Page_Title);
+
+                    services.AddGroup(new PageGroupInfo(
+                        Langs.Common.Resources.Settings_Draw, "settings.picking", FluentIcons.SettingsFilled));
+                    services.AddSettingsPage<DefaultDrawSettingsPage>(
+                        Langs.SettingsPages.Picking.Resources.Page_Default);
+                    services.AddSettingsPage<RollCallDrawSettingsPage>(Langs.SettingsPages.Picking.Resources
+                        .Page_RollCall);
+                    services.AddSettingsPage<QuickDrawSettingsPage>(
+                        Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
+                    services.AddSettingsPage<LotteryDrawSettingsPage>(
+                        Langs.SettingsPages.Picking.Resources.Page_Lottery);
+
+                    services.AddGroup(new PageGroupInfo(
+                        Langs.Common.Resources.Feat_History, "settings.history", FluentIcons.HistoryFilled));
+                    services.AddSettingsPage<HistoryManagementSettingsPage>(Langs.Common.Resources
+                        .Settings_HistoryManagement);
+                    services.AddSettingsPage<RollCallHistorySettingsPage>(Langs.Common.Resources.Feat_RollCallHistory);
+                    services.AddSettingsPage<LotteryHistorySettingsPage>(Langs.Common.Resources.Feat_LotteryHistory);
+
+
+                    // 底部
+                    services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
+                    services.AddSettingsPage<MobileUpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
+                    services.AddSettingsPageSeparator(PageLocation.Bottom, isHide: true);
+                    services.AddSettingsPage<DebugSettingsPage>(
+                        Langs.SettingsPages.Debug.DebugStrings.Get("Page_Title"));
                 }
                 else
                 {
                     // services.AddSettingsPage<MobileSettingsCatalogPage>(MobileResources.P_Settings);
-                    
+
                     // 顶部
                     services.AddSettingsPage<HomeSettingsPage>(Langs.Common.Resources.Settings_Home);
                     services.AddSettingsPageSeparator();
@@ -889,10 +925,13 @@ public partial class App : Application
                         Langs.Common.Resources.Settings_Personalized, "settings.personalized",
                         FluentIcons.ColorFilled));
                     services.AddSettingsPage<AppearanceSettingsPage>(Langs.Common.Resources.Settings_Appearance);
-                    services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources
-                        .Settings_FloatingWindow);
+                    if (!isMobile)
+                    {
+                        services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources.Settings_FloatingWindow);
+                    }
                     services.AddSettingsPage<MusicSettingsPage>(Langs.SettingsPages.Personalized.Music.Resources
                         .Page_Title);
+
                     services.AddSettingsPage<LinkageSettingsPage>(Langs.Common.Resources.Settings_Linkage);
                     services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
 
@@ -1527,11 +1566,24 @@ public partial class App : Application
                 if (!string.IsNullOrWhiteSpace(pageId))
                     SettingsView.Current?.NavigateToPage(pageId);
             },
-            async () =>
+            () =>
             {
-                await ShowSettingsWindowCoreAsync();
-                SettingsView.Current?.NavigateToPreviewPage(pageId ?? "settings.general.basic");
+                Dispatcher.UIThread.Post(() =>
+                {
+                    ObserveTask(ShowSettingsPreviewAsync(pageId),
+                        "Settings preview display failed.");
+                }, DispatcherPriority.Background);
+                return Task.CompletedTask;
             }), "Settings window authorization failed.");
+    }
+
+    private static async Task ShowSettingsPreviewAsync(string? pageId)
+    {
+        await ShowSettingsWindowCoreAsync();
+        if (!string.IsNullOrWhiteSpace(pageId))
+            SettingsView.Current?.NavigateToPreviewPage(pageId);
+        else
+            SettingsView.Current?.EnterPreview();
     }
 
     public static void SetSettingsWindowVisibility(string action, string pageId, bool preview)
@@ -1551,10 +1603,7 @@ public partial class App : Application
         if (shouldShow)
         {
             await ShowSettingsWindowCoreAsync();
-            if (preview)
-                SettingsView.Current?.NavigateToPreviewPage(pageId);
-            else
-                SettingsView.Current?.NavigateToPage(pageId);
+            SettingsView.Current?.NavigateToPage(pageId);
         }
         else
         {

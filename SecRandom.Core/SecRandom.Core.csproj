@@ -22,7 +22,7 @@
         <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)"/>
         <PackageReference Include="DynamicData" Version="9.4.33" />
         <PackageReference Include="FluentAvaloniaUI" Version="3.0.2" />
-        <PackageReference Include="Irihi.Ursa" Version="2.1.0" />
+        <PackageReference Include="Irihi.Ursa" Version="2.2.0" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
         <PackageReference Include="MiniExcel" Version="1.45.0" />
         <PackageReference Include="Pastel" Version="8.0.0" />

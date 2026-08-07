@@ -2,15 +2,14 @@
                               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                               xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
                               xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-                              xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
-                              xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
-                              x:Class="SecRandom.Views.Mobile.Settings.MobileSettingsCatalogPage"
+                               xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
+                               x:Class="SecRandom.Views.Mobile.Settings.MobileSettingsCatalogPage"
                               x:DataType="local:MobileSettingsCatalogPage">
     <ScrollViewer x:Name="PageScroll">
-        <ItemsControl ItemsSource="{Binding Groups}">
+        <ItemsControl ItemsSource="{Binding Items}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <StackPanel Orientation="Vertical" Classes="page-container" />
+                    <StackPanel Classes="page-container" Orientation="Vertical" />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             
@@ -18,7 +17,10 @@
                 <DataTemplate>
                     <fa:FASettingsExpander ItemsSource="{Binding Pages}"
                                            Header="{Binding Name}"
-                                           IsExpanded="True">
+                                           Tag="{Binding PageId}"
+                                           IsClickEnabled="{Binding IsPage}"
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi ChevronRightFilled}}"
+                                           Click="CatalogItem_OnClick">
                         <fa:FASettingsExpander.IconSource>
                             <sr:FluentIconSource Glyph="{Binding IconGlyph}" />
                         </fa:FASettingsExpander.IconSource>

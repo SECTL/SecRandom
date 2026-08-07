@@ -4,42 +4,25 @@
                               xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
                               xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
                               x:Class="SecRandom.Views.Mobile.Settings.MobileUpdateSettingsPage">
-    <ScrollViewer x:Name="PageScroll"
-                  Padding="20,20,20,28"
-                  HorizontalScrollBarVisibility="Disabled"
-                  VerticalScrollBarVisibility="Auto"
-                  IsScrollChainingEnabled="False"
-                  IsScrollInertiaEnabled="True">
-        <StackPanel Spacing="14" MaxWidth="720">
-            <StackPanel Spacing="4">
-                <TextBlock Text="{x:Static langs:Resources.S_AppUpdates}"
-                           FontSize="24"
-                           FontWeight="SemiBold"
-                           TextWrapping="Wrap" />
-                <TextBlock Text="{x:Static langs:Resources.S_AppUpdates_D}"
-                           FontSize="12"
-                           TextWrapping="Wrap" />
-            </StackPanel>
-            <StackPanel x:Name="SupportedUpdateSurface" Spacing="12">
+    <ScrollViewer x:Name="PageScroll">
+        <StackPanel Classes="page-container">
+            <StackPanel x:Name="SupportedUpdateSurface" Spacing="8">
                 <Button x:Name="CheckUpdatesButton"
-                        MinHeight="44"
                         Content="{x:Static langs:Resources.C_CheckUpdates}"
                         Click="CheckUpdatesButton_OnClick" />
+
                 <TextBlock x:Name="UpdateStatusText" TextWrapping="Wrap" />
+
                 <Button x:Name="InstallUpdateButton"
                         Classes="accent"
-                        MinHeight="48"
                         Content="{x:Static langs:Resources.C_InstallUpdate}"
                         Click="InstallUpdateButton_OnClick" />
             </StackPanel>
+
             <StackPanel x:Name="UnsupportedUpdateSurface"
-                        Spacing="14"
-                        Margin="0,48,0,24"
-                        HorizontalAlignment="Center"
-                        IsVisible="False">
+                        Spacing="8" IsVisible="False">
                 <sr:FluentIcon Glyph="{sr:Fi InfoFilled}"
-                               FontSize="40"
-                               Opacity="0.72"
+                               FontSize="48"
                                HorizontalAlignment="Center" />
                 <TextBlock Text="{x:Static langs:Resources.M_InAppUpdateUnsupported}"
                            FontSize="16"

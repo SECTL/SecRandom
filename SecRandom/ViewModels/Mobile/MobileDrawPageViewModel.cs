@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -75,6 +76,8 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
 
         EnsureRestartTemporaryRecordsCleared();
         RefreshSurface();
+
+        Config.MoreSettings.PropertyChanged += MoreSettingsOnPropertyChanged;
     }
 
     public ObservableCollection<MobileDrawResultImage> ResultImages { get; } = [];
@@ -90,9 +93,16 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
     public bool HasResultImages => ResultImages.Count > 0;
     public string DrawStudentsText => IsDrawing ? LR.M_Drawing : LR.C_StartDraw;
     public string DrawPrizeText => IsDrawing ? LR.M_Drawing : LR.C_DrawPrize;
+    public bool DrawPanelPositionLeft =>
+        Config.MoreSettings.RollCallControlPanelPosition == RollCallControlPanelPosition.Left;
 
     public event EventHandler<MobileDrawAnimationRequest>? AnimationRequested;
     public event EventHandler<MobileDrawDialogRequest>? DialogRequested;
+
+    private void MoreSettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(DrawPanelPositionLeft));
+    }
 
     partial void OnSelectedSurfaceChanged(int value)
     {
