@@ -23,4 +23,9 @@ public sealed class MacOsPlatformServiceRoot : IPlatformServiceRoot
         SupportsBackgroundResidency: true);
 
     public IWindowFeatureService WindowFeatures { get; } = new MacOsWindowFeatureService();
+
+    public IRemovableStorageCatalog RemovableStorage { get; } = new MacOsRemovableStorageCatalog();
+
+    public IRemovableStorageBindingMarker RemovableStorageBindingMarker { get; } =
+        new MacOsRemovableStorageBindingMarker();
 }

@@ -28,4 +28,9 @@ public sealed class WindowsPlatformServiceRoot : IPlatformServiceRoot
         SupportsBackgroundResidency: true);
 
     public IWindowFeatureService WindowFeatures { get; }
+
+    public IRemovableStorageCatalog RemovableStorage { get; } = new WindowsRemovableStorageCatalog();
+
+    public IRemovableStorageBindingMarker RemovableStorageBindingMarker { get; } =
+        new WindowsRemovableStorageBindingMarker();
 }

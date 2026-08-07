@@ -7,4 +7,8 @@ public interface IPlatformServiceRoot
     PlatformCapabilities Capabilities { get; }
 
     IWindowFeatureService WindowFeatures { get; }
+
+    IRemovableStorageCatalog RemovableStorage { get; }
+
+    IRemovableStorageBindingMarker RemovableStorageBindingMarker { get; }
 }

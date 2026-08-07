@@ -26,4 +26,9 @@ public sealed class LinuxPlatformServiceRoot : IPlatformServiceRoot
         SupportsBackgroundResidency: true);
 
     public IWindowFeatureService WindowFeatures { get; } = new LinuxWindowFeatureService();
+
+    public IRemovableStorageCatalog RemovableStorage { get; } = new LinuxRemovableStorageCatalog();
+
+    public IRemovableStorageBindingMarker RemovableStorageBindingMarker { get; } =
+        new LinuxRemovableStorageBindingMarker();
 }

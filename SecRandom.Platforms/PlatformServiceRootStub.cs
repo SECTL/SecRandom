@@ -16,6 +16,11 @@ public sealed class PlatformServiceRootStub : IPlatformServiceRoot, IWindowFeatu
 
     public IWindowFeatureService WindowFeatures => this;
 
+    public IRemovableStorageCatalog RemovableStorage => UnsupportedRemovableStorageCatalog.Instance;
+
+    public IRemovableStorageBindingMarker RemovableStorageBindingMarker =>
+        PortableRemovableStorageBindingMarker.Instance;
+
     public global::SecRandom.Platforms.Abstractions.WindowFeatures SupportedFeatures =>
         global::SecRandom.Platforms.Abstractions.WindowFeatures.None;
 
