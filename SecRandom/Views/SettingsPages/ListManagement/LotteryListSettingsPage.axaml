@@ -11,6 +11,7 @@
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="560"
              x:Class="SecRandom.Views.SettingsPages.ListManagement.LotteryListSettingsPage"
              x:DataType="local:LotteryListSettingsPage"
+             x:Name="Root"
              Unloaded="OnUnloaded">
     <UserControl.Resources>
         <!-- ReSharper disable once Xaml.RedundantResource -->
@@ -75,13 +76,34 @@
                       CanUserSortColumns="True"
                       CanUserResizeColumns="True"
                       GridLinesVisibility="Horizontal"
-                      IsReadOnly="False"
                       SelectionMode="Single"
-                      ItemsSource="{Binding SelectedPrizeList.Prizes}">
+                      ItemsSource="{Binding SelectedPrizeList.Prizes}"
+                      IsReadOnly="{Binding !#Root.IsDesktop}">
                 <DataGrid.Columns>
+                    <DataGridTemplateColumn MinWidth="64"
+                                            Header="{x:Static lr:Resources.C_Edit}"
+                                            IsVisible="{Binding !#Root.IsDesktop}">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Width="32"
+                                        Height="32"
+                                        Padding="0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Theme="{StaticResource TransparentButton}"
+                                        ToolTip.Tip="{x:Static lr:Resources.C_Edit}"
+                                        AutomationProperties.Name="{x:Static lr:Resources.C_Edit}"
+                                        CommandParameter="{Binding}"
+                                        Click="EditPrizeButton_OnClick">
+                                    <sr:FluentIcon Glyph="{sr:Fi EditFilled}" />
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
                     <DataGridCheckBoxColumn MinWidth="64"
-                                            Header="{x:Static lr:Resources.C_Exists}"
-                                            Binding="{Binding Exists}" />
+                                             Header="{x:Static lr:Resources.C_Exists}"
+                                             Binding="{Binding Exists}" />
                     
                     <DataGridTextColumn Width="0.8*" MinWidth="80"
                                         Header="{x:Static lr:Resources.C_PrizeId}"
