@@ -33,6 +33,7 @@ public partial class FirstRunOobeWindow : FAAppWindow
     {
         DataContext = this;
         InitializeComponent();
+        WindowDragBehavior.EnableExtendedTitleBarDrag(this);
         Closed += WindowOnClosed;
         Opened += WindowOnOpened;
     }

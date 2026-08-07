@@ -38,6 +38,7 @@ public partial class MainWindow : FAAppWindow
 
         TitleBar.Height = 48;
         TitleBar.ExtendsContentIntoTitleBar = true;
+        WindowDragBehavior.EnableExtendedTitleBarDrag(this);
 
         // 覆盖标题栏按钮颜色
         TitleBar.ButtonHoverBackgroundColor = Color.FromArgb(23, 0, 0, 0);
