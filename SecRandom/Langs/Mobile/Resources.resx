@@ -36,7 +36,7 @@
         <value>正在打开系统安装器</value>
     </data>
     <data name="M_StartupFailed" xml:space="preserve">
-        <value>移动端初始化失败。请重新启动应用；若问题持续，请提交 Android 日志。</value>
+        <value>移动端初始化失败；请重新启动应用；若问题持续，请提交 Android 日志</value>
     </data>
     <data name="M_InstallerOpened" xml:space="preserve">
         <value>已交给系统安装器</value>
@@ -45,37 +45,37 @@
         <value>安装更新失败: {0}</value>
     </data>
     <data name="M_EmptyMetadata" xml:space="preserve">
-        <value>更新元数据为空。</value>
+        <value>更新元数据为空</value>
     </data>
     <data name="M_MissingReleaseChannel" xml:space="preserve">
-        <value>更新元数据缺少 release 通道。</value>
+        <value>更新元数据缺少 release 通道</value>
     </data>
     <data name="M_ManifestUnavailable" xml:space="preserve">
-        <value>无法获取更新清单。</value>
+        <value>无法获取更新清单</value>
     </data>
     <data name="M_PackageUnavailable" xml:space="preserve">
-        <value>无法下载更新包。</value>
+        <value>无法下载更新包</value>
     </data>
     <data name="M_PackageLengthInvalid" xml:space="preserve">
-        <value>更新包长度校验失败。</value>
+        <value>更新包长度校验失败</value>
     </data>
     <data name="M_PackageHashInvalid" xml:space="preserve">
-        <value>更新包哈希校验失败。</value>
+        <value>更新包哈希校验失败</value>
     </data>
     <data name="M_ManifestSignatureInvalid" xml:space="preserve">
-        <value>更新清单签名无效。</value>
+        <value>更新清单签名无效</value>
     </data>
     <data name="M_ManifestInvalid" xml:space="preserve">
-        <value>更新清单无效。</value>
+        <value>更新清单无效</value>
     </data>
     <data name="M_ManifestTagMismatch" xml:space="preserve">
-        <value>更新清单与发布标签不匹配。</value>
+        <value>更新清单与发布标签不匹配</value>
     </data>
     <data name="M_AndroidContextUnavailable" xml:space="preserve">
-        <value>Android 上下文不可用。</value>
+        <value>Android 上下文不可用</value>
     </data>
     <data name="M_AndroidOnlyInstaller" xml:space="preserve">
-        <value>系统安装仅适用于 Android。</value>
+        <value>系统安装仅适用于 Android</value>
     </data>
     <data name="N_Draw" xml:space="preserve">
         <value>抽取</value>
@@ -246,13 +246,13 @@
         <value>无法打开设置</value>
     </data>
     <data name="M_GeneralMobileOnly" xml:space="preserve">
-        <value>移动端会自动适配系统语言、窗口和后台策略；桌面专属选项不会在此显示。</value>
+        <value>移动端会自动适配系统语言、窗口和后台策略；桌面专属选项不会在此显示</value>
     </data>
     <data name="M_BackupMobileUnavailable" xml:space="preserve">
-        <value>移动端备份与恢复将在提供受系统文件访问授权的完整事务后开放。</value>
+        <value>移动端备份与恢复将在提供受系统文件访问授权的完整事务后开放</value>
     </data>
     <data name="M_AboutLicense" xml:space="preserve">
-        <value>SecRandom 是面向活动与组织场景的公平抽取工具，采用 GPLv3 许可证发布。</value>
+        <value>SecRandom 是面向活动与组织场景的公平抽取工具，采用 GPLv3 许可证发布</value>
     </data>
     <data name="C_Back" xml:space="preserve">
         <value>返回设置</value>
@@ -366,7 +366,7 @@
         <value>去抽取</value>
     </data>
     <data name="M_NoHistoryPrompt" xml:space="preserve">
-        <value>完成一次点名或抽奖后，结果会显示在这里。</value>
+        <value>完成一次点名或抽奖后，结果会显示在这里</value>
     </data>
     <data name="M_TimeJustNow" xml:space="preserve">
         <value>刚刚</value>
@@ -411,13 +411,13 @@
         <value>Sentry 遥测</value>
     </data>
     <data name="S_SentryTelemetry_D" xml:space="preserve">
-        <value>匿名上传崩溃与性能数据，不包含个人身份信息。</value>
+        <value>匿名上传崩溃与性能数据，不包含个人身份信息</value>
     </data>
     <data name="S_Language" xml:space="preserve">
         <value>语言</value>
     </data>
     <data name="S_Language_D" xml:space="preserve">
-        <value>切换语言后立即生效，无需重启应用。</value>
+        <value>切换语言后立即生效，无需重启应用</value>
     </data>
     <data name="S_GroupPreferences" xml:space="preserve">
         <value>偏好</value>
@@ -432,13 +432,13 @@
         <value>名单为空</value>
     </data>
     <data name="M_EmptyStudentListHint" xml:space="preserve">
-        <value>添加成员后即可开始点名。</value>
+        <value>添加成员后即可开始点名</value>
     </data>
     <data name="M_EmptyPrizePool" xml:space="preserve">
         <value>奖池为空</value>
     </data>
     <data name="M_EmptyPrizePoolHint" xml:space="preserve">
-        <value>添加奖品后即可开始抽奖。</value>
+        <value>添加奖品后即可开始抽奖</value>
     </data>
     <data name="C_ExportAllData" xml:space="preserve">
         <value>导出全量数据</value>
@@ -453,19 +453,19 @@
         <value>导入设置</value>
     </data>
     <data name="M_BackupPickerHint" xml:space="preserve">
-        <value>通过系统文件选择器导出与导入；导入前会校验 SecRandom v3 格式，不受支持的文件不会改动任何数据。</value>
+        <value>通过系统文件选择器导出与导入；导入前会校验 SecRandom v3 格式，不受支持的文件不会改动任何数据</value>
     </data>
     <data name="S_AllData" xml:space="preserve">
         <value>全量数据</value>
     </data>
     <data name="S_AllData_D" xml:space="preserve">
-        <value>名单、历史、配置等全部数据打包为 ZIP 归档。</value>
+        <value>名单、历史、配置等全部数据打包为 ZIP 归档</value>
     </data>
     <data name="S_SettingsSection" xml:space="preserve">
         <value>设置</value>
     </data>
     <data name="S_SettingsSection_D" xml:space="preserve">
-        <value>仅导出 / 导入应用设置（settings envelope）。</value>
+        <value>仅导出 / 导入应用设置（settings envelope）</value>
     </data>
     <data name="M_ExportingAllData" xml:space="preserve">
         <value>正在导出全量数据…</value>
@@ -477,13 +477,13 @@
         <value>SecRandom 数据归档</value>
     </data>
     <data name="M_ExportCancelled" xml:space="preserve">
-        <value>已取消导出。</value>
+        <value>已取消导出</value>
     </data>
     <data name="M_WritingToTarget" xml:space="preserve">
         <value>正在写入所选位置…</value>
     </data>
     <data name="M_AllDataExported" xml:space="preserve">
-        <value>全量数据已导出到所选位置。</value>
+        <value>全量数据已导出到所选位置</value>
     </data>
     <data name="M_ExportFailed" xml:space="preserve">
         <value>导出失败：{0}</value>
@@ -498,7 +498,7 @@
         <value>SecRandom 设置文件</value>
     </data>
     <data name="M_SettingsExported" xml:space="preserve">
-        <value>设置已导出到所选位置。</value>
+        <value>设置已导出到所选位置</value>
     </data>
     <data name="M_PickingBackupFile" xml:space="preserve">
         <value>正在选择备份文件…</value>
@@ -510,7 +510,7 @@
         <value>选择设置备份</value>
     </data>
     <data name="M_ImportCancelled" xml:space="preserve">
-        <value>已取消导入。</value>
+        <value>已取消导入</value>
     </data>
     <data name="M_ReadingBackup" xml:space="preserve">
         <value>正在读取备份文件…</value>
@@ -519,10 +519,10 @@
         <value>正在校验备份…</value>
     </data>
     <data name="M_ValidationPassed" xml:space="preserve">
-        <value>校验通过，确认后开始导入。</value>
+        <value>校验通过，确认后开始导入</value>
     </data>
     <data name="M_ValidationUnsupported" xml:space="preserve">
-        <value>该文件不是受支持的 SecRandom v3 导出，无法导入。</value>
+        <value>该文件不是受支持的 SecRandom v3 导出，无法导入</value>
     </data>
     <data name="M_ReadOrValidateFailed" xml:space="preserve">
         <value>读取或校验失败：{0}</value>
@@ -546,40 +546,40 @@
         <value>取消</value>
     </data>
     <data name="M_BackupServiceUnavailable" xml:space="preserve">
-        <value>备份服务不可用。</value>
+        <value>备份服务不可用</value>
     </data>
     <data name="M_Importing" xml:space="preserve">
         <value>正在导入…</value>
     </data>
     <data name="M_ImportCompleted" xml:space="preserve">
-        <value>导入完成，共导入 {0} 个文件。</value>
+        <value>导入完成，共导入 {0} 个文件</value>
     </data>
     <data name="M_ImportFailed" xml:space="preserve">
         <value>导入失败：{0}</value>
     </data>
     <data name="M_PendingImportExists" xml:space="preserve">
-        <value>请先完成或取消当前的导入确认。</value>
+        <value>请先完成或取消当前的导入确认</value>
     </data>
     <data name="M_StorageUnavailable" xml:space="preserve">
-        <value>当前平台不支持系统文件选择，无法执行备份操作。</value>
+        <value>当前平台不支持系统文件选择，无法执行备份操作</value>
     </data>
     <data name="C_ViewOnGitHub" xml:space="preserve">
         <value>在 GitHub 查看项目</value>
     </data>
     <data name="M_BrowserUnavailable" xml:space="preserve">
-        <value>当前平台无法打开浏览器。</value>
+        <value>当前平台无法打开浏览器</value>
     </data>
     <data name="M_OpenBrowserFailed" xml:space="preserve">
-        <value>无法打开浏览器，请手动访问 github.com/SECTL/SecRandom。</value>
+        <value>无法打开浏览器，请手动访问 github.com/SECTL/SecRandom</value>
     </data>
     <data name="M_InAppUpdateUnsupported" xml:space="preserve">
         <value>当前平台不支持应用内更新</value>
     </data>
     <data name="M_IosUpdateDeferred" xml:space="preserve">
-        <value>iOS 的分发与更新将随后续版本提供；请前往项目发布页获取新版本。</value>
+        <value>iOS 的分发与更新将随后续版本提供；请前往项目发布页获取新版本</value>
     </data>
     <data name="M_UpdateSecurityNote" xml:space="preserve">
-        <value>更新包经 Ed25519 签名清单校验长度与哈希后，交给系统安装器。</value>
+        <value>更新包经 Ed25519 签名清单校验长度与哈希后，交给系统安装器</value>
     </data>
     <data name="C_StartDraw" xml:space="preserve"><value>开始</value></data>
     <data name="C_RemainingList" xml:space="preserve"><value>查看剩余名单</value></data>
@@ -605,7 +605,7 @@
     <data name="M_RemainingTitle" xml:space="preserve"><value>剩余名单</value></data>
     <data name="M_NoRemaining" xml:space="preserve"><value>当前范围没有剩余成员</value></data>
     <data name="M_DrawResultCount" xml:space="preserve"><value>已抽取 {0} 人</value></data>
-    <data name="M_ListTableHint" xml:space="preserve"><value>可横向滑动表格查看更多字段。</value></data>
+    <data name="M_ListTableHint" xml:space="preserve"><value>可横向滑动表格查看更多字段</value></data>
     <data name="M_MoreStudentTitle" xml:space="preserve"><value>成员更多设置</value></data>
     <data name="M_MorePrizeTitle" xml:space="preserve"><value>奖品更多设置</value></data>
     <data name="H_Enabled" xml:space="preserve"><value>启用</value></data>
@@ -645,10 +645,10 @@
     <data name="C_Preview" xml:space="preserve"><value>试听</value></data>
     <data name="C_Stop" xml:space="preserve"><value>停止</value></data>
     <data name="M_NoImageSelected" xml:space="preserve"><value>尚未选择图片</value></data>
-    <data name="M_RecordRequiresName" xml:space="preserve"><value>请至少填写编号或名称。</value></data>
-    <data name="M_InvalidPrizeValues" xml:space="preserve"><value>权重和库存必须是非负数。</value></data>
-    <data name="M_MediaImportFailed" xml:space="preserve"><value>无法导入所选媒体文件。</value></data>
-    <data name="M_SaveFailed" xml:space="preserve"><value>无法保存更改。</value></data>
+    <data name="M_RecordRequiresName" xml:space="preserve"><value>请至少填写编号或名称</value></data>
+    <data name="M_InvalidPrizeValues" xml:space="preserve"><value>权重和库存必须是非负数</value></data>
+    <data name="M_MediaImportFailed" xml:space="preserve"><value>无法导入所选媒体文件</value></data>
+    <data name="M_SaveFailed" xml:space="preserve"><value>无法保存更改</value></data>
     <data name="O_NoMusic" xml:space="preserve"><value>不播放音乐</value></data>
     <data name="O_RandomMusic" xml:space="preserve"><value>随机播放</value></data>
 </root>

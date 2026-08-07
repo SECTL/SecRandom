@@ -28,7 +28,7 @@
         <value>版本公告</value>
     </data>
     <data name="C_VersionNoticeText" xml:space="preserve">
-        <value>当前处于 Avalonia 重构阶段，暂不新增功能，重心放在性能优化与问题修复。
+        <value>当前处于 Avalonia 重构阶段，暂不新增功能，重心放在性能优化与问题修复；
 敬请期待基于 Avalonia 架构的 v3 版本！
 bug 报 GitHub Issue 或 SECTL QQ组织群 - 833875216</value>
     </data>

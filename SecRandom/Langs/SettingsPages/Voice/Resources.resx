@@ -64,13 +64,13 @@
     <value>试听</value>
   </data>
   <data name="C_TestVoiceText" xml:space="preserve">
-    <value>这是一条语音播报测试。</value>
+    <value>这是一条语音播报测试</value>
   </data>
   <data name="M_VoicesRefreshed" xml:space="preserve">
-    <value>音色列表已刷新。</value>
+    <value>音色列表已刷新</value>
   </data>
   <data name="M_TestVoiceCompleted" xml:space="preserve">
-    <value>试听已完成。</value>
+    <value>试听已完成</value>
   </data>
   <data name="M_TestVoiceFailed" xml:space="preserve">
     <value>试听失败</value>

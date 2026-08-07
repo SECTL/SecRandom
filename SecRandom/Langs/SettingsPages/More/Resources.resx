@@ -165,7 +165,7 @@
     <value>冲突</value>
   </data>
   <data name="M_ShortcutDuplicated" xml:space="preserve">
-    <value>该快捷键已分配给其他操作。</value>
+    <value>该快捷键已分配给其他操作</value>
   </data>
   <data name="C_ShortcutExampleRollCall" xml:space="preserve">
     <value>例如 Ctrl+Alt+R</value>

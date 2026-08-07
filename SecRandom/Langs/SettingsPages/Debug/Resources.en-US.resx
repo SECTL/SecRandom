@@ -55,7 +55,7 @@
     <value>Show plugin management</value>
   </data>
   <data name="C_ShowPluginSettings_D" xml:space="preserve">
-    <value>Plugins are still under test. Enabling it shows the navigation entry; it will be visible by default after release.</value>
+    <value>Plugins are still under test; enabling it shows the navigation entry and it will be visible by default after release</value>
   </data>
   <data name="M_ShowPluginSettings_Title" xml:space="preserve">
     <value>Show plugin management?</value>
@@ -76,7 +76,7 @@
     <value>Enable insider settings</value>
   </data>
   <data name="C_EnableInternalSettings_D" xml:space="preserve">
-    <value>Temporarily shows insider attached settings.</value>
+    <value>Temporarily shows insider attached settings</value>
   </data>
   <data name="M_InternalSettings_Title" xml:space="preserve">
     <value>Insider settings enabled</value>
@@ -101,7 +101,7 @@ Insider settings have lower priority than fair-draw rules. Selecting a member or
     <value>Refresh update status</value>
   </data>
   <data name="C_RefreshUpdate_D" xml:space="preserve">
-    <value>Reads the current update channel, status, and last check time.</value>
+    <value>Reads the current update channel, status, and last check time</value>
   </data>
   <data name="S_LinkageNotificationDiagnostics" xml:space="preserve">
     <value>Schedule linkage and notification</value>
@@ -110,7 +110,7 @@ Insider settings have lower priority than fair-draw rules. Selecting a member or
     <value>Refresh linkage status</value>
   </data>
   <data name="C_RefreshLinkage_D" xml:space="preserve">
-    <value>Refreshes the schedule snapshot and reads notification settings.</value>
+    <value>Refreshes the schedule snapshot and reads notification settings</value>
   </data>
   <data name="S_PlatformDiagnostics" xml:space="preserve">
     <value>Window and platform</value>
@@ -119,7 +119,7 @@ Insider settings have lower priority than fair-draw rules. Selecting a member or
     <value>Refresh platform status</value>
   </data>
   <data name="C_RefreshPlatform_D" xml:space="preserve">
-    <value>Reads runtime, window, and data-directory information.</value>
+    <value>Reads runtime, window, and data-directory information</value>
   </data>
   <data name="S_DataPathDiagnostics" xml:space="preserve">
     <value>Data and path diagnostics</value>
@@ -128,7 +128,7 @@ Insider settings have lower priority than fair-draw rules. Selecting a member or
     <value>Refresh path status</value>
   </data>
   <data name="C_RefreshPaths_D" xml:space="preserve">
-    <value>Only reads configuration and data paths; it does not create directories or modify files.</value>
+    <value>Only reads configuration and data paths; it does not create directories or modify files</value>
   </data>
   <data name="C_CurrentVersion" xml:space="preserve">
     <value>Current version</value>

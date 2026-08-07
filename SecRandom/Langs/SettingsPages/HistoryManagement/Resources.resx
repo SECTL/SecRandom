@@ -74,15 +74,15 @@
     <value>确认清除历史记录</value>
   </data>
   <data name="M_ClearConfirm_Content" xml:space="preserve">
-    <value>确认清除“{0}”的全部历史记录？此操作不可撤销。</value>
+    <value>确认清除“{0}”的全部历史记录？此操作不可撤销</value>
   </data>
   <data name="M_ClearSuccess" xml:space="preserve">
-    <value>已成功清除“{0}”的历史记录。</value>
+    <value>已成功清除“{0}”的历史记录</value>
   </data>
   <data name="M_ClearFailed" xml:space="preserve">
     <value>清除失败：{0}</value>
   </data>
   <data name="M_SelectFirst" xml:space="preserve">
-    <value>请先选择要清除历史记录的项目。</value>
+    <value>请先选择要清除历史记录的项目</value>
   </data>
 </root>

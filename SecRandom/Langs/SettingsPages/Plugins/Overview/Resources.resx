@@ -45,10 +45,10 @@
     <value>还没有发现插件</value>
   </data>
   <data name="C_OverviewEmptyHint" xml:space="preserve">
-    <value>可以先导入本地插件，或者刷新已安装内容。</value>
+    <value>可以先导入本地插件，或者刷新已安装内容</value>
   </data>
   <data name="C_ImportHint" xml:space="preserve">
-    <value>选择包含 plugin.json 的本地插件目录导入到应用插件目录。</value>
+    <value>选择包含 plugin.json 的本地插件目录导入到应用插件目录</value>
   </data>
   <data name="C_Importing" xml:space="preserve">
     <value>正在导入...</value>
@@ -144,7 +144,7 @@
     <value>禁用</value>
   </data>
   <data name="C_NoPluginSelectedHint" xml:space="preserve">
-    <value>从左侧选择一个插件查看状态和运行信息。</value>
+    <value>从左侧选择一个插件查看状态和运行信息</value>
   </data>
   <data name="C_InstalledPluginCount" xml:space="preserve">
     <value>已安装插件：{0}</value>
@@ -156,7 +156,7 @@
     <value>{0} 个插件</value>
   </data>
   <data name="C_NoDescription" xml:space="preserve">
-    <value>此插件没有提供描述。</value>
+    <value>此插件没有提供描述</value>
   </data>
   <data name="C_Unknown" xml:space="preserve">
     <value>未知</value>
@@ -219,22 +219,22 @@
     <value>SecRandom 插件包</value>
   </data>
   <data name="M_InvalidPluginFolder" xml:space="preserve">
-    <value>所选目录缺少有效的 plugin.json，或不符合插件结构。</value>
+    <value>所选目录缺少有效的 plugin.json，或不符合插件结构</value>
   </data>
   <data name="M_InvalidPluginPackage" xml:space="preserve">
-    <value>所选 .srpx 文件不是有效的 SecRandom 插件包。</value>
+    <value>所选 .srpx 文件不是有效的 SecRandom 插件包</value>
   </data>
   <data name="M_PluginImported" xml:space="preserve">
-    <value>插件已导入。</value>
+    <value>插件已导入</value>
   </data>
   <data name="M_PluginImportExists" xml:space="preserve">
-    <value>已存在同 ID 插件，请先处理或删除现有版本。</value>
+    <value>已存在同 ID 插件，请先处理或删除现有版本</value>
   </data>
   <data name="M_PluginImportFailed" xml:space="preserve">
     <value>插件导入失败：{0}</value>
   </data>
   <data name="M_PluginImportNeedsRestart" xml:space="preserve">
-    <value>插件导入后需要重启应用以完成加载。</value>
+    <value>插件导入后需要重启应用以完成加载</value>
   </data>
   <data name="M_CatalogRefreshFailed" xml:space="preserve">
     <value>插件源刷新失败：{0}</value>

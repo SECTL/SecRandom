@@ -81,14 +81,14 @@ SecRandom/
 | Draw audio / temp records    | `Services/Draw/DrawAudioService.cs`, `../SecRandom.Core/Services/Draw/DrawTemporaryRecordService.cs` | Audio stays app-layer; session-scoped temporary records are shared Core runtime behavior. |
 | Managed music library        | `Services/Music/MusicLibraryService.cs`, `Views/SettingsPages/Personalized/MusicSettingsPage.axaml(.cs)` | Imports, removes, and previews managed MP3/WAV/FLAC files under `data/audio/music`. |
 | Desktop integration          | `Services/Desktop/`                                                     | Taskbar lifecycle, Windows native global shortcuts, cross-platform autostart, and `secrandom://` registration.          |
-| Platform feature calls       | `Services/Platform/`, `../SecRandom.Platforms.Abstractions/`            | Views obtain `IWindowFeatureService` through Host; native implementations stay outside the app project.                 |
+| Platform feature calls       | `Services/Platform/`, `../SecRandom.Platforms.Abstractions/`            | Views obtain `IWindowFeatureService` through Host; native implementations stay outside the app project. Removable-storage enumeration uses the platform-owned `IRemovableStorageCatalog`. |
 | Cross-platform view host     | `Services/ViewEngine/`                                                    | Desktop physical host provider for `SecRandom.Core.Views`; it owns ordinary Avalonia windows only.                       |
 | Mobile root                  | `App.axaml.cs`, `Mobile/`, `Views/Mobile/MobileViewHost.axaml(.cs)`, `MobileRootView.axaml(.cs)`; entry points `../SecRandom.Android/MobileEntryPoint.cs`, `../SecRandom.iOS/MobileEntryPoint.cs` | Shared App mounts `MobileViewHost`'s one `NavigationPage`; it presents `MobileRootView` and independent MVE pages, while `MobileRootView` owns ordinary bottom-bar `UserControl` routes. |
 | Telemetry runtime seam       | `Services/Telemetry/`                                                   | App-layer-only telemetry policy/runtime boundary behind the `ITelemetryTransaction`/`ITelemetrySdkAdapter` seam; Sentry types stay inside the adapter and the desktop-only shim. Reads and live-applies `PrivacySettings.SentryTelemetryEnabled`. |
 | User feedback                | `Services/Feedback/`, `Views/FeedbackDrawer.axaml(.cs)`                | Explicit Sentry User Feedback service; each host uses a transient FeedbackDrawer, and Bug reports attach the existing standard diagnostic ZIP without enabling background telemetry. |
 | Online status reporting      | `Services/OnlineStatusService.cs`                                       | Host-managed SECTL online status reporter; reads `PrivacySettings.OnlineStatusMode`.                                      |
 | Update center                | `Services/Updates/`, `Views/SettingsPages/Update/`                       | Signed full-artifact checks, portable staging/Launcher restart, or native installer handoff.                              |
-| Security authorization       | `Services/Security/`                                                     | Separate credential storage, password/TOTP/USB factors, lockout state, and operation authorization gateway.               |
+| Security authorization       | `Services/Security/`                                                     | Separate credential storage, password/TOTP/USB factors, removable-device catalog, lockout state, and operation authorization gateway. |
 | URL/IPC automation           | `Services/Ipc/ProtocolCommandRouter.cs`, `Core/Services/SingleInstance/` | URL activation and duplex structured IPC share one protected command router; legacy plaintext activation remains supported. |
 
 ## CONVENTIONS
@@ -118,6 +118,8 @@ SecRandom/
 - Background app services such as `OnlineStatusService` are registered through Host and must honor `PrivacySettings.OnlineStatusMode` before doing network work.
 - `UpdateCenterService` is the only update transaction entry point. It must verify raw manifest bytes with the embedded Ed25519 key and verify artifact length/SHA-512 before a complete ZIP deployment or native installer handoff; `UpdateScheduler` only checks and never downloads in the background.
 - Security services are Host singletons. Keep secrets out of normal config and route protected window, tray, draw, and linkage operations through `ISecurityService` instead of duplicating checks in UI event handlers.
+- Security credentials live only in `data/config/security/credentials.json`. Its internal `FormatVersion` governs the format; the user's password uses Argon2id to derive the AES-256-GCM key, so the file is portable between supported hosts. Do not add DPAPI, Keychain, `secret-tool`, platform key files, filename version suffixes, or legacy credential-file migration.
+- Security settings mutations use `ISecurityService`'s password-gated update boundary once protection is active; pages project their state one-way and must not directly persist factor or protected-operation changes. `IRemovableStorageCatalog` is implemented by the Windows, Linux, and macOS platform projects (mobile uses an empty catalog); `IUsbDeviceCatalog` exposes only ready program-enumerated volumes, and the USB binding dialog selects its `UsbDeviceInfo` rows (drive letter, disk name, device ID) rather than arbitrary folders or paths. Current mount roots remain inside the catalog/security-service implementation and must not appear in `UsbDeviceInfo`, dialog results, public security APIs, or IPC. `ISecurityService.BindUsbAsync` accepts only the selected device ID and resolves the current mount internally.
 - `ProtocolCommandRouter` is a Host singleton and is the only app-layer URL/IPC command dispatcher. Keep IPC request handling on the UI dispatcher for UI mutations; `data/*` must use `IProfileQueryService` snapshots and never switch an active profile.
 - Roll-call, lottery, and quick-draw ViewModels are shared draw sessions for UI and IPC. Their protocol methods reuse nonvisual core paths after router authorization; do not resolve a detached transient ViewModel for IPC.
 - `SettingsView` read-only preview is entered only by the security verification prompt when `AllowSettingsPreview` is enabled. Freeze the page content host, not settings navigation, and exit preview on normal authorized navigation.
@@ -175,6 +177,8 @@ SecRandom/
 - Register only base `.resx` and designer in `SecRandom.csproj` using existing `EmbeddedResource` / `Compile` pattern.
 - Use `PublicResXFileCodeGenerator` for resource designers.
 - Settings keys: `S_`, `S_xxx_D`, `S_xxx_R`; options `O_`; messages `M_`; controls/content `C_`.
+- Chinese i18n values must not use the Chinese full stop (`。`).
+- Settings-page explanation values (`*_D`, including `S_*_D` and `C_*_D`) must not use sentence-ending or sentence-separating full stops (`。` or `.`); preserve technical dots in file names, domains, process names, and version identifiers.
 
 ## COMMENTS
 

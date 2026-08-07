@@ -103,7 +103,7 @@
     <value>カスタムフォント</value>
   </data>
   <data name="S_CustomFont_D" xml:space="preserve">
-    <value>フォントファミリー名。空欄の場合は既定のフォントを使用します</value>
+    <value>フォントファミリー名を指定し、空欄の場合は既定のフォントを使用します</value>
   </data>
   <data name="S_FontSize" xml:space="preserve">
     <value>フォントサイズ</value>
@@ -346,7 +346,7 @@
     <value>音声案内を有効化</value>
   </data>
   <data name="S_VoiceAnnouncementEnabled_D" xml:space="preserve">
-    <value>抽選後に結果を読み上げます。全体の音声案内が無効の場合は機能しません</value>
+    <value>抽選後に結果を読み上げ、全体の音声案内が無効の場合は機能しません</value>
   </data>
   <data name="S_AnimationMusic" xml:space="preserve">
     <value>アニメーション音楽</value>

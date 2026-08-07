@@ -19,7 +19,7 @@
     <value>概览</value>
   </data>
   <data name="Page_Description" xml:space="preserve">
-    <value>查看点名名单与抽奖奖池的累计统计。</value>
+    <value>查看点名名单与抽奖奖池的累计统计</value>
   </data>
   <data name="S_Overview" xml:space="preserve">
     <value>概览</value>
@@ -61,10 +61,10 @@
     <value>历史汇总</value>
   </data>
   <data name="M_NoRollCallLists" xml:space="preserve">
-    <value>尚未创建成员名单。</value>
+    <value>尚未创建成员名单</value>
   </data>
   <data name="M_NoLotteryPools" xml:space="preserve">
-    <value>尚未创建奖品池。</value>
+    <value>尚未创建奖品池</value>
   </data>
   <data name="M_NoDrawHistory" xml:space="preserve">
     <value>暂无记录</value>

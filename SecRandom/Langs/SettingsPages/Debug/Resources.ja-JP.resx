@@ -55,7 +55,7 @@
     <value>プラグイン管理を表示</value>
   </data>
   <data name="C_ShowPluginSettings_D" xml:space="preserve">
-    <value>プラグイン機能はテスト中です。有効にするとサイドバー項目を表示します。</value>
+    <value>プラグイン機能はテスト中で、有効にするとサイドバー項目を表示します</value>
   </data>
   <data name="M_ShowPluginSettings_Title" xml:space="preserve">
     <value>プラグイン管理を表示しますか？</value>
@@ -76,7 +76,7 @@
     <value>内幕設定を有効化</value>
   </data>
   <data name="C_EnableInternalSettings_D" xml:space="preserve">
-    <value>内幕の追加設定を一時的に表示します。</value>
+    <value>内幕の追加設定を一時的に表示します</value>
   </data>
   <data name="M_InternalSettings_Title" xml:space="preserve">
     <value>内幕設定を表示しました</value>
@@ -101,7 +101,7 @@
     <value>更新状態を更新</value>
   </data>
   <data name="C_RefreshUpdate_D" xml:space="preserve">
-    <value>現在の更新チャンネル、状態、最終確認時刻を読み取ります。</value>
+    <value>現在の更新チャンネル、状態、最終確認時刻を読み取ります</value>
   </data>
   <data name="S_LinkageNotificationDiagnostics" xml:space="preserve">
     <value>スケジュール連携と通知</value>
@@ -110,7 +110,7 @@
     <value>連携状態を更新</value>
   </data>
   <data name="C_RefreshLinkage_D" xml:space="preserve">
-    <value>スケジュールスナップショットを更新し、通知設定を読み取ります。</value>
+    <value>スケジュールスナップショットを更新し、通知設定を読み取ります</value>
   </data>
   <data name="S_PlatformDiagnostics" xml:space="preserve">
     <value>ウィンドウとプラットフォーム</value>
@@ -119,7 +119,7 @@
     <value>プラットフォーム状態を更新</value>
   </data>
   <data name="C_RefreshPlatform_D" xml:space="preserve">
-    <value>ランタイム、ウィンドウ、データディレクトリ情報を読み取ります。</value>
+    <value>ランタイム、ウィンドウ、データディレクトリ情報を読み取ります</value>
   </data>
   <data name="S_DataPathDiagnostics" xml:space="preserve">
     <value>データとパスの診断</value>
@@ -128,7 +128,7 @@
     <value>パス状態を更新</value>
   </data>
   <data name="C_RefreshPaths_D" xml:space="preserve">
-    <value>設定とデータパスだけを読み取り、ディレクトリ作成やファイル変更は行いません。</value>
+    <value>設定とデータパスだけを読み取り、ディレクトリ作成やファイル変更は行いません</value>
   </data>
   <data name="C_CurrentVersion" xml:space="preserve">
     <value>現在のバージョン</value>

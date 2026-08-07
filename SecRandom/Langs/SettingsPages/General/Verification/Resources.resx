@@ -7,7 +7,7 @@
   <data name="Page_Title" xml:space="preserve"><value>抽取验证</value></data>
   <data name="S_Verification" xml:space="preserve"><value>可验证抽取</value></data>
   <data name="C_WitnessNoticeTitle" xml:space="preserve"><value>服务端验证</value></data>
-  <data name="M_WitnessModeNotice" xml:space="preserve"><value>普通模式在本地立即抽取，断网时仍可使用并保存本地可重放证明；联网时会对新证明后台提交服务端重放验证。离线保存的历史证明不会自动补传，可在联网后手动上传到验证网站。验证签名会绑定证明内容，可发现之后的文件篡改；它不证明抽取前的本地程序或名单未被修改。</value></data>
+  <data name="M_WitnessModeNotice" xml:space="preserve"><value>普通模式在本地立即抽取，断网时仍可使用并保存本地可重放证明；联网时会对新证明后台提交服务端重放验证；离线保存的历史证明不会自动补传，可在联网后手动上传到验证网站；验证签名会绑定证明内容，可发现之后的文件篡改；它不证明抽取前的本地程序或名单未被修改</value></data>
   <data name="S_VerificationMode" xml:space="preserve"><value>可验证抽取模式</value></data>
   <data name="S_VerificationMode_D" xml:space="preserve"><value>普通模式可离线在本地立即抽取并在联网后手动验证；正式公证模式由服务端锁定候选池、生成随机材料并计算最终结果</value></data>
   <data name="O_VerificationMode_Local" xml:space="preserve"><value>普通模式</value></data>
@@ -15,15 +15,15 @@
   <data name="C_ModeConfirmTitle" xml:space="preserve"><value>切换可验证抽取模式</value></data>
   <data name="C_ModeConfirmSwitch" xml:space="preserve"><value>我已阅读并切换</value></data>
   <data name="C_Cancel" xml:space="preserve"><value>取消</value></data>
-  <data name="C_ModeReadConfirm" xml:space="preserve"><value>我已阅读并理解上述限制。</value></data>
-  <data name="M_ModeConfirmLocal" xml:space="preserve"><value>普通模式会立即在本地抽取，断网时仍可完成抽取并保存本地可重放证明。联网时，应用只会为新完成的普通抽取在后台向 fair.sectl.cn 提交一次重放签名请求；离线保存或失败的历史证明不会自动补传，可在联网后手动上传到验证网站。它可以证明已提交的证明文件可重放，并发现签名后的文件篡改。
+  <data name="C_ModeReadConfirm" xml:space="preserve"><value>我已阅读并理解上述限制</value></data>
+  <data name="M_ModeConfirmLocal" xml:space="preserve"><value>普通模式会立即在本地抽取，断网时仍可完成抽取并保存本地可重放证明；联网时，应用只会为新完成的普通抽取在后台向 fair.sectl.cn 提交一次重放签名请求；离线保存或失败的历史证明不会自动补传，可在联网后手动上传到验证网站；它可以证明已提交的证明文件可重放，并发现签名后的文件篡改
 
-它不能证明抽取前的本地程序、真实名单或随机种子未被修改，也不能排除抽取前反复试验后选择结果。</value></data>
-  <data name="M_ModeConfirmFormal" xml:space="preserve"><value>正式公证模式会先把本次匿名候选池、权重和规则锁定到 fair.sectl.cn；随后由服务端生成随机材料、计算最终结果并保存不可变官方证明。
+它不能证明抽取前的本地程序、真实名单或随机种子未被修改，也不能排除抽取前反复试验后选择结果</value></data>
+  <data name="M_ModeConfirmFormal" xml:space="preserve"><value>正式公证模式会先把本次匿名候选池、权重和规则锁定到 fair.sectl.cn；随后由服务端生成随机材料、计算最终结果并保存不可变官方证明
 
-网络波动、断网、服务不可用、设备故障或其他不可抗力导致未取得服务端完结证明时，本次正式公证不会生成本地替代结果，也不会自动改用普通模式。服务端确认锁定后，候选池、权重、规则、随机材料和结果均不能在流程中替换、补抽或重算；任何新的抽取只能作为另一笔独立公证。
+网络波动、断网、服务不可用、设备故障或其他不可抗力导致未取得服务端完结证明时，本次正式公证不会生成本地替代结果，也不会自动改用普通模式；服务端确认锁定后，候选池、权重、规则、随机材料和结果均不能在流程中替换、补抽或重算；任何新的抽取只能作为另一笔独立公证
 
-它能防止本地抽取代码、随机种子、结果文件在已锁定流程中被替换，但仍不能证明现实名单本身完整真实，或候选池在提交前未被人为筛选。</value></data>
+它能防止本地抽取代码、随机种子、结果文件在已锁定流程中被替换，但仍不能证明现实名单本身完整真实，或候选池在提交前未被人为筛选</value></data>
   <data name="S_ProofFolder" xml:space="preserve"><value>抽取证明文件</value></data>
   <data name="S_ProofFolder_D" xml:space="preserve"><value>证明会按日期自动保存；打开文件夹后可将 .srproof.json 文件上传到验证网站</value></data>
   <data name="C_OpenProofFolder" xml:space="preserve"><value>打开证明文件夹</value></data>
@@ -46,6 +46,6 @@
   <data name="O_Retention_90" xml:space="preserve"><value>90 天</value></data>
   <data name="O_Retention_Never" xml:space="preserve"><value>不清除</value></data>
   <data name="C_StatusTitle" xml:space="preserve"><value>抽取验证</value></data>
-  <data name="M_ServerWitnessedProof" xml:space="preserve"><value>服务端重放验证有效，证明文件已保存。</value></data>
-  <data name="M_LocalFallbackProof" xml:space="preserve"><value>服务端暂不可用，已保存本地可重放证明；可稍后上传到验证网站。</value></data>
+  <data name="M_ServerWitnessedProof" xml:space="preserve"><value>服务端重放验证有效，证明文件已保存</value></data>
+  <data name="M_LocalFallbackProof" xml:space="preserve"><value>服务端暂不可用，已保存本地可重放证明；可稍后上传到验证网站</value></data>
 </root>

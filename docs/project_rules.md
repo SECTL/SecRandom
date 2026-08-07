@@ -66,21 +66,22 @@ services.AddSettingsPage<LotteryTablePreviewPage>(
 - 设置子页：`settings.group.xxx`
 ## 本地化（必须）
 
-- 每个页面的本地化拆分到独立文件夹，结构固定：
-  - `Resources.resx`（zh-hans）
-  - `Resources.Designer.cs`
-  - `Resources.en-US.resx`
-  - `Resources.ja-JP.resx`
+- 每个页面的本地化拆分到独立文件夹：
+  - 必需：`Resources.resx`（zh-hans）和 `Resources.Designer.cs`
+  - 可选：`Resources.en-US.resx` 和 `Resources.ja-JP.resx`，文件名必须保持现有的精确大小写
 - `SecRandom/SecRandom.csproj` 只需要注册 `Resources.resx` 和 `Resources.Designer.cs`（照现有条目追加，不要把所有语言文件都注册进去）。
 - 注意必须使用 `PublicResXFileCodeGenerator`
 - 页面标题/菜单标题优先直接用 `Langs.*.Resources.*`。
 - 大部分情况无需处理 en-US 和 ja-JP 的创建和本地化，由 Crowdin 处理。
+- 中文 i18n 文案不得使用中文句号 `。`
+- 设置页面说明资源（`*_D`，包含 `S_*_D` 和 `C_*_D`）不得使用中文句号或英文句点，文件名、域名、进程名、版本号等技术标识中的英文点号保留
 
 ## 配置系统（必须理解）
 
 - 配置文件路径由 `ConfigBase.ConfigFilePath` 决定（因此天然支持“可变路径/档案切换”的设计）。
 - `ConfigHandlerBase` 默认监听 `PropertyChanged` 自动保存；`MainConfigHandler` 还会对语言/主题/字体等变更触发 UI 行为。
 - 保存/读取 JSON 由 `SecRandom.Core/Services/Config/FileConfigService.cs` 实现，并从 desktop/mobile Host 注册；它不是插件 API。
+- 安全凭据不是普通配置：只能由 `SecRandom/Services/Security/SecurityCredentialStore` 写入 `data/config/security/credentials.json`。格式版本写在内容的 `FormatVersion` 字段，密码用 Argon2id 派生 AES-256-GCM 密钥；不得使用平台密钥库或读取旧凭据文件。
 
 ### 配置集合类保存（易踩坑）
 

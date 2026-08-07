@@ -81,7 +81,7 @@
         <value>取消</value>
     </data>
     <data name="M_SelectEntry" xml:space="preserve">
-        <value>选择一条日志以查看详情。</value>
+        <value>选择一条日志以查看详情</value>
     </data>
     <data name="M_Copied" xml:space="preserve">
         <value>已复制日志内容</value>
@@ -93,7 +93,7 @@
         <value>删除日志文件</value>
     </data>
     <data name="M_DeleteContent" xml:space="preserve">
-        <value>确定要删除日志文件“{0}”吗？此操作无法撤销。</value>
+        <value>确定要删除日志文件“{0}”吗？此操作无法撤销</value>
     </data>
     <data name="M_DeletePrimary" xml:space="preserve">
         <value>删除</value>

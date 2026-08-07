@@ -122,7 +122,7 @@
         <value>一款易用的点名/抽奖软件，面向活动与组织场景设计，让抽取过程更高效透明</value>
     </data>
     <data name="App_License" xml:space="preserve">
-        <value>本项目基于 GNU General Public License v3.0 获得许可。</value>
+        <value>本项目基于 GNU General Public License v3.0 获得许可</value>
     </data>
     <data name="C_ToBeWritten" xml:space="preserve">
         <value>(等待编写)</value>

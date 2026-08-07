@@ -31,7 +31,7 @@
         <value>抽奖奖池导入</value>
     </data>
     <data name="C_InfoMessage" xml:space="preserve">
-        <value>从 Excel 或 CSV 文件导入奖品编号、名称、权重、数量和标签，导入后会保存到当前选择的抽奖奖池。</value>
+        <value>从 Excel 或 CSV 文件导入奖品编号、名称、权重、数量和标签，导入后会保存到当前选择的抽奖奖池</value>
     </data>
     <data name="C_CurrentList" xml:space="preserve">
         <value>当前奖池</value>
@@ -97,7 +97,7 @@
         <value>选择 Excel/CSV 文件</value>
     </data>
     <data name="C_SupportedFormats" xml:space="preserve">
-        <value>支持 .xlsx、.xls、.csv。第一行会作为列名。</value>
+        <value>支持 .xlsx、.xls、.csv；第一行会作为列名</value>
     </data>
     <data name="C_ColumnMapping" xml:space="preserve">
         <value>列映射</value>
@@ -139,16 +139,16 @@
         <value>默认奖池</value>
     </data>
     <data name="M_SelectFileFirst" xml:space="preserve">
-        <value>请选择文件后确认列映射。</value>
+        <value>请选择文件后确认列映射</value>
     </data>
     <data name="M_LoadFailed" xml:space="preserve">
         <value>加载失败：{0}</value>
     </data>
     <data name="M_FileLoaded" xml:space="preserve">
-        <value>已读取 {0} 行数据。</value>
+        <value>已读取 {0} 行数据</value>
     </data>
     <data name="M_SelectRequiredColumns" xml:space="preserve">
-        <value>请至少选择 ID/编号列或奖品名称列。</value>
+        <value>请至少选择 ID/编号列或奖品名称列</value>
     </data>
     <data name="M_DuplicateTitle" xml:space="preserve">
         <value>发现重复奖品名称</value>
@@ -157,7 +157,7 @@
         <value>以下 {0} 个奖品名称重复：
 {1}
 
-可以保留重名并继续导入，系统会用内部标识区分记录。</value>
+可以保留重名并继续导入，系统会用内部标识区分记录</value>
     </data>
     <data name="M_DuplicatePrimary" xml:space="preserve">
         <value>保留重名导入</value>
@@ -169,31 +169,31 @@
         <value>返回修改</value>
     </data>
     <data name="M_SelectListFirst" xml:space="preserve">
-        <value>请先选择一个奖池。</value>
+        <value>请先选择一个奖池</value>
     </data>
     <data name="M_OverwriteTitle" xml:space="preserve">
         <value>覆盖当前奖池？</value>
     </data>
     <data name="M_OverwriteContent" xml:space="preserve">
-        <value>当前奖池已有 {0} 个奖品，本次将导入 {1} 个奖品。继续后会覆盖当前奖池内容。</value>
+        <value>当前奖池已有 {0} 个奖品，本次将导入 {1} 个奖品；继续后会覆盖当前奖池内容</value>
     </data>
     <data name="M_OverwritePrimary" xml:space="preserve">
         <value>覆盖导入</value>
     </data>
     <data name="M_ImportSuccess" xml:space="preserve">
-        <value>已导入 {0} 个奖品到“{1}”。</value>
+        <value>已导入 {0} 个奖品到“{1}”</value>
     </data>
     <data name="M_AddPrizeTitle" xml:space="preserve">
         <value>添加奖品</value>
     </data>
     <data name="M_AddPrizeRequired" xml:space="preserve">
-        <value>请至少填写 ID/编号或奖品名称。</value>
+        <value>请至少填写 ID/编号或奖品名称</value>
     </data>
     <data name="M_AddPrizeInvalidValues" xml:space="preserve">
-        <value>权重和数量必须是大于 0 的有效数字。</value>
+        <value>权重和数量必须是大于 0 的有效数字</value>
     </data>
     <data name="M_AddPrizeSuccess" xml:space="preserve">
-        <value>已添加奖品。</value>
+        <value>已添加奖品</value>
     </data>
     <data name="M_ListNameDialogTitle_Add" xml:space="preserve">
         <value>新增奖池</value>
@@ -211,49 +211,49 @@
         <value>请输入奖池名称</value>
     </data>
     <data name="M_ListNameEmpty" xml:space="preserve">
-        <value>奖池名称不能为空。</value>
+        <value>奖池名称不能为空</value>
     </data>
     <data name="M_ListNameExists" xml:space="preserve">
-        <value>奖池“{0}”已存在。</value>
+        <value>奖池“{0}”已存在</value>
     </data>
     <data name="M_ListNameInvalid" xml:space="preserve">
-        <value>奖池名称不能包含文件名非法字符。</value>
+        <value>奖池名称不能包含文件名非法字符</value>
     </data>
     <data name="M_AddListSuccess" xml:space="preserve">
-        <value>已新增奖池“{0}”。</value>
+        <value>已新增奖池“{0}”</value>
     </data>
     <data name="M_RenameListSuccess" xml:space="preserve">
-        <value>已重命名为“{0}”。</value>
+        <value>已重命名为“{0}”</value>
     </data>
     <data name="M_DeleteListTitle" xml:space="preserve">
         <value>删除当前奖池？</value>
     </data>
     <data name="M_DeleteListContent" xml:space="preserve">
-        <value>将删除奖池“{0}”。此操作不可撤销。</value>
+        <value>将删除奖池“{0}”；此操作不可撤销</value>
     </data>
     <data name="M_DeleteListPrimary" xml:space="preserve">
         <value>删除</value>
     </data>
     <data name="M_DeleteListSuccess" xml:space="preserve">
-        <value>已删除奖池“{0}”。</value>
+        <value>已删除奖池“{0}”</value>
     </data>
     <data name="M_DeletePrizeTitle" xml:space="preserve">
         <value>删除奖品？</value>
     </data>
     <data name="M_DeletePrizeContent" xml:space="preserve">
-        <value>将从奖池“{1}”中删除奖品“{0}”。此操作不可撤销。</value>
+        <value>将从奖池“{1}”中删除奖品“{0}”；此操作不可撤销</value>
     </data>
     <data name="M_DeletePrizePrimary" xml:space="preserve">
         <value>删除</value>
     </data>
     <data name="M_DeletePrizeSuccess" xml:space="preserve">
-        <value>已删除奖品“{0}”。</value>
+        <value>已删除奖品“{0}”</value>
     </data>
     <data name="M_DeletePrizeNotFound" xml:space="preserve">
-        <value>该奖品已不存在，奖池已刷新。</value>
+        <value>该奖品已不存在，奖池已刷新</value>
     </data>
     <data name="M_KeepOneList" xml:space="preserve">
-        <value>至少需要保留一个奖池。</value>
+        <value>至少需要保留一个奖池</value>
     </data>
     <data name="K_IdColumns" xml:space="preserve">
         <value>ID|id|编号|序号|奖品ID|prize id|prize_id|no</value>
