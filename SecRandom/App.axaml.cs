@@ -781,8 +781,8 @@ public partial class App : Application
                 services.AddSingleton<CourseLinkageService>();
                 services.AddSingleton<LinkageDrawCoordinator>();
                 services.AddHostedService<CourseLinkageHostedService>();
-                services.AddSingleton<ICredentialKeyProtector, CredentialKeyProtector>();
                 services.AddSingleton<SecurityCredentialStore>();
+                services.AddSingleton<IUsbDeviceCatalog, UsbDeviceCatalog>();
                 services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
                 services.AddSingleton<ISecurityService, SecurityService>();
 
@@ -1522,16 +1522,14 @@ public partial class App : Application
         ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeSettingsAsync(
             async () =>
             {
-                if (SettingsView.Current is null || _settingsWindow is not { IsVisible: true })
-                    await ShowSettingsWindowCoreAsync();
+                await ShowSettingsWindowCoreAsync();
                 SettingsView.Current?.ExitPreview();
                 if (!string.IsNullOrWhiteSpace(pageId))
                     SettingsView.Current?.NavigateToPage(pageId);
             },
             async () =>
             {
-                if (SettingsView.Current is null || _settingsWindow is not { IsVisible: true })
-                    await ShowSettingsWindowCoreAsync();
+                await ShowSettingsWindowCoreAsync();
                 SettingsView.Current?.NavigateToPreviewPage(pageId ?? "settings.general.basic");
             }), "Settings window authorization failed.");
     }

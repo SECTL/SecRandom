@@ -5,6 +5,8 @@ namespace SecRandom.Shared;
 public static class Utils
 {
     public const string PackageRootEnvironmentVariable = "SECRANDOM_PACKAGE_ROOT";
+    private const string ConfigDirectoryName = "config";
+    private const string UnixHiddenEntriesFileName = ".hidden";
     private static readonly object DataRootGate = new();
     private static string? _configuredDataRoot;
     private static bool _dataRootWasRead;
@@ -64,7 +66,11 @@ public static class Utils
         var path = GetPath(strings);
 
         var directory = Path.GetDirectoryName(path);
-        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) Directory.CreateDirectory(directory);
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
+            EnsureConfigDirectoryHidden(strings);
+        }
 
         return path;
     }
@@ -73,9 +79,73 @@ public static class Utils
     {
         var path = GetPath(strings);
 
-        if (!string.IsNullOrEmpty(path) && !Directory.Exists(path)) Directory.CreateDirectory(path);
+        if (!string.IsNullOrEmpty(path))
+        {
+            Directory.CreateDirectory(path);
+            EnsureConfigDirectoryHidden(strings);
+        }
 
         return path;
+    }
+
+    private static void EnsureConfigDirectoryHidden(IReadOnlyList<string> pathSegments)
+    {
+        if (pathSegments.Count == 0
+            || !string.Equals(pathSegments[0], ConfigDirectoryName, StringComparison.Ordinal))
+            return;
+
+        var configDirectory = Path.Combine(DataRoot, ConfigDirectoryName);
+        try
+        {
+            var attributes = File.GetAttributes(configDirectory);
+            File.SetAttributes(configDirectory, attributes | FileAttributes.Hidden | FileAttributes.System);
+        }
+        catch (PlatformNotSupportedException)
+        {
+            EnsureUnixHiddenEntry(configDirectory);
+        }
+        catch (IOException)
+        {
+            // A read/write path must remain usable when the filesystem cannot persist attributes.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Hiding is best effort; it must not prevent config loading or saving.
+        }
+
+        if (!OperatingSystem.IsWindows())
+            EnsureUnixHiddenEntry(configDirectory);
+    }
+
+    private static void EnsureUnixHiddenEntry(string configDirectory)
+    {
+        var dataDirectory = Directory.GetParent(configDirectory)?.FullName;
+        if (string.IsNullOrWhiteSpace(dataDirectory))
+            return;
+
+        var hiddenEntriesPath = Path.Combine(dataDirectory, UnixHiddenEntriesFileName);
+        try
+        {
+            var entries = File.Exists(hiddenEntriesPath)
+                ? File.ReadAllLines(hiddenEntriesPath)
+                : [];
+            if (entries.Any(entry => string.Equals(entry.Trim(), ConfigDirectoryName, StringComparison.Ordinal)))
+                return;
+
+            using var stream = new FileStream(hiddenEntriesPath, FileMode.Append, FileAccess.Write, FileShare.Read);
+            using var writer = new StreamWriter(stream);
+            if (stream.Length > 0)
+                writer.WriteLine();
+            writer.WriteLine(ConfigDirectoryName);
+        }
+        catch (IOException)
+        {
+            // Hidden metadata is optional on filesystems without a writable parent directory.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Hidden metadata is optional; retain normal config behavior when it is denied.
+        }
     }
 
     private static string ResolvePackageRoot()

@@ -35,6 +35,24 @@ public sealed class CoreRuntimeServicesTests : IDisposable
     }
 
     [Fact]
+    public void ConfigDirectory_AppliesThePlatformHiddenPolicy()
+    {
+        _ = Utils.GetFilePath("config", "settings.json");
+
+        var configDirectory = Path.Combine(_dataRoot, "config");
+        if (OperatingSystem.IsWindows())
+        {
+            var attributes = File.GetAttributes(configDirectory);
+            Assert.True(attributes.HasFlag(FileAttributes.Hidden));
+            Assert.True(attributes.HasFlag(FileAttributes.System));
+            return;
+        }
+
+        var hiddenEntries = File.ReadAllLines(Path.Combine(_dataRoot, ".hidden"));
+        Assert.Contains("config", hiddenEntries);
+    }
+
+    [Fact]
     public void FileConfigService_DoesNotOverwriteAnEncryptedEnvelope()
     {
         using var provider = CreateProvider();

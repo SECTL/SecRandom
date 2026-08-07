@@ -24,6 +24,7 @@ public partial class Resources
     public static string C_ManageBindings => Text(nameof(C_ManageBindings));
     public static string C_SetPassword => Text(nameof(C_SetPassword));
     public static string C_ManagePassword => Text(nameof(C_ManagePassword));
+    public static string C_ChangePassword => Text(nameof(C_ChangePassword));
     public static string C_SetTotp => Text(nameof(C_SetTotp));
     public static string C_ResetTotp => Text(nameof(C_ResetTotp));
     public static string C_OpenSettings => Text(nameof(C_OpenSettings));
@@ -48,10 +49,15 @@ public partial class Resources
     public static string C_Preview => Text(nameof(C_Preview));
     public static string C_VerifyAndSave => Text(nameof(C_VerifyAndSave));
     public static string C_Bind => Text(nameof(C_Bind));
+    public static string C_Unbind => Text(nameof(C_Unbind));
     public static string C_UnbindSelected => Text(nameof(C_UnbindSelected));
     public static string C_BoundDevices => Text(nameof(C_BoundDevices));
+    public static string C_UsbDriveLetter => Text(nameof(C_UsbDriveLetter));
+    public static string C_UsbDiskName => Text(nameof(C_UsbDiskName));
+    public static string C_UsbDeviceId => Text(nameof(C_UsbDeviceId));
     public static string C_UsbConnected => Text(nameof(C_UsbConnected));
     public static string C_UsbDisconnected => Text(nameof(C_UsbDisconnected));
+    public static string C_Refresh => Text(nameof(C_Refresh));
     public static string C_PasswordPlaceholder => Text(nameof(C_PasswordPlaceholder));
     public static string C_CurrentPasswordPlaceholder => Text(nameof(C_CurrentPasswordPlaceholder));
     public static string C_NewPasswordPlaceholder => Text(nameof(C_NewPasswordPlaceholder));
@@ -70,6 +76,8 @@ public partial class Resources
     public static string M_UsbDialogTitle => Text(nameof(M_UsbDialogTitle));
     public static string M_UsbSetupDescription => Text(nameof(M_UsbSetupDescription));
     public static string M_UsbShortDescription => Text(nameof(M_UsbShortDescription));
+    public static string M_NoBindableUsb => Text(nameof(M_NoBindableUsb));
+    public static string M_NoBoundUsb => Text(nameof(M_NoBoundUsb));
     public static string M_UsbPickerTitle => Text(nameof(M_UsbPickerTitle));
     public static string M_SelectUsbFirst => Text(nameof(M_SelectUsbFirst));
     public static string M_VerificationDialogTitle => Text(nameof(M_VerificationDialogTitle));
@@ -78,6 +86,7 @@ public partial class Resources
     public static string M_VerificationLockedFormat => Text(nameof(M_VerificationLockedFormat));
     public static string M_LockoutFormat => Text(nameof(M_LockoutFormat));
     public static string M_UsbPresent => Text(nameof(M_UsbPresent));
+    public static string M_UsbMissing => Text(nameof(M_UsbMissing));
     public static string M_PasswordRemoved => Text(nameof(M_PasswordRemoved));
     public static string M_PasswordSaved => Text(nameof(M_PasswordSaved));
     public static string M_PasswordSaveFailed => Text(nameof(M_PasswordSaveFailed));

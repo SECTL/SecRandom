@@ -21,7 +21,8 @@
                                    Description="{x:Static lsp:Resources.S_Enabled_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi ShieldKeyholeFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding Settings.SecurityEnabled}"
+                    <ToggleSwitch IsChecked="{Binding IsSecurityEnabled, Mode=OneWay}"
+                                  IsCheckedChanged="SecurityEnabled_OnIsCheckedChanged"
                                   IsEnabled="{Binding CanEnableSecurity}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
@@ -30,7 +31,17 @@
                                    Description="{x:Static lsp:Resources.S_Password_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PasswordFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <Button Content="{Binding PasswordButtonText}" Click="ManagePassword_OnClick" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="{x:Static lsp:Resources.C_SetPassword}"
+                                IsVisible="{Binding CanSetPassword}"
+                                Click="SetPassword_OnClick" />
+                        <Button Content="{x:Static lsp:Resources.C_ChangePassword}"
+                                IsVisible="{Binding HasPassword}"
+                                Click="ChangePassword_OnClick" />
+                        <Button Content="{x:Static lsp:Resources.C_RemovePassword}"
+                                IsVisible="{Binding HasPassword}"
+                                Click="RemovePassword_OnClick" />
+                    </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
@@ -69,7 +80,9 @@
                                    Description="{x:Static lsp:Resources.S_RequireAll_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi ShieldKeyholeFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding Settings.RequireAllSelectedFactors}"
+                    <ToggleSwitch IsChecked="{Binding Settings.RequireAllSelectedFactors, Mode=OneWay}"
+                                  Tag="RequireAllSelectedFactors"
+                                  IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
                                   IsEnabled="{Binding CanEditFactorSelection}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
@@ -81,27 +94,39 @@
                                    Description="{x:Static lsp:Resources.S_WindowOperations_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <CheckBox Content="{x:Static lsp:Resources.C_OpenSettings}"
-                          IsChecked="{Binding Settings.ProtectOpenSettings}"
+                          IsChecked="{Binding Settings.ProtectOpenSettings, Mode=OneWay}"
+                          Tag="ProtectOpenSettings"
+                          IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
                           IsEnabled="{Binding CanEditProtectedOperations}" />
 
                 <CheckBox Content="{x:Static lsp:Resources.C_AllowSettingsPreview}"
-                          IsChecked="{Binding Settings.AllowSettingsPreview}"
+                          IsChecked="{Binding Settings.AllowSettingsPreview, Mode=OneWay}"
+                          Tag="AllowSettingsPreview"
+                          IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
                           IsEnabled="{Binding CanEditProtectedOperations}" />
 
                 <CheckBox Content="{x:Static lsp:Resources.C_ToggleMainWindow}"
-                          IsChecked="{Binding Settings.ProtectToggleMainWindow}"
+                          IsChecked="{Binding Settings.ProtectToggleMainWindow, Mode=OneWay}"
+                          Tag="ProtectToggleMainWindow"
+                          IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
                           IsEnabled="{Binding CanEditProtectedOperations}" />
 
                 <CheckBox Content="{x:Static lsp:Resources.C_ToggleFloatingWindow}"
-                          IsChecked="{Binding Settings.ProtectToggleFloatingWindow}"
+                          IsChecked="{Binding Settings.ProtectToggleFloatingWindow, Mode=OneWay}"
+                          Tag="ProtectToggleFloatingWindow"
+                          IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
                           IsEnabled="{Binding CanEditProtectedOperations}" />
 
                 <CheckBox Content="{x:Static lsp:Resources.C_Restart}"
-                          IsChecked="{Binding Settings.ProtectRestart}"
+                          IsChecked="{Binding Settings.ProtectRestart, Mode=OneWay}"
+                          Tag="ProtectRestart"
+                          IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
                           IsEnabled="{Binding CanEditProtectedOperations}" />
 
                 <CheckBox Content="{x:Static lsp:Resources.C_Exit}"
-                          IsChecked="{Binding Settings.ProtectExit}"
+                          IsChecked="{Binding Settings.ProtectExit, Mode=OneWay}"
+                          Tag="ProtectExit"
+                          IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
                           IsEnabled="{Binding CanEditProtectedOperations}" />
             </fa:FASettingsExpander>
 
@@ -109,27 +134,39 @@
                                    Description="{x:Static lsp:Resources.S_DrawOperations_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}">
                 <CheckBox Content="{x:Static lsp:Resources.C_RollCallStart}"
-                          IsChecked="{Binding Settings.ProtectRollCallStart}"
+                          IsChecked="{Binding Settings.ProtectRollCallStart, Mode=OneWay}"
+                          Tag="ProtectRollCallStart"
+                          IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
                           IsEnabled="{Binding CanEditProtectedOperations}" />
 
                 <CheckBox Content="{x:Static lsp:Resources.C_RollCallReset}"
-                          IsChecked="{Binding Settings.ProtectRollCallReset}"
+                          IsChecked="{Binding Settings.ProtectRollCallReset, Mode=OneWay}"
+                          Tag="ProtectRollCallReset"
+                          IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
                           IsEnabled="{Binding CanEditProtectedOperations}" />
 
                 <CheckBox Content="{x:Static lsp:Resources.C_QuickDrawStart}"
-                          IsChecked="{Binding Settings.ProtectQuickDrawStart}"
+                          IsChecked="{Binding Settings.ProtectQuickDrawStart, Mode=OneWay}"
+                          Tag="ProtectQuickDrawStart"
+                          IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
                           IsEnabled="{Binding CanEditProtectedOperations}" />
 
                 <CheckBox Content="{x:Static lsp:Resources.C_QuickDrawReset}"
-                          IsChecked="{Binding Settings.ProtectQuickDrawReset}"
+                          IsChecked="{Binding Settings.ProtectQuickDrawReset, Mode=OneWay}"
+                          Tag="ProtectQuickDrawReset"
+                          IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
                           IsEnabled="{Binding CanEditProtectedOperations}" />
 
                 <CheckBox Content="{x:Static lsp:Resources.C_LotteryStart}"
-                          IsChecked="{Binding Settings.ProtectLotteryStart}"
+                          IsChecked="{Binding Settings.ProtectLotteryStart, Mode=OneWay}"
+                          Tag="ProtectLotteryStart"
+                          IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
                           IsEnabled="{Binding CanEditProtectedOperations}" />
 
                 <CheckBox Content="{x:Static lsp:Resources.C_LotteryReset}"
-                          IsChecked="{Binding Settings.ProtectLotteryReset}"
+                          IsChecked="{Binding Settings.ProtectLotteryReset, Mode=OneWay}"
+                          Tag="ProtectLotteryReset"
+                          IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
                           IsEnabled="{Binding CanEditProtectedOperations}" />
             </fa:FASettingsExpander>
 
