@@ -21,7 +21,7 @@ public class SentryTelemetrySdkAdapterTests
     {
         SentryOptions options = GetConfiguredOptions();
 
-        Assert.True(options.Debug);
+        Assert.False(options.Debug);
     }
 
     [Fact]

@@ -44,6 +44,12 @@ internal sealed class ProfileCatalogManager(
         return true;
     }
 
+    public bool RenameStudentList(string oldName, string newName) =>
+        RenameList(oldName, newName, "roll_call_list", "roll_call_history", "roll_call_record_", isStudent: true);
+
+    public bool RenamePrizeList(string oldName, string newName) =>
+        RenameList(oldName, newName, "lottery_list", "lottery_history", "lottery_record_", isStudent: false);
+
     public bool DeleteStudentList(string name, bool deleteHistory)
     {
         if (string.IsNullOrWhiteSpace(name) || !StudentListExists(name))
@@ -302,5 +308,88 @@ internal sealed class ProfileCatalogManager(
     {
         if (File.Exists(path))
             File.Delete(path);
+    }
+
+    private bool RenameList(string oldName, string newName, string listDirectory, string historyDirectory,
+        string temporaryPrefix, bool isStudent)
+    {
+        oldName = oldName.Trim();
+        newName = newName.Trim();
+        if (string.IsNullOrWhiteSpace(oldName) || string.IsNullOrWhiteSpace(newName) ||
+            oldName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+            newName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+            string.Equals(oldName, newName, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var exists = isStudent ? StudentListExists(oldName) : PrizeListExists(oldName);
+        var targetExists = isStudent ? StudentListExists(newName) : PrizeListExists(newName);
+        if (!exists || targetExists)
+            return false;
+
+        var isActive = isStudent
+            ? string.Equals(profileService.StudentListConfig?.Name, oldName, StringComparison.Ordinal)
+            : string.Equals(profileService.PrizeListConfig?.Name, oldName, StringComparison.Ordinal);
+        profileService.SaveProfile();
+
+        var moves = new[]
+        {
+            (Source: Utils.GetFilePath("list", listDirectory, $"{oldName}.json"),
+             Target: Utils.GetFilePath("list", listDirectory, $"{newName}.json")),
+            (Source: Utils.GetFilePath("history", historyDirectory, $"{oldName}.json"),
+             Target: Utils.GetFilePath("history", historyDirectory, $"{newName}.json")),
+            (Source: Utils.GetFilePath("TEMP", $"{temporaryPrefix}{NormalizeFileComponent(oldName)}.json"),
+             Target: Utils.GetFilePath("TEMP", $"{temporaryPrefix}{NormalizeFileComponent(newName)}.json"))
+        };
+
+        var moved = new List<(string Source, string Target)>();
+        try
+        {
+            foreach (var move in moves)
+            {
+                if (!File.Exists(move.Source))
+                    continue;
+
+                File.Move(move.Source, move.Target);
+                moved.Add(move);
+            }
+
+            if (isStudent)
+            {
+                if (configHandler.Data.RollCallSettings.DefaultClass == oldName)
+                    configHandler.Data.RollCallSettings.DefaultClass = newName;
+                if (isActive)
+                    profileService.LoadStudentProfile(newName, saveCurrent: false);
+            }
+            else
+            {
+                if (configHandler.Data.LotterySettings.DefaultPool == oldName)
+                    configHandler.Data.LotterySettings.DefaultPool = newName;
+                if (isActive)
+                    profileService.LoadPrizeProfile(newName, saveCurrent: false);
+            }
+
+            configHandler.Save();
+            logger.LogInformation("已重命名{ListType}：旧名称={OldName}，新名称={NewName}。",
+                isStudent ? "点名名单" : "奖品池", oldName, newName);
+            return true;
+        }
+        catch
+        {
+            foreach (var move in moved.AsEnumerable().Reverse())
+            {
+                if (File.Exists(move.Target) && !File.Exists(move.Source))
+                    File.Move(move.Target, move.Source);
+            }
+
+            throw;
+        }
+    }
+
+    private static string NormalizeFileComponent(string value)
+    {
+        var text = string.IsNullOrWhiteSpace(value) ? "default" : value.Trim();
+        foreach (var invalid in Path.GetInvalidFileNameChars())
+            text = text.Replace(invalid, '_');
+        return text.Replace(' ', '_');
     }
 }

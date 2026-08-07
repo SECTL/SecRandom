@@ -318,7 +318,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
     private async Task ShowRestartDialog()
     {
-        if (_isShowingRestartDialog) return;
+        if (_isPreviewMode || _isShowingRestartDialog) return;
         _isShowingRestartDialog = true;
 
         var r = await new FAContentDialog
@@ -332,6 +332,9 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
         _isShowingRestartDialog = false;
         if (r != FAContentDialogResult.Primary)
+            return;
+
+        if (_isPreviewMode)
             return;
 
         await IAppHost.GetService<ISecurityService>().AuthorizeAsync(

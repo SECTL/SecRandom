@@ -19,6 +19,9 @@ public interface IProfileCatalogManager
     bool CreateStudentList(string name);
     bool CreatePrizeList(string name);
 
+    bool RenameStudentList(string oldName, string newName);
+    bool RenamePrizeList(string oldName, string newName);
+
     bool DeleteStudentList(string name, bool deleteHistory);
     bool DeletePrizeList(string name, bool deleteHistory);
 

@@ -53,7 +53,7 @@ SecRandom.Core/
 | Draw commit boundary       | `Services/Draw/DrawCommitCoordinator.cs`, `Abstraction/Services/IDrawCommitService.cs` | Single-`DrawRoundId` transactional commit: temporary records before history, failure snapshot compensation, serialized commit gate. |
 | Config handlers            | `Services/Config/`                                                               | `FileConfigService`, `MainConfigHandler`, and `ProfileConfigs` implement host-internal JSON persistence. |
 | Profile runtime            | `Services/Profiles/ProfileService.cs`                                            | Injected current-list/history runtime shared by desktop and mobile hosts. |
-| Profile catalog            | `Services/Profiles/ProfileCatalogManager.cs`                                     | List/profile CRUD and student/prize history clearing behind `IProfileCatalogManager`. |
+| Profile catalog            | `Services/Profiles/ProfileCatalogManager.cs`                                     | List/profile CRUD, rename/file migration, and student/prize history clearing behind `IProfileCatalogManager`. |
 | Roster import              | `Services/Profiles/RosterImportParser.cs`                                        | Shared roster spreadsheet parsing/column mapping used by desktop and mobile import flows. |
 | Temporary draw records     | `Services/Draw/DrawTemporaryRecordService.cs`                                   | Host-internal student/prize temporary records shared by desktop and mobile hosts. |
 | Feature availability       | `Services/FeatureAvailabilityService.cs`                                        | `MoreSettings.LotteryEnabled` runtime gate behind `IFeatureAvailabilityService`. |

@@ -71,6 +71,8 @@ public sealed class MobileHistoryPageTests
         public bool PrizeListExists(string name) => false;
         public bool CreateStudentList(string name) => false;
         public bool CreatePrizeList(string name) => false;
+        public bool RenameStudentList(string oldName, string newName) => false;
+        public bool RenamePrizeList(string oldName, string newName) => false;
         public bool DeleteStudentList(string name, bool deleteHistory) => false;
         public bool DeletePrizeList(string name, bool deleteHistory) => false;
         public StudentList? LoadStudentList(string name) => null;

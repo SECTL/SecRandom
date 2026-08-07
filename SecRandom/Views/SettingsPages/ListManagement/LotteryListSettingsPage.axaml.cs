@@ -192,6 +192,29 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         this.ShowSuccessToast(string.Format(LR.M_DeleteListSuccess, deleteName));
     }
 
+    private async void RenameListButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(SelectedPrizeListName) || SelectedPrizeList == null)
+        {
+            this.ShowWarningToast(LR.M_SelectListFirst);
+            return;
+        }
+
+        var oldName = SelectedPrizeListName;
+        var newName = await ShowListNameDialogAsync(LR.M_ListNameDialogTitle_Rename,
+            LR.M_ListNameDialogPrimary_Rename, oldName);
+        if (newName == null || string.Equals(oldName, newName, StringComparison.Ordinal))
+            return;
+
+        if (!ValidateNewListName(newName) || !_catalogManager.RenamePrizeList(oldName, newName))
+            return;
+
+        SelectedPrizeList = null;
+        RefreshPrizeLists(newName);
+        _logger.LogInformation("已重命名奖品池：旧奖品池={OldListName}，新奖品池={NewListName}。", oldName, newName);
+        this.ShowSuccessToast(string.Format(LR.M_RenameListSuccess, newName));
+    }
+
     private void ImportButton_OnClick(object? sender, RoutedEventArgs e)
     {
         if (SelectedPrizeList == null)

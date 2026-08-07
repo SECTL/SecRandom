@@ -24,6 +24,7 @@
                 
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <Button Content="{x:Static lr:Resources.C_AddList}" Click="AddListButton_OnClick" />
+                    <Button Content="{x:Static lr:Resources.C_RenameList}" Click="RenameListButton_OnClick" />
                     <Button Content="{x:Static lr:Resources.C_DeleteList}" Click="DeleteListButton_OnClick" />
                 </StackPanel>
             </StackPanel>

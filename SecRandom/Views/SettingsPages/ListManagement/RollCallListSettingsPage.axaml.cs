@@ -196,6 +196,29 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         this.ShowSuccessToast(string.Format(LR.M_DeleteListSuccess, deleteName));
     }
 
+    private async void RenameListButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(SelectedStudentListName) || SelectedStudentList == null)
+        {
+            this.ShowWarningToast(LR.M_SelectListFirst);
+            return;
+        }
+
+        var oldName = SelectedStudentListName;
+        var newName = await ShowListNameDialogAsync(LR.M_ListNameDialogTitle_Rename,
+            LR.M_ListNameDialogPrimary_Rename, oldName);
+        if (newName == null || string.Equals(oldName, newName, StringComparison.Ordinal))
+            return;
+
+        if (!ValidateNewListName(newName) || !_catalogManager.RenameStudentList(oldName, newName))
+            return;
+
+        SelectedStudentList = null;
+        RefreshStudentLists(newName);
+        _logger.LogInformation("已重命名点名名单：旧名单={OldListName}，新名单={NewListName}。", oldName, newName);
+        this.ShowSuccessToast(string.Format(LR.M_RenameListSuccess, newName));
+    }
+
     private void ImportButton_OnClick(object? sender, RoutedEventArgs e)
     {
         if (SelectedStudentList == null)
