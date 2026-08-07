@@ -3,19 +3,19 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
-              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.More"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.More"
              xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.More"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-               x:Class="SecRandom.Views.SettingsPages.More.MoreSettingsPage"
-              x:DataType="local:MoreSettingsPage"
-              Focusable="True"
-              Unloaded="OnUnloaded">
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SecRandom.Views.SettingsPages.More.MoreSettingsPage"
+             x:DataType="local:MoreSettingsPage"
+             Focusable="True"
+             Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro settings">
             <sr:IconText Text="{x:Static lsp:Resources.S_PageManagement}"
-                          Glyph="{sr:Fi PanelRightFilled}"
-                          Margin="0 0 0 4" />
+                         Glyph="{sr:Fi PanelRightFilled}"
+                         Margin="0 0 0 4" />
 
             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_RollCallPanelPosition}"
                                    Description="{x:Static lsp:Resources.S_RollCallPanelPosition_D}"
@@ -29,8 +29,9 @@
             </fa:FASettingsExpander>
 
             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_RollCallControls}"
-                                    Description="{x:Static lsp:Resources.S_RollCallControls_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi AppsListFilled}}">
+                                   Description="{x:Static lsp:Resources.S_RollCallControls_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi AppsListFilled}}"
+                                   IsVisible="{Binding UseDesktopUI}">
                 <fa:FASettingsExpanderItem>
                     <CheckBox Content="{x:Static lsp:Resources.S_RollCallResetButton}"
                               IsChecked="{Binding Settings.RollCallResetButton}" />
@@ -81,9 +82,9 @@
             </fa:FASettingsExpander>
 
             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_LotteryPanelPosition}"
-                                    Description="{x:Static lsp:Resources.S_LotteryPanelPosition_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi GiftFilled}}"
-                                    IsVisible="{Binding Settings.LotteryEnabled}">
+                                   Description="{x:Static lsp:Resources.S_LotteryPanelPosition_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi GiftFilled}}"
+                                   IsVisible="{Binding Settings.LotteryEnabled}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.LotteryControlPanelPosition}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_Right}" />
@@ -93,9 +94,15 @@
             </fa:FASettingsExpander>
 
             <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_LotteryControls}"
-                                    Description="{x:Static lsp:Resources.S_LotteryControls_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi AppsListFilled}}"
-                                    IsVisible="{Binding Settings.LotteryEnabled}">
+                                   Description="{x:Static lsp:Resources.S_LotteryControls_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi AppsListFilled}}">
+                <fa:FASettingsExpander.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                        <Binding Path="Settings.LotteryEnabled" />
+                        <Binding Path="UseDesktopUI" />
+                    </MultiBinding>
+                </fa:FASettingsExpander.IsVisible>
+                
                 <fa:FASettingsExpanderItem>
                     <CheckBox Content="{x:Static lsp:Resources.S_LotteryResetButton}"
                               IsChecked="{Binding Settings.LotteryResetButton}" />
@@ -149,10 +156,10 @@
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Shortcut_Card" IsVisible="{Binding IsDesktop}"
-                                    Header="{x:Static lsp:Resources.S_Shortcut}"
-                                    Description="{x:Static lsp:Resources.S_Shortcut_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi KeyboardFilled}}"
-                                    IsExpanded="{Binding Settings.EnableShortcut, Mode=OneWay}">
+                                   Header="{x:Static lsp:Resources.S_Shortcut}"
+                                   Description="{x:Static lsp:Resources.S_Shortcut_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi KeyboardFilled}}"
+                                   IsExpanded="{Binding Settings.EnableShortcut, Mode=OneWay}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.EnableShortcut}" />
                 </fa:FASettingsExpander.Footer>
@@ -164,10 +171,12 @@
                                        IsVisible="{Binding IsOpenRollCallPageShortcutConflicted}"
                                        Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                        VerticalAlignment="Center" />
-                            <TextBox Grid.Column="2" Tag="OpenRollCallPageShortcut" Text="{Binding Settings.OpenRollCallPageShortcut}"
+                            <TextBox Grid.Column="2" Tag="OpenRollCallPageShortcut"
+                                     Text="{Binding Settings.OpenRollCallPageShortcut}"
                                      IsReadOnly="True" PlaceholderText="{x:Static lsp:Resources.C_ShortcutCapture}"
                                      KeyDown="ShortcutBox_OnKeyDown" />
-                            <Button Grid.Column="3" Tag="OpenRollCallPageShortcut" Theme="{StaticResource TransparentButton}"
+                            <Button Grid.Column="3" Tag="OpenRollCallPageShortcut"
+                                    Theme="{StaticResource TransparentButton}"
                                     ToolTip.Tip="{x:Static lsp:Resources.C_ShortcutClear}"
                                     Click="ClearShortcutButton_OnClick">
                                 <sr:FluentIcon Glyph="{sr:Fi DismissCircleFilled}" />
@@ -183,7 +192,8 @@
                                        IsVisible="{Binding IsQuickDrawShortcutConflicted}"
                                        Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                        VerticalAlignment="Center" />
-                            <TextBox Grid.Column="2" Tag="QuickDrawShortcut" Text="{Binding Settings.QuickDrawShortcut}"
+                            <TextBox Grid.Column="2" Tag="QuickDrawShortcut"
+                                     Text="{Binding Settings.QuickDrawShortcut}"
                                      IsReadOnly="True" PlaceholderText="{x:Static lsp:Resources.C_ShortcutCapture}"
                                      KeyDown="ShortcutBox_OnKeyDown" />
                             <Button Grid.Column="3" Tag="QuickDrawShortcut" Theme="{StaticResource TransparentButton}"
@@ -203,10 +213,12 @@
                                        IsVisible="{Binding IsOpenLotteryPageShortcutConflicted}"
                                        Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                        VerticalAlignment="Center" />
-                            <TextBox Grid.Column="2" Tag="OpenLotteryPageShortcut" Text="{Binding Settings.OpenLotteryPageShortcut}"
+                            <TextBox Grid.Column="2" Tag="OpenLotteryPageShortcut"
+                                     Text="{Binding Settings.OpenLotteryPageShortcut}"
                                      IsReadOnly="True" PlaceholderText="{x:Static lsp:Resources.C_ShortcutCapture}"
                                      KeyDown="ShortcutBox_OnKeyDown" />
-                            <Button Grid.Column="3" Tag="OpenLotteryPageShortcut" Theme="{StaticResource TransparentButton}"
+                            <Button Grid.Column="3" Tag="OpenLotteryPageShortcut"
+                                    Theme="{StaticResource TransparentButton}"
                                     ToolTip.Tip="{x:Static lsp:Resources.C_ShortcutClear}"
                                     Click="ClearShortcutButton_OnClick">
                                 <sr:FluentIcon Glyph="{sr:Fi DismissCircleFilled}" />
@@ -222,10 +234,12 @@
                                        IsVisible="{Binding IsIncreaseRollCallCountShortcutConflicted}"
                                        Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                        VerticalAlignment="Center" />
-                            <TextBox Grid.Column="2" Tag="IncreaseRollCallCountShortcut" Text="{Binding Settings.IncreaseRollCallCountShortcut}"
+                            <TextBox Grid.Column="2" Tag="IncreaseRollCallCountShortcut"
+                                     Text="{Binding Settings.IncreaseRollCallCountShortcut}"
                                      IsReadOnly="True" PlaceholderText="{x:Static lsp:Resources.C_ShortcutCapture}"
                                      KeyDown="ShortcutBox_OnKeyDown" />
-                            <Button Grid.Column="3" Tag="IncreaseRollCallCountShortcut" Theme="{StaticResource TransparentButton}"
+                            <Button Grid.Column="3" Tag="IncreaseRollCallCountShortcut"
+                                    Theme="{StaticResource TransparentButton}"
                                     ToolTip.Tip="{x:Static lsp:Resources.C_ShortcutClear}"
                                     Click="ClearShortcutButton_OnClick">
                                 <sr:FluentIcon Glyph="{sr:Fi DismissCircleFilled}" />
@@ -241,10 +255,12 @@
                                        IsVisible="{Binding IsDecreaseRollCallCountShortcutConflicted}"
                                        Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                        VerticalAlignment="Center" />
-                            <TextBox Grid.Column="2" Tag="DecreaseRollCallCountShortcut" Text="{Binding Settings.DecreaseRollCallCountShortcut}"
+                            <TextBox Grid.Column="2" Tag="DecreaseRollCallCountShortcut"
+                                     Text="{Binding Settings.DecreaseRollCallCountShortcut}"
                                      IsReadOnly="True" PlaceholderText="{x:Static lsp:Resources.C_ShortcutCapture}"
                                      KeyDown="ShortcutBox_OnKeyDown" />
-                            <Button Grid.Column="3" Tag="DecreaseRollCallCountShortcut" Theme="{StaticResource TransparentButton}"
+                            <Button Grid.Column="3" Tag="DecreaseRollCallCountShortcut"
+                                    Theme="{StaticResource TransparentButton}"
                                     ToolTip.Tip="{x:Static lsp:Resources.C_ShortcutClear}"
                                     Click="ClearShortcutButton_OnClick">
                                 <sr:FluentIcon Glyph="{sr:Fi DismissCircleFilled}" />
@@ -261,10 +277,12 @@
                                        IsVisible="{Binding IsIncreaseLotteryCountShortcutConflicted}"
                                        Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                        VerticalAlignment="Center" />
-                            <TextBox Grid.Column="2" Tag="IncreaseLotteryCountShortcut" Text="{Binding Settings.IncreaseLotteryCountShortcut}"
+                            <TextBox Grid.Column="2" Tag="IncreaseLotteryCountShortcut"
+                                     Text="{Binding Settings.IncreaseLotteryCountShortcut}"
                                      IsReadOnly="True" PlaceholderText="{x:Static lsp:Resources.C_ShortcutCapture}"
                                      KeyDown="ShortcutBox_OnKeyDown" />
-                            <Button Grid.Column="3" Tag="IncreaseLotteryCountShortcut" Theme="{StaticResource TransparentButton}"
+                            <Button Grid.Column="3" Tag="IncreaseLotteryCountShortcut"
+                                    Theme="{StaticResource TransparentButton}"
                                     ToolTip.Tip="{x:Static lsp:Resources.C_ShortcutClear}"
                                     Click="ClearShortcutButton_OnClick">
                                 <sr:FluentIcon Glyph="{sr:Fi DismissCircleFilled}" />
@@ -281,10 +299,12 @@
                                        IsVisible="{Binding IsDecreaseLotteryCountShortcutConflicted}"
                                        Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                        VerticalAlignment="Center" />
-                            <TextBox Grid.Column="2" Tag="DecreaseLotteryCountShortcut" Text="{Binding Settings.DecreaseLotteryCountShortcut}"
+                            <TextBox Grid.Column="2" Tag="DecreaseLotteryCountShortcut"
+                                     Text="{Binding Settings.DecreaseLotteryCountShortcut}"
                                      IsReadOnly="True" PlaceholderText="{x:Static lsp:Resources.C_ShortcutCapture}"
                                      KeyDown="ShortcutBox_OnKeyDown" />
-                            <Button Grid.Column="3" Tag="DecreaseLotteryCountShortcut" Theme="{StaticResource TransparentButton}"
+                            <Button Grid.Column="3" Tag="DecreaseLotteryCountShortcut"
+                                    Theme="{StaticResource TransparentButton}"
                                     ToolTip.Tip="{x:Static lsp:Resources.C_ShortcutClear}"
                                     Click="ClearShortcutButton_OnClick">
                                 <sr:FluentIcon Glyph="{sr:Fi DismissCircleFilled}" />
@@ -300,10 +320,12 @@
                                        IsVisible="{Binding IsStartRollCallShortcutConflicted}"
                                        Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                        VerticalAlignment="Center" />
-                            <TextBox Grid.Column="2" Tag="StartRollCallShortcut" Text="{Binding Settings.StartRollCallShortcut}"
+                            <TextBox Grid.Column="2" Tag="StartRollCallShortcut"
+                                     Text="{Binding Settings.StartRollCallShortcut}"
                                      IsReadOnly="True" PlaceholderText="{x:Static lsp:Resources.C_ShortcutCapture}"
                                      KeyDown="ShortcutBox_OnKeyDown" />
-                            <Button Grid.Column="3" Tag="StartRollCallShortcut" Theme="{StaticResource TransparentButton}"
+                            <Button Grid.Column="3" Tag="StartRollCallShortcut"
+                                    Theme="{StaticResource TransparentButton}"
                                     ToolTip.Tip="{x:Static lsp:Resources.C_ShortcutClear}"
                                     Click="ClearShortcutButton_OnClick">
                                 <sr:FluentIcon Glyph="{sr:Fi DismissCircleFilled}" />
@@ -320,10 +342,12 @@
                                        IsVisible="{Binding IsStartLotteryShortcutConflicted}"
                                        Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                        VerticalAlignment="Center" />
-                            <TextBox Grid.Column="2" Tag="StartLotteryShortcut" Text="{Binding Settings.StartLotteryShortcut}"
+                            <TextBox Grid.Column="2" Tag="StartLotteryShortcut"
+                                     Text="{Binding Settings.StartLotteryShortcut}"
                                      IsReadOnly="True" PlaceholderText="{x:Static lsp:Resources.C_ShortcutCapture}"
                                      KeyDown="ShortcutBox_OnKeyDown" />
-                            <Button Grid.Column="3" Tag="StartLotteryShortcut" Theme="{StaticResource TransparentButton}"
+                            <Button Grid.Column="3" Tag="StartLotteryShortcut"
+                                    Theme="{StaticResource TransparentButton}"
                                     ToolTip.Tip="{x:Static lsp:Resources.C_ShortcutClear}"
                                     Click="ClearShortcutButton_OnClick">
                                 <sr:FluentIcon Glyph="{sr:Fi DismissCircleFilled}" />

@@ -108,7 +108,47 @@
             
             <ScrollViewer>
                 <StackPanel Spacing="8" VerticalAlignment="Bottom" Classes="draw-page animated-intro">
-                    <Grid ColumnDefinitions="* *" ColumnSpacing="8">
+                    <Grid ColumnDefinitions="* *" ColumnSpacing="8"
+                          IsVisible="{Binding DrawPanelPositionLeft}">
+                        <Grid Grid.Column="0"
+                              VerticalAlignment="Bottom"
+                              ColumnDefinitions="Auto Auto *"
+                              ColumnSpacing="8">
+                            <Grid.Styles>
+                                <Style Selector="Grid > Button">
+                                    <Setter Property="Width" Value="{DynamicResource SizeBase}" />
+                                    <Setter Property="Height" Value="{DynamicResource SizeBase}" />
+                                    <Setter Property="Margin" Value="0" />
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="FontSize" Value="24" />
+                                </Style>
+                            </Grid.Styles>
+                        
+                            <Button Grid.Column="0"
+                                    Content="+"
+                                    IsEnabled="{Binding CanIncreaseCount}"
+                                    Command="{Binding IncreaseCountCommand}" />
+                        
+                            <Button Grid.Column="1"
+                                    Content="-"
+                                    IsEnabled="{Binding CanDecreaseCount}"
+                                    Command="{Binding DecreaseCountCommand}"/>
+                        
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding DrawCount}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontSize="18" />
+                        </Grid>
+                        
+                        <sr:Field Grid.Column="1" Label="{x:Static langs:Resources.S_CurrentList}">
+                            <ComboBox ItemsSource="{Binding StudentLists}"
+                                      SelectedItem="{Binding SelectedStudentList, Mode=TwoWay}" />
+                        </sr:Field>
+                    </Grid>
+                    
+                    <Grid ColumnDefinitions="* *" ColumnSpacing="8"
+                          IsVisible="{Binding !DrawPanelPositionLeft}">
                         <sr:Field Grid.Column="0" Label="{x:Static langs:Resources.S_CurrentList}">
                             <ComboBox ItemsSource="{Binding StudentLists}"
                                       SelectedItem="{Binding SelectedStudentList, Mode=TwoWay}" />
