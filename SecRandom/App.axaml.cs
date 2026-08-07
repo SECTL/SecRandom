@@ -898,6 +898,7 @@ public partial class App : Application
                     
                     // 底部
                     services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
+                    services.AddSettingsPage<MobileUpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
                     services.AddSettingsPageSeparator(PageLocation.Bottom, isHide: true);
                     services.AddSettingsPage<DebugSettingsPage>(
                         Langs.SettingsPages.Debug.DebugStrings.Get("Page_Title"));

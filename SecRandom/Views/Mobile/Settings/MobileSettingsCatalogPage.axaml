@@ -5,7 +5,7 @@
                                xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
                                x:Class="SecRandom.Views.Mobile.Settings.MobileSettingsCatalogPage"
                               x:DataType="local:MobileSettingsCatalogPage">
-    <ScrollViewer x:Name="PageScroll" HorizontalScrollBarVisibility="Disabled">
+    <ScrollViewer x:Name="PageScroll">
         <ItemsControl ItemsSource="{Binding Items}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -19,8 +19,8 @@
                                            Header="{Binding Name}"
                                            Tag="{Binding PageId}"
                                            IsClickEnabled="{Binding IsPage}"
-                                           Click="CatalogItem_OnClick"
-                                           IsExpanded="True">
+                                           ActionIconSource="{sr:FluentIconSource {sr:Fi ChevronRightFilled}}"
+                                           Click="CatalogItem_OnClick">
                         <fa:FASettingsExpander.IconSource>
                             <sr:FluentIconSource Glyph="{Binding IconGlyph}" />
                         </fa:FASettingsExpander.IconSource>
