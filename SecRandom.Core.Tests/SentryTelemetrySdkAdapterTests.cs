@@ -17,11 +17,11 @@ public class SentryTelemetrySdkAdapterTests
     }
 
     [Fact]
-    public void ConfigureOptions_EnablesSdkDebugLogging()
+    public void ConfigureOptions_DisablesSdkDebugLogging()
     {
         SentryOptions options = GetConfiguredOptions();
 
-        Assert.True(options.Debug);
+        Assert.False(options.Debug);
     }
 
     [Fact]

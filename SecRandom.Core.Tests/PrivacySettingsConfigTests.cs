@@ -7,6 +7,7 @@ using MainConfigModel = global::SecRandom.Core.Models.MainConfigModel;
 using OnlineStatusMode = global::SecRandom.Core.Enums.Configs.OnlineStatusMode;
 using PrivacySettingsConfig = global::SecRandom.Core.Models.SubConfigs.General.PrivacySettingsConfig;
 using ConfigServiceBase = global::SecRandom.Core.Abstraction.ConfigServiceBase;
+using GlobalConstants = global::SecRandom.Core.GlobalConstants;
 using TelemetryMode = global::SecRandom.Core.Enums.Configs.TelemetryMode;
 using TelemetryPolicySnapshot = global::SecRandom.Services.Telemetry.TelemetryPolicySnapshot;
 
@@ -77,8 +78,9 @@ public class PrivacySettingsConfigTests
         Assert.False(policy.SendDefaultPii);
         Assert.True(policy.EnableTraces);
         Assert.True(policy.EnableProfiles);
-        Assert.Equal(0.2, policy.TracesSampleRate);
-        Assert.Equal(0.2, policy.ProfilesSampleRate);
+        double expectedSampleRate = GlobalConstants.IsDevelopment ? 1.0 : 0.2;
+        Assert.Equal(expectedSampleRate, policy.TracesSampleRate);
+        Assert.Equal(expectedSampleRate, policy.ProfilesSampleRate);
     }
 
     [Fact]
