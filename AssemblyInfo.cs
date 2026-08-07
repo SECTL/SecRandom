@@ -1,7 +1,7 @@
 using System.Reflection;
 using SecRandom;
 
-[assembly: AssemblyVersion(GitInfo.Tag)]
+[assembly: AssemblyVersion(GitInfo.AssemblyVersion)]
 [assembly: AssemblyInformationalVersion($"{GitInfo.Tag}+{GitInfo.CommitHash}")]
 [assembly: AssemblyTitle("SecRandom")]
 [assembly: AssemblyProduct("SecRandom")]
