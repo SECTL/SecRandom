@@ -13,25 +13,26 @@
              Loaded="OnLoaded"
              Unloaded="OnUnloaded">
     <Grid RowDefinitions="Auto *">
-        <Border Grid.Row="0" Height="48">
+        <Border Grid.Row="0" Height="48"
+                Background="Transparent"
+                WindowDecorationProperties.ElementRole="TitleBar">
             <StackPanel Orientation="Horizontal" Margin="8" Spacing="8">
                 <Button Theme="{StaticResource PaneToggleButtonStyle}"
                         IsVisible="{Binding ViewModel.IsNavPaneToggleButtonVisible}"
                         MinWidth="40" Width="48"
                         VerticalAlignment="Center"
                         Margin="-7 -8 -15 -8"
-                        Click="TogglePaneButton_OnClick" />
+                        Click="TogglePaneButton_OnClick"
+                        WindowDecorationProperties.ElementRole="User" />
 
                 <Image Source="/Assets/AppLogo.png"
                        Width="18" Height="18"
                        VerticalAlignment="Center"
-                       Margin="8 0 0 0"
-                       IsHitTestVisible="False" />
+                       Margin="8 0 0 0" />
 
                 <TextBlock Text="SecRandom"
                            FontSize="12"
-                           VerticalAlignment="Center"
-                           IsHitTestVisible="False" />
+                           VerticalAlignment="Center" />
             </StackPanel>
         </Border>
 

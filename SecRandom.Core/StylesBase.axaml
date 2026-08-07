@@ -169,14 +169,6 @@
         Selector="fa|FACommandBar.hide-popup-indicator fa|FACommandBarButton:labelright /template/ fa|FAFontIcon#SubItemChevron">
         <Setter Property="IsVisible" Value="False" />
     </Style>
-
-    <Style Selector="WindowDrawnDecorations /template/ Border#PART_WindowBorder">
-        <Setter Property="Background" Value="Transparent" />
-    </Style>
-
-    <Style Selector="WindowDrawnDecorations /template/ Panel#PART_TitleBar">
-        <Setter Property="Background" Value="Transparent" />
-    </Style>
     
     <Style Selector=".settings fa|FANumberBox">
         <Setter Property="MinWidth" Value="128" />
