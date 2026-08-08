@@ -10,7 +10,7 @@ Maintenance contract:
 - `docs/project_rules.md` is the source of truth when a convention conflicts with this summary.
 -->
 
-**Last Update:** 2026-08-07
+**Last Update:** 2026-08-08
 **Last Submit:** 51f7f7fd
 **Last modified model:** MiMoCode
 
@@ -174,7 +174,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - `Global.props` carries the main MSBuild behavior: unsafe enabled, Windows targeting enabled, SourceLink, full debug symbols, and default exclusion of project-local `artifacts/` / `publish/` output trees from SDK item globbing. The Git-info analyzer remains available to all projects, while the shared `AssemblyInfo.cs` is enabled only by projects that explicitly set `EnableGitInfoGenerator`; current versioned assemblies are `SecRandom.Core`, `SecRandom.Desktop`, `SecRandom.Android`, and `SecRandom.iOS`.
 - `Directory.Build.props` only pins `AvaloniaVersion`.
 - Standalone verification scripts live under `scripts/`; keep them self-contained and write outputs under `artifacts/`.
-- Release CI keeps generated material under `artifacts/release/`: RID publish trees under `publish/`, portable ZIP assembly under `portable/`, Windows installer staging under `installer/` and `setup/`, platform package workspaces under `linux/` / `macos/`, upload candidates under `dist/`, and release-job downloads/final signed assets under `downloaded/` / `output/`. The Android job stages its signed arm64 APK separately, then the release job includes it in `output/`, the signed manifest, and the GitHub release. Portable ZIP contents must remain a root `SecRandomLauncher` plus one valid `app-*` payload directory; do not rearrange that runtime package contract.
+- Release CI keeps generated material under `artifacts/release/`: RID publish trees under `publish/`, portable ZIP assembly under `portable/`, Windows installer staging under `installer/` and `setup/`, platform package workspaces under `linux/` / `macos/`, upload candidates under `dist/`, and release-job downloads/final signed assets under `downloaded/` / `output/`. Every Android build must receive the same configured release keystore secrets, rejects missing signing configuration, and verifies the produced APK certificate against that keystore before upload. The Android job stages signed arm64 and x64 APKs separately; the release job includes the supported APK artifacts in `output/`, the signed manifest, and the GitHub release. Portable ZIP contents must remain a root `SecRandomLauncher` plus one valid `app-*` payload directory; do not rearrange that runtime package contract.
 - More settings owns built-in draw page chrome options such as roll-call/lottery control panel position and control visibility; do not hard-code those controls outside the page/config binding.
 - `MoreSettings.LotteryEnabled` is the single capability switch for lottery. It must consistently gate main navigation, floating-window buttons, shortcuts, and URL/IPC routes.
 - Application-owned Fluent System Icons use the `Filled` variant by default across navigation, settings, buttons, menus, floating windows, and empty states. Use the closest semantic `Filled` icon when no same-name variant exists.
