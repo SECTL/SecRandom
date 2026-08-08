@@ -100,6 +100,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
     public bool HomeButtonVisible => _platformServiceRoot.Capabilities.SupportsSingleView;
     private IImportExportService ImportExportService => IAppHost.GetService<IImportExportService>();
     private IExternalLauncher ExternalLauncher => IAppHost.GetService<IExternalLauncher>();
+    public bool IsDesktop => App.IsDesktop;
 
     #region Misc
 

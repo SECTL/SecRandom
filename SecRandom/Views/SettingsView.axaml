@@ -136,15 +136,18 @@
 
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_OpenLogDirectory}"
+                                          IsVisible="{Binding IsDesktop}"
                                           Click="OpenLogDirectoryMenuItem_OnClick" />
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_OpenDataDirectory}"
+                                          IsVisible="{Binding IsDesktop}"
                                           Click="OpenDataDirectoryMenuItem_OnClick" />
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_OpenAppDirectory}"
+                                          IsVisible="{Binding IsDesktop}"
                                           Click="OpenAppDirectoryMenuItem_OnClick" />
 
-                                <Separator />
+                                <Separator IsVisible="{Binding IsDesktop}" />
 
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi CommentNoteFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_Feedback}"
