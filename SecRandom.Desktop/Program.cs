@@ -1,6 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Platform;
+using SecRandom;
 using SecRandom.Extensions;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
@@ -80,7 +85,41 @@ internal sealed class Program
             {
                 DefaultFamilyName = "avares://SecRandom/Assets/Fonts/MiSans/#MiSans"
             })
+            .AfterPlatformServicesSetup(_ => BindAssetLoader())
             .LogToTrace()
             .LogToHostSink();
+    }
+
+    private static void BindAssetLoader()
+    {
+        var appAssembly = typeof(App).Assembly;
+        var assemblyDirectory = Path.GetDirectoryName(appAssembly.Location);
+        var assetRoot = Path.Combine(
+            string.IsNullOrEmpty(assemblyDirectory) ? AppContext.BaseDirectory : assemblyDirectory,
+            "Assets");
+
+        var assetLoader = new OverlayAssetLoader(
+            new StandardAssetLoader(appAssembly),
+            appAssembly,
+            appAssembly.GetName().Name!,
+            "/Assets/",
+            assetRoot,
+            new HashSet<string>(StringComparer.Ordinal)
+            {
+                "Updates/release-public-key.txt"
+            });
+
+        const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance;
+        var locatorType = typeof(AvaloniaLocator);
+        var locator = locatorType.GetProperty("CurrentMutable", flags)?.GetValue(null)
+                      ?? throw new InvalidOperationException("Unable to get AvaloniaLocator.CurrentMutable.");
+        var bindMethod = locatorType.GetMethod("Bind", flags)?.MakeGenericMethod(typeof(IAssetLoader))
+                         ?? throw new InvalidOperationException("Unable to get AvaloniaLocator.Bind<T>().");
+        var registration = bindMethod.Invoke(locator, null)
+                           ?? throw new InvalidOperationException("Unable to bind Avalonia IAssetLoader.");
+        var toConstantMethod = registration.GetType().GetMethod("ToConstant", flags)?.MakeGenericMethod(typeof(IAssetLoader))
+                               ?? throw new InvalidOperationException("Unable to get AvaloniaLocator.ToConstant<T>().");
+
+        toConstantMethod.Invoke(registration, [assetLoader]);
     }
 }

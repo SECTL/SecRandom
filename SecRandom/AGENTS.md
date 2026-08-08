@@ -50,7 +50,7 @@ SecRandom/
 ├── Helpers/             # App-local helpers
 ├── Converters/          # App-local Avalonia converters
 ├── Langs/               # Per-page resx plus app-level IPC response localization
-├── Assets/              # Avalonia resources, icons, MiSans font, banners
+├── Assets/              # Desktop external resources; embedded for Android/iOS; icons, MiSans font, banners
 ├── Controls/            # App-specific controls, including Mobile/; shared controls belong in Core
 └── Styles.axaml         # Includes Core style bundle
 ```
@@ -112,6 +112,10 @@ SecRandom/
   `MobilePlatformServiceRoot`; shared mobile views must not reference Android or UIKit APIs. Do not recreate a separate mobile UI assembly.
 - Mobile uses the same configurable application font path as desktop: the default is embedded MiSans, and
   `AppearanceSettingsConfig.Font` / `FontWeight` apply through `RefreshPersonalizedSettings()` on every platform.
+- Desktop binds `OverlayAssetLoader` during platform setup in every configuration, so `avares://SecRandom/Assets/...`
+  resolves to the executable-adjacent `Assets/` files before embedded fallbacks. Android and iOS compile the app assets
+  into their package instead. Keep `Assets/Updates/release-public-key.txt` embedded and excluded from the overlay so a
+  replaceable application asset cannot alter the update trust root.
 - Mobile fixed layout is AXAML-first. Keep code-behind for runtime data, StorageProvider, dialogs, DataGrid setup, media, and service orchestration; do not add a second mobile style/token layer, `NavigationView`, or generic C# setting-row factory as the primary page layout.
 - Mobile SettingsView is its own MVE page in `MobileViewHost`'s `NavigationPage`, not bottom-bar root-route state. It currently reuses the desktop settings layout and starts at hidden `settings.mobile`, whose catalog follows the registered `SettingsItems` order, inserting each registered group at its first child and keeping ungrouped or unknown-group pages as directly clickable expanders. The catalog uses the same hidden/separator filtering and registered-group fallback as desktop settings navigation; grouped expanders remain collapsed by default on mobile. `MobileRootView` directly owns draw/history/overview selection and navigates its `FAFrame` through `IFANavigationPageFactory`, with history and cache disabled. Catalog navigation must not programmatically set the desktop `FANavigationView` selection because the hidden catalog has no corresponding sidebar item; navigate only its `FAFrame` content. The mobile main history route remains available, and its roll-call/lottery content embeds the registered settings history pages so both surfaces share the same ViewModels and column behavior. Its overview route likewise embeds `HomeSettingsPage` to share the settings overview's list and history summaries.
 - Crash recovery startup prompt handling runs before single-instance acquisition. Build the DI Host, but do not start normal hosted/runtime services, before showing the startup-only recovery prompt so its application-feedback action can open the same `FeedbackDrawer` Bug form with a prefilled crash report and standard diagnostics; normal app restart must release `SingleInstanceService` before launching the replacement process.

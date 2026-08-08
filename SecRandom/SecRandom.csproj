@@ -11,10 +11,19 @@
     <PropertyGroup>
         <HotAvaloniaAutoEnable>False</HotAvaloniaAutoEnable>
         <HotAvalonia Condition="'$(Configuration)' == 'Debug'">True</HotAvalonia>
+        <SecRandomBundleAssetsInAssembly Condition="'$(SecRandomBundleAssetsInAssembly)' == ''">true</SecRandomBundleAssetsInAssembly>
     </PropertyGroup>
 
     <ItemGroup>
-        <AvaloniaResource Include="Assets\**" />
+        <AvaloniaResource Include="Assets\**" Condition="'$(SecRandomBundleAssetsInAssembly)' == 'true'" />
+        <AvaloniaResource Include="Assets\Updates\release-public-key.txt"
+                          Condition="'$(SecRandomBundleAssetsInAssembly)' != 'true'" />
+        <None Update="Assets\**" Condition="'$(SecRandomBundleAssetsInAssembly)' != 'true'">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+            <PublishFolderType>Resource</PublishFolderType>
+        </None>
+        <None Remove="Assets\Updates\release-public-key.txt" />
         <AvaloniaResource Remove="Views\SettingsPages\Plugins\Overview\PluginsSettingsPage.axaml" />
     </ItemGroup>
 

@@ -28,7 +28,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SecRandom\SecRandom.csproj"/>
+        <ProjectReference Include="..\SecRandom\SecRandom.csproj">
+            <AdditionalProperties>SecRandomBundleAssetsInAssembly=false</AdditionalProperties>
+        </ProjectReference>
         <ProjectReference Include="..\SecRandom.Platforms\SecRandom.Platforms.csproj" />
         <ProjectReference Include="..\SecRandom.Platforms.Abstractions\SecRandom.Platforms.Abstractions.csproj" />
     </ItemGroup>
