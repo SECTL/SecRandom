@@ -939,7 +939,14 @@ public partial class App : Application
                 //     .Page_Title);
 
                 // 底部
-                services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
+                if (isMobile)
+                {
+                    services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
+                }
+                else
+                {
+                    services.AddSettingsPage<MobileUpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
+                }
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
 
                 services.AddSettingsPageSeparator(PageLocation.Bottom, isHide: true);

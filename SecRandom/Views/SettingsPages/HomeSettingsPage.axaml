@@ -74,7 +74,6 @@
                               CanUserSortColumns="False"
                               CanUserReorderColumns="False"
                               IsReadOnly="True"
-                              IsHitTestVisible="False"
                               BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                               BorderThickness="0 1 0 0">
                         <DataGrid.Styles>
@@ -85,23 +84,23 @@
                         </DataGrid.Styles>
                         
                         <DataGrid.Columns>
-                            <DataGridTextColumn Width="2.2*"
+                            <DataGridTextColumn Width="2.2*" MinWidth="220"
                                                 Header="{x:Static langs:Resources.C_Name}"
                                                 Binding="{Binding Name}" />
                             
-                            <DataGridTextColumn Width="*"
+                            <DataGridTextColumn Width="*" MinWidth="100"
                                                 Header="{x:Static langs:Resources.C_StudentCount}"
                                                 Binding="{Binding RecordCount}" />
 
-                            <DataGridTextColumn Width="1.4*"
+                            <DataGridTextColumn Width="1.4*" MinWidth="140"
                                                 Header="{x:Static langs:Resources.C_LastDrawn}"
                                                 Binding="{Binding LastDrawnTime}" />
 
-                            <DataGridTextColumn Width="*"
+                            <DataGridTextColumn Width="*" MinWidth="100"
                                                 Header="{x:Static langs:Resources.C_TotalRounds}"
                                                 Binding="{Binding TotalRounds}" />
 
-                            <DataGridTextColumn Width="*"
+                            <DataGridTextColumn Width="*" MinWidth="100"
                                                 Header="{x:Static langs:Resources.C_TotalDrawnCount}"
                                                 Binding="{Binding TotalDrawnCount}" />
                         </DataGrid.Columns>
@@ -155,7 +154,6 @@
                               CanUserSortColumns="False"
                               CanUserReorderColumns="False"
                               IsReadOnly="True"
-                              IsHitTestVisible="False"
                               BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                               BorderThickness="0 1 0 0">
                         <DataGrid.Styles>
@@ -166,23 +164,23 @@
                         </DataGrid.Styles>
                         
                         <DataGrid.Columns>
-                            <DataGridTextColumn Width="2.2*"
+                            <DataGridTextColumn Width="2.2*" MinWidth="220"
                                                 Header="{x:Static langs:Resources.C_Name}"
                                                 Binding="{Binding Name}" />
                             
-                            <DataGridTextColumn Width="*"
+                            <DataGridTextColumn Width="*" MinWidth="100"
                                                 Header="{x:Static langs:Resources.C_PrizeCount}"
                                                 Binding="{Binding RecordCount}" />
 
-                            <DataGridTextColumn Width="1.4*"
+                            <DataGridTextColumn Width="1.4*" MinWidth="140"
                                                 Header="{x:Static langs:Resources.C_LastDrawn}"
                                                 Binding="{Binding LastDrawnTime}" />
 
-                            <DataGridTextColumn Width="*"
+                            <DataGridTextColumn Width="*" MinWidth="100"
                                                 Header="{x:Static langs:Resources.C_TotalRounds}"
                                                 Binding="{Binding TotalRounds}" />
 
-                            <DataGridTextColumn Width="*"
+                            <DataGridTextColumn Width="*" MinWidth="100"
                                                 Header="{x:Static langs:Resources.C_TotalDrawnCount}"
                                                 Binding="{Binding TotalDrawnCount}" />
                         </DataGrid.Columns>
