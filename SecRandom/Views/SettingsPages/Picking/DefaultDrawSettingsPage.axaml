@@ -187,7 +187,6 @@
             <sr:IconText Text="{x:Static lp:Resources.Section_Music}" Glyph="{sr:Fi Speaker2Filled}" Margin="0 0 0 4" />
             <local:DrawMusicSettingsExpander x:Name="MusicSettingsExpander"
                                              Header="{x:Static lp:Resources.Section_Music}"
-                                             Description="{x:Static lp:Resources.Section_Music}"
                                              IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}"
                                              Settings="{Binding Settings}"
                                              MusicSelections="{Binding MusicSelections}" />
