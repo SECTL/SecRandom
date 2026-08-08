@@ -51,6 +51,9 @@
   <data name="M_ResetDone" xml:space="preserve">
     <value>已重置点名记录</value>
   </data>
+  <data name="M_AutoResetDone" xml:space="preserve">
+    <value>已自动重置点名记录并继续抽取</value>
+  </data>
   <data name="M_NoStudents" xml:space="preserve">
     <value>当前筛选条件下没有成员</value>
   </data>

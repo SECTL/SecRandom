@@ -58,6 +58,7 @@ namespace SecRandom.Langs.MainPages.RollCall {
         public static string M_Ready => ResourceManager.GetString("M_Ready", resourceCulture);
         public static string M_RepeatLimitExhausted => ResourceManager.GetString("M_RepeatLimitExhausted", resourceCulture);
         public static string M_ResetDone => ResourceManager.GetString("M_ResetDone", resourceCulture);
+        public static string M_AutoResetDone => ResourceManager.GetString("M_AutoResetDone", resourceCulture);
         public static string O_AllGenders => ResourceManager.GetString("O_AllGenders", resourceCulture);
         public static string O_AllGroups => ResourceManager.GetString("O_AllGroups", resourceCulture);
     }

@@ -105,6 +105,25 @@ public sealed class CoreRuntimeServicesTests : IDisposable
     }
 
     [Fact]
+    public void TemporaryRecordReset_OverwritesEmptyStateWithoutDeletingFiles()
+    {
+        using var provider = CreateProvider();
+        var temporaryRecords = provider.GetRequiredService<IDrawTemporaryRecordService>();
+        var student = new Student { Name = "Ada", RecordId = Guid.NewGuid() };
+        var prize = new Prize { Name = "Book", RecordId = Guid.NewGuid() };
+
+        temporaryRecords.RecordStudents("reset-class", string.Empty, string.Empty, [student]);
+        temporaryRecords.RecordPrizes("reset-pool", [prize]);
+        temporaryRecords.ResetStudentList("reset-class");
+        temporaryRecords.ResetPrizeList("reset-pool");
+
+        Assert.Empty(temporaryRecords.GetStudentCounts("reset-class", string.Empty, string.Empty));
+        Assert.Empty(temporaryRecords.GetPrizeCounts("reset-pool"));
+        Assert.True(File.Exists(Utils.GetFilePath("TEMP", "roll_call_record_reset-class.json")));
+        Assert.True(File.Exists(Utils.GetFilePath("TEMP", "lottery_record_reset-pool.json")));
+    }
+
+    [Fact]
     public void DrawEngineAndFeatureAvailabilityService_WorkWithoutStaticHostResolution()
     {
         using var provider = CreateProvider();

@@ -55,6 +55,7 @@ namespace SecRandom.Langs.MainPages.Lottery {
         public static string M_RemainingCountFormat => ResourceManager.GetString("M_RemainingCountFormat", resourceCulture);
         public static string M_RepeatLimitExhausted => ResourceManager.GetString("M_RepeatLimitExhausted", resourceCulture);
         public static string M_ResetDone => ResourceManager.GetString("M_ResetDone", resourceCulture);
+        public static string M_AutoResetDone => ResourceManager.GetString("M_AutoResetDone", resourceCulture);
         public static string O_AllGenders => ResourceManager.GetString("O_AllGenders", resourceCulture);
         public static string O_AllGroups => ResourceManager.GetString("O_AllGroups", resourceCulture);
         public static string O_NoStudentAssignment => ResourceManager.GetString("O_NoStudentAssignment", resourceCulture);

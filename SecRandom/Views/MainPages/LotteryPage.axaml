@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SecRandom.ViewModels.MainPages"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:langs="using:SecRandom.Langs.MainPages.Lottery"
              xmlns:system="clr-namespace:System;assembly=System.Runtime"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="720"
@@ -51,10 +52,10 @@
                             </Style>
                         </Grid.Styles>
                         
-                        <Button Grid.Column="0"
-                                Content="-"
-                                IsEnabled="{Binding CanDecreaseCount}"
-                                Command="{Binding DecreaseCountCommand}" />
+                        <sr:AcceleratingRepeatButton Grid.Column="0"
+                                                      Content="-"
+                                                      IsEnabled="{Binding CanDecreaseCount}"
+                                                      Command="{Binding DecreaseCountCommand}" />
                         
                         <TextBlock Grid.Column="1"
                                    Text="{Binding DrawCount}"
@@ -63,10 +64,10 @@
                                    FontSize="28"
                                    FontWeight="SemiBold" />
                         
-                        <Button Grid.Column="2"
-                                Content="+"
-                                IsEnabled="{Binding CanIncreaseCount}"
-                                Command="{Binding IncreaseCountCommand}" />
+                        <sr:AcceleratingRepeatButton Grid.Column="2"
+                                                      Content="+"
+                                                      IsEnabled="{Binding CanIncreaseCount}"
+                                                      Command="{Binding IncreaseCountCommand}" />
                     </Grid>
 
                     <Button Classes="accent"

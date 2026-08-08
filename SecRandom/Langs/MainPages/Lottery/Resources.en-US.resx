@@ -15,6 +15,7 @@
   <data name="O_AllGenders" xml:space="preserve"><value>Draw from all genders</value></data>
   <data name="M_Ready" xml:space="preserve"><value>Ready to draw</value></data>
   <data name="M_ResetDone" xml:space="preserve"><value>Lottery display reset</value></data>
+  <data name="M_AutoResetDone" xml:space="preserve"><value>Lottery records automatically reset and drawing continues</value></data>
   <data name="M_NoPrizes" xml:space="preserve"><value>No prizes are available to draw</value></data>
   <data name="M_NoRemainingPrizes" xml:space="preserve"><value>No prizes remain</value></data>
   <data name="M_NoStudents" xml:space="preserve"><value>No members match the current filters</value></data>

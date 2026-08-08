@@ -31,6 +31,7 @@ using SecRandom.Services.Security;
 using SecRandom.Services.Verification;
 using SecRandom.Services;
 using SecRandom.ViewModels;
+using SecRandom.Views;
 using SecRandom.Shared;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Models.Profile;
@@ -134,7 +135,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     public bool IsStudentAssignmentEnabled => SelectedStudentListName != NoStudentOption;
     public bool IsGroupSelectorVisible => MoreSettings.LotteryRangeSelector && IsStudentAssignmentEnabled;
     public bool IsGenderSelectorVisible => MoreSettings.LotteryGenderSelector && IsStudentAssignmentEnabled;
-    public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0 && RemainingCount > 0);
+    public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0);
     public string DrawButtonText => IsDrawing ? SR.C_Stop : SR.C_Start;
     public bool CanDecreaseCount => DrawCount > 1;
     public bool CanIncreaseCount => DrawCount < MaximumDrawCount;
@@ -269,6 +270,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             return;
 
         RefreshCounts();
+        ResetExhaustedTemporaryRecords();
         if (!CanStartDraw)
         {
             StatusText = TotalCount == 0 ? SR.M_NoPrizes : SR.M_NoRemainingPrizes;
@@ -378,10 +380,10 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             !await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.LotteryReset, () => Task.CompletedTask) ||
             !_featureAvailability.IsLotteryEnabled)
             return;
-        ResetDisplayCore();
+        ResetDisplayCore(showToast: true);
     }
 
-    private void ResetDisplayCore()
+    private void ResetDisplayCore(bool showToast = false)
     {
         _lastResultPrizes.Clear();
         ResultItems.Clear();
@@ -390,6 +392,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             _temporaryRecordService.ClearStudentScope(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
         IsResultVisible = false;
         StatusText = SR.M_ResetDone;
+        if (showToast)
+            MainView.ShowSuccessToast(SR.M_ResetDone);
         RefreshCounts();
     }
 
@@ -429,7 +433,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                     return Task.CompletedTask;
 
                 reset = true;
-                ResetDisplayCore();
+                ResetDisplayCore(showToast: true);
                 return Task.CompletedTask;
             });
         return authorized && reset;
@@ -824,6 +828,16 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             threshold);
     }
 
+    private IEnumerable<Student> GetStudentPoolCandidates()
+    {
+        if (!IsStudentAssignmentEnabled)
+            return [];
+
+        return (_profileService.CurrentStudentList?.Students ?? [])
+            .Where(student => student.IsCandidate)
+            .Where(student => DrawCandidateFilter.MatchesScope(student, CurrentGroupScope, CurrentGenderScope));
+    }
+
     private void EnsureRestartPrizeRecordsCleared(string listName)
     {
         if (Config.LotterySettings.ClearRecord == ClearRecordMode.Restarted)
@@ -834,6 +848,36 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     {
         if (Config.RollCallSettings.ClearRecord == ClearRecordMode.Restarted)
             _temporaryRecordService.ClearStudentListOnce(listName);
+    }
+
+    private bool ResetExhaustedTemporaryRecords()
+    {
+        if (TotalCount <= 0)
+            return false;
+
+        var reset = false;
+        if (RemainingCount <= 0)
+        {
+            _temporaryRecordService.ResetPrizeList(SelectedPrizeListName);
+            reset = true;
+        }
+
+        if (IsStudentAssignmentEnabled)
+        {
+            var studentPool = GetStudentPoolCandidates().ToList();
+            if (studentPool.Count > 0 && !GetStudentCandidates().Any())
+            {
+                _temporaryRecordService.ResetStudentList(SelectedStudentListName);
+                reset = true;
+            }
+        }
+
+        if (!reset)
+            return false;
+
+        RefreshCounts();
+        MainView.ShowSuccessToast(SR.M_AutoResetDone);
+        return true;
     }
 
     private void RefreshFilterOptions()

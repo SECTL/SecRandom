@@ -52,10 +52,10 @@
                             </Style>
                         </Grid.Styles>
                         
-                        <Button Grid.Column="0"
-                                Content="-"
-                                IsEnabled="{Binding CanDecreaseCount}"
-                                Command="{Binding DecreaseCountCommand}"/>
+                        <sr:AcceleratingRepeatButton Grid.Column="0"
+                                                      Content="-"
+                                                      IsEnabled="{Binding CanDecreaseCount}"
+                                                      Command="{Binding DecreaseCountCommand}"/>
                         
                         <TextBlock Grid.Column="1"
                                    Text="{Binding DrawCount}"
@@ -63,10 +63,10 @@
                                    VerticalAlignment="Center"
                                    FontSize="16" />
                         
-                        <Button Grid.Column="2"
-                                Content="+"
-                                IsEnabled="{Binding CanIncreaseCount}"
-                                Command="{Binding IncreaseCountCommand}" />
+                        <sr:AcceleratingRepeatButton Grid.Column="2"
+                                                      Content="+"
+                                                      IsEnabled="{Binding CanIncreaseCount}"
+                                                      Command="{Binding IncreaseCountCommand}" />
                     </Grid>
                     
                     <Button Classes="accent"

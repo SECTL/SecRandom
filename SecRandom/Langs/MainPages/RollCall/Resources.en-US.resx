@@ -66,6 +66,9 @@
   <data name="M_ResetDone" xml:space="preserve">
      <value>Roll-call records reset</value>
   </data>
+  <data name="M_AutoResetDone" xml:space="preserve">
+     <value>Roll-call records automatically reset and drawing continues</value>
+  </data>
   <data name="M_NoEligibleCandidates" xml:space="preserve">
      <value>No members meet the weighting criteria</value>
   </data>
