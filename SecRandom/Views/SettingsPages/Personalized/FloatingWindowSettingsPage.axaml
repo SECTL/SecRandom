@@ -6,7 +6,6 @@
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages"
              xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.FloatingWindow"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-             xmlns:u="https://irihi.tech/ursa"
              xmlns:personalized="clr-namespace:SecRandom.Views.SettingsPages.Personalized"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
               x:Class="SecRandom.Views.SettingsPages.Personalized.FloatingWindowSettingsPage"
@@ -63,9 +62,9 @@
                                    Description="{x:Static lsp:Resources.S_Buttons_EnabledItems_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PersonFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <u:MultiComboBox MinWidth="260"
-                                      ItemsSource="{Binding ButtonOptions}"
-                                      SelectedItems="{Binding SelectedButtonOptions}" />
+                    <sr:MultiComboBox MinWidth="260"
+                                       ItemsSource="{Binding ButtonOptions}"
+                                       SelectedItems="{Binding SelectedButtonOptions}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

@@ -3,7 +3,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
-             xmlns:u="https://irihi.tech/ursa"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.General"
              xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Security"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
@@ -70,9 +69,9 @@
                                     Description="{x:Static lsp:Resources.S_Factors_D}"
                                     IconSource="{sr:FluentIconSource {sr:Fi PasswordFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <u:MultiComboBox MinWidth="260" ItemsSource="{Binding FactorOptions}"
-                                      SelectedItems="{Binding SelectedFactorOptions}"
-                                      IsEnabled="{Binding CanEditFactorSelection}" />
+                    <sr:MultiComboBox MinWidth="260" ItemsSource="{Binding FactorOptions}"
+                                       SelectedItems="{Binding SelectedFactorOptions}"
+                                       IsEnabled="{Binding CanEditFactorSelection}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

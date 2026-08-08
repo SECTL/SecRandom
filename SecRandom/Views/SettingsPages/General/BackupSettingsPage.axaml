@@ -7,7 +7,6 @@
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.General"
              xmlns:lc="clr-namespace:SecRandom.Langs.Common"
              xmlns:lsb="clr-namespace:SecRandom.Langs.SettingsPages.General.Backup"
-             xmlns:u="https://irihi.tech/ursa"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
               x:Class="SecRandom.Views.SettingsPages.General.BackupSettingsPage"
               Loaded="OnLoaded"
@@ -70,9 +69,9 @@
                                    Description="{x:Static lsb:Resources.S_Includes_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi DatabaseArrowDownFilled}}">
                  <fa:FASettingsExpander.Footer>
-                     <u:MultiComboBox MinWidth="260"
-                                      ItemsSource="{Binding IncludeOptions}"
-                                      SelectedItems="{Binding SelectedIncludeOptions}" />
+                     <sr:MultiComboBox MinWidth="260"
+                                       ItemsSource="{Binding IncludeOptions}"
+                                       SelectedItems="{Binding SelectedIncludeOptions}" />
                  </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

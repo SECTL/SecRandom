@@ -1,6 +1,5 @@
 ﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:u="https://irihi.tech/ursa"
                     xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
                     xmlns:ui="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia">
     <Design.PreviewWith>
@@ -17,76 +16,63 @@
                     <ComboBoxItem>555</ComboBoxItem>
                 </ComboBox>
 
-                <TextBlock>Ursa.Avalonia:</TextBlock>
-                <u:MultiComboBox Width="200">
-                    <u:MultiComboBoxItem>111</u:MultiComboBoxItem>
-                    <u:MultiComboBoxItem>222</u:MultiComboBoxItem>
-                    <u:MultiComboBoxItem>333</u:MultiComboBoxItem>
-                    <u:MultiComboBoxItem>444</u:MultiComboBoxItem>
-                    <u:MultiComboBoxItem>555</u:MultiComboBoxItem>
-                </u:MultiComboBox>
+                <TextBlock>SecRandom.Core:</TextBlock>
+                <sr:MultiComboBox Width="200">
+                    <sr:MultiComboBoxItem>111</sr:MultiComboBoxItem>
+                    <sr:MultiComboBoxItem>222</sr:MultiComboBoxItem>
+                    <sr:MultiComboBoxItem>333</sr:MultiComboBoxItem>
+                    <sr:MultiComboBoxItem>444</sr:MultiComboBoxItem>
+                    <sr:MultiComboBoxItem>555</sr:MultiComboBoxItem>
+                </sr:MultiComboBox>
             </StackPanel>
         </Border>
     </Design.PreviewWith>
 
-    <x:Double x:Key="ComboBoxArrowThemeFontSize">21</x:Double>
-    <x:Double x:Key="ComboBoxThemeMinWidth">64</x:Double>
-    <x:Double x:Key="ComboBoxThemeMaxWidth">420</x:Double>
-    <x:Double x:Key="ComboBoxPopupThemeMinWidth">80</x:Double>
-    <x:Double x:Key="ComboBoxPopupThemeTouchMinWidth">240</x:Double>
-    <x:Double x:Key="ComboBoxItemPillHeight">16</x:Double>
-    <x:Double x:Key="ComboBoxItemPillWidth">3</x:Double>
-    <!--<x:Double x:Key="ComboBoxItemPillMinScale">0.625</x:Double>-->
-    <x:Double x:Key="ComboBoxMinHeight">32</x:Double>
-    <x:Int32 x:Key="ComboBoxPopupMaxNumberOfItems">15</x:Int32>
-    <x:Int32 x:Key="ComboBoxPopupMaxNumberOfItemsThatCanBeShownOnOneSide">7</x:Int32>
-    <x:String x:Key="ComboBoxItemScaleAnimationDuration">00:00:00.167</x:String>
-    <Thickness x:Key="ComboBoxBorderThemeThickness">1</Thickness>
-    <Thickness x:Key="ComboBoxDropdownBorderThickness">1</Thickness>
-    <Thickness x:Key="ComboBoxHeaderThemeMargin">0,0,0,4</Thickness>
-    <Thickness x:Key="ComboBoxPopupBorderThemeThickness">2</Thickness>
-    <Thickness x:Key="ComboBoxItemThemePadding">11,5,11,7</Thickness>
-    <Thickness x:Key="ComboBoxItemThemeTouchPadding">11,11,11,13</Thickness>
-    <Thickness x:Key="ComboBoxItemThemeGameControllerPadding">11,11,11,13</Thickness>
-    <Thickness x:Key="ComboBoxBackgroundBorderThicknessFocused">2</Thickness>
-    <Thickness x:Key="ComboBoxDropdownBorderPadding">0</Thickness>
-    <Thickness x:Key="ComboBoxDropdownContentMargin">0,4</Thickness>
-    <Thickness x:Key="ComboBoxTopHeaderMargin">0,0,0,8</Thickness>
-    <Thickness x:Key="ComboBoxPadding">12,5,0,7</Thickness>
-    <Thickness x:Key="ComboBoxEditableTextPadding">11,5,32,6</Thickness>
-    <CornerRadius x:Key="ComboBoxHiglightBorderCornerRadius">7</CornerRadius>
-    <CornerRadius x:Key="ComboBoxDropDownButtonBackgroundCornerRadius">4</CornerRadius>
-    <CornerRadius x:Key="ComboBoxItemCornerRadius">3</CornerRadius>
+    <x:Double x:Key="MultiComboBoxArrowThemeFontSize">21</x:Double>
+    <x:Double x:Key="MultiComboBoxThemeMinWidth">64</x:Double>
+    <x:Double x:Key="MultiComboBoxThemeMaxWidth">420</x:Double>
+    <x:Double x:Key="MultiComboBoxPopupThemeMinWidth">80</x:Double>
+    <x:Double x:Key="MultiComboBoxPopupThemeTouchMinWidth">240</x:Double>
+    <x:Double x:Key="MultiComboBoxMinHeight">32</x:Double>
+    <x:Int32 x:Key="MultiComboBoxPopupMaxNumberOfItems">15</x:Int32>
+    <x:Int32 x:Key="MultiComboBoxPopupMaxNumberOfItemsThatCanBeShownOnOneSide">7</x:Int32>
+    <x:String x:Key="MultiComboBoxItemScaleAnimationDuration">00:00:00.167</x:String>
+    <Thickness x:Key="MultiComboBoxBorderThemeThickness">1</Thickness>
+    <Thickness x:Key="MultiComboBoxDropdownBorderThickness">1</Thickness>
+    <Thickness x:Key="MultiComboBoxHeaderThemeMargin">0,0,0,4</Thickness>
+    <Thickness x:Key="MultiComboBoxPopupBorderThemeThickness">2</Thickness>
+    <Thickness x:Key="MultiComboBoxItemThemePadding">11,5,11,7</Thickness>
+    <Thickness x:Key="MultiComboBoxItemThemeTouchPadding">11,11,11,13</Thickness>
+    <Thickness x:Key="MultiComboBoxItemThemeGameControllerPadding">11,11,11,13</Thickness>
+    <Thickness x:Key="MultiComboBoxBackgroundBorderThicknessFocused">2</Thickness>
+    <Thickness x:Key="MultiComboBoxDropdownBorderPadding">0</Thickness>
+    <Thickness x:Key="MultiComboBoxDropdownContentMargin">0,2</Thickness>
+    <Thickness x:Key="MultiComboBoxTopHeaderMargin">0,0,0,8</Thickness>
+    <Thickness x:Key="MultiComboBoxPadding">4</Thickness>
+    <Thickness x:Key="MultiComboBoxEditableTextPadding">11,5,32,6</Thickness>
+    <CornerRadius x:Key="MultiComboBoxHiglightBorderCornerRadius">7</CornerRadius>
+    <CornerRadius x:Key="MultiComboBoxDropDownButtonBackgroundCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="MultiComboBoxItemCornerRadius">3</CornerRadius>
     <!-- Changed to double to avoid converters -->
-    <x:Double x:Key="ComboBoxItemPillCornerRadius">1.5</x:Double>
-    <FontWeight x:Key="ComboBoxHeaderThemeFontWeight">Normal</FontWeight>
-    <FontWeight x:Key="ComboBoxPlaceholderTextThemeFontWeight">SemiLight</FontWeight>
+    <FontWeight x:Key="MultiComboBoxHeaderThemeFontWeight">Normal</FontWeight>
+    <FontWeight x:Key="MultiComboBoxPlaceholderTextThemeFontWeight">SemiLight</FontWeight>
 
-    <ControlTheme TargetType="Rectangle" x:Key="ComboBoxItemPill">
-        <Setter Property="HorizontalAlignment" Value="Left" />
-        <Setter Property="Height" Value="{StaticResource ComboBoxItemPillHeight}" />
-        <Setter Property="Width" Value="{StaticResource ComboBoxItemPillWidth}" />
-        <Setter Property="Fill" Value="{DynamicResource ComboBoxItemPillFillBrush}" />
-        <Setter Property="RadiusX" Value="{DynamicResource ComboBoxItemPillCornerRadius}" />
-        <Setter Property="RadiusY" Value="{DynamicResource ComboBoxItemPillCornerRadius}" />
-    </ControlTheme>
-
-    <ControlTheme TargetType="u:MultiComboBox" x:Key="{x:Type u:MultiComboBox}">
+    <ControlTheme TargetType="sr:MultiComboBox" x:Key="{x:Type sr:MultiComboBox}">
         <Setter Property="Focusable" Value="True" />
-        <Setter Property="Padding" Value="{DynamicResource ComboBoxPadding}" />
-        <Setter Property="MaxWidth" Value="{DynamicResource ComboBoxThemeMaxWidth}" />
+        <Setter Property="Padding" Value="{DynamicResource MultiComboBoxPadding}" />
+        <Setter Property="MaxWidth" Value="{DynamicResource MultiComboBoxThemeMaxWidth}" />
         <Setter Property="MaxDropDownHeight" Value="504" />
         <Setter Property="Foreground" Value="{DynamicResource ComboBoxForeground}" />
         <Setter Property="Background" Value="{DynamicResource ComboBoxBackground}" />
         <Setter Property="BorderBrush" Value="{DynamicResource ComboBoxBorderBrush}" />
-        <Setter Property="BorderThickness" Value="{DynamicResource ComboBoxBorderThemeThickness}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource MultiComboBoxBorderThemeThickness}" />
         <Setter Property="HorizontalAlignment" Value="Left" />
         <Setter Property="VerticalAlignment" Value="Top" />
         <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
         <Setter Property="MaxSelectionBoxHeight" Value="270" />
         <Setter Property="MinHeight" Value="32" />
         <Setter Property="Template">
-            <ControlTemplate TargetType="u:MultiComboBox">
+            <ControlTemplate TargetType="sr:MultiComboBox">
                 <DataValidationErrors>
                     <Border x:Name="PART_BackgroundBorder"
                             Background="Transparent">
@@ -99,14 +85,14 @@
                                     Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
-                                    MinWidth="{DynamicResource ComboBoxThemeMinWidth}"
+                                    MinWidth="{DynamicResource MultiComboBoxThemeMinWidth}"
                                     CornerRadius="{TemplateBinding CornerRadius}" />
 
                             <Border x:Name="HighlightBackground"
                                     Grid.Row="1"
                                     Grid.Column="0"
                                     Grid.ColumnSpan="2"
-                                    BorderThickness="{DynamicResource ComboBoxBackgroundBorderThicknessFocused}"
+                                    BorderThickness="{DynamicResource MultiComboBoxBackgroundBorderThicknessFocused}"
                                     Opacity="0"
                                     Background="{DynamicResource ComboBoxBackgroundFocused}"
                                     BorderBrush="{DynamicResource ComboBoxBackgroundBorderBrushFocused}" />
@@ -115,7 +101,7 @@
                                        Grid.Row="1"
                                        Grid.Column="0"
                                        Margin="{TemplateBinding Padding}"
-                                       Text="{TemplateBinding Watermark}"
+                                       Text="{TemplateBinding PlaceholderText}"
                                        IsVisible="False" />
 
                             <Grid
@@ -136,18 +122,51 @@
                                     IsVisible="{TemplateBinding InnerLeftContent,
                                                             Converter={x:Static ObjectConverters.IsNotNull}}" />
 
-                                <u:MultiComboBoxSelectedItemList
+                                <ItemsControl
                                     Grid.Column="1"
                                     VerticalAlignment="Center"
-                                    ItemTemplate="{TemplateBinding SelectedItemTemplate}"
-                                    ItemsSource="{TemplateBinding SelectedItems}"
-                                    RemoveCommand="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Remove}">
+                                    ItemsSource="{TemplateBinding SelectedItems}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <WrapPanel Orientation="Horizontal" Background="Transparent" />
+                                            <WrapPanel Orientation="Horizontal" Background="Transparent"
+                                                       ItemSpacing="2" LineSpacing="2" />
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
-                                </u:MultiComboBoxSelectedItemList>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border
+                                                MinHeight="28"
+                                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="3"
+                                                ClipToBounds="True">
+                                                <Grid ColumnDefinitions="Auto,34">
+                                                    <ContentPresenter
+                                                        Grid.Column="0"
+                                                        Margin="10,0,8,0"
+                                                        VerticalAlignment="Center"
+                                                        Content="{Binding}"
+                                                        FontSize="12"
+                                                        Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                                        TextTrimming="CharacterEllipsis" />
+
+                                                    <Button
+                                                        Grid.Column="1"
+                                                        Theme="{StaticResource TransparentButton}"
+                                                        Padding="0"
+                                                        HorizontalAlignment="Stretch"
+                                                        VerticalAlignment="Stretch"
+                                                        CornerRadius="0"
+                                                        Command="{Binding $parent[sr:MultiComboBox].RemoveCommand}"
+                                                        CommandParameter="{Binding}">
+                                                        <sr:FluentIcon Glyph="{sr:Fi DismissFilled}" FontSize="12" />
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
 
                                 <ContentPresenter
                                     Grid.Column="2"
@@ -171,7 +190,7 @@
 
                             <ui:FAFontIcon x:Name="DropDownGlyph"
                                            Foreground="{DynamicResource ComboBoxDropDownGlyphForeground}"
-                                           MinHeight="{DynamicResource ComboBoxMinHeight}"
+                                           MinHeight="{DynamicResource MultiComboBoxMinHeight}"
                                            Grid.Row="1"
                                            Grid.Column="1"
                                            IsHitTestVisible="False"
@@ -193,8 +212,8 @@
                                 <Border x:Name="PopupBorder"
                                         Background="{DynamicResource ComboBoxDropDownBackground}"
                                         BorderBrush="{DynamicResource ComboBoxDropDownBorderBrush}"
-                                        BorderThickness="{DynamicResource ComboBoxDropdownBorderThickness}"
-                                        Padding="{DynamicResource ComboBoxDropdownBorderPadding}"
+                                        BorderThickness="{DynamicResource MultiComboBoxDropdownBorderThickness}"
+                                        Padding="{DynamicResource MultiComboBoxDropdownBorderPadding}"
                                         HorizontalAlignment="Stretch"
                                         CornerRadius="{DynamicResource OverlayCornerRadius}"
                                         BackgroundSizing="InnerBorderEdge">
@@ -203,7 +222,7 @@
                                         VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}"
                                         IsDeferredScrollingEnabled="{TemplateBinding (ScrollViewer.IsDeferredScrollingEnabled)}">
                                         <ItemsPresenter Name="PART_ItemsPresenter"
-                                                        Margin="{DynamicResource ComboBoxDropdownContentMargin}"
+                                                        Margin="{DynamicResource MultiComboBoxDropdownContentMargin}"
                                                         ItemsPanel="{TemplateBinding ItemsPanel}" />
                                     </ScrollViewer>
                                 </Border>
@@ -275,21 +294,21 @@
         </Style>
     </ControlTheme>
 
-    <ControlTheme TargetType="u:MultiComboBoxItem" x:Key="{x:Type u:MultiComboBoxItem}">
+    <ControlTheme TargetType="sr:MultiComboBoxItem" x:Key="{x:Type sr:MultiComboBoxItem}">
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="VerticalAlignment" Value="Top" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="MinHeight" Value="32" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
         <Setter Property="Foreground" Value="{DynamicResource ComboBoxItemForeground}" />
         <Setter Property="Background" Value="{DynamicResource ComboBoxItemBackground}" />
-        <Setter Property="Padding" Value="{DynamicResource ComboBoxItemThemePadding}" />
+        <Setter Property="Padding" Value="8,4,8,4" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
 
-        <!-- 累了，先这样吧，后续再实现 tablet 切换ui -->
         <Setter Property="Template">
-            <ControlTemplate TargetType="u:MultiComboBoxItem">
+            <ControlTemplate TargetType="sr:MultiComboBoxItem">
                 <Border
                     x:Name="RootBorder"
                     Padding="{TemplateBinding Padding}"
@@ -297,55 +316,38 @@
                     BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="{TemplateBinding BorderThickness}"
                     CornerRadius="{TemplateBinding CornerRadius}"
-                    Margin="5,2,5,2"
+                    MinHeight="{TemplateBinding MinHeight}"
+                    Margin="4,2,4,2"
                     TemplatedControl.IsTemplateFocusTarget="True">
-                    <Grid x:Name="RootGrid">
-                        <CheckBox Name="CheckBox"
-                                  HorizontalAlignment="Stretch"
-                                  Content="{TemplateBinding Content}"
-                                  ContentTemplate="{TemplateBinding ContentTemplate}"
-                                  Foreground="{TemplateBinding Foreground}"
-                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                  IsChecked="{TemplateBinding IsSelected, Mode=TwoWay}" />
+                    <Grid x:Name="RootGrid" ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <Border x:Name="CheckBox"
+                                Width="18"
+                                Height="18"
+                                CornerRadius="4"
+                                VerticalAlignment="Center"
+                                Background="{DynamicResource CheckBoxCheckBackgroundFillUnchecked}"
+                                BorderBrush="{DynamicResource CheckBoxCheckBackgroundStrokeUnchecked}"
+                                BorderThickness="1">
+                            <sr:FluentIcon x:Name="CheckGlyph"
+                                           Glyph="{sr:Fi CheckmarkFilled}"
+                                           FontSize="10"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource CheckBoxCheckGlyphForegroundUnchecked}"
+                                           IsVisible="{TemplateBinding IsSelected}" />
+                        </Border>
+
+                        <ContentPresenter x:Name="ContentPresenter"
+                                          Grid.Column="1"
+                                          VerticalAlignment="Center"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          Foreground="{TemplateBinding Foreground}"
+                                          HorizontalAlignment="Left" />
                     </Grid>
                 </Border>
             </ControlTemplate>
         </Setter>
-
-        <!-- <Setter Property="Template"> -->
-        <!--     <ControlTemplate TargetType="u:MultiComboBoxItem"> -->
-        <!--         <Border -->
-        <!--             x:Name="RootBorder" -->
-        <!--             Padding="{TemplateBinding Padding}" -->
-        <!--             Background="{TemplateBinding Background}" -->
-        <!--             BorderBrush="{TemplateBinding BorderBrush}" -->
-        <!--             BorderThickness="{TemplateBinding BorderThickness}"  -->
-        <!--             CornerRadius="{TemplateBinding CornerRadius}" -->
-        <!--             Margin="5,2,5,2" -->
-        <!--             TemplatedControl.IsTemplateFocusTarget="True"> -->
-        <!--             <Grid x:Name="RootGrid"> -->
-        <!--                 <StackPanel Orientation="Horizontal" Margin="-4"> -->
-        <!--                     <Viewbox Width="24" Height="24" Margin="-4 0 4 0" -->
-        <!--                              Stretch="Uniform" StretchDirection="Both" VerticalAlignment="Center"> -->
-        <!--                         <CheckBox Name="CheckBox" IsHitTestVisible="False" Width="20" Height="20" /> -->
-        <!--                     </Viewbox> -->
-        <!--                      -->
-        <!--                     <ContentPresenter Name="ContentPresenter" -->
-        <!--                                       Content="{TemplateBinding Content}" -->
-        <!--                                       ContentTemplate="{TemplateBinding ContentTemplate}" -->
-        <!--                                       Foreground="{TemplateBinding Foreground}" -->
-        <!--                                       HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" -->
-        <!--                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}" -->
-        <!--                                       Background="{x:Null}" -->
-        <!--                                       BorderBrush="{x:Null}" -->
-        <!--                                       CornerRadius="{TemplateBinding CornerRadius}" -->
-        <!--                                       BorderThickness="0"/> -->
-        <!--                 </StackPanel> -->
-        <!--             </Grid> -->
-        <!--         </Border> -->
-        <!--     </ControlTemplate> -->
-        <!-- </Setter> -->
 
         <Style Selector="^:pointerover">
             <Style Selector="^ /template/ Border#RootBorder">
@@ -375,12 +377,16 @@
             <Style Selector="^ /template/ ContentPresenter#ContentPresenter">
                 <Setter Property="Foreground" Value="{DynamicResource ComboBoxItemForegroundDisabled}" />
             </Style>
+            <Style Selector="^ /template/ Border#CheckBox">
+                <Setter Property="Background" Value="{DynamicResource CheckBoxCheckBackgroundFillUncheckedDisabled}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource CheckBoxCheckBackgroundStrokeUncheckedDisabled}" />
+            </Style>
+            <Style Selector="^ /template/ sr|FluentIcon#CheckGlyph">
+                <Setter Property="Foreground" Value="{DynamicResource CheckBoxCheckGlyphForegroundUncheckedDisabled}" />
+            </Style>
         </Style>
 
         <Style Selector="^:selected">
-            <Style Selector="^ /template/ Rectangle#Pill">
-                <Setter Property="Opacity" Value="1" />
-            </Style>
             <Style Selector="^ /template/ Border#RootBorder">
                 <Setter Property="Background" Value="{DynamicResource ComboBoxItemBackgroundSelected}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource ComboBoxItemBorderBrushSelected}" />
@@ -388,14 +394,18 @@
             <Style Selector="^ /template/ ContentPresenter#ContentPresenter">
                 <Setter Property="Foreground" Value="{DynamicResource ComboBoxItemForegroundSelected}" />
             </Style>
+            <Style Selector="^ /template/ Border#CheckBox">
+                <Setter Property="Background" Value="{DynamicResource CheckBoxCheckBackgroundFillChecked}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource CheckBoxCheckBackgroundStrokeChecked}" />
+            </Style>
+            <Style Selector="^ /template/ sr|FluentIcon#CheckGlyph">
+                <Setter Property="Foreground" Value="{DynamicResource CheckBoxCheckGlyphForegroundChecked}" />
+            </Style>
         </Style>
 
         <!-- WinUI styles not implemented: SelectedUnfocused  -->
 
         <Style Selector="^:selected:disabled">
-            <Style Selector="^ /template/ Rectangle#Pill">
-                <Setter Property="Opacity" Value="1" />
-            </Style>
             <Style Selector="^ /template/ Border#RootBorder">
                 <Setter Property="Background" Value="{DynamicResource ComboBoxItemBackgroundSelectedDisabled}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource ComboBoxItemBorderBrushSelectedDisabled}" />
@@ -403,12 +413,16 @@
             <Style Selector="^ /template/ ContentPresenter#ContentPresenter">
                 <Setter Property="Foreground" Value="{DynamicResource ComboBoxItemForegroundSelectedDisabled}" />
             </Style>
+            <Style Selector="^ /template/ Border#CheckBox">
+                <Setter Property="Background" Value="{DynamicResource CheckBoxCheckBackgroundFillCheckedDisabled}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource CheckBoxCheckBackgroundStrokeCheckedDisabled}" />
+            </Style>
+            <Style Selector="^ /template/ sr|FluentIcon#CheckGlyph">
+                <Setter Property="Foreground" Value="{DynamicResource CheckBoxCheckGlyphForegroundCheckedDisabled}" />
+            </Style>
         </Style>
 
         <Style Selector="^:selected:pointerover">
-            <Style Selector="^ /template/ Rectangle#Pill">
-                <Setter Property="Opacity" Value="1" />
-            </Style>
             <Style Selector="^ /template/ Border#RootBorder">
                 <Setter Property="Background" Value="{DynamicResource ComboBoxItemBackgroundSelectedPointerOver}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource ComboBoxItemBorderBrushSelectedPointerOver}" />
@@ -416,13 +430,16 @@
             <Style Selector="^ /template/ ContentPresenter#ContentPresenter">
                 <Setter Property="Foreground" Value="{DynamicResource ComboBoxItemForegroundSelectedPointerOver}" />
             </Style>
+            <Style Selector="^ /template/ Border#CheckBox">
+                <Setter Property="Background" Value="{DynamicResource CheckBoxCheckBackgroundFillCheckedPointerOver}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource CheckBoxCheckBackgroundStrokeCheckedPointerOver}" />
+            </Style>
+            <Style Selector="^ /template/ sr|FluentIcon#CheckGlyph">
+                <Setter Property="Foreground" Value="{DynamicResource CheckBoxCheckGlyphForegroundChecked}" />
+            </Style>
         </Style>
 
         <Style Selector="^:selected:pressed">
-            <Style Selector="^ /template/ Rectangle#Pill">
-                <Setter Property="Opacity" Value="1" />
-                <Setter Property="RenderTransform" Value="scaleY(0.625)" />
-            </Style>
             <Style Selector="^ /template/ Border#RootBorder">
                 <Setter Property="Background" Value="{DynamicResource ComboBoxItemBackgroundSelectedPressed}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource ComboBoxItemBorderBrushSelectedPressed}" />
@@ -430,53 +447,13 @@
             <Style Selector="^ /template/ ContentPresenter#ContentPresenter">
                 <Setter Property="Foreground" Value="{DynamicResource ComboBoxItemForegroundSelectedPressed}" />
             </Style>
+            <Style Selector="^ /template/ Border#CheckBox">
+                <Setter Property="Background" Value="{DynamicResource CheckBoxCheckBackgroundFillCheckedPressed}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource CheckBoxCheckBackgroundStrokeCheckedPressed}" />
+            </Style>
+            <Style Selector="^ /template/ sr|FluentIcon#CheckGlyph">
+                <Setter Property="Foreground" Value="{DynamicResource CheckBoxCheckGlyphForegroundChecked}" />
+            </Style>
         </Style>
-    </ControlTheme>
-
-    <ControlTheme TargetType="u:MultiComboBoxSelectedItemList" x:Key="{x:Type u:MultiComboBoxSelectedItemList}">
-        <Setter Property="Template">
-            <ControlTemplate TargetType="u:MultiComboBoxSelectedItemList">
-                <ItemsPresenter ItemsPanel="{TemplateBinding ItemsPanel}" />
-            </ControlTemplate>
-        </Setter>
-    </ControlTheme>
-
-    <ControlTheme x:Key="{x:Type u:ClosableTag}" TargetType="u:ClosableTag">
-        <Setter Property="VerticalAlignment" Value="Stretch" />
-        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
-        <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Template">
-            <ControlTemplate TargetType="u:ClosableTag">
-                <Border
-                    Margin="1"
-                    Padding="8,4,4,4"
-                    Background="{TemplateBinding Background}"
-                    BorderBrush="{TemplateBinding BorderBrush}"
-                    BorderThickness="{TemplateBinding BorderThickness}"
-                    CornerRadius="3">
-                    <StackPanel Orientation="Horizontal">
-                        <ContentPresenter
-                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                            Content="{TemplateBinding Content}"
-                            ContentTemplate="{TemplateBinding ContentTemplate}"
-                            FontSize="12"
-                            Foreground="{TemplateBinding Foreground}"
-                            TextTrimming="CharacterEllipsis" />
-
-                        <Button
-                            Name="{x:Static u:ClosableTag.PART_CloseButton}"
-                            Theme="{StaticResource TransparentButton}"
-                            Margin="4,0,0,0"
-                            Command="{TemplateBinding Command}"
-                            CommandParameter="{TemplateBinding}">
-                             <sr:FluentIcon Glyph="{sr:Fi DismissFilled}" Margin="-4" />
-                        </Button>
-                    </StackPanel>
-                </Border>
-            </ControlTemplate>
-        </Setter>
     </ControlTheme>
 </ResourceDictionary>
