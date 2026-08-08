@@ -380,6 +380,30 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.RollCallList {
                 return ResourceManager.GetString("M_AddMemberSuccess", resourceCulture);
             }
         }
+
+        public static string M_AddMemberHistoryResetTitle {
+            get {
+                return ResourceManager.GetString("M_AddMemberHistoryResetTitle", resourceCulture);
+            }
+        }
+
+        public static string M_AddMemberHistoryResetContent {
+            get {
+                return ResourceManager.GetString("M_AddMemberHistoryResetContent", resourceCulture);
+            }
+        }
+
+        public static string M_AddMemberHistoryResetPrimary {
+            get {
+                return ResourceManager.GetString("M_AddMemberHistoryResetPrimary", resourceCulture);
+            }
+        }
+
+        public static string M_AddMemberHistoryResetSecondary {
+            get {
+                return ResourceManager.GetString("M_AddMemberHistoryResetSecondary", resourceCulture);
+            }
+        }
         
         public static string M_ListNameDialogTitle_Add {
             get {

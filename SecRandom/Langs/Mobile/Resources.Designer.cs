@@ -77,6 +77,14 @@ public class Resources
 
     public static string M_AddStudentsPrompt => ResourceManager.GetString("M_AddStudentsPrompt", resourceCulture)!;
 
+    public static string M_AddMemberHistoryResetTitle => ResourceManager.GetString("M_AddMemberHistoryResetTitle", resourceCulture)!;
+
+    public static string M_AddMemberHistoryResetContent => ResourceManager.GetString("M_AddMemberHistoryResetContent", resourceCulture)!;
+
+    public static string M_AddMemberHistoryResetPrimary => ResourceManager.GetString("M_AddMemberHistoryResetPrimary", resourceCulture)!;
+
+    public static string M_AddMemberHistoryResetSecondary => ResourceManager.GetString("M_AddMemberHistoryResetSecondary", resourceCulture)!;
+
     public static string M_CandidatePrizes => ResourceManager.GetString("M_CandidatePrizes", resourceCulture)!;
 
     public static string M_CandidateStudents => ResourceManager.GetString("M_CandidateStudents", resourceCulture)!;

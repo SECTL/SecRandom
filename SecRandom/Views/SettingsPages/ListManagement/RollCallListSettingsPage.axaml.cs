@@ -29,6 +29,8 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         IAppHost.GetService<ILogger<RollCallListSettingsPage>>();
     private readonly IProfileCatalogManager _catalogManager =
         IAppHost.GetService<IProfileCatalogManager>();
+    private readonly IHistoryQueryService _historyQueryService =
+        IAppHost.GetService<IHistoryQueryService>();
 
     public bool IsDesktop => App.IsDesktop;
 
@@ -323,6 +325,7 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
             return;
         }
 
+        var shouldOfferHistoryClear = ShouldOfferStudentHistoryClear(SelectedStudentList);
         SelectedStudentList.Students.Add(new Student
         {
             Id = studentId,
@@ -333,9 +336,39 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         });
         SaveSelectedStudentList();
         OnPropertyChanged(nameof(SelectedStudentList));
+        if (shouldOfferHistoryClear && await ConfirmClearStudentHistoryAsync(SelectedStudentListName))
+            _catalogManager.ClearStudentHistory(SelectedStudentListName);
         _logger.LogInformation("已向点名名单新增成员：名单={ListName}，当前成员数={Count}。", SelectedStudentListName,
             SelectedStudentList.Students.Count);
         this.ShowSuccessToast(LR.M_AddMemberSuccess);
+    }
+
+    private bool ShouldOfferStudentHistoryClear(StudentList list)
+    {
+        if (list.Students.Count == 0)
+            return false;
+
+        var history = _historyQueryService.LoadStudentHistory(SelectedStudentListName);
+        if (history is null)
+            return false;
+
+        var uniqueLegacyKeys = ProfileRecordIdentity.BuildUniqueStudentLegacyKeySet(list.Students);
+        return list.Students.All(student =>
+            (ProfileRecordIdentity.GetStudentHistory(history, student, uniqueLegacyKeys.Contains)?.TotalCount ?? 0) > 0);
+    }
+
+    private async Task<bool> ConfirmClearStudentHistoryAsync(string listName)
+    {
+        var result = await new FAContentDialog
+        {
+            Title = LR.M_AddMemberHistoryResetTitle,
+            Content = string.Format(LR.M_AddMemberHistoryResetContent, listName),
+            PrimaryButtonText = LR.M_AddMemberHistoryResetPrimary,
+            CloseButtonText = LR.M_AddMemberHistoryResetSecondary,
+            DefaultButton = FAContentDialogButton.Primary
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+
+        return result == FAContentDialogResult.Primary;
     }
 
     private static TextBox AddInputField(StackPanel form, string label, string initialText = "")
