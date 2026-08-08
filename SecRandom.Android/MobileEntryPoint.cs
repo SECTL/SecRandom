@@ -1,4 +1,5 @@
 using Android.Content;
+using Android.Content.Res;
 using Android.OS;
 using Android.Runtime;
 using Android.Views;
@@ -25,7 +26,9 @@ public class MobileApplication : AvaloniaAndroidApplication<App>
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
         RegisterUnhandledExceptionHooks();
-        PlatformStartupContext.Set(new MobilePlatformServiceRoot(PlatformKind.Android)
+        var screenLayout = Resources?.Configuration?.ScreenLayout ?? ScreenLayout.SizeNormal;
+        var isTablet = (screenLayout & ScreenLayout.SizeMask) >= ScreenLayout.SizeLarge;
+        var platform = new MobilePlatformServiceRoot(PlatformKind.Android)
         {
             UpdateInstaller = new AndroidUpdateInstaller(),
             MediaPlayer = new AndroidMobileMediaPlayer(),
@@ -33,8 +36,10 @@ public class MobileApplication : AvaloniaAndroidApplication<App>
             {
                 if (OperatingSystem.IsAndroidVersionAtLeast(24))
                     global::Android.Util.Log.Error("SecRandom.Mobile", exception.ToString());
-            }
-        });
+            },
+            UsesDesktopMainView = isTablet
+        };
+        PlatformStartupContext.Set(platform);
         return base.CustomizeAppBuilder(builder);
     }
 
@@ -79,6 +84,7 @@ public sealed class UpdateFileProvider : global::AndroidX.Core.Content.FileProvi
     Theme = "@style/Theme.AppCompat.DayNight.NoActionBar",
     ConfigurationChanges = global::Android.Content.PM.ConfigChanges.Orientation |
                            global::Android.Content.PM.ConfigChanges.ScreenSize)]
+[SupportedOSPlatform("android24.0")]
 public sealed class MainActivity : AvaloniaMainActivity
 {
     protected override void OnCreate(Bundle? savedInstanceState)

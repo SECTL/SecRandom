@@ -93,7 +93,7 @@ SecRandom/
 
 ## CONVENTIONS
 
-- iPadOS is detected by the iOS entry head through `UIDevice.CurrentDevice.UserInterfaceIdiom`. It uses the original `MainView` and desktop main-page registrations inside the mobile single-view host, while its settings command opens the existing mobile `SettingsView` MVE rather than creating a desktop window. iPhone and Android retain `MobileRootView`.
+- iPadOS is detected by the iOS entry head through `UIDevice.CurrentDevice.UserInterfaceIdiom`, and Android tablets are detected by the Android entry head through `Resources.Configuration.ScreenLayout` and `Configuration.ScreenLayoutSizeMask`. Both use the original `MainView` and desktop main-page registrations inside the mobile single-view host, while their settings command opens the existing mobile `SettingsView` MVE rather than creating a desktop window. iPhone and Android phones retain `MobileRootView`.
 
 - `BuildHost()` registers logging, config, services, windows/views, ViewModels, attached settings controls,
   navigation pages, and real view-engine registrations. Built-in main/settings child pages use only

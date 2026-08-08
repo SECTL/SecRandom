@@ -20,6 +20,8 @@ using SecRandom.Core.Extensions;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services;
 using SecRandom.Core.Views;
+using SecRandom.Mobile;
+using SecRandom.Platforms.Abstractions;
 using SecRandom.Services;
 using SecRandom.Services.Mobile;
 using SecRandom.ViewModels;
@@ -63,6 +65,9 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 
     public static MainView? Current { get; private set; }
     public MainViewModel ViewModel { get; } = IAppHost.GetService<MainViewModel>();
+    public bool IsDesktop => App.IsDesktop;
+    public bool UseDesktopUI =>
+        (IAppHost.TryGetService<IPlatformServiceRoot>() as MobilePlatformServiceRoot)?.UsesDesktopMainView ?? IsDesktop;
 
     public Control? GetPage(Type srcType)
     {
@@ -119,7 +124,7 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 
     private void BuildNavigationMenuItems()
     {
-        var applySampleNav = App.IsDesktop || OperatingSystem.IsBrowser() || OperatingSystem.IsIOS();
+        var applySampleNav = App.IsDesktop || OperatingSystem.IsBrowser() || UseDesktopUI;
         
         ViewModel.NavigationViewItems.Clear();
         ViewModel.NavigationViewFooterItems.Clear();
