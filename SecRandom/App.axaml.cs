@@ -720,10 +720,11 @@ public partial class App : Application
                 services.AddHostedService<OnlineStatusService>();
 
                 // 服务
+                services.AddTransient<RollCallDrawService>();
+                services.AddTransient<LotteryDrawService>();
                 if (isMobile)
                 {
                     MobilePlatformServiceRoot currentMobilePlatform = mobilePlatform!;
-                    services.AddTransient<MobileRollCallService>();
                     services.AddSingleton<MobileMediaLibraryService>();
                     services.AddSingleton<IMobileMediaPlayer>(currentMobilePlatform.MediaPlayer);
                     if (currentMobilePlatform.KeyboardOcclusionSource is { } keyboardOcclusionSource)

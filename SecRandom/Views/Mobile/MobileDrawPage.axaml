@@ -15,7 +15,7 @@
                       HorizontalAlignment="Center"
                       Theme="{DynamicResource TabStripStyle}">
                 <TabStripItem Content="{x:Static langs:Resources.C_RollCall}"
-                              Width="96"/>
+                              Width="96" />
                 <TabStripItem x:Name="LotteryTab" Width="96"
                               Content="{x:Static langs:Resources.C_Lottery}"
                               IsVisible="{Binding IsLotteryEnabled}" />
@@ -103,27 +103,26 @@
                             </Setter.Value>
                         </Setter>
                     </Style>
+                    
+                    <Style Selector="^ Grid.Combo > Button">
+                        <Setter Property="Width" Value="{DynamicResource SizeBase}" />
+                        <Setter Property="Height" Value="{DynamicResource SizeBase}" />
+                        <Setter Property="Margin" Value="0" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="FontSize" Value="24" />
+                    </Style>
                 </Style>
             </Carousel.Styles>
 
             <ScrollViewer>
                 <StackPanel Spacing="8" VerticalAlignment="Bottom" Classes="draw-page animated-intro">
                     <Grid ColumnDefinitions="* *" ColumnSpacing="8"
-                          IsVisible="{Binding DrawPanelPositionLeft}">
+                          IsVisible="{Binding RollCallPositionLeft}">
                         <Grid Grid.Column="0"
                               VerticalAlignment="Bottom"
                               ColumnDefinitions="Auto Auto *"
-                              ColumnSpacing="8">
-                            <Grid.Styles>
-                                <Style Selector="Grid > Button">
-                                    <Setter Property="Width" Value="{DynamicResource SizeBase}" />
-                                    <Setter Property="Height" Value="{DynamicResource SizeBase}" />
-                                    <Setter Property="Margin" Value="0" />
-                                    <Setter Property="Padding" Value="0" />
-                                    <Setter Property="FontSize" Value="24" />
-                                </Style>
-                            </Grid.Styles>
-
+                              ColumnSpacing="8"
+                              Classes="Combo">
                             <Button Grid.Column="0"
                                     Content="+"
                                     IsEnabled="{Binding CanIncreaseCount}"
@@ -132,7 +131,7 @@
                             <Button Grid.Column="1"
                                     Content="-"
                                     IsEnabled="{Binding CanDecreaseCount}"
-                                    Command="{Binding DecreaseCountCommand}"/>
+                                    Command="{Binding DecreaseCountCommand}" />
 
                             <TextBlock Grid.Column="2"
                                        Text="{Binding DrawCount}"
@@ -148,7 +147,7 @@
                     </Grid>
 
                     <Grid ColumnDefinitions="* *" ColumnSpacing="8"
-                          IsVisible="{Binding !DrawPanelPositionLeft}">
+                          IsVisible="{Binding !RollCallPositionLeft}">
                         <sr:Field Grid.Column="0" Label="{x:Static langs:Resources.S_CurrentList}">
                             <ComboBox ItemsSource="{Binding StudentLists}"
                                       SelectedItem="{Binding SelectedStudentList, Mode=TwoWay}" />
@@ -157,17 +156,8 @@
                         <Grid Grid.Column="1"
                               VerticalAlignment="Bottom"
                               ColumnDefinitions="* Auto Auto"
-                              ColumnSpacing="8">
-                            <Grid.Styles>
-                                <Style Selector="Grid > Button">
-                                    <Setter Property="Width" Value="{DynamicResource SizeBase}" />
-                                    <Setter Property="Height" Value="{DynamicResource SizeBase}" />
-                                    <Setter Property="Margin" Value="0" />
-                                    <Setter Property="Padding" Value="0" />
-                                    <Setter Property="FontSize" Value="24" />
-                                </Style>
-                            </Grid.Styles>
-
+                              ColumnSpacing="8"
+                              Classes="Combo">
                             <TextBlock Grid.Column="0"
                                        Text="{Binding DrawCount}"
                                        HorizontalAlignment="Center"
@@ -182,7 +172,7 @@
                             <Button Grid.Column="2"
                                     Content="-"
                                     IsEnabled="{Binding CanDecreaseCount}"
-                                    Command="{Binding DecreaseCountCommand}"/>
+                                    Command="{Binding DecreaseCountCommand}" />
                         </Grid>
                     </Grid>
 
@@ -247,17 +237,113 @@
             </ScrollViewer>
 
             <ScrollViewer>
-                <StackPanel Spacing="8" VerticalAlignment="Bottom" Classes="draw-page">
+                <StackPanel Spacing="8" VerticalAlignment="Bottom" Classes="draw-page animated-intro">
                     <sr:Field Label="{x:Static langs:Resources.S_CurrentPool}">
-                        <TextBlock FontSize="24"
-                                   Text="{Binding PrizePoolName}"
-                                   TextWrapping="Wrap" />
+                        <ComboBox ItemsSource="{Binding PrizePools}"
+                                  SelectedItem="{Binding SelectedPrizePool, Mode=TwoWay}" />
                     </sr:Field>
+                    
+                    <Grid ColumnDefinitions="* *" ColumnSpacing="8"
+                          IsVisible="{Binding LotteryPositionLeft}">
+                        <Grid Grid.Column="0"
+                              VerticalAlignment="Bottom"
+                              ColumnDefinitions="Auto Auto *"
+                              ColumnSpacing="8"
+                              Classes="Combo">
+                            <Button Grid.Column="0"
+                                    Content="+"
+                                    IsEnabled="{Binding CanIncreaseCount}"
+                                    Command="{Binding IncreaseCountCommand}" />
 
-                    <Button Content="{x:Static langs:Resources.C_ManagePrizePool}"
-                            Command="{Binding OpenListManagementCommand}"
-                            IsEnabled="{Binding CanChangeSurface}" />
+                            <Button Grid.Column="1"
+                                    Content="-"
+                                    IsEnabled="{Binding CanDecreaseCount}"
+                                    Command="{Binding DecreaseCountCommand}" />
 
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding DrawCount}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontSize="18" />
+                        </Grid>
+
+                        <sr:Field Grid.Column="1" Label="{x:Static langs:Resources.S_CurrentList}">
+                            <ComboBox ItemsSource="{Binding LotteryStudentLists}"
+                                      SelectedItem="{Binding SelectedLotteryStudentList, Mode=TwoWay}" />
+                        </sr:Field>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="* *" ColumnSpacing="8"
+                          IsVisible="{Binding !LotteryPositionLeft}">
+                        <sr:Field Grid.Column="0" Label="{x:Static langs:Resources.S_CurrentList}">
+                            <ComboBox ItemsSource="{Binding LotteryStudentLists}"
+                                      SelectedItem="{Binding SelectedLotteryStudentList, Mode=TwoWay}" />
+                        </sr:Field>
+
+                        <Grid Grid.Column="1"
+                              VerticalAlignment="Bottom"
+                              ColumnDefinitions="* Auto Auto"
+                              ColumnSpacing="8"
+                              Classes="Combo">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding DrawCount}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontSize="18" />
+
+                            <Button Grid.Column="1"
+                                    Content="+"
+                                    IsEnabled="{Binding CanIncreaseCount}"
+                                    Command="{Binding IncreaseCountCommand}" />
+
+                            <Button Grid.Column="2"
+                                    Content="-"
+                                    IsEnabled="{Binding CanDecreaseCount}"
+                                    Command="{Binding DecreaseCountCommand}" />
+                        </Grid>
+                    </Grid>
+
+                    <Button Content="{x:Static langs:Resources.C_More}"
+                            IsEnabled="{Binding CanChangeSurface}">
+                        <Button.Flyout>
+                            <Flyout>
+                                <Grid x:Name="PrizeFlyoutGrid"
+                                      RowDefinitions="Auto Auto Auto Auto" ColumnDefinitions="* *"
+                                      RowSpacing="8" ColumnSpacing="8" Width="300">
+                                    <sr:Field Grid.Row="0" Grid.Column="0" Label="{x:Static langs:Resources.S_Group}">
+                                        <ComboBox ItemsSource="{Binding GroupOptions}"
+                                                  SelectedItem="{Binding SelectedGroup, Mode=TwoWay}" />
+                                    </sr:Field>
+                                    
+                                    <sr:Field Grid.Row="0" Grid.Column="1" Label="{x:Static langs:Resources.S_Gender}">
+                                        <ComboBox ItemsSource="{Binding GenderOptions}"
+                                                  SelectedItem="{Binding SelectedGender, Mode=TwoWay}" />
+                                    </sr:Field>
+                                    
+                                    <Button Grid.Row="1" Grid.Column="0"
+                                            Content="{x:Static langs:Resources.C_ResetRange}"
+                                            Command="{Binding ResetScopeCommand}" />
+                                    
+                                    <Button Grid.Row="1" Grid.Column="1"
+                                            Content="{x:Static langs:Resources.C_ClearTemporaryRecords}"
+                                            Click="ClearTemporaryRecords_OnClick" />
+                                    
+                                    <Button Grid.Row="2" Grid.Column="0"
+                                            Content="{x:Static langs:Resources.C_ManagePrizePool}"
+                                            Command="{Binding OpenListManagementCommand}" />
+                                    
+                                    <Button Grid.Row="2" Grid.Column="1"
+                                            Content="{x:Static langs:Resources.C_DrawSettings}"
+                                            Command="{Binding OpenDrawSettingsCommand}" />
+                                    
+                                    <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                                            Content="{x:Static langs:Resources.C_RemainingList}"
+                                            Command="{Binding ShowRemainingCommand}" />
+                                </Grid>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                    
                     <Button Classes="accent"
                             HorizontalContentAlignment="Center"
                             Content="{Binding DrawPrizeText}"

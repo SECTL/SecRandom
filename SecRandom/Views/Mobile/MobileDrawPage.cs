@@ -40,12 +40,15 @@ public sealed partial class MobileDrawPage : UserControl
 
     private void ViewModel_OnAnimationRequested(object? sender, MobileDrawAnimationRequest request)
     {
-        if (request.Stop)
-            MobileAnimations.Cancel(_resultText);
-        else if (request.Reveal)
-            MobileAnimations.PlayResultReveal(_resultCard);
-        else if (request.Names.Count > 0)
-            MobileAnimations.StartNameRoll(_resultText, request.Names);
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (request.Stop)
+                MobileAnimations.Cancel(_resultText);
+            else if (request.Reveal)
+                MobileAnimations.PlayResultReveal(_resultCard);
+            else if (request.Names.Count > 0)
+                MobileAnimations.StartNameRoll(_resultText, request.Names);
+        });
     }
 
     private void ViewModel_OnDialogRequested(object? sender, MobileDrawDialogRequest request)
@@ -53,8 +56,49 @@ public sealed partial class MobileDrawPage : UserControl
         _ = request.Kind switch
         {
             MobileDrawDialogKind.Remaining => ShowRemainingListAsync(request.Remaining ?? []),
+            MobileDrawDialogKind.RemainingPrizes => ShowRemainingPrizesAsync(request.RemainingPrizes ?? []),
             _ => Task.CompletedTask
         };
+    }
+
+    private async Task ShowRemainingPrizesAsync(IReadOnlyList<SecRandom.Shared.Models.Profile.Prize> remaining)
+    {
+        FlyoutHelper.CloseAncestorFlyout(this.FindControl<Grid>("PrizeFlyoutGrid"));
+        Control content;
+        if (remaining.Count == 0)
+        {
+            content = new TextBlock { Text = LR.M_NoRemaining, TextWrapping = TextWrapping.Wrap };
+        }
+        else
+        {
+            var rows = new StackPanel { Spacing = 4 };
+            foreach (var prize in remaining)
+            {
+                rows.Children.Add(new FASettingsExpander
+                {
+                    Header = FormatPrize(prize),
+                    Description = string.Join(" | ", new[] { prize.Id, prize.Tags }
+                        .Where(value => !string.IsNullOrWhiteSpace(value))),
+                    MinHeight = 64,
+                    HorizontalAlignment = HorizontalAlignment.Stretch
+                });
+            }
+
+            content = new ScrollViewer
+            {
+                MaxHeight = 520,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                Content = rows
+            };
+        }
+
+        await new FAContentDialog
+        {
+            Title = LR.M_RemainingTitle,
+            Content = content,
+            CloseButtonText = LR.C_Close,
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(TopLevel.GetTopLevel(this));
     }
 
     private async Task ShowRemainingListAsync(IReadOnlyList<SecRandom.Shared.Models.Profile.Student> remaining)
@@ -120,4 +164,7 @@ public sealed partial class MobileDrawPage : UserControl
     private static string FormatStudent(SecRandom.Shared.Models.Profile.Student student) => string.IsNullOrWhiteSpace(student.Id)
         ? student.Name
         : string.IsNullOrWhiteSpace(student.Name) ? student.Id : $"{student.Id}  {student.Name}";
+
+    private static string FormatPrize(SecRandom.Shared.Models.Profile.Prize prize) =>
+        string.IsNullOrWhiteSpace(prize.Name) ? prize.Id : prize.Name;
 }

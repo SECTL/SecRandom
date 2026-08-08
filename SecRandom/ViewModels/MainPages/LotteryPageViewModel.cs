@@ -55,6 +55,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly ISecurityService _securityService;
     private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
+    private readonly LotteryDrawService _lotteryDrawService;
     private readonly NotificationService? _notificationService;
     private readonly IFeatureAvailabilityService _featureAvailability;
     private readonly FileSystemWatcher? _prizeListWatcher;
@@ -89,6 +90,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         LinkageDrawCoordinator linkageDrawCoordinator,
         VerificationDrawCoordinator verificationDrawCoordinator,
         IFeatureAvailabilityService featureAvailability,
+        LotteryDrawService lotteryDrawService,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         NotificationService? notificationService = null)
         : base(configHandler)
@@ -104,6 +106,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         _securityService = securityService;
         _linkageDrawCoordinator = linkageDrawCoordinator;
         _verificationDrawCoordinator = verificationDrawCoordinator;
+        _lotteryDrawService = lotteryDrawService;
         _featureAvailability = featureAvailability;
         _notificationService = notificationService;
         if (!OperatingSystem.IsIOS())
@@ -293,21 +296,24 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                     count);
 
             var courseName = _linkageDrawCoordinator.GetCourseName();
-            var verificationDrawTask = _verificationDrawCoordinator.DrawPrizesAsync(
+            var drawTask = _lotteryDrawService.DrawAsync(new LotteryDrawRequest(
+                SelectedPrizeListName,
+                IsStudentAssignmentEnabled ? SelectedStudentListName : string.Empty,
+                CurrentGroupScope,
+                CurrentGenderScope,
                 count,
-                _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName),
-                prizes,
-                DrawProofExportContext.ForPrizes(SelectedPrizeListName),
-                cancellationToken: default);
+                courseName));
             var previewTask = ShowPreviewAsync(prizes, count, MusicSettings.AnimationMusic);
             List<Prize> drawn;
-            Guid? prizeProofId;
+            List<Student> assignedStudents;
             try
             {
-                var drawCompletedFirst = await Task.WhenAny(verificationDrawTask, previewTask).ConfigureAwait(true) == verificationDrawTask;
-                var proofOutcome = await verificationDrawTask.ConfigureAwait(true);
-                drawn = proofOutcome.Winners.ToList();
-                prizeProofId = proofOutcome.Proof.ProofId;
+                var drawCompletedFirst = await Task.WhenAny(drawTask, previewTask).ConfigureAwait(true) == drawTask;
+                var drawResult = await drawTask.ConfigureAwait(true);
+                if (drawResult is null)
+                    throw new InvalidOperationException("No eligible lottery candidates.");
+                drawn = drawResult.Prizes.ToList();
+                assignedStudents = drawResult.AssignedStudents.ToList();
                 if (drawCompletedFirst && !previewTask.IsCompleted)
                     await _drawAudioService.StartAnimationMusicAsync(
                         DrawMusicAttachedSettingsResolver.GetAnimationMusic(drawn.FirstOrDefault(), MusicSettings.AnimationMusic),
@@ -327,27 +333,6 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                 StatusText = SR.M_DrawFailed;
                 return;
             }
-
-            var assignedStudents = await DrawAssignedStudentsAsync(drawn.Count, prizeProofId, courseName).ConfigureAwait(true);
-            if (assignedStudents is null)
-            {
-                await _drawAudioService.StopAnimationMusicAsync(0, immediate: true).ConfigureAwait(false);
-                return;
-            }
-
-            // 奖品与获奖学生共用单一 DrawRoundId，一次性事务提交。
-            _drawCommitService.CommitLotteryDraw(new LotteryDrawCommit(
-                drawn,
-                DateTime.Now,
-                count,
-                SelectedPrizeListName,
-                AssignedStudents: assignedStudents.Count > 0 ? assignedStudents : null,
-                StudentListName: SelectedStudentListName,
-                StudentGroupScope: CurrentGroupScope,
-                StudentGenderScope: CurrentGenderScope,
-                PrizeDrawMethod: (int)Config.LotterySettings.DrawType,
-                StudentDrawMethod: (int)Config.RollCallSettings.DrawType,
-                CourseName: courseName));
 
             _lastResultPrizes = BuildDisplayPrizes(drawn, assignedStudents);
             ReplaceResults(_lastResultPrizes);
@@ -385,9 +370,10 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     {
         _lastResultPrizes.Clear();
         ResultItems.Clear();
-        _temporaryRecordService.ClearPrizeList(SelectedPrizeListName);
-        if (IsStudentAssignmentEnabled)
-            _temporaryRecordService.ClearStudentScope(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
+        _lotteryDrawService.Reset(
+            IsStudentAssignmentEnabled ? SelectedStudentListName : string.Empty,
+            CurrentGroupScope,
+            CurrentGenderScope);
         IsResultVisible = false;
         StatusText = SR.M_ResetDone;
         RefreshCounts();

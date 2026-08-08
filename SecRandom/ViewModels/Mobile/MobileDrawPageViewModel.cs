@@ -11,6 +11,8 @@ using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
+using SecRandom.Services.Draw;
+using SecRandom.Services.Linkage;
 using SecRandom.Services.Mobile;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Interfaces;
@@ -27,21 +29,25 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
     private readonly IProfileService _profileService;
     private readonly IDrawTemporaryRecordService _temporaryRecordService;
     private readonly MainConfigHandler _configHandler;
-    private readonly MobileRollCallService _rollCallService;
-    private readonly ILotterySession _lotterySession;
+    private readonly RollCallDrawService _rollCallService;
+    private readonly LotteryDrawService _lotteryService;
+    private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly MobileDrawMediaService _drawMedia;
     private readonly IMobileSettingsNavigator _settingsNavigator;
     private readonly IMobileCapabilities _capabilities;
-    private MobileRollCallSnapshot? _rollCallSnapshot;
-    private IReadOnlyList<Prize> _lotteryCandidates = [];
+    private RollCallDrawSnapshot? _rollCallSnapshot;
+    private LotteryDrawSnapshot? _lotterySnapshot;
     private IReadOnlyList<Student> _studentResult = [];
-    private Prize? _prizeResult;
+    private IReadOnlyList<Prize> _prizeResults = [];
+    private IReadOnlyList<Student> _lotteryAssignedStudents = [];
     private string? _resultStatusText;
     private string? _resultStatusDetail;
     private bool _synchronizingSurface;
 
     [ObservableProperty] private int _selectedSurface;
     [ObservableProperty] private string _selectedStudentList = string.Empty;
+    [ObservableProperty] private string _selectedPrizePool = string.Empty;
+    [ObservableProperty] private string? _selectedLotteryStudentList;
     [ObservableProperty] private string _selectedGroup = LR.O_All;
     [ObservableProperty] private string _selectedGender = LR.O_All;
     [ObservableProperty] private int _drawCount = 1;
@@ -51,6 +57,8 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
     [ObservableProperty] private string _resultText = string.Empty;
     [ObservableProperty] private string _resultDetail = string.Empty;
     [ObservableProperty] private IReadOnlyList<string> _studentLists = [];
+    [ObservableProperty] private IReadOnlyList<string> _prizePools = [];
+    [ObservableProperty] private IReadOnlyList<string> _lotteryStudentLists = [];
     [ObservableProperty] private IReadOnlyList<string> _groupOptions = [];
     [ObservableProperty] private IReadOnlyList<string> _genderOptions = [];
 
@@ -58,8 +66,9 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
         MainConfigHandler configHandler,
         IProfileService profileService,
         IDrawTemporaryRecordService temporaryRecordService,
-        MobileRollCallService rollCallService,
-        ILotterySession lotterySession,
+        RollCallDrawService rollCallService,
+        LotteryDrawService lotteryService,
+        LinkageDrawCoordinator linkageDrawCoordinator,
         MobileDrawMediaService drawMedia,
         IMobileSettingsNavigator settingsNavigator,
         IMobileCapabilities capabilities)
@@ -69,7 +78,8 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
         _profileService = profileService;
         _temporaryRecordService = temporaryRecordService;
         _rollCallService = rollCallService;
-        _lotterySession = lotterySession;
+        _lotteryService = lotteryService;
+        _linkageDrawCoordinator = linkageDrawCoordinator;
         _drawMedia = drawMedia;
         _settingsNavigator = settingsNavigator;
         _capabilities = capabilities;
@@ -87,21 +97,29 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
     public bool IsLotterySurface => SelectedSurface == (int)DrawSurface.Lottery;
     public bool CanChangeSurface => !IsDrawing;
     public bool CanDecreaseCount => !IsDrawing && DrawCount > 1;
-    public bool CanIncreaseCount => !IsDrawing && DrawCount < (_rollCallSnapshot?.RemainingCount ?? 0);
+    public bool CanIncreaseCount => !IsDrawing && DrawCount < CurrentRemainingCount;
     public bool CanDrawStudents => !IsDrawing && (_rollCallSnapshot?.RemainingCount ?? 0) > 0;
-    public bool CanDrawPrize => !IsDrawing && _lotteryCandidates.Count > 0;
+    public bool CanDrawPrize => !IsDrawing && !string.IsNullOrWhiteSpace(SelectedLotteryStudentList) &&
+                                (_lotterySnapshot?.RemainingCount ?? 0) > 0 &&
+                                (_lotterySnapshot?.EligibleStudents.Count ?? 0) >= DrawCount;
     public bool HasResultImages => ResultImages.Count > 0;
     public string DrawStudentsText => IsDrawing ? LR.M_Drawing : LR.C_StartDraw;
     public string DrawPrizeText => IsDrawing ? LR.M_Drawing : LR.C_DrawPrize;
-    public bool DrawPanelPositionLeft =>
+    public bool RollCallPositionLeft =>
         Config.MoreSettings.RollCallControlPanelPosition == RollCallControlPanelPosition.Left;
+    public bool LotteryPositionLeft =>
+        Config.MoreSettings.LotteryControlPanelPosition == RollCallControlPanelPosition.Left;
+    public int CurrentRemainingCount => IsLotterySurface
+        ? _lotterySnapshot?.RemainingCount ?? 0
+        : _rollCallSnapshot?.RemainingCount ?? 0;
 
     public event EventHandler<MobileDrawAnimationRequest>? AnimationRequested;
     public event EventHandler<MobileDrawDialogRequest>? DialogRequested;
 
     private void MoreSettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        OnPropertyChanged(nameof(DrawPanelPositionLeft));
+        OnPropertyChanged(nameof(RollCallPositionLeft));
+        OnPropertyChanged(nameof(LotteryPositionLeft));
     }
 
     partial void OnSelectedSurfaceChanged(int value)
@@ -133,6 +151,29 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
         RefreshSurface();
     }
 
+    partial void OnSelectedPrizePoolChanged(string value)
+    {
+        if (_synchronizingSurface || IsDrawing || string.IsNullOrWhiteSpace(value))
+            return;
+        _lotteryService.SwitchPrizePool(value);
+        DrawCount = 1;
+        ClearResult();
+        RefreshSurface();
+    }
+
+    partial void OnSelectedLotteryStudentListChanged(string? value)
+    {
+        if (_synchronizingSurface || IsDrawing)
+            return;
+        if (!string.IsNullOrWhiteSpace(value))
+            _lotteryService.SwitchStudentList(value);
+        SelectedGroup = LR.O_All;
+        SelectedGender = LR.O_All;
+        DrawCount = 1;
+        ClearResult();
+        RefreshSurface();
+    }
+
     partial void OnSelectedGroupChanged(string value)
     {
         if (_synchronizingSurface || IsDrawing)
@@ -155,7 +196,7 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
 
     partial void OnDrawCountChanged(int value)
     {
-        var maximum = Math.Max(1, _rollCallSnapshot?.RemainingCount ?? 1);
+        var maximum = Math.Max(1, CurrentRemainingCount);
         var normalized = Math.Clamp(value, 1, maximum);
         if (normalized != value)
             DrawCount = normalized;
@@ -176,11 +217,14 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
         if (IsDrawing || _rollCallSnapshot is null)
             return;
 
+        if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.RollCallStart, () => Task.CompletedTask))
+            return;
+
         IsDrawing = true;
         _resultStatusText = null;
         _resultStatusDetail = null;
         ResultImages.Clear();
-        RefreshSurface();
+        NotifyStateChanged();
         await StopMediaSafelyAsync();
         IReadOnlyList<Student>? resultMediaStudents = null;
         var names = _rollCallSnapshot.Remaining.Select(FormatStudent).Where(name => name.Length > 0).ToArray();
@@ -189,20 +233,21 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
 
         try
         {
-            var output = _rollCallService.Draw(DrawCount, GroupScope, GenderScope);
-            if (output.IsSuccess && output.Result.Count > 0)
-                await StartStudentAnimationMediaAsync(output.Result[0]);
+            var output = await _rollCallService.DrawAsync(new RollCallDrawRequest(
+                GetStudentListName(), GroupScope, GenderScope, DrawCount, _linkageDrawCoordinator.GetCourseName()));
+            if (output is not null && output.Students.Count > 0)
+                await StartStudentAnimationMediaAsync(output.Students[0]);
             await Task.Delay(RollDurationMs);
-            if (!output.IsSuccess || output.Result.Count == 0)
+            if (output is null || output.Students.Count == 0)
             {
                 _studentResult = [];
-                _resultStatusText = GetDrawFailureText(output.Status);
+                _resultStatusText = LR.M_NoEligibleCandidates;
                 _resultStatusDetail = string.Empty;
             }
             else
             {
-                _studentResult = output.Result;
-                resultMediaStudents = output.Result;
+                _studentResult = output.Students;
+                resultMediaStudents = output.Students;
             }
         }
         catch
@@ -227,41 +272,48 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
     [RelayCommand]
     private async Task DrawPrizeAsync()
     {
-        if (IsDrawing || !IsLotteryEnabled)
+        if (IsDrawing || !IsLotteryEnabled || !CanDrawPrize)
             return;
 
         IsDrawing = true;
         _resultStatusText = null;
         _resultStatusDetail = null;
         ResultImages.Clear();
-        RefreshSurface();
+        NotifyStateChanged();
         await StopMediaSafelyAsync();
         Prize? resultMediaPrize = null;
-        var names = _lotteryCandidates.Select(FormatPrize).Where(name => name.Length > 0).ToArray();
-        if (names.Length > 0)
+        var names = BuildLotteryPreviewNames();
+        if (names.Count > 0)
             AnimationRequested?.Invoke(this, new MobileDrawAnimationRequest(names, false));
 
         try
         {
-            var output = _lotterySession.DrawOnce();
-            if (output.IsSuccess && output.Result.Count > 0)
-                await StartPrizeAnimationMediaAsync(output.Result[0]);
+            if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.LotteryStart, () => Task.CompletedTask))
+                return;
+            var output = await _lotteryService.DrawAsync(new LotteryDrawRequest(
+                GetPrizePoolName(), SelectedLotteryStudentList ?? string.Empty, GroupScope, GenderScope, DrawCount,
+                _linkageDrawCoordinator.GetCourseName()));
+            if (output is not null && output.Prizes.Count > 0)
+                await StartPrizeAnimationMediaAsync(output.Prizes[0]);
             await Task.Delay(RollDurationMs);
-            if (!output.IsSuccess || output.Result.Count == 0)
+            if (output is null || output.Prizes.Count == 0)
             {
-                _prizeResult = null;
-                _resultStatusText = GetDrawFailureText(output.Status);
+                _prizeResults = [];
+                _lotteryAssignedStudents = [];
+                _resultStatusText = LR.M_NoEligibleCandidates;
                 _resultStatusDetail = string.Empty;
             }
             else
             {
-                _prizeResult = output.Result[0];
-                resultMediaPrize = _prizeResult;
+                _prizeResults = output.Prizes;
+                _lotteryAssignedStudents = output.AssignedStudents;
+                resultMediaPrize = output.Prizes[0];
             }
         }
         catch
         {
-            _prizeResult = null;
+            _prizeResults = [];
+            _lotteryAssignedStudents = [];
             _resultStatusText = LR.M_DrawFailed;
             _resultStatusDetail = string.Empty;
             await StopMediaSafelyAsync();
@@ -280,12 +332,17 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
 
     [RelayCommand]
     private void ShowRemaining() => DialogRequested?.Invoke(this,
-        new MobileDrawDialogRequest(MobileDrawDialogKind.Remaining, _rollCallSnapshot?.Remaining ?? []));
+        IsLotterySurface
+            ? new MobileDrawDialogRequest(MobileDrawDialogKind.RemainingPrizes, null, _lotterySnapshot?.Remaining ?? [])
+            : new MobileDrawDialogRequest(MobileDrawDialogKind.Remaining, _rollCallSnapshot?.Remaining ?? []));
 
     [RelayCommand]
     public void ResetScope()
     {
-        _rollCallService.ClearTemporaryRecords(GroupScope, GenderScope);
+        if (IsLotterySurface)
+            _lotteryService.Reset(SelectedLotteryStudentList ?? string.Empty, GroupScope, GenderScope);
+        else
+            _rollCallService.Reset(GroupScope, GenderScope);
         ClearResult();
         RefreshSurface();
     }
@@ -293,8 +350,8 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
     [RelayCommand]
     public void ClearTemporaryRecords()
     {
-        _temporaryRecordService.ClearStudentList(GetStudentListName());
-        _temporaryRecordService.ClearPrizeList(GetPrizeListName());
+        _rollCallService.Reset(string.Empty, string.Empty);
+        _lotteryService.Reset(SelectedLotteryStudentList ?? string.Empty, string.Empty, string.Empty);
         ClearResult();
         RefreshSurface();
     }
@@ -319,16 +376,25 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
             var snapshot = _rollCallService.GetSnapshot(GroupScope, GenderScope);
             _rollCallSnapshot = snapshot;
             DrawCount = Math.Clamp(DrawCount, 1, Math.Max(1, snapshot.RemainingCount));
-            StudentLists = _rollCallService.GetListNames();
+            StudentLists = snapshot.ListNames;
             var currentList = GetStudentListName();
             if (!string.Equals(SelectedStudentList, currentList, StringComparison.Ordinal))
                 SelectedStudentList = currentList;
-            GroupOptions = new[] { LR.O_All }.Concat(_rollCallService.GetGroups()).ToArray();
-            GenderOptions = new[] { LR.O_All }.Concat(_rollCallService.GetGenders()).ToArray();
-            _lotteryCandidates = _lotterySession.GetEligiblePrizes().ToArray();
+            GroupOptions = new[] { LR.O_All }.Concat(snapshot.Groups).ToArray();
+            GenderOptions = new[] { LR.O_All }.Concat(snapshot.Genders).ToArray();
+            _lotterySnapshot = _lotteryService.GetSnapshot(SelectedLotteryStudentList ?? string.Empty, GroupScope, GenderScope);
+            PrizePools = _lotterySnapshot.PrizePoolNames;
+            LotteryStudentLists = _lotterySnapshot.StudentListNames;
+            var currentPrizePool = GetPrizePoolName();
+            if (!string.Equals(SelectedPrizePool, currentPrizePool, StringComparison.Ordinal))
+                SelectedPrizePool = currentPrizePool;
+            if (!string.IsNullOrWhiteSpace(SelectedLotteryStudentList) &&
+                !LotteryStudentLists.Contains(SelectedLotteryStudentList))
+                SelectedLotteryStudentList = null;
+            DrawCount = Math.Clamp(DrawCount, 1, Math.Max(1, CurrentRemainingCount));
             RollCallSummary = string.Format(System.Globalization.CultureInfo.CurrentCulture,
                 LR.M_CountSummary, snapshot.TotalCount, snapshot.RemainingCount);
-            PrizePoolName = _profileService.PrizeListConfig?.Name ?? LR.M_DefaultPool;
+            PrizePoolName = currentPrizePool;
             UpdateResult(snapshot);
             NotifyStateChanged();
         }
@@ -338,7 +404,7 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
         }
     }
 
-    private void UpdateResult(MobileRollCallSnapshot snapshot)
+    private void UpdateResult(RollCallDrawSnapshot snapshot)
     {
         var hasStudents = _profileService.CurrentStudentList?.Students.Any(student => student.IsCandidate) ?? false;
         var hasPrizes = _profileService.CurrentPrizeList?.Prizes.Any(prize => prize.IsCandidate) ?? false;
@@ -357,16 +423,17 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
             return;
         }
 
-        ResultText = _resultStatusText ?? (_prizeResult is not null ? FormatPrize(_prizeResult)
-            : _lotteryCandidates.Count > 0 ? LR.M_Ready
+        ResultText = _resultStatusText ?? (_prizeResults.Count > 0 ? string.Join("\n",
+                _prizeResults.Select((prize, index) => FormatLotteryResult(prize,
+                    index < _lotteryAssignedStudents.Count ? _lotteryAssignedStudents[index] : null)))
+            : (_lotterySnapshot?.RemainingCount ?? 0) > 0 ? LR.M_Ready
             : hasPrizes ? LR.M_NoEligibleCandidates : LR.M_NoPrizes);
-        ResultDetail = _resultStatusDetail ?? (_prizeResult is not null
-            ? string.IsNullOrWhiteSpace(_prizeResult.Id) ? LR.M_DrawCompleted
-                : string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_PrizeId, _prizeResult.Id)
-            : _lotteryCandidates.Count > 0
-                ? string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_CandidatePrizes, _lotteryCandidates.Count)
+        ResultDetail = _resultStatusDetail ?? (_prizeResults.Count > 0
+            ? string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_DrawResultCount, _prizeResults.Count)
+            : (_lotterySnapshot?.RemainingCount ?? 0) > 0
+                ? string.Format(System.Globalization.CultureInfo.CurrentCulture, LR.M_CandidatePrizes, _lotterySnapshot!.RemainingCount)
                 : hasPrizes ? LR.M_RepeatLimitExhausted : LR.M_AddPrizesPrompt);
-        UpdateResultImages(_configHandler.Data.LotterySettings.LotteryImage && _prizeResult is not null ? [_prizeResult] : []);
+        UpdateResultImages(_configHandler.Data.LotterySettings.LotteryImage ? _prizeResults : []);
     }
 
     private bool ShouldShowStudentImages() => Config.GetOverrideDrawSettings(
@@ -450,7 +517,8 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
     private void ClearResult()
     {
         _studentResult = [];
-        _prizeResult = null;
+        _prizeResults = [];
+        _lotteryAssignedStudents = [];
         _resultStatusText = null;
         _resultStatusDetail = null;
         ResultImages.Clear();
@@ -477,6 +545,7 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasResultImages));
         OnPropertyChanged(nameof(DrawStudentsText));
         OnPropertyChanged(nameof(DrawPrizeText));
+        OnPropertyChanged(nameof(CurrentRemainingCount));
     }
 
     private static string FormatStudent(Student student) => string.IsNullOrWhiteSpace(student.Id)
@@ -484,10 +553,26 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
         : string.IsNullOrWhiteSpace(student.Name) ? student.Id : $"{student.Id}  {student.Name}";
 
     private static string FormatPrize(Prize prize) => string.IsNullOrWhiteSpace(prize.Name) ? prize.Id : prize.Name;
+
+    private IReadOnlyList<string> BuildLotteryPreviewNames()
+    {
+        if (_lotterySnapshot is not { Remaining.Count: > 0, EligibleStudents.Count: > 0 })
+            return [];
+
+        return _lotterySnapshot.Remaining.SelectMany(prize => _lotterySnapshot.EligibleStudents
+            .Select(student => FormatLotteryResult(prize, student))).ToArray();
+    }
+
+    private static string FormatLotteryResult(Prize prize, Student? student)
+    {
+        var prizeText = FormatPrize(prize);
+        return student is null ? prizeText : $"{prizeText}  -  {FormatStudent(student)}";
+    }
     private string GroupScope => string.Equals(SelectedGroup, LR.O_All, StringComparison.Ordinal) ? string.Empty : SelectedGroup;
     private string GenderScope => string.Equals(SelectedGender, LR.O_All, StringComparison.Ordinal) ? string.Empty : SelectedGender;
     private string GetStudentListName() => _profileService.StudentListConfig?.Name ?? MobileDefaults.ProfileName;
     private string GetPrizeListName() => _profileService.PrizeListConfig?.Name ?? MobileDefaults.ProfileName;
+    private string GetPrizePoolName() => _profileService.PrizeListConfig?.Name ?? MobileDefaults.ProfileName;
 
     private static string GetDrawFailureText(DrawStatus status) => status switch
     {
@@ -505,9 +590,11 @@ public sealed record MobileDrawAnimationRequest(IReadOnlyList<string> Names, boo
 
 public enum MobileDrawDialogKind
 {
-    Remaining
+    Remaining,
+    RemainingPrizes
 }
 
 public sealed record MobileDrawDialogRequest(
     MobileDrawDialogKind Kind,
-    IReadOnlyList<Student>? Remaining = null);
+    IReadOnlyList<Student>? Remaining = null,
+    IReadOnlyList<Prize>? RemainingPrizes = null);

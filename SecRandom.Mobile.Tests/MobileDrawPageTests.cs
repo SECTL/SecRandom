@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Services;
 using SecRandom.Mobile;
+using SecRandom.Services.Draw;
 using SecRandom.Services.Mobile;
 using SecRandom.Shared;
 using SecRandom.ViewModels.Mobile;
@@ -34,7 +35,8 @@ public sealed class MobileDrawPageTests : IDisposable
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.None));
         services.AddCoreRuntimeServices();
-        services.AddTransient<MobileRollCallService>();
+        services.AddTransient<RollCallDrawService>();
+        services.AddTransient<LotteryDrawService>();
         services.AddSingleton<IMobileMediaPlayer, UnsupportedMobileMediaPlayer>();
         services.AddSingleton<MobileMediaLibraryService>();
         services.AddSingleton<MobileDrawMediaService>();

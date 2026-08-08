@@ -54,6 +54,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private readonly ISecurityService _securityService;
     private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
+    private readonly RollCallDrawService _rollCallDrawService;
     private readonly NotificationService? _notificationService;
     private readonly FileSystemWatcher? _studentListWatcher;
     private List<Student> _lastResultStudents = [];
@@ -83,6 +84,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         ISecurityService securityService,
         LinkageDrawCoordinator linkageDrawCoordinator,
         VerificationDrawCoordinator verificationDrawCoordinator,
+        RollCallDrawService rollCallDrawService,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         DrawAudioService? drawAudioService = null,
         NotificationService? notificationService = null)
@@ -97,6 +99,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         _securityService = securityService;
         _linkageDrawCoordinator = linkageDrawCoordinator;
         _verificationDrawCoordinator = verificationDrawCoordinator;
+        _rollCallDrawService = rollCallDrawService;
         _voiceAnnouncementService = voiceAnnouncementService;
         _drawAudioService = drawAudioService;
         _notificationService = notificationService;
@@ -256,7 +259,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     {
         _lastResultStudents.Clear();
         ResultItems.Clear();
-        _temporaryRecordService.ClearStudentScope(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
+        _rollCallDrawService.Reset(CurrentGroupScope, CurrentGenderScope);
         IsResultVisible = false;
         ResultText = ReminderSettings.ReminderText;
         StatusText = SR.M_ResetDone;
@@ -309,22 +312,17 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
                     count);
 
             var courseName = _linkageDrawCoordinator.GetCourseName();
-            var now = DateTime.Now;
-            var verificationDrawTask = _verificationDrawCoordinator.DrawStudentsAsync(
-                count,
-                candidates,
-                DrawSettingsType.RollCall,
-                DrawProofExportContext.ForStudents(SelectedStudentListName, CurrentGroupScope, CurrentGenderScope, courseName),
-                courseName: courseName,
-                cancellationToken: default);
+            var drawTask = _rollCallDrawService.DrawAsync(new RollCallDrawRequest(
+                SelectedStudentListName, CurrentGroupScope, CurrentGenderScope, count, courseName));
             var previewTask = ShowPreviewAsync(candidates, count, MusicSettings.AnimationMusic);
             List<Student> drawnStudents;
-            VerificationDrawOutcome<Student> drawOutcome;
             try
             {
-                var drawCompletedFirst = await Task.WhenAny(verificationDrawTask, previewTask).ConfigureAwait(true) == verificationDrawTask;
-                drawOutcome = await verificationDrawTask.ConfigureAwait(true);
-                drawnStudents = drawOutcome.Winners.ToList();
+                var drawCompletedFirst = await Task.WhenAny(drawTask, previewTask).ConfigureAwait(true) == drawTask;
+                var drawResult = await drawTask.ConfigureAwait(true);
+                if (drawResult is null)
+                    throw new InvalidOperationException("No eligible point-call candidates.");
+                drawnStudents = drawResult.Students.ToList();
                 if (drawCompletedFirst && !previewTask.IsCompleted)
                     await PlayAnimationMusicAsync(DrawMusicAttachedSettingsResolver.GetAnimationMusic(
                         drawnStudents.FirstOrDefault(), MusicSettings.AnimationMusic)).ConfigureAwait(true);
@@ -341,18 +339,6 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
                 StatusText = SR.M_DrawFailed;
                 return;
             }
-
-            var weightSnapshot = BuildWeightSnapshot(drawnStudents, drawOutcome.FrozenWeights);
-            _drawCommitService.CommitStudentDraw(new StudentDrawCommit(
-                drawnStudents,
-                now,
-                count,
-                SelectedStudentListName,
-                CurrentGroupScope,
-                CurrentGenderScope,
-                (int)Config.RollCallSettings.DrawType,
-                weightSnapshot,
-                courseName));
 
             ResultItems.Clear();
             _lastResultStudents = drawnStudents;
