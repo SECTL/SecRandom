@@ -9,6 +9,10 @@
         <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
         <ApplicationIcon>..\SecRandom\Assets\AppLogo.ico</ApplicationIcon>
     </PropertyGroup>
+    
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <OutputType>WinExe</OutputType>
+    </PropertyGroup>
 
     <Import Project="..\Platforms.props" />
 
