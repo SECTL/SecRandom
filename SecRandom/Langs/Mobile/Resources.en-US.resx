@@ -185,6 +185,21 @@
     <data name="M_AddStudentsPrompt" xml:space="preserve">
         <value>Add members in Settings</value>
     </data>
+    <data name="M_AddMemberHistoryResetTitle" xml:space="preserve">
+        <value>Clear list history</value>
+    </data>
+    <data name="M_AddMemberHistoryResetContent" xml:space="preserve">
+        <value>Every existing member in “{0}” has been drawn at least once
+After adding a new member, fair drawing may give the new member a higher chance
+Would you like to clear the history for the current list
+Clearing history before fair drawing helps keep the new member’s chance from becoming too high</value>
+    </data>
+    <data name="M_AddMemberHistoryResetPrimary" xml:space="preserve">
+        <value>Clear history</value>
+    </data>
+    <data name="M_AddMemberHistoryResetSecondary" xml:space="preserve">
+        <value>Keep history</value>
+    </data>
     <data name="M_NoPrizes" xml:space="preserve">
         <value>No prizes available to draw yet</value>
     </data>

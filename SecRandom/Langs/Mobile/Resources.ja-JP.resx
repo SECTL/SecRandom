@@ -185,6 +185,21 @@
     <data name="M_AddStudentsPrompt" xml:space="preserve">
         <value>設定でメンバーを追加してください</value>
     </data>
+    <data name="M_AddMemberHistoryResetTitle" xml:space="preserve">
+        <value>リストの履歴を削除</value>
+    </data>
+    <data name="M_AddMemberHistoryResetContent" xml:space="preserve">
+        <value>「{0}」の既存メンバーは全員一度以上抽選されています
+新しいメンバーを追加すると、公平抽選で新しいメンバーの当選確率が高くなる場合があります
+現在のリストの履歴を削除しますか
+履歴を削除してから公平抽選を行うと、より公平な結果になります</value>
+    </data>
+    <data name="M_AddMemberHistoryResetPrimary" xml:space="preserve">
+        <value>履歴を削除</value>
+    </data>
+    <data name="M_AddMemberHistoryResetSecondary" xml:space="preserve">
+        <value>履歴を保持</value>
+    </data>
     <data name="M_NoPrizes" xml:space="preserve">
         <value>賞品プールに抽選できる賞品がまだありません</value>
     </data>

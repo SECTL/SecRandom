@@ -195,6 +195,21 @@
     <data name="M_AddMemberSuccess" xml:space="preserve">
         <value>已添加成员</value>
     </data>
+    <data name="M_AddMemberHistoryResetTitle" xml:space="preserve">
+        <value>清除名单历史记录</value>
+    </data>
+    <data name="M_AddMemberHistoryResetContent" xml:space="preserve">
+        <value>当前名单“{0}”中的所有现有成员抽取次数都不为 0
+新增成员后使用公平抽取可能会使新成员的抽中几率增大
+是否删除当前名单的历史记录
+清除历史记录后使用公平抽取会使效果更好</value>
+    </data>
+    <data name="M_AddMemberHistoryResetPrimary" xml:space="preserve">
+        <value>删除历史记录</value>
+    </data>
+    <data name="M_AddMemberHistoryResetSecondary" xml:space="preserve">
+        <value>保留历史记录</value>
+    </data>
     <data name="M_ListNameDialogTitle_Add" xml:space="preserve">
         <value>新增名单</value>
     </data>

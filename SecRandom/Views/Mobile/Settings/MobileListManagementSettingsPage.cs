@@ -28,6 +28,7 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
 {
     private readonly IProfileCatalogManager _catalogManager;
     private readonly IProfileService _profileService;
+    private readonly IHistoryQueryService _historyQueryService;
     private readonly MobileMediaLibraryService _mediaLibrary;
     private readonly MobileDrawMediaService _drawMedia;
     private int _segment;
@@ -39,6 +40,7 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
     public MobileListManagementSettingsPage(
         IProfileCatalogManager catalogManager,
         IProfileService profileService,
+        IHistoryQueryService historyQueryService,
         MobileMediaLibraryService mediaLibrary,
         MobileDrawMediaService drawMedia,
         IMobileCapabilities capabilities)
@@ -46,6 +48,7 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
     {
         _catalogManager = catalogManager;
         _profileService = profileService;
+        _historyQueryService = historyQueryService;
         _mediaLibrary = mediaLibrary;
         _drawMedia = drawMedia;
         InitializeComponent();
@@ -340,11 +343,12 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         SavePrizeList();
     }
 
-    private void AddStudent(TextBox name, TextBox id)
+    private async void AddStudent(TextBox name, TextBox id)
     {
         if (_studentList is null || string.IsNullOrWhiteSpace(name.Text) && string.IsNullOrWhiteSpace(id.Text))
             return;
 
+        var shouldOfferHistoryClear = ShouldOfferStudentHistoryClear(_studentList);
         var student = new Student
         {
             Name = name.Text?.Trim() ?? string.Empty,
@@ -356,7 +360,37 @@ public sealed partial class MobileListManagementSettingsPage : MobileSettingsPag
         {
             name.Text = string.Empty;
             id.Text = string.Empty;
+            if (shouldOfferHistoryClear && await ConfirmClearStudentHistoryAsync(_studentListName!))
+                _catalogManager.ClearStudentHistory(_studentListName!);
         }
+    }
+
+    private bool ShouldOfferStudentHistoryClear(StudentList list)
+    {
+        if (list.Students.Count == 0 || string.IsNullOrWhiteSpace(_studentListName))
+            return false;
+
+        var history = _historyQueryService.LoadStudentHistory(_studentListName);
+        if (history is null)
+            return false;
+
+        var uniqueLegacyKeys = ProfileRecordIdentity.BuildUniqueStudentLegacyKeySet(list.Students);
+        return list.Students.All(student =>
+            (ProfileRecordIdentity.GetStudentHistory(history, student, uniqueLegacyKeys.Contains)?.TotalCount ?? 0) > 0);
+    }
+
+    private async Task<bool> ConfirmClearStudentHistoryAsync(string listName)
+    {
+        var result = await new FAContentDialog
+        {
+            Title = LR.M_AddMemberHistoryResetTitle,
+            Content = string.Format(LR.M_AddMemberHistoryResetContent, listName),
+            PrimaryButtonText = LR.M_AddMemberHistoryResetPrimary,
+            CloseButtonText = LR.M_AddMemberHistoryResetSecondary,
+            DefaultButton = FAContentDialogButton.Primary
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+
+        return result == FAContentDialogResult.Primary;
     }
 
     private void AddPrize(TextBox name, TextBox id)

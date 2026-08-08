@@ -33,46 +33,36 @@ History-balanced weights and candidate filters help reduce repeat selections and
 
 ### Draw workflows
 
-- **Roll call**: Standard random and history-balanced draws with configurable repeat, no-repeat, and partial-repeat rules.
-- **Quick draw**: Fast student draws from a standalone floating window without taking over the main workspace.
-- **Lottery**: Prize-wheel and inventory-count drawing modes; student and prize pools maintain separate histories.
-- **Presentation**: Shared draw animation, result display, speech, music, and notification settings. The built-in notification can fall back when an external notification service fails.
+- **Roll call**: Supports standard random, history-balanced, and repeat-control draws.
+- **Quick draw**: Quickly draws students through a standalone floating window.
+- **Lottery**: Supports prize-wheel and inventory draws, with students and prizes managed independently.
+- **Rich presentation**: Provides unified settings for animation, results, speech, music, and notifications, with fallback when a notification fails.
 
-### History balance and lists
+### Fairness and list management
 
-- Configurable weights consider history count, time since a previous result, group, and gender context, with cold-start and gap protections.
-- Stable internal record identities preserve history; displayed student numbers, IDs, and names are metadata rather than required unique identities.
-- Multiple student lists and prize pools with `.xlsx`, `.xls`, and `.csv` import, field mapping, and preview.
-- Every logical draw round is retained for review and management by profile and draw type.
+- Dynamically adjusts weights using history count, draw interval, group, gender, and other factors to reduce repeats and distribution imbalance.
+- Uses stable internal identifiers to preserve history; student numbers, IDs, and names are display information only.
+- Supports multiple student lists, prize pools, and `.xlsx`, `.xls`, `.csv` import, mapping, and preview.
+- Saves history for every draw round for convenient review.
 
-### Fair selection
+### Reviewable draw results
 
-Fair selection combines a cryptographic random source with candidate weights derived from personal draw history, time since the last result, group and gender distribution. Cold-start, average-gap, and candidate-pool protections help reduce repeated selections and long-term imbalance. Its results depend on the list, rules, and configuration; it does not make absolute claims about real-world fairness.
-
-### Verifiable draws
-
-- Ordinary draws immediately save a locally replayable `.srproof.json` proof containing algorithm/input summaries, results, and required anonymous audit data.
-- A newly created proof may be submitted once in the background for replay verification and a signed receipt. Proofs can be exported and retained under age and storage limits.
-- Formal online witnessing is an explicit option: the service locks an anonymous request, then creates server-side random material and returns an `OnlineWitnessed` proof.
+- Every draw automatically saves a proof record file.
+- You can choose to involve the server in and witness the draw process.
+- Draw results can be checked again through official channels.
 
 ### Data, privacy, and security
 
-- Profiles, settings, and full data support export, import, manual backup, and automatic backup. Imports accept only SecRandom v3 manifest/envelope formats and create a recovery snapshot before writes.
-- Full-data exports can include lists, history, proofs, audio, course-linkage, and plugin data, but never security credentials.
-- Telemetry upload and online-status reporting are independent controls.
-- Optional password, TOTP, and USB binding protections use a separate credential store and can protect draws, resets, settings, or external commands.
+- Settings, lists, and history can all be imported, exported, backed up, and restored.
+- Backups may include lists, history, draw proofs, images, and audio, but never passwords or other security information.
+- Password, TOTP, or USB-drive protection can secure important operations, and you can choose which operations require verification.
 
-### Integration, plugins, and delivery
+### Verification boundaries
 
-- Optional course linkage supports CSES schedules and ClassIsland. Only a confirmed break state restricts draws when configured; unavailable, invalid, or unknown data does not block normal use.
-- ClassIsland notifications require the `SecRandom4Ci` v2 plugin. Plugins use a restricted declarative draw interface and cannot access random sources, weighting logic, writable history, or host services directly.
-- The update center validates a signed release manifest and artifact integrity. Portable packages use a stable launcher and versioned `app-*` payloads so data can survive updates.
-
-## Verification modes and limits
-
-**Offline reproducible proofs** preserve and replay ordinary draws. A background signed receipt can help detect proof changes after submission. It is not a pre-draw server witness, and it cannot prove that the local executable, the real-world candidate pool, or actions before the draw were unmodified.
-
-**Formal online witnessing** is an explicitly selected alternative. The service locks an anonymous request before generating random material and calculating a result; network, service, or device failures wait for a clear outcome and must not silently fall back to a local draw. It strengthens protection of the locked flow against local code, seed, and proof replacement, but it still cannot establish that a real-world roster is authentic, complete, or unfiltered before submission.
+| Mode | What it can do | What it cannot prove |
+|---|---|---|
+| Offline proof | Review a completed draw process | It is not a pre-draw server witness; it cannot prove that the local program or real-world roster was not modified |
+| Online witnessing | Protect the draw flow after the server locks it | It cannot prove that the roster is authentic, complete, or unfiltered before submission |
 
 ## Technical evolution
 
@@ -80,12 +70,12 @@ Fair selection combines a cryptographic random source with candidate weights der
 | --- | --- | --- |
 | v1 | Python + PyQt5 + qfluentwidgets | First desktop implementation |
 | v2 | Python + PySide6 + qfluentwidgets | Qt stack evolution |
-| **v3** | **C# + Avalonia + FluentAvalonia** | .NET desktop rewrite for continued draw, verification, plugin, and desktop-integration development |
+| **v3** | **C# + Avalonia + FluentAvalonia** | .NET desktop rewrite for continued draw, verification, and desktop-integration development |
 
 ## Download and updates
 
 - [GitHub Releases](https://github.com/SECTL/SecRandom/releases) provides release packages and change notes.
-- The [official download page](https://secrandom.sectl.top/download.html) provides stable and pre-release entry points.
+- The [official download page](https://stk.sectl.cn/SecRandom) provides the latest download entry point.
 - Automatic updates validate a signed release manifest and artifact length/hash before deployment. Refer to the package and notes supplied with each release for installation details.
 
 ## License and third-party notices
@@ -108,7 +98,7 @@ Thank you to everyone who contributes code, reports issues, improves documentati
 - [QQ Channel](https://pd.qq.com/s/4x5dafd34?b=9)
 - [Bilibili](https://space.bilibili.com/520571577)
 - [Report an issue](https://github.com/SECTL/SecRandom/issues)
-- [SecRandom documentation](https://secrandom.sectl.top/doc/overview.html)
+- [SecRandom documentation](https://secrandom.sectl.cn/doc/overview.html)
 - [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
 - [English contributing guide](CONTRIBUTING_EN.md)
 
