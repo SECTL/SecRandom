@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -165,6 +166,12 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         Config.GetOverrideDrawSettings(DrawSettingsType.Lottery, OverridableDrawSettingsType.Music);
     private DrawSettingsConfigBase VoiceAnnouncementSettings =>
         Config.GetOverrideDrawSettings(DrawSettingsType.Lottery, OverridableDrawSettingsType.VoiceAnnouncement);
+    private bool IsLotteryImageEnabled => Config.LotterySettings.OverrideStudentImageSettings
+        ? Config.LotterySettings.LotteryImage
+        : Config.DefaultDrawSettings.StudentImage;
+    private StudentImagePositionMode LotteryImagePosition => Config.LotterySettings.OverrideStudentImageSettings
+        ? Config.LotterySettings.LotteryImagePosition
+        : Config.DefaultDrawSettings.StudentImagePosition;
     private string CurrentGroupScope => SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup;
     private string CurrentGenderScope => SelectedGender == AllGendersOption ? string.Empty : SelectedGender;
 
@@ -747,7 +754,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             DisplaySettings.ShowWeightTransparency,
             $"权重 {prize.Weight:0.##}",
             BuildImage(prize),
-            Config.LotterySettings.LotteryImage,
+            IsLotteryImageEnabled,
+            LotteryImagePosition,
             BuildInitial(prize));
     }
 
@@ -1060,10 +1068,16 @@ public sealed record LotteryResultItem(
     string WeightText,
     Bitmap? Image,
     bool IsImageEnabled,
+    StudentImagePositionMode ImagePosition,
     string Initial)
 {
     public bool IsImageVisible => IsImageEnabled && Image is not null;
     public bool IsPlaceholderVisible => IsImageEnabled && Image is null;
+    public Orientation ImageLayoutOrientation => ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Right
+        ? Orientation.Horizontal
+        : Orientation.Vertical;
+    public bool IsImageBeforeText => IsImageEnabled && ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Top;
+    public bool IsImageAfterText => IsImageEnabled && ImagePosition is StudentImagePositionMode.Right or StudentImagePositionMode.Bottom;
 }
 
 public sealed record LotteryRemainingItem(string DisplayText, string Id, string Name, string Tags, int Remaining, int DrawnCount)

@@ -172,6 +172,28 @@
                 </Grid>
             </Border>
         </DataTemplate>
+
+        <DataTemplate x:Key="LotteryAvatarTemplate"
+                      DataType="vm:LotteryResultItem">
+            <Border Width="72" Height="72"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8">
+                <Grid>
+                    <Border CornerRadius="8" IsVisible="{Binding IsImageVisible}">
+                        <Border.Background>
+                            <ImageBrush Source="{Binding Image}" Stretch="UniformToFill" />
+                        </Border.Background>
+                    </Border>
+                    <TextBlock Text="{Binding Initial}"
+                               IsVisible="{Binding IsPlaceholderVisible}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="36"
+                               FontWeight="SemiBold"
+                               Foreground="{Binding TextBrush}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
     </UserControl.Resources>
 
     <UserControl.Styles>
@@ -235,29 +257,52 @@
                                 <Border Classes="result-card"
                                         IsVisible="{Binding IsCardStyle}"
                                         BorderBrush="{Binding AccentBrush}">
-                                    <StackPanel Spacing="6" HorizontalAlignment="Center">
-                                        <Grid Width="72" Height="72" IsVisible="{Binding IsImageEnabled}">
-                                            <Ellipse Fill="{Binding AccentBrush}" Opacity="0.18" />
-                                            <Image Source="{Binding Image}"
-                                                   Stretch="UniformToFill"
-                                                   ClipToBounds="True"
-                                                   IsVisible="{Binding IsImageVisible}" />
-                                            <TextBlock Text="{Binding Initial}"
-                                                       IsVisible="{Binding IsPlaceholderVisible}"
+                                    <StackPanel Orientation="{Binding ImageLayoutOrientation}"
+                                                Spacing="6"
+                                                HorizontalAlignment="Center">
+                                        <ContentControl Content="{Binding}"
+                                                        ContentTemplate="{StaticResource LotteryAvatarTemplate}"
+                                                        IsVisible="{Binding IsImageBeforeText}" />
+                                        <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding DisplayText}"
+                                                       Classes="result-name"
+                                                       Foreground="{Binding TextBrush}"
+                                                       FontSize="{Binding #RootControl.ViewModel.ResultFontSize}"
+                                                       FontFamily="{Binding #RootControl.ViewModel.ResultFontFamily}"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Tags}"
+                                                       IsVisible="{Binding IsTagsVisible}"
                                                        HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="30"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{Binding TextBrush}" />
-                                        </Grid>
-                                         <TextBlock Text="{Binding DisplayText}"
-                                                    Classes="result-name"
-                                                    Foreground="{Binding TextBrush}"
-                                                    FontSize="{Binding #RootControl.ViewModel.ResultFontSize}"
-                                                    FontFamily="{Binding #RootControl.ViewModel.ResultFontFamily}"
-                                                    FontWeight="SemiBold" />
-                                         <TextBlock Text="{Binding Tags}"
-                                                    IsVisible="{Binding IsTagsVisible}"
+                                                       Opacity="0.72"
+                                                       FontSize="13" />
+                                            <TextBlock Text="{Binding WeightText}"
+                                                       IsVisible="{Binding IsWeightVisible}"
+                                                       HorizontalAlignment="Center"
+                                                       Opacity="0.62"
+                                                       FontSize="12" />
+                                        </StackPanel>
+                                        <ContentControl Content="{Binding}"
+                                                        ContentTemplate="{StaticResource LotteryAvatarTemplate}"
+                                                        IsVisible="{Binding IsImageAfterText}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <StackPanel IsVisible="{Binding !IsCardStyle}"
+                                            Orientation="{Binding ImageLayoutOrientation}"
+                                            Spacing="6"
+                                            HorizontalAlignment="Center">
+                                    <ContentControl Content="{Binding}"
+                                                    ContentTemplate="{StaticResource LotteryAvatarTemplate}"
+                                                    IsVisible="{Binding IsImageBeforeText}" />
+                                    <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding DisplayText}"
+                                                   Classes="result-name"
+                                                   Foreground="{Binding TextBrush}"
+                                                   FontSize="{Binding #RootControl.ViewModel.ResultFontSize}"
+                                                   FontFamily="{Binding #RootControl.ViewModel.ResultFontFamily}"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Tags}"
+                                                   IsVisible="{Binding IsTagsVisible}"
                                                    HorizontalAlignment="Center"
                                                    Opacity="0.72"
                                                    FontSize="13" />
@@ -267,39 +312,9 @@
                                                    Opacity="0.62"
                                                    FontSize="12" />
                                     </StackPanel>
-                                </Border>
-
-                                <StackPanel IsVisible="{Binding !IsCardStyle}" Spacing="6" HorizontalAlignment="Center">
-                                    <Grid Width="72" Height="72" IsVisible="{Binding IsImageEnabled}">
-                                        <Ellipse Fill="{Binding AccentBrush}" Opacity="0.18" />
-                                        <Image Source="{Binding Image}"
-                                               Stretch="UniformToFill"
-                                               ClipToBounds="True"
-                                               IsVisible="{Binding IsImageVisible}" />
-                                        <TextBlock Text="{Binding Initial}"
-                                                   IsVisible="{Binding IsPlaceholderVisible}"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   FontSize="30"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{Binding TextBrush}" />
-                                    </Grid>
-                                     <TextBlock Text="{Binding DisplayText}"
-                                                Classes="result-name"
-                                                Foreground="{Binding TextBrush}"
-                                                FontSize="{Binding #RootControl.ViewModel.ResultFontSize}"
-                                                FontFamily="{Binding #RootControl.ViewModel.ResultFontFamily}"
-                                                FontWeight="SemiBold" />
-                                     <TextBlock Text="{Binding Tags}"
-                                                IsVisible="{Binding IsTagsVisible}"
-                                               HorizontalAlignment="Center"
-                                               Opacity="0.72"
-                                               FontSize="13" />
-                                    <TextBlock Text="{Binding WeightText}"
-                                               IsVisible="{Binding IsWeightVisible}"
-                                               HorizontalAlignment="Center"
-                                               Opacity="0.62"
-                                               FontSize="12" />
+                                    <ContentControl Content="{Binding}"
+                                                    ContentTemplate="{StaticResource LotteryAvatarTemplate}"
+                                                    IsVisible="{Binding IsImageAfterText}" />
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>

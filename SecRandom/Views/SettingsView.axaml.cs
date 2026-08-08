@@ -162,6 +162,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
         _logger?.LogInformation("跳转到设置 [{PageId}] {Id}", settings.PageId, settings.Id);
         SelectNavigationItemById(settings.PageId);
+        ClearSearch();
 
         if (settings.IsPage) return;
 
@@ -187,8 +188,6 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
             HighlightControl(targetControl, TimeSpan.FromSeconds(3));
         }, DispatcherPriority.Render);
-
-        ClearSearch();
     }
 
     private void ClearSearch()

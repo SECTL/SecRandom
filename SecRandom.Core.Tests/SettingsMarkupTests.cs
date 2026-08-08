@@ -3,6 +3,38 @@ namespace SecRandom.Core.Tests;
 public class SettingsMarkupTests
 {
     [Fact]
+    public void SettingsSearchSupportsImmediateSelectionAndClearing()
+    {
+        string markup = File.ReadAllText(GetRepositoryPath("SecRandom/Views/SettingsView.axaml"));
+        string source = File.ReadAllText(GetRepositoryPath("SecRandom/Views/SettingsView.axaml.cs"));
+
+        Assert.Contains("SelectionChanged=\"SearchBox_OnSelectionChanged\"", markup, StringComparison.Ordinal);
+        Assert.Contains("Click=\"SearchButton_OnClick\"", markup, StringComparison.Ordinal);
+        Assert.Contains("Click=\"ClearSearchButton_OnClick\"", markup, StringComparison.Ordinal);
+        Assert.Contains("IsVisible=\"{Binding ViewModel.HasSearchText}\"", markup, StringComparison.Ordinal);
+        Assert.Contains("ExecuteSettingsSearch(settings);", source, StringComparison.Ordinal);
+
+        int navigate = source.IndexOf("SelectNavigationItemById(settings.PageId);", StringComparison.Ordinal);
+        int clear = source.IndexOf("ClearSearch();", navigate, StringComparison.Ordinal);
+        int pageResultReturn = source.IndexOf("if (settings.IsPage) return;", navigate, StringComparison.Ordinal);
+        Assert.InRange(clear, navigate + 1, pageResultReturn - 1);
+    }
+
+    [Fact]
+    public void SettingsSearchViewModelTracksWhetherThereIsTextToClear()
+    {
+        var viewModel = new SecRandom.ViewModels.SettingsViewModel();
+
+        Assert.False(viewModel.HasSearchText);
+
+        viewModel.SearchText = "privacy";
+        Assert.True(viewModel.HasSearchText);
+
+        viewModel.SearchText = string.Empty;
+        Assert.False(viewModel.HasSearchText);
+    }
+
+    [Fact]
     public void NotificationOverrideSectionsUseSettingsExpanderItems()
     {
         var document = System.Xml.Linq.XDocument.Load(GetNotificationMarkupPath());

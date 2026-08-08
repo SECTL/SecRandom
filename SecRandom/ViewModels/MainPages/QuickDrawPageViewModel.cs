@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -572,6 +573,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             BuildResultOpacity(weight),
             BuildImage(student),
             StudentImageSettings.StudentImage,
+            StudentImageSettings.StudentImagePosition,
             BuildInitial(student));
     }
 
@@ -590,6 +592,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             1,
             null,
             false,
+            StudentImagePositionMode.Top,
             item.Trim()[0].ToString());
     }
 
@@ -682,8 +685,14 @@ public sealed record QuickDrawResultItem(
     double Opacity,
     Bitmap? Image,
     bool IsImageEnabled,
+    StudentImagePositionMode ImagePosition,
     string Initial)
 {
     public bool IsImageVisible => IsImageEnabled && Image is not null;
     public bool IsPlaceholderVisible => IsImageEnabled && Image is null;
+    public Orientation ImageLayoutOrientation => ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Right
+        ? Orientation.Horizontal
+        : Orientation.Vertical;
+    public bool IsImageBeforeText => IsImageEnabled && ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Top;
+    public bool IsImageAfterText => IsImageEnabled && ImagePosition is StudentImagePositionMode.Right or StudentImagePositionMode.Bottom;
 }
