@@ -17,8 +17,31 @@
                          Width="840" Height="640" MinWidth="680" MinHeight="500"
                          WindowStartupLocation="CenterScreen"
                          Closing="Window_OnClosing">
-    <Grid RowDefinitions="Auto,*,Auto,Auto">
-        <Border Grid.Row="0" Padding="32 24 32 20"
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
+        <StackPanel Grid.Row="0" Height="32"
+                    Orientation="Horizontal"
+                    IsVisible="{Binding IsHostWindows}"
+                    Classes.UseBackground="{Binding ViewModel.IsStatusVisible}"
+                    WindowDecorationProperties.ElementRole="TitleBar">
+            <StackPanel.Styles>
+                <Style Selector="StackPanel">
+                    <Setter Property="Background" Value="Transparent" />
+                </Style>
+                <Style Selector="StackPanel.UseBackground">
+                    <Setter Property="Background" Value="{DynamicResource LayerOnMicaBaseAltFillColorDefaultBrush}" />
+                </Style>
+            </StackPanel.Styles>
+            
+            <Image Width="16" Height="16" Margin="8 0 0 0"
+                   Source="/Assets/AppLogo.png" />
+
+            <TextBlock Text="{Binding ViewModel.PageTitle}"
+                       Margin="12 0 0 0"
+                       FontSize="12"
+                       VerticalAlignment="Center" />
+        </StackPanel>
+        
+        <Border Grid.Row="1" Padding="32 24 32 20"
                 Background="{DynamicResource LayerOnMicaBaseAltFillColorDefaultBrush}"
                 IsVisible="{Binding ViewModel.IsStatusVisible}">
             <Grid ColumnDefinitions="*,Auto">
@@ -36,7 +59,7 @@
             </Grid>
         </Border>
 
-        <sr:DrawerHost x:Name="ImportDrawerHost" Grid.Row="1" DrawerPlacement="Right">
+        <sr:DrawerHost x:Name="ImportDrawerHost" Grid.Row="2" DrawerPlacement="Right">
             <Carousel Classes="animated" SelectedIndex="{Binding ViewModel.SelectedStep}">
                 <Grid Margin="32" IsVisible="{Binding ViewModel.IsFullSetup}">
                     <StackPanel Spacing="14"
@@ -355,9 +378,9 @@
             </Carousel>
         </sr:DrawerHost>
 
-        <Separator Grid.Row="2" />
+        <Separator Grid.Row="3" />
         
-        <Grid Grid.Row="3" Margin="24 16"  ColumnDefinitions="Auto,*,Auto">
+        <Grid Grid.Row="4" Margin="24 16"  ColumnDefinitions="Auto,*,Auto">
             <Grid>
                 <TextBlock Text="{Binding ViewModel.StatusMessage}"
                            IsVisible="{Binding ViewModel.IsStatusVisible}"

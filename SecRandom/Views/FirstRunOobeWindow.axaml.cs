@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Controls;
 using FluentAvalonia.UI.Windowing;
@@ -33,6 +34,16 @@ public partial class FirstRunOobeWindow : FAAppWindow
     {
         DataContext = this;
         InitializeComponent();
+        
+        TitleBar.Height = 32;
+        TitleBar.ExtendsContentIntoTitleBar = true;
+        
+        // 覆盖标题栏按钮颜色
+        TitleBar.ButtonHoverBackgroundColor = Color.FromArgb(23, 0, 0, 0);
+        TitleBar.ButtonPressedBackgroundColor = Color.FromArgb(52, 0, 0, 0);
+        TitleBar.ButtonInactiveForegroundColor = Colors.Gray;
+
+        Loaded += OnLoaded;
         Closed += WindowOnClosed;
         Opened += WindowOnOpened;
     }
@@ -43,6 +54,16 @@ public partial class FirstRunOobeWindow : FAAppWindow
     public event EventHandler? Completed;
     public event EventHandler? LanguageChanged;
     private IImportExportService ImportExportService { get; } = IAppHost.GetService<IImportExportService>();
+    public bool IsHostWindows => OperatingSystem.IsWindows();
+
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        if (App.IsMicaSupported)
+        {
+            TransparencyLevelHint = [WindowTransparencyLevel.Mica];
+            Background = Brushes.Transparent;
+        }
+    }
 
     private void WindowOnOpened(object? sender, EventArgs e)
     {

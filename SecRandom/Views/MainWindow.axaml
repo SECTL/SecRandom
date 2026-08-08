@@ -8,4 +8,14 @@
                          Icon="/Assets/AppLogo.ico"
                          WindowStartupLocation="CenterScreen"
                          MinWidth="800" MinHeight="600"
-                         Loaded="OnLoaded" />
+                         Loaded="OnLoaded">
+    <faWindowing:FAAppWindow.Styles>
+        <Style Selector="NavigationPage#NavigationPage /template/ Grid#PART_ContentHost">
+            <Setter Property="Background" Value="{x:Null}" />
+        </Style>
+        
+        <Style Selector="ContentPage">
+            <Setter Property="Background" Value="{x:Null}" />
+        </Style>
+    </faWindowing:FAAppWindow.Styles>
+</faWindowing:FAAppWindow>
