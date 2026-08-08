@@ -1,44 +1,24 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-             xmlns:controls="clr-namespace:SecRandom.Controls.Mobile"
              xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
-             xmlns:local="clr-namespace:SecRandom.Views.Mobile"
              xmlns:history="clr-namespace:SecRandom.Views.SettingsPages.History"
              x:Class="SecRandom.Views.Mobile.MobileHistoryPage">
-    <Grid RowDefinitions="Auto,Auto,*" Margin="16" RowSpacing="8">
+    <Grid RowDefinitions="Auto,*" Margin="16" RowSpacing="8" Classes="animated-intro">
         <Viewbox Grid.Row="0" Height="36">
             <TabStrip x:Name="HistoryTabs"
                       SelectedIndex="0"
                       HorizontalAlignment="Center"
-                      Theme="{DynamicResource TabStripStyle}"
-                      SelectionChanged="HistoryTabs_OnSelectionChanged">
+                      Theme="{DynamicResource TabStripStyle}">
                 <TabStripItem Content="{x:Static langs:Resources.C_RollCall}" Width="96" />
                 <TabStripItem x:Name="LotteryTab" Content="{x:Static langs:Resources.C_Lottery}" Width="96" />
             </TabStrip>
         </Viewbox>
-        
-        <Grid Grid.Row="1" ColumnDefinitions="*,*,Auto" ColumnSpacing="8">
-            <sr:Field Grid.Column="0" Label="{x:Static langs:Resources.S_Profile}">
-                <ComboBox x:Name="ProfileSelector"
-                          HorizontalAlignment="Stretch"
-                          SelectionChanged="ProfileSelector_OnSelectionChanged" />
-            </sr:Field>
-            
-            <sr:Field Grid.Column="1" Label="{x:Static langs:Resources.S_HistoryMode}">
-                <ComboBox x:Name="HistoryModeSelector"
-                          HorizontalAlignment="Stretch"
-                          SelectionChanged="HistoryModeSelector_OnSelectionChanged">
-                    <ComboBoxItem Content="{x:Static langs:Resources.O_HistoryOverview}" />
-                    <ComboBoxItem Content="{x:Static langs:Resources.O_HistoryRecords}" />
-                </ComboBox>
-            </sr:Field>
-            
-            <Button Grid.Column="2" VerticalAlignment="Bottom"
-                    Content="{x:Static langs:Resources.C_Refresh}"
-                    Click="RefreshButton_OnClick" />
-        </Grid>
-        
-        <ContentControl Grid.Row="2" x:Name="HistoryContent" />
+
+        <Carousel Grid.Row="1"
+                  Classes="animated"
+                  SelectedIndex="{Binding #HistoryTabs.SelectedIndex}">
+            <history:RollCallHistorySettingsPage />
+            <history:LotteryHistorySettingsPage />
+        </Carousel>
     </Grid>
 </UserControl>

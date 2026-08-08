@@ -1,36 +1,64 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Models;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Mobile;
 using SecRandom.Shared.Models.Profile;
+using SecRandom.ViewModels.SettingsPages.History;
 using SecRandom.Views.Mobile;
 
 namespace SecRandom.Mobile.Tests;
 
 public sealed class MobileHistoryPageTests
 {
+    private static readonly SemaphoreSlim HostGate = new(1, 1);
+
     [AvaloniaFact]
-    public void LotteryTabIsHiddenWhenLotteryIsDisabled()
+    public async Task LotteryTabIsHiddenWhenLotteryIsDisabled()
     {
-        var profileService = new EmptyProfileService();
+        await HostGate.WaitAsync();
+        ServiceProvider? provider = null;
+        try
+        {
+            provider = CreateProvider();
+            IAppHost.Host = new TestHost(provider);
+
+            var page = new MobileHistoryPage(new TestCapabilities(lotteryEnabled: false));
+
+            Assert.Equal(0, page.FindControl<TabStrip>("HistoryTabs")!.SelectedIndex);
+            Assert.False(page.FindControl<TabStripItem>("LotteryTab")!.IsVisible);
+        }
+        finally
+        {
+            IAppHost.Host = null;
+            provider?.Dispose();
+            HostGate.Release();
+        }
+    }
+
+    private static ServiceProvider CreateProvider()
+    {
+        var services = new ServiceCollection();
         var configHandler = new MainConfigHandler(
             NullLogger<MainConfigHandler>.Instance,
             new InMemoryConfigService(new MainConfigModel()));
-        var page = new MobileHistoryPage(
-            profileService,
-            new EmptyHistoryQueryService(),
-            new EmptyProfileCatalogManager(),
-            configHandler,
-            new DrawEngine(configHandler, profileService, NullLogger<DrawEngine>.Instance),
-            new TestCapabilities(lotteryEnabled: false));
+        var profileService = new EmptyProfileService();
 
-        Assert.Equal(0, page.FindControl<TabStrip>("HistoryTabs")!.SelectedIndex);
-        Assert.False(page.FindControl<TabStripItem>("LotteryTab")!.IsVisible);
+        services.AddSingleton(configHandler);
+        services.AddSingleton<IProfileService>(profileService);
+        services.AddSingleton<IHistoryQueryService, EmptyHistoryQueryService>();
+        services.AddSingleton<IProfileCatalogManager, EmptyProfileCatalogManager>();
+        services.AddSingleton(new DrawEngine(configHandler, profileService, NullLogger<DrawEngine>.Instance));
+        services.AddTransient<RollCallHistoryViewModel>();
+        services.AddTransient<LotteryHistoryViewModel>();
+        return services.BuildServiceProvider();
     }
 
     private sealed class TestCapabilities(bool lotteryEnabled) : IMobileCapabilities
@@ -42,16 +70,9 @@ public sealed class MobileHistoryPageTests
     private sealed class InMemoryConfigService(MainConfigModel config) : ConfigServiceBase
     {
         public override bool IsConfigExists<T>(T fallback) => true;
-
         public override T LoadConfig<T>(T fallback) => config is T value ? value : fallback;
-
-        public override void SaveConfig<T>(T config)
-        {
-        }
-
-        public override void DeleteConfig<T>(T config)
-        {
-        }
+        public override void SaveConfig<T>(T config) { }
+        public override void DeleteConfig<T>(T config) { }
     }
 
     private sealed class EmptyHistoryQueryService : IHistoryQueryService
@@ -81,14 +102,8 @@ public sealed class MobileHistoryPageTests
         public bool SavePrizeList(PrizeList list) => false;
         public bool ReplaceStudents(string name, IReadOnlyList<Student> students) => false;
         public bool ReplacePrizes(string name, IReadOnlyList<Prize> prizes) => false;
-        public void SetDefaultStudentList(string name)
-        {
-        }
-
-        public void SetDefaultPrizePool(string name)
-        {
-        }
-
+        public void SetDefaultStudentList(string name) { }
+        public void SetDefaultPrizePool(string name) { }
         public bool ClearStudentHistory(string name) => false;
         public bool ClearPrizeHistory(string name) => false;
     }
@@ -103,47 +118,26 @@ public sealed class MobileHistoryPageTests
         public StudentHistoryConfig? StudentHistoryConfig => null;
         public PrizeListConfig? PrizeListConfig => null;
         public PrizeHistoryConfig? PrizeHistoryConfig => null;
+        public void LoadStudentProfile(string name, bool saveCurrent = true) { }
+        public void LoadPrizeProfile(string name, bool saveCurrent = true) { }
 
-        public void LoadStudentProfile(string name, bool saveCurrent = true)
-        {
-        }
+        public void RecordStudentHistory(IReadOnlyList<Student> students, DateTime now, int requestedCount,
+            string drawGroup = "", string drawGender = "", int drawMethod = 0,
+            IReadOnlyDictionary<Student, double>? weights = null, string courseName = "", string? drawRoundId = null) { }
 
-        public void LoadPrizeProfile(string name, bool saveCurrent = true)
-        {
-        }
+        public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount,
+            int drawMethod = 0, string? drawRoundId = null) { }
 
-        public void RecordStudentHistory(
-            IReadOnlyList<Student> students,
-            DateTime now,
-            int requestedCount,
-            string drawGroup = "",
-            string drawGender = "",
-            int drawMethod = 0,
-            IReadOnlyDictionary<Student, double>? weights = null,
-            string courseName = "",
-            string? drawRoundId = null)
-        {
-        }
+        public void ClearCurrentStudentHistory() { }
+        public void ClearCurrentPrizeHistory() { }
+        public void SaveProfile() { }
+    }
 
-        public void RecordPrizeHistory(
-            IReadOnlyList<Prize> prizes,
-            DateTime now,
-            int requestedCount,
-            int drawMethod = 0,
-            string? drawRoundId = null)
-        {
-        }
-
-        public void ClearCurrentStudentHistory()
-        {
-        }
-
-        public void ClearCurrentPrizeHistory()
-        {
-        }
-
-        public void SaveProfile()
-        {
-        }
+    private sealed class TestHost(IServiceProvider services) : IHost
+    {
+        public IServiceProvider Services { get; } = services;
+        public Task StartAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task StopAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public void Dispose() { }
     }
 }
