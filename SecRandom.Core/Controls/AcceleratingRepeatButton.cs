@@ -18,6 +18,8 @@ public sealed class AcceleratingRepeatButton : RepeatButton
     private readonly Stopwatch _holdDuration = new();
     private IPointer? _activePointer;
 
+    protected override Type StyleKeyOverride => typeof(Button);
+
     public AcceleratingRepeatButton()
     {
         // Trigger the first command on press so releasing after a repeat does not add a

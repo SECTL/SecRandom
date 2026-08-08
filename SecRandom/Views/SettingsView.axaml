@@ -62,6 +62,7 @@
                 </StackPanel>
 
                 <AutoCompleteBox Grid.Column="2"
+                                 x:Name="SearchBox"
                                  VerticalAlignment="Center" MaxWidth="420"
                                  IsVisible="{Binding !IsMobile}"
                                  FilterMode="Custom"
@@ -69,12 +70,26 @@
                                  ItemsSource="{Binding ViewModel.SettingsMetadata}"
                                  ItemFilter="{x:Static views:SettingsView.SettingsFilterProperty}"
                                  PlaceholderText="{x:Static ls:Resources.C_SearchBox_Watermark}"
+                                 Text="{Binding ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                  SelectedItem="{Binding ViewModel.SelectedSettings}"
+                                 SelectionChanged="SearchBox_OnSelectionChanged"
                                  KeyUp="SearchBox_OnKeyUp"
                                  WindowDecorationProperties.ElementRole="User">
                     <AutoCompleteBox.InnerRightContent>
-                        <sr:FluentIcon Glyph="{sr:Fi SearchFilled}" Margin="6"
-                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <StackPanel Orientation="Horizontal" Spacing="2">
+                            <Button Width="30" Height="30" Padding="0"
+                                    IsVisible="{Binding ViewModel.HasSearchText}"
+                                    Click="ClearSearchButton_OnClick"
+                                    WindowDecorationProperties.ElementRole="User">
+                                <sr:FluentIcon Glyph="{sr:Fi DismissCircleFilled}" />
+                            </Button>
+                            <Button Width="30" Height="30" Padding="0"
+                                    Click="SearchButton_OnClick"
+                                    WindowDecorationProperties.ElementRole="User">
+                                <sr:FluentIcon Glyph="{sr:Fi SearchFilled}"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </Button>
+                        </StackPanel>
                     </AutoCompleteBox.InnerRightContent>
                 </AutoCompleteBox>
 

@@ -357,6 +357,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             TriggerResultAnimation();
             StatusText = string.Format(SR.M_DrawnCountFormat, ResultItems.Count);
             RefreshCounts();
+            ResetExhaustedTemporaryRecords();
             await _drawAudioService.TransitionToResultMusicAsync(
                 DrawMusicAttachedSettingsResolver.GetResultMusic(drawn.FirstOrDefault(), MusicSettings.ResultMusic),
                 MusicSettings.ResultMusicVolume, MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut,

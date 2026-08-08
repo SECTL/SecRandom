@@ -367,6 +367,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             await PlayResultMusicAsync(drawnStudents.FirstOrDefault()).ConfigureAwait(false);
             StatusText = string.Format(SR.M_DrawnCountFormat, ResultItems.Count);
             RefreshCounts();
+            ResetForNewRoundIfExhausted();
             OnPropertyChanged(nameof(ResultText));
 
             if (_notificationService is not null)

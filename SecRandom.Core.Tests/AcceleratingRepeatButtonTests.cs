@@ -1,9 +1,18 @@
+using Avalonia.Controls;
 using SecRandom.Core.Controls;
 
 namespace SecRandom.Core.Tests;
 
 public sealed class AcceleratingRepeatButtonTests
 {
+    [Fact]
+    public void UsesTheStandardButtonTheme()
+    {
+        var button = new AcceleratingRepeatButton();
+
+        Assert.Equal(typeof(Button), button.StyleKey);
+    }
+
     [Fact]
     public void HoldDurationAcceleratesRepeatCadence()
     {
