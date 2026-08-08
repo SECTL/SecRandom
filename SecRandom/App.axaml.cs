@@ -1348,29 +1348,7 @@ public partial class App : Application
     /// </summary>
     private void ApplyStartupAppearance(AppearanceSettingsConfig settings)
     {
-        RequestedThemeVariant = settings.Theme switch
-        {
-            ThemeMode.Auto => ThemeVariant.Default,
-            ThemeMode.Light => ThemeVariant.Light,
-            ThemeMode.Dark => ThemeVariant.Dark,
-            _ => ThemeVariant.Default
-        };
-
-        var fluentAvaloniaTheme = this.FindResource(@"FluentAvaloniaTheme") as FluentAvaloniaTheme;
-        if (fluentAvaloniaTheme is null) return;
-
-        fluentAvaloniaTheme.PreferSystemTheme = settings.Theme == ThemeMode.Auto;
-
-        if (settings.ThemeColorMode == ThemeColorMode.System)
-        {
-            fluentAvaloniaTheme.PreferUserAccentColor = true;
-            fluentAvaloniaTheme.CustomAccentColor = null;
-        }
-        else
-        {
-            fluentAvaloniaTheme.PreferUserAccentColor = false;
-            fluentAvaloniaTheme.CustomAccentColor = settings.ThemeColor;
-        }
+        ApplyThemeSettings(settings);
 
         Resources[@"NavigationViewItemOnLeftIconBoxHeight"] = 20.0;
     }
@@ -1385,30 +1363,50 @@ public partial class App : Application
             fontFamily = @"avares://SecRandom/Assets/Fonts/MiSans/#MiSans";
 
         // 主题模式
-        RequestedThemeVariant = settings.Theme switch
+        ApplyThemeSettings(settings);
+
+        // 主题色
+        Resources[@"ContentControlThemeFontFamily"] = Resources[@"AppFontFamily"] = new FontFamily(fontFamily);
+        Resources[@"AppFontWeight"] = Enum.Parse<FontWeight>(settings.FontWeight.ToString());
+    }
+
+    private void ApplyThemeSettings(AppearanceSettingsConfig settings)
+    {
+        var useSystemTheme = settings.Theme == ThemeMode.Auto;
+        var requestedThemeVariant = settings.Theme switch
         {
             ThemeMode.Auto => ThemeVariant.Default,
             ThemeMode.Light => ThemeVariant.Light,
             ThemeMode.Dark => ThemeVariant.Dark,
             _ => ThemeVariant.Default
         };
+
         var fluentAvaloniaTheme = this.FindResource(@"FluentAvaloniaTheme") as FluentAvaloniaTheme;
-        fluentAvaloniaTheme?.PreferSystemTheme = settings.Theme == ThemeMode.Auto;
-
-        // 主题色
-        if (settings.ThemeColorMode == ThemeColorMode.System)
+        if (fluentAvaloniaTheme is not null)
         {
-            fluentAvaloniaTheme?.PreferUserAccentColor = true;
-            fluentAvaloniaTheme?.CustomAccentColor = null;
-        }
-        else
-        {
-            fluentAvaloniaTheme?.PreferUserAccentColor = false;
-            fluentAvaloniaTheme?.CustomAccentColor = settings.ThemeColor;
+            // Configure system tracking before an explicit variant so FluentAvalonia does
+            // not overwrite the requested variant while it is changing its resource set.
+            if (fluentAvaloniaTheme.PreferSystemTheme != useSystemTheme)
+                fluentAvaloniaTheme.PreferSystemTheme = useSystemTheme;
+
+            if (settings.ThemeColorMode == ThemeColorMode.System)
+            {
+                if (fluentAvaloniaTheme.CustomAccentColor is not null)
+                    fluentAvaloniaTheme.CustomAccentColor = null;
+                if (!fluentAvaloniaTheme.PreferUserAccentColor)
+                    fluentAvaloniaTheme.PreferUserAccentColor = true;
+            }
+            else
+            {
+                if (fluentAvaloniaTheme.PreferUserAccentColor)
+                    fluentAvaloniaTheme.PreferUserAccentColor = false;
+                if (fluentAvaloniaTheme.CustomAccentColor is not { } accentColor || accentColor != settings.ThemeColor)
+                    fluentAvaloniaTheme.CustomAccentColor = settings.ThemeColor;
+            }
         }
 
-        Resources[@"ContentControlThemeFontFamily"] = Resources[@"AppFontFamily"] = new FontFamily(fontFamily);
-        Resources[@"AppFontWeight"] = Enum.Parse<FontWeight>(settings.FontWeight.ToString());
+        if (!Equals(RequestedThemeVariant, requestedThemeVariant) && requestedThemeVariant != ThemeVariant.Default)
+            RequestedThemeVariant = requestedThemeVariant;
     }
 
     #region Windows
