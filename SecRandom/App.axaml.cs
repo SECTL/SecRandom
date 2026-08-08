@@ -673,7 +673,8 @@ public partial class App : Application
                     services.AddViewEngine()
                         .AddView<MobileRootView>(MobilePageIds.Root)
                         .AddView<MainView>(DesktopViewIds.Main)
-                        .AddView<SettingsView>(MobilePageIds.Settings);
+                        .AddView<SettingsView>(MobilePageIds.Settings)
+                        .AddView<RemainingListView>(RemainingListViewService.ViewId, ViewPresentation.Modal);
                     services.AddTransient<MobileViewHost>();
                 }
                 else
@@ -684,7 +685,8 @@ public partial class App : Application
                         serviceProvider.GetRequiredService<DesktopViewHostProvider>());
                     services.AddViewEngine()
                         .AddView<MainView>(DesktopViewIds.Main)
-                        .AddView<SettingsView>(DesktopViewIds.Settings);
+                        .AddView<SettingsView>(DesktopViewIds.Settings)
+                        .AddView<RemainingListView>(RemainingListViewService.ViewId, ViewPresentation.Modal);
                 }
 
                 // 日志
@@ -733,6 +735,8 @@ public partial class App : Application
                 }
 
                 services.AddSingleton<IProfileQueryService, ProfileQueryService>();
+                services.AddSingleton<RemainingListViewState>();
+                services.AddSingleton<RemainingListViewService>();
                 services.AddSingleton<DrawProofExportService>();
                 services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
                 services.AddHttpClient<IWitnessClient, WitnessClient>(client =>

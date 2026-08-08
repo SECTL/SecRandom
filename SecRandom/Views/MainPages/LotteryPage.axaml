@@ -142,37 +142,6 @@
             </Viewbox>
         </DataTemplate>
 
-        <DataTemplate x:Key="LotteryRemainingItemTemplate"
-                       DataType="vm:LotteryRemainingItem">
-            <Border Width="220"
-                    MinHeight="96"
-                    Margin="0 12 12 0"
-                    Padding="12"
-                    CornerRadius="6"
-                    BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                    BorderThickness="1"
-                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
-                <Grid RowDefinitions="Auto,Auto,Auto">
-                    <TextBlock Grid.Row="0"
-                               Text="{Binding DisplayText}"
-                               TextWrapping="Wrap"
-                               MaxHeight="44"
-                               FontWeight="SemiBold" />
-                    
-                    <TextBlock Grid.Row="1"
-                               Text="{Binding Tags}"
-                               IsVisible="{Binding IsTagsVisible}"
-                               Opacity="0.58"
-                               FontSize="12" />
-                    
-                    <TextBlock Grid.Row="2"
-                               Text="{Binding CountText}"
-                               Opacity="0.68"
-                               FontSize="12" />
-                </Grid>
-            </Border>
-        </DataTemplate>
-
         <DataTemplate x:Key="LotteryAvatarTemplate"
                       DataType="vm:LotteryResultItem">
             <Border Width="72" Height="72"

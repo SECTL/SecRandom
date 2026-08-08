@@ -128,10 +128,10 @@ internal sealed class DesktopViewHostWindow : Window, IViewHost
         _contentHost.Destroyed += (_, _) => Destroyed?.Invoke(this, EventArgs.Empty);
 
         Title = "SecRandom";
-        Width = 720;
-        Height = 480;
-        MinWidth = 320;
-        MinHeight = 240;
+        Width = 1000;
+        Height = 600;
+        MinWidth = 600;
+        MinHeight = 400;
         CanResize = true;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Content = _contentHost;
@@ -149,12 +149,16 @@ internal sealed class DesktopViewHostWindow : Window, IViewHost
     public async Task ShowPageAsync(ViewBase view, CancellationToken cancellationToken = default)
     {
         NavigationPage.SetHasNavigationBar(view, false);
+        if (view.Header is string title && !string.IsNullOrWhiteSpace(title))
+            Title = title;
         await _contentHost.ShowPageAsync(view, cancellationToken).ConfigureAwait(false);
         await EnsureVisibleAsync().ConfigureAwait(false);
     }
 
     public async Task ShowModalAsync(ViewBase view, CancellationToken cancellationToken = default)
     {
+        if (view.Header is string title && !string.IsNullOrWhiteSpace(title))
+            Title = title;
         await _contentHost.ShowModalAsync(view, cancellationToken).ConfigureAwait(false);
         await EnsureVisibleAsync().ConfigureAwait(false);
     }
