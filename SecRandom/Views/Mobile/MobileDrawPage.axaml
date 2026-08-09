@@ -97,12 +97,12 @@
                                   ColumnSpacing="8" Classes="Combo">
                                 <TextBlock Grid.Column="0" Text="{Binding DrawCount}" HorizontalAlignment="Center"
                                            VerticalAlignment="Center" FontSize="18" />
-                                <sr:AcceleratingRepeatButton Grid.Column="1" Content="+"
-                                                             IsEnabled="{Binding CanIncreaseCount}"
-                                                             Command="{Binding IncreaseCountCommand}" />
-                                <sr:AcceleratingRepeatButton Grid.Column="2" Content="-"
+                                <sr:AcceleratingRepeatButton Grid.Column="1" Content="-"
                                                              IsEnabled="{Binding CanDecreaseCount}"
                                                              Command="{Binding DecreaseCountCommand}" />
+                                <sr:AcceleratingRepeatButton Grid.Column="2" Content="+"
+                                                             IsEnabled="{Binding CanIncreaseCount}"
+                                                             Command="{Binding IncreaseCountCommand}" />
                             </Grid>
                         </Grid>
 
@@ -217,12 +217,12 @@
                                   ColumnSpacing="8" Classes="Combo">
                                 <TextBlock Grid.Column="0" Text="{Binding DrawCount}" HorizontalAlignment="Center"
                                            VerticalAlignment="Center" FontSize="18" />
-                                <sr:AcceleratingRepeatButton Grid.Column="1" Content="+"
-                                                             IsEnabled="{Binding CanIncreaseCount}"
-                                                             Command="{Binding IncreaseCountCommand}" />
-                                <sr:AcceleratingRepeatButton Grid.Column="2" Content="-"
+                                <sr:AcceleratingRepeatButton Grid.Column="1" Content="-"
                                                              IsEnabled="{Binding CanDecreaseCount}"
                                                              Command="{Binding DecreaseCountCommand}" />
+                                <sr:AcceleratingRepeatButton Grid.Column="2" Content="+"
+                                                             IsEnabled="{Binding CanIncreaseCount}"
+                                                             Command="{Binding IncreaseCountCommand}" />
                             </Grid>
                         </Grid>
 
