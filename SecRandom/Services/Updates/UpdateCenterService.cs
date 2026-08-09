@@ -35,8 +35,8 @@ public sealed class UpdateCenterService(
 {
     private const string Product = "SecRandom";
     private const string Repository = "SECTL/SecRandom";
-    private const string ManifestFileName = "SecRandom-update-manifest.v1.json";
-    private const string SignatureFileName = "SecRandom-update-manifest.v1.sig";
+    private const string ManifestFileName = "SecRandom-update-manifest.json";
+    private const string SignatureFileName = "SecRandom-update-manifest.sig";
     private static readonly Uri GitHubRawMetadataUri = new("https://raw.githubusercontent.com/SECTL/SecRandom/master/metadata.yaml");
     private static readonly Uri GitHubMirrorPrefix = new("https://ghproxy.sectl.cn/");
     private readonly HttpClient _httpClient = httpClient;
