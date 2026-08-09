@@ -131,7 +131,7 @@
         <DataTemplate x:Key="RollCallAvatarTemplate"
                       DataType="vm:RollCallResultItem">
             <Border Width="72" Height="72"
-                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    Background="{DynamicResource ControlFillColorSecondaryBrush}"
                     CornerRadius="8">
                 <Grid>
                     <Border CornerRadius="8" IsVisible="{Binding IsImageVisible}">
@@ -145,7 +145,7 @@
                                VerticalAlignment="Center"
                                FontSize="36"
                                FontWeight="SemiBold"
-                               Foreground="{Binding TextBrush}" />
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                 </Grid>
             </Border>
         </DataTemplate>
