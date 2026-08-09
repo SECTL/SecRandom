@@ -121,14 +121,110 @@
                                            Description="{x:Static lp:Resources.S_LotteryShowRandom_D}">
                     <fa:FASettingsExpanderItem.Footer>
                         <ComboBox SelectedIndex="{Binding Settings.LotteryShowRandom}">
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeIdPrizeBreakGroupHyphenMember}" />
                             <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeBreakGroupHyphenName}" />
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeBreakGroupBreakName}" />
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeHyphenGroupHyphenName}" />
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeBreakName}" />
                             <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeHyphenName}" />
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeBreakGroup}" />
                             <ComboBoxItem Content="{x:Static lp:Resources.O_PrizeHyphenGroup}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_Custom}" />
                         </ComboBox>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem x:Name="S_LotteryShowRandomFormat"
+                                           Content="{x:Static lp:Resources.S_LotteryShowRandomFormat}"
+                                           Description="{x:Static lp:Resources.S_LotteryShowRandomFormat_D}"
+                                           IsVisible="{Binding Settings.LotteryShowRandom, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:LotteryShowRandomMode.Custom}}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBox x:Name="CustomLotteryShowRandomFormatTextBox"
+                                     MinWidth="128" MaxWidth="256"
+                                     Text="{Binding Settings.CustomLotteryShowRandomFormat, Mode=TwoWay}" />
+                            <Button Theme="{StaticResource TransparentButton}"
+                                    ToolTip.Tip="{x:Static lp:Resources.C_LotteryShowRandomFormatTokens}">
+                                <sr:FluentIcon Glyph="{sr:Fi TextFontFilled}" />
+                                <Button.Flyout>
+                                    <Flyout ShowMode="Standard">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="{x:Static lp:Resources.C_LotteryShowRandomFormatIntro}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <Button Content="{}{id}" Tag="{}{id}"
+                                                        Click="InsertCustomLotteryShowRandomFormatTokenOnClick" />
+                                                <TextBlock VerticalAlignment="Center"
+                                                           Text="{x:Static lp:Resources.C_LotteryShowRandomFormatId}" />
+                                            </StackPanel>
+                                            <GroupBox Header="{x:Static lp:Resources.C_LotteryShowRandomFormatPrize}">
+                                                <StackPanel Spacing="4">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <Button Content="{}{prizeId}" Tag="{}{prizeId}"
+                                                                Click="InsertCustomLotteryShowRandomFormatTokenOnClick" />
+                                                        <TextBlock VerticalAlignment="Center"
+                                                                   Text="{x:Static lp:Resources.C_LotteryShowRandomFormatPrizeId}" />
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <Button Content="{}{prize}" Tag="{}{prize}"
+                                                                Click="InsertCustomLotteryShowRandomFormatTokenOnClick" />
+                                                        <TextBlock VerticalAlignment="Center"
+                                                                   Text="{x:Static lp:Resources.C_LotteryShowRandomFormatPrizeName}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </GroupBox>
+                                            <GroupBox Header="{x:Static lp:Resources.C_LotteryShowRandomFormatMember}">
+                                                <StackPanel Spacing="4">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <Button Content="{}{memberId}" Tag="{}{memberId}"
+                                                                Click="InsertCustomLotteryShowRandomFormatTokenOnClick" />
+                                                        <TextBlock VerticalAlignment="Center"
+                                                                   Text="{x:Static lp:Resources.C_LotteryShowRandomFormatMemberId}" />
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <Button Content="{}{member}" Tag="{}{member}"
+                                                                Click="InsertCustomLotteryShowRandomFormatTokenOnClick" />
+                                                        <TextBlock VerticalAlignment="Center"
+                                                                   Text="{x:Static lp:Resources.C_LotteryShowRandomFormatMemberName}" />
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <Button Content="{}{group}" Tag="{}{group}"
+                                                                Click="InsertCustomLotteryShowRandomFormatTokenOnClick" />
+                                                        <TextBlock VerticalAlignment="Center"
+                                                                   Text="{x:Static lp:Resources.C_LotteryShowRandomFormatGroup}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </GroupBox>
+                                            <GroupBox Header="{x:Static lp:Resources.C_LotteryShowRandomFormatFormat}">
+                                                <StackPanel Spacing="4">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <Button Content="{}{/}" Tag="{}{/}"
+                                                                Click="InsertCustomLotteryShowRandomFormatTokenOnClick" />
+                                                        <TextBlock VerticalAlignment="Center"
+                                                                   Text="{x:Static lp:Resources.C_LotteryShowRandomFormatLineBreak}" />
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <Button Content="{}{-}" Tag="{}{-}"
+                                                                Click="InsertCustomLotteryShowRandomFormatTokenOnClick" />
+                                                        <TextBlock VerticalAlignment="Center"
+                                                                   Text="{x:Static lp:Resources.C_LotteryShowRandomFormatHyphen}" />
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <Button Content="{}{ }" Tag="{}{ }"
+                                                                Click="InsertCustomLotteryShowRandomFormatTokenOnClick" />
+                                                        <TextBlock VerticalAlignment="Center"
+                                                                   Text="{x:Static lp:Resources.C_LotteryShowRandomFormatSpace}" />
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <Button Content="{}{·}" Tag="{}{·}"
+                                                                Click="InsertCustomLotteryShowRandomFormatTokenOnClick" />
+                                                        <TextBlock VerticalAlignment="Center"
+                                                                   Text="{x:Static lp:Resources.C_LotteryShowRandomFormatMiddleDot}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </GroupBox>
+                                            <TextBlock TextWrapping="Wrap"
+                                                       Text="{x:Static lp:Resources.C_LotteryShowRandomFormatDirectSeparators}" />
+                                        </StackPanel>
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
 

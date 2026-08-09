@@ -90,7 +90,7 @@ public class SettingsSearchService
             ["settings.picking.lottery"] = new HashSet<string>
             {
                 "S_DrawMode", "S_HalfRepeat", "S_LotteryDrawType", "S_DefaultPool", "S_ClearRecord", "S_FontSource",
-                "S_CustomFont", "S_FontSize", "S_DisplayStyle", "S_LotteryShowRandom", "S_ShowTags",
+                "S_CustomFont", "S_FontSize", "S_DisplayStyle", "S_LotteryShowRandom", "S_LotteryShowRandomFormat", "S_ShowTags",
                 "S_ShowWeightTransparency", "S_Animation", "S_AnimationInterval", "S_AutoplayCount",
                 "S_AnimationStyle", "S_ColorTheme", "S_FixedColor", "S_LotteryImage", "S_LotteryImagePosition",
                 "S_AnimationMusic", "S_ResultMusic", "S_AnimationMusicLoop", "S_AnimationMusicVolume",

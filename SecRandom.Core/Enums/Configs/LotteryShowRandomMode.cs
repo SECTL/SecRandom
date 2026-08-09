@@ -3,37 +3,27 @@
 public enum LotteryShowRandomMode
 {
     /// <summary>
-    ///     奖品[换行]小组[短横杠]姓名
+    ///     序号 奖品[换行]分组[短横杠]名称
     /// </summary>
-    PrizeBreakGroupHyphenName,
+    PrizeIdPrizeBreakGroupHyphenMember,
 
     /// <summary>
-    ///     奖品[换行]小组[换行]姓名
+    ///     奖品[换行]分组[短横杠]名称
     /// </summary>
-    PrizeBreakGroupBreakName,
+    PrizeBreakGroupHyphenMember,
 
     /// <summary>
-    ///     奖品[短横杠]小组[短横杠]姓名
+    ///     奖品[短横杠]名称
     /// </summary>
-    PrizeHyphenGroupHyphenName,
+    PrizeHyphenMember,
 
     /// <summary>
-    ///     奖品[换行]姓名
+    ///     奖品[短横杠]分组
     /// </summary>
-    PrizeBreakName,
+    PrizeHyphenGroup,
 
     /// <summary>
-    ///     奖品[短横杠]姓名
+    ///     自定义格式
     /// </summary>
-    PrizeHyphenName,
-
-    /// <summary>
-    ///     奖品[换行]小组
-    /// </summary>
-    PrizeBreakGroup,
-
-    /// <summary>
-    ///     奖品[短横杠]小组
-    /// </summary>
-    PrizeHyphenGroup
+    Custom
 }

@@ -18,6 +18,7 @@ using SecRandom.Core;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Helpers;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Models.SubConfigs;
@@ -607,7 +608,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         RemainingItems.Clear();
         foreach (var item in prizes
                       .OrderForList()
-                      .Select(prize => CreateRemainingItem(prize, temporaryCounts)))
+                      .Select((prize, index) => CreateRemainingItem(prize, temporaryCounts, index + 1)))
             RemainingItems.Add(item);
     }
 
@@ -629,7 +630,10 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             : prizes.Count(prize => GetTemporaryPrizeCount(prize, temporaryCounts) < threshold);
     }
 
-    private LotteryRemainingItem CreateRemainingItem(Prize prize, IReadOnlyDictionary<string, int> temporaryCounts)
+    private LotteryRemainingItem CreateRemainingItem(
+        Prize prize,
+        IReadOnlyDictionary<string, int> temporaryCounts,
+        int displayId)
     {
         var drawn = GetTemporaryPrizeCount(prize, temporaryCounts);
         var remaining = Config.LotterySettings.DrawType == LotteryDrawType.Count
@@ -637,7 +641,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             : Config.LotterySettings.DrawMode == DrawMode.Repeat
                 ? Math.Max(1, drawn + 1)
                 : Math.Max(0, GetLotteryRepeatThreshold() - drawn);
-        return new LotteryRemainingItem(FormatPrize(prize), prize.Id, prize.Name, prize.Tags, remaining, drawn);
+        return new LotteryRemainingItem(FormatPrize(prize, displayId), prize.Id, prize.Name, prize.Tags, remaining, drawn);
     }
 
     private static int GetTemporaryPrizeCount(Prize prize, IReadOnlyDictionary<string, int> temporaryCounts)
@@ -761,8 +765,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             var prize = prizes[i];
             var student = i < assignedStudents.Count ? assignedStudents[i] : null;
             result.Add(student is null
-                ? new LotteryDisplayPrize(prize, FormatPrize(prize), prize.Tags)
-                : new LotteryDisplayPrize(prize, FormatAssignedPrize(prize, student), prize.Tags));
+                ? new LotteryDisplayPrize(prize, FormatPrize(prize, i + 1), prize.Tags)
+                : new LotteryDisplayPrize(prize, FormatAssignedPrize(prize, student, i + 1), prize.Tags));
         }
 
         return result;
@@ -898,35 +902,29 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             SelectedGender = AllGendersOption;
     }
 
-    private string FormatPrize(Prize prize)
+    private string FormatPrize(Prize prize, int displayId)
     {
-        return Config.LotterySettings.LotteryShowRandom switch
-        {
-            LotteryShowRandomMode.PrizeHyphenName => JoinInline(prize.Id, prize.Name),
-            LotteryShowRandomMode.PrizeBreakName => JoinLines(prize.Id, prize.Name),
-            LotteryShowRandomMode.PrizeHyphenGroupHyphenName => JoinInline(prize.Id, prize.Tags, prize.Name),
-            LotteryShowRandomMode.PrizeBreakGroupHyphenName => JoinLines(prize.Id, JoinInline(prize.Tags, prize.Name)),
-            LotteryShowRandomMode.PrizeBreakGroupBreakName => JoinLines(prize.Id, prize.Tags, prize.Name),
-            LotteryShowRandomMode.PrizeBreakGroup => JoinLines(prize.Id, prize.Tags),
-            LotteryShowRandomMode.PrizeHyphenGroup => JoinInline(prize.Id, prize.Tags),
-            _ => JoinLines(prize.Id, prize.Name)
-        };
+        return FormatLotteryProcessDisplay(prize, null, displayId);
     }
 
-    private string FormatAssignedPrize(Prize prize, Student student)
+    private string FormatAssignedPrize(Prize prize, Student student, int displayId)
     {
-        var prizeText = string.IsNullOrWhiteSpace(prize.Name) ? prize.Id : prize.Name;
-        return Config.LotterySettings.LotteryShowRandom switch
-        {
-            LotteryShowRandomMode.PrizeHyphenName => JoinInline(prizeText, student.Name),
-            LotteryShowRandomMode.PrizeBreakName => JoinLines(prizeText, student.Name),
-            LotteryShowRandomMode.PrizeHyphenGroupHyphenName => JoinInline(prizeText, student.Group, student.Name),
-            LotteryShowRandomMode.PrizeBreakGroupHyphenName => JoinLines(prizeText, JoinInline(student.Group, student.Name)),
-            LotteryShowRandomMode.PrizeBreakGroupBreakName => JoinLines(prizeText, student.Group, student.Name),
-            LotteryShowRandomMode.PrizeBreakGroup => JoinLines(prizeText, student.Group),
-            LotteryShowRandomMode.PrizeHyphenGroup => JoinInline(prizeText, student.Group),
-            _ => JoinLines(prizeText, student.Name)
-        };
+        return FormatLotteryProcessDisplay(prize, student, displayId);
+    }
+
+    private string FormatLotteryProcessDisplay(Prize prize, Student? student, int displayId)
+    {
+        var template = LotteryProcessDisplayFormatter.ResolveTemplate(
+            Config.LotterySettings.LotteryShowRandom,
+            Config.LotterySettings.CustomLotteryShowRandomFormat);
+        return LotteryProcessDisplayFormatter.Format(
+            template,
+            displayId.ToString(),
+            prize.Id,
+            prize.Name,
+            student?.Group,
+            student?.Id,
+            student?.Name);
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
