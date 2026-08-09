@@ -787,7 +787,7 @@ jobs:
             $releaseTag = $env:RELEASE_TAG
             $channel = if ($releaseTag -match '-alpha(?:\.|$)') { 'alpha' } elseif ($releaseTag -match '-beta(?:\.|$)') { 'beta' } elseif ($releaseTag -match '-') { throw "Unsupported prerelease tag: $releaseTag" } else { 'release' }
             $metadata = Get-Content -LiteralPath metadata.yaml -Raw
-            $channelMatch = [regex]::Match($metadata, "(?ms)^  $channel:\s*\r?\n\s+tag:\s*(?<tag>\S+)\s*$")
+            $channelMatch = [regex]::Match($metadata, "(?ms)^  ${channel}:\s*\r?\n\s+tag:\s*(?<tag>\S+)\s*$")
             if (-not $channelMatch.Success -or $channelMatch.Groups['tag'].Value -ne $releaseTag) {
               throw "metadata.yaml channel '$channel' must point to release tag $releaseTag."
             }
