@@ -104,7 +104,7 @@
                         </Setter>
                     </Style>
                     
-                    <Style Selector="^ Grid.Combo > Button">
+                    <Style Selector="^ Grid.Combo > :is(Button)">
                         <Setter Property="Width" Value="{DynamicResource SizeBase}" />
                         <Setter Property="Height" Value="{DynamicResource SizeBase}" />
                         <Setter Property="Margin" Value="0" />
@@ -123,15 +123,15 @@
                               ColumnDefinitions="Auto Auto *"
                               ColumnSpacing="8"
                               Classes="Combo">
-                            <Button Grid.Column="0"
-                                    Content="+"
-                                    IsEnabled="{Binding CanIncreaseCount}"
-                                    Command="{Binding IncreaseCountCommand}" />
+                            <sr:AcceleratingRepeatButton Grid.Column="0"
+                                                         Content="+"
+                                                         IsEnabled="{Binding CanIncreaseCount}"
+                                                         Command="{Binding IncreaseCountCommand}" />
 
-                            <Button Grid.Column="1"
-                                    Content="-"
-                                    IsEnabled="{Binding CanDecreaseCount}"
-                                    Command="{Binding DecreaseCountCommand}" />
+                            <sr:AcceleratingRepeatButton Grid.Column="1"
+                                                          Content="-"
+                                                          IsEnabled="{Binding CanDecreaseCount}"
+                                                          Command="{Binding DecreaseCountCommand}"/>
 
                             <TextBlock Grid.Column="2"
                                        Text="{Binding DrawCount}"
@@ -164,15 +164,15 @@
                                        VerticalAlignment="Center"
                                        FontSize="18" />
 
-                            <Button Grid.Column="1"
-                                    Content="+"
-                                    IsEnabled="{Binding CanIncreaseCount}"
-                                    Command="{Binding IncreaseCountCommand}" />
+                            <sr:AcceleratingRepeatButton Grid.Column="1"
+                                                          Content="+"
+                                                          IsEnabled="{Binding CanIncreaseCount}"
+                                                          Command="{Binding IncreaseCountCommand}" />
 
-                            <Button Grid.Column="2"
-                                    Content="-"
-                                    IsEnabled="{Binding CanDecreaseCount}"
-                                    Command="{Binding DecreaseCountCommand}" />
+                            <sr:AcceleratingRepeatButton Grid.Column="2"
+                                                          Content="-"
+                                                          IsEnabled="{Binding CanDecreaseCount}"
+                                                          Command="{Binding DecreaseCountCommand}"/>
                         </Grid>
                     </Grid>
 
@@ -250,15 +250,15 @@
                               ColumnDefinitions="Auto Auto *"
                               ColumnSpacing="8"
                               Classes="Combo">
-                            <Button Grid.Column="0"
-                                    Content="+"
-                                    IsEnabled="{Binding CanIncreaseCount}"
-                                    Command="{Binding IncreaseCountCommand}" />
+                            <sr:AcceleratingRepeatButton Grid.Column="0"
+                                                         Content="+"
+                                                         IsEnabled="{Binding CanIncreaseCount}"
+                                                         Command="{Binding IncreaseCountCommand}" />
 
-                            <Button Grid.Column="1"
-                                    Content="-"
-                                    IsEnabled="{Binding CanDecreaseCount}"
-                                    Command="{Binding DecreaseCountCommand}" />
+                            <sr:AcceleratingRepeatButton Grid.Column="1"
+                                                         Content="-"
+                                                         IsEnabled="{Binding CanDecreaseCount}"
+                                                         Command="{Binding DecreaseCountCommand}"/>
 
                             <TextBlock Grid.Column="2"
                                        Text="{Binding DrawCount}"
@@ -291,15 +291,15 @@
                                        VerticalAlignment="Center"
                                        FontSize="18" />
 
-                            <Button Grid.Column="1"
-                                    Content="+"
-                                    IsEnabled="{Binding CanIncreaseCount}"
-                                    Command="{Binding IncreaseCountCommand}" />
+                            <sr:AcceleratingRepeatButton Grid.Column="1"
+                                                         Content="+"
+                                                         IsEnabled="{Binding CanIncreaseCount}"
+                                                         Command="{Binding IncreaseCountCommand}" />
 
-                            <Button Grid.Column="2"
-                                    Content="-"
-                                    IsEnabled="{Binding CanDecreaseCount}"
-                                    Command="{Binding DecreaseCountCommand}" />
+                            <sr:AcceleratingRepeatButton Grid.Column="2"
+                                                         Content="-"
+                                                         IsEnabled="{Binding CanDecreaseCount}"
+                                                         Command="{Binding DecreaseCountCommand}"/>
                         </Grid>
                     </Grid>
 

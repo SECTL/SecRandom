@@ -1,0 +1,101 @@
+<local:RemainingListView xmlns="https://github.com/avaloniaui"
+                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                         xmlns:local="using:SecRandom.Views.MainPages"
+                         xmlns:vm="using:SecRandom.ViewModels.MainPages"
+                         x:Class="SecRandom.Views.MainPages.RemainingListView"
+                         x:DataType="local:RemainingListView"
+                         NavigationPage.HasBackButton="True">
+    <local:RemainingListView.Resources>
+        <ResourceDictionary>
+        <DataTemplate x:Key="RollCallRemainingItemTemplate" DataType="vm:RollCallRemainingItem">
+            <Border Width="220"
+                    MinHeight="96"
+                    Margin="0 12 12 0"
+                    Padding="12"
+                    CornerRadius="6"
+                    BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                    BorderThickness="1"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="0"
+                               Text="{Binding DisplayText}"
+                               TextTrimming="CharacterEllipsis"
+                               FontWeight="SemiBold" />
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="1"
+                               Text="{Binding Gender}"
+                               Opacity="0.68" />
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="0"
+                               Grid.ColumnSpan="2"
+                               Text="{Binding Group}"
+                               Opacity="0.58"
+                               FontSize="12"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Row="2"
+                               Grid.Column="0"
+                               Grid.ColumnSpan="2"
+                               Text="{Binding Tags}"
+                               IsVisible="{Binding IsTagsVisible}"
+                               Opacity="0.58"
+                               FontSize="12"
+                               TextTrimming="CharacterEllipsis" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="LotteryRemainingItemTemplate" DataType="vm:LotteryRemainingItem">
+            <Border Width="220"
+                    MinHeight="96"
+                    Margin="0 12 12 0"
+                    Padding="12"
+                    CornerRadius="6"
+                    BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                    BorderThickness="1"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <Grid RowDefinitions="Auto,Auto,Auto">
+                    <TextBlock Grid.Row="0"
+                               Text="{Binding DisplayText}"
+                               TextWrapping="Wrap"
+                               MaxHeight="44"
+                               FontWeight="SemiBold" />
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding Tags}"
+                               IsVisible="{Binding IsTagsVisible}"
+                               Opacity="0.58"
+                               FontSize="12" />
+                    <TextBlock Grid.Row="2"
+                               Text="{Binding CountText}"
+                               Opacity="0.68"
+                               FontSize="12" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+        </ResourceDictionary>
+    </local:RemainingListView.Resources>
+
+    <Grid RowDefinitions="Auto,*" Margin="16">
+        <TextBlock Text="{Binding EmptyText}"
+                   Grid.RowSpan="2"
+                   IsVisible="{Binding IsEmpty}"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   TextWrapping="Wrap" />
+        <ScrollViewer Grid.Row="1"
+                      IsVisible="{Binding HasItems}"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="ItemsPresenter"
+                          ItemsSource="{Binding Items}"
+                          HorizontalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal"
+                                   HorizontalAlignment="Center" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</local:RemainingListView>

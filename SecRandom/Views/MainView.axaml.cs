@@ -17,7 +17,9 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Extensions;
+using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
+using SecRandom.Core.Models.UI;
 using SecRandom.Core.Services;
 using SecRandom.Core.Views;
 using SecRandom.Mobile;
@@ -68,6 +70,28 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
     public bool IsDesktop => App.IsDesktop;
     public bool UseDesktopUI =>
         (IAppHost.TryGetService<IPlatformServiceRoot>() as MobilePlatformServiceRoot)?.UsesDesktopMainView ?? IsDesktop;
+
+    public static void ShowSuccessToast(string message) => ShowToast(message, FAInfoBarSeverity.Success);
+
+    public static void ShowToast(string message, FAInfoBarSeverity severity)
+    {
+        var view = Current;
+        if (view is null)
+            return;
+
+        void Show()
+        {
+            view.ShowToast(new ToastMessage(message)
+            {
+                Severity = severity
+            });
+        }
+
+        if (Dispatcher.UIThread.CheckAccess())
+            Show();
+        else
+            Dispatcher.UIThread.Post(Show);
+    }
 
     public Control? GetPage(Type srcType)
     {

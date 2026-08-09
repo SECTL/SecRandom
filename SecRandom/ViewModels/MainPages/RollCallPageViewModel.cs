@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -31,6 +32,7 @@ using SecRandom.Services.Notification;
 using SecRandom.Services.Security;
 using SecRandom.Services.Verification;
 using SecRandom.ViewModels;
+using SecRandom.Views;
 using SecRandom.Shared;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Models.Profile;
@@ -134,7 +136,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     public bool IsControlPanelOnRight => !IsControlPanelOnLeft;
     public bool CanDecreaseCount => DrawCount > 1;
     public bool CanIncreaseCount => DrawCount < MaximumDrawCount;
-    public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0 && RemainingCount > 0);
+    public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0);
     public string DrawButtonText => IsDrawing ? SR.C_Stop : SR.C_Start;
     public int TotalCount { get; private set; }
     public int RemainingCount { get; private set; }
@@ -252,10 +254,10 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     {
         if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.RollCallReset, () => Task.CompletedTask))
             return;
-        ResetDrawHistoryCore();
+        ResetDrawHistoryCore(showToast: true);
     }
 
-    private void ResetDrawHistoryCore()
+    private void ResetDrawHistoryCore(bool showToast = false)
     {
         _lastResultStudents.Clear();
         ResultItems.Clear();
@@ -263,6 +265,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         IsResultVisible = false;
         ResultText = ReminderSettings.ReminderText;
         StatusText = SR.M_ResetDone;
+        if (showToast)
+            MainView.ShowSuccessToast(SR.M_ResetDone);
         RefreshCounts();
         OnPropertyChanged(nameof(ResultText));
     }
@@ -287,6 +291,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             return;
 
         RefreshCounts();
+        ResetForNewRoundIfExhausted();
         if (!CanStartDraw)
         {
             StatusText = TotalCount == 0 ? SR.M_NoStudents : SR.M_NoRemainingStudents;
@@ -349,6 +354,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             await PlayResultMusicAsync(drawnStudents.FirstOrDefault()).ConfigureAwait(false);
             StatusText = string.Format(SR.M_DrawnCountFormat, ResultItems.Count);
             RefreshCounts();
+            ResetForNewRoundIfExhausted();
             OnPropertyChanged(nameof(ResultText));
 
             if (_notificationService is not null)
@@ -380,7 +386,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         protectLinkage ? [SecurityOperation.RollCallReset, SecurityOperation.LinkageAction] : [SecurityOperation.RollCallReset],
         () =>
         {
-            ResetDrawHistoryCore();
+            ResetDrawHistoryCore(showToast: true);
             return Task.CompletedTask;
         });
     public void StopProtocolDraw() => StopPreview();
@@ -660,6 +666,17 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             _temporaryRecordService.ClearStudentListOnce(listName);
     }
 
+    private bool ResetForNewRoundIfExhausted()
+    {
+        if (TotalCount <= 0 || RemainingCount > 0)
+            return false;
+
+        _temporaryRecordService.ResetStudentList(SelectedStudentListName);
+        RefreshCounts();
+        MainView.ShowSuccessToast(SR.M_AutoResetDone);
+        return true;
+    }
+
     private IEnumerable<Student> GetVisibleStudents()
     {
         return CurrentStudentList?.Students.Where(student => student.IsCandidate) ?? [];
@@ -728,6 +745,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             $"权重 {weight:0.##}",
             image,
             StudentImageSettings.StudentImage,
+            StudentImageSettings.StudentImagePosition,
             BuildInitial(student));
     }
 
@@ -910,10 +928,16 @@ public sealed record RollCallResultItem(
     string WeightText,
     Bitmap? Image,
     bool IsImageEnabled,
+    StudentImagePositionMode ImagePosition,
     string Initial)
 {
     public bool IsImageVisible => IsImageEnabled && Image is not null;
     public bool IsPlaceholderVisible => IsImageEnabled && Image is null;
+    public Orientation ImageLayoutOrientation => ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Right
+        ? Orientation.Horizontal
+        : Orientation.Vertical;
+    public bool IsImageBeforeText => IsImageEnabled && ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Top;
+    public bool IsImageAfterText => IsImageEnabled && ImagePosition is StudentImagePositionMode.Right or StudentImagePositionMode.Bottom;
 }
 
 public sealed record RollCallRemainingItem(

@@ -78,6 +78,18 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         }
     }
 
+    public void ResetStudentList(string listName)
+    {
+        lock (_gate)
+        {
+            SaveStudentState(listName, new TemporaryRecordState
+            {
+                ListName = listName,
+                UpdatedAt = DateTimeOffset.Now
+            });
+        }
+    }
+
     public void ClearStudentList(string listName)
     {
         lock (_gate)
@@ -138,6 +150,18 @@ public static partial class CoreRuntimeServiceCollectionExtensions
 
             state.UpdatedAt = now;
             SavePrizeState(listName, state);
+        }
+    }
+
+    public void ResetPrizeList(string listName)
+    {
+        lock (_gate)
+        {
+            SavePrizeState(listName, new TemporaryRecordState
+            {
+                ListName = listName,
+                UpdatedAt = DateTimeOffset.Now
+            });
         }
     }
 

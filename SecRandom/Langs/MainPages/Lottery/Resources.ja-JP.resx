@@ -15,6 +15,7 @@
   <data name="O_AllGenders" xml:space="preserve"><value>すべての性別から抽選</value></data>
   <data name="M_Ready" xml:space="preserve"><value>抽選の準備完了</value></data>
   <data name="M_ResetDone" xml:space="preserve"><value>抽選表示をリセットしました</value></data>
+  <data name="M_AutoResetDone" xml:space="preserve"><value>抽選記録を自動リセットして抽選を続けます</value></data>
   <data name="M_NoPrizes" xml:space="preserve"><value>抽選できる賞品がありません</value></data>
   <data name="M_NoRemainingPrizes" xml:space="preserve"><value>残りの賞品がありません</value></data>
   <data name="M_NoStudents" xml:space="preserve"><value>現在の条件に一致するメンバーがいません</value></data>

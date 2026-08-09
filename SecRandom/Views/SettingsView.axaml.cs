@@ -133,12 +133,41 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
     private void SearchBox_OnKeyUp(object? sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Enter || ViewModel.SelectedSettings == null) return;
+        if (e.Key != Key.Enter) return;
+        ExecuteSettingsSearch(ViewModel.SelectedSettings);
+    }
 
-        var settings = ViewModel.SelectedSettings;
+    private void SearchBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is AutoCompleteBox { SelectedItem: SettingsMetadata settings })
+            ExecuteSettingsSearch(settings);
+    }
+
+    private void SearchButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel.SelectedSettings is { } settings)
+        {
+            ExecuteSettingsSearch(settings);
+            return;
+        }
+
+        SearchBox.Focus();
+        SearchBox.IsDropDownOpen = !string.IsNullOrWhiteSpace(ViewModel.SearchText);
+    }
+
+    private void ClearSearchButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        ClearSearch();
+        SearchBox.Focus();
+    }
+
+    private void ExecuteSettingsSearch(SettingsMetadata? settings)
+    {
+        if (settings == null) return;
 
         _logger?.LogInformation("跳转到设置 [{PageId}] {Id}", settings.PageId, settings.Id);
         SelectNavigationItemById(settings.PageId);
+        ClearSearch();
 
         if (settings.IsPage) return;
 
@@ -164,6 +193,13 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
             HighlightControl(targetControl, TimeSpan.FromSeconds(3));
         }, DispatcherPriority.Render);
+    }
+
+    private void ClearSearch()
+    {
+        SearchBox.IsDropDownOpen = false;
+        ViewModel.SelectedSettings = null;
+        ViewModel.SearchText = string.Empty;
     }
 
     public void HighlightControl(Control? target, TimeSpan? duration = null)

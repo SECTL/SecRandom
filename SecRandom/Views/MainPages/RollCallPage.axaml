@@ -52,10 +52,10 @@
                             </Style>
                         </Grid.Styles>
                         
-                        <Button Grid.Column="0"
-                                Content="-"
-                                IsEnabled="{Binding CanDecreaseCount}"
-                                Command="{Binding DecreaseCountCommand}"/>
+                        <sr:AcceleratingRepeatButton Grid.Column="0"
+                                                      Content="-"
+                                                      IsEnabled="{Binding CanDecreaseCount}"
+                                                      Command="{Binding DecreaseCountCommand}"/>
                         
                         <TextBlock Grid.Column="1"
                                    Text="{Binding DrawCount}"
@@ -63,10 +63,10 @@
                                    VerticalAlignment="Center"
                                    FontSize="16" />
                         
-                        <Button Grid.Column="2"
-                                Content="+"
-                                IsEnabled="{Binding CanIncreaseCount}"
-                                Command="{Binding IncreaseCountCommand}" />
+                        <sr:AcceleratingRepeatButton Grid.Column="2"
+                                                      Content="+"
+                                                      IsEnabled="{Binding CanIncreaseCount}"
+                                                      Command="{Binding IncreaseCountCommand}" />
                     </Grid>
                     
                     <Button Classes="accent"
@@ -128,42 +128,24 @@
             </Viewbox>
         </DataTemplate>
         
-        <DataTemplate x:Key="RollCallRemainingItemTemplate"
-                      DataType="vm:RollCallRemainingItem">
-            <Border Width="220"
-                    MinHeight="96"
-                    Margin="0 12 12 0"
-                    Padding="12"
-                    CornerRadius="6"
-                    BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                    BorderThickness="1"
-                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
-                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
-                    <TextBlock Grid.Row="0"
-                               Grid.Column="0"
-                               Text="{Binding DisplayText}"
-                               TextTrimming="CharacterEllipsis"
-                               FontWeight="SemiBold" />
-                    
-                    <TextBlock Grid.Row="0"
-                               Grid.Column="1"
-                               Text="{Binding Gender}"
-                               Opacity="0.68" />
-                    
-                    <TextBlock Grid.Row="1" Grid.Column="0"
-                               Grid.ColumnSpan="2"
-                               Text="{Binding Group}"
-                               Opacity="0.58"
-                               FontSize="12"
-                               TextTrimming="CharacterEllipsis" />
-                    
-                    <TextBlock Grid.Row="2" Grid.Column="0"
-                               Grid.ColumnSpan="2"
-                               Text="{Binding Tags}"
-                               IsVisible="{Binding IsTagsVisible}"
-                               Opacity="0.58"
-                               FontSize="12"
-                               TextTrimming="CharacterEllipsis" />
+        <DataTemplate x:Key="RollCallAvatarTemplate"
+                      DataType="vm:RollCallResultItem">
+            <Border Width="72" Height="72"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8">
+                <Grid>
+                    <Border CornerRadius="8" IsVisible="{Binding IsImageVisible}">
+                        <Border.Background>
+                            <ImageBrush Source="{Binding Image}" Stretch="UniformToFill" />
+                        </Border.Background>
+                    </Border>
+                    <TextBlock Text="{Binding Initial}"
+                               IsVisible="{Binding IsPlaceholderVisible}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="36"
+                               FontWeight="SemiBold"
+                               Foreground="{Binding TextBrush}" />
                 </Grid>
             </Border>
         </DataTemplate>
@@ -231,21 +213,47 @@
                                             IsVisible="{Binding IsCardStyle}"
                                             BorderBrush="{Binding AccentBrush}"
                                             Opacity="{Binding Opacity}">
-                                        <StackPanel Spacing="6" HorizontalAlignment="Center">
-                                            <Grid Width="72" Height="72" IsVisible="{Binding IsImageEnabled}">
-                                                <Ellipse Fill="{Binding AccentBrush}" Opacity="0.18" />
-                                                <Image Source="{Binding Image}" Stretch="UniformToFill" ClipToBounds="True"
-                                                       IsVisible="{Binding IsImageVisible}" />
-                                                <TextBlock Text="{Binding Initial}"
-                                                           IsVisible="{Binding IsPlaceholderVisible}"
+                                        <StackPanel Orientation="{Binding ImageLayoutOrientation}"
+                                                    Spacing="6"
+                                                    HorizontalAlignment="Center">
+                                            <ContentControl Content="{Binding}"
+                                                            ContentTemplate="{StaticResource RollCallAvatarTemplate}"
+                                                            IsVisible="{Binding IsImageBeforeText}" />
+                                            <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                                <TextBlock Text="{Binding DisplayText}"
+                                                           Classes="result-name"
+                                                           FontSize="{Binding #RootControl.ViewModel.ResultFontSize}"
+                                                           FontFamily="{Binding #RootControl.ViewModel.ResultFontFamily}"
+                                                           FontWeight="SemiBold" />
+                                                <TextBlock Text="{Binding Tags}"
+                                                           IsVisible="{Binding IsTagsVisible}"
                                                            HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           FontSize="30"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{Binding TextBrush}" />
-                                            </Grid>
+                                                           Opacity="0.72"
+                                                           FontSize="13" />
+                                                <TextBlock Text="{Binding WeightText}"
+                                                           IsVisible="{Binding IsWeightVisible}"
+                                                           HorizontalAlignment="Center"
+                                                           Opacity="0.62"
+                                                           FontSize="12" />
+                                            </StackPanel>
+                                            <ContentControl Content="{Binding}"
+                                                            ContentTemplate="{StaticResource RollCallAvatarTemplate}"
+                                                            IsVisible="{Binding IsImageAfterText}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <StackPanel IsVisible="{Binding !IsCardStyle}"
+                                                Orientation="{Binding ImageLayoutOrientation}"
+                                                Spacing="6"
+                                                HorizontalAlignment="Center">
+                                        <ContentControl Content="{Binding}"
+                                                        ContentTemplate="{StaticResource RollCallAvatarTemplate}"
+                                                        IsVisible="{Binding IsImageBeforeText}" />
+                                        <StackPanel Spacing="6" HorizontalAlignment="Center">
                                             <TextBlock Text="{Binding DisplayText}"
                                                        Classes="result-name"
+                                                       Foreground="{Binding TextBrush}"
+                                                       Opacity="{Binding Opacity}"
                                                        FontSize="{Binding #RootControl.ViewModel.ResultFontSize}"
                                                        FontFamily="{Binding #RootControl.ViewModel.ResultFontFamily}"
                                                        FontWeight="SemiBold" />
@@ -260,26 +268,9 @@
                                                        Opacity="0.62"
                                                        FontSize="12" />
                                         </StackPanel>
-                                    </Border>
-
-                                    <StackPanel IsVisible="{Binding !IsCardStyle}" Spacing="6" HorizontalAlignment="Center">
-                                        <TextBlock Text="{Binding DisplayText}"
-                                                   Classes="result-name"
-                                                   Foreground="{Binding TextBrush}"
-                                                   Opacity="{Binding Opacity}"
-                                                   FontSize="{Binding #RootControl.ViewModel.ResultFontSize}"
-                                                   FontFamily="{Binding #RootControl.ViewModel.ResultFontFamily}"
-                                                   FontWeight="SemiBold" />
-                                        <TextBlock Text="{Binding Tags}"
-                                                   IsVisible="{Binding IsTagsVisible}"
-                                                   HorizontalAlignment="Center"
-                                                   Opacity="0.72"
-                                                   FontSize="13" />
-                                        <TextBlock Text="{Binding WeightText}"
-                                                   IsVisible="{Binding IsWeightVisible}"
-                                                   HorizontalAlignment="Center"
-                                                   Opacity="0.62"
-                                                   FontSize="12" />
+                                        <ContentControl Content="{Binding}"
+                                                        ContentTemplate="{StaticResource RollCallAvatarTemplate}"
+                                                        IsVisible="{Binding IsImageAfterText}" />
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>

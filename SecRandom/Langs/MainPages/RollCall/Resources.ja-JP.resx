@@ -16,6 +16,7 @@
   <data name="O_AllGenders" xml:space="preserve"><value>すべての性別から抽選</value></data>
   <data name="M_Ready" xml:space="preserve"><value>準備完了</value></data>
   <data name="M_ResetDone" xml:space="preserve"><value>点呼記録をリセットしました</value></data>
+  <data name="M_AutoResetDone" xml:space="preserve"><value>点呼記録を自動リセットして抽選を続けます</value></data>
   <data name="M_NoStudents" xml:space="preserve"><value>現在の条件に一致するメンバーがいません</value></data>
   <data name="M_NoRemainingStudents" xml:space="preserve"><value>現在の条件では残りのメンバーがいません</value></data>
   <data name="M_DrawnCountFormat" xml:space="preserve"><value>{0} 人のメンバーを抽選しました</value></data>

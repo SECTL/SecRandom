@@ -48,6 +48,9 @@
   <data name="M_ResetDone" xml:space="preserve">
     <value>已重置抽奖显示</value>
   </data>
+  <data name="M_AutoResetDone" xml:space="preserve">
+    <value>已自动重置抽奖记录并继续抽取</value>
+  </data>
   <data name="M_NoPrizes" xml:space="preserve">
     <value>没有可抽取的奖品</value>
   </data>
