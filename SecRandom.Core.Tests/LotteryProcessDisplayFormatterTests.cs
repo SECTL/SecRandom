@@ -12,10 +12,8 @@ public sealed class LotteryProcessDisplayFormatterTests
     public void NormalizeTemplate_CollapsesSpacesAndCanonicalizesLineBreaks()
     {
         var template = LotteryProcessDisplayFormatter.NormalizeTemplate("{id}   {prize}\r\n{group}-{member}");
-        var repeatedSpaceToken = LotteryProcessDisplayFormatter.NormalizeTemplate("{id}{ }{ }{prize}");
 
-        Assert.Equal("{id}{ }{prize}{/}{group}-{member}", template);
-        Assert.Equal("{id}{ }{prize}", repeatedSpaceToken);
+        Assert.Equal("{id} {prize}{/}{group}-{member}", template);
     }
 
     [Fact]
@@ -43,10 +41,10 @@ public sealed class LotteryProcessDisplayFormatterTests
     }
 
     [Fact]
-    public void Format_ExpandsSpaceAndMiddleDotTokens()
+    public void Format_PreservesDirectSeparators()
     {
         var formatted = LotteryProcessDisplayFormatter.Format(
-            "{prizeId}{ }{prize}{-}{memberId}{\u00B7}{member}",
+            "{prizeId} {prize}-{memberId}\u00B7{member}",
             "1",
             "P-01",
             "Gift",
@@ -63,13 +61,13 @@ public sealed class LotteryProcessDisplayFormatterTests
         LotterySettingsConfig settings = new()
         {
             LotteryShowRandom = LotteryShowRandomMode.Custom,
-            CustomLotteryShowRandomFormat = "{prize}{ }{member}"
+            CustomLotteryShowRandomFormat = "{prize} {member}"
         };
         var json = JsonSerializer.Serialize(settings, ConfigServiceBase.JsonOptions);
         var restored = JsonSerializer.Deserialize<LotterySettingsConfig>(json, ConfigServiceBase.JsonOptions);
 
         Assert.Equal(LotteryShowRandomMode.Custom, settings.LotteryShowRandom);
-        Assert.Equal("{prize}{ }{member}", restored?.CustomLotteryShowRandomFormat);
+        Assert.Equal("{prize} {member}", restored?.CustomLotteryShowRandomFormat);
         Assert.Equal(
             LotteryProcessDisplayFormatter.DefaultTemplate,
             new LotterySettingsConfig().CustomLotteryShowRandomFormat);

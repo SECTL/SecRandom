@@ -1086,33 +1086,6 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 短横线.
-        /// </summary>
-        public static string C_LotteryShowRandomFormatHyphen {
-            get {
-                return ResourceManager.GetString("C_LotteryShowRandomFormatHyphen", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 插入空格.
-        /// </summary>
-        public static string C_LotteryShowRandomFormatSpace {
-            get {
-                return ResourceManager.GetString("C_LotteryShowRandomFormatSpace", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 间隔点.
-        /// </summary>
-        public static string C_LotteryShowRandomFormatMiddleDot {
-            get {
-                return ResourceManager.GetString("C_LotteryShowRandomFormatMiddleDot", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to 除换行符以外，其他分隔符可直接输入.
         /// </summary>
         public static string C_LotteryShowRandomFormatDirectSeparators {

@@ -198,24 +198,6 @@
                                                         <TextBlock VerticalAlignment="Center"
                                                                    Text="{x:Static lp:Resources.C_LotteryShowRandomFormatLineBreak}" />
                                                     </StackPanel>
-                                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                                        <Button Content="{}{-}" Tag="{}{-}"
-                                                                Click="InsertCustomLotteryShowRandomFormatTokenOnClick" />
-                                                        <TextBlock VerticalAlignment="Center"
-                                                                   Text="{x:Static lp:Resources.C_LotteryShowRandomFormatHyphen}" />
-                                                    </StackPanel>
-                                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                                        <Button Content="{}{ }" Tag="{}{ }"
-                                                                Click="InsertCustomLotteryShowRandomFormatTokenOnClick" />
-                                                        <TextBlock VerticalAlignment="Center"
-                                                                   Text="{x:Static lp:Resources.C_LotteryShowRandomFormatSpace}" />
-                                                    </StackPanel>
-                                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                                        <Button Content="{}{·}" Tag="{}{·}"
-                                                                Click="InsertCustomLotteryShowRandomFormatTokenOnClick" />
-                                                        <TextBlock VerticalAlignment="Center"
-                                                                   Text="{x:Static lp:Resources.C_LotteryShowRandomFormatMiddleDot}" />
-                                                    </StackPanel>
                                                 </StackPanel>
                                             </GroupBox>
                                             <TextBlock TextWrapping="Wrap"

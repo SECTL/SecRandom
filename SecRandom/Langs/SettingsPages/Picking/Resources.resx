@@ -57,9 +57,6 @@
   <data name="C_LotteryShowRandomFormatGroup" xml:space="preserve"><value>成员分组</value></data>
   <data name="C_LotteryShowRandomFormatFormat" xml:space="preserve"><value>格式</value></data>
   <data name="C_LotteryShowRandomFormatLineBreak" xml:space="preserve"><value>换行</value></data>
-  <data name="C_LotteryShowRandomFormatHyphen" xml:space="preserve"><value>短横线</value></data>
-  <data name="C_LotteryShowRandomFormatSpace" xml:space="preserve"><value>空格</value></data>
-  <data name="C_LotteryShowRandomFormatMiddleDot" xml:space="preserve"><value>间隔点</value></data>
   <data name="C_LotteryShowRandomFormatDirectSeparators" xml:space="preserve"><value>除换行符以外，其他分隔符可直接输入</value></data>
   <data name="S_ShowTags" xml:space="preserve"><value>显示标签</value></data>
   <data name="S_ShowTags_D" xml:space="preserve"><value>抽取结果中展示成员或奖品标签</value></data>
