@@ -29,6 +29,14 @@ public static class Utils
     /// </summary>
     public static void ConfigureMobileDataRoot()
     {
+        ConfigureDataRoot(GetMobileDataRootPath());
+    }
+
+    /// <summary>
+    ///     Resolves the fixed application-private mobile data directory without changing the configured root.
+    /// </summary>
+    public static string GetMobileDataRootPath()
+    {
         if (!OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS())
             throw new PlatformNotSupportedException("Mobile data roots are only supported on Android and iOS.");
 
@@ -36,7 +44,7 @@ public static class Utils
         if (string.IsNullOrWhiteSpace(localApplicationData))
             throw new InvalidOperationException("The platform does not provide an application-private data directory.");
 
-        ConfigureDataRoot(Path.Combine(localApplicationData, "SecRandom", "data"));
+        return Path.Combine(localApplicationData, "SecRandom", "data");
     }
 
     private static void ConfigureDataRoot(string dataRoot)

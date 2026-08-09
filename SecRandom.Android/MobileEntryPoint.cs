@@ -32,6 +32,7 @@ public class MobileApplication : AvaloniaAndroidApplication<App>
         {
             UpdateInstaller = new AndroidUpdateInstaller(),
             MediaPlayer = new AndroidMobileMediaPlayer(),
+            PathLauncher = AndroidDataDirectoryLauncher.TryOpenPath,
             StartupErrorLogger = exception =>
             {
                 if (OperatingSystem.IsAndroidVersionAtLeast(24))

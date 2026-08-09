@@ -101,6 +101,10 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
     private IImportExportService ImportExportService => IAppHost.GetService<IImportExportService>();
     private IExternalLauncher ExternalLauncher => IAppHost.GetService<IExternalLauncher>();
     public bool IsDesktop => App.IsDesktop;
+    public bool CanOpenFileManagerDirectories => IsDesktop || _platformServiceRoot is MobilePlatformServiceRoot
+        {
+            Kind: PlatformKind.Android
+        };
 
     #region Misc
 

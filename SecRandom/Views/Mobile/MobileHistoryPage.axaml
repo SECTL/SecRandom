@@ -3,7 +3,7 @@
              xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
              xmlns:history="clr-namespace:SecRandom.Views.SettingsPages.History"
              x:Class="SecRandom.Views.Mobile.MobileHistoryPage">
-    <Grid RowDefinitions="Auto,*" Margin="16" RowSpacing="8" Classes="animated-intro">
+    <Grid RowDefinitions="Auto,*" Margin="12" RowSpacing="8" Classes="animated-intro">
         <Viewbox Grid.Row="0" Height="36">
             <TabStrip x:Name="HistoryTabs"
                       SelectedIndex="0"

@@ -7,7 +7,7 @@
              xmlns:system="clr-namespace:System;assembly=System.Runtime"
              x:Class="SecRandom.Views.Mobile.MobileDrawPage"
              x:DataType="vm:MobileDrawPageViewModel">
-    <Grid RowDefinitions="Auto Auto *" RowSpacing="8" MaxWidth="720" Margin="16" Classes="animated-intro">
+    <Grid RowDefinitions="Auto Auto *" RowSpacing="8" MaxWidth="720" Margin="12" Classes="animated-intro">
         <Viewbox Grid.Row="0" Height="36">
             <TabStrip x:Name="DrawSurfaceTabs"
                       IsEnabled="{Binding CanChangeSurface}"

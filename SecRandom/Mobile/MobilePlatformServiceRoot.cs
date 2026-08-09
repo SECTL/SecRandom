@@ -51,6 +51,11 @@ public sealed class MobilePlatformServiceRoot : IPlatformServiceRoot, IWindowFea
     public IMobileKeyboardOcclusionSource? KeyboardOcclusionSource { get; set; }
 
     /// <summary>
+    /// Platform heads may expose the mobile data root through a system file manager.
+    /// </summary>
+    public Func<string, bool>? PathLauncher { get; set; }
+
+    /// <summary>
     /// Platform heads may attach a startup error sink (for example Android.Util.Log) for Host-build failures.
     /// </summary>
     public Action<Exception>? StartupErrorLogger { get; set; }
