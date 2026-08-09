@@ -21,6 +21,8 @@
                 WindowDecorationProperties.ElementRole="TitleBar">
             <Grid ColumnDefinitions="Auto * 3* * Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="8" Spacing="8">
+                    <Border Width="60" IsVisible="{Binding ViewModel.IsMacOs}" />
+                    
                     <Button Name="TogglePaneButton"
                             Theme="{StaticResource PaneToggleButtonStyle}"
                             HorizontalAlignment="Center" VerticalAlignment="Center"

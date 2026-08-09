@@ -32,6 +32,7 @@ public partial class SettingsViewModel : ObservableRecipient
     }
 
     public bool IsWindows => OperatingSystem.IsWindows();
+    public bool IsMacOs => OperatingSystem.IsMacOS();
     public bool HasSearchText => !string.IsNullOrEmpty(SearchText);
     public ObservableCollection<FANavigationViewItemBase> FlattenNavigationItems { get; } = [];
     public ObservableCollection<FANavigationViewItemBase> NavigationViewItems { get; } = [];

@@ -67,6 +67,7 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 
     public static MainView? Current { get; private set; }
     public MainViewModel ViewModel { get; } = IAppHost.GetService<MainViewModel>();
+    public bool IsMacOs => OperatingSystem.IsMacOS();
     public bool IsDesktop => App.IsDesktop;
     public bool UseDesktopUI =>
         (IAppHost.TryGetService<IPlatformServiceRoot>() as MobilePlatformServiceRoot)?.UsesDesktopMainView ?? IsDesktop;

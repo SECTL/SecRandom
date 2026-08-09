@@ -17,6 +17,8 @@
                 Background="Transparent"
                 WindowDecorationProperties.ElementRole="TitleBar">
             <StackPanel Orientation="Horizontal" Margin="8" Spacing="8">
+                <Border Width="60" IsVisible="{Binding IsMacOs}" />
+                
                 <Button Theme="{StaticResource PaneToggleButtonStyle}"
                         IsVisible="{Binding ViewModel.IsNavPaneToggleButtonVisible}"
                         MinWidth="40" Width="48"

@@ -54,6 +54,12 @@ public partial class MainWindow : FAAppWindow
         Closing += MainWindowOnClosing;
         Closed += MainWindowOnClosed;
         RestoreWindowSettings();
+
+        if (OperatingSystem.IsMacOS())
+        {
+            ExtendClientAreaToDecorationsHint = true;
+            ExtendClientAreaTitleBarHeightHint = 48;
+        }
     }
 
     private void InitializeComponent()
