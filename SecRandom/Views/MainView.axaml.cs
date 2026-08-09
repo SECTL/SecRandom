@@ -12,18 +12,25 @@ using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Extensions;
+using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
+using SecRandom.Core.Models.UI;
 using SecRandom.Core.Services;
+using SecRandom.Core.Views;
+using SecRandom.Mobile;
+using SecRandom.Platforms.Abstractions;
 using SecRandom.Services;
+using SecRandom.Services.Mobile;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
 
-public partial class MainView : UserControl, IFANavigationPageFactory
+public partial class MainView : ViewBase, IFANavigationPageFactory
 {
     private const string DefaultMainPageId = "main.rollCall";
 
@@ -33,7 +40,7 @@ public partial class MainView : UserControl, IFANavigationPageFactory
     private AppToastAdorner? _appToastAdorner;
     private bool _isAdornerAdded;
     private bool _isFeatureAvailabilitySubscribed;
-    private readonly FeatureAvailabilityService _featureAvailability = IAppHost.GetService<FeatureAvailabilityService>();
+    private readonly IFeatureAvailabilityService _featureAvailability = IAppHost.GetService<IFeatureAvailabilityService>();
 
     public MainView()
     {
@@ -47,6 +54,11 @@ public partial class MainView : UserControl, IFANavigationPageFactory
         _navigationFrame?.NavigationPageFactory = this;
         BuildNavigationMenuItems();
         SelectNavigationItemById(DefaultMainPageId);
+        Closed += (_, _) =>
+        {
+            if (ReferenceEquals(Current, this))
+                Current = null;
+        };
 
         TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
         RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
@@ -55,6 +67,32 @@ public partial class MainView : UserControl, IFANavigationPageFactory
 
     public static MainView? Current { get; private set; }
     public MainViewModel ViewModel { get; } = IAppHost.GetService<MainViewModel>();
+    public bool IsMacOs => OperatingSystem.IsMacOS();
+    public bool IsDesktop => App.IsDesktop;
+    public bool UseDesktopUI =>
+        (IAppHost.TryGetService<IPlatformServiceRoot>() as MobilePlatformServiceRoot)?.UsesDesktopMainView ?? IsDesktop;
+
+    public static void ShowSuccessToast(string message) => ShowToast(message, FAInfoBarSeverity.Success);
+
+    public static void ShowToast(string message, FAInfoBarSeverity severity)
+    {
+        var view = Current;
+        if (view is null)
+            return;
+
+        void Show()
+        {
+            view.ShowToast(new ToastMessage(message)
+            {
+                Severity = severity
+            });
+        }
+
+        if (Dispatcher.UIThread.CheckAccess())
+            Show();
+        else
+            Dispatcher.UIThread.Post(Show);
+    }
 
     public Control? GetPage(Type srcType)
     {
@@ -107,12 +145,11 @@ public partial class MainView : UserControl, IFANavigationPageFactory
             _featureAvailability.Changed -= FeatureAvailabilityOnChanged;
             _isFeatureAvailabilitySubscribed = false;
         }
-        DataContext = null;
     }
 
     private void BuildNavigationMenuItems()
     {
-        
+        var applySampleNav = App.IsDesktop || OperatingSystem.IsBrowser() || UseDesktopUI;
         
         ViewModel.NavigationViewItems.Clear();
         ViewModel.NavigationViewFooterItems.Clear();
@@ -124,7 +161,7 @@ public partial class MainView : UserControl, IFANavigationPageFactory
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
                 .Select(x =>
                 {
-                    if (App.IsDesktop || OperatingSystem.IsBrowser())
+                    if (applySampleNav)
                     {
                         x.Classes.Add(@"SampleAppNav");
                     }
@@ -139,7 +176,7 @@ public partial class MainView : UserControl, IFANavigationPageFactory
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
                 .Select(x =>
                 {
-                    if (App.IsDesktop || OperatingSystem.IsBrowser())
+                    if (applySampleNav)
                     {
                         x.Classes.Add(@"SampleAppNav");
                     }
@@ -152,14 +189,14 @@ public partial class MainView : UserControl, IFANavigationPageFactory
             Name = Langs.Common.Resources.Feat_Settings
         };
         var settingsItem = settingsPageInfo.ToNavigationViewItemBase();
-        if (App.IsDesktop || OperatingSystem.IsBrowser())
+        if (applySampleNav)
         {
             settingsItem.Classes.Add(@"SampleAppNav");
         }
         
         ViewModel.NavigationViewFooterItems.Add(settingsItem);
         
-        if (App.IsDesktop || OperatingSystem.IsBrowser())
+        if (applySampleNav)
         {
             _navigationView?.Classes.Add(@"SampleAppNav");
         }
@@ -213,7 +250,10 @@ public partial class MainView : UserControl, IFANavigationPageFactory
     {
         if (info.Id == "settings")
         {
-            App.ShowSettingsWindow();
+            if (!App.IsDesktop && IAppHost.TryGetService<IMobileSettingsNavigator>() is { } mobileSettings)
+                _ = mobileSettings.OpenAsync();
+            else
+                App.ShowSettingsWindow();
             return;
         }
 
@@ -221,6 +261,7 @@ public partial class MainView : UserControl, IFANavigationPageFactory
         SelectNavigationItem(info);
         ViewModel.SelectedPageInfo = info;
         _navigationFrame?.NavigateFromObject(info);
+        CloseDrawer();
     }
 
     private void NavigationView_OnItemInvoked(object? sender, FANavigationViewItemInvokedEventArgs e)

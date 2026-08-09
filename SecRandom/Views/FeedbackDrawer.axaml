@@ -1,0 +1,110 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="using:SecRandom.Views"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:ls="clr-namespace:SecRandom.Langs.SettingsView"
+             mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="720"
+             x:Class="SecRandom.Views.FeedbackDrawer"
+             x:DataType="local:FeedbackDrawer">
+    <Grid Width="460" MaxWidth="460" RowDefinitions="Auto,*,Auto,Auto">
+        <Grid Grid.Row="0" Margin="20,18,18,14" ColumnDefinitions="*,Auto">
+            <TextBlock Text="{x:Static ls:Resources.C_Feedback_Title}"
+                       Theme="{StaticResource SubtitleTextBlockStyle}"
+                       VerticalAlignment="Center" />
+            
+            <Button Grid.Column="1"
+                    Theme="{StaticResource TransparentButton}"
+                    ToolTip.Tip="{x:Static ls:Resources.C_Feedback_CloseTemporary}"
+                    Click="CloseTemporarily_OnClick">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <sr:FluentIcon Glyph="{sr:Fi DismissFilled}" />
+                    <TextBlock Text="{x:Static ls:Resources.C_Feedback_CloseTemporary}" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" Padding="0 0 0 8">
+            <StackPanel Margin="20,0" Spacing="16">
+                <TabStrip Theme="{DynamicResource TabStripStyle}"
+                          HorizontalAlignment="Center"
+                          SelectedIndex="{Binding ViewModel.Category}">
+                    <TabStripItem Content="{x:Static ls:Resources.C_Feedback_Bug}" />
+                    <TabStripItem Content="{x:Static ls:Resources.C_Feedback_Feature}" />
+                </TabStrip>
+
+                <sr:Field Label="{x:Static ls:Resources.C_Feedback_Summary}">
+                    <TextBox Text="{Binding ViewModel.Title, Mode=TwoWay}"
+                             PlaceholderText="{x:Static ls:Resources.C_Feedback_SummaryPlaceholder}" />
+                </sr:Field>
+
+                <sr:Field Label="{x:Static ls:Resources.C_Feedback_ContactEmail}">
+                    <TextBox Text="{Binding ViewModel.ContactEmail, Mode=TwoWay}"
+                             PlaceholderText="{x:Static ls:Resources.C_Feedback_ContactEmailPlaceholder}" />
+                </sr:Field>
+
+                <fa:FAInfoBar IsVisible="{Binding ViewModel.IsBug}"
+                              Severity="Informational"
+                              IsOpen="True"
+                              IsClosable="False"
+                              Message="{x:Static ls:Resources.C_Feedback_DiagnosticNotice}" />
+
+                <StackPanel IsVisible="{Binding ViewModel.IsBug}" Spacing="16">
+                    <sr:Field Label="{x:Static ls:Resources.C_Feedback_Expected}">
+                        <TextBox Text="{Binding ViewModel.ExpectedBehavior, Mode=TwoWay}"
+                                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="82"
+                                 PlaceholderText="{x:Static ls:Resources.C_Feedback_ExpectedPlaceholder}" />
+                    </sr:Field>
+                    <sr:Field Label="{x:Static ls:Resources.C_Feedback_Actual}">
+                        <TextBox Text="{Binding ViewModel.ActualResult, Mode=TwoWay}"
+                                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="82"
+                                 PlaceholderText="{x:Static ls:Resources.C_Feedback_ActualPlaceholder}" />
+                    </sr:Field>
+                    <sr:Field Label="{x:Static ls:Resources.C_Feedback_Reproduce}">
+                        <TextBox Text="{Binding ViewModel.ReproductionSteps, Mode=TwoWay}"
+                                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="106"
+                                 PlaceholderText="{x:Static ls:Resources.C_Feedback_ReproducePlaceholder}" />
+                    </sr:Field>
+                </StackPanel>
+
+                <StackPanel IsVisible="{Binding ViewModel.IsFeature}" Spacing="16">
+                    <sr:Field Label="{x:Static ls:Resources.C_Feedback_Motivation}">
+                        <TextBox Text="{Binding ViewModel.Motivation, Mode=TwoWay}"
+                                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="82"
+                                 PlaceholderText="{x:Static ls:Resources.C_Feedback_MotivationPlaceholder}" />
+                    </sr:Field>
+                    <sr:Field Label="{x:Static ls:Resources.C_Feedback_Request}">
+                        <TextBox Text="{Binding ViewModel.FeatureRequest, Mode=TwoWay}"
+                                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="106"
+                                 PlaceholderText="{x:Static ls:Resources.C_Feedback_RequestPlaceholder}" />
+                    </sr:Field>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Separator Grid.Row="2" />
+
+        <Grid Grid.Row="3" Margin="20,14" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+            <Button Click="GitHub_OnClick">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                    <Border Width="16" Height="16" CornerRadius="4" ClipToBounds="True">
+                        <Image Source="/Assets/GitHub-Mark.png" />
+                    </Border>
+                    
+                    <TextBlock Text="GitHub" />
+                </StackPanel>
+            </Button>
+            
+            <Button Grid.Column="2" Content="{x:Static ls:Resources.C_Feedback_Cancel}"
+                    IsEnabled="{Binding !ViewModel.IsSubmitting}"
+                    Click="CancelFeedback_OnClick" />
+            
+            <Button Grid.Column="3" Classes="accent"
+                    Content="{x:Static ls:Resources.C_Feedback_Submit}"
+                    IsEnabled="{Binding !ViewModel.IsSubmitting}"
+                    Click="SubmitFeedback_OnClick" />
+        </Grid>
+    </Grid>
+</UserControl>

@@ -10,15 +10,16 @@
   <data name="C_ShowRemainingList" xml:space="preserve"><value>Show remaining list</value></data>
   <data name="C_RemainingListTitle" xml:space="preserve"><value>Remaining prizes</value></data>
   <data name="C_Close" xml:space="preserve"><value>Close</value></data>
-  <data name="O_NoStudentAssignment" xml:space="preserve"><value>Do not draw students</value></data>
-  <data name="O_AllGroups" xml:space="preserve"><value>Draw from all students</value></data>
+  <data name="O_NoStudentAssignment" xml:space="preserve"><value>Do not draw members</value></data>
+  <data name="O_AllGroups" xml:space="preserve"><value>Draw from all members</value></data>
   <data name="O_AllGenders" xml:space="preserve"><value>Draw from all genders</value></data>
   <data name="M_Ready" xml:space="preserve"><value>Ready to draw</value></data>
   <data name="M_ResetDone" xml:space="preserve"><value>Lottery display reset</value></data>
+  <data name="M_AutoResetDone" xml:space="preserve"><value>Lottery records automatically reset and drawing continues</value></data>
   <data name="M_NoPrizes" xml:space="preserve"><value>No prizes are available to draw</value></data>
   <data name="M_NoRemainingPrizes" xml:space="preserve"><value>No prizes remain</value></data>
-  <data name="M_NoStudents" xml:space="preserve"><value>No students match the current filters</value></data>
-  <data name="M_NoRemainingStudents" xml:space="preserve"><value>No students remain under the current filters</value></data>
+  <data name="M_NoStudents" xml:space="preserve"><value>No members match the current filters</value></data>
+  <data name="M_NoRemainingStudents" xml:space="preserve"><value>No members remain under the current filters</value></data>
   <data name="M_DrawnCountFormat" xml:space="preserve"><value>{0} prizes drawn</value></data>
   <data name="M_CountSummaryFormat" xml:space="preserve"><value>Total prizes: {0} | Remaining prizes: {1}</value></data>
   <data name="M_DrawFailed" xml:space="preserve"><value>Lottery failed</value></data>

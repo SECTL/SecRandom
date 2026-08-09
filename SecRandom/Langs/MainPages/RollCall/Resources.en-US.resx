@@ -31,13 +31,13 @@
      <value>Remaining list</value>
   </data>
   <data name="M_NoStudents" xml:space="preserve">
-     <value>No students match the current filters</value>
+     <value>No members match the current filters</value>
   </data>
   <data name="M_ResultSeparator" xml:space="preserve">
      <value>, </value>
   </data>
   <data name="M_RepeatLimitExhausted" xml:space="preserve">
-     <value>Not enough students remain. Reset the records or adjust the filters.</value>
+     <value>Not enough members remain. Reset the records or adjust the filters.</value>
   </data>
   <data name="M_InvalidWeight" xml:space="preserve">
      <value>Invalid weight settings</value>
@@ -49,7 +49,7 @@
      <value>Show remaining list</value>
   </data>
   <data name="M_NoCandidates" xml:space="preserve">
-     <value>No students are available to draw</value>
+     <value>No members are available to draw</value>
   </data>
   <data name="C_ListSettings" xml:space="preserve">
      <value>List settings</value>
@@ -66,26 +66,29 @@
   <data name="M_ResetDone" xml:space="preserve">
      <value>Roll-call records reset</value>
   </data>
+  <data name="M_AutoResetDone" xml:space="preserve">
+     <value>Roll-call records automatically reset and drawing continues</value>
+  </data>
   <data name="M_NoEligibleCandidates" xml:space="preserve">
-     <value>No students meet the weighting criteria</value>
+     <value>No members meet the weighting criteria</value>
   </data>
   <data name="M_DrawFailed" xml:space="preserve">
      <value>Draw failed</value>
   </data>
   <data name="M_CountSummaryFormat" xml:space="preserve">
-     <value>Total students: {0} | Remaining: {1}</value>
+     <value>Total members: {0} | Remaining: {1}</value>
   </data>
   <data name="M_NoRemainingStudents" xml:space="preserve">
-     <value>No students remain under the current filters</value>
+     <value>No members remain under the current filters</value>
   </data>
   <data name="C_Close" xml:space="preserve">
      <value>Close</value>
   </data>
   <data name="M_DrawnCountFormat" xml:space="preserve">
-     <value>{0} students drawn</value>
+     <value>{0} members drawn</value>
   </data>
   <data name="O_AllGroups" xml:space="preserve">
-     <value>Draw from all students</value>
+     <value>Draw from all members</value>
   </data>
   <data name="C_Start" xml:space="preserve">
      <value>Start</value>

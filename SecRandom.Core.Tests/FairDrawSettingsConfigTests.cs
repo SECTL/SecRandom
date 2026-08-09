@@ -6,6 +6,7 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Interfaces;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
@@ -89,8 +90,7 @@ public class FairDrawSettingsConfigTests
         });
 
         using var host = BuildHost(config, new TestProfileService());
-        IAppHost.Host = host;
-        var engine = new DrawEngine();
+        var engine = CreateEngine(host);
 
         var weights = engine.CalculateStudentWeight([first, second], new Dictionary<Student, History>
         {
@@ -121,8 +121,7 @@ public class FairDrawSettingsConfigTests
         });
 
         using var host = BuildHost(config, new TestProfileService());
-        IAppHost.Host = host;
-        var engine = new DrawEngine();
+        var engine = CreateEngine(host);
 
         var weights = engine.CalculateStudentWeight([lowCount, highCount], new Dictionary<Student, History>
         {
@@ -150,8 +149,7 @@ public class FairDrawSettingsConfigTests
         });
 
         using var host = BuildHost(config, new TestProfileService());
-        IAppHost.Host = host;
-        var engine = new DrawEngine();
+        var engine = CreateEngine(host);
 
         var weights = engine.CalculateStudentWeight([shielded], new Dictionary<Student, History>
         {
@@ -189,14 +187,77 @@ public class FairDrawSettingsConfigTests
         });
 
         using var host = BuildHost(config, new TestProfileService(history));
-        IAppHost.Host = host;
-        var weights = new DrawEngine().CalculateStudentWeight(
+        var weights = CreateEngine(host).CalculateStudentWeight(
             [groupA, groupB],
             new Dictionary<Student, History> { [groupA] = new(), [groupB] = new() },
             "数学");
 
         Assert.True(weights.Single(item => item.Candidate == groupB).Weight
                     > weights.Single(item => item.Candidate == groupA).Weight);
+    }
+
+    [Fact]
+    public void MobileDesktopDefaults_IgnoresPersistedFairDrawSettingsAndKeepsFilteredWeights()
+    {
+        var first = new Student { Name = "A", RecordId = Guid.NewGuid() };
+        var second = new Student { Name = "B", RecordId = Guid.NewGuid() };
+        var overdrawn = new Student { Name = "C", RecordId = Guid.NewGuid() };
+        var history = new StudentHistory
+        {
+            Students =
+            {
+                [first.RecordId.ToString("D")] = new History { TotalCount = 0 },
+                [second.RecordId.ToString("D")] = new History { TotalCount = 0 },
+                [overdrawn.RecordId.ToString("D")] = new History { TotalCount = 3 }
+            }
+        };
+        var configA = BuildConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = false,
+            EnableAvgGapProtection = false,
+            GapThreshold = 99,
+            FairDrawGroup = false,
+            FairDrawGender = false,
+            FairDrawTime = false,
+            ColdStartEnabled = false,
+            BaseWeight = 20,
+            MinWeight = 20,
+            MaxWeight = 20
+        });
+        configA.RollCallSettings.DrawType = DrawType.Fair;
+
+        var configB = BuildConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = true,
+            EnableAvgGapProtection = true,
+            GapThreshold = 1,
+            FairDrawGroup = true,
+            FairDrawGender = true,
+            FairDrawTime = true,
+            ColdStartEnabled = true,
+            BaseWeight = 1,
+            MinWeight = 0.5,
+            MaxWeight = 5.0
+        });
+        configB.RollCallSettings.DrawType = DrawType.Fair;
+
+        using var hostA = BuildHost(configA, new TestProfileService(history));
+        using var hostB = BuildHost(configB, new TestProfileService(history));
+        var engineA = CreateEngine(hostA, new ScriptedRandomSource(0));
+        var engineB = CreateEngine(hostB, new ScriptedRandomSource(0));
+
+        var preparedA = engineA.PrepareStudentsForMobileDesktopDefaults(1, [first, second, overdrawn], DrawSettingsType.RollCall, DrawType.Fair);
+        var preparedB = engineB.PrepareStudentsForMobileDesktopDefaults(1, [first, second, overdrawn], DrawSettingsType.RollCall, DrawType.Fair);
+        var outputA = engineA.DrawPreparedStudents(preparedA, 1);
+        var outputB = engineB.DrawPreparedStudents(preparedB, 1);
+
+        Assert.Equal(preparedA.UsableCandidates, preparedB.UsableCandidates);
+        Assert.Equal(preparedA.WeightedCandidates.Select(candidate => (candidate.Candidate, candidate.Weight)), preparedB.WeightedCandidates.Select(candidate => (candidate.Candidate, candidate.Weight)));
+        Assert.DoesNotContain(overdrawn, preparedA.UsableCandidates);
+        Assert.True(outputA.IsSuccess);
+        Assert.True(outputB.IsSuccess);
+        Assert.Equal(outputA.Result, outputB.Result);
+        Assert.DoesNotContain(overdrawn, outputA.Result);
     }
 
     [Fact]
@@ -227,9 +288,8 @@ public class FairDrawSettingsConfigTests
         config.RollCallSettings.DrawType = DrawType.Fair;
 
         using var host = BuildHost(config, new TestProfileService(history));
-        IAppHost.Host = host;
 
-        var input = new DrawEngine().CreateStudentVerificationInput(
+        var input = CreateEngine(host).CreateStudentVerificationInput(
             1,
             [first, second, overdrawn],
             DrawSettingsType.RollCall);
@@ -262,6 +322,24 @@ public class FairDrawSettingsConfigTests
             .Build();
     }
 
+    private static DrawEngine CreateEngine(IHost host, IRandomSource? randomSource = null)
+    {
+        return new DrawEngine(
+            host.Services.GetRequiredService<MainConfigHandler>(),
+            host.Services.GetRequiredService<IProfileService>(),
+            host.Services.GetRequiredService<ILogger<DrawEngine>>(),
+            randomSource);
+    }
+
+    private sealed class ScriptedRandomSource(params double[] values) : IRandomSource
+    {
+        private readonly Queue<double> _values = new(values);
+
+        public int NextInt32(int maxExclusive) => throw new InvalidOperationException("This test uses weighted sampling.");
+
+        public double NextDouble() => _values.Dequeue();
+    }
+
     private sealed class TestConfigService(MainConfigModel config) : ConfigServiceBase
     {
         public override bool IsConfigExists<T>(T fallback) => true;
@@ -292,8 +370,8 @@ public class FairDrawSettingsConfigTests
         public PrizeHistoryConfig? PrizeHistoryConfig => null;
         public void LoadStudentProfile(string name, bool saveCurrent = true) { }
         public void LoadPrizeProfile(string name, bool saveCurrent = true) { }
-        public void RecordStudentHistory(IReadOnlyList<Student> students, DateTime now, int requestedCount, string drawGroup = "", string drawGender = "", int drawMethod = 0, IReadOnlyDictionary<Student, double>? weights = null, string courseName = "") { }
-        public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount) { }
+        public void RecordStudentHistory(IReadOnlyList<Student> students, DateTime now, int requestedCount, string drawGroup = "", string drawGender = "", int drawMethod = 0, IReadOnlyDictionary<Student, double>? weights = null, string courseName = "", string? drawRoundId = null) { }
+        public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount, int drawMethod = 0, string? drawRoundId = null) { }
         public void ClearCurrentStudentHistory() { }
         public void ClearCurrentPrizeHistory() { }
         public void SaveProfile() { }

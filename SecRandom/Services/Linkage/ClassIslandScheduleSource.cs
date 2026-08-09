@@ -30,18 +30,18 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
     {
         var lessons = await GetLessonsAsync(cancellationToken).ConfigureAwait(false);
         if (lessons is null)
-            return CourseScheduleSnapshot.Unavailable(SourceName, "无法连接到 ClassIsland。");
+            return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandUnavailable);
 
         try
         {
             if (!lessons.IsTimerRunning)
-                return CourseScheduleSnapshot.Unavailable(SourceName, "ClassIsland 计时器未运行。");
+                return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandTimerStopped);
             if (!lessons.IsClassPlanEnabled)
-                return CourseScheduleSnapshot.Unavailable(SourceName, "ClassIsland 未启用课程表。");
+                return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandScheduleDisabled);
             if (!lessons.IsClassPlanLoaded)
-                return CourseScheduleSnapshot.Unavailable(SourceName, "ClassIsland 尚未加载当天课表。");
+                return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandScheduleUnloaded);
             if (!lessons.IsLessonConfirmed)
-                return CourseScheduleSnapshot.Unavailable(SourceName, "ClassIsland 尚未确认当前时间点。");
+                return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandTimeUnconfirmed);
 
             var state = lessons.CurrentState switch
             {
@@ -50,7 +50,8 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
                 _ => CourseTimeState.Unknown
             };
             if (state == CourseTimeState.Unknown)
-                return CourseScheduleSnapshot.Unavailable(SourceName, $"ClassIsland 当前状态为 {lessons.CurrentState}。");
+                return CourseScheduleSnapshot.Unavailable(SourceName,
+                    $"{ScheduleErrorCodes.ClassIslandUnsupportedState}:{lessons.CurrentState}");
 
             // Latest ClassIsland exposes the break label through CurrentSubject during Breaking.
             var currentName = state == CourseTimeState.OnClass
@@ -98,9 +99,9 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
         }
         catch (Exception exception)
         {
-            logger.LogDebug(exception, "读取 ClassIsland 课程状态失败。");
+            logger.LogDebug(exception, "读取 ClassIsland 日程状态失败。");
             InvalidateConnection();
-            return CourseScheduleSnapshot.Unavailable(SourceName, "读取 ClassIsland 课程状态失败。");
+            return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandReadFailed);
         }
     }
 

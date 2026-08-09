@@ -1,0 +1,53 @@
+<local:MobileSettingsPageBase xmlns="https://github.com/avaloniaui"
+                              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                              xmlns:controls="clr-namespace:SecRandom.Controls.Mobile"
+                              xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
+                              xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+                              x:Class="SecRandom.Views.Mobile.Settings.MobileAboutSettingsPage">
+    <ScrollViewer x:Name="PageScroll"
+                  Padding="20,20,20,28"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto"
+                  IsScrollChainingEnabled="False"
+                  IsScrollInertiaEnabled="True">
+        <StackPanel Spacing="14" MaxWidth="720">
+            <StackPanel Spacing="4">
+                <TextBlock Text="{x:Static langs:Resources.S_About}"
+                           FontSize="24"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="{x:Static langs:Resources.S_About_D}"
+                           FontSize="12"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+            <controls:MobileCard>
+                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                    <Image Source="avares://SecRandom/Assets/AppLogo.png"
+                           Width="64"
+                           Height="64"
+                           HorizontalAlignment="Center" />
+                    <TextBlock Text="SecRandom"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               TextAlignment="Center" />
+                    <TextBlock x:Name="VersionText"
+                               FontSize="12"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap" />
+                    <TextBlock Text="{x:Static langs:Resources.M_AboutLicense}"
+                               FontSize="12"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </controls:MobileCard>
+            <Button x:Name="ProjectLinkButton"
+                    MinHeight="44"
+                    Content="{x:Static langs:Resources.C_ViewOnGitHub}"
+                    Click="ProjectLinkButton_OnClick" />
+            <TextBlock x:Name="AboutStatusText"
+                       FontSize="12"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap" />
+        </StackPanel>
+    </ScrollViewer>
+</local:MobileSettingsPageBase>

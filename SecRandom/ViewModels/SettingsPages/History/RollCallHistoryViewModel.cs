@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
@@ -24,9 +23,9 @@ namespace SecRandom.ViewModels.SettingsPages.History;
 
 public sealed partial class RollCallHistoryViewModel : ViewModelBase
 {
-    private readonly ILogger<RollCallHistoryViewModel> _logger =
-        IAppHost.GetService<ILogger<RollCallHistoryViewModel>>();
     private readonly DrawEngine _drawEngine = IAppHost.GetService<DrawEngine>();
+    private readonly IHistoryQueryService _historyQueryService = IAppHost.GetService<IHistoryQueryService>();
+    private readonly IProfileCatalogManager _catalogManager = IAppHost.GetService<IProfileCatalogManager>();
 
     private StudentHistory? _history;
     private StudentList? _studentList;
@@ -69,26 +68,11 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
     private void RefreshClassNames()
     {
         ClassNames.Clear();
-        foreach (var name in EnumerateProfileNames("list", "roll_call_list", "history", "roll_call_history"))
+        foreach (var name in _catalogManager.GetStudentListNames()
+                     .Concat(_historyQueryService.GetStudentHistoryNames())
+                     .Distinct()
+                     .OrderBy(name => name, StringComparer.Ordinal))
             ClassNames.Add(name);
-    }
-
-    private static IEnumerable<string> EnumerateProfileNames(
-        string listRoot,
-        string listSubDir,
-        string historyRoot,
-        string historySubDir)
-    {
-        HashSet<string> names = [];
-        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath(listRoot, listSubDir), "*.json")
-                     .Concat(Directory.GetFiles(Utils.GetDirectoryPath(historyRoot, historySubDir), "*.json")))
-        {
-            var name = Path.GetFileNameWithoutExtension(file);
-            if (!string.IsNullOrWhiteSpace(name))
-                names.Add(name);
-        }
-
-        return names.OrderBy(name => name, StringComparer.Ordinal);
     }
 
     partial void OnSelectedClassNameChanged(string? value) => Load();
@@ -114,26 +98,17 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
             return;
         }
 
-        try
-        {
-            _history = new StudentHistoryConfig(SelectedClassName).Data;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "读取点名历史失败：班级={ClassName}。", SelectedClassName);
-        }
+        // 只读快照：缺失的历史按空历史处理（保留既有“无历史文件仍显示名单行”的行为），
+        // 缺失的名单按空名单处理；读取失败由查询/目录服务内部记录警告。
+        _history = _historyQueryService.LoadStudentHistory(SelectedClassName) ?? new StudentHistory(SelectedClassName);
 
-        try
+        _studentList = _catalogManager.LoadStudentList(SelectedClassName);
+        if (_studentList is not null)
         {
-            _studentList = new StudentListConfig(SelectedClassName).Data;
             _uniqueLegacyKeys = ProfileRecordIdentity.BuildUniqueStudentLegacyKeySet(_studentList.Students);
             _studentByKey = BuildStudentMap(_studentList.Students, _uniqueLegacyKeys);
             _studentInfoByKey = BuildStudentInfoMap(_studentList.Students, _uniqueLegacyKeys);
             _studentIdPadWidth = CalculateNumericPadWidth(_studentList.Students.Select(student => student.Id));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "读取学生列表失败，点名历史将只显示历史键：班级={ClassName}。", SelectedClassName);
         }
 
         RebuildModeOptions();

@@ -3,7 +3,6 @@
         xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
         xmlns:styling="clr-namespace:FluentAvalonia.Styling;assembly=FluentAvalonia"
         xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
-        xmlns:system="clr-namespace:System;assembly=System.Runtime"
         xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia">
     <Styles.Resources>
         <ResourceDictionary>
@@ -13,7 +12,7 @@
                 <MergeResourceInclude Source="/Controls/DevelopmentBuildAdorner.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <system:Double x:Key="PageContainerWidth">960</system:Double>
+            <x:Double x:Key="PageContainerWidth">960</x:Double>
 
             <styling:FluentAvaloniaTheme x:Key="FluentAvaloniaTheme"
                                          PreferSystemTheme="True"
@@ -28,6 +27,7 @@
     <StyleInclude Source="/Styles/PopupAnimations.axaml" />
     <StyleInclude Source="/Styles/StackPanelIntroAnimation.axaml" />
     <StyleInclude Source="/Styles/TabStrip.axaml" />
+    <StyleInclude Source="/Styles/TouchTextCommandBarFlyout.axaml" />
     <StyleInclude Source="/Controls/StickyScrollViewer.axaml" />
     <StyleInclude Source="/Controls/DrawerHost.axaml" />
     <StyleInclude Source="/Controls/Empty.axaml" />
@@ -169,12 +169,16 @@
         Selector="fa|FACommandBar.hide-popup-indicator fa|FACommandBarButton:labelright /template/ fa|FAFontIcon#SubItemChevron">
         <Setter Property="IsVisible" Value="False" />
     </Style>
-
-    <Style Selector="WindowDrawnDecorations /template/ Border#PART_WindowBorder">
-        <Setter Property="Background" Value="Transparent" />
+    
+    <Style Selector=".settings fa|FANumberBox">
+        <Setter Property="MinWidth" Value="128" />
     </Style>
-
-    <Style Selector="WindowDrawnDecorations /template/ Panel#PART_TitleBar">
-        <Setter Property="Background" Value="Transparent" />
+    
+    <Style Selector=".settings NumericUpDown">
+        <Setter Property="MinWidth" Value="128" />
+    </Style>
+    
+    <Style Selector=".settings TextBox">
+        <Setter Property="MinWidth" Value="128" />
     </Style>
 </Styles>

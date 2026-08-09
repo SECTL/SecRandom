@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-              xmlns:langs="clr-namespace:SecRandom.Langs.SettingsPages.Home"
+             xmlns:langs="clr-namespace:SecRandom.Langs.SettingsPages.Home"
              xmlns:vm="using:SecRandom.ViewModels.SettingsPages"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.HomeSettingsPage"
@@ -10,56 +10,185 @@
              Loaded="OnLoaded">
     <UserControl.Styles>
         <Style Selector="Border.overview-section">
-            <Setter Property="Margin" Value="0 0 0 28" />
-            <Setter Property="Padding" Value="20" />
+            <Setter Property="Margin" Value="0 0 0 16" />
+            <Setter Property="Padding" Value="16" />
             <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="4" />
         </Style>
+        
         <Style Selector="Border.overview-metric">
             <Setter Property="Padding" Value="10 20" />
             <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
             <Setter Property="BorderThickness" Value="1 0 0 0" />
         </Style>
+        
         <Style Selector="Grid.overview-row">
             <Setter Property="MinHeight" Value="46" />
             <Setter Property="Margin" Value="0 0 0 1" />
         </Style>
     </UserControl.Styles>
+    
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
             <Border Classes="overview-section">
-                <StackPanel Spacing="16">
+                <StackPanel Spacing="8">
                     <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Text="{x:Static langs:Resources.C_RollCall}" FontSize="20" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="1" Text="{x:Static langs:Resources.C_HistorySummary}" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Grid.Column="0" Text="{x:Static langs:Resources.C_RollCall}"
+                                   FontSize="20" FontWeight="SemiBold" />
+                        
+                        <TextBlock Grid.Column="1" Text="{x:Static langs:Resources.C_HistorySummary}"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     </Grid>
-                    <Grid ColumnDefinitions="*,*,*">
-                        <Border Classes="overview-metric" BorderThickness="0"><StackPanel Spacing="6"><TextBlock Text="{x:Static langs:Resources.C_ListCount}" TextWrapping="NoWrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Text="{Binding RollCallListCount}" FontSize="28" FontWeight="SemiBold" /></StackPanel></Border>
-                        <Border Grid.Column="1" Classes="overview-metric"><StackPanel Spacing="6"><TextBlock Text="{x:Static langs:Resources.C_TotalRounds}" TextWrapping="NoWrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Text="{Binding RollCallTotalRounds}" FontSize="28" FontWeight="SemiBold" /></StackPanel></Border>
-                        <Border Grid.Column="2" Classes="overview-metric"><StackPanel Spacing="6"><TextBlock Text="{x:Static langs:Resources.C_TotalDrawnCount}" TextWrapping="NoWrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Text="{Binding RollCallTotalDrawnCount}" FontSize="28" FontWeight="SemiBold" /></StackPanel></Border>
+                    
+                    <Grid ColumnDefinitions="2.2*,2.4*,2*">
+                        <Border Grid.Column="0" Classes="overview-metric" BorderThickness="0">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{x:Static langs:Resources.C_ListCount}" TextWrapping="NoWrap"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding RollCallListCount}" FontSize="28" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="1" Classes="overview-metric">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{x:Static langs:Resources.C_TotalRounds}" TextWrapping="NoWrap"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding RollCallTotalRounds}" FontSize="28" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Classes="overview-metric">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{x:Static langs:Resources.C_TotalDrawnCount}" TextWrapping="NoWrap"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding RollCallTotalDrawnCount}" FontSize="28" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
                     </Grid>
-                    <Grid Classes="overview-row" ColumnDefinitions="2.2*,*,1.4*,*,*" Margin="0 4 0 0"><TextBlock Text="{x:Static langs:Resources.C_Name}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Grid.Column="1" Text="{x:Static langs:Resources.C_StudentCount}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Grid.Column="2" Text="{x:Static langs:Resources.C_LastDrawn}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Grid.Column="3" Text="{x:Static langs:Resources.C_TotalRounds}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Grid.Column="4" Text="{x:Static langs:Resources.C_TotalDrawnCount}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /></Grid>
-                    <ItemsControl ItemsSource="{Binding RollCallLists}" IsVisible="{Binding HasRollCallLists}"><ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:HomeProfileCard"><Grid Classes="overview-row" ColumnDefinitions="2.2*,*,1.4*,*,*"><TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" /><TextBlock Grid.Column="1" Text="{Binding RecordCount}" /><TextBlock Grid.Column="2" Text="{Binding LastDrawnTime}" /><TextBlock Grid.Column="3" Text="{Binding TotalRounds}" /><TextBlock Grid.Column="4" Text="{Binding TotalDrawnCount}" /></Grid></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
-                    <TextBlock Text="{x:Static langs:Resources.M_NoRollCallLists}" IsVisible="{Binding HasNoRollCallLists}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    
+                    <DataGrid IsVisible="{Binding HasRollCallLists}"
+                              ItemsSource="{Binding RollCallLists}"
+                              AutoGenerateColumns="False"
+                              CanUserResizeColumns="False"
+                              CanUserSortColumns="False"
+                              CanUserReorderColumns="False"
+                              IsReadOnly="True"
+                              BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                              BorderThickness="0 1 0 0">
+                        <DataGrid.Styles>
+                            <Style Selector="DataGridColumnHeader">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="AreSeparatorsVisible" Value="False" />
+                            </Style>
+                        </DataGrid.Styles>
+                        
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="2.2*" MinWidth="220"
+                                                Header="{x:Static langs:Resources.C_Name}"
+                                                Binding="{Binding Name}" />
+                            
+                            <DataGridTextColumn Width="*" MinWidth="100"
+                                                Header="{x:Static langs:Resources.C_StudentCount}"
+                                                Binding="{Binding RecordCount}" />
+
+                            <DataGridTextColumn Width="1.4*" MinWidth="140"
+                                                Header="{x:Static langs:Resources.C_LastDrawn}"
+                                                Binding="{Binding LastDrawnTime}" />
+
+                            <DataGridTextColumn Width="*" MinWidth="100"
+                                                Header="{x:Static langs:Resources.C_TotalRounds}"
+                                                Binding="{Binding TotalRounds}" />
+
+                            <DataGridTextColumn Width="*" MinWidth="100"
+                                                Header="{x:Static langs:Resources.C_TotalDrawnCount}"
+                                                Binding="{Binding TotalDrawnCount}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    
+                    <TextBlock Text="{x:Static langs:Resources.M_NoRollCallLists}"
+                               IsVisible="{Binding HasNoRollCallLists}"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </Border>
 
-            <Border Classes="overview-section">
-                <StackPanel Spacing="16">
+            <Border Classes="overview-section" IsVisible="{Binding Config.MoreSettings.LotteryEnabled}">
+                <StackPanel Spacing="8">
                     <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Text="{x:Static langs:Resources.C_Lottery}" FontSize="20" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="1" Text="{x:Static langs:Resources.C_HistorySummary}" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Grid.Column="0" Text="{x:Static langs:Resources.C_Lottery}"
+                                   FontSize="20" FontWeight="SemiBold" />
+                        
+                        <TextBlock Grid.Column="1" Text="{x:Static langs:Resources.C_HistorySummary}"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     </Grid>
-                    <Grid ColumnDefinitions="*,*,*">
-                        <Border Classes="overview-metric" BorderThickness="0"><StackPanel Spacing="6"><TextBlock Text="{x:Static langs:Resources.C_PoolCount}" TextWrapping="NoWrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Text="{Binding LotteryPoolCount}" FontSize="28" FontWeight="SemiBold" /></StackPanel></Border>
-                        <Border Grid.Column="1" Classes="overview-metric"><StackPanel Spacing="6"><TextBlock Text="{x:Static langs:Resources.C_TotalRounds}" TextWrapping="NoWrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Text="{Binding LotteryTotalRounds}" FontSize="28" FontWeight="SemiBold" /></StackPanel></Border>
-                        <Border Grid.Column="2" Classes="overview-metric"><StackPanel Spacing="6"><TextBlock Text="{x:Static langs:Resources.C_TotalDrawnCount}" TextWrapping="NoWrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Text="{Binding LotteryTotalDrawnCount}" FontSize="28" FontWeight="SemiBold" /></StackPanel></Border>
+                    
+                    <Grid ColumnDefinitions="2.2*,2.4*,2*">
+                        <Border Grid.Column="0" Classes="overview-metric" BorderThickness="0">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{x:Static langs:Resources.C_PoolCount}" TextWrapping="NoWrap"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding LotteryPoolCount}" FontSize="28" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="1" Classes="overview-metric">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{x:Static langs:Resources.C_TotalRounds}" TextWrapping="NoWrap"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding LotteryTotalRounds}" FontSize="28" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Classes="overview-metric">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{x:Static langs:Resources.C_TotalDrawnCount}" TextWrapping="NoWrap"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding LotteryTotalDrawnCount}" FontSize="28" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
                     </Grid>
-                    <Grid Classes="overview-row" ColumnDefinitions="2.2*,*,1.4*,*,*" Margin="0 4 0 0"><TextBlock Text="{x:Static langs:Resources.C_Name}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Grid.Column="1" Text="{x:Static langs:Resources.C_PrizeCount}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Grid.Column="2" Text="{x:Static langs:Resources.C_LastDrawn}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Grid.Column="3" Text="{x:Static langs:Resources.C_TotalRounds}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Grid.Column="4" Text="{x:Static langs:Resources.C_TotalDrawnCount}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /></Grid>
-                    <ItemsControl ItemsSource="{Binding LotteryPools}" IsVisible="{Binding HasLotteryPools}"><ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:HomeProfileCard"><Grid Classes="overview-row" ColumnDefinitions="2.2*,*,1.4*,*,*"><TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" /><TextBlock Grid.Column="1" Text="{Binding RecordCount}" /><TextBlock Grid.Column="2" Text="{Binding LastDrawnTime}" /><TextBlock Grid.Column="3" Text="{Binding TotalRounds}" /><TextBlock Grid.Column="4" Text="{Binding TotalDrawnCount}" /></Grid></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
-                    <TextBlock Text="{x:Static langs:Resources.M_NoLotteryPools}" IsVisible="{Binding HasNoLotteryPools}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    
+                    <DataGrid IsVisible="{Binding HasLotteryPools}"
+                              ItemsSource="{Binding LotteryPools}"
+                              AutoGenerateColumns="False"
+                              CanUserResizeColumns="False"
+                              CanUserSortColumns="False"
+                              CanUserReorderColumns="False"
+                              IsReadOnly="True"
+                              BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                              BorderThickness="0 1 0 0">
+                        <DataGrid.Styles>
+                            <Style Selector="DataGridColumnHeader">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="AreSeparatorsVisible" Value="False" />
+                            </Style>
+                        </DataGrid.Styles>
+                        
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="2.2*" MinWidth="220"
+                                                Header="{x:Static langs:Resources.C_Name}"
+                                                Binding="{Binding Name}" />
+                            
+                            <DataGridTextColumn Width="*" MinWidth="100"
+                                                Header="{x:Static langs:Resources.C_PrizeCount}"
+                                                Binding="{Binding RecordCount}" />
+
+                            <DataGridTextColumn Width="1.4*" MinWidth="140"
+                                                Header="{x:Static langs:Resources.C_LastDrawn}"
+                                                Binding="{Binding LastDrawnTime}" />
+
+                            <DataGridTextColumn Width="*" MinWidth="100"
+                                                Header="{x:Static langs:Resources.C_TotalRounds}"
+                                                Binding="{Binding TotalRounds}" />
+
+                            <DataGridTextColumn Width="*" MinWidth="100"
+                                                Header="{x:Static langs:Resources.C_TotalDrawnCount}"
+                                                Binding="{Binding TotalDrawnCount}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    
+                    <TextBlock Text="{x:Static langs:Resources.M_NoLotteryPools}"
+                               IsVisible="{Binding HasNoLotteryPools}"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </Border>
         </StackPanel>

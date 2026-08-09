@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="C_Start" xml:space="preserve"><value>Quick Draw</value></data>
+  <data name="C_Stop" xml:space="preserve"><value>Stop</value></data>
+  <data name="M_Ready" xml:space="preserve"><value>Ready for quick draw</value></data>
+  <data name="M_NoMembers" xml:space="preserve"><value>No members are available to draw</value></data>
+  <data name="M_Drawing" xml:space="preserve"><value>Drawing...</value></data>
+  <data name="M_DrawFailed" xml:space="preserve"><value>Quick draw failed</value></data>
+  <data name="M_DrawnCountFormat" xml:space="preserve"><value>{0} member(s) drawn</value></data>
+  <data name="M_ResetDone" xml:space="preserve"><value>Current list roll-call records cleared</value></data>
+  <data name="M_DefaultListRequired" xml:space="preserve"><value>Select a default member list in Quick Draw settings first</value></data>
+  <data name="M_DefaultListMissing" xml:space="preserve"><value>The default member list no longer exists. Select it again in Quick Draw settings</value></data>
+</root>

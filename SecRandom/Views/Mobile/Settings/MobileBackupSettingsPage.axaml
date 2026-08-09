@@ -1,0 +1,104 @@
+<local:MobileSettingsPageBase xmlns="https://github.com/avaloniaui"
+                              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+                              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                              xmlns:controls="clr-namespace:SecRandom.Controls.Mobile"
+                              xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
+                              xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+                              x:Class="SecRandom.Views.Mobile.Settings.MobileBackupSettingsPage">
+    <ScrollViewer x:Name="PageScroll"
+                  Padding="20,20,20,28"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto"
+                  IsScrollChainingEnabled="False"
+                  IsScrollInertiaEnabled="True">
+        <StackPanel Spacing="14" MaxWidth="720">
+            <StackPanel Spacing="4">
+                <TextBlock Text="{x:Static langs:Resources.S_Backup}"
+                           FontSize="24"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="{x:Static langs:Resources.S_Backup_D}"
+                           FontSize="12"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+            <TextBlock Text="{x:Static langs:Resources.M_BackupPickerHint}"
+                       FontSize="12"
+                       TextWrapping="Wrap" />
+
+            <fa:FASettingsExpander Header="{x:Static langs:Resources.S_AllData}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi DatabaseFilled}}"
+                                   IsExpanded="True">
+                <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_AllData}"
+                                            Description="{x:Static langs:Resources.S_AllData_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <Button x:Name="ExportAllButton"
+                                    Classes="accent"
+                                    MinHeight="44"
+                                    Content="{x:Static langs:Resources.C_ExportAllData}"
+                                    Click="ExportAllButton_OnClick" />
+                            <Button x:Name="ImportAllButton"
+                                    Grid.Column="1"
+                                    MinHeight="44"
+                                    Content="{x:Static langs:Resources.C_ImportAllData}"
+                                    Click="ImportAllButton_OnClick" />
+                        </Grid>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander Header="{x:Static langs:Resources.S_SettingsSection}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi SettingsFilled}}"
+                                   IsExpanded="True">
+                <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_SettingsSection}"
+                                            Description="{x:Static langs:Resources.S_SettingsSection_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <Button x:Name="ExportSettingsButton"
+                                    Classes="accent"
+                                    MinHeight="44"
+                                    Content="{x:Static langs:Resources.C_ExportSettings}"
+                                    Click="ExportSettingsButton_OnClick" />
+                            <Button x:Name="ImportSettingsButton"
+                                    Grid.Column="1"
+                                    MinHeight="44"
+                                    Content="{x:Static langs:Resources.C_ImportSettings}"
+                                    Click="ImportSettingsButton_OnClick" />
+                        </Grid>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+
+            <controls:MobileCard x:Name="ImportConfirmationHost" IsVisible="False">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <sr:FluentIcon Glyph="{sr:Fi WarningFilled}"
+                                       FontSize="18"
+                                       VerticalAlignment="Center" />
+                        <TextBlock Text="{x:Static langs:Resources.S_ConfirmImport}"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock x:Name="ImportConfirmationDetail" TextWrapping="Wrap" />
+                    <TextBlock x:Name="ImportConfirmationWarnings"
+                               IsVisible="False"
+                               TextWrapping="Wrap" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button x:Name="ConfirmImportButton"
+                                Classes="accent"
+                                MinHeight="44"
+                                Content="{x:Static langs:Resources.C_ConfirmImport}"
+                                Click="ConfirmImportButton_OnClick" />
+                        <Button x:Name="CancelImportButton"
+                                Grid.Column="1"
+                                MinHeight="44"
+                                Content="{x:Static langs:Resources.C_Cancel}"
+                                Click="CancelImportButton_OnClick" />
+                    </Grid>
+                </StackPanel>
+            </controls:MobileCard>
+            <TextBlock x:Name="BackupStatusText" TextWrapping="Wrap" />
+        </StackPanel>
+    </ScrollViewer>
+</local:MobileSettingsPageBase>

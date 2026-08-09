@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Controls;
 using FluentAvalonia.UI.Windowing;
@@ -14,6 +15,8 @@ using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Services.FirstRun;
+using SecRandom.Core.Services.Archive;
 using SecRandom.Services.ImportExport;
 using SecRandom.ViewModels;
 using LR = SecRandom.Langs.FirstRunOobe.Resources;
@@ -31,6 +34,16 @@ public partial class FirstRunOobeWindow : FAAppWindow
     {
         DataContext = this;
         InitializeComponent();
+        
+        TitleBar.Height = 32;
+        TitleBar.ExtendsContentIntoTitleBar = true;
+        
+        // 覆盖标题栏按钮颜色
+        TitleBar.ButtonHoverBackgroundColor = Color.FromArgb(23, 0, 0, 0);
+        TitleBar.ButtonPressedBackgroundColor = Color.FromArgb(52, 0, 0, 0);
+        TitleBar.ButtonInactiveForegroundColor = Colors.Gray;
+
+        Loaded += OnLoaded;
         Closed += WindowOnClosed;
         Opened += WindowOnOpened;
     }
@@ -41,6 +54,16 @@ public partial class FirstRunOobeWindow : FAAppWindow
     public event EventHandler? Completed;
     public event EventHandler? LanguageChanged;
     private IImportExportService ImportExportService { get; } = IAppHost.GetService<IImportExportService>();
+    public bool IsHostWindows => OperatingSystem.IsWindows();
+
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        if (App.IsMicaSupported)
+        {
+            TransparencyLevelHint = [WindowTransparencyLevel.Mica];
+            Background = Brushes.Transparent;
+        }
+    }
 
     private void WindowOnOpened(object? sender, EventArgs e)
     {
@@ -206,7 +229,20 @@ public partial class FirstRunOobeWindow : FAAppWindow
             return;
         }
 
-        action(name);
+        try
+        {
+            action(name);
+        }
+        catch (OobeDataSetupException exception)
+        {
+            var message = exception.Error switch
+            {
+                OobeDataSetupError.ListNameInvalid => LR.M_ListNameInvalid,
+                OobeDataSetupError.ListAlreadyExists => LR.M_ListNameExists,
+                _ => LR.M_ListNameInvalid
+            };
+            _ = ShowDialogAsync(LR.C_ListNameTitle, message);
+        }
     }
 
     private async Task<string?> PromptListNameAsync(string title, string primaryButtonText, string initialName)

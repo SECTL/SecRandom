@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0-android36.0</TargetFramework>
+        <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
+
+        <ApplicationTitle>SecRandom</ApplicationTitle>
+        <ApplicationId>cn.sectl.secrandom.mobile</ApplicationId>
+        <AndroidPackageFormats>apk</AndroidPackageFormats>
+        <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <AndroidResource Include="Icon.png">
+            <Link>Resources\drawable\Icon.png</Link>
+        </AndroidResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\SecRandom\SecRandom.csproj">
+            <AdditionalProperties>SecRandomBundleAssetsInAssembly=true</AdditionalProperties>
+        </ProjectReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia.Android" Version="$(AvaloniaVersion)" />
+        <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.2.0.2" />
+    </ItemGroup>
+
+    <Import Project="..\Global.props" />
+
+    <Target Name="SetMobileApplicationDisplayVersion"
+            DependsOnTargets="GetGitInfoForSourceGenerator"
+            BeforeTargets="_GetAndroidPackageName;_CompileAppManifestInputs">
+        <PropertyGroup>
+            <_MobileApplicationDisplayVersion>$(GitTag)</_MobileApplicationDisplayVersion>
+            <_MobileApplicationDisplayVersion Condition="$([System.String]::Copy('$(_MobileApplicationDisplayVersion)').StartsWith('v'))">$([System.String]::Copy('$(_MobileApplicationDisplayVersion)').Substring(1))</_MobileApplicationDisplayVersion>
+            <!-- versionCode stays monotonic for Android updates; versionName follows the desktop Git tag. -->
+            <ApplicationDisplayVersion>$(_MobileApplicationDisplayVersion)</ApplicationDisplayVersion>
+        </PropertyGroup>
+    </Target>
+</Project>

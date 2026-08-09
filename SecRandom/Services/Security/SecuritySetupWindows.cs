@@ -1,14 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Selection;
 using Avalonia.Controls.Templates;
 using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Platform.Storage;
+using FluentAvalonia.UI.Controls;
 using QRCoder;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Icons;
@@ -16,83 +14,71 @@ using SR = SecRandom.Langs.SettingsPages.Security.Resources;
 
 namespace SecRandom.Services.Security;
 
-internal sealed record PasswordEditorResult(string CurrentPassword, string NewPassword, bool Remove);
+internal sealed record PasswordEditorResult(string CurrentPassword, string NewPassword);
+internal sealed record UsbBindingResult(string? DeviceId, string? UnbindId);
 
-internal sealed class PasswordEditorWindow : Window
+internal static class SecuritySetupDialogs
 {
-    private readonly TextBox _current = CreatePasswordInput(SR.C_CurrentPasswordPlaceholder);
-    private readonly TextBox _password = CreatePasswordInput(SR.C_NewPasswordPlaceholder);
-    private readonly TextBox _confirmation = CreatePasswordInput(SR.C_ConfirmPasswordPlaceholder);
+    private const double UsbBindingDialogContentWidth = 480;
+    private const double UsbBindingDialogContentHeight = 340;
 
-    public PasswordEditorWindow(bool hasPassword)
+    public static async Task<PasswordEditorResult?> ShowPasswordEditorAsync(TopLevel xamlRoot, bool hasPassword)
     {
-        Title = hasPassword ? SR.M_PasswordDialogTitle : SR.M_SetPasswordDialogTitle;
-        Width = 420;
-        MinHeight = hasPassword ? 390 : 320;
-        SizeToContent = SizeToContent.Height;
-        CanResize = false;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        var panel = new StackPanel { Margin = new Thickness(24), Spacing = 10 };
+        var current = CreatePasswordInput(SR.C_CurrentPasswordPlaceholder);
+        var password = CreatePasswordInput(SR.C_NewPasswordPlaceholder);
+        var confirmation = CreatePasswordInput(SR.C_ConfirmPasswordPlaceholder);
+        var panel = new StackPanel { Spacing = 10 };
         panel.Children.Add(new TextBlock { Text = SR.S_Password_D, TextWrapping = TextWrapping.Wrap });
         if (hasPassword)
         {
             panel.Children.Add(new TextBlock { Text = SR.C_CurrentPassword });
-            panel.Children.Add(_current);
+            panel.Children.Add(current);
         }
         panel.Children.Add(new TextBlock { Text = SR.C_NewPassword });
-        panel.Children.Add(_password);
+        panel.Children.Add(password);
         panel.Children.Add(new TextBlock { Text = SR.C_ConfirmPassword });
-        panel.Children.Add(_confirmation);
+        panel.Children.Add(confirmation);
 
-        var buttons = CreateButtonPanel();
-        if (hasPassword)
+        var dialog = CreateDialog(xamlRoot, hasPassword ? SR.M_PasswordDialogTitle : SR.M_SetPasswordDialogTitle, panel);
+        dialog.Buttons.Add(new FATaskDialogButton(SR.C_Cancel, "cancel"));
+        dialog.Buttons.Add(new FATaskDialogButton(SR.C_Save, "save") { IsDefault = true });
+        dialog.Closing += (_, args) =>
         {
-            var remove = new Button { Content = SR.C_RemovePassword };
-            remove.Click += (_, _) => Close(new PasswordEditorResult(_current.Text ?? string.Empty, string.Empty, true));
-            buttons.Children.Insert(0, remove);
-        }
-        var save = new Button { Content = SR.C_Save };
-        save.Click += (_, _) =>
-        {
-            if ((_password.Text ?? string.Empty) == (_confirmation.Text ?? string.Empty))
-                Close(new PasswordEditorResult(_current.Text ?? string.Empty, _password.Text ?? string.Empty, false));
+            if (Equals(args.Result, "save") && !string.Equals(password.Text, confirmation.Text, StringComparison.Ordinal))
+                args.Cancel = true;
         };
-        buttons.Children.Add(save);
-        panel.Children.Add(buttons);
-        Content = panel;
+
+        return await dialog.ShowAsync() switch
+        {
+            "save" => new PasswordEditorResult(current.Text ?? string.Empty, password.Text ?? string.Empty),
+            _ => null
+        };
     }
 
-    private static StackPanel CreateButtonPanel()
+    public static async Task<string?> ShowPasswordRemovalAsync(TopLevel xamlRoot)
     {
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8 };
-        var cancel = new Button { Content = SR.C_Cancel };
-        cancel.Click += (_, _) => (TopLevel.GetTopLevel(cancel) as Window)?.Close((PasswordEditorResult?)null);
-        buttons.Children.Add(cancel);
-        return buttons;
+        var current = CreatePasswordInput(SR.C_CurrentPasswordPlaceholder);
+        var panel = new StackPanel { Spacing = 10 };
+        panel.Children.Add(new TextBlock { Text = SR.S_Password_D, TextWrapping = TextWrapping.Wrap });
+        panel.Children.Add(new TextBlock { Text = SR.C_CurrentPassword });
+        panel.Children.Add(current);
+
+        var dialog = CreateDialog(xamlRoot, SR.M_PasswordDialogTitle, panel);
+        dialog.Buttons.Add(new FATaskDialogButton(SR.C_Cancel, "cancel"));
+        dialog.Buttons.Add(new FATaskDialogButton(SR.C_RemovePassword, "remove"));
+        return Equals(await dialog.ShowAsync(), "remove") ? current.Text : null;
     }
 
-    private static TextBox CreatePasswordInput(string placeholderText) => new() { PasswordChar = '●', PlaceholderText = placeholderText };
-}
-
-internal sealed class TotpSetupWindow : Window
-{
-    private readonly TextBox[] _digits = Enumerable.Range(0, 6).Select(_ => new TextBox
+    public static async Task<string?> ShowTotpSetupAsync(TopLevel xamlRoot, string secret)
     {
-        Width = 42,
-        MaxLength = 1,
-        HorizontalContentAlignment = HorizontalAlignment.Center,
-        FontSize = 20
-    }).ToArray();
-
-    public TotpSetupWindow(string secret)
-    {
-        Title = SR.M_TotpDialogTitle;
-        Width = 620;
-        MinHeight = 480;
-        SizeToContent = SizeToContent.Height;
-        CanResize = false;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        var panel = new StackPanel { Margin = new Thickness(24), Spacing = 12 };
+        var code = new TextBox
+        {
+            MaxLength = 6,
+            PlaceholderText = SR.C_TotpPlaceholder,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            FontSize = 20
+        };
+        var panel = new StackPanel { Spacing = 12 };
         panel.Children.Add(new TextBlock { Text = SR.M_TotpSetupDescription, TextWrapping = TextWrapping.Wrap });
         panel.Children.Add(new Image
         {
@@ -103,52 +89,213 @@ internal sealed class TotpSetupWindow : Window
         });
         panel.Children.Add(new TextBlock { Text = SR.M_TotpManualKey });
         var keyPanel = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 8 };
-        keyPanel.Children.Add(new TextBox
-        {
-            Text = secret,
-            IsReadOnly = true,
-            FontFamily = FontFamily.Default
-        });
-        var copy = new Button
-        {
-            Content = new FluentIcon(FluentIcons.CopyFilled)
-        };
+        keyPanel.Children.Add(new TextBox { Text = secret, IsReadOnly = true, FontFamily = FontFamily.Default });
+        var copy = new Button { Content = new FluentIcon(FluentIcons.CopyFilled) };
         ToolTip.SetTip(copy, SR.C_Copy);
-        copy.Click += async (_, _) =>
-        {
-            await (TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(secret) ?? System.Threading.Tasks.Task.CompletedTask);
-        };
+        copy.Click += async (_, _) => await (xamlRoot.Clipboard?.SetTextAsync(secret) ?? Task.CompletedTask);
         Grid.SetColumn(copy, 1);
         keyPanel.Children.Add(copy);
         panel.Children.Add(keyPanel);
         panel.Children.Add(new TextBlock { Text = SR.M_TotpCode });
-        var codePanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Spacing = 8 };
-        for (var index = 0; index < _digits.Length; index++)
-        {
-            var currentIndex = index;
-            _digits[index].TextChanged += (_, _) => MoveToNextDigit(currentIndex);
-            codePanel.Children.Add(_digits[index]);
-        }
-        panel.Children.Add(codePanel);
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8 };
-        var cancel = new Button { Content = SR.C_Cancel };
-        cancel.Click += (_, _) => Close((string?)null);
-        var save = new Button { Content = SR.C_VerifyAndSave };
-        save.Click += (_, _) => Close(string.Concat(_digits.Select(input => input.Text)));
-        buttons.Children.Add(cancel);
-        buttons.Children.Add(save);
-        panel.Children.Add(buttons);
-        Content = panel;
+        panel.Children.Add(code);
+
+        var dialog = CreateDialog(xamlRoot, SR.M_TotpDialogTitle, panel);
+        dialog.Buttons.Add(new FATaskDialogButton(SR.C_Cancel, "cancel"));
+        dialog.Buttons.Add(new FATaskDialogButton(SR.C_VerifyAndSave, "save") { IsDefault = true });
+        return Equals(await dialog.ShowAsync(), "save") ? code.Text : null;
     }
 
-    private void MoveToNextDigit(int index)
+    public static async Task<UsbBindingResult?> ShowUsbBindingAsync(TopLevel xamlRoot, IReadOnlyList<UsbDeviceInfo> devices)
     {
-        var input = _digits[index];
-        if (input.Text is not { Length: > 0 }) return;
-        input.Text = input.Text[^1..];
-        if (index < _digits.Length - 1)
-            _digits[index + 1].Focus();
+        var bindableDevices = devices.Where(device => !device.IsBound).ToList();
+        var boundDevices = devices.Where(device => device.IsBound).ToList();
+        var bindList = CreateUsbDeviceList(bindableDevices);
+        var unbindList = CreateUsbDeviceList(boundDevices);
+        var tabs = new TabControl
+        {
+            Classes = { "compact" },
+            Padding = new Thickness(0),
+            SelectedIndex = 0
+        };
+        tabs.Items.Add(new TabItem
+        {
+            Header = SR.C_Bind,
+            Content = CreateUsbTabContent(bindableDevices, bindList, SR.M_NoBindableUsb)
+        });
+        tabs.Items.Add(new TabItem
+        {
+            Header = SR.C_Unbind,
+            Content = CreateUsbTabContent(boundDevices, unbindList, SR.M_NoBoundUsb)
+        });
+
+        var panel = new Grid
+        {
+            Width = UsbBindingDialogContentWidth,
+            Height = UsbBindingDialogContentHeight,
+            RowDefinitions = new RowDefinitions("Auto,*"),
+            RowSpacing = 12
+        };
+        panel.Children.Add(new TextBlock { Text = SR.M_UsbShortDescription, TextWrapping = TextWrapping.Wrap });
+        Grid.SetRow(tabs, 1);
+        panel.Children.Add(tabs);
+
+        var dialog = CreateDialog(xamlRoot, SR.M_UsbDialogTitle, panel);
+        var cancel = new FATaskDialogButton(SR.C_Cancel, "cancel");
+        var action = new FATaskDialogButton(SR.C_Bind, "bind") { IsDefault = true };
+        void UpdateActions()
+        {
+            var isBinding = tabs.SelectedIndex == 0;
+            action.Text = isBinding ? SR.C_Bind : SR.C_Unbind;
+            action.DialogResult = isBinding ? "bind" : "unbind";
+            action.IsEnabled = isBinding
+                ? bindList.SelectedItem is UsbDeviceInfo
+                : unbindList.SelectedItem is UsbDeviceInfo;
+        }
+
+        tabs.SelectionChanged += (_, _) => UpdateActions();
+        bindList.SelectionChanged += (_, _) => UpdateActions();
+        unbindList.SelectionChanged += (_, _) => UpdateActions();
+        dialog.Buttons.Add(cancel);
+        dialog.Buttons.Add(action);
+        UpdateActions();
+        dialog.Closing += (_, args) =>
+        {
+            if (Equals(args.Result, "bind") && bindList.SelectedItem is not UsbDeviceInfo)
+                args.Cancel = true;
+            if (Equals(args.Result, "unbind") && unbindList.SelectedItem is not UsbDeviceInfo)
+                args.Cancel = true;
+        };
+
+        return await dialog.ShowAsync() switch
+        {
+            "unbind" when unbindList.SelectedItem is UsbDeviceInfo { BindingId: not null } device => new UsbBindingResult(null, device.BindingId),
+            "bind" when bindList.SelectedItem is UsbDeviceInfo device => new UsbBindingResult(device.DeviceId, null),
+            _ => null
+        };
     }
+
+    private static Control CreateUsbTabContent(
+        IReadOnlyList<UsbDeviceInfo> devices,
+        ListBox list,
+        string emptyMessage)
+    {
+        var panel = new Grid
+        {
+            RowDefinitions = new RowDefinitions("Auto,*"),
+            RowSpacing = 8,
+            Margin = new Thickness(0, 8, 0, 0)
+        };
+        if (devices.Count == 0)
+            panel.Children.Add(new TextBlock { Text = emptyMessage, TextWrapping = TextWrapping.Wrap });
+        Grid.SetRow(list, 1);
+        panel.Children.Add(list);
+        return panel;
+    }
+
+    private static ListBox CreateUsbDeviceList(IReadOnlyList<UsbDeviceInfo> devices)
+    {
+        var list = new ListBox
+        {
+            ItemsSource = devices,
+            SelectionMode = SelectionMode.Single,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            ItemTemplate = new FuncDataTemplate<UsbDeviceInfo>((device, _) =>
+            {
+                if (device is null)
+                    return new TextBlock();
+
+                var fields = new Grid
+                {
+                    ColumnDefinitions = new ColumnDefinitions("96,*"),
+                    RowDefinitions = new RowDefinitions("Auto,Auto,Auto"),
+                    ColumnSpacing = 8,
+                    RowSpacing = 3
+                };
+                AddUsbField(fields, 0, SR.C_UsbDriveLetter, device.DriveLetter);
+                AddUsbField(fields, 1, SR.C_UsbDiskName, device.DisplayName);
+                var deviceIdentifier = string.IsNullOrWhiteSpace(device.HardwareName)
+                    ? FormatUsbDeviceId(device.DeviceId)
+                    : device.HardwareName;
+                AddUsbField(
+                    fields,
+                    2,
+                    SR.C_UsbDeviceId,
+                    deviceIdentifier,
+                    device.DeviceId);
+                return new Border
+                {
+                    Padding = new Thickness(8),
+                    Child = fields
+                };
+            })
+        };
+        ScrollViewer.SetVerticalScrollBarVisibility(list, ScrollBarVisibility.Auto);
+        return list;
+    }
+
+    internal static string FormatUsbDeviceId(string deviceId)
+    {
+        var value = deviceId.Trim();
+        const string volumeGuidPrefix = "volume-guid:";
+        if (value.StartsWith(volumeGuidPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            value = value[volumeGuidPrefix.Length..].Trim();
+            const string windowsVolumePathPrefix = @"\\?\Volume{";
+            if (value.StartsWith(windowsVolumePathPrefix, StringComparison.OrdinalIgnoreCase))
+                value = value[windowsVolumePathPrefix.Length..].TrimEnd('\\').TrimEnd('}');
+            else
+                value = value.Trim('\\', '{', '}');
+        }
+        else
+        {
+            var separator = value.IndexOf(':');
+            if (separator >= 0 && separator < value.Length - 1)
+                value = value[(separator + 1)..];
+        }
+
+        if (value.Length <= 16)
+            return value;
+
+        return $"{value[..8]}...{value[^4..]}";
+    }
+
+    private static void AddUsbField(
+        Grid grid,
+        int row,
+        string label,
+        string value,
+        string? fullValue = null)
+    {
+        var labelBlock = new TextBlock { Text = label, FontWeight = FontWeight.SemiBold };
+        var valueBlock = new TextBlock
+        {
+            Text = value,
+            TextWrapping = TextWrapping.NoWrap,
+            TextTrimming = TextTrimming.CharacterEllipsis
+        };
+        if (!string.IsNullOrWhiteSpace(fullValue) && !string.Equals(value, fullValue, StringComparison.Ordinal))
+            ToolTip.SetTip(valueBlock, fullValue);
+        Grid.SetRow(labelBlock, row);
+        Grid.SetRow(valueBlock, row);
+        Grid.SetColumn(valueBlock, 1);
+        grid.Children.Add(labelBlock);
+        grid.Children.Add(valueBlock);
+    }
+
+    private static FATaskDialog CreateDialog(TopLevel xamlRoot, string title, Control content) => new()
+    {
+        XamlRoot = xamlRoot,
+        Title = title,
+        Header = title,
+        Content = content
+    };
+
+    private static TextBox CreatePasswordInput(string placeholderText) => new()
+    {
+        PasswordChar = '●',
+        PlaceholderText = placeholderText
+    };
 
     private static IImage BuildQrCode(string content)
     {
@@ -156,79 +303,5 @@ internal sealed class TotpSetupWindow : Window
         using var data = generator.CreateQrCode(content, QRCodeGenerator.ECCLevel.Q);
         var png = new PngByteQRCode(data).GetGraphic(8);
         return new Avalonia.Media.Imaging.Bitmap(new MemoryStream(png));
-    }
-}
-
-internal sealed record UsbBindingResult(string? RootPath, string? UnbindId);
-
-internal sealed class UsbBindingWindow : Window
-{
-    private readonly TextBlock _selectedUsb = new() { Text = SR.M_SelectUsbFirst, TextWrapping = TextWrapping.Wrap };
-    private readonly ComboBox _bindings = new() { HorizontalAlignment = HorizontalAlignment.Stretch };
-    private string? _selectedPath;
-
-    public UsbBindingWindow(IReadOnlyList<UsbBindingInfo> bindings)
-    {
-        Title = SR.M_UsbDialogTitle;
-        Width = 640;
-        MinHeight = 360;
-        SizeToContent = SizeToContent.Height;
-        CanResize = false;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        var panel = new StackPanel { Margin = new Thickness(24), Spacing = 12 };
-        panel.Children.Add(new TextBlock { Text = SR.M_UsbShortDescription, TextWrapping = TextWrapping.Wrap });
-        var selection = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 10 };
-        selection.Children.Add(_selectedUsb);
-        var select = new Button { Content = SR.C_SelectUsb };
-        select.Click += SelectUsb_OnClick;
-        Grid.SetColumn(select, 1);
-        selection.Children.Add(select);
-        panel.Children.Add(selection);
-        if (bindings.Count > 0)
-        {
-            panel.Children.Add(new TextBlock { Text = SR.C_BoundDevices });
-            _bindings.ItemsSource = bindings;
-            _bindings.ItemTemplate = new FuncDataTemplate<UsbBindingInfo>((binding, _) =>
-            {
-                if (binding is null) return new TextBlock();
-                var displayName = string.IsNullOrWhiteSpace(binding.DisplayName) ? binding.Id : binding.DisplayName;
-                var state = binding.IsPresent ? SR.C_UsbConnected : SR.C_UsbDisconnected;
-                return new TextBlock { Text = $"{displayName} ({state})", TextTrimming = TextTrimming.CharacterEllipsis };
-            });
-            panel.Children.Add(_bindings);
-        }
-
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8 };
-        var cancel = new Button { Content = SR.C_Cancel };
-        cancel.Click += (_, _) => Close((UsbBindingResult?)null);
-        if (bindings.Count > 0)
-        {
-            var unbind = new Button { Content = SR.C_UnbindSelected };
-            unbind.Click += (_, _) =>
-            {
-                if (_bindings.SelectedItem is UsbBindingInfo binding)
-                    Close(new UsbBindingResult(null, binding.Id));
-            };
-            buttons.Children.Add(unbind);
-        }
-        var bind = new Button { Content = SR.C_Bind };
-        bind.Click += (_, _) =>
-        {
-            if (_selectedPath is not null)
-                Close(new UsbBindingResult(_selectedPath, null));
-        };
-        buttons.Children.Add(cancel);
-        buttons.Children.Add(bind);
-        panel.Children.Add(buttons);
-        Content = panel;
-    }
-
-    private async void SelectUsb_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = SR.M_UsbPickerTitle, AllowMultiple = false });
-        var folder = folders.FirstOrDefault();
-        if (folder is null) return;
-        _selectedPath = folder.TryGetLocalPath();
-        _selectedUsb.Text = _selectedPath ?? folder.Name;
     }
 }

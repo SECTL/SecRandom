@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
+using System.Globalization;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
-using SecRandom.Shared;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared.Models.Profile;
+using Resources = SecRandom.Langs.SettingsPages.Home.Resources;
 
 namespace SecRandom.ViewModels.SettingsPages;
 
@@ -27,8 +28,16 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
     partial void OnHasRollCallListsChanged(bool value) => OnPropertyChanged(nameof(HasNoRollCallLists));
     partial void OnHasLotteryPoolsChanged(bool value) => OnPropertyChanged(nameof(HasNoLotteryPools));
 
-    public HomeSettingsPageViewModel(MainConfigHandler configHandler) : base(configHandler)
+    private readonly IHistoryQueryService _historyQueryService;
+    private readonly IProfileCatalogManager _catalogManager;
+
+    public HomeSettingsPageViewModel(
+        MainConfigHandler configHandler,
+        IHistoryQueryService historyQueryService,
+        IProfileCatalogManager catalogManager) : base(configHandler)
     {
+        _historyQueryService = historyQueryService;
+        _catalogManager = catalogManager;
     }
 
     public ObservableCollection<HomeProfileCard> RollCallLists { get; } = [];
@@ -42,17 +51,17 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
 
     private void RefreshRollCallLists()
     {
-        var cards = EnumerateProfileNames("roll_call_list")
+        var cards = _catalogManager.GetStudentListNames()
             .Select(name =>
             {
-                var list = new StudentListConfig(name).Data;
-                var history = new StudentHistoryConfig(name).Data;
+                var list = _catalogManager.LoadStudentList(name);
+                var history = _historyQueryService.LoadStudentHistory(name);
                 return new HomeProfileCard(
                     name,
-                    list.Students.Count(student => student.IsCandidate),
-                    history.TotalRounds,
-                    history.TotalStats,
-                    FormatLastDrawnTime(history.Students.Values.Select(item => item.LastDrawnTime)));
+                    list?.Students.Count(student => student.IsCandidate) ?? 0,
+                    history?.TotalRounds ?? 0,
+                    history?.TotalStats ?? 0,
+                    FormatLastDrawnTime(history?.Students.Values.Select(item => item.LastDrawnTime) ?? []));
             })
             .ToList();
 
@@ -68,17 +77,17 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
 
     private void RefreshLotteryPools()
     {
-        var cards = EnumerateProfileNames("lottery_list")
+        var cards = _catalogManager.GetPrizeListNames()
             .Select(name =>
             {
-                var list = new PrizeListConfig(name).Data;
-                var history = new PrizeHistoryConfig(name).Data;
+                var list = _catalogManager.LoadPrizeList(name);
+                var history = _historyQueryService.LoadPrizeHistory(name);
                 return new HomeProfileCard(
                     name,
-                    list.Prizes.Count(prize => prize.IsCandidate),
-                    history.TotalRounds,
-                    history.TotalStats,
-                    FormatLastDrawnTime(history.Prizes.Values.Select(item => item.LastDrawnTime)));
+                    list?.Prizes.Count(prize => prize.IsCandidate) ?? 0,
+                    history?.TotalRounds ?? 0,
+                    history?.TotalStats ?? 0,
+                    FormatLastDrawnTime(history?.Prizes.Values.Select(item => item.LastDrawnTime) ?? []));
             })
             .ToList();
 
@@ -92,31 +101,23 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
         HasLotteryPools = cards.Count > 0;
     }
 
-    private static IEnumerable<string> EnumerateProfileNames(string directory)
-    {
-        return Directory.GetFiles(Utils.GetDirectoryPath("list", directory), "*.json")
-            .Select(Path.GetFileNameWithoutExtension)
-            .Where(name => !string.IsNullOrWhiteSpace(name))
-            .OrderBy(name => name, StringComparer.Ordinal)!;
-    }
-
     private static string FormatLastDrawnTime(IEnumerable<DateTime> times)
     {
         var lastDrawnTime = times.DefaultIfEmpty(DateTime.MinValue).Max();
         if (lastDrawnTime == DateTime.MinValue)
-            return "暂无记录";
+            return Resources.M_NoDrawHistory;
 
         var elapsed = DateTime.Now - lastDrawnTime;
         if (elapsed < TimeSpan.FromMinutes(1))
-            return "刚刚";
+            return Resources.M_JustNow;
         if (elapsed < TimeSpan.FromHours(1))
-            return $"{(int)elapsed.TotalMinutes} 分钟前";
+            return string.Format(Resources.M_MinutesAgo, (int)elapsed.TotalMinutes);
         if (lastDrawnTime.Date == DateTime.Today)
-            return $"今天 {lastDrawnTime:HH:mm}";
+            return string.Format(Resources.M_TodayAt, lastDrawnTime.ToString("t", CultureInfo.CurrentCulture));
         if (lastDrawnTime.Date == DateTime.Today.AddDays(-1))
-            return $"昨天 {lastDrawnTime:HH:mm}";
+            return string.Format(Resources.M_YesterdayAt, lastDrawnTime.ToString("t", CultureInfo.CurrentCulture));
 
-        return lastDrawnTime.ToString("yyyy-MM-dd HH:mm");
+        return lastDrawnTime.ToString("g", CultureInfo.CurrentCulture);
     }
 }
 

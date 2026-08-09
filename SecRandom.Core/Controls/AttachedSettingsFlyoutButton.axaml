@@ -10,7 +10,8 @@
         Padding="8,4"
         HorizontalAlignment="Center"
         VerticalAlignment="Center"
-        ToolTip.Tip="{x:Static lr:Resources.C_AttachedSettingsButtonTip}">
+        ToolTip.Tip="{x:Static lr:Resources.C_AttachedSettingsButtonTip}"
+        Theme="{StaticResource TransparentButton}">
     <Button.Resources>
         <ControlTheme x:Key="AttachedSettingsFlyoutPresenterTheme"
                       TargetType="FlyoutPresenter"

@@ -1,21 +1,22 @@
-﻿<Project>
+<Project>
     <PropertyGroup>
         <!-- we'll do our own versioning -->
         <GitVersion>false</GitVersion>
+        <EnableGitInfoGenerator Condition="'$(EnableGitInfoGenerator)' == ''">false</EnableGitInfoGenerator>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
         <NullabilityInfoContextSupport>True</NullabilityInfoContextSupport>
         <ErrorOnDuplicatePublishOutputFiles>False</ErrorOnDuplicatePublishOutputFiles>
         <CheckEolWorkloads>false</CheckEolWorkloads>
-        <DefaultItemExcludes>$(DefaultItemExcludes);artifacts/**;publish/**</DefaultItemExcludes>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="SecRandom.SimpleGitInfoGenerator" Version="1.0.0.0"
+        <PackageReference Include="SecRandom.SimpleGitInfoGenerator" Version="1.0.1.3"
                           PrivateAssets="All" IncludeAssets="build;analyzers"/>
 
-        <Compile Include="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)'))/AssemblyInfo.cs">
+        <Compile Include="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)'))/AssemblyInfo.cs"
+                 Condition="'$(EnableGitInfoGenerator)' == 'true'">
             <LinkBase>Properties</LinkBase>
         </Compile>
     </ItemGroup>
@@ -24,17 +25,8 @@
         <GitVersion_UpdateAssemblyInfo>true</GitVersion_UpdateAssemblyInfo>
     </PropertyGroup>
 
-    <Target Name="NormalizeGitTagForAssemblyVersion"
-            AfterTargets="GetGitInfoForSourceGenerator"
-            BeforeTargets="CoreCompile">
-        <PropertyGroup>
-            <!-- Release tags keep their conventional v-prefix; assembly versions cannot. -->
-            <GitTag Condition="$([System.String]::Copy('$(GitTag)').StartsWith('v'))">$([System.String]::Copy('$(GitTag)').Substring(1))</GitTag>
-        </PropertyGroup>
-    </Target>
-
     <ItemGroup>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.200" PrivateAssets="All"/>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.301" PrivateAssets="All"/>
     </ItemGroup>
 
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">

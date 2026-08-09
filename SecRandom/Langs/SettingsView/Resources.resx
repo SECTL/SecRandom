@@ -37,7 +37,7 @@
         <value>取消</value>
     </data>
     <data name="M_NeedsRestarting_Tooltip" xml:space="preserve">
-        <value>部分设置需要重启才能生效，点击以重启应用。</value>
+        <value>部分设置需要重启才能生效，点击以重启应用</value>
     </data>
     <data name="C_SearchBox_Watermark" xml:space="preserve">
         <value>搜索设置...</value>
@@ -73,7 +73,7 @@
         <value>导出所有数据</value>
     </data>
     <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve">
-        <value>立即导出 SecRandom v3 全部非凭据数据、设置、插件和插件私有配置</value>
+        <value>立即导出 SecRandom v3 全部非凭据数据和设置</value>
     </data>
     <data name="C_MoreOptions_ImportAllData" xml:space="preserve">
         <value>导入所有数据</value>
@@ -130,28 +130,28 @@
         <value>导出诊断数据</value>
     </data>
     <data name="M_DiagnosticExportContent" xml:space="preserve">
-        <value>标准诊断包包含全部经过脱敏处理的日志和运行时信息。扩展诊断包还包含脱敏设置快照、插件与档案数量摘要及脱敏崩溃报告。两种诊断包均不包含名单、历史原文、插件私有配置或安全凭据</value>
+        <value>标准诊断包包含全部经过脱敏处理的日志和运行时信息；扩展诊断包还包含脱敏设置快照、档案数量摘要及脱敏崩溃报告；两种诊断包均不包含名单、历史原文或安全凭据</value>
     </data>
     <data name="M_ImportTitle" xml:space="preserve">
         <value>确认导入</value>
     </data>
     <data name="M_ImportSettingsContent" xml:space="preserve">
-        <value>将替换当前所有非凭据设置，包括窗口、启动、主题、抽取和系统集成。确认后会先自动创建设置恢复快照；快照失败时不会导入。密码、TOTP、USB 绑定和锁定状态不会导入。</value>
+        <value>将替换当前所有非凭据设置，包括窗口、启动、主题、抽取和系统集成；确认后会先自动创建设置恢复快照；快照失败时不会导入；密码、TOTP、USB 绑定和锁定状态不会导入</value>
     </data>
     <data name="M_ImportAllDataContent" xml:space="preserve">
-        <value>将替换现有非凭据数据、设置、名单、历史、资源、插件和插件私有配置。确认后会先自动创建完整恢复快照；快照失败时不会导入。安全凭据不会导入。</value>
+        <value>将替换现有非凭据数据、设置、名单、历史和资源；确认后会先自动创建完整恢复快照；快照失败时不会导入；安全凭据不会导入</value>
     </data>
     <data name="M_ImportUnsupportedTitle" xml:space="preserve">
         <value>不支持的导入文件</value>
     </data>
     <data name="M_ImportUnsupportedContent" xml:space="preserve">
-        <value>该文件不是受支持的 SecRandom v3 导出文件。</value>
+        <value>该文件不是受支持的 SecRandom v3 导出文件</value>
     </data>
     <data name="M_ImportUnsupportedUnknownVersion" xml:space="preserve">
         <value>未识别</value>
     </data>
     <data name="M_ImportUnsupportedVersion" xml:space="preserve">
-        <value>检测到的导出版本：{0}\n\n{1}\n\n未创建恢复快照，也未修改任何数据。</value>
+        <value>检测到的导出版本：{0}\n\n{1}\n\n未创建恢复快照，也未修改任何数据</value>
     </data>
     <data name="M_ExportSuccess" xml:space="preserve">
         <value>已导出：{0}</value>
@@ -160,15 +160,102 @@
         <value>导入完成，恢复备份：{0}</value>
     </data>
     <data name="M_ExportFailed" xml:space="preserve">
-        <value>导出失败。</value>
+        <value>导出失败</value>
     </data>
     <data name="M_ImportFailed" xml:space="preserve">
-        <value>导入失败，未完成覆盖。</value>
+        <value>导入失败，未完成覆盖</value>
     </data>
     <data name="M_OpenDirectoryFailed" xml:space="preserve">
-        <value>无法打开目录。</value>
+        <value>无法打开目录</value>
     </data>
     <data name="M_PageNotFound" xml:space="preserve">
         <value>页面 {0} 未找到</value>
+    </data>
+    <data name="M_NavigateFailed" xml:space="preserve">
+        <value>导航时出现错误</value>
+    </data>
+    <data name="C_MoreOptions_Feedback" xml:space="preserve">
+        <value>反馈</value>
+    </data>
+    <data name="C_Feedback_Title" xml:space="preserve">
+        <value>反馈</value>
+    </data>
+    <data name="C_Feedback_CloseTemporary" xml:space="preserve">
+        <value>暂时关闭</value>
+    </data>
+    <data name="C_Feedback_Bug" xml:space="preserve">
+        <value>Bug</value>
+    </data>
+    <data name="C_Feedback_Feature" xml:space="preserve">
+        <value>新功能 / 优化体验</value>
+    </data>
+    <data name="C_Feedback_Summary" xml:space="preserve">
+        <value>简要标题</value>
+    </data>
+    <data name="C_Feedback_SummaryPlaceholder" xml:space="preserve">
+        <value>用一句话概括问题或建议</value>
+    </data>
+    <data name="C_Feedback_ContactEmail" xml:space="preserve">
+        <value>联系邮箱（可选）</value>
+    </data>
+    <data name="C_Feedback_ContactEmailPlaceholder" xml:space="preserve">
+        <value>用于在需要时回复你</value>
+    </data>
+    <data name="C_Feedback_CrashReport" xml:space="preserve">
+        <value>崩溃报告</value>
+    </data>
+    <data name="C_Feedback_Expected" xml:space="preserve">
+        <value>期望行为</value>
+    </data>
+    <data name="C_Feedback_ExpectedPlaceholder" xml:space="preserve">
+        <value>描述你期望发生的行为</value>
+    </data>
+    <data name="C_Feedback_Actual" xml:space="preserve">
+        <value>实际结果</value>
+    </data>
+    <data name="C_Feedback_ActualPlaceholder" xml:space="preserve">
+        <value>描述实际发生的行为</value>
+    </data>
+    <data name="C_Feedback_Reproduce" xml:space="preserve">
+        <value>重现步骤</value>
+    </data>
+    <data name="C_Feedback_ReproducePlaceholder" xml:space="preserve">
+        <value>1. 首先……&#10;2. 然后……&#10;3. ……</value>
+    </data>
+    <data name="C_Feedback_Motivation" xml:space="preserve">
+        <value>背景与动机</value>
+    </data>
+    <data name="C_Feedback_MotivationPlaceholder" xml:space="preserve">
+        <value>为什么需要这个功能？它解决了什么场景？</value>
+    </data>
+    <data name="C_Feedback_Request" xml:space="preserve">
+        <value>想要实现或优化的功能</value>
+    </data>
+    <data name="C_Feedback_RequestPlaceholder" xml:space="preserve">
+        <value>尽量具体地说明期望的功能、流程或体验改进</value>
+    </data>
+    <data name="C_Feedback_DiagnosticNotice" xml:space="preserve">
+        <value>提交时自动生成并上传与“导出诊断数据”相同的脱敏 ZIP 附件，用于问题定位</value>
+    </data>
+    <data name="C_Feedback_Cancel" xml:space="preserve">
+        <value>取消反馈</value>
+    </data>
+    <data name="C_Feedback_Submit" xml:space="preserve">
+        <value>提交反馈</value>
+    </data>
+    <data name="M_Feedback_Required" xml:space="preserve">
+        <value>请填写所有必填项后再提交反馈</value>
+    </data>
+    <data name="M_Feedback_InvalidEmail" xml:space="preserve">
+        <value>请填写有效的联系邮箱，或将其留空</value>
+    </data>
+    <data name="M_Feedback_Success" xml:space="preserve">
+        <value>反馈已提交，感谢你的帮助</value>
+    </data>
+    <data name="M_Feedback_DiagnosticTooLarge" xml:space="preserve">
+        <value>诊断 ZIP 超过上传限制，未提交反馈；请清理日志后重试，或使用 GitHub</value>
+    </data>
+    <data name="M_Feedback_Failed" xml:space="preserve">
+        <value>反馈提交失败，请稍后重试或使用 GitHub</value>
     </data>
 </root>

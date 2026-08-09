@@ -3,6 +3,38 @@ namespace SecRandom.Core.Tests;
 public class SettingsMarkupTests
 {
     [Fact]
+    public void SettingsSearchSupportsImmediateSelectionAndClearing()
+    {
+        string markup = File.ReadAllText(GetRepositoryPath("SecRandom/Views/SettingsView.axaml"));
+        string source = File.ReadAllText(GetRepositoryPath("SecRandom/Views/SettingsView.axaml.cs"));
+
+        Assert.Contains("SelectionChanged=\"SearchBox_OnSelectionChanged\"", markup, StringComparison.Ordinal);
+        Assert.Contains("Click=\"SearchButton_OnClick\"", markup, StringComparison.Ordinal);
+        Assert.Contains("Click=\"ClearSearchButton_OnClick\"", markup, StringComparison.Ordinal);
+        Assert.Contains("IsVisible=\"{Binding ViewModel.HasSearchText}\"", markup, StringComparison.Ordinal);
+        Assert.Contains("ExecuteSettingsSearch(settings);", source, StringComparison.Ordinal);
+
+        int navigate = source.IndexOf("SelectNavigationItemById(settings.PageId);", StringComparison.Ordinal);
+        int clear = source.IndexOf("ClearSearch();", navigate, StringComparison.Ordinal);
+        int pageResultReturn = source.IndexOf("if (settings.IsPage) return;", navigate, StringComparison.Ordinal);
+        Assert.InRange(clear, navigate + 1, pageResultReturn - 1);
+    }
+
+    [Fact]
+    public void SettingsSearchViewModelTracksWhetherThereIsTextToClear()
+    {
+        var viewModel = new SecRandom.ViewModels.SettingsViewModel();
+
+        Assert.False(viewModel.HasSearchText);
+
+        viewModel.SearchText = "privacy";
+        Assert.True(viewModel.HasSearchText);
+
+        viewModel.SearchText = string.Empty;
+        Assert.False(viewModel.HasSearchText);
+    }
+
+    [Fact]
     public void NotificationOverrideSectionsUseSettingsExpanderItems()
     {
         var document = System.Xml.Linq.XDocument.Load(GetNotificationMarkupPath());
@@ -200,11 +232,24 @@ public class SettingsMarkupTests
         {
             string expandedBinding = $"{{Binding Settings.{overrideName}, Mode=OneWay}}";
             var section = document.Descendants().SingleOrDefault(element =>
-                element.Name.LocalName == "FASettingsExpander"
+                element.Name.LocalName is "FASettingsExpander" or "DrawMusicSettingsExpander"
                 && (string?)element.Attribute("IsExpanded") == expandedBinding);
             Assert.True(section is not null, $"{relativePath} is missing the {overrideName} override expander.");
 
-            var rows = section!.Elements()
+            // 自定义 DrawMusicSettingsExpander 的行定义在其自身的 axaml 中，单独校验。
+            if (section!.Name.LocalName == "DrawMusicSettingsExpander")
+            {
+                var controlDocument = System.Xml.Linq.XDocument.Load(GetRepositoryPath(
+                    "SecRandom/Views/SettingsPages/Picking/DrawMusicSettingsExpander.axaml"));
+                var controlRows = controlDocument.Root!.Elements()
+                    .Where(element => !element.Name.LocalName.EndsWith(".Footer", StringComparison.Ordinal))
+                    .ToList();
+                Assert.NotEmpty(controlRows);
+                Assert.All(controlRows, row => Assert.Equal("FASettingsExpanderItem", row.Name.LocalName));
+                continue;
+            }
+
+            var rows = section.Elements()
                 .Where(element => element.Name.LocalName != "FASettingsExpander.Footer")
                 .ToList();
             Assert.NotEmpty(rows);
@@ -272,6 +317,83 @@ public class SettingsMarkupTests
         Assert.Contains("_isPreviewMode", method, StringComparison.Ordinal);
         Assert.Contains("SecurityOperation.RestartApplication", method, StringComparison.Ordinal);
         Assert.Contains("AuthorizeAsync", method, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SecuritySettingsUseVerifiedEnablementAndSeparatePasswordCommands()
+    {
+        string markup = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Views/SettingsPages/General/SecuritySettingsPage.axaml"));
+        string source = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Views/SettingsPages/General/SecuritySettingsPage.axaml.cs"));
+
+        Assert.DoesNotContain("IsChecked=\"{Binding Settings.SecurityEnabled}\"", markup, StringComparison.Ordinal);
+        Assert.Contains("IsCheckedChanged=\"SecurityEnabled_OnIsCheckedChanged\"", markup, StringComparison.Ordinal);
+        Assert.Contains("Click=\"SetPassword_OnClick\"", markup, StringComparison.Ordinal);
+        Assert.Contains("Click=\"ChangePassword_OnClick\"", markup, StringComparison.Ordinal);
+        Assert.Contains("Click=\"RemovePassword_OnClick\"", markup, StringComparison.Ordinal);
+        Assert.Contains("UpdateSecuritySettingsAsync", source, StringComparison.Ordinal);
+        Assert.Contains("BeginTotpSetupAsync(xamlRoot", source, StringComparison.Ordinal);
+        Assert.Contains("GetUsbDevicesAsync", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SecuritySettingsRouteFactorAndProtectionChangesThroughVerifiedHandlers()
+    {
+        string markup = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Views/SettingsPages/General/SecuritySettingsPage.axaml"));
+        string source = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Views/SettingsPages/General/SecuritySettingsPage.axaml.cs"));
+
+        Assert.Contains("SelectedFactorOptionsOnCollectionChanged", source, StringComparison.Ordinal);
+        Assert.Contains("UpdateSecuritySettingsAsync", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("IsChecked=\"{Binding Settings.RequireAllSelectedFactors}\"", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("IsChecked=\"{Binding Settings.AllowSettingsPreview}\"", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "IsChecked=\"{Binding Settings.ProtectOpenSettings}\"",
+            markup,
+            StringComparison.Ordinal);
+        Assert.Contains("Mode=OneWay", markup, StringComparison.Ordinal);
+        Assert.Contains("SecurityOption_OnIsCheckedChanged", markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void UsbBindingDialogUsesTabsAndSingleSelectionDeviceRows()
+    {
+        string source = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Services/Security/SecuritySetupWindows.cs"));
+        string pageSource = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Views/SettingsPages/General/SecuritySettingsPage.axaml.cs"));
+
+        Assert.Contains("TabControl", source, StringComparison.Ordinal);
+        Assert.Contains("TabItem", source, StringComparison.Ordinal);
+        Assert.Contains("SelectionMode.Single", source, StringComparison.Ordinal);
+        Assert.Contains("UsbBindingDialogContentWidth = 480", source, StringComparison.Ordinal);
+        Assert.Contains("UsbBindingDialogContentHeight = 340", source, StringComparison.Ordinal);
+        Assert.Contains("ScrollViewer.SetVerticalScrollBarVisibility(list, ScrollBarVisibility.Auto)", source, StringComparison.Ordinal);
+        Assert.Contains("device.DriveLetter", source, StringComparison.Ordinal);
+        Assert.Contains("device.DisplayName", source, StringComparison.Ordinal);
+        Assert.Contains("device.DeviceId", source, StringComparison.Ordinal);
+        Assert.Contains("device.HardwareName", source, StringComparison.Ordinal);
+        Assert.Contains("!device.IsBound", source, StringComparison.Ordinal);
+        Assert.Contains("device.IsBound", source, StringComparison.Ordinal);
+        Assert.Contains("new UsbBindingResult(device.DeviceId, null)", source, StringComparison.Ordinal);
+        Assert.Contains("action.Text = isBinding ? SR.C_Bind : SR.C_Unbind", source, StringComparison.Ordinal);
+        Assert.Contains("action.DialogResult = isBinding ? \"bind\" : \"unbind\"", source, StringComparison.Ordinal);
+        Assert.Contains("dialog.Buttons.Add(action)", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("dialog.Buttons.Clear()", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("device.RootPath", source, StringComparison.Ordinal);
+        Assert.Contains("result.DeviceId", pageSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("result.RootPath", pageSource, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void UsbBindingDialogFormatsOpaqueVolumeIdsForDisplay()
+    {
+        var displayId = SecRandom.Services.Security.SecuritySetupDialogs.FormatUsbDeviceId(
+            @"volume-guid:\\?\Volume{a4194489-0000-0000-0000-100000000000}\");
+
+        Assert.Equal("a4194489...0000", displayId);
     }
 
     private static string GetNotificationMarkupPath()

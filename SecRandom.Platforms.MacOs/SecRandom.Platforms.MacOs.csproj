@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\SecRandom.Platforms\SecRandom.Platforms.csproj" />
+        <ProjectReference Include="..\SecRandom.Platforms.Abstractions\SecRandom.Platforms.Abstractions.csproj" />
+    </ItemGroup>
+
+    <Import Project="..\Global.props" />
+</Project>

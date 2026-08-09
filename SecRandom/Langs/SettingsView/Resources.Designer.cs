@@ -22,15 +22,15 @@ namespace SecRandom.Langs.SettingsView {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -44,7 +44,7 @@ namespace SecRandom.Langs.SettingsView {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -58,7 +58,306 @@ namespace SecRandom.Langs.SettingsView {
                 resourceCulture = value;
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to 取消.
+        /// </summary>
+        public static string C_Cancel {
+            get {
+                return ResourceManager.GetString("C_Cancel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 关闭.
+        /// </summary>
+        public static string C_Close {
+            get {
+                return ResourceManager.GetString("C_Close", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 扩展诊断包.
+        /// </summary>
+        public static string C_DiagnosticExtended {
+            get {
+                return ResourceManager.GetString("C_DiagnosticExtended", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 标准诊断包.
+        /// </summary>
+        public static string C_DiagnosticStandard {
+            get {
+                return ResourceManager.GetString("C_DiagnosticStandard", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 导出全部数据.
+        /// </summary>
+        public static string C_ExportAllDataFileTitle {
+            get {
+                return ResourceManager.GetString("C_ExportAllDataFileTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 导出诊断数据.
+        /// </summary>
+        public static string C_ExportDiagnosticDataFileTitle {
+            get {
+                return ResourceManager.GetString("C_ExportDiagnosticDataFileTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 导出设置.
+        /// </summary>
+        public static string C_ExportSettingsFileTitle {
+            get {
+                return ResourceManager.GetString("C_ExportSettingsFileTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 实际结果.
+        /// </summary>
+        public static string C_Feedback_Actual {
+            get {
+                return ResourceManager.GetString("C_Feedback_Actual", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 描述实际发生的行为。.
+        /// </summary>
+        public static string C_Feedback_ActualPlaceholder {
+            get {
+                return ResourceManager.GetString("C_Feedback_ActualPlaceholder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Bug.
+        /// </summary>
+        public static string C_Feedback_Bug {
+            get {
+                return ResourceManager.GetString("C_Feedback_Bug", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 取消反馈.
+        /// </summary>
+        public static string C_Feedback_Cancel {
+            get {
+                return ResourceManager.GetString("C_Feedback_Cancel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 联系邮箱（可选）.
+        /// </summary>
+        public static string C_Feedback_ContactEmail {
+            get {
+                return ResourceManager.GetString("C_Feedback_ContactEmail", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 用于在需要时回复你.
+        /// </summary>
+        public static string C_Feedback_ContactEmailPlaceholder {
+            get {
+                return ResourceManager.GetString("C_Feedback_ContactEmailPlaceholder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 崩溃报告.
+        /// </summary>
+        public static string C_Feedback_CrashReport {
+            get {
+                return ResourceManager.GetString("C_Feedback_CrashReport", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 暂时关闭.
+        /// </summary>
+        public static string C_Feedback_CloseTemporary {
+            get {
+                return ResourceManager.GetString("C_Feedback_CloseTemporary", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 提交时自动生成并上传与“导出诊断数据”相同的脱敏 ZIP 附件，用于问题定位。.
+        /// </summary>
+        public static string C_Feedback_DiagnosticNotice {
+            get {
+                return ResourceManager.GetString("C_Feedback_DiagnosticNotice", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 期望行为.
+        /// </summary>
+        public static string C_Feedback_Expected {
+            get {
+                return ResourceManager.GetString("C_Feedback_Expected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 描述你期望发生的行为。.
+        /// </summary>
+        public static string C_Feedback_ExpectedPlaceholder {
+            get {
+                return ResourceManager.GetString("C_Feedback_ExpectedPlaceholder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 新功能 / 优化体验.
+        /// </summary>
+        public static string C_Feedback_Feature {
+            get {
+                return ResourceManager.GetString("C_Feedback_Feature", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 背景与动机.
+        /// </summary>
+        public static string C_Feedback_Motivation {
+            get {
+                return ResourceManager.GetString("C_Feedback_Motivation", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 为什么需要这个功能？它解决了什么场景？.
+        /// </summary>
+        public static string C_Feedback_MotivationPlaceholder {
+            get {
+                return ResourceManager.GetString("C_Feedback_MotivationPlaceholder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 重现步骤.
+        /// </summary>
+        public static string C_Feedback_Reproduce {
+            get {
+                return ResourceManager.GetString("C_Feedback_Reproduce", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 1. 首先……
+        ///2. 然后……
+        ///3. ……。.
+        /// </summary>
+        public static string C_Feedback_ReproducePlaceholder {
+            get {
+                return ResourceManager.GetString("C_Feedback_ReproducePlaceholder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 想要实现或优化的功能.
+        /// </summary>
+        public static string C_Feedback_Request {
+            get {
+                return ResourceManager.GetString("C_Feedback_Request", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 尽量具体地说明期望的功能、流程或体验改进。.
+        /// </summary>
+        public static string C_Feedback_RequestPlaceholder {
+            get {
+                return ResourceManager.GetString("C_Feedback_RequestPlaceholder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 提交反馈.
+        /// </summary>
+        public static string C_Feedback_Submit {
+            get {
+                return ResourceManager.GetString("C_Feedback_Submit", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 简要标题.
+        /// </summary>
+        public static string C_Feedback_Summary {
+            get {
+                return ResourceManager.GetString("C_Feedback_Summary", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 用一句话概括问题或建议.
+        /// </summary>
+        public static string C_Feedback_SummaryPlaceholder {
+            get {
+                return ResourceManager.GetString("C_Feedback_SummaryPlaceholder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 反馈.
+        /// </summary>
+        public static string C_Feedback_Title {
+            get {
+                return ResourceManager.GetString("C_Feedback_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 导入.
+        /// </summary>
+        public static string C_Import {
+            get {
+                return ResourceManager.GetString("C_Import", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 导入全部数据.
+        /// </summary>
+        public static string C_ImportAllDataFileTitle {
+            get {
+                return ResourceManager.GetString("C_ImportAllDataFileTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 导入设置.
+        /// </summary>
+        public static string C_ImportSettingsFileTitle {
+            get {
+                return ResourceManager.GetString("C_ImportSettingsFileTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to JSON 文件.
+        /// </summary>
+        public static string C_JsonFileType {
+            get {
+                return ResourceManager.GetString("C_JsonFileType", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 更多选项....
         /// </summary>
@@ -67,7 +366,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 导出所有数据.
         /// </summary>
@@ -76,16 +375,16 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ExportAllData", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to 退出软件时导出全部数据和设置.
+        ///   Looks up a localized string similar to 立即导出 SecRandom v3 全部非凭据数据、设置、插件和插件私有配置.
         /// </summary>
         public static string C_MoreOptions_ExportAllData_D {
             get {
                 return ResourceManager.GetString("C_MoreOptions_ExportAllData_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 导出诊断数据.
         /// </summary>
@@ -94,16 +393,16 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ExportDiagnosticData", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to 退出软件时导出诊断信息，用于排查问题.
+        ///   Looks up a localized string similar to 立即导出脱敏的运行时信息和受限日志，用于排查问题.
         /// </summary>
         public static string C_MoreOptions_ExportDiagnosticData_D {
             get {
                 return ResourceManager.GetString("C_MoreOptions_ExportDiagnosticData_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 导出设置.
         /// </summary>
@@ -112,16 +411,25 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ExportSettings", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to 将当前设置导出为配置文件，用于备份和迁移.
+        ///   Looks up a localized string similar to 将当前设置导出为 SecRandom v3 配置文件，用于备份和迁移.
         /// </summary>
         public static string C_MoreOptions_ExportSettings_D {
             get {
                 return ResourceManager.GetString("C_MoreOptions_ExportSettings_D", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to 反馈.
+        /// </summary>
+        public static string C_MoreOptions_Feedback {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_Feedback", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 导入所有数据.
         /// </summary>
@@ -130,16 +438,16 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ImportAllData", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to 启动软件时从备份文件恢复全部数据.
+        ///   Looks up a localized string similar to 仅从 SecRandom v3 备份导入全部数据，导入前自动创建恢复快照.
         /// </summary>
         public static string C_MoreOptions_ImportAllData_D {
             get {
                 return ResourceManager.GetString("C_MoreOptions_ImportAllData_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 导入设置.
         /// </summary>
@@ -148,16 +456,16 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_ImportSettings", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to 从配置文件导入设置，覆盖当前配置信息.
+        ///   Looks up a localized string similar to 仅从 SecRandom v3 配置文件导入设置，覆盖当前配置信息.
         /// </summary>
         public static string C_MoreOptions_ImportSettings_D {
             get {
                 return ResourceManager.GetString("C_MoreOptions_ImportSettings_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 查看日志.
         /// </summary>
@@ -166,7 +474,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_MoreOptions_LogViewer", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 查看和管理程序日志文件.
         /// </summary>
@@ -176,18 +484,33 @@ namespace SecRandom.Langs.SettingsView {
             }
         }
 
-        public static string C_MoreOptions_OpenLogDirectory {
-            get { return ResourceManager.GetString("C_MoreOptions_OpenLogDirectory", resourceCulture); }
-        }
-
-        public static string C_MoreOptions_OpenDataDirectory {
-            get { return ResourceManager.GetString("C_MoreOptions_OpenDataDirectory", resourceCulture); }
-        }
-
+        /// <summary>
+        ///   Looks up a localized string similar to 打开应用目录.
+        /// </summary>
         public static string C_MoreOptions_OpenAppDirectory {
-            get { return ResourceManager.GetString("C_MoreOptions_OpenAppDirectory", resourceCulture); }
+            get {
+                return ResourceManager.GetString("C_MoreOptions_OpenAppDirectory", resourceCulture);
+            }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to 打开数据目录.
+        /// </summary>
+        public static string C_MoreOptions_OpenDataDirectory {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_OpenDataDirectory", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 打开日志目录.
+        /// </summary>
+        public static string C_MoreOptions_OpenLogDirectory {
+            get {
+                return ResourceManager.GetString("C_MoreOptions_OpenLogDirectory", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 搜索设置....
         /// </summary>
@@ -196,7 +519,178 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("C_SearchBox_Watermark", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ZIP 文件.
+        /// </summary>
+        public static string C_ZipFileType {
+            get {
+                return ResourceManager.GetString("C_ZipFileType", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 标准诊断包包含全部经过脱敏处理的日志和运行时信息。扩展诊断包还包含脱敏设置快照、插件与档案数量摘要及脱敏崩溃报告。两种诊断包均不包含名单、历史原文、插件私有配置或安全凭据.
+        /// </summary>
+        public static string M_DiagnosticExportContent {
+            get {
+                return ResourceManager.GetString("M_DiagnosticExportContent", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 导出诊断数据.
+        /// </summary>
+        public static string M_DiagnosticExportTitle {
+            get {
+                return ResourceManager.GetString("M_DiagnosticExportTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 导出失败。.
+        /// </summary>
+        public static string M_ExportFailed {
+            get {
+                return ResourceManager.GetString("M_ExportFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 已导出：{0}.
+        /// </summary>
+        public static string M_ExportSuccess {
+            get {
+                return ResourceManager.GetString("M_ExportSuccess", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 请填写有效的联系邮箱，或将其留空。.
+        /// </summary>
+        public static string M_Feedback_InvalidEmail {
+            get {
+                return ResourceManager.GetString("M_Feedback_InvalidEmail", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 诊断 ZIP 超过上传限制，未提交反馈。请清理日志后重试，或使用 GitHub。.
+        /// </summary>
+        public static string M_Feedback_DiagnosticTooLarge {
+            get {
+                return ResourceManager.GetString("M_Feedback_DiagnosticTooLarge", resourceCulture);
+            }
+        }
         
+        /// <summary>
+        ///   Looks up a localized string similar to 反馈提交失败，请稍后重试或使用 GitHub。.
+        /// </summary>
+        public static string M_Feedback_Failed {
+            get {
+                return ResourceManager.GetString("M_Feedback_Failed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 请填写所有必填项后再提交反馈。.
+        /// </summary>
+        public static string M_Feedback_Required {
+            get {
+                return ResourceManager.GetString("M_Feedback_Required", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 反馈已提交，感谢你的帮助。.
+        /// </summary>
+        public static string M_Feedback_Success {
+            get {
+                return ResourceManager.GetString("M_Feedback_Success", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 将替换现有非凭据数据、设置、名单、历史、资源、插件和插件私有配置。确认后会先自动创建完整恢复快照；快照失败时不会导入。安全凭据不会导入。.
+        /// </summary>
+        public static string M_ImportAllDataContent {
+            get {
+                return ResourceManager.GetString("M_ImportAllDataContent", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 导入失败，未完成覆盖。.
+        /// </summary>
+        public static string M_ImportFailed {
+            get {
+                return ResourceManager.GetString("M_ImportFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 将替换当前所有非凭据设置，包括窗口、启动、主题、抽取和系统集成。确认后会先自动创建设置恢复快照；快照失败时不会导入。密码、TOTP、USB 绑定和锁定状态不会导入。.
+        /// </summary>
+        public static string M_ImportSettingsContent {
+            get {
+                return ResourceManager.GetString("M_ImportSettingsContent", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 导入完成，恢复备份：{0}.
+        /// </summary>
+        public static string M_ImportSuccess {
+            get {
+                return ResourceManager.GetString("M_ImportSuccess", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 确认导入.
+        /// </summary>
+        public static string M_ImportTitle {
+            get {
+                return ResourceManager.GetString("M_ImportTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 该文件不是受支持的 SecRandom v3 导出文件。.
+        /// </summary>
+        public static string M_ImportUnsupportedContent {
+            get {
+                return ResourceManager.GetString("M_ImportUnsupportedContent", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 不支持的导入文件.
+        /// </summary>
+        public static string M_ImportUnsupportedTitle {
+            get {
+                return ResourceManager.GetString("M_ImportUnsupportedTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 未识别.
+        /// </summary>
+        public static string M_ImportUnsupportedUnknownVersion {
+            get {
+                return ResourceManager.GetString("M_ImportUnsupportedUnknownVersion", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 检测到的导出版本：{0}\n\n{1}\n\n未创建恢复快照，也未修改任何数据。.
+        /// </summary>
+        public static string M_ImportUnsupportedVersion {
+            get {
+                return ResourceManager.GetString("M_ImportUnsupportedVersion", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 需要重启.
         /// </summary>
@@ -206,10 +700,6 @@ namespace SecRandom.Langs.SettingsView {
             }
         }
 
-        public static string M_OpenDirectoryFailed {
-            get { return ResourceManager.GetString("M_OpenDirectoryFailed", resourceCulture); }
-        }
-        
         /// <summary>
         ///   Looks up a localized string similar to 取消.
         /// </summary>
@@ -218,16 +708,16 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("M_NeedsRestarting_Close", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to 部分设置需要重启以应用更改。.
+        ///   Looks up a localized string similar to 部分设置需要重启以应用更改.
         /// </summary>
         public static string M_NeedsRestarting_D {
             get {
                 return ResourceManager.GetString("M_NeedsRestarting_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 重启.
         /// </summary>
@@ -236,7 +726,7 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("M_NeedsRestarting_Primary", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 部分设置需要重启才能生效，点击以重启应用。.
         /// </summary>
@@ -245,7 +735,25 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("M_NeedsRestarting_Tooltip", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to 导航时出现错误.
+        /// </summary>
+        public static string M_NavigateFailed {
+            get {
+                return ResourceManager.GetString("M_NavigateFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 无法打开目录。.
+        /// </summary>
+        public static string M_OpenDirectoryFailed {
+            get {
+                return ResourceManager.GetString("M_OpenDirectoryFailed", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 页面 {0} 未找到.
         /// </summary>

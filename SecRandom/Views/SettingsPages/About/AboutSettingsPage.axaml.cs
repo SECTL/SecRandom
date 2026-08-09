@@ -115,7 +115,7 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
 
     private async void Contributors_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (Resources["ContributorsDrawer"] is Grid drawer)
+        if (Resources["ContributorsDrawer"] is Control drawer)
         {
             drawer.DataContext = this;
             SettingsView.Current?.OpenDrawer(drawer);

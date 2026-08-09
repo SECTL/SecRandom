@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+             xmlns:history="clr-namespace:SecRandom.Views.SettingsPages.History"
+             x:Class="SecRandom.Views.Mobile.MobileHistoryPage">
+    <Grid RowDefinitions="Auto,*" Margin="12" RowSpacing="8" Classes="animated-intro">
+        <Viewbox Grid.Row="0" Height="36">
+            <TabStrip x:Name="HistoryTabs"
+                      SelectedIndex="0"
+                      HorizontalAlignment="Center"
+                      Theme="{DynamicResource TabStripStyle}">
+                <TabStripItem Content="{x:Static langs:Resources.C_RollCall}" Width="96" />
+                <TabStripItem x:Name="LotteryTab" Content="{x:Static langs:Resources.C_Lottery}" Width="96" />
+            </TabStrip>
+        </Viewbox>
+
+        <Carousel Grid.Row="1"
+                  Classes="animated"
+                  SelectedIndex="{Binding #HistoryTabs.SelectedIndex}">
+            <history:RollCallHistorySettingsPage />
+            <history:LotteryHistorySettingsPage />
+        </Carousel>
+    </Grid>
+</UserControl>

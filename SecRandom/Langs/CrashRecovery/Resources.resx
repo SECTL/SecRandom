@@ -25,7 +25,7 @@
         <value>SecRandom 崩溃恢复</value>
     </data>
     <data name="Description" xml:space="preserve">
-        <value>SecRandom 遇到了未处理的错误。下面是本次崩溃报告，可复制后反馈问题，或重新启动程序。</value>
+        <value>SecRandom 遇到了未处理的错误；下面是本次崩溃报告，可复制后反馈问题，或重新启动程序</value>
     </data>
     <data name="C_CopyReport" xml:space="preserve">
         <value>复制报告</value>
@@ -69,5 +69,26 @@
 ```text
 {0}
 ```</value>
+    </data>
+    <data name="C_ReportInApp" xml:space="preserve">
+        <value>应用内反馈</value>
+    </data>
+    <data name="C_ReportGitHub" xml:space="preserve">
+        <value>GitHub</value>
+    </data>
+    <data name="M_ReportSuccess" xml:space="preserve">
+        <value>崩溃报告已通过应用内反馈提交</value>
+    </data>
+    <data name="M_ReportFailed" xml:space="preserve">
+        <value>应用内反馈提交失败，请使用 GitHub 反馈</value>
+    </data>
+    <data name="FeedbackExpected" xml:space="preserve">
+        <value>应用应稳定运行，不应发生未处理异常</value>
+    </data>
+    <data name="FeedbackActual" xml:space="preserve">
+        <value>应用发生未处理异常并进入崩溃恢复</value>
+    </data>
+    <data name="FeedbackReproduction" xml:space="preserve">
+        <value>崩溃报告已自动收集，请参考随附诊断信息</value>
     </data>
 </root>

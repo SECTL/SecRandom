@@ -2,56 +2,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:SecRandom.Views"
-        xmlns:lcr="clr-namespace:SecRandom.Langs.CrashRecovery"
+         xmlns:lcr="clr-namespace:SecRandom.Langs.CrashRecovery"
         mc:Ignorable="d" d:DesignWidth="720" d:DesignHeight="520"
         x:Class="SecRandom.Views.CrashRecoveryWindow"
-        x:DataType="local:CrashRecoveryWindow"
         Icon="/Assets/AppLogo.ico"
         Title="{x:Static lcr:Resources.Title}"
         Width="720" Height="520"
         MinWidth="520" MinHeight="420"
         WindowStartupLocation="CenterScreen">
-    <Grid Margin="24" RowDefinitions="Auto,*,Auto">
-        <StackPanel>
-            <TextBlock Text="{x:Static lcr:Resources.Title}"
-                       FontSize="24"
-                       FontWeight="SemiBold" />
-            <TextBlock Text="{x:Static lcr:Resources.Description}"
-                       TextWrapping="Wrap"
-                       Margin="0 8 0 16" />
-        </StackPanel>
-
-        <TextBox Grid.Row="1"
-                 Text="{Binding CrashReport}"
-                 IsReadOnly="True"
-                 AcceptsReturn="True"
-                 TextWrapping="NoWrap"
-                 FontFamily="Consolas"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                 ScrollViewer.HorizontalScrollBarVisibility="Auto" />
-
-        <StackPanel Grid.Row="2"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Right"
-                    Spacing="8"
-                    Margin="0 16 0 0">
-            <Button Content="{x:Static lcr:Resources.C_CopyReport}"
-                    MinWidth="96"
-                    Click="CopyReport_OnClick" />
-            <Button Content="{x:Static lcr:Resources.C_ReportIssue}"
-                    MinWidth="96"
-                    Click="ReportIssue_OnClick" />
-            <Button Content="{x:Static lcr:Resources.C_Ignore}"
-                    MinWidth="80"
-                    IsVisible="{Binding CanIgnore}"
-                    Click="Ignore_OnClick" />
-            <Button Content="{Binding RestartButtonText}"
-                    MinWidth="96"
-                    Click="Restart_OnClick" />
-            <Button Content="{x:Static lcr:Resources.C_Close}"
-                    MinWidth="80"
-                    Click="Close_OnClick" />
-        </StackPanel>
-    </Grid>
+    <ContentControl x:Name="ContentHost" />
 </Window>

@@ -56,9 +56,9 @@
   <data name="S_Usb" xml:space="preserve"><value>绑定 U 盘</value></data>
   <data name="S_Usb_D" xml:space="preserve"><value>绑定盘内会保存专用安全令牌，插入该盘时可作为验证方式</value></data>
   <data name="S_Factors" xml:space="preserve"><value>验证方式</value></data>
-  <data name="S_Factors_D" xml:space="preserve"><value>密码为必选项；可额外选择已经配置的验证方式</value></data>
+  <data name="S_Factors_D" xml:space="preserve"><value>密码用于保护凭据；可额外选择已经配置的验证方式</value></data>
   <data name="S_RequireAll" xml:space="preserve"><value>全部已选验证方式均需验证</value></data>
-   <data name="S_RequireAll_D" xml:space="preserve"><value>密码始终需要验证；关闭时，任意一个已选附加方式通过即可继续</value></data>
+   <data name="S_RequireAll_D" xml:space="preserve"><value>开启时必须完成全部已选验证方式；关闭时任一已选方式通过即可继续</value></data>
   <data name="S_WindowOperations" xml:space="preserve"><value>窗口与应用</value></data>
   <data name="S_WindowOperations_D" xml:space="preserve"><value>保护设置入口、窗口显隐及应用生命周期操作</value></data>
   <data name="S_DrawOperations" xml:space="preserve"><value>抽取</value></data>
@@ -66,6 +66,7 @@
   <data name="C_ManageBindings" xml:space="preserve"><value>管理绑定</value></data>
   <data name="C_SetPassword" xml:space="preserve"><value>设置密码</value></data>
   <data name="C_ManagePassword" xml:space="preserve"><value>修改或移除密码</value></data>
+  <data name="C_ChangePassword" xml:space="preserve"><value>修改密码</value></data>
   <data name="C_SetTotp" xml:space="preserve"><value>设置 TOTP</value></data>
   <data name="C_ResetTotp" xml:space="preserve"><value>重置 TOTP</value></data>
   <data name="C_OpenSettings" xml:space="preserve"><value>打开设置</value></data>
@@ -90,10 +91,15 @@
   <data name="C_Preview" xml:space="preserve"><value>预览</value></data>
   <data name="C_VerifyAndSave" xml:space="preserve"><value>验证并保存</value></data>
   <data name="C_Bind" xml:space="preserve"><value>绑定</value></data>
+  <data name="C_Unbind" xml:space="preserve"><value>解绑</value></data>
   <data name="C_UnbindSelected" xml:space="preserve"><value>解绑所选</value></data>
   <data name="C_BoundDevices" xml:space="preserve"><value>已绑定设备</value></data>
+  <data name="C_UsbDriveLetter" xml:space="preserve"><value>盘符</value></data>
+  <data name="C_UsbDiskName" xml:space="preserve"><value>磁盘名称</value></data>
+  <data name="C_UsbDeviceId" xml:space="preserve"><value>设备标识符</value></data>
   <data name="C_UsbConnected" xml:space="preserve"><value>已连接</value></data>
   <data name="C_UsbDisconnected" xml:space="preserve"><value>未连接</value></data>
+  <data name="C_Refresh" xml:space="preserve"><value>刷新</value></data>
   <data name="C_PasswordPlaceholder" xml:space="preserve"><value>输入密码</value></data>
   <data name="C_CurrentPasswordPlaceholder" xml:space="preserve"><value>输入当前密码</value></data>
   <data name="C_NewPasswordPlaceholder" xml:space="preserve"><value>输入新密码</value></data>
@@ -103,30 +109,33 @@
   <data name="M_PasswordDialogTitle" xml:space="preserve"><value>管理安全密码</value></data>
   <data name="M_SetPasswordDialogTitle" xml:space="preserve"><value>设置安全密码</value></data>
   <data name="M_TotpDialogTitle" xml:space="preserve"><value>设置 TOTP 动态口令</value></data>
-  <data name="M_TotpSetupDescription" xml:space="preserve"><value>请在认证器应用中添加以下密钥，然后输入当前 6 位验证码确认。</value></data>
+  <data name="M_TotpSetupDescription" xml:space="preserve"><value>请在认证器应用中添加以下密钥，然后输入当前 6 位验证码确认</value></data>
   <data name="M_UsbDialogTitle" xml:space="preserve"><value>管理 U 盘绑定</value></data>
-  <data name="M_UsbSetupDescription" xml:space="preserve"><value>输入已挂载 U 盘的根目录。绑定时会在其中创建 SecRandom.safety.key。</value></data>
+  <data name="M_UsbSetupDescription" xml:space="preserve"><value>从可移动设备列表中选择 U 盘，绑定时会在其中创建 SecRandom.safety.key</value></data>
   <data name="M_VerificationDialogTitle" xml:space="preserve"><value>安全验证</value></data>
-  <data name="M_VerificationAllFactors" xml:space="preserve"><value>请完成全部已选验证方式。</value></data>
-  <data name="M_VerificationAnyFactor" xml:space="preserve"><value>完成任一已选验证方式即可继续。</value></data>
-  <data name="M_VerificationLockedFormat" xml:space="preserve"><value>验证已锁定，请在 {0} 秒后重试。</value></data>
-  <data name="M_LockoutFormat" xml:space="preserve"><value>验证已锁定，请在 {0} 秒后再试。</value></data>
+  <data name="M_VerificationAllFactors" xml:space="preserve"><value>请完成全部已选验证方式</value></data>
+  <data name="M_VerificationAnyFactor" xml:space="preserve"><value>完成任一已选验证方式即可继续</value></data>
+  <data name="M_VerificationLockedFormat" xml:space="preserve"><value>验证已锁定，请在 {0} 秒后重试</value></data>
+  <data name="M_LockoutFormat" xml:space="preserve"><value>验证已锁定，请在 {0} 秒后再试</value></data>
   <data name="M_UsbPresent" xml:space="preserve"><value>已连接绑定的 U 盘</value></data>
-  <data name="M_PasswordRemoved" xml:space="preserve"><value>已移除密码并关闭安全保护。</value></data>
-  <data name="M_PasswordSaved" xml:space="preserve"><value>密码已保存。</value></data>
-  <data name="M_PasswordSaveFailed" xml:space="preserve"><value>无法保存密码。密码至少需要 6 位，修改时请确认当前密码。</value></data>
-  <data name="M_SetPasswordFirst" xml:space="preserve"><value>请先设置密码。</value></data>
-  <data name="M_TotpSaved" xml:space="preserve"><value>TOTP 设置已保存。</value></data>
-  <data name="M_TotpSaveFailed" xml:space="preserve"><value>验证码无效，未保存 TOTP 设置。</value></data>
-  <data name="M_UsbUpdated" xml:space="preserve"><value>U 盘绑定已更新。</value></data>
-  <data name="M_UsbUpdateFailed" xml:space="preserve"><value>无法更新 U 盘绑定。请确认设备已连接且可写入。</value></data>
+  <data name="M_UsbMissing" xml:space="preserve"><value>未检测到绑定的 U 盘</value></data>
+  <data name="M_PasswordRemoved" xml:space="preserve"><value>已移除密码并关闭安全保护</value></data>
+  <data name="M_PasswordSaved" xml:space="preserve"><value>密码已保存</value></data>
+  <data name="M_PasswordSaveFailed" xml:space="preserve"><value>无法保存密码；密码至少需要 6 位，修改时请确认当前密码</value></data>
+  <data name="M_SetPasswordFirst" xml:space="preserve"><value>请先设置密码</value></data>
+  <data name="M_TotpSaved" xml:space="preserve"><value>TOTP 设置已保存</value></data>
+  <data name="M_TotpSaveFailed" xml:space="preserve"><value>验证码无效，未保存 TOTP 设置</value></data>
+  <data name="M_UsbUpdated" xml:space="preserve"><value>U 盘绑定已更新</value></data>
+  <data name="M_UsbUpdateFailed" xml:space="preserve"><value>无法更新 U 盘绑定；请确认设备已连接且可写入</value></data>
   <data name="C_SelectUsb" xml:space="preserve"><value>选择 U 盘</value></data>
   <data name="C_SelectedUsb" xml:space="preserve"><value>已选位置</value></data>
-  <data name="M_SelectUsbFirst" xml:space="preserve"><value>请先选择 U 盘。</value></data>
+  <data name="M_SelectUsbFirst" xml:space="preserve"><value>请先选择 U 盘</value></data>
   <data name="M_UsbPickerTitle" xml:space="preserve"><value>选择用于安全验证的 U 盘</value></data>
-  <data name="M_UsbShortDescription" xml:space="preserve"><value>选择要用于验证的 U 盘。</value></data>
+  <data name="M_UsbShortDescription" xml:space="preserve"><value>选择要用于验证的 U 盘</value></data>
+  <data name="M_NoBindableUsb" xml:space="preserve"><value>没有可绑定的 U 盘</value></data>
+  <data name="M_NoBoundUsb" xml:space="preserve"><value>暂无已绑定的 U 盘</value></data>
   <data name="M_TotpManualKey" xml:space="preserve"><value>手动密钥</value></data>
   <data name="M_TotpCode" xml:space="preserve"><value>验证码</value></data>
   <data name="C_Copy" xml:space="preserve"><value>复制</value></data>
-  <data name="M_Copied" xml:space="preserve"><value>已复制。</value></data>
+  <data name="M_Copied" xml:space="preserve"><value>已复制</value></data>
 </root>

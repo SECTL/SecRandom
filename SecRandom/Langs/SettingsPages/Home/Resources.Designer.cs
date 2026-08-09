@@ -47,6 +47,11 @@ namespace SecRandom.Langs.SettingsPages.Home {
         public static string C_TotalRounds => ResourceManager.GetString("C_TotalRounds", resourceCulture);
         public static string M_NoLotteryPools => ResourceManager.GetString("M_NoLotteryPools", resourceCulture);
         public static string M_NoRollCallLists => ResourceManager.GetString("M_NoRollCallLists", resourceCulture);
+        public static string M_NoDrawHistory => ResourceManager.GetString("M_NoDrawHistory", resourceCulture);
+        public static string M_JustNow => ResourceManager.GetString("M_JustNow", resourceCulture);
+        public static string M_MinutesAgo => ResourceManager.GetString("M_MinutesAgo", resourceCulture);
+        public static string M_TodayAt => ResourceManager.GetString("M_TodayAt", resourceCulture);
+        public static string M_YesterdayAt => ResourceManager.GetString("M_YesterdayAt", resourceCulture);
         public static string Page_Description => ResourceManager.GetString("Page_Description", resourceCulture);
         public static string Page_Title => ResourceManager.GetString("Page_Title", resourceCulture);
         public static string S_Overview => ResourceManager.GetString("S_Overview", resourceCulture);

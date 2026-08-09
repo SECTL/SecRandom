@@ -9,8 +9,8 @@
               x:Class="SecRandom.Views.SettingsPages.LogViewer.LogViewerSettingsPage"
              x:DataType="local:LogViewerSettingsPage"
              Loaded="OnLoaded">
-    <Grid RowDefinitions="Auto * Auto 220" Margin="12 12 18 12" RowSpacing="10">
-        <Grid Grid.Row="0" ColumnDefinitions="360 Auto * Auto Auto Auto" ColumnSpacing="8">
+    <Grid RowDefinitions="Auto Auto * Auto 128" Margin="12 12 18 12" RowSpacing="10">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto * Auto Auto Auto Auto Auto" ColumnSpacing="8">
             <ComboBox Grid.Column="0"
                       MinWidth="260"
                       MaxWidth="380"
@@ -34,25 +34,27 @@
                 </ComboBox.ItemTemplate>
             </ComboBox>
 
-            <TextBox Grid.Column="2"
+            <TextBox Grid.Column="3"
+                     MinWidth="196"
+                     MaxWidth="256"
                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                      PlaceholderText="{x:Static lsp:Resources.C_SearchWatermark}" />
 
-            <Button Grid.Column="3"
+            <Button Grid.Column="4"
                     Theme="{StaticResource TransparentButton}"
                     ToolTip.Tip="{x:Static lsp:Resources.C_Refresh}"
                     Click="RefreshButton_OnClick">
                 <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseFilled}" />
             </Button>
 
-            <Button Grid.Column="4"
+            <Button Grid.Column="5"
                     Theme="{StaticResource TransparentButton}"
                     ToolTip.Tip="{x:Static lsp:Resources.C_OpenFolder}"
                     Click="OpenFolderButton_OnClick">
                 <sr:FluentIcon Glyph="{sr:Fi FolderOpenFilled}" />
             </Button>
 
-            <Button Grid.Column="5"
+            <Button Grid.Column="6"
                     Theme="{StaticResource TransparentButton}"
                     ToolTip.Tip="{x:Static lsp:Resources.C_DeleteSelected}"
                     IsEnabled="{Binding CanDeleteSelectedLogFile}"
@@ -61,37 +63,7 @@
             </Button>
         </Grid>
 
-        <Border Grid.Row="1"
-                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="4"
-                ClipToBounds="True">
-            <DataGrid AutoGenerateColumns="False"
-                      CanUserSortColumns="False"
-                      CanUserResizeColumns="True"
-                      GridLinesVisibility="Horizontal"
-                      IsReadOnly="True"
-                      SelectionMode="Single"
-                      ItemsSource="{Binding FilteredEntries}"
-                      SelectedItem="{Binding SelectedEntry}">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Width="190"
-                                        Header="{x:Static lsp:Resources.C_ColumnTime}"
-                                        Binding="{Binding TimeText}" />
-                    <DataGridTextColumn Width="130"
-                                        Header="{x:Static lsp:Resources.C_ColumnLevel}"
-                                        Binding="{Binding LevelText}" />
-                    <DataGridTextColumn Width="220"
-                                        Header="{x:Static lsp:Resources.C_ColumnCategory}"
-                                        Binding="{Binding ShortCategory}" />
-                    <DataGridTextColumn Width="*"
-                                        Header="{x:Static lsp:Resources.C_ColumnMessage}"
-                                        Binding="{Binding Preview}" />
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
-
-        <Grid Grid.Row="2" ColumnDefinitions="* Auto" ColumnSpacing="8">
+        <Grid Grid.Row="1" ColumnDefinitions="* Auto" ColumnSpacing="8">
             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                 <TextBlock Text="{Binding EntryCountText}"
                            Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
@@ -108,17 +80,40 @@
             </Button>
         </Grid>
 
-        <Border Grid.Row="3"
+        <Border Grid.Row="2"
                 BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                 BorderThickness="1"
                 CornerRadius="4"
-                Padding="12">
-            <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Auto">
-                <SelectableTextBlock Text="{Binding SelectedEntryText}"
-                                     FontSize="12"
-                                     TextWrapping="NoWrap" />
-            </ScrollViewer>
+                ClipToBounds="True">
+            <DataGrid AutoGenerateColumns="False"
+                      CanUserSortColumns="False"
+                      CanUserResizeColumns="True"
+                      GridLinesVisibility="Horizontal"
+                      IsReadOnly="True"
+                      SelectionMode="Single"
+                      ItemsSource="{Binding FilteredEntries}"
+                      SelectedItem="{Binding SelectedEntry}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="{x:Static lsp:Resources.C_ColumnTime}"
+                                        Binding="{Binding TimeText}" />
+                    <DataGridTextColumn Header="{x:Static lsp:Resources.C_ColumnLevel}"
+                                        Binding="{Binding LevelText}" />
+                    <DataGridTextColumn Width="220"
+                                        Header="{x:Static lsp:Resources.C_ColumnCategory}"
+                                        Binding="{Binding ShortCategory}" />
+                    <DataGridTextColumn Width="*"
+                                        Header="{x:Static lsp:Resources.C_ColumnMessage}"
+                                        Binding="{Binding Preview}" />
+                </DataGrid.Columns>
+            </DataGrid>
         </Border>
+
+        <GridSplitter Grid.Row="3" />
+        
+        <TextBox Grid.Row="4"
+                 Text="{Binding SelectedEntryText}"
+                 IsReadOnly="True"
+                 FontSize="12"
+                 TextWrapping="NoWrap" />
     </Grid>
 </UserControl>

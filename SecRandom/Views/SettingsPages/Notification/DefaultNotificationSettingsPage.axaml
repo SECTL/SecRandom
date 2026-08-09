@@ -7,7 +7,7 @@
              x:Class="SecRandom.Views.SettingsPages.Notification.DefaultNotificationSettingsPage"
              x:DataType="notification:DefaultNotificationSettingsPage">
     <ScrollViewer>
-        <StackPanel Classes="page-container animated-intro">
+        <StackPanel Classes="page-container animated-intro settings">
             <sr:IconText Text="{Binding NotificationWindowSettingsTitle}" Glyph="{sr:Fi WindowFilled}" Margin="0 0 0 4" />
 
             <fa:FASettingsExpander Header="{Binding WindowPositionTitle}"

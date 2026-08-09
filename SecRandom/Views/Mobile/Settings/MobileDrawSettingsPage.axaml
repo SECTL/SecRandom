@@ -1,0 +1,365 @@
+<local:MobileSettingsPageBase xmlns="https://github.com/avaloniaui"
+                              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+                              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                              xmlns:media="clr-namespace:SecRandom.Services.Mobile"
+                              xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
+                              xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+                              x:Class="SecRandom.Views.Mobile.Settings.MobileDrawSettingsPage">
+    <ScrollViewer x:Name="PageScroll"
+                  Padding="20,20,20,28"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto"
+                  IsScrollChainingEnabled="False"
+                  IsScrollInertiaEnabled="True">
+        <StackPanel Spacing="14" MaxWidth="720">
+            <StackPanel Spacing="4">
+                <TextBlock Text="{x:Static langs:Resources.S_DrawSettings}"
+                           FontSize="24"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="{x:Static langs:Resources.S_DrawSettings_D}"
+                           FontSize="12"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+
+            <fa:FASettingsExpander Header="{x:Static langs:Resources.S_RollCall}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PersonFilled}}"
+                                   IsExpanded="True">
+                <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_RollCall}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Spacing="8">
+                            <RadioButton x:Name="RollCallFairButton"
+                                         Content="{x:Static langs:Resources.O_Fair}"
+                                         IsCheckedChanged="RollCallDrawType_OnChecked" />
+                            <RadioButton x:Name="RollCallRandomButton"
+                                         Content="{x:Static langs:Resources.O_Random}"
+                                         IsCheckedChanged="RollCallDrawType_OnChecked" />
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_RepeatMode}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Spacing="8">
+                            <RadioButton x:Name="RollCallNoRepeatButton"
+                                         Content="{x:Static langs:Resources.O_NoRepeat}"
+                                         IsCheckedChanged="RollCallDrawMode_OnChecked" />
+                            <RadioButton x:Name="RollCallRepeatButton"
+                                         Content="{x:Static langs:Resources.O_Repeat}"
+                                         IsCheckedChanged="RollCallDrawMode_OnChecked" />
+                            <RadioButton x:Name="RollCallHalfRepeatButton"
+                                         Content="{x:Static langs:Resources.O_HalfRepeat}"
+                                         IsCheckedChanged="RollCallDrawMode_OnChecked" />
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{x:Static langs:Resources.S_HalfRepeat}" FontSize="12" />
+                                <TextBox x:Name="RollCallHalfRepeatBox"
+                                         MinHeight="44"
+                                         LostFocus="RollCallHalfRepeatBox_OnLostFocus" />
+                            </StackPanel>
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_AttachedImage}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch x:Name="RollCallImageToggle"
+                                      OnContent=""
+                                      OffContent=""
+                                      IsCheckedChanged="RollCallImageToggle_OnIsCheckedChanged" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_ClearRecord}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Spacing="8">
+                            <RadioButton x:Name="RollCallRestartedButton"
+                                         Content="{x:Static langs:Resources.O_Restarted}"
+                                         IsCheckedChanged="RollCallClearRecord_OnChecked" />
+                            <RadioButton x:Name="RollCallClearedButton"
+                                         Content="{x:Static langs:Resources.O_Cleared}"
+                                         IsCheckedChanged="RollCallClearRecord_OnChecked" />
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="LotterySettingsSection"
+                                   Header="{x:Static langs:Resources.S_Lottery}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi GiftFilled}}"
+                                   IsExpanded="True">
+                <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_Lottery}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Spacing="8">
+                            <RadioButton x:Name="LotteryCountButton"
+                                         Content="{x:Static langs:Resources.O_Count}"
+                                         IsCheckedChanged="LotteryDrawType_OnChecked" />
+                            <RadioButton x:Name="LotteryPanButton"
+                                         Content="{x:Static langs:Resources.O_Pan}"
+                                         IsCheckedChanged="LotteryDrawType_OnChecked" />
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                <fa:FASettingsExpanderItem x:Name="LotteryRepeatSettings"
+                                            Content="{x:Static langs:Resources.S_RepeatMode}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Spacing="8">
+                            <RadioButton x:Name="LotteryNoRepeatButton"
+                                         Content="{x:Static langs:Resources.O_NoRepeat}"
+                                         IsCheckedChanged="LotteryDrawMode_OnChecked" />
+                            <RadioButton x:Name="LotteryRepeatButton"
+                                         Content="{x:Static langs:Resources.O_Repeat}"
+                                         IsCheckedChanged="LotteryDrawMode_OnChecked" />
+                            <RadioButton x:Name="LotteryHalfRepeatButton"
+                                         Content="{x:Static langs:Resources.O_HalfRepeat}"
+                                         IsCheckedChanged="LotteryDrawMode_OnChecked" />
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{x:Static langs:Resources.S_HalfRepeat}" FontSize="12" />
+                                <TextBox x:Name="LotteryHalfRepeatBox"
+                                         MinHeight="44"
+                                         LostFocus="LotteryHalfRepeatBox_OnLostFocus" />
+                            </StackPanel>
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_AttachedImage}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ToggleSwitch x:Name="LotteryImageToggle"
+                                      OnContent=""
+                                      OffContent=""
+                                      IsCheckedChanged="LotteryImageToggle_OnIsCheckedChanged" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+                <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_ClearRecord}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <StackPanel Spacing="8">
+                            <RadioButton x:Name="LotteryRestartedButton"
+                                         Content="{x:Static langs:Resources.O_Restarted}"
+                                         IsCheckedChanged="LotteryClearRecord_OnChecked" />
+                            <RadioButton x:Name="LotteryClearedButton"
+                                         Content="{x:Static langs:Resources.O_Cleared}"
+                                         IsCheckedChanged="LotteryClearRecord_OnChecked" />
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+
+            <StackPanel x:Name="MediaSettingsSection" Spacing="14" IsVisible="False">
+                <fa:FASettingsExpander Header="{x:Static langs:Resources.S_Music}"
+                                       IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}"
+                                       IsExpanded="True">
+                    <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_RollCall}">
+                        <fa:FASettingsExpanderItem.Footer>
+                            <StackPanel Spacing="10">
+                                <ToggleSwitch x:Name="RollCallMusicOverrideToggle"
+                                              Content="{x:Static langs:Resources.S_UseCustomMusic}"
+                                              OnContent=""
+                                              OffContent=""
+                                              IsCheckedChanged="RollCallMusicOverrideToggle_OnIsCheckedChanged" />
+                                <StackPanel x:Name="RollCallMusicOptions" Spacing="8">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{x:Static langs:Resources.S_AnimationMusic}" FontSize="12" />
+                                     <ComboBox x:Name="RollCallAnimationMusicSelector"
+                                                   MinHeight="44"
+                                                   SelectionChanged="RollCallAnimationMusicSelector_OnSelectionChanged">
+                                             <ComboBox.ItemTemplate>
+                                                <DataTemplate x:DataType="media:MobileMediaSelection">
+                                                    <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                                                </DataTemplate>
+                                             </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{x:Static langs:Resources.S_ResultMusic}" FontSize="12" />
+                                     <ComboBox x:Name="RollCallResultMusicSelector"
+                                                   MinHeight="44"
+                                                   SelectionChanged="RollCallResultMusicSelector_OnSelectionChanged">
+                                             <ComboBox.ItemTemplate>
+                                                <DataTemplate x:DataType="media:MobileMediaSelection">
+                                                    <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                                                </DataTemplate>
+                                             </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <ToggleSwitch x:Name="RollCallAnimationLoopToggle"
+                                                  Content="{x:Static langs:Resources.S_AnimationMusicLoop}"
+                                                  OnContent=""
+                                                  OffContent=""
+                                                  IsCheckedChanged="RollCallAnimationLoopToggle_OnIsCheckedChanged" />
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{x:Static langs:Resources.S_AnimationMusicVolume}" FontSize="12" />
+                                        <TextBox x:Name="RollCallAnimationVolumeBox"
+                                                 MinHeight="44"
+                                                 LostFocus="RollCallAnimationVolumeBox_OnLostFocus" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{x:Static langs:Resources.S_ResultMusicVolume}" FontSize="12" />
+                                        <TextBox x:Name="RollCallResultVolumeBox"
+                                                 MinHeight="44"
+                                                 LostFocus="RollCallResultVolumeBox_OnLostFocus" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </fa:FASettingsExpanderItem.Footer>
+                    </fa:FASettingsExpanderItem>
+                    <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_Music}">
+                        <fa:FASettingsExpanderItem.Footer>
+                            <StackPanel Spacing="8">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{x:Static langs:Resources.S_AnimationMusic}" FontSize="12" />
+                                     <ComboBox x:Name="DefaultAnimationMusicSelector"
+                                               MinHeight="44"
+                                               SelectionChanged="DefaultAnimationMusicSelector_OnSelectionChanged">
+                                         <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="media:MobileMediaSelection">
+                                                <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                                            </DataTemplate>
+                                         </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{x:Static langs:Resources.S_ResultMusic}" FontSize="12" />
+                                     <ComboBox x:Name="DefaultResultMusicSelector"
+                                               MinHeight="44"
+                                               SelectionChanged="DefaultResultMusicSelector_OnSelectionChanged">
+                                         <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="media:MobileMediaSelection">
+                                                <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                                            </DataTemplate>
+                                         </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                                <ToggleSwitch x:Name="DefaultAnimationLoopToggle"
+                                              Content="{x:Static langs:Resources.S_AnimationMusicLoop}"
+                                              OnContent=""
+                                              OffContent=""
+                                              IsCheckedChanged="DefaultAnimationLoopToggle_OnIsCheckedChanged" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{x:Static langs:Resources.S_AnimationMusicVolume}" FontSize="12" />
+                                    <TextBox x:Name="DefaultAnimationVolumeBox"
+                                             MinHeight="44"
+                                             LostFocus="DefaultAnimationVolumeBox_OnLostFocus" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{x:Static langs:Resources.S_ResultMusicVolume}" FontSize="12" />
+                                    <TextBox x:Name="DefaultResultVolumeBox"
+                                             MinHeight="44"
+                                             LostFocus="DefaultResultVolumeBox_OnLostFocus" />
+                                </StackPanel>
+                            </StackPanel>
+                        </fa:FASettingsExpanderItem.Footer>
+                    </fa:FASettingsExpanderItem>
+                    <fa:FASettingsExpanderItem x:Name="LotteryMusicItem"
+                                                Content="{x:Static langs:Resources.S_Lottery}">
+                        <fa:FASettingsExpanderItem.Footer>
+                            <StackPanel Spacing="10">
+                                <ToggleSwitch x:Name="LotteryMusicOverrideToggle"
+                                              Content="{x:Static langs:Resources.S_UseCustomMusic}"
+                                              OnContent=""
+                                              OffContent=""
+                                              IsCheckedChanged="LotteryMusicOverrideToggle_OnIsCheckedChanged" />
+                                <StackPanel x:Name="LotteryMusicOptions" Spacing="8">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{x:Static langs:Resources.S_AnimationMusic}" FontSize="12" />
+                                        <ComboBox x:Name="LotteryAnimationMusicSelector"
+                                                  MinHeight="44"
+                                                  SelectionChanged="LotteryAnimationMusicSelector_OnSelectionChanged">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate x:DataType="media:MobileMediaSelection">
+                                                    <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{x:Static langs:Resources.S_ResultMusic}" FontSize="12" />
+                                        <ComboBox x:Name="LotteryResultMusicSelector"
+                                                  MinHeight="44"
+                                                  SelectionChanged="LotteryResultMusicSelector_OnSelectionChanged">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate x:DataType="media:MobileMediaSelection">
+                                                    <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <ToggleSwitch x:Name="LotteryAnimationLoopToggle"
+                                                  Content="{x:Static langs:Resources.S_AnimationMusicLoop}"
+                                                  OnContent=""
+                                                  OffContent=""
+                                                  IsCheckedChanged="LotteryAnimationLoopToggle_OnIsCheckedChanged" />
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{x:Static langs:Resources.S_AnimationMusicVolume}" FontSize="12" />
+                                        <TextBox x:Name="LotteryAnimationVolumeBox"
+                                                 MinHeight="44"
+                                                 LostFocus="LotteryAnimationVolumeBox_OnLostFocus" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{x:Static langs:Resources.S_ResultMusicVolume}" FontSize="12" />
+                                        <TextBox x:Name="LotteryResultVolumeBox"
+                                                 MinHeight="44"
+                                                 LostFocus="LotteryResultVolumeBox_OnLostFocus" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </fa:FASettingsExpanderItem.Footer>
+                    </fa:FASettingsExpanderItem>
+                </fa:FASettingsExpander>
+
+                <fa:FASettingsExpander Header="{x:Static langs:Resources.S_VoiceAnnouncements}"
+                                       IconSource="{sr:FluentIconSource {sr:Fi IotFilled}}"
+                                       IsExpanded="True">
+                    <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_RollCall}">
+                        <fa:FASettingsExpanderItem.Footer>
+                            <ToggleSwitch x:Name="RollCallVoiceAnnouncementToggle"
+                                          Content="{x:Static langs:Resources.S_VoiceAnnouncements}"
+                                          OnContent=""
+                                          OffContent=""
+                                          IsCheckedChanged="RollCallVoiceAnnouncementToggle_OnIsCheckedChanged" />
+                        </fa:FASettingsExpanderItem.Footer>
+                    </fa:FASettingsExpanderItem>
+                    <fa:FASettingsExpanderItem x:Name="LotteryVoiceAnnouncementItem"
+                                                Content="{x:Static langs:Resources.S_Lottery}">
+                        <fa:FASettingsExpanderItem.Footer>
+                            <ToggleSwitch x:Name="LotteryVoiceAnnouncementToggle"
+                                          Content="{x:Static langs:Resources.S_VoiceAnnouncements}"
+                                          OnContent=""
+                                          OffContent=""
+                                          IsCheckedChanged="LotteryVoiceAnnouncementToggle_OnIsCheckedChanged" />
+                        </fa:FASettingsExpanderItem.Footer>
+                    </fa:FASettingsExpanderItem>
+                    <fa:FASettingsExpanderItem Content="{x:Static langs:Resources.S_VoiceAnnouncements}">
+                        <fa:FASettingsExpanderItem.Footer>
+                            <StackPanel Spacing="8">
+                                <ToggleSwitch x:Name="VoiceEnabledToggle"
+                                              Content="{x:Static langs:Resources.S_VoiceAnnouncements}"
+                                              OnContent=""
+                                              OffContent=""
+                                              IsCheckedChanged="VoiceEnabledToggle_OnIsCheckedChanged" />
+                                <ToggleSwitch x:Name="VoiceAnnounceIdToggle"
+                                              Content="{x:Static langs:Resources.S_AnnounceId}"
+                                              OnContent=""
+                                              OffContent=""
+                                              IsCheckedChanged="VoiceAnnounceIdToggle_OnIsCheckedChanged" />
+                                <ToggleSwitch x:Name="VoiceAnnounceNameToggle"
+                                              Content="{x:Static langs:Resources.S_AnnounceName}"
+                                              OnContent=""
+                                              OffContent=""
+                                              IsCheckedChanged="VoiceAnnounceNameToggle_OnIsCheckedChanged" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{x:Static langs:Resources.S_VoiceVolume}" FontSize="12" />
+                                    <TextBox x:Name="VoiceVolumeBox"
+                                             MinHeight="44"
+                                             LostFocus="VoiceVolumeBox_OnLostFocus" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{x:Static langs:Resources.S_VoiceRate}" FontSize="12" />
+                                    <TextBox x:Name="VoiceRateBox"
+                                             MinHeight="44"
+                                             LostFocus="VoiceRateBox_OnLostFocus" />
+                                </StackPanel>
+                            </StackPanel>
+                        </fa:FASettingsExpanderItem.Footer>
+                    </fa:FASettingsExpanderItem>
+                </fa:FASettingsExpander>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</local:MobileSettingsPageBase>

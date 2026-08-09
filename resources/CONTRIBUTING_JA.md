@@ -59,7 +59,6 @@ dotnet test SecRandom.Core.Tests/SecRandom.Core.Tests.csproj -c Release --no-res
 - 生徒、賞品、履歴の内部 ID には `RecordId` を使用します。表示 ID や名前は必須の一意識別子ではありません。
 - 辞書とコレクションの直接変更では設定が自動保存されません。所有するコードが適切なライフサイクル境界で保存してください。
 - すべてのセキュリティ認可は `ISecurityService` を経由します。資格情報を通常設定、ログ、エクスポート、診断情報へ含めてはいけません。
-- プラグインは `SecRandom.Core/Plugins` 配下の安定した契約だけに依存できます。抽選内部、書き込み可能な設定や履歴、完全なホストサービスプロバイダーを渡してはいけません。
 - 新しいアプリケーションアイコンには、raw Unicode Fluent 字形ではなく、プロジェクトの Fluent Filled アイコンシステムを使用してください。
 
 ## 変更範囲とテスト

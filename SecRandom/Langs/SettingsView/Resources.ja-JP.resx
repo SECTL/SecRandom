@@ -20,7 +20,7 @@
   <data name="C_MoreOptions_ImportSettings" xml:space="preserve"><value>設定をインポート</value></data>
   <data name="C_MoreOptions_ImportSettings_D" xml:space="preserve"><value>SecRandom v3 設定ファイルから設定のみをインポートし、現在の設定を置き換えます</value></data>
   <data name="C_MoreOptions_ExportAllData" xml:space="preserve"><value>すべてのデータをエクスポート</value></data>
-  <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve"><value>資格情報を除くデータ、設定、プラグイン、プラグインの個別設定を今すぐエクスポートします</value></data>
+   <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve"><value>資格情報を除くすべてのデータと設定を今すぐエクスポートします</value></data>
   <data name="C_MoreOptions_ImportAllData" xml:space="preserve"><value>すべてのデータをインポート</value></data>
   <data name="C_MoreOptions_ImportAllData_D" xml:space="preserve"><value>SecRandom v3 バックアップからすべてのデータをインポートします。インポート前に復元スナップショットを作成します</value></data>
    <data name="C_MoreOptions_OpenLogDirectory" xml:space="preserve"><value>ログフォルダーを開く</value></data>
@@ -39,10 +39,10 @@
   <data name="C_DiagnosticStandard" xml:space="preserve"><value>標準診断パッケージ</value></data>
   <data name="C_DiagnosticExtended" xml:space="preserve"><value>拡張診断パッケージ</value></data>
   <data name="M_DiagnosticExportTitle" xml:space="preserve"><value>診断データをエクスポート</value></data>
-  <data name="M_DiagnosticExportContent" xml:space="preserve"><value>標準パッケージには匿名化したログと実行情報が含まれます。拡張パッケージには匿名化した設定スナップショット、プラグインとプロファイル数の概要、匿名化したクラッシュレポートも含まれます。どちらにもリストや履歴の内容、プラグインの個別設定、安全資格情報は含まれません</value></data>
+   <data name="M_DiagnosticExportContent" xml:space="preserve"><value>標準パッケージには匿名化したログと実行情報が含まれます。拡張パッケージには匿名化した設定スナップショット、プロファイル数の概要、匿名化したクラッシュレポートも含まれます。どちらにもリストや履歴の内容、安全資格情報は含まれません</value></data>
   <data name="M_ImportTitle" xml:space="preserve"><value>インポートの確認</value></data>
   <data name="M_ImportSettingsContent" xml:space="preserve"><value>ウィンドウ、起動、テーマ、抽選、デスクトップ連携を含む、資格情報以外のすべての設定が置き換えられます。先に復元スナップショットを作成し、失敗した場合はインポートを中止します。パスワード、TOTP、USB バインド、ロックアウト状態はインポートされません。</value></data>
-  <data name="M_ImportAllDataContent" xml:space="preserve"><value>資格情報以外のデータ、設定、プロファイル、履歴、リソース、プラグイン、プラグインの個別設定が置き換えられます。先に完全な復元スナップショットを作成し、失敗した場合はインポートを中止します。安全資格情報はインポートされません。</value></data>
+   <data name="M_ImportAllDataContent" xml:space="preserve"><value>資格情報以外のデータ、設定、プロファイル、履歴、リソースが置き換えられます。先に完全な復元スナップショットを作成し、失敗した場合はインポートを中止します。安全資格情報はインポートされません。</value></data>
   <data name="M_ImportUnsupportedTitle" xml:space="preserve"><value>サポートされていないインポートファイル</value></data>
   <data name="M_ImportUnsupportedContent" xml:space="preserve"><value>このファイルはサポートされている SecRandom v3 エクスポートファイルではありません。</value></data>
   <data name="M_ImportUnsupportedUnknownVersion" xml:space="preserve"><value>不明</value></data>
@@ -53,4 +53,33 @@
   <data name="M_ImportFailed" xml:space="preserve"><value>置き換えを完了できず、インポートに失敗しました。</value></data>
   <data name="M_OpenDirectoryFailed" xml:space="preserve"><value>フォルダーを開けませんでした。</value></data>
   <data name="M_PageNotFound" xml:space="preserve"><value>ページ {0} が見つかりません</value></data>
+  <data name="M_NavigateFailed" xml:space="preserve"><value>ナビゲーション中にエラーが発生しました</value></data>
+  <data name="C_MoreOptions_Feedback" xml:space="preserve"><value>フィードバック</value></data>
+  <data name="C_Feedback_Title" xml:space="preserve"><value>フィードバック</value></data>
+  <data name="C_Feedback_CloseTemporary" xml:space="preserve"><value>いったん閉じる</value></data>
+  <data name="C_Feedback_Bug" xml:space="preserve"><value>不具合</value></data>
+  <data name="C_Feedback_Feature" xml:space="preserve"><value>新機能 / 体験の改善</value></data>
+  <data name="C_Feedback_Summary" xml:space="preserve"><value>概要</value></data>
+  <data name="C_Feedback_SummaryPlaceholder" xml:space="preserve"><value>問題または提案を一文で要約してください</value></data>
+  <data name="C_Feedback_ContactEmail" xml:space="preserve"><value>連絡先メールアドレス（任意）</value></data>
+  <data name="C_Feedback_ContactEmailPlaceholder" xml:space="preserve"><value>返信が必要な場合にのみ使用します</value></data>
+  <data name="C_Feedback_CrashReport" xml:space="preserve"><value>クラッシュレポート</value></data>
+  <data name="C_Feedback_Expected" xml:space="preserve"><value>期待する動作</value></data>
+  <data name="C_Feedback_ExpectedPlaceholder" xml:space="preserve"><value>期待していた動作を説明してください。</value></data>
+  <data name="C_Feedback_Actual" xml:space="preserve"><value>実際の結果</value></data>
+  <data name="C_Feedback_ActualPlaceholder" xml:space="preserve"><value>実際に起きたことを説明してください。</value></data>
+  <data name="C_Feedback_Reproduce" xml:space="preserve"><value>再現手順</value></data>
+  <data name="C_Feedback_ReproducePlaceholder" xml:space="preserve"><value>1. 最初に...&#10;2. 次に...&#10;3. ...</value></data>
+  <data name="C_Feedback_Motivation" xml:space="preserve"><value>背景と動機</value></data>
+  <data name="C_Feedback_MotivationPlaceholder" xml:space="preserve"><value>なぜこの機能が必要ですか？どのような場面に役立ちますか？</value></data>
+  <data name="C_Feedback_Request" xml:space="preserve"><value>実装または改善してほしい機能</value></data>
+  <data name="C_Feedback_RequestPlaceholder" xml:space="preserve"><value>希望する機能、手順、または体験の改善をできるだけ具体的に説明してください。</value></data>
+  <data name="C_Feedback_DiagnosticNotice" xml:space="preserve"><value>送信時に「診断データをエクスポート」と同等の匿名化 ZIP 添付ファイルが自動生成・アップロードされ、問題の調査に使用されます。</value></data>
+  <data name="C_Feedback_Cancel" xml:space="preserve"><value>フィードバックを取り消す</value></data>
+  <data name="C_Feedback_Submit" xml:space="preserve"><value>フィードバックを送信</value></data>
+  <data name="M_Feedback_Required" xml:space="preserve"><value>送信する前に必須項目をすべて入力してください。</value></data>
+  <data name="M_Feedback_InvalidEmail" xml:space="preserve"><value>有効な連絡先メールアドレスを入力するか、空欄にしてください。</value></data>
+  <data name="M_Feedback_Success" xml:space="preserve"><value>フィードバックを送信しました。ご協力ありがとうございます。</value></data>
+  <data name="M_Feedback_DiagnosticTooLarge" xml:space="preserve"><value>診断 ZIP がアップロード上限を超えているため、フィードバックは送信されませんでした。ログを整理して再試行するか、GitHub を使用してください。</value></data>
+  <data name="M_Feedback_Failed" xml:space="preserve"><value>フィードバックを送信できませんでした。後でもう一度試すか、GitHub を使用してください。</value></data>
 </root>

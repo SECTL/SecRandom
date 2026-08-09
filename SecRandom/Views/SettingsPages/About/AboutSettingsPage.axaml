@@ -12,55 +12,74 @@
               x:Class="SecRandom.Views.SettingsPages.About.AboutSettingsPage"
               x:DataType="local:AboutSettingsPage">
     <UserControl.Resources>
-        <Grid x:Key="ContributorsDrawer" Width="320" Margin="16" RowDefinitions="Auto,Auto,Auto,*">
-            <TextBlock Grid.Row="0" Text="{x:Static lsa:Resources.S_Ack_Contributors}"
-                       Theme="{StaticResource SubtitleTextBlockStyle}" />
-            <TextBlock Grid.Row="1" Margin="0,6,0,8" Text="{x:Static lsa:Resources.S_Ack_Contributors_D}"
-                       TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-            <Button Grid.Row="2" HorizontalAlignment="Left" Click="RefreshContributors_OnClick"
-                    IsEnabled="{Binding CanRefreshContributors}"
-                    ToolTip.Tip="{x:Static lsa:Resources.C_Refresh}">
-                <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseFilled}" />
-            </Button>
-            
-            <ItemsControl Grid.Row="3" Margin="0,8,0,0" ItemsSource="{Binding Contributors}"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Spacing="4"></StackPanel>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
+        <ScrollViewer x:Key="ContributorsDrawer" Width="320">
+            <StackPanel Margin="16" Spacing="8">
+                <Grid ColumnDefinitions="* Auto">
+                    <TextBlock Grid.Column="0"
+                               Text="{x:Static lsa:Resources.S_Ack_Contributors}"
+                               Theme="{StaticResource SubtitleTextBlockStyle}" />
+                    
+                    <Button Grid.Column="1"
+                            IsEnabled="{Binding CanRefreshContributors}"
+                            ToolTip.Tip="{x:Static lsa:Resources.C_Refresh}"
+                            Theme="{StaticResource TransparentButton}"
+                            Click="RefreshContributors_OnClick">
+                        <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseFilled}" />
+                    </Button>
+                </Grid>
                 
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="local:GitHubContributor">
-                        <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                Margin="0" Padding="4" Background="Transparent"
-                                CommandParameter="{Binding ProfileUrl}" Click="OpenContributorProfile_OnClick"
-                                ToolTip.Tip="{Binding ProfileUrl}">
-                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                                <Border Width="36" Height="36" CornerRadius="18" ClipToBounds="True"
-                                        Background="{DynamicResource ControlFillColorSecondaryBrush}"
-                                        BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                                        BorderThickness="1">
-                                    <Border Width="34" Height="34" CornerRadius="17" ClipToBounds="True">
-                                        <Image Source="{Binding Avatar}" Stretch="UniformToFill" />
+                <TextBlock Text="{x:Static lsa:Resources.S_Ack_Contributors_D}"
+                           TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                
+                <ItemsControl ItemsSource="{Binding Contributors}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Spacing="4"></StackPanel>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="local:GitHubContributor">
+                            <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                    Margin="0" Padding="4" Background="Transparent"
+                                    CommandParameter="{Binding ProfileUrl}" Click="OpenContributorProfile_OnClick"
+                                    ToolTip.Tip="{Binding ProfileUrl}">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                    <Border Grid.Column="0"
+                                            Width="36" Height="36"
+                                            Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                            BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="18"
+                                            ClipToBounds="True">
+                                        <Border Width="34" Height="34" CornerRadius="17" ClipToBounds="True">
+                                            <Image Source="{Binding Avatar}" Stretch="UniformToFill" />
+                                        </Border>
                                     </Border>
-                                </Border>
-                                
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-                                    <TextBlock Text="{Binding Login}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Text="{Binding ContributionText}" FontSize="12"
-                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                </StackPanel>
-                                
-                                <sr:FluentIcon Grid.Column="2" Glyph="{sr:Fi OpenFilled}" VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </Grid>
+                                    
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{Binding Login}"
+                                                   FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding ContributionText}"
+                                                   FontSize="12"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    </StackPanel>
+                                    
+                                    <sr:FluentIcon Grid.Column="2"
+                                                   Glyph="{sr:Fi OpenFilled}"
+                                                   Margin="0 0 8 0"
+                                                   VerticalAlignment="Center" />
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
     </UserControl.Resources>
+    
     <sr:StickyScrollViewer CollapsedHeight="58">
         <sr:StickyScrollViewer.HeaderContent>
             <Grid>
@@ -75,8 +94,10 @@
                             <GradientStop Color="#00ffffff" Offset="0.92" />
                         </LinearGradientBrush>
                     </Panel.OpacityMask>
+                    
                     <Border Background="#0d1111" />
-                    <Panel MaxWidth="{StaticResource PageContainerWidth}">
+                    
+                    <Panel MaxWidth="{StaticResource PageContainerWidth}" ClipToBounds="True">
                         <Panel.Styles>
                             <Style Selector="Panel">
                                 <Style.Animations>
@@ -92,6 +113,7 @@
                                 </Style.Animations>
                             </Style>
                         </Panel.Styles>
+                        
                         <Border Width="{Binding $self.Bounds.Height}"
                                 HorizontalAlignment="Left"
                                 Margin="-150 -100 0 0">
@@ -102,6 +124,7 @@
                                 </RadialGradientBrush>
                             </Border.Background>
                         </Border>
+                        
                         <Border Width="{Binding $self.Bounds.Height}"
                                 HorizontalAlignment="Right"
                                 Margin="0 0 100 -50">
@@ -113,6 +136,7 @@
                             </Border.Background>
                         </Border>
                     </Panel>
+                    
                     <Border Background="Transparent"
                             HorizontalAlignment="Center"
                             MaxWidth="{StaticResource PageContainerWidth}"
@@ -242,7 +266,7 @@
 
                 <fa:FASettingsExpanderItem Content="{x:Static lsa:Resources.S_Ack_Contributors}"
                                            Description="{x:Static lsa:Resources.S_Ack_Contributors_D}"
-                                           IsClickEnabled="True" ActionIconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}"
+                                           IsClickEnabled="True"
                                            Click="Contributors_OnClick" />
             </fa:FASettingsExpander>
         </StackPanel>

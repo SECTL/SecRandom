@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -13,12 +14,15 @@ using Avalonia.Platform;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Services.Linkage;
 using SecRandom.Services;
+using SecRandom.Services.Platform;
+using SecRandom.Platforms.Abstractions;
 using SecRandom.ViewModels;
 
 namespace SecRandom.Views;
@@ -45,7 +49,7 @@ public partial class FloatingWindow : Window
     private int _expandedWindowHeight;
     private int _dockAnchorCenterY;
     private readonly CourseLinkageService _linkageService = IAppHost.GetService<CourseLinkageService>();
-    private readonly FeatureAvailabilityService _featureAvailability = IAppHost.GetService<FeatureAvailabilityService>();
+    private readonly IFeatureAvailabilityService _featureAvailability = IAppHost.GetService<IFeatureAvailabilityService>();
     private bool _hiddenByCourseLinkage;
     private bool _wasVisibleBeforeCourseLinkage;
     private bool _userWantsVisible = true;
@@ -55,6 +59,8 @@ public partial class FloatingWindow : Window
         DataContext = this;
         Position = new PixelPoint(ViewModel.Config.FloatPosition.X, ViewModel.Config.FloatPosition.Y);
         InitializeComponent();
+        TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
+        this.ApplyPlatformFeatures(WindowFeatures.ToolWindow, enabled: true);
 
         TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
         RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
@@ -68,6 +74,7 @@ public partial class FloatingWindow : Window
         ViewModel.Config.LinkageSettings.PropertyChanged += LinkageSettings_OnPropertyChanged;
         _linkageService.StateChanged += LinkageServiceOnStateChanged;
         _featureAvailability.Changed += FeatureAvailabilityOnChanged;
+        Opened += OnOpened;
         Closed += (_, _) => _featureAvailability.Changed -= FeatureAvailabilityOnChanged;
         RefreshItems();
     }
@@ -95,19 +102,21 @@ public partial class FloatingWindow : Window
             if (control != null)
                 ButtonsPanel.Children.Add(control);
         }
+
+        UpdateButtonsPanelWidth(settings);
     }
 
     private void ApplyWindowSettings(FloatingWindowSettingsConfig settings)
     {
-        var size = GetButtonSize(settings.FloatingWindowSize);
         WindowBorder.Opacity = System.Math.Clamp(settings.FloatingWindowOpacity, 20, 100) / 100.0;
-        Topmost = settings.FloatingWindowTopmostMode is TopmostMode.Topmost or TopmostMode.UiAccess;
+        var topmost = settings.FloatingWindowTopmostMode is TopmostMode.Topmost or TopmostMode.UiAccess;
+        Topmost = topmost;
+        if (IsLoaded)
+            this.ApplyPlatformFeatures(WindowFeatures.Topmost, topmost);
         ButtonsPanel.Orientation = settings.FloatingWindowPlacement == 1
             ? Orientation.Vertical
             : Orientation.Horizontal;
-        ButtonsPanel.Width = settings.FloatingWindowPlacement == 0
-            ? (size + 4) * 2
-            : double.NaN;
+        ButtonsPanel.Width = double.NaN;
 
         if (!settings.StickToEdge && _isDocked)
             RestoreFromDock();
@@ -123,6 +132,11 @@ public partial class FloatingWindow : Window
         return value <= 6
             ? value switch { 0 => 28, 1 => 32, 2 => 40, 3 => 48, 4 => 56, 5 => 64, _ => 72 }
             : System.Math.Clamp(value, 32, 160);
+    }
+
+    private static int GetEffectiveButtonSize(FloatingWindowSettingsConfig settings)
+    {
+        return GetButtonSize(settings.FloatingWindowSize);
     }
 
     private static IEnumerable<string> GetVisibleButtonNames(FloatingWindowSettingsConfig settings, bool isLotteryEnabled)
@@ -178,7 +192,7 @@ public partial class FloatingWindow : Window
         }
 
         if (_userWantsVisible && _wasVisibleBeforeCourseLinkage)
-            App.RestoreAndActivate(this);
+            App.RestoreWithoutActivating(this);
         _wasVisibleBeforeCourseLinkage = false;
     }
 
@@ -223,14 +237,15 @@ public partial class FloatingWindow : Window
         string label,
         FloatingWindowSettingsConfig settings)
     {
-        var size = GetButtonSize(settings.FloatingWindowSize);
+        var size = GetEffectiveButtonSize(settings);
         var displayStyle = settings.FloatingWindowDisplayStyle;
+        var padding = new Thickness(System.Math.Max(2, size * 0.08));
         var button = new Button
         {
             Height = size,
-            Width = size,
+            Width = GetButtonWidth(size, label, displayStyle, padding),
             Margin = new Thickness(2),
-            Padding = new Thickness(System.Math.Max(2, size * 0.08)),
+            Padding = padding,
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center
         };
@@ -259,7 +274,7 @@ public partial class FloatingWindow : Window
                     new TextBlock
                     {
                         Text = label,
-                        FontSize = System.Math.Max(9, size * 0.22),
+                        FontSize = System.Math.Max(8, size * 0.16),
                         TextAlignment = TextAlignment.Center,
                         TextWrapping = TextWrapping.Wrap,
                         HorizontalAlignment = HorizontalAlignment.Center
@@ -269,6 +284,43 @@ public partial class FloatingWindow : Window
         };
 
         return button;
+    }
+
+    private void UpdateButtonsPanelWidth(FloatingWindowSettingsConfig settings)
+    {
+        var buttons = ButtonsPanel.Children
+            .OfType<Button>()
+            .ToArray();
+        if (buttons.Length == 0)
+        {
+            ButtonsPanel.Width = double.NaN;
+            return;
+        }
+
+        var buttonWidth = buttons.Max(button => button.Width);
+        foreach (var button in buttons)
+            button.Width = buttonWidth;
+
+        ButtonsPanel.Width = settings.FloatingWindowPlacement == 0
+            ? (buttonWidth + buttons[0].Margin.Left + buttons[0].Margin.Right) * Math.Min(2, buttons.Length)
+            : double.NaN;
+    }
+
+    private static double GetButtonWidth(int size, string label, int displayStyle, Thickness padding)
+    {
+        if (displayStyle == 1)
+            return size;
+
+        var fontSize = displayStyle == 2
+            ? System.Math.Max(10, size * 0.28)
+            : System.Math.Max(9, size * 0.22);
+        var textWidth = label.Sum(character => character switch
+        {
+            ' ' => fontSize * 0.35,
+            >= '\u2E80' => fontSize,
+            _ => fontSize * 0.62
+        });
+        return System.Math.Max(size, System.Math.Ceiling(textWidth + padding.Left + padding.Right + 2));
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
@@ -284,10 +336,15 @@ public partial class FloatingWindow : Window
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
+        ApplyWindowSettings(ViewModel.Config.FloatingWindowSettings);
         Dispatcher.UIThread.Post(RestoreStartupPositionAndScheduleDock, DispatcherPriority.Render);
         // 触发布局更新
         Width = 20;
+    }
+
+    private void OnOpened(object? sender, EventArgs e)
+    {
+        this.ApplyPlatformFeatures(WindowFeatures.SkipTaskSwitcher, enabled: true);
     }
 
     private async void RestoreStartupPositionAndScheduleDock()

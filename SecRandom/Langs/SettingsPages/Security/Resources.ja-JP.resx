@@ -27,9 +27,9 @@
   <data name="S_Usb" xml:space="preserve"><value>USB ドライブ</value></data>
   <data name="S_Usb_D" xml:space="preserve"><value>登録したドライブにセキュリティトークンを保存します</value></data>
   <data name="S_Factors" xml:space="preserve"><value>認証方式</value></data>
-  <data name="S_Factors_D" xml:space="preserve"><value>パスワードは必須です。設定済みの方式を追加できます</value></data>
+  <data name="S_Factors_D" xml:space="preserve"><value>パスワードは認証情報を保護し、設定済みの方式を追加できます</value></data>
   <data name="S_RequireAll" xml:space="preserve"><value>選択したすべての方式を要求</value></data>
-  <data name="S_RequireAll_D" xml:space="preserve"><value>パスワードは常に必要です。オフの場合は追加方式のいずれかで続行できます</value></data>
+  <data name="S_RequireAll_D" xml:space="preserve"><value>オンの場合は選択したすべての認証方式が必要で、オフの場合はいずれか一つで続行できます</value></data>
   <data name="S_WindowOperations" xml:space="preserve"><value>ウィンドウとアプリ</value></data>
   <data name="S_WindowOperations_D" xml:space="preserve"><value>設定、ウィンドウ表示、アプリ操作を保護します</value></data>
   <data name="S_DrawOperations" xml:space="preserve"><value>抽選</value></data>
@@ -37,6 +37,7 @@
   <data name="C_ManageBindings" xml:space="preserve"><value>登録を管理</value></data>
   <data name="C_SetPassword" xml:space="preserve"><value>パスワードを設定</value></data>
   <data name="C_ManagePassword" xml:space="preserve"><value>パスワードを変更または削除</value></data>
+  <data name="C_ChangePassword" xml:space="preserve"><value>パスワードを変更</value></data>
   <data name="C_SetTotp" xml:space="preserve"><value>TOTP を設定</value></data>
   <data name="C_ResetTotp" xml:space="preserve"><value>TOTP をリセット</value></data>
   <data name="C_OpenSettings" xml:space="preserve"><value>設定を開く</value></data>
@@ -61,10 +62,15 @@
   <data name="C_Preview" xml:space="preserve"><value>プレビュー</value></data>
   <data name="C_VerifyAndSave" xml:space="preserve"><value>認証して保存</value></data>
   <data name="C_Bind" xml:space="preserve"><value>登録</value></data>
+  <data name="C_Unbind" xml:space="preserve"><value>解除</value></data>
   <data name="C_UnbindSelected" xml:space="preserve"><value>選択した登録を解除</value></data>
   <data name="C_BoundDevices" xml:space="preserve"><value>登録済みドライブ</value></data>
+  <data name="C_UsbDriveLetter" xml:space="preserve"><value>ドライブ</value></data>
+  <data name="C_UsbDiskName" xml:space="preserve"><value>ディスク名</value></data>
+  <data name="C_UsbDeviceId" xml:space="preserve"><value>デバイス識別子</value></data>
   <data name="C_UsbConnected" xml:space="preserve"><value>接続済み</value></data>
   <data name="C_UsbDisconnected" xml:space="preserve"><value>未接続</value></data>
+  <data name="C_Refresh" xml:space="preserve"><value>更新</value></data>
   <data name="C_PasswordPlaceholder" xml:space="preserve"><value>パスワードを入力</value></data>
   <data name="C_CurrentPasswordPlaceholder" xml:space="preserve"><value>現在のパスワードを入力</value></data>
   <data name="C_NewPasswordPlaceholder" xml:space="preserve"><value>新しいパスワードを入力</value></data>
@@ -82,16 +88,19 @@
   <data name="C_Copy" xml:space="preserve"><value>コピー</value></data>
   <data name="M_Copied" xml:space="preserve"><value>コピーしました。</value></data>
   <data name="M_UsbDialogTitle" xml:space="preserve"><value>USB 登録を管理</value></data>
-  <data name="M_UsbSetupDescription" xml:space="preserve"><value>接続した USB ドライブのルートフォルダーを選択してください。SecRandom.safety.key がそこに作成されます。</value></data>
+  <data name="M_UsbSetupDescription" xml:space="preserve"><value>一覧からリムーバブル USB ドライブを選択してください。SecRandom.safety.key がそこに作成されます。</value></data>
   <data name="M_UsbShortDescription" xml:space="preserve"><value>認証に使用する USB ドライブを選択します。</value></data>
+  <data name="M_NoBindableUsb" xml:space="preserve"><value>登録できるリムーバブル USB ドライブがありません</value></data>
+  <data name="M_NoBoundUsb" xml:space="preserve"><value>登録済みの USB ドライブはありません</value></data>
   <data name="M_UsbPickerTitle" xml:space="preserve"><value>セキュリティ認証用 USB ドライブを選択</value></data>
   <data name="M_SelectUsbFirst" xml:space="preserve"><value>先に USB ドライブを選択してください。</value></data>
   <data name="M_VerificationDialogTitle" xml:space="preserve"><value>セキュリティ認証</value></data>
-  <data name="M_VerificationAllFactors" xml:space="preserve"><value>選択したすべての認証方式を完了してください。</value></data>
-  <data name="M_VerificationAnyFactor" xml:space="preserve"><value>選択した認証方式のいずれかを完了すると続行できます。</value></data>
-  <data name="M_VerificationLockedFormat" xml:space="preserve"><value>認証がロックされています。{0} 秒後に再試行してください。</value></data>
-  <data name="M_LockoutFormat" xml:space="preserve"><value>認証がロックされています。{0} 秒後に再試行してください。</value></data>
+  <data name="M_VerificationAllFactors" xml:space="preserve"><value>選択したすべての認証方式を完了してください</value></data>
+  <data name="M_VerificationAnyFactor" xml:space="preserve"><value>選択した認証方式のいずれかを完了すると続行できます</value></data>
+  <data name="M_VerificationLockedFormat" xml:space="preserve"><value>認証がロックされています、{0} 秒後に再試行してください</value></data>
+  <data name="M_LockoutFormat" xml:space="preserve"><value>認証がロックされています、{0} 秒後に再試行してください</value></data>
   <data name="M_UsbPresent" xml:space="preserve"><value>登録済み USB ドライブが接続されています</value></data>
+  <data name="M_UsbMissing" xml:space="preserve"><value>登録済み USB ドライブが検出されません</value></data>
   <data name="M_PasswordRemoved" xml:space="preserve"><value>パスワードを削除し、セキュリティ保護を無効にしました。</value></data>
   <data name="M_PasswordSaved" xml:space="preserve"><value>パスワードを保存しました。</value></data>
   <data name="M_PasswordSaveFailed" xml:space="preserve"><value>パスワードを保存できません。6 文字以上で、変更時は現在のパスワードを確認してください。</value></data>

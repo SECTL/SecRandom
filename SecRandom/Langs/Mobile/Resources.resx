@@ -1,0 +1,669 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+                id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true" />
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="M_CheckingUpdates" xml:space="preserve">
+        <value>正在检查更新</value>
+    </data>
+    <data name="M_UpToDate" xml:space="preserve">
+        <value>已是最新版本</value>
+    </data>
+    <data name="M_UpdateAvailable" xml:space="preserve">
+        <value>发现新版本 {0}</value>
+    </data>
+    <data name="M_CheckUpdatesFailed" xml:space="preserve">
+        <value>检查更新失败: {0}</value>
+    </data>
+    <data name="M_DownloadingUpdate" xml:space="preserve">
+        <value>正在下载更新</value>
+    </data>
+    <data name="M_OpeningInstaller" xml:space="preserve">
+        <value>正在打开系统安装器</value>
+    </data>
+    <data name="M_StartupFailed" xml:space="preserve">
+        <value>移动端初始化失败；请重新启动应用；若问题持续，请提交 Android 日志</value>
+    </data>
+    <data name="M_InstallerOpened" xml:space="preserve">
+        <value>已交给系统安装器</value>
+    </data>
+    <data name="M_InstallUpdateFailed" xml:space="preserve">
+        <value>安装更新失败: {0}</value>
+    </data>
+    <data name="M_EmptyMetadata" xml:space="preserve">
+        <value>更新元数据为空</value>
+    </data>
+    <data name="M_MissingReleaseChannel" xml:space="preserve">
+        <value>更新元数据缺少 release 通道</value>
+    </data>
+    <data name="M_ManifestUnavailable" xml:space="preserve">
+        <value>无法获取更新清单</value>
+    </data>
+    <data name="M_PackageUnavailable" xml:space="preserve">
+        <value>无法下载更新包</value>
+    </data>
+    <data name="M_PackageLengthInvalid" xml:space="preserve">
+        <value>更新包长度校验失败</value>
+    </data>
+    <data name="M_PackageHashInvalid" xml:space="preserve">
+        <value>更新包哈希校验失败</value>
+    </data>
+    <data name="M_ManifestSignatureInvalid" xml:space="preserve">
+        <value>更新清单签名无效</value>
+    </data>
+    <data name="M_ManifestInvalid" xml:space="preserve">
+        <value>更新清单无效</value>
+    </data>
+    <data name="M_ManifestTagMismatch" xml:space="preserve">
+        <value>更新清单与发布标签不匹配</value>
+    </data>
+    <data name="M_AndroidContextUnavailable" xml:space="preserve">
+        <value>Android 上下文不可用</value>
+    </data>
+    <data name="M_AndroidOnlyInstaller" xml:space="preserve">
+        <value>系统安装仅适用于 Android</value>
+    </data>
+    <data name="N_Draw" xml:space="preserve">
+        <value>抽取</value>
+    </data>
+    <data name="N_History" xml:space="preserve">
+        <value>历史记录</value>
+    </data>
+    <data name="N_Overview" xml:space="preserve">
+        <value>概览</value>
+    </data>
+    <data name="N_Settings" xml:space="preserve">
+        <value>设置</value>
+    </data>
+    <data name="C_RollCall" xml:space="preserve">
+        <value>点名</value>
+    </data>
+    <data name="C_Lottery" xml:space="preserve">
+        <value>抽奖</value>
+    </data>
+    <data name="C_DrawOne" xml:space="preserve">
+        <value>抽取一人</value>
+    </data>
+    <data name="C_DrawPrize" xml:space="preserve">
+        <value>抽取奖品</value>
+    </data>
+    <data name="C_ManageStudentList" xml:space="preserve">
+        <value>管理成员名单</value>
+    </data>
+    <data name="C_ManagePrizePool" xml:space="preserve">
+        <value>管理奖池</value>
+    </data>
+    <data name="C_ClearTemporaryRecords" xml:space="preserve">
+        <value>清空临时抽取记录</value>
+    </data>
+    <data name="C_AddStudent" xml:space="preserve">
+        <value>添加成员</value>
+    </data>
+    <data name="C_AddPrize" xml:space="preserve">
+        <value>添加奖品</value>
+    </data>
+    <data name="C_Remove" xml:space="preserve">
+        <value>移除</value>
+    </data>
+    <data name="C_CheckUpdates" xml:space="preserve">
+        <value>检查更新</value>
+    </data>
+    <data name="C_InstallUpdate" xml:space="preserve">
+        <value>下载并安装更新</value>
+    </data>
+    <data name="S_CurrentList" xml:space="preserve">
+        <value>当前名单</value>
+    </data>
+    <data name="S_CurrentPool" xml:space="preserve">
+        <value>当前奖池</value>
+    </data>
+    <data name="S_RecentDraws" xml:space="preserve">
+        <value>最近抽取</value>
+    </data>
+    <data name="S_DataOverview" xml:space="preserve">
+        <value>数据概览</value>
+    </data>
+    <data name="S_StudentList" xml:space="preserve">
+        <value>成员名单</value>
+    </data>
+    <data name="S_PrizePool" xml:space="preserve">
+        <value>奖池</value>
+    </data>
+    <data name="S_AppUpdates" xml:space="preserve">
+        <value>应用更新</value>
+    </data>
+    <data name="P_Draw" xml:space="preserve">
+        <value>抽取</value>
+    </data>
+    <data name="P_History" xml:space="preserve">
+        <value>历史记录</value>
+    </data>
+    <data name="P_Overview" xml:space="preserve">
+        <value>概览</value>
+    </data>
+    <data name="P_Settings" xml:space="preserve">
+        <value>设置</value>
+    </data>
+    <data name="W_StudentName" xml:space="preserve">
+        <value>成员名称</value>
+    </data>
+    <data name="W_StudentId" xml:space="preserve">
+        <value>编号（可选）</value>
+    </data>
+    <data name="W_PrizeName" xml:space="preserve">
+        <value>奖品名称</value>
+    </data>
+    <data name="W_PrizeId" xml:space="preserve">
+        <value>奖品编号（可选）</value>
+    </data>
+    <data name="M_Ready" xml:space="preserve">
+        <value>准备开始</value>
+    </data>
+    <data name="M_DefaultList" xml:space="preserve">
+        <value>默认名单</value>
+    </data>
+    <data name="M_DefaultPool" xml:space="preserve">
+        <value>默认奖池</value>
+    </data>
+    <data name="M_NoStudents" xml:space="preserve">
+        <value>名单中还没有可点名成员</value>
+    </data>
+    <data name="M_AddStudentsPrompt" xml:space="preserve">
+        <value>请在设置中添加成员</value>
+    </data>
+    <data name="M_AddMemberHistoryResetTitle" xml:space="preserve">
+        <value>清除名单历史记录</value>
+    </data>
+    <data name="M_AddMemberHistoryResetContent" xml:space="preserve">
+        <value>当前名单“{0}”中的所有现有成员抽取次数都不为 0
+新增成员后使用公平抽取可能会使新成员的抽中几率增大
+是否删除当前名单的历史记录
+清除历史记录后使用公平抽取会使效果更好</value>
+    </data>
+    <data name="M_AddMemberHistoryResetPrimary" xml:space="preserve">
+        <value>删除历史记录</value>
+    </data>
+    <data name="M_AddMemberHistoryResetSecondary" xml:space="preserve">
+        <value>保留历史记录</value>
+    </data>
+    <data name="M_NoPrizes" xml:space="preserve">
+        <value>奖池中还没有可抽取奖品</value>
+    </data>
+    <data name="M_AddPrizesPrompt" xml:space="preserve">
+        <value>请在设置中添加奖品</value>
+    </data>
+    <data name="M_CandidateStudents" xml:space="preserve">
+        <value>当前可点名 {0} 人</value>
+    </data>
+    <data name="M_CandidatePrizes" xml:space="preserve">
+        <value>当前可抽取 {0} 项</value>
+    </data>
+    <data name="M_DrawCompleted" xml:space="preserve">
+        <value>抽取完成</value>
+    </data>
+    <data name="M_StudentId" xml:space="preserve">
+        <value>编号：{0}</value>
+    </data>
+    <data name="M_PrizeId" xml:space="preserve">
+        <value>编号：{0}</value>
+    </data>
+    <data name="M_NoHistory" xml:space="preserve">
+        <value>尚无抽取记录</value>
+    </data>
+    <data name="M_Students" xml:space="preserve">
+        <value>成员</value>
+    </data>
+    <data name="M_Prizes" xml:space="preserve">
+        <value>奖品</value>
+    </data>
+    <data name="M_RollCallRounds" xml:space="preserve">
+        <value>点名轮次</value>
+    </data>
+    <data name="M_LotteryRounds" xml:space="preserve">
+        <value>抽奖轮次</value>
+    </data>
+    <data name="M_Enabled" xml:space="preserve">
+        <value>已启用</value>
+    </data>
+    <data name="M_Disabled" xml:space="preserve">
+        <value>已停用</value>
+    </data>
+    <data name="M_NoCandidates" xml:space="preserve">
+        <value>没有可抽取的候选项</value>
+    </data>
+    <data name="M_NoEligibleCandidates" xml:space="preserve">
+        <value>没有符合条件的候选项</value>
+    </data>
+    <data name="M_RepeatLimitExhausted" xml:space="preserve">
+        <value>当前重复限制下没有可抽取的候选项</value>
+    </data>
+    <data name="M_InvalidWeight" xml:space="preserve">
+        <value>候选项权重无效</value>
+    </data>
+    <data name="M_DrawFailed" xml:space="preserve">
+        <value>抽取未完成</value>
+    </data>
+    <data name="M_OpenSettingsFailed" xml:space="preserve">
+        <value>无法打开设置</value>
+    </data>
+    <data name="M_GeneralMobileOnly" xml:space="preserve">
+        <value>移动端会自动适配系统语言、窗口和后台策略；桌面专属选项不会在此显示</value>
+    </data>
+    <data name="M_BackupMobileUnavailable" xml:space="preserve">
+        <value>移动端备份与恢复将在提供受系统文件访问授权的完整事务后开放</value>
+    </data>
+    <data name="M_AboutLicense" xml:space="preserve">
+        <value>SecRandom 是面向活动与组织场景的公平抽取工具，采用 GPLv3 许可证发布</value>
+    </data>
+    <data name="C_Back" xml:space="preserve">
+        <value>返回设置</value>
+    </data>
+    <data name="C_Home" xml:space="preserve">
+        <value>主页</value>
+    </data>
+    <data name="S_SettingsCategories" xml:space="preserve">
+        <value>设置分类</value>
+    </data>
+    <data name="S_General" xml:space="preserve">
+        <value>通用</value>
+    </data>
+    <data name="S_General_D" xml:space="preserve">
+        <value>移动端的系统适配与基础行为</value>
+    </data>
+    <data name="S_Personalization" xml:space="preserve">
+        <value>个性化</value>
+    </data>
+    <data name="S_Personalization_D" xml:space="preserve">
+        <value>主题外观</value>
+    </data>
+    <data name="S_ListManagement" xml:space="preserve">
+        <value>名单管理</value>
+    </data>
+    <data name="S_ListManagement_D" xml:space="preserve">
+        <value>成员名单与奖池</value>
+    </data>
+    <data name="S_DrawSettings" xml:space="preserve">
+        <value>抽取</value>
+    </data>
+    <data name="S_DrawSettings_D" xml:space="preserve">
+        <value>点名和抽奖规则</value>
+    </data>
+    <data name="S_Backup" xml:space="preserve">
+        <value>备份</value>
+    </data>
+    <data name="S_Backup_D" xml:space="preserve">
+        <value>数据备份与恢复</value>
+    </data>
+    <data name="S_AppUpdates_D" xml:space="preserve">
+        <value>检查已签名的应用更新</value>
+    </data>
+    <data name="S_About" xml:space="preserve">
+        <value>关于</value>
+    </data>
+    <data name="S_About_D" xml:space="preserve">
+        <value>版本与许可证</value>
+    </data>
+    <data name="S_Theme" xml:space="preserve">
+        <value>主题</value>
+    </data>
+    <data name="S_RollCall" xml:space="preserve">
+        <value>点名</value>
+    </data>
+    <data name="S_Lottery" xml:space="preserve">
+        <value>抽奖</value>
+    </data>
+    <data name="S_RepeatMode" xml:space="preserve">
+        <value>重复规则</value>
+    </data>
+    <data name="S_Version" xml:space="preserve">
+        <value>版本</value>
+    </data>
+    <data name="O_ThemeAuto" xml:space="preserve">
+        <value>跟随系统</value>
+    </data>
+    <data name="O_ThemeLight" xml:space="preserve">
+        <value>浅色</value>
+    </data>
+    <data name="O_ThemeDark" xml:space="preserve">
+        <value>深色</value>
+    </data>
+    <data name="O_Fair" xml:space="preserve">
+        <value>公平抽取</value>
+    </data>
+    <data name="O_Random" xml:space="preserve">
+        <value>随机抽取</value>
+    </data>
+    <data name="O_NoRepeat" xml:space="preserve">
+        <value>不重复</value>
+    </data>
+    <data name="O_Repeat" xml:space="preserve">
+        <value>允许重复</value>
+    </data>
+    <data name="O_Count" xml:space="preserve">
+        <value>按库存数量</value>
+    </data>
+    <data name="O_Pan" xml:space="preserve">
+        <value>转盘权重</value>
+    </data>
+    <data name="O_HalfRepeat" xml:space="preserve">
+        <value>半重复</value>
+    </data>
+    <data name="O_Restarted" xml:space="preserve">
+        <value>重启后清除</value>
+    </data>
+    <data name="O_Cleared" xml:space="preserve">
+        <value>手动清除</value>
+    </data>
+    <data name="S_HalfRepeat" xml:space="preserve">
+        <value>半重复阈值</value>
+    </data>
+    <data name="S_ClearRecord" xml:space="preserve">
+        <value>清除记录</value>
+    </data>
+    <data name="M_Drawing" xml:space="preserve">
+        <value>正在抽取…</value>
+    </data>
+    <data name="C_GoToDraw" xml:space="preserve">
+        <value>去抽取</value>
+    </data>
+    <data name="M_NoHistoryPrompt" xml:space="preserve">
+        <value>完成一次点名或抽奖后，结果会显示在这里</value>
+    </data>
+    <data name="M_TimeJustNow" xml:space="preserve">
+        <value>刚刚</value>
+    </data>
+    <data name="M_TimeMinutesAgo" xml:space="preserve">
+        <value>{0} 分钟前</value>
+    </data>
+    <data name="M_TimeHoursAgo" xml:space="preserve">
+        <value>{0} 小时前</value>
+    </data>
+    <data name="M_TimeDaysAgo" xml:space="preserve">
+        <value>{0} 天前</value>
+    </data>
+    <data name="M_Unknown" xml:space="preserve">
+        <value>未知</value>
+    </data>
+    <data name="S_OnlineStatus" xml:space="preserve">
+        <value>在线状态上报</value>
+    </data>
+    <data name="O_Off" xml:space="preserve">
+        <value>关闭</value>
+    </data>
+    <data name="O_Anonymous" xml:space="preserve">
+        <value>匿名</value>
+    </data>
+    <data name="O_Full" xml:space="preserve">
+        <value>完整</value>
+    </data>
+    <data name="O_LanguageChinese" xml:space="preserve">
+        <value>简体中文</value>
+    </data>
+    <data name="O_LanguageEnglish" xml:space="preserve">
+        <value>English</value>
+    </data>
+    <data name="O_LanguageJapanese" xml:space="preserve">
+        <value>日本語</value>
+    </data>
+    <data name="S_Telemetry" xml:space="preserve">
+        <value>错误与性能遥测</value>
+    </data>
+    <data name="S_SentryTelemetry" xml:space="preserve">
+        <value>Sentry 遥测</value>
+    </data>
+    <data name="S_SentryTelemetry_D" xml:space="preserve">
+        <value>匿名上传崩溃与性能数据，不包含个人身份信息</value>
+    </data>
+    <data name="S_Language" xml:space="preserve">
+        <value>语言</value>
+    </data>
+    <data name="S_Language_D" xml:space="preserve">
+        <value>切换语言后立即生效，无需重启应用</value>
+    </data>
+    <data name="S_GroupPreferences" xml:space="preserve">
+        <value>偏好</value>
+    </data>
+    <data name="S_GroupData" xml:space="preserve">
+        <value>数据</value>
+    </data>
+    <data name="S_GroupApp" xml:space="preserve">
+        <value>应用</value>
+    </data>
+    <data name="M_EmptyStudentList" xml:space="preserve">
+        <value>名单为空</value>
+    </data>
+    <data name="M_EmptyStudentListHint" xml:space="preserve">
+        <value>添加成员后即可开始点名</value>
+    </data>
+    <data name="M_EmptyPrizePool" xml:space="preserve">
+        <value>奖池为空</value>
+    </data>
+    <data name="M_EmptyPrizePoolHint" xml:space="preserve">
+        <value>添加奖品后即可开始抽奖</value>
+    </data>
+    <data name="C_ExportAllData" xml:space="preserve">
+        <value>导出全量数据</value>
+    </data>
+    <data name="C_ImportAllData" xml:space="preserve">
+        <value>导入 / 恢复全量数据</value>
+    </data>
+    <data name="C_ExportSettings" xml:space="preserve">
+        <value>导出设置</value>
+    </data>
+    <data name="C_ImportSettings" xml:space="preserve">
+        <value>导入设置</value>
+    </data>
+    <data name="M_BackupPickerHint" xml:space="preserve">
+        <value>通过系统文件选择器导出与导入；导入前会校验 SecRandom v3 格式，不受支持的文件不会改动任何数据</value>
+    </data>
+    <data name="S_AllData" xml:space="preserve">
+        <value>全量数据</value>
+    </data>
+    <data name="S_AllData_D" xml:space="preserve">
+        <value>名单、历史、配置等全部数据打包为 ZIP 归档</value>
+    </data>
+    <data name="S_SettingsSection" xml:space="preserve">
+        <value>设置</value>
+    </data>
+    <data name="S_SettingsSection_D" xml:space="preserve">
+        <value>仅导出 / 导入应用设置（settings envelope）</value>
+    </data>
+    <data name="M_ExportingAllData" xml:space="preserve">
+        <value>正在导出全量数据…</value>
+    </data>
+    <data name="M_SaveAllDataTitle" xml:space="preserve">
+        <value>保存全量数据备份</value>
+    </data>
+    <data name="M_DataArchiveFileType" xml:space="preserve">
+        <value>SecRandom 数据归档</value>
+    </data>
+    <data name="M_ExportCancelled" xml:space="preserve">
+        <value>已取消导出</value>
+    </data>
+    <data name="M_WritingToTarget" xml:space="preserve">
+        <value>正在写入所选位置…</value>
+    </data>
+    <data name="M_AllDataExported" xml:space="preserve">
+        <value>全量数据已导出到所选位置</value>
+    </data>
+    <data name="M_ExportFailed" xml:space="preserve">
+        <value>导出失败：{0}</value>
+    </data>
+    <data name="M_ExportingSettings" xml:space="preserve">
+        <value>正在导出设置…</value>
+    </data>
+    <data name="M_SaveSettingsTitle" xml:space="preserve">
+        <value>保存设置备份</value>
+    </data>
+    <data name="M_SettingsFileType" xml:space="preserve">
+        <value>SecRandom 设置文件</value>
+    </data>
+    <data name="M_SettingsExported" xml:space="preserve">
+        <value>设置已导出到所选位置</value>
+    </data>
+    <data name="M_PickingBackupFile" xml:space="preserve">
+        <value>正在选择备份文件…</value>
+    </data>
+    <data name="M_PickAllDataTitle" xml:space="preserve">
+        <value>选择全量数据备份</value>
+    </data>
+    <data name="M_PickSettingsTitle" xml:space="preserve">
+        <value>选择设置备份</value>
+    </data>
+    <data name="M_ImportCancelled" xml:space="preserve">
+        <value>已取消导入</value>
+    </data>
+    <data name="M_ReadingBackup" xml:space="preserve">
+        <value>正在读取备份文件…</value>
+    </data>
+    <data name="M_ValidatingBackup" xml:space="preserve">
+        <value>正在校验备份…</value>
+    </data>
+    <data name="M_ValidationPassed" xml:space="preserve">
+        <value>校验通过，确认后开始导入</value>
+    </data>
+    <data name="M_ValidationUnsupported" xml:space="preserve">
+        <value>该文件不是受支持的 SecRandom v3 导出，无法导入</value>
+    </data>
+    <data name="M_ReadOrValidateFailed" xml:space="preserve">
+        <value>读取或校验失败：{0}</value>
+    </data>
+    <data name="M_SourceVersion" xml:space="preserve">
+        <value>来源版本：{0}</value>
+    </data>
+    <data name="M_UnrecognizedVersion" xml:space="preserve">
+        <value>未识别</value>
+    </data>
+    <data name="M_ImportFileCount" xml:space="preserve">
+        <value>包含文件：{0} 个（{1} MB）</value>
+    </data>
+    <data name="S_ConfirmImport" xml:space="preserve">
+        <value>确认导入</value>
+    </data>
+    <data name="C_ConfirmImport" xml:space="preserve">
+        <value>确认导入</value>
+    </data>
+    <data name="C_Cancel" xml:space="preserve">
+        <value>取消</value>
+    </data>
+    <data name="M_BackupServiceUnavailable" xml:space="preserve">
+        <value>备份服务不可用</value>
+    </data>
+    <data name="M_Importing" xml:space="preserve">
+        <value>正在导入…</value>
+    </data>
+    <data name="M_ImportCompleted" xml:space="preserve">
+        <value>导入完成，共导入 {0} 个文件</value>
+    </data>
+    <data name="M_ImportFailed" xml:space="preserve">
+        <value>导入失败：{0}</value>
+    </data>
+    <data name="M_PendingImportExists" xml:space="preserve">
+        <value>请先完成或取消当前的导入确认</value>
+    </data>
+    <data name="M_StorageUnavailable" xml:space="preserve">
+        <value>当前平台不支持系统文件选择，无法执行备份操作</value>
+    </data>
+    <data name="C_ViewOnGitHub" xml:space="preserve">
+        <value>在 GitHub 查看项目</value>
+    </data>
+    <data name="M_BrowserUnavailable" xml:space="preserve">
+        <value>当前平台无法打开浏览器</value>
+    </data>
+    <data name="M_OpenBrowserFailed" xml:space="preserve">
+        <value>无法打开浏览器，请手动访问 github.com/SECTL/SecRandom</value>
+    </data>
+    <data name="M_InAppUpdateUnsupported" xml:space="preserve">
+        <value>当前平台不支持应用内更新</value>
+    </data>
+    <data name="M_IosUpdateDeferred" xml:space="preserve">
+        <value>iOS 的分发与更新将随后续版本提供；请前往项目发布页获取新版本</value>
+    </data>
+    <data name="M_UpdateSecurityNote" xml:space="preserve">
+        <value>更新包经 Ed25519 签名清单校验长度与哈希后，交给系统安装器</value>
+    </data>
+    <data name="C_StartDraw" xml:space="preserve"><value>开始</value></data>
+    <data name="C_RemainingList" xml:space="preserve"><value>查看剩余名单</value></data>
+    <data name="C_More" xml:space="preserve"><value>更多</value></data>
+    <data name="C_ResetRange" xml:space="preserve"><value>重置当前范围</value></data>
+    <data name="C_DrawSettings" xml:space="preserve"><value>抽取设置</value></data>
+    <data name="C_Close" xml:space="preserve"><value>关闭</value></data>
+    <data name="C_Save" xml:space="preserve"><value>保存</value></data>
+    <data name="C_Edit" xml:space="preserve"><value>编辑</value></data>
+    <data name="C_Refresh" xml:space="preserve"><value>刷新</value></data>
+    <data name="S_DrawCount" xml:space="preserve"><value>抽取数量</value></data>
+    <data name="S_Group" xml:space="preserve"><value>分组</value></data>
+    <data name="S_Gender" xml:space="preserve"><value>性别</value></data>
+    <data name="S_Profile" xml:space="preserve"><value>名单 / 奖池</value></data>
+    <data name="S_HistoryMode" xml:space="preserve"><value>显示方式</value></data>
+    <data name="S_Tags" xml:space="preserve"><value>标签</value></data>
+    <data name="S_Weight" xml:space="preserve"><value>权重</value></data>
+    <data name="S_Inventory" xml:space="preserve"><value>库存</value></data>
+    <data name="O_All" xml:space="preserve"><value>全部</value></data>
+    <data name="O_HistoryOverview" xml:space="preserve"><value>汇总</value></data>
+    <data name="O_HistoryRecords" xml:space="preserve"><value>记录</value></data>
+    <data name="M_CountSummary" xml:space="preserve"><value>成员数量：{0}  |  剩余数量：{1}</value></data>
+    <data name="M_RemainingTitle" xml:space="preserve"><value>剩余名单</value></data>
+    <data name="M_NoRemaining" xml:space="preserve"><value>当前范围没有剩余成员</value></data>
+    <data name="M_DrawResultCount" xml:space="preserve"><value>已抽取 {0} 人</value></data>
+    <data name="M_ListTableHint" xml:space="preserve"><value>可横向滑动表格查看更多字段</value></data>
+    <data name="M_MoreStudentTitle" xml:space="preserve"><value>成员更多设置</value></data>
+    <data name="M_MorePrizeTitle" xml:space="preserve"><value>奖品更多设置</value></data>
+    <data name="H_Enabled" xml:space="preserve"><value>启用</value></data>
+    <data name="H_Id" xml:space="preserve"><value>编号</value></data>
+    <data name="H_Name" xml:space="preserve"><value>名称</value></data>
+    <data name="H_Gender" xml:space="preserve"><value>性别</value></data>
+    <data name="H_Group" xml:space="preserve"><value>分组</value></data>
+    <data name="H_Tags" xml:space="preserve"><value>标签</value></data>
+    <data name="H_Weight" xml:space="preserve"><value>权重</value></data>
+    <data name="H_Inventory" xml:space="preserve"><value>库存</value></data>
+    <data name="H_Time" xml:space="preserve"><value>时间</value></data>
+    <data name="H_Count" xml:space="preserve"><value>次数 / 数量</value></data>
+    <data name="H_DrawScope" xml:space="preserve"><value>抽取范围</value></data>
+    <data name="H_Operations" xml:space="preserve"><value>操作</value></data>
+    <data name="H_AttachedSettings" xml:space="preserve"><value>附加设置</value></data>
+    <data name="S_AttachedImage" xml:space="preserve"><value>展示图片</value></data>
+    <data name="S_AttachedMusic" xml:space="preserve"><value>专属音乐</value></data>
+    <data name="S_AttachedVoice" xml:space="preserve"><value>专属语音</value></data>
+    <data name="S_AnimationMusic" xml:space="preserve"><value>动画音乐</value></data>
+    <data name="S_ResultMusic" xml:space="preserve"><value>结果音乐</value></data>
+    <data name="S_Music" xml:space="preserve"><value>音乐</value></data>
+    <data name="S_UseCustomMusic" xml:space="preserve"><value>使用本页音乐</value></data>
+    <data name="S_AnimationMusicLoop" xml:space="preserve"><value>循环播放动画音乐</value></data>
+    <data name="S_AnimationMusicVolume" xml:space="preserve"><value>动画音乐音量</value></data>
+    <data name="S_ResultMusicVolume" xml:space="preserve"><value>结果音乐音量</value></data>
+    <data name="S_VoiceAlias" xml:space="preserve"><value>播报别名</value></data>
+    <data name="S_VoicePrefix" xml:space="preserve"><value>播报前缀</value></data>
+    <data name="S_VoiceSuffix" xml:space="preserve"><value>播报后缀</value></data>
+    <data name="S_VoiceAnnouncements" xml:space="preserve"><value>语音播报</value></data>
+    <data name="S_AnnounceId" xml:space="preserve"><value>播报编号</value></data>
+    <data name="S_AnnounceName" xml:space="preserve"><value>播报名称</value></data>
+    <data name="S_VoiceVolume" xml:space="preserve"><value>播报音量</value></data>
+    <data name="S_VoiceRate" xml:space="preserve"><value>播报语速</value></data>
+    <data name="C_SelectImage" xml:space="preserve"><value>选择图片</value></data>
+    <data name="C_RemoveImage" xml:space="preserve"><value>移除图片</value></data>
+    <data name="C_ImportMusic" xml:space="preserve"><value>导入音乐</value></data>
+    <data name="C_Preview" xml:space="preserve"><value>试听</value></data>
+    <data name="C_Stop" xml:space="preserve"><value>停止</value></data>
+    <data name="M_NoImageSelected" xml:space="preserve"><value>尚未选择图片</value></data>
+    <data name="M_RecordRequiresName" xml:space="preserve"><value>请至少填写编号或名称</value></data>
+    <data name="M_InvalidPrizeValues" xml:space="preserve"><value>权重和库存必须是非负数</value></data>
+    <data name="M_MediaImportFailed" xml:space="preserve"><value>无法导入所选媒体文件</value></data>
+    <data name="M_SaveFailed" xml:space="preserve"><value>无法保存更改</value></data>
+    <data name="O_NoMusic" xml:space="preserve"><value>不播放音乐</value></data>
+    <data name="O_RandomMusic" xml:space="preserve"><value>随机播放</value></data>
+</root>

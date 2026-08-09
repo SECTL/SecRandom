@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -18,13 +18,13 @@ public sealed class CsesScheduleParser
     public CsesSchedule Parse(string content)
     {
         if (string.IsNullOrWhiteSpace(content))
-            throw new InvalidDataException("CSES 文件为空。");
+            throw CsesScheduleException.Create(CsesScheduleError.Empty);
 
         var root = AsMap(_deserializer.Deserialize<object>(content))
-            ?? throw new InvalidDataException("CSES 根节点必须是对象。");
+            ?? throw CsesScheduleException.Create(CsesScheduleError.RootNotObject);
         var courses = ParseTimeslots(root).ToList();
         if (courses.Count == 0)
-            throw new InvalidDataException("CSES 文件中没有有效课程。");
+            throw CsesScheduleException.Create(CsesScheduleError.NoValidItems);
 
         ValidateCourses(courses);
         var normalized = string.Join("\n", courses
@@ -46,7 +46,7 @@ public sealed class CsesScheduleParser
                 foreach (var item in timeslots)
                 {
                     if (AsMap(item) is not { } slot || !TryCreateCourse(slot, subjects, out var course))
-                        throw new InvalidDataException("CSES 时间段格式无效。");
+                        throw CsesScheduleException.Create(CsesScheduleError.InvalidItem);
                     yield return course;
                 }
 
@@ -64,7 +64,7 @@ public sealed class CsesScheduleParser
                 foreach (var classItem in AsList(daySchedule.TryGetValue("classes", out var classes) ? classes : null))
                 {
                     if (AsMap(classItem) is not { } @class)
-                        throw new InvalidDataException("CSES 课程条目格式无效。");
+                        throw CsesScheduleException.Create(CsesScheduleError.InvalidItem);
                     var mapped = new Dictionary<string, object?>(@class, StringComparer.OrdinalIgnoreCase)
                     {
                         ["day_of_week"] = day
@@ -74,7 +74,7 @@ public sealed class CsesScheduleParser
                     if (!mapped.ContainsKey("location") && mapped.TryGetValue("room", out var room))
                         mapped["location"] = room;
                     if (!TryCreateCourse(mapped, subjects, out var course))
-                        throw new InvalidDataException("CSES 课程条目格式无效。");
+                        throw CsesScheduleException.Create(CsesScheduleError.InvalidItem);
                     yield return course;
                 }
             }
@@ -126,7 +126,7 @@ public sealed class CsesScheduleParser
         foreach (var course in courses)
         {
             if (course.StartTime >= course.EndTime)
-                throw new InvalidDataException($"课程“{course.Name}”的开始时间必须早于结束时间。");
+                throw CsesScheduleException.Create(CsesScheduleError.InvalidTime, course.Name);
         }
 
         foreach (var group in courses.GroupBy(course => course.DayOfWeek))
@@ -134,7 +134,7 @@ public sealed class CsesScheduleParser
             var ordered = group.OrderBy(course => course.StartTime).ToArray();
             for (var i = 1; i < ordered.Length; i++)
                 if (ordered[i].StartTime < ordered[i - 1].EndTime)
-                    throw new InvalidDataException($"星期{group.Key}的课程时间存在重叠。");
+                    throw CsesScheduleException.Create(CsesScheduleError.OverlappingItems, group.Key);
         }
     }
 
@@ -202,5 +202,63 @@ public sealed class CsesScheduleParser
 
 public sealed record CsesSchedule(IReadOnlyList<CourseInfo> Courses, string Version)
 {
-    public string Summary => $"课程表包含 {Courses.Count} 个时间段，最早 {Courses.Min(course => course.StartTime):HH:mm}，最晚 {Courses.Max(course => course.EndTime):HH:mm}";
+    public int PeriodCount => Courses.Count;
+    public TimeOnly Earliest => Courses.Min(course => course.StartTime);
+    public TimeOnly Latest => Courses.Max(course => course.EndTime);
+}
+
+public enum CsesScheduleError
+{
+    Empty,
+    RootNotObject,
+    NoValidItems,
+    InvalidItem,
+    InvalidTime,
+    OverlappingItems
+}
+
+// InvalidDataException 是密封类型，CsesScheduleException 无法作为异常继承它；
+// 改为工厂方法：生成固定中文 Message 的 InvalidDataException，并把结构化错误码/参数
+// 存入 Data，UI 层用 TryGetError 取回后按资源本地化（与 Message 的文化无关性解耦）。
+public static class CsesScheduleException
+{
+    private const string ErrorKey = nameof(CsesScheduleError);
+    private const string ArgumentKey = "Argument";
+
+    public static InvalidDataException Create(CsesScheduleError error, object? argument = null)
+    {
+        var exception = new InvalidDataException(Describe(error, argument));
+        exception.Data[ErrorKey] = error;
+        if (argument is not null)
+            exception.Data[ArgumentKey] = argument;
+        return exception;
+    }
+
+    public static bool TryGetError(
+        InvalidDataException exception,
+        out CsesScheduleError error,
+        out object? argument)
+    {
+        if (exception.Data[ErrorKey] is CsesScheduleError value)
+        {
+            error = value;
+            argument = exception.Data[ArgumentKey];
+            return true;
+        }
+
+        error = default;
+        argument = null;
+        return false;
+    }
+
+    private static string Describe(CsesScheduleError error, object? argument) => error switch
+    {
+        CsesScheduleError.Empty => "课表内容为空。",
+        CsesScheduleError.RootNotObject => "课表根节点不是对象。",
+        CsesScheduleError.NoValidItems => "课表不包含任何有效课程。",
+        CsesScheduleError.InvalidItem => "课表包含无效课程项。",
+        CsesScheduleError.InvalidTime => $"课程时间无效：{argument}。",
+        CsesScheduleError.OverlappingItems => $"课程时间重叠：{argument}。",
+        _ => "课表数据无效。"
+    };
 }

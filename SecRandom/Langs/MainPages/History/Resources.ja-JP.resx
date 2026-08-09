@@ -1,37 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
-  <resheader name="version"><value>1.3</value></resheader>
-  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="Page_Title" xml:space="preserve"><value>履歴</value></data>
-  <data name="Tab_RollCall" xml:space="preserve"><value>点呼履歴</value></data>
-  <data name="Tab_Lottery" xml:space="preserve"><value>抽選履歴</value></data>
-  <data name="C_SelectClass" xml:space="preserve"><value>クラスを選択</value></data>
-  <data name="C_SelectPool" xml:space="preserve"><value>賞品プールを選択</value></data>
-  <data name="C_SelectMode" xml:space="preserve"><value>表示モード</value></data>
-  <data name="C_Refresh" xml:space="preserve"><value>更新</value></data>
-  <data name="C_ModeOverview" xml:space="preserve"><value>すべての記録</value></data>
-  <data name="C_ModeRecords" xml:space="preserve"><value>時刻順に表示</value></data>
-  <data name="C_MethodRandom" xml:space="preserve"><value>ランダム抽選</value></data>
-  <data name="C_MethodWeight" xml:space="preserve"><value>公平な抽選</value></data>
-  <data name="C_NoData" xml:space="preserve"><value>履歴記録はありません</value></data>
-  <data name="H_Name" xml:space="preserve"><value>名前</value></data>
-  <data name="H_PrizeName" xml:space="preserve"><value>名称</value></data>
-  <data name="H_TotalCountRollCall" xml:space="preserve"><value>点呼回数</value></data>
-  <data name="H_TotalCountLottery" xml:space="preserve"><value>当選回数</value></data>
-  <data name="H_DrawTime" xml:space="preserve"><value>点呼時刻</value></data>
-  <data name="H_LotteryTime" xml:space="preserve"><value>抽選時刻</value></data>
-  <data name="H_DrawMode" xml:space="preserve"><value>点呼モード</value></data>
-  <data name="H_DrawNumbers" xml:space="preserve"><value>点呼人数</value></data>
-  <data name="H_LotteryNumbers" xml:space="preserve"><value>抽選数</value></data>
-  <data name="H_StudentId" xml:space="preserve"><value>学籍番号</value></data>
-  <data name="H_Serial" xml:space="preserve"><value>番号</value></data>
-  <data name="H_Gender" xml:space="preserve"><value>性別</value></data>
-  <data name="H_Group" xml:space="preserve"><value>グループ</value></data>
-  <data name="H_Subject" xml:space="preserve"><value>科目</value></data>
-  <data name="H_GenderLimit" xml:space="preserve"><value>性別制限</value></data>
-  <data name="H_GroupLimit" xml:space="preserve"><value>グループ制限</value></data>
-  <data name="H_Weight" xml:space="preserve"><value>重み</value></data>
-  <data name="C_Break" xml:space="preserve"><value>休み時間</value></data>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Page_Title" xml:space="preserve">
+    <value>履歴</value>
+  </data>
+  <data name="Tab_RollCall" xml:space="preserve">
+    <value>点呼履歴</value>
+  </data>
+  <data name="Tab_Lottery" xml:space="preserve">
+    <value>抽選履歴</value>
+  </data>
+  <data name="C_SelectClass" xml:space="preserve">
+    <value>リストを選択</value>
+  </data>
+  <data name="C_SelectPool" xml:space="preserve">
+    <value>賞品プールを選択</value>
+  </data>
+  <data name="C_SelectMode" xml:space="preserve">
+    <value>表示モード</value>
+  </data>
+  <data name="C_Refresh" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="C_ModeOverview" xml:space="preserve">
+    <value>すべての記録</value>
+  </data>
+  <data name="C_ModeRecords" xml:space="preserve">
+    <value>時刻順に表示</value>
+  </data>
+  <data name="C_MethodRandom" xml:space="preserve">
+    <value>ランダム抽選</value>
+  </data>
+  <data name="C_MethodWeight" xml:space="preserve">
+    <value>公平な抽選</value>
+  </data>
+  <data name="C_NoData" xml:space="preserve">
+    <value>履歴記録はありません</value>
+  </data>
+  <data name="H_Name" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="H_PrizeName" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="H_TotalCountRollCall" xml:space="preserve">
+    <value>点呼回数</value>
+  </data>
+  <data name="H_TotalCountLottery" xml:space="preserve">
+    <value>当選回数</value>
+  </data>
+  <data name="H_DrawTime" xml:space="preserve">
+    <value>点呼時刻</value>
+  </data>
+  <data name="H_LotteryTime" xml:space="preserve">
+    <value>抽選時刻</value>
+  </data>
+  <data name="H_DrawMode" xml:space="preserve">
+    <value>点呼モード</value>
+  </data>
+  <data name="H_DrawNumbers" xml:space="preserve">
+    <value>点呼数</value>
+  </data>
+  <data name="H_LotteryNumbers" xml:space="preserve">
+    <value>抽選数</value>
+  </data>
+  <data name="H_StudentId" xml:space="preserve">
+    <value>番号 / ID</value>
+  </data>
+  <data name="H_Serial" xml:space="preserve">
+    <value>番号</value>
+  </data>
+  <data name="H_Gender" xml:space="preserve">
+    <value>性別</value>
+  </data>
+  <data name="H_Group" xml:space="preserve">
+    <value>分組</value>
+  </data>
+  <data name="H_Subject" xml:space="preserve">
+    <value>予定項目</value>
+  </data>
+  <data name="H_GenderLimit" xml:space="preserve">
+    <value>性別制限</value>
+  </data>
+  <data name="H_GroupLimit" xml:space="preserve">
+    <value>分組制限</value>
+  </data>
+  <data name="H_Weight" xml:space="preserve">
+    <value>重み</value>
+  </data>
+  <data name="C_Break" xml:space="preserve">
+    <value>空き時間帯</value>
+  </data>
 </root>

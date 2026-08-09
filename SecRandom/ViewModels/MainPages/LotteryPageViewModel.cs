@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -31,6 +32,7 @@ using SecRandom.Services.Security;
 using SecRandom.Services.Verification;
 using SecRandom.Services;
 using SecRandom.ViewModels;
+using SecRandom.Views;
 using SecRandom.Shared;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Models.Profile;
@@ -47,6 +49,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly DrawEngine _drawEngine;
     private readonly IProfileService _profileService;
     private readonly IDrawTemporaryRecordService _temporaryRecordService;
+    private readonly IDrawCommitService _drawCommitService;
     private readonly MainConfigHandler _configHandler;
     private readonly DrawAudioService _drawAudioService;
     private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
@@ -54,10 +57,11 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly ISecurityService _securityService;
     private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
+    private readonly LotteryDrawService _lotteryDrawService;
     private readonly NotificationService? _notificationService;
-    private readonly FeatureAvailabilityService _featureAvailability;
-    private readonly FileSystemWatcher _prizeListWatcher;
-    private readonly FileSystemWatcher _studentListWatcher;
+    private readonly IFeatureAvailabilityService _featureAvailability;
+    private readonly FileSystemWatcher? _prizeListWatcher;
+    private readonly FileSystemWatcher? _studentListWatcher;
     private bool _isDrawCommandRunning;
     private bool _isRefreshingLists;
     private bool _isPrizeListRefreshQueued;
@@ -81,12 +85,14 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         DrawEngine drawEngine,
         IProfileService profileService,
         IDrawTemporaryRecordService temporaryRecordService,
+        IDrawCommitService drawCommitService,
         DrawAudioService drawAudioService,
         ILogger<LotteryPageViewModel> logger,
         ISecurityService securityService,
         LinkageDrawCoordinator linkageDrawCoordinator,
         VerificationDrawCoordinator verificationDrawCoordinator,
-        FeatureAvailabilityService featureAvailability,
+        IFeatureAvailabilityService featureAvailability,
+        LotteryDrawService lotteryDrawService,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         NotificationService? notificationService = null)
         : base(configHandler)
@@ -95,16 +101,21 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         _drawEngine = drawEngine;
         _profileService = profileService;
         _temporaryRecordService = temporaryRecordService;
+        _drawCommitService = drawCommitService;
         _drawAudioService = drawAudioService;
         _voiceAnnouncementService = voiceAnnouncementService;
         _logger = logger;
         _securityService = securityService;
         _linkageDrawCoordinator = linkageDrawCoordinator;
         _verificationDrawCoordinator = verificationDrawCoordinator;
+        _lotteryDrawService = lotteryDrawService;
         _featureAvailability = featureAvailability;
         _notificationService = notificationService;
-        _prizeListWatcher = CreatePrizeListWatcher();
-        _studentListWatcher = CreateStudentListWatcher();
+        if (!OperatingSystem.IsIOS())
+        {
+            _prizeListWatcher = CreatePrizeListWatcher();
+            _studentListWatcher = CreateStudentListWatcher();
+        }
         PrizeListNames.CollectionChanged += PrizeListNamesOnCollectionChanged;
         StudentListNames.CollectionChanged += StudentListNamesOnCollectionChanged;
         Config.LotterySettings.PropertyChanged += SettingsOnPropertyChanged;
@@ -128,7 +139,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     public bool IsStudentAssignmentEnabled => SelectedStudentListName != NoStudentOption;
     public bool IsGroupSelectorVisible => MoreSettings.LotteryRangeSelector && IsStudentAssignmentEnabled;
     public bool IsGenderSelectorVisible => MoreSettings.LotteryGenderSelector && IsStudentAssignmentEnabled;
-    public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0 && RemainingCount > 0);
+    public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0);
     public string DrawButtonText => IsDrawing ? SR.C_Stop : SR.C_Start;
     public bool CanDecreaseCount => DrawCount > 1;
     public bool CanIncreaseCount => DrawCount < MaximumDrawCount;
@@ -158,6 +169,12 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         Config.GetOverrideDrawSettings(DrawSettingsType.Lottery, OverridableDrawSettingsType.Music);
     private DrawSettingsConfigBase VoiceAnnouncementSettings =>
         Config.GetOverrideDrawSettings(DrawSettingsType.Lottery, OverridableDrawSettingsType.VoiceAnnouncement);
+    private bool IsLotteryImageEnabled => Config.LotterySettings.OverrideStudentImageSettings
+        ? Config.LotterySettings.LotteryImage
+        : Config.DefaultDrawSettings.StudentImage;
+    private StudentImagePositionMode LotteryImagePosition => Config.LotterySettings.OverrideStudentImageSettings
+        ? Config.LotterySettings.LotteryImagePosition
+        : Config.DefaultDrawSettings.StudentImagePosition;
     private string CurrentGroupScope => SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup;
     private string CurrentGenderScope => SelectedGender == AllGendersOption ? string.Empty : SelectedGender;
 
@@ -263,6 +280,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             return;
 
         RefreshCounts();
+        ResetExhaustedTemporaryRecords();
         if (!CanStartDraw)
         {
             StatusText = TotalCount == 0 ? SR.M_NoPrizes : SR.M_NoRemainingPrizes;
@@ -287,21 +305,24 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                     count);
 
             var courseName = _linkageDrawCoordinator.GetCourseName();
-            var verificationDrawTask = _verificationDrawCoordinator.DrawPrizesAsync(
+            var drawTask = _lotteryDrawService.DrawAsync(new LotteryDrawRequest(
+                SelectedPrizeListName,
+                IsStudentAssignmentEnabled ? SelectedStudentListName : string.Empty,
+                CurrentGroupScope,
+                CurrentGenderScope,
                 count,
-                _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName),
-                prizes,
-                DrawProofExportContext.ForPrizes(SelectedPrizeListName),
-                cancellationToken: default);
+                courseName));
             var previewTask = ShowPreviewAsync(prizes, count, MusicSettings.AnimationMusic);
             List<Prize> drawn;
-            Guid? prizeProofId;
+            List<Student> assignedStudents;
             try
             {
-                var drawCompletedFirst = await Task.WhenAny(verificationDrawTask, previewTask).ConfigureAwait(true) == verificationDrawTask;
-                var proofOutcome = await verificationDrawTask.ConfigureAwait(true);
-                drawn = proofOutcome.Winners.ToList();
-                prizeProofId = proofOutcome.Proof.ProofId;
+                var drawCompletedFirst = await Task.WhenAny(drawTask, previewTask).ConfigureAwait(true) == drawTask;
+                var drawResult = await drawTask.ConfigureAwait(true);
+                if (drawResult is null)
+                    throw new InvalidOperationException("No eligible lottery candidates.");
+                drawn = drawResult.Prizes.ToList();
+                assignedStudents = drawResult.AssignedStudents.ToList();
                 if (drawCompletedFirst && !previewTask.IsCompleted)
                     await _drawAudioService.StartAnimationMusicAsync(
                         DrawMusicAttachedSettingsResolver.GetAnimationMusic(drawn.FirstOrDefault(), MusicSettings.AnimationMusic),
@@ -322,38 +343,13 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                 return;
             }
 
-            var assignedStudents = await DrawAssignedStudentsAsync(drawn.Count, prizeProofId, courseName).ConfigureAwait(true);
-            if (assignedStudents is null)
-            {
-                await _drawAudioService.StopAnimationMusicAsync(0, immediate: true).ConfigureAwait(false);
-                return;
-            }
-
-            _profileService.RecordPrizeHistory(drawn, DateTime.Now, count);
-            _temporaryRecordService.RecordPrizes(SelectedPrizeListName, drawn);
-            if (assignedStudents.Count > 0)
-            {
-                _profileService.RecordStudentHistory(
-                    assignedStudents,
-                    DateTime.Now,
-                    assignedStudents.Count,
-                    SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup,
-                    SelectedGender == AllGendersOption ? string.Empty : SelectedGender,
-                    (int)Config.RollCallSettings.DrawType,
-                    courseName: courseName);
-                _temporaryRecordService.RecordStudents(
-                    SelectedStudentListName,
-                    CurrentGenderScope,
-                    CurrentGroupScope,
-                    assignedStudents);
-            }
-
             _lastResultPrizes = BuildDisplayPrizes(drawn, assignedStudents);
             ReplaceResults(_lastResultPrizes);
             IsResultVisible = true;
             TriggerResultAnimation();
             StatusText = string.Format(SR.M_DrawnCountFormat, ResultItems.Count);
             RefreshCounts();
+            ResetExhaustedTemporaryRecords();
             await _drawAudioService.TransitionToResultMusicAsync(
                 DrawMusicAttachedSettingsResolver.GetResultMusic(drawn.FirstOrDefault(), MusicSettings.ResultMusic),
                 MusicSettings.ResultMusicVolume, MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut,
@@ -377,18 +373,21 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             !await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.LotteryReset, () => Task.CompletedTask) ||
             !_featureAvailability.IsLotteryEnabled)
             return;
-        ResetDisplayCore();
+        ResetDisplayCore(showToast: true);
     }
 
-    private void ResetDisplayCore()
+    private void ResetDisplayCore(bool showToast = false)
     {
         _lastResultPrizes.Clear();
         ResultItems.Clear();
-        _temporaryRecordService.ClearPrizeList(SelectedPrizeListName);
-        if (IsStudentAssignmentEnabled)
-            _temporaryRecordService.ClearStudentScope(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
+        _lotteryDrawService.Reset(
+            IsStudentAssignmentEnabled ? SelectedStudentListName : string.Empty,
+            CurrentGroupScope,
+            CurrentGenderScope);
         IsResultVisible = false;
         StatusText = SR.M_ResetDone;
+        if (showToast)
+            MainView.ShowSuccessToast(SR.M_ResetDone);
         RefreshCounts();
     }
 
@@ -428,7 +427,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                     return Task.CompletedTask;
 
                 reset = true;
-                ResetDisplayCore();
+                ResetDisplayCore(showToast: true);
                 return Task.CompletedTask;
             });
         return authorized && reset;
@@ -615,13 +614,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         if (Config.LotterySettings.DrawType == LotteryDrawType.Count)
             return prizes.Sum(prize => Math.Max(0, prize.Count - GetTemporaryPrizeCount(prize, temporaryCounts)));
 
-        var threshold = Config.LotterySettings.DrawMode switch
-        {
-            DrawMode.Repeat => 0,
-            DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, Config.LotterySettings.HalfRepeat),
-            _ => 1
-        };
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.LotterySettings.DrawMode, Config.LotterySettings.HalfRepeat);
 
         return threshold <= 0
             ? prizes.Count
@@ -646,13 +639,9 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
     private int GetLotteryRepeatThreshold()
     {
-        return Config.LotterySettings.DrawMode switch
-        {
-            DrawMode.Repeat => int.MaxValue,
-            DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, Config.LotterySettings.HalfRepeat),
-            _ => 1
-        };
+        // 展示口径：Repeat 视为无限剩余，对应抽取阈值 helper 的 0（不限制）。
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.LotterySettings.DrawMode, Config.LotterySettings.HalfRepeat);
+        return threshold <= 0 ? int.MaxValue : threshold;
     }
 
     private async Task ShowPreviewAsync(IReadOnlyList<Prize> prizes, int count, string animationMusic)
@@ -751,7 +740,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             DisplaySettings.ShowWeightTransparency,
             $"权重 {prize.Weight:0.##}",
             BuildImage(prize),
-            Config.LotterySettings.LotteryImage,
+            IsLotteryImageEnabled,
+            LotteryImagePosition,
             BuildInitial(prize));
     }
 
@@ -823,29 +813,24 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         if (!IsStudentAssignmentEnabled)
             return [];
 
-        return (_profileService.CurrentStudentList?.Students ?? [])
-            .Where(student => student.IsCandidate)
-            .Where(student => SelectedGroup == AllGroupsOption || student.Group == SelectedGroup)
-            .Where(student => SelectedGender == AllGendersOption || student.Gender == SelectedGender)
-            .Where(student => !HasReachedStudentRepeatLimit(student));
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.RollCallSettings.DrawMode, Config.RollCallSettings.HalfRepeat);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
+        return DrawCandidateFilter.FilterEligibleStudents(
+            _profileService.CurrentStudentList?.Students ?? [],
+            CurrentGroupScope,
+            CurrentGenderScope,
+            counts,
+            threshold);
     }
 
-    private bool HasReachedStudentRepeatLimit(Student student)
+    private IEnumerable<Student> GetStudentPoolCandidates()
     {
-        var threshold = Config.RollCallSettings.DrawMode switch
-        {
-            DrawMode.Repeat => 0,
-            DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, Config.RollCallSettings.HalfRepeat),
-            _ => 1
-        };
+        if (!IsStudentAssignmentEnabled)
+            return [];
 
-        if (threshold <= 0)
-            return false;
-
-        var recordId = ProfileRecordIdentity.EnsureRecordId(student);
-        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
-        return counts.GetValueOrDefault(recordId) >= threshold;
+        return (_profileService.CurrentStudentList?.Students ?? [])
+            .Where(student => student.IsCandidate)
+            .Where(student => DrawCandidateFilter.MatchesScope(student, CurrentGroupScope, CurrentGenderScope));
     }
 
     private void EnsureRestartPrizeRecordsCleared(string listName)
@@ -858,6 +843,36 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     {
         if (Config.RollCallSettings.ClearRecord == ClearRecordMode.Restarted)
             _temporaryRecordService.ClearStudentListOnce(listName);
+    }
+
+    private bool ResetExhaustedTemporaryRecords()
+    {
+        if (TotalCount <= 0)
+            return false;
+
+        var reset = false;
+        if (RemainingCount <= 0)
+        {
+            _temporaryRecordService.ResetPrizeList(SelectedPrizeListName);
+            reset = true;
+        }
+
+        if (IsStudentAssignmentEnabled)
+        {
+            var studentPool = GetStudentPoolCandidates().ToList();
+            if (studentPool.Count > 0 && !GetStudentCandidates().Any())
+            {
+                _temporaryRecordService.ResetStudentList(SelectedStudentListName);
+                reset = true;
+            }
+        }
+
+        if (!reset)
+            return false;
+
+        RefreshCounts();
+        MainView.ShowSuccessToast(SR.M_AutoResetDone);
+        return true;
     }
 
     private void RefreshFilterOptions()
@@ -939,8 +954,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         Config.DefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.MoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged -= SettingsOnPropertyChanged;
-        _prizeListWatcher.Dispose();
-        _studentListWatcher.Dispose();
+        _prizeListWatcher?.Dispose();
+        _studentListWatcher?.Dispose();
     }
 
     private IBrush BuildReminderBrush()
@@ -1039,10 +1054,16 @@ public sealed record LotteryResultItem(
     string WeightText,
     Bitmap? Image,
     bool IsImageEnabled,
+    StudentImagePositionMode ImagePosition,
     string Initial)
 {
     public bool IsImageVisible => IsImageEnabled && Image is not null;
     public bool IsPlaceholderVisible => IsImageEnabled && Image is null;
+    public Orientation ImageLayoutOrientation => ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Right
+        ? Orientation.Horizontal
+        : Orientation.Vertical;
+    public bool IsImageBeforeText => IsImageEnabled && ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Top;
+    public bool IsImageAfterText => IsImageEnabled && ImagePosition is StudentImagePositionMode.Right or StudentImagePositionMode.Bottom;
 }
 
 public sealed record LotteryRemainingItem(string DisplayText, string Id, string Name, string Tags, int Remaining, int DrawnCount)

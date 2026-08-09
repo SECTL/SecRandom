@@ -1,14 +1,9 @@
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Timers;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -16,6 +11,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using DynamicData;
 using FluentAvalonia.UI.Controls;
+using FluentAvalonia.UI.Navigation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
@@ -26,23 +22,29 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Extensions;
 using SecRandom.Core.Helpers.UI;
+using SecRandom.Core.Icons;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Logging;
+using SecRandom.Core.Views;
 using SecRandom.Models;
 using SecRandom.Services.Desktop;
+using SecRandom.Core.Services.Archive;
+using SecRandom.Mobile;
 using SecRandom.Services.ImportExport;
 using SecRandom.Services.Security;
 using SecRandom.Shared;
 using SecRandom.ViewModels;
+using SecRandom.Views.Mobile;
+using SecRandom.Platforms.Abstractions;
 
 namespace SecRandom.Views;
 
-public partial class SettingsView : UserControl, IFANavigationPageFactory
+public partial class SettingsView : ViewBase, IFANavigationPageFactory
 {
-    private const string DefaultMainPageId = "settings.overview";
-
-    private readonly ILogger<SettingsView> _logger = IAppHost.GetService<ILogger<SettingsView>>();
+    private const string DefaultDesktopPageId = "settings.overview";
+    private readonly ILogger<SettingsView>? _logger;
+    private readonly bool _isMobile;
     private AppToastAdorner? _appToastAdorner;
 
     private Border? _currentHighlight;
@@ -50,18 +52,39 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     private bool _isAdornerAdded;
     private bool _isShowingRestartDialog;
     private bool _isPreviewMode;
+    private readonly List<(Control Control, bool IsEnabled)> _previewDisabledControls = [];
+    private IPlatformServiceRoot _platformServiceRoot;
 
-    public SettingsView()
+    public SettingsView(
+        IPlatformServiceRoot platform,
+        SettingsViewModel? viewModel = null,
+        ILogger<SettingsView>? logger = null)
     {
-        Current = this;
+        _platformServiceRoot = platform;
+        _isMobile = platform.Capabilities.SupportsSingleView;
+        if (platform is MobilePlatformServiceRoot root)
+        {
+            _isMobile = _isMobile && !root.UsesDesktopMainView;
+        }
+        _logger = logger;
+        ViewModel = viewModel ?? new SettingsViewModel();
         DataContext = this;
         InitializeComponent();
 
         NavigationFrame.NavigationPageFactory = this;
+        NavigationFrame.Navigated += NavigationFrame_OnNavigated;
+        Current = this;
         if (GlobalConstants.IsDevelopment)
             ShowDebugNavigationItem();
         BuildNavigationMenuItems();
-        SelectNavigationItemById(DefaultMainPageId);
+        SelectNavigationItemById(_isMobile ? MobilePageIds.Settings : DefaultDesktopPageId);
+        Closed += (_, _) =>
+        {
+            NavigationFrame.Navigated -= NavigationFrame_OnNavigated;
+            RestorePreviewControls();
+            if (ReferenceEquals(Current, this))
+                Current = null;
+        };
 
         TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
         RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
@@ -72,11 +95,24 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     public static AutoCompleteFilterPredicate<object?> SettingsFilterProperty => SearchFilter;
 
     public bool IsPreviewMode => _isPreviewMode;
-    public SettingsViewModel ViewModel { get; } = IAppHost.GetService<SettingsViewModel>();
-    private IImportExportService ImportExportService { get; } = IAppHost.GetService<IImportExportService>();
-    private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
+    public SettingsViewModel ViewModel { get; }
+    public bool IsMobile => _isMobile;
+    public bool HomeButtonVisible => _platformServiceRoot.Capabilities.SupportsSingleView;
+    private IImportExportService ImportExportService => IAppHost.GetService<IImportExportService>();
+    private IExternalLauncher ExternalLauncher => IAppHost.GetService<IExternalLauncher>();
+    public bool IsDesktop => App.IsDesktop;
+    public bool CanOpenFileManagerDirectories => IsDesktop || _platformServiceRoot is MobilePlatformServiceRoot
+        {
+            Kind: PlatformKind.Android
+        };
 
     #region Misc
+
+    private void MobileHomeButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var viewEngine = IAppHost.GetService<IViewEngine>();
+        _ =  viewEngine.CloseAsync(MobilePageIds.Settings, ViewCloseReason.Back);
+    }
 
     public static bool SearchFilter(string? search, object? item)
     {
@@ -97,25 +133,54 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
 
     private void SearchBox_OnKeyUp(object? sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Enter || ViewModel.SelectedSettings == null) return;
+        if (e.Key != Key.Enter) return;
+        ExecuteSettingsSearch(ViewModel.SelectedSettings);
+    }
 
-        var settings = ViewModel.SelectedSettings;
+    private void SearchBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is AutoCompleteBox { SelectedItem: SettingsMetadata settings })
+            ExecuteSettingsSearch(settings);
+    }
 
-        _logger.LogInformation("跳转到设置 [{PageId}] {Id}", settings.PageId, settings.Id);
+    private void SearchButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel.SelectedSettings is { } settings)
+        {
+            ExecuteSettingsSearch(settings);
+            return;
+        }
+
+        SearchBox.Focus();
+        SearchBox.IsDropDownOpen = !string.IsNullOrWhiteSpace(ViewModel.SearchText);
+    }
+
+    private void ClearSearchButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        ClearSearch();
+        SearchBox.Focus();
+    }
+
+    private void ExecuteSettingsSearch(SettingsMetadata? settings)
+    {
+        if (settings == null) return;
+
+        _logger?.LogInformation("跳转到设置 [{PageId}] {Id}", settings.PageId, settings.Id);
         SelectNavigationItemById(settings.PageId);
+        ClearSearch();
 
         if (settings.IsPage) return;
 
-        var pageRoot = NavigationFrame.Content as Control;
+        Control? pageRoot = NavigationFrame.Content as Control;
 
         var settingsControl = pageRoot?.FindControl<Control>(settings.Id);
-        _logger.LogInformation("设置控件: {Control}", settingsControl);
+            _logger?.LogInformation("设置控件: {Control}", settingsControl);
 
         Control? categoryControl = null;
         if (!settings.IsCategory)
         {
             categoryControl = pageRoot?.FindControl<Control>(settings.CategoryId);
-            _logger.LogInformation("分类控件: {Control}", categoryControl);
+            _logger?.LogInformation("分类控件: {Control}", categoryControl);
 
             if (categoryControl is FASettingsExpander settingsExpander) settingsExpander.IsExpanded = true;
         }
@@ -128,6 +193,13 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
 
             HighlightControl(targetControl, TimeSpan.FromSeconds(3));
         }, DispatcherPriority.Render);
+    }
+
+    private void ClearSearch()
+    {
+        SearchBox.IsDropDownOpen = false;
+        ViewModel.SelectedSettings = null;
+        ViewModel.SearchText = string.Empty;
     }
 
     public void HighlightControl(Control? target, TimeSpan? duration = null)
@@ -191,7 +263,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
 
         if (duration.HasValue)
         {
-            var timer = new Timer(duration.Value.TotalMilliseconds) { AutoReset = false };
+            var timer = new System.Timers.Timer(duration.Value.TotalMilliseconds) { AutoReset = false };
             timer.Elapsed += (_, _) =>
             {
                 Dispatcher.UIThread.Post(() =>
@@ -235,7 +307,8 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        if (ViewModel.SelectedPageInfo is null) SelectNavigationItemById(DefaultMainPageId);
+        if (ViewModel.SelectedPageInfo is null)
+            SelectNavigationItemById(_isMobile ? MobilePageIds.Settings : DefaultDesktopPageId);
 
         if (Content is not Control element || _isAdornerAdded) return;
 
@@ -257,7 +330,6 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
         IAppHost.TryGetService<MainConfigHandler>()?.Save();
-        DataContext = null;
     }
 
     #endregion
@@ -303,6 +375,9 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         if (r != FAContentDialogResult.Primary)
             return;
 
+        if (_isPreviewMode)
+            return;
+
         await IAppHost.GetService<ISecurityService>().AuthorizeAsync(
             SecurityOperation.RestartApplication,
             () =>
@@ -320,6 +395,14 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
     private void LogViewerMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
         SelectNavigationItemById("settings.logs");
+    }
+
+    private void FeedbackMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        FeedbackDrawer drawer = ViewModel.DrawerContent as FeedbackDrawer
+            ?? IAppHost.GetService<FeedbackDrawer>();
+        drawer.Configure(CloseDrawer);
+        OpenDrawer(drawer);
     }
 
     private void OpenLogDirectoryMenuItem_OnClick(object? sender, RoutedEventArgs e)
@@ -365,7 +448,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "导出诊断数据失败。");
+            _logger?.LogError(ex, "导出诊断数据失败。");
             this.ShowErrorToast(GetResource("M_ExportFailed"));
         }
     }
@@ -389,7 +472,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "导出设置失败。");
+            _logger?.LogError(ex, "导出设置失败。");
             this.ShowErrorToast(GetResource("M_ExportFailed"));
         }
     }
@@ -421,7 +504,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "导入设置失败。");
+            _logger?.LogError(ex, "导入设置失败。");
             await ShowImportFailureAsync(ex);
         }
     }
@@ -445,7 +528,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "导出全部数据失败。");
+            _logger?.LogError(ex, "导出全部数据失败。");
             this.ShowErrorToast(GetResource("M_ExportFailed"));
         }
     }
@@ -477,7 +560,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "导入全部数据失败。");
+            _logger?.LogError(ex, "导入全部数据失败。");
             await ShowImportFailureAsync(ex);
         }
     }
@@ -582,10 +665,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
 
     private bool CanTransferData()
     {
-        if (!_isPreviewMode)
-            return true;
-        this.ShowWarningToast("预览模式下不能导入或导出数据。");
-        return false;
+        return true;
     }
 
     private static string GetResource(string key)
@@ -614,7 +694,7 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
     }
 
-    private void CoreNavigate(PageInfo info, bool isBack = false)
+    private void CoreNavigate(PageInfo info, bool isBack = false, bool updateNavigationSelection = true)
     {
         if (ViewModel.SelectedPageInfo?.Id == info.Id) return;
 
@@ -624,11 +704,22 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
             ViewModel.CanGoBack = true;
         }
 
-        var item = ViewModel.FlattenNavigationItems.FirstOrDefault(item => Equals(item.Tag, info));
-        ViewModel.FrameContent = null;
-        ViewModel.SelectedNavigationViewItem = item;
-        ViewModel.SelectedPageInfo = info;
-        NavigationFrame.NavigateFromObject(info);
+        try
+        {
+            var item = ViewModel.FlattenNavigationItems.FirstOrDefault(item => Equals(item.Tag, info));
+            ViewModel.FrameContent = null;
+            if (updateNavigationSelection)
+                ViewModel.SelectedNavigationViewItem = item;
+            ViewModel.SelectedPageInfo = info;
+            NavigationFrame.NavigateFromObject(info);
+        }
+        catch (Exception e)
+        {
+            _logger?.LogError(e, "Failed navigating to page {PageId}", info.Id);
+            NavigationFrame.NavigateFromObject(e);
+        }
+
+        CloseDrawer();
     }
 
     public void SelectNavigationItemById(string id, bool isBack = false)
@@ -668,48 +759,73 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
         BuildNavigationMenuItems();
     }
 
-    public void SetPluginSettingsNavigationVisible(bool isVisible)
-    {
-        var pluginPage = PagesRegistryService.SettingsItems.FirstOrDefault(info => info.Id == "settings.plugin");
-        if (pluginPage is null || pluginPage.IsHide == !isVisible)
-            return;
-
-        pluginPage.IsHide = !isVisible;
-        var pluginSeparator = PagesRegistryService.SettingsItems
-            .TakeWhile(info => info != pluginPage)
-            .LastOrDefault(info => info.IsSeparator && info.Location == PageLocation.Top);
-        if (pluginSeparator is not null)
-            pluginSeparator.IsHide = !isVisible;
-        BuildNavigationMenuItems();
-    }
-
     public void NavigateToPage(string id)
     {
         ExitPreview();
         var info = PagesRegistryService.SettingsItems.FirstOrDefault(item => item.Id == id);
         if (info is not null)
-            CoreNavigate(info, isBack: true);
+            CoreNavigate(info, updateNavigationSelection: !_isMobile);
     }
 
     public void NavigateToPreviewPage(string id)
     {
-        _isPreviewMode = true;
-        var info = PagesRegistryService.SettingsItems.FirstOrDefault(item => item.Id == id);
-        if (info is not null)
-            CoreNavigate(info, isBack: true);
-        UpdatePreviewState();
+        if (ViewModel.SelectedPageInfo?.Id != id)
+        {
+            var info = PagesRegistryService.SettingsItems.FirstOrDefault(item => item.Id == id);
+            if (info is not null)
+                CoreNavigate(info);
+        }
+
+        EnterPreview();
     }
 
-    private void UpdatePreviewState()
+    public void EnterPreview()
     {
-        NavigationFrame.IsEnabled = !_isPreviewMode;
-        NavigationFrame.IsHitTestVisible = !_isPreviewMode;
+        _isPreviewMode = true;
+        QueuePreviewPageDisable();
     }
 
     public void ExitPreview()
     {
         _isPreviewMode = false;
-        UpdatePreviewState();
+        RestorePreviewControls();
+    }
+
+    private void NavigationFrame_OnNavigated(object? sender, FANavigationEventArgs e)
+    {
+        if (_isPreviewMode)
+            QueuePreviewPageDisable();
+    }
+
+    private void QueuePreviewPageDisable()
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!_isPreviewMode || NavigationFrame.Content is not Control page)
+                return;
+
+            RestorePreviewControls();
+            if (!_isMobile && ViewModel.SelectedPageInfo?.Id == "settings.about")
+                return;
+
+            Control[] targets = page is UserControl userControl
+                && userControl.Content is ScrollViewer scrollViewer
+                && scrollViewer.Content is Control content
+                ? [content]
+                : [page];
+            foreach (var target in targets)
+            {
+                _previewDisabledControls.Add((target, target.IsEnabled));
+                target.IsEnabled = false;
+            }
+        }, DispatcherPriority.Render);
+    }
+
+    private void RestorePreviewControls()
+    {
+        foreach (var (control, isEnabled) in _previewDisabledControls)
+            control.IsEnabled = isEnabled;
+        _previewDisabledControls.Clear();
     }
 
     private void TogglePaneButton_OnClick(object? sender, RoutedEventArgs e)
@@ -736,7 +852,8 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
 
         if (e.InvokedItemContainer is FANavigationViewItem { Tag: PageInfo containerInfo })
             info = containerInfo;
-        else if (e.InvokedItem is PageInfo invokedInfo) info = invokedInfo;
+        else if (e.InvokedItem is PageInfo invokedInfo)
+            info = invokedInfo;
 
         if (info != null) CoreNavigate(info);
     }
@@ -748,6 +865,33 @@ public partial class SettingsView : UserControl, IFANavigationPageFactory
 
     public Control? GetPageFromObject(object target)
     {
+        if (target is Exception exception)
+        {
+            return new StackPanel
+            {
+                Spacing = 4,
+                Margin = new Thickness(8),
+                Children =
+                {
+                    new FluentIcon
+                    {
+                        Glyph = FluentIcons.ErrorCircleFilled,
+                        FontSize = 48
+                    },
+                    new TextBlock
+                    {
+                        Text = Langs.SettingsView.Resources.M_NavigateFailed,
+                        HorizontalAlignment = HorizontalAlignment.Center
+                    },
+                    new TextBox
+                    {
+                        IsReadOnly = true,
+                        Text = exception.ToString(),
+                    }
+                }
+            };
+        }
+        
         if (target is not PageInfo info) return null;
 
         var page = IAppHost.Host!.Services.GetKeyedService<UserControl>(info.Id);

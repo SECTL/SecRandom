@@ -6,8 +6,15 @@
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+        <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
         <ApplicationIcon>..\SecRandom\Assets\AppLogo.ico</ApplicationIcon>
     </PropertyGroup>
+    
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <OutputType>WinExe</OutputType>
+    </PropertyGroup>
+
+    <Import Project="..\Platforms.props" />
 
     <PropertyGroup>
         <EnableUiAccess Condition="'$(EnableUiAccess)' == ''">false</EnableUiAccess>
@@ -17,10 +24,27 @@
 
     <ItemGroup>
         <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)"/>
+        <PackageReference Include="Sentry.Extensions.Logging" Version="6.8.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SecRandom\SecRandom.csproj"/>
+        <ProjectReference Include="..\SecRandom\SecRandom.csproj">
+            <AdditionalProperties>SecRandomBundleAssetsInAssembly=false</AdditionalProperties>
+        </ProjectReference>
+        <ProjectReference Include="..\SecRandom.Platforms\SecRandom.Platforms.csproj" />
+        <ProjectReference Include="..\SecRandom.Platforms.Abstractions\SecRandom.Platforms.Abstractions.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(SecRandomPlatform)' == 'Windows'">
+        <ProjectReference Include="..\SecRandom.Platforms.Windows\SecRandom.Platforms.Windows.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(SecRandomPlatform)' == 'Linux'">
+        <ProjectReference Include="..\SecRandom.Platforms.Linux\SecRandom.Platforms.Linux.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(SecRandomPlatform)' == 'MacOs'">
+        <ProjectReference Include="..\SecRandom.Platforms.MacOs\SecRandom.Platforms.MacOs.csproj" />
     </ItemGroup>
 
     <Import Project="..\Global.props"/>

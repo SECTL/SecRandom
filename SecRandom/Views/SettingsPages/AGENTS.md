@@ -26,7 +26,6 @@ SecRandom/Views/SettingsPages/
 |-- More/                                 # settings.more: more settings
 |-- Update/                               # settings.update: update settings
 |-- LogViewer/                            # settings.logs: hidden log viewer
-`-- Plugins/Overview/                     # settings.plugin: plugin management overview
 ```
 
 ## WHERE TO LOOK
@@ -50,7 +49,6 @@ SecRandom/Views/SettingsPages/
 | Update settings | `Update/UpdateSettingsPage.axaml(.cs)` | `settings.update` bottom-nav entry. |
 | Notification settings | `Notification/VoiceSettingsPage.axaml(.cs)` etc. | Voice/music and notification channel entries under `settings.notification`. |
 | History management | `History/HistoryManagementSettingsPage.axaml(.cs)` | Clears roll-call/lottery histories through active-profile or named-profile handlers; `settings.history.management`. |
-| Plugin settings | `Plugins/Overview/PluginsSettingsPage.axaml(.cs)` | `settings.plugin` group; single compact management page. |
 | Log viewer | `LogViewer/LogViewerSettingsPage.axaml(.cs)` | Hidden page `settings.logs`; opened from the settings shell more-options menu. |
 | About / external links | `About/AboutSettingsPage.axaml(.cs)` | `settings.about` bottom-nav; `Process.Start` for external URLs. |
 | Shell navigation semantics | `../SettingsView.axaml.cs` | Default page `settings.overview`, history stack, generated menu. |
@@ -60,12 +58,14 @@ SecRandom/Views/SettingsPages/
 
 - Every non-debug settings page needs `[PageInfo]`, Host registration, and a matching localization folder under `SecRandom/Langs/SettingsPages/` when user-facing text is localized.
 - Privacy page localization lives under `General/Privacy/` and is registered like other settings pages with only `Resources.resx` + `Resources.Designer.cs` in the project file.
+- Chinese settings-page i18n values must not use the Chinese full stop (`。`).
+- Settings-page explanation values (`*_D`, including `S_*_D` and `C_*_D`) must not use sentence-ending or sentence-separating full stops (`。` or `.`); preserve technical dots in file names, domains, process names, and version identifiers.
 - Page IDs here follow `settings.xxx` or `settings.group.xxx`; historical grouping notes live in `docs/settings-pages-plan.md`.
 - Group membership is owned by the `groupId` in `[PageInfo(...)]` and by `services.AddGroup(...)` in `BuildHost()`; do not handwire grouping in the page.
 - Pages usually resolve `ViewModelBase` via `IAppHost.GetService<ViewModelBase>()`, set `DataContext = this`, and expose `Settings` from `ViewModel.Config.*`.
 - Basic-settings platform switches must route through `DesktopIntegrationService`; do not manipulate registry keys, XDG desktop files, or macOS launch services from the settings page. Revert a switch when the platform operation fails.
-- Security settings must display credential state before factor selection. Password, TOTP, and USB setup are command-driven; selected factors use the shared Ursa `MultiComboBox` pattern with plain option data, and protected-operation controls are driven by `ISecurityService` state.
-- Settings pages using Ursa `MultiComboBox` must subscribe to the backing settings model on construction and every `Loaded` event, unsubscribe on `Unloaded`, and save at the selection mutation boundary. `MultiComboBox` mutates its bound `SelectedItems` collection directly, so persist multi-select changes from that collection's `CollectionChanged` event rather than `SelectionChanged`. Follow `SecuritySettingsPage` for lifecycle and use plain option-data binding.
+- Security settings must display credential state before factor selection. Password, TOTP, and USB setup are command-driven; selected factors use the shared `MultiComboBox` pattern with plain option data, and protected-operation controls are driven by `ISecurityService` state.
+- Settings pages using `MultiComboBox` must subscribe to the backing settings model on construction and every `Loaded` event, unsubscribe on `Unloaded`, and save at the selection mutation boundary. `MultiComboBox` mutates its bound `SelectedItems` collection directly, so persist multi-select changes from that collection's `CollectionChanged` event rather than `SelectionChanged`. Follow `SecuritySettingsPage` for lifecycle and use plain option-data binding.
 - V2-parity settings pages should keep the same `ScrollViewer` + `StackPanel.page-container animated-intro` + `FASettingsExpander` rhythm as existing settings pages.
 - A page containing multiple settings categories should use `IconText` category headings followed by sibling `FASettingsExpander` rows. Override groups follow the committed draw-settings pattern: one outer `FASettingsExpander` whose direct rows are `FASettingsExpanderItem` controls; never nest another `FASettingsExpander` inside it.
 - Default notification settings follow the default draw-settings layout: category `IconText` headings with sibling non-grouping `FASettingsExpander` rows. Only per-draw notification pages use collapsible override groups.
@@ -76,9 +76,7 @@ SecRandom/Views/SettingsPages/
 - If a settings change needs a restart, request it through `SettingsView.Current?.RequestRestartApp()` instead of restarting directly. Selecting UIAccess topmost in basic or floating-window settings persists the mode and uses this restart flow so the desktop launcher can run the `killtimer0/uiaccess`-style token preparation before UI initialization.
 - If a settings change only needs live UI refresh, follow `AppearanceSettingsPage` and route through `App.Current.RefreshPersonalizedSettings()`.
 - `settings.logs` should stay hidden from the sidebar and reachable from the settings shell more-options menu; keep that menu action as a navigation jump.
-- `settings.plugin` is the visible expandable plugin group in the sidebar. Keep the single-page management layout aligned with settings-page density and avoid marketplace-style presentation.
 - Backup pages and settings-shell import actions must delegate archive/file-system work to `IImportExportService`; do not bypass manifest validation, v2 migration, staging, or mandatory pre-import snapshots.
-- Plugin overview should stay toolbar-first and management-focused, with one local plugin import entry that copies a selected plugin directory into the app plugin store; do not surface promotional copy or a store layout.
 
 ## ANTI-PATTERNS
 
@@ -87,4 +85,3 @@ SecRandom/Views/SettingsPages/
 - `DebugSettingsPage` is available in all builds for the About-page activation path; keep it hidden by default in release builds and localize all user-facing text under `Langs/SettingsPages/Debug/`.
 - Do not put backup/config persistence logic in these pages when the boundary belongs in Core handlers or app services.
 - Do not open navigation targets by manually editing menu items in `SettingsView`; register pages/groups and let the registry build the menu.
-- Do not turn `settings.plugin` into a store or marketplace page; it is a settings group for installed plugin management.

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services;
@@ -30,7 +31,7 @@ public sealed class GlobalShortcutService : IHostedService
     private MoreSettingsConfig _settings;
     private readonly RollCallPageViewModel _rollCall;
     private readonly LotteryPageViewModel _lottery;
-    private readonly FeatureAvailabilityService _featureAvailability;
+    private readonly IFeatureAvailabilityService _featureAvailability;
     private readonly ILogger<GlobalShortcutService> _logger;
     private readonly ManualResetEventSlim _threadReady = new();
     private readonly object _settingsGate = new();
@@ -44,7 +45,7 @@ public sealed class GlobalShortcutService : IHostedService
         MainConfigHandler configHandler,
         RollCallPageViewModel rollCall,
         LotteryPageViewModel lottery,
-        FeatureAvailabilityService featureAvailability,
+        IFeatureAvailabilityService featureAvailability,
         ILogger<GlobalShortcutService> logger)
     {
         _configHandler = configHandler;

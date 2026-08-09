@@ -59,7 +59,6 @@ dotnet test SecRandom.Core.Tests/SecRandom.Core.Tests.csproj -c Release --no-res
 - 使用 `RecordId` 维护学生、奖品和历史的内部身份；显示的 `Id` 或名称不是必需的唯一标识。
 - 配置字典和集合的直接修改不会自动保存，负责该变更的代码必须在合适的生命周期调用保存。
 - 安全授权统一通过 `ISecurityService`；凭据不得写入普通设置、日志、导出数据或诊断信息。
-- 插件只能依赖 `SecRandom.Core/Plugins` 的稳定契约，不能获得抽取内部、可写配置、可写历史或完整宿主服务。
 - 新应用图标使用项目的 Fluent Filled 图标系统，不要加入原始 Unicode Fluent 字形。
 
 ## 修改范围与测试

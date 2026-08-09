@@ -10,15 +10,10 @@
               x:DataType="local:VerificationSettingsPage"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450">
     <ScrollViewer>
-        <StackPanel Classes="page-container animated-intro">
+        <StackPanel Classes="page-container animated-intro settings">
             <fa:FAInfoBar Severity="Informational" IsOpen="True" IsClosable="False"
-                           Title="{x:Static lv:Resources.C_WitnessNoticeTitle}"
-                           MinHeight="104"
-                           Padding="16 14">
-                <TextBlock Text="{x:Static lv:Resources.M_WitnessModeNotice}"
-                           TextWrapping="Wrap"
-                           LineHeight="20" />
-            </fa:FAInfoBar>
+                          Title="{x:Static lv:Resources.C_WitnessNoticeTitle}"
+                          Message="{x:Static lv:Resources.M_WitnessModeNotice}" />
 
             <fa:FASettingsExpander Header="{x:Static lv:Resources.S_VerificationMode}"
                                     Description="{x:Static lv:Resources.S_VerificationMode_D}"
@@ -36,7 +31,7 @@
                                     Description="{x:Static lv:Resources.S_ProofFolder_D}"
                                     IconSource="{sr:FluentIconSource {sr:Fi FolderOpenFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <StackPanel Orientation="Horizontal" Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
                         <Button Content="{x:Static lv:Resources.C_OpenProofFolder}"
                                 Click="OpenProofFolder_OnClick" />
                         <Button Content="{x:Static lv:Resources.C_OpenVerificationWebsite}"

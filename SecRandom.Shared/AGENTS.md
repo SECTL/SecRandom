@@ -50,6 +50,7 @@ SecRandom.Shared/
 - `ProfileListOrderingExtensions` is the shared presentation ordering for students and prizes: numeric IDs sort first, followed by other IDs, then records without IDs by `CurrentCulture` name order. Use it in list-management and remaining-list UI so every language and draw surface stays consistent.
 - IPC DTOs under `Models/Ipc/` are serialization-only contracts. Keep them free of UI/runtime services and do not emit internal `RecordId` values in external projections.
 - Update DTOs under `Updates/` remain serialization-only. Manifest signature verification, network access, package extraction, and installer process execution belong in the app layer.
+- Mobile Android releases use the same signed manifest with `android-apk` artifacts. The manifest contract remains distribution-neutral; downloading, package installation, and iOS distribution handling stay in the corresponding app layer.
 - Draw proofs serialize their product algorithm release as `algorithmEngineVersion`; retain the nullable legacy `kernelVersion` reader only for historical proof files. User-visible labels must call it an algorithm engine version, not a kernel version.
 - New proof files are locally `OfflineReproducible`; `DrawProofWitness` receipt fields are nullable so the same contract can carry a later server replay attestation without writing empty historical challenge fields. The receipt is excluded from the canonical proof hash, while challenge/key fields remain historical compatibility data.
 - `HistoryItem.DrawRoundId` is an additive persisted field. New multi-record draws share one value so IPC history can group a logical draw; empty legacy values require conservative fallback grouping.
@@ -59,7 +60,7 @@ SecRandom.Shared/
 - Prefer small extension methods and plain contracts here; richer behavior belongs in `SecRandom.Core`.
 - `ConfigBase` / `ProfileConfigBase` define paths and identity for persisted files; handlers and desktop storage live
   outside Shared.
-- `Utils.GetFilePath(...)` is the expected route for data/config paths; regardless of installation or portable deployment, `Utils.DataRoot` must remain `<PackageRoot>/data`. Do not redirect it to system or user-profile locations.
+- `Utils.GetFilePath(...)` is the expected route for data/config paths. Its default desktop/portable root remains `<PackageRoot>/data`. `Utils.ConfigureMobileDataRoot()` is a startup-only Android/iOS operation with a fixed `LocalApplicationData/SecRandom/data` target; shared `SecRandom.App` calls it exactly once in its mobile branch before any path is read. No Shared model, Core service, plugin, or desktop flow may change the root. Accessing `data/config` also applies filesystem hiding: Windows uses `Hidden|System`, while Unix-like hosts maintain the parent `.hidden` entry because the stable `config` name cannot be changed.
 - If adding a shared model that will be persisted, consider backward-compatible defaults and nullable behavior first.
 - Comments should document serialization/backward-compatibility constraints, not obvious property names.
 

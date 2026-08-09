@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 using System.ComponentModel;
 using Avalonia.Controls;
-using Avalonia.Controls.Templates;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using FluentAvalonia.UI.Controls;
@@ -10,6 +9,7 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Icons;
 using SecRandom.Helpers;
+using SecRandom.Services.ViewEngine;
 using SecRandom.ViewModels.MainPages;
 using SR = SecRandom.Langs.MainPages.Lottery.Resources;
 
@@ -39,7 +39,9 @@ public partial class LotteryPage : UserControl
         AttachViewModel();
     }
 
-    private void OnUnloaded(object? sender, RoutedEventArgs e)
+    private void OnUnloaded(object? sender, RoutedEventArgs e) => DetachViewModel();
+
+    private void DetachViewModel()
     {
         _isUnloaded = true;
         if (_isViewModelSubscribed)
@@ -109,14 +111,9 @@ public partial class LotteryPage : UserControl
     private void RemainingListButton_OnClick(object? sender, RoutedEventArgs e)
     {
         ViewModel.RefreshRemainingList();
-        var window = new RemainingListWindow(
+        _ = IAppHost.GetService<RemainingListViewService>().ShowAsync(
             SR.C_RemainingListTitle,
             ViewModel.RemainingItems,
-            this.FindResource("LotteryRemainingItemTemplate") as IDataTemplate);
-        var owner = TopLevel.GetTopLevel(this) as Window;
-        if (owner is null)
-            window.Show();
-        else
-            window.Show(owner);
+            SR.M_NoRemainingPrizes);
     }
 }

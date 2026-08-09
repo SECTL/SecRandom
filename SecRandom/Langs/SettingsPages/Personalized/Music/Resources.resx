@@ -16,13 +16,13 @@
   <data name="C_Stop" xml:space="preserve"><value>停止</value></data>
   <data name="C_Cancel" xml:space="preserve"><value>取消</value></data>
   <data name="C_Delete" xml:space="preserve"><value>删除</value></data>
-  <data name="M_Empty" xml:space="preserve"><value>尚未导入音乐。</value></data>
-  <data name="M_ImportFailed" xml:space="preserve"><value>无法导入所选音乐文件。</value></data>
-  <data name="M_PreviewFailed" xml:space="preserve"><value>无法试听该音乐文件。</value></data>
+  <data name="M_Empty" xml:space="preserve"><value>尚未导入音乐</value></data>
+  <data name="M_ImportFailed" xml:space="preserve"><value>无法导入所选音乐文件</value></data>
+  <data name="M_PreviewFailed" xml:space="preserve"><value>无法试听该音乐文件</value></data>
   <data name="M_DeleteTitle" xml:space="preserve"><value>删除音乐</value></data>
-  <data name="M_DeleteContent" xml:space="preserve"><value>删除“{0}”后，所有抽取设置中引用它的位置会重置为不开启音乐。</value></data>
+  <data name="M_DeleteContent" xml:space="preserve"><value>删除“{0}”后，所有抽取设置中引用它的位置会重置为不开启音乐</value></data>
   <data name="M_DeletePrimary" xml:space="preserve"><value>删除</value></data>
-  <data name="M_DeleteFailed" xml:space="preserve"><value>无法删除该音乐文件。</value></data>
-  <data name="M_DeleteSuccess" xml:space="preserve"><value>已删除“{0}”。</value></data>
-  <data name="M_Imported" xml:space="preserve"><value>已导入 {0} 首音乐。</value></data>
+  <data name="M_DeleteFailed" xml:space="preserve"><value>无法删除该音乐文件</value></data>
+  <data name="M_DeleteSuccess" xml:space="preserve"><value>已删除“{0}”</value></data>
+  <data name="M_Imported" xml:space="preserve"><value>已导入 {0} 首音乐</value></data>
 </root>

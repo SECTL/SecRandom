@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -15,7 +14,6 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.FirstRun;
 using SecRandom.Services.Voice;
-using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.FirstRunOobe.Resources;
 
@@ -28,6 +26,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     private readonly OobeDataSetupService _dataSetupService;
     private readonly DesktopIntegrationService _desktopIntegration;
     private readonly IProfileService _profileService;
+    private readonly IProfileCatalogManager _catalogManager;
     private AppearanceSettingsConfig? _appearanceSettings;
     private BasicSettingsConfig? _basicSettings;
     private PrivacySettingsConfig? _privacySettings;
@@ -49,13 +48,15 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         FirstRunOobeService oobeService,
         OobeDataSetupService dataSetupService,
         DesktopIntegrationService desktopIntegration,
-        IProfileService profileService) : base(configHandler)
+        IProfileService profileService,
+        IProfileCatalogManager catalogManager) : base(configHandler)
     {
         _configHandler = configHandler;
         _oobeService = oobeService;
         _dataSetupService = dataSetupService;
         _desktopIntegration = desktopIntegration;
         _profileService = profileService;
+        _catalogManager = catalogManager;
         RefreshFromConfig();
         SelectedStep = IsPrivacyPolicyOnly ? 1 : 0;
     }
@@ -266,28 +267,28 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     {
         RefreshListSelector(
             StudentListNames,
-            Utils.GetDirectoryPath("list", "roll_call_list"),
+            _catalogManager.GetStudentListNames(),
             _configHandler.Data.RollCallSettings.DefaultClass,
-            name => new StudentListConfig(name).Save(),
+            name => _catalogManager.CreateStudentList(name),
             name => SelectedStudentListName = name);
         RefreshListSelector(
             PrizeListNames,
-            Utils.GetDirectoryPath("list", "lottery_list"),
+            _catalogManager.GetPrizeListNames(),
             _configHandler.Data.LotterySettings.DefaultPool,
-            name => new PrizeListConfig(name).Save(),
+            name => _catalogManager.CreatePrizeList(name),
             name => SelectedPrizeListName = name);
     }
 
     private static void RefreshListSelector(
         ObservableCollection<string> names,
-        string directory,
+        IReadOnlyList<string> existingNames,
         string preferredName,
         Action<string> createDefault,
         Action<string> select)
     {
         names.Clear();
-        foreach (var file in Directory.GetFiles(directory, "*.json").OrderBy(Path.GetFileName))
-            names.Add(Path.GetFileNameWithoutExtension(file));
+        foreach (var name in existingNames)
+            names.Add(name);
 
         if (names.Count == 0)
         {

@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using SecRandom.Mobile;
+using SecRandom.Platforms.Abstractions;
 
 namespace SecRandom.Services.Desktop;
 
@@ -10,9 +12,15 @@ public interface IExternalLauncher
     bool TryOpenUri(string uri);
 }
 
-public sealed class ExternalLauncher(ILogger<ExternalLauncher> logger) : IExternalLauncher
+public sealed class ExternalLauncher(IPlatformServiceRoot platform, ILogger<ExternalLauncher> logger) : IExternalLauncher
 {
-    public bool TryOpenPath(string path) => TryStart(path, isUri: false);
+    public bool TryOpenPath(string path)
+    {
+        if (platform is MobilePlatformServiceRoot { PathLauncher: { } mobilePathLauncher })
+            return mobilePathLauncher(path);
+
+        return TryStart(path, isUri: false);
+    }
 
     public bool TryOpenUri(string uri) => TryStart(uri, isUri: true);
 

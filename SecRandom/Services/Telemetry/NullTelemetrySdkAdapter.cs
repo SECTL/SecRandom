@@ -37,6 +37,11 @@ public sealed class NullTelemetrySdkAdapter : ITelemetrySdkAdapter
         return Task.CompletedTask;
     }
 
+    public ITelemetryTransaction? StartTransaction(string name, string operation)
+    {
+        return null;
+    }
+
     public Task ShutdownAsync(TimeSpan timeout, CancellationToken cancellationToken = default)
     {
         lock (_gate)

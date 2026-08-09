@@ -36,8 +36,10 @@ public sealed class VerificationDrawCoordinator(
         string courseName = "",
         CancellationToken cancellationToken = default)
     {
-        var input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName);
-        return DrawAsync(input, candidates, exportContext, parentProofId, cancellationToken);
+        var verificationMode = configHandler.Data.General.Verification.Mode;
+        var includeInternalRules = verificationMode != VerificationMode.FormalNotarized;
+        var input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName, includeInternalRules);
+        return DrawAsync(input, candidates, exportContext, parentProofId, verificationMode, cancellationToken);
     }
 
     public Task<VerificationDrawOutcome<Prize>> DrawPrizesAsync(
@@ -47,8 +49,10 @@ public sealed class VerificationDrawCoordinator(
         DrawProofExportContext exportContext,
         CancellationToken cancellationToken = default)
     {
-        var input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts);
-        return DrawAsync(input, prizes, exportContext, null, cancellationToken);
+        var verificationMode = configHandler.Data.General.Verification.Mode;
+        var includeInternalRules = verificationMode != VerificationMode.FormalNotarized;
+        var input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts, includeInternalRules);
+        return DrawAsync(input, prizes, exportContext, null, verificationMode, cancellationToken);
     }
 
     private async Task<VerificationDrawOutcome<TCandidate>> DrawAsync<TCandidate>(
@@ -56,6 +60,7 @@ public sealed class VerificationDrawCoordinator(
         IReadOnlyCollection<TCandidate> records,
         DrawProofExportContext exportContext,
         Guid? parentProofId,
+        VerificationMode verificationMode,
         CancellationToken cancellationToken)
         where TCandidate : class
     {
@@ -64,7 +69,7 @@ public sealed class VerificationDrawCoordinator(
         var inputHash = VerificationWireCodec.ComputeInputHash(input);
         DrawProof proof;
         VerificationKernelResult result;
-        if (configHandler.Data.General.Verification.Mode == VerificationMode.FormalNotarized)
+        if (verificationMode == VerificationMode.FormalNotarized)
         {
             var request = new FormalNotarizationRequest
             {
@@ -88,10 +93,18 @@ public sealed class VerificationDrawCoordinator(
             result = kernel.Draw(input, seed);
             proof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OfflineReproducible, parentProofId, null);
         }
-        var outcome = Complete(records, recordLookup, result, proof, exportContext);
+        var outcome = Complete(records, recordLookup, result, proof, exportContext, FreezeWeights(input));
         if (proof.Mode == VerificationProofMode.OfflineReproducible)
             attestationService.Request(outcome.ProofPath);
         return outcome;
+    }
+
+    private static IReadOnlyDictionary<Guid, double> FreezeWeights(VerificationDrawInput input)
+    {
+        // 提交侧的权重快照必须取自 proof 冻结输入，避免与证明分叉；同一记录多次出现（奖品库存）取首个权重。
+        return input.Candidates
+            .GroupBy(candidate => candidate.RecordId)
+            .ToDictionary(group => group.Key, group => group.First().WeightMicros / 1_000_000d);
     }
 
     private VerificationDrawOutcome<TCandidate> Complete<TCandidate>(
@@ -99,7 +112,8 @@ public sealed class VerificationDrawCoordinator(
         IReadOnlyDictionary<Guid, TCandidate> recordLookup,
         VerificationKernelResult result,
         DrawProof proof,
-        DrawProofExportContext exportContext)
+        DrawProofExportContext exportContext,
+        IReadOnlyDictionary<Guid, double> frozenWeights)
         where TCandidate : class
     {
         var winners = result.Winners.Select(winner => recordLookup.TryGetValue(winner.RecordId, out var record)
@@ -107,7 +121,7 @@ public sealed class VerificationDrawCoordinator(
             : throw new InvalidDataException("Verification kernel returned a record outside the frozen pool."))
             .ToList();
         var proofPath = proofExporter.Save(proof, exportContext);
-        return new VerificationDrawOutcome<TCandidate>(winners, proof, proofPath);
+        return new VerificationDrawOutcome<TCandidate>(winners, proof, proofPath, frozenWeights);
     }
 
     private static DrawProof CreateProof(
@@ -177,4 +191,5 @@ public sealed class VerificationDrawCoordinator(
 public sealed record VerificationDrawOutcome<TCandidate>(
     IReadOnlyList<TCandidate> Winners,
     DrawProof Proof,
-    string ProofPath);
+    string ProofPath,
+    IReadOnlyDictionary<Guid, double> FrozenWeights);

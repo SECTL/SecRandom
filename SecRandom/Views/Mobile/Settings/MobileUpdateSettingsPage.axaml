@@ -1,0 +1,39 @@
+<local:MobileSettingsPageBase xmlns="https://github.com/avaloniaui"
+                              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                              xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
+                              xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
+                              x:Class="SecRandom.Views.Mobile.Settings.MobileUpdateSettingsPage">
+    <ScrollViewer x:Name="PageScroll">
+        <StackPanel Classes="page-container">
+            <StackPanel x:Name="SupportedUpdateSurface" Spacing="8">
+                <Button x:Name="CheckUpdatesButton"
+                        Content="{x:Static langs:Resources.C_CheckUpdates}"
+                        Click="CheckUpdatesButton_OnClick" />
+
+                <TextBlock x:Name="UpdateStatusText" TextWrapping="Wrap" />
+
+                <Button x:Name="InstallUpdateButton"
+                        Classes="accent"
+                        Content="{x:Static langs:Resources.C_InstallUpdate}"
+                        Click="InstallUpdateButton_OnClick" />
+            </StackPanel>
+
+            <StackPanel x:Name="UnsupportedUpdateSurface"
+                        Spacing="8" IsVisible="False">
+                <sr:FluentIcon Glyph="{sr:Fi InfoFilled}"
+                               FontSize="48"
+                               HorizontalAlignment="Center" />
+                <TextBlock Text="{x:Static langs:Resources.M_InAppUpdateUnsupported}"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="{x:Static langs:Resources.M_IosUpdateDeferred}"
+                           FontSize="12"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</local:MobileSettingsPageBase>

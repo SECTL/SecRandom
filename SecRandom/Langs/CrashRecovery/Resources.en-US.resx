@@ -23,4 +23,11 @@
 ```text
 {0}
 ```</value></data>
+  <data name="C_ReportInApp" xml:space="preserve"><value>In-app feedback</value></data>
+  <data name="C_ReportGitHub" xml:space="preserve"><value>GitHub</value></data>
+  <data name="M_ReportSuccess" xml:space="preserve"><value>Crash report submitted through in-app feedback.</value></data>
+  <data name="M_ReportFailed" xml:space="preserve"><value>In-app feedback submission failed. Please report the issue through GitHub.</value></data>
+  <data name="FeedbackExpected" xml:space="preserve"><value>The application should run normally without an unhandled exception.</value></data>
+  <data name="FeedbackActual" xml:space="preserve"><value>The application encountered an unhandled exception and entered crash recovery.</value></data>
+  <data name="FeedbackReproduction" xml:space="preserve"><value>The crash report was collected automatically; see the attached diagnostic information.</value></data>
 </root>

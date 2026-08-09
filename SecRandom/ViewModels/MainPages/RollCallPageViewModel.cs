@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -31,6 +32,7 @@ using SecRandom.Services.Notification;
 using SecRandom.Services.Security;
 using SecRandom.Services.Verification;
 using SecRandom.ViewModels;
+using SecRandom.Views;
 using SecRandom.Shared;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Models.Profile;
@@ -46,6 +48,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private readonly DrawEngine _drawEngine;
     private readonly IProfileService _profileService;
     private readonly IDrawTemporaryRecordService _temporaryRecordService;
+    private readonly IDrawCommitService _drawCommitService;
     private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
     private readonly DrawAudioService? _drawAudioService;
     private readonly MainConfigHandler _configHandler;
@@ -53,8 +56,9 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private readonly ISecurityService _securityService;
     private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
+    private readonly RollCallDrawService _rollCallDrawService;
     private readonly NotificationService? _notificationService;
-    private readonly FileSystemWatcher _studentListWatcher;
+    private readonly FileSystemWatcher? _studentListWatcher;
     private List<Student> _lastResultStudents = [];
     private int _studentIdPadWidth;
     private bool _isRefreshingLists;
@@ -77,10 +81,12 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         DrawEngine drawEngine,
         IProfileService profileService,
         IDrawTemporaryRecordService temporaryRecordService,
+        IDrawCommitService drawCommitService,
         ILogger<RollCallPageViewModel> logger,
         ISecurityService securityService,
         LinkageDrawCoordinator linkageDrawCoordinator,
         VerificationDrawCoordinator verificationDrawCoordinator,
+        RollCallDrawService rollCallDrawService,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         DrawAudioService? drawAudioService = null,
         NotificationService? notificationService = null)
@@ -90,16 +96,21 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         _drawEngine = drawEngine;
         _profileService = profileService;
         _temporaryRecordService = temporaryRecordService;
+        _drawCommitService = drawCommitService;
         _logger = logger;
         _securityService = securityService;
         _linkageDrawCoordinator = linkageDrawCoordinator;
         _verificationDrawCoordinator = verificationDrawCoordinator;
+        _rollCallDrawService = rollCallDrawService;
         _voiceAnnouncementService = voiceAnnouncementService;
         _drawAudioService = drawAudioService;
         _notificationService = notificationService;
 
         ResultText = ReminderSettings.ReminderText;
-        _studentListWatcher = CreateStudentListWatcher();
+        if (!OperatingSystem.IsIOS())
+        {
+            _studentListWatcher = CreateStudentListWatcher();
+        }
 
         StudentListNames.CollectionChanged += StudentListNamesOnCollectionChanged;
         ResultItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ResultText));
@@ -125,7 +136,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     public bool IsControlPanelOnRight => !IsControlPanelOnLeft;
     public bool CanDecreaseCount => DrawCount > 1;
     public bool CanIncreaseCount => DrawCount < MaximumDrawCount;
-    public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0 && RemainingCount > 0);
+    public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0);
     public string DrawButtonText => IsDrawing ? SR.C_Stop : SR.C_Start;
     public int TotalCount { get; private set; }
     public int RemainingCount { get; private set; }
@@ -243,17 +254,19 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     {
         if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.RollCallReset, () => Task.CompletedTask))
             return;
-        ResetDrawHistoryCore();
+        ResetDrawHistoryCore(showToast: true);
     }
 
-    private void ResetDrawHistoryCore()
+    private void ResetDrawHistoryCore(bool showToast = false)
     {
         _lastResultStudents.Clear();
         ResultItems.Clear();
-        _temporaryRecordService.ClearStudentScope(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
+        _rollCallDrawService.Reset(CurrentGroupScope, CurrentGenderScope);
         IsResultVisible = false;
         ResultText = ReminderSettings.ReminderText;
         StatusText = SR.M_ResetDone;
+        if (showToast)
+            MainView.ShowSuccessToast(SR.M_ResetDone);
         RefreshCounts();
         OnPropertyChanged(nameof(ResultText));
     }
@@ -278,6 +291,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             return;
 
         RefreshCounts();
+        ResetForNewRoundIfExhausted();
         if (!CanStartDraw)
         {
             StatusText = TotalCount == 0 ? SR.M_NoStudents : SR.M_NoRemainingStudents;
@@ -303,20 +317,17 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
                     count);
 
             var courseName = _linkageDrawCoordinator.GetCourseName();
-            var now = DateTime.Now;
-            var verificationDrawTask = _verificationDrawCoordinator.DrawStudentsAsync(
-                count,
-                candidates,
-                DrawSettingsType.RollCall,
-                DrawProofExportContext.ForStudents(SelectedStudentListName, CurrentGroupScope, CurrentGenderScope, courseName),
-                courseName: courseName,
-                cancellationToken: default);
+            var drawTask = _rollCallDrawService.DrawAsync(new RollCallDrawRequest(
+                SelectedStudentListName, CurrentGroupScope, CurrentGenderScope, count, courseName));
             var previewTask = ShowPreviewAsync(candidates, count, MusicSettings.AnimationMusic);
             List<Student> drawnStudents;
             try
             {
-                var drawCompletedFirst = await Task.WhenAny(verificationDrawTask, previewTask).ConfigureAwait(true) == verificationDrawTask;
-                drawnStudents = (await verificationDrawTask.ConfigureAwait(true)).Winners.ToList();
+                var drawCompletedFirst = await Task.WhenAny(drawTask, previewTask).ConfigureAwait(true) == drawTask;
+                var drawResult = await drawTask.ConfigureAwait(true);
+                if (drawResult is null)
+                    throw new InvalidOperationException("No eligible point-call candidates.");
+                drawnStudents = drawResult.Students.ToList();
                 if (drawCompletedFirst && !previewTask.IsCompleted)
                     await PlayAnimationMusicAsync(DrawMusicAttachedSettingsResolver.GetAnimationMusic(
                         drawnStudents.FirstOrDefault(), MusicSettings.AnimationMusic)).ConfigureAwait(true);
@@ -334,18 +345,6 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
                 return;
             }
 
-            var weightSnapshot = BuildWeightSnapshot(drawnStudents, courseName);
-            _profileService.RecordStudentHistory(
-                drawnStudents,
-                now,
-                count,
-                SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup,
-                SelectedGender == AllGendersOption ? string.Empty : SelectedGender,
-                (int)Config.RollCallSettings.DrawType,
-                weightSnapshot,
-                courseName);
-            _temporaryRecordService.RecordStudents(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope, drawnStudents);
-
             ResultItems.Clear();
             _lastResultStudents = drawnStudents;
             RefreshResultItems();
@@ -355,6 +354,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             await PlayResultMusicAsync(drawnStudents.FirstOrDefault()).ConfigureAwait(false);
             StatusText = string.Format(SR.M_DrawnCountFormat, ResultItems.Count);
             RefreshCounts();
+            ResetForNewRoundIfExhausted();
             OnPropertyChanged(nameof(ResultText));
 
             if (_notificationService is not null)
@@ -386,7 +386,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         protectLinkage ? [SecurityOperation.RollCallReset, SecurityOperation.LinkageAction] : [SecurityOperation.RollCallReset],
         () =>
         {
-            ResetDrawHistoryCore();
+            ResetDrawHistoryCore(showToast: true);
             return Task.CompletedTask;
         });
     public void StopProtocolDraw() => StopPreview();
@@ -394,15 +394,13 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private void OpenRollCallSettings()
     {
-        App.ShowSettingsWindow();
-        Views.SettingsView.Current?.SelectNavigationItemById("settings.picking.rollCall");
+        App.ShowSettingsWindow("settings.picking.rollCall");
     }
 
     [RelayCommand]
     private void OpenListSettings()
     {
-        App.ShowSettingsWindow();
-        Views.SettingsView.Current?.SelectNavigationItemById("settings.listManagement.rollCallList");
+        App.ShowSettingsWindow("settings.listManagement.rollCallList");
     }
 
     public void RefreshLists()
@@ -454,7 +452,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         Config.DefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.MoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged -= SettingsOnPropertyChanged;
-        _studentListWatcher.Dispose();
+        _studentListWatcher?.Dispose();
     }
 
     private void StudentListNamesOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -668,6 +666,17 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             _temporaryRecordService.ClearStudentListOnce(listName);
     }
 
+    private bool ResetForNewRoundIfExhausted()
+    {
+        if (TotalCount <= 0 || RemainingCount > 0)
+            return false;
+
+        _temporaryRecordService.ResetStudentList(SelectedStudentListName);
+        RefreshCounts();
+        MainView.ShowSuccessToast(SR.M_AutoResetDone);
+        return true;
+    }
+
     private IEnumerable<Student> GetVisibleStudents()
     {
         return CurrentStudentList?.Students.Where(student => student.IsCandidate) ?? [];
@@ -680,40 +689,19 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     private IEnumerable<Student> GetEligibleCandidates(IEnumerable<Student>? candidates = null)
     {
-        var source = candidates ?? GetCandidates();
-        return source.Where(student => !HasReachedRepeatLimit(student));
+        var source = candidates ?? GetVisibleStudents();
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.RollCallSettings.DrawMode, Config.RollCallSettings.HalfRepeat);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
+        return DrawCandidateFilter.FilterEligibleStudents(source, CurrentGroupScope, CurrentGenderScope, counts, threshold);
     }
 
-    private bool MatchesSelection(Student student)
-    {
-        if (!student.IsCandidate)
-            return false;
-
-        if (SelectedGroup != AllGroupsOption && student.Group != SelectedGroup)
-            return false;
-
-        if (SelectedGender != AllGendersOption && student.Gender != SelectedGender)
-            return false;
-
-        return true;
-    }
+    private bool MatchesSelection(Student student) => DrawCandidateFilter.MatchesScope(student, CurrentGroupScope, CurrentGenderScope);
 
     private bool HasReachedRepeatLimit(Student student)
     {
-        var threshold = Config.RollCallSettings.DrawMode switch
-        {
-            DrawMode.Repeat => 0,
-            DrawMode.NoRepeat => 1,
-            DrawMode.HalfRepeat => Math.Max(1, Config.RollCallSettings.HalfRepeat),
-            _ => 1
-        };
-
-        if (threshold <= 0)
-            return false;
-
-        var recordId = ProfileRecordIdentity.EnsureRecordId(student);
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.RollCallSettings.DrawMode, Config.RollCallSettings.HalfRepeat);
         var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
-        return counts.GetValueOrDefault(recordId) >= threshold;
+        return DrawRepeatPolicy.HasReachedLimit(counts.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(student)), threshold);
     }
 
     public void ResetForCourseLinkage()
@@ -721,14 +709,19 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         ResetDrawHistoryCore();
     }
 
-    private Dictionary<Student, double> BuildWeightSnapshot(IReadOnlyCollection<Student> drawnStudents, string courseName = "")
+    private static Dictionary<Student, double> BuildWeightSnapshot(
+        IReadOnlyCollection<Student> drawnStudents,
+        IReadOnlyDictionary<Guid, double> frozenWeights)
     {
-        if (Config.RollCallSettings.DrawType != DrawType.Fair)
-            return drawnStudents.ToDictionary(student => student, _ => 1.0);
+        // 权重快照取自 proof 冻结输入，避免提交时重算与证明分叉。
+        Dictionary<Student, double> snapshot = [];
+        foreach (var student in drawnStudents)
+        {
+            ProfileRecordIdentity.EnsureRecordId(student);
+            snapshot[student] = frozenWeights.GetValueOrDefault(student.RecordId, 1.0);
+        }
 
-        return _drawEngine.CalculateStudentWeight(GetVisibleStudents().ToList(), courseName: courseName)
-            .Where(candidate => drawnStudents.Contains(candidate.Candidate))
-            .ToDictionary(candidate => candidate.Candidate, candidate => candidate.Weight);
+        return snapshot;
     }
 
     private RollCallResultItem CreateResultItem(Student student)
@@ -752,6 +745,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             $"权重 {weight:0.##}",
             image,
             StudentImageSettings.StudentImage,
+            StudentImageSettings.StudentImagePosition,
             BuildInitial(student));
     }
 
@@ -934,10 +928,16 @@ public sealed record RollCallResultItem(
     string WeightText,
     Bitmap? Image,
     bool IsImageEnabled,
+    StudentImagePositionMode ImagePosition,
     string Initial)
 {
     public bool IsImageVisible => IsImageEnabled && Image is not null;
     public bool IsPlaceholderVisible => IsImageEnabled && Image is null;
+    public Orientation ImageLayoutOrientation => ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Right
+        ? Orientation.Horizontal
+        : Orientation.Vertical;
+    public bool IsImageBeforeText => IsImageEnabled && ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Top;
+    public bool IsImageAfterText => IsImageEnabled && ImagePosition is StudentImagePositionMode.Right or StudentImagePositionMode.Bottom;
 }
 
 public sealed record RollCallRemainingItem(

@@ -1,0 +1,41 @@
+﻿{
+  "schema_version": 1,
+  "plan": "sentry-user-feedback",
+  "slug": "feedback-drawer",
+  "title": "Feedback Drawer",
+  "created_at": "2026-07-23T14:18:31.046Z",
+  "updated_at": "2026-07-23T14:52:58.450Z",
+  "latest_version": 5,
+  "versions": [
+    {
+      "version": 1,
+      "file": "v001.html",
+      "intent": "Settings feedback drawer with categorization, optional screenshots, Bug diagnostics, and draft controls.",
+      "created_at": "2026-07-23T14:18:31.046Z"
+    },
+    {
+      "version": 2,
+      "file": "v002.html",
+      "intent": "Updated feedback drawer aligned to the repository Bug and Feature issue templates, with automatic Bug diagnostics.",
+      "created_at": "2026-07-23T14:36:48.554Z"
+    },
+    {
+      "version": 3,
+      "file": "v003.html",
+      "intent": "Final feedback drawer without screenshot uploads; Bug feedback automatically uploads the app's standard diagnostic ZIP.",
+      "created_at": "2026-07-23T14:46:32.513Z"
+    },
+    {
+      "version": 4,
+      "file": "v004.html",
+      "intent": "Drawer revision with no header subtitle and a lower-left GitHub Issues link.",
+      "created_at": "2026-07-23T14:50:38.019Z"
+    },
+    {
+      "version": 5,
+      "file": "v005.html",
+      "intent": "Footer revision: lower-left GitHub icon-and-text secondary button.",
+      "created_at": "2026-07-23T14:52:58.450Z"
+    }
+  ]
+}

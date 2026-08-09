@@ -13,6 +13,7 @@ using FluentAvalonia.UI.Controls;
 using MiniExcelLibs;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Services.Profiles;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.RollCallList.Resources;
 
@@ -246,43 +247,22 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
 
     private void AutoMapColumns()
     {
-        IdColumn = FindBestColumn(GetKeywords(LR.K_IdColumns)) ?? LR.C_NoneColumn;
-        NameColumn = FindBestColumn(GetKeywords(LR.K_NameColumns)) ?? NameColumn;
-        GenderColumn = FindBestColumn(GetKeywords(LR.K_GenderColumns))
+        IdColumn = RosterImportParser.FindBestColumn(RequiredColumnOptions, RosterImportParser.SplitKeywords(LR.K_IdColumns)) ?? LR.C_NoneColumn;
+        NameColumn = RosterImportParser.FindBestColumn(RequiredColumnOptions, RosterImportParser.SplitKeywords(LR.K_NameColumns)) ?? NameColumn;
+        GenderColumn = RosterImportParser.FindBestColumn(RequiredColumnOptions, RosterImportParser.SplitKeywords(LR.K_GenderColumns))
                        ?? LR.C_NoneColumn;
-        GroupColumn = FindBestColumn(GetKeywords(LR.K_GroupColumns))
+        GroupColumn = RosterImportParser.FindBestColumn(RequiredColumnOptions, RosterImportParser.SplitKeywords(LR.K_GroupColumns))
                       ?? LR.C_NoneColumn;
-        TagsColumn = FindBestColumn(GetKeywords(LR.K_TagsColumns))
+        TagsColumn = RosterImportParser.FindBestColumn(RequiredColumnOptions, RosterImportParser.SplitKeywords(LR.K_TagsColumns))
                      ?? LR.C_NoneColumn;
     }
 
-    private static string[] GetKeywords(string keywords)
-    {
-        return keywords.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-    }
-
-    private string? FindBestColumn(IReadOnlyList<string> keywords)
-    {
-        var bestScore = 0;
-        string? bestColumn = null;
-
-        foreach (var column in RequiredColumnOptions)
-        {
-            var normalizedColumn = column.ToLowerInvariant();
-            for (var i = 0; i < keywords.Count; i++)
-            {
-                var keyword = keywords[i].ToLowerInvariant();
-                var score = normalizedColumn == keyword ? 100 - i : normalizedColumn.Contains(keyword) ? 50 - i : 0;
-                if (score <= bestScore)
-                    continue;
-
-                bestScore = score;
-                bestColumn = column;
-            }
-        }
-
-        return bestColumn;
-    }
+    private StudentRosterColumnMapping CurrentMapping => new(
+        IsSelectedColumn(IdColumn) ? IdColumn : null,
+        IsSelectedColumn(NameColumn) ? NameColumn : null,
+        IsSelectedColumn(GenderColumn) ? GenderColumn : null,
+        IsSelectedColumn(GroupColumn) ? GroupColumn : null,
+        IsSelectedColumn(TagsColumn) ? TagsColumn : null);
 
     private void RefreshPreview()
     {
@@ -300,34 +280,20 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
 
     private ImportPreviewRow CreatePreviewRow(IReadOnlyDictionary<string, string> row)
     {
+        var mapping = CurrentMapping;
         return new ImportPreviewRow(
-            GetColumnValue(row, IdColumn),
-            GetColumnValue(row, NameColumn),
-            GetColumnValue(row, GenderColumn),
-            GetColumnValue(row, GroupColumn),
-            string.Join(' ', SplitTags(GetColumnValue(row, TagsColumn))));
+            RosterImportParser.GetValue(row, mapping.Id),
+            RosterImportParser.GetValue(row, mapping.Name),
+            RosterImportParser.GetValue(row, mapping.Gender),
+            RosterImportParser.GetValue(row, mapping.Group),
+            string.Join(' ', RosterImportParser.SplitTags(RosterImportParser.GetValue(row, mapping.Tags))));
     }
 
     private void ImportButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        var students = _rows
-            .Select(row => new Student
-            {
-                Id = GetColumnValue(row, IdColumn),
-                Name = GetColumnValue(row, NameColumn),
-                Gender = GetColumnValue(row, GenderColumn),
-                Group = GetColumnValue(row, GroupColumn),
-                Tags = string.Join(' ', SplitTags(GetColumnValue(row, TagsColumn))),
-                Exists = true
-            })
-            .Where(student => student.IsCandidate)
-            .ToList();
-
-        var duplicatedNames = students.Where(student => !string.IsNullOrWhiteSpace(student.Name))
-            .GroupBy(student => student.Name)
-            .Where(group => group.Count() > 1)
-            .Select(group => group.Key)
-            .ToList();
+        var parseResult = RosterImportParser.ParseStudents(_rows, CurrentMapping);
+        var students = parseResult.Items;
+        var duplicatedNames = parseResult.DuplicatedNames;
 
         if (duplicatedNames.Count > 0)
         {
@@ -364,23 +330,9 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
 
         if (result == FAContentDialogResult.Secondary)
         {
-            RenameDuplicatedStudents(students);
+            RosterImportParser.RenameDuplicatedStudents(students);
             _logger.LogInformation("点名名单导入已自动处理重复姓名：有效行数={Count}。", students.Count);
             _importHandler(students);
-        }
-    }
-
-    private static void RenameDuplicatedStudents(IEnumerable<Student> students)
-    {
-        var counts = new Dictionary<string, int>();
-
-        foreach (var student in students)
-        {
-            var baseName = student.Name;
-            counts.TryAdd(baseName, 0);
-            counts[baseName]++;
-            if (counts[baseName] > 1)
-                student.Name = $"{baseName} ({counts[baseName]})";
         }
     }
 
@@ -397,14 +349,6 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         return !string.IsNullOrWhiteSpace(column) && column != LR.C_NoneColumn;
     }
 
-    private static string GetColumnValue(IReadOnlyDictionary<string, string> row, string? column)
-    {
-        if (!IsSelectedColumn(column) || column == null)
-            return string.Empty;
-
-        return row.GetValueOrDefault(column, string.Empty).Trim();
-    }
-
     private static string ConvertCell(object? value)
     {
         return value switch
@@ -413,17 +357,6 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
             DateTime dateTime => dateTime.ToString(CultureInfo.CurrentCulture),
             _ => Convert.ToString(value, CultureInfo.CurrentCulture) ?? string.Empty
         };
-    }
-
-    private static IEnumerable<string> SplitTags(string rawTags)
-    {
-        if (string.IsNullOrWhiteSpace(rawTags))
-            return [];
-
-        foreach (var separator in new[] { '，', ',', '；', ';', '|', '/', '\\', '\n', '\t' })
-            rawTags = rawTags.Replace(separator, ' ');
-
-        return rawTags.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct();
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

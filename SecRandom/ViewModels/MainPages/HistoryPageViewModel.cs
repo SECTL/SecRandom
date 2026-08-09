@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.Logging;
-using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Models;
 using SecRandom.ViewModels;
@@ -19,12 +17,11 @@ namespace SecRandom.ViewModels.MainPages;
 
 /// <summary>
 ///     主窗口历史记录页 ViewModel。
-///     直接枚举 data/history 目录并按需读取，不经过 IProfileService，避免切换当前活跃档案的副作用。
+///     通过 Core 查询服务读取历史，不经过 IProfileService，避免切换当前活跃档案的副作用。
 /// </summary>
 public partial class HistoryPageViewModel : ViewModelBase
 {
-    private readonly ILogger<HistoryPageViewModel> _logger =
-        IAppHost.GetService<ILogger<HistoryPageViewModel>>();
+    private readonly IHistoryQueryService _historyQueryService;
 
     private StudentHistory? _rollCallHistory;
     private PrizeHistory? _lotteryHistory;
@@ -34,8 +31,9 @@ public partial class HistoryPageViewModel : ViewModelBase
     [ObservableProperty] private string? _selectedLotteryPoolName;
     [ObservableProperty] private string _selectedLotteryMode = HistoryMode.Overview;
 
-    public HistoryPageViewModel(MainConfigHandler configHandler) : base(configHandler)
+    public HistoryPageViewModel(MainConfigHandler configHandler, IHistoryQueryService historyQueryService) : base(configHandler)
     {
+        _historyQueryService = historyQueryService;
         RefreshCommand = new RelayCommand(RefreshAll);
 
         RefreshNames();
@@ -73,16 +71,15 @@ public partial class HistoryPageViewModel : ViewModelBase
 
     private void RefreshNames()
     {
-        UpdateNames(RollCallClassNames, "roll_call_history");
-        UpdateNames(LotteryPoolNames, "lottery_history");
+        UpdateNames(RollCallClassNames, _historyQueryService.GetStudentHistoryNames());
+        UpdateNames(LotteryPoolNames, _historyQueryService.GetPrizeHistoryNames());
     }
 
-    private static void UpdateNames(ObservableCollection<string> target, string subDir)
+    private static void UpdateNames(ObservableCollection<string> target, IReadOnlyList<string> names)
     {
         target.Clear();
-        var dir = Utils.GetDirectoryPath("history", subDir);
-        foreach (var file in Directory.GetFiles(dir, "*.json").OrderBy(Path.GetFileName))
-            target.Add(Path.GetFileNameWithoutExtension(file));
+        foreach (var name in names)
+            target.Add(name);
     }
 
     // ============ 点名历史 ============
@@ -101,15 +98,7 @@ public partial class HistoryPageViewModel : ViewModelBase
             return;
         }
 
-        try
-        {
-            _rollCallHistory = new StudentHistoryConfig(SelectedRollCallClassName).Data;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "读取点名历史失败：班级={ClassName}。", SelectedRollCallClassName);
-            _rollCallHistory = null;
-        }
+        _rollCallHistory = _historyQueryService.LoadStudentHistory(SelectedRollCallClassName);
 
         RebuildRollCallModeOptions();
         BuildRollCallRows();
@@ -181,15 +170,7 @@ public partial class HistoryPageViewModel : ViewModelBase
             return;
         }
 
-        try
-        {
-            _lotteryHistory = new PrizeHistoryConfig(SelectedLotteryPoolName).Data;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "读取抽奖历史失败：奖池={PoolName}。", SelectedLotteryPoolName);
-            _lotteryHistory = null;
-        }
+        _lotteryHistory = _historyQueryService.LoadPrizeHistory(SelectedLotteryPoolName);
 
         RebuildLotteryModeOptions();
         BuildLotteryRows();

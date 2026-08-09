@@ -2,16 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Models;
 using SecRandom.ViewModels;
-using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
 using History = SecRandom.Shared.Models.Profile.History;
 using ProfileHistory = SecRandom.Shared.Models.Profile.History;
@@ -20,8 +18,8 @@ namespace SecRandom.ViewModels.SettingsPages.History;
 
 public sealed partial class LotteryHistoryViewModel : ViewModelBase
 {
-    private readonly ILogger<LotteryHistoryViewModel> _logger =
-        IAppHost.GetService<ILogger<LotteryHistoryViewModel>>();
+    private readonly IHistoryQueryService _historyQueryService = IAppHost.GetService<IHistoryQueryService>();
+    private readonly IProfileCatalogManager _catalogManager = IAppHost.GetService<IProfileCatalogManager>();
 
     private PrizeHistory? _history;
     private PrizeList? _prizeList;
@@ -61,26 +59,11 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
     private void RefreshPoolNames()
     {
         PoolNames.Clear();
-        foreach (var name in EnumerateProfileNames("list", "lottery_list", "history", "lottery_history"))
+        foreach (var name in _catalogManager.GetPrizeListNames()
+                     .Concat(_historyQueryService.GetPrizeHistoryNames())
+                     .Distinct()
+                     .OrderBy(name => name, StringComparer.Ordinal))
             PoolNames.Add(name);
-    }
-
-    private static IEnumerable<string> EnumerateProfileNames(
-        string listRoot,
-        string listSubDir,
-        string historyRoot,
-        string historySubDir)
-    {
-        HashSet<string> names = [];
-        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath(listRoot, listSubDir), "*.json")
-                     .Concat(Directory.GetFiles(Utils.GetDirectoryPath(historyRoot, historySubDir), "*.json")))
-        {
-            var name = Path.GetFileNameWithoutExtension(file);
-            if (!string.IsNullOrWhiteSpace(name))
-                names.Add(name);
-        }
-
-        return names.OrderBy(name => name, StringComparer.Ordinal);
     }
 
     partial void OnSelectedPoolNameChanged(string? value) => Load();
@@ -102,26 +85,17 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
             return;
         }
 
-        try
-        {
-            _history = new PrizeHistoryConfig(SelectedPoolName).Data;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "读取抽奖历史失败：奖池={PoolName}。", SelectedPoolName);
-        }
+        // 只读快照：缺失的历史按空历史处理（保留既有“无历史文件仍显示名单行”的行为），
+        // 缺失的奖池按空奖池处理；读取失败由查询/目录服务内部记录警告。
+        _history = _historyQueryService.LoadPrizeHistory(SelectedPoolName) ?? new PrizeHistory(SelectedPoolName);
 
-        try
+        _prizeList = _catalogManager.LoadPrizeList(SelectedPoolName);
+        if (_prizeList is not null)
         {
-            _prizeList = new PrizeListConfig(SelectedPoolName).Data;
             _uniqueLegacyKeys = ProfileRecordIdentity.BuildUniquePrizeLegacyKeySet(_prizeList.Prizes);
             _prizeByKey = BuildPrizeMap(_prizeList.Prizes, _uniqueLegacyKeys);
             _prizeInfoByKey = BuildPrizeInfoMap(_prizeList.Prizes, _uniqueLegacyKeys);
             _prizeIdPadWidth = CalculateNumericPadWidth(_prizeList.Prizes.Select(prize => prize.Id));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "读取奖品列表失败，抽奖历史将只显示历史键：奖池={PoolName}。", SelectedPoolName);
         }
 
         RebuildModeOptions();

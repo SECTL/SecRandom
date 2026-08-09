@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
     <xsd:element name="root" msdata:IsDataSet="true" />
@@ -94,7 +93,7 @@
     <value>奖池选择</value>
   </data>
   <data name="S_LotteryStudentListSelector" xml:space="preserve">
-    <value>学生名单选择</value>
+    <value>成员名单选择</value>
   </data>
   <data name="S_LotteryRangeSelector" xml:space="preserve">
     <value>范围选择</value>
@@ -166,7 +165,7 @@
     <value>冲突</value>
   </data>
   <data name="M_ShortcutDuplicated" xml:space="preserve">
-    <value>该快捷键已分配给其他操作。</value>
+    <value>该快捷键已分配给其他操作</value>
   </data>
   <data name="C_ShortcutExampleRollCall" xml:space="preserve">
     <value>例如 Ctrl+Alt+R</value>

@@ -2,7 +2,7 @@
 <root>
   <data name="PrivacyPolicy" xml:space="preserve"><value>SecRandom プライバシーポリシー（バージョン 1）
 
-1. 適用範囲と同意。SecRandom は教育活動向けのランダム抽選ツールです。本ソフトウェアを使い続けることで、本ポリシーを確認し同意したものとみなされます。本ポリシーは適用法令により与えられる権利を制限しません。
+1. 適用範囲と同意。SecRandom は活動や組織向けのランダム抽選ツールです。本ソフトウェアを使い続けることで、本ポリシーを確認し同意したものとみなされます。本ポリシーは適用法令により与えられる権利を制限しません。
 
 2. ローカルデータ。名簿、賞品、履歴、設定は既定でローカルに保存されます。適法、正確、許可済みで必要なデータのみをインポートしてください。
 
@@ -43,25 +43,25 @@ SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="C_VerificationNoticeTitle" xml:space="preserve"><value>検証可能な抽選について</value></data>
   <data name="C_VerificationNoticeAccept" xml:space="preserve"><value>検証可能な抽選についての注意事項を読みました。</value></data>
   <data name="C_DataTitle" xml:space="preserve"><value>データの復元またはリストの選択</value></data>
-  <data name="C_DataDescription" xml:space="preserve"><value>既存の SecRandom v3 データを復元し、最初に使う点呼名簿を選択またはインポートできます。スキップしても後の利用に影響しません。</value></data>
+  <data name="C_DataDescription" xml:space="preserve"><value>既存の SecRandom v3 データを復元し、最初に使う点呼リストを選択またはインポートできます。スキップしても後の利用に影響しません。</value></data>
   <data name="C_RestoreTitle" xml:space="preserve"><value>既存データを復元</value></data>
   <data name="C_RestoreDescription" xml:space="preserve"><value>v3 のエクスポートファイルのみ受け付けます。</value></data>
   <data name="C_ImportSettings" xml:space="preserve"><value>v3 設定をインポート</value></data>
   <data name="C_ImportAllData" xml:space="preserve"><value>v3 の全データをインポート</value></data>
-  <data name="C_RollCallList" xml:space="preserve"><value>点呼名簿</value></data>
-  <data name="C_RollCallListDescription" xml:space="preserve"><value>点呼に使用する名簿を選択するか、名簿ファイルをインポートします。</value></data>
-  <data name="C_ImportRoster" xml:space="preserve"><value>名簿をインポート</value></data>
+  <data name="C_RollCallList" xml:space="preserve"><value>点呼リスト</value></data>
+  <data name="C_RollCallListDescription" xml:space="preserve"><value>点呼に使用するリストを選択するか、メンバーリストファイルをインポートします。</value></data>
+  <data name="C_ImportRoster" xml:space="preserve"><value>メンバーリストをインポート</value></data>
   <data name="C_RefreshList" xml:space="preserve"><value>更新</value></data>
   <data name="C_AddList" xml:space="preserve"><value>追加</value></data>
   <data name="C_RenameList" xml:space="preserve"><value>名前を変更</value></data>
   <data name="C_DeleteList" xml:space="preserve"><value>削除</value></data>
-  <data name="C_AddStudentListTitle" xml:space="preserve"><value>新しいクラス</value></data>
+  <data name="C_AddStudentListTitle" xml:space="preserve"><value>新しいリスト</value></data>
   <data name="C_AddPrizeListTitle" xml:space="preserve"><value>新しい賞品プール</value></data>
   <data name="C_RenameListTitle" xml:space="preserve"><value>リスト名を変更</value></data>
   <data name="C_DeleteListTitle" xml:space="preserve"><value>リストを削除</value></data>
   <data name="C_ListNameTitle" xml:space="preserve"><value>リスト名</value></data>
   <data name="C_ListNamePlaceholder" xml:space="preserve"><value>名前を入力</value></data>
-  <data name="C_DefaultStudentListName" xml:space="preserve"><value>新しいクラス</value></data>
+  <data name="C_DefaultStudentListName" xml:space="preserve"><value>新しいリスト</value></data>
   <data name="C_DefaultPrizeListName" xml:space="preserve"><value>新しい賞品プール</value></data>
   <data name="C_LotteryTitle" xml:space="preserve"><value>抽選機能</value></data>
   <data name="C_LotteryDescription" xml:space="preserve"><value>無効にすると、抽選ナビゲーション、フローティング操作、ショートカット、外部コマンドを利用できません。</value></data>
@@ -102,7 +102,7 @@ SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="C_CompleteTitle" xml:space="preserve"><value>設定を完了</value></data>
   <data name="C_CompleteDescription" xml:space="preserve"><value>検証可能な抽選について読み、プライバシーポリシーと GPLv3 を確認したら、完了をクリックして SecRandom を開始します。リスト、抽選、外観、デスクトップ連携、プライバシーは後から変更できます。</value></data>
   <data name="C_CompletedItems" xml:space="preserve"><value>設定済みの項目</value></data>
-  <data name="C_CompletedClass" xml:space="preserve"><value>名簿と賞品プールはリスト管理から管理できます。</value></data>
+  <data name="C_CompletedClass" xml:space="preserve"><value>メンバーリストと賞品プールはリスト管理から管理できます。</value></data>
   <data name="C_CompletedAppearance" xml:space="preserve"><value>抽選の入口、テーマ、フローティングウィンドウの外観は設定で変更できます。</value></data>
   <data name="C_CompletedIntegration" xml:space="preserve"><value>外部リンクの設定は、アプリ内部の単一インスタンス通信を無効にしません。</value></data>
   <data name="C_CompletedPrivacy" xml:space="preserve"><value>テレメトリとオンライン状態の報告はプライバシー設定で変更できます。</value></data>
@@ -144,7 +144,7 @@ SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="M_AgreementRequired" xml:space="preserve"><value>先に検証可能な抽選について、プライバシーポリシー、GNU GPLv3 を読み、確認してください。</value></data>
   <data name="M_CompletionAgreementRequired" xml:space="preserve"><value>完了する前に、検証可能な抽選について、プライバシーポリシー、GNU GPLv3 の確認が必要です。</value></data>
   <data name="M_DesktopIntegrationFailed" xml:space="preserve"><value>一部のデスクトップ連携を有効にできなかったため、無効のままです。後から設定で再試行できます。</value></data>
-  <data name="M_StudentsImported" xml:space="preserve"><value>{0} 人の学生をインポートし、既定のクラスに設定しました。</value></data>
+  <data name="M_StudentsImported" xml:space="preserve"><value>{0} 人のメンバーをインポートし、既定のリストに設定しました。</value></data>
   <data name="M_PrizesImported" xml:space="preserve"><value>{0} 件の賞品をインポートし、既定の賞品プールに設定しました。</value></data>
   <data name="M_OverwriteListContent" xml:space="preserve"><value>「{0}」には現在 {1} 件の記録があります。{2} 件をインポートすると既存の内容を置き換えます。</value></data>
   <data name="M_ListNameEmpty" xml:space="preserve"><value>名前を入力してください。</value></data>

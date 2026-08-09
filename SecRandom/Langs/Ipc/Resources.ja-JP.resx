@@ -30,7 +30,7 @@
   <data name="M_RollCallCountSet" xml:space="preserve"><value>点呼人数を設定しました</value></data>
   <data name="M_RollCallGroupSet" xml:space="preserve"><value>点呼グループを設定しました</value></data>
   <data name="M_RollCallGenderSet" xml:space="preserve"><value>点呼の性別フィルターを設定しました</value></data>
-  <data name="M_StudentListSet" xml:space="preserve"><value>学生名簿を設定しました</value></data>
+  <data name="M_StudentListSet" xml:space="preserve"><value>メンバーリストを設定しました</value></data>
   <data name="M_LotteryCountSet" xml:space="preserve"><value>抽選人数を設定しました</value></data>
   <data name="M_PoolSet" xml:space="preserve"><value>賞品プールを設定しました</value></data>
   <data name="M_LotteryGroupSet" xml:space="preserve"><value>抽選グループを設定しました</value></data>
@@ -52,9 +52,9 @@
   <data name="M_NoQuickDrawResult" xml:space="preserve"><value>クイック抽選の結果がありません。</value></data>
   <data name="M_NoEligibleRecordsFormat" xml:space="preserve"><value>{0} に抽選可能な記録がありません。</value></data>
   <data name="M_InvalidParameterFormat" xml:space="preserve"><value>{0} パラメーターが無効です。</value></data>
-  <data name="M_InvalidStudentList" xml:space="preserve"><value>学生名簿のパラメーターが無効です。</value></data>
+  <data name="M_InvalidStudentList" xml:space="preserve"><value>メンバーリストのパラメーターが無効です。</value></data>
   <data name="M_InvalidPool" xml:space="preserve"><value>賞品プールのパラメーターが無効です。</value></data>
-  <data name="M_AssignmentUnavailable" xml:space="preserve"><value>抽選用の学生割り当て名簿が有効になっていません。</value></data>
+  <data name="M_AssignmentUnavailable" xml:space="preserve"><value>抽選用のメンバー割り当てリストが有効になっていません。</value></data>
   <data name="L_RollCallCount" xml:space="preserve"><value>点呼人数</value></data>
   <data name="L_RollCallGroup" xml:space="preserve"><value>点呼グループ</value></data>
   <data name="L_RollCallGender" xml:space="preserve"><value>点呼の性別フィルター</value></data>

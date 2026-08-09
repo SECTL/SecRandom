@@ -1,0 +1,18 @@
+<local:MobileSectionHeader xmlns="https://github.com/avaloniaui"
+                           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                            xmlns:local="clr-namespace:SecRandom.Controls.Mobile"
+                            xmlns:views="clr-namespace:SecRandom.Views.Mobile"
+                            x:Class="SecRandom.Controls.Mobile.MobileSectionHeader">
+    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
+        <TextBlock x:Name="Icon"
+                    FontFamily="avares://SecRandom/Assets/Fonts/#FluentSystemIcons-Resizable"
+                   FontSize="16"
+                   LineHeight="16"
+                    VerticalAlignment="Center" />
+        <TextBlock x:Name="TitleText"
+                    FontSize="16"
+                   FontWeight="SemiBold"
+                    VerticalAlignment="Center"
+                   TextWrapping="Wrap" />
+    </StackPanel>
+</local:MobileSectionHeader>

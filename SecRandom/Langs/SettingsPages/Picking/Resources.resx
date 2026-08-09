@@ -12,7 +12,7 @@
   <data name="Section_Display" xml:space="preserve"><value>显示设置</value></data>
   <data name="Section_Animation" xml:space="preserve"><value>动画设置</value></data>
   <data name="Section_Color" xml:space="preserve"><value>颜色设置</value></data>
-  <data name="Section_StudentImage" xml:space="preserve"><value>学生头像设置</value></data>
+  <data name="Section_StudentImage" xml:space="preserve"><value>成员头像设置</value></data>
   <data name="Section_Reminder" xml:space="preserve"><value>提示语设置</value></data>
   <data name="C_EnableOverride" xml:space="preserve"><value>启用覆盖</value></data>
   <data name="S_DrawMode" xml:space="preserve"><value>抽取模式</value></data>
@@ -38,13 +38,13 @@
   <data name="S_FontSize" xml:space="preserve"><value>字体大小</value></data>
   <data name="S_FontSize_D" xml:space="preserve"><value>抽取结果文字大小</value></data>
   <data name="S_DisplayFormat" xml:space="preserve"><value>显示格式</value></data>
-  <data name="S_DisplayFormat_D" xml:space="preserve"><value>控制结果中显示姓名、编号或两者</value></data>
+  <data name="S_DisplayFormat_D" xml:space="preserve"><value>控制结果中显示名称、编号或两者</value></data>
   <data name="S_DisplayStyle" xml:space="preserve"><value>显示样式</value></data>
   <data name="S_DisplayStyle_D" xml:space="preserve"><value>控制抽取结果的整体样式</value></data>
   <data name="S_LotteryShowRandom" xml:space="preserve"><value>抽奖过程显示</value></data>
   <data name="S_LotteryShowRandom_D" xml:space="preserve"><value>抽奖过程中候选结果的展示格式</value></data>
   <data name="S_ShowTags" xml:space="preserve"><value>显示标签</value></data>
-  <data name="S_ShowTags_D" xml:space="preserve"><value>抽取结果中展示学生或奖品标签</value></data>
+  <data name="S_ShowTags_D" xml:space="preserve"><value>抽取结果中展示成员或奖品标签</value></data>
   <data name="S_ShowWeightTransparency" xml:space="preserve"><value>权重透明化</value></data>
   <data name="S_ShowWeightTransparency_D" xml:space="preserve"><value>在结果展示中显示权重透明信息</value></data>
   <data name="S_ReminderText" xml:space="preserve"><value>提示语</value></data>
@@ -68,9 +68,9 @@
   <data name="S_FixedColor" xml:space="preserve"><value>固定颜色</value></data>
   <data name="S_FixedColor_D" xml:space="preserve"><value>颜色主题为固定颜色时使用</value></data>
   <data name="S_StudentImage" xml:space="preserve"><value>显示头像</value></data>
-  <data name="S_StudentImage_D" xml:space="preserve"><value>在抽取结果中显示学生头像</value></data>
+  <data name="S_StudentImage_D" xml:space="preserve"><value>在抽取结果中显示成员头像</value></data>
   <data name="S_StudentImagePosition" xml:space="preserve"><value>头像位置</value></data>
-  <data name="S_StudentImagePosition_D" xml:space="preserve"><value>学生头像相对文字的位置</value></data>
+  <data name="S_StudentImagePosition_D" xml:space="preserve"><value>成员头像相对文字的位置</value></data>
   <data name="O_Repeat" xml:space="preserve"><value>允许重复</value></data>
   <data name="O_NoRepeat" xml:space="preserve"><value>不重复</value></data>
   <data name="O_HalfRepeat" xml:space="preserve"><value>半重复</value></data>
@@ -86,8 +86,8 @@
   <data name="O_Count" xml:space="preserve"><value>按剩余数量</value></data>
   <data name="O_FollowGlobal" xml:space="preserve"><value>跟随全局</value></data>
   <data name="O_Custom" xml:space="preserve"><value>自定义</value></data>
-  <data name="O_Both" xml:space="preserve"><value>编号和姓名</value></data>
-  <data name="O_Name" xml:space="preserve"><value>仅姓名</value></data>
+  <data name="O_Both" xml:space="preserve"><value>编号和名称</value></data>
+  <data name="O_Name" xml:space="preserve"><value>仅名称</value></data>
   <data name="O_Id" xml:space="preserve"><value>仅编号</value></data>
   <data name="O_Default" xml:space="preserve"><value>默认</value></data>
   <data name="O_Card" xml:space="preserve"><value>卡片</value></data>
@@ -106,13 +106,13 @@
   <data name="O_Top" xml:space="preserve"><value>上方</value></data>
   <data name="O_Right" xml:space="preserve"><value>右侧</value></data>
   <data name="O_Bottom" xml:space="preserve"><value>下方</value></data>
-  <data name="O_PrizeBreakGroupHyphenName" xml:space="preserve"><value>奖品/小组-姓名</value></data>
-  <data name="O_PrizeBreakGroupBreakName" xml:space="preserve"><value>奖品/小组/姓名</value></data>
-  <data name="O_PrizeHyphenGroupHyphenName" xml:space="preserve"><value>奖品-小组-姓名</value></data>
-  <data name="O_PrizeBreakName" xml:space="preserve"><value>奖品/姓名</value></data>
-  <data name="O_PrizeHyphenName" xml:space="preserve"><value>奖品-姓名</value></data>
-  <data name="O_PrizeBreakGroup" xml:space="preserve"><value>奖品/小组</value></data>
-  <data name="O_PrizeHyphenGroup" xml:space="preserve"><value>奖品-小组</value></data>
+  <data name="O_PrizeBreakGroupHyphenName" xml:space="preserve"><value>奖品/分组-名称</value></data>
+  <data name="O_PrizeBreakGroupBreakName" xml:space="preserve"><value>奖品/分组/名称</value></data>
+  <data name="O_PrizeHyphenGroupHyphenName" xml:space="preserve"><value>奖品-分组-名称</value></data>
+  <data name="O_PrizeBreakName" xml:space="preserve"><value>奖品/名称</value></data>
+  <data name="O_PrizeHyphenName" xml:space="preserve"><value>奖品-名称</value></data>
+  <data name="O_PrizeBreakGroup" xml:space="preserve"><value>奖品/分组</value></data>
+  <data name="O_PrizeHyphenGroup" xml:space="preserve"><value>奖品-分组</value></data>
   <data name="Section_Overridable" xml:space="preserve">
     <value>可覆盖设置</value>
   </data>

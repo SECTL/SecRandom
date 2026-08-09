@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0-ios</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <ApplicationTitle>SecRandom</ApplicationTitle>
+        <ApplicationId>cn.sectl.secrandom.mobile</ApplicationId>
+        <AppIcon>AppIcon</AppIcon>
+        <IncludeAllAppIcons>true</IncludeAllAppIcons>
+        <InfoPlist>Info.plist</InfoPlist>
+        <RuntimeIdentifier>ios-arm64</RuntimeIdentifier>
+        <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\SecRandom\SecRandom.csproj">
+            <AdditionalProperties>SecRandomBundleAssetsInAssembly=true</AdditionalProperties>
+        </ProjectReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia.iOS" Version="$(AvaloniaVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ImageAsset Include="Resources\Assets.xcassets" />
+    </ItemGroup>
+
+    <Import Project="..\Global.props" />
+
+    <Target Name="SetMobileApplicationDisplayVersion"
+            DependsOnTargets="GetGitInfoForSourceGenerator"
+            BeforeTargets="_GetAndroidPackageName;_CompileAppManifestInputs">
+        <PropertyGroup>
+            <_MobileApplicationDisplayVersion>$(Version)</_MobileApplicationDisplayVersion>
+            <_MobileApplicationDisplayVersion Condition="'$(_MobileApplicationDisplayVersion)' == '' OR '$(_MobileApplicationDisplayVersion)' == '1.0'">$(GitTag)</_MobileApplicationDisplayVersion>
+            <_MobileApplicationDisplayVersion Condition="$([System.String]::Copy('$(_MobileApplicationDisplayVersion)').StartsWith('v'))">$([System.String]::Copy('$(_MobileApplicationDisplayVersion)').Substring(1))</_MobileApplicationDisplayVersion>
+            <ApplicationDisplayVersion>$(_MobileApplicationDisplayVersion)</ApplicationDisplayVersion>
+            <ApplicationVersion Condition="'$(ApplicationVersion)' == '' OR '$(ApplicationVersion)' == '1.0'">$(_MobileApplicationDisplayVersion)</ApplicationVersion>
+        </PropertyGroup>
+    </Target>
+</Project>

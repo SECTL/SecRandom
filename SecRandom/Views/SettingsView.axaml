@@ -1,28 +1,36 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-             xmlns:fa="using:FluentAvalonia.UI.Controls"
-             xmlns:core="using:SecRandom.Core"
-             xmlns:ls="clr-namespace:SecRandom.Langs.SettingsView"
-             xmlns:views="using:SecRandom.Views"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="SecRandom.Views.SettingsView"
-             x:DataType="views:SettingsView"
-             Loaded="OnLoaded"
-             Unloaded="OnUnloaded">
+<views:SettingsView xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                    xmlns:fa="using:FluentAvalonia.UI.Controls"
+                    xmlns:core="using:SecRandom.Core"
+                    xmlns:ls="clr-namespace:SecRandom.Langs.SettingsView"
+                    xmlns:ml="clr-namespace:SecRandom.Langs.Mobile"
+                    xmlns:views="using:SecRandom.Views"
+                    mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                    x:Class="SecRandom.Views.SettingsView"
+                    x:DataType="views:SettingsView"
+                    Header="{x:Static ml:Resources.P_Settings}"
+                    NavigationPage.HasNavigationBar="False"
+                    Loaded="OnLoaded"
+                    Unloaded="OnUnloaded">
     <Grid RowDefinitions="Auto *">
-        <Border Grid.Row="0" Height="48">
+        <Border Grid.Row="0" Height="48"
+                Background="Transparent"
+                WindowDecorationProperties.ElementRole="TitleBar">
             <Grid ColumnDefinitions="Auto * 3* * Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="8" Spacing="8">
+                    <Border Width="60" IsVisible="{Binding ViewModel.IsMacOs}" />
+                    
                     <Button Name="TogglePaneButton"
                             Theme="{StaticResource PaneToggleButtonStyle}"
                             HorizontalAlignment="Center" VerticalAlignment="Center"
                             Margin="-7 -8 -8 -8"
                             Click="TogglePaneButton_OnClick"
                             IsVisible="{Binding !#NavigationView.IsPaneToggleButtonVisible}"
-                            MinWidth="40" Width="48" />
+                            MinWidth="40" Width="48"
+                            WindowDecorationProperties.ElementRole="User" />
 
                     <Button Name="BackButton"
                             HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -31,54 +39,84 @@
                             IsVisible="{Binding ViewModel.CanGoBack}"
                             MinWidth="40" Width="48"
                             Classes="nav-back"
-                            IsHitTestVisible="True" />
+                            WindowDecorationProperties.ElementRole="User" />
+
+                    <Button HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Width="40" Height="36" IsHitTestVisible="True"
+                            Theme="{DynamicResource TransparentButton}"
+                            IsVisible="{Binding HomeButtonVisible}"
+                            Click="MobileHomeButton_OnClick"
+                            WindowDecorationProperties.ElementRole="User">
+                        <sr:FluentIcon Glyph="{sr:Fi HomeFilled}" FontSize="16"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Button>
 
                     <Image Source="/Assets/AppLogo.png"
                            Width="18" Height="18"
                            VerticalAlignment="Center"
                            Margin="8 0 0 0"
-                           IsHitTestVisible="False" />
+                           IsVisible="{Binding !IsMobile}" />
 
                     <TextBlock Text="SecRandom"
                                FontSize="12"
                                VerticalAlignment="Center"
-                               IsHitTestVisible="False" />
+                               IsVisible="{Binding !IsMobile}" />
                 </StackPanel>
 
                 <AutoCompleteBox Grid.Column="2"
+                                 x:Name="SearchBox"
                                  VerticalAlignment="Center" MaxWidth="420"
+                                 IsVisible="{Binding !IsMobile}"
                                  FilterMode="Custom"
                                  MaxDropDownHeight="480"
                                  ItemsSource="{Binding ViewModel.SettingsMetadata}"
                                  ItemFilter="{x:Static views:SettingsView.SettingsFilterProperty}"
                                  PlaceholderText="{x:Static ls:Resources.C_SearchBox_Watermark}"
+                                 Text="{Binding ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                  SelectedItem="{Binding ViewModel.SelectedSettings}"
-                                 KeyUp="SearchBox_OnKeyUp">
+                                 SelectionChanged="SearchBox_OnSelectionChanged"
+                                 KeyUp="SearchBox_OnKeyUp"
+                                 WindowDecorationProperties.ElementRole="User">
                     <AutoCompleteBox.InnerRightContent>
-                         <sr:FluentIcon Glyph="{sr:Fi SearchFilled}" Margin="6"
-                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <StackPanel Orientation="Horizontal" Spacing="2">
+                            <Button Width="30" Height="30" Padding="0"
+                                    IsVisible="{Binding ViewModel.HasSearchText}"
+                                    Click="ClearSearchButton_OnClick"
+                                    WindowDecorationProperties.ElementRole="User">
+                                <sr:FluentIcon Glyph="{sr:Fi DismissCircleFilled}" />
+                            </Button>
+                            <Button Width="30" Height="30" Padding="0"
+                                    Click="SearchButton_OnClick"
+                                    WindowDecorationProperties.ElementRole="User">
+                                <sr:FluentIcon Glyph="{sr:Fi SearchFilled}"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </Button>
+                        </StackPanel>
                     </AutoCompleteBox.InnerRightContent>
                 </AutoCompleteBox>
 
-                 <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
-                     <Button Classes="accent"
+                <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
+                    <Button Classes="accent"
                             Margin="0 -8" VerticalAlignment="Center"
                             IsVisible="{Binding ViewModel.IsRequestedRestart}"
                             ToolTip.Tip="{x:Static ls:Resources.M_NeedsRestarting_Tooltip}"
-                            Click="ButtonRestartApp_OnClick">
-                         <sr:IconText Glyph="{sr:Fi ArrowCounterclockwiseFilled}" Text="{x:Static ls:Resources.M_NeedsRestarting}" />
-                     </Button>
+                            Click="ButtonRestartApp_OnClick"
+                            WindowDecorationProperties.ElementRole="User">
+                        <sr:IconText Glyph="{sr:Fi ArrowCounterclockwiseFilled}"
+                                     Text="{x:Static ls:Resources.M_NeedsRestarting}" />
+                    </Button>
 
-                     <TextBlock Text="{x:Static core:GlobalConstants.Version}"
-                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                FontSize="12"
-                                VerticalAlignment="Center"
-                                IsHitTestVisible="False" />
+                    <TextBlock Text="{x:Static core:GlobalConstants.Version}"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               IsHitTestVisible="False" />
 
-                     <Button Theme="{StaticResource TransparentButton}"
+                    <Button Theme="{StaticResource TransparentButton}"
                             ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions}"
                             VerticalAlignment="Center" HorizontalAlignment="Right"
-                            Margin="0 0 4 0">
+                            Margin="0 0 4 0"
+                            WindowDecorationProperties.ElementRole="User">
                         <sr:FluentIcon Glyph="{sr:Fi MoreHorizontalFilled}" />
 
                         <Button.Flyout>
@@ -87,42 +125,51 @@
                                           Header="{x:Static ls:Resources.C_MoreOptions_LogViewer}"
                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_LogViewer_D}"
                                           Click="LogViewerMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseArrowDownFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData}"
-                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData_D}"
-                                           Click="ExportDiagnosticDataMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseArrowDownFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData}"
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData_D}"
+                                          Click="ExportDiagnosticDataMenuItem_OnClick" />
 
                                 <Separator />
 
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_ExportSettings}"
-                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportSettings_D}"
-                                           Click="ExportSettingsMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_ImportSettings}"
-                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportSettings_D}"
-                                           Click="ImportSettingsMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_ExportAllData}"
-                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportAllData_D}"
-                                           Click="ExportAllDataMenuItem_OnClick" />
-                                  <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowFilled}}"
-                                            Header="{x:Static ls:Resources.C_MoreOptions_ImportAllData}"
-                                            ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportAllData_D}"
-                                            Click="ImportAllDataMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_ExportSettings}"
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportSettings_D}"
+                                          Click="ExportSettingsMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_ImportSettings}"
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportSettings_D}"
+                                          Click="ImportSettingsMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_ExportAllData}"
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportAllData_D}"
+                                          Click="ExportAllDataMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_ImportAllData}"
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportAllData_D}"
+                                          Click="ImportAllDataMenuItem_OnClick" />
 
-                                 <Separator />
+                                <Separator />
 
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_OpenLogDirectory}"
-                                           Click="OpenLogDirectoryMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_OpenDataDirectory}"
-                                           Click="OpenDataDirectoryMenuItem_OnClick" />
-                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
-                                           Header="{x:Static ls:Resources.C_MoreOptions_OpenAppDirectory}"
-                                           Click="OpenAppDirectoryMenuItem_OnClick" />
-                             </MenuFlyout>
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_OpenLogDirectory}"
+                                          IsVisible="{Binding CanOpenFileManagerDirectories}"
+                                          Click="OpenLogDirectoryMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_OpenDataDirectory}"
+                                          IsVisible="{Binding CanOpenFileManagerDirectories}"
+                                          Click="OpenDataDirectoryMenuItem_OnClick" />
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_OpenAppDirectory}"
+                                          IsVisible="{Binding CanOpenFileManagerDirectories}"
+                                          Click="OpenAppDirectoryMenuItem_OnClick" />
+
+                                <Separator IsVisible="{Binding CanOpenFileManagerDirectories}" />
+
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi CommentNoteFilled}}"
+                                          Header="{x:Static ls:Resources.C_MoreOptions_Feedback}"
+                                          Click="FeedbackMenuItem_OnClick" />
+                            </MenuFlyout>
                         </Button.Flyout>
                     </Button>
 
@@ -164,11 +211,12 @@
                                    Theme="{StaticResource TitleTextBlockStyle}" />
                     </Grid>
 
-                    <fa:FAFrame Grid.Row="1" x:Name="NavigationFrame"
+                    <fa:FAFrame Grid.Row="1"
+                                x:Name="NavigationFrame"
                                 IsNavigationStackEnabled="False" CacheSize="0"
                                 Content="{Binding ViewModel.FrameContent}" />
                 </Grid>
             </sr:DrawerHost>
         </fa:FANavigationView>
     </Grid>
-</UserControl>
+</views:SettingsView>

@@ -40,7 +40,7 @@
     <value>点名设置</value>
   </data>
   <data name="O_AllGroups" xml:space="preserve">
-    <value>抽取全部学生</value>
+    <value>抽取全部成员</value>
   </data>
   <data name="O_AllGenders" xml:space="preserve">
     <value>抽取全部性别</value>
@@ -51,26 +51,29 @@
   <data name="M_ResetDone" xml:space="preserve">
     <value>已重置点名记录</value>
   </data>
+  <data name="M_AutoResetDone" xml:space="preserve">
+    <value>已自动重置点名记录并继续抽取</value>
+  </data>
   <data name="M_NoStudents" xml:space="preserve">
-    <value>当前筛选条件下没有学生</value>
+    <value>当前筛选条件下没有成员</value>
   </data>
   <data name="M_NoRemainingStudents" xml:space="preserve">
-    <value>当前筛选条件下没有剩余学生</value>
+    <value>当前筛选条件下没有剩余成员</value>
   </data>
   <data name="M_DrawnCountFormat" xml:space="preserve">
-    <value>已抽中 {0} 人</value>
+    <value>已抽中 {0} 名成员</value>
   </data>
   <data name="M_CountSummaryFormat" xml:space="preserve">
-    <value>总人数: {0} | 剩余人数: {1}</value>
+    <value>成员数量: {0} | 剩余数量: {1}</value>
   </data>
   <data name="M_NoCandidates" xml:space="preserve">
-    <value>没有可抽取的学生</value>
+    <value>没有可抽取的成员</value>
   </data>
   <data name="M_NoEligibleCandidates" xml:space="preserve">
-    <value>没有符合权重条件的学生</value>
+    <value>没有符合权重条件的成员</value>
   </data>
   <data name="M_RepeatLimitExhausted" xml:space="preserve">
-    <value>剩余学生不足，请重置记录或调整筛选</value>
+    <value>剩余成员不足，请重置记录或调整筛选</value>
   </data>
   <data name="M_InvalidWeight" xml:space="preserve">
     <value>权重设置无效</value>

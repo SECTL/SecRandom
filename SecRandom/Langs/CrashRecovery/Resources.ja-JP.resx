@@ -23,4 +23,11 @@
 ```text
 {0}
 ```</value></data>
+  <data name="C_ReportInApp" xml:space="preserve"><value>アプリ内フィードバック</value></data>
+  <data name="C_ReportGitHub" xml:space="preserve"><value>GitHub</value></data>
+  <data name="M_ReportSuccess" xml:space="preserve"><value>クラッシュレポートをアプリ内フィードバックで送信しました。</value></data>
+  <data name="M_ReportFailed" xml:space="preserve"><value>アプリ内フィードバックを送信できませんでした。GitHub で問題を報告してください。</value></data>
+  <data name="FeedbackExpected" xml:space="preserve"><value>アプリケーションは未処理の例外なしに正常に動作する必要があります。</value></data>
+  <data name="FeedbackActual" xml:space="preserve"><value>アプリケーションで未処理の例外が発生し、クラッシュ復旧に入りました。</value></data>
+  <data name="FeedbackReproduction" xml:space="preserve"><value>クラッシュレポートは自動収集されました。添付の診断情報を参照してください。</value></data>
 </root>

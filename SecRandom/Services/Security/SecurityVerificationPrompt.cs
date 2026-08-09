@@ -1,23 +1,34 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Controls;
 
 namespace SecRandom.Services.Security;
 
 public sealed class SecurityVerificationPrompt : ISecurityVerificationPrompt
 {
-    private SecurityVerificationWindow? _activeWindow;
+    private bool _isShowing;
 
     public async Task<SecurityVerificationResponse> RequestAsync(
+        TopLevel xamlRoot,
         SecurityVerificationRequest request,
         CancellationToken cancellationToken = default)
     {
-        if (_activeWindow is not null)
+        if (_isShowing)
             return new SecurityVerificationResponse(string.Empty, string.Empty, false, Cancelled: true);
 
-        var window = new SecurityVerificationWindow(request);
-        _activeWindow = window;
-        window.Closed += (_, _) => _activeWindow = null;
-        window.Show();
-        return await window.Completion;
+        _isShowing = true;
+        try
+        {
+            return await SecurityVerificationDialog.ShowAsync(xamlRoot, request)
+                .WaitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return new SecurityVerificationResponse(string.Empty, string.Empty, false, Cancelled: true);
+        }
+        finally
+        {
+            _isShowing = false;
+        }
     }
 }

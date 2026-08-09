@@ -10,7 +10,7 @@
               x:Class="SecRandom.Views.SettingsPages.History.HistoryManagementSettingsPage"
               x:DataType="local:HistoryManagementSettingsPage">
     <ScrollViewer>
-        <StackPanel Classes="page-container animated-intro">
+        <StackPanel Classes="page-container animated-intro settings">
             <sr:IconText x:Name="S_ClearHistory"
                          Text="{x:Static lsp:Resources.S_ClearHistory}"
                          Glyph="{sr:Fi DeleteFilled}"

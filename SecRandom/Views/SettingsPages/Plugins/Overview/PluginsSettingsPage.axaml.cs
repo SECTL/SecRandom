@@ -1,3 +1,4 @@
+#if false
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -905,4 +906,14 @@ public sealed class PluginOverviewItem
             return $"{value / 1_000d:0.#}K";
         return value.ToString();
     }
+}
+#endif
+
+using Avalonia.Controls;
+
+namespace SecRandom.Views.SettingsPages.Plugins.Overview;
+
+// The overview markup is retained, but its plugin-backed implementation is disabled.
+public partial class PluginsSettingsPage : UserControl
+{
 }

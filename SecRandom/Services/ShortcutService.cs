@@ -8,6 +8,7 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.ViewModels.MainPages;
@@ -19,7 +20,7 @@ public sealed class ShortcutService(
     MainConfigHandler configHandler,
     RollCallPageViewModel rollCallViewModel,
     LotteryPageViewModel lotteryViewModel,
-    FeatureAvailabilityService featureAvailability,
+    IFeatureAvailabilityService featureAvailability,
     ILogger<ShortcutService> logger) : IHostedService, IDisposable
 {
     private const uint WmHotKey = 0x0312;
@@ -164,15 +165,13 @@ public sealed class ShortcutService(
         switch (action)
         {
             case ShortcutAction.OpenRollCallPage:
-                App.ShowMainWindow();
-                MainView.Current?.SelectNavigationItemById("main.rollCall");
+                App.ShowMainWindow("main.rollCall");
                 break;
             case ShortcutAction.QuickDraw:
                 App.ShowQuickDrawWindow();
                 break;
             case ShortcutAction.OpenLotteryPage:
-                App.ShowMainWindow();
-                MainView.Current?.SelectNavigationItemById("main.lottery");
+                App.ShowMainWindow("main.lottery");
                 break;
             case ShortcutAction.IncreaseRollCallCount:
                 if (rollCallViewModel.IncreaseCountCommand.CanExecute(null))

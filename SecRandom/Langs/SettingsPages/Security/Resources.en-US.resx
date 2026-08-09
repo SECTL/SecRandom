@@ -27,9 +27,9 @@
   <data name="S_Usb" xml:space="preserve"><value>USB Drive</value></data>
   <data name="S_Usb_D" xml:space="preserve"><value>A bound drive stores a security token and can be used for verification</value></data>
   <data name="S_Factors" xml:space="preserve"><value>Verification Methods</value></data>
-  <data name="S_Factors_D" xml:space="preserve"><value>Password is required; add other configured methods when needed</value></data>
+  <data name="S_Factors_D" xml:space="preserve"><value>A password protects the credentials; add other configured methods when needed</value></data>
   <data name="S_RequireAll" xml:space="preserve"><value>Require All Selected Methods</value></data>
-  <data name="S_RequireAll_D" xml:space="preserve"><value>Password is always required; when off, any one selected additional method is sufficient</value></data>
+  <data name="S_RequireAll_D" xml:space="preserve"><value>When on, complete all selected verification methods; when off, any one selected method is sufficient</value></data>
   <data name="S_WindowOperations" xml:space="preserve"><value>Windows and App</value></data>
   <data name="S_WindowOperations_D" xml:space="preserve"><value>Protect settings, window visibility, and app lifecycle actions</value></data>
   <data name="S_DrawOperations" xml:space="preserve"><value>Draws</value></data>
@@ -37,6 +37,7 @@
   <data name="C_ManageBindings" xml:space="preserve"><value>Manage Bindings</value></data>
   <data name="C_SetPassword" xml:space="preserve"><value>Set Password</value></data>
   <data name="C_ManagePassword" xml:space="preserve"><value>Change or Remove Password</value></data>
+  <data name="C_ChangePassword" xml:space="preserve"><value>Change Password</value></data>
   <data name="C_SetTotp" xml:space="preserve"><value>Set TOTP</value></data>
   <data name="C_ResetTotp" xml:space="preserve"><value>Reset TOTP</value></data>
   <data name="C_OpenSettings" xml:space="preserve"><value>Open Settings</value></data>
@@ -60,10 +61,15 @@
   <data name="C_VerifyAndSave" xml:space="preserve"><value>Verify and Save</value></data>
   <data name="C_Preview" xml:space="preserve"><value>Preview</value></data>
   <data name="C_Bind" xml:space="preserve"><value>Bind</value></data>
+  <data name="C_Unbind" xml:space="preserve"><value>Unbind</value></data>
   <data name="C_UnbindSelected" xml:space="preserve"><value>Unbind Selected</value></data>
   <data name="C_BoundDevices" xml:space="preserve"><value>Bound Drives</value></data>
+  <data name="C_UsbDriveLetter" xml:space="preserve"><value>Drive</value></data>
+  <data name="C_UsbDiskName" xml:space="preserve"><value>Disk Name</value></data>
+  <data name="C_UsbDeviceId" xml:space="preserve"><value>Device identifier</value></data>
   <data name="C_UsbConnected" xml:space="preserve"><value>Connected</value></data>
   <data name="C_UsbDisconnected" xml:space="preserve"><value>Disconnected</value></data>
+  <data name="C_Refresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="C_PasswordPlaceholder" xml:space="preserve"><value>Enter password</value></data>
   <data name="C_CurrentPasswordPlaceholder" xml:space="preserve"><value>Enter current password</value></data>
   <data name="C_NewPasswordPlaceholder" xml:space="preserve"><value>Enter new password</value></data>
@@ -82,16 +88,19 @@
   <data name="C_Copy" xml:space="preserve"><value>Copy</value></data>
   <data name="M_Copied" xml:space="preserve"><value>Copied.</value></data>
   <data name="M_UsbDialogTitle" xml:space="preserve"><value>Manage USB Binding</value></data>
-  <data name="M_UsbSetupDescription" xml:space="preserve"><value>Select the root folder of a mounted USB drive. SecRandom.safety.key will be created there.</value></data>
+  <data name="M_UsbSetupDescription" xml:space="preserve"><value>Select a removable USB drive from the list. SecRandom.safety.key will be created there.</value></data>
   <data name="M_UsbShortDescription" xml:space="preserve"><value>Select the USB drive used for verification.</value></data>
+  <data name="M_NoBindableUsb" xml:space="preserve"><value>No unbound removable USB drives are available</value></data>
+  <data name="M_NoBoundUsb" xml:space="preserve"><value>No USB drives are currently bound</value></data>
   <data name="M_UsbPickerTitle" xml:space="preserve"><value>Select USB Drive for Security Verification</value></data>
   <data name="M_SelectUsbFirst" xml:space="preserve"><value>Select a USB drive first.</value></data>
   <data name="M_VerificationDialogTitle" xml:space="preserve"><value>Security Verification</value></data>
-  <data name="M_VerificationAllFactors" xml:space="preserve"><value>Complete all selected verification methods.</value></data>
-  <data name="M_VerificationAnyFactor" xml:space="preserve"><value>Complete any selected verification method to continue.</value></data>
-  <data name="M_VerificationLockedFormat" xml:space="preserve"><value>Verification is locked. Try again in {0} seconds.</value></data>
-  <data name="M_LockoutFormat" xml:space="preserve"><value>Verification is locked. Try again in {0} seconds.</value></data>
+  <data name="M_VerificationAllFactors" xml:space="preserve"><value>Complete all selected verification methods</value></data>
+  <data name="M_VerificationAnyFactor" xml:space="preserve"><value>Complete any selected verification method to continue</value></data>
+  <data name="M_VerificationLockedFormat" xml:space="preserve"><value>Verification is locked, try again in {0} seconds</value></data>
+  <data name="M_LockoutFormat" xml:space="preserve"><value>Verification is locked, try again in {0} seconds</value></data>
   <data name="M_UsbPresent" xml:space="preserve"><value>Bound USB drive is connected</value></data>
+  <data name="M_UsbMissing" xml:space="preserve"><value>Bound USB drive is not detected</value></data>
   <data name="M_PasswordRemoved" xml:space="preserve"><value>Password removed and security protection disabled.</value></data>
   <data name="M_PasswordSaved" xml:space="preserve"><value>Password saved.</value></data>
   <data name="M_PasswordSaveFailed" xml:space="preserve"><value>Unable to save password. It must contain at least 6 characters; confirm the current password when changing it.</value></data>

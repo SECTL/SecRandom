@@ -58,7 +58,7 @@
         <value>Export all data</value>
     </data>
     <data name="C_MoreOptions_ExportAllData_D" xml:space="preserve">
-        <value>Export non-credential data, plugins, and plugin private configuration now</value>
+        <value>Export all non-credential data and settings now</value>
     </data>
     <data name="C_MoreOptions_ImportAllData" xml:space="preserve">
         <value>Import all data</value>
@@ -106,7 +106,7 @@
         <value>Export diagnostic data</value>
     </data>
     <data name="M_DiagnosticExportContent" xml:space="preserve">
-        <value>The standard package contains all redacted logs and runtime information. The extended package also contains a redacted settings snapshot, plugin and profile counts, and redacted crash reports. Neither package includes profile or history contents, plugin private configuration, or security credentials.</value>
+        <value>The standard package contains all redacted logs and runtime information. The extended package also contains a redacted settings snapshot, profile counts, and redacted crash reports. Neither package includes profile or history contents or security credentials.</value>
     </data>
     <data name="M_ImportTitle" xml:space="preserve">
         <value>Confirm import</value>
@@ -115,7 +115,7 @@
         <value>All non-credential settings, including window, startup, theme, draw, and desktop integration settings, will be replaced. A recovery snapshot is created first; import is cancelled if it fails. Passwords, TOTP, USB bindings, and lockout state are not imported.</value>
     </data>
     <data name="M_ImportAllDataContent" xml:space="preserve">
-        <value>All non-credential data, settings, profiles, history, resources, plugins, and plugin private configuration will be replaced. A full recovery snapshot is created first; import is cancelled if it fails. Unrepresentable v2 history is retained as raw data. Security credentials are not imported.</value>
+        <value>All non-credential data, settings, profiles, history, and resources will be replaced. A full recovery snapshot is created first; import is cancelled if it fails. Unrepresentable v2 history is retained as raw data. Security credentials are not imported.</value>
     </data>
     <data name="M_ExportSuccess" xml:space="preserve">
         <value>Exported: {0}</value>
@@ -140,4 +140,35 @@
     <data name="M_ImportUnsupportedContent"><value>This is not a supported SecRandom v3 export file.</value></data>
     <data name="M_ImportUnsupportedUnknownVersion"><value>Unknown</value></data>
     <data name="M_ImportUnsupportedVersion"><value>Detected export version: {0}&#xA;&#xA;{1}&#xA;&#xA;No recovery snapshot was created and no data was changed.</value></data>
+    <data name="M_NavigateFailed" xml:space="preserve">
+        <value>An error occurred during navigation.</value>
+    </data>
+    <data name="C_MoreOptions_Feedback"><value>Feedback</value></data>
+    <data name="C_Feedback_Title"><value>Feedback</value></data>
+    <data name="C_Feedback_CloseTemporary"><value>Close for now</value></data>
+    <data name="C_Feedback_Bug"><value>Bug</value></data>
+    <data name="C_Feedback_Feature"><value>Feature / experience improvement</value></data>
+    <data name="C_Feedback_Summary"><value>Summary</value></data>
+    <data name="C_Feedback_SummaryPlaceholder"><value>Summarize the issue or suggestion in one sentence</value></data>
+    <data name="C_Feedback_ContactEmail"><value>Contact email (optional)</value></data>
+    <data name="C_Feedback_ContactEmailPlaceholder"><value>Used only if we need to reply</value></data>
+    <data name="C_Feedback_CrashReport"><value>Crash report</value></data>
+    <data name="C_Feedback_Expected"><value>Expected behavior</value></data>
+    <data name="C_Feedback_ExpectedPlaceholder"><value>Describe what you expected to happen.</value></data>
+    <data name="C_Feedback_Actual"><value>Actual result</value></data>
+    <data name="C_Feedback_ActualPlaceholder"><value>Describe what actually happened.</value></data>
+    <data name="C_Feedback_Reproduce"><value>Steps to reproduce</value></data>
+    <data name="C_Feedback_ReproducePlaceholder"><value>1. First...&#10;2. Then...&#10;3. ...</value></data>
+    <data name="C_Feedback_Motivation"><value>Background and motivation</value></data>
+    <data name="C_Feedback_MotivationPlaceholder"><value>Why is this needed? What situation would it help with?</value></data>
+    <data name="C_Feedback_Request"><value>Feature or improvement requested</value></data>
+    <data name="C_Feedback_RequestPlaceholder"><value>Describe the desired feature, workflow, or experience improvement as specifically as possible.</value></data>
+    <data name="C_Feedback_DiagnosticNotice"><value>A redacted ZIP attachment equivalent to Export diagnostic data is generated and uploaded automatically when you submit, to help investigate the issue.</value></data>
+    <data name="C_Feedback_Cancel"><value>Cancel feedback</value></data>
+    <data name="C_Feedback_Submit"><value>Submit feedback</value></data>
+    <data name="M_Feedback_Required"><value>Fill in all required fields before submitting feedback.</value></data>
+    <data name="M_Feedback_InvalidEmail"><value>Enter a valid contact email or leave it blank.</value></data>
+    <data name="M_Feedback_Success"><value>Feedback submitted. Thank you for your help.</value></data>
+    <data name="M_Feedback_DiagnosticTooLarge"><value>The diagnostic ZIP exceeds the upload limit, so feedback was not submitted. Clear logs and try again, or use GitHub.</value></data>
+    <data name="M_Feedback_Failed"><value>Feedback submission failed. Try again later or use GitHub.</value></data>
 </root>

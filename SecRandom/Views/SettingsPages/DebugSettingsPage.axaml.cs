@@ -23,6 +23,7 @@ using SecRandom.Services.Updates;
 using SecRandom.Shared;
 using SecRandom.Views;
 using DebugResources = SecRandom.Langs.SettingsPages.Debug.DebugStrings;
+using LinkageResources = SecRandom.Langs.SettingsPages.Linkage.Resources;
 
 namespace SecRandom.Views.SettingsPages;
 
@@ -37,16 +38,13 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
     private string _platformDiagnostics = string.Empty;
     private string _dataAndPathDiagnostics = string.Empty;
     private bool _isInternalSettingsEnabled;
-    private bool _isPluginSettingsVisible;
     private bool _isUpdatingInternalSettingsToggle;
-    private bool _isUpdatingPluginSettingsToggle;
 
     public DebugSettingsPage()
     {
         DataContext = this;
         InitializeComponent();
         InternalSettingsToggle.IsCheckedChanged += InternalSettingsToggle_OnIsCheckedChanged;
-        PluginSettingsToggle.IsCheckedChanged += PluginSettingsToggle_OnIsCheckedChanged;
         RefreshDiagnostics();
     }
 
@@ -80,12 +78,6 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
         private set => SetDiagnostic(ref _isInternalSettingsEnabled, value, nameof(IsInternalSettingsEnabled));
     }
 
-    public bool IsPluginSettingsVisible
-    {
-        get => _isPluginSettingsVisible;
-        private set => SetDiagnostic(ref _isPluginSettingsVisible, value, nameof(IsPluginSettingsVisible));
-    }
-
     public DebugResources Strings { get; } = new();
 
     private event PropertyChangedEventHandler? DiagnosticsPropertyChanged;
@@ -103,7 +95,9 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
 
     private void OpenDrawer_Test(object? sender, RoutedEventArgs e)
     {
-        SettingsView.Current?.OpenDrawer(this.FindResource("DrawerTest")!);
+        var content = (Control)this.FindResource("DrawerTest")!;
+        content.DataContext = this;
+        SettingsView.Current?.OpenDrawer(content);
     }
 
     private void ShowCrashRecoveryWindow_OnClick(object? sender, RoutedEventArgs e)
@@ -138,39 +132,6 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
         SettingsView.Current?.NavigateToPage("settings.about");
     }
 
-    private async void PluginSettingsToggle_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
-    {
-        if (_isUpdatingPluginSettingsToggle || sender is not ToggleSwitch toggle)
-            return;
-
-        if (toggle.IsChecked != true)
-        {
-            SettingsView.Current?.SetPluginSettingsNavigationVisible(false);
-            IsPluginSettingsVisible = false;
-            return;
-        }
-
-        var result = await new FAContentDialog
-        {
-            Title = DebugResources.Get("M_ShowPluginSettings_Title"),
-            Content = DebugResources.Get("M_ShowPluginSettings"),
-            PrimaryButtonText = DebugResources.Get("C_Show"),
-            CloseButtonText = DebugResources.Get("C_Cancel"),
-            DefaultButton = FAContentDialogButton.Close
-        }.ShowAsync(TopLevel.GetTopLevel(this));
-
-        if (result != FAContentDialogResult.Primary)
-        {
-            _isUpdatingPluginSettingsToggle = true;
-            toggle.IsChecked = false;
-            _isUpdatingPluginSettingsToggle = false;
-            return;
-        }
-
-        SettingsView.Current?.SetPluginSettingsNavigationVisible(true);
-        IsPluginSettingsVisible = true;
-    }
-
     private async void InternalSettingsToggle_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
     {
         if (_isUpdatingInternalSettingsToggle || sender is not ToggleSwitch toggle)
@@ -186,7 +147,11 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
         var result = await new FAContentDialog
         {
             Title = DebugResources.Get("M_InternalSettings_ConfirmTitle"),
-            Content = DebugResources.Get("M_InternalSettings"),
+            Content = new TextBlock
+            {
+                Text = $"{DebugResources.Get("M_InternalSettings")}{Environment.NewLine}{Environment.NewLine}{DebugResources.Get("M_InternalSettings_FormalNotarization")}",
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap
+            },
             PrimaryButtonText = DebugResources.Get("C_Enable"),
             CloseButtonText = DebugResources.Get("C_Cancel"),
             DefaultButton = FAContentDialogButton.Close
@@ -230,7 +195,7 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
                                             + $"{T("C_CurrentCourse")}: {snapshot.CurrentCourse?.Name ?? "-"}\n"
                                             + $"{T("C_NextCourse")}: {snapshot.NextCourse?.Name ?? "-"}\n"
                                             + $"{T("C_DrawRestricted")}: {_courseLinkage.IsConfirmedNonClassTime}\n"
-                                            + $"{T("C_SnapshotError")}: {EmptyAsDash(snapshot.Error)}\n\n"
+                                             + $"{T("C_SnapshotError")}: {EmptyAsDash(FormatScheduleError(snapshot.Error))}\n\n"
                                             + $"{T("C_NotificationsEnabled")}: {notification.Enabled}\n"
                                             + $"{T("C_BuiltInNotification")}: {notification.UsesBuiltInNotificationService}\n"
                                             + $"{T("C_ExternalNotification")}: {notification.UsesExternalNotificationService}\n"
@@ -254,12 +219,41 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
                                  + FormatPath(T("C_DataDirectory"), dataRoot, isDirectory: true)
                                  + FormatPath(T("C_LogDirectory"), Path.Combine(dataRoot, "logs"), isDirectory: true)
                                  + FormatPath(T("C_BackupDirectory"), Path.Combine(dataRoot, "backup"), isDirectory: true)
-                                 + FormatPath(T("C_PluginDirectory"), Path.Combine(dataRoot, "plugins"), isDirectory: true)
-                                 + FormatPath(T("C_PluginConfigDirectory"), Path.Combine(dataRoot, "configs", "plugins"), isDirectory: true)
-                                 + FormatPath(T("C_ProofDirectory"), Path.Combine(dataRoot, "proofs"), isDirectory: true)
+                                  + FormatPath(T("C_ProofDirectory"), Path.Combine(dataRoot, "proofs"), isDirectory: true)
                                  + FormatPath(T("C_UpdateDownloadDirectory"), Path.Combine(dataRoot, "updates", "downloads"), isDirectory: true)
                                  + FormatPath(T("C_CourseLinkageDirectory"), Path.Combine(dataRoot, "CSES"), isDirectory: true)
                                  + FormatPath(T("C_CrashDirectory"), Path.Combine(dataRoot, "crashes"), isDirectory: true);
+        DataAndPathDiagnostics = DataAndPathDiagnostics.Trim();
+    }
+
+    private static string? FormatScheduleError(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+            return error;
+
+        var (code, argument) = error.Split(':', 2) switch
+        {
+            [var knownCode, var knownArgument] => (knownCode, knownArgument),
+            [var knownCode] => (knownCode, null),
+            _ => (error, null)
+        };
+        var key = code switch
+        {
+            ScheduleErrorCodes.CsesMissing => "M_ScheduleError_CsesMissing",
+            ScheduleErrorCodes.ClassIslandUnavailable => "M_ScheduleError_ClassIslandUnavailable",
+            ScheduleErrorCodes.ClassIslandTimerStopped => "M_ScheduleError_ClassIslandTimerStopped",
+            ScheduleErrorCodes.ClassIslandScheduleDisabled => "M_ScheduleError_ClassIslandScheduleDisabled",
+            ScheduleErrorCodes.ClassIslandScheduleUnloaded => "M_ScheduleError_ClassIslandScheduleUnloaded",
+            ScheduleErrorCodes.ClassIslandTimeUnconfirmed => "M_ScheduleError_ClassIslandTimeUnconfirmed",
+            ScheduleErrorCodes.ClassIslandUnsupportedState => "M_ScheduleError_ClassIslandUnsupportedState",
+            ScheduleErrorCodes.ClassIslandReadFailed => "M_ScheduleError_ClassIslandReadFailed",
+            _ => null
+        };
+        if (key is null)
+            return error;
+
+        var format = LinkageResources.ResourceManager.GetString(key, LinkageResources.Culture) ?? key;
+        return argument is null ? format : string.Format(CultureInfo.CurrentCulture, format, argument);
     }
 
     private void SetDiagnostic<T>(ref T field, T value, string propertyName)
