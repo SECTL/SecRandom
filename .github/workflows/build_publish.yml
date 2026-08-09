@@ -805,9 +805,9 @@ jobs:
                 @('macos-pkg', 'self-contained', 'macos', $Matches.arch)
               } elseif ($name -match '^SecRandom-v.+-(?<rid>osx-(?<arch>x64|arm64))\.app\.zip$') {
                 @('macos-app', 'self-contained', 'macos', $Matches.arch)
-              } elseif ($name -match '^SecRandom-v.+-Android-(?<arch>arm64)\.apk$') {
+              } elseif ($name -match '^SecRandom-v.+-Android-(?<arch>arm64|x64)\.apk$') {
                 @('android-apk', 'self-contained', 'android', $Matches.arch)
-               } elseif ($name -match '^SecRandom-v.+-iOS-(?<arch>arm64)-unsigned\.ipa$') {
+              } elseif ($name -match '^SecRandom-v.+-iOS-(?<arch>arm64)-unsigned\.ipa$') {
                 @('ios-ipa', 'self-contained', 'ios', $Matches.arch)
               } else {
                 throw "Unrecognized release artifact name: $name"
