@@ -35,6 +35,15 @@
     <data name="Feat_QuickDraw" xml:space="preserve"><value>クイック抽選</value></data>
     <data name="C_QuickDrawAutoCloseHint" xml:space="preserve"><value>{0} 秒後に自動的に閉じます&#xA;3 回連続クリックで閉じます</value></data>
     <data name="C_QuickDrawManualCloseHint" xml:space="preserve"><value>3 回連続クリックで閉じます</value></data>
+    <data name="C_Close" xml:space="preserve"><value>閉じる</value></data>
+    <data name="M_PortableDataDirectoryUnavailableTitle" xml:space="preserve"><value>ポータブル版のデータフォルダーに書き込めません</value></data>
+    <data name="M_PortableDataDirectoryUnavailableContent" xml:space="preserve"><value>SecRandom ポータブル版は、同梱の data フォルダーに書き込める必要があります
+
+データフォルダー: {0}
+エラー: {1}
+
+ポータブル版フォルダー全体を書き込み可能な場所へ移動するか、フォルダーのアクセス許可を変更してから再試行してください</value></data>
+    <data name="M_UnknownError" xml:space="preserve"><value>不明なエラー</value></data>
     <data name="Feat_Lottery" xml:space="preserve"><value>抽選</value></data>
     <data name="Settings_About" xml:space="preserve"><value>SecRandom について</value></data>
     <data name="Settings_Basic" xml:space="preserve"><value>基本</value></data>

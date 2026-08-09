@@ -110,6 +110,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - `ConfigBase` / `ProfileConfigBase` define paths and identity for persisted files; handlers and desktop storage live
   outside Shared.
 - `Utils.GetFilePath(...)` is the expected route for data/config paths. Its default desktop/portable root remains `<PackageRoot>/data`. `Utils.ConfigureMobileDataRoot()` is a startup-only Android/iOS operation with a fixed `LocalApplicationData/SecRandom/data` target; shared `SecRandom.App` calls it exactly once in its mobile branch before any path is read. No Shared model, Core service, plugin, or desktop flow may change the root. Accessing `data/config` also applies filesystem hiding: Windows uses `Hidden|System`, while Unix-like hosts maintain the parent `.hidden` entry because the stable `config` name cannot be changed.
+- Desktop `Utils.PrepareDesktopDataRoot()` performs a real temporary-file write probe before the first data path is resolved. Installed package kinds fall back to `LocalApplicationData/SecRandom/data` when the package directory is not writable; `portable-zip` keeps the package-root data contract and returns a failure result for the app layer to present before Host startup.
 - If adding a shared model that will be persisted, consider backward-compatible defaults and nullable behavior first.
 - Comments should document serialization/backward-compatibility constraints, not obvious property names.
 
