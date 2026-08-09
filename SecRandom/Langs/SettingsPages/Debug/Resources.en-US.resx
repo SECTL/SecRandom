@@ -104,13 +104,13 @@ Insider settings have lower priority than fair-draw rules. Selecting a member or
     <value>Reads the current update channel, status, and last check time</value>
   </data>
   <data name="S_LinkageNotificationDiagnostics" xml:space="preserve">
-    <value>Schedule linkage and notification</value>
+    <value>Course linkage and notification</value>
   </data>
   <data name="C_RefreshLinkage" xml:space="preserve">
     <value>Refresh linkage status</value>
   </data>
   <data name="C_RefreshLinkage_D" xml:space="preserve">
-    <value>Refreshes the schedule snapshot and reads notification settings</value>
+    <value>Refreshes the course snapshot and reads notification settings</value>
   </data>
   <data name="S_PlatformDiagnostics" xml:space="preserve">
     <value>Window and platform</value>
@@ -152,19 +152,19 @@ Insider settings have lower priority than fair-draw rules. Selecting a member or
     <value>Linkage source</value>
   </data>
   <data name="C_CourseSource" xml:space="preserve">
-    <value>Schedule source</value>
+    <value>Course source</value>
   </data>
   <data name="C_CourseState" xml:space="preserve">
-    <value>Schedule state</value>
+    <value>Course state</value>
   </data>
   <data name="C_SnapshotAvailable" xml:space="preserve">
     <value>Snapshot available</value>
   </data>
   <data name="C_CurrentCourse" xml:space="preserve">
-    <value>Current schedule item</value>
+    <value>Current class</value>
   </data>
   <data name="C_NextCourse" xml:space="preserve">
-    <value>Next schedule item</value>
+    <value>Next class</value>
   </data>
   <data name="C_DrawRestricted" xml:space="preserve">
     <value>Draw restricted by linkage</value>
@@ -254,27 +254,27 @@ Insider settings have lower priority than fair-draw rules. Selecting a member or
     <value>Missing</value>
   </data>
   <data name="M_ScheduleError_CsesMissing" xml:space="preserve">
-    <value>尚未导入有效的 CSES 日程表。</value>
+    <value>No valid CSES timetable has been imported.</value>
   </data>
   <data name="M_ScheduleError_ClassIslandUnavailable" xml:space="preserve">
-    <value>无法连接到 ClassIsland。</value>
+    <value>Unable to connect to ClassIsland.</value>
   </data>
   <data name="M_ScheduleError_ClassIslandTimerStopped" xml:space="preserve">
-    <value>ClassIsland 计时器未运行。</value>
+    <value>The ClassIsland timer is not running.</value>
   </data>
   <data name="M_ScheduleError_ClassIslandScheduleDisabled" xml:space="preserve">
-    <value>ClassIsland 未启用日程表。</value>
+    <value>ClassIsland has not enabled its timetable.</value>
   </data>
   <data name="M_ScheduleError_ClassIslandScheduleUnloaded" xml:space="preserve">
-    <value>ClassIsland 尚未加载当天日程。</value>
+    <value>ClassIsland has not loaded today's timetable.</value>
   </data>
   <data name="M_ScheduleError_ClassIslandTimeUnconfirmed" xml:space="preserve">
-    <value>ClassIsland 尚未确认当前时间状态。</value>
+    <value>ClassIsland has not confirmed the current class-time state.</value>
   </data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState" xml:space="preserve">
-    <value>ClassIsland 返回了未支持的当前状态：{0}。</value>
+    <value>ClassIsland returned an unsupported current state: {0}.</value>
   </data>
   <data name="M_ScheduleError_ClassIslandReadFailed" xml:space="preserve">
-    <value>无法读取 ClassIsland 的日程状态。</value>
+    <value>Unable to read the ClassIsland class state.</value>
   </data>
 </root>

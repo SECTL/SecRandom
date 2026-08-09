@@ -29,9 +29,9 @@
   <data name="H_Serial" xml:space="preserve"><value>No.</value></data>
   <data name="H_Gender" xml:space="preserve"><value>Gender</value></data>
   <data name="H_Group" xml:space="preserve"><value>Segment</value></data>
-  <data name="H_Subject" xml:space="preserve"><value>Schedule item</value></data>
+  <data name="H_Subject" xml:space="preserve"><value>Course</value></data>
   <data name="H_GenderLimit" xml:space="preserve"><value>Gender limit</value></data>
   <data name="H_GroupLimit" xml:space="preserve"><value>Segment limit</value></data>
   <data name="H_Weight" xml:space="preserve"><value>Weight</value></data>
-  <data name="C_Break" xml:space="preserve"><value>Free period</value></data>
+  <data name="C_Break" xml:space="preserve"><value>Break</value></data>
 </root>

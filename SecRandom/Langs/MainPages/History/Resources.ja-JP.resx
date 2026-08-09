@@ -88,7 +88,7 @@
     <value>分組</value>
   </data>
   <data name="H_Subject" xml:space="preserve">
-    <value>予定項目</value>
+    <value>授業</value>
   </data>
   <data name="H_GenderLimit" xml:space="preserve">
     <value>性別制限</value>
@@ -100,6 +100,6 @@
     <value>重み</value>
   </data>
   <data name="C_Break" xml:space="preserve">
-    <value>空き時間帯</value>
+    <value>休み時間</value>
   </data>
 </root>
