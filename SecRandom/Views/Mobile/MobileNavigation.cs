@@ -14,13 +14,7 @@ public static class MobilePageIds
     public const string History = "main.history";
     public const string Overview = "main.overview";
     public const string Settings = "root.settings";
-    public const string General = "settings.mobile.general";
-    public const string Personalization = "settings.mobile.personalization";
-    public const string ListManagement = "settings.mobile.listManagement";
-    public const string DrawSettings = "settings.mobile.draw";
-    public const string Backup = "settings.mobile.backup";
     public const string Update = "settings.mobile.update";
-    public const string About = "settings.mobile.about";
 }
 
 public enum MobileDestination

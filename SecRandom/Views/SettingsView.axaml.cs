@@ -35,6 +35,7 @@ using SecRandom.Services.ImportExport;
 using SecRandom.Services.Security;
 using SecRandom.Shared;
 using SecRandom.ViewModels;
+using SecRandom.ViewModels.MainPages;
 using SecRandom.Views.Mobile;
 using SecRandom.Platforms.Abstractions;
 
@@ -82,6 +83,8 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
         {
             NavigationFrame.Navigated -= NavigationFrame_OnNavigated;
             RestorePreviewControls();
+            if (_isMobile)
+                RefreshMobileDrawSessions();
             if (ReferenceEquals(Current, this))
                 Current = null;
         };
@@ -339,6 +342,12 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
         IAppHost.TryGetService<MainConfigHandler>()?.Save();
+    }
+
+    private static void RefreshMobileDrawSessions()
+    {
+        IAppHost.TryGetService<RollCallPageViewModel>()?.RefreshAfterProfileChange();
+        IAppHost.TryGetService<LotteryPageViewModel>()?.RefreshAfterProfileChange();
     }
 
     #endregion

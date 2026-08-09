@@ -196,34 +196,38 @@ public sealed class LotteryDrawService(
 
     public async Task<LotteryDrawResult?> DrawAsync(LotteryDrawRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.StudentListName))
-            return null;
-
         SwitchPrizePool(request.PrizePoolName);
-        SwitchStudentList(request.StudentListName);
+        var assignStudents = !string.IsNullOrWhiteSpace(request.StudentListName);
+        if (assignStudents)
+            SwitchStudentList(request.StudentListName);
         var snapshot = GetSnapshot(request.StudentListName, request.Group, request.Gender);
         if (snapshot.RemainingCount == 0)
             return null;
         var count = Math.Clamp(request.Count, 1, snapshot.RemainingCount);
-        if (snapshot.EligibleStudents.Count < count)
+        if (assignStudents && snapshot.EligibleStudents.Count < count)
             return null;
         var prizes = await verification.DrawPrizesAsync(count,
             temporaryRecords.GetPrizeCounts(GetPrizePoolName()), snapshot.Prizes,
             DrawProofExportContext.ForPrizes(GetPrizePoolName()), cancellationToken).ConfigureAwait(false);
-        var assigned = (await verification.DrawStudentsAsync(count, snapshot.EligibleStudents, DrawSettingsType.RollCall,
-            DrawProofExportContext.ForStudents(GetStudentListName(), request.Group, request.Gender, request.CourseName),
-            prizes.Proof.ProofId, request.CourseName, cancellationToken).ConfigureAwait(false)).Winners;
+        IReadOnlyList<Student> assigned = assignStudents
+            ? (await verification.DrawStudentsAsync(count, snapshot.EligibleStudents, DrawSettingsType.RollCall,
+                DrawProofExportContext.ForStudents(GetStudentListName(), request.Group, request.Gender, request.CourseName),
+                prizes.Proof.ProofId, request.CourseName, cancellationToken).ConfigureAwait(false)).Winners
+            : [];
         if (assigned.Count != prizes.Winners.Count)
-            return null;
+        {
+            if (assignStudents)
+                return null;
+        }
         var roundId = drawCommits.CommitLotteryDraw(new LotteryDrawCommit(
             prizes.Winners,
             DateTime.Now,
             count,
             GetPrizePoolName(),
-            assigned,
-            GetStudentListName(),
-            request.Group,
-            request.Gender,
+            assignStudents ? assigned : null,
+            assignStudents ? GetStudentListName() : null,
+            assignStudents ? request.Group : string.Empty,
+            assignStudents ? request.Gender : string.Empty,
             (int)configHandler.Data.LotterySettings.DrawType,
             (int)configHandler.Data.RollCallSettings.DrawType,
             request.CourseName));

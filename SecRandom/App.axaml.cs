@@ -70,7 +70,6 @@ using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
 using MobileResources = SecRandom.Langs.Mobile.Resources;
 using SecRandom.ViewModels;
-using SecRandom.ViewModels.Mobile;
 using SecRandom.ViewModels.MainPages;
 using SecRandom.ViewModels.SettingsPages;
 using SecRandom.ViewModels.SettingsPages.History;
@@ -852,9 +851,16 @@ public partial class App : Application
                 // 设置界面 Views
                 services.AddSettingsPage<LogViewerSettingsPage>(Langs.SettingsPages.LogViewer.Resources.Page_Title);
 
-                // 移动端与桌面端共享设置页面，只有系统安装边界不同的更新页保留移动实现。
-                services.AddSettingsPage<HomeSettingsPage>(Langs.Common.Resources.Settings_Home);
-                services.AddSettingsPageSeparator();
+                // 移动端保留目录壳，内容页共用桌面实现，只有系统安装边界不同的更新页保留移动实现。
+                if (isMobile && useMobileUI)
+                {
+                    services.AddSettingsPage<MobileSettingsCatalogPage>(MobileResources.P_Settings);
+                }
+                else
+                {
+                    services.AddSettingsPage<HomeSettingsPage>(Langs.Common.Resources.Settings_Home);
+                    services.AddSettingsPageSeparator();
+                }
 
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_General, "settings.general", FluentIcons.SettingsFilled));

@@ -43,15 +43,46 @@ public sealed class MobileHistoryPageTests
         }
     }
 
-    private static ServiceProvider CreateProvider()
+    [AvaloniaFact]
+    public async Task LotteryTabTracksFeatureAvailabilityAndReturnsToRollCall()
+    {
+        await HostGate.WaitAsync();
+        ServiceProvider? provider = null;
+        try
+        {
+            var featureAvailability = new TestFeatureAvailability(lotteryEnabled: true);
+            provider = CreateProvider(featureAvailability);
+            IAppHost.Host = new TestHost(provider);
+            var page = new MobileHistoryPage(new TestCapabilities(lotteryEnabled: true));
+            var tabs = page.FindControl<TabStrip>("HistoryTabs")!;
+            tabs.SelectedIndex = 1;
+
+            featureAvailability.SetLotteryEnabled(false);
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+            Assert.False(page.FindControl<TabStripItem>("LotteryTab")!.IsVisible);
+            Assert.Equal(0, tabs.SelectedIndex);
+        }
+        finally
+        {
+            IAppHost.Host = null;
+            provider?.Dispose();
+            HostGate.Release();
+        }
+    }
+
+    private static ServiceProvider CreateProvider(IFeatureAvailabilityService? featureAvailability = null)
     {
         var services = new ServiceCollection();
         var configHandler = new MainConfigHandler(
             NullLogger<MainConfigHandler>.Instance,
             new InMemoryConfigService(new MainConfigModel()));
         var profileService = new EmptyProfileService();
+        var availability = featureAvailability as TestFeatureAvailability ?? new TestFeatureAvailability(lotteryEnabled: false);
 
         services.AddSingleton(configHandler);
+        services.AddSingleton(availability);
+        services.AddSingleton<IFeatureAvailabilityService>(availability);
         services.AddSingleton<IProfileService>(profileService);
         services.AddSingleton<IHistoryQueryService, EmptyHistoryQueryService>();
         services.AddSingleton<IProfileCatalogManager, EmptyProfileCatalogManager>();
@@ -65,6 +96,19 @@ public sealed class MobileHistoryPageTests
     {
         public bool IsLotteryEnabled { get; } = lotteryEnabled;
         public bool SupportsInAppUpdate => false;
+    }
+
+    private sealed class TestFeatureAvailability(bool lotteryEnabled) : IFeatureAvailabilityService
+    {
+        public bool IsLotteryEnabled { get; private set; } = lotteryEnabled;
+        public event EventHandler? Changed;
+        public void Refresh() { }
+
+        public void SetLotteryEnabled(bool enabled)
+        {
+            IsLotteryEnabled = enabled;
+            Changed?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     private sealed class InMemoryConfigService(MainConfigModel config) : ConfigServiceBase

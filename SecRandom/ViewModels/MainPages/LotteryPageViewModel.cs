@@ -111,7 +111,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         _lotteryDrawService = lotteryDrawService;
         _featureAvailability = featureAvailability;
         _notificationService = notificationService;
-        if (!OperatingSystem.IsIOS())
+        if (App.IsDesktop && !OperatingSystem.IsIOS())
         {
             _prizeListWatcher = CreatePrizeListWatcher();
             _studentListWatcher = CreateStudentListWatcher();
@@ -488,6 +488,14 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
         SelectedStudentListName = StudentListNames.Contains(previousName) ? previousName : NoStudentOption;
         RefreshFilterOptions();
+    }
+
+    /// <summary>Refreshes the shared draw session after profile mutations made by settings or import flows.</summary>
+    public void RefreshAfterProfileChange()
+    {
+        RefreshPrizeLists();
+        RefreshStudentLists();
+        RefreshCounts();
     }
 
     private void PrizeListNamesOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

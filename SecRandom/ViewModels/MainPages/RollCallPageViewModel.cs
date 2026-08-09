@@ -107,7 +107,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         _notificationService = notificationService;
 
         ResultText = ReminderSettings.ReminderText;
-        if (!OperatingSystem.IsIOS())
+        if (App.IsDesktop && !OperatingSystem.IsIOS())
         {
             _studentListWatcher = CreateStudentListWatcher();
         }
@@ -441,6 +441,14 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         {
             _isRefreshingLists = false;
         }
+    }
+
+    /// <summary>Refreshes the shared draw session after profile mutations made by settings or import flows.</summary>
+    public void RefreshAfterProfileChange()
+    {
+        RefreshLists();
+        RefreshFilterOptions();
+        RefreshCounts();
     }
 
     public void Dispose()

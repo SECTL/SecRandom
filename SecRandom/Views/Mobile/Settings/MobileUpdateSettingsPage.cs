@@ -13,16 +13,14 @@ namespace SecRandom.Views.Mobile.Settings;
 /// stays in AXAML while update service state is synchronized after each operation.
 /// </summary>
 [PageInfo(MobilePageIds.Update, FluentIcons.ArrowSyncFilled, location: PageLocation.Bottom)]
-public sealed partial class MobileUpdateSettingsPage : MobileSettingsPageBase
+public sealed partial class MobileUpdateSettingsPage : UserControl
 {
     private readonly MobileUpdateService _updateService;
     private readonly bool _installerSupported;
 
     public MobileUpdateSettingsPage(
         MobileUpdateService updateService,
-        IMobileUpdateInstaller updateInstaller,
-        IMobileCapabilities capabilities)
-        : base(capabilities)
+        IMobileUpdateInstaller updateInstaller)
     {
         _updateService = updateService;
         _installerSupported = updateInstaller.IsSupported;

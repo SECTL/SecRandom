@@ -4,26 +4,24 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services;
 using SecRandom.Services.Mobile;
+using SecRandom.Views.Mobile;
 
 namespace SecRandom.Views.Mobile.Settings;
 
 /// <summary>
-/// SettingsView 的隐藏目录页。目录顺序与 SettingsView 的导航栏保持一致。
+/// Mobile settings navigation shell. It lists the registered desktop settings pages plus the mobile update page.
 /// </summary>
 [PageInfo(MobilePageIds.Settings, FluentIcons.SettingsFilled, isHide: true)]
-public sealed partial class MobileSettingsCatalogPage : MobileSettingsPageBase
+public sealed partial class MobileSettingsCatalogPage : Avalonia.Controls.UserControl
 {
     private readonly IMobileSettingsNavigator _settingsNavigator;
 
-    public MobileSettingsCatalogPage(
-        IMobileCapabilities capabilities,
-        IMobileSettingsNavigator settingsNavigator)
-        : base(capabilities)
+    public MobileSettingsCatalogPage(IMobileSettingsNavigator settingsNavigator)
     {
         _settingsNavigator = settingsNavigator;
         InitializeComponent();
         var pages = PagesRegistryService.SettingsItems
-            .Where(page => !page.IsSeparator && !page.IsHide)
+            .Where(page => !page.IsSeparator && !page.IsHide && page.Id != MobilePageIds.Settings)
             .ToArray();
         var addedGroups = new HashSet<string>();
         var items = new List<MobileSettingsCatalogItem>();
@@ -39,15 +37,11 @@ public sealed partial class MobileSettingsCatalogPage : MobileSettingsPageBase
                         group.Name,
                         group.IconGlyph,
                         null,
-                        pages
-                            .Where(item => item.GroupId == groupId)
-                            .Select(CreateEntry)
-                            .ToArray()));
+                        pages.Where(item => item.GroupId == groupId).Select(CreateEntry).ToArray()));
                     continue;
                 }
             }
 
-            // This is also the fallback used by the desktop navigation when a group is unknown.
             if (page.GroupId is null || PagesRegistryService.GroupItems.All(item => item.Id != page.GroupId))
                 items.Add(new MobileSettingsCatalogItem(page.Name, page.IconGlyph, page.Id, []));
         }
@@ -58,16 +52,13 @@ public sealed partial class MobileSettingsCatalogPage : MobileSettingsPageBase
 
     public IReadOnlyList<MobileSettingsCatalogItem> Items { get; }
 
-    private static MobileSettingsCatalogEntry CreateEntry(PageInfo page) =>
-        new(page.Id, page.Name, page.IconGlyph);
+    private static MobileSettingsCatalogEntry CreateEntry(PageInfo page) => new(page.Id, page.Name, page.IconGlyph);
 
     private void CatalogItem_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (sender is not Avalonia.Controls.Control { Tag: string pageId })
             return;
 
-        // FASettingsExpanderItem keeps processing its routed click after this handler returns.
-        // Replacing the FAFrame content must wait until that input cycle has completed.
         Dispatcher.UIThread.Post(
             () => _ = _settingsNavigator.NavigateAsync(pageId),
             DispatcherPriority.Background);

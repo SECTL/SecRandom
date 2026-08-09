@@ -1,170 +1,147 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
-using Avalonia.Layout;
-using Avalonia.Media;
 using Avalonia.Markup.Xaml;
-using FluentAvalonia.UI.Controls;
-using SecRandom.Core.Helpers.UI;
-using SecRandom.ViewModels.Mobile;
-using LR = SecRandom.Langs.Mobile.Resources;
+using Avalonia.Threading;
+using System.ComponentModel;
+using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
+using SecRandom.Services.ViewEngine;
+using SecRandom.ViewModels.MainPages;
+using RollCallResources = SecRandom.Langs.MainPages.RollCall.Resources;
+using LotteryResources = SecRandom.Langs.MainPages.Lottery.Resources;
 
 namespace SecRandom.Views.Mobile;
 
 /// <summary>
-/// Hosts view-only animations and dialogs. Draw state and commands belong to the ViewModel.
+/// Mobile layout shell over the desktop draw sessions. Draw state, result projection, and animations remain shared.
 /// </summary>
 public sealed partial class MobileDrawPage : UserControl
 {
-    private readonly TextBlock _resultText;
-    private readonly Control _resultCard;
+    private readonly IFeatureAvailabilityService _featureAvailability;
+    private readonly TabStrip _drawSurfaceTabs;
+    private readonly Control _rollCallSurface;
+    private readonly Control _lotterySurface;
+    private bool _synchronizingSurface;
 
-    public MobileDrawPage(MobileDrawPageViewModel viewModel)
+    public MobileDrawPage(
+        RollCallPageViewModel rollCallViewModel,
+        LotteryPageViewModel lotteryViewModel,
+        IFeatureAvailabilityService featureAvailability)
     {
-        ViewModel = viewModel;
+        RollCallViewModel = rollCallViewModel;
+        LotteryViewModel = lotteryViewModel;
+        _featureAvailability = featureAvailability;
+        DataContext = this;
         InitializeComponent();
-        DataContext = ViewModel;
-        _resultText = this.FindControl<TextBlock>("ResultText")!;
-        _resultCard = this.FindControl<Control>("DrawResultCard")!;
-        ViewModel.AnimationRequested += ViewModel_OnAnimationRequested;
-        ViewModel.DialogRequested += ViewModel_OnDialogRequested;
+        _drawSurfaceTabs = this.FindControl<TabStrip>("DrawSurfaceTabs")!;
+        _rollCallSurface = this.FindControl<Control>("RollCallSurface")!;
+        _lotterySurface = this.FindControl<Control>("LotterySurface")!;
+        _featureAvailability.Changed += FeatureAvailabilityOnChanged;
+        RollCallViewModel.PropertyChanged += DrawViewModelOnPropertyChanged;
+        LotteryViewModel.PropertyChanged += DrawViewModelOnPropertyChanged;
         DetachedFromVisualTree += (_, _) =>
         {
-            ViewModel.AnimationRequested -= ViewModel_OnAnimationRequested;
-            ViewModel.DialogRequested -= ViewModel_OnDialogRequested;
-            MobileAnimations.Cancel(_resultText);
+            _featureAvailability.Changed -= FeatureAvailabilityOnChanged;
+            RollCallViewModel.PropertyChanged -= DrawViewModelOnPropertyChanged;
+            LotteryViewModel.PropertyChanged -= DrawViewModelOnPropertyChanged;
         };
+        RefreshLotteryAvailability();
     }
 
-    public MobileDrawPageViewModel ViewModel { get; }
+    public RollCallPageViewModel RollCallViewModel { get; }
+    public LotteryPageViewModel LotteryViewModel { get; }
+    public bool IsLotteryEnabled => _featureAvailability.IsLotteryEnabled;
+    public bool CanChangeSurface => !RollCallViewModel.IsDrawing && !LotteryViewModel.IsDrawing;
 
-    private void ViewModel_OnAnimationRequested(object? sender, MobileDrawAnimationRequest request)
+    private void DrawSurfaceTabs_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-        {
-            if (request.Stop)
-                MobileAnimations.Cancel(_resultText);
-            else if (request.Reveal)
-                MobileAnimations.PlayResultReveal(_resultCard);
-            else if (request.Names.Count > 0)
-                MobileAnimations.StartNameRoll(_resultText, request.Names);
-        });
-    }
+        // Avalonia raises the initial selection event while InitializeComponent is still populating
+        // the control tree, before the named fields have been assigned by the constructor.
+        if (_drawSurfaceTabs is null || !ReferenceEquals(sender, _drawSurfaceTabs))
+            return;
 
-    private void ViewModel_OnDialogRequested(object? sender, MobileDrawDialogRequest request)
-    {
-        _ = request.Kind switch
+        if (_synchronizingSurface || _drawSurfaceTabs.SelectedIndex != 1 || IsLotteryEnabled)
         {
-            MobileDrawDialogKind.Remaining => ShowRemainingListAsync(request.Remaining ?? []),
-            MobileDrawDialogKind.RemainingPrizes => ShowRemainingPrizesAsync(request.RemainingPrizes ?? []),
-            _ => Task.CompletedTask
-        };
-    }
-
-    private async Task ShowRemainingPrizesAsync(IReadOnlyList<SecRandom.Shared.Models.Profile.Prize> remaining)
-    {
-        FlyoutHelper.CloseAncestorFlyout(this.FindControl<Grid>("PrizeFlyoutGrid"));
-        Control content;
-        if (remaining.Count == 0)
-        {
-            content = new TextBlock { Text = LR.M_NoRemaining, TextWrapping = TextWrapping.Wrap };
-        }
-        else
-        {
-            var rows = new StackPanel { Spacing = 4 };
-            foreach (var prize in remaining)
-            {
-                rows.Children.Add(new FASettingsExpander
-                {
-                    Header = FormatPrize(prize),
-                    Description = string.Join(" | ", new[] { prize.Id, prize.Tags }
-                        .Where(value => !string.IsNullOrWhiteSpace(value))),
-                    MinHeight = 64,
-                    HorizontalAlignment = HorizontalAlignment.Stretch
-                });
-            }
-
-            content = new ScrollViewer
-            {
-                MaxHeight = 520,
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                Content = rows
-            };
+            SetSurface(_drawSurfaceTabs.SelectedIndex == 1 && IsLotteryEnabled);
+            return;
         }
 
-        await new FAContentDialog
-        {
-            Title = LR.M_RemainingTitle,
-            Content = content,
-            CloseButtonText = LR.C_Close,
-            DefaultButton = FAContentDialogButton.Close
-        }.ShowAsync(TopLevel.GetTopLevel(this));
+        SetSurface(false);
     }
 
-    private async Task ShowRemainingListAsync(IReadOnlyList<SecRandom.Shared.Models.Profile.Student> remaining)
+    private void FeatureAvailabilityOnChanged(object? sender, EventArgs e) =>
+        Dispatcher.UIThread.Post(RefreshLotteryAvailability);
+
+    private void DrawViewModelOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        FlyoutHelper.CloseAncestorFlyout(FlyoutGrid);
-        
-        Control content;
-        if (remaining.Count == 0)
+        if (e.PropertyName == nameof(RollCallPageViewModel.IsDrawing))
+            _drawSurfaceTabs.IsEnabled = CanChangeSurface;
+    }
+
+    private void RefreshLotteryAvailability()
+    {
+        this.FindControl<TabStripItem>("LotteryTab")!.IsVisible = IsLotteryEnabled;
+        if (!IsLotteryEnabled)
         {
-            content = new TextBlock { Text = LR.M_NoRemaining, TextWrapping = TextWrapping.Wrap };
+            // Cancels only the visual/audio preview; the shared transactional draw is allowed to finish its commit.
+            LotteryViewModel.StopProtocolDraw();
+            SetSurface(false);
         }
-        else
-        {
-            var rows = new StackPanel { Spacing = 4 };
-            foreach (var student in remaining)
-            {
-                rows.Children.Add(new FASettingsExpander
-                {
-                    Header = FormatStudent(student),
-                    Description = string.Join(" | ", new[] { student.Gender, student.Group, student.Tags }
-                        .Where(value => !string.IsNullOrWhiteSpace(value))),
-                    MinHeight = 64,
-                    HorizontalAlignment = HorizontalAlignment.Stretch
-                });
-            }
+    }
 
-            content = new ScrollViewer
-            {
-                MaxHeight = 520,
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                Content = rows
-            };
+    private void SetSurface(bool lottery)
+    {
+        _synchronizingSurface = true;
+        try
+        {
+            _drawSurfaceTabs.SelectedIndex = lottery && IsLotteryEnabled ? 1 : 0;
+            _rollCallSurface.IsVisible = !lottery || !IsLotteryEnabled;
+            _lotterySurface.IsVisible = lottery && IsLotteryEnabled;
         }
-
-        await new FAContentDialog
+        finally
         {
-            Title = LR.M_RemainingTitle,
-            Content = content,
-            CloseButtonText = LR.C_Close,
-            DefaultButton = FAContentDialogButton.Close
-        }.ShowAsync(TopLevel.GetTopLevel(this));
+            _synchronizingSurface = false;
+        }
     }
 
-    private void ClearTemporaryRecords_OnClick(object? sender, RoutedEventArgs e)
+    private void ShowRollCallRemaining_OnClick(object? sender, RoutedEventArgs e)
     {
-        _ = ConfirmClearTemporaryRecordsAsync();
+        RollCallViewModel.RefreshRemainingList();
+        _ = SecRandom.Core.Abstraction.IAppHost.GetService<RemainingListViewService>().ShowAsync(
+            RollCallResources.C_RemainingListTitle, RollCallViewModel.RemainingItems, RollCallResources.M_NoRemainingStudents);
     }
 
-    private async Task ConfirmClearTemporaryRecordsAsync()
+    private void ShowLotteryRemaining_OnClick(object? sender, RoutedEventArgs e)
     {
-        var result = await new FAContentDialog
-        {
-            Title = LR.C_ClearTemporaryRecords,
-            Content = LR.C_ClearTemporaryRecords,
-            PrimaryButtonText = LR.C_ClearTemporaryRecords,
-            CloseButtonText = LR.C_Cancel,
-            DefaultButton = FAContentDialogButton.Close
-        }.ShowAsync(TopLevel.GetTopLevel(this));
-        if (result == FAContentDialogResult.Primary)
-            ViewModel.ClearTemporaryRecords();
+        LotteryViewModel.RefreshRemainingList();
+        _ = SecRandom.Core.Abstraction.IAppHost.GetService<RemainingListViewService>().ShowAsync(
+            LotteryResources.C_RemainingListTitle, LotteryViewModel.RemainingItems, LotteryResources.M_NoRemainingPrizes);
     }
 
-    private static string FormatStudent(SecRandom.Shared.Models.Profile.Student student) => string.IsNullOrWhiteSpace(student.Id)
-        ? student.Name
-        : string.IsNullOrWhiteSpace(student.Name) ? student.Id : $"{student.Id}  {student.Name}";
+    private void ClearRollCallTemporaryRecords_OnClick(object? sender, RoutedEventArgs e)
+    {
+        IAppHost.GetService<IDrawTemporaryRecordService>().ClearStudentList(RollCallViewModel.SelectedStudentListName);
+        RollCallViewModel.RefreshAfterProfileChange();
+    }
 
-    private static string FormatPrize(SecRandom.Shared.Models.Profile.Prize prize) =>
-        string.IsNullOrWhiteSpace(prize.Name) ? prize.Id : prize.Name;
+    private void ClearLotteryTemporaryRecords_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var temporaryRecords = IAppHost.GetService<IDrawTemporaryRecordService>();
+        temporaryRecords.ClearPrizeList(LotteryViewModel.SelectedPrizeListName);
+        if (LotteryViewModel.IsStudentAssignmentEnabled)
+            temporaryRecords.ClearStudentList(LotteryViewModel.SelectedStudentListName);
+        LotteryViewModel.RefreshAfterProfileChange();
+    }
+
+    private void OpenRollCallListSettings_OnClick(object? sender, RoutedEventArgs e) =>
+        App.ShowSettingsWindow("settings.listManagement.rollCallList");
+
+    private void OpenLotteryListSettings_OnClick(object? sender, RoutedEventArgs e) =>
+        App.ShowSettingsWindow("settings.listManagement.lotteryList");
+
+    private void OpenLotterySettings_OnClick(object? sender, RoutedEventArgs e) =>
+        App.ShowSettingsWindow("settings.picking.lottery");
+
+    private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }
