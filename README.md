@@ -4,7 +4,7 @@
 
 # SecRandom
 
-**面向课堂与团队的随机抽取工具，提供可配置的抽取流程、历史管理与可验证的抽取记录。**
+**基于动态权重的公平随机工具，让抽取与决策告别争议**
 
 [![GitHub Issues](https://img.shields.io/github/issues-search/SECTL/SecRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=问题)](https://github.com/SECTL/SecRandom/issues)
 [![最新版本](https://img.shields.io/github/v/release/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=最新正式版)](https://github.com/SECTL/SecRandom/releases/latest)
@@ -72,9 +72,9 @@ SecRandom 是面向课堂、团队、活动、决策等场景的公平抽取应�
 
 ## 下载与更新
 
-- [GitHub Releases](https://github.com/SECTL/SecRandom/releases) 提供各版本的发行包与更新说明。
-- [官方下载页面](https://stk.sectl.cn/SecRandom) 提供下载最新版入口。
-- 自动更新在部署前验证已签名的发布清单以及制品的长度和哈希；请以每个发行版本提供的安装包和说明为准。
+- [GitHub Releases](https://github.com/SECTL/SecRandom/releases) 提供各版本的发行包与更新说明
+- [官方下载页面](https://stk.sectl.cn/SecRandom) 提供下载最新版入口
+- 自动更新在部署前验证已签名的发布清单以及制品的长度和哈希；请以每个发行版本提供的安装包和说明为准
 
 ## 许可证与第三方声明
 
@@ -88,7 +88,7 @@ SecRandom 是面向课堂、团队、活动、决策等场景的公平抽取应�
   <img src="https://contrib.rocks/image?repo=SECTL/SecRandom" alt="SecRandom contributors" />
 </a>
 
-感谢每一位为 SecRandom 提交代码、报告问题、完善文档和提供反馈的贡献者。头像由 GitHub 贡献者数据动态生成，点击可前往 [GitHub 贡献者页面](https://github.com/SECTL/SecRandom/graphs/contributors) 查看完整统计。
+感谢每一位为 SecRandom 提交代码、报告问题、完善文档和提供反馈的贡献者。头像由 GitHub 贡献者数据动态生成，点击可前往 [GitHub 贡献者页面](https://github.com/SECTL/SecRandom/graphs/contributors) 查看完整统计
 
 ## 支持与社区
 

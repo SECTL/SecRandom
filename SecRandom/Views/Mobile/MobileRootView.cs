@@ -1,5 +1,3 @@
-using System.ComponentModel;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
@@ -9,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Controls;
-using SecRandom.Core.Services.Config;
 using SecRandom.Core.Views;
 using SecRandom.Services.Mobile;
 using LR = SecRandom.Langs.Mobile.Resources;
@@ -18,7 +15,6 @@ namespace SecRandom.Views.Mobile;
 
 public sealed partial class MobileRootView : ViewBase, IFANavigationPageFactory
 {
-    private readonly MainConfigHandler _configHandler;
     private readonly IServiceProvider _services;
     private readonly IMobileSettingsNavigator _settingsNavigator;
     private readonly ILogger<MobileRootView>? _logger;
@@ -28,10 +24,9 @@ public sealed partial class MobileRootView : ViewBase, IFANavigationPageFactory
     private bool _synchronizingBottomNavigation;
     private MobileDestination _destination = MobileDestination.Draw;
 
-    public MobileRootView(MainConfigHandler configHandler, IServiceProvider services,
+    public MobileRootView(IServiceProvider services,
         IMobileSettingsNavigator settingsNavigator, ILogger<MobileRootView>? logger = null)
     {
-        _configHandler = configHandler;
         _services = services;
         _settingsNavigator = settingsNavigator;
         _logger = logger;
@@ -39,12 +34,6 @@ public sealed partial class MobileRootView : ViewBase, IFANavigationPageFactory
         _bottomNavigation = this.FindControl<TabStrip>(@"BottomNavigation")!;
         _pageOutlet = this.FindControl<FAFrame>(@"PageOutlet")!;
         _pageOutlet.NavigationPageFactory = this;
-        _configHandler.Data.Appearance.PropertyChanged += AppearanceOnPropertyChanged;
-        Closed += (_, _) =>
-        {
-            _configHandler.Data.Appearance.PropertyChanged -= AppearanceOnPropertyChanged;
-        };
-        ApplyTheme();
         NavigateRoot(MobileDestination.Draw);
         UpdateDestinationChrome();
     }
@@ -179,22 +168,6 @@ public sealed partial class MobileRootView : ViewBase, IFANavigationPageFactory
         MobileDestination.Overview => MobilePageIds.Overview,
         _ => throw new ArgumentOutOfRangeException(nameof(destination))
     };
-
-    private void AppearanceOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(_configHandler.Data.Appearance.Theme))
-            ApplyTheme();
-    }
-
-    private void ApplyTheme()
-    {
-        Application.Current!.RequestedThemeVariant = _configHandler.Data.Appearance.Theme switch
-        {
-            Core.Enums.Configs.ThemeMode.Light => Avalonia.Styling.ThemeVariant.Light,
-            Core.Enums.Configs.ThemeMode.Dark => Avalonia.Styling.ThemeVariant.Dark,
-            _ => Avalonia.Styling.ThemeVariant.Default
-        };
-    }
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }
