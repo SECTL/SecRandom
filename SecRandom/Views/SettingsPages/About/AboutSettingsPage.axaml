@@ -19,13 +19,20 @@
                                Text="{x:Static lsa:Resources.S_Ack_Contributors}"
                                Theme="{StaticResource SubtitleTextBlockStyle}" />
                     
-                    <Button Grid.Column="1"
-                            IsEnabled="{Binding CanRefreshContributors}"
-                            ToolTip.Tip="{x:Static lsa:Resources.C_Refresh}"
-                            Theme="{StaticResource TransparentButton}"
-                            Click="RefreshContributors_OnClick">
-                        <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseFilled}" />
-                    </Button>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                        <Button IsEnabled="{Binding CanRefreshContributors}"
+                                ToolTip.Tip="{x:Static lsa:Resources.C_Refresh}"
+                                Theme="{StaticResource TransparentButton}"
+                                Click="RefreshContributors_OnClick">
+                            <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseFilled}" />
+                        </Button>
+                        
+                        <Button ToolTip.Tip="{x:Static lsa:Resources.C_Close}"
+                                Theme="{StaticResource TransparentButton}"
+                                Click="CloseDrawer_OnClick">
+                            <sr:FluentIcon Glyph="{sr:Fi DismissRegular}" />
+                        </Button>
+                    </StackPanel>
                 </Grid>
                 
                 <TextBlock Text="{x:Static lsa:Resources.S_Ack_Contributors_D}"

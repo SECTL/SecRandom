@@ -129,6 +129,11 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
         await RefreshContributorsAsync();
     }
 
+    private void CloseDrawer_OnClick(object? sender, RoutedEventArgs e)
+    {
+        SettingsView.Current?.CloseDrawer();
+    }
+
     private void OpenContributorProfile_OnClick(object? sender, RoutedEventArgs e)
     {
         if ((sender as Button)?.CommandParameter is string profileUrl)

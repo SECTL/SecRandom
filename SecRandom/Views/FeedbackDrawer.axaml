@@ -6,10 +6,10 @@
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              xmlns:ls="clr-namespace:SecRandom.Langs.SettingsView"
-             mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="720"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="720"
              x:Class="SecRandom.Views.FeedbackDrawer"
              x:DataType="local:FeedbackDrawer">
-    <Grid Width="460" MaxWidth="460" RowDefinitions="Auto,*,Auto,Auto">
+    <Grid MaxWidth="400" RowDefinitions="Auto,*,Auto,Auto">
         <Grid Grid.Row="0" Margin="20,18,18,14" ColumnDefinitions="*,Auto">
             <TextBlock Text="{x:Static ls:Resources.C_Feedback_Title}"
                        Theme="{StaticResource SubtitleTextBlockStyle}"
