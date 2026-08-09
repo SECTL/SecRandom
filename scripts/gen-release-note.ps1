@@ -9,7 +9,7 @@ if ([string]::IsNullOrWhiteSpace($tag)) {
 
 $changelogPath = "./CHANGELOG/v3/${tag}/CHANGELOG.md"
 $releaseNotePath = "./release-note.md"
-$outDir = "./out"
+$outDir = "./artifacts/release/output"
 
 if (-not (Test-Path $outDir)) {
     throw "Output directory not found: $outDir"
