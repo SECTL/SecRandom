@@ -19,6 +19,8 @@ public sealed class SecAgentPluginBootstrapHostedService(
     IHttpClientFactory httpClientFactory,
     ILogger<SecAgentPluginBootstrapHostedService> logger) : BackgroundService
 {
+    private const string ConnectorPluginId = "secrandom";
+    private const string ConnectorPluginVersion = "0.1.1";
     private static readonly Uri BaseUri = new("http://127.0.0.1:42189/");
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -64,12 +66,17 @@ public sealed class SecAgentPluginBootstrapHostedService(
         if (!health.IsSuccessStatusCode) return;
 
         var installed = await client.GetFromJsonAsync<PluginListResponse>("plugins", JsonOptions, cancellationToken).ConfigureAwait(false);
-        if (installed?.Plugins?.Any(plugin => string.Equals(plugin.Id, "secrandom", StringComparison.OrdinalIgnoreCase)) == true)
+        var current = installed?.Plugins?.FirstOrDefault(plugin =>
+            string.Equals(plugin.Id, ConnectorPluginId, StringComparison.OrdinalIgnoreCase));
+        if (current is not null && !IsOlderVersion(current.Version, ConnectorPluginVersion))
             return;
 
-        using var response = await client.PostAsJsonAsync("plugins/install", new { pluginId = "secrandom" }, JsonOptions, cancellationToken).ConfigureAwait(false);
+        var request = current is null
+            ? new { pluginId = ConnectorPluginId, version = (string?)null }
+            : new { pluginId = ConnectorPluginId, version = (string?)ConnectorPluginVersion };
+        using var response = await client.PostAsJsonAsync("plugins/install", request, JsonOptions, cancellationToken).ConfigureAwait(false);
         if (response.IsSuccessStatusCode)
-            logger.LogInformation("Requested local SecAgent to install the SecRandom connector plugin.");
+            logger.LogInformation("Requested local SecAgent to install/update the SecRandom connector plugin to {Version}.", ConnectorPluginVersion);
         else
             logger.LogDebug("Local SecAgent declined SecRandom connector installation with HTTP {StatusCode}.", response.StatusCode);
     }
@@ -82,5 +89,14 @@ public sealed class SecAgentPluginBootstrapHostedService(
     private sealed class PluginInfo
     {
         public string? Id { get; init; }
+        public string? Version { get; init; }
+    }
+
+    private static bool IsOlderVersion(string? current, string desired)
+    {
+        if (Version.TryParse(current, out var currentVersion) && Version.TryParse(desired, out var desiredVersion))
+            return currentVersion < desiredVersion;
+
+        return !string.Equals(current, desired, StringComparison.OrdinalIgnoreCase);
     }
 }
