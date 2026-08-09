@@ -57,6 +57,7 @@ using SecRandom.Services.Linkage;
 using SecRandom.Services.Music;
 using SecRandom.Services.Settings;
 using SecRandom.Services.Security;
+using SecRandom.Services.SecAgent;
 using SecRandom.Services.Telemetry;
 using SecRandom.Services.Verification;
 using SecRandom.Services.Voice;
@@ -453,6 +454,9 @@ public partial class App : Application
                 services.AddSingleton<ISpeechAudioPlayer, SpeechAudioPlayer>();
                 services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
                 services.AddSingleton<NotificationService>();
+                // Local-only REST endpoint for the SecAgent connector. It intentionally has no UI/settings registration.
+                services.AddHostedService<SecAgentHttpHostedService>();
+                services.AddHostedService<SecAgentPluginBootstrapHostedService>();
                 services.AddSingleton(serviceProvider => new MusicLibraryService(
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
                     serviceProvider.GetRequiredService<ILogger<MusicLibraryService>>(),
