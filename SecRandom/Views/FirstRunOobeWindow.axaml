@@ -60,10 +60,7 @@
         </Border>
 
         <sr:DrawerHost x:Name="ImportDrawerHost" Grid.Row="2" DrawerPlacement="Right">
-            <!-- OOBE pages contain nested ScrollViewers and settings controls. Avoid the
-                 composite slide/cross-fade transition here so navigation cannot block on
-                 a re-entrant layout pass when leaving the lottery step. -->
-            <Carousel SelectedIndex="{Binding ViewModel.SelectedStep}">
+            <Carousel Classes="animated" SelectedIndex="{Binding ViewModel.SelectedStep}">
                 <Grid Margin="32" IsVisible="{Binding ViewModel.IsFullSetup}">
                     <StackPanel Spacing="14"
                                 HorizontalAlignment="Center"

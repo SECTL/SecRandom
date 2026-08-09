@@ -53,19 +53,9 @@ public partial class DrawEngine
         DrawSettingsType drawSettingsType,
         string courseName = "")
     {
-        var executionPolicy = StudentDrawExecutionPolicy.DesktopConfigured(
+        return DrawStudent(count, filter, drawSettingsType, StudentDrawExecutionPolicy.DesktopConfigured(
             GetStudentDrawType(drawSettingsType),
-            ConfigData.FairDrawSettings);
-        var result = DrawStudent(count, filter, drawSettingsType, executionPolicy, courseName);
-        if (result.Status != DrawStatus.RepeatLimitExhausted
-            || !ShouldAutoResetStudentRound(count, filter, drawSettingsType))
-            return result;
-
-        var listName = StudentList.Name;
-        _profileService.ClearCurrentStudentHistory();
-        IAppHost.TryGetService<IDrawTemporaryRecordService>()?.ClearStudentList(listName);
-        _logger.LogInformation("学生抽取已完成一轮，已自动清空名单 {StudentListName} 的历史和临时记录并开始新一轮。", listName);
-        return DrawStudent(count, filter, drawSettingsType, executionPolicy, courseName);
+            ConfigData.FairDrawSettings), courseName);
     }
 
     internal DrawResult<Student> DrawStudent(
@@ -121,15 +111,6 @@ public partial class DrawEngine
             _logger.LogWarning("点名抽取失败：未找到候选学生。请求数量={Count}.", count);
             return new DrawResult<Student> { Status = DrawStatus.NoCandidates };
         }
-    }
-
-    private bool ShouldAutoResetStudentRound(int count, Func<Student, bool> filter, DrawSettingsType drawSettingsType)
-    {
-        if (count <= 0 || GetStudentRepeatThreshold(drawSettingsType) <= 0)
-            return false;
-
-        var baseCandidateCount = StudentList.Students.Count(student => student.IsCandidate && filter(student));
-        return baseCandidateCount >= count;
     }
 
     public DrawResult<Student> DrawStudent(int count, IReadOnlyCollection<Student> candidates, string courseName = "")
