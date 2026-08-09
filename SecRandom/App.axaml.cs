@@ -12,6 +12,7 @@ using Avalonia.Platform;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using FluentAvalonia.Styling;
+using FluentAvalonia.UI.Controls;
 using HotAvalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -94,6 +95,7 @@ using QuickDrawNotificationSettingsPage = SecRandom.Views.SettingsPages.Notifica
 using RollCallNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.RollCallNotificationSettingsPage;
 using SecuritySettingsPage = SecRandom.Views.SettingsPages.General.SecuritySettingsPage;
 using VoiceSettingsPage = SecRandom.Views.SettingsPages.Notification.VoiceSettingsPage;
+using CR = SecRandom.Langs.Common.Resources;
 
 namespace SecRandom;
 
@@ -111,6 +113,7 @@ public partial class App : Application
     private MobileViewHost? _mobileViewHost;
     private bool _mobileStopping;
     private bool _mobileStartupFailureShown;
+    private Utils.DesktopDataRootPreparationResult? _desktopDataRootPreparation;
     private readonly object _shutdownGate = new();
     private bool _isStopping;
     private bool _isOobeActive;
@@ -145,12 +148,17 @@ public partial class App : Application
     public override void Initialize()
     {
         TouchInputModeAssist.Initialize();
-        if (PlatformStartupContext.Current is MobilePlatformServiceRoot)
+        var isMobile = PlatformStartupContext.Current is MobilePlatformServiceRoot;
+        if (isMobile)
             Utils.ConfigureMobileDataRoot();
+        else
+            _desktopDataRootPreparation = Utils.PrepareDesktopDataRoot();
 
         // 初始化语言
         var mainConfig = new MainConfigModel();
-        var settings = LoadStartupSettings(mainConfig);
+        var settings = _desktopDataRootPreparation is { IsPortablePackage: true, IsWritable: false }
+            ? mainConfig
+            : LoadStartupSettings(mainConfig);
         var culture = settings.Basic.Language switch
         {
             LanguageMode.ChineseSimplified => @"zh-Hans",
@@ -159,7 +167,7 @@ public partial class App : Application
             _ => @"zh-Hans"
         };
         InitializeLanguages(new CultureInfo(culture));
-        if (PlatformStartupContext.Current is MobilePlatformServiceRoot)
+        if (isMobile)
             ApplyMobileCulture(new CultureInfo(culture));
 
         // 初始化 Avalonia App
@@ -188,6 +196,13 @@ public partial class App : Application
             WriteDesktopStartupDiagnostic("Desktop framework initialization started.");
             _desktopLifetime = desktop;
             IsDesktop = true;
+
+            if (_desktopDataRootPreparation is { IsPortablePackage: true, IsWritable: false } preparation)
+            {
+                desktop.MainWindow = CreatePortableDataRootFailureHost(desktop, preparation);
+                base.OnFrameworkInitializationCompleted();
+                return;
+            }
 
             if (CrashRecoveryRuntime.StartupPromptOptions is { } promptOptions)
             {
@@ -575,6 +590,33 @@ public partial class App : Application
             // 所有分支最终都退出当前（重复）实例
             host.Close();
             RequestDesktopShutdown();
+        };
+
+        return host;
+    }
+
+    private static Window CreatePortableDataRootFailureHost(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        Utils.DesktopDataRootPreparationResult preparation)
+    {
+        var host = new SecRandomTmpRootWindow();
+        host.Opened += async (_, _) =>
+        {
+            var dialog = new FATaskDialog
+            {
+                XamlRoot = host,
+                Title = CR.M_PortableDataDirectoryUnavailableTitle,
+                Header = CR.M_PortableDataDirectoryUnavailableTitle,
+                Content = string.Format(
+                    CR.M_PortableDataDirectoryUnavailableContent,
+                    preparation.DataRoot,
+                    preparation.ErrorMessage ?? CR.M_UnknownError)
+            };
+            dialog.Buttons.Add(new FATaskDialogButton(CR.C_Close, "close") { IsDefault = true });
+
+            await dialog.ShowAsync();
+            host.Close();
+            desktop.Shutdown();
         };
 
         return host;
