@@ -70,39 +70,38 @@ jobs:
           $fullDir = "$releaseRoot/publish/full/$env:RID"
           $lightDir = "$releaseRoot/publish/light/$env:RID"
           New-Item -ItemType Directory -Path $fullDir, $lightDir -Force | Out-Null
-          dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj `
-             -c Release `
-             -r $env:RID `
-             -p:SecRandomPlatform=$env:PLATFORM `
-             --self-contained `
-            -p:PublishTrimmed=false `
-            -p:UseAppHost=true `
-            -p:DebugType=None `
-            -p:DebugSymbols=false `
-            --no-restore `
-            -o $fullDir
-          dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj `
-             -c Release `
-             -r $env:RID `
-             -p:SecRandomPlatform=$env:PLATFORM `
-             --self-contained false `
-            -p:PublishTrimmed=false `
-            -p:UseAppHost=true `
-            -p:DebugType=None `
-            -p:DebugSymbols=false `
-            --no-restore `
-            -o $lightDir
+          $publishArguments = @(
+            'publish', 'SecRandom.Desktop/SecRandom.Desktop.csproj',
+            '-c', 'Release',
+            '-r', $env:RID,
+            "-p:SecRandomPlatform=$env:PLATFORM",
+            '-p:PublishTrimmed=false',
+            '-p:UseAppHost=true',
+            '-p:DebugType=None',
+            '-p:DebugSymbols=false',
+            '-p:BuildInParallel=false',
+            '-p:UseSharedCompilation=false',
+            '--no-restore'
+          )
+          & dotnet @publishArguments --self-contained -o $fullDir
+          if ($LASTEXITCODE -ne 0) {
+            throw "Full desktop publish failed with exit code $LASTEXITCODE."
+          }
+          & dotnet @publishArguments --self-contained false -o $lightDir
+          if ($LASTEXITCODE -ne 0) {
+            throw "Light desktop publish failed with exit code $LASTEXITCODE."
+          }
 
-#      - name: Verify bundled audio runtime
-#        shell: pwsh
-#        env:
-#          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
-#        run: |
-#          $nativeAsset = if ($env:RID.StartsWith('win-')) { 'miniaudio.dll' } elseif ($env:RID.StartsWith('linux-')) { 'libminiaudio.so' } else { 'libminiaudio.dylib' }
-#          $assetPath = Join-Path "artifacts/release/publish/full/$env:RID" $nativeAsset
-#          if (!(Test-Path -LiteralPath $assetPath)) {
-#            throw "SoundFlow native audio runtime was not published: $assetPath"
-#          }
+      - name: Verify bundled audio runtime
+        shell: pwsh
+        env:
+          RID: ${{ matrix.os == 'windows' && format('win-{0}', matrix.arch) || (matrix.os == 'linux' && format('linux-{0}', matrix.arch) || format('osx-{0}', matrix.arch)) }}
+        run: |
+          $nativeAsset = if ($env:RID.StartsWith('win-')) { 'miniaudio.dll' } elseif ($env:RID.StartsWith('linux-')) { 'libminiaudio.so' } else { 'libminiaudio.dylib' }
+          $assetPath = Join-Path "artifacts/release/publish/full/$env:RID" $nativeAsset
+          if (!(Test-Path -LiteralPath $assetPath)) {
+            throw "SoundFlow native audio runtime was not published: $assetPath"
+          }
 
       - name: Pack Portable Zips (Windows)
         if: ${{ matrix.os == 'windows' }}
@@ -235,7 +234,7 @@ jobs:
             $outDir = "artifacts/release/installer/$env:RID"
             Remove-Item $outDir -Recurse -Force -ErrorAction SilentlyContinue
             New-Item -ItemType Directory -Path $outDir -Force | Out-Null
-            dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj `
+            & dotnet publish SecRandom.Desktop/SecRandom.Desktop.csproj `
               -c Release `
               -r $env:RID `
               -p:SecRandomPlatform=$env:PLATFORM `
@@ -243,8 +242,13 @@ jobs:
               -p:PublishTrimmed=false `
               -p:UseAppHost=true `
               -p:EnableUiAccess=true `
+              -p:BuildInParallel=false `
+              -p:UseSharedCompilation=false `
               --no-restore `
               -o $outDir
+            if ($LASTEXITCODE -ne 0) {
+              throw "UIAccess desktop publish failed with exit code $LASTEXITCODE."
+            }
 
             $certificatePath = Join-Path $env:RUNNER_TEMP 'secrandom-uiaccess.pfx'
             try {
