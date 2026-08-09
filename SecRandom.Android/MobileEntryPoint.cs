@@ -84,7 +84,8 @@ public sealed class UpdateFileProvider : global::AndroidX.Core.Content.FileProvi
 [Activity(MainLauncher = true, Exported = true,
     Theme = "@style/Theme.AppCompat.DayNight.NoActionBar",
     ConfigurationChanges = global::Android.Content.PM.ConfigChanges.Orientation |
-                           global::Android.Content.PM.ConfigChanges.ScreenSize)]
+                           global::Android.Content.PM.ConfigChanges.ScreenSize |
+                           global::Android.Content.PM.ConfigChanges.UiMode)]
 [SupportedOSPlatform("android24.0")]
 public sealed class MainActivity : AvaloniaMainActivity
 {

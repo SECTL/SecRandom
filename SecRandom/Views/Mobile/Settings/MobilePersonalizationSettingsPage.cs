@@ -65,6 +65,7 @@ public sealed partial class MobilePersonalizationSettingsPage : MobileSettingsPa
             return;
 
         _configHandler.Data.Appearance.Theme = theme;
+        App.Current.RefreshPersonalizedSettings();
         _configHandler.Save();
     }
 
