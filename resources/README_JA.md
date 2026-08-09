@@ -23,11 +23,9 @@
 > [!NOTE]
 > SecRandom は GNU GPLv3 で公開されています。ソースコードの変更と再配布は可能ですが、派生物も GNU GPLv3 で公開する必要があります。
 
-## SecRandom v3
+## SecRandom
 
-SecRandom v3 は、授業、クラス、チームでのランダム抽選のためのデスクトップアプリケーションです。点呼、クイック抽選、賞品抽選を、共通のプロファイル、履歴、設定システムに統合し、確認できる抽選証明を提供します。
-
-履歴に基づく重み付けと候補者フィルターは、同じ人の連続選出を減らし、長期的な分布を改善するためのものです。現実の名簿、ルール、運用手順を管理する代わりにはならず、それらをソフトウェアで検証できるとは主張しません。
+SecRandom は、授業、チーム、イベント、意思決定などの場面で公平な抽選を行うためのアプリケーションです。
 
 ## 機能
 
@@ -80,7 +78,9 @@ SecRandom v3 は、授業、クラス、チームでのランダム抽選のた�
 
 ## ライセンスと第三者通知
 
-SecRandom は [GNU GPLv3](../LICENSE) で公開されています。第三者コンポーネント、著作権情報、配布審査に関する注記は [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md) を参照してください。
+- SecRandom は [GNU GPLv3](../LICENSE) で公開されています。
+- 第三者コンポーネント、著作権情報、配布審査に関する注記は [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md) を参照してください。
+- 履歴に基づく重み付けと候補者フィルターは、同じ人の連続選出を減らし、長期的な分布を改善するためのものです。現実の名簿、ルール、運用手順を管理する代わりにはならず、それらをソフトウェアで検証できるとは主張しません。
 
 ## 貢献者と特別な謝辞
 
@@ -104,9 +104,12 @@ SecRandom は [GNU GPLv3](../LICENSE) で公開されています。第三者コ
 
 ## Star History
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date&theme=dark">
-  <img alt="Star History" src="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date">
-</picture>
+<a href="https://www.star-history.com/?repos=SECTL%2FSecRandom&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&theme=dark&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
+ </picture>
+</a>
 
 **Copyright © 2025-2026 SECTL**
