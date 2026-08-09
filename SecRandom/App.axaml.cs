@@ -676,7 +676,7 @@ public partial class App : Application
                         .AddView<MobileRootView>(MobilePageIds.Root)
                         .AddView<MainView>(DesktopViewIds.Main)
                         .AddView<SettingsView>(MobilePageIds.Settings)
-                        .AddView<RemainingListView>(RemainingListViewService.ViewId, ViewPresentation.Modal);
+                        .AddView<RemainingListView>(RemainingListViewService.ViewId);
                     services.AddTransient<MobileViewHost>();
                 }
                 else
@@ -822,7 +822,6 @@ public partial class App : Application
                 // 杂项 Views
                 if (isMobile)
                 {
-                    services.AddTransient<MobileDrawPageViewModel>();
                     services.AddSingleton<IMobileRootViewReloader>(_ =>
                         new MobileRootViewReloader(ReloadMobileRootViewAsync));
                     services.AddSingleton<IMobileCapabilities, MobileCapabilities>();
@@ -853,16 +852,9 @@ public partial class App : Application
                 // 设置界面 Views
                 services.AddSettingsPage<LogViewerSettingsPage>(Langs.SettingsPages.LogViewer.Resources.Page_Title);
 
-                // 顶部
-                if (isMobile && useMobileUI)
-                {
-                    services.AddSettingsPage<MobileSettingsCatalogPage>(MobileResources.P_Settings);
-                }
-                else
-                {
-                    services.AddSettingsPage<HomeSettingsPage>(Langs.Common.Resources.Settings_Home);
-                    services.AddSettingsPageSeparator();
-                }
+                // 移动端与桌面端共享设置页面，只有系统安装边界不同的更新页保留移动实现。
+                services.AddSettingsPage<HomeSettingsPage>(Langs.Common.Resources.Settings_Home);
+                services.AddSettingsPageSeparator();
 
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_General, "settings.general", FluentIcons.SettingsFilled));
