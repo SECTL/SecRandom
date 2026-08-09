@@ -569,7 +569,18 @@ jobs:
             throw "Android release signing is required for every build; missing secrets: $($missingSigningValues -join ', ')."
           }
           $keystorePath = Join-Path $env:RUNNER_TEMP 'secrandom-android.keystore'
-          [IO.File]::WriteAllBytes($keystorePath, [Convert]::FromBase64String(($env:ANDROID_SIGNING_KEYSTORE_BASE64 -replace '[^A-Za-z0-9+/=]', '')))
+          $keystoreBase64 = $env:ANDROID_SIGNING_KEYSTORE_BASE64.Trim()
+          $keystoreBase64 = $keystoreBase64 -replace '-', '+'
+          $keystoreBase64 = $keystoreBase64 -replace '_', '/'
+          $keystoreBytes = [Convert]::FromBase64String($keystoreBase64)
+          if ($keystoreBytes.Length -lt 16) {
+            throw 'The Android release keystore secret decoded to an implausibly small file; re-check ANDROID_SIGNING_KEYSTORE_BASE64.'
+          }
+          [IO.File]::WriteAllBytes($keystorePath, $keystoreBytes)
+          $keystoreVerification = & keytool -J-Duser.language=en -J-Duser.country=US -list -v -keystore $keystorePath -storepass $env:ANDROID_SIGNING_KEYSTORE_PASSWORD -alias $env:ANDROID_SIGNING_KEY_ALIAS 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            throw "Android signing keystore validation failed. $($keystoreVerification -join ' ')"
+          }
           $arguments += @('-p:AndroidKeyStore=true', "-p:AndroidSigningKeyStore=$keystorePath", "-p:AndroidSigningStorePass=$env:ANDROID_SIGNING_KEYSTORE_PASSWORD", "-p:AndroidSigningKeyAlias=$env:ANDROID_SIGNING_KEY_ALIAS", "-p:AndroidSigningKeyPass=$env:ANDROID_SIGNING_KEY_PASSWORD")
           & dotnet @arguments
           if ($LASTEXITCODE -ne 0) {
