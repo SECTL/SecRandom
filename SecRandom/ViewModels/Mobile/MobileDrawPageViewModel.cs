@@ -99,9 +99,10 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
     public bool CanDecreaseCount => !IsDrawing && DrawCount > 1;
     public bool CanIncreaseCount => !IsDrawing && DrawCount < CurrentRemainingCount;
     public bool CanDrawStudents => !IsDrawing && (_rollCallSnapshot?.RemainingCount ?? 0) > 0;
-    public bool CanDrawPrize => !IsDrawing && !string.IsNullOrWhiteSpace(SelectedLotteryStudentList) &&
+    public bool CanDrawPrize => !IsDrawing &&
                                 (_lotterySnapshot?.RemainingCount ?? 0) > 0 &&
-                                (_lotterySnapshot?.EligibleStudents.Count ?? 0) >= DrawCount;
+                                (!HasLotteryStudentAssignment ||
+                                 (_lotterySnapshot?.EligibleStudents.Count ?? 0) >= DrawCount);
     public bool HasResultImages => ResultImages.Count > 0;
     public string DrawStudentsText => IsDrawing ? LR.M_Drawing : LR.C_StartDraw;
     public string DrawPrizeText => IsDrawing ? LR.M_Drawing : LR.C_DrawPrize;
@@ -112,6 +113,8 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
     public int CurrentRemainingCount => IsLotterySurface
         ? _lotterySnapshot?.RemainingCount ?? 0
         : _rollCallSnapshot?.RemainingCount ?? 0;
+
+    private bool HasLotteryStudentAssignment => !string.IsNullOrWhiteSpace(SelectedLotteryStudentList);
 
     public event EventHandler<MobileDrawAnimationRequest>? AnimationRequested;
     public event EventHandler<MobileDrawDialogRequest>? DialogRequested;
@@ -556,8 +559,11 @@ public sealed partial class MobileDrawPageViewModel : ViewModelBase
 
     private IReadOnlyList<string> BuildLotteryPreviewNames()
     {
-        if (_lotterySnapshot is not { Remaining.Count: > 0, EligibleStudents.Count: > 0 })
+        if (_lotterySnapshot is not { Remaining.Count: > 0 })
             return [];
+
+        if (!HasLotteryStudentAssignment || _lotterySnapshot.EligibleStudents.Count == 0)
+            return _lotterySnapshot.Remaining.Select(FormatPrize).ToArray();
 
         return _lotterySnapshot.Remaining.SelectMany(prize => _lotterySnapshot.EligibleStudents
             .Select(student => FormatLotteryResult(prize, student))).ToArray();
