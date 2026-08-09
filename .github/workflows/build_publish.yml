@@ -557,7 +557,7 @@ jobs:
           ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         run: |
           $version = $env:VERSION.TrimStart('v', 'V')
-          $arguments = @('build', 'SecRandom.Android/SecRandom.Android.csproj', '-c', 'Release', '-r', 'android-${{ matrix.arch }}', "-p:Version=$version", '-p:ApplicationVersion=${{ github.run_number }}')
+          $arguments = @('build', 'SecRandom.Android/SecRandom.Android.csproj', '-c', 'Release', '-r', 'android-${{ matrix.arch }}', "-p:Version=$version", '-p:ApplicationVersion=${{ github.run_number }}', '-p:BuildInParallel=false', '-p:UseSharedCompilation=false')
           $signingValues = @{
             ANDROID_SIGNING_KEYSTORE_BASE64 = $env:ANDROID_SIGNING_KEYSTORE_BASE64
             ANDROID_SIGNING_KEYSTORE_PASSWORD = $env:ANDROID_SIGNING_KEYSTORE_PASSWORD
@@ -671,6 +671,7 @@ jobs:
         env:
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
         run: |
+          set -euo pipefail
           version="${VERSION#v}"
           version="${version#V}"
           output="artifacts/mobile/SecRandom-v${version}-ios-arm64-unsigned.ipa"
@@ -685,6 +686,8 @@ jobs:
             -p:CodesignRequireProvisioningProfile=false \
             -p:BuildIpa=true \
             -p:ArchiveOnBuild=false \
+            -p:BuildInParallel=false \
+            -p:UseSharedCompilation=false \
             -p:IpaPackagePath="$GITHUB_WORKSPACE/$output"
           test -s "$output"
           unzip -l "$output" | grep -q 'Payload/.*\.app/Info.plist'
