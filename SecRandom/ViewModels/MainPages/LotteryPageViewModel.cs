@@ -754,7 +754,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             BuildImage(prize),
             IsLotteryImageEnabled,
             LotteryImagePosition,
-            BuildInitial(prize));
+            AvatarInitialResolver.Resolve(prize.Name, prize.Id));
     }
 
     private List<LotteryDisplayPrize> BuildDisplayPrizes(IReadOnlyList<Prize> prizes, IReadOnlyList<Student> assignedStudents)
@@ -1020,12 +1020,6 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
         try { return File.Exists(settings.ImagePath) ? new Bitmap(settings.ImagePath) : null; }
         catch { return null; }
-    }
-
-    private static string BuildInitial(Prize prize)
-    {
-        var text = string.IsNullOrWhiteSpace(prize.Name) ? prize.Id : prize.Name;
-        return string.IsNullOrWhiteSpace(text) ? "?" : text.Trim()[0].ToString();
     }
 
     private string ToStatusMessage(DrawStatus status)

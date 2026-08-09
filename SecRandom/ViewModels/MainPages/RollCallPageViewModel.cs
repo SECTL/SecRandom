@@ -754,7 +754,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             image,
             StudentImageSettings.StudentImage,
             StudentImageSettings.StudentImagePosition,
-            BuildInitial(student));
+            AvatarInitialResolver.Resolve(student.Name, student.Id));
     }
 
     private RollCallRemainingItem CreateRemainingItem(Student student)
@@ -812,12 +812,6 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             ColorSettings.AnimationColorTheme,
             ColorSettings.AnimationFixedColor,
             Config.Appearance.Theme);
-    }
-
-    private static string BuildInitial(Student student)
-    {
-        var text = string.IsNullOrWhiteSpace(student.Name) ? student.Id : student.Name;
-        return string.IsNullOrWhiteSpace(text) ? "?" : text.Trim()[0].ToString();
     }
 
     private void UpdateStudentIdPadWidth()
