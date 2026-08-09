@@ -2,8 +2,8 @@ schema_version: 2
 product: SecRandom
 repository: SECTL/SecRandom
 manifest:
-  file_name: SecRandom-update-manifest.v1.json
-  signature_file_name: SecRandom-update-manifest.v1.sig
+  file_name: SecRandom-update-manifest.json
+  signature_file_name: SecRandom-update-manifest.sig
   public_key_id: secrandom-release-2026-01
 runtime:
   lite: net10.0-desktop

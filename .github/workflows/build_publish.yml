@@ -832,8 +832,8 @@ jobs:
               publishedAt = [DateTimeOffset]::UtcNow.ToString('O')
               artifacts = @($artifacts)
             }
-            $manifestPath = "$releaseOutput/SecRandom-update-manifest.v1.json"
-            $signaturePath = "$releaseOutput/SecRandom-update-manifest.v1.sig"
+            $manifestPath = "$releaseOutput/SecRandom-update-manifest.json"
+            $signaturePath = "$releaseOutput/SecRandom-update-manifest.sig"
             $manifest | ConvertTo-Json -Depth 5 -Compress | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM -NoNewline
             & openssl pkeyutl -sign -rawin -inkey $privateKeyPath -in $manifestPath -out $signaturePath
             if ($LASTEXITCODE -ne 0) { throw "OpenSSL Ed25519 signing failed with exit code $LASTEXITCODE." }
@@ -853,7 +853,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           name: SecRandom ${{ github.event.inputs.release_tag }}
-          artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/*.apk,./artifacts/release/output/*.ipa,./artifacts/release/output/SecRandom-update-manifest.v1.json,./artifacts/release/output/SecRandom-update-manifest.v1.sig"
+          artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/*.apk,./artifacts/release/output/*.ipa,./artifacts/release/output/SecRandom-update-manifest.json,./artifacts/release/output/SecRandom-update-manifest.sig"
           draft: true
           bodyFile: ./release-note.md
           token: ${{ secrets.GITHUB_TOKEN }}
