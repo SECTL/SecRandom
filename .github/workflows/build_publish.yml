@@ -569,10 +569,21 @@ jobs:
             throw "Android release signing is required for every build; missing secrets: $($missingSigningValues -join ', ')."
           }
           $keystorePath = Join-Path $env:RUNNER_TEMP 'secrandom-android.keystore'
-          $keystoreBase64 = $env:ANDROID_SIGNING_KEYSTORE_BASE64.Trim()
+          $keystoreBase64 = $env:ANDROID_SIGNING_KEYSTORE_BASE64
+          if ($keystoreBase64.Length -gt 0 -and [int][char]$keystoreBase64[0] -eq 0xFEFF) {
+            $keystoreBase64 = $keystoreBase64.Substring(1)
+          }
+          $keystoreBase64 = $keystoreBase64.Trim()
           $keystoreBase64 = $keystoreBase64 -replace '-', '+'
           $keystoreBase64 = $keystoreBase64 -replace '_', '/'
-          $keystoreBytes = [Convert]::FromBase64String($keystoreBase64)
+          $keystoreBytes = $null
+          try {
+            $keystoreBytes = [Convert]::FromBase64String($keystoreBase64)
+          } catch {
+            $firstInvalid = $keystoreBase64.ToCharArray() | Where-Object { [char]::IsWhiteSpace($_) -eq $false -and $_ -notmatch '[A-Za-z0-9+/=]' } | Select-Object -First 1
+            $invalidCodePoint = if ($null -ne $firstInvalid) { [int][char]$firstInvalid } else { -1 }
+            throw "ANDROID_SIGNING_KEYSTORE_BASE64 is not valid base64 even after trimming whitespace and translating URL-safe characters; first invalid character has code point $invalidCodePoint. Re-provision the secret with a clean base64 encoding of the keystore."
+          }
           if ($keystoreBytes.Length -lt 16) {
             throw 'The Android release keystore secret decoded to an implausibly small file; re-check ANDROID_SIGNING_KEYSTORE_BASE64.'
           }
