@@ -588,7 +588,8 @@ jobs:
             throw 'The Android release keystore secret decoded to an implausibly small file; re-check ANDROID_SIGNING_KEYSTORE_BASE64.'
           }
           [IO.File]::WriteAllBytes($keystorePath, $keystoreBytes)
-          $keystoreVerification = & keytool -J-Duser.language=en -J-Duser.country=US -list -v -keystore $keystorePath -storepass $env:ANDROID_SIGNING_KEYSTORE_PASSWORD -alias $env:ANDROID_SIGNING_KEY_ALIAS 2>&1
+          $keytoolArguments = @('-J-Duser.language=en', '-J-Duser.country=US', '-list', '-v', '-keystore', $keystorePath, '-storepass', $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, '-alias', $env:ANDROID_SIGNING_KEY_ALIAS)
+          $keystoreVerification = & keytool @keytoolArguments 2>&1
           if ($LASTEXITCODE -ne 0) {
             throw "Android signing keystore validation failed. $($keystoreVerification -join ' ')"
           }
@@ -614,7 +615,8 @@ jobs:
           if (!(Test-Path -LiteralPath $keystorePath)) {
             throw 'The Android signing keystore is missing after the build.'
           }
-          $keystoreCertificate = & keytool -J-Duser.language=en -J-Duser.country=US -list -v -keystore $keystorePath -storepass $env:ANDROID_SIGNING_KEYSTORE_PASSWORD -alias $env:ANDROID_SIGNING_KEY_ALIAS 2>&1
+          $keytoolArguments = @('-J-Duser.language=en', '-J-Duser.country=US', '-list', '-v', '-keystore', $keystorePath, '-storepass', $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, '-alias', $env:ANDROID_SIGNING_KEY_ALIAS)
+          $keystoreCertificate = & keytool @keytoolArguments 2>&1
           if ($LASTEXITCODE -ne 0) {
             throw 'Unable to read the Android release certificate from the signing keystore.'
           }
