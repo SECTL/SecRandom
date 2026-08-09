@@ -1,11 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
+using FluentAvalonia.UI.Windowing;
 using SecRandom.Core.Views;
 
 namespace SecRandom.Services.ViewEngine;
@@ -115,7 +113,7 @@ public sealed class DesktopViewHostProvider : IViewHostProvider
     }
 }
 
-internal sealed class DesktopViewHostWindow : Window, IViewHost
+internal sealed class DesktopViewHostWindow : FAAppWindow, IViewHost
 {
     private readonly ViewHostControl _contentHost;
     private bool _allowClose;
@@ -127,7 +125,7 @@ internal sealed class DesktopViewHostWindow : Window, IViewHost
         _contentHost = new ViewHostControl(hostId);
         _contentHost.Destroyed += (_, _) => Destroyed?.Invoke(this, EventArgs.Empty);
 
-        Title = "SecRandom";
+        Title = @"SecRandom";
         Width = 1000;
         Height = 600;
         MinWidth = 600;
@@ -136,6 +134,7 @@ internal sealed class DesktopViewHostWindow : Window, IViewHost
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Content = _contentHost;
 
+        Loaded += WindowOnLoaded;
         Closing += WindowOnClosing;
         Closed += WindowOnClosed;
     }
@@ -190,6 +189,15 @@ internal sealed class DesktopViewHostWindow : Window, IViewHost
             _allowClose = true;
             Close();
         });
+    }
+
+    private void WindowOnLoaded(object? sender, RoutedEventArgs e)
+    {
+        if (App.IsMicaSupported)
+        {
+            TransparencyLevelHint = [WindowTransparencyLevel.Mica];
+            Background = Brushes.Transparent;
+        }
     }
 
     private void WindowOnClosing(object? sender, WindowClosingEventArgs e)

@@ -10,7 +10,6 @@
         <DataTemplate x:Key="RollCallRemainingItemTemplate" DataType="vm:RollCallRemainingItem">
             <Border Width="220"
                     MinHeight="96"
-                    Margin="0 12 12 0"
                     Padding="12"
                     CornerRadius="6"
                     BorderBrush="{DynamicResource ControlElevationBorderBrush}"
@@ -48,7 +47,6 @@
         <DataTemplate x:Key="LotteryRemainingItemTemplate" DataType="vm:LotteryRemainingItem">
             <Border Width="220"
                     MinHeight="96"
-                    Margin="0 12 12 0"
                     Padding="12"
                     CornerRadius="6"
                     BorderBrush="{DynamicResource ControlElevationBorderBrush}"
@@ -75,15 +73,15 @@
         </ResourceDictionary>
     </local:RemainingListView.Resources>
 
-    <Grid RowDefinitions="Auto,*" Margin="16">
+    <Grid>
         <TextBlock Text="{Binding EmptyText}"
-                   Grid.RowSpan="2"
                    IsVisible="{Binding IsEmpty}"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"
-                   TextWrapping="Wrap" />
-        <ScrollViewer Grid.Row="1"
-                      IsVisible="{Binding HasItems}"
+                   TextWrapping="Wrap"
+                   Margin="12" />
+        
+        <ScrollViewer IsVisible="{Binding HasItems}"
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto">
             <ItemsControl x:Name="ItemsPresenter"
@@ -92,7 +90,8 @@
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <WrapPanel Orientation="Horizontal"
-                                   HorizontalAlignment="Center" />
+                                   HorizontalAlignment="Center"
+                                   Margin="12" ItemSpacing="12" LineSpacing="12" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
             </ItemsControl>
