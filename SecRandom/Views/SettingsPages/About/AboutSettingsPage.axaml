@@ -264,7 +264,7 @@
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsa:Resources.S_Ack_Contributors}"
+                 <fa:FASettingsExpanderItem x:Name="S_Ack_Contributors" Content="{x:Static lsa:Resources.S_Ack_Contributors}"
                                            Description="{x:Static lsa:Resources.S_Ack_Contributors_D}"
                                            IsClickEnabled="True"
                                            Click="Contributors_OnClick" />

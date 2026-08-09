@@ -32,7 +32,7 @@
     
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro">
-            <Border Classes="overview-section">
+            <Border x:Name="S_Overview" Classes="overview-section">
                 <StackPanel Spacing="8">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0" Text="{x:Static langs:Resources.C_RollCall}"

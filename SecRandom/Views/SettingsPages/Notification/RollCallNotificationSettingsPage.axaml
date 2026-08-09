@@ -4,6 +4,6 @@
              xmlns:notification="clr-namespace:SecRandom.Views.SettingsPages.Notification"
              x:Class="SecRandom.Views.SettingsPages.Notification.RollCallNotificationSettingsPage">
     <ScrollViewer>
-        <notification:NotificationChannelSettingsContent />
+        <notification:NotificationChannelSettingsContent x:Name="S_RollCall" />
     </ScrollViewer>
 </UserControl>

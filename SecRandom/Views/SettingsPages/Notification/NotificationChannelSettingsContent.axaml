@@ -12,7 +12,7 @@
                      Glyph="{sr:Fi SettingsFilled}"
                      Margin="0 0 0 4" />
 
-        <fa:FASettingsExpander Header="{Binding EnabledTitle}"
+        <fa:FASettingsExpander x:Name="S_Default_Enabled" Header="{Binding EnabledTitle}"
                                Description="{Binding EnabledDescription}"
                                IconSource="{sr:FluentIconSource {sr:Fi CommentNoteFilled}}">
             <fa:FASettingsExpander.Footer>
@@ -20,7 +20,7 @@
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
 
-        <fa:FASettingsExpander Header="{Binding AnimationTitle}"
+        <fa:FASettingsExpander x:Name="S_Default_Animation" Header="{Binding AnimationTitle}"
                                Description="{Binding AnimationDescription}"
                                IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
             <fa:FASettingsExpander.Footer>
@@ -33,7 +33,7 @@
                      Glyph="{sr:Fi SettingsFilled}"
                      Margin="0 0 0 4" />
 
-        <fa:FASettingsExpander Header="{Binding NotificationWindowSettingsTitle}"
+        <fa:FASettingsExpander x:Name="S_Default_NotificationWindowSettings" Header="{Binding NotificationWindowSettingsTitle}"
                                IsExpanded="{Binding OverrideNotificationWindowSettings, Mode=OneWay}"
                                IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
             <fa:FASettingsExpander.Footer>
@@ -43,7 +43,7 @@
                               IsChecked="{Binding OverrideNotificationWindowSettings}" />
             </fa:FASettingsExpander.Footer>
 
-            <fa:FASettingsExpanderItem Content="{Binding WindowPositionTitle}"
+            <fa:FASettingsExpanderItem x:Name="S_Default_WindowPosition" Content="{Binding WindowPositionTitle}"
                                        Description="{Binding WindowPositionDescription}">
                 <fa:FASettingsExpanderItem.Footer>
                     <ComboBox SelectedIndex="{Binding ChannelSettings.WindowPosition}">
@@ -56,7 +56,7 @@
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
 
-            <fa:FASettingsExpanderItem Content="{Binding EnabledMonitorTitle}"
+            <fa:FASettingsExpanderItem x:Name="S_Default_EnabledMonitor" Content="{Binding EnabledMonitorTitle}"
                                        Description="{Binding EnabledMonitorDescription}">
                 <fa:FASettingsExpanderItem.Footer>
                     <ComboBox ItemsSource="{Binding MonitorOptions}"
@@ -72,7 +72,7 @@
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
 
-            <fa:FASettingsExpanderItem Content="{Binding OffsetTitle}"
+            <fa:FASettingsExpanderItem x:Name="S_Default_Offset" Content="{Binding OffsetTitle}"
                                        Description="{Binding OffsetDescription}">
                 <fa:FASettingsExpanderItem.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="4">
@@ -82,7 +82,7 @@
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
 
-            <fa:FASettingsExpanderItem Content="{Binding TransparencyTitle}"
+            <fa:FASettingsExpanderItem x:Name="S_Default_Transparency" Content="{Binding TransparencyTitle}"
                                         Description="{Binding TransparencyDescription}">
                 <fa:FASettingsExpanderItem.Footer>
                     <Grid Width="280" ColumnDefinitions="*,Auto" ColumnSpacing="12">
@@ -100,7 +100,7 @@
             </fa:FASettingsExpanderItem>
         </fa:FASettingsExpander>
 
-        <fa:FASettingsExpander Header="{Binding NotificationServiceTitle}"
+        <fa:FASettingsExpander x:Name="S_Default_NotificationService" Header="{Binding NotificationServiceTitle}"
                                IsExpanded="{Binding OverrideServiceSettings, Mode=OneWay}"
                                IconSource="{sr:FluentIconSource {sr:Fi CommentNoteFilled}}">
             <fa:FASettingsExpander.Footer>
@@ -110,7 +110,7 @@
                               IsChecked="{Binding OverrideServiceSettings}" />
             </fa:FASettingsExpander.Footer>
 
-            <fa:FASettingsExpanderItem Content="{Binding NotificationServiceTypeTitle}"
+            <fa:FASettingsExpanderItem x:Name="S_Default_NotificationServiceType" Content="{Binding NotificationServiceTypeTitle}"
                                        Description="{Binding NotificationServiceTypeDescription}">
                 <fa:FASettingsExpanderItem.Footer>
                     <ComboBox SelectedIndex="{Binding ChannelSettings.NotificationServiceType}">
@@ -121,7 +121,7 @@
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
 
-            <fa:FASettingsExpanderItem Content="{Binding NotificationServiceFailureFallbackTitle}"
+            <fa:FASettingsExpanderItem x:Name="S_Default_NotificationServiceFailureFallback" Content="{Binding NotificationServiceFailureFallbackTitle}"
                                         Description="{Binding NotificationServiceFailureFallbackDescription}"
                                          IsVisible="{Binding UsesExternalNotificationServiceOnly}">
                 <fa:FASettingsExpanderItem.Footer>
@@ -129,21 +129,21 @@
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
 
-            <fa:FASettingsExpanderItem Content="{Binding DisplayDurationTitle}"
+            <fa:FASettingsExpanderItem x:Name="S_Default_DisplayDuration" Content="{Binding DisplayDurationTitle}"
                                        Description="{Binding DisplayDurationDescription}">
                 <fa:FASettingsExpanderItem.Footer>
                     <NumericUpDown Value="{Binding ChannelSettings.DisplayDuration}" Minimum="1" Maximum="60" />
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
 
-            <fa:FASettingsExpanderItem Content="{Binding UseMainWindowWhenExceedThresholdTitle}"
+            <fa:FASettingsExpanderItem x:Name="S_Default_UseMainWindowWhenExceedThreshold" Content="{Binding UseMainWindowWhenExceedThresholdTitle}"
                                        Description="{Binding UseMainWindowWhenExceedThresholdDescription}">
                 <fa:FASettingsExpanderItem.Footer>
                     <ToggleSwitch IsChecked="{Binding ChannelSettings.UseMainWindowWhenExceedThreshold}" />
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
 
-            <fa:FASettingsExpanderItem Content="{Binding MainWindowDisplayThresholdTitle}"
+            <fa:FASettingsExpanderItem x:Name="S_Default_MainWindowDisplayThreshold" Content="{Binding MainWindowDisplayThresholdTitle}"
                                        Description="{Binding MainWindowDisplayThresholdDescription}">
                 <fa:FASettingsExpanderItem.Footer>
                     <NumericUpDown Value="{Binding ChannelSettings.MainWindowDisplayThreshold}" Minimum="1" Maximum="100" />

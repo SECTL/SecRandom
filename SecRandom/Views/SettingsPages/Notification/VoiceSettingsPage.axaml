@@ -70,7 +70,8 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Playback_Actions}"
+            <fa:FASettingsExpander x:Name="S_Playback_Actions"
+                                    Header="{x:Static lsp:Resources.S_Playback_Actions}"
                                     Description="{x:Static lsp:Resources.S_Playback_Actions_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PersonVoiceFilled}}">
                 <fa:FASettingsExpander.Footer>

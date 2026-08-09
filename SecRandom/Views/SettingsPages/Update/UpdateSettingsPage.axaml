@@ -24,13 +24,13 @@
                            FontWeight="Medium"
                            TextWrapping="Wrap" />
                 <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="0 4 0 0">
-                    <TextBlock Text="{x:Static lsp:Resources.S_Strategy_LastCheckTime}" Opacity="0.7" />
+                    <TextBlock x:Name="S_Strategy_LastCheckTime" Text="{x:Static lsp:Resources.S_Strategy_LastCheckTime}" Opacity="0.7" />
                     <TextBlock Text="{Binding Settings.LastCheckTime, StringFormat={}{0:g}, TargetNullValue={x:Static lsp:Resources.M_StatusNotChecked}}" />
                 </StackPanel>
             </Grid>
 
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="0 0 0 16">
-                <Button Classes="accent"
+                <Button x:Name="S_Check" Classes="accent"
                         Content="{Binding UpdateCenter.PrimaryActionText}"
                         Click="CheckForUpdates"
                         IsEnabled="{Binding UpdateCenter.CanCheck}" />

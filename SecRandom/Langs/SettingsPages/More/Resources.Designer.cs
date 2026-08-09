@@ -105,51 +105,51 @@ namespace SecRandom.Langs.SettingsPages.More {
             }
         }
         
-        public static string S_RollCallResetButton {
+        public static string C_RollCallResetButton {
             get {
-                return ResourceManager.GetString("S_RollCallResetButton", resourceCulture);
+                return ResourceManager.GetString("C_RollCallResetButton", resourceCulture);
             }
         }
         
-        public static string S_RollCallQuantityControl {
+        public static string C_RollCallQuantityControl {
             get {
-                return ResourceManager.GetString("S_RollCallQuantityControl", resourceCulture);
+                return ResourceManager.GetString("C_RollCallQuantityControl", resourceCulture);
             }
         }
         
-        public static string S_RollCallStartButton {
+        public static string C_RollCallStartButton {
             get {
-                return ResourceManager.GetString("S_RollCallStartButton", resourceCulture);
+                return ResourceManager.GetString("C_RollCallStartButton", resourceCulture);
             }
         }
         
-        public static string S_RollCallListSelector {
+        public static string C_RollCallListSelector {
             get {
-                return ResourceManager.GetString("S_RollCallListSelector", resourceCulture);
+                return ResourceManager.GetString("C_RollCallListSelector", resourceCulture);
             }
         }
         
-        public static string S_RollCallRangeSelector {
+        public static string C_RollCallRangeSelector {
             get {
-                return ResourceManager.GetString("S_RollCallRangeSelector", resourceCulture);
+                return ResourceManager.GetString("C_RollCallRangeSelector", resourceCulture);
             }
         }
         
-        public static string S_RollCallGenderSelector {
+        public static string C_RollCallGenderSelector {
             get {
-                return ResourceManager.GetString("S_RollCallGenderSelector", resourceCulture);
+                return ResourceManager.GetString("C_RollCallGenderSelector", resourceCulture);
             }
         }
         
-        public static string S_RollCallRemainingButton {
+        public static string C_RollCallRemainingButton {
             get {
-                return ResourceManager.GetString("S_RollCallRemainingButton", resourceCulture);
+                return ResourceManager.GetString("C_RollCallRemainingButton", resourceCulture);
             }
         }
         
-        public static string S_RollCallQuantityLabel {
+        public static string C_RollCallQuantityLabel {
             get {
-                return ResourceManager.GetString("S_RollCallQuantityLabel", resourceCulture);
+                return ResourceManager.GetString("C_RollCallQuantityLabel", resourceCulture);
             }
         }
         
@@ -177,57 +177,57 @@ namespace SecRandom.Langs.SettingsPages.More {
             }
         }
         
-        public static string S_LotteryResetButton {
+        public static string C_LotteryResetButton {
             get {
-                return ResourceManager.GetString("S_LotteryResetButton", resourceCulture);
+                return ResourceManager.GetString("C_LotteryResetButton", resourceCulture);
             }
         }
         
-        public static string S_LotteryQuantityControl {
+        public static string C_LotteryQuantityControl {
             get {
-                return ResourceManager.GetString("S_LotteryQuantityControl", resourceCulture);
+                return ResourceManager.GetString("C_LotteryQuantityControl", resourceCulture);
             }
         }
         
-        public static string S_LotteryStartButton {
+        public static string C_LotteryStartButton {
             get {
-                return ResourceManager.GetString("S_LotteryStartButton", resourceCulture);
+                return ResourceManager.GetString("C_LotteryStartButton", resourceCulture);
             }
         }
         
-        public static string S_LotteryListSelector {
+        public static string C_LotteryListSelector {
             get {
-                return ResourceManager.GetString("S_LotteryListSelector", resourceCulture);
+                return ResourceManager.GetString("C_LotteryListSelector", resourceCulture);
             }
         }
         
-        public static string S_LotteryStudentListSelector {
+        public static string C_LotteryStudentListSelector {
             get {
-                return ResourceManager.GetString("S_LotteryStudentListSelector", resourceCulture);
+                return ResourceManager.GetString("C_LotteryStudentListSelector", resourceCulture);
             }
         }
         
-        public static string S_LotteryRangeSelector {
+        public static string C_LotteryRangeSelector {
             get {
-                return ResourceManager.GetString("S_LotteryRangeSelector", resourceCulture);
+                return ResourceManager.GetString("C_LotteryRangeSelector", resourceCulture);
             }
         }
         
-        public static string S_LotteryGenderSelector {
+        public static string C_LotteryGenderSelector {
             get {
-                return ResourceManager.GetString("S_LotteryGenderSelector", resourceCulture);
+                return ResourceManager.GetString("C_LotteryGenderSelector", resourceCulture);
             }
         }
         
-        public static string S_LotteryRemainingButton {
+        public static string C_LotteryRemainingButton {
             get {
-                return ResourceManager.GetString("S_LotteryRemainingButton", resourceCulture);
+                return ResourceManager.GetString("C_LotteryRemainingButton", resourceCulture);
             }
         }
         
-        public static string S_LotteryQuantityLabel {
+        public static string C_LotteryQuantityLabel {
             get {
-                return ResourceManager.GetString("S_LotteryQuantityLabel", resourceCulture);
+                return ResourceManager.GetString("C_LotteryQuantityLabel", resourceCulture);
             }
         }
         

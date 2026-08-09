@@ -27,17 +27,66 @@ SecRandom.Shared/
 ```
 
 ## WHERE TO LOOK
+| Task | Location | Notes |
+|------|----------|-------|
+| Run/build/test | `SecRandom.sln`, `.github/workflows/Build.yml` | Use solution commands; no Makefile/CMake. |
+| Desktop startup | `SecRandom.Desktop/Program.cs` | Process entry → Avalonia lifetime. |
+| Platform capability contracts | `SecRandom.Platforms.Abstractions/`, `SecRandom.Platforms/` | App-internal platform root, window feature requests/results, startup context, and DI bridge. |
+| Native window features | `SecRandom.Platforms.Windows/`, `SecRandom.Platforms.Linux/`, `SecRandom.Platforms.MacOs/` | Each platform owns native feature handling; views must not add platform API calls. |
+| Mobile startup | `SecRandom/App.axaml.cs`, `SecRandom/Mobile/`, `SecRandom/Views/Mobile/`, `SecRandom.Android/`, `SecRandom.iOS/` | The shared `App` owns the one Host and branches by Avalonia lifetime; `SecRandom` owns the mobile root, routes, services, and platform-neutral seams while heads own entry points. |
+| Mobile UI tests | `SecRandom.Mobile.Tests/` | Avalonia Headless smoke tests load mobile styles and lay out native shell controls at phone dimensions. |
+| Mobile point-call orchestration | `SecRandom/Services/Mobile/MobileRollCallService.cs` | Mobile-only list/scope/count orchestration over existing Core filtering, sampling, and transactional commit services. |
+| App composition / DI | `SecRandom/App.axaml.cs` | `BuildHost()` is the registration source of truth. |
+| Main navigation | `SecRandom/Views/MainView.axaml.cs` | Default page `main.rollCall`; keyed DI page factory. Built-in draw pages are `main.rollCall` and `main.lottery`; quick draw opens from the floating window instead of the main sidebar. |
+| Settings navigation | `SecRandom/Views/SettingsView.axaml.cs` | Default page `settings.overview`; has back stack + restart dialog. General group now includes `settings.general.basic`, `settings.general.privacy`, and `settings.general.backup`. |
+| Page registration helpers | `SecRandom.Core/Extensions/Registry/` | `AddMainPage`, `AddSettingsPage`, group, and separator helpers. |
+| ClassIsland notifications | `SecRandom/Services/Notification/`, `SecRandom4Ci.Interface/` | Typed v2 IPC client for the installed SecRandom4Ci ClassIsland plugin. |
+| Crash recovery | `SecRandom/Services/CrashRecovery/`, `SecRandom/Views/CrashRecoveryWindow.axaml.cs` | Fatal/dispatcher crash report prompt, guarded auto-restart, and shared desktop relaunch logic. |
+| Page registry state | `SecRandom.Core/Services/PagesRegistryService.cs` | Main/settings/group collections. |
+| Cross-platform view engine | `SecRandom.Core/Views/` | Logical view/session contracts; desktop and mobile shells provide DI-registered physical hosts. |
+| Fair draw logic | `SecRandom.Core/Services/Draw/` | Partial `DrawEngine`, weighted draw, filters, crypto RNG, plus `DrawCommitCoordinator` (`IDrawCommitService`) transactional commits and shared `DrawRepeatPolicy`/`DrawCandidateFilter`. |
+| Config persistence | `SecRandom.Core/Services/Config/` | `FileConfigService` and handlers are host-internal Core runtime services; desktop keeps its existing package-root data path. v3 backup/archive transfer lives in `SecRandom.Core/Services/Archive/` (`DataArchiveService`). |
+| Audit tooling | `scripts/FairnessAudit/` | Standalone fairness/performance validation script and HTML report generator. |
+| Release update signing | `scripts/ReleaseManifest/`, `.github/workflows/build_publish.yml` | Ed25519 key-generation helper and CI manifest signer; private key is Actions-secret-only. Release intermediates and final artifacts are grouped under `artifacts/release/`. |
+| Reusable controls/styles | `SecRandom.Core/Controls/`, `SecRandom.Core/Styles/`, `SecRandom.Core/StylesBase.axaml` | App style entrypoint includes Core bundle. |
+| Localization rules | `SecRandom/Langs/`, `SecRandom.Core/Langs/`, `docs/localization.md` | Per-page resource folders; `.csproj` registers base resx/designer only. Privacy page resources live under `SecRandom/Langs/SettingsPages/General/Privacy/`. |
+| Shared contracts | `SecRandom.Shared/` | Keep UI/runtime dependencies out. Profile list items use hidden stable `RecordId` keys; visible `Id`/student number/prize number is optional metadata. |
+| Project rules | `docs/project_rules.md` | Strongest local convention source. |
 
-| Task                         | Location                                                                     | Notes                                                                                  |
-|------------------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| Config base path/model       | `Abstraction/`                                                               | `ConfigBase` and `ProfileConfigBase` used by Core handlers.                            |
-| Profile data contracts       | `Models/Profile/`                                                            | Student/prize lists, hidden stable item identity, and histories.                       |
-| Attached settings contracts  | `Interfaces/IAttachedSettings.cs`, `Interfaces/IAttachableSettingsObject.cs` | Used by Core draw/attached-settings logic.                                             |
-| Serialization helpers        | `Extensions/`                                                                | Shared extension methods; keep dependency-light.                                       |
-| IPC/shared model boundary    | `Models/Ipc/`                                                                | Structured URL-request and response DTOs shared by Core transport and app routing.     |
-| Update contracts             | `Updates/`                                                                    | Serialization-only manifest, artifact, package marker, and enum contracts.             |
-| File/data path helper        | `Utils.cs`                                                                   | Central path helper used by config conventions.                                        |
-| Observable collection helper | `ComponentModels/ObservableDictionary.cs`                                    | Use carefully with persistence; dictionary mutation may not trigger outer config save. |
+## CODE MAP
+Keep this map short and stable. When code moves, AI agents should re-read the moved files and update this map in the same task.
+
+| Symbol | Type | Location | Role |
+|--------|------|----------|------|
+| `Program.Main` | entry | `SecRandom.Desktop/Program.cs` | Starts Avalonia desktop lifetime. |
+| `UiAccessStartup` | startup helper | `SecRandom.Desktop/UiAccessStartup.cs` | When UIAccess topmost is configured on Windows, elevates a bootstrap process and starts a replacement process with a UIAccess token before Avalonia initializes. |
+| `Program.BuildAvaloniaApp` | entry helper | `SecRandom.Desktop/Program.cs` | Platform detect, MiSans default font, trace logging. |
+| `App` | Avalonia app | `SecRandom/App.axaml.cs`, `App.Consts.cs` | Culture, XAML load, Host/DI, windows, restart/stop, theme/font refresh. |
+| `IAppHost` | static service access | `SecRandom.Core/Abstraction/IAppHost.cs` | Holds Host and exposes `GetService<T>()` / `TryGetService<T>()`. |
+| `MainView` | shell view | `SecRandom/Views/MainView.axaml.cs` | Main NavigationView, drawer, default page, settings window bridge. |
+| `SettingsView` | shell view | `SecRandom/Views/SettingsView.axaml.cs` | Settings NavigationView, history/back, restart prompt. |
+| `PagesRegistryService` | registry | `SecRandom.Core/Services/PagesRegistryService.cs` | Static collections backing generated navigation menus. |
+| `DrawEngine` | domain service | `SecRandom.Core/Services/Draw/DrawEngine*.cs` | Student/prize drawing, fairness weights, repeat/avg-gap filtering. |
+| `WeightedDrawEngine<T>` | algorithm | `SecRandom.Core/Services/Draw/WeightedDrawEngine.cs` | Validates weights and samples without replacement. |
+| `MainConfigHandler` | config handler | `SecRandom.Core/Services/Config/MainConfigHandler.cs` | Main config wrapper over `ConfigHandlerBase<MainConfigModel>`; persists the canonical `General` subtree and still loads legacy root `basic`/`backup` JSON. |
+| `ProfileService` | runtime service | `SecRandom.Core/Services/Profiles/ProfileService.cs` | Current profile runtime state, active student-list/history switching, and persistence for desktop and mobile hosts. |
+| `IProfileService` | service contract | `SecRandom.Core/Abstraction/Services/IProfileService.cs` | Current lists/history + student profile switch + profile save boundary. |
+| `SettingsSearchService` | app service | `SecRandom/Services/Settings/SettingsSearchService.cs` | Indexes current settings controls via reflected localization resources; searchable visual targets use stable `x:Name` IDs and nested targets may be found through the visual tree. |
+| `CrashRecoveryRuntime` | app service helper | `SecRandom/Services/CrashRecovery/CrashRecoveryRuntime.cs` | Reads crash recovery mode, writes bounded crash reports, and builds restart process plans. |
+| `ISecurityService` | app service contract | `SecRandom/Services/Security/` | Owns credential verification, lockout policy, selected-factor authorization, and protected-operation gating. |
+| `ProtocolCommandRouter` | app service | `SecRandom/Services/Ipc/ProtocolCommandRouter.cs` | Normalizes URL/IPC routes, routes protected commands, and returns structured IPC results. |
+| `DeviceUuidStore` | app service | `SecRandom/Services/Config/DeviceUuidStore.cs` | Persists the pseudo-anonymous device UUID separately in `data/config/device-uuid.json` and migrates legacy settings values. |
+| `AttachedSettingsRegistryService` | registry | `SecRandom.Core/Services/AttachedSettingsRegistryService.cs` | Static collections for attached-settings controls. |
+| `ViewModelBase` | base VM | `SecRandom/ViewModels/ViewModelBase.cs` | Base VM exposing `MainConfig`; inherits `ObservableRecipient`. |
+| `GlobalConstants` | constants | `SecRandom.Core/GlobalConstants.cs` | Version, platform, and development-mode constants. |
+| `DrawCommitCoordinator` | domain service | `SecRandom.Core/Services/Draw/DrawCommitCoordinator.cs` | `IDrawCommitService` implementation: single `DrawRoundId`, temp→history commit order, snapshot compensation, serialized gate. |
+| `DrawRepeatPolicy` / `DrawCandidateFilter` | draw rules | `SecRandom.Core/Services/Draw/` | Shared repeat-threshold and candidate-filter rules; replaces formerly duplicated copies. |
+| `DataArchiveService` | domain service | `SecRandom.Core/Services/Archive/DataArchiveService.cs` | Platform-neutral v3 backup/archive engine: validation, staging commit/rollback, snapshots. |
+| `IArchivePostImportHooks` | seam | `SecRandom.Core/Services/Archive/IArchivePostImportHooks.cs` | Platform follow-up after archive import; Core registers Null hooks, desktop overrides them. |
+| `ProfileCatalogManager` | domain service | `SecRandom.Core/Services/Profiles/ProfileCatalogManager.cs` | List/profile CRUD and student/prize history clearing behind `IProfileCatalogManager`. |
+| `RosterImportParser` | parser | `SecRandom.Core/Services/Profiles/RosterImportParser.cs` | Shared roster spreadsheet parsing and column mapping for desktop/mobile imports. |
+| `MobileRollCallService` | mobile service | `SecRandom/Services/Mobile/MobileRollCallService.cs` | Mobile list/scope/count snapshots, multi-member draws, remaining list, and scoped temporary reset without changing the Core session contract. |
+| `MobileMediaLibraryService` / `MobileDrawMediaService` | mobile services | `SecRandom/Services/Mobile/` | Mobile-private media import/reference cleanup and draw-time per-record image/music/voice orchestration through head-injected native playback. |
 
 ## CONVENTIONS
 

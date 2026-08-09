@@ -173,13 +173,13 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
         Control? pageRoot = NavigationFrame.Content as Control;
 
-        var settingsControl = pageRoot?.FindControl<Control>(settings.Id);
+        var settingsControl = FindSettingsControl(pageRoot, settings.ControlId);
             _logger?.LogInformation("设置控件: {Control}", settingsControl);
 
         Control? categoryControl = null;
         if (!settings.IsCategory)
         {
-            categoryControl = pageRoot?.FindControl<Control>(settings.CategoryId);
+            categoryControl = FindSettingsControl(pageRoot, settings.CategoryControlId);
             _logger?.LogInformation("分类控件: {Control}", categoryControl);
 
             if (categoryControl is FASettingsExpander settingsExpander) settingsExpander.IsExpanded = true;
@@ -193,6 +193,15 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
             HighlightControl(targetControl, TimeSpan.FromSeconds(3));
         }, DispatcherPriority.Render);
+    }
+
+    private static Control? FindSettingsControl(Control? pageRoot, string controlId)
+    {
+        if (pageRoot is null || string.IsNullOrWhiteSpace(controlId)) return null;
+
+        return pageRoot.FindControl<Control>(controlId)
+               ?? pageRoot.GetVisualDescendants().OfType<Control>()
+                   .FirstOrDefault(control => control.Name == controlId);
     }
 
     private void ClearSearch()

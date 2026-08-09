@@ -78,16 +78,17 @@
                                  KeyUp="SearchBox_OnKeyUp"
                                  WindowDecorationProperties.ElementRole="User">
                     <AutoCompleteBox.InnerRightContent>
-                        <StackPanel Orientation="Horizontal" Spacing="2">
+                        <StackPanel Orientation="Horizontal">
                             <Button Width="30" Height="30" Padding="0"
                                     IsVisible="{Binding ViewModel.HasSearchText}"
-                                    Click="ClearSearchButton_OnClick"
-                                    WindowDecorationProperties.ElementRole="User">
-                                <sr:FluentIcon Glyph="{sr:Fi DismissCircleFilled}" />
+                                    Theme="{StaticResource TransparentButton}"
+                                    Click="ClearSearchButton_OnClick">
+                                <sr:FluentIcon Glyph="{sr:Fi BackspaceFilled}" />
                             </Button>
+                            
                             <Button Width="30" Height="30" Padding="0"
-                                    Click="SearchButton_OnClick"
-                                    WindowDecorationProperties.ElementRole="User">
+                                    Theme="{StaticResource TransparentButton}"
+                                    Click="SearchButton_OnClick">
                                 <sr:FluentIcon Glyph="{sr:Fi SearchFilled}"
                                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             </Button>

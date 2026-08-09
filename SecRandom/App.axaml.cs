@@ -949,11 +949,11 @@ public partial class App : Application
                 // 底部
                 if (isMobile)
                 {
-                    services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
+                    services.AddSettingsPage<MobileUpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
                 }
                 else
                 {
-                    services.AddSettingsPage<MobileUpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
+                    services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
                 }
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
 
