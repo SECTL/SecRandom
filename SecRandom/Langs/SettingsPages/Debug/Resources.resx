@@ -52,11 +52,11 @@
   <data name="C_LastCheck" xml:space="preserve"><value>上次检查</value></data>
   <data name="C_AvailableVersion" xml:space="preserve"><value>可用版本</value></data>
   <data name="C_LinkageSource" xml:space="preserve"><value>联动来源</value></data>
-  <data name="C_CourseSource" xml:space="preserve"><value>日程来源</value></data>
-  <data name="C_CourseState" xml:space="preserve"><value>日程状态</value></data>
+  <data name="C_CourseSource" xml:space="preserve"><value>课程来源</value></data>
+  <data name="C_CourseState" xml:space="preserve"><value>课程状态</value></data>
   <data name="C_SnapshotAvailable" xml:space="preserve"><value>快照可用</value></data>
-  <data name="C_CurrentCourse" xml:space="preserve"><value>当前日程项目</value></data>
-  <data name="C_NextCourse" xml:space="preserve"><value>下一日程项目</value></data>
+  <data name="C_CurrentCourse" xml:space="preserve"><value>当前课程</value></data>
+  <data name="C_NextCourse" xml:space="preserve"><value>下一节课</value></data>
   <data name="C_DrawRestricted" xml:space="preserve"><value>抽取受限</value></data>
   <data name="C_SnapshotError" xml:space="preserve"><value>快照错误</value></data>
   <data name="C_NotificationsEnabled" xml:space="preserve"><value>通知已启用</value></data>
@@ -82,7 +82,7 @@
   <data name="C_PluginConfigDirectory" xml:space="preserve"><value>插件配置目录</value></data>
   <data name="C_ProofDirectory" xml:space="preserve"><value>证明目录</value></data>
   <data name="C_UpdateDownloadDirectory" xml:space="preserve"><value>更新下载目录</value></data>
-  <data name="C_CourseLinkageDirectory" xml:space="preserve"><value>日程联动目录</value></data>
+  <data name="C_CourseLinkageDirectory" xml:space="preserve"><value>课程联动目录</value></data>
   <data name="C_CrashDirectory" xml:space="preserve"><value>崩溃报告目录</value></data>
   <data name="C_Exists" xml:space="preserve"><value>存在</value></data>
   <data name="C_Missing" xml:space="preserve"><value>缺失</value></data>

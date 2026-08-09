@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
   <data name="Page_Title">
-    <value>日程連携設定</value>
+    <value>授業連携設定</value>
   </data>
   <data name="S_External">
-    <value>日程連携</value>
+    <value>授業連携</value>
   </data>
   <data name="S_External_VerificationRequired">
     <value>認証後の続行を許可</value>
   </data>
   <data name="S_External_VerificationRequired_D">
-    <value>非スケジュール時間帯の制限が有効な場合、設定したセキュリティ認証後に一時的な抽選やリセットを許可します</value>
+    <value>授業外制限が有効な場合、設定したセキュリティ認証後に一時的な抽選やリセットを許可します</value>
   </data>
   <data name="S_External_InstantDrawDisable">
-    <value>非スケジュール時間帯の操作を制限</value>
+    <value>授業外の操作を制限</value>
   </data>
   <data name="S_External_InstantDrawDisable_D">
-    <value>非スケジュール時間帯と確認された場合に抽選とリセットを制限します</value>
+    <value>休み時間や授業外と確認された場合に抽選とリセットを制限します</value>
   </data>
   <data name="S_External_DataSource">
     <value>データソース</value>
   </data>
   <data name="S_External_DataSource_D">
-    <value>日程または外部連携のデータソースを選択します</value>
+    <value>授業または外部連携のデータソースを選択します</value>
   </data>
   <data name="O_DataSource_Off">
     <value>オフ</value>
@@ -31,10 +31,10 @@
     <value>ClassIsland</value>
   </data>
   <data name="O_DataSource_Cses">
-    <value>CSES 日程表</value>
+    <value>CSES 時間割</value>
   </data>
   <data name="S_Cses">
-    <value>CSES 日程表</value>
+    <value>CSES 時間割</value>
   </data>
   <data name="C_CsesImport">
     <value>時間割をインポート</value>
@@ -46,19 +46,19 @@
     <value>時間割を消去</value>
   </data>
   <data name="M_CsesMissing">
-    <value>有効な CSES 日程表はまだインポートされていません。</value>
+    <value>有効な CSES 時間割はまだインポートされていません。</value>
   </data>
   <data name="M_CsesImported">
-    <value>CSES 日程表をインポートしました: {0}</value>
+    <value>CSES 時間割をインポートしました: {0}</value>
   </data>
   <data name="M_CsesCleared">
-    <value>CSES 日程表を消去しました。</value>
+    <value>CSES 時間割を消去しました。</value>
   </data>
   <data name="M_CsesClearTitle">
     <value>時間割を消去</value>
   </data>
   <data name="M_CsesClearContent">
-    <value>現在インポートされている CSES 日程表を消去しますか？</value>
+    <value>現在インポートされている CSES 時間割を消去しますか？</value>
   </data>
   <data name="C_Confirm">
     <value>確認</value>
@@ -67,75 +67,75 @@
     <value>キャンセル</value>
   </data>
   <data name="S_ClassTime">
-    <value>スケジュール時間帯</value>
+    <value>授業時間</value>
   </data>
   <data name="S_ClassTime_HideFloatingWindow">
-    <value>スケジュール終了後に非表示</value>
+    <value>授業後に非表示</value>
   </data>
   <data name="S_ClassTime_HideFloatingWindow_D">
-    <value>スケジュール終了後に自動で非表示にします</value>
+    <value>授業終了時に自動で非表示にします</value>
   </data>
   <data name="S_ClassTime_PreClassReset">
-    <value>スケジュール開始前にリセット</value>
+    <value>授業前にリセット</value>
   </data>
   <data name="S_ClassTime_PreClassReset_D">
-    <value>スケジュール開始前に一時抽選記録を自動でリセットします</value>
+    <value>授業前に一時抽選記録を自動でリセットします</value>
   </data>
   <data name="S_ClassTime_PreClassResetTime">
-    <value>スケジュール開始前のリセット時刻</value>
+    <value>授業前リセット時刻</value>
   </data>
   <data name="S_ClassTime_PreClassResetTime_D">
-    <value>スケジュール開始の何秒前にリセットするか指定します</value>
+    <value>授業前何秒以内にリセットするか指定します</value>
   </data>
   <data name="S_ClassTime_PostClassDisableDelay">
-    <value>スケジュール終了後の制限遅延</value>
+    <value>授業後の無効化遅延</value>
   </data>
   <data name="S_ClassTime_PostClassDisableDelay_D">
-    <value>スケジュール終了後、関連する抽選操作を制限するまでの秒数</value>
+    <value>授業終了後、関連する抽選入口を無効にするまでの秒数</value>
   </data>
   <data name="S_SubjectHistory_BreakAssignment_D">
-    <value>非スケジュール時間帯の履歴の帰属先を選択します</value>
+    <value>休み時間の履歴の帰属先を選択します</value>
   </data>
   <data name="O_BreakAssignment_Break">
-    <value>非スケジュール時間帯</value>
+    <value>休み時間</value>
   </data>
   <data name="S_SubjectHistory">
-    <value>日程項目履歴</value>
+    <value>科目履歴</value>
   </data>
   <data name="S_SubjectHistory_BreakAssignment">
-    <value>非スケジュール時間帯の帰属</value>
+    <value>休み時間の帰属</value>
   </data>
   <data name="O_BreakAssignment_NextClass">
-    <value>次の日程項目</value>
+    <value>次の授業</value>
   </data>
   <data name="O_BreakAssignment_PreviousClass">
-    <value>前の日程項目</value>
+    <value>前の授業</value>
   </data>
   <data name="S_ClassTime_PreClassEnableTime">
-    <value>スケジュール開始前の解除時刻</value>
+    <value>授業前の解除時刻</value>
   </data>
   <data name="S_SubjectHistory_Filter_D">
-    <value>重みの計算に現在の日程項目の履歴だけを使用します</value>
+    <value>重みの計算に現在の科目の履歴だけを使用します</value>
   </data>
   <data name="S_SubjectHistory_Filter">
-    <value>日程項目履歴フィルター</value>
+    <value>科目履歴フィルター</value>
   </data>
   <data name="S_ClassTime_PreClassEnableTime_D">
-    <value>スケジュール開始の何秒前に制限を解除するか指定します</value>
+    <value>授業の何秒前に制限を解除するか指定します</value>
   </data>
-  <data name="M_CsesSummary"><value>日程時間帯は {0} 件（{1:HH:mm}～{2:HH:mm}）です</value></data>
-  <data name="M_CsesErrorEmpty"><value>CSES 日程ファイルが空です。</value></data>
-  <data name="M_CsesErrorRoot"><value>CSES 日程ファイルのルートはオブジェクトである必要があります。</value></data>
-  <data name="M_CsesErrorNoItems"><value>CSES 日程ファイルに有効な予定項目がありません。</value></data>
-  <data name="M_CsesErrorInvalidItem"><value>CSES 日程項目の形式が無効です。</value></data>
-  <data name="M_CsesErrorInvalidTime"><value>予定項目「{0}」の開始時刻は終了時刻より前である必要があります。</value></data>
-  <data name="M_CsesErrorOverlap"><value>曜日 {0} の予定項目の時間が重複しています。</value></data>
-  <data name="M_ScheduleError_CsesMissing"><value>有効な CSES 日程表はまだインポートされていません。</value></data>
+  <data name="M_CsesSummary"><value>授業は {0} 件（{1:HH:mm}～{2:HH:mm}）です</value></data>
+  <data name="M_CsesErrorEmpty"><value>CSES 時間割ファイルが空です。</value></data>
+  <data name="M_CsesErrorRoot"><value>CSES 時間割ファイルのルートはオブジェクトである必要があります。</value></data>
+  <data name="M_CsesErrorNoItems"><value>CSES 時間割ファイルに有効な授業がありません。</value></data>
+  <data name="M_CsesErrorInvalidItem"><value>授業の形式が無効です。</value></data>
+  <data name="M_CsesErrorInvalidTime"><value>授業「{0}」の開始時刻は終了時刻より前である必要があります。</value></data>
+  <data name="M_CsesErrorOverlap"><value>曜日 {0} の授業時間が重複しています。</value></data>
+  <data name="M_ScheduleError_CsesMissing"><value>有効な CSES 時間割はまだインポートされていません。</value></data>
   <data name="M_ScheduleError_ClassIslandUnavailable"><value>ClassIsland に接続できません。</value></data>
   <data name="M_ScheduleError_ClassIslandTimerStopped"><value>ClassIsland のタイマーが動作していません。</value></data>
-  <data name="M_ScheduleError_ClassIslandScheduleDisabled"><value>ClassIsland で日程表が有効になっていません。</value></data>
-  <data name="M_ScheduleError_ClassIslandScheduleUnloaded"><value>ClassIsland が当日の日程を読み込んでいません。</value></data>
-  <data name="M_ScheduleError_ClassIslandTimeUnconfirmed"><value>ClassIsland が現在の時間状態を確認していません。</value></data>
+  <data name="M_ScheduleError_ClassIslandScheduleDisabled"><value>ClassIsland で時間割が有効になっていません。</value></data>
+  <data name="M_ScheduleError_ClassIslandScheduleUnloaded"><value>ClassIsland が当日の時間割を読み込んでいません。</value></data>
+  <data name="M_ScheduleError_ClassIslandTimeUnconfirmed"><value>ClassIsland が現在の授業時間状態を確認していません。</value></data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState"><value>ClassIsland から未対応の現在状態が返されました: {0}。</value></data>
-  <data name="M_ScheduleError_ClassIslandReadFailed"><value>ClassIsland の日程状態を読み取れません。</value></data>
+  <data name="M_ScheduleError_ClassIslandReadFailed"><value>ClassIsland の授業状態を読み取れません。</value></data>
 </root>
