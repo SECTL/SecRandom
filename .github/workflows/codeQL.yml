@@ -53,7 +53,7 @@ jobs:
 
       - name: 构建
         if: ${{ matrix.language == 'csharp' }}
-        run: dotnet build ./SecRandom.Desktop/SecRandom.Desktop.csproj -c Release
+        run: dotnet build ./SecRandom.Desktop/SecRandom.Desktop.csproj -c Release -p:BuildInParallel=false
 
       - name: 执行 CodeQL 分析
         uses: github/codeql-action/analyze@v4

@@ -54,7 +54,7 @@ Nested instruction files:
 ## WHERE TO LOOK
 | Task | Location | Notes |
 |------|----------|-------|
-| Run/build/test | `SecRandom.sln`, `.github/workflows/Build.yml` | Use solution commands; no Makefile/CMake. |
+| Run/build/test | `SecRandom.sln`, `.github/workflows/Build.yml` | Use solution commands; no Makefile/CMake. CodeQL builds the desktop project with `BuildInParallel=false` because the desktop asset override can otherwise schedule duplicate Core project nodes that race on Avalonia's generated resource file. |
 | Desktop startup | `SecRandom.Desktop/Program.cs` | Process entry → Avalonia lifetime. |
 | Platform capability contracts | `SecRandom.Platforms.Abstractions/`, `SecRandom.Platforms/` | App-internal platform root, window feature requests/results, startup context, and DI bridge. |
 | Native window features | `SecRandom.Platforms.Windows/`, `SecRandom.Platforms.Linux/`, `SecRandom.Platforms.MacOs/` | Each platform owns native feature handling; views must not add platform API calls. |
