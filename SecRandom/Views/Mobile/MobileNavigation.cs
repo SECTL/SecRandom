@@ -14,7 +14,7 @@ public static class MobilePageIds
     public const string History = "main.history";
     public const string Overview = "main.overview";
     public const string Settings = "root.settings";
-    public const string Update = "settings.mobile.update";
+    public const string Update = "settings.update";
 }
 
 public enum MobileDestination

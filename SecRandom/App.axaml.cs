@@ -88,7 +88,6 @@ using SecRandom.Views.SettingsPages.More;
 using SecRandom.Views.SettingsPages.Personalized;
 using SecRandom.Views.SettingsPages.Picking;
 // using SecRandom.Views.SettingsPages.Plugins.Overview;
-using SecRandom.Views.SettingsPages.Update;
 using DefaultNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.DefaultNotificationSettingsPage;
 using FloatingWindowSettingsPage = SecRandom.Views.SettingsPages.Personalized.FloatingWindowSettingsPage;
 using LotteryNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.LotteryNotificationSettingsPage;
