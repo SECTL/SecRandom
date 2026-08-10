@@ -22,7 +22,7 @@ public sealed class RosterTransferService
     private const string ManifestPrefix = "SRQR1M";
     private const string DataPrefix = "SRQR1D";
     // Keep offline QR modules large enough for a 256 px presentation surface.
-    // Data frames are padded below so every frame uses the same QR matrix size.
+    // Data frames are padded below, and the manifest uses their selected version so every frame matches.
     private const int FramePayloadLength = 128;
     private const int FrameIndexDigits = 4;
     private const int FrameOffsetDigits = 7;
@@ -49,8 +49,6 @@ public sealed class RosterTransferService
             using var generator = new QRCodeGenerator();
             var manifest = string.Join('|', ManifestPrefix, sessionId,
                 Base64UrlEncode(Encoding.UTF8.GetBytes(document.FileName)), compressedPayload.Length, chunks.Count, checksum);
-            using (var manifestData = generator.CreateQrCode(manifest, QRCodeGenerator.ECCLevel.M))
-                frames.Add(new PngByteQRCode(manifestData).GetGraphic(8));
             var dataContents = new List<string>(chunks.Count);
             for (var index = 0; index < chunks.Count; index++)
             {
@@ -67,6 +65,10 @@ public sealed class RosterTransferService
                 using var data = generator.CreateQrCode(content, QRCodeGenerator.ECCLevel.M);
                 dataFrameVersion = Math.Max(dataFrameVersion, data.Version);
             }
+
+            using (var manifestData = generator.CreateQrCode(manifest, QRCodeGenerator.ECCLevel.M,
+                       requestedVersion: dataFrameVersion))
+                frames.Add(new PngByteQRCode(manifestData).GetGraphic(8));
 
             foreach (var content in dataContents)
             {

@@ -38,6 +38,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
     private string _targetListName = string.Empty;
     private bool _isQrImportMode;
     private RosterImportMode _selectedImportMode = RosterImportMode.ExcelCsv;
+    private RosterImportModeOption _selectedImportModeOption = null!;
     private bool _isScanningQr;
     private bool _isDrawerClosed;
     private const int SessionCodeLength = 12;
@@ -65,12 +66,16 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         TargetListName = targetListName;
         _importHandler = importHandler;
         _qrImport = _transferService.CreateImportAccumulator();
+        ImportModes =
+        [
+            new(RosterImportMode.ExcelCsv, FileImportModeLabel),
+            new(RosterImportMode.QuickQr, QuickQrImportModeLabel),
+            new(RosterImportMode.OfflineQr, OfflineQrImportModeLabel),
+            new(RosterImportMode.SessionCode, SessionCodeImportModeLabel)
+        ];
+        _selectedImportModeOption = ImportModes[0];
         DataContext = this;
         InitializeComponent();
-        FileImportMenuItem.Header = FileImportModeLabel;
-        QuickQrImportMenuItem.Header = QuickQrImportModeLabel;
-        OfflineQrImportMenuItem.Header = OfflineQrImportModeLabel;
-        SessionCodeImportMenuItem.Header = SessionCodeImportModeLabel;
     }
 
     public ObservableCollection<string> RequiredColumnOptions { get; } = [];
@@ -144,6 +149,21 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
     public string OfflineQrImportModeLabel => Text("C_ImportOfflineQr");
     public string SessionCodeImportModeLabel => Text("C_ImportSessionCode");
     public string ImportSourceLabel => Text("C_SelectImportSource");
+    public IReadOnlyList<RosterImportModeOption> ImportModes { get; }
+    public RosterImportModeOption SelectedImportModeOption
+    {
+        get => _selectedImportModeOption;
+        set
+        {
+            if (value is null || ReferenceEquals(_selectedImportModeOption, value))
+                return;
+
+            if (!SetField(ref _selectedImportModeOption, value))
+                return;
+
+            _ = SelectImportModeAsync(value.Mode);
+        }
+    }
     public string QrImportLabel => Text("C_QrImport");
     public string ScanQrLabel => IsQrScanning ? Text("C_StopQrScanner") : Text("C_StartQrScanner");
     public string TransferProgressLabel => Text("C_TransferProgress");
@@ -401,44 +421,49 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         }
     }
 
-    private async void ImportSplitButton_OnClick(object? sender, RoutedEventArgs e) =>
-        await OpenFileImportAsync();
-
-    private async void FileImportMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    private async void FileImportButton_OnClick(object? sender, RoutedEventArgs e)
     {
         await OpenFileImportAsync();
     }
 
-    private async void QuickQrImportMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    private async Task SelectImportModeAsync(RosterImportMode mode)
     {
         await StopQrScannerAsync();
-        SelectQrImportSource(RosterImportMode.QuickQr);
-        await ToggleQrScannerAsync();
-    }
+        if (_isDrawerClosed || SelectedImportModeOption.Mode != mode)
+            return;
 
-    private async void OfflineQrImportMenuItem_OnClick(object? sender, RoutedEventArgs e)
-    {
-        await StopQrScannerAsync();
-        SelectQrImportSource(RosterImportMode.OfflineQr);
-        await ToggleQrScannerAsync();
-    }
-
-    private async void SessionCodeImportMenuItem_OnClick(object? sender, RoutedEventArgs e)
-    {
-        await StopQrScannerAsync();
-        SelectSessionCodeImportSource();
+        switch (mode)
+        {
+            case RosterImportMode.ExcelCsv:
+                SelectFileImportSource();
+                break;
+            case RosterImportMode.QuickQr:
+            case RosterImportMode.OfflineQr:
+                SelectQrImportSource(mode);
+                await ToggleQrScannerAsync();
+                break;
+            case RosterImportMode.SessionCode:
+                SelectSessionCodeImportSource();
+                break;
+        }
     }
 
     private async Task OpenFileImportAsync()
     {
-        _selectedImportMode = RosterImportMode.ExcelCsv;
-        IsQrImportMode = false;
-        NotifyImportModeChanged();
-        ResetPreviewAndImportState();
         await StopQrScannerAsync();
+        SelectFileImportSource();
         await SelectFileAsync();
         if (_rows.Count == 0)
             StatusText = LR.M_SelectFileFirst;
+    }
+
+    private void SelectFileImportSource()
+    {
+        _selectedImportMode = RosterImportMode.ExcelCsv;
+        IsQrImportMode = false;
+        ResetPreviewAndImportState();
+        StatusText = LR.M_SelectFileFirst;
+        NotifyImportModeChanged();
     }
 
     private void SelectQrImportSource(RosterImportMode mode)

@@ -10,8 +10,9 @@
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="720"
              x:Class="SecRandom.Views.SettingsPages.ListManagement.RollCallListImportView"
              x:DataType="local:RollCallListImportView">
-    <ScrollViewer Width="400">
-        <StackPanel Margin="16" Spacing="8">
+    <Grid Width="400" RowDefinitions="*,Auto">
+        <ScrollViewer Grid.Row="0">
+            <StackPanel Margin="16,16,16,8" Spacing="8">
             <TextBlock Text="{x:Static lr:Resources.C_ImportTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
             <TextBlock Text="{Binding TargetListDescription}" TextWrapping="Wrap"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
@@ -23,34 +24,32 @@
                           IsOpen="True" />
 
             <GroupBox Header="{Binding ImportSourceLabel}">
-                <SplitButton x:Name="ImportSplitButton"
-                             Classes="accent"
-                             Content="{Binding FileImportModeLabel}"
-                             Click="ImportSplitButton_OnClick">
-                    <SplitButton.Flyout>
-                        <MenuFlyout>
-                            <MenuItem x:Name="FileImportMenuItem"
-                                      Click="FileImportMenuItem_OnClick" />
-                            <MenuItem x:Name="QuickQrImportMenuItem"
-                                      Click="QuickQrImportMenuItem_OnClick" />
-                            <MenuItem x:Name="OfflineQrImportMenuItem"
-                                      Click="OfflineQrImportMenuItem_OnClick" />
-                            <MenuItem x:Name="SessionCodeImportMenuItem"
-                                      Click="SessionCodeImportMenuItem_OnClick" />
-                        </MenuFlyout>
-                    </SplitButton.Flyout>
-                </SplitButton>
+                <ComboBox ItemsSource="{Binding ImportModes}"
+                          SelectedItem="{Binding SelectedImportModeOption, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Label}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
             </GroupBox>
-            <StackPanel Spacing="4">
-                    <TextBlock IsVisible="{Binding IsFileImportMode}"
-                               Text="{Binding SelectedFileName}"
+            <GroupBox IsVisible="{Binding IsFileImportMode}"
+                      Header="{x:Static lr:Resources.C_SelectFile}">
+                <StackPanel Spacing="4">
+                    <Button Classes="accent" Click="FileImportButton_OnClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <sr:FluentIcon Glyph="{sr:Fi FolderOpenFilled}" />
+                            <TextBlock Text="{x:Static lr:Resources.C_SelectFileButton}" />
+                        </StackPanel>
+                    </Button>
+                    <TextBlock Text="{Binding SelectedFileName}"
                                TextWrapping="Wrap"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <TextBlock IsVisible="{Binding IsFileImportMode}"
-                               Text="{x:Static lr:Resources.C_SupportedFormats}"
+                    <TextBlock Text="{x:Static lr:Resources.C_SupportedFormats}"
                                TextWrapping="Wrap"
                                Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-            </StackPanel>
+                </StackPanel>
+            </GroupBox>
 
             <GroupBox IsVisible="{Binding IsQrImportMode}" Header="{Binding QrImportLabel}">
                 <StackPanel Spacing="10">
@@ -139,19 +138,20 @@
                 </DataGrid>
             </Border>
 
-            <Grid ColumnDefinitions="* Auto">
-                <TextBlock Grid.Column="0" VerticalAlignment="Center"
-                           Text="{Binding StatusText}" TextWrapping="Wrap"
-                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
-                    <Button Content="{x:Static lr:Resources.C_Cancel}" Click="CancelButton_OnClick" />
-                    <Button Classes="accent"
-                            Content="{x:Static lr:Resources.C_Import}"
-                            IsEnabled="{Binding CanImport}"
-                            Click="ImportButton_OnClick" />
-                </StackPanel>
-            </Grid>
-        </StackPanel>
-    </ScrollViewer>
+            </StackPanel>
+        </ScrollViewer>
+        <Grid Grid.Row="1" Margin="16,8,16,16" ColumnDefinitions="* Auto">
+            <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                       Text="{Binding StatusText}" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
+                <Button Content="{x:Static lr:Resources.C_Cancel}" Click="CancelButton_OnClick" />
+                <Button Classes="accent"
+                        Content="{x:Static lr:Resources.C_Import}"
+                        IsEnabled="{Binding CanImport}"
+                        Click="ImportButton_OnClick" />
+            </StackPanel>
+        </Grid>
+    </Grid>
 </UserControl>

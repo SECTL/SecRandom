@@ -77,6 +77,14 @@ public partial class RollCallDrawSettingsPage : UserControl
         foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "roll_call_list"), "*.json")
                      .OrderBy(Path.GetFileName))
             StudentListNames.Add(Path.GetFileNameWithoutExtension(file));
+
+        if (StudentListNames.Count > 0
+            && string.IsNullOrWhiteSpace(Settings.DefaultClass)
+            && SettingsView.Current?.IsPreviewMode != true)
+        {
+            Settings.DefaultClass = StudentListNames[0];
+            ConfigHandler.Save();
+        }
     }
 
     private void NormalizeDrawSettings()

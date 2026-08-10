@@ -78,6 +78,14 @@ public partial class LotteryDrawSettingsPage : UserControl
         foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "lottery_list"), "*.json")
                      .OrderBy(Path.GetFileName))
             PrizeListNames.Add(Path.GetFileNameWithoutExtension(file));
+
+        if (PrizeListNames.Count > 0
+            && string.IsNullOrWhiteSpace(Settings.DefaultPool)
+            && SettingsView.Current?.IsPreviewMode != true)
+        {
+            Settings.DefaultPool = PrizeListNames[0];
+            ConfigHandler.Save();
+        }
     }
 
     private void NormalizeDrawSettings()

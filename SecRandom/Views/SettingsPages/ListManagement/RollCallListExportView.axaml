@@ -7,8 +7,9 @@
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="720"
              x:Class="SecRandom.Views.SettingsPages.ListManagement.RosterListExportView"
              x:DataType="local:RosterListExportView">
-    <ScrollViewer Width="400">
-        <StackPanel Margin="16" Spacing="12">
+    <Grid Width="400" RowDefinitions="*,Auto">
+        <ScrollViewer Grid.Row="0">
+            <StackPanel Margin="16,16,16,8" Spacing="12">
             <TextBlock Text="{Binding Title}" Theme="{StaticResource TitleTextBlockStyle}" />
             <TextBlock Text="{Binding TargetListDescription}" TextWrapping="Wrap"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
@@ -118,7 +119,9 @@
                 </StackPanel>
             </GroupBox>
 
-            <Button HorizontalAlignment="Right" Content="{Binding CloseButtonText}" Click="CloseButton_OnClick" />
-        </StackPanel>
-    </ScrollViewer>
+            </StackPanel>
+        </ScrollViewer>
+        <Button Grid.Row="1" Margin="16,8,16,16" HorizontalAlignment="Right"
+                Content="{Binding CloseButtonText}" Click="CloseButton_OnClick" />
+    </Grid>
 </UserControl>
