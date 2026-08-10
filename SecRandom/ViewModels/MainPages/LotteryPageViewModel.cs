@@ -604,12 +604,14 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private void RefreshRemainingList(IEnumerable<Prize>? source)
     {
         var prizes = (source ?? GetCurrentPrizes()).ToList();
+        var displayIds = GetPrizeDisplayIds(prizes);
         var temporaryCounts = _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName);
         RemainingItems.Clear();
-        foreach (var item in prizes
-                      .OrderForList()
-                      .Select((prize, index) => CreateRemainingItem(prize, temporaryCounts, index + 1)))
-            RemainingItems.Add(item);
+        foreach (var prize in prizes.OrderForList())
+        {
+            var displayId = displayIds.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(prize), 1);
+            RemainingItems.Add(CreateRemainingItem(prize, temporaryCounts, displayId));
+        }
     }
 
     private IEnumerable<Prize> GetCurrentPrizes()
@@ -658,7 +660,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
     private async Task ShowPreviewAsync(IReadOnlyList<Prize> prizes, int count, string animationMusic)
     {
-        if (Config.LotterySettings.LotteryShowRandom < 0 || AnimationSettings.Animation == AnimationMode.NoAnimation)
+        if ((Config.LotterySettings.OverrideDisplaySettings && Config.LotterySettings.LotteryShowRandom < 0)
+            || AnimationSettings.Animation == AnimationMode.NoAnimation)
             return;
 
         await _drawAudioService.StartAnimationMusicAsync(
@@ -759,17 +762,30 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
     private List<LotteryDisplayPrize> BuildDisplayPrizes(IReadOnlyList<Prize> prizes, IReadOnlyList<Student> assignedStudents)
     {
+        var displayIds = GetPrizeDisplayIds();
         List<LotteryDisplayPrize> result = [];
         for (var i = 0; i < prizes.Count; i++)
         {
             var prize = prizes[i];
             var student = i < assignedStudents.Count ? assignedStudents[i] : null;
+            var displayId = displayIds.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(prize), i + 1);
             result.Add(student is null
-                ? new LotteryDisplayPrize(prize, FormatPrize(prize, i + 1), prize.Tags)
-                : new LotteryDisplayPrize(prize, FormatAssignedPrize(prize, student, i + 1), prize.Tags));
+                ? new LotteryDisplayPrize(prize, FormatPrize(prize, displayId), prize.Tags)
+                : new LotteryDisplayPrize(prize, FormatAssignedPrize(prize, student, displayId), prize.Tags));
         }
 
         return result;
+    }
+
+    private Dictionary<string, int> GetPrizeDisplayIds(IEnumerable<Prize>? source = null)
+    {
+        Dictionary<string, int> displayIds = [];
+        foreach (var (prize, index) in (source ?? GetCurrentPrizes())
+                     .OrderForList()
+                     .Select((prize, index) => (prize, index)))
+            displayIds.TryAdd(ProfileRecordIdentity.EnsureRecordId(prize), index + 1);
+
+        return displayIds;
     }
 
     private async Task<List<Student>?> DrawAssignedStudentsAsync(int count, Guid? parentProofId, string courseName)
@@ -914,9 +930,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
     private string FormatLotteryProcessDisplay(Prize prize, Student? student, int displayId)
     {
-        var template = LotteryProcessDisplayFormatter.ResolveTemplate(
-            Config.LotterySettings.LotteryShowRandom,
-            Config.LotterySettings.CustomLotteryShowRandomFormat);
+        var template = Config.GetLotteryProcessDisplayTemplate();
         return LotteryProcessDisplayFormatter.Format(
             template,
             displayId.ToString(),

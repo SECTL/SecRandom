@@ -2,6 +2,7 @@ using System.Text.Json;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Helpers;
+using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs.Picking;
 
 namespace SecRandom.Core.Tests;
@@ -71,5 +72,19 @@ public sealed class LotteryProcessDisplayFormatterTests
         Assert.Equal(
             LotteryProcessDisplayFormatter.DefaultTemplate,
             new LotterySettingsConfig().CustomLotteryShowRandomFormat);
+    }
+
+    [Fact]
+    public void LotteryProcessDisplay_UsesTheDefaultTemplateUntilDisplayOverrideIsEnabled()
+    {
+        MainConfigModel config = new();
+        config.LotterySettings.LotteryShowRandom = LotteryShowRandomMode.Custom;
+        config.LotterySettings.CustomLotteryShowRandomFormat = "{prizeId}";
+
+        Assert.Equal(LotteryProcessDisplayFormatter.DefaultTemplate, config.GetLotteryProcessDisplayTemplate());
+
+        config.LotterySettings.OverrideDisplaySettings = true;
+
+        Assert.Equal("{prizeId}", config.GetLotteryProcessDisplayTemplate());
     }
 }

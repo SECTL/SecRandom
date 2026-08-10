@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Core.Enums;
+using SecRandom.Core.Helpers;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
@@ -113,6 +114,15 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
                 : DefaultDrawSettings,
             _ => throw new ArgumentOutOfRangeException(nameof(settingsType), settingsType, null)
         };
+    }
+
+    public string GetLotteryProcessDisplayTemplate()
+    {
+        return LotterySettings.OverrideDisplaySettings
+            ? LotteryProcessDisplayFormatter.ResolveTemplate(
+                LotterySettings.LotteryShowRandom,
+                LotterySettings.CustomLotteryShowRandomFormat)
+            : LotteryProcessDisplayFormatter.DefaultTemplate;
     }
 
     public NotificationChannelSettings GetNotificationChannelSettings(NotificationSettingsType notificationSettingsType)
