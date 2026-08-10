@@ -119,7 +119,7 @@
         <value>退出程序</value>
     </data>
     <data name="App_Description" xml:space="preserve">
-        <value>一款易用的点名/抽奖软件，面向活动与组织场景设计，让抽取过程更高效透明</value>
+        <value>基于动态权重的公平随机工具，让抽取与决策告别争议</value>
     </data>
     <data name="App_License" xml:space="preserve">
         <value>本项目基于 GNU General Public License v3.0 获得许可</value>

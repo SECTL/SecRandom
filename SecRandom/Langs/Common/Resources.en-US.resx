@@ -136,7 +136,7 @@ Move the entire portable package to a writable location, or adjust the directory
         <value>Exit Program</value>
     </data>
     <data name="App_Description" xml:space="preserve">
-        <value>An easy-to-use roll-call and lottery app designed for activities and organizations, making draws more efficient and transparent.</value>
+        <value>A fair random tool based on dynamic weighting, putting an end to disputes in draws and decisions</value>
     </data>
     <data name="App_License" xml:space="preserve">
         <value>This project is licensed under the GNU General Public License v3.0.</value>

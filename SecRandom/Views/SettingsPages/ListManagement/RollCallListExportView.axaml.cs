@@ -19,7 +19,7 @@ namespace SecRandom.Views.SettingsPages.ListManagement;
 
 public partial class RosterListExportView : UserControl, INotifyPropertyChanged, IDrawerCloseAware
 {
-    private static readonly TimeSpan QrFrameInterval = TimeSpan.FromMilliseconds(200);
+    private static readonly TimeSpan QrFrameInterval = TimeSpan.FromMilliseconds(150);
     private readonly RosterTransferDocument _document;
     private readonly IReadOnlyList<Dictionary<string, object?>> _fileRows;
     private readonly Func<string, string> _getResource;
