@@ -13,7 +13,18 @@
             <TextBlock Text="{Binding TargetListDescription}" TextWrapping="Wrap"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
-            <GroupBox Header="{Binding FileExportTitle}">
+            <GroupBox Header="{Binding ExportModeLabel}">
+                <ComboBox ItemsSource="{Binding ExportModes}"
+                          SelectedItem="{Binding SelectedExportMode, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Label}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </GroupBox>
+
+            <GroupBox IsVisible="{Binding IsFileExportMode}" Header="{Binding FileExportTitle}">
                 <StackPanel Spacing="6">
                     <Button Classes="accent"
                             Content="{Binding ExportFileButtonText}"
@@ -32,34 +43,24 @@
                 </StackPanel>
             </GroupBox>
 
-            <GroupBox Header="{Binding QrExportTitle}">
+            <GroupBox IsVisible="{Binding IsDeviceExportMode}" Header="{Binding QrExportTitle}">
                 <StackPanel Spacing="10">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <ComboBox Width="220"
-                                  ItemsSource="{Binding ExportModes}"
-                                  SelectedItem="{Binding SelectedExportMode, Mode=TwoWay}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Label}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                        <Button Classes="accent" HorizontalContentAlignment="Center"
-                                Content="{Binding QrExportButtonText}"
-                                IsEnabled="{Binding CanToggleQrExport}"
-                                Click="ToggleQrExportButton_OnClick">
-                            <Button.ContentTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <sr:FluentIcon Glyph="{sr:Fi QrCodeFilled}" />
-                                        <TextBlock Text="{Binding}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </Button.ContentTemplate>
-                        </Button>
-                    </StackPanel>
+                    <Button Classes="accent" HorizontalAlignment="Left" HorizontalContentAlignment="Center"
+                            Content="{Binding QrExportButtonText}"
+                            IsEnabled="{Binding CanToggleQrExport}"
+                            Click="ToggleQrExportButton_OnClick">
+                        <Button.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <sr:FluentIcon Glyph="{sr:Fi QrCodeFilled}" />
+                                    <TextBlock Text="{Binding}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </Button.ContentTemplate>
+                    </Button>
 
-                    <Border HorizontalAlignment="Center" Width="256" Height="256"
+                    <Border IsVisible="{Binding IsQrImageVisible}"
+                            HorizontalAlignment="Center" Width="256" Height="256"
                             CornerRadius="6" ClipToBounds="True">
                         <Grid>
                             <Image IsVisible="{Binding !IsQrExporting}"
@@ -72,20 +73,30 @@
                             <Border IsVisible="{Binding !IsQrExporting}"
                                     Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
                                     Opacity="0.56" />
-                            <Image IsVisible="{Binding IsQrImageVisible}"
-                                   Source="{Binding CurrentQrImage}"
+                            <Image Source="{Binding CurrentQrImage}"
                                    Stretch="Uniform" />
-                            <StackPanel IsVisible="{Binding IsSessionCodeVisible}"
-                                        HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                                <TextBlock Text="{Binding SessionCodeLabel}" Classes="caption" HorizontalAlignment="Center" />
-                                <TextBlock Text="{Binding SessionCodeValue}" FontSize="26" FontWeight="Bold"
-                                           LetterSpacing="2" HorizontalAlignment="Center" />
-                            </StackPanel>
                         </Grid>
                     </Border>
 
-                    <ProgressBar Minimum="0" Maximum="1" Value="{Binding ExportProgress}" />
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="12">
+                    <Border IsVisible="{Binding IsSessionCodeVisible}"
+                            HorizontalAlignment="Center" Padding="16"
+                            BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                            BorderThickness="1" CornerRadius="6">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="{Binding SessionCodeLabel}" Classes="caption" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding SessionCodeValue}" FontSize="26" FontWeight="Bold"
+                                       HorizontalAlignment="Center" TextWrapping="Wrap" />
+                            <Button HorizontalAlignment="Center" Click="CopySessionCode_OnClick">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <sr:FluentIcon Glyph="{sr:Fi ClipboardFilled}" />
+                                    <TextBlock Text="{Binding SessionCodeCopyLabel}" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
+                    <ProgressBar IsVisible="{Binding IsOfflineQrExportVisible}" Minimum="0" Maximum="1" Value="{Binding ExportProgress}" />
+                    <Grid IsVisible="{Binding IsOfflineQrExportVisible}" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="12">
                         <StackPanel><TextBlock Classes="caption" Text="{Binding FramesLabel}" /><TextBlock Text="{Binding FramesValue}" FontSize="18" /></StackPanel>
                         <StackPanel Grid.Column="1"><TextBlock Classes="caption" Text="{Binding SpeedLabel}" /><TextBlock Text="{Binding SpeedValue}" FontSize="18" /></StackPanel>
                         <StackPanel Grid.Row="1"><TextBlock Classes="caption" Text="{Binding PayloadLabel}" /><TextBlock Text="{Binding PayloadValue}" FontSize="18" /></StackPanel>

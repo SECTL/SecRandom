@@ -28,7 +28,7 @@ public sealed class LinuxRosterQrCameraCapture : IAsyncDisposable
                 {
                     if (_capture.Read(frame) && !frame.Empty() && Cv2.ImEncode(".jpg", frame, out var jpeg))
                         await onFrame(jpeg).ConfigureAwait(false);
-                    await Task.Delay(120, _cancellation.Token).ConfigureAwait(false);
+                    await Task.Delay(250, _cancellation.Token).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException) { }

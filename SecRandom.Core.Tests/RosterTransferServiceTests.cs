@@ -52,4 +52,13 @@ public sealed class RosterTransferServiceTests
         Assert.Equal("扫啥呢，示例二维码而已，好奇心太重了",
             await transfer.DecodeQrTextAsync(stream, TestContext.Current.CancellationToken));
     }
+
+    [Fact]
+    public void SessionCode_NormalizesLowercaseAndSeparatorsForDisplayAndImport()
+    {
+        const string expected = "AB12CD34EF56";
+
+        Assert.Equal(expected, RosterSyncTransferService.NormalizeSessionCode("ab-12 cd_34ef56"));
+        Assert.Equal(expected, RosterSyncTransferService.FormatSessionCode("ab-12 cd_34ef56"));
+    }
 }

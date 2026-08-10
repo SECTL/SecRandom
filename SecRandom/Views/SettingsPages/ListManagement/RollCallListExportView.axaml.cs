@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Input.Platform;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -17,7 +18,7 @@ namespace SecRandom.Views.SettingsPages.ListManagement;
 
 public partial class RosterListExportView : UserControl, INotifyPropertyChanged
 {
-    private static readonly TimeSpan QrFrameInterval = TimeSpan.FromMilliseconds(140);
+    private static readonly TimeSpan QrFrameInterval = TimeSpan.FromMilliseconds(200);
     private readonly RosterTransferDocument _document;
     private readonly IReadOnlyList<Dictionary<string, object?>> _fileRows;
     private readonly Func<string, string> _getResource;
@@ -47,11 +48,12 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
         _statusValue = GetResource("C_QrIdle");
         ExportModes =
         [
-            new RosterExportModeOption(RosterCloudTransferMode.QuickQr, GetResource("C_ModeQuickQr")),
-            new RosterExportModeOption(RosterCloudTransferMode.OfflineQr, GetResource("C_ModeOfflineQr")),
-            new RosterExportModeOption(RosterCloudTransferMode.SessionCode, GetResource("C_ModeSessionCode"))
+            new RosterExportModeOption(RosterExportMode.File, GetResource("C_FileExport")),
+            new RosterExportModeOption(RosterExportMode.QuickQr, GetResource("C_ModeQuickQr")),
+            new RosterExportModeOption(RosterExportMode.OfflineQr, GetResource("C_ModeOfflineQr")),
+            new RosterExportModeOption(RosterExportMode.SessionCode, GetResource("C_ModeSessionCode"))
         ];
-        _selectedExportMode = ExportModes[0];
+        _selectedExportMode = ExportModes[1];
         ExampleQrImage = CreateImage(_transferService.CreateExampleQrPng());
         _frameTimer = new DispatcherTimer { Interval = QrFrameInterval };
         _frameTimer.Tick += (_, _) => AdvanceQrFrame();
@@ -70,6 +72,7 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
     public string QrIdleHint => GetResource("C_QrIdleHint");
     public string CloseButtonText => GetResource("C_Cancel");
     public string QrExportButtonText => IsQrExporting ? GetResource("C_StopQrExport") : GetResource("C_ExportToDevices");
+    public string ExportModeLabel => GetResource("C_SelectExportMode");
     public IReadOnlyList<RosterExportModeOption> ExportModes { get; }
     public RosterExportModeOption SelectedExportMode
     {
@@ -77,7 +80,8 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
         set
         {
             if (value is null || ReferenceEquals(_selectedExportMode, value)) return;
-            StopQrExport();
+            if (IsQrExporting)
+                StopQrExport();
             SetField(ref _selectedExportMode, value);
             StatusValue = GetResource("C_QrIdle");
             NotifyStatsChanged();
@@ -85,8 +89,11 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
     }
     public bool IsQrExporting { get => _isQrExporting; private set => SetField(ref _isQrExporting, value); }
     public bool CanToggleQrExport => !_isGenerating;
+    public bool IsFileExportMode => SelectedExportMode.Mode == RosterExportMode.File;
+    public bool IsDeviceExportMode => !IsFileExportMode;
     public bool IsSessionCodeVisible => IsQrExporting && _cloudTransfer?.Mode == RosterCloudTransferMode.SessionCode;
-    public bool IsQrImageVisible => IsQrExporting && !IsSessionCodeVisible;
+    public bool IsQrImageVisible => IsDeviceExportMode && !IsSessionCodeVisible;
+    public bool IsOfflineQrExportVisible => IsQrExporting && SelectedExportMode.Mode == RosterExportMode.OfflineQr;
     public double ExportProgress => _exportSession is not null
         ? (double)(_frameIndex + 1) / _exportSession.Frames.Count
         : IsQrExporting && _cloudTransfer is not null ? 1 : 0;
@@ -110,6 +117,7 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
     public string SessionValue => _cloudTransfer?.SessionCode is { } code ? RosterSyncTransferService.FormatSessionCode(code)
         : _cloudTransfer?.TransferId?[..8] ?? _exportSession?.SessionId[..8] ?? "-";
     public string SessionCodeLabel => GetResource("C_SessionCode");
+    public string SessionCodeCopyLabel => GetResource("C_CopySessionCode");
     public string SessionCodeValue => _cloudTransfer?.SessionCode is { } code ? RosterSyncTransferService.FormatSessionCode(code) : "-";
     public string StatusValue { get => _statusValue; private set => SetField(ref _statusValue, value); }
 
@@ -178,7 +186,7 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
         StatusValue = GetResource("C_QrGenerating");
         try
         {
-            if (SelectedExportMode.Mode == RosterCloudTransferMode.OfflineQr)
+            if (SelectedExportMode.Mode == RosterExportMode.OfflineQr)
                 await StartOfflineQrExportAsync();
             else
                 await StartCloudExportAsync();
@@ -207,7 +215,13 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
 
     private async Task StartCloudExportAsync()
     {
-        _cloudTransfer = await _syncTransferService.CreateAsync(_document, _fileRows, SelectedExportMode.Mode);
+        var mode = SelectedExportMode.Mode switch
+        {
+            RosterExportMode.QuickQr => RosterCloudTransferMode.QuickQr,
+            RosterExportMode.SessionCode => RosterCloudTransferMode.SessionCode,
+            _ => throw new InvalidOperationException("The selected export method does not use cloud transfer.")
+        };
+        _cloudTransfer = await _syncTransferService.CreateAsync(_document, _fileRows, mode);
         if (_cloudTransfer.PairingUrl is { } pairingUrl)
             SetQrImage(RosterSyncTransferService.CreatePairingQrPng(pairingUrl));
         IsQrExporting = true;
@@ -262,6 +276,15 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
         previous?.Dispose();
     }
 
+    private async void CopySessionCode_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var code = _cloudTransfer?.SessionCode;
+        if (string.IsNullOrWhiteSpace(code))
+            return;
+        await (TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(RosterSyncTransferService.NormalizeSessionCode(code))
+            ?? Task.CompletedTask);
+    }
+
     private IReadOnlyList<Dictionary<string, object?>> CreateFileRows() => _fileRows;
 
     private static string CreateCsv(IReadOnlyList<Dictionary<string, object?>> rows)
@@ -301,8 +324,11 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
         OnPropertyChanged(nameof(RecordsValue));
         OnPropertyChanged(nameof(SessionValue));
         OnPropertyChanged(nameof(QrExportButtonText));
+        OnPropertyChanged(nameof(IsFileExportMode));
+        OnPropertyChanged(nameof(IsDeviceExportMode));
         OnPropertyChanged(nameof(IsSessionCodeVisible));
         OnPropertyChanged(nameof(IsQrImageVisible));
+        OnPropertyChanged(nameof(IsOfflineQrExportVisible));
         OnPropertyChanged(nameof(SessionCodeValue));
     }
 

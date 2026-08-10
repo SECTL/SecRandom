@@ -9,7 +9,17 @@
   <data name="C_Cancel"><value>キャンセル</value></data>
   <data name="C_ImportExcelCsv"><value>Excel/CSV</value></data>
   <data name="C_ImportQrCode"><value>QR コード</value></data>
+  <data name="C_ImportQuickQr"><value>QR 高速インポート</value></data>
+  <data name="C_ImportOfflineQr"><value>オフライン QR インポート</value></data>
+  <data name="C_ImportSessionCode"><value>セッションコードでインポート</value></data>
   <data name="C_SelectImportSource"><value>インポート方法を選択</value></data>
+  <data name="C_SelectExportMode"><value>エクスポート方法を選択</value></data>
+  <data name="C_CopySessionCode"><value>セッションコードをコピー</value></data>
+  <data name="C_SessionCodeHint"><value>英字または数字を 12 桁入力すると自動検証します</value></data>
+  <data name="C_SessionCodeVerifying"><value>セッションコードを検証しています</value></data>
+  <data name="C_SessionCodeLoaded"><value>{0} 件のリストを受信しました。インポートできます。</value></data>
+  <data name="M_SessionCodeInvalid"><value>セッションコードが無効または期限切れです: {0}</value></data>
+  <data name="M_QuickQrInvalid"><value>QR 高速インポートに失敗しました: {0}</value></data>
   <data name="C_TransferFramesPerSecond"><value>{0:F1} フレーム/秒</value></data>
   <data name="M_QrLoaded"><value>{0} 件のリストデータを受信しました。インポートできます。</value></data>
   <data name="C_ModeQuickQr"><value>QR スキャンでほかのデバイスへ高速エクスポート</value></data>

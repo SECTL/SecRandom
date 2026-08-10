@@ -25,6 +25,8 @@ public sealed record RosterCloudTransferInfo(
     long PayloadBytes,
     int RecordCount);
 
+public sealed record RosterSyncImportResult(RosterTransferDocument Document, string FileName);
+
 /// <summary>
 /// Encrypts roster exports locally and uploads only the encrypted archive to SecRandom Sync.
 /// </summary>
@@ -114,6 +116,31 @@ public sealed class RosterSyncTransferService(HttpClient httpClient)
             await EnsureSuccessAsync(response, cancellationToken);
     }
 
+    public async Task<RosterSyncImportResult> ImportQuickAsync(string pairingUrl, CancellationToken cancellationToken = default)
+    {
+        if (!TryParseQuickPairing(pairingUrl, out var transferId, out var key))
+            throw new InvalidDataException("The QR code is not a SecRandom quick-transfer pairing code.");
+
+        var envelope = await httpClient.GetFromJsonAsync<RosterSyncEnvelope>(
+            $"v1/transfers/{Uri.EscapeDataString(transferId)}", JsonOptions, cancellationToken)
+            ?? throw new InvalidDataException("Sync service returned an empty transfer payload.");
+        return DecryptArchive(envelope, key);
+    }
+
+    public async Task<RosterSyncImportResult> ImportSessionAsync(string sessionCode, CancellationToken cancellationToken = default)
+    {
+        var normalizedCode = NormalizeSessionCode(sessionCode);
+        if (normalizedCode.Length != SessionCodeLength)
+            throw new InvalidDataException("The session code must contain 12 letters or digits.");
+
+        using var response = await httpClient.PostAsJsonAsync("v1/sessions/resolve",
+            new RosterSyncResolveSessionRequest(Sha256Hex(normalizedCode)), JsonOptions, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+        var envelope = await response.Content.ReadFromJsonAsync<RosterSyncEnvelope>(JsonOptions, cancellationToken)
+            ?? throw new InvalidDataException("Sync service returned an empty transfer payload.");
+        return DecryptArchive(envelope, Encoding.UTF8.GetBytes(normalizedCode));
+    }
+
     public static byte[] CreatePairingQrPng(string pairingUrl)
     {
         using var generator = new QRCodeGenerator();
@@ -121,7 +148,10 @@ public sealed class RosterSyncTransferService(HttpClient httpClient)
         return new PngByteQRCode(data).GetGraphic(8);
     }
 
-    public static string FormatSessionCode(string code) => string.Join('-', Enumerable.Range(0, 3).Select(index => code.Substring(index * 4, 4)));
+    public static string NormalizeSessionCode(string? code) => new(code?.Where(char.IsLetterOrDigit)
+        .Select(char.ToUpperInvariant).ToArray() ?? []);
+
+    public static string FormatSessionCode(string code) => NormalizeSessionCode(code);
 
     private static string CreateSessionCode()
     {
@@ -153,6 +183,9 @@ public sealed class RosterSyncTransferService(HttpClient httpClient)
                 using (var stream = xlsxEntry.Open()) stream.Write(xlsx);
                 var csvEntry = archive.CreateEntry($"{baseName}.csv", CompressionLevel.Fastest);
                 using (var stream = csvEntry.Open()) stream.Write(csv);
+                var documentEntry = archive.CreateEntry("secrandom-roster-transfer.json", CompressionLevel.Fastest);
+                using (var stream = documentEntry.Open())
+                    JsonSerializer.Serialize(stream, document, JsonOptions);
             }
             return output.ToArray();
         }
@@ -171,12 +204,65 @@ public sealed class RosterSyncTransferService(HttpClient httpClient)
     }
 
     private static string EscapeCsv(string value) => $"\"{value.Replace("\"", "\"\"")}\"";
+
+    private static RosterSyncImportResult DecryptArchive(RosterSyncEnvelope envelope, byte[] keyMaterial)
+    {
+        if (envelope.Format != "secrandom-sync-envelope/v1" || envelope.Encryption != "aes-256-gcm")
+            throw new InvalidDataException("The transfer payload format is not supported.");
+
+        var salt = FromBase64Url(envelope.Salt);
+        var key = envelope.KeyDerivation switch
+        {
+            "raw" when keyMaterial.Length == 32 => keyMaterial,
+            "pbkdf2-sha256" when envelope.Iterations is > 0 => Rfc2898DeriveBytes.Pbkdf2(
+                keyMaterial, salt, envelope.Iterations.Value, HashAlgorithmName.SHA256, 32),
+            _ => throw new InvalidDataException("The transfer key is not valid for this payload.")
+        };
+        var ciphertext = FromBase64Url(envelope.Ciphertext);
+        var plaintext = new byte[ciphertext.Length];
+        using (var aes = new AesGcm(key, 16))
+            aes.Decrypt(FromBase64Url(envelope.Nonce), ciphertext, FromBase64Url(envelope.Tag), plaintext);
+
+        using var input = new MemoryStream(plaintext, writable: false);
+        using var archive = new ZipArchive(input, ZipArchiveMode.Read);
+        var documentEntry = archive.GetEntry("secrandom-roster-transfer.json")
+            ?? throw new InvalidDataException("The transfer archive does not contain roster data.");
+        using var documentStream = documentEntry.Open();
+        var document = JsonSerializer.Deserialize<RosterTransferDocument>(documentStream, JsonOptions)
+            ?? throw new InvalidDataException("The transfer roster data is invalid.");
+        if (document.Version != 1)
+            throw new InvalidDataException("The transfer roster version is not supported.");
+        return new RosterSyncImportResult(document, document.FileName);
+    }
+
+    private static bool TryParseQuickPairing(string value, out string transferId, out byte[] key)
+    {
+        transferId = string.Empty;
+        key = [];
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var pairing) || string.IsNullOrWhiteSpace(pairing.Fragment))
+            return false;
+        var values = System.Web.HttpUtility.ParseQueryString(pairing.Fragment.TrimStart('#'));
+        transferId = values["t"] ?? string.Empty;
+        try
+        {
+            key = FromBase64Url(values["k"] ?? string.Empty);
+            return transferId.Length == 24 && key.Length == 32;
+        }
+        catch (FormatException)
+        {
+            transferId = string.Empty;
+            key = [];
+            return false;
+        }
+    }
     private static string SanitizeFileName(string value)
     {
         foreach (var invalid in Path.GetInvalidFileNameChars()) value = value.Replace(invalid, '_');
         return value.Trim().TrimEnd('.') is { Length: > 0 } safe ? safe : "roster";
     }
     private static string Base64Url(byte[] value) => Convert.ToBase64String(value).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    private static byte[] FromBase64Url(string value) => Convert.FromBase64String(value.Replace('-', '+').Replace('_', '/')
+        .PadRight(value.Length + (4 - value.Length % 4) % 4, '='));
     private static string Sha256Hex(string value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
 
     private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken cancellationToken)
@@ -190,4 +276,5 @@ public sealed class RosterSyncTransferService(HttpClient httpClient)
 
     private sealed record RosterSyncCreateRequest(string Mode, long PayloadLength, string PayloadSha256, string? SessionCodeHash);
     private sealed record RosterSyncCreateResponse(string Id, string UploadToken, DateTimeOffset ExpiresAt);
+    private sealed record RosterSyncResolveSessionRequest(string SessionCodeHash);
 }

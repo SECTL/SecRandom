@@ -31,8 +31,12 @@
                         <MenuFlyout>
                             <MenuItem x:Name="FileImportMenuItem"
                                       Click="FileImportMenuItem_OnClick" />
-                            <MenuItem x:Name="QrImportMenuItem"
-                                      Click="QrImportMenuItem_OnClick" />
+                            <MenuItem x:Name="QuickQrImportMenuItem"
+                                      Click="QuickQrImportMenuItem_OnClick" />
+                            <MenuItem x:Name="OfflineQrImportMenuItem"
+                                      Click="OfflineQrImportMenuItem_OnClick" />
+                            <MenuItem x:Name="SessionCodeImportMenuItem"
+                                      Click="SessionCodeImportMenuItem_OnClick" />
                         </MenuFlyout>
                     </SplitButton.Flyout>
                 </SplitButton>
@@ -57,8 +61,8 @@
                                               PhotoCaptured="CameraControl_OnPhotoCaptured"
                                               CameraError="CameraControl_OnCameraError" />
                     </Border>
-                    <ProgressBar Minimum="0" Maximum="1" Value="{Binding QrProgress}" />
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="12">
+                    <ProgressBar IsVisible="{Binding IsQrTransferStatsVisible}" Minimum="0" Maximum="1" Value="{Binding QrProgress}" />
+                    <Grid IsVisible="{Binding IsQrTransferStatsVisible}" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="12">
                         <StackPanel><TextBlock Classes="caption" Text="{Binding TransferProgressLabel}" /><TextBlock Text="{Binding QrProgressText}" FontSize="18" /></StackPanel>
                         <StackPanel Grid.Column="1"><TextBlock Classes="caption" Text="{Binding TransferSpeedLabel}" /><TextBlock Text="{Binding QrDecodeSpeedText}" FontSize="18" /></StackPanel>
                         <StackPanel Grid.Row="1"><TextBlock Classes="caption" Text="{Binding TransferReceivedLabel}" /><TextBlock Text="{Binding QrPayloadText}" FontSize="18" /></StackPanel>
@@ -66,6 +70,27 @@
                         <StackPanel Grid.Row="2"><TextBlock Classes="caption" Text="{Binding TransferSessionLabel}" /><TextBlock Text="{Binding QrSessionText}" FontSize="18" /></StackPanel>
                         <StackPanel Grid.Row="2" Grid.Column="1"><TextBlock Classes="caption" Text="{Binding TransferElapsedLabel}" /><TextBlock Text="{Binding QrElapsedText}" FontSize="18" /></StackPanel>
                     </Grid>
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox IsVisible="{Binding IsSessionCodeImportMode}" Header="{Binding SessionCodeImportModeLabel}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{Binding SessionCodeHint}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="3">
+                        <TextBox x:Name="SessionCodeBox0" Tag="0" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
+                        <TextBox x:Name="SessionCodeBox1" Tag="1" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
+                        <TextBox x:Name="SessionCodeBox2" Tag="2" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
+                        <TextBox x:Name="SessionCodeBox3" Tag="3" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
+                        <TextBox x:Name="SessionCodeBox4" Tag="4" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
+                        <TextBox x:Name="SessionCodeBox5" Tag="5" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
+                        <TextBox x:Name="SessionCodeBox6" Tag="6" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
+                        <TextBox x:Name="SessionCodeBox7" Tag="7" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
+                        <TextBox x:Name="SessionCodeBox8" Tag="8" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
+                        <TextBox x:Name="SessionCodeBox9" Tag="9" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
+                        <TextBox x:Name="SessionCodeBox10" Tag="10" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
+                        <TextBox x:Name="SessionCodeBox11" Tag="11" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
+                    </StackPanel>
                 </StackPanel>
             </GroupBox>
 
@@ -99,7 +124,7 @@
                 </StackPanel>
             </GroupBox>
 
-            <Border IsVisible="{Binding IsFileImportMode}"
+            <Border IsVisible="{Binding HasPreview}"
                     BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                     BorderThickness="1" CornerRadius="4 4 0 0" ClipToBounds="True">
                 <DataGrid Height="150"

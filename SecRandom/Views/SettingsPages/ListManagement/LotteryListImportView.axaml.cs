@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using CameraView;
@@ -37,9 +38,14 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
     private string? _weightColumn;
     private string _targetListName = string.Empty;
     private bool _isQrImportMode;
+    private RosterImportMode _selectedImportMode = RosterImportMode.ExcelCsv;
     private bool _isScanningQr;
+    private bool _isUpdatingSessionCode;
+    private readonly string[] _sessionCode = new string[12];
+    private CancellationTokenSource? _sessionCodeVerificationCancellationTokenSource;
     private List<Prize>? _qrPrizes;
     private readonly RosterTransferService _transferService = IAppHost.GetService<RosterTransferService>();
+    private readonly RosterSyncTransferService _syncTransferService = IAppHost.GetService<RosterSyncTransferService>();
     private readonly RosterTransferService.RosterQrImportAccumulator _qrImport;
     private CancellationTokenSource? _qrScanCancellationTokenSource;
     private LinuxRosterQrCameraCapture? _linuxQrCameraCapture;
@@ -60,7 +66,9 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
         DataContext = this;
         InitializeComponent();
         FileImportMenuItem.Header = FileImportModeLabel;
-        QrImportMenuItem.Header = QrImportModeLabel;
+        QuickQrImportMenuItem.Header = QuickQrImportModeLabel;
+        OfflineQrImportMenuItem.Header = OfflineQrImportModeLabel;
+        SessionCodeImportMenuItem.Header = SessionCodeImportModeLabel;
     }
 
     public ObservableCollection<string> RequiredColumnOptions { get; } = [];
@@ -113,15 +121,26 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
             if (!SetField(ref _isQrImportMode, value))
                 return;
             NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsFileImportMode)));
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsQuickQrImportMode)));
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsOfflineQrImportMode)));
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSessionCodeImportMode)));
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsQrTransferStatsVisible)));
         }
     }
 
-    public bool IsFileImportMode => !IsQrImportMode;
+    public bool IsFileImportMode => _selectedImportMode == RosterImportMode.ExcelCsv;
+    public bool IsQuickQrImportMode => _selectedImportMode == RosterImportMode.QuickQr;
+    public bool IsOfflineQrImportMode => _selectedImportMode == RosterImportMode.OfflineQr;
+    public bool IsSessionCodeImportMode => _selectedImportMode == RosterImportMode.SessionCode;
+    public bool IsQrTransferStatsVisible => IsOfflineQrImportMode;
+    public bool HasPreview => PreviewRows.Count > 0;
     public bool CanScanQr => true;
     public bool IsQrScanning => _isScanningQr;
     public bool IsCameraPreviewSupported => !OperatingSystem.IsLinux();
     public string FileImportModeLabel => Text("C_ImportExcelCsv");
-    public string QrImportModeLabel => Text("C_ImportQrCode");
+    public string QuickQrImportModeLabel => Text("C_ImportQuickQr");
+    public string OfflineQrImportModeLabel => Text("C_ImportOfflineQr");
+    public string SessionCodeImportModeLabel => Text("C_ImportSessionCode");
     public string ImportSourceLabel => Text("C_SelectImportSource");
     public string QrImportLabel => Text("C_QrImport");
     public string ScanQrLabel => IsQrScanning ? Text("C_StopQrScanner") : Text("C_StartQrScanner");
@@ -142,6 +161,8 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
     public string QrSessionText => _qrImport.TotalFrames == 0 ? "-" : _qrImport.SessionId[..8];
     public string QrElapsedText => _qrImport.StartedAt == default ? "-" :
         $"{Math.Max(0, (DateTimeOffset.UtcNow - _qrImport.StartedAt).TotalSeconds):F1} s";
+    public string SessionCodeHint => Text("C_SessionCodeHint");
+    public string SessionCodeVerifyingText => Text("C_SessionCodeVerifying");
 
     public string? IdColumn
     {
@@ -325,6 +346,7 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
             : CanImport
                 ? string.Format(LR.M_FileLoaded, _rows.Count)
                 : LR.M_SelectRequiredColumns;
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasPreview)));
     }
 
     private ImportPreviewRow CreatePreviewRow(IReadOnlyDictionary<string, string> row)
@@ -340,7 +362,7 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
 
     private void ImportButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (IsQrImportMode)
+        if (!IsFileImportMode)
         {
             if (_qrPrizes is not null)
                 SubmitPrizes(_qrPrizes);
@@ -382,31 +404,86 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
         await OpenFileImportAsync();
     }
 
-    private async void QrImportMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    private async void QuickQrImportMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
         await StopQrScannerAsync();
-        SelectQrImportSource();
+        SelectQrImportSource(RosterImportMode.QuickQr);
         await ToggleQrScannerAsync();
+    }
+
+    private async void OfflineQrImportMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        await StopQrScannerAsync();
+        SelectQrImportSource(RosterImportMode.OfflineQr);
+        await ToggleQrScannerAsync();
+    }
+
+    private async void SessionCodeImportMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        await StopQrScannerAsync();
+        SelectSessionCodeImportSource();
     }
 
     private async Task OpenFileImportAsync()
     {
+        _selectedImportMode = RosterImportMode.ExcelCsv;
         IsQrImportMode = false;
+        NotifyImportModeChanged();
+        ResetPreviewAndImportState();
         await StopQrScannerAsync();
         await SelectFileAsync();
         if (_rows.Count == 0)
             StatusText = LR.M_SelectFileFirst;
     }
 
-    private void SelectQrImportSource()
+    private void SelectQrImportSource(RosterImportMode mode)
     {
+        _selectedImportMode = mode;
         _qrImport.Reset();
         _qrPrizes = null;
         PreviewRows.Clear();
+        CancelSessionCodeVerification();
         IsQrImportMode = true;
         StatusText = Text("C_QrImportReady");
         CanImport = false;
+        NotifyImportModeChanged();
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasPreview)));
         NotifyQrStatsChanged();
+    }
+
+    private void SelectSessionCodeImportSource()
+    {
+        _selectedImportMode = RosterImportMode.SessionCode;
+        IsQrImportMode = false;
+        _qrPrizes = null;
+        PreviewRows.Clear();
+        ResetSessionCodeBoxes();
+        CancelSessionCodeVerification();
+        CanImport = false;
+        StatusText = SessionCodeHint;
+        NotifyImportModeChanged();
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasPreview)));
+    }
+
+    private void ResetPreviewAndImportState()
+    {
+        _rows.Clear();
+        _qrPrizes = null;
+        PreviewRows.Clear();
+        SelectedFileName = LR.C_NoFileSelected;
+        CancelSessionCodeVerification();
+        CanImport = false;
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasPreview)));
+    }
+
+    private void NotifyImportModeChanged()
+    {
+        foreach (var propertyName in new[]
+                 {
+                     nameof(IsFileImportMode), nameof(IsQuickQrImportMode), nameof(IsOfflineQrImportMode),
+                     nameof(IsSessionCodeImportMode), nameof(IsQrTransferStatsVisible)
+                 })
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
     private async Task ToggleQrScannerAsync()
@@ -487,6 +564,28 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
 
     private async Task HandleQrTextAsync(string text)
     {
+        if (IsQuickQrImportMode)
+        {
+            try
+            {
+                var syncResult = await _syncTransferService.ImportQuickAsync(text, _qrScanCancellationTokenSource?.Token ?? default);
+                if (syncResult.Document.Version != 1 || syncResult.Document.Kind != RosterTransferKind.Prizes)
+                {
+                    StatusText = Text("M_QrWrongType");
+                    return;
+                }
+                LoadQrPrizes(syncResult.Document);
+                CanImport = true;
+                await StopQrScannerAsync(keepStatus: true);
+                StatusText = string.Format(Text("M_QrLoaded"), _qrPrizes?.Count ?? 0);
+            }
+            catch (Exception exception) when (exception is InvalidDataException or HttpRequestException)
+            {
+                StatusText = string.Format(Text("M_QuickQrInvalid"), exception.Message);
+            }
+            return;
+        }
+
         var result = _qrImport.Add(text);
         if (result == RosterQrFrameImportResult.Rejected)
         {
@@ -508,6 +607,14 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
             return;
         }
 
+        LoadQrPrizes(document);
+        CanImport = true;
+        await StopQrScannerAsync(keepStatus: true);
+        StatusText = string.Format(Text("M_QrLoaded"), _qrPrizes?.Count ?? 0);
+    }
+
+    private void LoadQrPrizes(RosterTransferDocument document)
+    {
         _qrPrizes = document.Rows
             .Where(row => !string.IsNullOrWhiteSpace(row.Id) || !string.IsNullOrWhiteSpace(row.Name))
             .Select(row => new Prize
@@ -521,10 +628,154 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
         foreach (var prize in _qrPrizes.Take(3))
             PreviewRows.Add(new ImportPreviewRow(prize.Id, prize.Name,
                 prize.Weight.ToString(CultureInfo.CurrentCulture), prize.Count.ToString(CultureInfo.CurrentCulture), prize.Tags));
-        CanImport = true;
-        await StopQrScannerAsync(keepStatus: true);
-        StatusText = string.Format(Text("M_QrLoaded"), _qrPrizes.Count);
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasPreview)));
     }
+
+    private async void SessionCodeBox_OnTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_isUpdatingSessionCode || sender is not TextBox textBox || !TryGetSessionCodeIndex(textBox, out var index))
+            return;
+
+        var normalized = RosterSyncTransferService.NormalizeSessionCode(textBox.Text);
+        if (normalized.Length > 1)
+        {
+            SetSessionCodeFrom(index, normalized);
+        }
+        else
+        {
+            _sessionCode[index] = normalized;
+            if (!string.Equals(textBox.Text, normalized, StringComparison.Ordinal))
+            {
+                _isUpdatingSessionCode = true;
+                textBox.Text = normalized;
+                _isUpdatingSessionCode = false;
+            }
+            if (normalized.Length == 1 && index < _sessionCode.Length - 1)
+                GetSessionCodeBox(index + 1)?.Focus();
+        }
+
+        if (GetSessionCode().Length == _sessionCode.Length)
+            await VerifySessionCodeAsync();
+        else
+            InvalidateSessionCodeImport();
+    }
+
+    private void SessionCodeBox_OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Back || sender is not TextBox textBox || !TryGetSessionCodeIndex(textBox, out var index) || index == 0)
+            return;
+        if (!string.IsNullOrEmpty(textBox.Text) && textBox.CaretIndex > 0)
+            return;
+
+        var previous = GetSessionCodeBox(index - 1);
+        if (previous is null)
+            return;
+        previous.Focus();
+        previous.Text = string.Empty;
+        e.Handled = true;
+    }
+
+    private async Task VerifySessionCodeAsync()
+    {
+        var code = GetSessionCode();
+        if (code.Length != _sessionCode.Length)
+            return;
+
+        CancelSessionCodeVerification();
+        var cancellation = new CancellationTokenSource();
+        _sessionCodeVerificationCancellationTokenSource = cancellation;
+        CanImport = false;
+        StatusText = SessionCodeVerifyingText;
+        try
+        {
+            var result = await _syncTransferService.ImportSessionAsync(code, cancellation.Token);
+            if (!ReferenceEquals(_sessionCodeVerificationCancellationTokenSource, cancellation))
+                return;
+            if (result.Document.Version != 1 || result.Document.Kind != RosterTransferKind.Prizes)
+                throw new InvalidDataException(Text("M_QrWrongType"));
+
+            LoadQrPrizes(result.Document);
+            CanImport = true;
+            StatusText = string.Format(Text("C_SessionCodeLoaded"), _qrPrizes?.Count ?? 0);
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+            // A newer keystroke superseded this verification request.
+        }
+        catch (Exception exception)
+        {
+            if (!ReferenceEquals(_sessionCodeVerificationCancellationTokenSource, cancellation))
+                return;
+            PreviewRows.Clear();
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasPreview)));
+            CanImport = false;
+            StatusText = string.Format(Text("M_SessionCodeInvalid"), exception.Message);
+        }
+        finally
+        {
+            if (ReferenceEquals(_sessionCodeVerificationCancellationTokenSource, cancellation))
+                _sessionCodeVerificationCancellationTokenSource = null;
+            cancellation.Dispose();
+        }
+    }
+
+    private void SetSessionCodeFrom(int startIndex, string value)
+    {
+        var normalized = RosterSyncTransferService.NormalizeSessionCode(value);
+        _isUpdatingSessionCode = true;
+        for (var index = startIndex; index < _sessionCode.Length; index++)
+        {
+            var offset = index - startIndex;
+            var character = offset < normalized.Length ? normalized[offset].ToString() : string.Empty;
+            _sessionCode[index] = character;
+            var textBox = GetSessionCodeBox(index);
+            if (textBox is not null && !string.Equals(textBox.Text, character, StringComparison.Ordinal))
+                textBox.Text = character;
+        }
+        _isUpdatingSessionCode = false;
+        GetSessionCodeBox(Math.Min(startIndex + normalized.Length, _sessionCode.Length - 1))?.Focus();
+    }
+
+    private void ResetSessionCodeBoxes()
+    {
+        _isUpdatingSessionCode = true;
+        for (var index = 0; index < _sessionCode.Length; index++)
+        {
+            _sessionCode[index] = string.Empty;
+            var textBox = GetSessionCodeBox(index);
+            if (textBox is not null)
+                textBox.Text = string.Empty;
+        }
+        _isUpdatingSessionCode = false;
+        GetSessionCodeBox(0)?.Focus();
+    }
+
+    private void InvalidateSessionCodeImport()
+    {
+        CancelSessionCodeVerification();
+        _qrPrizes = null;
+        PreviewRows.Clear();
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasPreview)));
+        CanImport = false;
+        if (IsSessionCodeImportMode)
+            StatusText = SessionCodeHint;
+    }
+
+    private void CancelSessionCodeVerification()
+    {
+        var cancellation = _sessionCodeVerificationCancellationTokenSource;
+        _sessionCodeVerificationCancellationTokenSource = null;
+        cancellation?.Cancel();
+        cancellation?.Dispose();
+    }
+
+    private string GetSessionCode() => string.Concat(_sessionCode);
+
+    private TextBox? GetSessionCodeBox(int index) => this.FindControl<TextBox>($"SessionCodeBox{index}");
+
+    private static bool TryGetSessionCodeIndex(TextBox textBox, out int index) =>
+        int.TryParse(textBox.Tag?.ToString(), NumberStyles.None, CultureInfo.InvariantCulture, out index) &&
+        index is >= 0 and < 12;
 
     private async Task CaptureNextQrFrameAsync(CancellationToken cancellationToken)
     {
@@ -597,6 +848,7 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
     private async void CancelButton_OnClick(object? sender, RoutedEventArgs e)
     {
         await StopQrScannerAsync();
+        CancelSessionCodeVerification();
         if (CloseHandler is not null)
             CloseHandler();
         else

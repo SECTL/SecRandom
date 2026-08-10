@@ -7,6 +7,7 @@ using System.Text.Json;
 using QRCoder;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using ZXing;
 using ZXing.Common;
 
@@ -73,6 +74,12 @@ public sealed class RosterTransferService
         {
             cancellationToken.ThrowIfCancellationRequested();
             using var image = Image.Load<Rgba32>(imageStream);
+            if (Math.Max(image.Width, image.Height) > 960)
+                image.Mutate(context => context.Resize(new ResizeOptions
+                {
+                    Mode = ResizeMode.Max,
+                    Size = new Size(960, 960)
+                }));
             var pixels = new byte[image.Width * image.Height * 4];
             image.CopyPixelDataTo(pixels);
             var source = new RGBLuminanceSource(pixels, image.Width, image.Height,
