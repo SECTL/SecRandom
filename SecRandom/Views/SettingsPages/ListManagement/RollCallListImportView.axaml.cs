@@ -10,8 +10,6 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
-using Avalonia.Threading;
-using CameraView;
 using FluentAvalonia.UI.Controls;
 using MiniExcelLibs;
 using Microsoft.Extensions.Logging;
@@ -20,11 +18,12 @@ using SecRandom.Core.Services.Profiles;
 using SecRandom.Langs.SettingsPages.ListManagement.RosterTransfer;
 using SecRandom.Services.RosterTransfer;
 using SecRandom.Shared.Models.Profile;
+using SecRandom.Views;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.RollCallList.Resources;
 
 namespace SecRandom.Views.SettingsPages.ListManagement;
 
-public partial class RollCallListImportView : UserControl, INotifyPropertyChanged
+public partial class RollCallListImportView : UserControl, INotifyPropertyChanged, IDrawerCloseAware
 {
     private Action<IReadOnlyList<Student>> _importHandler;
     private readonly List<Dictionary<string, string>> _rows = [];
@@ -40,15 +39,18 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
     private bool _isQrImportMode;
     private RosterImportMode _selectedImportMode = RosterImportMode.ExcelCsv;
     private bool _isScanningQr;
+    private bool _isDrawerClosed;
     private const int SessionCodeLength = 12;
     private bool _isUpdatingSessionCode;
     private CancellationTokenSource? _sessionCodeVerificationCancellationTokenSource;
     private List<Student>? _qrStudents;
     private readonly RosterTransferService _transferService = IAppHost.GetService<RosterTransferService>();
     private readonly RosterSyncTransferService _syncTransferService = IAppHost.GetService<RosterSyncTransferService>();
+    private readonly IRosterQrCameraCaptureFactory _qrCameraCaptureFactory =
+        IAppHost.GetService<IRosterQrCameraCaptureFactory>();
     private readonly RosterTransferService.RosterQrImportAccumulator _qrImport;
     private CancellationTokenSource? _qrScanCancellationTokenSource;
-    private LinuxRosterQrCameraCapture? _linuxQrCameraCapture;
+    private IRosterQrCameraCapture? _qrCameraCapture;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
     private readonly ILogger<RollCallListImportView> _logger =
         IAppHost.GetService<ILogger<RollCallListImportView>>();
@@ -136,7 +138,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
     public bool HasPreview => PreviewRows.Count > 0;
     public bool CanScanQr => true;
     public bool IsQrScanning => _isScanningQr;
-    public bool IsCameraPreviewSupported => !OperatingSystem.IsLinux();
+    public bool IsCameraPreviewSupported => _qrCameraCaptureFactory.IsPreviewSupported;
     public string FileImportModeLabel => Text("C_ImportExcelCsv");
     public string QuickQrImportModeLabel => Text("C_ImportQuickQr");
     public string OfflineQrImportModeLabel => Text("C_ImportOfflineQr");
@@ -491,6 +493,8 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
 
     private async Task ToggleQrScannerAsync()
     {
+        if (_isDrawerClosed)
+            return;
         if (_isScanningQr)
         {
             await StopQrScannerAsync();
@@ -502,39 +506,29 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
             _qrScanCancellationTokenSource = new CancellationTokenSource();
             _isScanningQr = true;
             NotifyQrScannerStateChanged();
-            if (OperatingSystem.IsLinux())
+            var cameraCapture = _qrCameraCaptureFactory.Create(CameraControl);
+            cameraCapture.CameraError += CameraCapture_OnCameraError;
+            _qrCameraCapture = cameraCapture;
+            var startResult = await cameraCapture.StartAsync(ProcessCapturedQrImageAsync,
+                _qrScanCancellationTokenSource.Token);
+            if (_isDrawerClosed)
             {
-                _linuxQrCameraCapture = new LinuxRosterQrCameraCapture();
-                await _linuxQrCameraCapture.StartAsync(ProcessCapturedQrImageAsync,
-                    _qrScanCancellationTokenSource.Token);
-                StatusText = Text("C_QrImportReady");
+                await StopQrScannerAsync();
                 return;
             }
-            var provider = CameraProviderFactory.Create();
-            var permissions = CameraProviderFactory.CreatePermissions(provider);
-            if (!await permissions.CheckPermissionAsync() && !await permissions.RequestPermissionAsync())
+            if (startResult == RosterQrCameraStartResult.PermissionDenied)
             {
                 StatusText = Text("M_CameraPermissionDenied");
                 await StopQrScannerAsync(keepStatus: true);
                 return;
             }
-            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render);
-            CameraControl.CameraProvider = provider;
-            await CameraControl.InitializeCameraAsync(provider);
-            await CameraControl.StartCameraAsync();
             StatusText = Text("C_QrImportReady");
-            await CaptureNextQrFrameAsync(_qrScanCancellationTokenSource.Token);
         }
         catch (Exception exception)
         {
             StatusText = string.Format(Text("M_CameraStartFailed"), exception.Message);
             await StopQrScannerAsync(keepStatus: true);
         }
-    }
-
-    private async void CameraControl_OnPhotoCaptured(object? sender, byte[] imageBytes)
-    {
-        await ProcessCapturedQrImageAsync(imageBytes);
     }
 
     private async Task ProcessCapturedQrImageAsync(byte[] imageBytes)
@@ -549,8 +543,6 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
             if (!string.IsNullOrWhiteSpace(text))
                 await HandleQrTextAsync(text);
 
-            if (_isScanningQr && !_qrImport.IsComplete && !OperatingSystem.IsLinux())
-                await CaptureNextQrFrameAsync(_qrScanCancellationTokenSource.Token);
         }
         catch (OperationCanceledException)
         {
@@ -563,7 +555,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         }
     }
 
-    private async void CameraControl_OnCameraError(object? sender, string error)
+    private async void CameraCapture_OnCameraError(object? sender, string error)
     {
         if (!_isScanningQr)
             return;
@@ -732,40 +724,30 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
     private string GetSessionCode() =>
         RosterSyncTransferService.NormalizeSessionCode(this.FindControl<TextBox>("SessionCodeInput")?.Text);
 
-    private async Task CaptureNextQrFrameAsync(CancellationToken cancellationToken)
-    {
-        await Task.Delay(120, cancellationToken);
-        if (_isScanningQr && !cancellationToken.IsCancellationRequested)
-            await CameraControl.TakePhotoAsync();
-    }
-
     private async Task StopQrScannerAsync(bool keepStatus = false)
     {
         var cancellation = Interlocked.Exchange(ref _qrScanCancellationTokenSource, null);
         cancellation?.Cancel();
         cancellation?.Dispose();
-        if (!_isScanningQr)
-            return;
+        var wasScanning = _isScanningQr;
         _isScanningQr = false;
         try
         {
-            if (_linuxQrCameraCapture is { } linuxCapture)
+            if (_qrCameraCapture is { } cameraCapture)
             {
-                _linuxQrCameraCapture = null;
-                await linuxCapture.DisposeAsync();
-            }
-            else
-            {
-                await CameraControl.StopCameraAsync();
+                _qrCameraCapture = null;
+                cameraCapture.CameraError -= CameraCapture_OnCameraError;
+                await cameraCapture.DisposeAsync();
             }
         }
         catch (Exception)
         {
             // A provider can already be stopped when the drawer closes.
         }
-        if (!keepStatus)
+        if (!keepStatus && wasScanning)
             StatusText = Text("C_QrImportReady");
-        NotifyQrScannerStateChanged();
+        if (wasScanning)
+            NotifyQrScannerStateChanged();
     }
 
     private void NotifyQrScannerStateChanged()
@@ -805,12 +787,18 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
 
     private async void CancelButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        await StopQrScannerAsync();
-        CancelSessionCodeVerification();
+        await ((IDrawerCloseAware)this).OnDrawerClosedAsync();
         if (CloseHandler is not null)
             CloseHandler();
         else
             SettingsView.Current?.CloseDrawer();
+    }
+
+    async Task IDrawerCloseAware.OnDrawerClosedAsync()
+    {
+        _isDrawerClosed = true;
+        CancelSessionCodeVerification();
+        await StopQrScannerAsync();
     }
 
     private static bool IsSelectedColumn(string? column)

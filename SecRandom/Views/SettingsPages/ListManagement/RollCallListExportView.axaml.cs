@@ -12,11 +12,12 @@ using MiniExcelLibs;
 using SecRandom.Core.Abstraction;
 using SecRandom.Services.RosterTransfer;
 using SecRandom.Shared.Models.Profile;
+using SecRandom.Views;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.RollCallList.Resources;
 
 namespace SecRandom.Views.SettingsPages.ListManagement;
 
-public partial class RosterListExportView : UserControl, INotifyPropertyChanged
+public partial class RosterListExportView : UserControl, INotifyPropertyChanged, IDrawerCloseAware
 {
     private static readonly TimeSpan QrFrameInterval = TimeSpan.FromMilliseconds(200);
     private readonly RosterTransferDocument _document;
@@ -32,6 +33,7 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
     private int _frameIndex;
     private bool _isGenerating;
     private bool _isQrExporting;
+    private bool _isDrawerClosed;
     private string _statusValue;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
 
@@ -83,7 +85,7 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
         {
             if (value is null || ReferenceEquals(_selectedExportMode, value)) return;
             if (IsQrExporting)
-                StopQrExport();
+                _ = StopQrExportAsync();
             SetField(ref _selectedExportMode, value);
             StatusValue = GetResource("C_QrIdle");
             NotifyStatsChanged();
@@ -181,7 +183,7 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
     {
         if (IsQrExporting)
         {
-            StopQrExport();
+            await StopQrExportAsync();
             return;
         }
 
@@ -208,7 +210,11 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
 
     private async Task StartOfflineQrExportAsync()
     {
-        _exportSession = await _transferService.CreateExportSessionAsync(_document);
+        var exportSession = await _transferService.CreateExportSessionAsync(_document);
+        if (_isDrawerClosed)
+            return;
+
+        _exportSession = exportSession;
         _frameIndex = 0;
         SetQrImage(_exportSession.Frames[0]);
         IsQrExporting = true;
@@ -225,11 +231,18 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
             RosterExportMode.SessionCode => RosterCloudTransferMode.SessionCode,
             _ => throw new InvalidOperationException("The selected export method does not use cloud transfer.")
         };
-        _cloudTransfer = await _syncTransferService.CreateAsync(_document, _fileRows, mode);
-        if (_cloudTransfer.PairingUrl is { } pairingUrl)
+        var cloudTransfer = await _syncTransferService.CreateAsync(_document, _fileRows, mode);
+        if (_isDrawerClosed)
+        {
+            await RevokeCloudTransferAsync(cloudTransfer);
+            return;
+        }
+
+        _cloudTransfer = cloudTransfer;
+        if (cloudTransfer.PairingUrl is { } pairingUrl)
             SetQrImage(RosterSyncTransferService.CreatePairingQrPng(pairingUrl));
         IsQrExporting = true;
-        StatusValue = GetResource(_cloudTransfer.Mode == RosterCloudTransferMode.SessionCode
+        StatusValue = GetResource(cloudTransfer.Mode == RosterCloudTransferMode.SessionCode
             ? "C_SessionCodeReady"
             : "C_CloudQrExporting");
         NotifyStatsChanged();
@@ -244,7 +257,7 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
         NotifyStatsChanged();
     }
 
-    private void StopQrExport()
+    private async Task StopQrExportAsync()
     {
         _frameTimer.Stop();
         var cloudTransfer = _cloudTransfer;
@@ -258,7 +271,7 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
         StatusValue = GetResource("C_QrStopped");
         NotifyStatsChanged();
         if (cloudTransfer is not null)
-            _ = RevokeCloudTransferAsync(cloudTransfer);
+            await RevokeCloudTransferAsync(cloudTransfer);
     }
 
     private async Task RevokeCloudTransferAsync(RosterCloudTransferInfo transfer)
@@ -269,7 +282,7 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
         }
         catch
         {
-            // Stopping locally must stay responsive; the server has an expiry fallback.
+            // The server expiry remains the fallback when the client cannot reach it.
         }
     }
 
@@ -309,14 +322,20 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
     };
     protected string GetResource(string name) => _getResource(name);
 
-    private void CloseButton_OnClick(object? sender, RoutedEventArgs e)
+    private async void CloseButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        StopQrExport();
+        await ((IDrawerCloseAware)this).OnDrawerClosedAsync();
         (ExampleQrImage as IDisposable)?.Dispose();
         if (CloseHandler is not null)
             CloseHandler();
         else
             SettingsView.Current?.CloseDrawer();
+    }
+
+    async Task IDrawerCloseAware.OnDrawerClosedAsync()
+    {
+        _isDrawerClosed = true;
+        await StopQrExportAsync();
     }
 
     private void NotifyStatsChanged()

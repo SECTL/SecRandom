@@ -110,6 +110,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 | `IArchivePostImportHooks` | seam | `SecRandom.Core/Services/Archive/IArchivePostImportHooks.cs` | Platform follow-up after archive import; Core registers Null hooks, desktop overrides them. |
 | `ProfileCatalogManager` | domain service | `SecRandom.Core/Services/Profiles/ProfileCatalogManager.cs` | List/profile CRUD and student/prize history clearing behind `IProfileCatalogManager`. |
 | `RosterImportParser` | parser | `SecRandom.Core/Services/Profiles/RosterImportParser.cs` | Shared roster spreadsheet parsing and column mapping for desktop/mobile imports. |
+| `IRosterQrCameraCapture` / `IRosterQrCameraCaptureFactory` | app service seam | `SecRandom/Services/RosterTransfer/IRosterQrCameraCapture.cs` | Common in-memory frame, permission, error, and lifetime boundary for list-import QR cameras; the Host-resolved factory selects CameraView for Windows/Android/iOS, and OpenCV uses AVFoundation on macOS and V4L2 on Linux. |
 | `MobileRollCallService` | mobile service | `SecRandom/Services/Mobile/MobileRollCallService.cs` | Mobile list/scope/count snapshots, multi-member draws, remaining list, and scoped temporary reset without changing the Core session contract. |
 | `MobileMediaLibraryService` / `MobileDrawMediaService` | mobile services | `SecRandom/Services/Mobile/` | Mobile-private media import/reference cleanup and draw-time per-record image/music/voice orchestration through head-injected native playback. |
 

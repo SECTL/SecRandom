@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.ListManagement"
-             xmlns:cv="using:CameraView"
+             xmlns:controls="clr-namespace:SecRandom.Controls"
              xmlns:lr="clr-namespace:SecRandom.Langs.SettingsPages.ListManagement.RollCallList"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
@@ -57,9 +57,7 @@
                     <Border Height="220" ClipToBounds="True" CornerRadius="4"
                             IsVisible="{Binding IsCameraPreviewSupported}"
                             Background="{DynamicResource ControlFillColorSecondaryBrush}">
-                        <cv:CameraViewControl x:Name="CameraControl"
-                                              PhotoCaptured="CameraControl_OnPhotoCaptured"
-                                              CameraError="CameraControl_OnCameraError" />
+                        <controls:RosterQrCameraPreview x:Name="CameraControl" />
                     </Border>
                     <ProgressBar IsVisible="{Binding IsQrTransferStatsVisible}" Minimum="0" Maximum="1" Value="{Binding QrProgress}" />
                     <Grid IsVisible="{Binding IsQrTransferStatsVisible}" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="12">

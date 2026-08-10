@@ -11,6 +11,11 @@
     </PropertyGroup>
 
     <Import Project="..\Platforms.props" />
+
+    <!-- CameraView ships the Windows provider only for the Windows TFM. -->
+    <PropertyGroup Condition="'$(SecRandomPlatform)' == 'Windows'">
+        <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    </PropertyGroup>
     
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <OutputType>WinExe</OutputType>

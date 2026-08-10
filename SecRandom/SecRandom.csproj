@@ -460,6 +460,10 @@
         <PackageReference Include="CameraView.Avalonia" Version="1.0.18" />
         <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260627" />
         <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64" Version="4.13.0.20260627" />
+        <PackageReference Include="OpenCvSharp4.runtime.osx.10.15-x64" Version="4.6.0.20230105"
+                          Condition="'$(RuntimeIdentifier)' == 'osx-x64'" />
+        <PackageReference Include="OpenCvSharp4.runtime.osx_arm64" Version="4.8.1-rc"
+                          Condition="'$(RuntimeIdentifier)' == 'osx-arm64'" />
         <PackageReference Include="SoundFlow" Version="[1.2.1.3]" />
         <PackageReference Include="ClassIsland.Shared.IPC" Version="2.1.0.1" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.10" />

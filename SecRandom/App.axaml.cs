@@ -768,6 +768,7 @@ public partial class App : Application
                 services.AddTransient<RollCallDrawService>();
                 services.AddTransient<LotteryDrawService>();
                 services.AddSingleton<RosterTransferService>();
+                services.AddSingleton<IRosterQrCameraCaptureFactory, RosterQrCameraCaptureFactory>();
                 services.AddHttpClient<RosterSyncTransferService>(client =>
                 {
                     client.BaseAddress = new Uri("https://secrandom-sync.sectl.cn/");

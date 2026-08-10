@@ -3,37 +3,52 @@ using OpenCvSharp;
 namespace SecRandom.Services.RosterTransfer;
 
 /// <summary>
-/// Linux V4L2 capture loop used when the desktop camera control has no Linux provider.
-/// It forwards JPEG frames in memory only; no camera frame is persisted.
+/// OpenCV desktop capture loop used when CameraView has no native provider.
+/// It uses V4L2 on Linux and AVFoundation on macOS, forwarding JPEG frames in memory only.
 /// </summary>
-public sealed class LinuxRosterQrCameraCapture : IAsyncDisposable
+public sealed class OpenCvRosterQrCameraCapture : IRosterQrCameraCapture
 {
-    private readonly VideoCapture _capture = new(0, VideoCaptureAPIs.V4L2);
+    private readonly VideoCapture _capture;
+    private readonly string _cameraApiName;
     private CancellationTokenSource? _cancellation;
     private Task? _loop;
 
-    public Task StartAsync(Func<byte[], Task> onFrame, CancellationToken cancellationToken)
+    public event EventHandler<string>? CameraError;
+
+    public OpenCvRosterQrCameraCapture(VideoCaptureAPIs captureApi, string cameraApiName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(cameraApiName);
+        _cameraApiName = cameraApiName;
+        _capture = new VideoCapture(0, captureApi);
+    }
+
+    public Task<RosterQrCameraStartResult> StartAsync(Func<byte[], Task> onFrame, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(onFrame);
         if (!_capture.IsOpened())
-            throw new InvalidOperationException("No V4L2 camera is available.");
+            throw new InvalidOperationException($"No {_cameraApiName} camera is available.");
 
-        _cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        _cancellation = cancellation;
         _loop = Task.Run(async () =>
         {
             using var frame = new Mat();
             try
             {
-                while (!_cancellation.IsCancellationRequested)
+                while (!cancellation.IsCancellationRequested)
                 {
                     if (_capture.Read(frame) && !frame.Empty() && Cv2.ImEncode(".jpg", frame, out var jpeg))
-                        await onFrame(jpeg).ConfigureAwait(false);
-                    await Task.Delay(250, _cancellation.Token).ConfigureAwait(false);
+                        await RosterQrCameraDispatcher.DispatchFrameAsync(onFrame, jpeg).ConfigureAwait(false);
+                    await Task.Delay(250, cancellation.Token).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException) { }
+            catch (Exception exception) when (!cancellation.IsCancellationRequested)
+            {
+                RosterQrCameraDispatcher.DispatchError(CameraError, this, exception.Message);
+            }
         }, CancellationToken.None);
-        return Task.CompletedTask;
+        return Task.FromResult(RosterQrCameraStartResult.Started);
     }
 
     public ValueTask DisposeAsync()

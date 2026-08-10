@@ -9,6 +9,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using System.ComponentModel;
 using DynamicData;
 using FluentAvalonia.UI.Controls;
 using FluentAvalonia.UI.Navigation;
@@ -69,6 +70,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
         }
         _logger = logger;
         ViewModel = viewModel ?? new SettingsViewModel();
+        ViewModel.PropertyChanged += ViewModel_OnPropertyChanged;
         DataContext = this;
         InitializeComponent();
 
@@ -81,6 +83,8 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
         SelectNavigationItemById(_isMobile ? MobilePageIds.Settings : DefaultDesktopPageId);
         Closed += (_, _) =>
         {
+            ViewModel.PropertyChanged -= ViewModel_OnPropertyChanged;
+            _ = NotifyDrawerClosedAsync(ViewModel.DrawerContent);
             NavigationFrame.Navigated -= NavigationFrame_OnNavigated;
             RestorePreviewControls();
             if (_isMobile)
@@ -356,6 +360,8 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
 
     public void OpenDrawer(object content)
     {
+        if (ViewModel.IsDrawerOpen && !ReferenceEquals(ViewModel.DrawerContent, content))
+            _ = NotifyDrawerClosedAsync(ViewModel.DrawerContent);
         ViewModel.DrawerContent = content;
         ViewModel.IsDrawerOpen = true;
     }
@@ -363,6 +369,18 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
     public void CloseDrawer()
     {
         ViewModel.IsDrawerOpen = false;
+    }
+
+    private void ViewModel_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SettingsViewModel.IsDrawerOpen) && !ViewModel.IsDrawerOpen)
+            _ = NotifyDrawerClosedAsync(ViewModel.DrawerContent);
+    }
+
+    private static async Task NotifyDrawerClosedAsync(object? content)
+    {
+        if (content is IDrawerCloseAware closeAware)
+            await closeAware.OnDrawerClosedAsync();
     }
 
     #endregion

@@ -87,16 +87,33 @@ public sealed class RosterSyncTransferService(HttpClient httpClient)
         var created = await createResponse.Content.ReadFromJsonAsync<RosterSyncCreateResponse>(JsonOptions, cancellationToken)
             ?? throw new InvalidOperationException("Sync service returned an empty transfer response");
 
-        using var payloadContent = new ByteArrayContent(payload);
-        payloadContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-        payloadContent.Headers.ContentLength = payload.LongLength;
-        using var uploadRequest = new HttpRequestMessage(HttpMethod.Put, $"v1/transfers/{Uri.EscapeDataString(created.Id)}/payload")
+        try
         {
-            Content = payloadContent
-        };
-        uploadRequest.Headers.Add("X-SecRandom-Upload-Token", created.UploadToken);
-        using var uploadResponse = await httpClient.SendAsync(uploadRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        await EnsureSuccessAsync(uploadResponse, cancellationToken);
+            using var payloadContent = new ByteArrayContent(payload);
+            payloadContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+            payloadContent.Headers.ContentLength = payload.LongLength;
+            using var uploadRequest = new HttpRequestMessage(HttpMethod.Put, $"v1/transfers/{Uri.EscapeDataString(created.Id)}/payload")
+            {
+                Content = payloadContent
+            };
+            uploadRequest.Headers.Add("X-SecRandom-Upload-Token", created.UploadToken);
+            using var uploadResponse = await httpClient.SendAsync(uploadRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            await EnsureSuccessAsync(uploadResponse, cancellationToken);
+        }
+        catch
+        {
+            var incompleteTransfer = new RosterCloudTransferInfo(mode, created.Id, created.UploadToken, null, null,
+                created.ExpiresAt, payload.LongLength, document.Rows.Count);
+            try
+            {
+                await RevokeAsync(incompleteTransfer, CancellationToken.None);
+            }
+            catch
+            {
+                // The service retains its short expiry as the last-resort cleanup path.
+            }
+            throw;
+        }
 
         var pairingUrl = mode == RosterCloudTransferMode.QuickQr
             ? $"{PublicUrl}/#t={Uri.EscapeDataString(created.Id)}&k={Uri.EscapeDataString(Base64Url(keyMaterial))}"
