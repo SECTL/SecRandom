@@ -53,7 +53,7 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
             new RosterExportModeOption(RosterExportMode.OfflineQr, GetResource("C_ModeOfflineQr")),
             new RosterExportModeOption(RosterExportMode.SessionCode, GetResource("C_ModeSessionCode"))
         ];
-        _selectedExportMode = ExportModes[1];
+        _selectedExportMode = ExportModes[0];
         ExampleQrImage = CreateImage(_transferService.CreateExampleQrPng());
         _frameTimer = new DispatcherTimer { Interval = QrFrameInterval };
         _frameTimer.Tick += (_, _) => AdvanceQrFrame();
@@ -68,7 +68,9 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
     public string FileExportTitle => GetResource("C_FileExport");
     public string ExportFileButtonText => GetResource("C_ExportToFile");
     public string SupportedFileTypesText => GetResource("C_ExportSupportedFormats");
-    public string QrExportTitle => GetResource("C_QrExport");
+    public string DeviceExportTitle => SelectedExportMode.Mode == RosterExportMode.SessionCode
+        ? GetResource("C_SessionCodeExport")
+        : GetResource("C_QrExport");
     public string QrIdleHint => GetResource("C_QrIdleHint");
     public string CloseButtonText => GetResource("C_Cancel");
     public string QrExportButtonText => IsQrExporting ? GetResource("C_StopQrExport") : GetResource("C_ExportToDevices");
@@ -330,6 +332,7 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
         OnPropertyChanged(nameof(IsQrImageVisible));
         OnPropertyChanged(nameof(IsOfflineQrExportVisible));
         OnPropertyChanged(nameof(SessionCodeValue));
+        OnPropertyChanged(nameof(DeviceExportTitle));
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

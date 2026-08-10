@@ -43,7 +43,7 @@
                 </StackPanel>
             </GroupBox>
 
-            <GroupBox IsVisible="{Binding IsDeviceExportMode}" Header="{Binding QrExportTitle}">
+            <GroupBox IsVisible="{Binding IsDeviceExportMode}" Header="{Binding DeviceExportTitle}">
                 <StackPanel Spacing="10">
                     <Button Classes="accent" HorizontalAlignment="Left" HorizontalContentAlignment="Center"
                             Content="{Binding QrExportButtonText}"
@@ -78,22 +78,18 @@
                         </Grid>
                     </Border>
 
-                    <Border IsVisible="{Binding IsSessionCodeVisible}"
-                            HorizontalAlignment="Center" Padding="16"
-                            BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                            BorderThickness="1" CornerRadius="6">
-                        <StackPanel Spacing="10">
-                            <TextBlock Text="{Binding SessionCodeLabel}" Classes="caption" HorizontalAlignment="Center" />
-                            <TextBlock Text="{Binding SessionCodeValue}" FontSize="26" FontWeight="Bold"
-                                       HorizontalAlignment="Center" TextWrapping="Wrap" />
-                            <Button HorizontalAlignment="Center" Click="CopySessionCode_OnClick">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <sr:FluentIcon Glyph="{sr:Fi ClipboardFilled}" />
-                                    <TextBlock Text="{Binding SessionCodeCopyLabel}" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                    </Border>
+                    <StackPanel IsVisible="{Binding IsSessionCodeVisible}"
+                                HorizontalAlignment="Center" Spacing="10">
+                        <TextBlock Text="{Binding SessionCodeLabel}" Classes="caption" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding SessionCodeValue}" FontSize="26" FontWeight="Bold"
+                                   HorizontalAlignment="Center" TextWrapping="Wrap" />
+                        <Button HorizontalAlignment="Center" Click="CopySessionCode_OnClick">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <sr:FluentIcon Glyph="{sr:Fi ClipboardFilled}" />
+                                <TextBlock Text="{Binding SessionCodeCopyLabel}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
 
                     <ProgressBar IsVisible="{Binding IsOfflineQrExportVisible}" Minimum="0" Maximum="1" Value="{Binding ExportProgress}" />
                     <Grid IsVisible="{Binding IsOfflineQrExportVisible}" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="12">

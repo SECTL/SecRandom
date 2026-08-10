@@ -15,7 +15,7 @@
   <data name="C_SelectImportSource"><value>インポート方法を選択</value></data>
   <data name="C_SelectExportMode"><value>エクスポート方法を選択</value></data>
   <data name="C_CopySessionCode"><value>セッションコードをコピー</value></data>
-  <data name="C_SessionCodeHint"><value>英字または数字を 12 桁入力すると自動検証します</value></data>
+  <data name="C_SessionCodeHint"><value>英字または数字を区切りなしで 12 桁入力すると自動検証します</value></data>
   <data name="C_SessionCodeVerifying"><value>セッションコードを検証しています</value></data>
   <data name="C_SessionCodeLoaded"><value>{0} 件のリストを受信しました。インポートできます。</value></data>
   <data name="M_SessionCodeInvalid"><value>セッションコードが無効または期限切れです: {0}</value></data>
@@ -28,4 +28,5 @@
   <data name="C_SessionCode"><value>セッションコード</value></data>
   <data name="C_SessionCodeReady"><value>セッションコードを生成しました</value></data>
   <data name="C_CloudQrExporting"><value>ペアリング QR コードを生成しました</value></data>
+<data name="C_SessionCodeExport"><value>セッションコードでエクスポート</value></data>
 </root>

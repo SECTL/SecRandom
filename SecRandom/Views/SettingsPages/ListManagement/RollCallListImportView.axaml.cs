@@ -8,9 +8,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using CameraView;
 using FluentAvalonia.UI.Controls;
 using MiniExcelLibs;
@@ -40,8 +40,8 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
     private bool _isQrImportMode;
     private RosterImportMode _selectedImportMode = RosterImportMode.ExcelCsv;
     private bool _isScanningQr;
+    private const int SessionCodeLength = 12;
     private bool _isUpdatingSessionCode;
-    private readonly string[] _sessionCode = new string[12];
     private CancellationTokenSource? _sessionCodeVerificationCancellationTokenSource;
     private List<Student>? _qrStudents;
     private readonly RosterTransferService _transferService = IAppHost.GetService<RosterTransferService>();
@@ -460,7 +460,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         IsQrImportMode = false;
         _qrStudents = null;
         PreviewRows.Clear();
-        ResetSessionCodeBoxes();
+        ResetSessionCodeInput();
         CancelSessionCodeVerification();
         CanImport = false;
         StatusText = SessionCodeHint;
@@ -518,6 +518,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
                 await StopQrScannerAsync(keepStatus: true);
                 return;
             }
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render);
             CameraControl.CameraProvider = provider;
             await CameraControl.InitializeCameraAsync(provider);
             await CameraControl.StartCameraAsync();
@@ -636,54 +637,29 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasPreview)));
     }
 
-    private async void SessionCodeBox_OnTextChanged(object? sender, TextChangedEventArgs e)
+    private async void SessionCodeInput_OnTextChanged(object? sender, TextChangedEventArgs e)
     {
-        if (_isUpdatingSessionCode || sender is not TextBox textBox || !TryGetSessionCodeIndex(textBox, out var index))
+        if (_isUpdatingSessionCode || sender is not TextBox textBox)
             return;
 
         var normalized = RosterSyncTransferService.NormalizeSessionCode(textBox.Text);
-        if (normalized.Length > 1)
+        if (!string.Equals(textBox.Text, normalized, StringComparison.Ordinal))
         {
-            SetSessionCodeFrom(index, normalized);
-        }
-        else
-        {
-            _sessionCode[index] = normalized;
-            if (!string.Equals(textBox.Text, normalized, StringComparison.Ordinal))
-            {
-                _isUpdatingSessionCode = true;
-                textBox.Text = normalized;
-                _isUpdatingSessionCode = false;
-            }
-            if (normalized.Length == 1 && index < _sessionCode.Length - 1)
-                GetSessionCodeBox(index + 1)?.Focus();
+            _isUpdatingSessionCode = true;
+            textBox.Text = normalized;
+            _isUpdatingSessionCode = false;
         }
 
-        if (GetSessionCode().Length == _sessionCode.Length)
+        if (normalized.Length == SessionCodeLength)
             await VerifySessionCodeAsync();
         else
             InvalidateSessionCodeImport();
     }
 
-    private void SessionCodeBox_OnKeyDown(object? sender, KeyEventArgs e)
-    {
-        if (e.Key != Key.Back || sender is not TextBox textBox || !TryGetSessionCodeIndex(textBox, out var index) || index == 0)
-            return;
-        if (!string.IsNullOrEmpty(textBox.Text) && textBox.CaretIndex > 0)
-            return;
-
-        var previous = GetSessionCodeBox(index - 1);
-        if (previous is null)
-            return;
-        previous.Focus();
-        previous.Text = string.Empty;
-        e.Handled = true;
-    }
-
     private async Task VerifySessionCodeAsync()
     {
         var code = GetSessionCode();
-        if (code.Length != _sessionCode.Length)
+        if (code.Length != SessionCodeLength)
             return;
 
         CancelSessionCodeVerification();
@@ -724,35 +700,14 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         }
     }
 
-    private void SetSessionCodeFrom(int startIndex, string value)
-    {
-        var normalized = RosterSyncTransferService.NormalizeSessionCode(value);
-        _isUpdatingSessionCode = true;
-        for (var index = startIndex; index < _sessionCode.Length; index++)
-        {
-            var offset = index - startIndex;
-            var character = offset < normalized.Length ? normalized[offset].ToString() : string.Empty;
-            _sessionCode[index] = character;
-            var textBox = GetSessionCodeBox(index);
-            if (textBox is not null && !string.Equals(textBox.Text, character, StringComparison.Ordinal))
-                textBox.Text = character;
-        }
-        _isUpdatingSessionCode = false;
-        GetSessionCodeBox(Math.Min(startIndex + normalized.Length, _sessionCode.Length - 1))?.Focus();
-    }
-
-    private void ResetSessionCodeBoxes()
+    private void ResetSessionCodeInput()
     {
         _isUpdatingSessionCode = true;
-        for (var index = 0; index < _sessionCode.Length; index++)
-        {
-            _sessionCode[index] = string.Empty;
-            var textBox = GetSessionCodeBox(index);
-            if (textBox is not null)
-                textBox.Text = string.Empty;
-        }
+        var textBox = this.FindControl<TextBox>("SessionCodeInput");
+        if (textBox is not null)
+            textBox.Text = string.Empty;
         _isUpdatingSessionCode = false;
-        GetSessionCodeBox(0)?.Focus();
+        textBox?.Focus();
     }
 
     private void InvalidateSessionCodeImport()
@@ -774,13 +729,8 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         cancellation?.Dispose();
     }
 
-    private string GetSessionCode() => string.Concat(_sessionCode);
-
-    private TextBox? GetSessionCodeBox(int index) => this.FindControl<TextBox>($"SessionCodeBox{index}");
-
-    private static bool TryGetSessionCodeIndex(TextBox textBox, out int index) =>
-        int.TryParse(textBox.Tag?.ToString(), NumberStyles.None, CultureInfo.InvariantCulture, out index) &&
-        index is >= 0 and < 12;
+    private string GetSessionCode() =>
+        RosterSyncTransferService.NormalizeSessionCode(this.FindControl<TextBox>("SessionCodeInput")?.Text);
 
     private async Task CaptureNextQrFrameAsync(CancellationToken cancellationToken)
     {

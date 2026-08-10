@@ -77,20 +77,8 @@
                 <StackPanel Spacing="8">
                     <TextBlock Text="{Binding SessionCodeHint}" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="3">
-                        <TextBox x:Name="SessionCodeBox0" Tag="0" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
-                        <TextBox x:Name="SessionCodeBox1" Tag="1" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
-                        <TextBox x:Name="SessionCodeBox2" Tag="2" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
-                        <TextBox x:Name="SessionCodeBox3" Tag="3" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
-                        <TextBox x:Name="SessionCodeBox4" Tag="4" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
-                        <TextBox x:Name="SessionCodeBox5" Tag="5" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
-                        <TextBox x:Name="SessionCodeBox6" Tag="6" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
-                        <TextBox x:Name="SessionCodeBox7" Tag="7" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
-                        <TextBox x:Name="SessionCodeBox8" Tag="8" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
-                        <TextBox x:Name="SessionCodeBox9" Tag="9" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
-                        <TextBox x:Name="SessionCodeBox10" Tag="10" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
-                        <TextBox x:Name="SessionCodeBox11" Tag="11" Width="25" MaxLength="12" TextAlignment="Center" FontSize="17" TextChanged="SessionCodeBox_OnTextChanged" KeyDown="SessionCodeBox_OnKeyDown" />
-                    </StackPanel>
+                    <TextBox x:Name="SessionCodeInput" MaxLength="12" TextAlignment="Center"
+                             FontSize="17" TextChanged="SessionCodeInput_OnTextChanged" />
                 </StackPanel>
             </GroupBox>
 
