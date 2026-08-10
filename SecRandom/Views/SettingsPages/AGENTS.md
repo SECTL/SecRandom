@@ -24,7 +24,7 @@ SecRandom/Views/SettingsPages/
 |-- About/                                # settings.about: about page with external links
 |-- Linkage/                              # settings.linkage: linkage settings
 |-- More/                                 # settings.more: more settings
-|-- Update/                               # settings.update: update settings
+|-- Update/                               # settings.update: shared update settings
 |-- LogViewer/                            # settings.logs: hidden log viewer
 ```
 
@@ -46,7 +46,7 @@ SecRandom/Views/SettingsPages/
 | Personalized music library | `Personalized/MusicSettingsPage.axaml(.cs)` | Page ID `settings.personalized.music`; imports, deletes, and previews managed MP3/WAV/FLAC tracks. |
 | Linkage settings | `Linkage/LinkageSettingsPage.axaml(.cs)` | Top-level `settings.linkage` entry. |
 | More settings | `More/MoreSettingsPage.axaml(.cs)` | `settings.more` top-level entry. |
-| Update settings | `Update/UpdateSettingsPage.axaml(.cs)` | `settings.update` bottom-nav entry. |
+| Update settings | `Update/UpdateSettingsPage.axaml(.cs)` | Shared `settings.update` bottom-nav entry for desktop and mobile. |
 | Notification settings | `Notification/VoiceSettingsPage.axaml(.cs)` etc. | Voice/music and notification channel entries under `settings.notification`. |
 | History management | `History/HistoryManagementSettingsPage.axaml(.cs)` | Clears roll-call/lottery histories through active-profile or named-profile handlers; `settings.history.management`. |
 | Log viewer | `LogViewer/LogViewerSettingsPage.axaml(.cs)` | Hidden page `settings.logs`; opened from the settings shell more-options menu. |
