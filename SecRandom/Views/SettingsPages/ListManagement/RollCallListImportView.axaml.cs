@@ -463,7 +463,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         ResetSessionCodeInput();
         CancelSessionCodeVerification();
         CanImport = false;
-        StatusText = SessionCodeHint;
+        StatusText = string.Empty;
         NotifyImportModeChanged();
         NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasPreview)));
     }
@@ -718,7 +718,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
         NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasPreview)));
         CanImport = false;
         if (IsSessionCodeImportMode)
-            StatusText = SessionCodeHint;
+            StatusText = string.Empty;
     }
 
     private void CancelSessionCodeVerification()

@@ -15,7 +15,7 @@
   <data name="C_SelectImportSource"><value>Choose import method</value></data>
   <data name="C_SelectExportMode"><value>Choose export method</value></data>
   <data name="C_CopySessionCode"><value>Copy session code</value></data>
-  <data name="C_SessionCodeHint"><value>Enter 12 letters or digits without separators. Verification starts automatically.</value></data>
+  <data name="C_SessionCodeHint"><value>Enter 12 letters or digits. Verification starts automatically.</value></data>
   <data name="C_SessionCodeVerifying"><value>Verifying session code</value></data>
   <data name="C_SessionCodeLoaded"><value>Received {0} list records. Ready to import.</value></data>
   <data name="M_SessionCodeInvalid"><value>The session code is invalid or expired: {0}</value></data>

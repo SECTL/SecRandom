@@ -94,7 +94,9 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged
     public bool IsFileExportMode => SelectedExportMode.Mode == RosterExportMode.File;
     public bool IsDeviceExportMode => !IsFileExportMode;
     public bool IsSessionCodeVisible => IsQrExporting && _cloudTransfer?.Mode == RosterCloudTransferMode.SessionCode;
-    public bool IsQrImageVisible => IsDeviceExportMode && !IsSessionCodeVisible;
+    public bool IsQrImageVisible => IsDeviceExportMode &&
+                                    SelectedExportMode.Mode != RosterExportMode.SessionCode &&
+                                    !IsSessionCodeVisible;
     public bool IsOfflineQrExportVisible => IsQrExporting && SelectedExportMode.Mode == RosterExportMode.OfflineQr;
     public double ExportProgress => _exportSession is not null
         ? (double)(_frameIndex + 1) / _exportSession.Frames.Count

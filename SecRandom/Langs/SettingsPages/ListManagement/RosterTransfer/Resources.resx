@@ -49,7 +49,7 @@
   <data name="C_SelectImportSource"><value>选择导入方式</value></data>
   <data name="C_SelectExportMode"><value>选择导出方式</value></data>
   <data name="C_CopySessionCode"><value>复制会话码</value></data>
-  <data name="C_SessionCodeHint"><value>输入 12 位字母或数字，无需分隔符，输入完成后自动验证</value></data>
+  <data name="C_SessionCodeHint"><value>输入 12 位字母或数字，输入完成后自动验证</value></data>
   <data name="C_SessionCodeVerifying"><value>正在验证会话码</value></data>
   <data name="C_SessionCodeLoaded"><value>已接收 {0} 条记录，可以导入</value></data>
   <data name="M_SessionCodeInvalid"><value>会话码无效或已过期：{0}</value></data>
