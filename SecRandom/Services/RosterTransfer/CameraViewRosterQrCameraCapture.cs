@@ -8,6 +8,7 @@ namespace SecRandom.Services.RosterTransfer;
 /// </summary>
 public sealed class CameraViewRosterQrCameraCapture(CameraViewControl cameraControl) : IRosterQrCameraCapture
 {
+    private static readonly TimeSpan CaptureInterval = TimeSpan.FromMilliseconds(60);
     private readonly CameraViewControl _cameraControl = cameraControl;
     private CancellationTokenSource? _cancellation;
     private Func<byte[], Task>? _onFrame;
@@ -114,7 +115,7 @@ public sealed class CameraViewRosterQrCameraCapture(CameraViewControl cameraCont
 
     private async Task CaptureNextFrameAsync(CancellationToken cancellationToken)
     {
-        await Task.Delay(120, cancellationToken);
+        await Task.Delay(CaptureInterval, cancellationToken);
         if (!cancellationToken.IsCancellationRequested && _cancellation is { } active &&
             active.Token == cancellationToken)
             await RunOnUiThreadAsync(_cameraControl.TakePhotoAsync);

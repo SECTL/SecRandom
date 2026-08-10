@@ -8,6 +8,7 @@ namespace SecRandom.Services.RosterTransfer;
 /// </summary>
 public sealed class OpenCvRosterQrCameraCapture : IRosterQrCameraCapture
 {
+    private static readonly TimeSpan CaptureInterval = TimeSpan.FromMilliseconds(100);
     private readonly VideoCapture _capture;
     private readonly string _cameraApiName;
     private CancellationTokenSource? _cancellation;
@@ -39,7 +40,7 @@ public sealed class OpenCvRosterQrCameraCapture : IRosterQrCameraCapture
                 {
                     if (_capture.Read(frame) && !frame.Empty() && Cv2.ImEncode(".jpg", frame, out var jpeg))
                         await RosterQrCameraDispatcher.DispatchFrameAsync(onFrame, jpeg).ConfigureAwait(false);
-                    await Task.Delay(250, cancellation.Token).ConfigureAwait(false);
+                    await Task.Delay(CaptureInterval, cancellation.Token).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException) { }

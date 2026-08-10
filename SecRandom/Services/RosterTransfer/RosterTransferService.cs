@@ -21,7 +21,11 @@ public sealed class RosterTransferService
 {
     private const string ManifestPrefix = "SRQR1M";
     private const string DataPrefix = "SRQR1D";
-    private const int FramePayloadLength = 320;
+    // Keep offline QR modules large enough for a 256 px presentation surface.
+    // Data frames are padded below so every frame uses the same QR matrix size.
+    private const int FramePayloadLength = 128;
+    private const int FrameIndexDigits = 4;
+    private const int FrameOffsetDigits = 7;
     private const int MaximumFrameCount = 4096;
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
 
@@ -47,12 +51,28 @@ public sealed class RosterTransferService
                 Base64UrlEncode(Encoding.UTF8.GetBytes(document.FileName)), compressedPayload.Length, chunks.Count, checksum);
             using (var manifestData = generator.CreateQrCode(manifest, QRCodeGenerator.ECCLevel.M))
                 frames.Add(new PngByteQRCode(manifestData).GetGraphic(8));
+            var dataContents = new List<string>(chunks.Count);
             for (var index = 0; index < chunks.Count; index++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var content = string.Join('|', DataPrefix, sessionId, index, index * FramePayloadLength,
-                    compressedPayload.Length, checksum, Convert.ToBase64String(chunks[index]));
+                dataContents.Add(string.Join('|', DataPrefix, sessionId,
+                    index.ToString($"D{FrameIndexDigits}", CultureInfo.InvariantCulture),
+                    (index * FramePayloadLength).ToString($"D{FrameOffsetDigits}", CultureInfo.InvariantCulture),
+                    compressedPayload.Length, checksum, Convert.ToBase64String(PadFrame(chunks[index]))));
+            }
+
+            var dataFrameVersion = 0;
+            foreach (var content in dataContents)
+            {
                 using var data = generator.CreateQrCode(content, QRCodeGenerator.ECCLevel.M);
+                dataFrameVersion = Math.Max(dataFrameVersion, data.Version);
+            }
+
+            foreach (var content in dataContents)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                using var data = generator.CreateQrCode(content, QRCodeGenerator.ECCLevel.M,
+                    requestedVersion: dataFrameVersion);
                 frames.Add(new PngByteQRCode(data).GetGraphic(8));
             }
 
@@ -124,6 +144,13 @@ public sealed class RosterTransferService
         if (chunks.Count == 0)
             chunks.Add([]);
         return chunks;
+    }
+
+    private static byte[] PadFrame(byte[] chunk)
+    {
+        var padded = new byte[FramePayloadLength];
+        Buffer.BlockCopy(chunk, 0, padded, 0, chunk.Length);
+        return padded;
     }
 
     private static string Base64UrlEncode(byte[] value) => Convert.ToBase64String(value)
@@ -218,13 +245,17 @@ public sealed class RosterTransferService
             if (!IsComplete || _checksum is null)
                 throw new InvalidOperationException("二维码传输尚未完成。");
 
-            var compressedPayload = Enumerable.Range(0, _totalFrames).Select(index =>
+            var receivedPayload = Enumerable.Range(0, _totalFrames).Select(index =>
                 _chunks.TryGetValue(index, out var chunk)
                     ? chunk
                     : throw new InvalidOperationException("二维码分包缺失。"))
                 .SelectMany(chunk => chunk)
                 .ToArray();
-            if (compressedPayload.Length != _payloadLength ||
+            if (receivedPayload.Length < _payloadLength)
+                throw new InvalidDataException("二维码传输校验失败，请重新扫描。");
+
+            var compressedPayload = receivedPayload[.._payloadLength];
+            if (
                 !CryptographicOperations.FixedTimeEquals(Convert.FromHexString(_checksum), SHA256.HashData(compressedPayload)))
             {
                 throw new InvalidDataException("二维码传输校验失败，请重新扫描。");
@@ -265,7 +296,7 @@ public sealed class RosterTransferService
                 !int.TryParse(parts[2], NumberStyles.None, CultureInfo.InvariantCulture, out var index) ||
                 !int.TryParse(parts[3], NumberStyles.None, CultureInfo.InvariantCulture, out var offset) ||
                 !int.TryParse(parts[4], NumberStyles.None, CultureInfo.InvariantCulture, out var payloadLength) ||
-                index < 0 || offset != index * FramePayloadLength || payloadLength <= 0 || parts[5].Length != 64)
+                index < 0 || offset < 0 || offset >= payloadLength || payloadLength <= 0 || parts[5].Length != 64)
                 return false;
 
             try
