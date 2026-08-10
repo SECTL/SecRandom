@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -27,7 +28,7 @@ public partial class SettingsTransferImportView : UserControl, INotifyPropertyCh
     private bool _isCompleting;
     private bool _isUpdatingSessionCode;
     private bool _hasStartedQrScanner;
-    private RosterQrCameraOption _selectedCameraOption = null!;
+    private RosterQrCameraOption? _selectedCameraOption;
     private string _statusText;
     private long _receivedBytes;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
@@ -45,17 +46,12 @@ public partial class SettingsTransferImportView : UserControl, INotifyPropertyCh
         _completeImportAsync = completeImportAsync ?? throw new ArgumentNullException(nameof(completeImportAsync));
         _getResource = getResource ?? throw new ArgumentNullException(nameof(getResource));
         _offlineImport = _offlineQrService.CreateImportAccumulator();
-        CameraOptions =
-        [
-            new(RosterQrCameraSelection.First, GetResource("C_TransferCameraOne")),
-            new(RosterQrCameraSelection.Second, GetResource("C_TransferCameraTwo"))
-        ];
-        _selectedCameraOption = CameraOptions[0];
         _statusText = IsQrMode ? GetResource("C_TransferStatusWaitingForQr") : GetResource("C_TransferStatusReady");
         DataContext = this;
         InitializeComponent();
-        Loaded += (_, _) =>
+        Loaded += async (_, _) =>
         {
+            await LoadCameraOptionsAsync();
             if (IsQrMode && !_hasStartedQrScanner)
             {
                 _hasStartedQrScanner = true;
@@ -87,9 +83,9 @@ public partial class SettingsTransferImportView : UserControl, INotifyPropertyCh
     public bool IsOfflineQrMode => _mode == RosterCloudTransferMode.OfflineQr;
     public bool IsSessionCodeMode => _mode == RosterCloudTransferMode.SessionCode;
     public bool IsCameraPreviewSupported => _cameraCaptureFactory.IsPreviewSupported;
-    public bool IsCameraSelectionSupported => _cameraCaptureFactory.SupportsCameraSelection;
-    public IReadOnlyList<RosterQrCameraOption> CameraOptions { get; }
-    public RosterQrCameraOption SelectedCameraOption
+    public bool HasCameraSelection => CameraOptions.Count > 1;
+    public ObservableCollection<RosterQrCameraOption> CameraOptions { get; } = [];
+    public RosterQrCameraOption? SelectedCameraOption
     {
         get => _selectedCameraOption;
         set
@@ -138,7 +134,7 @@ public partial class SettingsTransferImportView : UserControl, INotifyPropertyCh
         try
         {
             _scanCancellation = new CancellationTokenSource();
-            _cameraCapture = _cameraCaptureFactory.Create(CameraControl, SelectedCameraOption.Selection);
+            _cameraCapture = _cameraCaptureFactory.Create(CameraControl, SelectedCameraOption?.Device);
             _cameraCapture.CameraError += CameraCapture_OnCameraError;
             _isScanning = true;
             var result = await _cameraCapture.StartAsync(ProcessCapturedQrImageAsync, _scanCancellation.Token);
@@ -302,6 +298,37 @@ public partial class SettingsTransferImportView : UserControl, INotifyPropertyCh
 
         await StopCameraAsync(keepStatus: true);
         await StartCameraAsync();
+    }
+
+    private async Task LoadCameraOptionsAsync()
+    {
+        try
+        {
+            var selectedId = _selectedCameraOption?.Device.Id;
+            var options = await _cameraCaptureFactory.GetAvailableOptionsAsync(CancellationToken.None);
+            if (_isClosed)
+                return;
+
+            CameraOptions.Clear();
+            foreach (var option in options)
+                CameraOptions.Add(option);
+
+            _selectedCameraOption = CameraOptions.FirstOrDefault(option => option.Device.Id == selectedId) ??
+                                    CameraOptions.FirstOrDefault();
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedCameraOption)));
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasCameraSelection)));
+        }
+        catch (OperationCanceledException)
+        {
+            // Closing the drawer can cancel a platform device query.
+        }
+        catch (Exception)
+        {
+            CameraOptions.Clear();
+            _selectedCameraOption = null;
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedCameraOption)));
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasCameraSelection)));
+        }
     }
 
     private async void CloseButton_OnClick(object? sender, RoutedEventArgs e)

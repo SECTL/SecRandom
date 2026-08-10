@@ -23,19 +23,12 @@ public enum RosterQrCameraStartResult
 }
 
 /// <summary>
-/// Identifies one of the two camera sources exposed by the QR import UI.
-/// CameraView maps these to rear/front cameras; OpenCV maps them to device indexes zero/one.
-/// </summary>
-public enum RosterQrCameraSelection
-{
-    First,
-    Second
-}
-
-/// <summary>
 /// UI-ready camera choice for QR imports.
 /// </summary>
-public sealed record RosterQrCameraOption(RosterQrCameraSelection Selection, string Label);
+public sealed record RosterQrCameraOption(PlatformCameraDevice Device)
+{
+    public string Label => Device.DisplayName;
+}
 
 /// <summary>
 /// Creates the active platform's roster QR camera capture session.
@@ -44,33 +37,48 @@ public interface IRosterQrCameraCaptureFactory
 {
     bool IsPreviewSupported { get; }
 
-    bool SupportsCameraSelection { get; }
+    Task<IReadOnlyList<RosterQrCameraOption>> GetAvailableOptionsAsync(CancellationToken cancellationToken);
 
-    IRosterQrCameraCapture Create(Control previewControl, RosterQrCameraSelection selection);
+    IRosterQrCameraCapture Create(Control previewControl, PlatformCameraDevice? device);
 }
 
 /// <summary>
 /// Keeps native camera provider selection in the composition layer instead of list-import views.
 /// </summary>
-public sealed class RosterQrCameraCaptureFactory(IPlatformServiceRoot platform) : IRosterQrCameraCaptureFactory
+public sealed class RosterQrCameraCaptureFactory(IPlatformServiceRoot platform,
+    IPlatformCameraDeviceCatalog cameraDevices) : IRosterQrCameraCaptureFactory
 {
     private readonly PlatformKind _platformKind = platform?.Kind ?? throw new ArgumentNullException(nameof(platform));
+    private readonly IPlatformCameraDeviceCatalog _cameraDevices = cameraDevices ??
+        throw new ArgumentNullException(nameof(cameraDevices));
 
     public bool IsPreviewSupported => true;
 
-    public bool SupportsCameraSelection => _platformKind != PlatformKind.Ios;
+    public async Task<IReadOnlyList<RosterQrCameraOption>> GetAvailableOptionsAsync(CancellationToken cancellationToken)
+    {
+        if (_platformKind == PlatformKind.Ios)
+            return [];
 
-    public IRosterQrCameraCapture Create(Control previewControl, RosterQrCameraSelection selection)
+        return (await _cameraDevices.GetAvailableAsync(cancellationToken))
+            .Select(device => new RosterQrCameraOption(device))
+            .ToArray();
+    }
+
+    public IRosterQrCameraCapture Create(Control previewControl, PlatformCameraDevice? device)
     {
         ArgumentNullException.ThrowIfNull(previewControl);
 
         return _platformKind switch
         {
-            PlatformKind.Linux => new OpenCvRosterQrCameraCapture(VideoCaptureAPIs.V4L2, "Linux V4L2", (int)selection),
-            PlatformKind.MacOs => new OpenCvRosterQrCameraCapture(VideoCaptureAPIs.AVFOUNDATION, "macOS AVFoundation", (int)selection),
+            PlatformKind.Windows when device is not null => new OpenCvRosterQrCameraCapture(VideoCaptureAPIs.DSHOW,
+                "Windows DirectShow", device.CaptureIndex),
+            PlatformKind.Linux when device is not null => new OpenCvRosterQrCameraCapture(VideoCaptureAPIs.V4L2,
+                "Linux V4L2", device.CaptureIndex),
+            PlatformKind.MacOs when device is not null => new OpenCvRosterQrCameraCapture(VideoCaptureAPIs.AVFOUNDATION,
+                "macOS AVFoundation", device.CaptureIndex),
             _ => new CameraViewRosterQrCameraCapture((previewControl as RosterQrCameraPreview)?.GetOrCreateCameraView()
                 ?? throw new ArgumentException("The active camera provider requires a roster camera preview host.",
-                    nameof(previewControl)), selection)
+                    nameof(previewControl)), device?.Facing ?? PlatformCameraFacing.Default)
         };
     }
 }

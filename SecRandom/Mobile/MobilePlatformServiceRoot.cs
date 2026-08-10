@@ -67,6 +67,12 @@ public sealed class MobilePlatformServiceRoot : IPlatformServiceRoot, IWindowFea
     public IRemovableStorageBindingMarker RemovableStorageBindingMarker =>
         PortableRemovableStorageBindingMarker.Instance;
 
+    /// <summary>
+    /// Platform heads may provide the system camera directory before startup.
+    /// </summary>
+    public IPlatformCameraDeviceCatalog CameraDevices { get; set; } =
+        UnsupportedPlatformCameraDeviceCatalog.Instance;
+
     public global::SecRandom.Platforms.Abstractions.WindowFeatures SupportedFeatures =>
         global::SecRandom.Platforms.Abstractions.WindowFeatures.None;
 

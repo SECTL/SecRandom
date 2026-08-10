@@ -39,7 +39,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
     private bool _isQrImportMode;
     private RosterImportMode _selectedImportMode = RosterImportMode.ExcelCsv;
     private RosterImportModeOption _selectedImportModeOption = null!;
-    private RosterQrCameraOption _selectedCameraOption = null!;
+    private RosterQrCameraOption? _selectedCameraOption;
     private bool _isScanningQr;
     private bool _isDrawerClosed;
     private const int SessionCodeLength = 12;
@@ -75,14 +75,9 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
             new(RosterImportMode.SessionCode, SessionCodeImportModeLabel)
         ];
         _selectedImportModeOption = ImportModes[0];
-        CameraOptions =
-        [
-            new(RosterQrCameraSelection.First, Text("C_CameraOne")),
-            new(RosterQrCameraSelection.Second, Text("C_CameraTwo"))
-        ];
-        _selectedCameraOption = CameraOptions[0];
         DataContext = this;
         InitializeComponent();
+        Loaded += (_, _) => _ = LoadCameraOptionsAsync();
     }
 
     public ObservableCollection<string> RequiredColumnOptions { get; } = [];
@@ -151,14 +146,14 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
     public bool CanScanQr => true;
     public bool IsQrScanning => _isScanningQr;
     public bool IsCameraPreviewSupported => _qrCameraCaptureFactory.IsPreviewSupported;
-    public bool IsCameraSelectionSupported => _qrCameraCaptureFactory.SupportsCameraSelection;
+    public bool HasCameraSelection => CameraOptions.Count > 1;
     public string FileImportModeLabel => Text("C_ImportExcelCsv");
     public string QuickQrImportModeLabel => Text("C_ImportQuickQr");
     public string OfflineQrImportModeLabel => Text("C_ImportOfflineQr");
     public string SessionCodeImportModeLabel => Text("C_ImportSessionCode");
     public string ImportSourceLabel => Text("C_SelectImportSource");
     public IReadOnlyList<RosterImportModeOption> ImportModes { get; }
-    public IReadOnlyList<RosterQrCameraOption> CameraOptions { get; }
+    public ObservableCollection<RosterQrCameraOption> CameraOptions { get; } = [];
     public RosterImportModeOption SelectedImportModeOption
     {
         get => _selectedImportModeOption;
@@ -173,7 +168,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
             _ = SelectImportModeAsync(value.Mode);
         }
     }
-    public RosterQrCameraOption SelectedCameraOption
+    public RosterQrCameraOption? SelectedCameraOption
     {
         get => _selectedCameraOption;
         set
@@ -548,10 +543,11 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
 
         try
         {
+            await LoadCameraOptionsAsync();
             _qrScanCancellationTokenSource = new CancellationTokenSource();
             _isScanningQr = true;
             NotifyQrScannerStateChanged();
-            var cameraCapture = _qrCameraCaptureFactory.Create(CameraControl, SelectedCameraOption.Selection);
+            var cameraCapture = _qrCameraCaptureFactory.Create(CameraControl, SelectedCameraOption?.Device);
             cameraCapture.CameraError += CameraCapture_OnCameraError;
             _qrCameraCapture = cameraCapture;
             var startResult = await cameraCapture.StartAsync(ProcessCameraFrameAsync,
@@ -808,6 +804,37 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
 
         await StopQrScannerAsync(keepStatus: true);
         await ToggleQrScannerAsync();
+    }
+
+    private async Task LoadCameraOptionsAsync()
+    {
+        try
+        {
+            var selectedId = _selectedCameraOption?.Device.Id;
+            var options = await _qrCameraCaptureFactory.GetAvailableOptionsAsync(CancellationToken.None);
+            if (_isDrawerClosed)
+                return;
+
+            CameraOptions.Clear();
+            foreach (var option in options)
+                CameraOptions.Add(option);
+
+            _selectedCameraOption = CameraOptions.FirstOrDefault(option => option.Device.Id == selectedId) ??
+                                    CameraOptions.FirstOrDefault();
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedCameraOption)));
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasCameraSelection)));
+        }
+        catch (OperationCanceledException)
+        {
+            // Closing the drawer can cancel a platform device query.
+        }
+        catch (Exception)
+        {
+            CameraOptions.Clear();
+            _selectedCameraOption = null;
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedCameraOption)));
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasCameraSelection)));
+        }
     }
 
     private void NotifyQrScannerStateChanged()

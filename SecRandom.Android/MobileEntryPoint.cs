@@ -35,6 +35,7 @@ public class MobileApplication : AvaloniaAndroidApplication<App>
         {
             UpdateInstaller = new AndroidUpdateInstaller(),
             MediaPlayer = new AndroidMobileMediaPlayer(),
+            CameraDevices = new AndroidCameraDeviceCatalog(this),
             PathLauncher = AndroidDataDirectoryLauncher.TryOpenPath,
             StartupErrorLogger = exception =>
             {

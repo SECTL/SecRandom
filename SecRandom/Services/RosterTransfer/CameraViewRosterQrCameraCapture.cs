@@ -2,6 +2,7 @@ using Avalonia.Threading;
 using CameraView;
 using CameraView.Models;
 using CameraView.Services;
+using SecRandom.Platforms.Abstractions;
 using SkiaSharp;
 
 namespace SecRandom.Services.RosterTransfer;
@@ -10,12 +11,12 @@ namespace SecRandom.Services.RosterTransfer;
 /// CameraView implementation for the platforms that ship its native provider: Windows, Android, and iOS.
 /// </summary>
 public sealed class CameraViewRosterQrCameraCapture(CameraViewControl cameraControl,
-    RosterQrCameraSelection selection) : IRosterQrCameraCapture
+    PlatformCameraFacing facing) : IRosterQrCameraCapture
 {
     private static readonly TimeSpan CaptureInterval = TimeSpan.FromMilliseconds(60);
     private static readonly TimeSpan PreviewFrameFallbackDelay = TimeSpan.FromMilliseconds(750);
     private readonly CameraViewControl _cameraControl = cameraControl;
-    private readonly CameraFacing _cameraFacing = selection == RosterQrCameraSelection.Second
+    private readonly CameraFacing _cameraFacing = facing == PlatformCameraFacing.Front
         ? CameraFacing.Front
         : CameraFacing.Back;
     private CancellationTokenSource? _cancellation;
