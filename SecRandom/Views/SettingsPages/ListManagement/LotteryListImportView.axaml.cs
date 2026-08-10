@@ -10,11 +10,14 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using CameraView;
 using FluentAvalonia.UI.Controls;
 using MiniExcelLibs;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Services.Profiles;
+using SecRandom.Langs.SettingsPages.ListManagement.RosterTransfer;
+using SecRandom.Services.RosterTransfer;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.LotteryList.Resources;
 
@@ -33,6 +36,13 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
     private string? _tagsColumn;
     private string? _weightColumn;
     private string _targetListName = string.Empty;
+    private bool _isQrImportMode;
+    private bool _isScanningQr;
+    private List<Prize>? _qrPrizes;
+    private readonly RosterTransferService _transferService = IAppHost.GetService<RosterTransferService>();
+    private readonly RosterTransferService.RosterQrImportAccumulator _qrImport;
+    private CancellationTokenSource? _qrScanCancellationTokenSource;
+    private LinuxRosterQrCameraCapture? _linuxQrCameraCapture;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
     private readonly ILogger<LotteryListImportView> _logger =
         IAppHost.GetService<ILogger<LotteryListImportView>>();
@@ -46,8 +56,11 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
     {
         TargetListName = targetListName;
         _importHandler = importHandler;
+        _qrImport = _transferService.CreateImportAccumulator();
         DataContext = this;
         InitializeComponent();
+        FileImportMenuItem.Header = FileImportModeLabel;
+        QrImportMenuItem.Header = QrImportModeLabel;
     }
 
     public ObservableCollection<string> RequiredColumnOptions { get; } = [];
@@ -91,6 +104,44 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
         get => _canImport;
         set => SetField(ref _canImport, value);
     }
+
+    public bool IsQrImportMode
+    {
+        get => _isQrImportMode;
+        private set
+        {
+            if (!SetField(ref _isQrImportMode, value))
+                return;
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsFileImportMode)));
+        }
+    }
+
+    public bool IsFileImportMode => !IsQrImportMode;
+    public bool CanScanQr => true;
+    public bool IsQrScanning => _isScanningQr;
+    public bool IsCameraPreviewSupported => !OperatingSystem.IsLinux();
+    public string FileImportModeLabel => Text("C_ImportExcelCsv");
+    public string QrImportModeLabel => Text("C_ImportQrCode");
+    public string ImportSourceLabel => Text("C_SelectImportSource");
+    public string QrImportLabel => Text("C_QrImport");
+    public string ScanQrLabel => IsQrScanning ? Text("C_StopQrScanner") : Text("C_StartQrScanner");
+    public string TransferProgressLabel => Text("C_TransferProgress");
+    public string TransferSpeedLabel => Text("C_TransferSpeed");
+    public string TransferReceivedLabel => Text("C_TransferReceived");
+    public string TransferFramesDetailLabel => Text("C_TransferFramesDetail");
+    public string TransferSessionLabel => Text("C_TransferSession");
+    public string TransferElapsedLabel => Text("C_TransferElapsed");
+    public double QrProgress => _qrImport.TotalFrames == 0 ? 0 : (double)_qrImport.AcceptedFrames / _qrImport.TotalFrames;
+    public string QrProgressText => _qrImport.TotalFrames == 0 ? "-" : $"{_qrImport.AcceptedFrames} / {_qrImport.TotalFrames}";
+    public string QrDecodeSpeedText => _qrImport.StartedAt == default ? "-" :
+        string.Format(Text("C_TransferFramesPerSecond"),
+            _qrImport.AcceptedFrames / Math.Max(0.1, (DateTimeOffset.UtcNow - _qrImport.StartedAt).TotalSeconds));
+    public string QrPayloadText => _qrImport.PayloadLength == 0 ? "-" :
+        $"{(_qrImport.PayloadLength * QrProgress):F0} B / {_qrImport.PayloadLength} B";
+    public string QrFramesText => $"{_qrImport.AcceptedFrames}/{_qrImport.DuplicateFrames}/{_qrImport.RejectedFrames}";
+    public string QrSessionText => _qrImport.TotalFrames == 0 ? "-" : _qrImport.SessionId[..8];
+    public string QrElapsedText => _qrImport.StartedAt == default ? "-" :
+        $"{Math.Max(0, (DateTimeOffset.UtcNow - _qrImport.StartedAt).TotalSeconds):F1} s";
 
     public string? IdColumn
     {
@@ -143,7 +194,7 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
         remove => NotifyPropertyChanged -= value;
     }
 
-    private async void SelectFileButton_OnClick(object? sender, RoutedEventArgs e)
+    private async Task SelectFileAsync()
     {
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel == null)
@@ -289,9 +340,26 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
 
     private void ImportButton_OnClick(object? sender, RoutedEventArgs e)
     {
+        if (IsQrImportMode)
+        {
+            if (_qrPrizes is not null)
+                SubmitPrizes(_qrPrizes);
+            return;
+        }
+
         var parseResult = RosterImportParser.ParsePrizes(_rows, CurrentMapping);
-        var prizes = parseResult.Items;
-        var duplicatedNames = parseResult.DuplicatedNames;
+        SubmitPrizes(parseResult.Items, parseResult.DuplicatedNames);
+    }
+
+    private void SubmitPrizes(List<Prize> prizes, IReadOnlyList<string>? duplicatedNames = null)
+    {
+        duplicatedNames ??= prizes
+            .Where(prize => !string.IsNullOrWhiteSpace(prize.Name))
+            .GroupBy(prize => prize.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Count() > 1)
+            .Select(group => group.Key)
+            .OrderBy(name => name, StringComparer.CurrentCulture)
+            .ToArray();
 
         if (duplicatedNames.Count > 0)
         {
@@ -304,6 +372,198 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
             _logger.LogInformation("提交奖品池导入：有效行数={Count}。", prizes.Count);
             _importHandler(prizes);
         }
+    }
+
+    private async void ImportSplitButton_OnClick(object? sender, RoutedEventArgs e) =>
+        await OpenFileImportAsync();
+
+    private async void FileImportMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        await OpenFileImportAsync();
+    }
+
+    private async void QrImportMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        await StopQrScannerAsync();
+        SelectQrImportSource();
+        await ToggleQrScannerAsync();
+    }
+
+    private async Task OpenFileImportAsync()
+    {
+        IsQrImportMode = false;
+        await StopQrScannerAsync();
+        await SelectFileAsync();
+        if (_rows.Count == 0)
+            StatusText = LR.M_SelectFileFirst;
+    }
+
+    private void SelectQrImportSource()
+    {
+        _qrImport.Reset();
+        _qrPrizes = null;
+        PreviewRows.Clear();
+        IsQrImportMode = true;
+        StatusText = Text("C_QrImportReady");
+        CanImport = false;
+        NotifyQrStatsChanged();
+    }
+
+    private async Task ToggleQrScannerAsync()
+    {
+        if (_isScanningQr)
+        {
+            await StopQrScannerAsync();
+            return;
+        }
+
+        try
+        {
+            _qrScanCancellationTokenSource = new CancellationTokenSource();
+            _isScanningQr = true;
+            NotifyQrScannerStateChanged();
+            if (OperatingSystem.IsLinux())
+            {
+                _linuxQrCameraCapture = new LinuxRosterQrCameraCapture();
+                await _linuxQrCameraCapture.StartAsync(ProcessCapturedQrImageAsync,
+                    _qrScanCancellationTokenSource.Token);
+                StatusText = Text("C_QrImportReady");
+                return;
+            }
+            var provider = CameraProviderFactory.Create();
+            var permissions = CameraProviderFactory.CreatePermissions(provider);
+            if (!await permissions.CheckPermissionAsync() && !await permissions.RequestPermissionAsync())
+            {
+                StatusText = Text("M_CameraPermissionDenied");
+                await StopQrScannerAsync(keepStatus: true);
+                return;
+            }
+            CameraControl.CameraProvider = provider;
+            await CameraControl.InitializeCameraAsync(provider);
+            await CameraControl.StartCameraAsync();
+            StatusText = Text("C_QrImportReady");
+            await CaptureNextQrFrameAsync(_qrScanCancellationTokenSource.Token);
+        }
+        catch (Exception exception)
+        {
+            StatusText = string.Format(Text("M_CameraStartFailed"), exception.Message);
+            await StopQrScannerAsync(keepStatus: true);
+        }
+    }
+
+    private async void CameraControl_OnPhotoCaptured(object? sender, byte[] imageBytes)
+    {
+        await ProcessCapturedQrImageAsync(imageBytes);
+    }
+
+    private async Task ProcessCapturedQrImageAsync(byte[] imageBytes)
+    {
+        if (!_isScanningQr || _qrScanCancellationTokenSource is null)
+            return;
+        try
+        {
+            await using var imageStream = new MemoryStream(imageBytes, writable: false);
+            var text = await _transferService.DecodeQrTextAsync(imageStream, _qrScanCancellationTokenSource.Token);
+            if (!string.IsNullOrWhiteSpace(text))
+                await HandleQrTextAsync(text);
+            if (_isScanningQr && !_qrImport.IsComplete && !OperatingSystem.IsLinux())
+                await CaptureNextQrFrameAsync(_qrScanCancellationTokenSource.Token);
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception exception)
+        {
+            StatusText = string.Format(Text("M_QrTransferFailed"), exception.Message);
+            await StopQrScannerAsync(keepStatus: true);
+        }
+    }
+
+    private async void CameraControl_OnCameraError(object? sender, string error)
+    {
+        if (!_isScanningQr)
+            return;
+        StatusText = string.Format(Text("M_CameraStartFailed"), error);
+        await StopQrScannerAsync(keepStatus: true);
+    }
+
+    private async Task HandleQrTextAsync(string text)
+    {
+        var result = _qrImport.Add(text);
+        if (result == RosterQrFrameImportResult.Rejected)
+        {
+            StatusText = Text("M_QrNotFound");
+            NotifyQrStatsChanged();
+            return;
+        }
+
+        StatusText = Text("C_QrImporting");
+        NotifyQrStatsChanged();
+        if (!_qrImport.IsComplete)
+            return;
+
+        var document = _qrImport.GetCompletedDocument();
+        if (document.Version != 1 || document.Kind != RosterTransferKind.Prizes)
+        {
+            StatusText = Text("M_QrWrongType");
+            await StopQrScannerAsync(keepStatus: true);
+            return;
+        }
+
+        _qrPrizes = document.Rows
+            .Where(row => !string.IsNullOrWhiteSpace(row.Id) || !string.IsNullOrWhiteSpace(row.Name))
+            .Select(row => new Prize
+            {
+                RecordId = Guid.NewGuid(), Exists = row.Exists, Id = row.Id, Name = row.Name,
+                Weight = double.TryParse(row.DetailOne, NumberStyles.Float, CultureInfo.InvariantCulture, out var weight) ? weight : 1,
+                Count = int.TryParse(row.DetailTwo, NumberStyles.Integer, CultureInfo.InvariantCulture, out var count) ? count : 1,
+                Tags = row.Tags ?? string.Empty
+            }).ToList();
+        PreviewRows.Clear();
+        foreach (var prize in _qrPrizes.Take(3))
+            PreviewRows.Add(new ImportPreviewRow(prize.Id, prize.Name,
+                prize.Weight.ToString(CultureInfo.CurrentCulture), prize.Count.ToString(CultureInfo.CurrentCulture), prize.Tags));
+        CanImport = true;
+        await StopQrScannerAsync(keepStatus: true);
+        StatusText = string.Format(Text("M_QrLoaded"), _qrPrizes.Count);
+    }
+
+    private async Task CaptureNextQrFrameAsync(CancellationToken cancellationToken)
+    {
+        await Task.Delay(120, cancellationToken);
+        if (_isScanningQr && !cancellationToken.IsCancellationRequested)
+            await CameraControl.TakePhotoAsync();
+    }
+
+    private async Task StopQrScannerAsync(bool keepStatus = false)
+    {
+        var cancellation = Interlocked.Exchange(ref _qrScanCancellationTokenSource, null);
+        cancellation?.Cancel();
+        cancellation?.Dispose();
+        if (!_isScanningQr)
+            return;
+        _isScanningQr = false;
+        try
+        {
+            if (_linuxQrCameraCapture is { } linuxCapture)
+            {
+                _linuxQrCameraCapture = null;
+                await linuxCapture.DisposeAsync();
+            }
+            else
+            {
+                await CameraControl.StopCameraAsync();
+            }
+        }
+        catch (Exception) { }
+        if (!keepStatus)
+            StatusText = Text("C_QrImportReady");
+        NotifyQrScannerStateChanged();
+    }
+
+    private void NotifyQrScannerStateChanged()
+    {
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanScanQr)));
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsQrScanning)));
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ScanQrLabel)));
     }
 
     private async Task ConfirmDuplicateNamesAsync(List<Prize> prizes, IReadOnlyList<string> duplicatedNames)
@@ -334,8 +594,9 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
         }
     }
 
-    private void CancelButton_OnClick(object? sender, RoutedEventArgs e)
+    private async void CancelButton_OnClick(object? sender, RoutedEventArgs e)
     {
+        await StopQrScannerAsync();
         if (CloseHandler is not null)
             CloseHandler();
         else
@@ -355,6 +616,18 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
             DateTime dateTime => dateTime.ToString(CultureInfo.CurrentCulture),
             _ => Convert.ToString(value, CultureInfo.CurrentCulture) ?? string.Empty
         };
+    }
+
+    private static string Text(string name) => RosterTransferText.Get(name);
+
+    private void NotifyQrStatsChanged()
+    {
+        foreach (var propertyName in new[]
+                 {
+                     nameof(QrProgress), nameof(QrProgressText), nameof(QrDecodeSpeedText), nameof(QrPayloadText),
+                     nameof(QrFramesText), nameof(QrSessionText), nameof(QrElapsedText)
+                 })
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

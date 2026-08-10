@@ -15,6 +15,7 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
+using SecRandom.Langs.SettingsPages.ListManagement.RosterTransfer;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.LotteryList.Resources;
 
@@ -31,6 +32,7 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         IAppHost.GetService<IProfileCatalogManager>();
 
     public bool IsDesktop => App.IsDesktop;
+    public string ExportListLabel => RosterTransferText.Get("C_Export");
 
     public LotteryListSettingsPage()
     {
@@ -278,6 +280,20 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         var view = new LotteryListImportView(SelectedPrizeListName, OnPrizesImported);
         SettingsView.Current?.OpenDrawer(view);
         _logger.LogInformation("打开奖品池导入面板：目标奖品池={ListName}。", SelectedPrizeListName);
+    }
+
+    private void ExportButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (SelectedPrizeList is null)
+        {
+            this.ShowWarningToast(LR.M_SelectListFirst);
+            return;
+        }
+
+        SettingsView.Current?.OpenDrawer(new LotteryListExportView(SelectedPrizeListName,
+            SelectedPrizeList.Prizes.ToList()));
+        _logger.LogInformation("打开奖品池导出面板：奖品池={ListName}，奖品数={Count}。", SelectedPrizeListName,
+            SelectedPrizeList.Prizes.Count);
     }
 
     private async void AddPrizeButton_OnClick(object? sender, RoutedEventArgs e)

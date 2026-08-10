@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.ListManagement"
+             xmlns:cv="using:CameraView"
              xmlns:lr="clr-namespace:SecRandom.Langs.SettingsPages.ListManagement.RollCallList"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
@@ -21,21 +22,55 @@
                           IsClosable="False"
                           IsOpen="True" />
 
-            <GroupBox Header="{x:Static lr:Resources.C_SelectFile}">
-                <StackPanel Spacing="4">
-                    <Button Content="{x:Static lr:Resources.C_SelectFileButton}" Click="SelectFileButton_OnClick" />
-                    
-                    <TextBlock Text="{Binding SelectedFileName}"
+            <GroupBox Header="{Binding ImportSourceLabel}">
+                <SplitButton x:Name="ImportSplitButton"
+                             Classes="accent"
+                             Content="{Binding FileImportModeLabel}"
+                             Click="ImportSplitButton_OnClick">
+                    <SplitButton.Flyout>
+                        <MenuFlyout>
+                            <MenuItem x:Name="FileImportMenuItem"
+                                      Click="FileImportMenuItem_OnClick" />
+                            <MenuItem x:Name="QrImportMenuItem"
+                                      Click="QrImportMenuItem_OnClick" />
+                        </MenuFlyout>
+                    </SplitButton.Flyout>
+                </SplitButton>
+            </GroupBox>
+            <StackPanel Spacing="4">
+                    <TextBlock IsVisible="{Binding IsFileImportMode}"
+                               Text="{Binding SelectedFileName}"
                                TextWrapping="Wrap"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    
-                    <TextBlock Text="{x:Static lr:Resources.C_SupportedFormats}"
+                    <TextBlock IsVisible="{Binding IsFileImportMode}"
+                               Text="{x:Static lr:Resources.C_SupportedFormats}"
                                TextWrapping="Wrap"
                                Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+            </StackPanel>
+
+            <GroupBox IsVisible="{Binding IsQrImportMode}" Header="{Binding QrImportLabel}">
+                <StackPanel Spacing="10">
+                    <Border Height="220" ClipToBounds="True" CornerRadius="4"
+                            IsVisible="{Binding IsCameraPreviewSupported}"
+                            Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                        <cv:CameraViewControl x:Name="CameraControl"
+                                              PhotoCaptured="CameraControl_OnPhotoCaptured"
+                                              CameraError="CameraControl_OnCameraError" />
+                    </Border>
+                    <ProgressBar Minimum="0" Maximum="1" Value="{Binding QrProgress}" />
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="12">
+                        <StackPanel><TextBlock Classes="caption" Text="{Binding TransferProgressLabel}" /><TextBlock Text="{Binding QrProgressText}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Column="1"><TextBlock Classes="caption" Text="{Binding TransferSpeedLabel}" /><TextBlock Text="{Binding QrDecodeSpeedText}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Row="1"><TextBlock Classes="caption" Text="{Binding TransferReceivedLabel}" /><TextBlock Text="{Binding QrPayloadText}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="1"><TextBlock Classes="caption" Text="{Binding TransferFramesDetailLabel}" /><TextBlock Text="{Binding QrFramesText}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Row="2"><TextBlock Classes="caption" Text="{Binding TransferSessionLabel}" /><TextBlock Text="{Binding QrSessionText}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="1"><TextBlock Classes="caption" Text="{Binding TransferElapsedLabel}" /><TextBlock Text="{Binding QrElapsedText}" FontSize="18" /></StackPanel>
+                    </Grid>
                 </StackPanel>
             </GroupBox>
-            
-            <GroupBox Header="{x:Static lr:Resources.C_ColumnMapping}">
+
+            <GroupBox IsVisible="{Binding IsFileImportMode}"
+                      Header="{x:Static lr:Resources.C_ColumnMapping}">
                 <StackPanel Spacing="4">
                     <TextBlock Text="{x:Static lr:Resources.C_ColumnMapping_D}"
                                TextWrapping="Wrap"
@@ -64,7 +99,8 @@
                 </StackPanel>
             </GroupBox>
 
-            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+            <Border IsVisible="{Binding IsFileImportMode}"
+                    BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                     BorderThickness="1" CornerRadius="4 4 0 0" ClipToBounds="True">
                 <DataGrid Height="150"
                           AutoGenerateColumns="False"

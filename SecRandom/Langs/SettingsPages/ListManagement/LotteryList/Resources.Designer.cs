@@ -86,7 +86,13 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.LotteryList {
                 return ResourceManager.GetString("C_ImportList", resourceCulture);
             }
         }
-        
+
+        public static string C_ExportList {
+            get {
+                return ResourceManager.GetString("C_ExportList", resourceCulture);
+            }
+        }
+
         public static string C_AddPrize {
             get {
                 return ResourceManager.GetString("C_AddPrize", resourceCulture);

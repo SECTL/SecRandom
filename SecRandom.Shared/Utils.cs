@@ -11,6 +11,7 @@ public static class Utils
     private static readonly object DataRootGate = new();
     private static string? _configuredDataRoot;
     private static bool _dataRootWasRead;
+    private static DesktopDataRootPreparationResult? _desktopPreparation;
 
     public readonly record struct DesktopDataRootPreparationResult(
         bool IsPortablePackage,
@@ -69,6 +70,8 @@ public static class Utils
     {
         lock (DataRootGate)
         {
+            if (_desktopPreparation is { } prepared)
+                return prepared;
             if (_dataRootWasRead)
                 throw new InvalidOperationException("The data root must be prepared before it is first used.");
             if (_configuredDataRoot is not null)
@@ -79,16 +82,18 @@ public static class Utils
             {
                 _configuredDataRoot = Path.GetFullPath(packageDataRoot);
                 _dataRootWasRead = true;
-                return new DesktopDataRootPreparationResult(
-                    isPortablePackage, true, _configuredDataRoot, null);
+                var result = new DesktopDataRootPreparationResult(isPortablePackage, true, _configuredDataRoot, null);
+                _desktopPreparation = result;
+                return result;
             }
 
             if (isPortablePackage)
             {
                 _configuredDataRoot = Path.GetFullPath(packageDataRoot);
                 _dataRootWasRead = true;
-                return new DesktopDataRootPreparationResult(
-                    true, false, _configuredDataRoot, packageError);
+                var result = new DesktopDataRootPreparationResult(true, false, _configuredDataRoot, packageError);
+                _desktopPreparation = result;
+                return result;
             }
 
             var fallbackRoot = GetDesktopFallbackDataRoot();
@@ -101,7 +106,9 @@ public static class Utils
 
             _configuredDataRoot = Path.GetFullPath(fallbackRoot);
             _dataRootWasRead = true;
-            return new DesktopDataRootPreparationResult(false, true, _configuredDataRoot, packageError);
+            var fallbackResult = new DesktopDataRootPreparationResult(false, true, _configuredDataRoot, packageError);
+            _desktopPreparation = fallbackResult;
+            return fallbackResult;
         }
     }
 
@@ -319,6 +326,7 @@ public static class Utils
         {
             _configuredDataRoot = null;
             _dataRootWasRead = false;
+            _desktopPreparation = null;
         }
     }
 

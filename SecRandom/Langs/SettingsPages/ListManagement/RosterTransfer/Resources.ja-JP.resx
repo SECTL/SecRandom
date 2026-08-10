@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="C_Export"><value>リストをエクスポート</value></data><data name="C_ExportTitle"><value>リストをエクスポート</value></data><data name="C_FileExport"><value>ファイルへエクスポート</value></data><data name="C_ExportToFile"><value>ファイルへエクスポート</value></data><data name="C_ExportSupportedFormats"><value>.xlsx と .csv ファイルに対応しています</value></data><data name="C_QrExport"><value>QR コードでエクスポート</value></data><data name="C_ExportToDevices"><value>ほかのデバイスへエクスポート</value></data><data name="C_StopQrExport"><value>エクスポートを停止</value></data><data name="C_QrIdleHint"><value>エクスポートを開始すると、ほかのデバイスで読み取れる QR コードを表示します</value></data><data name="C_QrIdle"><value>QR 転送の開始待ち</value></data><data name="C_QrGenerating"><value>すべての QR コードを事前生成しています</value></data><data name="C_QrExporting"><value>ほかのデバイスへ送信中</value></data><data name="C_QrStopped"><value>QR エクスポートを停止しました</value></data><data name="C_FileExported"><value>リストをファイルにエクスポートしました</value></data><data name="M_QrTransferFailed"><value>QR 転送に失敗しました: {0}</value></data><data name="C_TransferFrames"><value>転送フレーム</value></data><data name="C_TransferSpeed"><value>転送速度</value></data><data name="C_TransferSize"><value>データサイズ</value></data><data name="C_TransferRecords"><value>レコード数</value></data><data name="C_TransferSession"><value>セッション</value></data><data name="C_TransferStatus"><value>状態</value></data><data name="C_ImportSource"><value>インポート方法</value></data><data name="C_ImportFromFile"><value>Excel/CSV ファイルからインポート</value></data><data name="C_ImportFromQr"><value>QR コードからインポート</value></data><data name="C_QrImport"><value>QR コードでインポート</value></data><data name="C_ScanQrCode"><value>カメラで読み取る</value></data><data name="C_QrImportReady"><value>カメラで QR コードを読み取る準備ができました</value></data><data name="C_QrImporting"><value>QR データを受信中</value></data><data name="C_TransferProgress"><value>転送進行状況</value></data><data name="C_TransferReceived"><value>転送済み / 合計サイズ</value></data><data name="C_TransferFramesDetail"><value>新規 / 重複 / 無効</value></data><data name="C_TransferElapsed"><value>経過時間</value></data><data name="M_QrNotFound"><value>リスト転送 QR コードを認識できませんでした</value></data><data name="M_QrWrongType"><value>QR コードのリスト種類が一致しません</value></data>
+  <data name="C_StartQrScanner"><value>カメラで読み取る</value></data>
+  <data name="C_StopQrScanner"><value>読み取りを停止</value></data>
+  <data name="M_CameraPermissionDenied"><value>カメラの権限が許可されていません</value></data>
+  <data name="M_CameraStartFailed"><value>カメラを開始できません: {0}</value></data>
+  <data name="C_TargetList"><value>対象リスト: {0}</value></data>
+  <data name="C_Cancel"><value>キャンセル</value></data>
+  <data name="C_ImportExcelCsv"><value>Excel/CSV</value></data>
+  <data name="C_ImportQrCode"><value>QR コード</value></data>
+  <data name="C_SelectImportSource"><value>インポート方法を選択</value></data>
+  <data name="C_TransferFramesPerSecond"><value>{0:F1} フレーム/秒</value></data>
+  <data name="M_QrLoaded"><value>{0} 件のリストデータを受信しました。インポートできます。</value></data>
+  <data name="C_ModeQuickQr"><value>QR スキャンでほかのデバイスへ高速エクスポート</value></data>
+  <data name="C_ModeOfflineQr"><value>オフラインでほかのデバイスへエクスポート</value></data>
+  <data name="C_ModeSessionCode"><value>セッションコードでほかのデバイスへエクスポート</value></data>
+  <data name="C_SessionCode"><value>セッションコード</value></data>
+  <data name="C_SessionCodeReady"><value>セッションコードを生成しました</value></data>
+  <data name="C_CloudQrExporting"><value>ペアリング QR コードを生成しました</value></data>
+</root>

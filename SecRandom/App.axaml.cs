@@ -49,6 +49,7 @@ using SecRandom.Services.Desktop;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Notification;
 using SecRandom.Services.Profiles;
+using SecRandom.Services.RosterTransfer;
 using SecRandom.Services.Ipc;
 using SecRandom.Services.ImportExport;
 using SecRandom.Services.FirstRun;
@@ -766,6 +767,12 @@ public partial class App : Application
                 // 服务
                 services.AddTransient<RollCallDrawService>();
                 services.AddTransient<LotteryDrawService>();
+                services.AddSingleton<RosterTransferService>();
+                services.AddHttpClient<RosterSyncTransferService>(client =>
+                {
+                    client.BaseAddress = new Uri("https://secrandom-sync.sectl.cn/");
+                    client.Timeout = TimeSpan.FromSeconds(30);
+                });
                 if (isMobile)
                 {
                     MobilePlatformServiceRoot currentMobilePlatform = mobilePlatform!;

@@ -37,6 +37,7 @@ SecRandom/
 │   ├── Notification/     # ClassIsland SecRandom4Ci notification bridge
 │   ├── Ipc/             # ProtocolCommandRouter for URL/IPC command routing
 │   ├── Profiles/        # Non-mutating ProfileQueryService snapshots
+│   ├── RosterTransfer/  # In-memory roster file/QR transfer, frame integrity, and Linux V4L2 camera capture
 │   ├── Settings/        # SettingsSearchService
 │   ├── Mobile/          # Mobile navigation, draw/media, update, profile helpers
 │   ├── Security/        # Credential store, verification prompts, factor/operation authorization
@@ -77,6 +78,7 @@ SecRandom/
 | Searchable settings metadata | `Services/Settings/SettingsSearchService.cs`                            | Reflects `Langs.SettingsPages.*` resources and registered settings pages. Current setting rows use stable `x:Name` IDs; nested targets may be resolved through the visual tree and obsolete resource entries are excluded. |
 | ClassIsland notifications    | `Services/Notification/`, `../SecRandom4Ci.Interface/`                 | Sends draw-result DTOs to the optional ClassIsland `SecRandom4Ci` plugin through v2 IPC. |
 | Profile persistence          | `../SecRandom.Core/Services/Profiles/ProfileService.cs`, `../SecRandom.Core/Services/Profiles/ProfileCatalogManager.cs` | Current lists/history, active point-call list/history switching, catalog rename/delete/create, and `SaveProfile()`; list items carry hidden `RecordId` identity. |
+| Roster transfer              | `Services/RosterTransfer/`, `Views/SettingsPages/ListManagement/` | Offline QR export pre-generates all manifest/data PNG frames in memory, then loops them. Quick QR and session-code export encrypt the `.xlsx`/`.csv` archive locally with AES-256-GCM and send only its ciphertext to SecRandom Sync; quick QR keeps the random key in the URL fragment, while session mode sends only a SHA-256 code hash. Import keeps only current-drawer frames in memory: Android/iOS and Windows/macOS use `CameraView.Avalonia`, Linux reads V4L2 frames through OpenCV. Never offer QR-image file selection or persist roster transfer frames. |
 | Voice announcements          | `Services/Voice/`, `Controls/AttachedSettings/SpecificAnnouncementAttachedSettingsControl.axaml(.cs)` | App-layer TTS runtime: `ISpeechProvider` implementations enumerate/synthesize system or Edge audio, `SpeechAudioPlayer` owns SoundFlow/MiniAudio playback, and `VoiceAnnouncementService` builds one batched result announcement. The registered `专属语音` attached setting supplies per-student/per-prize alias, prefix, and suffix. |
 | Draw-proof attestation       | `Services/Verification/` | Immediately saves a local reproducible proof, then asynchronously asks `fair.sectl.cn` to replay and sign its exact committed content. |
 | Draw audio / temp records    | `Services/Draw/DrawAudioService.cs`, `../SecRandom.Core/Services/Draw/DrawTemporaryRecordService.cs` | Audio stays app-layer; session-scoped temporary records are shared Core runtime behavior. |
@@ -171,6 +173,8 @@ SecRandom/
 - If a required Filled icon has no same-name variant, choose the closest semantic Filled icon and keep the mapping traceable to the source icon or code point. Logo, author/organization, window, and taskbar image assets remain unchanged.
 
 ## LOCALIZATION
+
+- Every new or changed user-facing string must be present in `Resources.resx` (Simplified Chinese), `Resources.en-US.resx` (English), and `Resources.ja-JP.resx` (Japanese). Do not leave a fallback key or base-language string in any of the three supported languages.
 
 - On Android, `MobileViewHost` handles `TopLevel.BackRequested` only when an independent MVE is above `MobileRootView`, closing that MVE back to the root. Back requests at the root remain unhandled so Android performs its normal exit behavior; the event does not alter the settings shell's internal page history or bottom-bar routes.
 

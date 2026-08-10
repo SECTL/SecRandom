@@ -57,6 +57,7 @@ SecRandom/Views/SettingsPages/
 ## CONVENTIONS
 
 - Every non-debug settings page needs `[PageInfo]`, Host registration, and a matching localization folder under `SecRandom/Langs/SettingsPages/` when user-facing text is localized.
+- Every new or changed settings-page user-facing string must be translated in the matching `Resources.resx`, `Resources.en-US.resx`, and `Resources.ja-JP.resx` files. Simplified Chinese, English, and Japanese are all required; no language may rely on a fallback key.
 - Privacy page localization lives under `General/Privacy/` and is registered like other settings pages with only `Resources.resx` + `Resources.Designer.cs` in the project file.
 - Chinese settings-page i18n values must not use the Chinese full stop (`。`).
 - Settings-page explanation values (`*_D`, including `S_*_D` and `C_*_D`) must not use sentence-ending or sentence-separating full stops (`。` or `.`); preserve technical dots in file names, domains, process names, and version identifiers.
