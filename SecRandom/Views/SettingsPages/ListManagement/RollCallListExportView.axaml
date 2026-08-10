@@ -91,6 +91,21 @@
                         </Button>
                     </StackPanel>
 
+                    <StackPanel IsVisible="{Binding IsCloudTransferLinkVisible}" Spacing="6">
+                        <TextBlock Text="{Binding SyncPortalDescription}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <TextBox Text="{Binding SyncPortalAddress, Mode=OneWay}"
+                                     IsReadOnly="True" VerticalContentAlignment="Center" />
+                            <Button Grid.Column="1" Click="CopySyncPortalAddress_OnClick">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <sr:FluentIcon Glyph="{sr:Fi ClipboardFilled}" />
+                                    <TextBlock Text="{Binding CopySyncPortalAddressLabel}" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+
                     <ProgressBar IsVisible="{Binding IsOfflineQrExportVisible}" Minimum="0" Maximum="1" Value="{Binding ExportProgress}" />
                     <Grid IsVisible="{Binding IsOfflineQrExportVisible}" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="12">
                         <StackPanel><TextBlock Classes="caption" Text="{Binding FramesLabel}" /><TextBlock Text="{Binding FramesValue}" FontSize="18" /></StackPanel>

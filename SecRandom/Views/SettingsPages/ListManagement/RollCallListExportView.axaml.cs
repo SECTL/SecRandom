@@ -20,6 +20,7 @@ namespace SecRandom.Views.SettingsPages.ListManagement;
 public partial class RosterListExportView : UserControl, INotifyPropertyChanged, IDrawerCloseAware
 {
     private static readonly TimeSpan QrFrameInterval = TimeSpan.FromMilliseconds(150);
+    private const string SyncPortalAddressValue = "secrandom-sync.sectl.cn";
     private readonly RosterTransferDocument _document;
     private readonly IReadOnlyList<Dictionary<string, object?>> _fileRows;
     private readonly Func<string, string> _getResource;
@@ -99,6 +100,7 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged,
     public bool IsQrImageVisible => IsDeviceExportMode &&
                                     SelectedExportMode.Mode != RosterExportMode.SessionCode &&
                                     !IsSessionCodeVisible;
+    public bool IsCloudTransferLinkVisible => IsQrExporting && _cloudTransfer is not null;
     public bool IsOfflineQrExportVisible => IsQrExporting && SelectedExportMode.Mode == RosterExportMode.OfflineQr;
     public double ExportProgress => _exportSession is not null
         ? (double)(_frameIndex + 1) / _exportSession.Frames.Count
@@ -125,6 +127,9 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged,
     public string SessionCodeLabel => GetResource("C_SessionCode");
     public string SessionCodeCopyLabel => GetResource("C_CopySessionCode");
     public string SessionCodeValue => _cloudTransfer?.SessionCode is { } code ? RosterSyncTransferService.FormatSessionCode(code) : "-";
+    public string SyncPortalAddress => SyncPortalAddressValue;
+    public string SyncPortalDescription => GetResource("C_SyncPortalDescription");
+    public string CopySyncPortalAddressLabel => GetResource("C_CopySyncPortalAddress");
     public string StatusValue { get => _statusValue; private set => SetField(ref _statusValue, value); }
 
     event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
@@ -302,6 +307,12 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged,
             ?? Task.CompletedTask);
     }
 
+    private async void CopySyncPortalAddress_OnClick(object? sender, RoutedEventArgs e)
+    {
+        await (TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(SyncPortalAddress)
+            ?? Task.CompletedTask);
+    }
+
     private IReadOnlyList<Dictionary<string, object?>> CreateFileRows() => _fileRows;
 
     private static string CreateCsv(IReadOnlyList<Dictionary<string, object?>> rows)
@@ -351,6 +362,7 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged,
         OnPropertyChanged(nameof(IsDeviceExportMode));
         OnPropertyChanged(nameof(IsSessionCodeVisible));
         OnPropertyChanged(nameof(IsQrImageVisible));
+        OnPropertyChanged(nameof(IsCloudTransferLinkVisible));
         OnPropertyChanged(nameof(IsOfflineQrExportVisible));
         OnPropertyChanged(nameof(SessionCodeValue));
         OnPropertyChanged(nameof(DeviceExportTitle));

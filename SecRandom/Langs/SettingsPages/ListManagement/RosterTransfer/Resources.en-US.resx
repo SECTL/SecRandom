@@ -29,4 +29,6 @@
   <data name="C_SessionCodeReady"><value>Session code generated</value></data>
   <data name="C_CloudQrExporting"><value>Pairing QR code generated</value></data>
 <data name="C_SessionCodeExport"><value>Session code export</value></data>
+<data name="C_SyncPortalDescription"><value>Open this address in a browser on another device to receive the list remotely without installing the app</value></data>
+<data name="C_CopySyncPortalAddress"><value>Copy link</value></data>
 </root>

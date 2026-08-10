@@ -29,4 +29,6 @@
   <data name="C_SessionCodeReady"><value>セッションコードを生成しました</value></data>
   <data name="C_CloudQrExporting"><value>ペアリング QR コードを生成しました</value></data>
 <data name="C_SessionCodeExport"><value>セッションコードでエクスポート</value></data>
+<data name="C_SyncPortalDescription"><value>別のデバイスのブラウザーでこのアドレスを開くと、アプリをインストールせずにリストファイルをリモートで受信できます</value></data>
+<data name="C_CopySyncPortalAddress"><value>リンクをコピー</value></data>
 </root>
