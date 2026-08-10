@@ -36,6 +36,7 @@
   <data name="C_Import" xml:space="preserve"><value>インポート</value></data>
   <data name="C_Cancel" xml:space="preserve"><value>キャンセル</value></data>
   <data name="C_Close" xml:space="preserve"><value>閉じる</value></data>
+  <data name="C_CopySessionCode" xml:space="preserve"><value>セッションコードをコピー</value></data>
   <data name="C_DiagnosticStandard" xml:space="preserve"><value>標準診断パッケージ</value></data>
   <data name="C_DiagnosticExtended" xml:space="preserve"><value>拡張診断パッケージ</value></data>
   <data name="M_DiagnosticExportTitle" xml:space="preserve"><value>診断データをエクスポート</value></data>
@@ -82,4 +83,42 @@
   <data name="M_Feedback_Success" xml:space="preserve"><value>フィードバックを送信しました。ご協力ありがとうございます。</value></data>
   <data name="M_Feedback_DiagnosticTooLarge" xml:space="preserve"><value>診断 ZIP がアップロード上限を超えているため、フィードバックは送信されませんでした。ログを整理して再試行するか、GitHub を使用してください。</value></data>
   <data name="M_Feedback_Failed" xml:space="preserve"><value>フィードバックを送信できませんでした。後でもう一度試すか、GitHub を使用してください。</value></data>
+  <data name="C_TransferFileExport" xml:space="preserve"><value>ファイルへエクスポート</value></data>
+  <data name="C_TransferFileImport" xml:space="preserve"><value>ファイルからインポート</value></data>
+  <data name="C_TransferQuickQrExport" xml:space="preserve"><value>クイック QR でほかの端末へエクスポート</value></data>
+  <data name="C_TransferOfflineQrExport" xml:space="preserve"><value>オフライン QR でほかの端末へエクスポート</value></data>
+  <data name="C_TransferSessionCodeExport" xml:space="preserve"><value>セッションコードでほかの端末へエクスポート</value></data>
+  <data name="C_TransferQuickQrImport" xml:space="preserve"><value>クイック QR インポート</value></data>
+  <data name="C_TransferOfflineQrImport" xml:space="preserve"><value>オフライン QR インポート</value></data>
+  <data name="C_TransferSessionCodeImport" xml:space="preserve"><value>セッションコードインポート</value></data>
+  <data name="C_TransferQuickQrTitle" xml:space="preserve"><value>クイック QR 転送</value></data>
+  <data name="C_TransferOfflineQrTitle" xml:space="preserve"><value>オフライン QR 転送</value></data>
+  <data name="C_TransferSessionCodeTitle" xml:space="preserve"><value>セッションコード転送</value></data>
+  <data name="C_TransferPortalHint" xml:space="preserve"><value>ほかの端末で QR を読み取るか、SecRandom Sync を開いて受信します。</value></data>
+  <data name="C_TransferStatusFrames" xml:space="preserve"><value>フレーム {0} / {1}</value></data>
+  <data name="C_TransferStatusReady" xml:space="preserve"><value>転送を受信する準備ができました</value></data>
+  <data name="C_TransferStatusReceiving" xml:space="preserve"><value>転送を受信しています</value></data>
+  <data name="C_TransferStatusWaitingForQr" xml:space="preserve"><value>カメラで QR コードを読み取るのを待っています</value></data>
+  <data name="C_TransferStatusReceivingQr" xml:space="preserve"><value>QR コードのデータを受信しています</value></data>
+  <data name="C_TransferStatusSending" xml:space="preserve"><value>ほかのデバイスに送信しています</value></data>
+  <data name="C_TransferStatusCompleted" xml:space="preserve"><value>QR コードのデータを受信しました</value></data>
+  <data name="C_TransferScanHint" xml:space="preserve"><value>ほかの端末に表示された QR コードをカメラで読み取ります。</value></data>
+  <data name="C_TransferOpenCamera" xml:space="preserve"><value>カメラを開く</value></data>
+  <data name="C_TransferStopCamera" xml:space="preserve"><value>カメラを停止</value></data>
+  <data name="M_TransferFailed" xml:space="preserve"><value>転送に失敗しました: {0}</value></data>
+  <data name="M_TransferWrongContent" xml:space="preserve"><value>受信した転送の種類が現在の操作と一致しません。</value></data>
+  <data name="C_TransferCopyAddress" xml:space="preserve"><value>アドレスをコピー</value></data>
+  <data name="C_TransferSessionCodeLabel" xml:space="preserve"><value>セッションコード</value></data>
+  <data name="C_TransferFrames" xml:space="preserve"><value>転送フレーム</value></data>
+  <data name="C_TransferSpeed" xml:space="preserve"><value>転送速度</value></data>
+  <data name="C_TransferSize" xml:space="preserve"><value>データサイズ</value></data>
+  <data name="C_TransferSession" xml:space="preserve"><value>セッション</value></data>
+  <data name="C_TransferStatus" xml:space="preserve"><value>状態</value></data>
+  <data name="C_TransferFramesPerSecond" xml:space="preserve"><value>{0:F1} フレーム/秒</value></data>
+  <data name="C_TransferLocal" xml:space="preserve"><value>ローカル</value></data>
+  <data name="C_TransferProgress" xml:space="preserve"><value>転送進行状況</value></data>
+  <data name="C_TransferReceived" xml:space="preserve"><value>受信済み / 合計サイズ</value></data>
+  <data name="C_TransferFramesDetail" xml:space="preserve"><value>新規 / 重複 / 無効</value></data>
+  <data name="C_TransferElapsed" xml:space="preserve"><value>経過時間</value></data>
+  <data name="C_TransferExportHint" xml:space="preserve"><value>ほかの端末で表示中の QR コードを読み取り、転送を受信します。</value></data>
 </root>

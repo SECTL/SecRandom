@@ -1,0 +1,65 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:SecRandom.Views"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="620"
+             x:Class="SecRandom.Views.SettingsTransferExportView"
+             x:DataType="local:SettingsTransferExportView">
+    <Grid Width="400" RowDefinitions="*,Auto">
+        <ScrollViewer Grid.Row="0">
+            <StackPanel Margin="16,16,16,8" Spacing="12">
+                <TextBlock Text="{Binding Title}" Theme="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock Text="{Binding Description}" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+                <GroupBox Header="{Binding TransferMethodLabel}">
+                    <StackPanel Spacing="10">
+                        <Border IsVisible="{Binding IsQrImageVisible}"
+                                HorizontalAlignment="Center" Padding="12" CornerRadius="4">
+                            <Image Source="{Binding CurrentQrImage}" Width="256" Height="256" />
+                        </Border>
+
+                        <StackPanel IsVisible="{Binding IsSessionCodeVisible}"
+                                    HorizontalAlignment="Center" Spacing="10">
+                            <TextBlock Text="{Binding SessionCodeLabel}" Classes="caption" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding SessionCode}" FontSize="26" FontWeight="Bold"
+                                       HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+                            <Button HorizontalAlignment="Center" Content="{Binding CopySessionCodeLabel}"
+                                    Click="CopySessionCodeButton_OnClick" />
+                        </StackPanel>
+
+                        <StackPanel IsVisible="{Binding IsCloudTransferLinkVisible}" Spacing="6">
+                            <TextBlock Text="{Binding SyncPortalDescription}" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                <TextBox Text="{Binding SyncPortalAddress, Mode=OneWay}"
+                                         IsReadOnly="True" VerticalContentAlignment="Center" />
+                                <Button Grid.Column="1" Content="{Binding CopySyncPortalAddressLabel}"
+                                        Click="CopySyncPortalAddressButton_OnClick" />
+                            </Grid>
+                        </StackPanel>
+
+                        <ProgressBar IsVisible="{Binding IsOfflineQrVisible}" Minimum="0" Maximum="1" Value="{Binding FrameProgress}" />
+                        <Grid IsVisible="{Binding IsOfflineQrVisible}"
+                              ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto"
+                              RowSpacing="8" ColumnSpacing="12">
+                            <StackPanel><TextBlock Classes="caption" Text="{Binding FramesLabel}" /><TextBlock Text="{Binding FramesValue}" FontSize="18" /></StackPanel>
+                            <StackPanel Grid.Column="1"><TextBlock Classes="caption" Text="{Binding SpeedLabel}" /><TextBlock Text="{Binding SpeedValue}" FontSize="18" /></StackPanel>
+                            <StackPanel Grid.Row="1"><TextBlock Classes="caption" Text="{Binding PayloadLabel}" /><TextBlock Text="{Binding PayloadValue}" FontSize="18" /></StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="1"><TextBlock Classes="caption" Text="{Binding SessionLabel}" /><TextBlock Text="{Binding SessionValue}" FontSize="18" /></StackPanel>
+                            <StackPanel Grid.Row="2"><TextBlock Classes="caption" Text="{Binding StatusLabel}" /><TextBlock Text="{Binding StatusText}" FontSize="18" TextTrimming="CharacterEllipsis" /></StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <Grid Grid.Row="1" Margin="16,8,16,16" ColumnDefinitions="* Auto">
+            <TextBlock Text="{Binding PayloadText}" VerticalAlignment="Center"
+                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+            <Button Grid.Column="1" Content="{Binding CloseLabel}" Click="CloseButton_OnClick" />
+        </Grid>
+    </Grid>
+</UserControl>

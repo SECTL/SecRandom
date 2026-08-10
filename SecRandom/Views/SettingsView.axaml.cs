@@ -33,6 +33,7 @@ using SecRandom.Services.Desktop;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Mobile;
 using SecRandom.Services.ImportExport;
+using SecRandom.Services.RosterTransfer;
 using SecRandom.Services.Security;
 using SecRandom.Shared;
 using SecRandom.ViewModels;
@@ -510,6 +511,147 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
         {
             _logger?.LogError(ex, "导出设置失败。");
             this.ShowErrorToast(GetResource("M_ExportFailed"));
+        }
+    }
+
+    private async void TransferMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!CanTransferData() || sender is not MenuItem { Tag: string tag })
+            return;
+
+        var parts = tag.Split(':');
+        if (parts.Length != 3)
+            return;
+
+        var contentType = parts[0] switch
+        {
+            "settings" => SyncTransferContentType.Settings,
+            "all-data" => SyncTransferContentType.AllData,
+            _ => throw new InvalidOperationException("Unknown transfer content type.")
+        };
+
+        if (parts[2] == "file")
+        {
+            if (contentType == SyncTransferContentType.Settings)
+            {
+                if (parts[1] == "export")
+                    ExportSettingsMenuItem_OnClick(sender, e);
+                else if (parts[1] == "import")
+                    ImportSettingsMenuItem_OnClick(sender, e);
+            }
+            else if (parts[1] == "export")
+                ExportAllDataMenuItem_OnClick(sender, e);
+            else if (parts[1] == "import")
+                ImportAllDataMenuItem_OnClick(sender, e);
+            return;
+        }
+
+        var mode = parts[2] switch
+        {
+            "quick" => RosterCloudTransferMode.QuickQr,
+            "offline" => RosterCloudTransferMode.OfflineQr,
+            "session" => RosterCloudTransferMode.SessionCode,
+            _ => throw new InvalidOperationException("Unknown transfer mode.")
+        };
+
+        if (parts[1] == "export")
+            await OpenTransferExportAsync(contentType, mode);
+        else if (parts[1] == "import")
+            OpenTransferImport(contentType, mode);
+    }
+
+    private async Task OpenTransferExportAsync(SyncTransferContentType contentType, RosterCloudTransferMode mode)
+    {
+        try
+        {
+            var package = await CreateTransferPackageAsync(contentType);
+            OpenDrawer(new SettingsTransferExportView(package, mode, GetResource));
+        }
+        catch (Exception exception)
+        {
+            _logger?.LogError(exception, "Unable to prepare a settings transfer export.");
+            this.ShowErrorToast(string.Format(GetResource("M_TransferFailed"), exception.Message));
+        }
+    }
+
+    private void OpenTransferImport(SyncTransferContentType contentType, RosterCloudTransferMode mode)
+    {
+        OpenDrawer(new SettingsTransferImportView(contentType, mode,
+            package => ImportTransferredPackageAsync(contentType, package), GetResource));
+    }
+
+    private async Task<SyncTransferPackage> CreateTransferPackageAsync(SyncTransferContentType contentType)
+    {
+        var extension = contentType == SyncTransferContentType.Settings ? "json" : "zip";
+        var fileName = contentType == SyncTransferContentType.Settings
+            ? $"SecRandom_{GlobalConstants.Version}_settings.json"
+            : $"SecRandom_{GlobalConstants.Version}_all_data.zip";
+        var temporaryPath = Path.Combine(Path.GetTempPath(), $"secrandom-transfer-{Guid.NewGuid():N}.{extension}");
+        try
+        {
+            if (contentType == SyncTransferContentType.Settings)
+                await ImportExportService.ExportSettingsAsync(temporaryPath);
+            else
+                await ImportExportService.ExportAllDataAsync(temporaryPath);
+
+            var size = new FileInfo(temporaryPath).Length;
+            SyncTransferLimits.EnsurePayloadSize(size, "export file");
+            return new SyncTransferPackage(contentType, fileName, await File.ReadAllBytesAsync(temporaryPath));
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+                File.Delete(temporaryPath);
+        }
+    }
+
+    private async Task<bool> ImportTransferredPackageAsync(SyncTransferContentType expectedContentType,
+        SyncTransferPackage package)
+    {
+        if (package.ContentType != expectedContentType)
+        {
+            this.ShowErrorToast(GetResource("M_TransferWrongContent"));
+            return false;
+        }
+
+        SyncTransferLimits.EnsurePayloadSize(package.Content.LongLength, "import file");
+        var extension = expectedContentType == SyncTransferContentType.Settings ? "json" : "zip";
+        var temporaryPath = Path.Combine(Path.GetTempPath(), $"secrandom-transfer-import-{Guid.NewGuid():N}.{extension}");
+        try
+        {
+            await File.WriteAllBytesAsync(temporaryPath, package.Content);
+            var inspection = expectedContentType == SyncTransferContentType.Settings
+                ? await ImportExportService.InspectSettingsAsync(temporaryPath)
+                : await ImportExportService.InspectAllDataAsync(temporaryPath);
+            if (!inspection.IsSupportedV3)
+            {
+                await ShowUnsupportedImportAsync(inspection);
+                return false;
+            }
+
+            var confirmation = expectedContentType == SyncTransferContentType.Settings
+                ? GetResource("M_ImportSettingsContent")
+                : GetResource("M_ImportAllDataContent");
+            if (!await ConfirmImportAsync(BuildImportConfirmation(confirmation, inspection)))
+                return false;
+
+            var result = expectedContentType == SyncTransferContentType.Settings
+                ? await ImportExportService.ImportSettingsAsync(temporaryPath)
+                : await ImportExportService.ImportAllDataAsync(temporaryPath);
+            this.ShowSuccessToast(string.Format(GetResource("M_ImportSuccess"), Path.GetFileName(result.SnapshotPath)));
+            RequestRestartApp();
+            return true;
+        }
+        catch (Exception exception)
+        {
+            _logger?.LogError(exception, "Unable to import a transferred settings package.");
+            await ShowImportFailureAsync(exception);
+            return false;
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+                File.Delete(temporaryPath);
         }
     }
 

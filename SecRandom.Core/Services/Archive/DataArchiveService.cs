@@ -29,10 +29,16 @@ public sealed class DataArchiveService(
     IArchivePostImportHooks postImportHooks,
     ILogger<DataArchiveService> logger)
 {
+    /// <summary>
+    /// Maximum size of a settings or data archive that can cross a device boundary.
+    /// The desktop shell and SecRandom Sync use the same 16 MiB limit.
+    /// </summary>
+    public const long MaxTransferBytes = 16L * 1024 * 1024;
+
     private const string ArchiveFormatName = "secrandom-archive";
     private const int MaxEntries = 20_000;
-    private const long MaxEntryBytes = 1L * 1024 * 1024 * 1024;
-    private const long MaxTotalBytes = 4L * 1024 * 1024 * 1024;
+    private const long MaxEntryBytes = MaxTransferBytes;
+    private const long MaxTotalBytes = MaxTransferBytes;
 
     private static readonly string[] AllDataRoots =
     [
@@ -56,7 +62,9 @@ public sealed class DataArchiveService(
                 ProducerVersion = GlobalConstants.Version,
                 Settings = JsonSerializer.SerializeToElement(configHandler.Data, ConfigServiceBase.JsonOptions)
             };
-            File.WriteAllText(destinationPath, JsonSerializer.Serialize(envelope, ConfigServiceBase.JsonOptions), Encoding.UTF8);
+            var content = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(envelope, ConfigServiceBase.JsonOptions));
+            EnsureTransferSize(content.LongLength, "settings export");
+            File.WriteAllBytes(destinationPath, content);
             return destinationPath;
         }, cancellationToken);
     }
@@ -210,6 +218,7 @@ public sealed class DataArchiveService(
     private ImportInspection InspectSettings(string sourcePath, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        EnsureTransferFileSize(sourcePath, "settings import");
         using var document = JsonDocument.Parse(File.ReadAllText(sourcePath));
         if (document.RootElement.ValueKind != JsonValueKind.Object)
             return new ImportInspection(ArchiveFormat.Unknown, null, string.Empty, 0, 0, [], ["设置文件根节点必须是对象。"]);
@@ -230,6 +239,7 @@ public sealed class DataArchiveService(
 
     private ImportInspection InspectArchive(string sourcePath, CancellationToken cancellationToken)
     {
+        EnsureTransferFileSize(sourcePath, "archive import");
         using var archive = ZipFile.OpenRead(sourcePath);
         ValidateArchiveEntries(archive, cancellationToken);
         var manifestEntry = archive.GetEntry("manifest.json");
@@ -277,16 +287,18 @@ public sealed class DataArchiveService(
                 SaveCurrentState();
                 EnsureParents(temporaryPath);
                 var files = new List<ArchiveFileEntry>();
+                long sourceBytes = 0;
                 using (var archive = ZipFile.Open(temporaryPath, ZipArchiveMode.Create))
                 {
                     foreach (var root in roots.Distinct(StringComparer.OrdinalIgnoreCase))
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        AddRootToArchive(archive, root, files, cancellationToken);
+                        AddRootToArchive(archive, root, files, ref sourceBytes, cancellationToken);
                     }
                     ArchiveZipWriter.WriteManifest(archive, kind, files);
                 }
 
+                EnsureTransferFileSize(temporaryPath, "archive export");
                 InspectArchive(temporaryPath, cancellationToken);
                 File.Move(temporaryPath, destinationPath);
                 if (Path.GetDirectoryName(Path.GetFullPath(destinationPath))?.Equals(
@@ -303,7 +315,8 @@ public sealed class DataArchiveService(
         }
     }
 
-    private void AddRootToArchive(ZipArchive archive, string root, List<ArchiveFileEntry> files, CancellationToken cancellationToken)
+    private void AddRootToArchive(ZipArchive archive, string root, List<ArchiveFileEntry> files, ref long sourceBytes,
+        CancellationToken cancellationToken)
     {
         var normalized = NormalizePath(root);
         if (!IsManagedPath(normalized))
@@ -312,7 +325,7 @@ public sealed class DataArchiveService(
         var source = Path.Combine(_dataDirectory, normalized.Replace('/', Path.DirectorySeparatorChar));
         if (File.Exists(source))
         {
-            AddFileToArchive(archive, source, normalized, files, cancellationToken);
+            AddFileToArchive(archive, source, normalized, files, ref sourceBytes, cancellationToken);
             return;
         }
         if (!Directory.Exists(source))
@@ -323,16 +336,20 @@ public sealed class DataArchiveService(
             cancellationToken.ThrowIfCancellationRequested();
             var relative = NormalizePath(Path.Combine(normalized, Path.GetRelativePath(source, file)));
             if (IsManagedPath(relative))
-                AddFileToArchive(archive, file, relative, files, cancellationToken);
+                AddFileToArchive(archive, file, relative, files, ref sourceBytes, cancellationToken);
         }
     }
 
-    private static void AddFileToArchive(ZipArchive archive, string source, string entryPath, List<ArchiveFileEntry> files, CancellationToken cancellationToken)
+    private static void AddFileToArchive(ZipArchive archive, string source, string entryPath, List<ArchiveFileEntry> files,
+        ref long sourceBytes, CancellationToken cancellationToken)
     {
+        var fileLength = new FileInfo(source).Length;
+        sourceBytes = checked(sourceBytes + fileLength);
+        EnsureTransferSize(sourceBytes, "archive export");
         var entry = archive.CreateEntry(entryPath, CompressionLevel.SmallestSize);
         using var input = File.OpenRead(source);
         using var output = entry.Open();
-        var hash = CopyAndHash(input, output, cancellationToken, out var length);
+        var hash = CopyAndHash(input, output, cancellationToken, out var length, MaxTransferBytes);
         files.Add(new ArchiveFileEntry { Path = entryPath, Length = length, Sha256 = hash });
     }
 
@@ -463,13 +480,15 @@ public sealed class DataArchiveService(
         if (!File.Exists(sourcePath))
             throw new FileNotFoundException("找不到导入文件。", sourcePath);
 
+        EnsureTransferFileSize(sourcePath, "import source");
+
         var sourceCopy = Path.Combine(_dataDirectory, ".import-staging", $"{Guid.NewGuid():N}.source");
         EnsureParents(sourceCopy);
         try
         {
             using var input = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             using var output = new FileStream(sourceCopy, FileMode.CreateNew, FileAccess.Write, FileShare.None);
-            CopyAndHash(input, output, cancellationToken, out _);
+            CopyAndHash(input, output, cancellationToken, out _, MaxTransferBytes);
             return sourceCopy;
         }
         catch
@@ -558,7 +577,7 @@ public sealed class DataArchiveService(
         EnsureParents(destination);
         using var input = entry.Open();
         using var output = File.Create(destination);
-        CopyAndHash(input, output, cancellationToken, out _);
+        CopyAndHash(input, output, cancellationToken, out _, MaxEntryBytes);
     }
 
     private string CreateBackupPath(string kind)
@@ -635,7 +654,8 @@ public sealed class DataArchiveService(
         if (!string.IsNullOrWhiteSpace(parent)) Directory.CreateDirectory(parent);
     }
 
-    private static string CopyAndHash(Stream input, Stream output, CancellationToken cancellationToken, out long length)
+    private static string CopyAndHash(Stream input, Stream output, CancellationToken cancellationToken, out long length,
+        long maximumLength = long.MaxValue)
     {
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         var buffer = new byte[81920];
@@ -644,11 +664,26 @@ public sealed class DataArchiveService(
         while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (length > maximumLength - read)
+                throw new InvalidDataException("Import or export content exceeds the 16 MiB transfer limit.");
             output.Write(buffer, 0, read);
             hash.AppendData(buffer, 0, read);
             length += read;
         }
         return Convert.ToHexString(hash.GetHashAndReset());
+    }
+
+    private static void EnsureTransferFileSize(string path, string operation)
+    {
+        if (!File.Exists(path))
+            throw new FileNotFoundException("File not found.", path);
+        EnsureTransferSize(new FileInfo(path).Length, operation);
+    }
+
+    private static void EnsureTransferSize(long length, string operation)
+    {
+        if (length < 0 || length > MaxTransferBytes)
+            throw new InvalidDataException($"{operation} exceeds the 16 MiB transfer limit.");
     }
 
     private static string Hash(Stream input)

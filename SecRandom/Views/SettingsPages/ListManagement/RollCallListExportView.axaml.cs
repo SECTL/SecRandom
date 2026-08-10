@@ -10,6 +10,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using MiniExcelLibs;
 using SecRandom.Core.Abstraction;
+using SecRandom.Helpers;
 using SecRandom.Services.RosterTransfer;
 using SecRandom.Shared.Models.Profile;
 using SecRandom.Views;
@@ -272,7 +273,8 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged,
         _frameIndex = 0;
         var previous = CurrentQrImage as IDisposable;
         CurrentQrImage = null;
-        previous?.Dispose();
+        if (previous is not null)
+            ImageSourceLifetime.DisposeAfterRender(previous);
         StatusValue = GetResource("C_QrStopped");
         NotifyStatsChanged();
         if (cloudTransfer is not null)
@@ -295,7 +297,8 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged,
     {
         var previous = CurrentQrImage as IDisposable;
         CurrentQrImage = CreateImage(png);
-        previous?.Dispose();
+        if (previous is not null)
+            ImageSourceLifetime.DisposeAfterRender(previous);
     }
 
     private async void CopySessionCode_OnClick(object? sender, RoutedEventArgs e)
@@ -336,7 +339,8 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged,
     private async void CloseButton_OnClick(object? sender, RoutedEventArgs e)
     {
         await ((IDrawerCloseAware)this).OnDrawerClosedAsync();
-        (ExampleQrImage as IDisposable)?.Dispose();
+        if (ExampleQrImage is IDisposable exampleQrImage)
+            ImageSourceLifetime.DisposeAfterRender(exampleQrImage);
         if (CloseHandler is not null)
             CloseHandler();
         else

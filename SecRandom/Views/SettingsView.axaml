@@ -135,12 +135,20 @@
 
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_ExportSettings}"
-                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportSettings_D}"
-                                          Click="ExportSettingsMenuItem_OnClick" />
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportSettings_D}">
+                                    <MenuItem Header="{x:Static ls:Resources.C_TransferFileExport}" Tag="settings:export:file" Click="TransferMenuItem_OnClick" />
+                                    <MenuItem Header="{x:Static ls:Resources.C_TransferQuickQrExport}" Tag="settings:export:quick" Click="TransferMenuItem_OnClick" />
+                                    <MenuItem Header="{x:Static ls:Resources.C_TransferOfflineQrExport}" Tag="settings:export:offline" Click="TransferMenuItem_OnClick" />
+                                    <MenuItem Header="{x:Static ls:Resources.C_TransferSessionCodeExport}" Tag="settings:export:session" Click="TransferMenuItem_OnClick" />
+                                </MenuItem>
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_ImportSettings}"
-                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportSettings_D}"
-                                          Click="ImportSettingsMenuItem_OnClick" />
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportSettings_D}">
+                                    <MenuItem Header="{x:Static ls:Resources.C_TransferFileImport}" Tag="settings:import:file" Click="TransferMenuItem_OnClick" />
+                                    <MenuItem Header="{x:Static ls:Resources.C_TransferQuickQrImport}" Tag="settings:import:quick" Click="TransferMenuItem_OnClick" />
+                                    <MenuItem Header="{x:Static ls:Resources.C_TransferOfflineQrImport}" Tag="settings:import:offline" Click="TransferMenuItem_OnClick" />
+                                    <MenuItem Header="{x:Static ls:Resources.C_TransferSessionCodeImport}" Tag="settings:import:session" Click="TransferMenuItem_OnClick" />
+                                </MenuItem>
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseWindowFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_ExportAllData}"
                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportAllData_D}"

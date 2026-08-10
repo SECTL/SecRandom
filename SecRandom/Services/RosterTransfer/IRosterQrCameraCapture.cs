@@ -39,7 +39,7 @@ public sealed class RosterQrCameraCaptureFactory(IPlatformServiceRoot platform) 
 {
     private readonly PlatformKind _platformKind = platform?.Kind ?? throw new ArgumentNullException(nameof(platform));
 
-    public bool IsPreviewSupported => _platformKind is not (PlatformKind.Linux or PlatformKind.MacOs);
+    public bool IsPreviewSupported => true;
 
     public IRosterQrCameraCapture Create(Control previewControl)
     {

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <root>
     <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
@@ -117,9 +117,12 @@
     <data name="C_Cancel" xml:space="preserve">
         <value>取消</value>
     </data>
-    <data name="C_Close" xml:space="preserve">
-        <value>关闭</value>
-    </data>
+  <data name="C_Close" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="C_CopySessionCode" xml:space="preserve">
+    <value>复制会话码</value>
+  </data>
     <data name="C_DiagnosticStandard" xml:space="preserve">
         <value>标准诊断包</value>
     </data>
@@ -258,4 +261,42 @@
     <data name="M_Feedback_Failed" xml:space="preserve">
         <value>反馈提交失败，请稍后重试或使用 GitHub</value>
     </data>
+  <data name="C_TransferFileExport" xml:space="preserve"><value>文件导出</value></data>
+  <data name="C_TransferFileImport" xml:space="preserve"><value>从文件导入</value></data>
+  <data name="C_TransferQuickQrExport" xml:space="preserve"><value>扫码快速导出至其它设备</value></data>
+  <data name="C_TransferOfflineQrExport" xml:space="preserve"><value>无网导出至其它设备</value></data>
+  <data name="C_TransferSessionCodeExport" xml:space="preserve"><value>会话码导出至其它设备</value></data>
+  <data name="C_TransferQuickQrImport" xml:space="preserve"><value>扫码快速导入</value></data>
+  <data name="C_TransferOfflineQrImport" xml:space="preserve"><value>无网扫码导入</value></data>
+  <data name="C_TransferSessionCodeImport" xml:space="preserve"><value>会话码导入</value></data>
+  <data name="C_TransferQuickQrTitle" xml:space="preserve"><value>扫码快速传输</value></data>
+  <data name="C_TransferOfflineQrTitle" xml:space="preserve"><value>无网二维码传输</value></data>
+  <data name="C_TransferSessionCodeTitle" xml:space="preserve"><value>会话码传输</value></data>
+  <data name="C_TransferPortalHint" xml:space="preserve"><value>在其它设备中扫码，或打开 SecRandom Sync 接收传输</value></data>
+  <data name="C_TransferStatusFrames" xml:space="preserve"><value>第 {0} / {1} 帧</value></data>
+  <data name="C_TransferStatusReady" xml:space="preserve"><value>准备接收传输</value></data>
+  <data name="C_TransferStatusReceiving" xml:space="preserve"><value>正在接收传输</value></data>
+  <data name="C_TransferStatusWaitingForQr" xml:space="preserve"><value>等待摄像头扫描二维码</value></data>
+  <data name="C_TransferStatusReceivingQr" xml:space="preserve"><value>正在接收二维码数据</value></data>
+  <data name="C_TransferStatusSending" xml:space="preserve"><value>正在向其它设备发送</value></data>
+  <data name="C_TransferStatusCompleted" xml:space="preserve"><value>二维码数据接收完成</value></data>
+  <data name="C_TransferScanHint" xml:space="preserve"><value>使用相机扫描其它设备显示的二维码</value></data>
+  <data name="C_TransferOpenCamera" xml:space="preserve"><value>打开相机</value></data>
+  <data name="C_TransferStopCamera" xml:space="preserve"><value>停止相机</value></data>
+  <data name="M_TransferFailed" xml:space="preserve"><value>传输失败：{0}</value></data>
+  <data name="M_TransferWrongContent" xml:space="preserve"><value>收到的传输类型与当前操作不匹配。</value></data>
+  <data name="C_TransferCopyAddress" xml:space="preserve"><value>复制地址</value></data>
+  <data name="C_TransferSessionCodeLabel" xml:space="preserve"><value>会话码</value></data>
+  <data name="C_TransferFrames" xml:space="preserve"><value>传输帧</value></data>
+  <data name="C_TransferSpeed" xml:space="preserve"><value>传输速度</value></data>
+  <data name="C_TransferSize" xml:space="preserve"><value>数据大小</value></data>
+  <data name="C_TransferSession" xml:space="preserve"><value>会话</value></data>
+  <data name="C_TransferStatus" xml:space="preserve"><value>状态</value></data>
+  <data name="C_TransferFramesPerSecond" xml:space="preserve"><value>{0:F1} 帧/秒</value></data>
+  <data name="C_TransferLocal" xml:space="preserve"><value>本地</value></data>
+  <data name="C_TransferProgress" xml:space="preserve"><value>传输进度</value></data>
+  <data name="C_TransferReceived" xml:space="preserve"><value>已接收/总大小</value></data>
+  <data name="C_TransferFramesDetail" xml:space="preserve"><value>新帧/重复/无效</value></data>
+  <data name="C_TransferElapsed" xml:space="preserve"><value>已用时间</value></data>
+  <data name="C_TransferExportHint" xml:space="preserve"><value>在另一台设备上扫描显示的二维码以接收传输</value></data>
 </root>

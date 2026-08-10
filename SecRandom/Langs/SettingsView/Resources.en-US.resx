@@ -135,7 +135,8 @@
     <data name="M_OpenDirectoryFailed"><value>Unable to open the directory.</value></data>
     <data name="C_MoreOptions_LogViewer"><value>View logs</value></data>
     <data name="C_MoreOptions_LogViewer_D"><value>View and manage application log files</value></data>
-    <data name="C_Close"><value>Close</value></data>
+  <data name="C_Close"><value>Close</value></data>
+  <data name="C_CopySessionCode"><value>Copy session code</value></data>
     <data name="M_ImportUnsupportedTitle"><value>Unsupported Import File</value></data>
     <data name="M_ImportUnsupportedContent"><value>This is not a supported SecRandom v3 export file.</value></data>
     <data name="M_ImportUnsupportedUnknownVersion"><value>Unknown</value></data>
@@ -171,4 +172,42 @@
     <data name="M_Feedback_Success"><value>Feedback submitted. Thank you for your help.</value></data>
     <data name="M_Feedback_DiagnosticTooLarge"><value>The diagnostic ZIP exceeds the upload limit, so feedback was not submitted. Clear logs and try again, or use GitHub.</value></data>
     <data name="M_Feedback_Failed"><value>Feedback submission failed. Try again later or use GitHub.</value></data>
+  <data name="C_TransferFileExport" xml:space="preserve"><value>Export to file</value></data>
+  <data name="C_TransferFileImport" xml:space="preserve"><value>Import from file</value></data>
+  <data name="C_TransferQuickQrExport" xml:space="preserve"><value>Quick QR export to another device</value></data>
+  <data name="C_TransferOfflineQrExport" xml:space="preserve"><value>Offline QR export to another device</value></data>
+  <data name="C_TransferSessionCodeExport" xml:space="preserve"><value>Session-code export to another device</value></data>
+  <data name="C_TransferQuickQrImport" xml:space="preserve"><value>Quick QR import</value></data>
+  <data name="C_TransferOfflineQrImport" xml:space="preserve"><value>Offline QR import</value></data>
+  <data name="C_TransferSessionCodeImport" xml:space="preserve"><value>Session-code import</value></data>
+  <data name="C_TransferQuickQrTitle" xml:space="preserve"><value>Quick QR transfer</value></data>
+  <data name="C_TransferOfflineQrTitle" xml:space="preserve"><value>Offline QR transfer</value></data>
+  <data name="C_TransferSessionCodeTitle" xml:space="preserve"><value>Session-code transfer</value></data>
+  <data name="C_TransferPortalHint" xml:space="preserve"><value>Scan on another device or open SecRandom Sync to receive the transfer.</value></data>
+  <data name="C_TransferStatusFrames" xml:space="preserve"><value>Frame {0} / {1}</value></data>
+  <data name="C_TransferStatusReady" xml:space="preserve"><value>Ready to receive a transfer</value></data>
+  <data name="C_TransferStatusReceiving" xml:space="preserve"><value>Receiving transfer</value></data>
+  <data name="C_TransferStatusWaitingForQr" xml:space="preserve"><value>Waiting for camera to scan QR code</value></data>
+  <data name="C_TransferStatusReceivingQr" xml:space="preserve"><value>Receiving QR code data</value></data>
+  <data name="C_TransferStatusSending" xml:space="preserve"><value>Sending to other devices</value></data>
+  <data name="C_TransferStatusCompleted" xml:space="preserve"><value>QR code data received</value></data>
+  <data name="C_TransferScanHint" xml:space="preserve"><value>Use the camera to scan the QR code shown on the other device.</value></data>
+  <data name="C_TransferOpenCamera" xml:space="preserve"><value>Open camera</value></data>
+  <data name="C_TransferStopCamera" xml:space="preserve"><value>Stop camera</value></data>
+  <data name="M_TransferFailed" xml:space="preserve"><value>Transfer failed: {0}</value></data>
+  <data name="M_TransferWrongContent" xml:space="preserve"><value>The received transfer does not match this operation.</value></data>
+  <data name="C_TransferCopyAddress" xml:space="preserve"><value>Copy address</value></data>
+  <data name="C_TransferSessionCodeLabel" xml:space="preserve"><value>Session code</value></data>
+  <data name="C_TransferFrames" xml:space="preserve"><value>Transfer frames</value></data>
+  <data name="C_TransferSpeed" xml:space="preserve"><value>Transfer speed</value></data>
+  <data name="C_TransferSize" xml:space="preserve"><value>Data size</value></data>
+  <data name="C_TransferSession" xml:space="preserve"><value>Session</value></data>
+  <data name="C_TransferStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="C_TransferFramesPerSecond" xml:space="preserve"><value>{0:F1} frames/s</value></data>
+  <data name="C_TransferLocal" xml:space="preserve"><value>Local</value></data>
+  <data name="C_TransferProgress" xml:space="preserve"><value>Transfer progress</value></data>
+  <data name="C_TransferReceived" xml:space="preserve"><value>Received / total size</value></data>
+  <data name="C_TransferFramesDetail" xml:space="preserve"><value>New / duplicate / invalid</value></data>
+  <data name="C_TransferElapsed" xml:space="preserve"><value>Elapsed</value></data>
+  <data name="C_TransferExportHint" xml:space="preserve"><value>Scan the displayed QR code on another device to receive the transfer.</value></data>
 </root>

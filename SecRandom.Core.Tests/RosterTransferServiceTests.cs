@@ -130,6 +130,50 @@ public sealed class RosterTransferServiceTests
         Assert.Equal(expected, RosterSyncTransferService.FormatSessionCode("ab-12 cd_34ef56"));
     }
 
+    [Fact]
+    public async Task OfflineQrExport_RejectsRosterLargerThan300KiB()
+    {
+        var transfer = new RosterTransferService();
+        var document = new RosterTransferDocument(
+            1,
+            RosterTransferKind.Students,
+            "too-large.secrandom-roster.json",
+            Enumerable.Range(0, 12_000).Select(index => new RosterTransferRow(
+                true,
+                $"student-{index}-{Guid.NewGuid():N}",
+                $"Student {Guid.NewGuid():N}",
+                Guid.NewGuid().ToString("N"),
+                Guid.NewGuid().ToString("N"),
+                Guid.NewGuid().ToString("N"))).ToArray());
+
+        var exception = await Assert.ThrowsAsync<InvalidDataException>(
+            () => transfer.CreateExportSessionAsync(document, TestContext.Current.CancellationToken));
+
+        Assert.Contains("300 KiB", exception.Message);
+    }
+
+    [Fact]
+    public async Task OfflineQrExport_RejectsSettingsPackageLargerThan300KiB()
+    {
+        var transfer = new SettingsTransferQrService();
+        var package = new SyncTransferPackage(SyncTransferContentType.Settings, "settings.json",
+            RandomNumberGenerator.GetBytes(SyncTransferLimits.MaxOfflineQrPayloadBytes + 1));
+
+        var exception = await Assert.ThrowsAsync<InvalidDataException>(
+            () => transfer.CreateExportSessionAsync(package, TestContext.Current.CancellationToken));
+
+        Assert.Contains("300 KiB", exception.Message);
+    }
+
+    [Fact]
+    public void CloudTransfer_RejectsPayloadLargerThanOneMiB()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            SyncTransferLimits.EnsurePayloadSize(SyncTransferLimits.MaxPayloadBytes + 1));
+
+        Assert.Contains("1 MiB", exception.Message);
+    }
+
     private static (int Width, int Height) ReadPngSize(byte[] png)
     {
         Assert.True(png.Length >= 24);

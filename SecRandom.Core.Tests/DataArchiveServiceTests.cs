@@ -209,6 +209,23 @@ public sealed class DataArchiveServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ImportSettings_RejectsFilesOverTheTransferLimitBeforeStaging()
+    {
+        using var provider = CreateProvider();
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var source = Path.Combine(_exportDirectory, "oversized-settings.json");
+        await using (var stream = new FileStream(source, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            stream.SetLength(DataArchiveService.MaxTransferBytes + 1);
+
+        var exception = await Assert.ThrowsAsync<InvalidDataException>(
+            () => archive.ImportSettingsAsync(source, TestContext.Current.CancellationToken));
+
+        Assert.Contains("16 MiB", exception.Message);
+        var staging = Path.Combine(_dataRoot, ".import-staging");
+        Assert.False(Directory.Exists(staging) && Directory.EnumerateFiles(staging, "*.source").Any());
+    }
+
+    [Fact]
     public void CommitCandidate_RollsBackCommittedRootsWhenALaterRootFails()
     {
         using var provider = CreateProvider();

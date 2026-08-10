@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:SecRandom.Views"
+             xmlns:controls="clr-namespace:SecRandom.Controls"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="620"
+             x:Class="SecRandom.Views.SettingsTransferImportView"
+             x:DataType="local:SettingsTransferImportView">
+    <Grid Width="400" RowDefinitions="*,Auto">
+        <ScrollViewer Grid.Row="0">
+            <StackPanel Margin="16,16,16,8" Spacing="12">
+                <TextBlock Text="{Binding Title}" Theme="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock Text="{Binding Description}" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+                <GroupBox IsVisible="{Binding IsQrMode}" Header="{Binding TransferMethodLabel}">
+                    <StackPanel Spacing="10">
+                        <Border Height="220" ClipToBounds="True" CornerRadius="4"
+                                IsVisible="{Binding IsCameraPreviewSupported}"
+                                Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                            <controls:RosterQrCameraPreview x:Name="CameraControl" />
+                        </Border>
+                        <ProgressBar IsVisible="{Binding IsOfflineQrMode}" Minimum="0" Maximum="1" Value="{Binding FrameProgress}" />
+                        <Grid IsVisible="{Binding IsOfflineQrMode}"
+                              ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto"
+                              RowSpacing="8" ColumnSpacing="12">
+                            <StackPanel><TextBlock Classes="caption" Text="{Binding TransferProgressLabel}" /><TextBlock Text="{Binding ProgressText}" FontSize="18" /></StackPanel>
+                            <StackPanel Grid.Column="1"><TextBlock Classes="caption" Text="{Binding TransferSpeedLabel}" /><TextBlock Text="{Binding DecodeSpeedText}" FontSize="18" /></StackPanel>
+                            <StackPanel Grid.Row="1"><TextBlock Classes="caption" Text="{Binding TransferReceivedLabel}" /><TextBlock Text="{Binding ReceivedText}" FontSize="18" /></StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="1"><TextBlock Classes="caption" Text="{Binding TransferFramesDetailLabel}" /><TextBlock Text="{Binding FramesText}" FontSize="18" /></StackPanel>
+                            <StackPanel Grid.Row="2"><TextBlock Classes="caption" Text="{Binding TransferSessionLabel}" /><TextBlock Text="{Binding SessionText}" FontSize="18" /></StackPanel>
+                            <StackPanel Grid.Row="2" Grid.Column="1"><TextBlock Classes="caption" Text="{Binding TransferElapsedLabel}" /><TextBlock Text="{Binding ElapsedText}" FontSize="18" /></StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox IsVisible="{Binding IsSessionCodeMode}" Header="{Binding TransferMethodLabel}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{Binding SessionCodeHint}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBox x:Name="SessionCodeInput" MaxLength="12" TextAlignment="Center" FontSize="17"
+                                 TextChanged="SessionCodeInput_OnTextChanged" />
+                    </StackPanel>
+                </GroupBox>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <Grid Grid.Row="1" Margin="16,8,16,16" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
+                <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <TextBlock Grid.Column="1" Text="{Binding PayloadText}" VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+            </Grid>
+            <Button Grid.Column="1" Content="{Binding CloseLabel}" Click="CloseButton_OnClick" />
+        </Grid>
+    </Grid>
+</UserControl>

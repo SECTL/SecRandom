@@ -39,6 +39,7 @@ public sealed class RosterTransferService
         {
             cancellationToken.ThrowIfCancellationRequested();
             var compressedPayload = Compress(JsonSerializer.SerializeToUtf8Bytes(document, SerializerOptions));
+            SyncTransferLimits.EnsureOfflineQrPayloadSize(compressedPayload.LongLength);
             var chunks = Split(compressedPayload, FramePayloadLength);
             if (chunks.Count > MaximumFrameCount)
                 throw new InvalidOperationException("名单过大，无法在合理数量的二维码中传输。");
@@ -134,7 +135,14 @@ public sealed class RosterTransferService
         using var input = new MemoryStream(payload);
         using var brotli = new BrotliStream(input, CompressionMode.Decompress);
         using var output = new MemoryStream();
-        brotli.CopyTo(output);
+        var buffer = new byte[81920];
+        int read;
+        while ((read = brotli.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            if (output.Length + read > SyncTransferLimits.MaxOfflineQrPayloadBytes * 2L)
+                throw new InvalidDataException("Offline QR transfer expands beyond its safety limit.");
+            output.Write(buffer, 0, read);
+        }
         return output.ToArray();
     }
 
@@ -257,6 +265,7 @@ public sealed class RosterTransferService
                 throw new InvalidDataException("二维码传输校验失败，请重新扫描。");
 
             var compressedPayload = receivedPayload[.._payloadLength];
+            SyncTransferLimits.EnsureOfflineQrPayloadSize(compressedPayload.LongLength);
             if (
                 !CryptographicOperations.FixedTimeEquals(Convert.FromHexString(_checksum), SHA256.HashData(compressedPayload)))
             {
@@ -277,7 +286,8 @@ public sealed class RosterTransferService
             if (parts[0] == ManifestPrefix && parts.Length == 6 &&
                 int.TryParse(parts[3], NumberStyles.None, CultureInfo.InvariantCulture, out var manifestPayloadLength) &&
                 int.TryParse(parts[4], NumberStyles.None, CultureInfo.InvariantCulture, out var manifestTotal) &&
-                manifestPayloadLength > 0 && manifestTotal is > 0 and <= MaximumFrameCount)
+                manifestPayloadLength is > 0 and <= SyncTransferLimits.MaxOfflineQrPayloadBytes &&
+                manifestTotal is > 0 and <= MaximumFrameCount)
             {
                 try
                 {
@@ -298,13 +308,21 @@ public sealed class RosterTransferService
                 !int.TryParse(parts[2], NumberStyles.None, CultureInfo.InvariantCulture, out var index) ||
                 !int.TryParse(parts[3], NumberStyles.None, CultureInfo.InvariantCulture, out var offset) ||
                 !int.TryParse(parts[4], NumberStyles.None, CultureInfo.InvariantCulture, out var payloadLength) ||
-                index < 0 || offset < 0 || offset >= payloadLength || payloadLength <= 0 || parts[5].Length != 64)
+                index < 0 || offset < 0 || offset >= payloadLength ||
+                payloadLength is <= 0 or > SyncTransferLimits.MaxOfflineQrPayloadBytes || parts[5].Length != 64)
                 return false;
 
             try
             {
-                frame = new RosterQrFrame(RosterQrFrameKind.Data, parts[1], null, index, 0, payloadLength, parts[5],
-                    Convert.FromBase64String(parts[6]));
+                var chunk = Convert.FromBase64String(parts[6]);
+                // New frames are 128 bytes; legacy clients used 320 bytes. Infer the
+                // frame width from the offset so reverse-order scans remain compatible.
+                var inferredLength = index > 0 && offset % index == 0 ? offset / index : chunk.Length;
+                var isSingleLegacyFrame = index == 0 && chunk.Length == payloadLength && chunk.Length <= 320;
+                if ((inferredLength is not (128 or 320) && !isSingleLegacyFrame) || chunk.Length <= 0 ||
+                    chunk.Length > inferredLength || offset != index * inferredLength)
+                    return false;
+                frame = new RosterQrFrame(RosterQrFrameKind.Data, parts[1], null, index, 0, payloadLength, parts[5], chunk);
                 return true;
             }
             catch (System.FormatException)

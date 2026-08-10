@@ -534,7 +534,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
             var cameraCapture = _qrCameraCaptureFactory.Create(CameraControl);
             cameraCapture.CameraError += CameraCapture_OnCameraError;
             _qrCameraCapture = cameraCapture;
-            var startResult = await cameraCapture.StartAsync(ProcessCapturedQrImageAsync,
+            var startResult = await cameraCapture.StartAsync(ProcessCameraFrameAsync,
                 _qrScanCancellationTokenSource.Token);
             if (_isDrawerClosed)
             {
@@ -578,6 +578,12 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
             StatusText = string.Format(Text("M_QrTransferFailed"), exception.Message);
             await StopQrScannerAsync(keepStatus: true);
         }
+    }
+
+    private async Task ProcessCameraFrameAsync(byte[] imageBytes)
+    {
+        await CameraControl.ShowFrameAsync(imageBytes);
+        await ProcessCapturedQrImageAsync(imageBytes);
     }
 
     private async void CameraCapture_OnCameraError(object? sender, string error)
