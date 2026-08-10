@@ -88,7 +88,6 @@ using SecRandom.Views.SettingsPages.More;
 using SecRandom.Views.SettingsPages.Personalized;
 using SecRandom.Views.SettingsPages.Picking;
 // using SecRandom.Views.SettingsPages.Plugins.Overview;
-using SecRandom.Views.SettingsPages.Update;
 using DefaultNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.DefaultNotificationSettingsPage;
 using FloatingWindowSettingsPage = SecRandom.Views.SettingsPages.Personalized.FloatingWindowSettingsPage;
 using LotteryNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.LotteryNotificationSettingsPage;
@@ -995,14 +994,7 @@ public partial class App : Application
                 //     .Page_Title);
 
                 // 底部
-                if (isMobile)
-                {
-                    services.AddSettingsPage<MobileUpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
-                }
-                else
-                {
-                    services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
-                }
+                services.AddSettingsPage<MobileUpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
 
                 services.AddSettingsPageSeparator(PageLocation.Bottom, isHide: true);

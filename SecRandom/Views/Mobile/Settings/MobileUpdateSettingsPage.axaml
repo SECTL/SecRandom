@@ -2,7 +2,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:langs="clr-namespace:SecRandom.Langs.Mobile"
-             x:Class="SecRandom.Views.Mobile.Settings.MobileUpdateSettingsPage">
+             xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
+             xmlns:updates="clr-namespace:SecRandom.Shared.Updates;assembly=SecRandom.Shared"
+             x:Class="SecRandom.Views.Mobile.Settings.MobileUpdateSettingsPage"
+             x:DataType="local:MobileUpdateSettingsPage"
+             Loaded="OnLoaded"
+             Unloaded="OnUnloaded">
     <ScrollViewer x:Name="PageScroll">
         <StackPanel Classes="page-container">
             <StackPanel x:Name="SupportedUpdateSurface" Spacing="8">
@@ -11,6 +16,17 @@
                         Click="CheckUpdatesButton_OnClick" />
 
                 <TextBlock x:Name="UpdateStatusText" TextWrapping="Wrap" />
+
+                <ComboBox x:Name="DesktopArtifactSelector"
+                          ItemsSource="{Binding DesktopUpdateCenter.AvailableArtifacts}"
+                          SelectedItem="{Binding DesktopUpdateCenter.SelectedArtifact, Mode=TwoWay}"
+                          IsVisible="False">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="updates:UpdateArtifact">
+                            <TextBlock Text="{Binding AssetName}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
 
                 <Button x:Name="InstallUpdateButton"
                         Classes="accent"
