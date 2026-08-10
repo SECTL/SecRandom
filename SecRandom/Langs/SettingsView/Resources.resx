@@ -154,7 +154,7 @@
         <value>未识别</value>
     </data>
     <data name="M_ImportUnsupportedVersion" xml:space="preserve">
-        <value>检测到的导出版本：{0}\n\n{1}\n\n未创建恢复快照，也未修改任何数据</value>
+        <value>检测到的导出版本：{0}&#xA;&#xA;{1}&#xA;&#xA;未创建恢复快照，也未修改任何数据</value>
     </data>
     <data name="M_ExportSuccess" xml:space="preserve">
         <value>已导出：{0}</value>
