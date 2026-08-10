@@ -121,4 +121,6 @@
   <data name="C_TransferFramesDetail" xml:space="preserve"><value>新規 / 重複 / 無効</value></data>
   <data name="C_TransferElapsed" xml:space="preserve"><value>経過時間</value></data>
   <data name="C_TransferExportHint" xml:space="preserve"><value>ほかの端末で表示中の QR コードを読み取り、転送を受信します。</value></data>
+  <data name="C_TransferCameraOne" xml:space="preserve"><value>カメラ 1</value></data>
+  <data name="C_TransferCameraTwo" xml:space="preserve"><value>カメラ 2</value></data>
 </root>

@@ -11,23 +11,26 @@ public sealed class OpenCvRosterQrCameraCapture : IRosterQrCameraCapture
     private static readonly TimeSpan CaptureInterval = TimeSpan.FromMilliseconds(100);
     private readonly VideoCapture _capture;
     private readonly string _cameraApiName;
+    private readonly int _cameraIndex;
     private CancellationTokenSource? _cancellation;
     private Task? _loop;
 
     public event EventHandler<string>? CameraError;
 
-    public OpenCvRosterQrCameraCapture(VideoCaptureAPIs captureApi, string cameraApiName)
+    public OpenCvRosterQrCameraCapture(VideoCaptureAPIs captureApi, string cameraApiName, int cameraIndex)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(cameraApiName);
+        ArgumentOutOfRangeException.ThrowIfNegative(cameraIndex);
         _cameraApiName = cameraApiName;
-        _capture = new VideoCapture(0, captureApi);
+        _cameraIndex = cameraIndex;
+        _capture = new VideoCapture(cameraIndex, captureApi);
     }
 
     public Task<RosterQrCameraStartResult> StartAsync(Func<byte[], Task> onFrame, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(onFrame);
         if (!_capture.IsOpened())
-            throw new InvalidOperationException($"No {_cameraApiName} camera is available.");
+            throw new InvalidOperationException($"No {_cameraApiName} camera is available at index {_cameraIndex}.");
 
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _cancellation = cancellation;

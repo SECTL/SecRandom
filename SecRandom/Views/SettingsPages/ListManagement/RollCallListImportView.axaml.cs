@@ -39,6 +39,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
     private bool _isQrImportMode;
     private RosterImportMode _selectedImportMode = RosterImportMode.ExcelCsv;
     private RosterImportModeOption _selectedImportModeOption = null!;
+    private RosterQrCameraOption _selectedCameraOption = null!;
     private bool _isScanningQr;
     private bool _isDrawerClosed;
     private const int SessionCodeLength = 12;
@@ -74,6 +75,12 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
             new(RosterImportMode.SessionCode, SessionCodeImportModeLabel)
         ];
         _selectedImportModeOption = ImportModes[0];
+        CameraOptions =
+        [
+            new(RosterQrCameraSelection.First, Text("C_CameraOne")),
+            new(RosterQrCameraSelection.Second, Text("C_CameraTwo"))
+        ];
+        _selectedCameraOption = CameraOptions[0];
         DataContext = this;
         InitializeComponent();
     }
@@ -144,12 +151,14 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
     public bool CanScanQr => true;
     public bool IsQrScanning => _isScanningQr;
     public bool IsCameraPreviewSupported => _qrCameraCaptureFactory.IsPreviewSupported;
+    public bool IsCameraSelectionSupported => _qrCameraCaptureFactory.SupportsCameraSelection;
     public string FileImportModeLabel => Text("C_ImportExcelCsv");
     public string QuickQrImportModeLabel => Text("C_ImportQuickQr");
     public string OfflineQrImportModeLabel => Text("C_ImportOfflineQr");
     public string SessionCodeImportModeLabel => Text("C_ImportSessionCode");
     public string ImportSourceLabel => Text("C_SelectImportSource");
     public IReadOnlyList<RosterImportModeOption> ImportModes { get; }
+    public IReadOnlyList<RosterQrCameraOption> CameraOptions { get; }
     public RosterImportModeOption SelectedImportModeOption
     {
         get => _selectedImportModeOption;
@@ -162,6 +171,17 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
                 return;
 
             _ = SelectImportModeAsync(value.Mode);
+        }
+    }
+    public RosterQrCameraOption SelectedCameraOption
+    {
+        get => _selectedCameraOption;
+        set
+        {
+            if (value is null || ReferenceEquals(_selectedCameraOption, value) || !SetField(ref _selectedCameraOption, value))
+                return;
+
+            _ = RestartQrScannerForCameraChangeAsync();
         }
     }
     public string QrImportLabel => Text("C_QrImport");
@@ -531,7 +551,7 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
             _qrScanCancellationTokenSource = new CancellationTokenSource();
             _isScanningQr = true;
             NotifyQrScannerStateChanged();
-            var cameraCapture = _qrCameraCaptureFactory.Create(CameraControl);
+            var cameraCapture = _qrCameraCaptureFactory.Create(CameraControl, SelectedCameraOption.Selection);
             cameraCapture.CameraError += CameraCapture_OnCameraError;
             _qrCameraCapture = cameraCapture;
             var startResult = await cameraCapture.StartAsync(ProcessCameraFrameAsync,
@@ -779,6 +799,15 @@ public partial class RollCallListImportView : UserControl, INotifyPropertyChange
             StatusText = Text("C_QrImportReady");
         if (wasScanning)
             NotifyQrScannerStateChanged();
+    }
+
+    private async Task RestartQrScannerForCameraChangeAsync()
+    {
+        if (!IsQrImportMode || _isDrawerClosed)
+            return;
+
+        await StopQrScannerAsync(keepStatus: true);
+        await ToggleQrScannerAsync();
     }
 
     private void NotifyQrScannerStateChanged()

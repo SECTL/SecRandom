@@ -210,4 +210,6 @@
   <data name="C_TransferFramesDetail" xml:space="preserve"><value>New / duplicate / invalid</value></data>
   <data name="C_TransferElapsed" xml:space="preserve"><value>Elapsed</value></data>
   <data name="C_TransferExportHint" xml:space="preserve"><value>Scan the displayed QR code on another device to receive the transfer.</value></data>
+  <data name="C_TransferCameraOne" xml:space="preserve"><value>Camera 1</value></data>
+  <data name="C_TransferCameraTwo" xml:space="preserve"><value>Camera 2</value></data>
 </root>

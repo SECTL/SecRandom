@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -43,6 +44,12 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
         .GetServices<IHostedService>().OfType<OnlineStatusService>().First();
     private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
     public int OnlineUsersCount => OnlineStatusService.CachedOnlineCount;
+    public string BannerSource => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName switch
+    {
+        "zh" => "/Assets/Banners/secrandom-banner-cn.png",
+        "ja" => "/Assets/Banners/secrandom-banner-ja.png",
+        _ => "/Assets/Banners/secrandom-banner-en.png"
+    };
     public ObservableCollection<GitHubContributor> Contributors { get; } = [];
 
     public bool IsRefreshingContributors

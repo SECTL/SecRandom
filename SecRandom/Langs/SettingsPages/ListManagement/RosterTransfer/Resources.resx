@@ -64,4 +64,6 @@
   <data name="C_SessionCodeExport"><value>会话码导出</value></data>
   <data name="C_SyncPortalDescription"><value>在其它设备的浏览器打开此地址，即可远程接收名单文件，无需下载软件</value></data>
   <data name="C_CopySyncPortalAddress"><value>复制链接</value></data>
+  <data name="C_CameraOne"><value>摄像头 1</value></data>
+  <data name="C_CameraTwo"><value>摄像头 2</value></data>
 </root>

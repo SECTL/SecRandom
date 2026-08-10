@@ -23,13 +23,30 @@ public enum RosterQrCameraStartResult
 }
 
 /// <summary>
+/// Identifies one of the two camera sources exposed by the QR import UI.
+/// CameraView maps these to rear/front cameras; OpenCV maps them to device indexes zero/one.
+/// </summary>
+public enum RosterQrCameraSelection
+{
+    First,
+    Second
+}
+
+/// <summary>
+/// UI-ready camera choice for QR imports.
+/// </summary>
+public sealed record RosterQrCameraOption(RosterQrCameraSelection Selection, string Label);
+
+/// <summary>
 /// Creates the active platform's roster QR camera capture session.
 /// </summary>
 public interface IRosterQrCameraCaptureFactory
 {
     bool IsPreviewSupported { get; }
 
-    IRosterQrCameraCapture Create(Control previewControl);
+    bool SupportsCameraSelection { get; }
+
+    IRosterQrCameraCapture Create(Control previewControl, RosterQrCameraSelection selection);
 }
 
 /// <summary>
@@ -41,17 +58,19 @@ public sealed class RosterQrCameraCaptureFactory(IPlatformServiceRoot platform) 
 
     public bool IsPreviewSupported => true;
 
-    public IRosterQrCameraCapture Create(Control previewControl)
+    public bool SupportsCameraSelection => _platformKind != PlatformKind.Ios;
+
+    public IRosterQrCameraCapture Create(Control previewControl, RosterQrCameraSelection selection)
     {
         ArgumentNullException.ThrowIfNull(previewControl);
 
         return _platformKind switch
         {
-            PlatformKind.Linux => new OpenCvRosterQrCameraCapture(VideoCaptureAPIs.V4L2, "Linux V4L2"),
-            PlatformKind.MacOs => new OpenCvRosterQrCameraCapture(VideoCaptureAPIs.AVFOUNDATION, "macOS AVFoundation"),
+            PlatformKind.Linux => new OpenCvRosterQrCameraCapture(VideoCaptureAPIs.V4L2, "Linux V4L2", (int)selection),
+            PlatformKind.MacOs => new OpenCvRosterQrCameraCapture(VideoCaptureAPIs.AVFOUNDATION, "macOS AVFoundation", (int)selection),
             _ => new CameraViewRosterQrCameraCapture((previewControl as RosterQrCameraPreview)?.GetOrCreateCameraView()
                 ?? throw new ArgumentException("The active camera provider requires a roster camera preview host.",
-                    nameof(previewControl)))
+                    nameof(previewControl)), selection)
         };
     }
 }

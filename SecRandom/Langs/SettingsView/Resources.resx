@@ -299,4 +299,6 @@
   <data name="C_TransferFramesDetail" xml:space="preserve"><value>新帧/重复/无效</value></data>
   <data name="C_TransferElapsed" xml:space="preserve"><value>已用时间</value></data>
   <data name="C_TransferExportHint" xml:space="preserve"><value>在另一台设备上扫描显示的二维码以接收传输</value></data>
+  <data name="C_TransferCameraOne" xml:space="preserve"><value>摄像头 1</value></data>
+  <data name="C_TransferCameraTwo" xml:space="preserve"><value>摄像头 2</value></data>
 </root>

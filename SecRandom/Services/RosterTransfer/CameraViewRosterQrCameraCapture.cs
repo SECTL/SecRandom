@@ -1,5 +1,6 @@
 using Avalonia.Threading;
 using CameraView;
+using CameraView.Models;
 using CameraView.Services;
 using SkiaSharp;
 
@@ -8,11 +9,15 @@ namespace SecRandom.Services.RosterTransfer;
 /// <summary>
 /// CameraView implementation for the platforms that ship its native provider: Windows, Android, and iOS.
 /// </summary>
-public sealed class CameraViewRosterQrCameraCapture(CameraViewControl cameraControl) : IRosterQrCameraCapture
+public sealed class CameraViewRosterQrCameraCapture(CameraViewControl cameraControl,
+    RosterQrCameraSelection selection) : IRosterQrCameraCapture
 {
     private static readonly TimeSpan CaptureInterval = TimeSpan.FromMilliseconds(60);
     private static readonly TimeSpan PreviewFrameFallbackDelay = TimeSpan.FromMilliseconds(750);
     private readonly CameraViewControl _cameraControl = cameraControl;
+    private readonly CameraFacing _cameraFacing = selection == RosterQrCameraSelection.Second
+        ? CameraFacing.Front
+        : CameraFacing.Back;
     private CancellationTokenSource? _cancellation;
     private Func<byte[], Task>? _onFrame;
     private ICameraProvider? _cameraProvider;
@@ -49,6 +54,7 @@ public sealed class CameraViewRosterQrCameraCapture(CameraViewControl cameraCont
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render);
             await RunOnUiThreadAsync(async () =>
             {
+                _cameraControl.CameraFacing = _cameraFacing;
                 _cameraControl.CameraProvider = provider;
                 await _cameraControl.InitializeCameraAsync(provider);
                 _cameraInitialized = true;

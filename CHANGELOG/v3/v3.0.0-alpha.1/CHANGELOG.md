@@ -1,4 +1,4 @@
-<img width="1800" height="766" alt="新版本" src="https://github.com/SECTL/SecRandom/blob/master/data/assets/icon/secrandom-release.png" />
+<img width="1800" height="766" alt="新版本" src="https://github.com/SECTL/SecRandom/blob/master/SecRandom/Assets/Banners/secrandom-banner-cn.png" />
 
 > [!caution]
 >

@@ -27,6 +27,7 @@ public partial class SettingsTransferImportView : UserControl, INotifyPropertyCh
     private bool _isCompleting;
     private bool _isUpdatingSessionCode;
     private bool _hasStartedQrScanner;
+    private RosterQrCameraOption _selectedCameraOption = null!;
     private string _statusText;
     private long _receivedBytes;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
@@ -44,6 +45,12 @@ public partial class SettingsTransferImportView : UserControl, INotifyPropertyCh
         _completeImportAsync = completeImportAsync ?? throw new ArgumentNullException(nameof(completeImportAsync));
         _getResource = getResource ?? throw new ArgumentNullException(nameof(getResource));
         _offlineImport = _offlineQrService.CreateImportAccumulator();
+        CameraOptions =
+        [
+            new(RosterQrCameraSelection.First, GetResource("C_TransferCameraOne")),
+            new(RosterQrCameraSelection.Second, GetResource("C_TransferCameraTwo"))
+        ];
+        _selectedCameraOption = CameraOptions[0];
         _statusText = IsQrMode ? GetResource("C_TransferStatusWaitingForQr") : GetResource("C_TransferStatusReady");
         DataContext = this;
         InitializeComponent();
@@ -80,6 +87,19 @@ public partial class SettingsTransferImportView : UserControl, INotifyPropertyCh
     public bool IsOfflineQrMode => _mode == RosterCloudTransferMode.OfflineQr;
     public bool IsSessionCodeMode => _mode == RosterCloudTransferMode.SessionCode;
     public bool IsCameraPreviewSupported => _cameraCaptureFactory.IsPreviewSupported;
+    public bool IsCameraSelectionSupported => _cameraCaptureFactory.SupportsCameraSelection;
+    public IReadOnlyList<RosterQrCameraOption> CameraOptions { get; }
+    public RosterQrCameraOption SelectedCameraOption
+    {
+        get => _selectedCameraOption;
+        set
+        {
+            if (value is null || ReferenceEquals(_selectedCameraOption, value) || !SetField(ref _selectedCameraOption, value))
+                return;
+
+            _ = RestartCameraForSelectionChangeAsync();
+        }
+    }
     public string SessionCodeHint => GetResource("C_TransferPortalHint");
     public string TransferProgressLabel => GetResource("C_TransferProgress");
     public string TransferSpeedLabel => GetResource("C_TransferSpeed");
@@ -118,7 +138,7 @@ public partial class SettingsTransferImportView : UserControl, INotifyPropertyCh
         try
         {
             _scanCancellation = new CancellationTokenSource();
-            _cameraCapture = _cameraCaptureFactory.Create(CameraControl);
+            _cameraCapture = _cameraCaptureFactory.Create(CameraControl, SelectedCameraOption.Selection);
             _cameraCapture.CameraError += CameraCapture_OnCameraError;
             _isScanning = true;
             var result = await _cameraCapture.StartAsync(ProcessCapturedQrImageAsync, _scanCancellation.Token);
@@ -273,6 +293,15 @@ public partial class SettingsTransferImportView : UserControl, INotifyPropertyCh
         _isScanning = false;
         if (!keepStatus)
             StatusText = GetResource("C_TransferStatusReady");
+    }
+
+    private async Task RestartCameraForSelectionChangeAsync()
+    {
+        if (!IsQrMode || _isClosed || _isCompleting)
+            return;
+
+        await StopCameraAsync(keepStatus: true);
+        await StartCameraAsync();
     }
 
     private async void CloseButton_OnClick(object? sender, RoutedEventArgs e)

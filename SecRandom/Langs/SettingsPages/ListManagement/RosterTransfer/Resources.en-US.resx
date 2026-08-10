@@ -31,4 +31,6 @@
 <data name="C_SessionCodeExport"><value>Session code export</value></data>
 <data name="C_SyncPortalDescription"><value>Open this address in a browser on another device to receive the list remotely without installing the app</value></data>
 <data name="C_CopySyncPortalAddress"><value>Copy link</value></data>
+  <data name="C_CameraOne"><value>Camera 1</value></data>
+  <data name="C_CameraTwo"><value>Camera 2</value></data>
 </root>

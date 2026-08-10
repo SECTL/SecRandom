@@ -16,6 +16,15 @@
 
                 <GroupBox IsVisible="{Binding IsQrMode}" Header="{Binding TransferMethodLabel}">
                     <StackPanel Spacing="10">
+                        <ComboBox IsVisible="{Binding IsCameraSelectionSupported}"
+                                  ItemsSource="{Binding CameraOptions}"
+                                  SelectedItem="{Binding SelectedCameraOption, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Label}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                         <Border Height="220" ClipToBounds="True" CornerRadius="4"
                                 IsVisible="{Binding IsCameraPreviewSupported}"
                                 Background="{DynamicResource ControlFillColorSecondaryBrush}">

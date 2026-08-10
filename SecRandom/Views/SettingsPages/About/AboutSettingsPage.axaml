@@ -148,7 +148,7 @@
                             HorizontalAlignment="Center"
                             MaxWidth="{StaticResource PageContainerWidth}"
                             VerticalAlignment="Top">
-                        <Image Source="/Assets/Banners/secrandom-banner.png" Stretch="Uniform" />
+                        <Image Source="{Binding BannerSource}" Stretch="Uniform" />
                     </Border>
                 </Panel>
 
