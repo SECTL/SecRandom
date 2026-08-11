@@ -103,8 +103,9 @@
                     </Panel.OpacityMask>
                     
                     <Border Background="#0d1111" />
-                    
-                    <Panel MaxWidth="{StaticResource PageContainerWidth}" ClipToBounds="True">
+
+                    <Panel MaxWidth="{StaticResource PageContainerWidth}"
+                           ClipToBounds="True">
                         <Panel.Styles>
                             <Style Selector="Panel">
                                 <Style.Animations>
@@ -120,7 +121,7 @@
                                 </Style.Animations>
                             </Style>
                         </Panel.Styles>
-                        
+
                         <Border Width="{Binding $self.Bounds.Height}"
                                 HorizontalAlignment="Left"
                                 Margin="-150 -100 0 0">
@@ -131,7 +132,7 @@
                                 </RadialGradientBrush>
                             </Border.Background>
                         </Border>
-                        
+
                         <Border Width="{Binding $self.Bounds.Height}"
                                 HorizontalAlignment="Right"
                                 Margin="0 0 100 -50">
@@ -142,12 +143,23 @@
                                 </RadialGradientBrush>
                             </Border.Background>
                         </Border>
+
                     </Panel>
-                    
+
                     <Border Background="Transparent"
                             HorizontalAlignment="Center"
                             MaxWidth="{StaticResource PageContainerWidth}"
                             VerticalAlignment="Top">
+                        <Border.OpacityMask>
+                            <LinearGradientBrush StartPoint="0%, 0%"
+                                                 EndPoint="100%, 0%">
+                                <GradientStop Color="#80ffffff" Offset="0.0" />
+                                <GradientStop Color="#ffffffff" Offset="0.08" />
+                                <GradientStop Color="#ffffffff" Offset="0.92" />
+                                <GradientStop Color="#80ffffff" Offset="1.0" />
+                            </LinearGradientBrush>
+                        </Border.OpacityMask>
+
                         <Image Source="{Binding BannerSource}" Stretch="Uniform" />
                     </Border>
                 </Panel>

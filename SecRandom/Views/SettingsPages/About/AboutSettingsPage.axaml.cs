@@ -13,6 +13,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -44,12 +45,7 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
         .GetServices<IHostedService>().OfType<OnlineStatusService>().First();
     private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
     public int OnlineUsersCount => OnlineStatusService.CachedOnlineCount;
-    public string BannerSource => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName switch
-    {
-        "zh" => "/Assets/Banners/secrandom-banner-cn.png",
-        "ja" => "/Assets/Banners/secrandom-banner-ja.png",
-        _ => "/Assets/Banners/secrandom-banner-en.png"
-    };
+    public Bitmap BannerSource { get; } = LoadBanner();
     public ObservableCollection<GitHubContributor> Contributors { get; } = [];
 
     public bool IsRefreshingContributors
@@ -80,6 +76,18 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
     {
         DataContext = this;
         InitializeComponent();
+    }
+
+    private static Bitmap LoadBanner()
+    {
+        var fileName = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName switch
+        {
+            "zh" => "secrandom-banner-cn.png",
+            "ja" => "secrandom-banner-ja.png",
+            _ => "secrandom-banner-en.png"
+        };
+
+        return new Bitmap(AssetLoader.Open(new Uri($"avares://SecRandom/Assets/Banners/{fileName}")));
     }
 
     private void OrganizationIcon_OnPointerPressed(object? sender, PointerPressedEventArgs e)
