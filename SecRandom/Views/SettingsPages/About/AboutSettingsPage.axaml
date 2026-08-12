@@ -104,8 +104,7 @@
                     
                     <Border Background="#0d1111" />
 
-                    <Panel MaxWidth="{StaticResource PageContainerWidth}"
-                           ClipToBounds="True">
+                    <Panel MaxWidth="{StaticResource PageContainerWidth}">
                         <Panel.Styles>
                             <Style Selector="Panel">
                                 <Style.Animations>
@@ -135,7 +134,7 @@
 
                         <Border Width="{Binding $self.Bounds.Height}"
                                 HorizontalAlignment="Right"
-                                Margin="0 0 100 -50">
+                                Margin="0 0 100 0">
                             <Border.Background>
                                 <RadialGradientBrush Center="50%, 50%">
                                     <GradientStop Offset="0.2" Color="#ff0c0e1f" />
