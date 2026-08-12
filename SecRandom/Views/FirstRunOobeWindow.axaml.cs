@@ -436,7 +436,7 @@ public partial class FirstRunOobeWindow : FAAppWindow
 
     private void Window_OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        if (_canClose)
+        if (_canClose || e.CloseReason is WindowCloseReason.ApplicationShutdown or WindowCloseReason.OSShutdown)
             return;
 
         e.Cancel = true;

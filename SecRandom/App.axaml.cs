@@ -493,7 +493,6 @@ public partial class App : Application
         if (startupProtocolUri is not null)
             Dispatcher.UIThread.Post(() => HandleProtocolUri(startupProtocolUri), DispatcherPriority.Render);
 
-        AppDomain.CurrentDomain.ProcessExit += CurrentDomainOnProcessExit;
         Dispatcher.UIThread.UnhandledException += App_OnDispatcherUnhandledException;
     }
 
@@ -1084,28 +1083,63 @@ public partial class App : Application
         IAppHost.TryGetService<ILogger<App>>()?
             .LogInformation("Stopping application.");
 
-        AppStopping?.Invoke(this, EventArgs.Empty);
-
-        _floatingWindow?.CanClose = true;
-
-        IAppHost.GetService<MainConfigHandler>().Save();
-        IAppHost.GetService<IProfileService>().SaveProfile();
-        await ShutdownTelemetryAsync().ConfigureAwait(false);
-
         IHost? host = IAppHost.Host;
-        if (host is not null)
+        try
         {
-            await host.StopAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-            host.Dispose();
+            try
+            {
+                AppStopping?.Invoke(this, EventArgs.Empty);
+            }
+            catch (Exception exception)
+            {
+                IAppHost.TryGetService<ILogger<App>>()?
+                    .LogError(exception, "Application stopping notification failed.");
+            }
+
+            _floatingWindow?.CanClose = true;
+            TrySaveConfigForCrashRecovery();
+            await ShutdownTelemetryAsync().ConfigureAwait(false);
+
+            if (host is not null)
+            {
+                try
+                {
+                    await host.StopAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+                }
+                catch (Exception exception)
+                {
+                    IAppHost.TryGetService<ILogger<App>>()?
+                        .LogError(exception, "Host shutdown failed.");
+                }
+
+                try
+                {
+                    host.Dispose();
+                }
+                catch (Exception exception)
+                {
+                    IAppHost.TryGetService<ILogger<App>>()?
+                        .LogError(exception, "Host disposal failed.");
+                }
+            }
         }
+        finally
+        {
+            IAppHost.Host = null;
 
-        IAppHost.Host = null;
+            try
+            {
+                // 释放单实例 Mutex 及 IPC 管道
+                SingleInstanceService.Instance.Dispose();
+            }
+            catch (Exception exception)
+            {
+                System.Diagnostics.Debug.WriteLine(exception);
+            }
 
-        // 释放单实例 Mutex 及 IPC 管道
-        SingleInstanceService.Instance.Dispose();
-
-        if (requestLifetimeShutdown)
-            RequestDesktopShutdown();
+            if (requestLifetimeShutdown)
+                RequestDesktopShutdown();
+        }
     }
 
     public async void Restart()
@@ -1191,12 +1225,21 @@ public partial class App : Application
         try
         {
             IAppHost.TryGetService<MainConfigHandler>()?.Save();
+        }
+        catch (Exception ex)
+        {
+            IAppHost.TryGetService<ILogger<App>>()?
+                .LogError(ex, "Configuration persistence failed.");
+        }
+
+        try
+        {
             IAppHost.TryGetService<IProfileService>()?.SaveProfile();
         }
         catch (Exception ex)
         {
             IAppHost.TryGetService<ILogger<App>>()?
-                .LogError(ex, "Crash-recovery persistence failed.");
+                .LogError(ex, "Profile persistence failed.");
         }
     }
 
@@ -1209,20 +1252,6 @@ public partial class App : Application
         }
         catch
         {
-        }
-    }
-
-    private void CurrentDomainOnProcessExit(object? sender, EventArgs e)
-    {
-        try
-        {
-            IAppHost.TryGetService<MainConfigHandler>()?.Save();
-            IAppHost.TryGetService<IProfileService>()?.SaveProfile();
-        }
-        catch (Exception ex)
-        {
-            IAppHost.TryGetService<ILogger<App>>()?
-                .LogError(ex, "Process-exit persistence failed.");
         }
     }
 

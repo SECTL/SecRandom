@@ -108,7 +108,7 @@ public partial class FloatingWindow : Window
 
     private void ApplyWindowSettings(FloatingWindowSettingsConfig settings)
     {
-        WindowBorder.Opacity = System.Math.Clamp(settings.FloatingWindowOpacity, 20, 100) / 100.0;
+        WindowBorder.Opacity = Math.Clamp(settings.FloatingWindowOpacity, 20, 100) / 100.0;
         var topmost = settings.FloatingWindowTopmostMode is TopmostMode.Topmost or TopmostMode.UiAccess;
         Topmost = topmost;
         if (IsLoaded)
@@ -131,7 +131,7 @@ public partial class FloatingWindow : Window
     {
         return value <= 6
             ? value switch { 0 => 28, 1 => 32, 2 => 40, 3 => 48, 4 => 56, 5 => 64, _ => 72 }
-            : System.Math.Clamp(value, 32, 160);
+            : Math.Clamp(value, 32, 160);
     }
 
     private static int GetEffectiveButtonSize(FloatingWindowSettingsConfig settings)
@@ -239,7 +239,7 @@ public partial class FloatingWindow : Window
     {
         var size = GetEffectiveButtonSize(settings);
         var displayStyle = settings.FloatingWindowDisplayStyle;
-        var padding = new Thickness(System.Math.Max(2, size * 0.08));
+        var padding = new Thickness(Math.Max(2, size * 0.08));
         var button = new Button
         {
             Height = size,
@@ -257,7 +257,7 @@ public partial class FloatingWindow : Window
             2 => new TextBlock
             {
                 Text = label,
-                FontSize = System.Math.Max(10, size * 0.28),
+                FontSize = Math.Max(10, size * 0.28),
                 TextAlignment = TextAlignment.Center,
                 TextWrapping = TextWrapping.Wrap,
                 VerticalAlignment = VerticalAlignment.Center
@@ -265,7 +265,7 @@ public partial class FloatingWindow : Window
             _ => new StackPanel
             {
                 Orientation = Orientation.Vertical,
-                Spacing = System.Math.Max(1, size * 0.04),
+                Spacing = Math.Max(1, size * 0.04),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 Children =
@@ -274,7 +274,7 @@ public partial class FloatingWindow : Window
                     new TextBlock
                     {
                         Text = label,
-                        FontSize = System.Math.Max(8, size * 0.16),
+                        FontSize = Math.Max(8, size * 0.16),
                         TextAlignment = TextAlignment.Center,
                         TextWrapping = TextWrapping.Wrap,
                         HorizontalAlignment = HorizontalAlignment.Center
@@ -312,26 +312,28 @@ public partial class FloatingWindow : Window
             return size;
 
         var fontSize = displayStyle == 2
-            ? System.Math.Max(10, size * 0.28)
-            : System.Math.Max(9, size * 0.22);
+            ? Math.Max(10, size * 0.28)
+            : Math.Max(9, size * 0.22);
         var textWidth = label.Sum(character => character switch
         {
             ' ' => fontSize * 0.35,
             >= '\u2E80' => fontSize,
             _ => fontSize * 0.62
         });
-        return System.Math.Max(size, System.Math.Ceiling(textWidth + padding.Left + padding.Right + 2));
+        return Math.Max(size, Math.Ceiling(textWidth + padding.Left + padding.Right + 2));
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        if (!CanClose) e.Cancel = true;
-        else
+        if (CanClose || e.CloseReason is WindowCloseReason.ApplicationShutdown or WindowCloseReason.OSShutdown)
         {
             ViewModel.Config.FloatingWindowSettings.PropertyChanged -= FloatingWindowSettings_OnPropertyChanged;
             ViewModel.Config.LinkageSettings.PropertyChanged -= LinkageSettings_OnPropertyChanged;
             _linkageService.StateChanged -= LinkageServiceOnStateChanged;
+            return;
         }
+
+        e.Cancel = true;
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
