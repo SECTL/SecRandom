@@ -262,4 +262,7 @@ Move the entire portable package to a writable location, or adjust the directory
     <data name="MultiInstance_Cancel" xml:space="preserve">
         <value>Cancel</value>
     </data>
+    <data name="C_PickButtonText" xml:space="preserve">
+        <value>Go</value>
+    </data>
 </root>

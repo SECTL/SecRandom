@@ -262,4 +262,7 @@
     <data name="MultiInstance_Cancel" xml:space="preserve">
         <value>取消</value>
     </data>
+    <data name="C_PickButtonText" xml:space="preserve">
+        <value>抽</value>
+    </data>
 </root>
