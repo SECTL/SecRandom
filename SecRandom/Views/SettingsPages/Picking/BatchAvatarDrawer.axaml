@@ -1,0 +1,120 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lp="clr-namespace:SecRandom.Langs.SettingsPages.Picking"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Picking"
+             mc:Ignorable="d" d:DesignWidth="360" d:DesignHeight="720"
+             x:Class="SecRandom.Views.SettingsPages.Picking.BatchAvatarDrawer"
+             x:DataType="local:BatchAvatarDrawer">
+    <Grid Width="360" RowDefinitions="Auto,*,Auto" RowSpacing="8">
+        <Grid Grid.Row="0" Margin="16,16,16,0">
+            <TextBlock Text="{x:Static lp:Resources.C_BatchAvatar}"
+                       Theme="{StaticResource SubtitleTextBlockStyle}" />
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="16,12,16,0" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="8">
+            <StackPanel Grid.Row="0" Spacing="4">
+                <Button Classes="accent" HorizontalAlignment="Stretch"
+                        Click="ChooseDirectoryButton_OnClick">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <sr:FluentIcon Glyph="{sr:Fi FolderOpenFilled}" />
+                        <TextBlock Text="{x:Static lp:Resources.C_BatchAvatarChooseDirectory}" />
+                    </StackPanel>
+                </Button>
+                <TextBlock Text="{x:Static lp:Resources.C_BatchAvatarDirectoryHint}"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <TextBlock x:Name="SelectedDirectoryTextBlock"
+                           Text="{x:Static lp:Resources.C_BatchAvatarNoDirectorySelected}"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+            </StackPanel>
+
+            <TabStrip Grid.Row="1" x:Name="AvatarTabStrip"
+                      HorizontalAlignment="Center"
+                      Theme="{DynamicResource TabStripStyle}"
+                      SelectionChanged="AvatarTabStrip_OnSelectionChanged">
+                <TabStripItem Content="{x:Static lp:Resources.C_BatchAvatarRoster}" />
+                <TabStripItem x:Name="PrizeTabItem" Content="{x:Static lp:Resources.C_BatchAvatarPrize}" />
+            </TabStrip>
+
+            <sr:Field Grid.Row="2" x:Name="RosterSelector"
+                      Label="{x:Static lp:Resources.C_BatchAvatarTargetRoster}">
+                <ComboBox x:Name="RosterComboBox"
+                          HorizontalAlignment="Stretch"
+                          SelectionChanged="RosterComboBox_OnSelectionChanged" />
+            </sr:Field>
+
+            <sr:Field Grid.Row="2" x:Name="PrizeSelector" IsVisible="False"
+                      Label="{x:Static lp:Resources.C_BatchAvatarTargetPrize}">
+                <ComboBox x:Name="PrizeComboBox"
+                          HorizontalAlignment="Stretch"
+                          SelectionChanged="PrizeComboBox_OnSelectionChanged" />
+            </sr:Field>
+
+            <Border Grid.Row="3" BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                    BorderThickness="1" CornerRadius="4 4 0 0" ClipToBounds="True">
+                <DataGrid x:Name="RowsGrid" MinHeight="280"
+                          AutoGenerateColumns="False"
+                          CanUserSortColumns="True"
+                          CanUserResizeColumns="True"
+                          GridLinesVisibility="Horizontal"
+                          SelectionMode="Single">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="52" Header="{x:Static lp:Resources.C_BatchAvatarSet}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate x:DataType="local:BatchAvatarRow">
+                                    <CheckBox IsChecked="{Binding IsSet, Mode=TwoWay}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="*" MinWidth="80"
+                                                Header="{x:Static lp:Resources.C_BatchAvatarRecord}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate x:DataType="local:BatchAvatarRow">
+                                    <TextBlock Text="{Binding RecordName}" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="*" MinWidth="130" Header="{x:Static lp:Resources.C_BatchAvatarFile}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate x:DataType="local:BatchAvatarRow">
+                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <Button Theme="{StaticResource TransparentButton}"
+                                                Padding="4"
+                                                ToolTip.Tip="{x:Static lp:Resources.C_BatchAvatarChooseFile}"
+                                                Click="ChooseFileButton_OnClick">
+                                            <sr:FluentIcon Glyph="{sr:Fi FolderOpenFilled}" />
+                                        </Button>
+                                        <TextBlock Text="{Binding FileName}" FontSize="12"
+                                                   VerticalAlignment="Center"
+                                                   TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+        </Grid>
+        
+        <Grid Grid.Row="2" Margin="16,12,16,16" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+            <TextBlock Grid.Column="0" x:Name="MatchSummaryTextBlock"
+                       VerticalAlignment="Center" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+            <Button Grid.Column="1" Content="{x:Static lp:Resources.C_Cancel}"
+                    Click="CancelButton_OnClick" />
+
+            <Button Grid.Column="2" Classes="accent" Content="{x:Static lp:Resources.C_Confirm}"
+                    Click="ConfirmButton_OnClick" />
+        </Grid>
+    </Grid>
+</UserControl>

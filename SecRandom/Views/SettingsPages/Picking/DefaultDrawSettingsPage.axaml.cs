@@ -63,4 +63,19 @@ public partial class DefaultDrawSettingsPage : UserControl
         Settings.PropertyChanged += SettingsOnPropertyChanged;
         _isSubscribed = true;
     }
+
+    private void BatchAvatarButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        SettingsView.Current?.OpenDrawer(new BatchAvatarDrawer());
+    }
+
+    private void StudentImageViaRoster_OnClick(object? sender, RoutedEventArgs e)
+    {
+        SettingsView.Current?.SelectNavigationItemById("settings.listManagement.rollCallList");
+    }
+
+    private void StudentImageViaPrize_OnClick(object? sender, RoutedEventArgs e)
+    {
+        SettingsView.Current?.SelectNavigationItemById("settings.listManagement.lotteryList");
+    }
 }
