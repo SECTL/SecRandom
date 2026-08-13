@@ -501,6 +501,85 @@ jobs:
           path: artifacts/release/dist/*.pkg
           if-no-files-found: ignore
 
+  build_pluginsdk:
+    name: Build_PluginSDK
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Get Version
+        id: get_version
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+        run: |
+          $semverPattern = '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z.-]+)?$'
+          if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
+            $version = $env:RELEASE_TAG.TrimStart('v', 'V')
+            if ($version -notmatch $semverPattern) {
+              throw "Release tag must be a v-prefixed semantic version (vMAJOR.MINOR.PATCH), got '$env:RELEASE_TAG'."
+            }
+          } else {
+            $tag = git describe --tags --abbrev=0 2>$null
+            if ($LASTEXITCODE -eq 0 -and $tag) {
+              $version = $tag.TrimStart('v', 'V')
+              if ($version -notmatch $semverPattern) {
+                Write-Host "WARNING: latest tag '$tag' is not semantic versioning; using it as-is for the routine build artifact."
+              }
+            } else {
+              $version = '0.0.0-dev'
+            }
+          }
+          echo "PKG_VERSION=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Plugin SDK package version: $version"
+
+      - name: Verify API version matches main version
+        shell: pwsh
+        env:
+          PKG_VERSION: ${{ steps.get_version.outputs.PKG_VERSION }}
+        run: |
+          $api = Get-Content 'SecRandom.PluginSdk/PluginApiVersions.cs' -Raw
+          $match = [regex]::Match($api, 'new\((?<major>\d+),\s*\d+')
+          if (-not $match.Success) { throw 'Unable to parse PluginApiVersions.Current.' }
+          $apiMajor = $match.Groups['major'].Value
+          $pkgMajor = ($env:PKG_VERSION -split '\.')[0]
+          if ($apiMajor -ne $pkgMajor) {
+            throw "PluginApiVersions.Current major ($apiMajor) must match the package version major ($pkgMajor)."
+          }
+
+      - name: Pack Plugin SDK
+        shell: pwsh
+        env:
+          PKG_VERSION: ${{ steps.get_version.outputs.PKG_VERSION }}
+        run: |
+          $outDir = 'artifacts/pluginsdk'
+          New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+          foreach ($project in @(
+            'SecRandom.Shared/SecRandom.Shared.csproj',
+            'SecRandom.Core/SecRandom.Core.csproj',
+            'SecRandom.PluginSdk/SecRandom.PluginSdk.csproj'
+          )) {
+            & dotnet pack $project -c Release -o $outDir "-p:PackageVersion=$env:PKG_VERSION" '-p:BuildInParallel=false' '-p:UseSharedCompilation=false'
+            if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project with exit code $LASTEXITCODE." }
+          }
+
+      - name: Upload Plugin SDK Packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: pluginsdk
+          path: artifacts/pluginsdk/*.nupkg
+          if-no-files-found: error
+
   build_android:
     name: Build_Android_${{ matrix.arch }}
     runs-on: ubuntu-24.04
@@ -732,10 +811,11 @@ jobs:
   publish:
     name: Publish_Release
     runs-on: windows-2022
-    needs: [build_desktop, build_android, build_ios]
-    if: ${{ always() && success('build_desktop') && success('build_android') && success('build_ios') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
+    needs: [build_desktop, build_android, build_ios, build_pluginsdk]
+    if: ${{ always() && success('build_desktop') && success('build_android') && success('build_ios') && success('build_pluginsdk') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
     permissions:
       contents: write
+      id-token: write
     concurrency:
       group: publish-public
     steps:
@@ -761,6 +841,24 @@ jobs:
           }
           Write-Host "Combined files:"
           Get-ChildItem $releaseOutput -File | Select-Object Name, Length
+
+      - name: NuGet login (OIDC → temp API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: NuGet push
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: |
+          $packages = Get-ChildItem './artifacts/release/downloaded/pluginsdk' -Filter *.nupkg -Recurse | Select-Object -ExpandProperty FullName
+          if (-not $packages) { throw 'No Plugin SDK nupkg artifacts found to publish.' }
+          foreach ($nupkg in $packages) {
+            & dotnet nuget push $nupkg --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+            if ($LASTEXITCODE -ne 0) { throw "NuGet push failed for $nupkg with exit code $LASTEXITCODE." }
+          }
 
       - name: Generate signed update manifest
         shell: pwsh

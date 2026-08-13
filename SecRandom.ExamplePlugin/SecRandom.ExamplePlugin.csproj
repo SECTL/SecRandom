@@ -6,7 +6,7 @@
         <EnableDynamicLoading>true</EnableDynamicLoading>
         <CreateSrpx>true</CreateSrpx>
         <UseLocalPluginSdk Condition="'$(UseLocalPluginSdk)' == ''">true</UseLocalPluginSdk>
-        <SecRandomPluginSdkVersion Condition="'$(SecRandomPluginSdkVersion)' == ''">1.0.0</SecRandomPluginSdkVersion>
+        <SecRandomPluginSdkVersion Condition="'$(SecRandomPluginSdkVersion)' == ''">3.0.0</SecRandomPluginSdkVersion>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(UseLocalPluginSdk)' == 'true'">

@@ -6,6 +6,13 @@
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
+        <PackageId>SecRandom.Core</PackageId>
+        <Description>SecRandom core: domain logic, config/logging services, shared Avalonia controls/styles, and the draw/profile/config service contracts exposed to plugins.</Description>
+        <Authors>SECTL</Authors>
+        <Company>SECTL</Company>
+        <RepositoryUrl>https://github.com/SECTL/SecRandom</RepositoryUrl>
+        <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+        <PackageTags>secrandom;draw;random;education</PackageTags>
     </PropertyGroup>
 
     <PropertyGroup>

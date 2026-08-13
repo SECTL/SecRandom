@@ -368,8 +368,13 @@ public sealed class PluginManager : IPluginManager
             throw new InvalidDataException("Plugin entrance assembly path is invalid.");
         }
 
-        if (!Version.TryParse(manifest.ApiVersion, out var apiVersion) || apiVersion.Major != 1)
-            throw new InvalidDataException("Plugin API version 1.x is required.");
+        if (!Version.TryParse(manifest.ApiVersion, out var apiVersion) ||
+            apiVersion.Major < PluginApiVersions.Current.Major)
+        {
+            throw new InvalidDataException(
+                $"Plugin API version {manifest.ApiVersion} is not supported; " +
+                $"{PluginApiVersions.Current.Major}.0 or higher is required.");
+        }
     }
 
     private sealed record DiscoveredPlugin(PluginInfo Info, bool IsEnabled);
