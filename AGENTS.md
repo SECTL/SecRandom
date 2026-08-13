@@ -10,7 +10,7 @@ Maintenance contract:
 - `docs/project_rules.md` is the source of truth when a convention conflicts with this summary.
 -->
 
-**Last Update:** 2026-08-11
+**Last Update:** 2026-08-13
 **Last Submit:** 51f7f7fd
 **Last modified model:** MiMoCode
 
@@ -23,6 +23,8 @@ SecRandom-C/
 ├── SecRandom/             # Avalonia app layer: App host, views, viewmodels, app services, localization, assets
 ├── SecRandom.Core/        # Core/domain + reusable UI controls/styles + config/logging/draw services
 ├── SecRandom.Shared/      # Cross-project contracts, base config/model types, IPC/profile models
+├── SecRandom.PluginSdk/    # In-process plugin base types and SRPX packaging target
+├── SecRandom.ExamplePlugin/# Minimal plugin template
 ├── SecRandom4Ci.Interface/ # Shared ClassIsland v2 IPC contract for the SecRandom4Ci plugin
 ├── SecRandom.Desktop/     # Tiny executable launcher; Program.cs bootstraps Avalonia and UiAccessStartup.cs prepares Windows UIAccess
 ├── SecRandom.Launcher/    # Minimal portable-package version selector; starts an activated app-* payload only
@@ -62,6 +64,7 @@ Nested instruction files:
 | Mobile UI tests | `SecRandom.Mobile.Tests/` | Avalonia Headless smoke tests load mobile styles and lay out native shell controls at phone dimensions. |
 | Mobile point-call orchestration | `SecRandom/Services/Mobile/MobileRollCallService.cs` | Mobile-only list/scope/count orchestration over existing Core filtering, sampling, and transactional commit services. |
 | App composition / DI | `SecRandom/App.axaml.cs` | `BuildHost()` is the registration source of truth. |
+| Plugins | `SecRandom.PluginSdk/`, `SecRandom/Services/Plugins/`, `SecRandom.ExamplePlugin/` | Desktop SRPX plugins are loaded before Host build; plugin pages/services register through Core APIs. |
 | Main navigation | `SecRandom/Views/MainView.axaml.cs` | Default page `main.rollCall`; keyed DI page factory. Built-in draw pages are `main.rollCall` and `main.lottery`; quick draw opens from the floating window instead of the main sidebar. |
 | Settings navigation | `SecRandom/Views/SettingsView.axaml.cs` | Default page `settings.overview`; has back stack + restart dialog. General group now includes `settings.general.basic`, `settings.general.privacy`, and `settings.general.backup`. |
 | Page registration helpers | `SecRandom.Core/Extensions/Registry/` | `AddMainPage`, `AddSettingsPage`, group, and separator helpers. |
@@ -143,6 +146,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - Proof ordering TODO: attestation is still enqueued when a draw completes rather than strictly after the commit boundary; deferring proof finalization/attestation until after the `IDrawCommitService` commit remains an open task. Keep this note until that ordering lands.
 - Settings preview is a security-prompt outcome, not URL authorization bypass. When enabled, it freezes page content while preserving settings navigation and must not mutate configuration.
 - ViewModels must be registered in `SecRandom/App.axaml.cs` `BuildHost()`; reusable services also go through Host. The mobile branch directly registers its mobile runtime services, navigation, pages, and single-view host rather than delegating to a separate application-service extension.
+- Desktop plugins use `.srpx` ZIP packages with a root `manifest.yml`; the entry assembly contains one non-abstract `PluginBase` implementation. Plugins are discovered from `data/plugins`, pending packages are staged in `data/cache/plugin-packages`, and plugin initialization runs before Host construction. Plugin page IDs are owned by the plugin and must be unique at the application registry level. External dynamic plugins are desktop-only for now; mobile hosts do not load them.
 - The cross-platform view engine lives in `SecRandom.Core/Views/`. It separates logical Avalonia `Control` sessions, presentation intent, close/result handling, factories, and hosts. Core contracts must not expose `Window`, platform lifetimes, native APIs, or raw `IServiceProvider`; desktop and mobile shells register their physical presenters through DI.
 - MVE is reserved for independent logical views with their own lifecycle, including `MainView`, `SettingsView`, crash recovery, and the modal `main.remainingList` view. Desktop shell child pages remain keyed `UserControl` instances hosted only by `FAFrame`; `desktop.main` and `desktop.settings` name the physical windows that host the two shell views, never hidden regions inside those shells. Settings read-only preview freezes the `FAFrame` content while leaving navigation available.
 - Platform feature callers must resolve narrow platform contracts from Host. `PlatformStartupContext` is startup-only: desktop `Program` and Android/iOS heads set it before Avalonia starts, then shared `App` reads it once to select desktop or mobile registrations. Do not use it from views, ViewModels, Core, or business services. Removable-storage discovery follows the same boundary through `IRemovableStorageCatalog`: Windows, Linux, and macOS enumerate ready removable volumes in their matching platform projects, while the app security service consumes opaque device IDs and user-facing display locations and resolves mount paths internally. `IPlatformCameraDeviceCatalog` follows the same boundary for named QR camera choices: only platform projects may enumerate native devices; the app layer receives opaque IDs, display names, capture indexes, and facing hints. A catalog mount root is internal implementation data and must not cross into `ISecurityService` public binding APIs, UI models, dialogs, or IPC payloads. Platform discovery commands must read output asynchronously and enforce a bounded timeout before returning an empty catalog. USB binding markers use the sibling `IRemovableStorageBindingMarker` contract and always use `.SecRandom.safety.key`; binding presence requires both the platform-hidden marker token and the matching stored device record. Binding records persist only the stable device ID and token hash; mount roots are never persisted or used as identity.

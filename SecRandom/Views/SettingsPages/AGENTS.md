@@ -24,6 +24,7 @@ SecRandom/Views/SettingsPages/
 |-- About/                                # settings.about: about page with external links
 |-- Linkage/                              # settings.linkage: linkage settings
 |-- More/                                 # settings.more: more settings
+|-- Plugins/                              # settings.plugin: local SRPX plugin management
 |-- Update/                               # settings.update: shared update settings
 |-- LogViewer/                            # settings.logs: hidden log viewer
 ```
@@ -46,6 +47,7 @@ SecRandom/Views/SettingsPages/
 | Personalized music library | `Personalized/MusicSettingsPage.axaml(.cs)` | Page ID `settings.personalized.music`; imports, deletes, and previews managed MP3/WAV/FLAC tracks. |
 | Linkage settings | `Linkage/LinkageSettingsPage.axaml(.cs)` | Top-level `settings.linkage` entry. |
 | More settings | `More/MoreSettingsPage.axaml(.cs)` | `settings.more` top-level entry. |
+| Plugins | `Plugins/PluginsSettingsPage.axaml(.cs)` | Desktop-only `settings.plugin` page; left list splits into 已安装/市场, stages local `.srpx` packages, shows load status, and toggles plugin enablement for the next restart. Plugin README renders through Core `MarkdownConvertHelper` + `Styles/RichTextStyles.axaml`. |
 | Update settings | `Update/UpdateSettingsPage.axaml(.cs)` | Shared `settings.update` bottom-nav entry for desktop and mobile. |
 | Notification settings | `Notification/VoiceSettingsPage.axaml(.cs)` etc. | Voice/music and notification channel entries under `settings.notification`. |
 | History management | `History/HistoryManagementSettingsPage.axaml(.cs)` | Clears roll-call/lottery histories through active-profile or named-profile handlers; `settings.history.management`. |
@@ -62,6 +64,7 @@ SecRandom/Views/SettingsPages/
 - Chinese settings-page i18n values must not use the Chinese full stop (`。`).
 - Settings-page explanation values (`*_D`, including `S_*_D` and `C_*_D`) must not use sentence-ending or sentence-separating full stops (`。` or `.`); preserve technical dots in file names, domains, process names, and version identifiers.
 - Page IDs here follow `settings.xxx` or `settings.group.xxx`; historical grouping notes live in `docs/settings-pages-plan.md`.
+- `settings.plugin` uses `IPluginManager` only. Do not restore the retired plugin-market/catalog abstractions until a signed catalog protocol is implemented.
 - Group membership is owned by the `groupId` in `[PageInfo(...)]` and by `services.AddGroup(...)` in `BuildHost()`; do not handwire grouping in the page.
 - Pages usually resolve `ViewModelBase` via `IAppHost.GetService<ViewModelBase>()`, set `DataContext = this`, and expose `Settings` from `ViewModel.Config.*`.
 - Basic-settings platform switches must route through `DesktopIntegrationService`; do not manipulate registry keys, XDG desktop files, or macOS launch services from the settings page. Revert a switch when the platform operation fails.

@@ -64,6 +64,8 @@ using SecRandom.Services.Verification;
 using SecRandom.Services.Voice;
 using SecRandom.Services.Updates;
 using SecRandom.Services.ViewEngine;
+using SecRandom.Services.Plugins;
+using SecRandom.PluginSdk;
 using SecRandom.Mobile;
 using SecRandom.Services.Mobile;
 using SecRandom.Views.Mobile;
@@ -88,7 +90,7 @@ using SecRandom.Views.SettingsPages.More;
 using SecRandom.Views.SettingsPages.Personalized;
 using SecRandom.Views.SettingsPages.Picking;
 using SecRandom.Views.SettingsPages.Update;
-// using SecRandom.Views.SettingsPages.Plugins.Overview;
+using SecRandom.Views.SettingsPages.Plugins;
 using DefaultNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.DefaultNotificationSettingsPage;
 using FloatingWindowSettingsPage = SecRandom.Views.SettingsPages.Personalized.FloatingWindowSettingsPage;
 using LotteryNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.LotteryNotificationSettingsPage;
@@ -705,7 +707,7 @@ public partial class App : Application
         IAppHost.Host = Host
             .CreateDefaultBuilder()
             .UseContentRoot(AppContext.BaseDirectory)
-            .ConfigureServices(services =>
+            .ConfigureServices((context, services) =>
             {
                 if (isMobile)
                 {
@@ -757,6 +759,8 @@ public partial class App : Application
 
                 // 配置
                 services.AddCoreRuntimeServices();
+                var pluginManager = new PluginManager();
+                services.AddSingleton<IPluginManager>(pluginManager);
                 services.AddSingleton<DeviceUuidStore>();
 
                 services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
@@ -989,9 +993,12 @@ public partial class App : Application
                 services.AddSettingsPage<RollCallHistorySettingsPage>(Langs.Common.Resources.Feat_RollCallHistory);
                 services.AddSettingsPage<LotteryHistorySettingsPage>(Langs.Common.Resources.Feat_LotteryHistory);
 
-                services.AddSettingsPageSeparator(isHide: true);
-                // services.AddSettingsPage<PluginsSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources
-                //     .Page_Title);
+                if (!isMobile)
+                {
+                    services.AddSettingsPageSeparator();
+                    services.AddSettingsPage<PluginsSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources
+                        .Page_Title);
+                }
 
                 // 底部
                 services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
@@ -1000,6 +1007,9 @@ public partial class App : Application
                 services.AddSettingsPageSeparator(PageLocation.Bottom, isHide: true);
                 services.AddSettingsPage<DebugSettingsPage>(
                     Langs.SettingsPages.Debug.DebugStrings.Get("Page_Title"));
+
+                if (!isMobile)
+                    pluginManager.Initialize(context, services);
             })
             .Build();
 
@@ -1422,7 +1432,7 @@ public partial class App : Application
             _ => ThemeVariant.Default
         };
 
-        var fluentAvaloniaTheme = this.FindResource(@"FluentAvaloniaTheme") as FluentAvaloniaTheme;
+        var fluentAvaloniaTheme = this.Styles.OfType<FluentAvaloniaTheme>().FirstOrDefault();
         if (fluentAvaloniaTheme is not null)
         {
             // Configure system tracking before an explicit variant so FluentAvalonia does

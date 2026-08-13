@@ -1,0 +1,33 @@
+<Project>
+    <PropertyGroup>
+        <CreateSrpx Condition="'$(CreateSrpx)' == ''">false</CreateSrpx>
+        <SrpxPackageOutputDirectory>$(MSBuildProjectDirectory)\srpx</SrpxPackageOutputDirectory>
+        <SrpxPackageOutputName>$(MSBuildProjectName).srpx</SrpxPackageOutputName>
+        <SrpxPackageOutputPath>$(SrpxPackageOutputDirectory)\$(SrpxPackageOutputName)</SrpxPackageOutputPath>
+        <SrpxStagingDirectory>$(IntermediateOutputPath)srpx-package\</SrpxStagingDirectory>
+    </PropertyGroup>
+
+    <Target Name="CreateSrpx" AfterTargets="Build" Condition="'$(CreateSrpx)' == 'true'">
+        <Error Condition="!Exists('$(OutputPath)manifest.yml')"
+               Code="SRSDK0001"
+               Text="The plugin manifest manifest.yml was not found in the build output." />
+
+        <RemoveDir Directories="$(SrpxStagingDirectory)" />
+        <MakeDir Directories="$(SrpxStagingDirectory)" />
+        <MakeDir Directories="$(SrpxPackageOutputDirectory)" />
+
+        <ItemGroup>
+            <_SrpxPackageFile Include="$(OutputPath)**\*"
+                              Exclude="$(OutputPath)$(AssemblyName).pdb;$(OutputPath)**\*.pdb" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_SrpxPackageFile)"
+              DestinationFiles="@(_SrpxPackageFile->'$(SrpxStagingDirectory)%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true" />
+        <RemoveDir Directories="$(SrpxPackageOutputDirectory)" />
+        <MakeDir Directories="$(SrpxPackageOutputDirectory)" />
+        <ZipDirectory SourceDirectory="$(SrpxStagingDirectory)"
+                      DestinationFile="$(SrpxPackageOutputPath)"
+                      Overwrite="true" />
+        <Message Importance="high" Text="Created SecRandom plugin package $(SrpxPackageOutputPath)" />
+    </Target>
+</Project>

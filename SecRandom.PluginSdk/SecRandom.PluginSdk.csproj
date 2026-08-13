@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <PackageId>SecRandom.PluginSdk</PackageId>
+        <Title>SecRandom Plugin SDK</Title>
+        <Description>SDK for developing SecRandom plugins.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\SecRandom.Core\SecRandom.Core.csproj"
+                          IncludeAssets="all" />
+        <None Include="SecRandom.PluginSdk.targets" Pack="True" PackagePath="build/net10.0" />
+    </ItemGroup>
+
+    <Import Project="..\Global.props" />
+    <Import Project="SecRandom.PluginSdk.targets" />
+</Project>

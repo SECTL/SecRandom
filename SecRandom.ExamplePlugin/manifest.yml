@@ -1,0 +1,6 @@
+id: secrandom.example
+name: SecRandom 示例插件
+entranceAssembly: SecRandom.ExamplePlugin.dll
+apiVersion: 1.0.0
+version: 1.0.0
+author: SECTL

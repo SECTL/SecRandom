@@ -21,10 +21,10 @@ SecRandom.Core/
 ├── Controls/             # Reusable Avalonia controls/templates
 ├── Converters/           # Shared Avalonia converters
 ├── Assets/               # Icon mapping JSON inputs for generated Fluent/Lucide icon enums
-├── Helpers/              # Core helper utilities
+├── Helpers/              # Core helper utilities, including MarkdownConvertHelper
 ├── Interfaces/           # Core-facing interfaces
 ├── Views/                # Logical view/session contracts; app shells provide physical hosts
-├── Styles/               # Modular shared style files
+├── Styles/               # Modular shared style files, including RichTextStyles for Markdown.Avalonia
 ├── StylesBase.axaml      # Shared style hub imported by app
 ├── Services/Draw/        # Fair/random draw engine, filters, commit coordinator, shared repeat/candidate rules
 ├── Services/Archive/     # Platform-neutral v3 backup/archive engine (DataArchiveService + post-import hooks)

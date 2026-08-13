@@ -24,7 +24,7 @@ SecRandom/
 │   ├── Mobile/          # Mobile route ViewModels, including mobile draw state and commands
 │   └── SettingsPages/
 │       └── History/     # History settings VMs (RollCallHistoryViewModel, LotteryHistoryViewModel)
-├── Services/            # App-only services
+├── Services/            # App-only services, including desktop SRPX plugin loading
 │   ├── Config/          # Device UUID and desktop-specific configuration adapters
 │   ├── CrashRecovery/   # Crash detection, recovery prompt, restart guard
 │   ├── Desktop/         # TaskBarIconService, GlobalShortcutService
@@ -104,6 +104,7 @@ SecRandom/
   independent lifecycle views such as `MainView`, `SettingsView`, and crash recovery use MVE.
   Its mobile branch directly registers mobile services, navigation, routes, settings pages, and the single-view host;
   do not move those registrations to a separate application-service extension.
+- Desktop SRPX plugin initialization runs inside `BuildHost()` before `Build()`, after Core and built-in page registrations. Dynamic plugins are skipped by mobile hosts, while plugin page IDs remain plugin-owned and must be unique.
 - `BuildHost()` receives the root selected through `PlatformStartupContext` and registers it with `AddPlatformServices`. The shared App selects mutually exclusive desktop or mobile registrations; app code may adapt an Avalonia `TopLevel` into a neutral handle, but it must not contain Win32/X11/AppKit operations or platform selection logic.
 - `BuildHost()` registers the desktop `IViewHostProvider` after `AddViewEngine()`. Named physical hosts are registered by `App` when a main/settings window is created. It does not manage embedded shell regions.
 - The remaining-list dialog is an independent `main.remainingList` MVE view. `RemainingListViewService` owns its transient state and opens it through `IViewEngine`; main draw pages must not instantiate a `Window` for this flow.

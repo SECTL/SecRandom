@@ -167,6 +167,9 @@
   <data name="S_Status" xml:space="preserve">
     <value>状态</value>
   </data>
+  <data name="C_Readme" xml:space="preserve">
+    <value>README</value>
+  </data>
   <data name="S_Directory" xml:space="preserve">
     <value>目录</value>
   </data>

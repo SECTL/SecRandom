@@ -1,0 +1,124 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mdxaml="https://github.com/whistyun/Markdown.Avalonia"
+        xmlns:avalonia="clr-namespace:ColorTextBlock.Avalonia;assembly=ColorTextBlock.Avalonia"
+        xmlns:avedit="https://github.com/avaloniaui/avaloniaedit"
+        xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core">
+    <Style Selector="mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer avalonia|CTextBlock">
+        <Setter Property="FontWeight" Value="Regular" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="TextAlignment" Value="Left" />
+        <Setter Property="Margin" Value="0 0 0 4" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer avalonia|CTextBlock.Heading1">
+        <Setter Property="Margin" Value="0 0 0 8" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="FontSize" Value="32" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer avalonia|CTextBlock.Heading2">
+        <Setter Property="Margin" Value="0 16 0 8" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer avalonia|CTextBlock.Heading3">
+        <Setter Property="Margin" Value="0 16 0 8" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontWeight" Value="Medium" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer avalonia|CTextBlock.Heading4">
+        <Setter Property="Margin" Value="0 16 0 8" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="Regular" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer avalonia|CHyperlink">
+        <Setter Property="Foreground" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer avalonia|CHyperlink:pointerover">
+        <Setter Property="Foreground" Value="{DynamicResource AccentFillColorSecondaryBrush}" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer avalonia|CCode">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer TextBlock.CodeBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="FontFamily" Value="Consolas, Hack, monospace" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer Border.CodeBlock">
+        <Setter Property="Margin" Value="0 8" />
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer Border.Blockquote">
+        <Setter Property="Margin" Value="0 8" />
+        <Setter Property="Padding" Value="8 0 0 0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Setter Property="BorderThickness" Value="4 0 0 0" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer Border.Table">
+        <Setter Property="BorderBrush" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Setter Property="BorderThickness" Value="0 0 1 1" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer Border.TableHeader">
+        <Setter Property="Padding" Value="6" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Setter Property="BorderThickness" Value="1 1 0 0" />
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer Border.OddTableRow, mdxaml|MarkdownScrollViewer .Markdown_Avalonia_MarkdownViewer Border.EvenTableRow">
+        <Setter Property="BorderThickness" Value="1 1 0 0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Setter Property="Padding" Value="6" />
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .CodeBlock avedit|TextEditor">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="FontFamily" Value="Consolas, Hack, monospace" />
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .CodeBlock Label.LangInfo">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="8 0 8 4" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .CodeBlock Button.CopyButton">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer .CodeBlock Button.CopyButton TextBlock">
+        <Setter Property="Text" Value="{sr:Fi CopyFilled}" />
+        <Setter Property="FontFamily" Value="{x:Static sr:GlobalConstants.FluentIconsFontFamily}" />
+        <Setter Property="FontWeight" Value="Regular" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    </Style>
+
+    <Style Selector="mdxaml|MarkdownScrollViewer /template/ ScrollViewer">
+        <Setter Property="Padding" Value="8" />
+    </Style>
+</Styles>

@@ -26,11 +26,11 @@
             <PublishFolderType>Resource</PublishFolderType>
         </None>
         <None Remove="Assets\Updates\release-public-key.txt" />
-        <AvaloniaResource Remove="Views\SettingsPages\Plugins\Overview\PluginsSettingsPage.axaml" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\SecRandom.Core\SecRandom.Core.csproj" />
+        <ProjectReference Include="..\SecRandom.PluginSdk\SecRandom.PluginSdk.csproj" />
         <ProjectReference Include="..\SecRandom4Ci.Interface\SecRandom4Ci.Interface.csproj" />
         <ProjectReference Include="..\SecRandom.Platforms\SecRandom.Platforms.csproj" />
         <ProjectReference Include="..\SecRandom.Platforms.Abstractions\SecRandom.Platforms.Abstractions.csproj" />
@@ -426,10 +426,6 @@
           <SubType>Code</SubType>
         </Compile>
 
-        <Compile Update="Views\SettingsPages\Plugins\Overview\PluginsSettingsPage.axaml.cs">
-          <DependentUpon>PluginsSettingsPage.axaml</DependentUpon>
-          <SubType>Code</SubType>
-        </Compile>
 
         <Compile Update="Views\SettingsPages\General\SecuritySettingsPage.axaml.cs">
           <DependentUpon>SecuritySettingsPage.axaml</DependentUpon>
