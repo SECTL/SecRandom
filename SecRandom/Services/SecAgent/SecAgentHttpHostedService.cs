@@ -194,11 +194,27 @@ public sealed class SecAgentHttpHostedService(
         var includeNames = StringArray(arguments, "include_names");
         var listName = profileService.CurrentStudentList?.Name ?? string.Empty;
         var temporaryCounts = temporaryRecordService.GetStudentCounts(listName, string.Empty, string.Empty);
+        var hasMatchingStudents = (profileService.CurrentStudentList?.Students ?? [])
+            .Any(student => student.IsCandidate && Matches(student, includeTags, excludeTags, includeIds, includeNames));
+        var mayResetExhaustedRound = configHandler.Data.QuickDrawSettings.DrawMode != DrawMode.Repeat
+                                     && hasMatchingStudents;
 
         var result = await InvokeAuthorizedAsync(SecurityOperation.QuickDrawStart, () =>
         {
-            var draw = drawEngine.DrawStudent(requestedCount, student => Matches(student, includeTags, excludeTags, includeIds, includeNames)
-                && !HasReachedTemporaryLimit(student, temporaryCounts), DrawSettingsType.QuickDraw, linkageDrawCoordinator.GetCourseName());
+            DrawResult<Student> DrawFromRemainingStudents()
+                => drawEngine.DrawStudent(requestedCount,
+                    student => Matches(student, includeTags, excludeTags, includeIds, includeNames)
+                               && !HasReachedTemporaryLimit(student, temporaryCounts),
+                    DrawSettingsType.QuickDraw, linkageDrawCoordinator.GetCourseName());
+
+            var draw = DrawFromRemainingStudents();
+            if (!draw.IsSuccess && mayResetExhaustedRound && draw.Status == DrawStatus.RepeatLimitExhausted)
+            {
+                temporaryRecordService.ResetStudentList(listName);
+                temporaryCounts = temporaryRecordService.GetStudentCounts(listName, string.Empty, string.Empty);
+                draw = DrawFromRemainingStudents();
+            }
+
             if (!draw.IsSuccess || draw.Result.Count == 0)
                 return Task.FromResult(draw);
 
