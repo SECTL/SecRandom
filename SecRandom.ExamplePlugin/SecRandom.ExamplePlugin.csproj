@@ -5,22 +5,15 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <EnableDynamicLoading>true</EnableDynamicLoading>
         <CreateSrpx>true</CreateSrpx>
-        <UseLocalPluginSdk Condition="'$(UseLocalPluginSdk)' == ''">true</UseLocalPluginSdk>
-        <SecRandomPluginSdkVersion Condition="'$(SecRandomPluginSdkVersion)' == ''">3.0.0</SecRandomPluginSdkVersion>
     </PropertyGroup>
 
-    <ItemGroup Condition="'$(UseLocalPluginSdk)' == 'true'">
-        <ProjectReference Include="..\SecRandom.PluginSdk\SecRandom.PluginSdk.csproj" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(UseLocalPluginSdk)' != 'true'">
-        <PackageReference Include="SecRandom.PluginSdk" Version="$(SecRandomPluginSdkVersion)">
+    <ItemGroup>
+        <PackageReference Include="SecRandom.PluginSdk" Version="3.0.0-alpha1">
             <ExcludeAssets>runtime;native</ExcludeAssets>
         </PackageReference>
     </ItemGroup>
-
+    
     <ItemGroup>
-        <PackageReference Include="YamlDotNet" Version="18.1.0" />
         <None Update="manifest.yml">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
@@ -31,7 +24,4 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-
-    <Import Project="..\SecRandom.PluginSdk\SecRandom.PluginSdk.targets"
-            Condition="'$(UseLocalPluginSdk)' == 'true'" />
 </Project>
