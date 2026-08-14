@@ -7,6 +7,7 @@ using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
@@ -24,22 +25,16 @@ namespace SecRandom.Views.SettingsPages.Personalized;
 public partial class FloatingWindowSettingsPage : UserControl
 {
     private bool _isSettingsSubscribed;
+    private readonly IFloatingWindowButtonRegistry _floatingWindowButtonRegistry = IAppHost.GetService<IFloatingWindowButtonRegistry>();
 
     public FloatingWindowSettingsPage()
     {
         Settings = ViewModel.Config.FloatingWindowSettings;
         var migratedSize = NormalizeFloatingWindowSize() | NormalizeDockedWindowSize();
-        ButtonOptions =
-        [
-            new(LR.S_Buttons_RollCall, () => Settings.ShowRollCallButton,
-                value => Settings.ShowRollCallButton = value),
-            new(LR.S_Buttons_QuickDraw, () => Settings.ShowQuickDrawButton,
-                value => Settings.ShowQuickDrawButton = value),
-            new(LR.S_Buttons_Lottery, () => Settings.ShowLotteryButton,
-                value => Settings.ShowLotteryButton = value)
-        ];
+        ButtonOptions = BuildButtonOptions();
         SelectedButtonOptions = BuildSelectedOptions(ButtonOptions);
         SelectedButtonOptions.CollectionChanged += SelectedButtonOptions_OnCollectionChanged;
+        _floatingWindowButtonRegistry.Changed += FloatingWindowButtonRegistry_OnChanged;
         DataContext = this;
         InitializeComponent();
         SubscribeSettings();
@@ -63,10 +58,12 @@ public partial class FloatingWindowSettingsPage : UserControl
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         SubscribeSettings();
+        RebuildButtonOptions();
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
     {
+        _floatingWindowButtonRegistry.Changed -= FloatingWindowButtonRegistry_OnChanged;
         if (!_isSettingsSubscribed)
             return;
 
@@ -90,6 +87,60 @@ public partial class FloatingWindowSettingsPage : UserControl
             && Settings.FloatingWindowTopmostMode == TopmostMode.UiAccess
             && !DesktopIntegration.IsUiAccessAvailable())
             SettingsView.Current?.RequestRestartApp();
+    }
+
+    private AvaloniaList<MultiSelectSettingOption> BuildButtonOptions()
+    {
+        var options = new AvaloniaList<MultiSelectSettingOption>
+        {
+            new(LR.S_Buttons_RollCall, () => Settings.ShowRollCallButton,
+                value => Settings.ShowRollCallButton = value),
+            new(LR.S_Buttons_QuickDraw, () => Settings.ShowQuickDrawButton,
+                value => Settings.ShowQuickDrawButton = value),
+            new(LR.S_Buttons_Lottery, () => Settings.ShowLotteryButton,
+                value => Settings.ShowLotteryButton = value)
+        };
+        foreach (var button in _floatingWindowButtonRegistry.Buttons)
+        {
+            options.Add(new MultiSelectSettingOption(
+                button.Label,
+                () => Settings.VisiblePluginButtonIds.Contains(button.Id, StringComparer.OrdinalIgnoreCase),
+                value =>
+                {
+                    if (value)
+                    {
+                        if (!Settings.VisiblePluginButtonIds.Contains(button.Id, StringComparer.OrdinalIgnoreCase))
+                            Settings.VisiblePluginButtonIds.Add(button.Id);
+                    }
+                    else
+                    {
+                        Settings.VisiblePluginButtonIds.Remove(button.Id);
+                    }
+                }));
+        }
+
+        return options;
+    }
+
+    private void FloatingWindowButtonRegistry_OnChanged(object? sender, EventArgs e)
+    {
+        RebuildButtonOptions();
+    }
+
+    private void RebuildButtonOptions()
+    {
+        if (!IsLoaded)
+            return;
+
+        var wasSelected = SelectedButtonOptions.Select(option => option.Label).ToHashSet();
+        SelectedButtonOptions.CollectionChanged -= SelectedButtonOptions_OnCollectionChanged;
+        ButtonOptions.Clear();
+        foreach (var option in BuildButtonOptions())
+            ButtonOptions.Add(option);
+        SelectedButtonOptions.Clear();
+        foreach (var option in ButtonOptions.Where(option => wasSelected.Contains(option.Label)))
+            SelectedButtonOptions.Add(option);
+        SelectedButtonOptions.CollectionChanged += SelectedButtonOptions_OnCollectionChanged;
     }
 
     private static AvaloniaList<MultiSelectSettingOption> BuildSelectedOptions(
@@ -132,9 +183,8 @@ public partial class FloatingWindowSettingsPage : UserControl
 
     private void SelectedButtonOptions_OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        Settings.ShowRollCallButton = SelectedButtonOptions.Contains(ButtonOptions[0]);
-        Settings.ShowQuickDrawButton = SelectedButtonOptions.Contains(ButtonOptions[1]);
-        Settings.ShowLotteryButton = SelectedButtonOptions.Contains(ButtonOptions[2]);
+        foreach (var option in ButtonOptions)
+            option.SetSelected(SelectedButtonOptions.Contains(option));
         ConfigHandler.Save();
     }
 }

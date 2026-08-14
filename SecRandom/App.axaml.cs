@@ -23,6 +23,7 @@ using SecRandom.Controls.AttachedSettings;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Abstraction.Services.Views;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
@@ -761,8 +762,8 @@ public partial class App : Application
                 services.AddCoreRuntimeServices();
                 var pluginManager = new PluginManager();
                 services.AddSingleton<IPluginManager>(pluginManager);
+                services.AddSingleton(pluginManager);
                 services.AddSingleton<DeviceUuidStore>();
-
                 services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
                 services.AddSingleton<TelemetryRuntimeService>();
                 services.AddHostedService<OnlineStatusService>();
@@ -1019,7 +1020,21 @@ public partial class App : Application
                     Langs.SettingsPages.Debug.DebugStrings.Get("Page_Title"));
 
                 if (!isMobile)
+                {
+                    services.AddSingleton<IMainView, MainViewAdapter>();
+                    services.AddSingleton<ISettingsView, SettingsViewAdapter>();
+                    services.AddSingleton<IAppNavigationService, AppNavigationService>();
+                    services.AddSingleton<IAppLifecycleService, AppLifecycleService>();
+                    services.AddSingleton<IPluginDrawService, PluginDrawService>();
+                    services.AddSingleton<IFloatingWindowButtonRegistry, FloatingWindowButtonRegistry>();
+                    services.AddHostedService<PluginLifecycleBridge>();
+                    services.AddHttpClient("plugin-market", client => client.Timeout = TimeSpan.FromSeconds(30));
+                    services.AddSingleton<PluginMarketService>(provider => new PluginMarketService(
+                        provider.GetRequiredService<ILogger<PluginMarketService>>(),
+                        provider.GetRequiredService<IHttpClientFactory>().CreateClient("plugin-market"),
+                        provider.GetRequiredService<IPluginManager>()));
                     pluginManager.Initialize(context, services);
+                }
             })
             .Build();
 
@@ -1114,6 +1129,18 @@ public partial class App : Application
             {
                 IAppHost.TryGetService<ILogger<App>>()?
                     .LogError(exception, "Application stopping notification failed.");
+            }
+
+            try
+            {
+                var pluginManager = IAppHost.TryGetService<PluginManager>();
+                if (pluginManager is not null)
+                    await pluginManager.DisposePluginsAsync().ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                IAppHost.TryGetService<ILogger<App>>()?
+                    .LogError(exception, "Plugin disposal failed.");
             }
 
             _floatingWindow?.CanClose = true;
@@ -1213,6 +1240,8 @@ public partial class App : Application
         TryLogCritical(e.Exception);
         ObserveTask(CaptureUnhandledExceptionAsync(e.Exception), "Unhandled exception telemetry capture failed.");
 
+        TryDisablePluginOnCrash(e.Exception);
+
         e.Handled = DispatcherCrashRecovery.TryRecover(
             e.Exception,
             CrashRecoveryRuntime.TryCreateCurrentProcessPromptOptions,
@@ -1220,6 +1249,29 @@ public partial class App : Application
             CrashRecoveryRuntime.TryHandlePromptDisplayFailure,
             CrashRecoveryRuntime.TryHandleFatalException,
             RequestDesktopShutdown);
+    }
+
+    /// <summary>
+    ///     When an unhandled exception originates from a plugin load context, marks that plugin for
+    ///     disabled-on-next-startup so a recurring plugin crash is contained without touching other plugins.
+    ///     The restart required to honor the marker is left to the crash recovery flow.
+    /// </summary>
+    private static void TryDisablePluginOnCrash(Exception exception)
+    {
+        var pluginManager = IAppHost.TryGetService<PluginManager>();
+        if (pluginManager is null)
+            return;
+
+        if (!IAppHost.GetService<MainConfigHandler>().Data.General.CrashRecovery.DisableCrashedPlugin)
+            return;
+
+        var pluginId = pluginManager.GetPluginIdForException(exception);
+        if (pluginId is null)
+            return;
+
+        pluginManager.DisablePluginOnCrash(pluginId);
+        IAppHost.TryGetService<ILogger<App>>()?
+            .LogWarning("Plugin {PluginId} caused an unhandled exception and was disabled for the next startup.", pluginId);
     }
 
     private static bool ShowCrashRecoveryPrompt(CrashRecoveryPromptOptions promptOptions)

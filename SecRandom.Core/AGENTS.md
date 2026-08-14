@@ -45,6 +45,7 @@ SecRandom.Core/
 |----------------------------|----------------------------------------------------------------------------------|-------------------------------------------------------------------------|
 | Service access             | `Abstraction/IAppHost.cs`                                                        | Static Host holder and service helpers.                                 |
 | Profile contract           | `Abstraction/Services/IProfileService.cs`                                        | Current profile/list/history boundary, including active student-profile switching. |
+| Plugin view contracts      | `Abstraction/Services/Views/`                                                    | `IDrawerView`/`IMainView`/`ISettingsView` plugin-facing drawer/navigation contracts; app shells provide adapters. |
 | Page metadata              | `Attributes/PageInfoAttribute.cs`, `Models/PageInfo.cs`                          | Used by registration extensions.                                        |
 | Page registration          | `Extensions/Registry/`                                                           | `AddMainPage`, `AddSettingsPage`, group/separator helpers.              |
 | Navigation registry        | `Services/PagesRegistryService.cs`                                               | Static main/settings/group collections.                                 |

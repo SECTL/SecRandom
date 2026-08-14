@@ -19,6 +19,7 @@ using SecRandom.Core.Controls;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
+using SecRandom.Core.Services.Config;
 using SecRandom.Services.Linkage;
 using SecRandom.Services;
 using SecRandom.Services.Platform;
@@ -74,9 +75,22 @@ public partial class FloatingWindow : Window
         ViewModel.Config.LinkageSettings.PropertyChanged += LinkageSettings_OnPropertyChanged;
         _linkageService.StateChanged += LinkageServiceOnStateChanged;
         _featureAvailability.Changed += FeatureAvailabilityOnChanged;
+        var buttonRegistry = IAppHost.TryGetService<IFloatingWindowButtonRegistry>();
+        if (buttonRegistry is not null)
+            buttonRegistry.Changed += FloatingWindowButtonRegistry_OnChanged;
         Opened += OnOpened;
-        Closed += (_, _) => _featureAvailability.Changed -= FeatureAvailabilityOnChanged;
+        Closed += (_, _) =>
+        {
+            _featureAvailability.Changed -= FeatureAvailabilityOnChanged;
+            if (buttonRegistry is not null)
+                buttonRegistry.Changed -= FloatingWindowButtonRegistry_OnChanged;
+        };
         RefreshItems();
+    }
+
+    private void FloatingWindowButtonRegistry_OnChanged(object? sender, EventArgs e)
+    {
+        Dispatcher.UIThread.Post(RefreshItems);
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
@@ -103,7 +117,37 @@ public partial class FloatingWindow : Window
                 ButtonsPanel.Children.Add(control);
         }
 
+        foreach (var button in GetVisiblePluginButtons(settings))
+            ButtonsPanel.Children.Add(CreatePluginButton(button, settings));
+
         UpdateButtonsPanelWidth(settings);
+    }
+
+    private IReadOnlyList<FloatingWindowButtonDescriptor> GetVisiblePluginButtons(FloatingWindowSettingsConfig settings)
+    {
+        var registry = IAppHost.GetService<IFloatingWindowButtonRegistry>();
+        var registered = registry.Buttons;
+
+        var staleIds = settings.VisiblePluginButtonIds
+            .Where(id => registered.All(button => !string.Equals(button.Id, id, StringComparison.OrdinalIgnoreCase)))
+            .ToArray();
+        if (staleIds.Length > 0)
+        {
+            foreach (var staleId in staleIds)
+                settings.VisiblePluginButtonIds.Remove(staleId);
+            IAppHost.TryGetService<MainConfigHandler>()?.Save();
+        }
+
+        return registered
+            .Where(button => settings.VisiblePluginButtonIds.Contains(button.Id, StringComparer.OrdinalIgnoreCase))
+            .ToArray();
+    }
+
+    private static Button CreatePluginButton(FloatingWindowButtonDescriptor descriptor, FloatingWindowSettingsConfig settings)
+    {
+        var button = CreateButton(descriptor.Icon, descriptor.Label, settings);
+        button.Click += (_, _) => descriptor.Click();
+        return button;
     }
 
     private void ApplyWindowSettings(FloatingWindowSettingsConfig settings)

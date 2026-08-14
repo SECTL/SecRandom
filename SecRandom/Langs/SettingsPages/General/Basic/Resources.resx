@@ -113,4 +113,10 @@
     <data name="O_CrashRecoveryMode_PromptAndRestart" xml:space="preserve">
         <value>显示恢复页并自动重启</value>
     </data>
+    <data name="S_Behavior_DisableCrashedPlugin" xml:space="preserve">
+        <value>插件崩溃自动禁用</value>
+    </data>
+    <data name="S_Behavior_DisableCrashedPlugin_D" xml:space="preserve">
+        <value>插件导致崩溃时自动禁用该插件，下次启动不再加载</value>
+    </data>
 </root>

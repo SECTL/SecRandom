@@ -9,6 +9,7 @@ using SecRandom;
 using SecRandom.Extensions;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
+using SecRandom.Services.Plugins;
 using SecRandom.Platforms;
 using SecRandom.Shared;
 #if SEC_RANDOM_PLATFORM_WINDOWS
@@ -41,6 +42,7 @@ internal sealed class Program
         ConfigurePlatformServices();
         ProtocolActivation.SetStartupArguments(args);
         CrashRecoveryRuntime.SetStartupArguments(args);
+        PluginManager.SetStartupArguments(args);
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 
         try
@@ -110,7 +112,8 @@ internal sealed class Program
             assetRoot,
             new HashSet<string>(StringComparer.Ordinal)
             {
-                "Updates/release-public-key.txt"
+                "Updates/release-public-key.txt",
+                "Plugins/plugin-market-public-key.txt"
             });
 
         const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance;
