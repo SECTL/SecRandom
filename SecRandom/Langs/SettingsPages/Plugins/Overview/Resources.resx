@@ -257,4 +257,55 @@
   <data name="M_UninstallFailed" xml:space="preserve">
     <value>插件卸载失败：{0}</value>
   </data>
+  <data name="M_IndexInvalid" xml:space="preserve">
+    <value>插件市场索引无效</value>
+  </data>
+  <data name="M_IndexSignatureInvalid" xml:space="preserve">
+    <value>插件市场索引签名校验失败</value>
+  </data>
+  <data name="M_PublicKeyInvalid" xml:space="preserve">
+    <value>插件市场公钥无效</value>
+  </data>
+  <data name="M_DownloadUrlMissing" xml:space="preserve">
+    <value>插件 {0} 未提供下载地址</value>
+  </data>
+  <data name="M_PackageHashMismatch" xml:space="preserve">
+    <value>插件包 SHA-256 校验失败：期望 {0}，实际 {1}</value>
+  </data>
+  <data name="M_DependencyMissing" xml:space="preserve">
+    <value>插件 {1} 缺少必需依赖 {0}</value>
+  </data>
+  <data name="M_DependencyCycle" xml:space="preserve">
+    <value>检测到插件依赖循环：{0}</value>
+  </data>
+  <data name="M_InstallConfirm" xml:space="preserve">
+    <value>安装插件 {0}？{1}安装后将在下次启动时生效。</value>
+  </data>
+  <data name="M_InstallDependencies" xml:space="preserve">
+    <value>将同时安装 {0} 个依赖插件。</value>
+  </data>
+  <data name="C_Update" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="C_Installed" xml:space="preserve">
+    <value>已安装</value>
+  </data>
+  <data name="C_Incompatible" xml:space="preserve">
+    <value>不兼容</value>
+  </data>
+  <data name="C_Refreshing" xml:space="preserve">
+    <value>刷新中…</value>
+  </data>
+  <data name="C_CatalogRefreshHint" xml:space="preserve">
+    <value>点击刷新按钮从官方市场加载插件列表</value>
+  </data>
+  <data name="C_Dependencies" xml:space="preserve">
+    <value>依赖：{0}</value>
+  </data>
+  <data name="C_ProjectUrl" xml:space="preserve">
+    <value>项目主页</value>
+  </data>
+  <data name="M_InstallConfirmTitle" xml:space="preserve">
+    <value>安装插件</value>
+  </data>
 </root>

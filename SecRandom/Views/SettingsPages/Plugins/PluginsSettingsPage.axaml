@@ -75,7 +75,7 @@
                                  Padding="0"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <ListBox.ItemTemplate>
-                                <DataTemplate x:DataType="local:PluginOverviewItem">
+                                <DataTemplate x:DataType="local:PluginListItemBase">
                                     <Border Padding="0 8">
                                         <Grid ColumnDefinitions="Auto,*,Auto"
                                               RowDefinitions="Auto,Auto"
@@ -197,13 +197,27 @@
                                                        Text="{Binding SelectedPluginStatus}" />
                                         </StackPanel>
                                     </Border>
+
+                                    <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                               Text="{Binding MarketDependenciesText}"
+                                               TextTrimming="CharacterEllipsis"
+                                               IsVisible="{Binding IsMarketItemSelected}"
+                                               VerticalAlignment="Center" />
                                 </StackPanel>
                             </StackPanel>
                             
                             <ToggleSwitch Grid.Column="2"
                                           IsChecked="{Binding IsSelectedPluginEnabled}"
                                           IsEnabled="{Binding CanToggleSelectedPlugin}"
+                                          IsVisible="{Binding IsInstalledItemSelected}"
                                           VerticalAlignment="Center" />
+
+                            <Button Grid.Column="2"
+                                    Content="{Binding MarketActionText}"
+                                    IsEnabled="{Binding CanRunMarketAction}"
+                                    IsVisible="{Binding IsMarketItemSelected}"
+                                    VerticalAlignment="Center"
+                                    Click="MarketActionButton_OnClick" />
                         </Grid>
 
                         <Grid Grid.Row="1" ColumnDefinitions="* Auto">
@@ -216,7 +230,8 @@
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
                                 <Button Theme="{StaticResource TransparentButton}"
                                         ToolTip.Tip="{x:Static lp:Resources.C_Uninstall}"
-                                        IsEnabled="{Binding CanToggleSelectedPlugin}"
+                                        IsEnabled="{Binding CanUninstallSelectedPlugin}"
+                                        IsVisible="{Binding IsInstalledItemSelected}"
                                         VerticalAlignment="Center"
                                         Click="UninstallSelectedPluginButton_OnClick">
                                     <sr:FluentIcon Glyph="{sr:Fi DeleteFilled}" />
@@ -224,6 +239,7 @@
                                 <Button Theme="{StaticResource TransparentButton}"
                                         ToolTip.Tip="{x:Static lp:Resources.C_OpenSelectedFolder}"
                                         IsEnabled="{Binding CanOpenSelectedFolder}"
+                                        IsVisible="{Binding IsInstalledItemSelected}"
                                         VerticalAlignment="Center"
                                         Click="OpenSelectedFolderButton_OnClick">
                                     <sr:FluentIcon Glyph="{sr:Fi FolderOpenFilled}" />

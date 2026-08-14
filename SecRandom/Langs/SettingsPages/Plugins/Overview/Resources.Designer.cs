@@ -119,5 +119,22 @@ namespace SecRandom.Langs.SettingsPages.Plugins.Overview
         public static string M_UninstallConfirmTitle => ResourceManager.GetString("M_UninstallConfirmTitle", resourceCulture);
         public static string M_UninstallConfirm => ResourceManager.GetString("M_UninstallConfirm", resourceCulture);
         public static string M_UninstallFailed => ResourceManager.GetString("M_UninstallFailed", resourceCulture);
+        public static string M_IndexInvalid => ResourceManager.GetString("M_IndexInvalid", resourceCulture);
+        public static string M_IndexSignatureInvalid => ResourceManager.GetString("M_IndexSignatureInvalid", resourceCulture);
+        public static string M_PublicKeyInvalid => ResourceManager.GetString("M_PublicKeyInvalid", resourceCulture);
+        public static string M_DownloadUrlMissing => ResourceManager.GetString("M_DownloadUrlMissing", resourceCulture);
+        public static string M_PackageHashMismatch => ResourceManager.GetString("M_PackageHashMismatch", resourceCulture);
+        public static string M_DependencyMissing => ResourceManager.GetString("M_DependencyMissing", resourceCulture);
+        public static string M_DependencyCycle => ResourceManager.GetString("M_DependencyCycle", resourceCulture);
+        public static string M_InstallConfirm => ResourceManager.GetString("M_InstallConfirm", resourceCulture);
+        public static string M_InstallDependencies => ResourceManager.GetString("M_InstallDependencies", resourceCulture);
+        public static string C_Update => ResourceManager.GetString("C_Update", resourceCulture);
+        public static string C_Installed => ResourceManager.GetString("C_Installed", resourceCulture);
+        public static string C_Incompatible => ResourceManager.GetString("C_Incompatible", resourceCulture);
+        public static string C_Refreshing => ResourceManager.GetString("C_Refreshing", resourceCulture);
+        public static string C_CatalogRefreshHint => ResourceManager.GetString("C_CatalogRefreshHint", resourceCulture);
+        public static string C_Dependencies => ResourceManager.GetString("C_Dependencies", resourceCulture);
+        public static string C_ProjectUrl => ResourceManager.GetString("C_ProjectUrl", resourceCulture);
+        public static string M_InstallConfirmTitle => ResourceManager.GetString("M_InstallConfirmTitle", resourceCulture);
     }
 }

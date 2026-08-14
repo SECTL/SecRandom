@@ -21,6 +21,8 @@ using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.PluginSdk;
 using SecRandom.Services.Desktop;
+using SecRandom.Services.Plugins;
+using SecRandom.Shared.Models.Plugins;
 using LR = SecRandom.Langs.SettingsPages.Plugins.Overview.Resources;
 
 namespace SecRandom.Views.SettingsPages.Plugins;
@@ -30,10 +32,13 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
 {
     private readonly IPluginManager _pluginManager = IAppHost.GetService<IPluginManager>();
     private readonly IExternalLauncher _externalLauncher = IAppHost.GetService<IExternalLauncher>();
-    private readonly ObservableCollection<PluginOverviewItem> _pluginList = [];
-    private PluginOverviewItem? _selectedItem;
+    private readonly PluginMarketService _marketService = IAppHost.GetService<PluginMarketService>();
+    private readonly ObservableCollection<PluginListItemBase> _pluginList = [];
+    private PluginListItemBase? _selectedItem;
     private string _searchText = string.Empty;
     private PluginOverviewFilter _filter = PluginOverviewFilter.Installed;
+    private bool _isMarketLoaded;
+    private bool _isMarketRefreshing;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
 
     public PluginsSettingsPage()
@@ -47,7 +52,7 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
         };
     }
 
-    public ObservableCollection<PluginOverviewItem> PluginList { get; } = [];
+    public ObservableCollection<PluginListItemBase> PluginList { get; } = [];
 
     public ObservableCollection<PluginFilterChip> FilterChips { get; } =
     [
@@ -63,7 +68,9 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
         ? LR.C_CatalogEmpty
         : LR.C_OverviewEmptyTitle;
 
-    public string EmptyHint => LR.C_OverviewEmptyHint;
+    public string EmptyHint => Filter == PluginOverviewFilter.Market
+        ? LR.C_CatalogRefreshHint
+        : LR.C_OverviewEmptyHint;
 
     public string SearchText
     {
@@ -83,9 +90,12 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
             if (!SetField(ref _filter, value))
                 return;
 
-            ApplyFilterAndSelection(SelectedItem?.Id);
+            ApplyFilterAndSelection(SelectedItem?.Id, BuildListForCurrentFilter());
             OnPropertyChanged(nameof(SelectedFilterChip));
             OnPropertyChanged(nameof(EmptyTitle));
+            OnPropertyChanged(nameof(EmptyHint));
+            if (value == PluginOverviewFilter.Market && !_isMarketLoaded)
+                _ = RefreshMarketAsync();
         }
     }
 
@@ -102,7 +112,7 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
         }
     }
 
-    public PluginOverviewItem? SelectedItem
+    public PluginListItemBase? SelectedItem
     {
         get => _selectedItem;
         set
@@ -119,34 +129,50 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
             OnPropertyChanged(nameof(HasSelectedPluginError));
             OnPropertyChanged(nameof(SelectedPluginReadme));
             OnPropertyChanged(nameof(SelectedPluginIcon));
+            OnPropertyChanged(nameof(IsInstalledItemSelected));
+            OnPropertyChanged(nameof(IsMarketItemSelected));
             OnPropertyChanged(nameof(IsSelectedPluginEnabled));
             OnPropertyChanged(nameof(CanToggleSelectedPlugin));
             OnPropertyChanged(nameof(CanOpenSelectedFolder));
+            OnPropertyChanged(nameof(CanUninstallSelectedPlugin));
+            OnPropertyChanged(nameof(MarketActionText));
+            OnPropertyChanged(nameof(CanRunMarketAction));
+            OnPropertyChanged(nameof(MarketDependenciesText));
         }
     }
 
     public bool HasSelectedPlugin => SelectedItem != null;
     public bool HasNoSelectedPlugin => SelectedItem == null;
-    public bool CanToggleSelectedPlugin => SelectedItem != null;
-    public bool CanOpenSelectedFolder => SelectedItem != null;
-    public bool HasSelectedPluginError => !string.IsNullOrWhiteSpace(SelectedItem?.ErrorMessage);
+    public bool IsInstalledItemSelected => SelectedItem is PluginOverviewItem;
+    public bool IsMarketItemSelected => SelectedItem is PluginMarketItem;
+    public bool CanToggleSelectedPlugin => SelectedItem is PluginOverviewItem;
+    public bool CanOpenSelectedFolder => SelectedItem is PluginOverviewItem;
+    public bool CanUninstallSelectedPlugin => SelectedItem is PluginOverviewItem;
+    public bool HasSelectedPluginError => SelectedItem is PluginOverviewItem { ErrorMessage: not null and not "" };
+    public bool CanRunMarketAction => SelectedItem is PluginMarketItem { CanInstall: true } && !_isMarketRefreshing;
 
     public IImage? SelectedPluginIcon => SelectedItem?.Icon;
 
     public string SelectedPluginTitle => SelectedItem?.Name ?? LR.C_NoPluginSelected;
-    public string SelectedPluginMetaLine => SelectedItem == null
-        ? string.Empty
-        : $"{SelectedItem.Version} | {SelectedItem.Author}";
+    public string SelectedPluginMetaLine => SelectedItem?.MetaLine ?? string.Empty;
     public string SelectedPluginStatus => SelectedItem?.StatusText ?? "-";
-    public string SelectedPluginError => SelectedItem?.ErrorMessage ?? string.Empty;
+    public string SelectedPluginError => SelectedItem is PluginOverviewItem item ? item.ErrorMessage ?? string.Empty : string.Empty;
     public string SelectedPluginReadme => BuildSelectedPluginReadme();
+
+    public string MarketActionText => SelectedItem is PluginMarketItem { HasUpdate: true } item
+        ? LR.C_Update
+        : LR.C_Install;
+
+    public string MarketDependenciesText => SelectedItem is PluginMarketItem { DependencyText.Length: > 0 } item
+        ? string.Format(LR.C_Dependencies, item.DependencyText)
+        : string.Empty;
 
     public bool IsSelectedPluginEnabled
     {
-        get => SelectedItem?.Plugin.IsEnabled == true;
+        get => SelectedItem is PluginOverviewItem { Plugin.IsEnabled: true };
         set
         {
-            if (SelectedItem?.Plugin is not { } plugin || plugin.IsEnabled == value)
+            if (SelectedItem is not PluginOverviewItem { Plugin: { } plugin } || plugin.IsEnabled == value)
                 return;
 
             if (!_pluginManager.SetEnabled(plugin.Manifest.Id, value))
@@ -164,11 +190,51 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
     {
         RefreshPlugins(SelectedItem?.Id);
         Dispatcher.UIThread.Post(RebuildCodeBlocks);
+        if (Filter == PluginOverviewFilter.Market && !_isMarketLoaded)
+            _ = RefreshMarketAsync();
     }
 
-    private void RefreshButton_OnClick(object? sender, RoutedEventArgs e)
+    private async void RefreshButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        RefreshPlugins(SelectedItem?.Id);
+        if (Filter == PluginOverviewFilter.Market)
+            await RefreshMarketAsync();
+        else
+            RefreshPlugins(SelectedItem?.Id);
+    }
+
+    private async Task RefreshMarketAsync()
+    {
+        if (_isMarketRefreshing)
+            return;
+
+        _isMarketRefreshing = true;
+        _isMarketLoaded = true;
+        OnPropertyChanged(nameof(CanRunMarketAction));
+        try
+        {
+            await _marketService.RefreshAsync(CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            this.ShowErrorToast(string.Format(LR.M_CatalogRefreshFailed, exception.Message));
+        }
+        finally
+        {
+            _isMarketRefreshing = false;
+            OnPropertyChanged(nameof(CanRunMarketAction));
+            if (Filter == PluginOverviewFilter.Market)
+                ApplyFilterAndSelection(SelectedItem?.Id, BuildMarketItems());
+        }
+    }
+
+    private IReadOnlyList<PluginMarketItem> BuildMarketItems()
+    {
+        var installed = _pluginManager.Plugins
+            .ToDictionary(plugin => plugin.Manifest.Id, plugin => plugin.Manifest.Version, StringComparer.OrdinalIgnoreCase);
+        return _marketService.Entries
+            .Select(entry => PluginMarketItem.FromEntry(entry, installed, _marketService))
+            .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToArray();
     }
 
     private async void ImportPluginButton_OnClick(object? sender, RoutedEventArgs e)
@@ -217,13 +283,13 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
 
     private void OpenSelectedFolderButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (SelectedItem is not null)
-            _externalLauncher.TryOpenPath(SelectedItem.DirectoryPath);
+        if (SelectedItem is PluginOverviewItem item)
+            _externalLauncher.TryOpenPath(item.DirectoryPath);
     }
 
     private async void UninstallSelectedPluginButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (SelectedItem?.Plugin is not { } plugin)
+        if (SelectedItem is not PluginOverviewItem { Plugin: { } plugin })
             return;
 
         var confirmed = await ConfirmUninstallAsync();
@@ -238,6 +304,49 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
 
         RefreshPlugins(SelectedItem?.Id);
         SettingsView.Current?.RequestRestartApp();
+    }
+
+    private async void MarketActionButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (SelectedItem is not PluginMarketItem { Entry: { } entry } || _isMarketRefreshing)
+            return;
+
+        try
+        {
+            var plan = _marketService.ResolveInstallPlan(entry);
+            var dependencyNote = plan.HasDependencies
+                ? string.Format(LR.M_InstallDependencies, plan.Entries.Count - 1)
+                : string.Empty;
+            var confirmed = await ConfirmMarketInstallAsync(entry, dependencyNote);
+            if (!confirmed)
+                return;
+
+            await _marketService.InstallAsync(plan, CancellationToken.None);
+            this.ShowSuccessToast(string.Format(LR.M_PluginImported, entry.DisplayName));
+            SettingsView.Current?.RequestRestartApp();
+        }
+        catch (InvalidDataException)
+        {
+            this.ShowWarningToast(LR.M_InvalidPluginPackage);
+        }
+        catch (Exception exception)
+        {
+            this.ShowErrorToast(string.Format(LR.M_PluginImportFailed, exception.Message));
+        }
+    }
+
+    private async Task<bool> ConfirmMarketInstallAsync(PluginCatalogEntry entry, string dependencyNote)
+    {
+        var separator = string.IsNullOrEmpty(dependencyNote) ? string.Empty : $"{Environment.NewLine}{dependencyNote}";
+        var result = await new FAContentDialog
+        {
+            Title = LR.M_InstallConfirmTitle,
+            Content = string.Format(LR.M_InstallConfirm, entry.DisplayName, separator),
+            PrimaryButtonText = LR.C_Install,
+            CloseButtonText = SecRandom.Langs.SettingsView.Resources.C_Cancel,
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+        return result == FAContentDialogResult.Primary;
     }
 
     private async Task<bool> ConfirmUninstallAsync()
@@ -317,25 +426,27 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
 
     private void RefreshPlugins(string? preferredPluginId)
     {
-        var query = SearchText.Trim();
-        var items = _pluginManager.Plugins
-            .Where(plugin => string.IsNullOrWhiteSpace(query)
-                             || plugin.Manifest.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase)
-                             || plugin.Manifest.Id.Contains(query, StringComparison.CurrentCultureIgnoreCase)
-                             || plugin.Manifest.Author.Contains(query, StringComparison.CurrentCultureIgnoreCase))
-            .OrderBy(plugin => plugin.Manifest.Name, StringComparer.CurrentCultureIgnoreCase)
-            .Select(plugin => PluginOverviewItem.FromPlugin(plugin, FormatStatus(plugin)))
-            .ToList();
-
-        ApplyFilterAndSelection(preferredPluginId, items);
+        ApplyFilterAndSelection(preferredPluginId, BuildListForCurrentFilter());
     }
 
-    private void ApplyFilterAndSelection(string? preferredPluginId, IReadOnlyList<PluginOverviewItem>? items = null)
+    private void ApplyFilterAndSelection(string? preferredPluginId, IReadOnlyList<PluginListItemBase>? items = null)
     {
         var source = items ?? PluginList.ToList();
-        var filteredList = Filter == PluginOverviewFilter.Installed
-            ? source.OrderBy(x => x.Name, StringComparer.CurrentCultureIgnoreCase).ToList()
-            : [];
+        IReadOnlyList<PluginListItemBase> filteredList;
+        if (Filter == PluginOverviewFilter.Installed)
+        {
+            filteredList = source.OfType<PluginOverviewItem>()
+                .Where(item => MatchesQuery(item))
+                .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToArray();
+        }
+        else
+        {
+            filteredList = source.OfType<PluginMarketItem>()
+                .Where(item => MatchesQuery(item))
+                .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToArray();
+        }
 
         PluginList.Clear();
         foreach (var item in filteredList)
@@ -348,6 +459,30 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
         var preferred = filteredList.FirstOrDefault(x => x.Id == preferredPluginId);
         var current = filteredList.FirstOrDefault(x => x.Id == SelectedItem?.Id);
         SelectedItem = preferred ?? current;
+    }
+
+    /// <summary>
+    ///     Builds the item list for the currently selected tab from its own source, so switching tabs
+    ///     does not filter the other tab's entries out of the shared <see cref="PluginList"/>.
+    /// </summary>
+    private IReadOnlyList<PluginListItemBase> BuildListForCurrentFilter()
+    {
+        return Filter == PluginOverviewFilter.Installed
+            ? _pluginManager.Plugins
+                .Select(plugin => PluginOverviewItem.FromPlugin(plugin, FormatStatus(plugin)))
+                .ToArray()
+            : BuildMarketItems();
+    }
+
+    private bool MatchesQuery(PluginListItemBase item)
+    {
+        if (string.IsNullOrWhiteSpace(SearchText))
+            return true;
+
+        var query = SearchText.Trim();
+        return item.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+               || item.Id.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+               || item.Author.Contains(query, StringComparison.CurrentCultureIgnoreCase);
     }
 
     private static string FormatStatus(PluginInfo plugin)
@@ -363,17 +498,22 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
 
     private string BuildSelectedPluginReadme()
     {
-        if (SelectedItem == null)
-            return string.Empty;
-
-        foreach (var fileName in new[] { "README.md", "Readme.md", "readme.md", "README.txt", "readme.txt" })
+        if (SelectedItem is PluginOverviewItem overview)
         {
-            var path = Path.Combine(SelectedItem.DirectoryPath, fileName);
-            if (File.Exists(path))
-                return File.ReadAllText(path, Encoding.UTF8);
+            foreach (var fileName in new[] { "README.md", "Readme.md", "readme.md", "README.txt", "readme.txt" })
+            {
+                var path = Path.Combine(overview.DirectoryPath, fileName);
+                if (File.Exists(path))
+                    return File.ReadAllText(path, Encoding.UTF8);
+            }
+
+            return $"# {overview.Name}{Environment.NewLine}{Environment.NewLine}{overview.Description}";
         }
 
-        return $"# {SelectedItem.Name}{Environment.NewLine}{Environment.NewLine}{SelectedItem.Description}";
+        if (SelectedItem is PluginMarketItem market)
+            return market.ReadmeText;
+
+        return string.Empty;
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
@@ -406,28 +546,37 @@ public enum PluginOverviewFilter
 
 public sealed record PluginFilterChip(PluginOverviewFilter Filter, string Text);
 
-public sealed class PluginOverviewItem
+public abstract class PluginListItemBase
+{
+    public string Id { get; protected init; } = string.Empty;
+    public string Name { get; protected init; } = string.Empty;
+    public string Version { get; protected init; } = string.Empty;
+    public string Author { get; protected init; } = string.Empty;
+    public string Description { get; protected init; } = string.Empty;
+    public IImage? Icon { get; protected init; }
+    public string ListSubtitle => string.IsNullOrWhiteSpace(Author) ? Id : Author;
+    public abstract string MetaLine { get; }
+    public abstract string StatusText { get; }
+}
+
+public sealed class PluginOverviewItem : PluginListItemBase
 {
     private PluginOverviewItem()
     {
     }
 
     public PluginInfo Plugin { get; private init; } = null!;
-    public string Id { get; private init; } = string.Empty;
-    public string Name { get; private init; } = string.Empty;
-    public string Version { get; private init; } = string.Empty;
-    public string Author { get; private init; } = string.Empty;
-    public string Description { get; private init; } = string.Empty;
     public string ApiVersion { get; private init; } = string.Empty;
-    public string StatusText { get; private init; } = string.Empty;
     public string? ErrorMessage { get; private init; }
     public string DirectoryPath { get; private init; } = string.Empty;
-    public IImage? Icon { get; private init; }
-    public string ListSubtitle => string.IsNullOrWhiteSpace(Author) ? Id : Author;
+
+    public override string MetaLine => string.IsNullOrWhiteSpace(Author) ? Version : $"{Version} | {Author}";
+    public override string StatusText => _statusText;
+    private string _statusText = string.Empty;
 
     public static PluginOverviewItem FromPlugin(PluginInfo plugin, string statusText)
     {
-        return new PluginOverviewItem
+        var item = new PluginOverviewItem
         {
             Plugin = plugin,
             Id = plugin.Manifest.Id,
@@ -436,11 +585,12 @@ public sealed class PluginOverviewItem
             Author = plugin.Manifest.Author,
             Description = plugin.Manifest.Description,
             ApiVersion = plugin.Manifest.ApiVersion,
-            StatusText = statusText,
             ErrorMessage = plugin.Exception?.Message,
             DirectoryPath = plugin.PluginFolderPath,
             Icon = LoadIcon(plugin)
         };
+        item._statusText = statusText;
+        return item;
     }
 
     private static IImage? LoadIcon(PluginInfo plugin)
@@ -458,5 +608,89 @@ public sealed class PluginOverviewItem
         {
             return null;
         }
+    }
+}
+
+public sealed class PluginMarketItem : PluginListItemBase
+{
+    private PluginMarketItem()
+    {
+    }
+
+    public PluginCatalogEntry Entry { get; private init; } = null!;
+    public bool IsInstalled { get; private init; }
+    public bool HasUpdate { get; private init; }
+    public bool IsCompatible { get; private init; }
+    public bool CanInstall => !IsInstalled && IsCompatible;
+    public string ApiVersion { get; private init; } = string.Empty;
+    public string DependencyText { get; private init; } = string.Empty;
+    public string ReadmeText { get; private init; } = string.Empty;
+
+    public override string MetaLine => string.IsNullOrWhiteSpace(Author) ? Version : $"{Version} | {Author}";
+
+    public override string StatusText => !IsCompatible
+        ? LR.C_Incompatible
+        : IsInstalled
+            ? (HasUpdate ? LR.C_Update : LR.C_Installed)
+            : LR.S_StatusAvailable;
+
+    public static PluginMarketItem FromEntry(
+        PluginCatalogEntry entry,
+        IReadOnlyDictionary<string, string> installedVersions,
+        PluginMarketService marketService)
+    {
+        var installed = installedVersions.TryGetValue(entry.Id, out var version);
+        var hasUpdate = installed && !string.IsNullOrWhiteSpace(version) && IsNewer(entry.Version, version);
+        return new PluginMarketItem
+        {
+            Entry = entry,
+            Id = entry.Id,
+            Name = entry.DisplayName,
+            Version = entry.Version,
+            Author = entry.Author,
+            Description = entry.Description,
+            ApiVersion = entry.ApiVersion,
+            IsInstalled = installed,
+            HasUpdate = hasUpdate,
+            IsCompatible = PluginMarketService.IsCompatible(entry, PluginApiVersions.Current.Major.ToString()),
+            DependencyText = string.Join(", ", entry.Dependencies.Select(dependency => dependency.Id)),
+            ReadmeText = BuildReadme(entry),
+            Icon = null
+        };
+    }
+
+    private static bool IsNewer(string candidate, string current)
+    {
+        return TryParseVersion(candidate, out var candidateVersion)
+               && TryParseVersion(current, out var currentVersion)
+               && candidateVersion > currentVersion;
+    }
+
+    private static bool TryParseVersion(string text, out Version version)
+    {
+        var normalized = text.Trim().TrimStart('v', 'V');
+        var prereleaseIndex = normalized.IndexOf('-');
+        if (prereleaseIndex >= 0)
+            normalized = normalized[..prereleaseIndex];
+        return System.Version.TryParse(normalized, out version!);
+    }
+
+    private static string BuildReadme(PluginCatalogEntry entry)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine($"# {entry.DisplayName}");
+        if (!string.IsNullOrWhiteSpace(entry.Description))
+        {
+            builder.AppendLine();
+            builder.AppendLine(entry.Description);
+        }
+
+        if (!string.IsNullOrWhiteSpace(entry.ProjectUrl))
+        {
+            builder.AppendLine();
+            builder.AppendLine($"[{LR.C_ProjectUrl}]({entry.ProjectUrl})");
+        }
+
+        return builder.ToString();
     }
 }

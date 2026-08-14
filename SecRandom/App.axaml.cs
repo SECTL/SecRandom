@@ -1018,6 +1018,11 @@ public partial class App : Application
                     services.AddSingleton<IPluginDrawService, PluginDrawService>();
                     services.AddSingleton<IFloatingWindowButtonRegistry, FloatingWindowButtonRegistry>();
                     services.AddHostedService<PluginLifecycleBridge>();
+                    services.AddHttpClient("plugin-market", client => client.Timeout = TimeSpan.FromSeconds(30));
+                    services.AddSingleton<PluginMarketService>(provider => new PluginMarketService(
+                        provider.GetRequiredService<ILogger<PluginMarketService>>(),
+                        provider.GetRequiredService<IHttpClientFactory>().CreateClient("plugin-market"),
+                        provider.GetRequiredService<IPluginManager>()));
                     pluginManager.Initialize(context, services);
                 }
             })

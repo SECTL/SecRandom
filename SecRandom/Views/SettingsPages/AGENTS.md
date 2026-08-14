@@ -64,7 +64,7 @@ SecRandom/Views/SettingsPages/
 - Chinese settings-page i18n values must not use the Chinese full stop (`。`).
 - Settings-page explanation values (`*_D`, including `S_*_D` and `C_*_D`) must not use sentence-ending or sentence-separating full stops (`。` or `.`); preserve technical dots in file names, domains, process names, and version identifiers.
 - Page IDs here follow `settings.xxx` or `settings.group.xxx`; historical grouping notes live in `docs/settings-pages-plan.md`.
-- `settings.plugin` uses `IPluginManager` only. Do not restore the retired plugin-market/catalog abstractions until a signed catalog protocol is implemented.
+- `settings.plugin` uses `IPluginManager` and the app-layer `PluginMarketService` for the 已安装/市场 tabs. The market tab loads the signed index from the fixed `generated` release in `SECTL/SecRandom-PluginIndex`, verifies the Ed25519 signature and each package SHA-256, resolves dependencies in topological order, then stages through `IPluginManager.StagePackage`; installs request a restart. Do not restore the older unsigned plugin-market/catalog abstractions.
 - Group membership is owned by the `groupId` in `[PageInfo(...)]` and by `services.AddGroup(...)` in `BuildHost()`; do not handwire grouping in the page.
 - Pages usually resolve `ViewModelBase` via `IAppHost.GetService<ViewModelBase>()`, set `DataContext = this`, and expose `Settings` from `ViewModel.Config.*`.
 - Basic-settings platform switches must route through `DesktopIntegrationService`; do not manipulate registry keys, XDG desktop files, or macOS launch services from the settings page. Revert a switch when the platform operation fails.

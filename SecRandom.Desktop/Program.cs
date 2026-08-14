@@ -112,7 +112,8 @@ internal sealed class Program
             assetRoot,
             new HashSet<string>(StringComparer.Ordinal)
             {
-                "Updates/release-public-key.txt"
+                "Updates/release-public-key.txt",
+                "Plugins/plugin-market-public-key.txt"
             });
 
         const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance;
