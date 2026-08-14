@@ -368,17 +368,19 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
     private bool TryLoadDefaultStudentList()
     {
+        RefreshStudentLists();
         var defaultClass = Config.QuickDrawSettings.DefaultClass.Trim();
-        if (string.IsNullOrWhiteSpace(defaultClass))
-        {
-            StatusText = QuickDrawResources.M_DefaultListRequired;
-            return false;
-        }
-
         if (!StudentListNames.Contains(defaultClass))
         {
-            StatusText = QuickDrawResources.M_DefaultListMissing;
-            return false;
+            defaultClass = StudentListNames.FirstOrDefault() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(defaultClass))
+            {
+                StatusText = QuickDrawResources.M_DefaultListRequired;
+                return false;
+            }
+
+            Config.QuickDrawSettings.DefaultClass = defaultClass;
+            _configHandler.Save();
         }
 
         if (SelectedStudentListName != defaultClass)
