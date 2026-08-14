@@ -13,6 +13,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using AvaloniaEdit;
+using FluentAvalonia.UI.Controls;
 using HotAvalonia;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
@@ -218,6 +219,38 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
     {
         if (SelectedItem is not null)
             _externalLauncher.TryOpenPath(SelectedItem.DirectoryPath);
+    }
+
+    private async void UninstallSelectedPluginButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (SelectedItem?.Plugin is not { } plugin)
+            return;
+
+        var confirmed = await ConfirmUninstallAsync();
+        if (!confirmed)
+            return;
+
+        if (!_pluginManager.UninstallPlugin(plugin.Manifest.Id))
+        {
+            this.ShowErrorToast(string.Format(LR.M_UninstallFailed, plugin.Manifest.Id));
+            return;
+        }
+
+        RefreshPlugins(SelectedItem?.Id);
+        SettingsView.Current?.RequestRestartApp();
+    }
+
+    private async Task<bool> ConfirmUninstallAsync()
+    {
+        var result = await new FAContentDialog
+        {
+            Title = LR.M_UninstallConfirmTitle,
+            Content = LR.M_UninstallConfirm,
+            PrimaryButtonText = LR.C_Uninstall,
+            CloseButtonText = SecRandom.Langs.SettingsView.Resources.C_Cancel,
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+        return result == FAContentDialogResult.Primary;
     }
 
     [AvaloniaHotReload]

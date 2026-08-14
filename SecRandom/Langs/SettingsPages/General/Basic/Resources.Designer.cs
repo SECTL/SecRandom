@@ -233,6 +233,24 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 插件崩溃自动禁用.
+        /// </summary>
+        public static string S_Behavior_DisableCrashedPlugin {
+            get {
+                return ResourceManager.GetString("S_Behavior_DisableCrashedPlugin", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 插件导致崩溃时自动禁用该插件，下次启动不再加载.
+        /// </summary>
+        public static string S_Behavior_DisableCrashedPlugin_D {
+            get {
+                return ResourceManager.GetString("S_Behavior_DisableCrashedPlugin_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 显示语言.
         /// </summary>
         public static string S_Behavior_Language {

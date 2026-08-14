@@ -245,4 +245,16 @@
   <data name="M_SourceAddFailed" xml:space="preserve">
     <value>插件源添加失败：{0}</value>
   </data>
+  <data name="C_Uninstall" xml:space="preserve">
+    <value>卸载</value>
+  </data>
+  <data name="M_UninstallConfirmTitle" xml:space="preserve">
+    <value>卸载插件</value>
+  </data>
+  <data name="M_UninstallConfirm" xml:space="preserve">
+    <value>卸载后将在下次启动时移除该插件，插件配置目录会保留，确认卸载？</value>
+  </data>
+  <data name="M_UninstallFailed" xml:space="preserve">
+    <value>插件卸载失败：{0}</value>
+  </data>
 </root>

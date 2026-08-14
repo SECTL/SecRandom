@@ -115,5 +115,9 @@ namespace SecRandom.Langs.SettingsPages.Plugins.Overview
         public static string M_PluginImportNeedsRestart => ResourceManager.GetString("M_PluginImportNeedsRestart", resourceCulture);
         public static string M_CatalogRefreshFailed => ResourceManager.GetString("M_CatalogRefreshFailed", resourceCulture);
         public static string M_SourceAddFailed => ResourceManager.GetString("M_SourceAddFailed", resourceCulture);
+        public static string C_Uninstall => ResourceManager.GetString("C_Uninstall", resourceCulture);
+        public static string M_UninstallConfirmTitle => ResourceManager.GetString("M_UninstallConfirmTitle", resourceCulture);
+        public static string M_UninstallConfirm => ResourceManager.GetString("M_UninstallConfirm", resourceCulture);
+        public static string M_UninstallFailed => ResourceManager.GetString("M_UninstallFailed", resourceCulture);
     }
 }

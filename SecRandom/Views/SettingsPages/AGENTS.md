@@ -47,7 +47,7 @@ SecRandom/Views/SettingsPages/
 | Personalized music library | `Personalized/MusicSettingsPage.axaml(.cs)` | Page ID `settings.personalized.music`; imports, deletes, and previews managed MP3/WAV/FLAC tracks. |
 | Linkage settings | `Linkage/LinkageSettingsPage.axaml(.cs)` | Top-level `settings.linkage` entry. |
 | More settings | `More/MoreSettingsPage.axaml(.cs)` | `settings.more` top-level entry. |
-| Plugins | `Plugins/PluginsSettingsPage.axaml(.cs)` | Desktop-only `settings.plugin` page; left list splits into 已安装/市场, stages local `.srpx` packages, shows load status, and toggles plugin enablement for the next restart. Plugin README renders through Core `MarkdownConvertHelper` + `Styles/RichTextStyles.axaml`. |
+| Plugins | `Plugins/PluginsSettingsPage.axaml(.cs)` | Desktop-only `settings.plugin` page; left list splits into 已安装/市场, stages local `.srpx` packages, shows load status, toggles plugin enablement, and uninstalls selected plugins for the next restart (config directory preserved). Plugin README renders through Core `MarkdownConvertHelper` + `Styles/RichTextStyles.axaml`. |
 | Update settings | `Update/UpdateSettingsPage.axaml(.cs)` | Shared `settings.update` bottom-nav entry for desktop and mobile. |
 | Notification settings | `Notification/VoiceSettingsPage.axaml(.cs)` etc. | Voice/music and notification channel entries under `settings.notification`. |
 | History management | `History/HistoryManagementSettingsPage.axaml(.cs)` | Clears roll-call/lottery histories through active-profile or named-profile handlers; `settings.history.management`. |

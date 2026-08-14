@@ -215,6 +215,13 @@
                             
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
                                 <Button Theme="{StaticResource TransparentButton}"
+                                        ToolTip.Tip="{x:Static lp:Resources.C_Uninstall}"
+                                        IsEnabled="{Binding CanToggleSelectedPlugin}"
+                                        VerticalAlignment="Center"
+                                        Click="UninstallSelectedPluginButton_OnClick">
+                                    <sr:FluentIcon Glyph="{sr:Fi DeleteFilled}" />
+                                </Button>
+                                <Button Theme="{StaticResource TransparentButton}"
                                         ToolTip.Tip="{x:Static lp:Resources.C_OpenSelectedFolder}"
                                         IsEnabled="{Binding CanOpenSelectedFolder}"
                                         VerticalAlignment="Center"

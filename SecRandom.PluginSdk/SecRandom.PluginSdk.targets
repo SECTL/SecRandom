@@ -19,6 +19,17 @@
         <ItemGroup>
             <_SrpxPackageFile Include="$(OutputPath)**\*"
                               Exclude="$(OutputPath)$(AssemblyName).pdb;$(OutputPath)**\*.pdb" />
+            <!-- Host-provided assemblies are never shipped inside a plugin package; the host supplies them at runtime. -->
+            <_SrpxPackageFile Remove="$(OutputPath)SecRandom.PluginSdk.dll;$(OutputPath)SecRandom.Core.dll;$(OutputPath)SecRandom.Shared.dll" />
+            <_SrpxPackageFile Remove="$(OutputPath)Avalonia*.dll" />
+            <_SrpxPackageFile Remove="$(OutputPath)FluentAvalonia*.dll" />
+            <_SrpxPackageFile Remove="$(OutputPath)Microsoft.Extensions*.dll" />
+            <_SrpxPackageFile Remove="$(OutputPath)DynamicData.dll;$(OutputPath)System.Reactive.dll;$(OutputPath)CommunityToolkit.Mvvm.dll;$(OutputPath)Xaml.Behaviors.dll;$(OutputPath)MiniExcel.dll;$(OutputPath)Pastel.dll;$(OutputPath)AsyncImageLoader.Avalonia.dll" />
+            <_SrpxPackageFile Remove="$(OutputPath)SkiaSharp.dll;$(OutputPath)HarfBuzzSharp.dll;$(OutputPath)ShimSkiaSharp.dll;$(OutputPath)MicroCom.Runtime.dll;$(OutputPath)AvaloniaEdit.dll" />
+            <_SrpxPackageFile Remove="$(OutputPath)Svg*.dll;$(OutputPath)HtmlAgilityPack.dll;$(OutputPath)ExCSS.dll;$(OutputPath)ColorDocument.Avalonia.dll;$(OutputPath)ColorTextBlock.Avalonia.dll;$(OutputPath)Markdown.Avalonia*.dll" />
+            <_SrpxPackageFile Remove="$(OutputPath)System.Diagnostics.EventLog*.dll" />
+            <_SrpxPackageFile Remove="$(OutputPath)runtimes\**" />
+            <_SrpxPackageFile Remove="$(OutputPath)**\*.resources.dll" />
         </ItemGroup>
         <Copy SourceFiles="@(_SrpxPackageFile)"
               DestinationFiles="@(_SrpxPackageFile->'$(SrpxStagingDirectory)%(RecursiveDir)%(Filename)%(Extension)')"

@@ -9,6 +9,7 @@ using SecRandom;
 using SecRandom.Extensions;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
+using SecRandom.Services.Plugins;
 using SecRandom.Platforms;
 using SecRandom.Shared;
 #if SEC_RANDOM_PLATFORM_WINDOWS
@@ -41,6 +42,7 @@ internal sealed class Program
         ConfigurePlatformServices();
         ProtocolActivation.SetStartupArguments(args);
         CrashRecoveryRuntime.SetStartupArguments(args);
+        PluginManager.SetStartupArguments(args);
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 
         try

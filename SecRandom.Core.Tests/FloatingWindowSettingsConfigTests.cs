@@ -22,4 +22,20 @@ public class FloatingWindowSettingsConfigTests
         Assert.False(restored.FloatingWindowSettings.ShowQuickDrawButton);
         Assert.True(restored.FloatingWindowSettings.ShowLotteryButton);
     }
+
+    [Fact]
+    public void MainConfig_PluginButtonSelectionsRoundTripThroughJson()
+    {
+        MainConfigModel config = new();
+        config.FloatingWindowSettings.VisiblePluginButtonIds.Add("plugin.a.button");
+        config.FloatingWindowSettings.VisiblePluginButtonIds.Add("plugin.b.button");
+
+        string json = JsonSerializer.Serialize(config, ConfigServiceBase.JsonOptions);
+        MainConfigModel? restored = JsonSerializer.Deserialize<MainConfigModel>(json, ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(restored);
+        Assert.Equal(2, restored.FloatingWindowSettings.VisiblePluginButtonIds.Count);
+        Assert.Contains("plugin.a.button", restored.FloatingWindowSettings.VisiblePluginButtonIds);
+        Assert.Contains("plugin.b.button", restored.FloatingWindowSettings.VisiblePluginButtonIds);
+    }
 }

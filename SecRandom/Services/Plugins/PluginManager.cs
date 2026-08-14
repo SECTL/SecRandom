@@ -13,9 +13,13 @@ public sealed class PluginManager : IPluginManager
 {
     public const string PluginPackageExtension = ".srpx";
     public const string PluginManifestFileName = "manifest.yml";
+    public const string UninstallMarkerFileName = ".uninstall";
+    public const string DisabledMarkerFileName = ".disabled";
 
     private readonly List<PluginInfo> _plugins = [];
     private readonly Dictionary<string, PluginLoadContext> _loadContexts = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<PluginBase> _entrances = [];
+    private readonly object _entranceGate = new();
 
     public IReadOnlyList<PluginInfo> Plugins => _plugins;
 
@@ -25,8 +29,48 @@ public sealed class PluginManager : IPluginManager
     public static string PluginPackagesDirectory => Utils.GetDirectoryPath("cache", "plugin-packages");
     public static string PluginConfigsDirectory => Utils.GetDirectoryPath("config", "plugins");
 
+    private static IReadOnlyList<string> _startupExternalPluginDirectories = [];
+
+    /// <summary>
+    ///     Parses <c>--epp</c> / <c>--externalPluginPath</c> startup arguments (one value per flag, repeatable)
+    ///     into the external plugin directories used by every PluginManager instance for this process.
+    /// </summary>
+    public static void SetStartupArguments(IReadOnlyList<string> args)
+    {
+        _startupExternalPluginDirectories = ParseExternalPluginDirectories(args);
+    }
+
+    internal static IReadOnlyList<string> ParseExternalPluginDirectories(IReadOnlyList<string> args)
+    {
+        List<string> directories = [];
+        for (var index = 0; index < args.Count; index++)
+        {
+            var argument = args[index];
+            if (!string.Equals(argument, "--epp", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(argument, "--externalPluginPath", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (index + 1 >= args.Count)
+                continue;
+            var value = args[++index];
+            if (!string.IsNullOrWhiteSpace(value))
+                directories.Add(value);
+        }
+
+        return directories;
+    }
+
+    /// <summary>
+    ///     Additional plugin directories contributed by <c>--externalPluginPath</c> startup arguments
+    ///     (also <c>--epp</c>). Development plugins are discovered from these directories and keep their
+    ///     in-place layout; they are never moved or removed by the host.
+    /// </summary>
+    public IReadOnlyList<string> ExternalPluginDirectories { get; set; } = [];
+
     public void Initialize(HostBuilderContext context, IServiceCollection services)
     {
+        ExternalPluginDirectories = _startupExternalPluginDirectories;
+        ProcessUninstallMarkers();
         ProcessPendingPackages();
 
         var discovered = DiscoverPlugins().ToList();
@@ -127,7 +171,7 @@ public sealed class PluginManager : IPluginManager
         if (plugin is null)
             return false;
 
-        var disabledMarkerPath = Path.Combine(plugin.PluginFolderPath, ".disabled");
+        var disabledMarkerPath = Path.Combine(plugin.PluginFolderPath, DisabledMarkerFileName);
         if (enabled)
         {
             if (File.Exists(disabledMarkerPath))
@@ -140,6 +184,116 @@ public sealed class PluginManager : IPluginManager
 
         plugin.IsEnabled = enabled;
         return true;
+    }
+
+    /// <summary>
+    ///     Marks a plugin for uninstall. The plugin stays on disk until the next startup removes its folder;
+    ///     its configuration directory under <c>data/config/plugins/&lt;id&gt;</c> is preserved.
+    /// </summary>
+    public bool UninstallPlugin(string pluginId)
+    {
+        var plugin = _plugins.FirstOrDefault(candidate => string.Equals(
+            candidate.Manifest.Id,
+            pluginId,
+            StringComparison.OrdinalIgnoreCase));
+        if (plugin is null)
+            return false;
+
+        try
+        {
+            File.WriteAllText(
+                Path.Combine(plugin.PluginFolderPath, UninstallMarkerFileName),
+                string.Empty);
+        }
+        catch
+        {
+            return false;
+        }
+
+        plugin.IsEnabled = false;
+        return true;
+    }
+
+    /// <summary>
+    ///     Disables a plugin whose code caused a process-level failure. Writes the same marker used by
+    ///     the settings enable switch so the plugin stays disabled on the next startup.
+    /// </summary>
+    public bool DisablePluginOnCrash(string pluginId)
+    {
+        var plugin = _plugins.FirstOrDefault(candidate => string.Equals(
+            candidate.Manifest.Id,
+            pluginId,
+            StringComparison.OrdinalIgnoreCase));
+        if (plugin is null)
+            return false;
+
+        try
+        {
+            File.WriteAllText(
+                Path.Combine(plugin.PluginFolderPath, DisabledMarkerFileName),
+                string.Empty);
+        }
+        catch
+        {
+            return false;
+        }
+
+        plugin.IsEnabled = false;
+        return true;
+    }
+
+    /// <summary>
+    ///     Returns the id of the plugin whose load context owns the deepest stack frame of the exception,
+    ///     or <see langword="null"/> when the failure is not plugin-originated.
+    /// </summary>
+    public string? GetPluginIdForException(Exception exception)
+    {
+        for (Exception? current = exception; current is not null; current = current.InnerException)
+        {
+            foreach (var (pluginId, loadContext) in _loadContexts)
+            {
+                if (loadContext.OwnsException(current))
+                    return pluginId;
+            }
+        }
+
+        return null;
+    }
+
+    public async ValueTask DisposePluginsAsync()
+    {
+        PluginBase[] entrances;
+        lock (_entranceGate)
+            entrances = _entrances.ToArray();
+        foreach (var entrance in entrances)
+        {
+            try
+            {
+                await entrance.DisposeAsync().ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                System.Diagnostics.Debug.WriteLine($"Plugin disposal failed for {entrance.Info.Manifest.Id}: {exception}");
+            }
+        }
+    }
+
+    private void ProcessUninstallMarkers()
+    {
+        foreach (var directory in Directory.EnumerateDirectories(PluginsDirectory))
+        {
+            if (!File.Exists(Path.Combine(directory, UninstallMarkerFileName)))
+                continue;
+
+            try
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+            catch (Exception)
+            {
+                // Keep the marked folder so the user can inspect or retry uninstall later.
+            }
+        }
     }
 
     private void ProcessPendingPackages()
@@ -184,7 +338,7 @@ public sealed class PluginManager : IPluginManager
 
     private IEnumerable<DiscoveredPlugin> DiscoverPlugins()
     {
-        foreach (var directory in Directory.EnumerateDirectories(PluginsDirectory))
+        foreach (var directory in EnumeratePluginDirectories())
         {
             PluginInfo info;
             try
@@ -200,7 +354,7 @@ public sealed class PluginManager : IPluginManager
                     Manifest = manifest,
                     PluginFolderPath = Path.GetFullPath(directory),
                     PluginConfigFolder = Path.Combine(PluginConfigsDirectory, manifest.Id),
-                    IsEnabled = !File.Exists(Path.Combine(directory, ".disabled"))
+                    IsEnabled = !File.Exists(Path.Combine(directory, DisabledMarkerFileName))
                 };
             }
             catch (Exception exception)
@@ -224,6 +378,32 @@ public sealed class PluginManager : IPluginManager
             if (!info.IsEnabled && info.LoadStatus == PluginLoadStatus.NotLoaded)
                 info.LoadStatus = PluginLoadStatus.Disabled;
             yield return new DiscoveredPlugin(info, info.IsEnabled);
+        }
+    }
+
+    private IEnumerable<string> EnumeratePluginDirectories()
+    {
+        HashSet<string> visited = new(StringComparer.OrdinalIgnoreCase);
+        if (Directory.Exists(PluginsDirectory))
+        {
+            foreach (var directory in Directory.EnumerateDirectories(PluginsDirectory))
+            {
+                visited.Add(Path.GetFullPath(directory));
+                yield return directory;
+            }
+        }
+
+        foreach (var externalDirectory in ExternalPluginDirectories)
+        {
+            if (string.IsNullOrWhiteSpace(externalDirectory) || !Directory.Exists(externalDirectory))
+                continue;
+
+            foreach (var directory in Directory.EnumerateDirectories(externalDirectory))
+            {
+                var fullPath = Path.GetFullPath(directory);
+                if (visited.Add(fullPath))
+                    yield return directory;
+            }
         }
     }
 
@@ -255,6 +435,8 @@ public sealed class PluginManager : IPluginManager
         entrance.Initialize(context, services);
         services.AddSingleton<PluginBase>(entrance);
         services.AddSingleton(entranceType, entrance);
+        lock (_entranceGate)
+            _entrances.Add(entrance);
         plugin.Info.LoadStatus = PluginLoadStatus.Loaded;
     }
 

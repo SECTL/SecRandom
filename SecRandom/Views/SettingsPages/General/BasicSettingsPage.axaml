@@ -120,6 +120,15 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_Behavior_DisableCrashedPlugin"
+                                    Header="{x:Static lsb:Resources.S_Behavior_DisableCrashedPlugin}"
+                                    Description="{x:Static lsb:Resources.S_Behavior_DisableCrashedPlugin_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi PlugConnectedFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding CrashRecoverySettings.DisableCrashedPlugin}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

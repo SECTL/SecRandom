@@ -9,4 +9,6 @@ public interface IPluginManager
     void StagePackage(string packagePath);
 
     bool SetEnabled(string pluginId, bool enabled);
+
+    bool UninstallPlugin(string pluginId);
 }

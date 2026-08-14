@@ -27,4 +27,19 @@ public class CrashRecoveryConfigTests
         Assert.NotNull(restored);
         Assert.Equal(CrashRecoveryMode.RestartOnly, restored.General.CrashRecovery.Mode);
     }
+
+    [Fact]
+    public void MainConfig_DisableCrashedPluginDefaultsEnabledAndRoundTripsThroughJson()
+    {
+        MainConfigModel config = new();
+
+        Assert.True(config.General.CrashRecovery.DisableCrashedPlugin);
+
+        config.General.CrashRecovery.DisableCrashedPlugin = false;
+        string json = JsonSerializer.Serialize(config, ConfigServiceBase.JsonOptions);
+        MainConfigModel? restored = JsonSerializer.Deserialize<MainConfigModel>(json, ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(restored);
+        Assert.False(restored.General.CrashRecovery.DisableCrashedPlugin);
+    }
 }
