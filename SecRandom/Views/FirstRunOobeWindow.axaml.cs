@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
@@ -46,6 +47,7 @@ public partial class FirstRunOobeWindow : FAAppWindow
         Loaded += OnLoaded;
         Closed += WindowOnClosed;
         Opened += WindowOnOpened;
+        ImportDrawerHost.PropertyChanged += ImportDrawerHost_OnPropertyChanged;
     }
 
     public FirstRunOobeViewModel ViewModel { get; } = IAppHost.GetService<FirstRunOobeViewModel>();
@@ -339,6 +341,18 @@ public partial class FirstRunOobeWindow : FAAppWindow
         LanguageChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    private void ImportDrawerHost_OnPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == DrawerHost.IsDrawerOpenProperty && !ImportDrawerHost.IsDrawerOpen)
+            _ = NotifyImportDrawerClosedAsync(ImportDrawerHost.DrawerContent);
+    }
+
+    private static async Task NotifyImportDrawerClosedAsync(object? content)
+    {
+        if (content is IDrawerCloseAware closeAware)
+            await closeAware.OnDrawerClosedAsync();
+    }
+
     private async void ImportSettings_OnClick(object? sender, RoutedEventArgs e)
     {
         var path = await PickPathAsync(LR.C_ImportSettingsTitle, "*.json", LR.C_JsonFileType);
@@ -422,7 +436,7 @@ public partial class FirstRunOobeWindow : FAAppWindow
 
     private void Window_OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        if (_canClose)
+        if (_canClose || e.CloseReason is WindowCloseReason.ApplicationShutdown or WindowCloseReason.OSShutdown)
             return;
 
         e.Cancel = true;
@@ -432,6 +446,8 @@ public partial class FirstRunOobeWindow : FAAppWindow
     private void WindowOnClosed(object? sender, EventArgs e)
     {
         Closed -= WindowOnClosed;
+        ImportDrawerHost.PropertyChanged -= ImportDrawerHost_OnPropertyChanged;
+        _ = NotifyImportDrawerClosedAsync(ImportDrawerHost.DrawerContent);
     }
 
     private async Task ConfirmExitAsync()

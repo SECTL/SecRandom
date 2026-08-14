@@ -31,4 +31,6 @@ public sealed class LinuxPlatformServiceRoot : IPlatformServiceRoot
 
     public IRemovableStorageBindingMarker RemovableStorageBindingMarker { get; } =
         new LinuxRemovableStorageBindingMarker();
+
+    public IPlatformCameraDeviceCatalog CameraDevices { get; } = new LinuxCameraDeviceCatalog();
 }

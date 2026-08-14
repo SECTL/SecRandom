@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="C_Export"><value>Export list</value></data><data name="C_ExportTitle"><value>Export list</value></data><data name="C_FileExport"><value>Export to file</value></data><data name="C_ExportToFile"><value>Export to file</value></data><data name="C_ExportSupportedFormats"><value>Supports .xlsx and .csv files</value></data><data name="C_QrExport"><value>QR code export</value></data><data name="C_ExportToDevices"><value>Export to other devices</value></data><data name="C_StopQrExport"><value>Stop export</value></data><data name="C_QrIdleHint"><value>Start exporting to show QR codes that another device can scan</value></data><data name="C_QrIdle"><value>Waiting to start QR transfer</value></data><data name="C_QrGenerating"><value>Pre-generating all QR codes</value></data><data name="C_QrExporting"><value>Sending to other devices</value></data><data name="C_QrStopped"><value>QR export stopped</value></data><data name="C_FileExported"><value>List exported to file</value></data><data name="M_QrTransferFailed"><value>QR transfer failed: {0}</value></data><data name="C_TransferFrames"><value>Transfer frames</value></data><data name="C_TransferSpeed"><value>Transfer speed</value></data><data name="C_TransferSize"><value>Data size</value></data><data name="C_TransferRecords"><value>Records</value></data><data name="C_TransferSession"><value>Session</value></data><data name="C_TransferStatus"><value>Status</value></data><data name="C_ImportSource"><value>Import method</value></data><data name="C_ImportFromFile"><value>Import from Excel/CSV file</value></data><data name="C_ImportFromQr"><value>Import from QR code</value></data><data name="C_QrImport"><value>QR code import</value></data><data name="C_ScanQrCode"><value>Scan with camera</value></data><data name="C_QrImportReady"><value>Waiting for a QR code from the camera</value></data><data name="C_QrImporting"><value>Receiving QR data</value></data><data name="C_TransferProgress"><value>Transfer progress</value></data><data name="C_TransferReceived"><value>Transferred / total size</value></data><data name="C_TransferFramesDetail"><value>New / duplicate / invalid</value></data><data name="C_TransferElapsed"><value>Elapsed</value></data><data name="M_QrNotFound"><value>No list-transfer QR code found</value></data><data name="M_QrWrongType"><value>The QR code contains a different list type</value></data>
+  <data name="C_StartQrScanner"><value>Start camera scanning</value></data>
+  <data name="C_StopQrScanner"><value>Stop scanning</value></data>
+  <data name="M_CameraPermissionDenied"><value>Camera permission was not granted</value></data>
+  <data name="M_CameraStartFailed"><value>Could not start the camera: {0}</value></data>
+  <data name="C_TargetList"><value>Target list: {0}</value></data>
+  <data name="C_Cancel"><value>Cancel</value></data>
+  <data name="C_ImportExcelCsv"><value>Excel/CSV</value></data>
+  <data name="C_ImportQrCode"><value>QR code</value></data>
+  <data name="C_ImportQuickQr"><value>Quick QR import</value></data>
+  <data name="C_ImportOfflineQr"><value>Offline QR import</value></data>
+  <data name="C_ImportSessionCode"><value>Session code import</value></data>
+  <data name="C_SelectImportSource"><value>Choose import method</value></data>
+  <data name="C_SelectExportMode"><value>Choose export method</value></data>
+  <data name="C_CopySessionCode"><value>Copy session code</value></data>
+  <data name="C_SessionCodeHint"><value>Enter 12 letters or digits. Verification starts automatically.</value></data>
+  <data name="C_SessionCodeVerifying"><value>Verifying session code</value></data>
+  <data name="C_SessionCodeLoaded"><value>Received {0} list records. Ready to import.</value></data>
+  <data name="M_SessionCodeInvalid"><value>The session code is invalid or expired: {0}</value></data>
+  <data name="M_QuickQrInvalid"><value>Quick QR import failed: {0}</value></data>
+  <data name="C_TransferFramesPerSecond"><value>{0:F1} frames/s</value></data>
+  <data name="M_QrLoaded"><value>Received {0} list records. Ready to import.</value></data>
+  <data name="C_ModeQuickQr"><value>Quick QR export to another device</value></data>
+  <data name="C_ModeOfflineQr"><value>Offline export to another device</value></data>
+  <data name="C_ModeSessionCode"><value>Session code export to another device</value></data>
+  <data name="C_SessionCode"><value>Session code</value></data>
+  <data name="C_SessionCodeReady"><value>Session code generated</value></data>
+  <data name="C_CloudQrExporting"><value>Pairing QR code generated</value></data>
+<data name="C_SessionCodeExport"><value>Session code export</value></data>
+<data name="C_SyncPortalDescription"><value>Open this address in a browser on another device to receive the list remotely without installing the app</value></data>
+<data name="C_CopySyncPortalAddress"><value>Copy link</value></data>
+  <data name="C_CameraOne"><value>Camera 1</value></data>
+  <data name="C_CameraTwo"><value>Camera 2</value></data>
+</root>

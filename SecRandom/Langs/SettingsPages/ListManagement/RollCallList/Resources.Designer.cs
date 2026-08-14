@@ -86,7 +86,13 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.RollCallList {
                 return ResourceManager.GetString("C_ImportList", resourceCulture);
             }
         }
-        
+
+        public static string C_ExportList {
+            get {
+                return ResourceManager.GetString("C_ExportList", resourceCulture);
+            }
+        }
+
         public static string C_AddMember {
             get {
                 return ResourceManager.GetString("C_AddMember", resourceCulture);

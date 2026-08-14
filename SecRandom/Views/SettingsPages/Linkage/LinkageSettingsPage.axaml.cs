@@ -105,7 +105,7 @@ public partial class LinkageSettingsPage : UserControl
             var path = file.TryGetLocalPath();
             if (path is null)
             {
-                temporaryPath = Path.Combine(Path.GetTempPath(), $"SecRandom-{Guid.NewGuid():N}{Path.GetExtension(file.Name)}");
+                temporaryPath = Path.Combine(Path.GetTempPath(), @$"SecRandom-{Guid.NewGuid():N}{Path.GetExtension(file.Name)}");
                 await using var source = await file.OpenReadAsync();
                 await using var target = File.Create(temporaryPath);
                 await source.CopyToAsync(target);
@@ -165,7 +165,10 @@ public partial class LinkageSettingsPage : UserControl
     private void RefreshCsesSummary()
     {
         var schedule = CsesStore.Load();
-        CsesSummary = schedule is null ? LR.M_CsesMissing : FormatCsesSummary(schedule);
+        Avalonia.Threading.Dispatcher.UIThread.Invoke(() =>
+        {
+            CsesSummary = schedule is null ? LR.M_CsesMissing : FormatCsesSummary(schedule);
+        });
     }
 
     private static string FormatCsesSummary(CsesSchedule schedule) => string.Format(

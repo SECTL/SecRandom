@@ -43,6 +43,21 @@
   <data name="S_DisplayStyle_D" xml:space="preserve"><value>控制抽取结果的整体样式</value></data>
   <data name="S_LotteryShowRandom" xml:space="preserve"><value>抽奖过程显示</value></data>
   <data name="S_LotteryShowRandom_D" xml:space="preserve"><value>抽奖过程中候选结果的展示格式</value></data>
+  <data name="S_LotteryShowRandomFormat" xml:space="preserve"><value>自定义显示格式</value></data>
+  <data name="S_LotteryShowRandomFormat_D" xml:space="preserve"><value>设置抽奖过程的自定义展示格式</value></data>
+  <data name="C_LotteryShowRandomFormatTokens" xml:space="preserve"><value>插入格式变量</value></data>
+  <data name="C_LotteryShowRandomFormatIntro" xml:space="preserve"><value>支持使用以下格式化变量，点按变量即可插入：</value></data>
+  <data name="C_LotteryShowRandomFormatId" xml:space="preserve"><value>序号</value></data>
+  <data name="C_LotteryShowRandomFormatPrize" xml:space="preserve"><value>奖项</value></data>
+  <data name="C_LotteryShowRandomFormatPrizeId" xml:space="preserve"><value>奖项 ID</value></data>
+  <data name="C_LotteryShowRandomFormatPrizeName" xml:space="preserve"><value>奖项名称</value></data>
+  <data name="C_LotteryShowRandomFormatMember" xml:space="preserve"><value>成员</value></data>
+  <data name="C_LotteryShowRandomFormatMemberId" xml:space="preserve"><value>成员 ID</value></data>
+  <data name="C_LotteryShowRandomFormatMemberName" xml:space="preserve"><value>成员名字</value></data>
+  <data name="C_LotteryShowRandomFormatGroup" xml:space="preserve"><value>成员分组</value></data>
+  <data name="C_LotteryShowRandomFormatFormat" xml:space="preserve"><value>格式</value></data>
+  <data name="C_LotteryShowRandomFormatLineBreak" xml:space="preserve"><value>换行</value></data>
+  <data name="C_LotteryShowRandomFormatDirectSeparators" xml:space="preserve"><value>除换行符以外，其他分隔符可直接输入</value></data>
   <data name="S_ShowTags" xml:space="preserve"><value>显示标签</value></data>
   <data name="S_ShowTags_D" xml:space="preserve"><value>抽取结果中展示成员或奖品标签</value></data>
   <data name="S_ShowWeightTransparency" xml:space="preserve"><value>权重透明化</value></data>
@@ -107,6 +122,7 @@
   <data name="O_Right" xml:space="preserve"><value>右侧</value></data>
   <data name="O_Bottom" xml:space="preserve"><value>下方</value></data>
   <data name="O_PrizeBreakGroupHyphenName" xml:space="preserve"><value>奖品/分组-名称</value></data>
+  <data name="O_PrizeIdPrizeBreakGroupHyphenMember" xml:space="preserve"><value>序号 奖品/分组-名称</value></data>
   <data name="O_PrizeBreakGroupBreakName" xml:space="preserve"><value>奖品/分组/名称</value></data>
   <data name="O_PrizeHyphenGroupHyphenName" xml:space="preserve"><value>奖品-分组-名称</value></data>
   <data name="O_PrizeBreakName" xml:space="preserve"><value>奖品/名称</value></data>
@@ -178,5 +194,74 @@
   </data>
   <data name="S_LotteryImagePosition_D" xml:space="preserve">
     <value>奖品图片相对文字的位置</value>
+  </data>
+  <data name="C_BatchAvatar" xml:space="preserve">
+    <value>批量设置头像</value>
+  </data>
+  <data name="C_BatchAvatarHint" xml:space="preserve">
+    <value>根据记录的名称或编号，从所选目录的第一层图片中批量匹配并设置头像</value>
+  </data>
+  <data name="C_BatchAvatarDirectoryHint" xml:space="preserve">
+    <value>图片只从所选目录的第一层查找</value>
+  </data>
+  <data name="C_BatchAvatarChooseDirectory" xml:space="preserve">
+    <value>选择目录</value>
+  </data>
+  <data name="C_BatchAvatarRoster" xml:space="preserve">
+    <value>点名名单</value>
+  </data>
+  <data name="C_BatchAvatarTargetRoster" xml:space="preserve">
+    <value>指定点名名单</value>
+  </data>
+  <data name="C_BatchAvatarTargetPrize" xml:space="preserve">
+    <value>指定抽奖名单</value>
+  </data>
+  <data name="C_BatchAvatarPrize" xml:space="preserve">
+    <value>抽奖名单</value>
+  </data>
+  <data name="C_BatchAvatarChooseFile" xml:space="preserve">
+    <value>重新选择外部文件</value>
+  </data>
+  <data name="C_BatchAvatarSet" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="C_BatchAvatarRecord" xml:space="preserve">
+    <value>记录</value>
+  </data>
+  <data name="C_BatchAvatarFile" xml:space="preserve">
+    <value>头像文件</value>
+  </data>
+  <data name="C_BatchAvatarMatchSummary" xml:space="preserve">
+    <value>自动匹配 {0} 条记录</value>
+  </data>
+  <data name="C_Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="C_Confirm" xml:space="preserve">
+    <value>确定</value>
+  </data>
+  <data name="M_BatchAvatarNoDirectory" xml:space="preserve">
+    <value>请先选择包含图片的目录</value>
+  </data>
+  <data name="M_BatchAvatarFileNotFound" xml:space="preserve">
+    <value>找不到头像文件：{0}</value>
+  </data>
+  <data name="M_BatchAvatarApplied" xml:space="preserve">
+    <value>已为 {0} 条记录设置头像</value>
+  </data>
+  <data name="C_BatchAvatarNoDirectorySelected" xml:space="preserve">
+    <value>未选择目录</value>
+  </data>
+  <data name="C_SetAvatarViaRoster" xml:space="preserve">
+    <value>设置点名名单头像</value>
+  </data>
+  <data name="C_SetAvatarViaRoster_D" xml:space="preserve">
+    <value>前往点名名单页面，用成员附加设置「展示图片」设置头像</value>
+  </data>
+  <data name="C_SetAvatarViaPrize" xml:space="preserve">
+    <value>设置抽奖名单头像</value>
+  </data>
+  <data name="C_SetAvatarViaPrize_D" xml:space="preserve">
+    <value>前往抽奖名单页面，用奖品附加设置「展示图片」设置奖品图片</value>
   </data>
 </root>

@@ -1,0 +1,127 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.ListManagement"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="720"
+             x:Class="SecRandom.Views.SettingsPages.ListManagement.RosterListExportView"
+             x:DataType="local:RosterListExportView">
+    <Grid Width="400" RowDefinitions="*,Auto">
+        <ScrollViewer Grid.Row="0">
+            <StackPanel Margin="16,16,16,8" Spacing="12">
+            <TextBlock Text="{Binding Title}" Theme="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="{Binding TargetListDescription}" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+            <GroupBox Header="{Binding ExportModeLabel}">
+                <ComboBox ItemsSource="{Binding ExportModes}"
+                          SelectedItem="{Binding SelectedExportMode, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Label}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </GroupBox>
+
+            <GroupBox IsVisible="{Binding IsFileExportMode}" Header="{Binding FileExportTitle}">
+                <StackPanel Spacing="6">
+                    <Button Classes="accent"
+                            Content="{Binding ExportFileButtonText}"
+                            Click="ExportFileButton_OnClick">
+                        <Button.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <sr:FluentIcon Glyph="{sr:Fi ArrowDownloadFilled}" />
+                                    <TextBlock Text="{Binding}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </Button.ContentTemplate>
+                    </Button>
+                    <TextBlock Text="{Binding SupportedFileTypesText}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox IsVisible="{Binding IsDeviceExportMode}" Header="{Binding DeviceExportTitle}">
+                <StackPanel Spacing="10">
+                    <Button Classes="accent" HorizontalAlignment="Left" HorizontalContentAlignment="Center"
+                            Content="{Binding QrExportButtonText}"
+                            IsEnabled="{Binding CanToggleQrExport}"
+                            Click="ToggleQrExportButton_OnClick">
+                        <Button.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <sr:FluentIcon Glyph="{sr:Fi QrCodeFilled}" />
+                                    <TextBlock Text="{Binding}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </Button.ContentTemplate>
+                    </Button>
+
+                    <Border IsVisible="{Binding IsQrImageVisible}"
+                            HorizontalAlignment="Center" Width="256" Height="256"
+                            CornerRadius="6" ClipToBounds="True">
+                        <Grid>
+                            <Image IsVisible="{Binding !IsQrExporting}"
+                                   Source="{Binding ExampleQrImage}"
+                                   Stretch="Uniform" Opacity="0.58">
+                                <Image.Effect>
+                                    <BlurEffect Radius="9" />
+                                </Image.Effect>
+                            </Image>
+                            <Border IsVisible="{Binding !IsQrExporting}"
+                                    Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                    Opacity="0.56" />
+                            <Image Source="{Binding CurrentQrImage}"
+                                   Stretch="Uniform" />
+                        </Grid>
+                    </Border>
+
+                    <StackPanel IsVisible="{Binding IsSessionCodeVisible}"
+                                HorizontalAlignment="Center" Spacing="10">
+                        <TextBlock Text="{Binding SessionCodeLabel}" Classes="caption" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding SessionCodeValue}" FontSize="26" FontWeight="Bold"
+                                   HorizontalAlignment="Center" TextWrapping="Wrap" />
+                        <Button HorizontalAlignment="Center" Click="CopySessionCode_OnClick">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <sr:FluentIcon Glyph="{sr:Fi ClipboardFilled}" />
+                                <TextBlock Text="{Binding SessionCodeCopyLabel}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <StackPanel IsVisible="{Binding IsCloudTransferLinkVisible}" Spacing="6">
+                        <TextBlock Text="{Binding SyncPortalDescription}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <TextBox Text="{Binding SyncPortalAddress, Mode=OneWay}"
+                                     IsReadOnly="True" VerticalContentAlignment="Center" />
+                            <Button Grid.Column="1" Click="CopySyncPortalAddress_OnClick">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <sr:FluentIcon Glyph="{sr:Fi ClipboardFilled}" />
+                                    <TextBlock Text="{Binding CopySyncPortalAddressLabel}" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+
+                    <ProgressBar IsVisible="{Binding IsOfflineQrExportVisible}" Minimum="0" Maximum="1" Value="{Binding ExportProgress}" />
+                    <Grid IsVisible="{Binding IsOfflineQrExportVisible}" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="12">
+                        <StackPanel><TextBlock Classes="caption" Text="{Binding FramesLabel}" /><TextBlock Text="{Binding FramesValue}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Column="1"><TextBlock Classes="caption" Text="{Binding SpeedLabel}" /><TextBlock Text="{Binding SpeedValue}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Row="1"><TextBlock Classes="caption" Text="{Binding PayloadLabel}" /><TextBlock Text="{Binding PayloadValue}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="1"><TextBlock Classes="caption" Text="{Binding RecordsLabel}" /><TextBlock Text="{Binding RecordsValue}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Row="2"><TextBlock Classes="caption" Text="{Binding SessionLabel}" /><TextBlock Text="{Binding SessionValue}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="1"><TextBlock Classes="caption" Text="{Binding StatusLabel}" /><TextBlock Text="{Binding StatusValue}" FontSize="18" TextTrimming="CharacterEllipsis" /></StackPanel>
+                    </Grid>
+                </StackPanel>
+            </GroupBox>
+
+            </StackPanel>
+        </ScrollViewer>
+        <Button Grid.Row="1" Margin="16,8,16,16" HorizontalAlignment="Right"
+                Content="{Binding CloseButtonText}" Click="CloseButton_OnClick" />
+    </Grid>
+</UserControl>

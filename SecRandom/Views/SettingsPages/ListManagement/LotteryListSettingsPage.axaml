@@ -63,6 +63,10 @@
                     <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi PeopleAddFilled}}"
                                            Label="{x:Static lr:Resources.C_ImportList}"
                                            Click="ImportButton_OnClick" />
+
+                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi ArrowDownloadFilled}}"
+                                           Label="{Binding ExportListLabel}"
+                                           Click="ExportButton_OnClick" />
                 </fa:FACommandBar.PrimaryCommands>
             </fa:FACommandBar>
         </Border>

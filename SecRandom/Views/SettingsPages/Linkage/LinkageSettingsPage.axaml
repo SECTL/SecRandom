@@ -50,14 +50,14 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander x:Name="S_External_Cses"
+            <fa:FASettingsExpander x:Name="S_Cses"
                                     Header="{x:Static lsp:Resources.S_Cses}"
                                     Description="{Binding CsesSummary}"
                                     IconSource="{sr:FluentIconSource {sr:Fi CalendarLtrFilled}}">
                 <StackPanel Spacing="8">
                     <WrapPanel>
                         <Button Margin="0 0 8 0" Content="{x:Static lsp:Resources.C_CsesImport}" Click="ImportCses_OnClick" />
-                        <Button Margin="0 0 8 0" Content="{x:Static lsp:Resources.C_CsesView}" Click="ViewCses_OnClick" />
+                        <!-- <Button Margin="0 0 8 0" Content="{x:Static lsp:Resources.C_CsesView}" Click="ViewCses_OnClick" /> -->
                         <Button Content="{x:Static lsp:Resources.C_CsesClear}" Click="ClearCses_OnClick" />
                     </WrapPanel>
                 </StackPanel>

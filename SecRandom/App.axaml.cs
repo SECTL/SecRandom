@@ -12,6 +12,7 @@ using Avalonia.Platform;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using FluentAvalonia.Styling;
+using FluentAvalonia.UI.Controls;
 using HotAvalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -48,6 +49,7 @@ using SecRandom.Services.Desktop;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Notification;
 using SecRandom.Services.Profiles;
+using SecRandom.Services.RosterTransfer;
 using SecRandom.Services.Ipc;
 using SecRandom.Services.ImportExport;
 using SecRandom.Services.FirstRun;
@@ -62,6 +64,8 @@ using SecRandom.Services.Verification;
 using SecRandom.Services.Voice;
 using SecRandom.Services.Updates;
 using SecRandom.Services.ViewEngine;
+using SecRandom.Services.Plugins;
+using SecRandom.PluginSdk;
 using SecRandom.Mobile;
 using SecRandom.Services.Mobile;
 using SecRandom.Views.Mobile;
@@ -70,7 +74,6 @@ using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
 using MobileResources = SecRandom.Langs.Mobile.Resources;
 using SecRandom.ViewModels;
-using SecRandom.ViewModels.Mobile;
 using SecRandom.ViewModels.MainPages;
 using SecRandom.ViewModels.SettingsPages;
 using SecRandom.ViewModels.SettingsPages.History;
@@ -86,8 +89,8 @@ using SecRandom.Views.SettingsPages.LogViewer;
 using SecRandom.Views.SettingsPages.More;
 using SecRandom.Views.SettingsPages.Personalized;
 using SecRandom.Views.SettingsPages.Picking;
-// using SecRandom.Views.SettingsPages.Plugins.Overview;
 using SecRandom.Views.SettingsPages.Update;
+using SecRandom.Views.SettingsPages.Plugins;
 using DefaultNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.DefaultNotificationSettingsPage;
 using FloatingWindowSettingsPage = SecRandom.Views.SettingsPages.Personalized.FloatingWindowSettingsPage;
 using LotteryNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.LotteryNotificationSettingsPage;
@@ -95,6 +98,7 @@ using QuickDrawNotificationSettingsPage = SecRandom.Views.SettingsPages.Notifica
 using RollCallNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.RollCallNotificationSettingsPage;
 using SecuritySettingsPage = SecRandom.Views.SettingsPages.General.SecuritySettingsPage;
 using VoiceSettingsPage = SecRandom.Views.SettingsPages.Notification.VoiceSettingsPage;
+using CR = SecRandom.Langs.Common.Resources;
 
 namespace SecRandom;
 
@@ -112,6 +116,7 @@ public partial class App : Application
     private MobileViewHost? _mobileViewHost;
     private bool _mobileStopping;
     private bool _mobileStartupFailureShown;
+    private Utils.DesktopDataRootPreparationResult? _desktopDataRootPreparation;
     private readonly object _shutdownGate = new();
     private bool _isStopping;
     private bool _isOobeActive;
@@ -146,12 +151,17 @@ public partial class App : Application
     public override void Initialize()
     {
         TouchInputModeAssist.Initialize();
-        if (PlatformStartupContext.Current is MobilePlatformServiceRoot)
+        var isMobile = PlatformStartupContext.Current is MobilePlatformServiceRoot;
+        if (isMobile)
             Utils.ConfigureMobileDataRoot();
+        else
+            _desktopDataRootPreparation = Utils.PrepareDesktopDataRoot();
 
         // 初始化语言
         var mainConfig = new MainConfigModel();
-        var settings = LoadStartupSettings(mainConfig);
+        var settings = _desktopDataRootPreparation is { IsPortablePackage: true, IsWritable: false }
+            ? mainConfig
+            : LoadStartupSettings(mainConfig);
         var culture = settings.Basic.Language switch
         {
             LanguageMode.ChineseSimplified => @"zh-Hans",
@@ -160,7 +170,7 @@ public partial class App : Application
             _ => @"zh-Hans"
         };
         InitializeLanguages(new CultureInfo(culture));
-        if (PlatformStartupContext.Current is MobilePlatformServiceRoot)
+        if (isMobile)
             ApplyMobileCulture(new CultureInfo(culture));
 
         // 初始化 Avalonia App
@@ -189,6 +199,13 @@ public partial class App : Application
             WriteDesktopStartupDiagnostic("Desktop framework initialization started.");
             _desktopLifetime = desktop;
             IsDesktop = true;
+
+            if (_desktopDataRootPreparation is { IsPortablePackage: true, IsWritable: false } preparation)
+            {
+                desktop.MainWindow = CreatePortableDataRootFailureHost(desktop, preparation);
+                base.OnFrameworkInitializationCompleted();
+                return;
+            }
 
             if (CrashRecoveryRuntime.StartupPromptOptions is { } promptOptions)
             {
@@ -478,7 +495,6 @@ public partial class App : Application
         if (startupProtocolUri is not null)
             Dispatcher.UIThread.Post(() => HandleProtocolUri(startupProtocolUri), DispatcherPriority.Render);
 
-        AppDomain.CurrentDomain.ProcessExit += CurrentDomainOnProcessExit;
         Dispatcher.UIThread.UnhandledException += App_OnDispatcherUnhandledException;
     }
 
@@ -581,6 +597,33 @@ public partial class App : Application
         return host;
     }
 
+    private static Window CreatePortableDataRootFailureHost(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        Utils.DesktopDataRootPreparationResult preparation)
+    {
+        var host = new SecRandomTmpRootWindow();
+        host.Opened += async (_, _) =>
+        {
+            var dialog = new FATaskDialog
+            {
+                XamlRoot = host,
+                Title = CR.M_PortableDataDirectoryUnavailableTitle,
+                Header = CR.M_PortableDataDirectoryUnavailableTitle,
+                Content = string.Format(
+                    CR.M_PortableDataDirectoryUnavailableContent,
+                    preparation.DataRoot,
+                    preparation.ErrorMessage ?? CR.M_UnknownError)
+            };
+            dialog.Buttons.Add(new FATaskDialogButton(CR.C_Close, "close") { IsDefault = true });
+
+            await dialog.ShowAsync();
+            host.Close();
+            desktop.Shutdown();
+        };
+
+        return host;
+    }
+
     /// <summary>
     ///     处理来自后续实例的 IPC 命令（第一个实例专用）。
     ///     回调来自后台线程，需通过 <see cref="Dispatcher"/> 切换到 UI 线程。
@@ -664,7 +707,7 @@ public partial class App : Application
         IAppHost.Host = Host
             .CreateDefaultBuilder()
             .UseContentRoot(AppContext.BaseDirectory)
-            .ConfigureServices(services =>
+            .ConfigureServices((context, services) =>
             {
                 if (isMobile)
                 {
@@ -676,7 +719,7 @@ public partial class App : Application
                         .AddView<MobileRootView>(MobilePageIds.Root)
                         .AddView<MainView>(DesktopViewIds.Main)
                         .AddView<SettingsView>(MobilePageIds.Settings)
-                        .AddView<RemainingListView>(RemainingListViewService.ViewId, ViewPresentation.Modal);
+                        .AddView<RemainingListView>(RemainingListViewService.ViewId);
                     services.AddTransient<MobileViewHost>();
                 }
                 else
@@ -716,6 +759,8 @@ public partial class App : Application
 
                 // 配置
                 services.AddCoreRuntimeServices();
+                var pluginManager = new PluginManager();
+                services.AddSingleton<IPluginManager>(pluginManager);
                 services.AddSingleton<DeviceUuidStore>();
 
                 services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
@@ -725,6 +770,13 @@ public partial class App : Application
                 // 服务
                 services.AddTransient<RollCallDrawService>();
                 services.AddTransient<LotteryDrawService>();
+                services.AddSingleton<RosterTransferService>();
+                services.AddSingleton<IRosterQrCameraCaptureFactory, RosterQrCameraCaptureFactory>();
+                services.AddHttpClient<RosterSyncTransferService>(client =>
+                {
+                    client.BaseAddress = new Uri("https://secrandom-sync.sectl.cn/");
+                    client.Timeout = TimeSpan.FromSeconds(30);
+                });
                 if (isMobile)
                 {
                     MobilePlatformServiceRoot currentMobilePlatform = mobilePlatform!;
@@ -822,7 +874,6 @@ public partial class App : Application
                 // 杂项 Views
                 if (isMobile)
                 {
-                    services.AddTransient<MobileDrawPageViewModel>();
                     services.AddSingleton<IMobileRootViewReloader>(_ =>
                         new MobileRootViewReloader(ReloadMobileRootViewAsync));
                     services.AddSingleton<IMobileCapabilities, MobileCapabilities>();
@@ -853,7 +904,7 @@ public partial class App : Application
                 // 设置界面 Views
                 services.AddSettingsPage<LogViewerSettingsPage>(Langs.SettingsPages.LogViewer.Resources.Page_Title);
 
-                // 顶部
+                // 移动端保留目录壳，内容页共用桌面实现，只有系统安装边界不同的更新页保留移动实现。
                 if (isMobile && useMobileUI)
                 {
                     services.AddSettingsPage<MobileSettingsCatalogPage>(MobileResources.P_Settings);
@@ -942,24 +993,23 @@ public partial class App : Application
                 services.AddSettingsPage<RollCallHistorySettingsPage>(Langs.Common.Resources.Feat_RollCallHistory);
                 services.AddSettingsPage<LotteryHistorySettingsPage>(Langs.Common.Resources.Feat_LotteryHistory);
 
-                services.AddSettingsPageSeparator(isHide: true);
-                // services.AddSettingsPage<PluginsSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources
-                //     .Page_Title);
+                if (!isMobile)
+                {
+                    services.AddSettingsPageSeparator();
+                    services.AddSettingsPage<PluginsSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources
+                        .Page_Title);
+                }
 
                 // 底部
-                if (isMobile)
-                {
-                    services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
-                }
-                else
-                {
-                    services.AddSettingsPage<MobileUpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
-                }
+                services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
 
                 services.AddSettingsPageSeparator(PageLocation.Bottom, isHide: true);
                 services.AddSettingsPage<DebugSettingsPage>(
                     Langs.SettingsPages.Debug.DebugStrings.Get("Page_Title"));
+
+                if (!isMobile)
+                    pluginManager.Initialize(context, services);
             })
             .Build();
 
@@ -1043,28 +1093,63 @@ public partial class App : Application
         IAppHost.TryGetService<ILogger<App>>()?
             .LogInformation("Stopping application.");
 
-        AppStopping?.Invoke(this, EventArgs.Empty);
-
-        _floatingWindow?.CanClose = true;
-
-        IAppHost.GetService<MainConfigHandler>().Save();
-        IAppHost.GetService<IProfileService>().SaveProfile();
-        await ShutdownTelemetryAsync().ConfigureAwait(false);
-
         IHost? host = IAppHost.Host;
-        if (host is not null)
+        try
         {
-            await host.StopAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-            host.Dispose();
+            try
+            {
+                AppStopping?.Invoke(this, EventArgs.Empty);
+            }
+            catch (Exception exception)
+            {
+                IAppHost.TryGetService<ILogger<App>>()?
+                    .LogError(exception, "Application stopping notification failed.");
+            }
+
+            _floatingWindow?.CanClose = true;
+            TrySaveConfigForCrashRecovery();
+            await ShutdownTelemetryAsync().ConfigureAwait(false);
+
+            if (host is not null)
+            {
+                try
+                {
+                    await host.StopAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+                }
+                catch (Exception exception)
+                {
+                    IAppHost.TryGetService<ILogger<App>>()?
+                        .LogError(exception, "Host shutdown failed.");
+                }
+
+                try
+                {
+                    host.Dispose();
+                }
+                catch (Exception exception)
+                {
+                    IAppHost.TryGetService<ILogger<App>>()?
+                        .LogError(exception, "Host disposal failed.");
+                }
+            }
         }
+        finally
+        {
+            IAppHost.Host = null;
 
-        IAppHost.Host = null;
+            try
+            {
+                // 释放单实例 Mutex 及 IPC 管道
+                SingleInstanceService.Instance.Dispose();
+            }
+            catch (Exception exception)
+            {
+                System.Diagnostics.Debug.WriteLine(exception);
+            }
 
-        // 释放单实例 Mutex 及 IPC 管道
-        SingleInstanceService.Instance.Dispose();
-
-        if (requestLifetimeShutdown)
-            RequestDesktopShutdown();
+            if (requestLifetimeShutdown)
+                RequestDesktopShutdown();
+        }
     }
 
     public async void Restart()
@@ -1150,12 +1235,21 @@ public partial class App : Application
         try
         {
             IAppHost.TryGetService<MainConfigHandler>()?.Save();
+        }
+        catch (Exception ex)
+        {
+            IAppHost.TryGetService<ILogger<App>>()?
+                .LogError(ex, "Configuration persistence failed.");
+        }
+
+        try
+        {
             IAppHost.TryGetService<IProfileService>()?.SaveProfile();
         }
         catch (Exception ex)
         {
             IAppHost.TryGetService<ILogger<App>>()?
-                .LogError(ex, "Crash-recovery persistence failed.");
+                .LogError(ex, "Profile persistence failed.");
         }
     }
 
@@ -1168,20 +1262,6 @@ public partial class App : Application
         }
         catch
         {
-        }
-    }
-
-    private void CurrentDomainOnProcessExit(object? sender, EventArgs e)
-    {
-        try
-        {
-            IAppHost.TryGetService<MainConfigHandler>()?.Save();
-            IAppHost.TryGetService<IProfileService>()?.SaveProfile();
-        }
-        catch (Exception ex)
-        {
-            IAppHost.TryGetService<ILogger<App>>()?
-                .LogError(ex, "Process-exit persistence failed.");
         }
     }
 
@@ -1352,7 +1432,7 @@ public partial class App : Application
             _ => ThemeVariant.Default
         };
 
-        var fluentAvaloniaTheme = this.FindResource(@"FluentAvaloniaTheme") as FluentAvaloniaTheme;
+        var fluentAvaloniaTheme = this.Styles.OfType<FluentAvaloniaTheme>().FirstOrDefault();
         if (fluentAvaloniaTheme is not null)
         {
             // Configure system tracking before an explicit variant so FluentAvalonia does

@@ -21,6 +21,8 @@ public sealed class PlatformServiceRootStub : IPlatformServiceRoot, IWindowFeatu
     public IRemovableStorageBindingMarker RemovableStorageBindingMarker =>
         PortableRemovableStorageBindingMarker.Instance;
 
+    public IPlatformCameraDeviceCatalog CameraDevices => UnsupportedPlatformCameraDeviceCatalog.Instance;
+
     public global::SecRandom.Platforms.Abstractions.WindowFeatures SupportedFeatures =>
         global::SecRandom.Platforms.Abstractions.WindowFeatures.None;
 

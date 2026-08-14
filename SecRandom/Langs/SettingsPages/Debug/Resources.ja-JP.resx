@@ -104,13 +104,13 @@
     <value>現在の更新チャンネル、状態、最終確認時刻を読み取ります</value>
   </data>
   <data name="S_LinkageNotificationDiagnostics" xml:space="preserve">
-    <value>スケジュール連携と通知</value>
+    <value>授業連携と通知</value>
   </data>
   <data name="C_RefreshLinkage" xml:space="preserve">
     <value>連携状態を更新</value>
   </data>
   <data name="C_RefreshLinkage_D" xml:space="preserve">
-    <value>スケジュールスナップショットを更新し、通知設定を読み取ります</value>
+    <value>授業スナップショットを更新し、通知設定を読み取ります</value>
   </data>
   <data name="S_PlatformDiagnostics" xml:space="preserve">
     <value>ウィンドウとプラットフォーム</value>
@@ -152,19 +152,19 @@
     <value>連携データソース</value>
   </data>
   <data name="C_CourseSource" xml:space="preserve">
-    <value>スケジュールソース</value>
+    <value>授業ソース</value>
   </data>
   <data name="C_CourseState" xml:space="preserve">
-    <value>スケジュール状態</value>
+    <value>授業状態</value>
   </data>
   <data name="C_SnapshotAvailable" xml:space="preserve">
     <value>スナップショット利用可</value>
   </data>
   <data name="C_CurrentCourse" xml:space="preserve">
-    <value>現在の予定項目</value>
+    <value>現在の授業</value>
   </data>
   <data name="C_NextCourse" xml:space="preserve">
-    <value>次の予定項目</value>
+    <value>次の授業</value>
   </data>
   <data name="C_DrawRestricted" xml:space="preserve">
     <value>連携による抽選制限</value>
@@ -242,7 +242,7 @@
     <value>更新ダウンロード</value>
   </data>
   <data name="C_CourseLinkageDirectory" xml:space="preserve">
-    <value>スケジュール連携</value>
+    <value>授業連携</value>
   </data>
   <data name="C_CrashDirectory" xml:space="preserve">
     <value>クラッシュレポート</value>
@@ -254,27 +254,27 @@
     <value>存在しない</value>
   </data>
   <data name="M_ScheduleError_CsesMissing" xml:space="preserve">
-    <value>尚未导入有效的 CSES 日程表。</value>
+    <value>有効な CSES 時間割はまだインポートされていません。</value>
   </data>
   <data name="M_ScheduleError_ClassIslandUnavailable" xml:space="preserve">
-    <value>无法连接到 ClassIsland。</value>
+    <value>ClassIsland に接続できません。</value>
   </data>
   <data name="M_ScheduleError_ClassIslandTimerStopped" xml:space="preserve">
-    <value>ClassIsland 计时器未运行。</value>
+    <value>ClassIsland のタイマーが動作していません。</value>
   </data>
   <data name="M_ScheduleError_ClassIslandScheduleDisabled" xml:space="preserve">
-    <value>ClassIsland 未启用日程表。</value>
+    <value>ClassIsland で時間割が有効になっていません。</value>
   </data>
   <data name="M_ScheduleError_ClassIslandScheduleUnloaded" xml:space="preserve">
-    <value>ClassIsland 尚未加载当天日程。</value>
+    <value>ClassIsland が当日の時間割を読み込んでいません。</value>
   </data>
   <data name="M_ScheduleError_ClassIslandTimeUnconfirmed" xml:space="preserve">
-    <value>ClassIsland 尚未确认当前时间状态。</value>
+    <value>ClassIsland が現在の授業時間状態を確認していません。</value>
   </data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState" xml:space="preserve">
-    <value>ClassIsland 返回了未支持的当前状态：{0}。</value>
+    <value>ClassIsland から未対応の現在状態が返されました: {0}。</value>
   </data>
   <data name="M_ScheduleError_ClassIslandReadFailed" xml:space="preserve">
-    <value>无法读取 ClassIsland 的日程状态。</value>
+    <value>ClassIsland の授業状態を読み取れません。</value>
   </data>
 </root>

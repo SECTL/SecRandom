@@ -20,6 +20,75 @@ public class SettingsMarkupTests
         Assert.InRange(clear, navigate + 1, pageResultReturn - 1);
     }
 
+    [Theory]
+    [InlineData("SecRandom/Views/SettingsPages/General/VerificationSettingsPage.axaml", "S_VerificationMode")]
+    [InlineData("SecRandom/Views/SettingsPages/General/BackupSettingsPage.axaml", "S_Includes")]
+    [InlineData("SecRandom/Views/SettingsPages/More/MoreSettingsPage.axaml", "S_Shortcut_Enable")]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/DefaultDrawSettingsPage.axaml", "S_AnimationStyle")]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/RollCallDrawSettingsPage.axaml", "S_ReminderText")]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/LotteryDrawSettingsPage.axaml", "S_LotteryImage")]
+    [InlineData("SecRandom/Views/SettingsPages/Notification/DefaultNotificationSettingsPage.axaml", "S_Default_DisplayDuration")]
+    public void SearchableSettingsUseStableControlNames(string relativePath, string controlId)
+    {
+        string markup = File.ReadAllText(GetRepositoryPath(relativePath));
+
+        Assert.Contains($"x:Name=\"{controlId}\"", markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SearchUsesExplicitControlIdsForNestedAndSharedSettings()
+    {
+        string metadata = File.ReadAllText(GetRepositoryPath("SecRandom/Models/SettingsMetadata.cs"));
+        string service = File.ReadAllText(GetRepositoryPath("SecRandom/Services/Settings/SettingsSearchService.cs"));
+        string view = File.ReadAllText(GetRepositoryPath("SecRandom/Views/SettingsView.axaml.cs"));
+
+        Assert.Contains("public string ControlId", metadata, StringComparison.Ordinal);
+        Assert.Contains("public string CategoryControlId", metadata, StringComparison.Ordinal);
+        Assert.Contains("GetControlId(settingsPageResourceId, fullId, false)", service, StringComparison.Ordinal);
+        Assert.Contains("FindSettingsControl(pageRoot, settings.ControlId)", view, StringComparison.Ordinal);
+        Assert.Contains("GetVisualDescendants()", view, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MoreRollCallQuantityLabelIsContentNotSearchMetadata()
+    {
+        string resource = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Langs/SettingsPages/More/Resources.resx"));
+        string markup = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Views/SettingsPages/More/MoreSettingsPage.axaml"));
+
+        Assert.Contains("C_RollCallQuantityLabel", resource, StringComparison.Ordinal);
+        Assert.DoesNotContain("S_RollCallQuantityLabel", resource, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"C_RollCallQuantityLabel\"", markup, StringComparison.Ordinal);
+        Assert.Contains("Resources.C_RollCallQuantityLabel", markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MoreSettingsCheckboxLabelsUseContentResourceKeys()
+    {
+        string resource = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Langs/SettingsPages/More/Resources.resx"));
+        string markup = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Views/SettingsPages/More/MoreSettingsPage.axaml"));
+
+        string[] checkboxKeys =
+        [
+            "RollCallResetButton", "RollCallQuantityControl", "RollCallStartButton", "RollCallListSelector",
+            "RollCallRangeSelector", "RollCallGenderSelector", "RollCallRemainingButton", "RollCallQuantityLabel",
+            "LotteryResetButton", "LotteryQuantityControl", "LotteryStartButton", "LotteryListSelector",
+            "LotteryStudentListSelector", "LotteryRangeSelector", "LotteryGenderSelector", "LotteryRemainingButton",
+            "LotteryQuantityLabel"
+        ];
+
+        foreach (string key in checkboxKeys)
+        {
+            Assert.Contains($"C_{key}", resource, StringComparison.Ordinal);
+            Assert.DoesNotContain($"S_{key}", resource, StringComparison.Ordinal);
+            Assert.Contains($"x:Name=\"C_{key}\"", markup, StringComparison.Ordinal);
+            Assert.Contains($"Resources.C_{key}", markup, StringComparison.Ordinal);
+        }
+    }
+
     [Fact]
     public void SettingsSearchViewModelTracksWhetherThereIsTextToClear()
     {

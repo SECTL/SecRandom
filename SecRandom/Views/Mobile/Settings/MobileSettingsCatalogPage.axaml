@@ -1,10 +1,10 @@
-<local:MobileSettingsPageBase xmlns="https://github.com/avaloniaui"
-                              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
-                              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-                               xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
-                               x:Class="SecRandom.Views.Mobile.Settings.MobileSettingsCatalogPage"
-                              x:DataType="local:MobileSettingsCatalogPage">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
+             x:Class="SecRandom.Views.Mobile.Settings.MobileSettingsCatalogPage"
+             x:DataType="local:MobileSettingsCatalogPage">
     <ScrollViewer x:Name="PageScroll">
         <ItemsControl ItemsSource="{Binding Items}">
             <ItemsControl.ItemsPanel>
@@ -12,7 +12,6 @@
                     <StackPanel Classes="page-container" Orientation="Vertical" />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
-            
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <fa:FASettingsExpander ItemsSource="{Binding Pages}"
@@ -24,7 +23,6 @@
                         <fa:FASettingsExpander.IconSource>
                             <sr:FluentIconSource Glyph="{Binding IconGlyph}" />
                         </fa:FASettingsExpander.IconSource>
-                                    
                         <fa:FASettingsExpander.ItemTemplate>
                             <DataTemplate>
                                 <fa:FASettingsExpanderItem Content="{Binding Name}"
@@ -44,4 +42,4 @@
             </ItemsControl.ItemTemplate>
         </ItemsControl>
     </ScrollViewer>
-</local:MobileSettingsPageBase>
+</UserControl>

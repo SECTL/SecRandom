@@ -17,6 +17,7 @@ public static class PlatformServiceCollectionExtensions
         services.AddSingleton<IWindowFeatureService>(root.WindowFeatures);
         services.AddSingleton<IRemovableStorageCatalog>(root.RemovableStorage);
         services.AddSingleton<IRemovableStorageBindingMarker>(root.RemovableStorageBindingMarker);
+        services.AddSingleton<IPlatformCameraDeviceCatalog>(root.CameraDevices);
         return services;
     }
 }

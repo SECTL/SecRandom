@@ -119,13 +119,30 @@
         <value>退出程序</value>
     </data>
     <data name="App_Description" xml:space="preserve">
-        <value>一款易用的点名/抽奖软件，面向活动与组织场景设计，让抽取过程更高效透明</value>
+        <value>基于动态权重的公平随机工具，让抽取与决策告别争议</value>
     </data>
     <data name="App_License" xml:space="preserve">
         <value>本项目基于 GNU General Public License v3.0 获得许可</value>
     </data>
     <data name="C_ToBeWritten" xml:space="preserve">
         <value>(等待编写)</value>
+    </data>
+    <data name="C_Close" xml:space="preserve">
+        <value>关闭</value>
+    </data>
+    <data name="M_PortableDataDirectoryUnavailableTitle" xml:space="preserve">
+        <value>无法写入便携版数据目录</value>
+    </data>
+    <data name="M_PortableDataDirectoryUnavailableContent" xml:space="preserve">
+        <value>SecRandom 便携版必须能够写入其所在目录中的 data 文件夹
+
+数据目录: {0}
+错误: {1}
+
+请将整个便携版文件夹移动到可写位置，或调整该目录权限后重试</value>
+    </data>
+    <data name="M_UnknownError" xml:space="preserve">
+        <value>未知错误</value>
     </data>
     <data name="AttachedSettings_BehindScene" xml:space="preserve">
         <value>内幕设置</value>
@@ -244,5 +261,8 @@
     </data>
     <data name="MultiInstance_Cancel" xml:space="preserve">
         <value>取消</value>
+    </data>
+    <data name="C_PickButtonText" xml:space="preserve">
+        <value>抽</value>
     </data>
 </root>

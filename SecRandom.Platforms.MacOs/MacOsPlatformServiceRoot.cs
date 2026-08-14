@@ -28,4 +28,6 @@ public sealed class MacOsPlatformServiceRoot : IPlatformServiceRoot
 
     public IRemovableStorageBindingMarker RemovableStorageBindingMarker { get; } =
         new MacOsRemovableStorageBindingMarker();
+
+    public IPlatformCameraDeviceCatalog CameraDevices { get; } = new MacOsCameraDeviceCatalog();
 }

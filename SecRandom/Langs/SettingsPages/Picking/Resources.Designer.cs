@@ -382,6 +382,15 @@ namespace SecRandom.Langs.SettingsPages.Picking {
                 return ResourceManager.GetString("O_PrizeHyphenName", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 序号 奖品/分组-名称.
+        /// </summary>
+        public static string O_PrizeIdPrizeBreakGroupHyphenMember {
+            get {
+                return ResourceManager.GetString("O_PrizeIdPrizeBreakGroupHyphenMember", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to 随机抽取.
@@ -933,6 +942,213 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 批量设置头像.
+        /// </summary>
+        public static string C_BatchAvatar {
+            get {
+                return ResourceManager.GetString("C_BatchAvatar", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 选择目录.
+        /// </summary>
+        public static string C_BatchAvatarChooseDirectory {
+            get {
+                return ResourceManager.GetString("C_BatchAvatarChooseDirectory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 重新选择外部文件.
+        /// </summary>
+        public static string C_BatchAvatarChooseFile {
+            get {
+                return ResourceManager.GetString("C_BatchAvatarChooseFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 图片只从所选目录的第一层查找.
+        /// </summary>
+        public static string C_BatchAvatarDirectoryHint {
+            get {
+                return ResourceManager.GetString("C_BatchAvatarDirectoryHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 头像文件.
+        /// </summary>
+        public static string C_BatchAvatarFile {
+            get {
+                return ResourceManager.GetString("C_BatchAvatarFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 根据记录的名称或编号，从所选目录的第一层图片中批量匹配并设置头像.
+        /// </summary>
+        public static string C_BatchAvatarHint {
+            get {
+                return ResourceManager.GetString("C_BatchAvatarHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 自动匹配 {0} 条记录.
+        /// </summary>
+        public static string C_BatchAvatarMatchSummary {
+            get {
+                return ResourceManager.GetString("C_BatchAvatarMatchSummary", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 未选择目录.
+        /// </summary>
+        public static string C_BatchAvatarNoDirectorySelected {
+            get {
+                return ResourceManager.GetString("C_BatchAvatarNoDirectorySelected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 抽奖名单.
+        /// </summary>
+        public static string C_BatchAvatarPrize {
+            get {
+                return ResourceManager.GetString("C_BatchAvatarPrize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 记录.
+        /// </summary>
+        public static string C_BatchAvatarRecord {
+            get {
+                return ResourceManager.GetString("C_BatchAvatarRecord", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 点名名单.
+        /// </summary>
+        public static string C_BatchAvatarRoster {
+            get {
+                return ResourceManager.GetString("C_BatchAvatarRoster", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 指定点名名单.
+        /// </summary>
+        public static string C_BatchAvatarTargetRoster {
+            get {
+                return ResourceManager.GetString("C_BatchAvatarTargetRoster", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 指定抽奖名单.
+        /// </summary>
+        public static string C_BatchAvatarTargetPrize {
+            get {
+                return ResourceManager.GetString("C_BatchAvatarTargetPrize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 设置.
+        /// </summary>
+        public static string C_BatchAvatarSet {
+            get {
+                return ResourceManager.GetString("C_BatchAvatarSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 取消.
+        /// </summary>
+        public static string C_Cancel {
+            get {
+                return ResourceManager.GetString("C_Cancel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 确定.
+        /// </summary>
+        public static string C_Confirm {
+            get {
+                return ResourceManager.GetString("C_Confirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 设置点名名单头像.
+        /// </summary>
+        public static string C_SetAvatarViaRoster {
+            get {
+                return ResourceManager.GetString("C_SetAvatarViaRoster", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 前往点名名单页面，用成员附加设置「展示图片」设置头像.
+        /// </summary>
+        public static string C_SetAvatarViaRoster_D {
+            get {
+                return ResourceManager.GetString("C_SetAvatarViaRoster_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 设置抽奖名单头像.
+        /// </summary>
+        public static string C_SetAvatarViaPrize {
+            get {
+                return ResourceManager.GetString("C_SetAvatarViaPrize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 前往抽奖名单页面，用奖品附加设置「展示图片」设置奖品图片.
+        /// </summary>
+        public static string C_SetAvatarViaPrize_D {
+            get {
+                return ResourceManager.GetString("C_SetAvatarViaPrize_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 已为 {0} 条记录设置头像.
+        /// </summary>
+        public static string M_BatchAvatarApplied {
+            get {
+                return ResourceManager.GetString("M_BatchAvatarApplied", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 找不到头像文件：{0}.
+        /// </summary>
+        public static string M_BatchAvatarFileNotFound {
+            get {
+                return ResourceManager.GetString("M_BatchAvatarFileNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 请先选择包含图片的目录.
+        /// </summary>
+        public static string M_BatchAvatarNoDirectory {
+            get {
+                return ResourceManager.GetString("M_BatchAvatarNoDirectory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 抽奖过程显示.
         /// </summary>
         public static string S_LotteryShowRandom {
@@ -947,6 +1163,141 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         public static string S_LotteryShowRandom_D {
             get {
                 return ResourceManager.GetString("S_LotteryShowRandom_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 自定义显示格式.
+        /// </summary>
+        public static string S_LotteryShowRandomFormat {
+            get {
+                return ResourceManager.GetString("S_LotteryShowRandomFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 设置抽奖过程的自定义展示格式.
+        /// </summary>
+        public static string S_LotteryShowRandomFormat_D {
+            get {
+                return ResourceManager.GetString("S_LotteryShowRandomFormat_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 插入格式变量.
+        /// </summary>
+        public static string C_LotteryShowRandomFormatTokens {
+            get {
+                return ResourceManager.GetString("C_LotteryShowRandomFormatTokens", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 支持使用以下格式化变量，点按变量即可插入：.
+        /// </summary>
+        public static string C_LotteryShowRandomFormatIntro {
+            get {
+                return ResourceManager.GetString("C_LotteryShowRandomFormatIntro", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 序号.
+        /// </summary>
+        public static string C_LotteryShowRandomFormatId {
+            get {
+                return ResourceManager.GetString("C_LotteryShowRandomFormatId", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 奖项.
+        /// </summary>
+        public static string C_LotteryShowRandomFormatPrize {
+            get {
+                return ResourceManager.GetString("C_LotteryShowRandomFormatPrize", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 奖项 ID.
+        /// </summary>
+        public static string C_LotteryShowRandomFormatPrizeId {
+            get {
+                return ResourceManager.GetString("C_LotteryShowRandomFormatPrizeId", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 奖项名称.
+        /// </summary>
+        public static string C_LotteryShowRandomFormatPrizeName {
+            get {
+                return ResourceManager.GetString("C_LotteryShowRandomFormatPrizeName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 成员.
+        /// </summary>
+        public static string C_LotteryShowRandomFormatMember {
+            get {
+                return ResourceManager.GetString("C_LotteryShowRandomFormatMember", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 成员 ID.
+        /// </summary>
+        public static string C_LotteryShowRandomFormatMemberId {
+            get {
+                return ResourceManager.GetString("C_LotteryShowRandomFormatMemberId", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 成员名字.
+        /// </summary>
+        public static string C_LotteryShowRandomFormatMemberName {
+            get {
+                return ResourceManager.GetString("C_LotteryShowRandomFormatMemberName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 成员分组.
+        /// </summary>
+        public static string C_LotteryShowRandomFormatGroup {
+            get {
+                return ResourceManager.GetString("C_LotteryShowRandomFormatGroup", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 格式.
+        /// </summary>
+        public static string C_LotteryShowRandomFormatFormat {
+            get {
+                return ResourceManager.GetString("C_LotteryShowRandomFormatFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 换行.
+        /// </summary>
+        public static string C_LotteryShowRandomFormatLineBreak {
+            get {
+                return ResourceManager.GetString("C_LotteryShowRandomFormatLineBreak", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 除换行符以外，其他分隔符可直接输入.
+        /// </summary>
+        public static string C_LotteryShowRandomFormatDirectSeparators {
+            get {
+                return ResourceManager.GetString("C_LotteryShowRandomFormatDirectSeparators", resourceCulture);
             }
         }
         

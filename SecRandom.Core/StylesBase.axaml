@@ -1,7 +1,6 @@
 ﻿<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-        xmlns:styling="clr-namespace:FluentAvalonia.Styling;assembly=FluentAvalonia"
         xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
         xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia">
     <Styles.Resources>
@@ -13,15 +12,11 @@
             </ResourceDictionary.MergedDictionaries>
 
             <x:Double x:Key="PageContainerWidth">960</x:Double>
-
-            <styling:FluentAvaloniaTheme x:Key="FluentAvaloniaTheme"
-                                         PreferSystemTheme="True"
-                                         UseSystemFontOnWindows="False"
-                                         TextVerticalAlignmentOverrideBehavior="Disabled" />
         </ResourceDictionary>
     </Styles.Resources>
 
-    <StaticResource ResourceKey="FluentAvaloniaTheme" />
+    <!-- AvaloniaEdit 主题：SyntaxHigh 代码块依赖其 TextEditor ControlTheme，不加载则编辑器无模板、文字不渲染 -->
+    <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
 
     <StyleInclude Source="/Styles/NavigationBackButton.axaml" />
     <StyleInclude Source="/Styles/PopupAnimations.axaml" />

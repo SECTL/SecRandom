@@ -11,4 +11,6 @@ public interface IPlatformServiceRoot
     IRemovableStorageCatalog RemovableStorage { get; }
 
     IRemovableStorageBindingMarker RemovableStorageBindingMarker { get; }
+
+    IPlatformCameraDeviceCatalog CameraDevices { get; }
 }

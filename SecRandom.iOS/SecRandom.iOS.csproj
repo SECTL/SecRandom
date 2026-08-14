@@ -25,6 +25,7 @@
 
     <ItemGroup>
         <PackageReference Include="Avalonia.iOS" Version="$(AvaloniaVersion)" />
+        <PackageReference Include="CameraView.Avalonia" Version="1.0.18" />
     </ItemGroup>
 
     <ItemGroup>

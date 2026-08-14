@@ -19,25 +19,25 @@
     <value>联动设置</value>
   </data>
   <data name="S_External" xml:space="preserve">
-    <value>日程联动</value>
+    <value>课程联动</value>
   </data>
   <data name="S_External_VerificationRequired" xml:space="preserve">
     <value>允许验证后继续</value>
   </data>
   <data name="S_External_VerificationRequired_D" xml:space="preserve">
-    <value>仅在已启用非日程时段限制时生效；开启后，通过已配置的安全验证可以临时继续抽取或重置；关闭后将直接阻止</value>
+    <value>仅在已启用非上课时段限制时生效；开启后，通过已配置的安全验证可以临时继续抽取或重置；关闭后将直接阻止</value>
   </data>
   <data name="S_External_InstantDrawDisable" xml:space="preserve">
-    <value>限制非日程时段操作</value>
+    <value>限制非上课时段操作</value>
   </data>
   <data name="S_External_InstantDrawDisable_D" xml:space="preserve">
-    <value>日程数据源明确显示处于非日程时段时，限制抽取和重置；关闭后不作限制</value>
+    <value>课程数据源明确显示处于课间或非上课时段时，限制抽取和重置；关闭后不作限制</value>
   </data>
   <data name="S_External_DataSource" xml:space="preserve">
     <value>数据源</value>
   </data>
   <data name="S_External_DataSource_D" xml:space="preserve">
-    <value>选择日程或外部联动数据来源</value>
+    <value>选择课程或外部联动数据来源</value>
   </data>
   <data name="O_DataSource_Off" xml:space="preserve">
     <value>关闭</value>
@@ -46,34 +46,34 @@
     <value>ClassIsland</value>
   </data>
   <data name="O_DataSource_Cses" xml:space="preserve">
-    <value>CSES 日程表</value>
+    <value>CSES 课程表</value>
   </data>
   <data name="S_Cses" xml:space="preserve">
-    <value>CSES 日程表</value>
+    <value>CSES 课程表</value>
   </data>
   <data name="C_CsesImport" xml:space="preserve">
-    <value>导入日程表</value>
+    <value>导入课程表</value>
   </data>
   <data name="C_CsesView" xml:space="preserve">
     <value>查看摘要</value>
   </data>
   <data name="C_CsesClear" xml:space="preserve">
-    <value>清除日程表</value>
+    <value>清除课程表</value>
   </data>
   <data name="M_CsesMissing" xml:space="preserve">
-    <value>尚未导入有效的 CSES 日程表</value>
+    <value>尚未导入有效的 CSES 课程表</value>
   </data>
   <data name="M_CsesImported" xml:space="preserve">
-    <value>已导入 CSES 日程表：{0}</value>
+    <value>已导入 CSES 课程表：{0}</value>
   </data>
   <data name="M_CsesCleared" xml:space="preserve">
-    <value>已清除 CSES 日程表</value>
+    <value>已清除 CSES 课程表</value>
   </data>
   <data name="M_CsesClearTitle" xml:space="preserve">
-    <value>清除日程表</value>
+    <value>清除课程表</value>
   </data>
   <data name="M_CsesClearContent" xml:space="preserve">
-    <value>确定要清除当前导入的 CSES 日程表吗？</value>
+    <value>确定要清除当前导入的 CSES 课程表吗？</value>
   </data>
   <data name="C_Confirm" xml:space="preserve">
     <value>确认</value>
@@ -82,75 +82,75 @@
     <value>取消</value>
   </data>
   <data name="S_ClassTime" xml:space="preserve">
-    <value>日程时段</value>
+    <value>课前课后</value>
   </data>
   <data name="S_ClassTime_HideFloatingWindow" xml:space="preserve">
-    <value>日程结束后隐藏悬浮窗</value>
+    <value>下课隐藏悬浮窗</value>
   </data>
   <data name="S_ClassTime_HideFloatingWindow_D" xml:space="preserve">
-    <value>日程结束后自动隐藏悬浮窗</value>
+    <value>课程结束时自动隐藏悬浮窗</value>
   </data>
   <data name="S_ClassTime_PreClassReset" xml:space="preserve">
-    <value>日程开始前重置</value>
+    <value>课前重置</value>
   </data>
   <data name="S_ClassTime_PreClassReset_D" xml:space="preserve">
-    <value>日程开始前自动重置临时抽取记录</value>
+    <value>上课前自动重置临时抽取记录</value>
   </data>
   <data name="S_ClassTime_PreClassResetTime" xml:space="preserve">
-    <value>日程开始前重置时间</value>
+    <value>课前重置时间</value>
   </data>
   <data name="S_ClassTime_PreClassResetTime_D" xml:space="preserve">
-    <value>距离日程开始前多少秒内执行重置</value>
+    <value>距离上课多少秒内执行课前重置</value>
   </data>
   <data name="S_ClassTime_PostClassDisableDelay" xml:space="preserve">
-    <value>日程结束后禁用延迟</value>
+    <value>课后禁用延迟</value>
   </data>
   <data name="S_ClassTime_PostClassDisableDelay_D" xml:space="preserve">
-    <value>日程结束后延迟多少秒禁用相关抽取入口</value>
+    <value>课程结束后延迟多少秒禁用相关抽取入口</value>
   </data>
   <data name="S_SubjectHistory_BreakAssignment_D" xml:space="preserve">
-    <value>选择非日程时段的历史记录归属方式</value>
+    <value>选择课间时段的历史记录归属方式</value>
   </data>
   <data name="O_BreakAssignment_Break" xml:space="preserve">
-    <value>非日程时段</value>
+    <value>课间</value>
   </data>
   <data name="S_SubjectHistory" xml:space="preserve">
-    <value>日程项目历史记录</value>
+    <value>科目历史记录</value>
   </data>
   <data name="S_SubjectHistory_BreakAssignment" xml:space="preserve">
-    <value>非日程时段归属</value>
+    <value>课间归属</value>
   </data>
   <data name="O_BreakAssignment_NextClass" xml:space="preserve">
-    <value>下个日程项目</value>
+    <value>下节课</value>
   </data>
   <data name="O_BreakAssignment_PreviousClass" xml:space="preserve">
-    <value>上个日程项目</value>
+    <value>上节课</value>
   </data>
   <data name="S_ClassTime_PreClassEnableTime" xml:space="preserve">
-    <value>日程开始前解禁时间</value>
+    <value>课前解禁时间</value>
   </data>
   <data name="S_SubjectHistory_Filter_D" xml:space="preserve">
-    <value>计算权重时只使用当前日程项目的历史记录</value>
+    <value>计算权重时只使用当前科目的历史记录</value>
   </data>
   <data name="S_SubjectHistory_Filter" xml:space="preserve">
-    <value>日程项目历史记录过滤</value>
+    <value>科目历史记录过滤</value>
   </data>
   <data name="S_ClassTime_PreClassEnableTime_D" xml:space="preserve">
-    <value>日程开始前多少秒提前解除非日程时段禁用</value>
+    <value>上课前多少秒提前解除课间禁用</value>
   </data>
-  <data name="M_CsesSummary" xml:space="preserve"><value>共 {0} 个日程时段，最早 {1:HH:mm}，最晚 {2:HH:mm}</value></data>
-  <data name="M_CsesErrorEmpty" xml:space="preserve"><value>CSES 日程文件为空</value></data>
-  <data name="M_CsesErrorRoot" xml:space="preserve"><value>CSES 日程文件的根节点必须是对象</value></data>
-  <data name="M_CsesErrorNoItems" xml:space="preserve"><value>CSES 日程文件中没有有效日程项目</value></data>
-  <data name="M_CsesErrorInvalidItem" xml:space="preserve"><value>CSES 日程项目格式无效</value></data>
-  <data name="M_CsesErrorInvalidTime" xml:space="preserve"><value>日程项目“{0}”的开始时间必须早于结束时间</value></data>
-  <data name="M_CsesErrorOverlap" xml:space="preserve"><value>星期 {0} 的日程项目时间存在重叠</value></data>
-  <data name="M_ScheduleError_CsesMissing" xml:space="preserve"><value>尚未导入有效的 CSES 日程表</value></data>
+  <data name="M_CsesSummary" xml:space="preserve"><value>共 {0} 节课，最早 {1:HH:mm}，最晚 {2:HH:mm}</value></data>
+  <data name="M_CsesErrorEmpty" xml:space="preserve"><value>CSES 课程表文件为空</value></data>
+  <data name="M_CsesErrorRoot" xml:space="preserve"><value>CSES 课程表文件的根节点必须是对象</value></data>
+  <data name="M_CsesErrorNoItems" xml:space="preserve"><value>CSES 课程表文件中没有有效课程</value></data>
+  <data name="M_CsesErrorInvalidItem" xml:space="preserve"><value>课程格式无效</value></data>
+  <data name="M_CsesErrorInvalidTime" xml:space="preserve"><value>课程“{0}”的开始时间必须早于结束时间</value></data>
+  <data name="M_CsesErrorOverlap" xml:space="preserve"><value>星期 {0} 的课程时间存在重叠</value></data>
+  <data name="M_ScheduleError_CsesMissing" xml:space="preserve"><value>尚未导入有效的 CSES 课程表</value></data>
   <data name="M_ScheduleError_ClassIslandUnavailable" xml:space="preserve"><value>无法连接到 ClassIsland</value></data>
   <data name="M_ScheduleError_ClassIslandTimerStopped" xml:space="preserve"><value>ClassIsland 计时器未运行</value></data>
-  <data name="M_ScheduleError_ClassIslandScheduleDisabled" xml:space="preserve"><value>ClassIsland 未启用日程表</value></data>
-  <data name="M_ScheduleError_ClassIslandScheduleUnloaded" xml:space="preserve"><value>ClassIsland 尚未加载当天日程</value></data>
-  <data name="M_ScheduleError_ClassIslandTimeUnconfirmed" xml:space="preserve"><value>ClassIsland 尚未确认当前时间状态</value></data>
+  <data name="M_ScheduleError_ClassIslandScheduleDisabled" xml:space="preserve"><value>ClassIsland 未启用课程表</value></data>
+  <data name="M_ScheduleError_ClassIslandScheduleUnloaded" xml:space="preserve"><value>ClassIsland 尚未加载当天课程表</value></data>
+  <data name="M_ScheduleError_ClassIslandTimeUnconfirmed" xml:space="preserve"><value>ClassIsland 尚未确认当前课程时间状态</value></data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState" xml:space="preserve"><value>ClassIsland 返回了未支持的当前状态：{0}</value></data>
-  <data name="M_ScheduleError_ClassIslandReadFailed" xml:space="preserve"><value>无法读取 ClassIsland 的日程状态</value></data>
+  <data name="M_ScheduleError_ClassIslandReadFailed" xml:space="preserve"><value>无法读取 ClassIsland 的课程状态</value></data>
 </root>

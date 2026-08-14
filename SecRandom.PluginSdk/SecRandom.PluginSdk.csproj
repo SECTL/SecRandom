@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <PackageId>SecRandom.PluginSdk</PackageId>
+        <Title>SecRandom Plugin SDK</Title>
+        <Description>SDK for developing SecRandom plugins. The SDK version tracks the main application release; plugins declare the targeted host API version in manifest.yml (see PluginApiVersions).</Description>
+        <Authors>SECTL</Authors>
+        <Company>SECTL</Company>
+        <RepositoryUrl>https://github.com/SECTL/SecRandom</RepositoryUrl>
+        <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+        <PackageTags>secrandom;plugin;addin;srpx</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\SecRandom.Core\SecRandom.Core.csproj"
+                          IncludeAssets="all" />
+        <None Include="SecRandom.PluginSdk.targets" Pack="True" PackagePath="build/net10.0" />
+        <None Include="README.md" Pack="True" PackagePath="\" />
+    </ItemGroup>
+
+    <Import Project="..\Global.props" />
+    <Import Project="SecRandom.PluginSdk.targets" />
+</Project>

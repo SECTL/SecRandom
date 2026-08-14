@@ -4,7 +4,7 @@
 
 # SecRandom
 
-**面向课堂与团队的随机抽取工具，提供可配置的抽取流程、历史管理与可验证的抽取记录。**
+**基于动态权重的公平随机工具，让抽取与决策告别争议**
 
 [![GitHub Issues](https://img.shields.io/github/issues-search/SECTL/SecRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=问题)](https://github.com/SECTL/SecRandom/issues)
 [![最新版本](https://img.shields.io/github/v/release/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=最新正式版)](https://github.com/SECTL/SecRandom/releases/latest)
@@ -21,13 +21,11 @@
 </div>
 
 > [!NOTE]
-> SecRandom 以 GNU GPLv3 协议发布。您可以修改和再发布源代码，但再发布的衍生作品也必须遵循 GNU GPLv3。
+> SecRandom 以 GNU GPLv3 协议发布！您可以修改和再发布源代码，但再发布的衍生作品也必须遵循 GNU GPLv3
 
-## SecRandom v3
+## SecRandom
 
-SecRandom v3 是面向课堂、班级和团队场景的桌面随机抽取应用。它将点名、快速抽取和奖品抽取放在统一的档案、历史与设置体系中，并提供可检查的抽取证明。
-
-软件通过历史平衡的权重与候选过滤策略帮助降低重复抽取、改善长期分布；它不替代对现实名单、规则或组织流程的管理，也不对这些现实条件作出软件无法验证的保证。
+SecRandom 是面向课堂、团队、活动、决策等场景的公平抽取应用
 
 ## 软件功能
 
@@ -74,13 +72,15 @@ SecRandom v3 是面向课堂、班级和团队场景的桌面随机抽取应用�
 
 ## 下载与更新
 
-- [GitHub Releases](https://github.com/SECTL/SecRandom/releases) 提供各版本的发行包与更新说明。
-- [官方下载页面](https://stk.sectl.cn/SecRandom) 提供下载最新版入口。
-- 自动更新在部署前验证已签名的发布清单以及制品的长度和哈希；请以每个发行版本提供的安装包和说明为准。
+- [GitHub Releases](https://github.com/SECTL/SecRandom/releases) 提供各版本的发行包与更新说明
+- [官方下载页面](https://stk.sectl.cn/SecRandom) 提供下载最新版入口
+- 自动更新在部署前验证已签名的发布清单以及制品的长度和哈希；请以每个发行版本提供的安装包和说明为准
 
 ## 许可证与第三方声明
 
-SecRandom 使用 [GNU GPLv3](LICENSE) 协议发布。第三方组件、版权和分发审查信息见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
+- SecRandom 使用 [GNU GPLv3](LICENSE) 协议发布
+- 第三方组件、版权和分发审查信息见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)
+- SecRandom 通过历史平衡的权重与候选过滤策略帮助降低重复抽取、改善长期分布；它不替代对现实名单、规则或组织流程的管理，也不对这些现实条件作出软件无法验证的保证
 
 ## 贡献者和特别感谢
 
@@ -88,7 +88,7 @@ SecRandom 使用 [GNU GPLv3](LICENSE) 协议发布。第三方组件、版权和
   <img src="https://contrib.rocks/image?repo=SECTL/SecRandom" alt="SecRandom contributors" />
 </a>
 
-感谢每一位为 SecRandom 提交代码、报告问题、完善文档和提供反馈的贡献者。头像由 GitHub 贡献者数据动态生成，点击可前往 [GitHub 贡献者页面](https://github.com/SECTL/SecRandom/graphs/contributors) 查看完整统计。
+感谢每一位为 SecRandom 提交代码、报告问题、完善文档和提供反馈的贡献者。头像由 GitHub 贡献者数据动态生成，点击可前往 [GitHub 贡献者页面](https://github.com/SECTL/SecRandom/graphs/contributors) 查看完整统计
 
 ## 支持与社区
 
@@ -104,9 +104,12 @@ SecRandom 使用 [GNU GPLv3](LICENSE) 协议发布。第三方组件、版权和
 
 ## Star History
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date&theme=dark">
-  <img alt="Star History" src="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date">
-</picture>
+<a href="https://www.star-history.com/?repos=SECTL%2FSecRandom&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&theme=dark&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=SECTL/SecRandom&type=date&legend=top-left&sealed_token=ugfdzW7iXV4wxuvKJoxpW6akarha_ogPhHQL86oTVzn8VT5lUiEMRTg8xxLjViyNUEax2PY2wSEeiYHOeJAGJfNRfLdtLGGihK9G5H-0WWX1rWT1YPBBVg" />
+ </picture>
+</a>
 
 **Copyright © 2025-2026 SECTL**

@@ -9,7 +9,7 @@
                        x:Name="Root"
                        Theme="{DynamicResource {x:Type fa:FASettingsExpander}}"
                        Classes="settings">
-    <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationMusic}"
+    <fa:FASettingsExpanderItem x:Name="S_AnimationMusic" Content="{x:Static lp:Resources.S_AnimationMusic}"
                                Description="{x:Static lp:Resources.S_AnimationMusic_D}">
         <fa:FASettingsExpanderItem.Footer>
             <ComboBox Width="220"
@@ -26,7 +26,7 @@
         </fa:FASettingsExpanderItem.Footer>
     </fa:FASettingsExpanderItem>
 
-    <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultMusic}"
+    <fa:FASettingsExpanderItem x:Name="S_ResultMusic" Content="{x:Static lp:Resources.S_ResultMusic}"
                                Description="{x:Static lp:Resources.S_ResultMusic_D}">
         <fa:FASettingsExpanderItem.Footer>
             <ComboBox Width="220" HorizontalAlignment="Right"
@@ -43,7 +43,7 @@
         </fa:FASettingsExpanderItem.Footer>
     </fa:FASettingsExpanderItem>
 
-    <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationMusicLoop}"
+    <fa:FASettingsExpanderItem x:Name="S_AnimationMusicLoop" Content="{x:Static lp:Resources.S_AnimationMusicLoop}"
                                Description="{x:Static lp:Resources.S_AnimationMusicLoop_D}">
         <fa:FASettingsExpanderItem.Footer>
             <ToggleSwitch HorizontalAlignment="Right"
@@ -51,7 +51,7 @@
         </fa:FASettingsExpanderItem.Footer>
     </fa:FASettingsExpanderItem>
 
-    <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationMusicVolume}"
+    <fa:FASettingsExpanderItem x:Name="S_AnimationMusicVolume" Content="{x:Static lp:Resources.S_AnimationMusicVolume}"
                                Description="{x:Static lp:Resources.S_AnimationMusicVolume_D}">
         <fa:FASettingsExpanderItem.Footer>
             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -64,7 +64,7 @@
         </fa:FASettingsExpanderItem.Footer>
     </fa:FASettingsExpanderItem>
 
-    <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultMusicVolume}"
+    <fa:FASettingsExpanderItem x:Name="S_ResultMusicVolume" Content="{x:Static lp:Resources.S_ResultMusicVolume}"
                                Description="{x:Static lp:Resources.S_ResultMusicVolume_D}">
         <fa:FASettingsExpanderItem.Footer>
             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -76,7 +76,7 @@
         </fa:FASettingsExpanderItem.Footer>
     </fa:FASettingsExpanderItem>
 
-    <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_AnimationMusicFade}"
+    <fa:FASettingsExpanderItem x:Name="S_AnimationMusicFade" Content="{x:Static lp:Resources.S_AnimationMusicFade}"
                                Description="{x:Static lp:Resources.S_AnimationMusicFade_D}">
         <fa:FASettingsExpanderItem.Footer>
             <StackPanel Spacing="4">
@@ -99,7 +99,7 @@
         </fa:FASettingsExpanderItem.Footer>
     </fa:FASettingsExpanderItem>
 
-    <fa:FASettingsExpanderItem Content="{x:Static lp:Resources.S_ResultMusicFade}"
+    <fa:FASettingsExpanderItem x:Name="S_ResultMusicFade" Content="{x:Static lp:Resources.S_ResultMusicFade}"
                                Description="{x:Static lp:Resources.S_ResultMusicFade_D}">
         <fa:FASettingsExpanderItem.Footer>
             <StackPanel Spacing="4">

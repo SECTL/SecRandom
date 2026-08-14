@@ -87,6 +87,7 @@ namespace SecRandom.Langs.SettingsPages.Plugins.Overview
         public static string C_PluginCount => ResourceManager.GetString("C_PluginCount", resourceCulture);
         public static string C_NoDescription => ResourceManager.GetString("C_NoDescription", resourceCulture);
         public static string C_Unknown => ResourceManager.GetString("C_Unknown", resourceCulture);
+        public static string C_Readme => ResourceManager.GetString("C_Readme", resourceCulture);
         public static string C_None => ResourceManager.GetString("C_None", resourceCulture);
         public static string S_Status => ResourceManager.GetString("S_Status", resourceCulture);
         public static string S_Directory => ResourceManager.GetString("S_Directory", resourceCulture);

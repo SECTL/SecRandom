@@ -9,8 +9,8 @@
               x:Class="SecRandom.Views.SettingsPages.LogViewer.LogViewerSettingsPage"
              x:DataType="local:LogViewerSettingsPage"
              Loaded="OnLoaded">
-    <Grid RowDefinitions="Auto Auto * Auto 128" Margin="12 12 18 12" RowSpacing="10">
-        <Grid Grid.Row="0" ColumnDefinitions="Auto * Auto Auto Auto Auto Auto" ColumnSpacing="8">
+    <Grid RowDefinitions="Auto Auto * Auto 128 Auto" Margin="12 12 18 12" RowSpacing="10">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto Auto Auto *" ColumnSpacing="8">
             <ComboBox Grid.Column="0"
                       MinWidth="260"
                       MaxWidth="380"
@@ -22,8 +22,25 @@
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
+            
+            <Button Grid.Column="1"
+                    Theme="{StaticResource TransparentButton}"
+                    ToolTip.Tip="{x:Static lsp:Resources.C_OpenFolder}"
+                    Click="OpenFolderButton_OnClick">
+                <sr:FluentIcon Glyph="{sr:Fi FolderOpenFilled}" />
+            </Button>
 
-            <ComboBox Grid.Column="1"
+            <Button Grid.Column="2"
+                    Theme="{StaticResource TransparentButton}"
+                    ToolTip.Tip="{x:Static lsp:Resources.C_DeleteSelected}"
+                    IsEnabled="{Binding CanDeleteSelectedLogFile}"
+                    Click="DeleteButton_OnClick">
+                <sr:FluentIcon Glyph="{sr:Fi DeleteFilled}" />
+            </Button>
+        </Grid>
+        
+        <Grid Grid.Row="1" ColumnDefinitions="Auto * Auto Auto Auto" ColumnSpacing="8">
+            <ComboBox Grid.Column="0"
                       Width="140"
                       ItemsSource="{Binding LevelFilters}"
                       SelectedItem="{Binding SelectedLevelFilter}">
@@ -34,56 +51,32 @@
                 </ComboBox.ItemTemplate>
             </ComboBox>
 
-            <TextBox Grid.Column="3"
-                     MinWidth="196"
-                     MaxWidth="256"
-                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                     PlaceholderText="{x:Static lsp:Resources.C_SearchWatermark}" />
-
-            <Button Grid.Column="4"
+            <Button Grid.Column="2"
                     Theme="{StaticResource TransparentButton}"
                     ToolTip.Tip="{x:Static lsp:Resources.C_Refresh}"
                     Click="RefreshButton_OnClick">
                 <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseFilled}" />
             </Button>
 
-            <Button Grid.Column="5"
-                    Theme="{StaticResource TransparentButton}"
-                    ToolTip.Tip="{x:Static lsp:Resources.C_OpenFolder}"
-                    Click="OpenFolderButton_OnClick">
-                <sr:FluentIcon Glyph="{sr:Fi FolderOpenFilled}" />
-            </Button>
-
-            <Button Grid.Column="6"
-                    Theme="{StaticResource TransparentButton}"
-                    ToolTip.Tip="{x:Static lsp:Resources.C_DeleteSelected}"
-                    IsEnabled="{Binding CanDeleteSelectedLogFile}"
-                    Click="DeleteButton_OnClick">
-                <sr:FluentIcon Glyph="{sr:Fi DeleteFilled}" />
-            </Button>
-        </Grid>
-
-        <Grid Grid.Row="1" ColumnDefinitions="* Auto" ColumnSpacing="8">
-            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                <TextBlock Text="{Binding EntryCountText}"
-                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                <TextBlock Text="{Binding SelectedFileInfoText}"
-                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-            </StackPanel>
-
-            <Button Grid.Column="1"
+            <Button Grid.Column="3"
                     Theme="{StaticResource TransparentButton}"
                     ToolTip.Tip="{x:Static lsp:Resources.C_CopySelected}"
                     IsEnabled="{Binding HasSelectedEntry}"
                     Click="CopyButton_OnClick">
                 <sr:FluentIcon Glyph="{sr:Fi ClipboardFilled}" />
             </Button>
+            
+            <TextBox Grid.Column="4"
+                     MinWidth="196"
+                     MaxWidth="256"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     PlaceholderText="{x:Static lsp:Resources.C_SearchWatermark}" />
         </Grid>
 
         <Border Grid.Row="2"
                 BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                 BorderThickness="1"
-                CornerRadius="4"
+                CornerRadius="4 4 0 0"
                 ClipToBounds="True">
             <DataGrid AutoGenerateColumns="False"
                       CanUserSortColumns="False"
@@ -101,7 +94,7 @@
                     <DataGridTextColumn Width="220"
                                         Header="{x:Static lsp:Resources.C_ColumnCategory}"
                                         Binding="{Binding ShortCategory}" />
-                    <DataGridTextColumn Width="*"
+                    <DataGridTextColumn Width="*" MinWidth="256"
                                         Header="{x:Static lsp:Resources.C_ColumnMessage}"
                                         Binding="{Binding Preview}" />
                 </DataGrid.Columns>
@@ -115,5 +108,12 @@
                  IsReadOnly="True"
                  FontSize="12"
                  TextWrapping="NoWrap" />
+        
+        <StackPanel Grid.Row="5" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <TextBlock Text="{Binding EntryCountText}"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            <TextBlock Text="{Binding SelectedFileInfoText}"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
     </Grid>
 </UserControl>

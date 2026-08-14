@@ -9,7 +9,7 @@ if ([string]::IsNullOrWhiteSpace($tag)) {
 
 $changelogPath = "./CHANGELOG/v3/${tag}/CHANGELOG.md"
 $releaseNotePath = "./release-note.md"
-$outDir = "./out"
+$outDir = "./artifacts/release/output"
 
 if (-not (Test-Path $outDir)) {
     throw "Output directory not found: $outDir"
@@ -23,7 +23,7 @@ if (-not $files) {
 $downloadSummary = @"
 **下载链接**
 
-| 文件名 | GitHub | SECTL高速 |
+| 文件名 | GitHub | SECTL 高速 |
 | --- | --- | --- |
 "@
 
@@ -35,22 +35,20 @@ foreach ($file in $files) {
 
 $md5Summary = @"
 > [!important]
-> 下载时请核对文件 MD5。
+> 下载时请核对文件 SHA256。
 
-| 文件名 | MD5 |
+<details>
+<summary>展开 SHA256 </summary>
+
+| 文件名 | SHA256 |
 | --- | --- |
 "@
 
-$hashes = [ordered]@{}
 foreach ($file in $files) {
-    $hash = (Get-FileHash $file.FullName -Algorithm MD5).Hash
-    $hashes[$file.Name] = $hash
-
+    $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash
     $md5Summary += "`n| $($file.Name) | ``$hash`` |"
 }
-
-$json = ConvertTo-Json $hashes -Compress
-$md5Summary += "`n`n<!-- SECRANDOM_PKG_MD5 $json -->"
+$md5Summary += "`n`n</details>"
 
 $changelog = if (Test-Path $changelogPath) {
     Get-Content $changelogPath -Raw

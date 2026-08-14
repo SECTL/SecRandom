@@ -24,7 +24,8 @@ SecRandom/Views/SettingsPages/
 |-- About/                                # settings.about: about page with external links
 |-- Linkage/                              # settings.linkage: linkage settings
 |-- More/                                 # settings.more: more settings
-|-- Update/                               # settings.update: update settings
+|-- Plugins/                              # settings.plugin: local SRPX plugin management
+|-- Update/                               # settings.update: shared update settings
 |-- LogViewer/                            # settings.logs: hidden log viewer
 ```
 
@@ -46,7 +47,8 @@ SecRandom/Views/SettingsPages/
 | Personalized music library | `Personalized/MusicSettingsPage.axaml(.cs)` | Page ID `settings.personalized.music`; imports, deletes, and previews managed MP3/WAV/FLAC tracks. |
 | Linkage settings | `Linkage/LinkageSettingsPage.axaml(.cs)` | Top-level `settings.linkage` entry. |
 | More settings | `More/MoreSettingsPage.axaml(.cs)` | `settings.more` top-level entry. |
-| Update settings | `Update/UpdateSettingsPage.axaml(.cs)` | `settings.update` bottom-nav entry. |
+| Plugins | `Plugins/PluginsSettingsPage.axaml(.cs)` | Desktop-only `settings.plugin` page; left list splits into 已安装/市场, stages local `.srpx` packages, shows load status, and toggles plugin enablement for the next restart. Plugin README renders through Core `MarkdownConvertHelper` + `Styles/RichTextStyles.axaml`. |
+| Update settings | `Update/UpdateSettingsPage.axaml(.cs)` | Shared `settings.update` bottom-nav entry for desktop and mobile. |
 | Notification settings | `Notification/VoiceSettingsPage.axaml(.cs)` etc. | Voice/music and notification channel entries under `settings.notification`. |
 | History management | `History/HistoryManagementSettingsPage.axaml(.cs)` | Clears roll-call/lottery histories through active-profile or named-profile handlers; `settings.history.management`. |
 | Log viewer | `LogViewer/LogViewerSettingsPage.axaml(.cs)` | Hidden page `settings.logs`; opened from the settings shell more-options menu. |
@@ -57,15 +59,18 @@ SecRandom/Views/SettingsPages/
 ## CONVENTIONS
 
 - Every non-debug settings page needs `[PageInfo]`, Host registration, and a matching localization folder under `SecRandom/Langs/SettingsPages/` when user-facing text is localized.
+- Every new or changed settings-page user-facing string must be translated in the matching `Resources.resx`, `Resources.en-US.resx`, and `Resources.ja-JP.resx` files. Simplified Chinese, English, and Japanese are all required; no language may rely on a fallback key.
 - Privacy page localization lives under `General/Privacy/` and is registered like other settings pages with only `Resources.resx` + `Resources.Designer.cs` in the project file.
 - Chinese settings-page i18n values must not use the Chinese full stop (`。`).
 - Settings-page explanation values (`*_D`, including `S_*_D` and `C_*_D`) must not use sentence-ending or sentence-separating full stops (`。` or `.`); preserve technical dots in file names, domains, process names, and version identifiers.
 - Page IDs here follow `settings.xxx` or `settings.group.xxx`; historical grouping notes live in `docs/settings-pages-plan.md`.
+- `settings.plugin` uses `IPluginManager` only. Do not restore the retired plugin-market/catalog abstractions until a signed catalog protocol is implemented.
 - Group membership is owned by the `groupId` in `[PageInfo(...)]` and by `services.AddGroup(...)` in `BuildHost()`; do not handwire grouping in the page.
 - Pages usually resolve `ViewModelBase` via `IAppHost.GetService<ViewModelBase>()`, set `DataContext = this`, and expose `Settings` from `ViewModel.Config.*`.
 - Basic-settings platform switches must route through `DesktopIntegrationService`; do not manipulate registry keys, XDG desktop files, or macOS launch services from the settings page. Revert a switch when the platform operation fails.
 - Security settings must display credential state before factor selection. Password, TOTP, and USB setup are command-driven; selected factors use the shared `MultiComboBox` pattern with plain option data, and protected-operation controls are driven by `ISecurityService` state.
 - Settings pages using `MultiComboBox` must subscribe to the backing settings model on construction and every `Loaded` event, unsubscribe on `Unloaded`, and save at the selection mutation boundary. `MultiComboBox` mutates its bound `SelectedItems` collection directly, so persist multi-select changes from that collection's `CollectionChanged` event rather than `SelectionChanged`. Follow `SecuritySettingsPage` for lifecycle and use plain option-data binding.
+- Searchable setting rows must use a stable `x:Name` matching their active `S_` localization ID; nested rows may use the visual-tree fallback, while stale localization entries should not be exposed as searchable targets.
 - V2-parity settings pages should keep the same `ScrollViewer` + `StackPanel.page-container animated-intro` + `FASettingsExpander` rhythm as existing settings pages.
 - A page containing multiple settings categories should use `IconText` category headings followed by sibling `FASettingsExpander` rows. Override groups follow the committed draw-settings pattern: one outer `FASettingsExpander` whose direct rows are `FASettingsExpanderItem` controls; never nest another `FASettingsExpander` inside it.
 - Default notification settings follow the default draw-settings layout: category `IconText` headings with sibling non-grouping `FASettingsExpander` rows. Only per-draw notification pages use collapsible override groups.

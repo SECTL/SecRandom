@@ -19,13 +19,20 @@
                                Text="{x:Static lsa:Resources.S_Ack_Contributors}"
                                Theme="{StaticResource SubtitleTextBlockStyle}" />
                     
-                    <Button Grid.Column="1"
-                            IsEnabled="{Binding CanRefreshContributors}"
-                            ToolTip.Tip="{x:Static lsa:Resources.C_Refresh}"
-                            Theme="{StaticResource TransparentButton}"
-                            Click="RefreshContributors_OnClick">
-                        <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseFilled}" />
-                    </Button>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                        <Button IsEnabled="{Binding CanRefreshContributors}"
+                                ToolTip.Tip="{x:Static lsa:Resources.C_Refresh}"
+                                Theme="{StaticResource TransparentButton}"
+                                Click="RefreshContributors_OnClick">
+                            <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseFilled}" />
+                        </Button>
+                        
+                        <Button ToolTip.Tip="{x:Static lsa:Resources.C_Close}"
+                                Theme="{StaticResource TransparentButton}"
+                                Click="CloseDrawer_OnClick">
+                            <sr:FluentIcon Glyph="{sr:Fi DismissRegular}" />
+                        </Button>
+                    </StackPanel>
                 </Grid>
                 
                 <TextBlock Text="{x:Static lsa:Resources.S_Ack_Contributors_D}"
@@ -96,8 +103,8 @@
                     </Panel.OpacityMask>
                     
                     <Border Background="#0d1111" />
-                    
-                    <Panel MaxWidth="{StaticResource PageContainerWidth}" ClipToBounds="True">
+
+                    <Panel MaxWidth="{StaticResource PageContainerWidth}">
                         <Panel.Styles>
                             <Style Selector="Panel">
                                 <Style.Animations>
@@ -113,7 +120,7 @@
                                 </Style.Animations>
                             </Style>
                         </Panel.Styles>
-                        
+
                         <Border Width="{Binding $self.Bounds.Height}"
                                 HorizontalAlignment="Left"
                                 Margin="-150 -100 0 0">
@@ -124,10 +131,10 @@
                                 </RadialGradientBrush>
                             </Border.Background>
                         </Border>
-                        
+
                         <Border Width="{Binding $self.Bounds.Height}"
                                 HorizontalAlignment="Right"
-                                Margin="0 0 100 -50">
+                                Margin="0 0 100 0">
                             <Border.Background>
                                 <RadialGradientBrush Center="50%, 50%">
                                     <GradientStop Offset="0.2" Color="#ff0c0e1f" />
@@ -135,13 +142,24 @@
                                 </RadialGradientBrush>
                             </Border.Background>
                         </Border>
+
                     </Panel>
-                    
+
                     <Border Background="Transparent"
                             HorizontalAlignment="Center"
                             MaxWidth="{StaticResource PageContainerWidth}"
                             VerticalAlignment="Top">
-                        <Image Source="/Assets/Banners/secrandom-banner.png" Stretch="Uniform" />
+                        <Border.OpacityMask>
+                            <LinearGradientBrush StartPoint="0%, 0%"
+                                                 EndPoint="100%, 0%">
+                                <GradientStop Color="#80ffffff" Offset="0.0" />
+                                <GradientStop Color="#ffffffff" Offset="0.08" />
+                                <GradientStop Color="#ffffffff" Offset="0.92" />
+                                <GradientStop Color="#80ffffff" Offset="1.0" />
+                            </LinearGradientBrush>
+                        </Border.OpacityMask>
+
+                        <Image Source="{Binding BannerSource}" Stretch="Uniform" />
                     </Border>
                 </Panel>
 
@@ -264,7 +282,7 @@
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem Content="{x:Static lsa:Resources.S_Ack_Contributors}"
+                 <fa:FASettingsExpanderItem x:Name="S_Ack_Contributors" Content="{x:Static lsa:Resources.S_Ack_Contributors}"
                                            Description="{x:Static lsa:Resources.S_Ack_Contributors_D}"
                                            IsClickEnabled="True"
                                            Click="Contributors_OnClick" />

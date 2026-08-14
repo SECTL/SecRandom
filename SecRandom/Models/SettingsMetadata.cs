@@ -11,6 +11,8 @@ public class SettingsMetadata
     public string CategoryName { get; set; } = string.Empty;
 
     public string Id { get; set; } = string.Empty;
+    public string ControlId { get; set; } = string.Empty;
+    public string CategoryControlId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
 

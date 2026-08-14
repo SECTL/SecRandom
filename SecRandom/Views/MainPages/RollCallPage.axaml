@@ -1,20 +1,14 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:SecRandom.ViewModels.MainPages"
+             xmlns:local="using:SecRandom.Views.MainPages"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:langs="using:SecRandom.Langs.MainPages.RollCall"
              xmlns:system="clr-namespace:System;assembly=System.Runtime"
-             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="720"
+             xmlns:vm="using:SecRandom.ViewModels.MainPages"
              x:Class="SecRandom.Views.MainPages.RollCallPage"
-             x:DataType="vm:RollCallPageViewModel"
-             Loaded="OnLoaded"
-             Unloaded="OnUnloaded"
-             x:Name="RootControl">
+             x:DataType="vm:RollCallPageViewModel">
     <UserControl.Resources>
-        <DataTemplate x:Key="RollCallControlPanelTemplate"
-                      DataType="vm:RollCallPageViewModel">
+        <DataTemplate x:Key="RollCallControlPanelTemplate" DataType="vm:RollCallPageViewModel">
             <Viewbox Width="234">
                 <StackPanel Width="180" Spacing="6">
                     <StackPanel.Resources>
@@ -22,26 +16,21 @@
                             <system:Double x:Key="SizeBase">36</system:Double>
                         </ResourceDictionary>
                     </StackPanel.Resources>
-                    
                     <StackPanel.Styles>
                         <Style Selector="StackPanel > Button">
                             <Setter Property="Height" Value="{DynamicResource SizeBase}" />
                             <Setter Property="HorizontalAlignment" Value="Stretch" />
                         </Style>
-                        
                         <Style Selector="StackPanel > ComboBox">
                             <Setter Property="Height" Value="{DynamicResource SizeBase}" />
                             <Setter Property="HorizontalAlignment" Value="Stretch" />
                         </Style>
                     </StackPanel.Styles>
-                    
+
                     <Button Content="{x:Static langs:Resources.C_Reset}"
                             IsVisible="{Binding MoreSettings.RollCallResetButton}"
-                            Command="{Binding ResetDrawHistoryCommand}"/>
-                    
-                    <Grid HorizontalAlignment="Stretch"
-                          ColumnDefinitions="Auto * Auto"
-                          ColumnSpacing="8">
+                            Command="{Binding ResetDrawHistoryCommand}" />
+                    <Grid HorizontalAlignment="Stretch" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
                         <Grid.Styles>
                             <Style Selector="Grid > Button">
                                 <Setter Property="Width" Value="{DynamicResource SizeBase}" />
@@ -51,240 +40,50 @@
                                 <Setter Property="FontSize" Value="24" />
                             </Style>
                         </Grid.Styles>
-                        
-                        <sr:AcceleratingRepeatButton Grid.Column="0"
-                                                      Content="-"
+                        <sr:AcceleratingRepeatButton Grid.Column="0" Content="-"
                                                       IsEnabled="{Binding CanDecreaseCount}"
-                                                      Command="{Binding DecreaseCountCommand}"/>
-                        
-                        <TextBlock Grid.Column="1"
-                                   Text="{Binding DrawCount}"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   FontSize="16" />
-                        
-                        <sr:AcceleratingRepeatButton Grid.Column="2"
-                                                      Content="+"
+                                                      Command="{Binding DecreaseCountCommand}" />
+                        <TextBlock Grid.Column="1" Text="{Binding DrawCount}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" />
+                        <sr:AcceleratingRepeatButton Grid.Column="2" Content="+"
                                                       IsEnabled="{Binding CanIncreaseCount}"
                                                       Command="{Binding IncreaseCountCommand}" />
                     </Grid>
-                    
-                    <Button Classes="accent"
-                            Content="{Binding DrawButtonText}"
+                    <Button Classes="accent" Content="{Binding DrawButtonText}"
                             IsVisible="{Binding MoreSettings.RollCallStartButton}"
-                            IsEnabled="{Binding CanStartDraw}"
-                            Command="{Binding StartDrawCommand}" />
-                    
+                            IsEnabled="{Binding CanStartDraw}" Command="{Binding StartDrawCommand}" />
                     <ComboBox IsVisible="{Binding MoreSettings.RollCallListSelector}"
-                              ItemsSource="{Binding StudentListNames}"
-                              SelectedItem="{Binding SelectedStudentListName}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding}"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           TextAlignment="Center" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
+                              ItemsSource="{Binding StudentListNames}" SelectedItem="{Binding SelectedStudentListName}">
+                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" /></DataTemplate></ComboBox.ItemTemplate>
                     </ComboBox>
-            
                     <ComboBox IsVisible="{Binding MoreSettings.RollCallRangeSelector}"
-                              ItemsSource="{Binding GroupOptions}"
-                              SelectedItem="{Binding SelectedGroup}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding}"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           TextAlignment="Center" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
+                              ItemsSource="{Binding GroupOptions}" SelectedItem="{Binding SelectedGroup}">
+                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" /></DataTemplate></ComboBox.ItemTemplate>
                     </ComboBox>
-            
                     <ComboBox IsVisible="{Binding MoreSettings.RollCallGenderSelector}"
-                              ItemsSource="{Binding GenderOptions}"
-                              SelectedItem="{Binding SelectedGender}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding}"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           TextAlignment="Center" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
+                              ItemsSource="{Binding GenderOptions}" SelectedItem="{Binding SelectedGender}">
+                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" /></DataTemplate></ComboBox.ItemTemplate>
                     </ComboBox>
-            
                     <Button Content="{x:Static langs:Resources.C_ShowRemainingList}"
                             IsVisible="{Binding MoreSettings.RollCallRemainingButton}"
                             Click="RemainingListButton_OnClick" />
-            
                     <Viewbox HorizontalAlignment="Stretch" StretchDirection="DownOnly">
-                        <TextBlock Text="{Binding CountSummary}"
-                                   IsVisible="{Binding MoreSettings.RollCallQuantityLabel}"
-                                   HorizontalAlignment="Center"
-                                   TextAlignment="Center" />
+                        <TextBlock Text="{Binding CountSummary}" IsVisible="{Binding MoreSettings.RollCallQuantityLabel}"
+                                   HorizontalAlignment="Center" TextAlignment="Center" />
                     </Viewbox>
                 </StackPanel>
             </Viewbox>
         </DataTemplate>
-        
-        <DataTemplate x:Key="RollCallAvatarTemplate"
-                      DataType="vm:RollCallResultItem">
-            <Border Width="72" Height="72"
-                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                    CornerRadius="8">
-                <Grid>
-                    <Border CornerRadius="8" IsVisible="{Binding IsImageVisible}">
-                        <Border.Background>
-                            <ImageBrush Source="{Binding Image}" Stretch="UniformToFill" />
-                        </Border.Background>
-                    </Border>
-                    <TextBlock Text="{Binding Initial}"
-                               IsVisible="{Binding IsPlaceholderVisible}"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               FontSize="36"
-                               FontWeight="SemiBold"
-                               Foreground="{Binding TextBrush}" />
-                </Grid>
-            </Border>
-        </DataTemplate>
     </UserControl.Resources>
-
-    <UserControl.Styles>
-        <Style Selector="TextBlock.result-name">
-            <Setter Property="TextAlignment" Value="Center" />
-            <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="MaxWidth" Value="860" />
-        </Style>
-
-        <Style Selector="Border.result-card">
-            <Setter Property="MinWidth" Value="180" />
-            <Setter Property="MinHeight" Value="96" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="22 16" />
-            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-        </Style>
-    </UserControl.Styles>
-
-    <Grid ColumnDefinitions="Auto,*,Auto"
-          RowDefinitions="*"
-          MinHeight="560">
-        <Border Grid.Column="0" Margin="0 0 24 24"
-                HorizontalAlignment="Left" VerticalAlignment="Bottom"
+    <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="*" MinHeight="560">
+        <Border Grid.Column="0" Margin="0,0,24,24" HorizontalAlignment="Left" VerticalAlignment="Bottom"
                 IsVisible="{Binding IsControlPanelOnLeft}">
-            <ContentControl Content="{Binding}"
-                            ContentTemplate="{StaticResource RollCallControlPanelTemplate}" />
+            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource RollCallControlPanelTemplate}" />
         </Border>
-
-        <Grid Grid.Column="1"
-              ClipToBounds="True">
-            <Grid Grid.Row="0">
-                <TextBlock Classes="result-name"
-                           IsVisible="{Binding !IsResultVisible}"
-                           Text="{Binding ResultText}"
-                           Foreground="{Binding ReminderBrush}"
-                           FontSize="{Binding ReminderFontSize}"
-                           FontFamily="{Binding ResultFontFamily}"
-                           FontWeight="SemiBold" />
-
-                <ScrollViewer IsVisible="{Binding IsResultVisible}"
-                                HorizontalScrollBarVisibility="Disabled"
-                                VerticalScrollBarVisibility="Auto"
-                                VerticalContentAlignment="Center">
-                    <ItemsControl x:Name="ResultPresenter"
-                                  ItemsSource="{Binding ResultItems}"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal"
-                                           HorizontalAlignment="Center" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:RollCallResultItem">
-                                <Grid Margin="8">
-                                    <Border Classes="result-card"
-                                            IsVisible="{Binding IsCardStyle}"
-                                            BorderBrush="{Binding AccentBrush}"
-                                            Opacity="{Binding Opacity}">
-                                        <StackPanel Orientation="{Binding ImageLayoutOrientation}"
-                                                    Spacing="6"
-                                                    HorizontalAlignment="Center">
-                                            <ContentControl Content="{Binding}"
-                                                            ContentTemplate="{StaticResource RollCallAvatarTemplate}"
-                                                            IsVisible="{Binding IsImageBeforeText}" />
-                                            <StackPanel Spacing="6" HorizontalAlignment="Center">
-                                                <TextBlock Text="{Binding DisplayText}"
-                                                           Classes="result-name"
-                                                           FontSize="{Binding #RootControl.ViewModel.ResultFontSize}"
-                                                           FontFamily="{Binding #RootControl.ViewModel.ResultFontFamily}"
-                                                           FontWeight="SemiBold" />
-                                                <TextBlock Text="{Binding Tags}"
-                                                           IsVisible="{Binding IsTagsVisible}"
-                                                           HorizontalAlignment="Center"
-                                                           Opacity="0.72"
-                                                           FontSize="13" />
-                                                <TextBlock Text="{Binding WeightText}"
-                                                           IsVisible="{Binding IsWeightVisible}"
-                                                           HorizontalAlignment="Center"
-                                                           Opacity="0.62"
-                                                           FontSize="12" />
-                                            </StackPanel>
-                                            <ContentControl Content="{Binding}"
-                                                            ContentTemplate="{StaticResource RollCallAvatarTemplate}"
-                                                            IsVisible="{Binding IsImageAfterText}" />
-                                        </StackPanel>
-                                    </Border>
-
-                                    <StackPanel IsVisible="{Binding !IsCardStyle}"
-                                                Orientation="{Binding ImageLayoutOrientation}"
-                                                Spacing="6"
-                                                HorizontalAlignment="Center">
-                                        <ContentControl Content="{Binding}"
-                                                        ContentTemplate="{StaticResource RollCallAvatarTemplate}"
-                                                        IsVisible="{Binding IsImageBeforeText}" />
-                                        <StackPanel Spacing="6" HorizontalAlignment="Center">
-                                            <TextBlock Text="{Binding DisplayText}"
-                                                       Classes="result-name"
-                                                       Foreground="{Binding TextBrush}"
-                                                       Opacity="{Binding Opacity}"
-                                                       FontSize="{Binding #RootControl.ViewModel.ResultFontSize}"
-                                                       FontFamily="{Binding #RootControl.ViewModel.ResultFontFamily}"
-                                                       FontWeight="SemiBold" />
-                                            <TextBlock Text="{Binding Tags}"
-                                                       IsVisible="{Binding IsTagsVisible}"
-                                                       HorizontalAlignment="Center"
-                                                       Opacity="0.72"
-                                                       FontSize="13" />
-                                            <TextBlock Text="{Binding WeightText}"
-                                                       IsVisible="{Binding IsWeightVisible}"
-                                                       HorizontalAlignment="Center"
-                                                       Opacity="0.62"
-                                                       FontSize="12" />
-                                        </StackPanel>
-                                        <ContentControl Content="{Binding}"
-                                                        ContentTemplate="{StaticResource RollCallAvatarTemplate}"
-                                                        IsVisible="{Binding IsImageAfterText}" />
-                                    </StackPanel>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </Grid>
-        </Grid>
-
-        <Border Grid.Column="2" Margin="0 0 24 24"
-                HorizontalAlignment="Right" VerticalAlignment="Bottom"
+        <local:RollCallResultPresenter Grid.Column="1" DataContext="{Binding}" />
+        <Border Grid.Column="2" Margin="0,0,24,24" HorizontalAlignment="Right" VerticalAlignment="Bottom"
                 IsVisible="{Binding IsControlPanelOnRight}">
-            <ContentControl Content="{Binding}"
-                            ContentTemplate="{StaticResource RollCallControlPanelTemplate}" />
+            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource RollCallControlPanelTemplate}" />
         </Border>
     </Grid>
 </UserControl>

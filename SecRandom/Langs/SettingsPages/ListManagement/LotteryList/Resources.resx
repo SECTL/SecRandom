@@ -45,6 +45,9 @@
     <data name="C_ImportList" xml:space="preserve">
         <value>导入奖池</value>
     </data>
+    <data name="C_ExportList" xml:space="preserve">
+        <value>导出奖池</value>
+    </data>
     <data name="C_AddPrize" xml:space="preserve">
         <value>添加奖品</value>
     </data>
@@ -273,4 +276,37 @@
     <data name="K_TagsColumns" xml:space="preserve">
         <value>标签|tag|tags|类别|分类|category</value>
     </data>
+    <data name="C_ExportTitle" xml:space="preserve"><value>导出抽奖奖池</value></data>
+    <data name="C_FileExport" xml:space="preserve"><value>导出为文件</value></data>
+    <data name="C_ExportToFile" xml:space="preserve"><value>导出为文件</value></data>
+    <data name="C_ExportSupportedFormats" xml:space="preserve"><value>支持 .xlsx 和 .csv 文件</value></data>
+    <data name="C_QrExport" xml:space="preserve"><value>二维码导出</value></data>
+    <data name="C_ExportToDevices" xml:space="preserve"><value>导出至其它设备</value></data>
+    <data name="C_StopQrExport" xml:space="preserve"><value>停止导出</value></data>
+    <data name="C_QrIdleHint" xml:space="preserve"><value>开始导出后，将显示可由其它设备扫描的二维码</value></data>
+    <data name="C_QrIdle" xml:space="preserve"><value>等待开始二维码传输</value></data>
+    <data name="C_QrGenerating" xml:space="preserve"><value>正在预生成全部二维码</value></data>
+    <data name="C_QrExporting" xml:space="preserve"><value>正在向其它设备发送</value></data>
+    <data name="C_QrStopped" xml:space="preserve"><value>二维码导出已停止</value></data>
+    <data name="C_FileExported" xml:space="preserve"><value>奖池已导出为文件</value></data>
+    <data name="M_QrTransferFailed" xml:space="preserve"><value>二维码传输失败：{0}</value></data>
+    <data name="C_TransferFrames" xml:space="preserve"><value>传输帧</value></data>
+    <data name="C_TransferSpeed" xml:space="preserve"><value>切换速度</value></data>
+    <data name="C_TransferSize" xml:space="preserve"><value>数据大小</value></data>
+    <data name="C_TransferRecords" xml:space="preserve"><value>记录数</value></data>
+    <data name="C_TransferSession" xml:space="preserve"><value>会话</value></data>
+    <data name="C_TransferStatus" xml:space="preserve"><value>状态</value></data>
+    <data name="C_ImportSource" xml:space="preserve"><value>导入方式</value></data>
+    <data name="C_ImportFromFile" xml:space="preserve"><value>从 Excel/CSV 文件导入</value></data>
+    <data name="C_ImportFromQr" xml:space="preserve"><value>从二维码导入</value></data>
+    <data name="C_QrImport" xml:space="preserve"><value>二维码导入</value></data>
+    <data name="C_ScanQrCode" xml:space="preserve"><value>扫描二维码</value></data>
+    <data name="C_QrImportReady" xml:space="preserve"><value>等待扫描二维码</value></data>
+    <data name="C_QrImporting" xml:space="preserve"><value>正在接收二维码数据</value></data>
+    <data name="C_TransferProgress" xml:space="preserve"><value>传输进度</value></data>
+    <data name="C_TransferReceived" xml:space="preserve"><value>已传输/总大小</value></data>
+    <data name="C_TransferFramesDetail" xml:space="preserve"><value>新帧/重复/无效</value></data>
+    <data name="C_TransferElapsed" xml:space="preserve"><value>已用时间</value></data>
+    <data name="M_QrNotFound" xml:space="preserve"><value>没有识别到名单二维码</value></data>
+    <data name="M_QrWrongType" xml:space="preserve"><value>该二维码不是抽奖奖池</value></data>
 </root>

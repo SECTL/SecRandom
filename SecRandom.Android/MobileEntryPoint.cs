@@ -1,10 +1,13 @@
 using Android.Content;
+using Android.Content.PM;
 using Android.Content.Res;
 using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Avalonia;
 using Avalonia.Android;
+using CameraView;
+using CameraView.Platforms.Android;
 using SecRandom.Core.Abstraction;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
@@ -32,6 +35,7 @@ public class MobileApplication : AvaloniaAndroidApplication<App>
         {
             UpdateInstaller = new AndroidUpdateInstaller(),
             MediaPlayer = new AndroidMobileMediaPlayer(),
+            CameraDevices = new AndroidCameraDeviceCatalog(this),
             PathLauncher = AndroidDataDirectoryLauncher.TryOpenPath,
             StartupErrorLogger = exception =>
             {
@@ -84,14 +88,28 @@ public sealed class UpdateFileProvider : global::AndroidX.Core.Content.FileProvi
 [Activity(MainLauncher = true, Exported = true,
     Theme = "@style/Theme.AppCompat.DayNight.NoActionBar",
     ConfigurationChanges = global::Android.Content.PM.ConfigChanges.Orientation |
-                           global::Android.Content.PM.ConfigChanges.ScreenSize)]
+                           global::Android.Content.PM.ConfigChanges.ScreenSize |
+                           global::Android.Content.PM.ConfigChanges.UiMode)]
 [SupportedOSPlatform("android24.0")]
 public sealed class MainActivity : AvaloniaMainActivity
 {
     protected override void OnCreate(Bundle? savedInstanceState)
     {
+        var cameraProvider = new AndroidCameraProvider(BaseContext!);
+        CameraProviderFactory.RegisterProvider(cameraProvider);
+        CameraProviderFactory.RegisterOrientationFactory(
+            () => new AndroidDeviceOrientationProvider(BaseContext!));
         base.OnCreate(savedInstanceState);
+        CameraProviderFactory.SetAndroidActivity(this);
         // Keep the viewport stable; MobileViewHost shifts only the obscured content region.
         Window?.SetSoftInputMode(SoftInput.AdjustNothing);
+    }
+
+    public override void OnRequestPermissionsResult(int requestCode, string[]? permissions,
+        Permission[]? grantResults)
+    {
+        base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        var granted = grantResults is { Length: > 0 } && grantResults[0] == Permission.Granted;
+        CameraProviderFactory.NotifyAndroidPermissionResult(granted);
     }
 }

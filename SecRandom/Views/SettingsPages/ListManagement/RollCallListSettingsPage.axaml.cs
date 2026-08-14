@@ -15,6 +15,7 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
+using SecRandom.Langs.SettingsPages.ListManagement.RosterTransfer;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.RollCallList.Resources;
 
@@ -33,6 +34,7 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         IAppHost.GetService<IHistoryQueryService>();
 
     public bool IsDesktop => App.IsDesktop;
+    public string ExportListLabel => RosterTransferText.Get("C_Export");
 
     public RollCallListSettingsPage()
     {
@@ -277,6 +279,20 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         var view = new RollCallListImportView(SelectedStudentListName, OnStudentsImported);
         SettingsView.Current?.OpenDrawer(view);
         _logger.LogInformation("打开点名名单导入面板：目标名单={ListName}。", SelectedStudentListName);
+    }
+
+    private void ExportButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (SelectedStudentList is null)
+        {
+            this.ShowWarningToast(LR.M_SelectListFirst);
+            return;
+        }
+
+        SettingsView.Current?.OpenDrawer(new RollCallListExportView(SelectedStudentListName,
+            SelectedStudentList.Students.ToList()));
+        _logger.LogInformation("打开点名名单导出面板：名单={ListName}，成员数={Count}。", SelectedStudentListName,
+            SelectedStudentList.Students.Count);
     }
 
     private async void AddMemberButton_OnClick(object? sender, RoutedEventArgs e)

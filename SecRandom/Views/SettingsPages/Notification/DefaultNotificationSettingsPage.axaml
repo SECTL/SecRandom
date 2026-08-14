@@ -8,9 +8,9 @@
              x:DataType="notification:DefaultNotificationSettingsPage">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro settings">
-            <sr:IconText Text="{Binding NotificationWindowSettingsTitle}" Glyph="{sr:Fi WindowFilled}" Margin="0 0 0 4" />
+            <sr:IconText x:Name="S_Default" Text="{Binding NotificationWindowSettingsTitle}" Glyph="{sr:Fi WindowFilled}" Margin="0 0 0 4" />
 
-            <fa:FASettingsExpander Header="{Binding WindowPositionTitle}"
+            <fa:FASettingsExpander x:Name="S_Default_WindowPosition" Header="{Binding WindowPositionTitle}"
                                    Description="{Binding WindowPositionDescription}"
                                    IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -24,7 +24,7 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{Binding EnabledMonitorTitle}"
+            <fa:FASettingsExpander x:Name="S_Default_EnabledMonitor" Header="{Binding EnabledMonitorTitle}"
                                    Description="{Binding EnabledMonitorDescription}"
                                    IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -41,7 +41,7 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{Binding OffsetTitle}"
+            <fa:FASettingsExpander x:Name="S_Default_Offset" Header="{Binding OffsetTitle}"
                                    Description="{Binding OffsetDescription}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PositionToBackFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -52,7 +52,7 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{Binding TransparencyTitle}"
+            <fa:FASettingsExpander x:Name="S_Default_Transparency" Header="{Binding TransparencyTitle}"
                                     Description="{Binding TransparencyDescription}"
                                     IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -73,7 +73,7 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText Text="{Binding NotificationServiceTitle}" Glyph="{sr:Fi CommentNoteFilled}" Margin="0 0 0 4" />
 
-            <fa:FASettingsExpander Header="{Binding NotificationServiceTypeTitle}"
+            <fa:FASettingsExpander x:Name="S_Default_NotificationServiceType" Header="{Binding NotificationServiceTypeTitle}"
                                    Description="{Binding NotificationServiceTypeDescription}"
                                    IconSource="{sr:FluentIconSource {sr:Fi CommentNoteFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -85,7 +85,7 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{Binding NotificationServiceFailureFallbackTitle}"
+            <fa:FASettingsExpander x:Name="S_Default_NotificationServiceFailureFallback" Header="{Binding NotificationServiceFailureFallbackTitle}"
                                      Description="{Binding NotificationServiceFailureFallbackDescription}"
                                       IsVisible="{Binding UsesExternalNotificationServiceOnly}"
                                      IconSource="{sr:FluentIconSource {sr:Fi ArrowReplyFilled}}">
@@ -94,7 +94,7 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{Binding DisplayDurationTitle}"
+            <fa:FASettingsExpander x:Name="S_Default_DisplayDuration" Header="{Binding DisplayDurationTitle}"
                                    Description="{Binding DisplayDurationDescription}"
                                    IconSource="{sr:FluentIconSource {sr:Fi TimePickerFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -102,7 +102,7 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{Binding UseMainWindowWhenExceedThresholdTitle}"
+            <fa:FASettingsExpander x:Name="S_Default_UseMainWindowWhenExceedThreshold" Header="{Binding UseMainWindowWhenExceedThresholdTitle}"
                                    Description="{Binding UseMainWindowWhenExceedThresholdDescription}"
                                    IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -110,7 +110,7 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{Binding MainWindowDisplayThresholdTitle}"
+            <fa:FASettingsExpander x:Name="S_Default_MainWindowDisplayThreshold" Header="{Binding MainWindowDisplayThresholdTitle}"
                                    Description="{Binding MainWindowDisplayThresholdDescription}"
                                    IconSource="{sr:FluentIconSource {sr:Fi NumberSymbolFilled}}">
                 <fa:FASettingsExpander.Footer>

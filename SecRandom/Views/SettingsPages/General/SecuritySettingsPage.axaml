@@ -13,10 +13,11 @@
              Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro settings">
-            <sr:IconText Text="{x:Static lsp:Resources.S_Credentials}" Glyph="{sr:Fi ShieldKeyholeFilled}"
+            <sr:IconText x:Name="S_Credentials" Text="{x:Static lsp:Resources.S_Credentials}" Glyph="{sr:Fi ShieldKeyholeFilled}"
                          Margin="0 0 0 4" />
 
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Enabled}"
+            <fa:FASettingsExpander x:Name="S_Enabled"
+                                    Header="{x:Static lsp:Resources.S_Enabled}"
                                    Description="{x:Static lsp:Resources.S_Enabled_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi ShieldKeyholeFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -26,7 +27,8 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Password}"
+            <fa:FASettingsExpander x:Name="S_Password"
+                                    Header="{x:Static lsp:Resources.S_Password}"
                                    Description="{x:Static lsp:Resources.S_Password_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PasswordFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -44,7 +46,8 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Totp}"
+            <fa:FASettingsExpander x:Name="S_Totp"
+                                    Header="{x:Static lsp:Resources.S_Totp}"
                                    Description="{x:Static lsp:Resources.S_Totp_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi ShieldKeyholeFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -53,7 +56,8 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Usb}"
+            <fa:FASettingsExpander x:Name="S_Usb"
+                                    Header="{x:Static lsp:Resources.S_Usb}"
                                    Description="{x:Static lsp:Resources.S_Usb_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi UsbStickFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -65,7 +69,8 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText Text="{x:Static lsp:Resources.S_Factors}" Glyph="{sr:Fi PasswordFilled}" Margin="0 0 0 4" />
 
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_Factors}"
+            <fa:FASettingsExpander x:Name="S_Factors"
+                                    Header="{x:Static lsp:Resources.S_Factors}"
                                     Description="{x:Static lsp:Resources.S_Factors_D}"
                                     IconSource="{sr:FluentIconSource {sr:Fi PasswordFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -75,7 +80,8 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_RequireAll}"
+            <fa:FASettingsExpander x:Name="S_RequireAll"
+                                    Header="{x:Static lsp:Resources.S_RequireAll}"
                                    Description="{x:Static lsp:Resources.S_RequireAll_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi ShieldKeyholeFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -87,9 +93,10 @@
             </fa:FASettingsExpander>
 
             <Separator Margin="0 12 0 4" />
-            <sr:IconText Text="{x:Static lsp:Resources.S_Protection}" Glyph="{sr:Fi LockClosedFilled}" Margin="0 0 0 4" />
+            <sr:IconText x:Name="S_Protection" Text="{x:Static lsp:Resources.S_Protection}" Glyph="{sr:Fi LockClosedFilled}" Margin="0 0 0 4" />
 
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_WindowOperations}"
+            <fa:FASettingsExpander x:Name="S_WindowOperations"
+                                    Header="{x:Static lsp:Resources.S_WindowOperations}"
                                    Description="{x:Static lsp:Resources.S_WindowOperations_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
                 <CheckBox Content="{x:Static lsp:Resources.C_OpenSettings}"
@@ -129,7 +136,8 @@
                           IsEnabled="{Binding CanEditProtectedOperations}" />
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_DrawOperations}"
+            <fa:FASettingsExpander x:Name="S_DrawOperations"
+                                    Header="{x:Static lsp:Resources.S_DrawOperations}"
                                    Description="{x:Static lsp:Resources.S_DrawOperations_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}">
                 <CheckBox Content="{x:Static lsp:Resources.C_RollCallStart}"

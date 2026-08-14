@@ -3,14 +3,16 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.ListManagement"
+             xmlns:controls="clr-namespace:SecRandom.Controls"
              xmlns:lr="clr-namespace:SecRandom.Langs.SettingsPages.ListManagement.RollCallList"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="720"
              x:Class="SecRandom.Views.SettingsPages.ListManagement.RollCallListImportView"
              x:DataType="local:RollCallListImportView">
-    <ScrollViewer Width="400">
-        <StackPanel Margin="16" Spacing="8">
+    <Grid Width="400" RowDefinitions="*,Auto">
+        <ScrollViewer Grid.Row="0">
+            <StackPanel Margin="16,16,16,8" Spacing="8">
             <TextBlock Text="{x:Static lr:Resources.C_ImportTitle}" Theme="{StaticResource TitleTextBlockStyle}" />
             <TextBlock Text="{Binding TargetListDescription}" TextWrapping="Wrap"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
@@ -21,21 +23,73 @@
                           IsClosable="False"
                           IsOpen="True" />
 
-            <GroupBox Header="{x:Static lr:Resources.C_SelectFile}">
+            <GroupBox Header="{Binding ImportSourceLabel}">
+                <ComboBox ItemsSource="{Binding ImportModes}"
+                          SelectedItem="{Binding SelectedImportModeOption, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Label}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </GroupBox>
+            <GroupBox IsVisible="{Binding IsFileImportMode}"
+                      Header="{x:Static lr:Resources.C_SelectFile}">
                 <StackPanel Spacing="4">
-                    <Button Content="{x:Static lr:Resources.C_SelectFileButton}" Click="SelectFileButton_OnClick" />
-                    
+                    <Button Classes="accent" Click="FileImportButton_OnClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <sr:FluentIcon Glyph="{sr:Fi FolderOpenFilled}" />
+                            <TextBlock Text="{x:Static lr:Resources.C_SelectFileButton}" />
+                        </StackPanel>
+                    </Button>
                     <TextBlock Text="{Binding SelectedFileName}"
                                TextWrapping="Wrap"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    
                     <TextBlock Text="{x:Static lr:Resources.C_SupportedFormats}"
                                TextWrapping="Wrap"
                                Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                 </StackPanel>
             </GroupBox>
-            
-            <GroupBox Header="{x:Static lr:Resources.C_ColumnMapping}">
+
+            <GroupBox IsVisible="{Binding IsQrImportMode}" Header="{Binding QrImportLabel}">
+                <StackPanel Spacing="10">
+                    <ComboBox IsVisible="{Binding HasCameraSelection}"
+                              ItemsSource="{Binding CameraOptions}"
+                              SelectedItem="{Binding SelectedCameraOption, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Label}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <Border Height="220" ClipToBounds="True" CornerRadius="4"
+                            IsVisible="{Binding IsCameraPreviewSupported}"
+                            Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                        <controls:RosterQrCameraPreview x:Name="CameraControl" />
+                    </Border>
+                    <ProgressBar IsVisible="{Binding IsQrTransferStatsVisible}" Minimum="0" Maximum="1" Value="{Binding QrProgress}" />
+                    <Grid IsVisible="{Binding IsQrTransferStatsVisible}" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="12">
+                        <StackPanel><TextBlock Classes="caption" Text="{Binding TransferProgressLabel}" /><TextBlock Text="{Binding QrProgressText}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Column="1"><TextBlock Classes="caption" Text="{Binding TransferSpeedLabel}" /><TextBlock Text="{Binding QrDecodeSpeedText}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Row="1"><TextBlock Classes="caption" Text="{Binding TransferReceivedLabel}" /><TextBlock Text="{Binding QrPayloadText}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="1"><TextBlock Classes="caption" Text="{Binding TransferFramesDetailLabel}" /><TextBlock Text="{Binding QrFramesText}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Row="2"><TextBlock Classes="caption" Text="{Binding TransferSessionLabel}" /><TextBlock Text="{Binding QrSessionText}" FontSize="18" /></StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="1"><TextBlock Classes="caption" Text="{Binding TransferElapsedLabel}" /><TextBlock Text="{Binding QrElapsedText}" FontSize="18" /></StackPanel>
+                    </Grid>
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox IsVisible="{Binding IsSessionCodeImportMode}" Header="{Binding SessionCodeImportModeLabel}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{Binding SessionCodeHint}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBox x:Name="SessionCodeInput" MaxLength="12" TextAlignment="Center"
+                             FontSize="17" TextChanged="SessionCodeInput_OnTextChanged" />
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox IsVisible="{Binding IsFileImportMode}"
+                      Header="{x:Static lr:Resources.C_ColumnMapping}">
                 <StackPanel Spacing="4">
                     <TextBlock Text="{x:Static lr:Resources.C_ColumnMapping_D}"
                                TextWrapping="Wrap"
@@ -64,7 +118,8 @@
                 </StackPanel>
             </GroupBox>
 
-            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+            <Border IsVisible="{Binding HasPreview}"
+                    BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                     BorderThickness="1" CornerRadius="4 4 0 0" ClipToBounds="True">
                 <DataGrid Height="150"
                           AutoGenerateColumns="False"
@@ -92,19 +147,20 @@
                 </DataGrid>
             </Border>
 
-            <Grid ColumnDefinitions="* Auto">
-                <TextBlock Grid.Column="0" VerticalAlignment="Center"
-                           Text="{Binding StatusText}" TextWrapping="Wrap"
-                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
-                    <Button Content="{x:Static lr:Resources.C_Cancel}" Click="CancelButton_OnClick" />
-                    <Button Classes="accent"
-                            Content="{x:Static lr:Resources.C_Import}"
-                            IsEnabled="{Binding CanImport}"
-                            Click="ImportButton_OnClick" />
-                </StackPanel>
-            </Grid>
-        </StackPanel>
-    </ScrollViewer>
+            </StackPanel>
+        </ScrollViewer>
+        <Grid Grid.Row="1" Margin="16,8,16,16" ColumnDefinitions="* Auto">
+            <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                       Text="{Binding StatusText}" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
+                <Button Content="{x:Static lr:Resources.C_Cancel}" Click="CancelButton_OnClick" />
+                <Button Classes="accent"
+                        Content="{x:Static lr:Resources.C_Import}"
+                        IsEnabled="{Binding CanImport}"
+                        Click="ImportButton_OnClick" />
+            </StackPanel>
+        </Grid>
+    </Grid>
 </UserControl>

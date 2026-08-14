@@ -1,17 +1,18 @@
-<img width="1800" height="766" alt="新版本" src="https://github.com/SECTL/SecRandom/blob/master/data/assets/icon/secrandom-release.png" />
+<img width="1800" height="766" alt="新版本" src="https://github.com/SECTL/SecRandom/blob/master/SecRandom/Assets/Banners/secrandom-banner-cn.png" />
 
 > [!caution]
 >
 > # 警告！当前版本为 Alpha 版本，请勿在生产环境使用
 >
-> **⚠️ 警告**：当前版本为 **Alpha 版本**，**请勿在生产环境使用**。功能已基本移植完成。当前版本可能存在未知Bug，仅供用户体验。使用中如遇问题，欢迎前往 GitHub Issues 反馈！
+> **⚠️ 警告**：当前版本为 **Alpha 版本**，**请勿在生产环境使用**。当前版本可能存在未知Bug，仅供用户体验。使用中如遇问题，欢迎前往 GitHub Issues 反馈！
 
-# v3.0 - Nonomi (十六夜野宫) alpha 1
+# v3.0.0- Nonomi (十六夜野宫) alpha 1
 
 ## 🚀 主要更新
 
 - 完成技术栈**重构**，从 **Python/PySide6/QFluentWidgets** 迁移至 **C#/.NET/Avalonia/FluentAvalonia**，提升跨平台能力、启动稳定性与长期可维护性
 - 新增 **可验证抽取证明**，支持本地可复现证明、公开校验数据和正式在线见证流程，便于复核抽取结果
+- 新增 **导出、导入名单/设置方式**，增加二维码、会话码导出名单至其它设备
 - 新增 **崩溃恢复**，能够在崩溃后显示报错信息，且能自动重启软件
 - 新增 **概览**，方便用户查看 **点名**、**抽奖** 的各个名单概览信息
 - 新增 **抽取动画**，v2的孤寡动画，生了两个动画，变成了一家三口

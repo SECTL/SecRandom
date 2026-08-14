@@ -221,6 +221,9 @@ public partial class MainWindow : FAAppWindow
         if (!UsesStoredWindowSettings)
             return;
 
+        if (e.CloseReason is WindowCloseReason.ApplicationShutdown or WindowCloseReason.OSShutdown)
+            return;
+
         SaveWindowSize();
         if (!UsesPrimaryWindowSettings)
             return;

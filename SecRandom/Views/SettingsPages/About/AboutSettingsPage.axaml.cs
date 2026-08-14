@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -12,6 +13,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -43,6 +45,7 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
         .GetServices<IHostedService>().OfType<OnlineStatusService>().First();
     private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
     public int OnlineUsersCount => OnlineStatusService.CachedOnlineCount;
+    public Bitmap BannerSource { get; } = LoadBanner();
     public ObservableCollection<GitHubContributor> Contributors { get; } = [];
 
     public bool IsRefreshingContributors
@@ -73,6 +76,18 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
     {
         DataContext = this;
         InitializeComponent();
+    }
+
+    private static Bitmap LoadBanner()
+    {
+        var fileName = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName switch
+        {
+            "zh" => "secrandom-banner-cn.png",
+            "ja" => "secrandom-banner-ja.png",
+            _ => "secrandom-banner-en.png"
+        };
+
+        return new Bitmap(AssetLoader.Open(new Uri($"avares://SecRandom/Assets/Banners/{fileName}")));
     }
 
     private void OrganizationIcon_OnPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -127,6 +142,11 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
     private async void RefreshContributors_OnClick(object? sender, RoutedEventArgs e)
     {
         await RefreshContributorsAsync();
+    }
+
+    private void CloseDrawer_OnClick(object? sender, RoutedEventArgs e)
+    {
+        SettingsView.Current?.CloseDrawer();
     }
 
     private void OpenContributorProfile_OnClick(object? sender, RoutedEventArgs e)

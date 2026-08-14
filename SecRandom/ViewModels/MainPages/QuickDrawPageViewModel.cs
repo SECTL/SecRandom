@@ -574,7 +574,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             BuildImage(student),
             StudentImageSettings.StudentImage,
             StudentImageSettings.StudentImagePosition,
-            BuildInitial(student));
+            AvatarInitialResolver.Resolve(student.Name, student.Id));
     }
 
     private QuickDrawResultItem CreateNotificationResultItem(string item)
@@ -650,12 +650,6 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
         try { return File.Exists(settings.ImagePath) ? new Bitmap(settings.ImagePath) : null; }
         catch { return null; }
-    }
-
-    private static string BuildInitial(Student student)
-    {
-        var text = string.IsNullOrWhiteSpace(student.Name) ? student.Id : student.Name;
-        return string.IsNullOrWhiteSpace(text) ? "?" : text.Trim()[0].ToString();
     }
 
     private async void StartCooldown()

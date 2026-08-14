@@ -10,6 +10,7 @@ using SecRandom.Extensions;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
 using SecRandom.Platforms;
+using SecRandom.Shared;
 #if SEC_RANDOM_PLATFORM_WINDOWS
 using SecRandom.Platforms.Windows;
 #elif SEC_RANDOM_PLATFORM_LINUX
@@ -28,6 +29,8 @@ internal sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // UiAccess startup reads the persisted topmost setting, so data-root selection must precede it.
+        Utils.PrepareDesktopDataRoot();
         if (!UiAccessStartup.ShouldContinue(args))
         {
             Environment.ExitCode = UiAccessStartup.BootstrapExitCode;
@@ -59,7 +62,8 @@ internal sealed class Program
     private static void ConfigurePlatformServices()
     {
 #if SEC_RANDOM_PLATFORM_WINDOWS
-        WindowsTouchKeyboardIntegration.Initialize();
+        if (OperatingSystem.IsWindows())
+            WindowsTouchKeyboardIntegration.Initialize();
         PlatformStartupContext.Set(new WindowsPlatformServiceRoot());
 #elif SEC_RANDOM_PLATFORM_LINUX
         PlatformStartupContext.Set(new LinuxPlatformServiceRoot());

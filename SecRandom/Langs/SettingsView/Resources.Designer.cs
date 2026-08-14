@@ -762,5 +762,14 @@ namespace SecRandom.Langs.SettingsView {
                 return ResourceManager.GetString("M_PageNotFound", resourceCulture);
             }
         }
+
+        public static string C_TransferFileExport => ResourceManager.GetString("C_TransferFileExport", resourceCulture);
+        public static string C_TransferFileImport => ResourceManager.GetString("C_TransferFileImport", resourceCulture);
+        public static string C_TransferQuickQrExport => ResourceManager.GetString("C_TransferQuickQrExport", resourceCulture);
+        public static string C_TransferOfflineQrExport => ResourceManager.GetString("C_TransferOfflineQrExport", resourceCulture);
+        public static string C_TransferSessionCodeExport => ResourceManager.GetString("C_TransferSessionCodeExport", resourceCulture);
+        public static string C_TransferQuickQrImport => ResourceManager.GetString("C_TransferQuickQrImport", resourceCulture);
+        public static string C_TransferOfflineQrImport => ResourceManager.GetString("C_TransferOfflineQrImport", resourceCulture);
+        public static string C_TransferSessionCodeImport => ResourceManager.GetString("C_TransferSessionCodeImport", resourceCulture);
     }
 }

@@ -7,6 +7,7 @@ using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Helpers;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
@@ -77,6 +78,14 @@ public partial class LotteryDrawSettingsPage : UserControl
         foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "lottery_list"), "*.json")
                      .OrderBy(Path.GetFileName))
             PrizeListNames.Add(Path.GetFileNameWithoutExtension(file));
+
+        if (PrizeListNames.Count > 0
+            && string.IsNullOrWhiteSpace(Settings.DefaultPool)
+            && SettingsView.Current?.IsPreviewMode != true)
+        {
+            Settings.DefaultPool = PrizeListNames[0];
+            ConfigHandler.Save();
+        }
     }
 
     private void NormalizeDrawSettings()
@@ -94,10 +103,30 @@ public partial class LotteryDrawSettingsPage : UserControl
                 DrawMode.HalfRepeat => System.Math.Clamp(Settings.HalfRepeat, 2, 100),
                 _ => Settings.HalfRepeat
             };
+            Settings.CustomLotteryShowRandomFormat = LotteryProcessDisplayFormatter.NormalizeTemplate(
+                Settings.CustomLotteryShowRandomFormat);
         }
         finally
         {
             _normalizingSettings = false;
         }
+    }
+
+    private void InsertCustomLotteryShowRandomFormatTokenOnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string token })
+            return;
+
+        var textBox = CustomLotteryShowRandomFormatTextBox;
+        var template = Settings.CustomLotteryShowRandomFormat;
+        var selectionStart = System.Math.Clamp(textBox.SelectionStart, 0, template.Length);
+        var selectionEnd = System.Math.Clamp(textBox.SelectionEnd, selectionStart, template.Length);
+        var updated = template[..selectionStart] + token + template[selectionEnd..];
+
+        Settings.CustomLotteryShowRandomFormat = LotteryProcessDisplayFormatter.NormalizeTemplate(updated);
+        var caret = System.Math.Min(selectionStart + token.Length, Settings.CustomLotteryShowRandomFormat.Length);
+        textBox.SelectionStart = caret;
+        textBox.SelectionEnd = caret;
+        textBox.Focus();
     }
 }

@@ -60,6 +60,29 @@ public sealed class DrawCommitCoordinatorTests : IDisposable
     }
 
     [Fact]
+    public void LotteryCommit_WithoutStudentAssignment_WritesOnlyPrizeHistory()
+    {
+        using var provider = CreateProvider();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var prize = new Prize { Name = "Notebook", RecordId = Guid.NewGuid() };
+        profile.CurrentPrizeList!.Prizes.Add(prize);
+        profile.SaveProfile();
+
+        var roundId = provider.GetRequiredService<IDrawCommitService>().CommitLotteryDraw(new LotteryDrawCommit(
+            [prize],
+            DateTime.Now,
+            1,
+            profile.PrizeListConfig!.Name,
+            PrizeDrawMethod: (int)LotteryDrawType.Count));
+
+        var prizeItem = profile.CurrentPrizeHistory!.Prizes.Values.SelectMany(history => history.Histories).Single();
+        Assert.Equal(roundId, prizeItem.DrawRoundId);
+        Assert.Empty(profile.CurrentStudentHistory!.Students);
+        Assert.Empty(provider.GetRequiredService<IDrawTemporaryRecordService>().GetStudentCounts(
+            profile.StudentListConfig!.Name, string.Empty, string.Empty));
+    }
+
+    [Fact]
     public void StudentCommit_RollsBackTemporaryRecordsAndHistoryWhenHistorySaveFails()
     {
         using var provider = CreateProvider();

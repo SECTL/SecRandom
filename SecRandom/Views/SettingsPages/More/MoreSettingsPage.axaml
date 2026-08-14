@@ -13,11 +13,13 @@
              Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro settings">
-            <sr:IconText Text="{x:Static lsp:Resources.S_PageManagement}"
+            <sr:IconText x:Name="S_PageManagement"
+                         Text="{x:Static lsp:Resources.S_PageManagement}"
                          Glyph="{sr:Fi PanelRightFilled}"
                          Margin="0 0 0 4" />
 
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_RollCallPanelPosition}"
+            <fa:FASettingsExpander x:Name="S_RollCallPanelPosition"
+                                   Header="{x:Static lsp:Resources.S_RollCallPanelPosition}"
                                    Description="{x:Static lsp:Resources.S_RollCallPanelPosition_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PanelRightFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -28,52 +30,54 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_RollCallControls}"
+            <fa:FASettingsExpander x:Name="S_RollCallControls"
+                                   Header="{x:Static lsp:Resources.S_RollCallControls}"
                                    Description="{x:Static lsp:Resources.S_RollCallControls_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi AppsListFilled}}"
                                    IsVisible="{Binding UseDesktopUI}">
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallResetButton}"
+                <fa:FASettingsExpanderItem x:Name="C_RollCallResetButton">
+                    <CheckBox Content="{x:Static lsp:Resources.C_RollCallResetButton}"
                               IsChecked="{Binding Settings.RollCallResetButton}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallQuantityControl}"
+                <fa:FASettingsExpanderItem x:Name="C_RollCallQuantityControl">
+                    <CheckBox Content="{x:Static lsp:Resources.C_RollCallQuantityControl}"
                               IsChecked="{Binding Settings.RollCallQuantityControl}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallStartButton}"
+                <fa:FASettingsExpanderItem x:Name="C_RollCallStartButton">
+                    <CheckBox Content="{x:Static lsp:Resources.C_RollCallStartButton}"
                               IsChecked="{Binding Settings.RollCallStartButton}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallListSelector}"
+                <fa:FASettingsExpanderItem x:Name="C_RollCallListSelector">
+                    <CheckBox Content="{x:Static lsp:Resources.C_RollCallListSelector}"
                               IsChecked="{Binding Settings.RollCallListSelector}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallRangeSelector}"
+                <fa:FASettingsExpanderItem x:Name="C_RollCallRangeSelector">
+                    <CheckBox Content="{x:Static lsp:Resources.C_RollCallRangeSelector}"
                               IsChecked="{Binding Settings.RollCallRangeSelector}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallGenderSelector}"
+                <fa:FASettingsExpanderItem x:Name="C_RollCallGenderSelector">
+                    <CheckBox Content="{x:Static lsp:Resources.C_RollCallGenderSelector}"
                               IsChecked="{Binding Settings.RollCallGenderSelector}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallRemainingButton}"
+                <fa:FASettingsExpanderItem x:Name="C_RollCallRemainingButton">
+                    <CheckBox Content="{x:Static lsp:Resources.C_RollCallRemainingButton}"
                               IsChecked="{Binding Settings.RollCallRemainingButton}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_RollCallQuantityLabel}"
+                 <fa:FASettingsExpanderItem x:Name="C_RollCallQuantityLabel">
+                     <CheckBox Content="{x:Static lsp:Resources.C_RollCallQuantityLabel}"
                               IsChecked="{Binding Settings.RollCallQuantityLabel}" />
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_LotteryEnabled}"
+            <fa:FASettingsExpander x:Name="S_LotteryEnabled"
+                                   Header="{x:Static lsp:Resources.S_LotteryEnabled}"
                                    Description="{x:Static lsp:Resources.S_LotteryEnabled_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi GiftFilled}}">
                 <fa:FASettingsExpander.Footer>
@@ -81,7 +85,8 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_LotteryPanelPosition}"
+            <fa:FASettingsExpander x:Name="S_LotteryPanelPosition"
+                                   Header="{x:Static lsp:Resources.S_LotteryPanelPosition}"
                                    Description="{x:Static lsp:Resources.S_LotteryPanelPosition_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi GiftFilled}}"
                                    IsVisible="{Binding Settings.LotteryEnabled}">
@@ -93,7 +98,8 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander Header="{x:Static lsp:Resources.S_LotteryControls}"
+            <fa:FASettingsExpander x:Name="S_LotteryControls"
+                                   Header="{x:Static lsp:Resources.S_LotteryControls}"
                                    Description="{x:Static lsp:Resources.S_LotteryControls_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi AppsListFilled}}">
                 <fa:FASettingsExpander.IsVisible>
@@ -103,67 +109,67 @@
                     </MultiBinding>
                 </fa:FASettingsExpander.IsVisible>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryResetButton}"
+                 <fa:FASettingsExpanderItem x:Name="C_LotteryResetButton">
+                     <CheckBox Content="{x:Static lsp:Resources.C_LotteryResetButton}"
                               IsChecked="{Binding Settings.LotteryResetButton}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryQuantityControl}"
+                 <fa:FASettingsExpanderItem x:Name="C_LotteryQuantityControl">
+                     <CheckBox Content="{x:Static lsp:Resources.C_LotteryQuantityControl}"
                               IsChecked="{Binding Settings.LotteryQuantityControl}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryStartButton}"
+                 <fa:FASettingsExpanderItem x:Name="C_LotteryStartButton">
+                     <CheckBox Content="{x:Static lsp:Resources.C_LotteryStartButton}"
                               IsChecked="{Binding Settings.LotteryStartButton}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryListSelector}"
+                 <fa:FASettingsExpanderItem x:Name="C_LotteryListSelector">
+                     <CheckBox Content="{x:Static lsp:Resources.C_LotteryListSelector}"
                               IsChecked="{Binding Settings.LotteryListSelector}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryStudentListSelector}"
+                 <fa:FASettingsExpanderItem x:Name="C_LotteryStudentListSelector">
+                     <CheckBox Content="{x:Static lsp:Resources.C_LotteryStudentListSelector}"
                               IsChecked="{Binding Settings.LotteryStudentListSelector}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryRangeSelector}"
+                 <fa:FASettingsExpanderItem x:Name="C_LotteryRangeSelector">
+                     <CheckBox Content="{x:Static lsp:Resources.C_LotteryRangeSelector}"
                               IsChecked="{Binding Settings.LotteryRangeSelector}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryGenderSelector}"
+                 <fa:FASettingsExpanderItem x:Name="C_LotteryGenderSelector">
+                     <CheckBox Content="{x:Static lsp:Resources.C_LotteryGenderSelector}"
                               IsChecked="{Binding Settings.LotteryGenderSelector}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryRemainingButton}"
+                 <fa:FASettingsExpanderItem x:Name="C_LotteryRemainingButton">
+                     <CheckBox Content="{x:Static lsp:Resources.C_LotteryRemainingButton}"
                               IsChecked="{Binding Settings.LotteryRemainingButton}" />
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpanderItem>
-                    <CheckBox Content="{x:Static lsp:Resources.S_LotteryQuantityLabel}"
+                 <fa:FASettingsExpanderItem x:Name="C_LotteryQuantityLabel">
+                     <CheckBox Content="{x:Static lsp:Resources.C_LotteryQuantityLabel}"
                               IsChecked="{Binding Settings.LotteryQuantityLabel}" />
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
             <Separator Margin="0 12 0 4" IsVisible="{Binding IsDesktop}" />
-            <sr:IconText x:Name="S_Shortcut" IsVisible="{Binding IsDesktop}"
+            <sr:IconText IsVisible="{Binding IsDesktop}"
                          Text="{x:Static lsp:Resources.S_Shortcut}"
                          Glyph="{sr:Fi FlashFilled}"
                          Margin="0 0 0 4" />
 
-            <fa:FASettingsExpander x:Name="S_Shortcut_Card" IsVisible="{Binding IsDesktop}"
+            <fa:FASettingsExpander x:Name="S_Shortcut" IsVisible="{Binding IsDesktop}"
                                    Header="{x:Static lsp:Resources.S_Shortcut}"
                                    Description="{x:Static lsp:Resources.S_Shortcut_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi KeyboardFilled}}"
                                    IsExpanded="{Binding Settings.EnableShortcut, Mode=OneWay}">
                 <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding Settings.EnableShortcut}" />
+                    <ToggleSwitch x:Name="S_Shortcut_Enable" IsChecked="{Binding Settings.EnableShortcut}" />
                 </fa:FASettingsExpander.Footer>
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_Shortcut_OpenRollCallPage}">
+                <fa:FASettingsExpanderItem x:Name="S_Shortcut_OpenRollCallPage" Content="{x:Static lsp:Resources.S_Shortcut_OpenRollCallPage}">
                     <fa:FASettingsExpanderItem.Footer>
                         <Grid ColumnDefinitions="50,8,180,32">
                             <TextBlock Grid.Column="0"
@@ -184,7 +190,7 @@
                         </Grid>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_Shortcut_QuickDraw}">
+                <fa:FASettingsExpanderItem x:Name="S_Shortcut_QuickDraw" Content="{x:Static lsp:Resources.S_Shortcut_QuickDraw}">
                     <fa:FASettingsExpanderItem.Footer>
                         <Grid ColumnDefinitions="50,8,180,32">
                             <TextBlock Grid.Column="0"
@@ -204,7 +210,7 @@
                         </Grid>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_Shortcut_OpenLotteryPage}"
+                <fa:FASettingsExpanderItem x:Name="S_Shortcut_OpenLotteryPage" Content="{x:Static lsp:Resources.S_Shortcut_OpenLotteryPage}"
                                            IsVisible="{Binding Settings.LotteryEnabled}">
                     <fa:FASettingsExpanderItem.Footer>
                         <Grid ColumnDefinitions="50,8,180,32">
@@ -226,7 +232,7 @@
                         </Grid>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_Shortcut_IncreaseRollCallCount}">
+                <fa:FASettingsExpanderItem x:Name="S_Shortcut_IncreaseRollCallCount" Content="{x:Static lsp:Resources.S_Shortcut_IncreaseRollCallCount}">
                     <fa:FASettingsExpanderItem.Footer>
                         <Grid ColumnDefinitions="50,8,180,32">
                             <TextBlock Grid.Column="0"
@@ -247,7 +253,7 @@
                         </Grid>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_Shortcut_DecreaseRollCallCount}">
+                <fa:FASettingsExpanderItem x:Name="S_Shortcut_DecreaseRollCallCount" Content="{x:Static lsp:Resources.S_Shortcut_DecreaseRollCallCount}">
                     <fa:FASettingsExpanderItem.Footer>
                         <Grid ColumnDefinitions="50,8,180,32">
                             <TextBlock Grid.Column="0"
@@ -268,7 +274,7 @@
                         </Grid>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_Shortcut_IncreaseLotteryCount}"
+                <fa:FASettingsExpanderItem x:Name="S_Shortcut_IncreaseLotteryCount" Content="{x:Static lsp:Resources.S_Shortcut_IncreaseLotteryCount}"
                                            IsVisible="{Binding Settings.LotteryEnabled}">
                     <fa:FASettingsExpanderItem.Footer>
                         <Grid ColumnDefinitions="50,8,180,32">
@@ -290,7 +296,7 @@
                         </Grid>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_Shortcut_DecreaseLotteryCount}"
+                <fa:FASettingsExpanderItem x:Name="S_Shortcut_DecreaseLotteryCount" Content="{x:Static lsp:Resources.S_Shortcut_DecreaseLotteryCount}"
                                            IsVisible="{Binding Settings.LotteryEnabled}">
                     <fa:FASettingsExpanderItem.Footer>
                         <Grid ColumnDefinitions="50,8,180,32">
@@ -312,7 +318,7 @@
                         </Grid>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_Shortcut_StartRollCall}">
+                <fa:FASettingsExpanderItem x:Name="S_Shortcut_StartRollCall" Content="{x:Static lsp:Resources.S_Shortcut_StartRollCall}">
                     <fa:FASettingsExpanderItem.Footer>
                         <Grid ColumnDefinitions="50,8,180,32">
                             <TextBlock Grid.Column="0"
@@ -333,7 +339,7 @@
                         </Grid>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_Shortcut_StartLottery}"
+                <fa:FASettingsExpanderItem x:Name="S_Shortcut_StartLottery" Content="{x:Static lsp:Resources.S_Shortcut_StartLottery}"
                                            IsVisible="{Binding Settings.LotteryEnabled}">
                     <fa:FASettingsExpanderItem.Footer>
                         <Grid ColumnDefinitions="50,8,180,32">

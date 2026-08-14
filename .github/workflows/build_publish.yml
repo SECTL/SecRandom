@@ -501,6 +501,85 @@ jobs:
           path: artifacts/release/dist/*.pkg
           if-no-files-found: ignore
 
+  build_pluginsdk:
+    name: Build_PluginSDK
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Get Version
+        id: get_version
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+        run: |
+          $semverPattern = '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z.-]+)?$'
+          if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
+            $version = $env:RELEASE_TAG.TrimStart('v', 'V')
+            if ($version -notmatch $semverPattern) {
+              throw "Release tag must be a v-prefixed semantic version (vMAJOR.MINOR.PATCH), got '$env:RELEASE_TAG'."
+            }
+          } else {
+            $tag = git describe --tags --abbrev=0 2>$null
+            if ($LASTEXITCODE -eq 0 -and $tag) {
+              $version = $tag.TrimStart('v', 'V')
+              if ($version -notmatch $semverPattern) {
+                Write-Host "WARNING: latest tag '$tag' is not semantic versioning; using it as-is for the routine build artifact."
+              }
+            } else {
+              $version = '0.0.0-dev'
+            }
+          }
+          echo "PKG_VERSION=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Plugin SDK package version: $version"
+
+      - name: Verify API version matches main version
+        shell: pwsh
+        env:
+          PKG_VERSION: ${{ steps.get_version.outputs.PKG_VERSION }}
+        run: |
+          $api = Get-Content 'SecRandom.PluginSdk/PluginApiVersions.cs' -Raw
+          $match = [regex]::Match($api, 'new\((?<major>\d+),\s*\d+')
+          if (-not $match.Success) { throw 'Unable to parse PluginApiVersions.Current.' }
+          $apiMajor = $match.Groups['major'].Value
+          $pkgMajor = ($env:PKG_VERSION -split '\.')[0]
+          if ($apiMajor -ne $pkgMajor) {
+            throw "PluginApiVersions.Current major ($apiMajor) must match the package version major ($pkgMajor)."
+          }
+
+      - name: Pack Plugin SDK
+        shell: pwsh
+        env:
+          PKG_VERSION: ${{ steps.get_version.outputs.PKG_VERSION }}
+        run: |
+          $outDir = 'artifacts/pluginsdk'
+          New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+          foreach ($project in @(
+            'SecRandom.Shared/SecRandom.Shared.csproj',
+            'SecRandom.Core/SecRandom.Core.csproj',
+            'SecRandom.PluginSdk/SecRandom.PluginSdk.csproj'
+          )) {
+            & dotnet pack $project -c Release -o $outDir "-p:PackageVersion=$env:PKG_VERSION" '-p:BuildInParallel=false' '-p:UseSharedCompilation=false'
+            if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project with exit code $LASTEXITCODE." }
+          }
+
+      - name: Upload Plugin SDK Packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: pluginsdk
+          path: artifacts/pluginsdk/*.nupkg
+          if-no-files-found: error
+
   build_android:
     name: Build_Android_${{ matrix.arch }}
     runs-on: ubuntu-24.04
@@ -557,7 +636,7 @@ jobs:
           ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         run: |
           $version = $env:VERSION.TrimStart('v', 'V')
-          $arguments = @('build', 'SecRandom.Android/SecRandom.Android.csproj', '-c', 'Release', '-r', 'android-${{ matrix.arch }}', "-p:Version=$version", '-p:ApplicationVersion=${{ github.run_number }}')
+          $arguments = @('build', 'SecRandom.Android/SecRandom.Android.csproj', '-c', 'Release', '-r', 'android-${{ matrix.arch }}', "-p:Version=$version", '-p:ApplicationVersion=${{ github.run_number }}', '-p:BuildInParallel=false', '-p:UseSharedCompilation=false')
           $signingValues = @{
             ANDROID_SIGNING_KEYSTORE_BASE64 = $env:ANDROID_SIGNING_KEYSTORE_BASE64
             ANDROID_SIGNING_KEYSTORE_PASSWORD = $env:ANDROID_SIGNING_KEYSTORE_PASSWORD
@@ -569,7 +648,30 @@ jobs:
             throw "Android release signing is required for every build; missing secrets: $($missingSigningValues -join ', ')."
           }
           $keystorePath = Join-Path $env:RUNNER_TEMP 'secrandom-android.keystore'
-          [IO.File]::WriteAllBytes($keystorePath, [Convert]::FromBase64String(($env:ANDROID_SIGNING_KEYSTORE_BASE64 -replace '[^A-Za-z0-9+/=]', '')))
+          $keystoreBase64 = $env:ANDROID_SIGNING_KEYSTORE_BASE64
+          if ($keystoreBase64.Length -gt 0 -and [int][char]$keystoreBase64[0] -eq 0xFEFF) {
+            $keystoreBase64 = $keystoreBase64.Substring(1)
+          }
+          $keystoreBase64 = $keystoreBase64.Trim()
+          $keystoreBase64 = $keystoreBase64 -replace '-', '+'
+          $keystoreBase64 = $keystoreBase64 -replace '_', '/'
+          $keystoreBytes = $null
+          try {
+            $keystoreBytes = [Convert]::FromBase64String($keystoreBase64)
+          } catch {
+            $firstInvalid = $keystoreBase64.ToCharArray() | Where-Object { [char]::IsWhiteSpace($_) -eq $false -and $_ -notmatch '[A-Za-z0-9+/=]' } | Select-Object -First 1
+            $invalidCodePoint = if ($null -ne $firstInvalid) { [int][char]$firstInvalid } else { -1 }
+            throw "ANDROID_SIGNING_KEYSTORE_BASE64 is not valid base64 even after trimming whitespace and translating URL-safe characters; first invalid character has code point $invalidCodePoint. Re-provision the secret with a clean base64 encoding of the keystore."
+          }
+          if ($keystoreBytes.Length -lt 16) {
+            throw 'The Android release keystore secret decoded to an implausibly small file; re-check ANDROID_SIGNING_KEYSTORE_BASE64.'
+          }
+          [IO.File]::WriteAllBytes($keystorePath, $keystoreBytes)
+          $keytoolArguments = @('-J-Duser.language=en', '-J-Duser.country=US', '-list', '-v', '-keystore', $keystorePath, '-storepass', $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, '-alias', $env:ANDROID_SIGNING_KEY_ALIAS)
+          $keystoreVerification = & keytool @keytoolArguments 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            throw "Android signing keystore validation failed. $($keystoreVerification -join ' ')"
+          }
           $arguments += @('-p:AndroidKeyStore=true', "-p:AndroidSigningKeyStore=$keystorePath", "-p:AndroidSigningStorePass=$env:ANDROID_SIGNING_KEYSTORE_PASSWORD", "-p:AndroidSigningKeyAlias=$env:ANDROID_SIGNING_KEY_ALIAS", "-p:AndroidSigningKeyPass=$env:ANDROID_SIGNING_KEY_PASSWORD")
           & dotnet @arguments
           if ($LASTEXITCODE -ne 0) {
@@ -592,7 +694,8 @@ jobs:
           if (!(Test-Path -LiteralPath $keystorePath)) {
             throw 'The Android signing keystore is missing after the build.'
           }
-          $keystoreCertificate = & keytool -J-Duser.language=en -J-Duser.country=US -list -v -keystore $keystorePath -storepass $env:ANDROID_SIGNING_KEYSTORE_PASSWORD -alias $env:ANDROID_SIGNING_KEY_ALIAS 2>&1
+          $keytoolArguments = @('-J-Duser.language=en', '-J-Duser.country=US', '-list', '-v', '-keystore', $keystorePath, '-storepass', $env:ANDROID_SIGNING_KEYSTORE_PASSWORD, '-alias', $env:ANDROID_SIGNING_KEY_ALIAS)
+          $keystoreCertificate = & keytool @keytoolArguments 2>&1
           if ($LASTEXITCODE -ne 0) {
             throw 'Unable to read the Android release certificate from the signing keystore.'
           }
@@ -671,6 +774,7 @@ jobs:
         env:
           VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
         run: |
+          set -euo pipefail
           version="${VERSION#v}"
           version="${version#V}"
           output="artifacts/mobile/SecRandom-v${version}-ios-arm64-unsigned.ipa"
@@ -685,6 +789,8 @@ jobs:
             -p:CodesignRequireProvisioningProfile=false \
             -p:BuildIpa=true \
             -p:ArchiveOnBuild=false \
+            -p:BuildInParallel=false \
+            -p:UseSharedCompilation=false \
             -p:IpaPackagePath="$GITHUB_WORKSPACE/$output"
           test -s "$output"
           unzip -l "$output" | grep -q 'Payload/.*\.app/Info.plist'
@@ -705,10 +811,11 @@ jobs:
   publish:
     name: Publish_Release
     runs-on: windows-2022
-    needs: [build_desktop, build_android, build_ios]
-    if: ${{ always() && success('build_desktop') && success('build_android') && success('build_ios') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
+    needs: [build_desktop, build_android, build_ios, build_pluginsdk]
+    if: ${{ always() && success('build_desktop') && success('build_android') && success('build_ios') && success('build_pluginsdk') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
     permissions:
       contents: write
+      id-token: write
     concurrency:
       group: publish-public
     steps:
@@ -735,6 +842,24 @@ jobs:
           Write-Host "Combined files:"
           Get-ChildItem $releaseOutput -File | Select-Object Name, Length
 
+      - name: NuGet login (OIDC → temp API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: NuGet push
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: |
+          $packages = Get-ChildItem './artifacts/release/downloaded/pluginsdk' -Filter *.nupkg -Recurse | Select-Object -ExpandProperty FullName
+          if (-not $packages) { throw 'No Plugin SDK nupkg artifacts found to publish.' }
+          foreach ($nupkg in $packages) {
+            & dotnet nuget push $nupkg --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+            if ($LASTEXITCODE -ne 0) { throw "NuGet push failed for $nupkg with exit code $LASTEXITCODE." }
+          }
+
       - name: Generate signed update manifest
         shell: pwsh
         env:
@@ -760,7 +885,7 @@ jobs:
             $releaseTag = $env:RELEASE_TAG
             $channel = if ($releaseTag -match '-alpha(?:\.|$)') { 'alpha' } elseif ($releaseTag -match '-beta(?:\.|$)') { 'beta' } elseif ($releaseTag -match '-') { throw "Unsupported prerelease tag: $releaseTag" } else { 'release' }
             $metadata = Get-Content -LiteralPath metadata.yaml -Raw
-            $channelMatch = [regex]::Match($metadata, "(?ms)^  $channel:\s*\r?\n\s+tag:\s*(?<tag>\S+)\s*$")
+            $channelMatch = [regex]::Match($metadata, "(?ms)^  ${channel}:\s*\r?\n\s+tag:\s*(?<tag>\S+)\s*$")
             if (-not $channelMatch.Success -or $channelMatch.Groups['tag'].Value -ne $releaseTag) {
               throw "metadata.yaml channel '$channel' must point to release tag $releaseTag."
             }
@@ -778,9 +903,9 @@ jobs:
                 @('macos-pkg', 'self-contained', 'macos', $Matches.arch)
               } elseif ($name -match '^SecRandom-v.+-(?<rid>osx-(?<arch>x64|arm64))\.app\.zip$') {
                 @('macos-app', 'self-contained', 'macos', $Matches.arch)
-              } elseif ($name -match '^SecRandom-v.+-Android-(?<arch>arm64)\.apk$') {
+              } elseif ($name -match '^SecRandom-v.+-Android-(?<arch>arm64|x64)\.apk$') {
                 @('android-apk', 'self-contained', 'android', $Matches.arch)
-               } elseif ($name -match '^SecRandom-v.+-iOS-(?<arch>arm64)-unsigned\.ipa$') {
+              } elseif ($name -match '^SecRandom-v.+-iOS-(?<arch>arm64)-unsigned\.ipa$') {
                 @('ios-ipa', 'self-contained', 'ios', $Matches.arch)
               } else {
                 throw "Unrecognized release artifact name: $name"
@@ -805,8 +930,8 @@ jobs:
               publishedAt = [DateTimeOffset]::UtcNow.ToString('O')
               artifacts = @($artifacts)
             }
-            $manifestPath = "$releaseOutput/SecRandom-update-manifest.v1.json"
-            $signaturePath = "$releaseOutput/SecRandom-update-manifest.v1.sig"
+            $manifestPath = "$releaseOutput/SecRandom-update-manifest.json"
+            $signaturePath = "$releaseOutput/SecRandom-update-manifest.sig"
             $manifest | ConvertTo-Json -Depth 5 -Compress | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM -NoNewline
             & openssl pkeyutl -sign -rawin -inkey $privateKeyPath -in $manifestPath -out $signaturePath
             if ($LASTEXITCODE -ne 0) { throw "OpenSSL Ed25519 signing failed with exit code $LASTEXITCODE." }
@@ -826,7 +951,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           name: SecRandom ${{ github.event.inputs.release_tag }}
-          artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/*.apk,./artifacts/release/output/*.ipa,./artifacts/release/output/SecRandom-update-manifest.v1.json,./artifacts/release/output/SecRandom-update-manifest.v1.sig"
+          artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/*.apk,./artifacts/release/output/*.ipa,./artifacts/release/output/SecRandom-update-manifest.json,./artifacts/release/output/SecRandom-update-manifest.sig"
           draft: true
           bodyFile: ./release-note.md
           token: ${{ secrets.GITHUB_TOKEN }}

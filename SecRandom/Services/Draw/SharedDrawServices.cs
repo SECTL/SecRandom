@@ -196,32 +196,37 @@ public sealed class LotteryDrawService(
 
     public async Task<LotteryDrawResult?> DrawAsync(LotteryDrawRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.StudentListName))
-            return null;
-
         SwitchPrizePool(request.PrizePoolName);
-        SwitchStudentList(request.StudentListName);
+        var hasStudentAssignment = !string.IsNullOrWhiteSpace(request.StudentListName);
+        if (hasStudentAssignment)
+            SwitchStudentList(request.StudentListName);
+
         var snapshot = GetSnapshot(request.StudentListName, request.Group, request.Gender);
         if (snapshot.RemainingCount == 0)
             return null;
         var count = Math.Clamp(request.Count, 1, snapshot.RemainingCount);
-        if (snapshot.EligibleStudents.Count < count)
+        if (hasStudentAssignment && snapshot.EligibleStudents.Count < count)
             return null;
         var prizes = await verification.DrawPrizesAsync(count,
             temporaryRecords.GetPrizeCounts(GetPrizePoolName()), snapshot.Prizes,
             DrawProofExportContext.ForPrizes(GetPrizePoolName()), cancellationToken).ConfigureAwait(false);
-        var assigned = (await verification.DrawStudentsAsync(count, snapshot.EligibleStudents, DrawSettingsType.RollCall,
-            DrawProofExportContext.ForStudents(GetStudentListName(), request.Group, request.Gender, request.CourseName),
-            prizes.Proof.ProofId, request.CourseName, cancellationToken).ConfigureAwait(false)).Winners;
-        if (assigned.Count != prizes.Winners.Count)
-            return null;
+        IReadOnlyList<Student> assigned = [];
+        if (hasStudentAssignment)
+        {
+            assigned = (await verification.DrawStudentsAsync(count, snapshot.EligibleStudents, DrawSettingsType.RollCall,
+                DrawProofExportContext.ForStudents(GetStudentListName(), request.Group, request.Gender, request.CourseName),
+                prizes.Proof.ProofId, request.CourseName, cancellationToken).ConfigureAwait(false)).Winners;
+            if (assigned.Count != prizes.Winners.Count)
+                return null;
+        }
+
         var roundId = drawCommits.CommitLotteryDraw(new LotteryDrawCommit(
             prizes.Winners,
             DateTime.Now,
             count,
             GetPrizePoolName(),
             assigned,
-            GetStudentListName(),
+            hasStudentAssignment ? GetStudentListName() : null,
             request.Group,
             request.Gender,
             (int)configHandler.Data.LotterySettings.DrawType,

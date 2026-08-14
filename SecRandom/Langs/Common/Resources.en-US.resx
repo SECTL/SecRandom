@@ -55,6 +55,23 @@
     <data name="C_QuickDrawManualCloseHint" xml:space="preserve">
         <value>Click 3 times in a row to close</value>
     </data>
+    <data name="C_Close" xml:space="preserve">
+        <value>Close</value>
+    </data>
+    <data name="M_PortableDataDirectoryUnavailableTitle" xml:space="preserve">
+        <value>Portable Data Directory Is Not Writable</value>
+    </data>
+    <data name="M_PortableDataDirectoryUnavailableContent" xml:space="preserve">
+        <value>The SecRandom portable package must be able to write its data directory
+
+Data directory: {0}
+Error: {1}
+
+Move the entire portable package to a writable location, or adjust the directory permissions and try again</value>
+    </data>
+    <data name="M_UnknownError" xml:space="preserve">
+        <value>Unknown error</value>
+    </data>
     <data name="Settings_About" xml:space="preserve">
         <value>About SecRandom</value>
     </data>
@@ -119,7 +136,7 @@
         <value>Exit Program</value>
     </data>
     <data name="App_Description" xml:space="preserve">
-        <value>An easy-to-use roll-call and lottery app designed for activities and organizations, making draws more efficient and transparent.</value>
+        <value>A fair random tool based on dynamic weighting, putting an end to disputes in draws and decisions</value>
     </data>
     <data name="App_License" xml:space="preserve">
         <value>This project is licensed under the GNU General Public License v3.0.</value>
@@ -244,5 +261,8 @@
     </data>
     <data name="MultiInstance_Cancel" xml:space="preserve">
         <value>Cancel</value>
+    </data>
+    <data name="C_PickButtonText" xml:space="preserve">
+        <value>Go</value>
     </data>
 </root>

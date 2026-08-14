@@ -21,10 +21,10 @@ SecRandom.Core/
 ├── Controls/             # Reusable Avalonia controls/templates
 ├── Converters/           # Shared Avalonia converters
 ├── Assets/               # Icon mapping JSON inputs for generated Fluent/Lucide icon enums
-├── Helpers/              # Core helper utilities
+├── Helpers/              # Core helper utilities, including MarkdownConvertHelper
 ├── Interfaces/           # Core-facing interfaces
 ├── Views/                # Logical view/session contracts; app shells provide physical hosts
-├── Styles/               # Modular shared style files
+├── Styles/               # Modular shared style files, including RichTextStyles for Markdown.Avalonia
 ├── StylesBase.axaml      # Shared style hub imported by app
 ├── Services/Draw/        # Fair/random draw engine, filters, commit coordinator, shared repeat/candidate rules
 ├── Services/Archive/     # Platform-neutral v3 backup/archive engine (DataArchiveService + post-import hooks)
@@ -69,6 +69,7 @@ SecRandom.Core/
 ## CONVENTIONS
 
 - `Views/` is the public logical view-engine boundary. It may use Avalonia `Control` but must not expose `Window`, application lifetimes, native platform APIs, or raw `IServiceProvider`. Physical desktop/mobile hosts are registered by their application shells through DI.
+- `ViewPresentation.Modal` renders without an automatic navigation bar. Modal callers own close/back behavior and must explicitly handle a close result when their flow depends on one.
 - Existing Core services may use `IAppHost.GetService<T>()` during the transition, but `DrawEngine` and new reusable runtime services use constructor injection. Construct `DrawEngine` with `MainConfigHandler`, `IProfileService`, and `ILogger<DrawEngine>`; do not add a new static-Host dependency.
 - `IProfileService.LoadStudentProfile(name)` switches the app-layer active point-call student list and matching history; callers should use it instead of constructing profile configs directly when changing the active roll-call list.
 - Registration helpers are responsible for both keyed DI and `PagesRegistryService` metadata.

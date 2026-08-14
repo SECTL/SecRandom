@@ -1,0 +1,272 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lp="clr-namespace:SecRandom.Langs.SettingsPages.Plugins.Overview"
+             xmlns:mdxaml="https://github.com/whistyun/Markdown.Avalonia"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Plugins"
+             xmlns:helpers="clr-namespace:SecRandom.Core.Helpers;assembly=SecRandom.Core"
+             mc:Ignorable="d"
+             x:Class="SecRandom.Views.SettingsPages.Plugins.PluginsSettingsPage"
+             x:DataType="local:PluginsSettingsPage"
+             d:DesignWidth="960"
+             d:DesignHeight="620"
+             Loaded="OnLoaded">
+    <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+            CornerRadius="3"
+            ClipToBounds="True"
+            Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+        <Grid ColumnDefinitions="430,Auto,*">
+            <Border Grid.Column="0" Padding="8">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="8">
+                    <TextBox Grid.Row="0" PlaceholderText="{x:Static lp:Resources.C_SearchPlugin}"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <Grid Grid.Row="1"
+                          ColumnDefinitions="*, Auto, Auto, Auto"
+                          ColumnSpacing="4"
+                          VerticalAlignment="Center">
+                        <TabStrip Grid.Column="0"
+                                  Classes="compact"
+                                  ItemsSource="{Binding FilterChips}"
+                                  SelectedItem="{Binding SelectedFilterChip}">
+                            <TabStrip.ItemTemplate>
+                                <DataTemplate x:DataType="local:PluginFilterChip">
+                                    <TextBlock FontWeight="SemiBold"
+                                               Text="{Binding Text}" />
+                                </DataTemplate>
+                            </TabStrip.ItemTemplate>
+                        </TabStrip>
+
+                        <Button Grid.Column="1"
+                                Theme="{StaticResource TransparentButton}"
+                                ToolTip.Tip="{x:Static lp:Resources.C_Refresh}"
+                                Click="RefreshButton_OnClick">
+                            <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseFilled}" />
+                        </Button>
+
+                        <Button Grid.Column="2"
+                                Theme="{StaticResource TransparentButton}"
+                                ToolTip.Tip="{x:Static lp:Resources.C_ImportPlugin}"
+                                Click="ImportPluginButton_OnClick">
+                            <sr:FluentIcon Glyph="{sr:Fi AddFilled}" />
+                        </Button>
+
+                        <Button Grid.Column="3"
+                                Theme="{StaticResource TransparentButton}"
+                                ToolTip.Tip="{x:Static lp:Resources.C_OpenPluginsFolder}"
+                                Click="OpenPluginsFolderButton_OnClick">
+                            <sr:FluentIcon Glyph="{sr:Fi FolderOpenFilled}" />
+                        </Button>
+                    </Grid>
+
+                    <Separator Grid.Row="2" Margin="-8 1" />
+
+                    <TextBlock Grid.Row="3" VerticalAlignment="Center"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Text="{Binding VisiblePluginCountText}" />
+                    
+                    <Grid Grid.Row="4">
+                        <ListBox ItemsSource="{Binding PluginList}"
+                                 SelectedItem="{Binding SelectedItem}"
+                                 Background="Transparent"
+                                 Padding="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="local:PluginOverviewItem">
+                                    <Border Padding="0 8">
+                                        <Grid ColumnDefinitions="Auto,*,Auto"
+                                              RowDefinitions="Auto,Auto"
+                                              ColumnSpacing="8">
+                                            <Border Grid.RowSpan="2"
+                                                    Width="46"
+                                                    Height="46"
+                                                    CornerRadius="5"
+                                                    Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                                    VerticalAlignment="Center">
+                                                <Grid>
+                                                    <Image Source="{Binding Icon}"
+                                                           IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                           Stretch="UniformToFill" />
+                                                    <sr:FluentIcon Glyph="{sr:Fi PlugConnectedFilled}"
+                                                                   IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNull}}"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center" />
+                                                </Grid>
+                                            </Border>
+
+                                            <TextBlock Grid.Column="1"
+                                                       FontSize="15"
+                                                       FontWeight="SemiBold"
+                                                       Text="{Binding Name}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Grid.Row="1"
+                                                       Grid.Column="1"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                       Text="{Binding ListSubtitle}"
+                                                       TextTrimming="CharacterEllipsis" />
+
+                                            <StackPanel Grid.Column="2"
+                                                        Grid.RowSpan="2"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Top"
+                                                        Spacing="3">
+                                                <TextBlock HorizontalAlignment="Right"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                           Text="{Binding Version}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="8"
+                                    IsVisible="{Binding IsPluginListEmpty}">
+                            <sr:FluentIcon Glyph="{sr:Fi PlugConnectedFilled}"
+                                           FontSize="32"
+                                           HorizontalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Text="{Binding EmptyTitle}" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"
+                                       MaxWidth="300"
+                                       Text="{Binding EmptyHint}" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="1" />
+            
+            <Border Grid.Column="2" Padding="16">
+                <Grid>
+                    <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="8"
+                          IsVisible="{Binding HasSelectedPlugin}">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border Width="58"
+                                    Height="58"
+                                    CornerRadius="8"
+                                    Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                                <Grid>
+                                    <Image Source="{Binding SelectedPluginIcon}"
+                                           IsVisible="{Binding SelectedPluginIcon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                           Stretch="UniformToFill" />
+                                    <sr:FluentIcon Glyph="{sr:Fi PlugConnectedFilled}"
+                                                   IsVisible="{Binding SelectedPluginIcon, Converter={x:Static ObjectConverters.IsNull}}"
+                                                   FontSize="28"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <StackPanel Grid.Column="1"
+                                        Spacing="4"
+                                        VerticalAlignment="Center">
+                                <TextBlock FontSize="22"
+                                           FontWeight="SemiBold"
+                                           Text="{Binding SelectedPluginTitle}"
+                                           TextTrimming="CharacterEllipsis" />
+
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                               Text="{Binding SelectedPluginMetaLine}"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center" />
+
+                                    <Border Padding="8 3"
+                                            CornerRadius="3"
+                                            Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                                        <StackPanel Orientation="Horizontal"
+                                                    Spacing="6">
+                                            <TextBlock FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                       Text="{x:Static lp:Resources.S_Status}" />
+                                            <TextBlock FontWeight="SemiBold"
+                                                       Text="{Binding SelectedPluginStatus}" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+                            
+                            <ToggleSwitch Grid.Column="2"
+                                          IsChecked="{Binding IsSelectedPluginEnabled}"
+                                          IsEnabled="{Binding CanToggleSelectedPlugin}"
+                                          VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Grid Grid.Row="1" ColumnDefinitions="* Auto">
+                            <TabStrip Grid.Column="0" Classes="compact" x:Name="ContentTab" SelectedIndex="0">
+                                <TabStripItem Content="{x:Static lp:Resources.C_Readme}" />
+                                <TabStripItem Content="{x:Static lp:Resources.S_Error}"
+                                              IsVisible="{Binding HasSelectedPluginError}" />
+                            </TabStrip>
+                            
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button Theme="{StaticResource TransparentButton}"
+                                        ToolTip.Tip="{x:Static lp:Resources.C_OpenSelectedFolder}"
+                                        IsEnabled="{Binding CanOpenSelectedFolder}"
+                                        VerticalAlignment="Center"
+                                        Click="OpenSelectedFolderButton_OnClick">
+                                    <sr:FluentIcon Glyph="{sr:Fi FolderOpenFilled}" />
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <Separator Grid.Row="2" Margin="-16 0" />
+                        
+                        <Carousel Grid.Row="3" SelectedIndex="{Binding #ContentTab.SelectedIndex}">
+                            <Border TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+                                <mdxaml:MarkdownScrollViewer x:Name="ReadmeViewer"
+                                                             Engine="{x:Static helpers:MarkdownConvertHelper.Engine}"
+                                                             Markdown="{Binding SelectedPluginReadme}"
+                                                             TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+                                    <mdxaml:MarkdownScrollViewer.Styles>
+                                        <StyleInclude Source="avares://SecRandom.Core/Styles/RichTextStyles.axaml" />
+                                    </mdxaml:MarkdownScrollViewer.Styles>
+                                </mdxaml:MarkdownScrollViewer>
+                            </Border>
+                            
+                            <ScrollViewer>
+                                <SelectableTextBlock Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                                     Text="{Binding SelectedPluginError}"
+                                                     TextWrapping="Wrap" />
+                            </ScrollViewer>
+                        </Carousel>
+                    </Grid>
+
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="8"
+                                IsVisible="{Binding HasNoSelectedPlugin}">
+                        <sr:FluentIcon Glyph="{sr:Fi PlugConnectedFilled}"
+                                       FontSize="36"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock FontSize="19"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"
+                                   Text="{x:Static lp:Resources.C_NoPluginSelected}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center"
+                                   MaxWidth="300"
+                                   Text="{x:Static lp:Resources.C_NoPluginSelectedHint}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

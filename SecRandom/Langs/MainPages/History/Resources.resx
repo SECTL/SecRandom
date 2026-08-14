@@ -91,7 +91,7 @@
     <value>分组</value>
   </data>
   <data name="H_Subject" xml:space="preserve">
-    <value>日程项目</value>
+    <value>课程</value>
   </data>
   <data name="H_GenderLimit" xml:space="preserve">
     <value>性别限制</value>
@@ -103,6 +103,6 @@
     <value>权重</value>
   </data>
   <data name="C_Break" xml:space="preserve">
-    <value>空闲时段</value>
+    <value>课间</value>
   </data>
 </root>

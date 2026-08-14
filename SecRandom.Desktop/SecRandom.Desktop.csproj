@@ -9,12 +9,17 @@
         <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
         <ApplicationIcon>..\SecRandom\Assets\AppLogo.ico</ApplicationIcon>
     </PropertyGroup>
+
+    <Import Project="..\Platforms.props" />
+
+    <!-- CameraView ships the Windows provider only for the Windows TFM. -->
+    <PropertyGroup Condition="'$(SecRandomPlatform)' == 'Windows'">
+        <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    </PropertyGroup>
     
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <OutputType>WinExe</OutputType>
     </PropertyGroup>
-
-    <Import Project="..\Platforms.props" />
 
     <PropertyGroup>
         <EnableUiAccess Condition="'$(EnableUiAccess)' == ''">false</EnableUiAccess>
@@ -24,6 +29,7 @@
 
     <ItemGroup>
         <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)"/>
+        <PackageReference Include="CameraView.Avalonia" Version="1.0.18" />
         <PackageReference Include="Sentry.Extensions.Logging" Version="6.8.0" />
     </ItemGroup>
 

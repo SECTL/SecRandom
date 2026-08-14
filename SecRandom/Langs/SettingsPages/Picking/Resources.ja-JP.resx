@@ -423,4 +423,73 @@
   <data name="S_LotteryImagePosition_D" xml:space="preserve">
     <value>文字に対する景品画像の位置</value>
   </data>
+  <data name="C_BatchAvatar" xml:space="preserve">
+    <value>アバターを一括設定</value>
+  </data>
+  <data name="C_BatchAvatarHint" xml:space="preserve">
+    <value>記録の名称または番号を基に、選択したディレクトリの第1階層の画像からアバターを一括マッチングして設定します</value>
+  </data>
+  <data name="C_BatchAvatarDirectoryHint" xml:space="preserve">
+    <value>画像は選択したディレクトリの第1階層のみを対象にします</value>
+  </data>
+  <data name="C_BatchAvatarChooseDirectory" xml:space="preserve">
+    <value>ディレクトリを選択</value>
+  </data>
+  <data name="C_BatchAvatarRoster" xml:space="preserve">
+    <value>点呼名簿</value>
+  </data>
+  <data name="C_BatchAvatarTargetRoster" xml:space="preserve">
+    <value>対象の点呼名簿</value>
+  </data>
+  <data name="C_BatchAvatarTargetPrize" xml:space="preserve">
+    <value>対象のくじ引き名簿</value>
+  </data>
+  <data name="C_BatchAvatarPrize" xml:space="preserve">
+    <value>くじ引き名簿</value>
+  </data>
+  <data name="C_BatchAvatarChooseFile" xml:space="preserve">
+    <value>外部ファイルを再選択</value>
+  </data>
+  <data name="C_BatchAvatarSet" xml:space="preserve">
+    <value>設定</value>
+  </data>
+  <data name="C_BatchAvatarRecord" xml:space="preserve">
+    <value>記録</value>
+  </data>
+  <data name="C_BatchAvatarFile" xml:space="preserve">
+    <value>アバターファイル</value>
+  </data>
+  <data name="C_BatchAvatarMatchSummary" xml:space="preserve">
+    <value>自動マッチング {0} 件</value>
+  </data>
+  <data name="C_Cancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="C_Confirm" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="M_BatchAvatarNoDirectory" xml:space="preserve">
+    <value>先に画像を含むディレクトリを選択してください</value>
+  </data>
+  <data name="M_BatchAvatarFileNotFound" xml:space="preserve">
+    <value>アバターファイルが見つかりません: {0}</value>
+  </data>
+  <data name="M_BatchAvatarApplied" xml:space="preserve">
+    <value>{0} 件の記録にアバターを設定しました</value>
+  </data>
+  <data name="C_BatchAvatarNoDirectorySelected" xml:space="preserve">
+    <value>ディレクトリ未選択</value>
+  </data>
+  <data name="C_SetAvatarViaRoster" xml:space="preserve">
+    <value>点呼名簿のアバターを設定</value>
+  </data>
+  <data name="C_SetAvatarViaRoster_D" xml:space="preserve">
+    <value>点呼名簿ページを開き、メンバーの追加設定（画像表示）でアバターを設定します</value>
+  </data>
+  <data name="C_SetAvatarViaPrize" xml:space="preserve">
+    <value>くじ引き名簿のアバターを設定</value>
+  </data>
+  <data name="C_SetAvatarViaPrize_D" xml:space="preserve">
+    <value>くじ引き名簿ページを開き、景品の追加設定（画像表示）で景品画像を設定します</value>
+  </data>
 </root>
