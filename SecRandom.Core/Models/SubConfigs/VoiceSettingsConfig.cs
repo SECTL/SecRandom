@@ -23,4 +23,15 @@ public partial class VoiceSettingsConfig : ObservableObject
     [ObservableProperty] private bool _voiceWaitComplete = true;
     [ObservableProperty] private bool _announceId = false;
     [ObservableProperty] private bool _announceName = true;
+
+    // OmniTTS engine 2 stores the selected provider, API endpoint, model, and voice.
+    // Providers may expose documented preset voices while models remain fetched or manually entered.
+    // API keys are credentials and must stay outside MainConfigModel and settings.json.
+    [ObservableProperty] private OmniTtsProvider _omniTtsProvider = OmniTtsProvider.OpenAi;
+    [ObservableProperty] private string _omniTtsApiBaseUrl = "https://api.openai.com/v1";
+    [ObservableProperty] private string _omniTtsModel = string.Empty;
+    [ObservableProperty] private string _omniTtsVoiceId = string.Empty;
+    [ObservableProperty] private string _omniTtsInstructions = string.Empty;
+    [ObservableProperty] private string _miMoVoiceDesignPrompt = string.Empty;
+    [ObservableProperty] private string _miMoVoiceCloneReferenceHash = string.Empty;
 }

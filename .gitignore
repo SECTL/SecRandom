@@ -470,3 +470,4 @@ $RECYCLE.BIN/
 /.kagent
 /plans
 /midscene_run
+/.playwright-cli

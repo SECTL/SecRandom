@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="S_MiMoVoiceDesign" xml:space="preserve"><value>MiMo 音声デザイン</value></data>
+  <data name="S_MiMoVoiceDesign_D" xml:space="preserve"><value>年齢、アクセント、声質、話し方を自然言語で指定します。参照音声は不要です。</value></data>
+  <data name="S_MiMoVoiceDesignPrompt" xml:space="preserve"><value>音声の説明</value></data>
+  <data name="S_MiMoVoiceDesignPrompt_D" xml:space="preserve"><value>生成する音声を説明します。読み上げる本文は合成内容として自動送信されます。</value></data>
+  <data name="S_MiMoVoiceClone" xml:space="preserve"><value>MiMo 音声クローン</value></data>
+  <data name="S_MiMoVoiceClone_D" xml:space="preserve"><value>本人の音声、または使用許諾を得た WAV 参照音声のみを使用してください。ファイルはローカルの非公開領域に保存され、設定やバックアップには含まれません。</value></data>
+  <data name="C_MiMoVoiceCloneSelect" xml:space="preserve"><value>参照音声を選択</value></data>
+  <data name="C_MiMoVoiceCloneClear" xml:space="preserve"><value>参照音声を削除</value></data>
+  <data name="M_MiMoVoiceCloneConfigured" xml:space="preserve"><value>参照音声を設定しました</value></data>
+  <data name="M_MiMoVoiceCloneNotConfigured" xml:space="preserve"><value>参照音声が設定されていません</value></data>
+  <data name="M_MiMoVoiceCloneImportFailed" xml:space="preserve"><value>参照音声を読み込めませんでした</value></data>
+  <data name="M_MiMoVoiceCloneCleared" xml:space="preserve"><value>参照音声を削除しました</value></data>
+  <data name="M_MiMoVoiceCloneConsentTitle" xml:space="preserve"><value>使用許諾の確認</value></data>
+  <data name="M_MiMoVoiceCloneConsentContent" xml:space="preserve"><value>この録音を音声クローンに使用する明示的な許諾があることを確認してください。</value></data>
+  <data name="C_MiMoVoiceCloneConsent" xml:space="preserve"><value>確認しました</value></data>
+  <data name="C_MiMoVoiceCloneCancel" xml:space="preserve"><value>キャンセル</value></data>
+</root>

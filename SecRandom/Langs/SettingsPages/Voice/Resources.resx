@@ -43,13 +43,13 @@
     <value>Edge TTS 音色</value>
   </data>
   <data name="S_Playback_EdgeTtsVoice_D" xml:space="preserve">
-    <value>Edge TTS 使用的 voice 名称</value>
+    <value>选择 Edge TTS 使用的音色</value>
   </data>
   <data name="S_Playback_Voice" xml:space="preserve">
-    <value>音色</value>
+    <value>系统语音音色</value>
   </data>
   <data name="S_Playback_Voice_D" xml:space="preserve">
-    <value>根据当前语音引擎显示可用音色</value>
+    <value>选择 Windows 系统语音使用的音色</value>
   </data>
   <data name="S_Playback_Actions" xml:space="preserve">
     <value>语音操作</value>
@@ -123,4 +123,4 @@
   <data name="S_SystemVolume" xml:space="preserve">
     <value>系统音量</value>
   </data>
-</root>
+<data name="O_VoiceEngine_OmniTts"><value>Omni TTS</value></data><data name="S_OmniTts"><value>Omni TTS 设置</value></data><data name="S_OmniTts_Provider"><value>服务提供方</value></data><data name="S_OmniTts_Provider_D"><value>选择 Omni TTS 使用的语音服务，模型与音色可自动获取或手动输入</value></data><data name="O_OmniTtsProvider_OpenAi"><value>OpenAI</value></data><data name="O_OmniTtsProvider_FishAudio"><value>FishAudio</value></data><data name="O_OmniTtsProvider_MiMo"><value>MiMo</value></data><data name="O_OmniTtsProvider_Custom"><value>自定义（OpenAI 兼容）</value></data><data name="S_OmniTts_ApiBaseUrl"><value>API 接入地址</value></data><data name="S_OmniTts_ApiBaseUrl_D"><value>服务提供方的 API 基础地址，切换提供方时自动填充</value></data><data name="S_OmniTts_ApiKey"><value>API 密钥</value></data><data name="S_OmniTts_ApiKey_D"><value>密钥仅保存在本地独立文件中，不写入设置、日志与备份</value></data><data name="C_OmniTtsSaveKey"><value>保存密钥</value></data><data name="C_OmniTtsClearKey"><value>清除密钥</value></data><data name="S_OmniTts_Model"><value>模型</value></data><data name="S_OmniTts_Model_D"><value>可点击获取从服务拉取的模型列表，也可直接手动输入模型名称</value></data><data name="C_OmniTtsRefreshModels"><value>获取模型</value></data><data name="C_OmniTtsRefreshVoices"><value>获取音色</value></data><data name="S_OmniTts_Voice"><value>音色</value></data><data name="S_OmniTts_Voice_D"><value>音色 ID 或参考音色标识，可下拉选择或手动输入</value></data><data name="S_OmniTts_Instructions"><value>语气指令</value></data><data name="S_OmniTts_Instructions_D"><value>仅部分模型支持（如 gpt-4o-mini-tts），用于引导播报语气</value></data><data name="S_OmniTts_BatchGenerate"><value>批量生成音频缓存</value></data><data name="S_OmniTts_BatchGenerate_D"><value>按当前模型与音色预生成播报音频，抽取时无需联网</value></data><data name="C_OmniTtsBatchTextHint"><value>每行一条要生成缓存的文本，或选择从名单生成</value></data><data name="O_OmniTtsBatchSource_Text"><value>多行文本</value></data><data name="O_OmniTtsBatchSource_Students"><value>点名名单</value></data><data name="O_OmniTtsBatchSource_Prizes"><value>抽奖名单</value></data><data name="C_OmniTtsStartBatch"><value>开始生成</value></data><data name="C_OmniTtsCancelBatch"><value>取消</value></data><data name="S_OmniTts_ClearCache"><value>清空语音缓存</value></data><data name="S_OmniTts_ClearCache_D"><value>删除当前引擎与音色下所选名单生成的本地语音缓存</value></data><data name="C_OmniTtsClearCache"><value>清空缓存</value></data><data name="M_OmniTtsKeyConfigured"><value>已配置</value></data><data name="M_OmniTtsKeyNotConfigured"><value>未配置</value></data><data name="M_OmniTtsKeyEmpty"><value>请输入要保存的 API 密钥</value></data><data name="M_OmniTtsKeySaved"><value>API 密钥已保存</value></data><data name="M_OmniTtsKeyCleared"><value>API 密钥已清除</value></data><data name="M_OmniTtsModelsRefreshed"><value>模型列表已更新</value></data><data name="M_OmniTtsModelsEmpty"><value>未能获取模型列表，可手动输入模型名称</value></data><data name="M_OmniTtsModelsRefreshFailed"><value>获取模型列表失败</value></data><data name="M_OmniTtsVoicesRefreshed"><value>音色列表已更新</value></data><data name="M_OmniTtsVoicesEmpty"><value>未能获取音色列表，可手动输入音色 ID</value></data><data name="M_OmniTtsVoicesRefreshFailed"><value>获取音色列表失败</value></data><data name="M_OmniTtsBatchStarted"><value>正在批量生成音频缓存</value></data><data name="M_OmniTtsBatchProgress"><value>{0}/{1}</value></data><data name="M_OmniTtsBatchCompleted"><value>批量生成完成：新增 {0}，跳过 {1}，失败 {2}</value></data><data name="M_OmniTtsBatchCompletedToast"><value>批量生成完成</value></data><data name="M_OmniTtsBatchCancelled"><value>批量生成已取消</value></data><data name="M_OmniTtsBatchFailed"><value>批量生成失败</value></data><data name="M_OmniTtsCacheCleared"><value>已清除 {0} 个语音缓存文件</value></data><data name="O_OmniTtsClearScope_All"><value>全部已有缓存的名单</value></data><data name="M_OmniTtsCacheEmpty"><value>当前引擎和音色下没有可清理的语音缓存</value></data><data name="S_OmniTtsClearScope"><value>清理范围</value></data><data name="S_OmniTtsClearScope_D"><value>仅显示当前引擎与音色下已有缓存的点名名单和抽奖名单，选择全部会同时清理两类缓存</value></data><data name="S_OmniTtsBatchScope"><value>生成范围</value></data><data name="S_OmniTtsBatchScope_D"><value>选择点名名单或抽奖名单，按当前引擎与音色生成本地语音缓存</value></data></root>

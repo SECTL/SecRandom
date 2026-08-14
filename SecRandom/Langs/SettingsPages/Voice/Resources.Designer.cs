@@ -337,5 +337,347 @@ namespace SecRandom.Langs.SettingsPages.Voice {
                 return ResourceManager.GetString("S_SystemVolume_Size_D", resourceCulture);
             }
         }
+
+        public static string O_VoiceEngine_OmniTts {
+            get {
+                return ResourceManager.GetString("O_VoiceEngine_OmniTts", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts {
+            get {
+                return ResourceManager.GetString("S_OmniTts", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_Provider {
+            get {
+                return ResourceManager.GetString("S_OmniTts_Provider", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_Provider_D {
+            get {
+                return ResourceManager.GetString("S_OmniTts_Provider_D", resourceCulture);
+            }
+        }
+
+        public static string O_OmniTtsProvider_OpenAi {
+            get {
+                return ResourceManager.GetString("O_OmniTtsProvider_OpenAi", resourceCulture);
+            }
+        }
+
+        public static string O_OmniTtsProvider_FishAudio {
+            get {
+                return ResourceManager.GetString("O_OmniTtsProvider_FishAudio", resourceCulture);
+            }
+        }
+
+        public static string O_OmniTtsProvider_MiMo {
+            get {
+                return ResourceManager.GetString("O_OmniTtsProvider_MiMo", resourceCulture);
+            }
+        }
+
+        public static string O_OmniTtsProvider_Custom {
+            get {
+                return ResourceManager.GetString("O_OmniTtsProvider_Custom", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_ApiBaseUrl {
+            get {
+                return ResourceManager.GetString("S_OmniTts_ApiBaseUrl", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_ApiBaseUrl_D {
+            get {
+                return ResourceManager.GetString("S_OmniTts_ApiBaseUrl_D", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_ApiKey {
+            get {
+                return ResourceManager.GetString("S_OmniTts_ApiKey", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_ApiKey_D {
+            get {
+                return ResourceManager.GetString("S_OmniTts_ApiKey_D", resourceCulture);
+            }
+        }
+
+        public static string C_OmniTtsSaveKey {
+            get {
+                return ResourceManager.GetString("C_OmniTtsSaveKey", resourceCulture);
+            }
+        }
+
+        public static string C_OmniTtsClearKey {
+            get {
+                return ResourceManager.GetString("C_OmniTtsClearKey", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_Model {
+            get {
+                return ResourceManager.GetString("S_OmniTts_Model", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_Model_D {
+            get {
+                return ResourceManager.GetString("S_OmniTts_Model_D", resourceCulture);
+            }
+        }
+
+        public static string C_OmniTtsRefreshModels {
+            get {
+                return ResourceManager.GetString("C_OmniTtsRefreshModels", resourceCulture);
+            }
+        }
+
+        public static string C_OmniTtsRefreshVoices {
+            get {
+                return ResourceManager.GetString("C_OmniTtsRefreshVoices", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_Voice {
+            get {
+                return ResourceManager.GetString("S_OmniTts_Voice", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_Voice_D {
+            get {
+                return ResourceManager.GetString("S_OmniTts_Voice_D", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_Instructions {
+            get {
+                return ResourceManager.GetString("S_OmniTts_Instructions", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_Instructions_D {
+            get {
+                return ResourceManager.GetString("S_OmniTts_Instructions_D", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_BatchGenerate {
+            get {
+                return ResourceManager.GetString("S_OmniTts_BatchGenerate", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_BatchGenerate_D {
+            get {
+                return ResourceManager.GetString("S_OmniTts_BatchGenerate_D", resourceCulture);
+            }
+        }
+
+        public static string C_OmniTtsBatchTextHint {
+            get {
+                return ResourceManager.GetString("C_OmniTtsBatchTextHint", resourceCulture);
+            }
+        }
+
+        public static string O_OmniTtsBatchSource_Text {
+            get {
+                return ResourceManager.GetString("O_OmniTtsBatchSource_Text", resourceCulture);
+            }
+        }
+
+        public static string O_OmniTtsBatchSource_Students {
+            get {
+                return ResourceManager.GetString("O_OmniTtsBatchSource_Students", resourceCulture);
+            }
+        }
+
+        public static string O_OmniTtsBatchSource_Prizes {
+            get {
+                return ResourceManager.GetString("O_OmniTtsBatchSource_Prizes", resourceCulture);
+            }
+        }
+
+        public static string C_OmniTtsStartBatch {
+            get {
+                return ResourceManager.GetString("C_OmniTtsStartBatch", resourceCulture);
+            }
+        }
+
+        public static string C_OmniTtsCancelBatch {
+            get {
+                return ResourceManager.GetString("C_OmniTtsCancelBatch", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_ClearCache {
+            get {
+                return ResourceManager.GetString("S_OmniTts_ClearCache", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTts_ClearCache_D {
+            get {
+                return ResourceManager.GetString("S_OmniTts_ClearCache_D", resourceCulture);
+            }
+        }
+
+        public static string C_OmniTtsClearCache {
+            get {
+                return ResourceManager.GetString("C_OmniTtsClearCache", resourceCulture);
+            }
+        }
+
+        public static string O_OmniTtsClearScope_All {
+            get {
+                return ResourceManager.GetString("O_OmniTtsClearScope_All", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTtsClearScope {
+            get {
+                return ResourceManager.GetString("S_OmniTtsClearScope", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTtsClearScope_D {
+            get {
+                return ResourceManager.GetString("S_OmniTtsClearScope_D", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTtsBatchScope {
+            get {
+                return ResourceManager.GetString("S_OmniTtsBatchScope", resourceCulture);
+            }
+        }
+
+        public static string S_OmniTtsBatchScope_D {
+            get {
+                return ResourceManager.GetString("S_OmniTtsBatchScope_D", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsKeyConfigured {
+            get {
+                return ResourceManager.GetString("M_OmniTtsKeyConfigured", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsKeyNotConfigured {
+            get {
+                return ResourceManager.GetString("M_OmniTtsKeyNotConfigured", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsKeyEmpty {
+            get {
+                return ResourceManager.GetString("M_OmniTtsKeyEmpty", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsKeySaved {
+            get {
+                return ResourceManager.GetString("M_OmniTtsKeySaved", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsKeyCleared {
+            get {
+                return ResourceManager.GetString("M_OmniTtsKeyCleared", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsModelsRefreshed {
+            get {
+                return ResourceManager.GetString("M_OmniTtsModelsRefreshed", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsModelsEmpty {
+            get {
+                return ResourceManager.GetString("M_OmniTtsModelsEmpty", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsModelsRefreshFailed {
+            get {
+                return ResourceManager.GetString("M_OmniTtsModelsRefreshFailed", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsVoicesRefreshed {
+            get {
+                return ResourceManager.GetString("M_OmniTtsVoicesRefreshed", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsVoicesEmpty {
+            get {
+                return ResourceManager.GetString("M_OmniTtsVoicesEmpty", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsVoicesRefreshFailed {
+            get {
+                return ResourceManager.GetString("M_OmniTtsVoicesRefreshFailed", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsBatchStarted {
+            get {
+                return ResourceManager.GetString("M_OmniTtsBatchStarted", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsBatchProgress {
+            get {
+                return ResourceManager.GetString("M_OmniTtsBatchProgress", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsBatchCompleted {
+            get {
+                return ResourceManager.GetString("M_OmniTtsBatchCompleted", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsBatchCompletedToast {
+            get {
+                return ResourceManager.GetString("M_OmniTtsBatchCompletedToast", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsBatchCancelled {
+            get {
+                return ResourceManager.GetString("M_OmniTtsBatchCancelled", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsBatchFailed {
+            get {
+                return ResourceManager.GetString("M_OmniTtsBatchFailed", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsCacheCleared {
+            get {
+                return ResourceManager.GetString("M_OmniTtsCacheCleared", resourceCulture);
+            }
+        }
+
+        public static string M_OmniTtsCacheEmpty {
+            get {
+                return ResourceManager.GetString("M_OmniTtsCacheEmpty", resourceCulture);
+            }
+        }
     }
 }

@@ -25,6 +25,7 @@ public sealed class SecRandomDocumentsProvider : DocumentsProvider
     private const string EncodedPathPrefix = "path:";
     private const string DefaultMimeType = "application/octet-stream";
     private const string ProtectedSecurityDirectory = "config/security";
+    private const string ProtectedVoiceDirectory = "config/voice";
 
     private static readonly string[] DefaultRootProjection =
     [
@@ -392,8 +393,10 @@ public sealed class SecRandomDocumentsProvider : DocumentsProvider
 
     private bool IsProtectedPath(string path)
     {
-        var protectedPath = Path.Combine(DataPath, ProtectedSecurityDirectory.Replace('/', Path.DirectorySeparatorChar));
-        return string.Equals(path, protectedPath, StringComparison.Ordinal) || IsContainedBy(path, protectedPath);
+        var protectedSecurityPath = Path.Combine(DataPath, ProtectedSecurityDirectory.Replace('/', Path.DirectorySeparatorChar));
+        var protectedVoicePath = Path.Combine(DataPath, ProtectedVoiceDirectory.Replace('/', Path.DirectorySeparatorChar));
+        return string.Equals(path, protectedSecurityPath, StringComparison.Ordinal) || IsContainedBy(path, protectedSecurityPath)
+               || string.Equals(path, protectedVoicePath, StringComparison.Ordinal) || IsContainedBy(path, protectedVoicePath);
     }
 
     private static bool IsContainedBy(string childPath, string parentPath) =>

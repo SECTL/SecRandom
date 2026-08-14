@@ -51,7 +51,9 @@ public class SettingsSearchService
             ["Update"] = new HashSet<string> { "S_Strategy_Source" },
             ["Voice"] = new HashSet<string>
             {
-                "S_Playback_EdgeTtsVoice", "S_SystemVolume", "S_SystemVolume_Control", "S_SystemVolume_Size"
+                "S_Playback_EdgeTtsVoice", "S_SystemVolume", "S_SystemVolume_Control", "S_SystemVolume_Size",
+                "S_OmniTts_Provider", "S_OmniTts_ApiBaseUrl", "S_OmniTts_ApiKey", "S_OmniTts_Model",
+                "S_OmniTts_Voice", "S_OmniTts_Instructions", "S_OmniTts_BatchGenerate", "S_OmniTts_ClearCache"
             }
         };
 

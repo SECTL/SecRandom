@@ -604,7 +604,7 @@ public sealed class DataArchiveService(
     private static bool IsManagedPath(string path)
     {
         path = NormalizePath(path);
-        if (path.StartsWith("config/security/", StringComparison.OrdinalIgnoreCase) || path.StartsWith("backup/", StringComparison.OrdinalIgnoreCase) || path.StartsWith(".import-staging/", StringComparison.OrdinalIgnoreCase) || path.StartsWith("crashes/", StringComparison.OrdinalIgnoreCase))
+        if (path.StartsWith("config/security/", StringComparison.OrdinalIgnoreCase) || path.StartsWith("config/voice/", StringComparison.OrdinalIgnoreCase) || path.StartsWith("backup/", StringComparison.OrdinalIgnoreCase) || path.StartsWith(".import-staging/", StringComparison.OrdinalIgnoreCase) || path.StartsWith("crashes/", StringComparison.OrdinalIgnoreCase))
             return false;
         return AllDataRoots.Any(root => path.Equals(root, StringComparison.OrdinalIgnoreCase) || path.StartsWith(root + "/", StringComparison.OrdinalIgnoreCase));
     }

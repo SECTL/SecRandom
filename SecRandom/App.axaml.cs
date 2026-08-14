@@ -824,8 +824,18 @@ public partial class App : Application
                 services.AddSingleton<ProtocolCommandRouter>();
                 services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
                 services.AddSingleton<ISpeechProvider, EdgeTtsSpeechProvider>();
+                services.AddHttpClient("omnitts", client => client.Timeout = TimeSpan.FromSeconds(30));
+                services.AddSingleton<OmniTtsCredentialStore>();
+                services.AddSingleton<MiMoVoiceReferenceStore>();
+                services.AddSingleton<OmniTtsSpeechProvider>();
+                services.AddSingleton<ISpeechProvider>(serviceProvider =>
+                    serviceProvider.GetRequiredService<OmniTtsSpeechProvider>());
+                services.AddSingleton<IOmniTtsCatalog>(serviceProvider =>
+                    serviceProvider.GetRequiredService<OmniTtsSpeechProvider>());
                 services.AddSingleton<ISpeechAudioPlayer, SpeechAudioPlayer>();
-                services.AddSingleton<IVoiceAnnouncementService, VoiceAnnouncementService>();
+                services.AddSingleton<VoiceAnnouncementService>();
+                services.AddSingleton<IVoiceAnnouncementService>(serviceProvider =>
+                    serviceProvider.GetRequiredService<VoiceAnnouncementService>());
                 services.AddSingleton<NotificationService>();
                 // Local-only REST endpoint for the SecAgent connector. It intentionally has no UI/settings registration.
                 services.AddHostedService<SecAgentHttpHostedService>();

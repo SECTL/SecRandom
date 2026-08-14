@@ -118,8 +118,9 @@ public static class AndroidDataDirectoryLauncher
     private static bool IsProtectedPath(string path, string dataRoot)
     {
         var securityDirectory = Path.Combine(dataRoot, "config", "security");
-        return string.Equals(path, securityDirectory, StringComparison.Ordinal)
-               || path.StartsWith(securityDirectory + Path.DirectorySeparatorChar, StringComparison.Ordinal);
+        var voiceDirectory = Path.Combine(dataRoot, "config", "voice");
+        return IsSameOrDescendant(path, securityDirectory)
+               || IsSameOrDescendant(path, voiceDirectory);
     }
 
     private static void TargetSystemFileManager(Intent intent, Context context)

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="S_MiMoVoiceDesign" xml:space="preserve"><value>MiMo Voice Design</value></data>
+  <data name="S_MiMoVoiceDesign_D" xml:space="preserve"><value>Describe age, accent, timbre, and style in natural language. No reference audio is needed.</value></data>
+  <data name="S_MiMoVoiceDesignPrompt" xml:space="preserve"><value>Voice description</value></data>
+  <data name="S_MiMoVoiceDesignPrompt_D" xml:space="preserve"><value>Describes the generated voice. The announcement text is sent automatically as synthesis content.</value></data>
+  <data name="S_MiMoVoiceClone" xml:space="preserve"><value>MiMo Voice Clone</value></data>
+  <data name="S_MiMoVoiceClone_D" xml:space="preserve"><value>Use only a WAV reference recording you own or are authorized to use. It stays in private local storage and is excluded from settings and backups.</value></data>
+  <data name="C_MiMoVoiceCloneSelect" xml:space="preserve"><value>Select reference audio</value></data>
+  <data name="C_MiMoVoiceCloneClear" xml:space="preserve"><value>Remove reference audio</value></data>
+  <data name="M_MiMoVoiceCloneConfigured" xml:space="preserve"><value>Reference audio configured</value></data>
+  <data name="M_MiMoVoiceCloneNotConfigured" xml:space="preserve"><value>No reference audio configured</value></data>
+  <data name="M_MiMoVoiceCloneImportFailed" xml:space="preserve"><value>Could not import reference audio</value></data>
+  <data name="M_MiMoVoiceCloneCleared" xml:space="preserve"><value>Reference audio removed</value></data>
+  <data name="M_MiMoVoiceCloneConsentTitle" xml:space="preserve"><value>Authorization confirmation</value></data>
+  <data name="M_MiMoVoiceCloneConsentContent" xml:space="preserve"><value>Confirm that you have explicit authorization to use this recording for voice cloning.</value></data>
+  <data name="C_MiMoVoiceCloneConsent" xml:space="preserve"><value>I confirm</value></data>
+  <data name="C_MiMoVoiceCloneCancel" xml:space="preserve"><value>Cancel</value></data>
+</root>

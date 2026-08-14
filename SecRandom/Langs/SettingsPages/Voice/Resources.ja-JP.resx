@@ -1,1 +1,280 @@
-<?xml version="1.0" encoding="utf-8"?><root><data name="Page_Title"><value>音声設定</value></data><data name="S_Playback"><value>音声読み上げ</value></data><data name="S_Playback_Enable"><value>音声読み上げを有効化</value></data><data name="S_Playback_Enable_D"><value>すべての抽選読み上げのマスタースイッチで、各抽選設定で個別に制御できます</value></data><data name="S_Playback_Engine"><value>音声エンジン</value></data><data name="S_Playback_Engine_D"><value>読み上げに使用する音声エンジンを選択</value></data><data name="O_VoiceEngine_System"><value>システム音声</value></data><data name="O_VoiceEngine_EdgeTts"><value>Edge TTS</value></data><data name="S_Playback_EdgeTtsVoice"><value>Edge TTS 音声</value></data><data name="S_Playback_EdgeTtsVoice_D"><value>Edge TTS が使用する voice 名</value></data><data name="S_Playback_Voice"><value>音声</value></data><data name="S_Playback_Voice_D"><value>現在の音声エンジンで利用できる音声</value></data><data name="S_Playback_Actions"><value>音声操作</value></data><data name="S_Playback_Actions_D"><value>利用可能な音声を更新するか、現在の設定で読み上げを試聴します</value></data><data name="C_RefreshVoices"><value>音声を更新</value></data><data name="C_TestVoice"><value>試聴</value></data><data name="C_TestVoiceText"><value>これは音声読み上げのテストです。</value></data><data name="M_VoicesRefreshed"><value>音声一覧を更新しました。</value></data><data name="M_TestVoiceCompleted"><value>試聴が完了しました。</value></data><data name="M_TestVoiceFailed"><value>試聴に失敗しました</value></data><data name="S_Playback_Volume"><value>音声音量</value></data><data name="S_Playback_Volume_D"><value>読み上げ音量を設定</value></data><data name="S_Playback_SpeechRate"><value>読み上げ速度</value></data><data name="S_Playback_SpeechRate_D"><value>読み上げ速度の割合を設定</value></data><data name="S_Content"><value>読み上げ内容</value></data><data name="S_Content_AnnounceId"><value>ID を読み上げ</value></data><data name="S_Content_AnnounceId_D"><value>結果に ID を含める</value></data><data name="S_Content_AnnounceName"><value>名前を読み上げ</value></data><data name="S_Content_AnnounceName_D"><value>結果に名前を含める</value></data><data name="S_SystemVolume_Control_D"><value>読み上げ前にシステム音量を自動調整</value></data><data name="S_SystemVolume_Control"><value>システム音量制御を有効化</value></data><data name="S_SystemVolume_Size"><value>システム音量</value></data><data name="S_SystemVolume_Size_D"><value>音声読み上げ時に使用するシステム音量を設定</value></data><data name="S_Playback_WaitComplete_D"><value>現在の読み上げが完了するまで次の抽選を許可しない</value></data><data name="S_Playback_WaitComplete"><value>読み上げの完了を待つ</value></data><data name="S_SystemVolume"><value>システム音量</value></data></root>
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="Page_Title">
+    <value>音声設定</value>
+  </data>
+  <data name="S_Playback">
+    <value>音声読み上げ</value>
+  </data>
+  <data name="S_Playback_Enable">
+    <value>音声読み上げを有効化</value>
+  </data>
+  <data name="S_Playback_Enable_D">
+    <value>すべての抽選読み上げのマスタースイッチで、各抽選設定で個別に制御できます</value>
+  </data>
+  <data name="S_Playback_Engine">
+    <value>音声エンジン</value>
+  </data>
+  <data name="S_Playback_Engine_D">
+    <value>読み上げに使用する音声エンジンを選択</value>
+  </data>
+  <data name="O_VoiceEngine_System">
+    <value>システム音声</value>
+  </data>
+  <data name="O_VoiceEngine_EdgeTts">
+    <value>Edge TTS</value>
+  </data>
+  <data name="S_Playback_EdgeTtsVoice">
+    <value>Edge TTS 音声</value>
+  </data>
+  <data name="S_Playback_EdgeTtsVoice_D">
+    <value>Edge TTS で使用する音声を選択</value>
+  </data>
+  <data name="S_Playback_Voice">
+    <value>システム音声</value>
+  </data>
+  <data name="S_Playback_Voice_D">
+    <value>Windows システム音声で使用する音声を選択</value>
+  </data>
+  <data name="S_Playback_Actions">
+    <value>音声操作</value>
+  </data>
+  <data name="S_Playback_Actions_D">
+    <value>利用可能な音声を更新するか、現在の設定で読み上げを試聴します</value>
+  </data>
+  <data name="C_RefreshVoices">
+    <value>音声を更新</value>
+  </data>
+  <data name="C_TestVoice">
+    <value>試聴</value>
+  </data>
+  <data name="C_TestVoiceText">
+    <value>これは音声読み上げのテストです。</value>
+  </data>
+  <data name="M_VoicesRefreshed">
+    <value>音声一覧を更新しました。</value>
+  </data>
+  <data name="M_TestVoiceCompleted">
+    <value>試聴が完了しました。</value>
+  </data>
+  <data name="M_TestVoiceFailed">
+    <value>試聴に失敗しました</value>
+  </data>
+  <data name="S_Playback_Volume">
+    <value>音声音量</value>
+  </data>
+  <data name="S_Playback_Volume_D">
+    <value>読み上げ音量を設定</value>
+  </data>
+  <data name="S_Playback_SpeechRate">
+    <value>読み上げ速度</value>
+  </data>
+  <data name="S_Playback_SpeechRate_D">
+    <value>読み上げ速度の割合を設定</value>
+  </data>
+  <data name="S_Content">
+    <value>読み上げ内容</value>
+  </data>
+  <data name="S_Content_AnnounceId">
+    <value>ID を読み上げ</value>
+  </data>
+  <data name="S_Content_AnnounceId_D">
+    <value>結果に ID を含める</value>
+  </data>
+  <data name="S_Content_AnnounceName">
+    <value>名前を読み上げ</value>
+  </data>
+  <data name="S_Content_AnnounceName_D">
+    <value>結果に名前を含める</value>
+  </data>
+  <data name="S_SystemVolume_Control_D">
+    <value>読み上げ前にシステム音量を自動調整</value>
+  </data>
+  <data name="S_SystemVolume_Control">
+    <value>システム音量制御を有効化</value>
+  </data>
+  <data name="S_SystemVolume_Size">
+    <value>システム音量</value>
+  </data>
+  <data name="S_SystemVolume_Size_D">
+    <value>音声読み上げ時に使用するシステム音量を設定</value>
+  </data>
+  <data name="S_Playback_WaitComplete_D">
+    <value>現在の読み上げが完了するまで次の抽選を許可しない</value>
+  </data>
+  <data name="S_Playback_WaitComplete">
+    <value>読み上げの完了を待つ</value>
+  </data>
+  <data name="S_SystemVolume">
+    <value>システム音量</value>
+  </data>
+  <data name="O_VoiceEngine_OmniTts">
+    <value>Omni TTS</value>
+  </data>
+  <data name="S_OmniTts">
+    <value>Omni TTS 設定</value>
+  </data>
+  <data name="S_OmniTts_Provider">
+    <value>サービス提供元</value>
+  </data>
+  <data name="S_OmniTts_Provider_D">
+    <value>Omni TTS で使用する音声サービスを選択、モデルと音声は自動取得または手動入力可能</value>
+  </data>
+  <data name="O_OmniTtsProvider_OpenAi">
+    <value>OpenAI</value>
+  </data>
+  <data name="O_OmniTtsProvider_FishAudio">
+    <value>FishAudio</value>
+  </data>
+  <data name="O_OmniTtsProvider_MiMo">
+    <value>MiMo</value>
+  </data>
+  <data name="O_OmniTtsProvider_Custom">
+    <value>カスタム（OpenAI 互換）</value>
+  </data>
+  <data name="S_OmniTts_ApiBaseUrl">
+    <value>API ベース URL</value>
+  </data>
+  <data name="S_OmniTts_ApiBaseUrl_D">
+    <value>音声サービスの API ベース URL、提供元を切り替えると自動入力</value>
+  </data>
+  <data name="S_OmniTts_ApiKey">
+    <value>API キー</value>
+  </data>
+  <data name="S_OmniTts_ApiKey_D">
+    <value>キーはローカルの独立ファイルのみに保存、設定・ログ・バックアップには書き込まない</value>
+  </data>
+  <data name="C_OmniTtsSaveKey">
+    <value>キーを保存</value>
+  </data>
+  <data name="C_OmniTtsClearKey">
+    <value>キーを削除</value>
+  </data>
+  <data name="S_OmniTts_Model">
+    <value>モデル</value>
+  </data>
+  <data name="S_OmniTts_Model_D">
+    <value>サービスからモデル一覧を取得するか、モデル名を直接入力</value>
+  </data>
+  <data name="C_OmniTtsRefreshModels">
+    <value>モデルを取得</value>
+  </data>
+  <data name="C_OmniTtsRefreshVoices">
+    <value>音声を取得</value>
+  </data>
+  <data name="S_OmniTts_Voice">
+    <value>音声</value>
+  </data>
+  <data name="S_OmniTts_Voice_D">
+    <value>音声 ID または参照音声、一覧から選択または手動入力</value>
+  </data>
+  <data name="S_OmniTts_Instructions">
+    <value>音声指示</value>
+  </data>
+  <data name="S_OmniTts_Instructions_D">
+    <value>一部モデルのみ対応（例 gpt-4o-mini-tts）、読み上げ口調の指定に使用</value>
+  </data>
+  <data name="S_OmniTts_BatchGenerate">
+    <value>音声キャッシュを一括生成</value>
+  </data>
+  <data name="S_OmniTts_BatchGenerate_D">
+    <value>現在のモデルと音声で読み上げ音声を事前生成、抽選時にオフライン再生可能</value>
+  </data>
+  <data name="C_OmniTtsBatchTextHint">
+    <value>1 行に 1 テキストを入力するか、一覧からの生成を選択</value>
+  </data>
+  <data name="O_OmniTtsBatchSource_Text">
+    <value>複数行テキスト</value>
+  </data>
+  <data name="O_OmniTtsBatchSource_Students">
+    <value>点名リスト</value>
+  </data>
+  <data name="O_OmniTtsBatchSource_Prizes">
+    <value>抽選名簿</value>
+  </data>
+  <data name="C_OmniTtsStartBatch">
+    <value>生成開始</value>
+  </data>
+  <data name="C_OmniTtsCancelBatch">
+    <value>キャンセル</value>
+  </data>
+  <data name="S_OmniTts_ClearCache">
+    <value>音声キャッシュをクリア</value>
+  </data>
+  <data name="S_OmniTts_ClearCache_D">
+    <value>現在のエンジンと音声で選択したリスト向けに生成されたローカル音声キャッシュを削除</value>
+  </data>
+  <data name="C_OmniTtsClearCache">
+    <value>キャッシュをクリア</value>
+  </data>
+  <data name="M_OmniTtsKeyConfigured">
+    <value>設定済み</value>
+  </data>
+  <data name="M_OmniTtsKeyNotConfigured">
+    <value>未設定</value>
+  </data>
+  <data name="M_OmniTtsKeyEmpty">
+    <value>保存する API キーを入力してください</value>
+  </data>
+  <data name="M_OmniTtsKeySaved">
+    <value>API キーを保存しました</value>
+  </data>
+  <data name="M_OmniTtsKeyCleared">
+    <value>API キーを削除しました</value>
+  </data>
+  <data name="M_OmniTtsModelsRefreshed">
+    <value>モデル一覧を更新しました</value>
+  </data>
+  <data name="M_OmniTtsModelsEmpty">
+    <value>モデル一覧を取得できませんでした、モデル名を手動入力してください</value>
+  </data>
+  <data name="M_OmniTtsModelsRefreshFailed">
+    <value>モデル一覧の取得に失敗しました</value>
+  </data>
+  <data name="M_OmniTtsVoicesRefreshed">
+    <value>音声一覧を更新しました</value>
+  </data>
+  <data name="M_OmniTtsVoicesEmpty">
+    <value>利用可能な音声が見つかりませんでした。音声 ID を手動で追加できます</value>
+  </data>
+  <data name="M_OmniTtsVoicesRefreshFailed">
+    <value>音声一覧の取得に失敗しました</value>
+  </data>
+  <data name="M_OmniTtsBatchStarted">
+    <value>音声キャッシュを生成中</value>
+  </data>
+  <data name="M_OmniTtsBatchProgress"><value>{0}/{1}</value></data>
+  <data name="M_OmniTtsBatchCompleted">
+    <value>一括生成完了：新規 {0}、スキップ {1}、失敗 {2}</value>
+  </data>
+  <data name="M_OmniTtsBatchCompletedToast">
+    <value>一括生成が完了しました</value>
+  </data>
+  <data name="M_OmniTtsBatchCancelled">
+    <value>一括生成をキャンセルしました</value>
+  </data>
+  <data name="M_OmniTtsBatchFailed">
+    <value>一括生成に失敗しました</value>
+  </data>
+  <data name="M_OmniTtsCacheCleared">
+    <value>{0} 個の音声キャッシュを削除しました</value>
+  </data>
+  <data name="O_OmniTtsClearScope_All">
+    <value>キャッシュがあるすべての一覧</value>
+  </data>
+  <data name="M_OmniTtsCacheEmpty">
+    <value>現在のエンジンと音声には削除できるキャッシュがありません</value>
+  </data>
+  <data name="S_OmniTtsClearScope">
+    <value>削除範囲</value>
+  </data>
+  <data name="S_OmniTtsClearScope_D">
+    <value>現在のエンジンと音声でキャッシュ済みの出席名簿と抽選名簿だけを表示し、すべてを選ぶと両方を削除</value>
+  </data>
+  <data name="S_OmniTtsBatchScope">
+    <value>生成範囲</value>
+  </data>
+  <data name="S_OmniTtsBatchScope_D">
+    <value>出席名簿または抽選名簿を選び、現在のエンジンと音声でローカル音声キャッシュを生成</value>
+  </data>
+</root>

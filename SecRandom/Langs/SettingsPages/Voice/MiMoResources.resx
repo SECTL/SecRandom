@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="S_MiMoVoiceDesign" xml:space="preserve"><value>MiMo 音色设计</value></data>
+  <data name="S_MiMoVoiceDesign_D" xml:space="preserve"><value>通过自然语言描述年龄、口音、音色和风格，无需参考音频</value></data>
+  <data name="S_MiMoVoiceDesignPrompt" xml:space="preserve"><value>音色描述</value></data>
+  <data name="S_MiMoVoiceDesignPrompt_D" xml:space="preserve"><value>用于生成音色的描述；播报文本会自动作为合成内容发送</value></data>
+  <data name="S_MiMoVoiceClone" xml:space="preserve"><value>MiMo 音色克隆</value></data>
+  <data name="S_MiMoVoiceClone_D" xml:space="preserve"><value>仅使用本人或已获授权的 WAV 参考音频。文件仅保存在本机私有目录，不会写入设置或备份</value></data>
+  <data name="C_MiMoVoiceCloneSelect" xml:space="preserve"><value>选择参考音频</value></data>
+  <data name="C_MiMoVoiceCloneClear" xml:space="preserve"><value>移除参考音频</value></data>
+  <data name="M_MiMoVoiceCloneConfigured" xml:space="preserve"><value>参考音频已配置</value></data>
+  <data name="M_MiMoVoiceCloneNotConfigured" xml:space="preserve"><value>未配置参考音频</value></data>
+  <data name="M_MiMoVoiceCloneImportFailed" xml:space="preserve"><value>参考音频导入失败</value></data>
+  <data name="M_MiMoVoiceCloneCleared" xml:space="preserve"><value>参考音频已移除</value></data>
+  <data name="M_MiMoVoiceCloneConsentTitle" xml:space="preserve"><value>使用授权确认</value></data>
+  <data name="M_MiMoVoiceCloneConsentContent" xml:space="preserve"><value>请确认你拥有使用此参考音频进行语音克隆的明确授权。</value></data>
+  <data name="C_MiMoVoiceCloneConsent" xml:space="preserve"><value>我已确认</value></data>
+  <data name="C_MiMoVoiceCloneCancel" xml:space="preserve"><value>取消</value></data>
+</root>

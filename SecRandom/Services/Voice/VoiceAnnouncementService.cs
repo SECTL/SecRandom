@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
@@ -22,7 +23,8 @@ public sealed class VoiceAnnouncementService(
     MainConfigHandler configHandler,
     IEnumerable<ISpeechProvider> speechProviders,
     ISpeechAudioPlayer audioPlayer,
-    ILogger<VoiceAnnouncementService> logger) : IVoiceAnnouncementService
+    ILogger<VoiceAnnouncementService> logger,
+    OmniTtsCredentialStore? omniTtsCredentialStore = null) : IVoiceAnnouncementService
 {
     private const int VoiceNamePrefixLength = 48;
     private const int TextPrefixLength = 96;
@@ -30,6 +32,7 @@ public sealed class VoiceAnnouncementService(
         .GroupBy(provider => provider.Engine)
         .ToDictionary(group => group.Key, group => group.First());
     private readonly SemaphoreSlim _speakGate = new(1, 1);
+    private readonly SemaphoreSlim _batchGate = new(1, 1);
 
     public Task<IReadOnlyList<VoiceOption>> GetVoicesAsync(
         int engine,
@@ -84,6 +87,215 @@ public sealed class VoiceAnnouncementService(
         return SpeakAsync(text, waitForCompletion, cancellationToken);
     }
 
+    /// <summary>
+    /// Pre-generates the audio cache for a list of texts so later announcements play
+    /// without network access. Uses the exact same cache key as real-time speech.
+    /// </summary>
+    public Task<VoiceBatchResult> GenerateCacheAsync(
+        IEnumerable<string> texts,
+        IProgress<VoiceBatchProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var uniqueTexts = texts
+            .Where(text => !string.IsNullOrWhiteSpace(text))
+            .Select(text => text!.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        return GenerateCacheCoreAsync(uniqueTexts, progress, cancellationToken);
+    }
+
+    public Task<VoiceBatchResult> GenerateStudentsCacheAsync(
+        IEnumerable<Student> students,
+        IProgress<VoiceBatchProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var settings = configHandler.Data.VoiceSettings;
+        var texts = students
+            .Select(student => BuildAnnouncementText(settings, GetSpecificSettings(student), student.Id, student.Name))
+            .Where(value => !string.IsNullOrWhiteSpace(value));
+        return GenerateCacheAsync(texts, progress, cancellationToken);
+    }
+
+    public Task<VoiceBatchResult> GeneratePrizesCacheAsync(
+        IEnumerable<Prize> prizes,
+        IProgress<VoiceBatchProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var settings = configHandler.Data.VoiceSettings;
+        var texts = prizes
+            .Select(prize => BuildAnnouncementText(settings, GetSpecificSettings(prize), prize.Id, prize.Name))
+            .Where(value => !string.IsNullOrWhiteSpace(value));
+        return GenerateCacheAsync(texts, progress, cancellationToken);
+    }
+
+    public int ClearStudentsCache(IEnumerable<Student> students)
+    {
+        var settings = configHandler.Data.VoiceSettings;
+        var texts = students
+            .Select(student => BuildAnnouncementText(settings, GetSpecificSettings(student), student.Id, student.Name));
+        return ClearCacheForTexts(texts);
+    }
+
+    public int ClearPrizesCache(IEnumerable<Prize> prizes)
+    {
+        var settings = configHandler.Data.VoiceSettings;
+        var texts = prizes
+            .Select(prize => BuildAnnouncementText(settings, GetSpecificSettings(prize), prize.Id, prize.Name));
+        return ClearCacheForTexts(texts);
+    }
+
+    public bool HasStudentsCache(IEnumerable<Student> students)
+    {
+        var settings = configHandler.Data.VoiceSettings;
+        var texts = students
+            .Select(student => BuildAnnouncementText(settings, GetSpecificSettings(student), student.Id, student.Name));
+        return HasCacheForTexts(texts);
+    }
+
+    public bool HasPrizesCache(IEnumerable<Prize> prizes)
+    {
+        var settings = configHandler.Data.VoiceSettings;
+        var texts = prizes
+            .Select(prize => BuildAnnouncementText(settings, GetSpecificSettings(prize), prize.Id, prize.Name));
+        return HasCacheForTexts(texts);
+    }
+
+    /// <summary>Deletes every cached voice audio file (all engines share the same directory).</summary>
+    public int ClearVoiceCache()
+    {
+        var cacheDirectory = Utils.GetDirectoryPath("audio", "voice");
+        if (!Directory.Exists(cacheDirectory))
+            return 0;
+
+        var removed = 0;
+        foreach (var file in Directory.EnumerateFiles(cacheDirectory))
+        {
+            try
+            {
+                File.Delete(file);
+                removed++;
+            }
+            catch (Exception exception)
+            {
+                logger.LogWarning(exception, "Failed to delete voice cache file: {Path}.", file);
+            }
+        }
+
+        return removed;
+    }
+
+    private int ClearCacheForTexts(IEnumerable<string> texts)
+    {
+        var settings = configHandler.Data.VoiceSettings;
+        var voiceId = ResolveVoiceId(settings, settings.VoiceEngine);
+        var cachedPaths = texts
+            .Where(text => !string.IsNullOrWhiteSpace(text))
+            .Select(text => GetCachedAudioPath(settings, settings.VoiceEngine, voiceId, text.Trim()))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+
+        var removed = 0;
+        foreach (var path in cachedPaths)
+        {
+            if (!File.Exists(path))
+                continue;
+
+            try
+            {
+                File.Delete(path);
+                removed++;
+            }
+            catch (Exception exception)
+            {
+                logger.LogWarning(exception, "Failed to delete voice cache file: {Path}.", path);
+            }
+        }
+
+        return removed;
+    }
+
+    private bool HasCacheForTexts(IEnumerable<string> texts)
+    {
+        var settings = configHandler.Data.VoiceSettings;
+        var voiceId = ResolveVoiceId(settings, settings.VoiceEngine);
+        return texts
+            .Where(text => !string.IsNullOrWhiteSpace(text))
+            .Select(text => GetCachedAudioPath(settings, settings.VoiceEngine, voiceId, text.Trim()))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Any(IsUsableCacheFile);
+    }
+
+    private static bool IsUsableCacheFile(string path)
+    {
+        try
+        {
+            return File.Exists(path) && new FileInfo(path).Length > 0;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+    }
+
+    private async Task<VoiceBatchResult> GenerateCacheCoreAsync(
+        IReadOnlyList<string> texts,
+        IProgress<VoiceBatchProgress>? progress,
+        CancellationToken cancellationToken)
+    {
+        if (texts.Count == 0)
+            return new VoiceBatchResult(0, 0, 0, []);
+
+        var settings = configHandler.Data.VoiceSettings;
+        if (!_speechProviders.TryGetValue(settings.VoiceEngine, out var provider) ||
+            provider.Engine == SystemSpeechProvider.SystemEngine && !OperatingSystem.IsWindows())
+            throw new InvalidOperationException("The selected voice engine is not available on this platform.");
+        if (provider.Engine == OmniTtsSpeechProvider.OmniEngine &&
+            omniTtsCredentialStore is not null &&
+            !omniTtsCredentialStore.HasKey(settings.OmniTtsProvider))
+            throw new InvalidOperationException("OmniTTS API key is not configured.");
+
+        await _batchGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var generated = 0;
+            var skipped = 0;
+            List<string> failedTexts = [];
+            for (var index = 0; index < texts.Count; index++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var text = texts[index];
+                progress?.Report(new VoiceBatchProgress(index + 1, texts.Count, text));
+
+                var voiceId = ResolveVoiceId(settings, provider.Engine);
+                var path = GetCachedAudioPath(settings, provider.Engine, voiceId, text);
+                if (File.Exists(path) && new FileInfo(path).Length > 0)
+                {
+                    skipped++;
+                    continue;
+                }
+
+                try
+                {
+                    var audio = await provider.SynthesizeAsync(
+                        new SpeechSynthesisRequest(text, voiceId),
+                        cancellationToken).ConfigureAwait(false);
+                    await WriteAudioAsync(path, audio, cancellationToken).ConfigureAwait(false);
+                    generated++;
+                }
+                catch (Exception exception)
+                {
+                    logger.LogWarning(exception, "Batch voice cache generation failed for one text.");
+                    failedTexts.Add(text);
+                }
+            }
+
+            return new VoiceBatchResult(generated, skipped, failedTexts.Count, failedTexts);
+        }
+        finally
+        {
+            _batchGate.Release();
+        }
+    }
+
     private async Task SpeakCoreAsync(string text, CancellationToken cancellationToken)
     {
         await _speakGate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -101,9 +313,21 @@ public sealed class VoiceAnnouncementService(
 
                 logger.LogWarning("System TTS is unavailable on this platform. Falling back to Edge TTS.");
             }
+            else if (provider.Engine == OmniTtsSpeechProvider.OmniEngine &&
+                     omniTtsCredentialStore is not null &&
+                     !omniTtsCredentialStore.HasKey(settings.OmniTtsProvider))
+            {
+                if (!_speechProviders.TryGetValue(EdgeTtsSpeechProvider.EdgeEngine, out provider))
+                {
+                    logger.LogWarning("OmniTTS API key is not configured and Edge TTS is unavailable.");
+                    return;
+                }
+
+                logger.LogWarning("OmniTTS API key is not configured. Falling back to Edge TTS.");
+            }
 
             var voiceId = ResolveVoiceId(settings, provider.Engine);
-            var path = GetCachedAudioPath(provider.Engine, voiceId, text);
+            var path = GetCachedAudioPath(settings, provider.Engine, voiceId, text);
             if (!File.Exists(path) || new FileInfo(path).Length == 0)
             {
                 var audio = await provider.SynthesizeAsync(
@@ -148,6 +372,24 @@ public sealed class VoiceAnnouncementService(
 
     private string ResolveVoiceId(VoiceSettingsConfig settings, int engine)
     {
+        if (engine == OmniTtsSpeechProvider.OmniEngine)
+        {
+            if (settings.OmniTtsProvider == OmniTtsProvider.MiMo)
+            {
+                if (OmniTtsSpeechProvider.IsMiMoVoiceCloneModel(settings.OmniTtsModel))
+                    return $"clone:{settings.MiMoVoiceCloneReferenceHash}";
+
+                if (OmniTtsSpeechProvider.IsMiMoVoiceDesignModel(settings.OmniTtsModel))
+                {
+                    var promptHash = Convert.ToHexString(SHA256.HashData(
+                        Encoding.UTF8.GetBytes(settings.MiMoVoiceDesignPrompt ?? string.Empty)))[..32];
+                    return $"design:{promptHash}";
+                }
+            }
+
+            return settings.OmniTtsVoiceId;
+        }
+
         if (engine == EdgeTtsSpeechProvider.EdgeEngine)
         {
             var defaultVoice = VoiceSettingsConfig.GetDefaultEdgeTtsVoiceName(configHandler.Data.General.Basic.Language);
@@ -158,6 +400,7 @@ public sealed class VoiceAnnouncementService(
     }
 
     private static string GetCachedAudioPath(
+        VoiceSettingsConfig settings,
         int engine,
         string voiceId,
         string text)
@@ -168,7 +411,7 @@ public sealed class VoiceAnnouncementService(
         return Path.Combine(
             cacheDirectory,
             $"{GetSafeCacheFileNamePart(voiceId, VoiceNamePrefixLength)}_"
-            + $"{GetSafeCacheFileNamePart(text, TextPrefixLength)}_{cacheKey}{GetAudioExtension(engine)}");
+            + $"{GetSafeCacheFileNamePart(text, TextPrefixLength)}_{cacheKey}{GetAudioExtension(settings, engine)}");
     }
 
     private static string GetSafeCacheFileNamePart(string value, int maximumBytes)
@@ -210,7 +453,14 @@ public sealed class VoiceAnnouncementService(
         }
     }
 
-    private static string GetAudioExtension(int engine) => engine == EdgeTtsSpeechProvider.EdgeEngine ? ".mp3" : ".wav";
+    private static string GetAudioExtension(VoiceSettingsConfig settings, int engine) =>
+        engine == OmniTtsSpeechProvider.OmniEngine &&
+        (settings.OmniTtsProvider == OmniTtsProvider.Gemini ||
+         settings.OmniTtsProvider == OmniTtsProvider.MiMo &&
+         (OmniTtsSpeechProvider.IsMiMoVoiceCloneModel(settings.OmniTtsModel) ||
+          OmniTtsSpeechProvider.IsMiMoVoiceDesignModel(settings.OmniTtsModel)))
+            ? ".wav"
+            : engine is EdgeTtsSpeechProvider.EdgeEngine or OmniTtsSpeechProvider.OmniEngine ? ".mp3" : ".wav";
 
     private static void AddIfNotBlank(ICollection<string> parts, string? value)
     {
@@ -230,3 +480,11 @@ public sealed class VoiceAnnouncementService(
         }
     }
 }
+
+public sealed record VoiceBatchProgress(int Completed, int Total, string CurrentText);
+
+public sealed record VoiceBatchResult(
+    int Generated,
+    int Skipped,
+    int Failed,
+    IReadOnlyList<string> FailedTexts);
