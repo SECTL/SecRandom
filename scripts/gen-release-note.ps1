@@ -29,7 +29,7 @@ $downloadSummary = @"
 
 foreach ($file in $files) {
     $gh = "https://github.com/${repo}/releases/download/${tag}/$($file.Name)"
-    $stk = "https://stk.sectl.top/SecRandom/${tag}/$($file.Name)"
+    $stk = "https://stk.sectl.cn/SecRandom/%E6%80%9D%E6%8B%93%E5%88%9B%E8%81%94%20Gihub%20%E9%95%9C%E5%83%8F%E6%BA%90/${tag}/$($file.Name)"
     $downloadSummary += "`n| $($file.Name) | [下载](${gh}) | [下载](${stk}) |"
 }
 
