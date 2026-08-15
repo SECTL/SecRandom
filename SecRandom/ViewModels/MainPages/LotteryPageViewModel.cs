@@ -65,6 +65,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly FileSystemWatcher? _studentListWatcher;
     private bool _isDrawCommandRunning;
     private bool _isRefreshingLists;
+    private bool _isApplyingSelectionRefresh;
     private bool _isPrizeListRefreshQueued;
     private bool _isStudentListRefreshQueued;
 
@@ -181,7 +182,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
     partial void OnSelectedPrizeListNameChanged(string value)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrWhiteSpace(value) || _isApplyingSelectionRefresh)
             return;
 
         _profileService.LoadPrizeProfile(value);
@@ -193,7 +194,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
     partial void OnSelectedStudentListNameChanged(string value)
     {
-        if (!string.IsNullOrWhiteSpace(value) && value != NoStudentOption)
+        if (!string.IsNullOrWhiteSpace(value) && value != NoStudentOption && !_isApplyingSelectionRefresh)
         {
             _profileService.LoadStudentProfile(value);
             EnsureRestartStudentRecordsCleared(value);
@@ -280,6 +281,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         if (IsDrawing)
             return;
 
+        EnsureActiveProfilesMatchSelection();
+
         RefreshCounts();
         ResetExhaustedTemporaryRecords();
         if (!CanStartDraw)
@@ -306,6 +309,9 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                     count);
 
             var courseName = _linkageDrawCoordinator.GetCourseName();
+            // 必须在 DrawAsync 启动之前冻结可分配学生：抽取提交（RecordStudents）会实时更新临时记录，
+            // 若在提交后才取候选，最后一轮（剩余人数=抽取数）提交后池子为 0，动画帧会丢失学生信息。
+            var previewStudents = IsStudentAssignmentEnabled ? GetStudentCandidates().ToList() : [];
             var drawTask = _lotteryDrawService.DrawAsync(new LotteryDrawRequest(
                 SelectedPrizeListName,
                 IsStudentAssignmentEnabled ? SelectedStudentListName : string.Empty,
@@ -313,7 +319,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                 CurrentGenderScope,
                 count,
                 courseName));
-            var previewTask = ShowPreviewAsync(prizes, count, MusicSettings.AnimationMusic);
+            var previewTask = ShowPreviewAsync(prizes, count, previewStudents, MusicSettings.AnimationMusic);
             List<Prize> drawn;
             List<Student> assignedStudents;
             try
@@ -463,13 +469,27 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
             var defaultPool = Config.LotterySettings.DefaultPool;
             var currentName = _profileService.PrizeListConfig?.Name ?? string.Empty;
-            SelectedPrizeListName = PrizeListNames.Contains(previousName)
+            var selected = PrizeListNames.Contains(previousName)
                 ? previousName
                 : PrizeListNames.Contains(defaultPool)
                     ? defaultPool
                     : PrizeListNames.Contains(currentName)
                         ? currentName
                         : PrizeListNames.FirstOrDefault() ?? string.Empty;
+
+            // 后台刷新（列表文件 watcher）会先清空下拉项，TwoWay 绑定把选中项回写成空值，
+            // 随后又原样恢复为刷新前的选择；这种「假变化」不得把共享档案切回本页选中项，
+            // 否则会打断闪抽等其它会话已切好的名单。仅当解析结果确实不同于刷新前（名单被删/改名等）
+            // 或用户主动选择时才切换共享档案。
+            _isApplyingSelectionRefresh = selected == previousName;
+            try
+            {
+                SelectedPrizeListName = selected;
+            }
+            finally
+            {
+                _isApplyingSelectionRefresh = false;
+            }
         }
         finally
         {
@@ -487,7 +507,17 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                      .OrderBy(Path.GetFileName))
             StudentListNames.Add(Path.GetFileNameWithoutExtension(file));
 
-        SelectedStudentListName = StudentListNames.Contains(previousName) ? previousName : NoStudentOption;
+        var selected = StudentListNames.Contains(previousName) ? previousName : NoStudentOption;
+        // 同 RollCall：刷新期间下拉框回写的空值恢复不算真实选择变化，不切换共享档案。
+        _isApplyingSelectionRefresh = selected == previousName;
+        try
+        {
+            SelectedStudentListName = selected;
+        }
+        finally
+        {
+            _isApplyingSelectionRefresh = false;
+        }
         RefreshFilterOptions();
     }
 
@@ -658,7 +688,11 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         return threshold <= 0 ? int.MaxValue : threshold;
     }
 
-    private async Task ShowPreviewAsync(IReadOnlyList<Prize> prizes, int count, string animationMusic)
+    private async Task ShowPreviewAsync(
+        IReadOnlyList<Prize> prizes,
+        int count,
+        IReadOnlyList<Student> studentCandidates,
+        string animationMusic)
     {
         if ((Config.LotterySettings.OverrideDisplaySettings && Config.LotterySettings.LotteryShowRandom < 0)
             || AnimationSettings.Animation == AnimationMode.NoAnimation)
@@ -669,6 +703,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             MusicSettings.AnimationMusicVolume,
             MusicSettings.AnimationMusicFadeIn, MusicSettings.AnimationMusicLoop).ConfigureAwait(true);
 
+        // 动画与真正抽取并行执行，抽取提交会实时更新临时记录；这里使用调用方在 DrawAsync 启动前
+        // 冻结的学生候选池，动画全程保持一致（与点名页动画使用冻结候选的语义一致）。
         var previewCts = new CancellationTokenSource();
         _previewCts = previewCts;
         var token = previewCts.Token;
@@ -685,7 +721,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             {
                 ReplaceResults(BuildDisplayPrizes(
                     prizes.OrderBy(_ => Random.Shared.Next()).Take(count).ToList(),
-                    GetRandomAssignedStudents(count)));
+                    GetRandomAssignedStudents(count, studentCandidates)));
                 IsResultVisible = true;
                 TriggerPreviewAnimation();
                 StatusText = SR.M_Drawing;
@@ -827,9 +863,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private List<Student> GetRandomAssignedStudents(int count)
+    private List<Student> GetRandomAssignedStudents(int count, IReadOnlyList<Student> candidates)
     {
-        var candidates = GetStudentCandidates().ToList();
         if (count <= 0 || candidates.Count == 0)
             return [];
 
@@ -901,6 +936,26 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         RefreshCounts();
         MainView.ShowSuccessToast(SR.M_AutoResetDone);
         return true;
+    }
+
+    /// <summary>
+    ///     抽奖预览与剩余统计都读取共享档案；其它会话（如闪抽）可能已把共享学生档案切到别的名单，
+    ///     抽取前必须先切回本页选中的奖池与名单，否则预览/候选会取自错误档案。
+    /// </summary>
+    private void EnsureActiveProfilesMatchSelection()
+    {
+        if (!string.IsNullOrWhiteSpace(SelectedPrizeListName)
+            && !string.Equals(_profileService.PrizeListConfig?.Name, SelectedPrizeListName, StringComparison.Ordinal))
+        {
+            _profileService.LoadPrizeProfile(SelectedPrizeListName);
+        }
+
+        if (IsStudentAssignmentEnabled
+            && !string.IsNullOrWhiteSpace(SelectedStudentListName)
+            && !string.Equals(_profileService.StudentListConfig?.Name, SelectedStudentListName, StringComparison.Ordinal))
+        {
+            _profileService.LoadStudentProfile(SelectedStudentListName);
+        }
     }
 
     private void RefreshFilterOptions()

@@ -62,6 +62,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private List<Student> _lastResultStudents = [];
     private int _studentIdPadWidth;
     private bool _isRefreshingLists;
+    private bool _isApplyingSelectionRefresh;
     private bool _isStudentListRefreshQueued;
     private bool _isDrawCommandRunning;
     private CancellationTokenSource? _previewCts;
@@ -183,7 +184,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     partial void OnSelectedStudentListNameChanged(string value)
     {
-        if (!string.IsNullOrWhiteSpace(value))
+        if (!string.IsNullOrWhiteSpace(value) && !_isApplyingSelectionRefresh)
         {
             _profileService.LoadStudentProfile(value);
             EnsureRestartTemporaryRecordsCleared(value);
@@ -289,6 +290,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     {
         if (IsDrawing)
             return;
+
+        EnsureActiveProfileMatchesSelection();
 
         RefreshCounts();
         ResetForNewRoundIfExhausted();
@@ -427,13 +430,27 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
             var defaultClass = Config.RollCallSettings.DefaultClass;
             var currentName = _profileService.StudentListConfig?.Name ?? string.Empty;
-            SelectedStudentListName = StudentListNames.Contains(previousName)
+            var selected = StudentListNames.Contains(previousName)
                 ? previousName
                 : StudentListNames.Contains(defaultClass)
                     ? defaultClass
                     : StudentListNames.Contains(currentName)
                         ? currentName
                         : StudentListNames[0];
+
+            // 后台刷新（列表文件 watcher）会先清空下拉项，TwoWay 绑定把选中项回写成空值，
+            // 随后又原样恢复为刷新前的选择；这种「假变化」不得把共享档案切回本页选中项，
+            // 否则会打断闪抽等其它会话已切好的名单。仅当解析结果确实不同于刷新前（名单被删/改名等）
+            // 或用户主动选择时才切换共享档案。
+            _isApplyingSelectionRefresh = selected == previousName;
+            try
+            {
+                SelectedStudentListName = selected;
+            }
+            finally
+            {
+                _isApplyingSelectionRefresh = false;
+            }
 
             UpdateStudentIdPadWidth();
         }
@@ -683,6 +700,19 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         RefreshCounts();
         MainView.ShowSuccessToast(SR.M_AutoResetDone);
         return true;
+    }
+
+    /// <summary>
+    ///     动画候选和剩余统计都读取共享档案；闪抽等其它会话可能已把共享档案切到别的名单，
+    ///     抽取前必须先切回本页选中的名单，否则动画/候选会取自错误名单。
+    /// </summary>
+    private void EnsureActiveProfileMatchesSelection()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedStudentListName)
+            || string.Equals(_profileService.StudentListConfig?.Name, SelectedStudentListName, StringComparison.Ordinal))
+            return;
+
+        _profileService.LoadStudentProfile(SelectedStudentListName);
     }
 
     private IEnumerable<Student> GetVisibleStudents()

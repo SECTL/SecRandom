@@ -198,6 +198,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (!TryLoadDefaultStudentList())
             return;
 
+        ResetForNewRoundIfExhausted();
+
         var candidates = GetEligibleCandidates().ToList();
         if (candidates.Count == 0)
         {
@@ -296,6 +298,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                 await _voiceAnnouncementService.SpeakStudentsAsync(drawn).ConfigureAwait(false);
 
             StartCooldown();
+            ResetForNewRoundIfExhausted();
         }
         finally
         {
@@ -384,7 +387,15 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         }
 
         if (SelectedStudentListName != defaultClass)
+        {
             SelectedStudentListName = defaultClass;
+        }
+        else
+        {
+            // 选择属性未变化不代表共享档案就是该名单：点名页等其它会话可能已把共享档案切到别的名单，
+            // 闪抽必须以解析出的默认名单为准，否则候选池会取自错误名单而证明文件名仍显示本名单。
+            _profileService.LoadStudentProfile(defaultClass);
+        }
 
         return true;
     }
@@ -405,6 +416,27 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             string.Empty,
             counts,
             threshold);
+    }
+
+    /// <summary>
+    ///     名单里还有成员但当前轮次已无可抽成员时（NoRepeat/HalfRepeat 抽空），自动重置临时记录
+    ///     并继续抽取，与点名/抽奖的抽空自动重置保持一致，避免闪抽停在「没有可抽取的成员」。
+    /// </summary>
+    private bool ResetForNewRoundIfExhausted()
+    {
+        var students = (_profileService.CurrentStudentList?.Students ?? [])
+            .Where(student => student.IsCandidate)
+            .ToList();
+        if (students.Count == 0)
+            return false;
+
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.QuickDrawSettings.DrawMode, Config.QuickDrawSettings.HalfRepeat);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, string.Empty, string.Empty);
+        if (DrawCandidateFilter.FilterEligibleStudents(students, string.Empty, string.Empty, counts, threshold).Any())
+            return false;
+
+        _temporaryRecordService.ResetStudentList(SelectedStudentListName);
+        return true;
     }
 
     private async Task ShowPreviewAsync(IReadOnlyList<Student> candidates, int count, string animationMusic)

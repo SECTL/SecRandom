@@ -21,10 +21,12 @@ public partial class RollCallDrawSettingsPage : UserControl
 {
     private bool _normalizingSettings;
     private bool _isSubscribed;
+    private string _lastKnownDefaultClass = string.Empty;
 
     public RollCallDrawSettingsPage()
     {
         Settings = ViewModel.Config.RollCallSettings;
+        _lastKnownDefaultClass = Settings.DefaultClass;
         MusicLibrary.Refresh();
         RefreshStudentLists();
         DataContext = this;
@@ -58,6 +60,20 @@ public partial class RollCallDrawSettingsPage : UserControl
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(RollCallSettingsConfig.DefaultClass))
+        {
+            if (string.IsNullOrWhiteSpace(Settings.DefaultClass))
+            {
+                // 下拉框在 ItemsSource 刷新时会先清空选中项并回写空值，恢复用户之前的选择
+                // 而不是清空或回退到第一项，避免默认名单被瞬时空掉后又被兜底逻辑覆盖。
+                if (!string.IsNullOrWhiteSpace(_lastKnownDefaultClass))
+                    Settings.DefaultClass = _lastKnownDefaultClass;
+                return;
+            }
+
+            _lastKnownDefaultClass = Settings.DefaultClass;
+        }
+
         NormalizeDrawSettings();
         ConfigHandler.Save();
     }
