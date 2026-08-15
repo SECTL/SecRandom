@@ -339,7 +339,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
         {
             nameof(IsCountdownMode), nameof(IsStopwatchMode), nameof(IsClockMode), nameof(HasControls),
             nameof(ModeIndex), nameof(IsRunning), nameof(ModeText), nameof(StartPauseText), nameof(DisplayTime),
-            nameof(SecondaryText), nameof(StatusText), nameof(RingBrush), nameof(Progress), nameof(HasLaps),
+            nameof(SecondaryText), nameof(RingBrush), nameof(Progress), nameof(HasLaps),
             nameof(SelectedTime), nameof(HoursText), nameof(MinutesText), nameof(SecondsText), nameof(StartPauseIcon)
         })
             OnPropertyChanged(name);
