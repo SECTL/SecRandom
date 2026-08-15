@@ -79,9 +79,7 @@
                                                         IsVisible="{Binding IsImageBeforeText}" />
                                         <StackPanel Spacing="4" HorizontalAlignment="Center">
                                             <TextBlock Text="{Binding DisplayText}"
-                                                       MaxWidth="360"
                                                        TextAlignment="Center"
-                                                       TextWrapping="Wrap"
                                                        Foreground="{Binding TextBrush}"
                                                        FontSize="{Binding #QuickDraw.ViewModel.ResultFontSize}"
                                                        FontFamily="{Binding #QuickDraw.ViewModel.ResultFontFamily}"

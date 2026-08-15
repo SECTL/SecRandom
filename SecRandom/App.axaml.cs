@@ -1900,6 +1900,10 @@ public partial class App : Application
             Background = Brushes.Transparent,
             TransparencyLevelHint = [WindowTransparencyLevel.Transparent]
         };
+        _quickDrawWindow.Loaded += (_, _) =>
+        {
+            _quickDrawWindow.Width = 280;
+        };
         _quickDrawWindow.Opened += (_, _) =>
         {
             ApplyQuickDrawWindowBounds(_quickDrawWindow);
