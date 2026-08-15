@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="Page_Title"><value>タイマー</value></data>
+  <data name="C_Countdown"><value>カウントダウン</value></data>
+  <data name="C_Stopwatch"><value>ストップウォッチ</value></data>
+  <data name="C_Clock"><value>時計</value></data>
+  <data name="C_Start"><value>開始</value></data>
+  <data name="C_Pause"><value>一時停止</value></data>
+  <data name="C_Reset"><value>リセット</value></data>
+  <data name="C_Lap"><value>ラップ</value></data>
+  <data name="C_ClearLaps"><value>ラップを消去</value></data>
+  <data name="C_TotalTime"><value>合計時間</value></data>
+  <data name="C_ShowMilliseconds"><value>ミリ秒を表示</value></data>
+  <data name="C_MiniWindow"><value>ミニウィンドウを開く</value></data>
+  <data name="C_Restore"><value>元に戻す</value></data>
+  <data name="C_Presets"><value>プリセット</value></data>
+  <data name="C_CommonPresets"><value>よく使う</value></data>
+  <data name="C_RecentPresets"><value>最近使用</value></data>
+  <data name="M_Ready"><value>準備完了</value></data>
+  <data name="M_Running"><value>計時中</value></data>
+  <data name="M_TimeUp"><value>時間です</value></data>
+  <data name="M_StopwatchDetails"><value>開始、一時停止、リセットで操作します</value></data>
+  <data name="M_ClockDetails"><value>現在の現地時刻と日付を表示します</value></data>
+  <data name="M_NoRecentPresets"><value>最近使用したプリセットはありません</value></data>
+  <data name="C_Tips" xml:space="preserve">
+    <value>時計の針は人の困惑、苦悩、弱さのように……いつまでも回り続ける。
+でも何があろうと、人は進まなければならない。
+その針が、永遠に前を指しているように。
+僕の旅はここまで、ここからは……君の道だ。</value>
+  </data>
+</root>

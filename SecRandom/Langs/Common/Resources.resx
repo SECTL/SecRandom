@@ -58,6 +58,9 @@
     <data name="Feat_Lottery" xml:space="preserve">
         <value>抽奖</value>
     </data>
+    <data name="Feat_Timer" xml:space="preserve">
+        <value>计时器</value>
+    </data>
     <data name="Settings_About" xml:space="preserve">
         <value>关于 SecRandom</value>
     </data>

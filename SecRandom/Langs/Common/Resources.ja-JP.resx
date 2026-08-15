@@ -33,6 +33,7 @@
     <data name="Menu_HideFloatingWindow" xml:space="preserve"><value>フローティングウィンドウを非表示</value></data>
     <data name="Feat_RollCall" xml:space="preserve"><value>点呼</value></data>
     <data name="Feat_QuickDraw" xml:space="preserve"><value>クイック抽選</value></data>
+    <data name="Feat_Timer" xml:space="preserve"><value>タイマー</value></data>
     <data name="C_QuickDrawAutoCloseHint" xml:space="preserve"><value>{0} 秒後に自動的に閉じます&#xA;3 回連続クリックで閉じます</value></data>
     <data name="C_QuickDrawManualCloseHint" xml:space="preserve"><value>3 回連続クリックで閉じます</value></data>
     <data name="C_Close" xml:space="preserve"><value>閉じる</value></data>

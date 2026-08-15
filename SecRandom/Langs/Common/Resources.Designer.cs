@@ -110,6 +110,12 @@ namespace SecRandom.Langs.Common {
                 return ResourceManager.GetString("Feat_Lottery", resourceCulture);
             }
         }
+
+        public static string Feat_Timer {
+            get {
+                return ResourceManager.GetString("Feat_Timer", resourceCulture);
+            }
+        }
         
         public static string Settings_About {
             get {

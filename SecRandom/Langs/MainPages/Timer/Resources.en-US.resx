@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="Page_Title"><value>Timer</value></data>
+  <data name="C_Countdown"><value>Countdown</value></data>
+  <data name="C_Stopwatch"><value>Stopwatch</value></data>
+  <data name="C_Clock"><value>Clock</value></data>
+  <data name="C_Start"><value>Start</value></data>
+  <data name="C_Pause"><value>Pause</value></data>
+  <data name="C_Reset"><value>Reset</value></data>
+  <data name="C_Lap"><value>Lap</value></data>
+  <data name="C_ClearLaps"><value>Clear laps</value></data>
+  <data name="C_TotalTime"><value>Total</value></data>
+  <data name="C_ShowMilliseconds"><value>Show milliseconds</value></data>
+  <data name="C_MiniWindow"><value>Open mini window</value></data>
+  <data name="C_Restore"><value>Restore</value></data>
+  <data name="C_Presets"><value>Presets</value></data>
+  <data name="C_CommonPresets"><value>Common</value></data>
+  <data name="C_RecentPresets"><value>Recent</value></data>
+  <data name="M_Ready"><value>Ready</value></data>
+  <data name="M_Running"><value>Running</value></data>
+  <data name="M_TimeUp"><value>Time is up</value></data>
+  <data name="M_StopwatchDetails"><value>Use start, pause, and reset to control the stopwatch</value></data>
+  <data name="M_ClockDetails"><value>Shows the current local time and date</value></data>
+  <data name="M_NoRecentPresets"><value>No recent presets</value></data>
+    <data name="C_Tips" xml:space="preserve">
+        <value>Clockie's hands spin around non-stop, indicating confusion, frustration, and weakness.
+But ultimately, people still need to move forward,
+just like your hands, always pointing ahead.
+This is where my journey ends. From now own...
+it is your path to walk.</value>
+    </data>
+</root>

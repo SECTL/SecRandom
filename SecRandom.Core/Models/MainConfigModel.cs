@@ -52,6 +52,7 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
     [ObservableProperty] private HistoryManagementSettingsConfig _historyManagementSettings = new();
     [ObservableProperty] private UpdateSettingsConfig _updateSettings = new();
     [ObservableProperty] private MoreSettingsConfig _moreSettings = new();
+    [ObservableProperty] private List<int> _recentTimerPresetSeconds = [];
 
     [JsonPropertyName("moreSettings")]
     public MoreSettingsConfig LegacyMoreSettingsOnLoad

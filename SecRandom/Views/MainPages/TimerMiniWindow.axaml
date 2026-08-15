@@ -1,0 +1,56 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+        xmlns:vm="using:SecRandom.ViewModels.MainPages"
+        x:Class="SecRandom.Views.MainPages.TimerMiniWindow"
+        x:DataType="vm:TimerViewModel"
+        Width="220" MinWidth="220" SizeToContent="Width"
+        Height="132" MinHeight="132" MaxHeight="132"
+        WindowStartupLocation="CenterScreen"
+        WindowDecorations="None"
+        ShowInTaskbar="False"
+        CanResize="False"
+        Topmost="True"
+        Background="Transparent">
+    <Grid>
+        <Border Background="{DynamicResource SolidBackgroundFillColorQuarternaryBrush}"
+                Opacity="0.8"
+                BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
+                BorderThickness="2"
+                CornerRadius="8"
+                ClipToBounds="True" />
+        <Grid Margin="14 10" RowDefinitions="*,Auto"
+              Background="Transparent"
+              PointerPressed="OnPointerPressed">
+            <TextBlock Grid.Row="0" Text="{Binding DisplayTime}"
+                       Theme="{StaticResource DisplayTextBlockStyle}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
+            
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+                <Button Width="32" Height="32" CornerRadius="16" Padding="0"
+                        ToolTip.Tip="{Binding RestoreText}"
+                        Click="Restore">
+                    <sr:FluentIcon Glyph="{sr:Fi DismissFilled}" FontSize="16"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Button>
+                
+                <Button Width="32" Height="32" CornerRadius="16" Padding="0"
+                        ToolTip.Tip="{Binding ResetText}"
+                        Command="{Binding ResetCommand}"
+                        IsVisible="{Binding !IsClockMode}">
+                    <sr:FluentIcon Glyph="{sr:Fi ArrowClockwiseFilled}" FontSize="16"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Button>
+                
+                <Button Width="32" Height="32" CornerRadius="16" Padding="0" Classes="accent"
+                        ToolTip.Tip="{Binding StartPauseText}"
+                        Command="{Binding ToggleStartPauseCommand}"
+                        IsVisible="{Binding !IsClockMode}">
+                    <sr:FluentIcon Glyph="{Binding StartPauseIcon}" FontSize="16"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

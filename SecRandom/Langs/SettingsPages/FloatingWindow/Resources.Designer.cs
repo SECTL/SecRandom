@@ -107,6 +107,12 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
             }
         }
 
+        public static string S_Buttons_Timer {
+            get {
+                return ResourceManager.GetString("S_Buttons_Timer", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 闪抽按钮.
         /// </summary>

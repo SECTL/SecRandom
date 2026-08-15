@@ -49,6 +49,9 @@
     <data name="Feat_QuickDraw" xml:space="preserve">
         <value>Quick Draw</value>
     </data>
+    <data name="Feat_Timer" xml:space="preserve">
+        <value>Timer</value>
+    </data>
     <data name="C_QuickDrawAutoCloseHint" xml:space="preserve">
         <value>Closes automatically in {0} seconds&#xA;Click 3 times in a row to close</value>
     </data>

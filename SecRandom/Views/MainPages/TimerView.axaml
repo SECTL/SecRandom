@@ -1,0 +1,198 @@
+<local:TimerView xmlns="https://github.com/avaloniaui"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:local="using:SecRandom.Views.MainPages"
+                 xmlns:vm="using:SecRandom.ViewModels.MainPages"
+                 xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+                 xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+                 x:Class="SecRandom.Views.MainPages.TimerView"
+                 x:DataType="vm:TimerViewModel"
+                 x:Name="Root"
+                 NavigationPage.HasNavigationBar="False"
+                 KeyDown="OnKeyDown">
+    <Grid Margin="20" RowDefinitions="Auto,*,Auto" RowSpacing="16">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,*">
+            <Viewbox Grid.Column="1" Height="32">
+                <TabStrip Theme="{DynamicResource TabStripStyle}"
+                          SelectedIndex="{Binding ModeIndex, Mode=TwoWay}">
+                    <TabStripItem Content="{Binding CountdownModeText}" />
+                    <TabStripItem Content="{Binding StopwatchModeText}" />
+                    <TabStripItem Content="{Binding ClockModeText}" />
+                </TabStrip>
+            </Viewbox>
+            
+            <Button Grid.Column="2"
+                    HorizontalAlignment="Right"
+                    Theme="{StaticResource TransparentButton}"
+                    ToolTip.Tip="{Binding MiniWindowText}"
+                    Click="OpenMiniWindow">
+                <sr:FluentIcon Glyph="{sr:Fi WindowFilled}" />
+            </Button>
+        </Grid>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*" ColumnSpacing="24">
+            <Grid Grid.Column="0" MinWidth="380" MinHeight="360">
+                <fa:FAProgressRing Width="312" Height="312"
+                                   IsIndeterminate="False"
+                                   Value="{Binding Progress}"
+                                   Maximum="1"
+                                   IsActive="{Binding IsRunning}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Foreground="{Binding RingBrush}" />
+
+                <StackPanel Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding ModeText}"
+                               HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{Binding DisplayTime}"
+                               HorizontalAlignment="Center"
+                               Theme="{StaticResource DisplayTextBlockStyle}"
+                               PointerPressed="DisplayTime_OnClick" />
+                    <TextBlock Text="{Binding SecondaryText}"
+                               HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <CheckBox IsVisible="{Binding IsStopwatchMode}"
+                              IsChecked="{Binding ShowStopwatchMilliseconds, Mode=TwoWay}"
+                              Content="{Binding ShowMillisecondsText}"
+                              HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+
+            <GridSplitter Grid.Column="1" />
+
+            <Carousel Grid.Column="2" Classes="animated"
+                      MaxWidth="360" VerticalAlignment="Center"
+                      SelectedIndex="{Binding ModeIndex}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{Binding PresetsTitle}"
+                               Theme="{StaticResource SubtitleTextBlockStyle}" />
+
+                    <TabStrip Theme="{DynamicResource TabStripStyle}"
+                              HorizontalAlignment="Left"
+                              SelectedIndex="{Binding PresetCategoryIndex, Mode=TwoWay}">
+                        <TabStripItem Content="{Binding CommonPresetsText}" />
+                        <TabStripItem Content="{Binding RecentPresetsText}" />
+                    </TabStrip>
+
+                    <UniformGrid IsVisible="{Binding !IsRecentPresetMode}"
+                                 Columns="3" Rows="2" ColumnSpacing="8" RowSpacing="8">
+                        <Button Content="05:00" Height="48" HorizontalAlignment="Stretch"
+                                Command="{Binding SetPresetCommand}"
+                                CommandParameter="300" />
+                        <Button Content="10:00" Height="48" HorizontalAlignment="Stretch"
+                                Command="{Binding SetPresetCommand}"
+                                CommandParameter="600" />
+                        <Button Content="15:00" Height="48" HorizontalAlignment="Stretch"
+                                Command="{Binding SetPresetCommand}"
+                                CommandParameter="900" />
+
+                        <Button Content="30:00" Height="48" HorizontalAlignment="Stretch"
+                                Command="{Binding SetPresetCommand}"
+                                CommandParameter="1800" />
+                        <Button Content="45:00" Height="48" HorizontalAlignment="Stretch"
+                                Command="{Binding SetPresetCommand}"
+                                CommandParameter="2700" />
+                        <Button Content="60:00" Height="48" HorizontalAlignment="Stretch"
+                                Command="{Binding SetPresetCommand}"
+                                CommandParameter="3600" />
+                    </UniformGrid>
+                    
+                    <ScrollViewer IsVisible="{Binding IsRecentPresetMode}"
+                                  MaxHeight="160"
+                                  VerticalScrollBarVisibility="Auto">
+                        <Grid>
+                            <TextBlock Text="{Binding NoRecentPresetsText}"
+                                       IsVisible="{Binding HasNoRecentPresets}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       Margin="12" />
+                            <ItemsControl ItemsSource="{Binding RecentPresets}"
+                                          IsVisible="{Binding !HasNoRecentPresets}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="3" ColumnSpacing="8" RowSpacing="8" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Content="{Binding Label}"
+                                                Command="{Binding #Root.ViewModel.SetPresetCommand}"
+                                                CommandParameter="{Binding Seconds}"
+                                                HorizontalAlignment="Stretch"
+                                                Height="48" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </ScrollViewer>
+                </StackPanel>
+
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{Binding StopwatchHint}"
+                               Theme="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock Text="{Binding StopwatchDetails}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+                    <DataGrid MaxHeight="256"
+                              CanUserReorderColumns="False"
+                              CanUserResizeColumns="False"
+                              CanUserSortColumns="False"
+                              IsReadOnly="True"
+                              AutoGenerateColumns="False"
+                              ItemsSource="{Binding Laps}"
+                              IsVisible="{Binding HasLaps}"
+                              GridLinesVisibility="Horizontal"
+                              BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                              BorderThickness="1 1 1 0"
+                              CornerRadius="4 4 0 0"
+                              ClipToBounds="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="#" Binding="{Binding Number}" />
+                            <DataGridTextColumn Width="*" Header="{Binding LapText}"
+                                                Binding="{Binding LapTime}" />
+                            <DataGridTextColumn Width="*" Header="{Binding TotalTimeText}"
+                                                Binding="{Binding TotalTime}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{Binding ClockHint}" x:Name="ClockHintTextBlock"
+                               Theme="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock Text="{Binding ClockDetails}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </Carousel>
+        </Grid>
+
+        <StackPanel Grid.Row="2" HorizontalAlignment="Center" MinWidth="256" Spacing="8">
+            <TimePicker IsVisible="{Binding IsCountdownMode}"
+                        SelectedTime="{Binding SelectedTime}"
+                        UseSeconds="True"
+                        MinWidth="256" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding IsStopwatchMode}">
+                <Button Grid.Column="0" HorizontalAlignment="Stretch"
+                        Content="{Binding ClearLapsText}"
+                        Command="{Binding ClearLapsCommand}"
+                        IsEnabled="{Binding HasLaps}" />
+
+                <Button Grid.Column="1" HorizontalAlignment="Stretch"
+                        Content="{Binding LapText}"
+                        Command="{Binding AddLapCommand}" />
+            </Grid>
+
+            <Grid ColumnDefinitions="* *" ColumnSpacing="8" IsVisible="{Binding !IsClockMode}">
+                <Button Grid.Column="0" HorizontalAlignment="Stretch"
+                        Content="{Binding ResetText}"
+                        Command="{Binding ResetCommand}" />
+
+                <Button Grid.Column="1" HorizontalAlignment="Stretch"
+                        Content="{Binding StartPauseText}"
+                        Command="{Binding ToggleStartPauseCommand}"
+                        Classes="accent" />
+            </Grid>
+        </StackPanel>
+    </Grid>
+</local:TimerView>

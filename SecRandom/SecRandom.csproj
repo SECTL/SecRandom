@@ -62,6 +62,11 @@
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
+        <EmbeddedResource Update="Langs\MainPages\Timer\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
         <EmbeddedResource Update="Langs\MainPages\Lottery\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>

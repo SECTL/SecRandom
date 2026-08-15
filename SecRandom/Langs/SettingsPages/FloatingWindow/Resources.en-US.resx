@@ -18,7 +18,8 @@
   <data name="S_Buttons_QuickDraw"><value>Quick Draw</value></data>
   <data name="S_Buttons_QuickDraw_D"><value>Show the quick-draw entry in the floating window</value></data>
   <data name="S_Buttons_Lottery"><value>Lottery</value></data>
-  <data name="S_Buttons_Lottery_D"><value>Show the lottery entry in the floating window</value></data>
+   <data name="S_Buttons_Lottery_D"><value>Show the lottery entry in the floating window</value></data>
+   <data name="S_Buttons_Timer"><value>Timer</value></data>
   <data name="S_Interaction"><value>Movement and Docking</value></data>
   <data name="S_Interaction_StickToEdge"><value>Edge docking</value></data>
   <data name="S_Interaction_StickToEdge_D"><value>Snap to the nearest left or right edge of the current screen when dragging ends</value></data>

@@ -732,7 +732,8 @@ public partial class App : Application
                     services.AddViewEngine()
                         .AddView<MainView>(DesktopViewIds.Main)
                         .AddView<SettingsView>(DesktopViewIds.Settings)
-                        .AddView<RemainingListView>(RemainingListViewService.ViewId, ViewPresentation.Modal);
+                        .AddView<RemainingListView>(RemainingListViewService.ViewId, ViewPresentation.Modal)
+                        .AddView<TimerView>(TimerViewService.ViewId, ViewPresentation.Modal);
                 }
 
                 // 日志
@@ -793,6 +794,11 @@ public partial class App : Application
                 services.AddSingleton<IProfileQueryService, ProfileQueryService>();
                 services.AddSingleton<RemainingListViewState>();
                 services.AddSingleton<RemainingListViewService>();
+                if (!isMobile)
+                {
+                    services.AddSingleton<TimerViewModel>();
+                    services.AddSingleton<TimerViewService>();
+                }
                 services.AddSingleton<DrawProofExportService>();
                 services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
                 services.AddHttpClient<IWitnessClient, WitnessClient>(client =>

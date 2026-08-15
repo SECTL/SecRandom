@@ -72,6 +72,9 @@
   <data name="S_Buttons_Lottery_D" xml:space="preserve">
     <value>在悬浮窗中显示抽奖入口</value>
   </data>
+  <data name="S_Buttons_Timer" xml:space="preserve">
+    <value>计时器</value>
+  </data>
   <data name="S_Interaction" xml:space="preserve">
     <value>移动与贴边</value>
   </data>

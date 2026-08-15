@@ -23,6 +23,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Services.Linkage;
 using SecRandom.Services;
 using SecRandom.Services.Platform;
+using SecRandom.Services.ViewEngine;
 using SecRandom.Platforms.Abstractions;
 using SecRandom.ViewModels;
 
@@ -110,6 +111,7 @@ public partial class FloatingWindow : Window
                 "roll_call" => GetRollCallButton(settings),
                 "quick_draw" => GetQuickDrawButton(settings),
                 "lottery" => GetLotteryButton(settings),
+                "timer" => GetTimerButton(settings),
                 _ => null
             };
 
@@ -188,6 +190,7 @@ public partial class FloatingWindow : Window
         if (settings.ShowRollCallButton) yield return "roll_call";
         if (settings.ShowQuickDrawButton) yield return "quick_draw";
         if (settings.ShowLotteryButton && isLotteryEnabled) yield return "lottery";
+        if (settings.ShowTimerButton) yield return "timer";
     }
 
     private void FeatureAvailabilityOnChanged(object? sender, EventArgs e)
@@ -273,6 +276,13 @@ public partial class FloatingWindow : Window
             App.ToggleMainWindow("main.lottery");
         };
 
+        return b;
+    }
+
+    private static Button GetTimerButton(FloatingWindowSettingsConfig settings)
+    {
+        var b = CreateButton(FluentIcons.TimerFilled, Langs.Common.Resources.Feat_Timer, settings);
+        b.Click += (_, _) => _ = IAppHost.GetService<TimerViewService>().ShowAsync();
         return b;
     }
 
