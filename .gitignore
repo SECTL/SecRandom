@@ -463,6 +463,10 @@ $RECYCLE.BIN/
 /.trae
 /TEMP
 
+# Local diagnostic tools and crash dumps
+.tools/
+*.dmp
+
 # omo
 .sisyphus
 /.mimocode
