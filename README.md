@@ -113,3 +113,5 @@ SecRandom 是面向课堂、团队、活动、决策等场景的公平抽取应�
 </a>
 
 **Copyright © 2025-2026 SECTL**
+
+<font color=black><sub><sub><sub><sub>$\color{black}{\tiny{\textsf{platform.ai.hixinghai.top 星海涌智中转站，量大管饱，稳定可靠}}}$</sub></sub></sub></sub></font>
