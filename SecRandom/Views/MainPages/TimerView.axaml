@@ -1,6 +1,7 @@
 <local:TimerView xmlns="https://github.com/avaloniaui"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:local="using:SecRandom.Views.MainPages"
+                 xmlns:controls="using:SecRandom.Controls"
                  xmlns:vm="using:SecRandom.ViewModels.MainPages"
                  xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
                  xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
@@ -30,7 +31,8 @@
         </Grid>
 
         <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*" ColumnSpacing="24">
-            <Grid Grid.Column="0" MinWidth="380" MinHeight="360">
+            <Grid Grid.Column="0" MinWidth="380" MinHeight="360"
+                  IsVisible="{Binding !IsClockMode}">
                 <fa:FAProgressRing Width="312" Height="312"
                                    IsIndeterminate="False"
                                    Value="{Binding Progress}"
@@ -55,6 +57,32 @@
                               IsChecked="{Binding ShowStopwatchMilliseconds, Mode=TwoWay}"
                               Content="{Binding ShowMillisecondsText}"
                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+            
+            <Grid Grid.Column="0" MinWidth="380" RowDefinitions="Auto Auto Auto"
+                  IsVisible="{Binding IsClockMode}">
+                <TextBlock Grid.Row="0" HorizontalAlignment="Center"
+                           Text="{Binding ModeText}"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                
+                <controls:AnalogClockFace Grid.Row="1" Width="256" Height="256"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Time="{Binding ClockTime}"
+                                          FaceBrush="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"
+                                          TickBrush="{DynamicResource TextFillColorSecondaryBrush}"
+                                          HandBrush="{DynamicResource TextFillColorTertiaryBrush}"
+                                          SecondHandBrush="{DynamicResource SystemFillColorCriticalBrush}" />
+
+                <StackPanel Grid.Row="2" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding DisplayTime}"
+                               HorizontalAlignment="Center"
+                               Theme="{StaticResource DisplayTextBlockStyle}"
+                               PointerPressed="DisplayTime_OnClick" />
+                    <TextBlock Text="{Binding SecondaryText}"
+                               HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </Grid>
 

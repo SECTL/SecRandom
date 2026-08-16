@@ -106,6 +106,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     public string DisplayTime => IsStopwatchMode
         ? FormatStopwatchTime(_elapsed, _showStopwatchMilliseconds)
         : FormatTime(IsCountdownMode ? _remaining : DateTime.Now.TimeOfDay);
+    public DateTime ClockTime => DateTime.Now;
     public string SecondaryText => IsCountdownMode
         ? $"{Math.Round(Progress * 100):0}%"
         : IsClockMode
@@ -339,7 +340,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
         {
             nameof(IsCountdownMode), nameof(IsStopwatchMode), nameof(IsClockMode), nameof(HasControls),
             nameof(ModeIndex), nameof(IsRunning), nameof(ModeText), nameof(StartPauseText), nameof(DisplayTime),
-            nameof(SecondaryText), nameof(RingBrush), nameof(Progress), nameof(HasLaps),
+            nameof(SecondaryText), nameof(ClockTime), nameof(RingBrush), nameof(Progress), nameof(HasLaps),
             nameof(SelectedTime), nameof(HoursText), nameof(MinutesText), nameof(SecondsText), nameof(StartPauseIcon)
         })
             OnPropertyChanged(name);
