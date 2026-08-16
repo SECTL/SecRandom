@@ -22,4 +22,4 @@ channels:
   beta:
     tag: v2.3.100
   alpha:
-    tag: v3.0.0-alpha.1
+    tag: v3.0.0-alpha.2
