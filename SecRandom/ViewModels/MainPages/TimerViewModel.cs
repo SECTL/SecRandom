@@ -49,12 +49,6 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     public string CountdownModeText => R.C_Countdown;
     public string StopwatchModeText => R.C_Stopwatch;
     public string ClockModeText => R.C_Clock;
-    public string ModeText => _mode switch
-    {
-        TimerMode.Countdown => R.C_Countdown,
-        TimerMode.Stopwatch => R.C_Stopwatch,
-        _ => R.C_Clock
-    };
     public string StartPauseText => _isRunning ? R.C_Pause : R.C_Start;
     public string ResetText => R.C_Reset;
     public string PresetsTitle => R.C_Presets;
@@ -107,6 +101,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
         ? FormatStopwatchTime(_elapsed, _showStopwatchMilliseconds)
         : FormatTime(IsCountdownMode ? _remaining : DateTime.Now.TimeOfDay);
     public DateTime ClockTime => DateTime.Now;
+    public DateTime StopwatchFaceTime => DateTime.Today.Add(_elapsed);
     public string SecondaryText => IsCountdownMode
         ? $"{Math.Round(Progress * 100):0}%"
         : IsClockMode
@@ -339,8 +334,8 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
         foreach (var name in new[]
         {
             nameof(IsCountdownMode), nameof(IsStopwatchMode), nameof(IsClockMode), nameof(HasControls),
-            nameof(ModeIndex), nameof(IsRunning), nameof(ModeText), nameof(StartPauseText), nameof(DisplayTime),
-            nameof(SecondaryText), nameof(ClockTime), nameof(RingBrush), nameof(Progress), nameof(HasLaps),
+            nameof(ModeIndex), nameof(IsRunning), nameof(StartPauseText), nameof(DisplayTime),
+            nameof(SecondaryText), nameof(ClockTime), nameof(StopwatchFaceTime), nameof(RingBrush), nameof(Progress), nameof(HasLaps),
             nameof(SelectedTime), nameof(HoursText), nameof(MinutesText), nameof(SecondsText), nameof(StartPauseIcon)
         })
             OnPropertyChanged(name);

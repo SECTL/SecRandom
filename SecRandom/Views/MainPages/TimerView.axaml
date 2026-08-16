@@ -20,7 +20,7 @@
                     <TabStripItem Content="{Binding ClockModeText}" />
                 </TabStrip>
             </Viewbox>
-            
+
             <Button Grid.Column="2"
                     HorizontalAlignment="Right"
                     Theme="{StaticResource TransparentButton}"
@@ -31,60 +31,87 @@
         </Grid>
 
         <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*" ColumnSpacing="24">
-            <Grid Grid.Column="0" MinWidth="380" MinHeight="360"
-                  IsVisible="{Binding !IsClockMode}">
-                <fa:FAProgressRing Width="312" Height="312"
-                                   IsIndeterminate="False"
-                                   Value="{Binding Progress}"
-                                   Maximum="1"
-                                   IsActive="{Binding IsRunning}"
+            <Carousel Grid.Column="0" Classes="animated"
+                      MinWidth="380" MinHeight="360" VerticalAlignment="Center"
+                      SelectedIndex="{Binding ModeIndex}">
+                <Grid>
+                    <fa:FAProgressRing Width="312" Height="312"
+                                       IsIndeterminate="False"
+                                       IsVisible="{Binding !IsStopwatchMode}"
+                                       Value="{Binding Progress}"
+                                       Maximum="1"
+                                       IsActive="{Binding IsRunning}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Foreground="{Binding RingBrush}" />
+
+                    <StackPanel Spacing="8" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding CountdownModeText}"
                                    HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   Foreground="{Binding RingBrush}" />
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding DisplayTime}"
+                                   HorizontalAlignment="Center"
+                                   Theme="{StaticResource DisplayTextBlockStyle}"
+                                   PointerPressed="DisplayTime_OnClick" />
+                        <TextBlock Text="{Binding SecondaryText}"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    </StackPanel>
+                </Grid>
 
-                <StackPanel Spacing="8" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding ModeText}"
-                               HorizontalAlignment="Center"
+                <Grid RowDefinitions="Auto Auto Auto">
+                    <TextBlock Grid.Row="0" HorizontalAlignment="Center"
+                               Text="{Binding StopwatchModeText}"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <TextBlock Text="{Binding DisplayTime}"
-                               HorizontalAlignment="Center"
-                               Theme="{StaticResource DisplayTextBlockStyle}"
-                               PointerPressed="DisplayTime_OnClick" />
-                    <TextBlock Text="{Binding SecondaryText}"
-                               HorizontalAlignment="Center"
-                               Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                    <CheckBox IsVisible="{Binding IsStopwatchMode}"
-                              IsChecked="{Binding ShowStopwatchMilliseconds, Mode=TwoWay}"
-                              Content="{Binding ShowMillisecondsText}"
-                              HorizontalAlignment="Center" />
-                </StackPanel>
-            </Grid>
-            
-            <Grid Grid.Column="0" MinWidth="380" RowDefinitions="Auto Auto Auto"
-                  IsVisible="{Binding IsClockMode}">
-                <TextBlock Grid.Row="0" HorizontalAlignment="Center"
-                           Text="{Binding ModeText}"
-                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                
-                <controls:AnalogClockFace Grid.Row="1" Width="256" Height="256"
-                                          HorizontalAlignment="Center"
-                                          VerticalAlignment="Center"
-                                          Time="{Binding ClockTime}"
-                                          FaceBrush="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"
-                                          TickBrush="{DynamicResource TextFillColorSecondaryBrush}"
-                                          HandBrush="{DynamicResource TextFillColorTertiaryBrush}"
-                                          SecondHandBrush="{DynamicResource SystemFillColorCriticalBrush}" />
 
-                <StackPanel Grid.Row="2" Spacing="8" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding DisplayTime}"
-                               HorizontalAlignment="Center"
-                               Theme="{StaticResource DisplayTextBlockStyle}"
-                               PointerPressed="DisplayTime_OnClick" />
-                    <TextBlock Text="{Binding SecondaryText}"
-                               HorizontalAlignment="Center"
+                    <controls:AnalogClockFace Grid.Row="1" Width="256" Height="256"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Mode="Stopwatch"
+                                              Time="{Binding StopwatchFaceTime}"
+                                              FaceBrush="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"
+                                              SecondaryFaceBrush="{DynamicResource SolidBackgroundFillColorTertiaryBrush}"
+                                              TickBrush="{DynamicResource TextFillColorSecondaryBrush}"
+                                              HandBrush="{DynamicResource TextFillColorTertiaryBrush}"
+                                              SecondHandBrush="{DynamicResource SystemFillColorCriticalBrush}" />
+
+                    <StackPanel Grid.Row="2" Spacing="8" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding DisplayTime}"
+                                   HorizontalAlignment="Center"
+                                   Theme="{StaticResource DisplayTextBlockStyle}"
+                                   PointerPressed="DisplayTime_OnClick" />
+                        <CheckBox IsChecked="{Binding ShowStopwatchMilliseconds, Mode=TwoWay}"
+                                  Content="{Binding ShowMillisecondsText}"
+                                  HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+
+                <Grid RowDefinitions="Auto Auto Auto">
+                    <TextBlock Grid.Row="0" HorizontalAlignment="Center"
+                               Text="{Binding ClockModeText}"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                </StackPanel>
-            </Grid>
+
+                    <controls:AnalogClockFace Grid.Row="1" Width="256" Height="256"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Mode="Clock"
+                                              Time="{Binding ClockTime}"
+                                              FaceBrush="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"
+                                              TickBrush="{DynamicResource TextFillColorSecondaryBrush}"
+                                              HandBrush="{DynamicResource TextFillColorTertiaryBrush}"
+                                              SecondHandBrush="{DynamicResource SystemFillColorCriticalBrush}" />
+
+                    <StackPanel Grid.Row="2" Spacing="8" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding DisplayTime}"
+                                   HorizontalAlignment="Center"
+                                   Theme="{StaticResource DisplayTextBlockStyle}"
+                                   PointerPressed="DisplayTime_OnClick" />
+                        <TextBlock Text="{Binding SecondaryText}"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </Grid>
+            </Carousel>
 
             <GridSplitter Grid.Column="1" />
 
@@ -124,7 +151,7 @@
                                 Command="{Binding SetPresetCommand}"
                                 CommandParameter="3600" />
                     </UniformGrid>
-                    
+
                     <ScrollViewer IsVisible="{Binding IsRecentPresetMode}"
                                   MaxHeight="160"
                                   VerticalScrollBarVisibility="Auto">
