@@ -43,17 +43,33 @@ public sealed class ExternalStudentDrawService(
         var gender = request.Gender?.Trim() ?? string.Empty;
         var listName = profileService.CurrentStudentList?.Name ?? string.Empty;
         var temporaryCounts = temporaryRecordService.GetStudentCounts(listName, gender, string.Empty);
+        var hasMatchingStudents = (profileService.CurrentStudentList?.Students ?? [])
+            .Any(student => student.IsCandidate && Matches(student, gender, request));
+        var mayResetExhaustedRound = configHandler.Data.QuickDrawSettings.DrawMode != DrawMode.Repeat
+                                     && hasMatchingStudents;
 
         var result = await InvokeAuthorizedAsync(
             SecurityOperation.QuickDrawStart,
             async () =>
             {
-                var draw = drawEngine.DrawStudent(
-                    requestedCount,
-                    student => Matches(student, gender, request)
-                                  && !HasReachedTemporaryLimit(student, temporaryCounts),
-                    DrawSettingsType.QuickDraw,
-                    linkageDrawCoordinator.GetCourseName());
+                DrawResult<Student> DrawFromRemainingStudents()
+                    => drawEngine.DrawStudent(
+                        requestedCount,
+                        student => Matches(student, gender, request)
+                                      && !HasReachedTemporaryLimit(student, temporaryCounts),
+                        DrawSettingsType.QuickDraw,
+                        linkageDrawCoordinator.GetCourseName());
+
+                var draw = DrawFromRemainingStudents();
+                if (!draw.IsSuccess
+                    && mayResetExhaustedRound
+                    && draw.Status == DrawStatus.RepeatLimitExhausted)
+                {
+                    temporaryRecordService.ResetStudentList(listName);
+                    temporaryCounts = temporaryRecordService.GetStudentCounts(listName, gender, string.Empty);
+                    draw = DrawFromRemainingStudents();
+                }
+
                 if (!draw.IsSuccess || draw.Result.Count == 0)
                     return draw;
 
