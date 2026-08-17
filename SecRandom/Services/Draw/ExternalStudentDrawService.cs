@@ -65,6 +65,7 @@ public sealed class ExternalStudentDrawService(
                     && mayResetExhaustedRound
                     && draw.Status == DrawStatus.RepeatLimitExhausted)
                 {
+                    profileService.ClearCurrentStudentHistory();
                     temporaryRecordService.ResetStudentList(listName);
                     temporaryCounts = temporaryRecordService.GetStudentCounts(listName, gender, string.Empty);
                     draw = DrawFromRemainingStudents();

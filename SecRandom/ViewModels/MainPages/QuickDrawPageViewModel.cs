@@ -435,6 +435,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (DrawCandidateFilter.FilterEligibleStudents(students, string.Empty, string.Empty, counts, threshold).Any())
             return false;
 
+        _profileService.ClearCurrentStudentHistory();
         _temporaryRecordService.ResetStudentList(SelectedStudentListName);
         return true;
     }
