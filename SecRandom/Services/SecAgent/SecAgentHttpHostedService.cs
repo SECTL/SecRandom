@@ -188,14 +188,15 @@ public sealed class SecAgentHttpHostedService(
 
         var requestedCount = Math.Clamp(arguments["count"]?.GetValue<int>() ?? 1, 1, 100);
         if (mode == "flash") requestedCount = 1;
+        var gender = StringArgument(arguments, "gender");
         var includeTags = StringArray(arguments, "include_tags");
         var excludeTags = StringArray(arguments, "exclude_tags");
         var includeIds = StringArray(arguments, "include_ids");
         var includeNames = StringArray(arguments, "include_names");
         var listName = profileService.CurrentStudentList?.Name ?? string.Empty;
-        var temporaryCounts = temporaryRecordService.GetStudentCounts(listName, string.Empty, string.Empty);
+        var temporaryCounts = temporaryRecordService.GetStudentCounts(listName, gender, string.Empty);
         var hasMatchingStudents = (profileService.CurrentStudentList?.Students ?? [])
-            .Any(student => student.IsCandidate && Matches(student, includeTags, excludeTags, includeIds, includeNames));
+            .Any(student => student.IsCandidate && Matches(student, gender, includeTags, excludeTags, includeIds, includeNames));
         var mayResetExhaustedRound = configHandler.Data.QuickDrawSettings.DrawMode != DrawMode.Repeat
                                      && hasMatchingStudents;
 
@@ -203,7 +204,7 @@ public sealed class SecAgentHttpHostedService(
         {
             DrawResult<Student> DrawFromRemainingStudents()
                 => drawEngine.DrawStudent(requestedCount,
-                    student => Matches(student, includeTags, excludeTags, includeIds, includeNames)
+                    student => Matches(student, gender, includeTags, excludeTags, includeIds, includeNames)
                                && !HasReachedTemporaryLimit(student, temporaryCounts),
                     DrawSettingsType.QuickDraw, linkageDrawCoordinator.GetCourseName());
 
@@ -211,7 +212,7 @@ public sealed class SecAgentHttpHostedService(
             if (!draw.IsSuccess && mayResetExhaustedRound && draw.Status == DrawStatus.RepeatLimitExhausted)
             {
                 temporaryRecordService.ResetStudentList(listName);
-                temporaryCounts = temporaryRecordService.GetStudentCounts(listName, string.Empty, string.Empty);
+                temporaryCounts = temporaryRecordService.GetStudentCounts(listName, gender, string.Empty);
                 draw = DrawFromRemainingStudents();
             }
 
@@ -221,7 +222,7 @@ public sealed class SecAgentHttpHostedService(
             profileService.RecordStudentHistory(draw.Result, DateTime.Now, requestedCount,
                 drawMethod: (int)configHandler.Data.QuickDrawSettings.DrawType,
                 courseName: linkageDrawCoordinator.GetCourseName());
-            temporaryRecordService.RecordStudents(listName, string.Empty, string.Empty, draw.Result);
+            temporaryRecordService.RecordStudents(listName, gender, string.Empty, draw.Result);
             if (mode == "flash")
                 notificationService.QueueStudents(NotificationSettingsType.QuickDraw, linkageDrawCoordinator.GetCourseName(), draw.Result);
             return Task.FromResult(draw);
@@ -258,11 +259,12 @@ public sealed class SecAgentHttpHostedService(
         return threshold > 0 && temporaryCounts.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(student)) >= threshold;
     }
 
-    private static bool Matches(Student student, IReadOnlyCollection<string> includeTags, IReadOnlyCollection<string> excludeTags,
+    private static bool Matches(Student student, string gender, IReadOnlyCollection<string> includeTags, IReadOnlyCollection<string> excludeTags,
         IReadOnlyCollection<string> includeIds, IReadOnlyCollection<string> includeNames)
     {
         var tags = student.Tags.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        return includeTags.All(tag => tags.Contains(tag, StringComparer.OrdinalIgnoreCase))
+        return (string.IsNullOrWhiteSpace(gender) || string.Equals(student.Gender, gender, StringComparison.OrdinalIgnoreCase))
+            && includeTags.All(tag => tags.Contains(tag, StringComparer.OrdinalIgnoreCase))
             && excludeTags.All(tag => !tags.Contains(tag, StringComparer.OrdinalIgnoreCase))
             && (includeIds.Count == 0 || includeIds.Contains(student.Id, StringComparer.OrdinalIgnoreCase))
             && (includeNames.Count == 0 || includeNames.Contains(student.Name, StringComparer.OrdinalIgnoreCase));
