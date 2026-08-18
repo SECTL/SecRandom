@@ -1,6 +1,5 @@
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -237,24 +236,9 @@ public sealed class PluginMarketService(
 
     private static byte[] ReadEmbeddedPublicKey()
     {
-        // Desktop builds keep the SecRandom assets beside the executable instead of
-        // embedding them in the shared application assembly.
-        var externalPath = Path.Combine(
-            AppContext.BaseDirectory,
-            "Assets",
-            "Plugins",
-            "plugin-market-public-key.txt");
-        if (File.Exists(externalPath))
-            return ParsePublicKey(File.ReadAllText(externalPath));
-
         using var stream = AssetLoader.Open(new Uri("avares://SecRandom/Assets/Plugins/plugin-market-public-key.txt"));
         using var reader = new StreamReader(stream, Encoding.UTF8);
-        return ParsePublicKey(reader.ReadToEnd());
-    }
-
-    private static byte[] ParsePublicKey(string text)
-    {
-        var key = Convert.FromBase64String(text.Trim());
+        var key = Convert.FromBase64String(reader.ReadToEnd().Trim());
         if (key.Length != Ed25519PublicKeyParameters.KeySize || key.All(static value => value == 0))
             throw new CryptographicException(SR.M_PublicKeyInvalid);
         return key;

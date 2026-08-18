@@ -843,7 +843,6 @@ public partial class App : Application
                 services.AddSingleton<IVoiceAnnouncementService>(serviceProvider =>
                     serviceProvider.GetRequiredService<VoiceAnnouncementService>());
                 services.AddSingleton<NotificationService>();
-                services.AddSingleton<IExternalStudentDrawService, ExternalStudentDrawService>();
                 services.AddSingleton(serviceProvider => new MusicLibraryService(
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
                     serviceProvider.GetRequiredService<ILogger<MusicLibraryService>>(),

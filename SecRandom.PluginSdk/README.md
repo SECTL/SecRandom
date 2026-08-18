@@ -32,12 +32,6 @@ Published plugins reference the SDK package and exclude its runtime assets so th
 
 The repository template defaults `UseLocalPluginSdk=true` so solution builds work before the SDK is published; set `UseLocalPluginSdk=false` with a NuGet source that contains `SecRandom.PluginSdk` to exercise the release packaging path.
 
-## Host integration APIs
-
-`IExternalStudentDrawService` lets a transport plugin request a host-managed student draw
-without depending on desktop application's internal service types. The host owns drawing,
-temporary records, history, security, and notifications; the plugin owns its transport.
-
 ## Building a plugin package
 
 Set `<CreateSrpx>true</CreateSrpx>` to produce `srpx/<ProjectName>.srpx` after every build. The package is a ZIP whose root contains `manifest.yml`, the entrance assembly, and any external package dependencies. Place it in `data/cache/plugin-packages` and restart the desktop application to install.
