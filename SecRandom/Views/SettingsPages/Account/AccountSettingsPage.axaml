@@ -1,0 +1,21 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Account"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             x:Class="SecRandom.Views.SettingsPages.Account.AccountSettingsPage"
+             x:DataType="local:AccountSettingsPage">
+    <ScrollViewer>
+        <StackPanel Classes="page-container animated-intro settings" Spacing="12">
+            <fa:FASettingsExpander Header="SECTL Auth" Description="使用 SECTL 账号登录 SecRandom，授权范围仅包含基本用户信息。" IconSource="{sr:FluentIconSource {sr:Fi PersonFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding AccountName}" VerticalAlignment="Center" />
+                        <Button Content="登录" IsVisible="{Binding !IsSignedIn}" IsEnabled="{Binding !IsBusy}" Click="SignIn_OnClick" />
+                        <Button Content="退出登录" IsVisible="{Binding IsSignedIn}" IsEnabled="{Binding !IsBusy}" Click="SignOut_OnClick" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

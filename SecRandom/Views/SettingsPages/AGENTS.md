@@ -22,6 +22,7 @@ SecRandom/Views/SettingsPages/
 |-- Notification/                         # settings.notification.*: voice and per-draw notification channels
 |-- History/                              # settings.history.*: management + roll-call/lottery history pages
 |-- About/                                # settings.about: about page with external links
+|-- Account/                              # settings.account: SECTL Auth account sign-in
 |-- Linkage/                              # settings.linkage: linkage settings
 |-- More/                                 # settings.more: more settings
 |-- Plugins/                              # settings.plugin: local SRPX plugin management
@@ -49,6 +50,7 @@ SecRandom/Views/SettingsPages/
 | More settings | `More/MoreSettingsPage.axaml(.cs)` | `settings.more` top-level entry. |
 | Plugins | `Plugins/PluginsSettingsPage.axaml(.cs)` | Desktop-only `settings.plugin` page; left list splits into 已安装/市场, stages local `.srpx` packages, shows load status, toggles plugin enablement, and uninstalls selected plugins for the next restart (config directory preserved). Plugin README renders through Core `MarkdownConvertHelper` + `Styles/RichTextStyles.axaml`. |
 | Update settings | `Update/UpdateSettingsPage.axaml(.cs)` | Shared `settings.update` bottom-nav entry for desktop and mobile. |
+| Account settings | `Account/AccountSettingsPage.axaml(.cs)` | Desktop-only `settings.account` entry; OAuth PKCE sign-in is delegated to `SectlAuthService`. |
 | Notification settings | `Notification/VoiceSettingsPage.axaml(.cs)` etc. | Voice/music and notification channel entries under `settings.notification`. |
 | History management | `History/HistoryManagementSettingsPage.axaml(.cs)` | Clears roll-call/lottery histories through active-profile or named-profile handlers; `settings.history.management`. |
 | Log viewer | `LogViewer/LogViewerSettingsPage.axaml(.cs)` | Hidden page `settings.logs`; opened from the settings shell more-options menu. |

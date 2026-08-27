@@ -45,6 +45,7 @@ using SecRandom.Dialogs;
 using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.AppearanceSettingsConfig;
 using SecRandom.Services;
 using SecRandom.Services.Config;
+using SecRandom.Services.Auth;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Draw;
@@ -81,6 +82,7 @@ using SecRandom.Views;
 using SecRandom.Views.MainPages;
 using SecRandom.Views.SettingsPages;
 using SecRandom.Views.SettingsPages.About;
+using SecRandom.Views.SettingsPages.Account;
 using SecRandom.Views.SettingsPages.General;
 using SecRandom.Views.SettingsPages.History;
 using SecRandom.Views.SettingsPages.Linkage;
@@ -772,6 +774,8 @@ public partial class App : Application
                 services.AddSingleton<IPluginManager>(pluginManager);
                 services.AddSingleton(pluginManager);
                 services.AddSingleton<DeviceUuidStore>();
+                if (!isMobile)
+                    services.AddSingleton<SectlAuthService>();
                 services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
                 services.AddSingleton<TelemetryRuntimeService>();
                 services.AddHostedService<OnlineStatusService>();
@@ -1023,6 +1027,8 @@ public partial class App : Application
 
                 // 底部
                 services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
+                if (!isMobile)
+                    services.AddSettingsPage<AccountSettingsPage>("账号");
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
 
                 services.AddSettingsPageSeparator(PageLocation.Bottom, isHide: true);
