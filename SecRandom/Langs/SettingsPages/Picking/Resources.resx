@@ -25,6 +25,16 @@
   <data name="S_DrawType_D" xml:space="preserve"><value>设置使用随机抽取或公平抽取</value></data>
   <data name="S_LotteryDrawType" xml:space="preserve"><value>抽奖方式</value></data>
   <data name="S_LotteryDrawType_D" xml:space="preserve"><value>设置按奖盘或按剩余数量抽奖</value></data>
+  <data name="S_LotteryAlgorithm" xml:space="preserve"><value>抽奖算法</value></data>
+  <data name="S_LotteryAlgorithm_D" xml:space="preserve"><value>选择用于生成奖品候选池的算法</value></data>
+  <data name="S_RollCallAlgorithm" xml:space="preserve"><value>点名算法</value></data>
+  <data name="S_RollCallAlgorithm_D" xml:space="preserve"><value>选择用于生成成员候选池的算法</value></data>
+  <data name="S_QuickDrawAlgorithm" xml:space="preserve"><value>点名算法</value></data>
+  <data name="S_QuickDrawAlgorithm_D" xml:space="preserve"><value>选择闪抽使用的点名算法</value></data>
+  <data name="O_AlgorithmFair" xml:space="preserve"><value>公平抽取</value></data>
+  <data name="O_AlgorithmRandom" xml:space="preserve"><value>随机抽取</value></data>
+  <data name="O_AlgorithmInventory" xml:space="preserve"><value>按剩余数量</value></data>
+  <data name="O_AlgorithmWeighted" xml:space="preserve"><value>加权抽奖</value></data>
   <data name="S_DefaultClass" xml:space="preserve"><value>默认抽取名单</value></data>
   <data name="S_DefaultClass_D" xml:space="preserve"><value>打开页面或执行闪抽时默认使用的名单</value></data>
   <data name="S_DefaultPool" xml:space="preserve"><value>默认抽奖名单</value></data>

@@ -760,6 +760,14 @@ public partial class App : Application
 
                 // 配置
                 services.AddCoreRuntimeServices();
+                services.AddRollCallAlgorithm<FairRollCallAlgorithm>(
+                    "builtin.fair", Langs.SettingsPages.Picking.Resources.O_AlgorithmFair);
+                services.AddRollCallAlgorithm<RandomRollCallAlgorithm>(
+                    "builtin.random", Langs.SettingsPages.Picking.Resources.O_AlgorithmRandom);
+                services.AddLotteryAlgorithm<InventoryLotteryAlgorithm>(
+                    "builtin.inventory", Langs.SettingsPages.Picking.Resources.O_AlgorithmInventory);
+                services.AddLotteryAlgorithm<WeightedLotteryAlgorithm>(
+                    "builtin.weighted", Langs.SettingsPages.Picking.Resources.O_AlgorithmWeighted);
                 var pluginManager = new PluginManager();
                 services.AddSingleton<IPluginManager>(pluginManager);
                 services.AddSingleton(pluginManager);

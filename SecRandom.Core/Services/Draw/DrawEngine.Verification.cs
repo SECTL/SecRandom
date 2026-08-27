@@ -40,7 +40,13 @@ public partial class DrawEngine
 
         var drawType = GetStudentDrawType(drawSettingsType);
         var drawMode = GetStudentDrawMode(drawSettingsType);
-        var executionPolicy = StudentDrawExecutionPolicy.DesktopConfigured(drawType, ConfigData.FairDrawSettings);
+        var executionPolicy = StudentDrawExecutionPolicy.DesktopConfigured(drawType, ConfigData.FairDrawSettings,
+            drawSettingsType switch
+            {
+                DrawSettingsType.RollCall => ConfigData.RollCallSettings.AlgorithmId,
+                DrawSettingsType.QuickDraw => ConfigData.QuickDrawSettings.AlgorithmId,
+                _ => null
+            });
         DrawPreparedStudentsSnapshot prepared;
         try
         {

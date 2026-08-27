@@ -42,9 +42,13 @@
                                    Description="{x:Static lp:Resources.S_DrawType_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <ComboBox SelectedIndex="{Binding Settings.DrawType}">
-                        <ComboBoxItem Content="{x:Static lp:Resources.O_Random}" />
-                        <ComboBoxItem Content="{x:Static lp:Resources.O_Fair}" />
+                    <ComboBox ItemsSource="{Binding Algorithms}" SelectedItem="{Binding SelectedAlgorithm, Mode=TwoWay}"
+                              MinWidth="220">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>

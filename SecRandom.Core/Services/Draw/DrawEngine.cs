@@ -23,17 +23,25 @@ public partial class DrawEngine
     private readonly IProfileService _profileService;
     private readonly ILogger<DrawEngine> _logger;
     private readonly IRandomSource _randomSource;
+    private readonly IRollCallAlgorithmRegistry _rollCallAlgorithms;
+    private readonly ILotteryAlgorithmRegistry _lotteryAlgorithms;
 
     public DrawEngine(
         MainConfigHandler configHandler,
         IProfileService profileService,
         ILogger<DrawEngine> logger,
-        IRandomSource? randomSource = null)
+        IRandomSource? randomSource = null,
+        IRollCallAlgorithmRegistry? rollCallAlgorithms = null,
+        ILotteryAlgorithmRegistry? lotteryAlgorithms = null)
     {
         _configHandler = configHandler;
         _profileService = profileService;
         _logger = logger;
         _randomSource = randomSource ?? new CryptoRandomSource();
+        _rollCallAlgorithms = rollCallAlgorithms ?? new RollCallAlgorithmRegistry(
+            [new FairRollCallAlgorithm(), new RandomRollCallAlgorithm()]);
+        _lotteryAlgorithms = lotteryAlgorithms ?? new LotteryAlgorithmRegistry(
+            [new InventoryLotteryAlgorithm(), new WeightedLotteryAlgorithm()]);
     }
 
     private MainConfigModel ConfigData => _configHandler.Data;
@@ -55,7 +63,8 @@ public partial class DrawEngine
     {
         return DrawStudent(count, filter, drawSettingsType, StudentDrawExecutionPolicy.DesktopConfigured(
             GetStudentDrawType(drawSettingsType),
-            ConfigData.FairDrawSettings), courseName);
+            ConfigData.FairDrawSettings,
+            GetStudentAlgorithmId(drawSettingsType)), courseName);
     }
 
     internal DrawResult<Student> DrawStudent(
@@ -137,7 +146,8 @@ public partial class DrawEngine
     {
         return DrawPreparedStudents(count, candidates, drawSettingsType, StudentDrawExecutionPolicy.DesktopConfigured(
             GetStudentDrawType(drawSettingsType),
-            ConfigData.FairDrawSettings), courseName);
+            ConfigData.FairDrawSettings,
+            GetStudentAlgorithmId(drawSettingsType)), courseName);
     }
 
     internal DrawResult<Student> DrawPreparedStudentsWithMobileDesktopDefaults(
@@ -223,6 +233,15 @@ public partial class DrawEngine
 
     private DrawType GetStudentDrawType(DrawSettingsType drawSettingsType)
     {
+        if (drawSettingsType == DrawSettingsType.RollCall)
+            return string.Equals(ConfigData.RollCallSettings.AlgorithmId, "builtin.random", StringComparison.OrdinalIgnoreCase)
+                ? DrawType.Random
+                : DrawType.Fair;
+        if (drawSettingsType == DrawSettingsType.QuickDraw)
+            return string.Equals(ConfigData.QuickDrawSettings.AlgorithmId, "builtin.random", StringComparison.OrdinalIgnoreCase)
+                ? DrawType.Random
+                : DrawType.Fair;
+
         return drawSettingsType switch
         {
             DrawSettingsType.RollCall => ConfigData.RollCallSettings.DrawType,
@@ -231,18 +250,23 @@ public partial class DrawEngine
         };
     }
 
+    private string? GetStudentAlgorithmId(DrawSettingsType drawSettingsType) => drawSettingsType switch
+    {
+        DrawSettingsType.RollCall => ConfigData.RollCallSettings.AlgorithmId,
+        DrawSettingsType.QuickDraw => ConfigData.QuickDrawSettings.AlgorithmId,
+        _ => null
+    };
+
     private List<WeightedCandidate<Student>> BuildStudentWeightedCandidates(
         List<Student> usable,
         IReadOnlyDictionary<Student, History> historyCache,
         StudentDrawExecutionPolicy executionPolicy,
         string courseName)
     {
-        return executionPolicy.DrawType switch
-        {
-            DrawType.Fair => CalculateStudentWeight(usable, executionPolicy.FairDrawSettings, historyCache, courseName),
-            DrawType.Random => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList(),
-            _ => usable.Select(s => new WeightedCandidate<Student> { Candidate = s, Weight = 1.0 }).ToList()
-        };
+        var algorithm = _rollCallAlgorithms.Resolve(executionPolicy.AlgorithmId ??
+            (executionPolicy.DrawType == DrawType.Fair ? "builtin.fair" : "builtin.random"));
+        return algorithm.BuildCandidates(this, usable, historyCache, executionPolicy.FairDrawSettings, courseName)
+            .ToList();
     }
 
     private int GetLotteryRepeatThreshold()
@@ -335,20 +359,11 @@ public partial class DrawEngine
         List<Prize> prizes,
         IReadOnlyDictionary<Prize, History> historyCache)
     {
-        if (ConfigData.LotterySettings.DrawType == LotteryDrawType.Count)
-        {
-            List<WeightedCandidate<Prize>> result = [];
-            foreach (var prize in prizes)
-            {
-                var remainingCount = Math.Max(0, prize.Count - (historyCache.GetValueOrDefault(prize)?.TotalCount ?? 0));
-                for (var i = 0; i < remainingCount; i++)
-                    result.Add(new WeightedCandidate<Prize> { Candidate = prize, Weight = 1.0 });
-            }
-
-            return result;
-        }
-
-        return prizes.Select(p => new WeightedCandidate<Prize> { Candidate = p, Weight = p.Weight }).ToList();
+        var fallback = ConfigData.LotterySettings.DrawType == LotteryDrawType.Count
+            ? "builtin.inventory"
+            : "builtin.weighted";
+        return _lotteryAlgorithms.Resolve(ConfigData.LotterySettings.AlgorithmId ?? fallback)
+            .BuildCandidates(prizes, historyCache).ToList();
     }
 
     private DrawResult<Prize> DrawPrizeCandidates(IReadOnlyList<WeightedCandidate<Prize>> candidates, int count)

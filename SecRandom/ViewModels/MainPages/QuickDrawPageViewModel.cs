@@ -644,7 +644,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
     private double BuildDisplayWeight(Student student)
     {
-        if (Config.QuickDrawSettings.DrawType != DrawType.Fair)
+        if (!string.Equals(Config.QuickDrawSettings.AlgorithmId, "builtin.fair", StringComparison.OrdinalIgnoreCase))
             return 1;
 
         return _drawEngine.CalculateStudentWeight((_profileService.CurrentStudentList?.Students ?? []).Where(s => s.IsCandidate).ToList(), courseName: _linkageDrawCoordinator.GetCourseName())

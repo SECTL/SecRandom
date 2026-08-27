@@ -49,6 +49,21 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_Algorithm" Header="{x:Static lp:Resources.S_QuickDrawAlgorithm}"
+                                   Description="{x:Static lp:Resources.S_QuickDrawAlgorithm_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox ItemsSource="{Binding Algorithms}" SelectedItem="{Binding SelectedAlgorithm, Mode=TwoWay}"
+                              MinWidth="220">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_DefaultClass" Header="{x:Static lp:Resources.S_DefaultClass}"
                                    Description="{x:Static lp:Resources.S_DefaultClass_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PeopleListFilled}}">

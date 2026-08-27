@@ -5,7 +5,7 @@ using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.Draw;
 
-internal sealed record FairDrawPolicySnapshot(
+public sealed record FairDrawPolicySnapshot(
     bool FairDraw,
     bool FairDrawGroup,
     bool FairDrawGender,
@@ -76,11 +76,13 @@ internal sealed record StudentDrawExecutionPolicy(
     string Name,
     int Version,
     DrawType DrawType,
-    FairDrawPolicySnapshot FairDrawSettings)
+    FairDrawPolicySnapshot FairDrawSettings,
+    string? AlgorithmId = null)
 {
-    public static StudentDrawExecutionPolicy DesktopConfigured(DrawType drawType, FairDrawSettingsConfig settings)
+    public static StudentDrawExecutionPolicy DesktopConfigured(DrawType drawType, FairDrawSettingsConfig settings,
+        string? algorithmId = null)
     {
-        return new StudentDrawExecutionPolicy("DesktopConfigured", 1, drawType, FairDrawPolicySnapshot.FromConfig(settings));
+        return new StudentDrawExecutionPolicy("DesktopConfigured", 1, drawType, FairDrawPolicySnapshot.FromConfig(settings), algorithmId);
     }
 
     public static StudentDrawExecutionPolicy MobileDesktopDefaultsV1(DrawType drawType)

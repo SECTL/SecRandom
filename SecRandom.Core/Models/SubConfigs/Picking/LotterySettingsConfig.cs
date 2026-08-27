@@ -11,6 +11,7 @@ public partial class LotterySettingsConfig : OverridableDrawSettings
     [ObservableProperty] private int _halfRepeat = 1;
 
     [ObservableProperty] private LotteryDrawType _drawType = LotteryDrawType.Count;
+    [ObservableProperty] private string _algorithmId = "builtin.inventory";
     [ObservableProperty] private string _defaultPool = string.Empty;
     [ObservableProperty] private LotteryShowRandomMode _lotteryShowRandom = LotteryShowRandomMode.PrizeIdPrizeBreakGroupHyphenMember;
     [ObservableProperty] private string _customLotteryShowRandomFormat = LotteryProcessDisplayFormatter.DefaultTemplate;

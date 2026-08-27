@@ -11,6 +11,7 @@ using SecRandom.Core.Helpers;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Draw;
 using SecRandom.Shared;
 using SecRandom.ViewModels;
 using SecRandom.Services.Music;
@@ -37,6 +38,26 @@ public partial class LotteryDrawSettingsPage : UserControl
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public LotterySettingsConfig Settings { get; }
     public ObservableCollection<string> PrizeListNames { get; } = [];
+    public IReadOnlyList<LotteryAlgorithmOption> Algorithms { get; } =
+        LotteryAlgorithmRegistryService.RegisteredAlgorithms
+            .Select(x => new LotteryAlgorithmOption(x.Id, x.Name)).ToArray();
+
+    public LotteryAlgorithmOption? SelectedAlgorithm
+    {
+        get => Algorithms.FirstOrDefault(x => string.Equals(x.Id, Settings.AlgorithmId, StringComparison.OrdinalIgnoreCase))
+               ?? Algorithms.FirstOrDefault();
+        set
+        {
+            if (value is null || string.Equals(Settings.AlgorithmId, value.Id, StringComparison.OrdinalIgnoreCase))
+                return;
+            Settings.AlgorithmId = value.Id;
+            if (string.Equals(value.Id, "builtin.inventory", StringComparison.OrdinalIgnoreCase))
+                Settings.DrawType = LotteryDrawType.Count;
+            else if (string.Equals(value.Id, "builtin.weighted", StringComparison.OrdinalIgnoreCase))
+                Settings.DrawType = LotteryDrawType.Pan;
+        }
+    }
+
     public ObservableCollection<MusicSelection> MusicSelections => MusicLibrary.Selections;
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
@@ -130,3 +151,5 @@ public partial class LotteryDrawSettingsPage : UserControl
         textBox.Focus();
     }
 }
+
+public sealed record LotteryAlgorithmOption(string Id, string Name);

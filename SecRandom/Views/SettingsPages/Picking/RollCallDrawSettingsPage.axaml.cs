@@ -10,6 +10,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Draw;
 using SecRandom.Shared;
 using SecRandom.ViewModels;
 using SecRandom.Services.Music;
@@ -38,6 +39,22 @@ public partial class RollCallDrawSettingsPage : UserControl
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public RollCallSettingsConfig Settings { get; }
     public ObservableCollection<string> StudentListNames { get; } = [];
+    public IReadOnlyList<RollCallAlgorithmOption> Algorithms { get; } =
+        RollCallAlgorithmRegistryService.RegisteredAlgorithms
+            .Select(x => new RollCallAlgorithmOption(x.Id, x.Name)).ToArray();
+
+    public RollCallAlgorithmOption? SelectedAlgorithm
+    {
+        get => Algorithms.FirstOrDefault(x => string.Equals(x.Id, Settings.AlgorithmId, StringComparison.OrdinalIgnoreCase))
+               ?? Algorithms.FirstOrDefault();
+        set
+        {
+            if (value is null || string.Equals(Settings.AlgorithmId, value.Id, StringComparison.OrdinalIgnoreCase))
+                return;
+            Settings.AlgorithmId = value.Id;
+        }
+    }
+
     public ObservableCollection<MusicSelection> MusicSelections => MusicLibrary.Selections;
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
@@ -125,3 +142,5 @@ public partial class RollCallDrawSettingsPage : UserControl
         }
     }
 }
+
+public sealed record RollCallAlgorithmOption(string Id, string Name);

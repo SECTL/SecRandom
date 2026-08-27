@@ -904,6 +904,17 @@ namespace SecRandom.Langs.SettingsPages.Picking {
                 return ResourceManager.GetString("S_LotteryDrawType_D", resourceCulture);
             }
         }
+
+        public static string S_LotteryAlgorithm => ResourceManager.GetString("S_LotteryAlgorithm", resourceCulture);
+        public static string S_LotteryAlgorithm_D => ResourceManager.GetString("S_LotteryAlgorithm_D", resourceCulture);
+        public static string S_RollCallAlgorithm => ResourceManager.GetString("S_RollCallAlgorithm", resourceCulture);
+        public static string S_RollCallAlgorithm_D => ResourceManager.GetString("S_RollCallAlgorithm_D", resourceCulture);
+        public static string S_QuickDrawAlgorithm => ResourceManager.GetString("S_QuickDrawAlgorithm", resourceCulture);
+        public static string S_QuickDrawAlgorithm_D => ResourceManager.GetString("S_QuickDrawAlgorithm_D", resourceCulture);
+        public static string O_AlgorithmFair => ResourceManager.GetString("O_AlgorithmFair", resourceCulture);
+        public static string O_AlgorithmRandom => ResourceManager.GetString("O_AlgorithmRandom", resourceCulture);
+        public static string O_AlgorithmInventory => ResourceManager.GetString("O_AlgorithmInventory", resourceCulture);
+        public static string O_AlgorithmWeighted => ResourceManager.GetString("O_AlgorithmWeighted", resourceCulture);
         
         /// <summary>
         ///   Looks up a localized string similar to 显示奖品图片.

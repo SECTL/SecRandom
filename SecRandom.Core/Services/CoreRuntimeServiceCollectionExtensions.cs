@@ -25,6 +25,8 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         services.AddTransient<IRollCallSession, RollCallSession>();
         services.AddTransient<ILotterySession, LotterySession>();
         services.AddSingleton<IHistoryQueryService, HistoryQueryService>();
+        services.AddSingleton<IRollCallAlgorithmRegistry, RollCallAlgorithmRegistry>();
+        services.AddSingleton<ILotteryAlgorithmRegistry, LotteryAlgorithmRegistry>();
         services.AddTransient<DrawEngine>();
         services.AddSingleton<IFeatureAvailabilityService, FeatureAvailabilityService>();
         services.AddSingleton<IArchivePostImportHooks, NullArchivePostImportHooks>();
