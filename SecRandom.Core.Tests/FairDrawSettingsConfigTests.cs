@@ -50,6 +50,85 @@ public class FairDrawSettingsConfigTests
     }
 
     [Fact]
+    public void AverageGapProtectionIsMandatoryAndLegacyToggleIsNotPersisted()
+    {
+        var config = new MainConfigModel
+        {
+            FairDrawSettings = new FairDrawSettingsConfig
+            {
+                EnableAvgGapProtection = false,
+                GapThreshold = 99
+            }
+        };
+
+        Assert.True(config.FairDrawSettings.EnableAvgGapProtection);
+        Assert.Equal(1, config.FairDrawSettings.GapThreshold);
+
+        var json = JsonSerializer.Serialize(config, ConfigServiceBase.JsonOptions);
+        Assert.DoesNotContain("enable_avg_gap_protection", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("gap_threshold", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ShareDebtWeightsUsePersonalAndEnabledDimensionDebt()
+    {
+        var first = new Student { Name = "A", Group = "G1", Gender = "男" };
+        var second = new Student { Name = "B", Group = "G2", Gender = "女" };
+        var third = new Student { Name = "C", Group = "G2", Gender = "男" };
+        var config = BuildConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = true,
+            FairDrawGroup = true,
+            FairDrawGender = true,
+            FairDrawTime = false,
+            MinWeight = 0,
+            MaxWeight = 10
+        });
+
+        using var host = BuildHost(config, new TestProfileService());
+        var weights = CreateEngine(host).CalculateStudentWeight(
+            [first, second, third],
+            new Dictionary<Student, History>
+            {
+                [first] = new() { TotalCount = 0 },
+                [second] = new() { TotalCount = 0 },
+                [third] = new() { TotalCount = 1 }
+            });
+
+        Assert.Equal(weights[0].Weight, weights[1].Weight);
+        Assert.True(weights[0].Weight > weights[2].Weight);
+        Assert.Equal(1.0, weights.Sum(item => item.Weight), precision: 10);
+    }
+
+    [Fact]
+    public void ShareDebtDimensionHorizonScalesWithBatchSize()
+    {
+        var first = new Student { Name = "A", Group = "G1", Gender = "男" };
+        var second = new Student { Name = "B", Group = "G2", Gender = "女" };
+        var settings = FairDrawPolicySnapshot.FromConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = true,
+            FairDrawGroup = true,
+            FairDrawGender = false,
+            FairDrawTime = false
+        });
+        var history = new Dictionary<Student, History>
+        {
+            [first] = new() { TotalCount = 2 },
+            [second] = new() { TotalCount = 0 }
+        };
+
+        using var host = BuildHost(BuildConfig(new FairDrawSettingsConfig()), new TestProfileService());
+        var engine = CreateEngine(host);
+        var single = engine.CalculateStudentWeight([first, second], settings with { BatchSize = 1 }, history);
+        var batch = engine.CalculateStudentWeight([first, second], settings with { BatchSize = 3 }, history);
+
+        Assert.True(batch[0].Weight > single[0].Weight);
+        Assert.True(batch[1].Weight < single[1].Weight);
+        Assert.Equal(1.0, batch.Sum(item => item.Weight), precision: 10);
+    }
+
+    [Fact]
     public void MainConfigModel_RoundTripsAnimationStyle()
     {
         var config = new MainConfigModel
@@ -192,8 +271,9 @@ public class FairDrawSettingsConfigTests
             new Dictionary<Student, History> { [groupA] = new(), [groupB] = new() },
             "数学");
 
-        Assert.True(weights.Single(item => item.Candidate == groupB).Weight
-                    > weights.Single(item => item.Candidate == groupA).Weight);
+        Assert.Equal(
+            weights.Single(item => item.Candidate == groupA).Weight,
+            weights.Single(item => item.Candidate == groupB).Weight);
     }
 
     [Fact]

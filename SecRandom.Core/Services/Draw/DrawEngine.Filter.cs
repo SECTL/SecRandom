@@ -6,6 +6,8 @@ namespace SecRandom.Core.Services.Draw;
 
 public partial class DrawEngine
 {
+    internal const int AverageGapProtectionThreshold = 1;
+
     private List<Student> FilterStudents(
         Func<Student, bool> filter,
         int drawCount,
@@ -83,8 +85,9 @@ public partial class DrawEngine
         if (drawCount > filteredList.Count)
             throw new RepeatLimitExhaustedException();
 
-        var fairSettings = executionPolicy.FairDrawSettings;
-        if (executionPolicy.DrawType != DrawType.Fair || !fairSettings.EnableAvgGapProtection)
+        // Average-gap protection is intentionally mandatory for fair draws. It is
+        // the hard candidate gate; the fair algorithm only ranks this pool later.
+        if (executionPolicy.DrawType != DrawType.Fair)
             return filteredList;
 
         var countByStudent = filteredList.ToDictionary(
@@ -96,8 +99,8 @@ public partial class DrawEngine
         var minDrawCount = countByStudent.Values.Min();
         var maxDrawCount = countByStudent.Values.Max();
         var maxEligibleDrawCount = avg;
-        if (maxDrawCount - minDrawCount > Math.Max(0, fairSettings.GapThreshold))
-            maxEligibleDrawCount = Math.Min(maxEligibleDrawCount, minDrawCount + Math.Max(0, fairSettings.GapThreshold));
+        if (maxDrawCount - minDrawCount > AverageGapProtectionThreshold)
+            maxEligibleDrawCount = Math.Min(maxEligibleDrawCount, minDrawCount + AverageGapProtectionThreshold);
 
         var pool = filteredList
             .Where(s => countByStudent[s] <= maxEligibleDrawCount)

@@ -65,7 +65,7 @@ public sealed class FairDrawAlgorithmTests
             Assert.True(Guid.TryParse(candidate.GetProperty("recordId").GetString(), out _)));
         Assert.True(audit.RootElement.GetProperty("fairness").GetProperty("averageGapProtectionApplied").GetBoolean());
         Assert.Equal(3, audit.RootElement.GetProperty("fairness").GetProperty("candidateCountBeforeAverageGapProtection").GetInt32());
-        Assert.Equal(2, audit.RootElement.GetProperty("fairness").GetProperty("candidateCountAfterAverageGapProtection").GetInt32());
+        Assert.Equal(1, audit.RootElement.GetProperty("fairness").GetProperty("candidateCountAfterAverageGapProtection").GetInt32());
     }
 
     [Fact]
@@ -101,8 +101,9 @@ public sealed class FairDrawAlgorithmTests
 
         var input = CreateEngine(host).CreateStudentVerificationInput(1, [groupA, groupB], DrawSettingsType.RollCall, "数学");
 
-        Assert.True(input.Candidates.Single(candidate => candidate.RecordId == groupA.RecordId).WeightMicros
-                    > input.Candidates.Single(candidate => candidate.RecordId == groupB.RecordId).WeightMicros);
+        Assert.Equal(
+            input.Candidates.Single(candidate => candidate.RecordId == groupA.RecordId).WeightMicros,
+            input.Candidates.Single(candidate => candidate.RecordId == groupB.RecordId).WeightMicros);
     }
 
     [Fact]
@@ -192,6 +193,7 @@ public sealed class FairDrawAlgorithmTests
         var second = new Student { Name = "Second", RecordId = Guid.NewGuid() };
         var config = CreateConfig(new FairDrawSettingsConfig());
         config.RollCallSettings.DrawType = DrawType.Random;
+        config.RollCallSettings.AlgorithmId = "builtin.random";
         config.RollCallSettings.DrawMode = DrawMode.HalfRepeat;
         config.RollCallSettings.HalfRepeat = 2;
 
@@ -222,6 +224,7 @@ public sealed class FairDrawAlgorithmTests
             FairDrawTime = false
         });
         config.RollCallSettings.DrawType = DrawType.Random;
+        config.RollCallSettings.AlgorithmId = "builtin.random";
 
         using var host = CreateHost(config, new TestProfileService(new StudentHistory(), new StudentList { Students = [first, second] }));
         var engine = CreateEngine(host, new WeightedScriptedRandomSource(0.75));
@@ -243,6 +246,7 @@ public sealed class FairDrawAlgorithmTests
         };
         var config = CreateConfig(new FairDrawSettingsConfig());
         config.RollCallSettings.DrawType = DrawType.Random;
+        config.RollCallSettings.AlgorithmId = "builtin.random";
         config.RollCallSettings.DrawMode = DrawMode.NoRepeat;
 
         using var host = CreateHost(config, new TestProfileService(new StudentHistory(), new StudentList { Students = [student] }));
@@ -264,6 +268,7 @@ public sealed class FairDrawAlgorithmTests
         };
         var config = CreateConfig(new FairDrawSettingsConfig());
         config.RollCallSettings.DrawType = DrawType.Random;
+        config.RollCallSettings.AlgorithmId = "builtin.random";
         config.RollCallSettings.DrawMode = DrawMode.NoRepeat;
 
         using var host = CreateHost(config, new TestProfileService(new StudentHistory(), new StudentList { Students = [student] }));

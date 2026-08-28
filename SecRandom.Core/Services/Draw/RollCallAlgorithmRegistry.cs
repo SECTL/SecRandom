@@ -18,9 +18,28 @@ public static class LotteryAlgorithmRegistryService
 
 internal sealed class LotteryAlgorithmRegistry(IEnumerable<ILotteryAlgorithm> algorithms) : ILotteryAlgorithmRegistry
 {
-    private readonly IReadOnlyDictionary<string, ILotteryAlgorithm> _algorithms =
-        algorithms.Zip(LotteryAlgorithmRegistryService.RegisteredAlgorithms)
+    private readonly IReadOnlyDictionary<string, ILotteryAlgorithm> _algorithms = BuildMap(algorithms);
+
+    private static IReadOnlyDictionary<string, ILotteryAlgorithm> BuildMap(IEnumerable<ILotteryAlgorithm> algorithms)
+    {
+        var instances = algorithms.ToArray();
+        if (instances.Length == 0)
+            instances = [new InventoryLotteryAlgorithm(), new WeightedLotteryAlgorithm()];
+        var registrations = LotteryAlgorithmRegistryService.RegisteredAlgorithms;
+        var mapped = instances.Zip(registrations)
             .ToDictionary(pair => pair.Second.Id, pair => pair.First, StringComparer.OrdinalIgnoreCase);
+        if (mapped.Count > 0)
+            return mapped;
+
+        return instances.ToDictionary(
+            algorithm => algorithm switch
+            {
+                InventoryLotteryAlgorithm => "builtin.inventory",
+                WeightedLotteryAlgorithm => "builtin.weighted",
+                _ => algorithm.GetType().FullName ?? algorithm.GetType().Name
+            },
+            StringComparer.OrdinalIgnoreCase);
+    }
 
     public ILotteryAlgorithm Resolve(string? id) =>
         !string.IsNullOrWhiteSpace(id) && _algorithms.TryGetValue(id, out var algorithm)
@@ -32,9 +51,28 @@ internal sealed class LotteryAlgorithmRegistry(IEnumerable<ILotteryAlgorithm> al
 
 internal sealed class RollCallAlgorithmRegistry(IEnumerable<IRollCallAlgorithm> algorithms) : IRollCallAlgorithmRegistry
 {
-    private readonly IReadOnlyDictionary<string, IRollCallAlgorithm> _algorithms =
-        algorithms.Zip(RollCallAlgorithmRegistryService.RegisteredAlgorithms)
+    private readonly IReadOnlyDictionary<string, IRollCallAlgorithm> _algorithms = BuildMap(algorithms);
+
+    private static IReadOnlyDictionary<string, IRollCallAlgorithm> BuildMap(IEnumerable<IRollCallAlgorithm> algorithms)
+    {
+        var instances = algorithms.ToArray();
+        if (instances.Length == 0)
+            instances = [new FairRollCallAlgorithm(), new RandomRollCallAlgorithm()];
+        var registrations = RollCallAlgorithmRegistryService.RegisteredAlgorithms;
+        var mapped = instances.Zip(registrations)
             .ToDictionary(pair => pair.Second.Id, pair => pair.First, StringComparer.OrdinalIgnoreCase);
+        if (mapped.Count > 0)
+            return mapped;
+
+        return instances.ToDictionary(
+            algorithm => algorithm switch
+            {
+                FairRollCallAlgorithm => "builtin.fair",
+                RandomRollCallAlgorithm => "builtin.random",
+                _ => algorithm.GetType().FullName ?? algorithm.GetType().Name
+            },
+            StringComparer.OrdinalIgnoreCase);
+    }
 
     public IRollCallAlgorithm Resolve(string? id)
     {

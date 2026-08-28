@@ -17,7 +17,7 @@ public static class VerificationWireCodec
     public const string InventoryLotteryAlgorithmId = "secrandom-inventory-permutation-chacha20/v3";
     public const string WeightedLotteryAlgorithmId = "secrandom-lottery-weighted-without-replacement-chacha20/v3";
     public const string AlgorithmId = StudentAlgorithmId;
-    public const string AlgorithmEngineVersion = "3.2.0";
+    public const string AlgorithmEngineVersion = "3.3.0";
 
     private static readonly byte[] InputMagic = "SRDI"u8.ToArray();
     private static readonly byte[] RequestMagic = "SRDQ"u8.ToArray();

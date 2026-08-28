@@ -51,6 +51,7 @@ public partial class QuickDrawSettingsPage : UserControl
             if (value is null || string.Equals(Settings.AlgorithmId, value.Id, StringComparison.OrdinalIgnoreCase))
                 return;
             Settings.AlgorithmId = value.Id;
+            SynchronizeLegacyDrawType();
         }
     }
     public ObservableCollection<string> StudentListNames { get; } = [];
@@ -76,6 +77,9 @@ public partial class QuickDrawSettingsPage : UserControl
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(QuickDrawSettingsConfig.AlgorithmId))
+            SynchronizeLegacyDrawType();
+
         if (e.PropertyName == nameof(QuickDrawSettingsConfig.DefaultClass))
         {
             if (string.IsNullOrWhiteSpace(Settings.DefaultClass))
@@ -127,6 +131,8 @@ public partial class QuickDrawSettingsPage : UserControl
         _normalizingSettings = true;
         try
         {
+            SynchronizeLegacyDrawType();
+
             Settings.HalfRepeat = Settings.DrawMode switch
             {
                 DrawMode.Repeat => 0,
@@ -141,5 +147,15 @@ public partial class QuickDrawSettingsPage : UserControl
         {
             _normalizingSettings = false;
         }
+    }
+
+    private void SynchronizeLegacyDrawType()
+    {
+        if (SettingsView.Current?.IsPreviewMode == true)
+            return;
+
+        Settings.DrawType = string.Equals(Settings.AlgorithmId, "builtin.random", StringComparison.OrdinalIgnoreCase)
+            ? DrawType.Random
+            : DrawType.Fair;
     }
 }

@@ -96,7 +96,7 @@ public partial class DrawEngine
             }
 
             var usable = FilterStudents(Filter1, count, historyCache, executionPolicy);
-            var weightedCandidates = BuildStudentWeightedCandidates(usable, historyCache, executionPolicy, courseName);
+            var weightedCandidates = BuildStudentWeightedCandidates(usable, historyCache, executionPolicy, courseName, count);
 
             var result = DrawWithBehindSceneWeights(weightedCandidates, count);
             LogDrawResult("学生抽取", result.Status, count, usable.Count, result.Result.Count);
@@ -174,7 +174,7 @@ public partial class DrawEngine
         var preparedCandidates = candidates.Where(student => student.IsCandidate).ToList();
         var historyCache = BuildStudentHistoryCache(preparedCandidates, courseName);
         var usable = FilterPreparedStudents(preparedCandidates, count, historyCache, executionPolicy);
-        var weightedCandidates = BuildStudentWeightedCandidates(usable, historyCache, executionPolicy, courseName);
+        var weightedCandidates = BuildStudentWeightedCandidates(usable, historyCache, executionPolicy, courseName, count);
         return new DrawPreparedStudentsSnapshot(usable, weightedCandidates, historyCache);
     }
 
@@ -261,11 +261,13 @@ public partial class DrawEngine
         List<Student> usable,
         IReadOnlyDictionary<Student, History> historyCache,
         StudentDrawExecutionPolicy executionPolicy,
-        string courseName)
+        string courseName,
+        int batchSize)
     {
         var algorithm = _rollCallAlgorithms.Resolve(executionPolicy.AlgorithmId ??
             (executionPolicy.DrawType == DrawType.Fair ? "builtin.fair" : "builtin.random"));
-        return algorithm.BuildCandidates(this, usable, historyCache, executionPolicy.FairDrawSettings, courseName)
+        var fairSettings = executionPolicy.FairDrawSettings with { BatchSize = Math.Max(1, batchSize) };
+        return algorithm.BuildCandidates(this, usable, historyCache, fairSettings, courseName)
             .ToList();
     }
 

@@ -78,9 +78,14 @@ public partial class DrawEngine
                 algorithmProfile = algorithmProfile.ToString(),
                 repeatMode = ToAuditName(drawMode),
                 halfRepeatLimit = drawMode == DrawMode.HalfRepeat ? GetStudentRepeatThreshold(drawSettingsType) : (int?)null,
-                averageGapProtectionApplied = executionPolicy.DrawType == DrawType.Fair && executionPolicy.FairDrawSettings.EnableAvgGapProtection,
+                averageGapProtectionApplied = executionPolicy.DrawType == DrawType.Fair,
                 candidateCountBeforeAverageGapProtection = preparedCandidates.Count,
-                candidateCountAfterAverageGapProtection = prepared.UsableCandidates.Count
+                candidateCountAfterAverageGapProtection = prepared.UsableCandidates.Count,
+                averageGapProtectionThreshold = AverageGapProtectionThreshold,
+                batchSize = count,
+                shareDebtPersonalHorizonRounds = ShareDebtPersonalHorizonRounds,
+                shareDebtDimensionHorizonPerPick = ShareDebtDimensionHorizonPerPick,
+                shareDebtRandomFloor = ShareDebtRandomFloor
             })
         };
     }

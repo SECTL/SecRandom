@@ -16,7 +16,7 @@ public sealed class VerificationKernelTests
     public void ProofProtocol_UsesSecRandomHistoryBalancedAlgorithmIdentity()
     {
         Assert.Equal("secrandom-fairdraw-history-balanced-weighted-chacha20/v3", VerificationWireCodec.AlgorithmId);
-        Assert.Equal("3.2.0", VerificationWireCodec.AlgorithmEngineVersion);
+        Assert.Equal("3.3.0", VerificationWireCodec.AlgorithmEngineVersion);
         Assert.Equal(
             "secrandom-inventory-permutation-chacha20/v3",
             VerificationWireCodec.GetAlgorithmId(VerificationSamplingMode.InventoryPermutation));

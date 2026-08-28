@@ -26,6 +26,12 @@ public sealed record FairDrawPolicySnapshot(
     double GenderWeight,
     double TimeWeight)
 {
+    /// <summary>
+    ///     Batch size used to scale dimension horizons. Public callers retain the
+    ///     single-draw default; the draw pipeline overwrites this for multi-pick draws.
+    /// </summary>
+    public int BatchSize { get; init; } = 1;
+
     public static FairDrawPolicySnapshot FromConfig(FairDrawSettingsConfig settings)
     {
         return new FairDrawPolicySnapshot(
