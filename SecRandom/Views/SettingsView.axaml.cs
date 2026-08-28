@@ -30,6 +30,7 @@ using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Views;
 using SecRandom.Models;
 using SecRandom.Services.Desktop;
+using SecRandom.Services.Auth;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Mobile;
 using SecRandom.Services.ImportExport;
@@ -43,7 +44,7 @@ using SecRandom.Platforms.Abstractions;
 
 namespace SecRandom.Views;
 
-public partial class SettingsView : ViewBase, IFANavigationPageFactory
+public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyPropertyChanged
 {
     private const string DefaultDesktopPageId = "settings.overview";
     private readonly ILogger<SettingsView>? _logger;
@@ -57,6 +58,9 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
     private bool _isPreviewMode;
     private readonly List<(Control Control, bool IsEnabled)> _previewDisabledControls = [];
     private IPlatformServiceRoot _platformServiceRoot;
+    private readonly SectlAuthService? _auth;
+    private Bitmap? _accountAvatar;
+    private bool _isAccountBusy;
 
     public SettingsView(
         IPlatformServiceRoot platform,
@@ -72,8 +76,12 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
         _logger = logger;
         ViewModel = viewModel ?? new SettingsViewModel();
         ViewModel.PropertyChanged += ViewModel_OnPropertyChanged;
+        _auth = IAppHost.TryGetService<SectlAuthService>();
+        if (_auth is not null)
+            _auth.StateChanged += AuthOnStateChanged;
         DataContext = this;
         InitializeComponent();
+        RefreshAccountPresentation();
 
         NavigationFrame.NavigationPageFactory = this;
         NavigationFrame.Navigated += NavigationFrame_OnNavigated;
@@ -85,6 +93,10 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
         Closed += (_, _) =>
         {
             ViewModel.PropertyChanged -= ViewModel_OnPropertyChanged;
+            if (_auth is not null)
+                _auth.StateChanged -= AuthOnStateChanged;
+            _accountAvatar?.Dispose();
+            _accountAvatar = null;
             _ = NotifyDrawerClosedAsync(ViewModel.DrawerContent);
             NavigationFrame.Navigated -= NavigationFrame_OnNavigated;
             RestorePreviewControls();
@@ -109,12 +121,128 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory
     private IImportExportService ImportExportService => IAppHost.GetService<IImportExportService>();
     private IExternalLauncher ExternalLauncher => IAppHost.GetService<IExternalLauncher>();
     public bool IsDesktop => App.IsDesktop;
+    public bool IsAccountVisible => _auth is not null && IsDesktop;
+    public bool IsAccountSignedIn => _auth?.IsSignedIn == true;
+    public string AccountDisplayName
+    {
+        get
+        {
+            if (!IsAccountSignedIn)
+                return Langs.SettingsView.Resources.Account_NotSignedIn;
+
+            return FirstNonBlank(_auth?.User?.ResolvedUserName, _auth?.User?.UserId, _auth?.Token?.UserId)
+                   ?? Langs.SettingsView.Resources.Account_SignedIn;
+        }
+    }
+    public string AccountUserId => FirstNonBlank(_auth?.User?.UserId, _auth?.Token?.UserId) ?? string.Empty;
+    public string AccountEmail => FirstNonBlank(_auth?.User?.Email) ?? string.Empty;
+    public bool ShowAccountInfoUnavailable => IsAccountSignedIn && _auth?.User is null;
+    public string AccountInitial => SecRandom.Helpers.AvatarInitialResolver.Resolve(AccountDisplayName, null);
+    public Bitmap? AccountAvatar => _accountAvatar;
+    public bool HasAccountAvatar => _accountAvatar is not null;
+    public bool ShowAccountInitial => IsAccountSignedIn && !HasAccountAvatar;
+    public bool ShowAccountPlaceholder => !IsAccountSignedIn && !HasAccountAvatar;
+    public bool IsAccountBusy
+    {
+        get => _isAccountBusy;
+        private set
+        {
+            if (_isAccountBusy == value)
+                return;
+
+            _isAccountBusy = value;
+            OnPropertyChanged();
+        }
+    }
+    public new event PropertyChangedEventHandler? PropertyChanged;
     public bool CanOpenFileManagerDirectories => IsDesktop || _platformServiceRoot is MobilePlatformServiceRoot
         {
             Kind: PlatformKind.Android
         };
 
     #region Misc
+
+    private static string? FirstNonBlank(params string?[] values) =>
+        values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?.Trim();
+
+    private void AuthOnStateChanged(object? sender, EventArgs e)
+    {
+        Dispatcher.UIThread.Post(RefreshAccountPresentation);
+    }
+
+    private void RefreshAccountPresentation()
+    {
+        if (_auth is null)
+            return;
+
+        Bitmap? avatar = null;
+        if (IsAccountSignedIn && _auth.AvatarBytes is { Length: > 0 } bytes)
+        {
+            try
+            {
+                using var stream = new MemoryStream(bytes, writable: false);
+                avatar = new Bitmap(stream);
+            }
+            catch
+            {
+                avatar = null;
+            }
+        }
+
+        _accountAvatar?.Dispose();
+        _accountAvatar = avatar;
+        OnPropertyChanged(nameof(IsAccountSignedIn));
+        OnPropertyChanged(nameof(AccountDisplayName));
+        OnPropertyChanged(nameof(AccountUserId));
+        OnPropertyChanged(nameof(AccountEmail));
+        OnPropertyChanged(nameof(ShowAccountInfoUnavailable));
+        OnPropertyChanged(nameof(AccountInitial));
+        OnPropertyChanged(nameof(AccountAvatar));
+        OnPropertyChanged(nameof(HasAccountAvatar));
+        OnPropertyChanged(nameof(ShowAccountInitial));
+        OnPropertyChanged(nameof(ShowAccountPlaceholder));
+    }
+
+    private async void AccountSignIn_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_auth is null || IsAccountBusy)
+            return;
+
+        IsAccountBusy = true;
+        try
+        {
+            await _auth.SignInAsync();
+        }
+        catch (Exception exception)
+        {
+            this.ShowErrorToast(exception.Message);
+        }
+        finally
+        {
+            IsAccountBusy = false;
+            RefreshAccountPresentation();
+        }
+    }
+
+    private async void AccountSignOut_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_auth is null || IsAccountBusy)
+            return;
+
+        IsAccountBusy = true;
+        try
+        {
+            await _auth.SignOutAsync();
+        }
+        finally
+        {
+            IsAccountBusy = false;
+            RefreshAccountPresentation();
+        }
+    }
+
+    private void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
     private void MobileHomeButton_OnClick(object? sender, RoutedEventArgs e)
     {

@@ -96,6 +96,49 @@
                     </AutoCompleteBox.InnerRightContent>
                 </AutoCompleteBox>
 
+                <Button Grid.Column="3"
+                        Theme="{StaticResource TransparentButton}"
+                        Padding="8 4"
+                        Margin="0 -4 8 -4"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        IsVisible="{Binding IsAccountVisible}"
+                        IsEnabled="{Binding !IsAccountBusy}"
+                        ToolTip.Tip="{Binding AccountDisplayName}"
+                        WindowDecorationProperties.ElementRole="User">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Border Width="28" Height="28" CornerRadius="6"
+                                Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                                BorderThickness="1" ClipToBounds="True">
+                            <Grid>
+                                <Image Source="{Binding AccountAvatar}" Stretch="UniformToFill"
+                                       IsVisible="{Binding HasAccountAvatar}" />
+                                <TextBlock Text="{Binding AccountInitial}" FontWeight="SemiBold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           IsVisible="{Binding ShowAccountInitial}" />
+                                <sr:FluentIcon Glyph="{sr:Fi PersonFilled}" FontSize="15"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               IsVisible="{Binding ShowAccountPlaceholder}" />
+                            </Grid>
+                        </Border>
+                        <TextBlock Text="{Binding AccountDisplayName}" Width="150" MaxWidth="150"
+                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuItem Header="{x:Static ls:Resources.Account_InfoUnavailable}"
+                                      IsVisible="{Binding ShowAccountInfoUnavailable}" IsEnabled="False" />
+                            <MenuItem Header="{Binding AccountUserId}" IsVisible="{Binding IsAccountSignedIn}" IsEnabled="False" />
+                            <MenuItem Header="{Binding AccountEmail}" IsVisible="{Binding IsAccountSignedIn}" IsEnabled="False" />
+                            <Separator IsVisible="{Binding IsAccountSignedIn}" />
+                            <MenuItem Header="{x:Static ls:Resources.Account_SignIn}" IsVisible="{Binding !IsAccountSignedIn}" IsEnabled="{Binding !IsAccountBusy}" Click="AccountSignIn_OnClick" />
+                            <MenuItem Header="{x:Static ls:Resources.Account_SignOut}" IsVisible="{Binding IsAccountSignedIn}" IsEnabled="{Binding !IsAccountBusy}" Click="AccountSignOut_OnClick" />
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+
                 <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
                     <Button Classes="accent"
                             Margin="0 -8" VerticalAlignment="Center"

@@ -82,7 +82,6 @@ using SecRandom.Views;
 using SecRandom.Views.MainPages;
 using SecRandom.Views.SettingsPages;
 using SecRandom.Views.SettingsPages.About;
-using SecRandom.Views.SettingsPages.Account;
 using SecRandom.Views.SettingsPages.General;
 using SecRandom.Views.SettingsPages.History;
 using SecRandom.Views.SettingsPages.Linkage;
@@ -111,6 +110,7 @@ public partial class App : Application
     private static NotificationChannelSettings? _quickDrawNotificationSettings;
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
+    private static Task? _runtimeServicesStartupTask;
     private NativeMenuItem? _floatingWindowMenuItem;
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     private IHost? _mobileHost;
@@ -478,7 +478,8 @@ public partial class App : Application
     {
         _desktopLifetime = desktop;
         WriteDesktopStartupDiagnostic("Scheduling desktop runtime services.");
-        ObserveTask(StartRuntimeServicesAsync(), "Runtime service startup failed.");
+        _runtimeServicesStartupTask = StartRuntimeServicesAsync();
+        ObserveTask(_runtimeServicesStartupTask, "Runtime service startup failed.");
         WriteDesktopStartupDiagnostic("Creating floating window.");
         _floatingWindow = new FloatingWindow();
         _floatingWindow.Opened += (_, _) => RefreshTrayWindowMenuItems();
@@ -1027,8 +1028,6 @@ public partial class App : Application
 
                 // 底部
                 services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
-                if (!isMobile)
-                    services.AddSettingsPage<AccountSettingsPage>("账号");
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
 
                 services.AddSettingsPageSeparator(PageLocation.Bottom, isHide: true);
@@ -1368,6 +1367,8 @@ public partial class App : Application
     private static async Task StartRuntimeServicesAsync()
     {
         await InitializeRuntimeServicesAsync().ConfigureAwait(false);
+        if (IAppHost.TryGetService<SectlAuthService>() is { } auth)
+            await auth.InitializeAsync().ConfigureAwait(false);
         await IAppHost.Host!.StartAsync().ConfigureAwait(false);
     }
 
@@ -1745,6 +1746,9 @@ public partial class App : Application
 
         try
         {
+            if (_runtimeServicesStartupTask is { } startupTask)
+                await startupTask.ConfigureAwait(true);
+
             if (_settingsWindow is null)
             {
                 var settingsWindow = _settingsWindow = new MainWindow(MainWindowSettingsScope.Settings)

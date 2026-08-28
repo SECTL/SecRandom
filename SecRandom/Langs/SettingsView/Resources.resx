@@ -301,4 +301,19 @@
   <data name="C_TransferExportHint" xml:space="preserve"><value>在另一台设备上扫描显示的二维码以接收传输</value></data>
   <data name="C_TransferCameraOne" xml:space="preserve"><value>摄像头 1</value></data>
   <data name="C_TransferCameraTwo" xml:space="preserve"><value>摄像头 2</value></data>
+    <data name="Account_NotSignedIn" xml:space="preserve">
+        <value>未登录</value>
+    </data>
+    <data name="Account_SignedIn" xml:space="preserve">
+        <value>已登录</value>
+    </data>
+    <data name="Account_InfoUnavailable" xml:space="preserve">
+        <value>账户信息暂时不可用</value>
+    </data>
+    <data name="Account_SignIn" xml:space="preserve">
+        <value>登录</value>
+    </data>
+    <data name="Account_SignOut" xml:space="preserve">
+        <value>退出登录</value>
+    </data>
 </root>

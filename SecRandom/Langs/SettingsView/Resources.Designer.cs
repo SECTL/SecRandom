@@ -60,6 +60,51 @@ namespace SecRandom.Langs.SettingsView {
         }
 
         /// <summary>
+        ///   Returns the localized string similar to 未登录.
+        /// </summary>
+        public static string Account_NotSignedIn {
+            get {
+                return ResourceManager.GetString("Account_NotSignedIn", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Returns the localized string similar to 已登录.
+        /// </summary>
+        public static string Account_SignedIn {
+            get {
+                return ResourceManager.GetString("Account_SignedIn", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Returns the localized string similar to 账户信息暂时不可用.
+        /// </summary>
+        public static string Account_InfoUnavailable {
+            get {
+                return ResourceManager.GetString("Account_InfoUnavailable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Returns the localized string similar to 登录.
+        /// </summary>
+        public static string Account_SignIn {
+            get {
+                return ResourceManager.GetString("Account_SignIn", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Returns the localized string similar to 退出登录.
+        /// </summary>
+        public static string Account_SignOut {
+            get {
+                return ResourceManager.GetString("Account_SignOut", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 取消.
         /// </summary>
         public static string C_Cancel {

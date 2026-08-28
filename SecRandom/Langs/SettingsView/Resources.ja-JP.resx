@@ -123,4 +123,9 @@
   <data name="C_TransferExportHint" xml:space="preserve"><value>ほかの端末で表示中の QR コードを読み取り、転送を受信します。</value></data>
   <data name="C_TransferCameraOne" xml:space="preserve"><value>カメラ 1</value></data>
   <data name="C_TransferCameraTwo" xml:space="preserve"><value>カメラ 2</value></data>
+  <data name="Account_NotSignedIn" xml:space="preserve"><value>未ログイン</value></data>
+  <data name="Account_SignedIn" xml:space="preserve"><value>ログイン済み</value></data>
+  <data name="Account_InfoUnavailable" xml:space="preserve"><value>アカウント情報を取得できません</value></data>
+  <data name="Account_SignIn" xml:space="preserve"><value>ログイン</value></data>
+  <data name="Account_SignOut" xml:space="preserve"><value>ログアウト</value></data>
 </root>

@@ -212,4 +212,19 @@
   <data name="C_TransferExportHint" xml:space="preserve"><value>Scan the displayed QR code on another device to receive the transfer.</value></data>
   <data name="C_TransferCameraOne" xml:space="preserve"><value>Camera 1</value></data>
   <data name="C_TransferCameraTwo" xml:space="preserve"><value>Camera 2</value></data>
+    <data name="Account_NotSignedIn" xml:space="preserve">
+        <value>Not signed in</value>
+    </data>
+    <data name="Account_SignedIn" xml:space="preserve">
+        <value>Signed in</value>
+    </data>
+    <data name="Account_InfoUnavailable" xml:space="preserve">
+        <value>Account information is temporarily unavailable</value>
+    </data>
+    <data name="Account_SignIn" xml:space="preserve">
+        <value>Sign in</value>
+    </data>
+    <data name="Account_SignOut" xml:space="preserve">
+        <value>Sign out</value>
+    </data>
 </root>
