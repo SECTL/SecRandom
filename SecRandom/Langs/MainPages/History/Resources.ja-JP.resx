@@ -30,6 +30,12 @@
   <data name="C_SelectMode" xml:space="preserve">
     <value>表示モード</value>
   </data>
+  <data name="C_SelectSubject" xml:space="preserve">
+    <value>授業を表示</value>
+  </data>
+  <data name="C_AllSubjects" xml:space="preserve">
+    <value>すべての授業</value>
+  </data>
   <data name="C_Refresh" xml:space="preserve">
     <value>更新</value>
   </data>

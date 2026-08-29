@@ -15,7 +15,7 @@
     </UserControl.Resources>
 
     <Grid RowDefinitions="Auto,*" RowSpacing="8" Classes="page-container">
-        <Grid Grid.Row="0" ColumnDefinitions="* * Auto" ColumnSpacing="4">
+        <Grid Grid.Row="0" ColumnDefinitions="* * Auto Auto" ColumnSpacing="4">
             <ComboBox Grid.Column="0"
                       HorizontalAlignment="Stretch"
                       PlaceholderText="{x:Static langs:Resources.C_SelectClass}"
@@ -35,7 +35,22 @@
                 </ComboBox.ItemTemplate>
             </ComboBox>
 
-            <Button Grid.Column="2"
+            <ComboBox Grid.Column="2"
+                      Width="160"
+                      HorizontalAlignment="Stretch"
+                      IsVisible="{Binding IsSubjectFilteringAvailable}"
+                      PlaceholderText="{x:Static langs:Resources.C_SelectSubject}"
+                      ItemsSource="{Binding SubjectOptions}"
+                      SelectedValue="{Binding SelectedSubject, Mode=TwoWay}"
+                      SelectedValueBinding="{Binding Key}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding DisplayName}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <Button Grid.Column="3"
                     Content="{x:Static langs:Resources.C_Refresh}"
                     Command="{Binding RefreshCommand}" />
         </Grid>

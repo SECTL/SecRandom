@@ -18,14 +18,15 @@ public partial class RollCallHistorySettingsPage : UserControl
         ViewModel = IAppHost.GetService<RollCallHistoryViewModel>();
         DataContext = ViewModel;
         InitializeComponent();
-        ViewModel.PropertyChanged += ViewModelOnPropertyChanged;
-        ViewModel.Config.LinkageSettings.PropertyChanged += LinkageSettingsOnPropertyChanged;
     }
 
     public RollCallHistoryViewModel ViewModel { get; }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
+        ViewModel.PropertyChanged += ViewModelOnPropertyChanged;
+        ViewModel.Config.LinkageSettings.PropertyChanged += LinkageSettingsOnPropertyChanged;
+        ViewModel.RefreshSubjectFiltering();
         UpdateColumns();
     }
 
@@ -39,14 +40,15 @@ public partial class RollCallHistorySettingsPage : UserControl
     private void ViewModelOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(RollCallHistoryViewModel.SelectedMode)
-                           or nameof(RollCallHistoryViewModel.HasWeightRows))
+                           or nameof(RollCallHistoryViewModel.HasWeightRows)
+                           or nameof(RollCallHistoryViewModel.ShouldShowSubjectColumn))
             UpdateColumns();
     }
 
     private void LinkageSettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == "SubjectHistoryFilterEnabled")
-            UpdateColumns();
+        if (e.PropertyName is "SubjectHistoryFilterEnabled" or "DataSource")
+            ViewModel.RefreshSubjectFiltering();
     }
 
     private void UpdateColumns()
@@ -67,8 +69,8 @@ public partial class RollCallHistorySettingsPage : UserControl
         cols[5].IsVisible = isOverview;               // 点名次数
         cols[6].IsVisible = isPersonal;               // 点名模式
         cols[7].IsVisible = isPersonal;               // 点名人数
-        cols[8].IsVisible = isRecords || isPersonal;  // 选择性别
-        cols[9].IsVisible = isRecords || isPersonal;  // 选择小组
+        cols[8].IsVisible = isPersonal;               // 选择性别
+        cols[9].IsVisible = isPersonal;               // 选择小组
         cols[10].IsVisible = ViewModel.ShouldShowSubjectColumn; // 科目
         cols[11].IsVisible = ViewModel.HasWeightRows; // 权重
     }

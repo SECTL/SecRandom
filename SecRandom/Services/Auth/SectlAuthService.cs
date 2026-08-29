@@ -17,6 +17,7 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
     public const string ClientId = "69c8cd6a0012dd3ea10a";
     private const string AuthBaseUrl = "https://appwrite.sectl.cn";
     private const string BrowserBaseUrl = "https://sectl.cn";
+    private const string OAuthScope = "user:read cloud:read cloud:write";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly TimeSpan[] InitializationRetryDelays =
     [
@@ -109,7 +110,7 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
             ["response_type"] = "code",
             ["code_challenge"] = challenge,
             ["code_challenge_method"] = "S256",
-            ["scope"] = "user:read",
+            ["scope"] = OAuthScope,
             ["state"] = state
         }.Select(pair => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
 

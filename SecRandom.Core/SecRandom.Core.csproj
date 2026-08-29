@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
+        <EnableGitInfoGenerator>false</EnableGitInfoGenerator>
         <PackageId>SecRandom.Core</PackageId>
         <Description>SecRandom core: domain logic, config/logging services, shared Avalonia controls/styles, and the draw/profile/config service contracts exposed to plugins.</Description>
         <Authors>SECTL</Authors>

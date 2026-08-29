@@ -224,7 +224,13 @@
     <data name="Account_SignIn" xml:space="preserve">
         <value>Sign in</value>
     </data>
-    <data name="Account_SignOut" xml:space="preserve">
-        <value>Sign out</value>
-    </data>
+  <data name="Account_SignOut" xml:space="preserve">
+    <value>Sign out</value>
+  </data>
+  <data name="Account_UserIdLabel" xml:space="preserve"><value>User ID</value></data>
+  <data name="Account_EmailLabel" xml:space="preserve"><value>Email</value></data>
+  <data name="Account_CopyUserId" xml:space="preserve"><value>Copy user ID</value></data>
+  <data name="Account_CopyEmail" xml:space="preserve"><value>Copy email</value></data>
+  <data name="Account_Copied" xml:space="preserve"><value>Copied</value></data>
+  <data name="Account_CopyFailed" xml:space="preserve"><value>Copy failed</value></data>
 </root>

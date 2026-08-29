@@ -9,11 +9,13 @@
         <NullabilityInfoContextSupport>True</NullabilityInfoContextSupport>
         <ErrorOnDuplicatePublishOutputFiles>False</ErrorOnDuplicatePublishOutputFiles>
         <CheckEolWorkloads>false</CheckEolWorkloads>
+        <DefaultItemExcludes>$(DefaultItemExcludes);artifacts/**;publish/**</DefaultItemExcludes>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="SecRandom.SimpleGitInfoGenerator" Version="1.0.1.3"
-                          PrivateAssets="All" IncludeAssets="build;analyzers"/>
+                          PrivateAssets="All" IncludeAssets="build;analyzers"
+                          Condition="'$(EnableGitInfoGenerator)' == 'true'"/>
 
         <Compile Include="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)'))/AssemblyInfo.cs"
                  Condition="'$(EnableGitInfoGenerator)' == 'true'">

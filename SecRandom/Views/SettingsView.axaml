@@ -100,14 +100,16 @@
                         Theme="{StaticResource TransparentButton}"
                         Padding="8 4"
                         Margin="0 -4 8 -4"
-                        HorizontalAlignment="Right"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        MinWidth="0"
                         VerticalAlignment="Center"
                         IsVisible="{Binding IsAccountVisible}"
                         IsEnabled="{Binding !IsAccountBusy}"
                         ToolTip.Tip="{Binding AccountDisplayName}"
                         WindowDecorationProperties.ElementRole="User">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Border Width="28" Height="28" CornerRadius="6"
+                    <Grid ColumnDefinitions="Auto 8 *" MinWidth="0">
+                        <Border Grid.Column="0" Width="28" Height="28" CornerRadius="6"
                                 Background="{DynamicResource ControlFillColorSecondaryBrush}"
                                 BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                                 BorderThickness="1" ClipToBounds="True">
@@ -122,19 +124,72 @@
                                                IsVisible="{Binding ShowAccountPlaceholder}" />
                             </Grid>
                         </Border>
-                        <TextBlock Text="{Binding AccountDisplayName}" Width="150" MaxWidth="150"
+                        <TextBlock Grid.Column="2" Text="{Binding AccountDisplayName}" MaxWidth="180"
+                                   MinWidth="0" HorizontalAlignment="Stretch"
                                    TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
                                    VerticalAlignment="Center" />
-                    </StackPanel>
+                    </Grid>
                     <Button.Flyout>
                         <MenuFlyout>
-                            <MenuItem Header="{x:Static ls:Resources.Account_InfoUnavailable}"
-                                      IsVisible="{Binding ShowAccountInfoUnavailable}" IsEnabled="False" />
-                            <MenuItem Header="{Binding AccountUserId}" IsVisible="{Binding IsAccountSignedIn}" IsEnabled="False" />
-                            <MenuItem Header="{Binding AccountEmail}" IsVisible="{Binding IsAccountSignedIn}" IsEnabled="False" />
+                            <MenuItem Icon="{sr:FluentIcon {sr:Fi InfoFilled}}"
+                                      IsVisible="{Binding ShowAccountInfoUnavailable}" IsEnabled="False">
+                                <MenuItem.Header>
+                                    <TextBlock Text="{x:Static ls:Resources.Account_InfoUnavailable}"
+                                               MaxWidth="240" TextWrapping="NoWrap"
+                                               TextTrimming="CharacterEllipsis" />
+                                </MenuItem.Header>
+                            </MenuItem>
+                            <MenuItem IsVisible="{Binding HasAccountUserId}"
+                                      IsEnabled="{Binding HasAccountUserId}"
+                                      ToolTip.Tip="{x:Static ls:Resources.Account_CopyUserId}"
+                                      Click="AccountCopyUserId_OnClick">
+                                <MenuItem.Header>
+                                    <Grid ColumnDefinitions="Auto 12 * 12 Auto" MinWidth="280">
+                                        <TextBlock Grid.Column="0" Text="{x:Static ls:Resources.Account_UserIdLabel}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{Binding AccountUserId}" MaxWidth="210"
+                                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center" />
+                                        <sr:FluentIcon Grid.Column="4" Glyph="{sr:Fi CopyFilled}"
+                                                       FontSize="16" VerticalAlignment="Center" />
+                                    </Grid>
+                                </MenuItem.Header>
+                            </MenuItem>
+                            <MenuItem IsVisible="{Binding HasAccountEmail}"
+                                      IsEnabled="{Binding HasAccountEmail}"
+                                      ToolTip.Tip="{x:Static ls:Resources.Account_CopyEmail}"
+                                      Click="AccountCopyEmail_OnClick">
+                                <MenuItem.Header>
+                                    <Grid ColumnDefinitions="Auto 12 * 12 Auto" MinWidth="280">
+                                        <TextBlock Grid.Column="0" Text="{x:Static ls:Resources.Account_EmailLabel}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{Binding AccountEmail}" MaxWidth="210"
+                                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center" />
+                                        <sr:FluentIcon Grid.Column="4" Glyph="{sr:Fi CopyFilled}"
+                                                       FontSize="16" VerticalAlignment="Center" />
+                                    </Grid>
+                                </MenuItem.Header>
+                            </MenuItem>
                             <Separator IsVisible="{Binding IsAccountSignedIn}" />
-                            <MenuItem Header="{x:Static ls:Resources.Account_SignIn}" IsVisible="{Binding !IsAccountSignedIn}" IsEnabled="{Binding !IsAccountBusy}" Click="AccountSignIn_OnClick" />
-                            <MenuItem Header="{x:Static ls:Resources.Account_SignOut}" IsVisible="{Binding IsAccountSignedIn}" IsEnabled="{Binding !IsAccountBusy}" Click="AccountSignOut_OnClick" />
+                            <MenuItem Icon="{sr:FluentIcon {sr:Fi DoorArrowRightFilled}}"
+                                      IsVisible="{Binding !IsAccountSignedIn}" IsEnabled="{Binding !IsAccountBusy}"
+                                      Click="AccountSignIn_OnClick">
+                                <MenuItem.Header>
+                                    <TextBlock Text="{x:Static ls:Resources.Account_SignIn}"
+                                               MaxWidth="240" TextWrapping="NoWrap"
+                                               TextTrimming="CharacterEllipsis" />
+                                </MenuItem.Header>
+                            </MenuItem>
+                            <MenuItem Icon="{sr:FluentIcon {sr:Fi DoorArrowLeftFilled}}"
+                                      IsVisible="{Binding IsAccountSignedIn}" IsEnabled="{Binding !IsAccountBusy}"
+                                      Click="AccountSignOut_OnClick">
+                                <MenuItem.Header>
+                                    <TextBlock Text="{x:Static ls:Resources.Account_SignOut}"
+                                               MaxWidth="240" TextWrapping="NoWrap"
+                                               TextTrimming="CharacterEllipsis" />
+                                </MenuItem.Header>
+                            </MenuItem>
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>

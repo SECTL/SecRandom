@@ -316,4 +316,22 @@
     <data name="Account_SignOut" xml:space="preserve">
         <value>退出登录</value>
     </data>
+    <data name="Account_UserIdLabel" xml:space="preserve">
+        <value>用户 ID</value>
+    </data>
+    <data name="Account_EmailLabel" xml:space="preserve">
+        <value>邮箱</value>
+    </data>
+    <data name="Account_CopyUserId" xml:space="preserve">
+        <value>复制用户 ID</value>
+    </data>
+    <data name="Account_CopyEmail" xml:space="preserve">
+        <value>复制邮箱</value>
+    </data>
+    <data name="Account_Copied" xml:space="preserve">
+        <value>已复制</value>
+    </data>
+    <data name="Account_CopyFailed" xml:space="preserve">
+        <value>复制失败</value>
+    </data>
 </root>

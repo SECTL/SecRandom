@@ -10,6 +10,8 @@
   <data name="C_SelectClass" xml:space="preserve"><value>Select list</value></data>
   <data name="C_SelectPool" xml:space="preserve"><value>Select prize pool</value></data>
   <data name="C_SelectMode" xml:space="preserve"><value>View mode</value></data>
+  <data name="C_SelectSubject" xml:space="preserve"><value>View course</value></data>
+  <data name="C_AllSubjects" xml:space="preserve"><value>All courses</value></data>
   <data name="C_Refresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="C_ModeOverview" xml:space="preserve"><value>All records</value></data>
   <data name="C_ModeRecords" xml:space="preserve"><value>View by time</value></data>

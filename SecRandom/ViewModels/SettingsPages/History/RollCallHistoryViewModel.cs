@@ -36,6 +36,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
 
     [ObservableProperty] private string? _selectedClassName;
     [ObservableProperty] private string _selectedMode = HistoryMode.Overview;
+    [ObservableProperty] private string _selectedSubject = string.Empty;
 
     public RollCallHistoryViewModel(MainConfigHandler configHandler) : base(configHandler)
     {
@@ -46,9 +47,13 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
 
     public ObservableCollection<string> ClassNames { get; } = [];
     public ObservableCollection<HistoryModeOption> ModeOptions { get; } = [];
+    public ObservableCollection<HistoryModeOption> SubjectOptions { get; } = [];
     public ObservableCollection<HistoryDisplayRow> Rows { get; } = [];
     public bool HasWeightRows => Rows.Any(row => !string.IsNullOrWhiteSpace(row.Weight));
-    public bool ShouldShowSubjectColumn => Config.LinkageSettings.SubjectHistoryFilterEnabled
+    public bool HasSubjectRows => Rows.Any(row => !string.IsNullOrWhiteSpace(row.Subject));
+    public bool IsSubjectFilteringAvailable => Config.LinkageSettings.DataSource != LinkageDataSource.Off
+        && Config.LinkageSettings.SubjectHistoryFilterEnabled;
+    public bool ShouldShowSubjectColumn => HasSubjectRows
         && SelectedMode != HistoryMode.Overview;
 
     public IRelayCommand RefreshCommand { get; }
@@ -61,8 +66,13 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
 
     public void Refresh()
     {
+        var selectedClassName = SelectedClassName;
+        var selectedMode = SelectedMode;
+        var selectedSubject = SelectedSubject;
         RefreshClassNames();
-        Load();
+
+        SelectedClassName = ResolveRefreshSelection(ClassNames, selectedClassName);
+        Load(selectedMode, selectedSubject);
     }
 
     private void RefreshClassNames()
@@ -76,13 +86,17 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
     }
 
     partial void OnSelectedClassNameChanged(string? value) => Load();
-    partial void OnSelectedModeChanged(string value)
+    partial void OnSelectedModeChanged(string value) => BuildRows();
+    partial void OnSelectedSubjectChanged(string value) => BuildRows();
+
+    public void RefreshSubjectFiltering()
     {
-        BuildRows();
+        OnPropertyChanged(nameof(IsSubjectFilteringAvailable));
         OnPropertyChanged(nameof(ShouldShowSubjectColumn));
+        BuildRows();
     }
 
-    private void Load()
+    private void Load(string? preferredMode = null, string? preferredSubject = null)
     {
         Rows.Clear();
         _history = null;
@@ -94,7 +108,8 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
 
         if (string.IsNullOrWhiteSpace(SelectedClassName))
         {
-            RebuildModeOptions();
+            RebuildModeOptions(preferredMode);
+            RebuildSubjectOptions(preferredSubject);
             return;
         }
 
@@ -111,13 +126,14 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
             _studentIdPadWidth = CalculateNumericPadWidth(_studentList.Students.Select(student => student.Id));
         }
 
-        RebuildModeOptions();
+        RebuildModeOptions(preferredMode);
+        RebuildSubjectOptions(preferredSubject);
         BuildRows();
     }
 
-    private void RebuildModeOptions()
+    private void RebuildModeOptions(string? preferredMode = null)
     {
-        var current = SelectedMode;
+        var current = preferredMode ?? SelectedMode;
         ModeOptions.Clear();
         ModeOptions.Add(new HistoryModeOption { Key = HistoryMode.Overview, DisplayName = SR.C_ModeOverview });
         ModeOptions.Add(new HistoryModeOption { Key = HistoryMode.Records, DisplayName = SR.C_ModeRecords });
@@ -133,51 +149,90 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
                 ModeOptions.Add(new HistoryModeOption { Key = key, DisplayName = ResolveStudentInfo(key).Name });
 
         if (!ModeOptions.Any(option => option.Key == current))
-            SelectedMode = HistoryMode.Overview;
+            current = HistoryMode.Overview;
+
+        SelectedMode = current;
+    }
+
+    private void RebuildSubjectOptions(string? preferredSubject = null)
+    {
+        var current = preferredSubject ?? SelectedSubject;
+        SubjectOptions.Clear();
+        SubjectOptions.Add(new HistoryModeOption { Key = string.Empty, DisplayName = SR.C_AllSubjects });
+
+        if (_history is not null)
+        {
+            foreach (var subject in _history.Students.Values
+                         .SelectMany(history => history.Histories)
+                         .Select(item => item.CourseName)
+                         .Where(subject => !string.IsNullOrWhiteSpace(subject))
+                         .Distinct(StringComparer.Ordinal)
+                         .OrderBy(subject => subject, StringComparer.CurrentCulture))
+            {
+                SubjectOptions.Add(new HistoryModeOption
+                {
+                    Key = subject,
+                    DisplayName = FormatSubject(subject)
+                });
+            }
+        }
+
+        if (!SubjectOptions.Any(option => option.Key == current))
+            current = string.Empty;
+
+        SelectedSubject = current;
     }
 
     private void BuildRows()
     {
         Rows.Clear();
-        if (_history == null) return;
-
-        var mode = SelectedMode;
-        if (mode == HistoryMode.Overview)
+        try
         {
-            var predictedWeights = BuildPredictedWeightMap();
-            foreach (var student in GetVisibleStudents())
-                Rows.Add(BuildOverviewRow(student, predictedWeights));
-
-            AddOrphanOverviewRows();
-        }
-        else if (mode == HistoryMode.Records)
-        {
-            foreach (var student in GetVisibleStudents())
-                AddHistoryRows(student);
-
-            AddOrphanHistoryRows();
-            SortByTimeDesc(Rows);
-        }
-        else if (_studentByKey.TryGetValue(mode, out var student))
-        {
-            var history = ResolveHistory(student);
-            if (history is null)
+            if (_history is null)
                 return;
 
-            var info = StudentInfo.From(student);
-            foreach (var item in history.Histories)
-                Rows.Add(BuildEventRow(info, item, _studentIdPadWidth));
-            SortByTimeDesc(Rows);
-        }
-        else if (_history.Students.TryGetValue(mode, out var target))
-        {
-            var info = ResolveStudentInfo(mode);
-            foreach (var item in target.Histories)
-                Rows.Add(BuildEventRow(info, item, _studentIdPadWidth));
-            SortByTimeDesc(Rows);
-        }
+            var mode = SelectedMode;
+            if (mode == HistoryMode.Overview)
+            {
+                var predictedWeights = BuildPredictedWeightMap();
+                foreach (var student in GetVisibleStudents())
+                    Rows.Add(BuildOverviewRow(student, predictedWeights));
 
-        OnPropertyChanged(nameof(HasWeightRows));
+                AddOrphanOverviewRows();
+            }
+            else if (mode == HistoryMode.Records)
+            {
+                foreach (var student in GetVisibleStudents())
+                    AddHistoryRows(student);
+
+                AddOrphanHistoryRows();
+                SortByTimeDesc(Rows);
+            }
+            else if (_studentByKey.TryGetValue(mode, out var student))
+            {
+                var history = ResolveHistory(student);
+                if (history is null)
+                    return;
+
+                var info = StudentInfo.From(student);
+                foreach (var item in GetFilteredHistoryItems(history))
+                    Rows.Add(BuildEventRow(info, item, _studentIdPadWidth));
+                SortByTimeDesc(Rows);
+            }
+            else if (_history.Students.TryGetValue(mode, out var target))
+            {
+                var info = ResolveStudentInfo(mode);
+                foreach (var item in GetFilteredHistoryItems(target))
+                    Rows.Add(BuildEventRow(info, item, _studentIdPadWidth));
+                SortByTimeDesc(Rows);
+            }
+        }
+        finally
+        {
+            OnPropertyChanged(nameof(HasWeightRows));
+            OnPropertyChanged(nameof(HasSubjectRows));
+            OnPropertyChanged(nameof(ShouldShowSubjectColumn));
+        }
     }
 
     private IEnumerable<Student> GetVisibleStudents()
@@ -191,7 +246,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
         if (Config.RollCallSettings.DrawType != DrawType.Fair)
             return [];
 
-        return _drawEngine.CalculateStudentWeight(visibleStudents)
+        return _drawEngine.CalculateStudentWeight(visibleStudents, courseName: GetSelectedSubjectFilter())
             .ToDictionary(candidate => candidate.Candidate, candidate => candidate.Weight);
     }
 
@@ -204,7 +259,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
             Name = student.Name,
             Gender = student.Gender,
             Group = student.Group,
-            TotalCount = history?.TotalCount ?? 0,
+            TotalCount = GetSubjectHistoryCount(history),
             Weight = predictedWeights.TryGetValue(student, out var weight)
                 ? FormatWeight(weight)
                 : string.Empty
@@ -218,7 +273,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
             return;
 
         var info = StudentInfo.From(student);
-        foreach (var item in history.Histories)
+        foreach (var item in GetFilteredHistoryItems(history))
             Rows.Add(BuildEventRow(info, item, _studentIdPadWidth));
     }
 
@@ -245,7 +300,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
                 Name = info.Name,
                 Gender = info.Gender,
                 Group = info.Group,
-                TotalCount = history.TotalCount,
+                TotalCount = GetSubjectHistoryCount(history),
                 Weight = FormatLatestWeight(history)
             });
         }
@@ -260,7 +315,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
         foreach (var (key, history) in _history.Students.Where(pair => !knownKeys.Contains(pair.Key)))
         {
             var info = ResolveStudentInfo(key);
-            foreach (var item in history.Histories)
+            foreach (var item in GetFilteredHistoryItems(history))
                 Rows.Add(BuildEventRow(info, item, _studentIdPadWidth));
         }
     }
@@ -277,6 +332,29 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
 
         return keys;
     }
+
+    private int GetSubjectHistoryCount(ProfileHistory? history)
+    {
+        if (history is null)
+            return 0;
+
+        return string.IsNullOrWhiteSpace(GetSelectedSubjectFilter())
+            ? history.TotalCount
+            : GetFilteredHistoryItems(history).Count();
+    }
+
+    private IEnumerable<HistoryItem> GetFilteredHistoryItems(ProfileHistory history)
+    {
+        var subject = GetSelectedSubjectFilter();
+        return string.IsNullOrWhiteSpace(subject)
+            ? history.Histories
+            : history.Histories.Where(item => string.Equals(item.CourseName, subject, StringComparison.Ordinal));
+    }
+
+    private string GetSelectedSubjectFilter() => IsSubjectFilteringAvailable ? SelectedSubject : string.Empty;
+
+    private static string? ResolveRefreshSelection(IReadOnlyList<string> names, string? current) =>
+        !string.IsNullOrWhiteSpace(current) && names.Contains(current) ? current : ResolveInitial(names, string.Empty);
 
     private StudentInfo ResolveStudentInfo(string historyKey)
     {
@@ -375,8 +453,8 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
         return subject == "__break__" ? SR.C_Break : subject;
     }
 
-    private static string FormatLatestWeight(ProfileHistory h) =>
-        h.Histories.LastOrDefault(item => item.DrawMethod == (int)DrawType.Fair) is { } last
+    private string FormatLatestWeight(ProfileHistory h) =>
+        GetFilteredHistoryItems(h).LastOrDefault(item => item.DrawMethod == (int)DrawType.Fair) is { } last
             ? FormatWeight(last.Weight)
             : string.Empty;
 

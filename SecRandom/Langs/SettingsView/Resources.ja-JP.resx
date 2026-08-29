@@ -128,4 +128,10 @@
   <data name="Account_InfoUnavailable" xml:space="preserve"><value>アカウント情報を取得できません</value></data>
   <data name="Account_SignIn" xml:space="preserve"><value>ログイン</value></data>
   <data name="Account_SignOut" xml:space="preserve"><value>ログアウト</value></data>
+  <data name="Account_UserIdLabel" xml:space="preserve"><value>ユーザー ID</value></data>
+  <data name="Account_EmailLabel" xml:space="preserve"><value>メール</value></data>
+  <data name="Account_CopyUserId" xml:space="preserve"><value>ユーザー ID をコピー</value></data>
+  <data name="Account_CopyEmail" xml:space="preserve"><value>メールをコピー</value></data>
+  <data name="Account_Copied" xml:space="preserve"><value>コピーしました</value></data>
+  <data name="Account_CopyFailed" xml:space="preserve"><value>コピーに失敗しました</value></data>
 </root>

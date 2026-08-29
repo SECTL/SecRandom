@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -136,6 +137,8 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
     }
     public string AccountUserId => FirstNonBlank(_auth?.User?.UserId, _auth?.Token?.UserId) ?? string.Empty;
     public string AccountEmail => FirstNonBlank(_auth?.User?.Email) ?? string.Empty;
+    public bool HasAccountUserId => !string.IsNullOrWhiteSpace(AccountUserId);
+    public bool HasAccountEmail => !string.IsNullOrWhiteSpace(AccountEmail);
     public bool ShowAccountInfoUnavailable => IsAccountSignedIn && _auth?.User is null;
     public string AccountInitial => SecRandom.Helpers.AvatarInitialResolver.Resolve(AccountDisplayName, null);
     public Bitmap? AccountAvatar => _accountAvatar;
@@ -195,6 +198,8 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
         OnPropertyChanged(nameof(AccountDisplayName));
         OnPropertyChanged(nameof(AccountUserId));
         OnPropertyChanged(nameof(AccountEmail));
+        OnPropertyChanged(nameof(HasAccountUserId));
+        OnPropertyChanged(nameof(HasAccountEmail));
         OnPropertyChanged(nameof(ShowAccountInfoUnavailable));
         OnPropertyChanged(nameof(AccountInitial));
         OnPropertyChanged(nameof(AccountAvatar));
@@ -238,6 +243,35 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
         {
             IsAccountBusy = false;
             RefreshAccountPresentation();
+        }
+    }
+
+    private async void AccountCopyUserId_OnClick(object? sender, RoutedEventArgs e) =>
+        await CopyAccountValueAsync(AccountUserId);
+
+    private async void AccountCopyEmail_OnClick(object? sender, RoutedEventArgs e) =>
+        await CopyAccountValueAsync(AccountEmail);
+
+    private async Task CopyAccountValueAsync(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return;
+
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is null)
+        {
+            this.ShowErrorToast(Langs.SettingsView.Resources.Account_CopyFailed);
+            return;
+        }
+
+        try
+        {
+            await clipboard.SetTextAsync(value);
+            this.ShowSuccessToast(Langs.SettingsView.Resources.Account_Copied);
+        }
+        catch
+        {
+            this.ShowErrorToast(Langs.SettingsView.Resources.Account_CopyFailed);
         }
     }
 

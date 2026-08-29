@@ -5,14 +5,18 @@ namespace SecRandom.Core;
 
 public static class GlobalConstants
 {
-    public static string Tag => GitInfo.Tag;
-    public static string Branch => GitInfo.Branch;
-    public static string CommitHash => GitInfo.CommitHash[..7];
-    public static string FullCommitHash => GitInfo.CommitHash;
+    private static readonly Assembly VersionAssembly = Assembly.GetEntryAssembly() ?? typeof(GlobalConstants).Assembly;
+    private static readonly (string Tag, string Branch, string CommitHash) VersionParts = GetVersionParts();
+
+    public static string Tag => VersionParts.Tag;
+    public static string Branch => VersionParts.Branch;
+    public static string CommitHash => VersionParts.CommitHash[..Math.Min(7, VersionParts.CommitHash.Length)];
+    public static string FullCommitHash => VersionParts.CommitHash;
 
     public static string CodeName => @"Nonomi";
-    public static string Version => $@"v{GitInfo.Version}";
-    public static string AssemblyVersion => GitInfo.AssemblyVersion;
+    public static string Version => Tag.StartsWith("v", StringComparison.OrdinalIgnoreCase) ? Tag : $@"v{Tag}";
+    public static string AssemblyVersion => VersionAssembly
+        .GetCustomAttribute<AssemblyVersionAttribute>()?.Version ?? "0.0.0.0";
     public static string DisplayVersion => $@"{Version} (Codename {CodeName})";
     public static string VersionLong => $@"{Version}-{CodeName}-{CommitHash}({Branch})";
 
@@ -39,4 +43,22 @@ public static class GlobalConstants
 
     public static FontFamily DefaultAvaFontFamily { get; } =
         new(@"avares://SecRandom/Assets/Fonts/MiSans/#MiSans");
+
+    private static (string Tag, string Branch, string CommitHash) GetVersionParts()
+    {
+        var informationalVersion = VersionAssembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion;
+        if (string.IsNullOrWhiteSpace(informationalVersion))
+            return ("0.0.0.0", "Unknown", "Unknown");
+
+        var separator = informationalVersion.IndexOf('+');
+        var generatedGitInfo = VersionAssembly.GetType("SecRandom.GitInfo");
+        var branch = generatedGitInfo?.GetField("Branch", BindingFlags.Public | BindingFlags.Static)?.GetValue(null) as string
+                     ?? generatedGitInfo?.GetProperty("Branch", BindingFlags.Public | BindingFlags.Static)?.GetValue(null) as string
+                     ?? "Unknown";
+        return separator < 0
+            ? (informationalVersion, branch, "Unknown")
+            : (informationalVersion[..separator], branch, informationalVersion[(separator + 1)..]);
+    }
 }

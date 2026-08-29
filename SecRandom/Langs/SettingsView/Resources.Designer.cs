@@ -105,6 +105,60 @@ namespace SecRandom.Langs.SettingsView {
         }
 
         /// <summary>
+        ///   Returns the localized string similar to 用户 ID.
+        /// </summary>
+        public static string Account_UserIdLabel {
+            get {
+                return ResourceManager.GetString("Account_UserIdLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Returns the localized string similar to 邮箱.
+        /// </summary>
+        public static string Account_EmailLabel {
+            get {
+                return ResourceManager.GetString("Account_EmailLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Returns the localized string similar to 复制用户 ID.
+        /// </summary>
+        public static string Account_CopyUserId {
+            get {
+                return ResourceManager.GetString("Account_CopyUserId", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Returns the localized string similar to 复制邮箱.
+        /// </summary>
+        public static string Account_CopyEmail {
+            get {
+                return ResourceManager.GetString("Account_CopyEmail", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Returns the localized string similar to 已复制.
+        /// </summary>
+        public static string Account_Copied {
+            get {
+                return ResourceManager.GetString("Account_Copied", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Returns the localized string similar to 复制失败.
+        /// </summary>
+        public static string Account_CopyFailed {
+            get {
+                return ResourceManager.GetString("Account_CopyFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 取消.
         /// </summary>
         public static string C_Cancel {

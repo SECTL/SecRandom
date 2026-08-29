@@ -67,6 +67,15 @@ namespace SecRandom.Langs.MainPages.History {
                 return ResourceManager.GetString("C_Break", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 全部科目.
+        /// </summary>
+        public static string C_AllSubjects {
+            get {
+                return ResourceManager.GetString("C_AllSubjects", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to 随机抽取.
@@ -137,6 +146,15 @@ namespace SecRandom.Langs.MainPages.History {
         public static string C_SelectMode {
             get {
                 return ResourceManager.GetString("C_SelectMode", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 查看科目.
+        /// </summary>
+        public static string C_SelectSubject {
+            get {
+                return ResourceManager.GetString("C_SelectSubject", resourceCulture);
             }
         }
         

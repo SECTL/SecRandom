@@ -1,5 +1,7 @@
 <Project>
     <PropertyGroup>
         <AvaloniaVersion>12.1.1</AvaloniaVersion>
+        <!-- Keep verification and publish outputs out of SDK default Compile items. -->
+        <DefaultItemExcludes>$(DefaultItemExcludes);artifacts/**;publish/**</DefaultItemExcludes>
     </PropertyGroup>
 </Project>

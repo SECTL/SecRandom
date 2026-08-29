@@ -52,8 +52,12 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
 
     public void Refresh()
     {
+        var selectedPoolName = SelectedPoolName;
+        var selectedMode = SelectedMode;
         RefreshPoolNames();
-        Load();
+
+        SelectedPoolName = ResolveRefreshSelection(PoolNames, selectedPoolName);
+        Load(selectedMode);
     }
 
     private void RefreshPoolNames()
@@ -69,7 +73,7 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
     partial void OnSelectedPoolNameChanged(string? value) => Load();
     partial void OnSelectedModeChanged(string value) => BuildRows();
 
-    private void Load()
+    private void Load(string? preferredMode = null)
     {
         Rows.Clear();
         _history = null;
@@ -81,7 +85,7 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
 
         if (string.IsNullOrWhiteSpace(SelectedPoolName))
         {
-            RebuildModeOptions();
+            RebuildModeOptions(preferredMode);
             return;
         }
 
@@ -98,13 +102,13 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
             _prizeIdPadWidth = CalculateNumericPadWidth(_prizeList.Prizes.Select(prize => prize.Id));
         }
 
-        RebuildModeOptions();
+        RebuildModeOptions(preferredMode);
         BuildRows();
     }
 
-    private void RebuildModeOptions()
+    private void RebuildModeOptions(string? preferredMode = null)
     {
-        var current = SelectedMode;
+        var current = preferredMode ?? SelectedMode;
         ModeOptions.Clear();
         ModeOptions.Add(new HistoryModeOption { Key = HistoryMode.Overview, DisplayName = SecRandom.Langs.MainPages.History.Resources.C_ModeOverview });
         ModeOptions.Add(new HistoryModeOption { Key = HistoryMode.Records, DisplayName = SecRandom.Langs.MainPages.History.Resources.C_ModeRecords });
@@ -120,7 +124,9 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
                 ModeOptions.Add(new HistoryModeOption { Key = key, DisplayName = ResolvePrizeInfo(key).Name });
 
         if (!ModeOptions.Any(option => option.Key == current))
-            SelectedMode = HistoryMode.Overview;
+            current = HistoryMode.Overview;
+
+        SelectedMode = current;
     }
 
     private void BuildRows()
@@ -319,6 +325,9 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
     {
         return weight.ToString("0.00", CultureInfo.CurrentCulture);
     }
+
+    private static string? ResolveRefreshSelection(IReadOnlyList<string> names, string? current) =>
+        !string.IsNullOrWhiteSpace(current) && names.Contains(current) ? current : ResolveInitial(names, string.Empty);
 
     private static string FormatLatestWeight(ProfileHistory history) =>
         history.Histories.LastOrDefault() is { } last
