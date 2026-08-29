@@ -15,6 +15,12 @@
                     NavigationPage.HasNavigationBar="False"
                     Loaded="OnLoaded"
                     Unloaded="OnUnloaded">
+    <views:SettingsView.Styles>
+        <Style Selector="MenuItem.account-info-item /template/ Border#PART_LayoutRoot">
+            <Setter Property="Margin" Value="0" />
+        </Style>
+    </views:SettingsView.Styles>
+
     <Grid RowDefinitions="Auto *">
         <Border Grid.Row="0" Height="48"
                 Background="Transparent"
@@ -100,8 +106,8 @@
                         Theme="{StaticResource TransparentButton}"
                         Padding="8 4"
                         Margin="0 -4 8 -4"
-                        HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Stretch"
+                        HorizontalAlignment="Right"
+                        HorizontalContentAlignment="Right"
                         MinWidth="0"
                         VerticalAlignment="Center"
                         IsVisible="{Binding IsAccountVisible}"
@@ -139,7 +145,8 @@
                                                TextTrimming="CharacterEllipsis" />
                                 </MenuItem.Header>
                             </MenuItem>
-                            <MenuItem IsVisible="{Binding HasAccountUserId}"
+                            <MenuItem Classes="account-info-item"
+                                      IsVisible="{Binding HasAccountUserId}"
                                       IsEnabled="{Binding HasAccountUserId}"
                                       ToolTip.Tip="{x:Static ls:Resources.Account_CopyUserId}"
                                       Click="AccountCopyUserId_OnClick">
@@ -155,7 +162,8 @@
                                     </Grid>
                                 </MenuItem.Header>
                             </MenuItem>
-                            <MenuItem IsVisible="{Binding HasAccountEmail}"
+                            <MenuItem Classes="account-info-item"
+                                      IsVisible="{Binding HasAccountEmail}"
                                       IsEnabled="{Binding HasAccountEmail}"
                                       ToolTip.Tip="{x:Static ls:Resources.Account_CopyEmail}"
                                       Click="AccountCopyEmail_OnClick">
@@ -272,6 +280,10 @@
                                           Click="OpenAppDirectoryMenuItem_OnClick" />
 
                                 <Separator IsVisible="{Binding CanOpenFileManagerDirectories}" />
+
+                                <MenuItem Icon="{sr:FluentIcon {sr:Fi MegaphoneFilled}}"
+                                          Header="{x:Static ls:Resources.C_Announcements}"
+                                          Click="AnnouncementsMenuItem_OnClick" />
 
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi CommentNoteFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_Feedback}"

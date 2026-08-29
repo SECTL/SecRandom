@@ -16,6 +16,11 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
 {
     public const string ClientId = "69c8cd6a0012dd3ea10a";
     private const string AuthBaseUrl = "https://appwrite.sectl.cn";
+    private const string AppwriteEndpoint = "https://appwrite.sectl.cn/v1";
+    private const string AppwriteProjectId = "69bd6e700005458848db";
+    private const string UserDataTableId = "user_data";
+    private const string DatabaseId = "69bd89d8000304c37368";
+    private const string AvatarBucketId = "69cce3720009a343f892";
     private const string BrowserBaseUrl = "https://sectl.cn";
     private const string OAuthScope = "user:read cloud:read cloud:write";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -169,6 +174,33 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
     private async Task<SectlUser?> GetUserInfoAsync(CancellationToken cancellationToken, bool allowRefresh = true)
     {
         if (!IsSignedIn) return null;
+
+        // Account profile fields are owned by the public user_data table. Use
+        // the OAuth token only to identify the row; userinfo is a compatibility
+        // fallback for older tokens that do not carry user_id.
+        var tokenUserId = _token?.UserId;
+        if (!string.IsNullOrWhiteSpace(tokenUserId))
+        {
+            var userData = await GetUserDataRowAsync(tokenUserId, cancellationToken, allowRefresh);
+            if (userData is not null)
+                return userData;
+        }
+
+        var userinfo = await GetOAuthUserInfoAsync(cancellationToken, allowRefresh);
+        if (userinfo is null)
+            return null;
+
+        var userId = userinfo.ResolvedUserId ?? _token?.UserId;
+        if (string.IsNullOrWhiteSpace(userId))
+            return userinfo;
+
+        var profile = await GetUserDataRowAsync(userId, cancellationToken, allowRefresh: false);
+        return profile ?? userinfo;
+    }
+
+    private async Task<SectlUser?> GetOAuthUserInfoAsync(CancellationToken cancellationToken, bool allowRefresh)
+    {
+        if (!IsSignedIn) return null;
         var client = httpClientFactory.CreateClient();
         using var request = new HttpRequestMessage(HttpMethod.Get, $"{AuthBaseUrl}/api/oauth/userinfo");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token!.AccessToken);
@@ -176,10 +208,58 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
         if (response.StatusCode == HttpStatusCode.Unauthorized
             && allowRefresh
             && await TryRefreshTokenAsync(cancellationToken))
-            return await GetUserInfoAsync(cancellationToken, allowRefresh: false);
+            return await GetOAuthUserInfoAsync(cancellationToken, allowRefresh: false);
 
         if (!response.IsSuccessStatusCode) return null;
-        return await response.Content.ReadFromJsonAsync<SectlUser>(JsonOptions, cancellationToken);
+
+        var payload = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions, cancellationToken);
+        return SectlUser.TryParse(payload);
+    }
+
+    private async Task<SectlUser?> GetUserDataRowAsync(
+        string userId,
+        CancellationToken cancellationToken,
+        bool allowRefresh = true)
+    {
+        try
+        {
+            var queries = new[]
+            {
+                JsonSerializer.Serialize(new { method = "equal", attribute = "user_id", values = new[] { userId } }, JsonOptions),
+                JsonSerializer.Serialize(new { method = "select", values = new[] { "user_id", "email", "user_name", "avatar_file_id" } }, JsonOptions)
+            };
+            var queryString = string.Join("&", queries.Select(query => $"queries[]={Uri.EscapeDataString(query)}"));
+            using var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{AppwriteEndpoint}/tablesdb/{DatabaseId}/tables/{UserDataTableId}/rows?{queryString}");
+            request.Headers.TryAddWithoutValidation("X-Appwrite-Project", AppwriteProjectId);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token!.AccessToken);
+            using var response = await httpClientFactory.CreateClient().SendAsync(request, cancellationToken);
+            if (response.StatusCode == HttpStatusCode.Unauthorized
+                && allowRefresh
+                && await TryRefreshTokenAsync(cancellationToken))
+                return await GetUserDataRowAsync(userId, cancellationToken, allowRefresh: false);
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var payload = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions, cancellationToken);
+            if (payload.ValueKind != JsonValueKind.Object
+                || !payload.TryGetProperty("rows", out var rows)
+                || rows.ValueKind != JsonValueKind.Array
+                || rows.GetArrayLength() == 0)
+                return null;
+
+            return SectlUser.TryParse(rows[0]);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private async Task<bool> TryRefreshTokenAsync(CancellationToken cancellationToken)
@@ -237,7 +317,13 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
 
         try
         {
-            return await httpClientFactory.CreateClient().GetByteArrayAsync(uri, cancellationToken);
+            using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+            if (!string.IsNullOrWhiteSpace(_token?.AccessToken))
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token.AccessToken);
+            using var response = await httpClientFactory.CreateClient().SendAsync(request, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return null;
+            return await response.Content.ReadAsByteArrayAsync(cancellationToken);
         }
         catch
         {
@@ -291,107 +377,72 @@ public sealed record SectlToken(
 public sealed record SectlUser(
     [property: JsonPropertyName("user_id")] string? UserId,
     [property: JsonPropertyName("user_name")] string? UserName,
-    string? Email)
+    [property: JsonPropertyName("email")] string? Email,
+    [property: JsonPropertyName("avatar_file_id")] string? AvatarFileId)
 {
-    // The current userinfo endpoint calls the display name "name" while older
-    // payloads and the account model use "user_name".
-    [JsonPropertyName("name")]
-    public string? Name { get; init; }
+    private const string AppwriteEndpoint = "https://appwrite.sectl.cn/v1";
+    private const string AppwriteProjectId = "69bd6e700005458848db";
+    private const string AvatarBucketId = "69cce3720009a343f892";
 
-    [JsonExtensionData]
-    public Dictionary<string, JsonElement>? AdditionalData { get; init; }
+    public string? ResolvedUserName => FirstNonBlank(UserName, Data?.UserName);
+    public string? ResolvedUserId => FirstNonBlank(UserId, Data?.UserId);
+    public string? ResolvedEmail => FirstNonBlank(Email, Data?.Email);
+    public string? ResolvedAvatarFileId => FirstNonBlank(AvatarFileId, Data?.AvatarFileId);
 
-    public string? ResolvedUserName => FirstNonBlank(
-        UserName,
-        FindAdditionalString("user_name"),
-        Name,
-        FindAdditionalString("name"));
+    public string? ResolvedAvatarUrl => BuildAvatarFileUrl(ResolvedAvatarFileId);
 
-    public string? ResolvedAvatarUrl
+    [JsonIgnore]
+    public SectlUserData? Data { get; init; }
+
+    public static SectlUser? TryParse(JsonElement payload)
     {
-        get
-        {
-            if (AdditionalData is null)
-                return null;
-
-            foreach (var pair in AdditionalData)
-            {
-                if (!new[] { "avatar", "avatar_url", "avatarUrl", "image", "profileImage", "profile_image", "profile_image_url" }
-                        .Contains(pair.Key, StringComparer.OrdinalIgnoreCase))
-                    continue;
-
-                var value = pair.Value;
-
-                if (value.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(value.GetString()))
-                    return value.GetString();
-
-                if (value.ValueKind == JsonValueKind.Object)
-                {
-                    foreach (var urlKey in new[] { "url", "src", "href" })
-                    {
-                        foreach (var property in value.EnumerateObject())
-                        {
-                            if (string.Equals(property.Name, urlKey, StringComparison.OrdinalIgnoreCase)
-                                && property.Value.ValueKind == JsonValueKind.String
-                                && !string.IsNullOrWhiteSpace(property.Value.GetString()))
-                                return property.Value.GetString();
-                        }
-                    }
-                }
-            }
-
+        if (payload.ValueKind != JsonValueKind.Object)
             return null;
-        }
+
+        var data = payload.TryGetProperty("data", out var nested) && nested.ValueKind == JsonValueKind.Object
+            ? ReadFields(nested)
+            : null;
+        var direct = ReadFields(payload);
+        return new SectlUser(direct.UserId, direct.UserName, direct.Email, direct.AvatarFileId)
+        {
+            Data = data
+        };
     }
+
+    public SectlUser Merge(SectlUser? fallback)
+    {
+        if (fallback is null)
+            return this;
+
+        return new SectlUser(
+            FirstNonBlank(ResolvedUserId, fallback.ResolvedUserId),
+            FirstNonBlank(ResolvedUserName, fallback.ResolvedUserName),
+            FirstNonBlank(ResolvedEmail, fallback.ResolvedEmail),
+            FirstNonBlank(ResolvedAvatarFileId, fallback.ResolvedAvatarFileId));
+    }
+
+    private static SectlUserData ReadFields(JsonElement value) => new(
+        ReadString(value, "user_id"),
+        ReadString(value, "user_name"),
+        ReadString(value, "email"),
+        ReadString(value, "avatar_file_id"));
+
+    private static string? ReadString(JsonElement value, string propertyName) =>
+        value.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.String
+            ? FirstNonBlank(property.GetString())
+            : null;
+
+    private static string? BuildAvatarFileUrl(string? fileId) => string.IsNullOrWhiteSpace(fileId)
+        ? null
+        : $"{AppwriteEndpoint}/storage/buckets/{AvatarBucketId}/files/{Uri.EscapeDataString(fileId)}/view?project={AppwriteProjectId}";
 
     private static string? FirstNonBlank(params string?[] values) =>
         values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?.Trim();
 
-    private string? FindAdditionalString(params string[] keys)
-    {
-        if (AdditionalData is null)
-            return null;
-
-        foreach (var pair in AdditionalData)
-        {
-            var value = FindString(pair.Key, pair.Value, keys);
-            if (value is not null)
-                return value;
-        }
-
-        return null;
-    }
-
-    private static string? FindString(string propertyName, JsonElement value, IReadOnlyCollection<string> keys)
-    {
-        if (keys.Contains(propertyName, StringComparer.OrdinalIgnoreCase))
-        {
-            if (value.ValueKind == JsonValueKind.String)
-                return FirstNonBlank(value.GetString());
-
-            if (value.ValueKind is JsonValueKind.Number or JsonValueKind.True or JsonValueKind.False)
-                return value.ToString();
-        }
-
-        if (value.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var property in value.EnumerateObject())
-            {
-                var result = FindString(property.Name, property.Value, keys);
-                if (result is not null)
-                    return result;
-            }
-        }
-        else if (value.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var item in value.EnumerateArray())
-            {
-                var result = FindString(propertyName, item, keys);
-                if (result is not null)
-                    return result;
-            }
-        }
-
-        return null;
-    }
 }
+
+public sealed record SectlUserData(
+    [property: JsonPropertyName("user_id")] string? UserId,
+    [property: JsonPropertyName("user_name")] string? UserName,
+    [property: JsonPropertyName("email")] string? Email,
+    [property: JsonPropertyName("avatar_file_id")] string? AvatarFileId);

@@ -46,6 +46,7 @@ using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.A
 using SecRandom.Services;
 using SecRandom.Services.Config;
 using SecRandom.Services.Auth;
+using SecRandom.Services.Announcements;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Draw;
@@ -82,6 +83,7 @@ using SecRandom.Views;
 using SecRandom.Views.MainPages;
 using SecRandom.Views.SettingsPages;
 using SecRandom.Views.SettingsPages.About;
+using SecRandom.Views.SettingsPages.Announcements;
 using SecRandom.Views.SettingsPages.General;
 using SecRandom.Views.SettingsPages.History;
 using SecRandom.Views.SettingsPages.Linkage;
@@ -775,6 +777,12 @@ public partial class App : Application
                 services.AddSingleton<IPluginManager>(pluginManager);
                 services.AddSingleton(pluginManager);
                 services.AddSingleton<DeviceUuidStore>();
+                services.AddHttpClient("announcements", client =>
+                {
+                    client.BaseAddress = new Uri("https://appwrite.sectl.cn/");
+                    client.Timeout = TimeSpan.FromSeconds(15);
+                });
+                services.AddSingleton<AnnouncementService>();
                 if (!isMobile)
                     services.AddSingleton<SectlAuthService>();
                 services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
@@ -1027,6 +1035,7 @@ public partial class App : Application
                 }
 
                 // 底部
+                services.AddSettingsPage<AnnouncementsSettingsPage>(Langs.SettingsView.Resources.C_Announcements);
                 services.AddSettingsPage<UpdateSettingsPage>(Langs.Common.Resources.Settings_Update);
                 services.AddSettingsPage<AboutSettingsPage>(Langs.Common.Resources.Settings_About);
 

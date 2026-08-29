@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page_Title" xml:space="preserve"><value>お知らせ</value></data>
+  <data name="C_Refresh" xml:space="preserve"><value>お知らせを更新</value></data>
+  <data name="C_Pinned" xml:space="preserve"><value>固定</value></data>
+  <data name="M_LoadError" xml:space="preserve"><value>お知らせを読み込めませんでした。後でもう一度お試しください。</value></data>
+  <data name="M_NetworkError" xml:space="preserve"><value>お知らせサービスに接続できません。ネットワークを確認して再試行してください。</value></data>
+  <data name="M_Empty" xml:space="preserve"><value>お知らせはありません</value></data>
+</root>

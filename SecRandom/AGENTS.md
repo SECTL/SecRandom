@@ -29,6 +29,7 @@ SecRandom/
 │   ├── CrashRecovery/   # Crash detection, recovery prompt, restart guard
 │   ├── Desktop/         # TaskBarIconService, GlobalShortcutService
 │   ├── Feedback/        # Explicit Sentry user-feedback submission and standard diagnostic ZIP attachment
+│   ├── Announcements/   # Public announcement retrieval from the SECTL Appwrite gateway
 │   ├── Platform/        # App-side neutral window-handle adapter for platform feature requests
 │   ├── Draw/            # DrawAudioService, DrawTemporaryRecordService
 │   ├── ImportExport/    # Desktop shell + post-import hooks over Core Archive services; diagnostics export
@@ -89,6 +90,7 @@ SecRandom/
 | Mobile root                  | `App.axaml.cs`, `Mobile/`, `Views/Mobile/MobileViewHost.axaml(.cs)`, `MobileRootView.axaml(.cs)`; entry points `../SecRandom.Android/MobileEntryPoint.cs`, `../SecRandom.iOS/MobileEntryPoint.cs` | Shared App mounts `MobileViewHost`'s one `NavigationPage`; it presents `MobileRootView` and independent MVE pages, while `MobileRootView` owns ordinary bottom-bar `UserControl` routes. |
 | Telemetry runtime seam       | `Services/Telemetry/`                                                   | App-layer-only telemetry policy/runtime boundary behind the `ITelemetryTransaction`/`ITelemetrySdkAdapter` seam; Sentry types stay inside the adapter and the desktop-only shim. Reads and live-applies `PrivacySettings.SentryTelemetryEnabled`. |
 | User feedback                | `Services/Feedback/`, `Views/FeedbackDrawer.axaml(.cs)`                | Explicit Sentry User Feedback service; each host uses a transient FeedbackDrawer, and Bug reports attach the existing standard diagnostic ZIP without enabling background telemetry. |
+| Announcements                | `Services/Announcements/`, `Views/SettingsPages/Announcements/`       | Hidden `settings.announcements` page reads public announcements from the Appwrite gateway and presents one expandable Markdown row per item; the settings more-options menu opens it immediately above Feedback. |
 | Online status reporting      | `Services/OnlineStatusService.cs`                                       | Host-managed SECTL online status reporter; reads `PrivacySettings.OnlineStatusMode`.                                      |
 | Update center                | `Services/Updates/`, `Views/SettingsPages/Update/`                       | Desktop `UpdateSettingsPage` is the shared `settings.update` surface for desktop and mobile, backed by signed full-artifact checks, portable staging/Launcher restart, or native installer handoff. |
 | Security authorization       | `Services/Security/`                                                     | Separate credential storage, password/TOTP/USB factors, removable-device catalog, lockout state, and operation authorization gateway. |

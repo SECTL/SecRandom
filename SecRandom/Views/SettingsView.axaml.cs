@@ -131,12 +131,12 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
             if (!IsAccountSignedIn)
                 return Langs.SettingsView.Resources.Account_NotSignedIn;
 
-            return FirstNonBlank(_auth?.User?.ResolvedUserName, _auth?.User?.UserId, _auth?.Token?.UserId)
+            return FirstNonBlank(_auth?.User?.ResolvedUserName, _auth?.User?.ResolvedUserId, _auth?.Token?.UserId)
                    ?? Langs.SettingsView.Resources.Account_SignedIn;
         }
     }
-    public string AccountUserId => FirstNonBlank(_auth?.User?.UserId, _auth?.Token?.UserId) ?? string.Empty;
-    public string AccountEmail => FirstNonBlank(_auth?.User?.Email) ?? string.Empty;
+    public string AccountUserId => FirstNonBlank(_auth?.User?.ResolvedUserId, _auth?.Token?.UserId) ?? string.Empty;
+    public string AccountEmail => _auth?.User?.ResolvedEmail ?? string.Empty;
     public bool HasAccountUserId => !string.IsNullOrWhiteSpace(AccountUserId);
     public bool HasAccountEmail => !string.IsNullOrWhiteSpace(AccountEmail);
     public bool ShowAccountInfoUnavailable => IsAccountSignedIn && _auth?.User is null;
@@ -602,6 +602,11 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
             ?? IAppHost.GetService<FeedbackDrawer>();
         drawer.Configure(CloseDrawer);
         OpenDrawer(drawer);
+    }
+
+    private void AnnouncementsMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        SelectNavigationItemById("settings.announcements");
     }
 
     private void OpenLogDirectoryMenuItem_OnClick(object? sender, RoutedEventArgs e)

@@ -521,6 +521,15 @@ namespace SecRandom.Langs.SettingsView {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 公告.
+        /// </summary>
+        public static string C_Announcements {
+            get {
+                return ResourceManager.GetString("C_Announcements", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 反馈.
         /// </summary>
         public static string C_MoreOptions_Feedback {

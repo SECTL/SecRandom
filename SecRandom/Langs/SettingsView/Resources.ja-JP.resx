@@ -11,6 +11,7 @@
   <data name="M_NeedsRestarting_Tooltip" xml:space="preserve"><value>一部の設定を適用するには再起動が必要です。クリックしてアプリを再起動します。</value></data>
   <data name="C_SearchBox_Watermark" xml:space="preserve"><value>設定を検索...</value></data>
   <data name="C_MoreOptions" xml:space="preserve"><value>その他のオプション...</value></data>
+  <data name="C_Announcements" xml:space="preserve"><value>お知らせ</value></data>
   <data name="C_MoreOptions_LogViewer" xml:space="preserve"><value>ログを表示</value></data>
   <data name="C_MoreOptions_LogViewer_D" xml:space="preserve"><value>アプリケーションのログファイルを表示・管理します</value></data>
   <data name="C_MoreOptions_ExportDiagnosticData" xml:space="preserve"><value>診断データをエクスポート</value></data>

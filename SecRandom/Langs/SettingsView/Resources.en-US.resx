@@ -145,6 +145,7 @@
         <value>An error occurred during navigation.</value>
     </data>
     <data name="C_MoreOptions_Feedback"><value>Feedback</value></data>
+    <data name="C_Announcements"><value>Announcements</value></data>
     <data name="C_Feedback_Title"><value>Feedback</value></data>
     <data name="C_Feedback_CloseTemporary"><value>Close for now</value></data>
     <data name="C_Feedback_Bug"><value>Bug</value></data>
