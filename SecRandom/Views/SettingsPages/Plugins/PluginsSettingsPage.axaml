@@ -3,10 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:lp="clr-namespace:SecRandom.Langs.SettingsPages.Plugins.Overview"
-             xmlns:mdxaml="https://github.com/whistyun/Markdown.Avalonia"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Plugins"
-             xmlns:helpers="clr-namespace:SecRandom.Core.Helpers;assembly=SecRandom.Core"
+             xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
              mc:Ignorable="d"
              x:Class="SecRandom.Views.SettingsPages.Plugins.PluginsSettingsPage"
              x:DataType="local:PluginsSettingsPage"
@@ -250,16 +249,9 @@
                         <Separator Grid.Row="2" Margin="-16 0" />
                         
                         <Carousel Grid.Row="3" SelectedIndex="{Binding #ContentTab.SelectedIndex}">
-                            <Border TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}">
-                                <mdxaml:MarkdownScrollViewer x:Name="ReadmeViewer"
-                                                             Engine="{x:Static helpers:MarkdownConvertHelper.Engine}"
-                                                             Markdown="{Binding SelectedPluginReadme}"
-                                                             TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}">
-                                    <mdxaml:MarkdownScrollViewer.Styles>
-                                        <StyleInclude Source="avares://SecRandom.Core/Styles/RichTextStyles.axaml" />
-                                    </mdxaml:MarkdownScrollViewer.Styles>
-                                </mdxaml:MarkdownScrollViewer>
-                            </Border>
+                            <ScrollViewer>
+                                <md:MarkdownRenderer MarkdownBuilder="{Binding SelectedPluginReadme, Converter={x:Static md:ValueConverters.ToObservableStringBuilder}}"/>
+                            </ScrollViewer>
                             
                             <ScrollViewer>
                                 <SelectableTextBlock Foreground="{DynamicResource SystemFillColorCriticalBrush}"

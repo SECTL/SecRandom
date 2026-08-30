@@ -1512,6 +1512,18 @@ public partial class App : Application
         // 主题色
         Resources[@"ContentControlThemeFontFamily"] = Resources[@"AppFontFamily"] = new FontFamily(fontFamily);
         Resources[@"AppFontWeight"] = Enum.Parse<FontWeight>(settings.FontWeight.ToString());
+        
+        // LiveMarkdown Resources
+        Dispatcher.UIThread.InvokeAsync(async () =>
+        {
+            await Task.Delay(1000);
+            Resources[@"BorderColor"] = this.FindResource(@"ControlStrokeColorDefault");
+            Resources[@"ForegroundColor"] = this.FindResource(@"TextFillColorPrimary");
+            Resources[@"CardBackgroundColor"] = this.FindResource(@"CardBackgroundFillColorDefault");
+            Resources[@"SecondaryCardBackgroundColor"] = this.FindResource(@"CardBackgroundFillColorSecondary");
+            Resources[@"CodeInlineColor"] = this.FindResource(@"SystemAccentColorDark2");
+            Resources[@"QuoteBorderColor"] = this.FindResource(@"SystemAccentColor");
+        });
     }
 
     private void ApplyThemeSettings(AppearanceSettingsConfig settings)

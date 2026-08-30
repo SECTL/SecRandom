@@ -35,13 +35,13 @@
             <NativeMenuItemSeparator />
 
             <NativeMenuItem Header="{x:Static langs:Resources.Menu_ShowMainWindow}"
-                              Click="MenuItemOpenMainWindow_OnClick" />
+                            Click="MenuItemOpenMainWindow_OnClick" />
 
             <NativeMenuItem Header="{x:Static langs:Resources.Menu_ShowFloatingWindow}"
-                             Click="MenuItemToggleFloatingWindow_OnClick" />
+                            Click="MenuItemToggleFloatingWindow_OnClick" />
 
             <NativeMenuItem Header="{x:Static langs:Resources.Menu_OpenSettings}"
-                             Click="MenuItemOpenSettings_OnClick" />
+                            Click="MenuItemOpenSettings_OnClick" />
 
             <NativeMenuItemSeparator />
 

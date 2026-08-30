@@ -2,19 +2,12 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
-using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
-using Avalonia.Threading;
-using Avalonia.VisualTree;
-using AvaloniaEdit;
 using FluentAvalonia.UI.Controls;
-using HotAvalonia;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Helpers.UI;
@@ -45,11 +38,6 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
     {
         DataContext = this;
         InitializeComponent();
-        ReadmeViewer.PropertyChanged += (_, e) =>
-        {
-            if (e.Property.Name == "Markdown")
-                Dispatcher.UIThread.Post(RebuildCodeBlocks);
-        };
     }
 
     public ObservableCollection<PluginListItemBase> PluginList { get; } = [];
@@ -189,7 +177,6 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         RefreshPlugins(SelectedItem?.Id);
-        Dispatcher.UIThread.Post(RebuildCodeBlocks);
         if (Filter == PluginOverviewFilter.Market && !_isMarketLoaded)
             _ = RefreshMarketAsync();
     }
@@ -360,68 +347,6 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
             DefaultButton = FAContentDialogButton.Close
         }.ShowAsync(TopLevel.GetTopLevel(this));
         return result == FAContentDialogResult.Primary;
-    }
-
-    [AvaloniaHotReload]
-    private void RebuildCodeBlocks()
-    {
-        var viewer = ReadmeViewer;
-        if (!viewer.IsLoaded)
-            return;
-
-        foreach (var border in viewer.GetVisualDescendants()
-                     .OfType<Border>()
-                     .Where(b => b.Classes.Contains("CodeBlock"))
-                     .ToList())
-        {
-            if (border.Child is Grid)
-                continue;
-
-            if (border.Child is not Panel codePad)
-                continue;
-
-            var editor = codePad.Children.OfType<TextEditor>().FirstOrDefault();
-            if (editor is null)
-                continue;
-
-            var lang = codePad.Children.OfType<Label>().FirstOrDefault()?.Content?.ToString() ?? string.Empty;
-            codePad.Children.Remove(editor);
-            border.Child = BuildCodeBlockLayout(editor, lang);
-        }
-    }
-
-    private static Control BuildCodeBlockLayout(TextEditor editor, string lang)
-    {
-        editor.Margin = new Thickness(0, 0, 0, 0);
-
-        var header = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto")
-        };
-
-        var langLabel = new Label
-        {
-            Content = lang,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        langLabel.Classes.Add("LangInfo");
-        header.Children.Add(langLabel);
-
-        var copyButton = new Button { Content = new TextBlock() };
-        copyButton.Classes.Add("CopyButton");
-        copyButton.Click += (_, _) =>
-        {
-            var top = TopLevel.GetTopLevel(editor);
-            top?.Clipboard?.SetTextAsync(editor.Text);
-        };
-        Grid.SetColumn(copyButton, 1);
-        header.Children.Add(copyButton);
-
-        var layout = new Grid { RowDefinitions = new RowDefinitions("Auto,*") };
-        layout.Children.Add(header);
-        Grid.SetRow(editor, 1);
-        layout.Children.Add(editor);
-        return layout;
     }
 
     private void RefreshPlugins(string? preferredPluginId)

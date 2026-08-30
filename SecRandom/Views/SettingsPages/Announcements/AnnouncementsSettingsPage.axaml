@@ -2,20 +2,23 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
-             xmlns:mdxaml="https://github.com/whistyun/Markdown.Avalonia"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
-             xmlns:helpers="clr-namespace:SecRandom.Core.Helpers;assembly=SecRandom.Core"
              xmlns:ann="clr-namespace:SecRandom.Services.Announcements"
              xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Announcements"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Announcements"
+             xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.Announcements.AnnouncementsSettingsPage"
              x:DataType="local:AnnouncementsSettingsPage"
              Loaded="OnLoaded">
-    <Grid Margin="12 16 18 0" RowDefinitions="Auto,*">
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0 0 0 12">
-            <TextBlock Text="{x:Static lsp:Resources.Page_Title}" Theme="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+    <Grid RowDefinitions="Auto,*">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="12 16 18 0"
+              MaxWidth="{StaticResource PageContainerWidth}">
+            <TextBlock Grid.Column="0" Text="{x:Static lsp:Resources.Page_Title}"
+                       Theme="{StaticResource TitleTextBlockStyle}"
+                       FontWeight="Normal"
+                       VerticalAlignment="Center" />
+
             <Button Grid.Column="1" Theme="{StaticResource TransparentButton}"
                     ToolTip.Tip="{x:Static lsp:Resources.C_Refresh}" Click="RefreshButton_OnClick"
                     IsEnabled="{Binding !IsLoading}">
@@ -23,24 +26,33 @@
             </Button>
         </Grid>
 
-        <Grid Grid.Row="1">
-            <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsLoading}" Height="2"
+        <Grid Grid.Row="1" Classes="page-container">
+            <ProgressBar IsIndeterminate="True"
+                         IsVisible="{Binding IsLoading}"
+                         Height="2"
                          VerticalAlignment="Top" />
-            <TextBlock Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}"
+            
+            <TextBlock Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding HasError}"
                        HorizontalAlignment="Center" VerticalAlignment="Center"
                        Foreground="{DynamicResource SystemFillColorCriticalBrush}" />
-            <TextBlock Text="{x:Static lsp:Resources.M_Empty}" IsVisible="{Binding IsEmpty}"
+            
+            <TextBlock Text="{x:Static lsp:Resources.M_Empty}"
+                       IsVisible="{Binding IsEmpty}"
                        HorizontalAlignment="Center" VerticalAlignment="Center"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
-            <ScrollViewer IsVisible="{Binding !IsLoading}" VerticalScrollBarVisibility="Auto">
+            <ScrollViewer IsVisible="{Binding !IsLoading}">
                 <ItemsControl ItemsSource="{Binding Announcements}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Classes="animated-intro" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="ann:AnnouncementItem">
-                            <Expander Margin="0 0 0 1" Padding="8 10"
-                                      Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
-                                      BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                                      BorderThickness="0 0 0 1">
+                            <Expander>
                                 <Expander.Header>
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                                         <StackPanel Spacing="3">
@@ -53,16 +65,17 @@
                                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                             </StackPanel>
                                         </StackPanel>
-                                        <TextBlock Grid.Column="1" Text="{x:Static lsp:Resources.C_Pinned}" FontSize="12"
+                                        
+                                        <TextBlock Grid.Column="1" Text="{x:Static lsp:Resources.C_Pinned}"
+                                                   FontSize="12"
                                                    IsVisible="{Binding IsPinned}"
                                                    Foreground="{DynamicResource SystemFillColorCautionBrush}"
                                                    VerticalAlignment="Center" />
                                     </Grid>
                                 </Expander.Header>
-                                <Border Margin="0 12 0 2" Padding="0 4 0 0">
-                                    <mdxaml:MarkdownScrollViewer Engine="{x:Static helpers:MarkdownConvertHelper.Engine}"
-                                                                  Markdown="{Binding Content}" />
-                                </Border>
+
+                                <md:MarkdownRenderer
+                                    MarkdownBuilder="{Binding Content, Converter={x:Static md:ValueConverters.ToObservableStringBuilder}}" />
                             </Expander>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

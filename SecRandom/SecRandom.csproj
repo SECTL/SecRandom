@@ -462,7 +462,6 @@
     <ItemGroup>
         <PackageReference Include="Avalonia.Markup.Xaml.Loader" Version="$(AvaloniaVersion)" />
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
-        <PackageReference Include="ClassIsland.Markdown.Avalonia" Version="12.0.0" />
         <PackageReference Include="HotAvalonia" Version="3.1.4" />
         <PackageReference Include="HotAvalonia.Core" Version="3.1.4" />
         <PackageReference Include="Sentry" Version="6.8.0" />
