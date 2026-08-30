@@ -44,6 +44,52 @@ public sealed class SectlAuthServiceTests
         Assert.False(sent);
     }
 
+    [Fact]
+    public async Task SendHeartbeatAsync_WhenAccessTokenIsRejected_RefreshesAndRetriesOnce()
+    {
+        var heartbeatTokens = new List<string?>();
+        var heartbeatAttempts = 0;
+        var client = new HttpClient(new StubHttpMessageHandler(request =>
+        {
+            string path = request.RequestUri!.AbsolutePath;
+            if (path == "/api/oauth/heartbeat")
+            {
+                heartbeatTokens.Add(request.Headers.Authorization?.Parameter);
+                heartbeatAttempts++;
+                return new HttpResponseMessage(
+                    heartbeatAttempts == 1 ? HttpStatusCode.Unauthorized : HttpStatusCode.NoContent);
+            }
+
+            if (request.RequestUri.Host == "uapis.cn" && path == "/api/v1/network/myip")
+            {
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("{\"ip\":\"203.0.113.10\"}", System.Text.Encoding.UTF8, "application/json")
+                };
+            }
+
+            if (path == "/api/oauth/refresh")
+            {
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(
+                        "{\"access_token\":\"refreshed-access-token\",\"refresh_token\":\"refreshed-refresh-token\",\"user_id\":\"user-1\",\"expires_in\":3600}",
+                        System.Text.Encoding.UTF8,
+                        "application/json")
+                };
+            }
+
+            throw new Xunit.Sdk.XunitException($"Unexpected request: {request.Method} {request.RequestUri}");
+        }));
+        var service = CreateService(client);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600));
+
+        bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(sent);
+        Assert.Equal(["access-token", "refreshed-access-token"], heartbeatTokens);
+    }
+
     private static SectlAuthService CreateService(HttpClient client)
     {
         var configHandler = new MainConfigHandler(
