@@ -784,7 +784,12 @@ public partial class App : Application
                 });
                 services.AddSingleton<AnnouncementService>();
                 if (!isMobile)
+                {
                     services.AddSingleton<SectlAuthService>();
+                    services.AddSingleton<SectlHeartbeatService>();
+                    services.AddHostedService(serviceProvider =>
+                        serviceProvider.GetRequiredService<SectlHeartbeatService>());
+                }
                 services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
                 services.AddSingleton<TelemetryRuntimeService>();
                 services.AddHostedService<OnlineStatusService>();

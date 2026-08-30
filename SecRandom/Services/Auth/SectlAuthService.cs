@@ -24,6 +24,7 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
     private const string AvatarBucketId = "69cce3720009a343f892";
     private const string BrowserBaseUrl = "https://sectl.cn";
     private const string OAuthScope = "user:read cloud:read cloud:write";
+    private static readonly Uri HeartbeatUri = new($"{AuthBaseUrl}/api/oauth/heartbeat");
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly TimeSpan[] InitializationRetryDelays =
     [
@@ -175,6 +176,37 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
         AvatarBytes = null;
         if (File.Exists(_tokenPath)) File.Delete(_tokenPath);
         StateChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Reports the authenticated device as active. A rejected access token is refreshed once
+    /// before retrying so a long-running desktop session does not stop reporting after expiry.
+    /// </summary>
+    public Task<bool> SendHeartbeatAsync(CancellationToken cancellationToken = default)
+    {
+        return SendHeartbeatAsync(allowRefresh: true, cancellationToken);
+    }
+
+    private async Task<bool> SendHeartbeatAsync(bool allowRefresh, CancellationToken cancellationToken)
+    {
+        string? accessToken = _token?.AccessToken;
+        if (string.IsNullOrWhiteSpace(accessToken))
+            return false;
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, HeartbeatUri);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        using HttpResponseMessage response = await httpClientFactory.CreateClient()
+            .SendAsync(request, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (response.StatusCode == HttpStatusCode.Unauthorized
+            && allowRefresh
+            && await TryRefreshTokenAsync(cancellationToken).ConfigureAwait(false))
+        {
+            return await SendHeartbeatAsync(allowRefresh: false, cancellationToken).ConfigureAwait(false);
+        }
+
+        return response.IsSuccessStatusCode;
     }
 
     private async Task<SectlUser?> GetUserInfoAsync(CancellationToken cancellationToken, bool allowRefresh = true)
