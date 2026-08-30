@@ -62,20 +62,17 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
     private readonly SectlAuthService? _auth;
     private Bitmap? _accountAvatar;
     private bool _isAccountBusy;
-
-    public SettingsView(
-        IPlatformServiceRoot platform,
-        SettingsViewModel? viewModel = null,
-        ILogger<SettingsView>? logger = null)
+    
+    public SettingsView()
     {
-        _platformServiceRoot = platform;
-        _isMobile = platform.Capabilities.SupportsSingleView;
-        if (platform is MobilePlatformServiceRoot root)
+        _platformServiceRoot = IAppHost.GetService<IPlatformServiceRoot>();
+        _isMobile = _platformServiceRoot.Capabilities.SupportsSingleView;
+        if (_platformServiceRoot is MobilePlatformServiceRoot root)
         {
             _isMobile = _isMobile && !root.UsesDesktopMainView;
         }
-        _logger = logger;
-        ViewModel = viewModel ?? new SettingsViewModel();
+        _logger = IAppHost.GetService<ILogger<SettingsView>>();
+        ViewModel = IAppHost.GetService<SettingsViewModel>();
         ViewModel.PropertyChanged += ViewModel_OnPropertyChanged;
         _auth = IAppHost.TryGetService<SectlAuthService>();
         if (_auth is not null)
