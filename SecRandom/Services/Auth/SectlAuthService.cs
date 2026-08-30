@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -147,7 +148,12 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
         var publicIp = await GetPublicIpAsync(client, timeout.Token)
             ?? throw new InvalidOperationException("无法获取公网 IP，授权已取消，请检查网络连接。");
         var payload = new { grant_type = "authorization_code", code, client_id = ClientId, redirect_uri = redirectUri, code_verifier = verifier, device_uuid = deviceUuidStore.GetOrCreate().ToString(), ip_address = publicIp };
-        using var result = await client.PostAsJsonAsync($"{AuthBaseUrl}/api/oauth/token", payload, timeout.Token);
+        using var tokenRequest = new HttpRequestMessage(HttpMethod.Post, $"{AuthBaseUrl}/api/oauth/token")
+        {
+            Content = JsonContent.Create(payload, options: JsonOptions)
+        };
+        tokenRequest.Headers.UserAgent.ParseAdd(BuildUserAgent());
+        using var result = await client.SendAsync(tokenRequest, timeout.Token);
         result.EnsureSuccessStatusCode();
         _token = await result.Content.ReadFromJsonAsync<SectlToken>(JsonOptions, timeout.Token) ?? throw new InvalidOperationException("SECTL 未返回 token。");
         await SaveAsync();
@@ -355,6 +361,9 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
         tcp.Start();
         return ((IPEndPoint)tcp.LocalEndpoint).Port;
     }
+
+    private static string BuildUserAgent() =>
+        $"SecRandom/{GlobalConstants.Version} ({RuntimeInformation.OSDescription}; {Environment.MachineName})";
 
     private async Task SaveAsync()
     {
