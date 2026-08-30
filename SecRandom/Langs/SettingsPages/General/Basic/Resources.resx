@@ -24,17 +24,6 @@
             PublicKeyToken=b77a5c561934e089
         </value>
     </resheader>
-    <data name="C_VersionNotice" xml:space="preserve">
-        <value>版本公告</value>
-    </data>
-    <data name="C_VersionNoticeText" xml:space="preserve">
-        <value>当前版本为 Alpha 版本，请勿在生产环境使用！
-当前版本可能存在未知Bug，仅供用户体验，
-使用中如遇问题，欢迎前往 GitHub Issues 反馈！</value>
-    </data>
-    <data name="C_VersionNoticeHide" xml:space="preserve">
-        <value>不再显示</value>
-    </data>
     <data name="M_DesktopIntegrationFailed" xml:space="preserve">
         <value>无法应用“{0}”设置：{1}</value>
     </data>

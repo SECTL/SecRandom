@@ -60,35 +60,6 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 版本公告.
-        /// </summary>
-        public static string C_VersionNotice {
-            get {
-                return ResourceManager.GetString("C_VersionNotice", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 不再显示.
-        /// </summary>
-        public static string C_VersionNoticeHide {
-            get {
-                return ResourceManager.GetString("C_VersionNoticeHide", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 当前处于 Avalonia 重构阶段，暂不新增功能，重心放在性能优化与问题修复。
-        ///敬请期待基于 Avalonia 架构的 v3 版本！
-        ///bug 报 GitHub Issue 或 SECTL QQ组织群 - 833875216.
-        /// </summary>
-        public static string C_VersionNoticeText {
-            get {
-                return ResourceManager.GetString("C_VersionNoticeText", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to 无法应用“{0}”设置：{1}.
         /// </summary>
         public static string M_DesktopIntegrationFailed {

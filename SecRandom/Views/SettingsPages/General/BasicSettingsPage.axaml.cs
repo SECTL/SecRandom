@@ -127,8 +127,4 @@ public partial class BasicSettingsPage : UserControl
         ConfigHandler.Save();
     }
 
-    private void HideVersionNoticeButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        Settings.ShowVersionNotice = false;
-    }
 }

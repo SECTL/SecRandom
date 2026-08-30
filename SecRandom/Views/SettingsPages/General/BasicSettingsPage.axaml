@@ -13,16 +13,6 @@
               Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro settings">
-            <fa:FAInfoBar Title="{x:Static lsb:Resources.C_VersionNotice}"
-                          Message="{x:Static lsb:Resources.C_VersionNoticeText}"
-                          Severity="Informational" IsClosable="False"
-                          IsOpen="{Binding Settings.ShowVersionNotice, Mode=OneWay}">
-                <fa:FAInfoBar.ActionButton>
-                    <Button Content="{x:Static lsb:Resources.C_VersionNoticeHide}"
-                            Click="HideVersionNoticeButton_OnClick" />
-                </fa:FAInfoBar.ActionButton>
-            </fa:FAInfoBar>
-
             <sr:IconText x:Name="S_Behavior"
                          Text="{x:Static lsb:Resources.S_Behavior}"
                          Glyph="{sr:Fi FlashFilled}"

@@ -52,5 +52,4 @@ public partial class BasicSettingsConfig : ObservableObject
     [ObservableProperty] private int _acceptedPrivacyPolicyVersion;
     [ObservableProperty] private int _acceptedGplVersion;
     [ObservableProperty] private int _acceptedVerificationNoticeVersion;
-    [ObservableProperty] private bool _showVersionNotice = true;
 }
