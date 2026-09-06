@@ -8,6 +8,7 @@
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <EnableGitInfoGenerator>true</EnableGitInfoGenerator>
         <ApplicationIcon>..\SecRandom\Assets\AppLogo.ico</ApplicationIcon>
+        <CetCompat>false</CetCompat>
     </PropertyGroup>
 
     <Import Project="..\Platforms.props" />
