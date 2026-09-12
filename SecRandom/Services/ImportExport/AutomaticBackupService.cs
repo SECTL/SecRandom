@@ -65,8 +65,7 @@ public sealed class AutomaticBackupService(
     {
         var settings = configHandler.Data.General.Backup;
         return settings.IncludeConfig || settings.IncludeList || settings.IncludeHistory || settings.IncludeProofs ||
-               settings.IncludeAudio || settings.IncludeCses || settings.IncludeImages || settings.IncludeThemes ||
-               settings.IncludeLogs;
+               settings.IncludeAudio || settings.IncludeCses || settings.IncludeImages || settings.IncludeLogs;
     }
 
     private bool IsDue(int intervalDays)

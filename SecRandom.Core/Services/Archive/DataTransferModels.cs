@@ -12,7 +12,13 @@ public enum ArchiveKind
     AutomaticBackup,
     PreImportSettings,
     PreImportAllData,
-    Diagnostic
+    Diagnostic,
+
+    /// <summary>
+    ///     Account cloud-sync package: same v3 archive envelope as <see cref="AllData" /> but with the
+    ///     cloud root set, so device identity, voice cache, logs, and plugin data never leave the device.
+    /// </summary>
+    CloudBackup
 }
 
 public enum ArchiveFormat

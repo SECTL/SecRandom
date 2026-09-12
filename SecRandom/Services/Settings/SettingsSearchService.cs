@@ -35,8 +35,7 @@ public class SettingsSearchService
             ["General.Backup"] = new HashSet<string>
             {
                 "S_Includes_Audio", "S_Includes_Config", "S_Includes_Cses", "S_Includes_History",
-                "S_Includes_Images", "S_Includes_List", "S_Includes_Logs", "S_Includes_Proofs",
-                "S_Includes_Themes"
+                "S_Includes_Images", "S_Includes_List", "S_Includes_Logs", "S_Includes_Proofs"
             },
             ["Notification"] = new HashSet<string>
             {

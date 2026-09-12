@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Models;
+using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
 
@@ -40,11 +41,35 @@ public sealed class DataArchiveService(
     private const long MaxEntryBytes = MaxTransferBytes;
     private const long MaxTotalBytes = MaxTransferBytes;
 
+    /// <summary>
+    ///     Every data root an archive may carry. Theme resources are absent on purpose: the theme
+    ///     library was removed, so `theme`/`themes` are neither exported nor committed, and legacy
+    ///     archives that still list them are skipped entry by entry instead of failing.
+    /// </summary>
     private static readonly string[] AllDataRoots =
     [
-        "config/settings.json", "config/device-uuid.json", "list", "history", "TEMP", "proofs", "audio", "CSES", "images", "themes",
-        "theme", "Language", "logs"
+        "config/settings.json", "config/device-uuid.json", "list", "history", "TEMP", "proofs", "audio", "CSES", "images",
+        "Language", "logs"
     ];
+
+    /// <summary>
+    ///     Hard ceiling for account cloud backups: the portable data a cloud archive may ever carry.
+    ///     It deliberately omits the device identity, the generated voice cache, draw proofs, theme
+    ///     resources, and logs, because a cloud archive must never re-identify another device or carry
+    ///     regenerable/diagnostic payloads. Plugins, security credentials, and staging directories are
+    ///     excluded by <see cref="IsManagedPath" /> for every archive kind, and logs are never
+    ///     committed by a restore either.
+    /// </summary>
+    public static readonly string[] CloudBackupRoots =
+    [
+        "config/settings.json", "list", "history", "TEMP", "audio/music", "CSES", "images", "Language"
+    ];
+
+    /// <summary>Cloud roots whose content has no row in the cloud backup-content selection.</summary>
+    private static readonly string[] AlwaysSelectedCloudRoots = ["TEMP", "Language"];
+
+    /// <summary>Device-identity path that cloud restore must never commit, even if an archive carries it.</summary>
+    private const string DeviceUuidPath = "config/device-uuid.json";
 
     private readonly string _dataDirectory = Utils.DataRoot;
     private readonly string _backupDirectory = Path.Combine(Utils.DataRoot, "backup");
@@ -72,6 +97,61 @@ public sealed class DataArchiveService(
     public Task<string> ExportAllDataAsync(string destinationPath, CancellationToken cancellationToken = default)
     {
         return Task.Run(() => CreateArchive(destinationPath, ArchiveKind.AllData, AllDataRoots, cancellationToken), cancellationToken);
+    }
+
+    /// <summary>
+    ///     Resolves the cloud archive root set from the dedicated cloud backup-content selection.
+    ///     <see cref="CloudBackupRoots" /> stays the hard ceiling, so the device identity, the voice
+    ///     cache, and logs are never uploaded even when the local backup includes them.
+    /// </summary>
+    public static IReadOnlyList<string> ResolveCloudBackupRoots(BackupConfig backup)
+    {
+        ArgumentNullException.ThrowIfNull(backup);
+        var selection = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (backup.CloudIncludeConfig) selection.Add("config/settings.json");
+        if (backup.CloudIncludeList) selection.Add("list");
+        if (backup.CloudIncludeHistory) selection.Add("history");
+        if (backup.CloudIncludeAudio) selection.Add("audio");
+        if (backup.CloudIncludeCses) selection.Add("CSES");
+        if (backup.CloudIncludeImages) selection.Add("images");
+
+        return CloudBackupRoots
+            .Where(root => AlwaysSelectedCloudRoots.Contains(root, StringComparer.OrdinalIgnoreCase)
+                           || selection.Contains(root)
+                           || selection.Any(chosen => root.StartsWith(chosen + "/", StringComparison.OrdinalIgnoreCase)))
+            .ToArray();
+    }
+
+    /// <summary>The cloud root set the current cloud backup-content selection resolves to.</summary>
+    public IReadOnlyList<string> GetCloudBackupRoots() => ResolveCloudBackupRoots(configHandler.Data.General.Backup);
+
+    /// <summary>
+    ///     Creates the account cloud-sync package from the cloud backup-content selection. The archive
+    ///     is a normal v3 archive with <see cref="ArchiveKind.CloudBackup" />, and its root set is
+    ///     capped by <see cref="CloudBackupRoots" />, so an upload never carries plugins, the voice
+    ///     cache, the device identity, credentials, or logs.
+    /// </summary>
+    public Task<string> ExportCloudBackupAsync(string destinationPath, CancellationToken cancellationToken = default)
+    {
+        var roots = GetCloudBackupRoots();
+        return Task.Run(() => CreateArchive(destinationPath, ArchiveKind.CloudBackup, roots, cancellationToken), cancellationToken);
+    }
+
+    /// <summary>
+    ///     Read-only inspection for a downloaded cloud backup. A valid v3 archive of any other kind is
+    ///     reported as unsupported instead of being silently restore-equivalent to a cloud package.
+    /// </summary>
+    public Task<ImportInspection> InspectCloudBackupAsync(string sourcePath, CancellationToken cancellationToken = default)
+    {
+        return Task.Run(() =>
+        {
+            var inspection = InspectArchive(sourcePath, cancellationToken);
+            return inspection.Kind == ArchiveKind.CloudBackup
+                ? inspection
+                : new ImportInspection(ArchiveFormat.Unknown, inspection.Kind, inspection.ProducerVersion,
+                    inspection.FileCount, inspection.UncompressedBytes, [],
+                    ["该文件不是云端备份归档。"]);
+        }, cancellationToken);
     }
 
     public Task<ImportInspection> InspectSettingsAsync(string sourcePath, CancellationToken cancellationToken = default)
@@ -123,6 +203,17 @@ public sealed class DataArchiveService(
         return Task.Run(() => ImportArchive(sourcePath, createSnapshot: true, cancellationToken), cancellationToken);
     }
 
+    /// <summary>
+    ///     Restores a downloaded cloud backup. Only <see cref="ArchiveKind.CloudBackup" /> archives are
+    ///     accepted, and the device identity is filtered out of the commit roots even when a crafted
+    ///     archive contains it, so a cloud restore can never overwrite this device's identity.
+    /// </summary>
+    public Task<ImportResult> ImportCloudBackupAsync(string sourcePath, CancellationToken cancellationToken = default)
+    {
+        return Task.Run(() => ImportArchive(sourcePath, createSnapshot: true, cancellationToken,
+            requiredKind: ArchiveKind.CloudBackup, excludeDeviceIdentity: true), cancellationToken);
+    }
+
     public string CreateManualBackup(IReadOnlyCollection<string> roots)
     {
         if (roots.Count == 0)
@@ -145,11 +236,6 @@ public sealed class DataArchiveService(
         if (backup.IncludeAudio) roots.Add("audio");
         if (backup.IncludeCses) roots.Add("CSES");
         if (backup.IncludeImages) roots.Add("images");
-        if (backup.IncludeThemes)
-        {
-            roots.Add("theme");
-            roots.Add("themes");
-        }
         if (backup.IncludeLogs) roots.Add("logs");
 
         if (roots.Count == 0)
@@ -163,7 +249,8 @@ public sealed class DataArchiveService(
         return Task.Run(() => ImportArchive(sourcePath, createSnapshot: true, cancellationToken), cancellationToken);
     }
 
-    private ImportResult ImportArchive(string sourcePath, bool createSnapshot, CancellationToken cancellationToken)
+    private ImportResult ImportArchive(string sourcePath, bool createSnapshot, CancellationToken cancellationToken,
+        ArchiveKind? requiredKind = null, bool excludeDeviceIdentity = false)
     {
         lock (_archiveOperationLock)
         {
@@ -175,6 +262,8 @@ public sealed class DataArchiveService(
                     throw new InvalidDataException("诊断数据不能导入。");
                 if (!inspection.IsSupportedV3)
                     throw CreateUnsupportedVersionException(inspection);
+                if (requiredKind is { } kind && inspection.Kind != kind)
+                    throw new InvalidDataException("该文件不是云端备份归档。");
 
                 SaveCurrentState();
                 var snapshot = string.Empty;
@@ -193,6 +282,10 @@ public sealed class DataArchiveService(
                     var rootsToCommit = inspection.Kind == ArchiveKind.AllData
                         ? AllDataRoots
                         : inspection.Roots;
+                    if (excludeDeviceIdentity)
+                        rootsToCommit = rootsToCommit
+                            .Where(root => !root.Equals(DeviceUuidPath, StringComparison.OrdinalIgnoreCase))
+                            .ToArray();
                     CommitCandidate(staging, rootsToCommit, inspection.Kind == ArchiveKind.AllData, warnings);
                     ReloadCoreRuntimeState();
                     warnings.AddRange(postImportHooks.OnAllDataImported());

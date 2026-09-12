@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <root>
     <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
@@ -63,9 +63,6 @@
     <data name="S_Includes_Images" xml:space="preserve">
         <value>图片资源</value>
     </data>
-    <data name="S_Includes_Themes" xml:space="preserve">
-        <value>主题资源</value>
-    </data>
     <data name="S_Includes_Logs" xml:space="preserve">
         <value>运行日志</value>
     </data>
@@ -95,9 +92,6 @@
     </data>
     <data name="S_Includes_Logs_D" xml:space="preserve">
         <value>程序运行日志，可能包含敏感信息（logs）</value>
-    </data>
-    <data name="S_Includes_Themes_D" xml:space="preserve">
-        <value>已安装的主题资源（theme）</value>
     </data>
     <data name="S_AutoBackup_D" xml:space="preserve">
         <value>是否启用自动备份</value>
@@ -197,5 +191,206 @@
     </data>
     <data name="M_RestoreTitle" xml:space="preserve">
         <value>恢复备份</value>
+    </data>
+    <data name="S_CloudBackup" xml:space="preserve">
+        <value>云端备份</value>
+    </data>
+    <data name="S_CloudBackup_D" xml:space="preserve">
+        <value>登录 SECTL 账号后可将数据备份上传到云端并随时恢复</value>
+    </data>
+    <data name="S_CloudBackup_Account" xml:space="preserve">
+        <value>账号状态</value>
+    </data>
+    <data name="S_CloudBackup_Account_D" xml:space="preserve">
+        <value>当前用于云同步的 SECTL 账号</value>
+    </data>
+    <data name="S_CloudBackup_Quota" xml:space="preserve">
+        <value>云端空间</value>
+    </data>
+    <data name="S_CloudBackup_Quota_D" xml:space="preserve">
+        <value>当前账号的云空间用量与本应用占用</value>
+    </data>
+    <data name="S_CloudBackup_Quota_R" xml:space="preserve">
+        <value>用量</value>
+    </data>
+    <data name="S_CloudBackup_OpenStoragePage" xml:space="preserve">
+        <value>打开 思拓创联 云储存页面</value>
+    </data>
+    <data name="S_CloudBackup_OpenStoragePage_D" xml:space="preserve">
+        <value>在浏览器中打开 SECTL 云储存网页，查看与管理云端文件</value>
+    </data>
+    <data name="S_CloudBackup_Upload" xml:space="preserve">
+        <value>立即备份到云端</value>
+    </data>
+    <data name="S_CloudBackup_Upload_D" xml:space="preserve">
+        <value>按云端备份内容的选择打包并上传，插件、语音缓存、设备标识、运行日志、抽取证明与主题资源不会上传</value>
+    </data>
+    <data name="S_CloudIncludes" xml:space="preserve">
+        <value>云端备份内容</value>
+    </data>
+    <data name="S_CloudIncludes_D" xml:space="preserve">
+        <value>选择需要包含在备份文件中的数据</value>
+    </data>
+    <data name="S_CloudAutoBackup" xml:space="preserve">
+        <value>云端自动备份</value>
+    </data>
+    <data name="S_CloudAutoBackup_D" xml:space="preserve">
+        <value>按设定的间隔自动备份到云端，云空间不足时会删除最早的云端备份</value>
+    </data>
+    <data name="S_CloudAutoBackup_IntervalDays" xml:space="preserve">
+        <value>自动备份间隔</value>
+    </data>
+    <data name="S_CloudAutoBackup_IntervalDays_D" xml:space="preserve">
+        <value>设置云端自动备份间隔（天）</value>
+    </data>
+    <data name="S_CloudAutoBackup_MaxCount" xml:space="preserve">
+        <value>自动备份上限</value>
+    </data>
+    <data name="S_CloudAutoBackup_MaxCount_D" xml:space="preserve">
+        <value>设置云端最多保留的备份数量（个），0为不限制，超出后自动删除最早的备份</value>
+    </data>
+    <data name="S_CloudBackup_List" xml:space="preserve">
+        <value>云端备份管理</value>
+    </data>
+    <data name="S_CloudBackup_List_D" xml:space="preserve">
+        <value>已上传的云端备份，可下载恢复或删除</value>
+    </data>
+    <data name="C_CloudBackup_SignIn" xml:space="preserve">
+        <value>登录账号</value>
+    </data>
+    <data name="C_CloudBackup_Upload" xml:space="preserve">
+        <value>开始上传</value>
+    </data>
+    <data name="C_CloudBackup_Cancel" xml:space="preserve">
+        <value>取消上传</value>
+    </data>
+    <data name="C_CloudBackup_Refresh" xml:space="preserve">
+        <value>刷新云端备份</value>
+    </data>
+    <data name="C_CloudBackup_Cleanup" xml:space="preserve">
+        <value>清理不完整备份</value>
+    </data>
+    <data name="C_CloudBackup_NotSignedIn" xml:space="preserve">
+        <value>未登录</value>
+    </data>
+    <data name="C_CloudBackup_QuotaRefresh" xml:space="preserve">
+        <value>刷新云端空间用量</value>
+    </data>
+    <data name="C_Tab_LocalBackup" xml:space="preserve">
+        <value>本地备份</value>
+    </data>
+    <data name="C_Tab_CloudBackup" xml:space="preserve">
+        <value>云端备份</value>
+    </data>
+    <data name="C_CloudBackup_QuotaUsage" xml:space="preserve">
+        <value>{0} / {1}（本应用 {2}）</value>
+    </data>
+    <data name="C_CloudBackup_SignedInAs" xml:space="preserve">
+        <value>{0}</value>
+    </data>
+    <data name="C_CloudBackup_Incomplete" xml:space="preserve">
+        <value>不完整</value>
+    </data>
+    <data name="C_CloudBackup_Backups_FileName" xml:space="preserve">
+        <value>备份</value>
+    </data>
+    <data name="C_CloudBackup_Backups_DateTime" xml:space="preserve">
+        <value>上传时间</value>
+    </data>
+    <data name="C_CloudBackup_Backups_Size" xml:space="preserve">
+        <value>大小</value>
+    </data>
+    <data name="C_CloudBackup_Backups_Operations" xml:space="preserve">
+        <value>操作</value>
+    </data>
+    <data name="C_CloudBackup_Backups_Restore" xml:space="preserve">
+        <value>下载恢复</value>
+    </data>
+    <data name="M_CloudSignInRequired" xml:space="preserve">
+        <value>请先登录 SECTL 账号</value>
+    </data>
+    <data name="M_CloudUploading" xml:space="preserve">
+        <value>上传中ing~</value>
+    </data>
+    <data name="M_CloudRefreshing" xml:space="preserve">
+        <value>刷新中ing~</value>
+    </data>
+    <data name="M_CloudCleaning" xml:space="preserve">
+        <value>清理中ing~</value>
+    </data>
+    <data name="M_CloudQuotaLoading" xml:space="preserve">
+        <value>正在获取</value>
+    </data>
+    <data name="M_CloudUploadSuccess" xml:space="preserve">
+        <value>云端备份上传完成</value>
+    </data>
+    <data name="M_CloudUploadFailed" xml:space="preserve">
+        <value>云端备份上传失败</value>
+    </data>
+    <data name="M_CloudServerTimeout" xml:space="preserve">
+        <value>云端服务响应超时，可能是服务端负载过高，请稍后重试</value>
+    </data>
+    <data name="M_CloudServerError" xml:space="preserve">
+        <value>云端服务暂时不可用，请稍后重试</value>
+    </data>
+    <data name="M_CloudUploadCleanupHint" xml:space="preserve">
+        <value>若云端残留未完成的分片，可使用“清理不完整备份”移除</value>
+    </data>
+    <data name="M_CloudUploadCancelled" xml:space="preserve">
+        <value>云端备份上传已取消</value>
+    </data>
+    <data name="M_CloudRefreshFailed" xml:space="preserve">
+        <value>获取云端备份列表失败</value>
+    </data>
+    <data name="M_CloudDeleteTitle" xml:space="preserve">
+        <value>删除云端备份</value>
+    </data>
+    <data name="M_CloudDeleteContent" xml:space="preserve">
+        <value>确定要删除云端备份“{0}”吗？此操作无法撤销</value>
+    </data>
+    <data name="M_CloudDeleteSuccess" xml:space="preserve">
+        <value>已删除云端备份</value>
+    </data>
+    <data name="M_CloudDeleteFailed" xml:space="preserve">
+        <value>删除云端备份失败</value>
+    </data>
+    <data name="M_CloudRestoreTitle" xml:space="preserve">
+        <value>从云端恢复</value>
+    </data>
+    <data name="M_CloudRestoreContent" xml:space="preserve">
+        <value>恢复云端备份“{0}”会覆盖当前对应数据；恢复前会自动创建一份当前数据快照，恢复完成后需要重启应用</value>
+    </data>
+    <data name="M_CloudRestoreSuccess" xml:space="preserve">
+        <value>云端备份已恢复，请重启应用后生效</value>
+    </data>
+    <data name="M_CloudRestoreFailed" xml:space="preserve">
+        <value>恢复云端备份失败</value>
+    </data>
+    <data name="M_CloudDownloadFailed" xml:space="preserve">
+        <value>云端备份下载失败</value>
+    </data>
+    <data name="M_CloudIncomplete" xml:space="preserve">
+        <value>该云端备份不完整，无法恢复</value>
+    </data>
+    <data name="M_CloudQuotaExceeded" xml:space="preserve">
+        <value>云空间不足，请清理云端备份后重试</value>
+    </data>
+    <data name="M_CloudServiceDisabled" xml:space="preserve">
+        <value>SECTL 尚未为该应用启用云服务</value>
+    </data>
+    <data name="M_CloudSignedOut" xml:space="preserve">
+        <value>SECTL 登录状态已失效，请重新登录</value>
+    </data>
+    <data name="M_CloudCleanupSuccess" xml:space="preserve">
+        <value>已清理 {0} 份不完整备份</value>
+    </data>
+    <data name="M_CloudCleanupFailed" xml:space="preserve">
+        <value>清理不完整备份失败</value>
+    </data>
+    <data name="M_CloudQuotaUnknown" xml:space="preserve">
+        <value>无法获取云端空间用量</value>
+    </data>
+    <data name="M_CloudStoragePageFailed" xml:space="preserve">
+        <value>无法打开云储存页面</value>
     </data>
 </root>

@@ -16,7 +16,7 @@ namespace SecRandom.Services.Auth;
 public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, DeviceUuidStore deviceUuidStore)
 {
     public const string ClientId = "69c8cd6a0012dd3ea10a";
-    private const string AuthBaseUrl = "https://appwrite.sectl.cn";
+    public const string ApiBaseUrl = "https://appwrite.sectl.cn";
     private const string AppwriteEndpoint = "https://appwrite.sectl.cn/v1";
     private const string AppwriteProjectId = "69bd6e700005458848db";
     private const string UserDataTableId = "user_data";
@@ -24,7 +24,7 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
     private const string AvatarBucketId = "69cce3720009a343f892";
     private const string BrowserBaseUrl = "https://sectl.cn";
     private const string OAuthScope = "user:read cloud:read cloud:write";
-    private static readonly Uri HeartbeatUri = new($"{AuthBaseUrl}/api/oauth/heartbeat");
+    private static readonly Uri HeartbeatUri = new($"{ApiBaseUrl}/api/oauth/heartbeat");
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly TimeSpan[] InitializationRetryDelays =
     [
@@ -149,7 +149,7 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
         var publicIp = await GetPublicIpAsync(client, timeout.Token)
             ?? throw new InvalidOperationException("无法获取公网 IP，授权已取消，请检查网络连接。");
         var payload = new { grant_type = "authorization_code", code, client_id = ClientId, redirect_uri = redirectUri, code_verifier = verifier, device_uuid = deviceUuidStore.GetOrCreate().ToString(), ip_address = publicIp };
-        using var tokenRequest = new HttpRequestMessage(HttpMethod.Post, $"{AuthBaseUrl}/api/oauth/token")
+        using var tokenRequest = new HttpRequestMessage(HttpMethod.Post, $"{ApiBaseUrl}/api/oauth/token")
         {
             Content = JsonContent.Create(payload, options: JsonOptions)
         };
@@ -167,7 +167,7 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
         if (IsSignedIn)
         {
             var client = httpClientFactory.CreateClient();
-            using var request = new HttpRequestMessage(HttpMethod.Post, $"{AuthBaseUrl}/api/oauth/logout");
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiBaseUrl}/api/oauth/logout");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token!.AccessToken);
             try { await client.SendAsync(request, cancellationToken); } catch { }
         }
@@ -176,6 +176,52 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
         AvatarBytes = null;
         if (File.Exists(_tokenPath)) File.Delete(_tokenPath);
         StateChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    ///     Sends an authenticated SECTL API request and refreshes the access token once when the
+    ///     service rejects it, so a long-running desktop session keeps working after expiry. Callers
+    ///     pass a request factory because a rejected request must be rebuilt for the retry; token
+    ///     storage and refresh policy stay inside this service.
+    /// </summary>
+    public async Task<HttpResponseMessage> SendAuthorizedAsync(
+        Func<HttpRequestMessage> createRequest,
+        HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(createRequest);
+        var accessToken = _token?.AccessToken;
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new InvalidOperationException("SECTL 账号未登录。");
+
+        var response = await SendWithTokenAsync(createRequest, accessToken, completionOption, cancellationToken)
+            .ConfigureAwait(false);
+        if (response.StatusCode != HttpStatusCode.Unauthorized)
+            return response;
+
+        if (!await TryRefreshTokenAsync(cancellationToken).ConfigureAwait(false))
+            return response;
+
+        response.Dispose();
+        return await SendWithTokenAsync(createRequest, _token!.AccessToken, completionOption, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private async Task<HttpResponseMessage> SendWithTokenAsync(Func<HttpRequestMessage> createRequest, string accessToken,
+        HttpCompletionOption completionOption, CancellationToken cancellationToken)
+    {
+        var request = createRequest();
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        try
+        {
+            return await httpClientFactory.CreateClient()
+                .SendAsync(request, completionOption, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            request.Dispose();
+        }
     }
 
     /// <summary>
@@ -221,7 +267,7 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
     {
         if (!IsSignedIn) return null;
         var client = httpClientFactory.CreateClient();
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"{AuthBaseUrl}/api/oauth/userinfo");
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{ApiBaseUrl}/api/oauth/userinfo");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token!.AccessToken);
         using var response = await client.SendAsync(request, cancellationToken);
         if (response.StatusCode == HttpStatusCode.Unauthorized
@@ -257,7 +303,7 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
                 device_uuid = deviceUuidStore.GetOrCreate().ToString(),
                 ip_address = publicIp
             };
-            using var response = await client.PostAsJsonAsync($"{AuthBaseUrl}/api/oauth/refresh", payload, cancellationToken);
+            using var response = await client.PostAsJsonAsync($"{ApiBaseUrl}/api/oauth/refresh", payload, cancellationToken);
             if (!response.IsSuccessStatusCode)
                 return false;
 

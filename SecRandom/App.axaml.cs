@@ -789,6 +789,16 @@ public partial class App : Application
                     services.AddSingleton<SectlHeartbeatService>();
                     services.AddHostedService(serviceProvider =>
                         serviceProvider.GetRequiredService<SectlHeartbeatService>());
+                    services.AddHttpClient("sectl-cloud", client =>
+                    {
+                        client.BaseAddress = new Uri("https://appwrite.sectl.cn/");
+                        client.Timeout = TimeSpan.FromSeconds(60);
+                    });
+                    services.AddSingleton<SectlCloudStorageClient>();
+                    services.AddSingleton<CloudBackupService>();
+                    services.AddSingleton<CloudAutomaticBackupService>();
+                    services.AddHostedService(serviceProvider =>
+                        serviceProvider.GetRequiredService<CloudAutomaticBackupService>());
                 }
                 services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
                 services.AddSingleton<TelemetryRuntimeService>();

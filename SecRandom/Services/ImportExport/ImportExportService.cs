@@ -35,6 +35,13 @@ public sealed class ImportExportService(
         return dataArchiveService.ExportAllDataAsync(destinationPath, cancellationToken);
     }
 
+    public Task<string> ExportCloudBackupAsync(string destinationPath, CancellationToken cancellationToken = default)
+    {
+        return dataArchiveService.ExportCloudBackupAsync(destinationPath, cancellationToken);
+    }
+
+    public IReadOnlyList<string> GetCloudBackupRoots() => dataArchiveService.GetCloudBackupRoots();
+
     public Task<ImportInspection> InspectSettingsAsync(string sourcePath, CancellationToken cancellationToken = default)
     {
         return dataArchiveService.InspectSettingsAsync(sourcePath, cancellationToken);
@@ -45,6 +52,11 @@ public sealed class ImportExportService(
         return dataArchiveService.InspectAllDataAsync(sourcePath, cancellationToken);
     }
 
+    public Task<ImportInspection> InspectCloudBackupAsync(string sourcePath, CancellationToken cancellationToken = default)
+    {
+        return dataArchiveService.InspectCloudBackupAsync(sourcePath, cancellationToken);
+    }
+
     public Task<ImportResult> ImportSettingsAsync(string sourcePath, CancellationToken cancellationToken = default)
     {
         return dataArchiveService.ImportSettingsAsync(sourcePath, cancellationToken);
@@ -53,6 +65,11 @@ public sealed class ImportExportService(
     public Task<ImportResult> ImportAllDataAsync(string sourcePath, CancellationToken cancellationToken = default)
     {
         return dataArchiveService.ImportAllDataAsync(sourcePath, cancellationToken);
+    }
+
+    public Task<ImportResult> ImportCloudBackupAsync(string sourcePath, CancellationToken cancellationToken = default)
+    {
+        return dataArchiveService.ImportCloudBackupAsync(sourcePath, cancellationToken);
     }
 
     public string CreateManualBackup(IReadOnlyCollection<string> roots)

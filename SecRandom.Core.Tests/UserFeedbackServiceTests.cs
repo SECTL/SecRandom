@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging.Abstractions;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Services.Feedback;
 using SecRandom.Services.ImportExport;
@@ -161,10 +161,14 @@ public class UserFeedbackServiceTests
 
         public Task<string> ExportSettingsAsync(string destinationPath, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<string> ExportAllDataAsync(string destinationPath, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<string> ExportCloudBackupAsync(string destinationPath, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public IReadOnlyList<string> GetCloudBackupRoots() => throw new NotSupportedException();
         public Task<ImportInspection> InspectSettingsAsync(string sourcePath, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<ImportInspection> InspectAllDataAsync(string sourcePath, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<ImportInspection> InspectCloudBackupAsync(string sourcePath, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<ImportResult> ImportSettingsAsync(string sourcePath, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<ImportResult> ImportAllDataAsync(string sourcePath, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<ImportResult> ImportCloudBackupAsync(string sourcePath, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public string CreateManualBackup(IReadOnlyCollection<string> roots) => throw new NotSupportedException();
         public string CreateAutomaticBackup(CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<ImportResult> RestoreBackupAsync(string sourcePath, CancellationToken cancellationToken = default) => throw new NotSupportedException();
