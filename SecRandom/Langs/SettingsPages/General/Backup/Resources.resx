@@ -223,7 +223,7 @@
         <value>立即备份到云端</value>
     </data>
     <data name="S_CloudBackup_Upload_D" xml:space="preserve">
-        <value>按云端备份内容的选择打包并上传，插件、语音缓存、设备标识、运行日志、抽取证明与主题资源不会上传</value>
+        <value>将所选数据打包上传到云端</value>
     </data>
     <data name="S_CloudIncludes" xml:space="preserve">
         <value>云端备份内容</value>

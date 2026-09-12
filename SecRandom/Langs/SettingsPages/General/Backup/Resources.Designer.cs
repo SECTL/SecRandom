@@ -1158,7 +1158,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 按云端备份内容的选择打包并上传，插件、语音缓存、设备标识、运行日志、抽取证明与主题资源不会上传.
+        ///   Looks up a localized string similar to 将所选数据打包上传到云端.
         /// </summary>
         public static string S_CloudBackup_Upload_D {
             get {
