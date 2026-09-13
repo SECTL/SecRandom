@@ -7,6 +7,7 @@ using Avalonia.Platform;
 using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
+using SecRandom.Core;
 using SecRandom.PluginSdk;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Plugins;
@@ -153,7 +154,9 @@ public sealed class PluginMarketService(
 
     /// <summary>
     ///     True when the entry's apiVersion major is not below the host major and its minimum host
-    ///     version is not above the current application version.
+    ///     version is not above <paramref name="currentVersion" />. Pass the application version
+    ///     (<see cref="GlobalConstants.Version" />), never just its major: a value that cannot be
+    ///     parsed silently skips the minimum-host check.
     /// </summary>
     public static bool IsCompatible(PluginCatalogEntry entry, string currentVersion)
     {
@@ -162,12 +165,27 @@ public sealed class PluginMarketService(
             return false;
 
         if (!string.IsNullOrWhiteSpace(entry.MinimumHostVersion)
-            && Version.TryParse(entry.MinimumHostVersion.TrimStart('v', 'V'), out var minimumHost)
-            && Version.TryParse(currentVersion.TrimStart('v', 'V'), out var current)
+            && TryParseHostVersion(entry.MinimumHostVersion, out var minimumHost)
+            && TryParseHostVersion(currentVersion, out var current)
             && minimumHost > current)
             return false;
 
         return true;
+    }
+
+    /// <summary>
+    ///     Parses an application version string. The raw <see cref="GlobalConstants.Version" /> keeps a
+    ///     SemVer pre-release/build suffix (<c>v3.0.0-beta.1</c>) that <see cref="Version" /> rejects, so
+    ///     the numeric core is compared instead; that keeps a pre-release host gating its market on the
+    ///     same scale as the released versions advertised in plugin metadata.
+    /// </summary>
+    private static bool TryParseHostVersion(string text, out Version version)
+    {
+        var normalized = text.Trim().TrimStart('v', 'V');
+        var metadataIndex = normalized.IndexOfAny(['-', '+']);
+        if (metadataIndex >= 0)
+            normalized = normalized[..metadataIndex];
+        return Version.TryParse(normalized, out version!);
     }
 
     private async Task<(byte[] Index, byte[] Signature)> DownloadIndexAsync(CancellationToken cancellationToken)

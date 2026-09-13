@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Controls;
+using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Helpers.UI;
@@ -577,7 +578,8 @@ public sealed class PluginMarketItem : PluginListItemBase
             ApiVersion = entry.ApiVersion,
             IsInstalled = installed,
             HasUpdate = hasUpdate,
-            IsCompatible = PluginMarketService.IsCompatible(entry, PluginApiVersions.Current.Major.ToString()),
+            // 必须传版本号本身：只传主版本会让最低宿主版本校验因解析失败而被静默跳过
+            IsCompatible = PluginMarketService.IsCompatible(entry, GlobalConstants.Version),
             DependencyText = string.Join(", ", entry.Dependencies.Select(dependency => dependency.Id)),
             ReadmeText = BuildReadme(entry),
             Icon = null

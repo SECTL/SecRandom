@@ -55,6 +55,51 @@ public sealed class PluginMarketTests
         Assert.True(PluginMarketService.IsCompatible(entry, "3.2.0"));
     }
 
+    [Theory]
+    [InlineData("v3.0.0-beta.1")]
+    [InlineData("v3.0.0-alpha.2")]
+    [InlineData("3.0.0-rc.1+build.7")]
+    public void IsCompatible_StillGatesMinimumHostVersionForPrereleaseHost(string hostVersion)
+    {
+        var entry = new PluginCatalogEntry
+        {
+            ApiVersion = PluginApiVersions.Current.ToString(),
+            MinimumHostVersion = "3.1.0"
+        };
+
+        // 预发布版本号必须仍参与比较，不能被解析失败吞掉整个最低宿主版本校验
+        Assert.False(PluginMarketService.IsCompatible(entry, hostVersion));
+    }
+
+    [Theory]
+    [InlineData("v3.0.0-beta.1")]
+    [InlineData("v3.0.0-alpha.2")]
+    [InlineData("3.0.0-rc.1+build.7")]
+    public void IsCompatible_AcceptsSatisfiedMinimumHostVersionForPrereleaseHost(string hostVersion)
+    {
+        var entry = new PluginCatalogEntry
+        {
+            ApiVersion = PluginApiVersions.Current.ToString(),
+            MinimumHostVersion = "v3.0.0"
+        };
+
+        Assert.True(PluginMarketService.IsCompatible(entry, hostVersion));
+    }
+
+    [Fact]
+    public void IsCompatible_MajorOnlyHostVersionSkipsTheMinimumHostCheck()
+    {
+        var entry = new PluginCatalogEntry
+        {
+            ApiVersion = PluginApiVersions.Current.ToString(),
+            MinimumHostVersion = "3.1.0"
+        };
+
+        // 锁定边界：无法解析的宿主版本会静默跳过最低宿主版本校验（保留宽容语义，避免让测试宿主/无
+        // GitInfo 宿主整体判定为不兼容）。因此调用方必须传 GlobalConstants.Version 而不是它的主版本
+        Assert.True(PluginMarketService.IsCompatible(entry, "3"));
+    }
+
     [Fact]
     public void ResolveInstallPlan_OrdersDependenciesFirst()
     {

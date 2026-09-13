@@ -181,6 +181,44 @@ public sealed class DataArchiveServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task V3ProducerVersionGate_AcceptsPrereleaseArchiveFromTheSameBuild()
+    {
+        using var provider = CreateProvider();
+        provider.GetRequiredService<MainConfigHandler>().Save();
+        File.WriteAllText(Utils.GetFilePath("list", "roll_call_list", "class.json"), "{}");
+
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var destination = Path.Combine(_exportDirectory, "prerelease-archive.zip");
+        await archive.ExportAllDataAsync(destination, TestContext.Current.CancellationToken);
+
+        // 预发布版本号（例如 v3.0.0-alpha.2）会原样进入 producer_version，同版本必须能恢复自己的归档
+        StampProducerVersion(destination, "v3.0.0-alpha.2");
+
+        var inspection = await archive.InspectAllDataAsync(destination, TestContext.Current.CancellationToken);
+        Assert.True(inspection.IsSupportedV3);
+        Assert.Equal("v3.0.0-alpha.2", inspection.ProducerVersion);
+
+        var result = await archive.ImportAllDataAsync(destination, TestContext.Current.CancellationToken);
+        Assert.True(result.ImportedFiles > 0);
+    }
+
+    [Fact]
+    public async Task V3ProducerVersionGate_AcceptsPrereleaseSettingsEnvelopeFromTheSameBuild()
+    {
+        using var provider = CreateProvider();
+        provider.GetRequiredService<MainConfigHandler>().Save();
+
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var destination = Path.Combine(_exportDirectory, "prerelease-settings.json");
+        await archive.ExportSettingsAsync(destination, TestContext.Current.CancellationToken);
+        StampProducerVersion(destination, "v3.0.0-alpha.2");
+
+        var inspection = await archive.InspectSettingsAsync(destination, TestContext.Current.CancellationToken);
+        Assert.True(inspection.IsSupportedV3);
+        Assert.Equal("v3.0.0-alpha.2", inspection.ProducerVersion);
+    }
+
+    [Fact]
     public async Task ImportAllData_CommitsArchiveCreatesSnapshotAndInvokesHooks()
     {
         var hooks = new RecordingHooks();

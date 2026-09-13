@@ -33,8 +33,15 @@ public class ImportExportArchiveTests
     [Theory]
     [InlineData("v3.0.0", true)]
     [InlineData("3.2.1", true)]
+    [InlineData("v3.0.0-alpha.2", true)]
+    [InlineData("v3.0.0-beta.1+build.5", true)]
+    [InlineData("3.0.0-rc.1", true)]
+    [InlineData("v3.0.0+build.5", true)]
     [InlineData("v2.9.0", false)]
     [InlineData("v4.0.0", false)]
+    [InlineData("v4.0.0-alpha.1", false)]
+    [InlineData("v3", false)]
+    [InlineData("not-a-version", false)]
     [InlineData("", false)]
     public void V3ProducerVersionValidator_AcceptsOnlyV3(string producerVersion, bool expected)
     {
