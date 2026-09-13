@@ -66,7 +66,8 @@ internal sealed class SecurityCredentialStore
                 envelope.Nonce,
                 envelope.Tag,
                 envelope.Ciphertext,
-                isReadable: true);
+                isReadable: true,
+                totpSecret: envelope.TotpSecret);
         }
         catch (IOException)
         {
@@ -290,7 +291,8 @@ internal sealed class SecurityCredentialStore
             LockedUntilUtc = metadata.LockedUntilUtc,
             Nonce = metadata.Nonce!,
             Tag = metadata.Tag!,
-            Ciphertext = metadata.Ciphertext!
+            Ciphertext = metadata.Ciphertext!,
+            TotpSecret = metadata.TotpSecret
         };
     }
 
@@ -443,7 +445,8 @@ internal sealed class SecurityCredentialMetadata(
     string? nonce,
     string? tag,
     string? ciphertext,
-    bool isReadable)
+    bool isReadable,
+    string? totpSecret = null)
 {
     public static SecurityCredentialMetadata CreateEmpty() => new(null, false, [], 0, null, null, null, null, true);
     public static SecurityCredentialMetadata CreateInvalid() => new(null, false, [], 0, null, null, null, null, false);
@@ -456,6 +459,7 @@ internal sealed class SecurityCredentialMetadata(
     public string? Nonce { get; set; } = nonce;
     public string? Tag { get; set; } = tag;
     public string? Ciphertext { get; set; } = ciphertext;
+    public string? TotpSecret { get; set; } = totpSecret;
     public bool IsReadable { get; } = isReadable;
 
     private static UsbBindingCredential CloneBinding(UsbBindingCredential binding)
@@ -503,6 +507,13 @@ internal sealed class SecurityCredentialEnvelope
     public required string Nonce { get; init; }
     public required string Tag { get; init; }
     public required string Ciphertext { get; init; }
+
+    /// <summary>
+    /// 明文 TOTP 密钥副本，仅在「任意已选验证方式」模式下由服务层写入，
+    /// 用于在不解锁加密负载的情况下校验 TOTP 验证码。全部验证模式下为 null，
+    /// 密钥仅存在于 AES-GCM 加密负载内。旧版凭据文件不含此字段，反序列化后为 null。
+    /// </summary>
+    public string? TotpSecret { get; init; }
 }
 
 internal sealed record SecurityCredentialAuthenticationData(
