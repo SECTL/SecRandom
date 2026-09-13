@@ -61,7 +61,10 @@ public enum SecurityFactor
 
 public interface ISecurityVerificationPrompt
 {
-    Task<SecurityVerificationResponse> RequestAsync(TopLevel xamlRoot, SecurityVerificationRequest request,
+    Task<SecurityVerificationResult> RequestAsync(
+        TopLevel xamlRoot,
+        SecurityVerificationRequest request,
+        Func<SecurityVerificationResponse, CancellationToken, Task<SecurityVerificationResult>> verify,
         CancellationToken cancellationToken = default);
 }
 

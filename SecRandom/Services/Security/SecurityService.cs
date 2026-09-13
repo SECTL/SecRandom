@@ -121,8 +121,7 @@ internal sealed class SecurityService(
                 GetRequiredFactors(metadata),
                 Settings.RequireAllSelectedFactors,
                 GetLockoutRemaining(metadata.LockedUntilUtc));
-            var response = await prompt.RequestAsync(App.Current.GetRootWindow(), request, cancellationToken);
-            var result = await VerifyAsync(response, cancellationToken);
+            var result = await prompt.RequestAsync(App.Current.GetRootWindow(), request, VerifyAsync, cancellationToken);
             if (!result.IsAuthorized)
             {
                 logger.LogInformation("Security authorization rejected for {Operations}: {Failure}", string.Join(',', operations), result.Failure);
@@ -184,14 +183,12 @@ internal sealed class SecurityService(
                 Settings.RequireAllSelectedFactors,
                 GetLockoutRemaining(metadata.LockedUntilUtc),
                 Settings.AllowSettingsPreview);
-            var response = await prompt.RequestAsync(App.Current.GetRootWindow(), request, cancellationToken);
-            if (response.PreviewRequested && request.AllowPreview)
+            var result = await prompt.RequestAsync(App.Current.GetRootWindow(), request, VerifyAsync, cancellationToken);
+            if (result.Failure == SecurityVerificationFailure.PreviewRequested && request.AllowPreview)
             {
                 await previewAction();
                 return new SecurityAuthorizationResult(false, true);
             }
-
-            var result = await VerifyAsync(response, cancellationToken);
             if (!result.IsAuthorized)
             {
                 logger.LogInformation("Security settings authorization rejected: {Failure}", result.Failure);
@@ -317,29 +314,47 @@ internal sealed class SecurityService(
                 [SecurityFactor.Password],
                 RequireAllSelectedFactors: true,
                 GetLockoutRemaining(credentialStore.LoadMetadata().LockedUntilUtc));
-            var response = await prompt.RequestAsync(xamlRoot, request, cancellationToken);
-            if (response.Cancelled || response.PreviewRequested)
-                return false;
 
-            lock (_gate)
+            Task<SecurityVerificationResult> VerifyPasswordAsync(
+                SecurityVerificationResponse response, CancellationToken ct)
             {
-                var metadata = credentialStore.LoadMetadata();
-                var remaining = GetLockoutRemaining(metadata.LockedUntilUtc);
-                if (remaining is not null)
-                    return false;
-
-                var unlockResult = credentialStore.TryUnlock(response.Password, out context);
-                if (unlockResult != CredentialUnlockResult.Succeeded || context is null)
+                lock (_gate)
                 {
-                    logger.LogInformation("Password authorization rejected: {Failure}", HandleUnlockFailure(metadata, unlockResult).Failure);
-                    return false;
-                }
+                    var metadata = credentialStore.LoadMetadata();
+                    var remaining = GetLockoutRemaining(metadata.LockedUntilUtc);
+                    if (remaining is not null)
+                        return Task.FromResult(
+                            new SecurityVerificationResult(false, SecurityVerificationFailure.LockedOut, remaining));
 
-                context.Credentials.FailedAttempts = 0;
-                context.Credentials.LockedUntilUtc = null;
-                if (!TrySaveCredentials(context))
-                    return false;
+                    var unlockResult = credentialStore.TryUnlock(response.Password, out var unlocked);
+                    if (unlockResult != CredentialUnlockResult.Succeeded || unlocked is null)
+                    {
+                        logger.LogInformation(
+                            "Password authorization rejected: {Failure}",
+                            HandleUnlockFailure(metadata, unlockResult).Failure);
+                        return Task.FromResult(new SecurityVerificationResult(
+                            false,
+                            SecurityVerificationFailure.InvalidCredentials,
+                            GetLockoutRemaining(metadata.LockedUntilUtc)));
+                    }
+
+                    unlocked.Credentials.FailedAttempts = 0;
+                    unlocked.Credentials.LockedUntilUtc = null;
+                    if (!TrySaveCredentials(unlocked))
+                    {
+                        unlocked.Dispose();
+                        return Task.FromResult(
+                            new SecurityVerificationResult(false, SecurityVerificationFailure.FactorUnavailable));
+                    }
+
+                    context = unlocked;
+                    return Task.FromResult(SecurityVerificationResult.Allowed);
+                }
             }
+
+            var result = await prompt.RequestAsync(xamlRoot, request, VerifyPasswordAsync, cancellationToken);
+            if (!result.IsAuthorized || context is null)
+                return false;
 
             retainContext = await action(context);
             return true;

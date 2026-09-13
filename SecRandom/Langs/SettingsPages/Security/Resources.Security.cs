@@ -84,6 +84,8 @@ public partial class Resources
     public static string M_VerificationAllFactors => Text(nameof(M_VerificationAllFactors));
     public static string M_VerificationAnyFactor => Text(nameof(M_VerificationAnyFactor));
     public static string M_VerificationLockedFormat => Text(nameof(M_VerificationLockedFormat));
+    public static string M_VerificationInvalid => Text(nameof(M_VerificationInvalid));
+    public static string M_VerificationUnavailable => Text(nameof(M_VerificationUnavailable));
     public static string M_LockoutFormat => Text(nameof(M_LockoutFormat));
     public static string M_UsbPresent => Text(nameof(M_UsbPresent));
     public static string M_UsbMissing => Text(nameof(M_UsbMissing));

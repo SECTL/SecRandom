@@ -116,6 +116,8 @@
   <data name="M_VerificationAllFactors" xml:space="preserve"><value>请完成全部已选验证方式</value></data>
   <data name="M_VerificationAnyFactor" xml:space="preserve"><value>完成任一已选验证方式即可继续</value></data>
   <data name="M_VerificationLockedFormat" xml:space="preserve"><value>验证已锁定，请在 {0} 秒后重试</value></data>
+  <data name="M_VerificationInvalid" xml:space="preserve"><value>密码或验证码错误，请检查后重试</value></data>
+  <data name="M_VerificationUnavailable" xml:space="preserve"><value>无法完成验证，请稍后重试</value></data>
   <data name="M_LockoutFormat" xml:space="preserve"><value>验证已锁定，请在 {0} 秒后再试</value></data>
   <data name="M_UsbPresent" xml:space="preserve"><value>已连接绑定的 U 盘</value></data>
   <data name="M_UsbMissing" xml:space="preserve"><value>未检测到绑定的 U 盘</value></data>

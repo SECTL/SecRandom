@@ -98,6 +98,8 @@
   <data name="M_VerificationAllFactors" xml:space="preserve"><value>選択したすべての認証方式を完了してください</value></data>
   <data name="M_VerificationAnyFactor" xml:space="preserve"><value>選択した認証方式のいずれかを完了すると続行できます</value></data>
   <data name="M_VerificationLockedFormat" xml:space="preserve"><value>認証がロックされています、{0} 秒後に再試行してください</value></data>
+  <data name="M_VerificationInvalid" xml:space="preserve"><value>パスワードまたは認証コードが正しくありません</value></data>
+  <data name="M_VerificationUnavailable" xml:space="preserve"><value>認証を完了できません、しばらくしてから再試行してください</value></data>
   <data name="M_LockoutFormat" xml:space="preserve"><value>認証がロックされています、{0} 秒後に再試行してください</value></data>
   <data name="M_UsbPresent" xml:space="preserve"><value>登録済み USB ドライブが接続されています</value></data>
   <data name="M_UsbMissing" xml:space="preserve"><value>登録済み USB ドライブが検出されません</value></data>
