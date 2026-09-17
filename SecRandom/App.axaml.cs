@@ -142,6 +142,8 @@ public partial class App : Application
 
         if (_floatingWindow is { PlatformImpl: not null } floatingRoot)
         {
+            if (!floatingRoot.IsVisible)
+                floatingRoot.Show();
             floatingRoot.Activate();
             return floatingRoot;
         }
