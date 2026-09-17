@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Selection;
 using Avalonia.Controls.Templates;
+using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -291,11 +292,16 @@ internal static class SecuritySetupDialogs
         Content = content
     };
 
-    private static TextBox CreatePasswordInput(string placeholderText) => new()
+    private static TextBox CreatePasswordInput(string placeholderText)
     {
-        PasswordChar = '●',
-        PlaceholderText = placeholderText
-    };
+        var input = new TextBox
+        {
+            PasswordChar = '●',
+            PlaceholderText = placeholderText
+        };
+        InputMethod.SetIsInputMethodEnabled(input, false);
+        return input;
+    }
 
     private static IImage BuildQrCode(string content)
     {

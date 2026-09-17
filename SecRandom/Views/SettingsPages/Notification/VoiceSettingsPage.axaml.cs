@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
@@ -836,6 +837,7 @@ public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
             (option, _) => new TextBlock { Text = option.DisplayName });
         var baseUrlBox = new TextBox { MinWidth = 360, Text = Settings.OmniTtsApiBaseUrl };
         var apiKeyBox = new TextBox { MinWidth = 360, PasswordChar = '*' };
+        InputMethod.SetIsInputMethodEnabled(apiKeyBox, false);
         var keyStatus = new TextBlock { Opacity = 0.7, FontSize = 12 };
 
         void RefreshKeyStatus()

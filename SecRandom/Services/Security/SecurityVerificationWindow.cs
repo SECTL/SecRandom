@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using FluentAvalonia.UI.Controls;
@@ -23,6 +24,7 @@ internal static class SecurityVerificationDialog
             PasswordChar = '●',
             PlaceholderText = SR.C_PasswordPlaceholder
         };
+        InputMethod.SetIsInputMethodEnabled(password, false);
         var totp = new TextBox { PlaceholderText = SR.C_TotpPlaceholder, MaxLength = 6 };
         var usb = new TextBlock
         {
