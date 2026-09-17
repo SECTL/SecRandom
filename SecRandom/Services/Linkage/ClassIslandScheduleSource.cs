@@ -40,18 +40,25 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
                 return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandScheduleDisabled);
             if (!lessons.IsClassPlanLoaded)
                 return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandScheduleUnloaded);
-            if (!lessons.IsLessonConfirmed)
-                return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandTimeUnconfirmed);
 
             var state = lessons.CurrentState switch
             {
                 TimeState.OnClass => CourseTimeState.OnClass,
                 TimeState.Breaking => CourseTimeState.Breaking,
+                TimeState.AfterSchool => CourseTimeState.Breaking,
+                TimeState.None => CourseTimeState.Breaking,
+                TimeState.PrepareOnClass => CourseTimeState.Breaking,
                 _ => CourseTimeState.Unknown
             };
             if (state == CourseTimeState.Unknown)
                 return CourseScheduleSnapshot.Unavailable(SourceName,
                     $"{ScheduleErrorCodes.ClassIslandUnsupportedState}:{lessons.CurrentState}");
+
+            // After school or before classes start, ClassIsland reports IsLessonConfirmed=false
+            // because no time layout item contains the current time. This is expected and
+            // should not prevent a valid snapshot for these confirmed non-class states.
+            if (!lessons.IsLessonConfirmed && lessons.CurrentState is TimeState.OnClass or TimeState.Breaking)
+                return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandTimeUnconfirmed);
 
             // Latest ClassIsland exposes the break label through CurrentSubject during Breaking.
             var currentName = state == CourseTimeState.OnClass
