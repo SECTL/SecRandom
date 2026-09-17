@@ -1,11 +1,13 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Threading;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
@@ -17,7 +19,11 @@ namespace SecRandom.Services.Security;
 
 internal static class SecurityVerificationDialog
 {
-    public static async Task<SecurityVerificationResponse> ShowAsync(TopLevel xamlRoot, SecurityVerificationRequest request)
+    public static async Task<SecurityVerificationResult> ShowAsync(
+        TopLevel xamlRoot,
+        SecurityVerificationRequest request,
+        Func<SecurityVerificationResponse, CancellationToken, Task<SecurityVerificationResult>> verify,
+        CancellationToken cancellationToken = default)
     {
         var password = new TextBox
         {
@@ -79,7 +85,15 @@ internal static class SecurityVerificationDialog
             }
         }
 
+        var errorText = new TextBlock
+        {
+            Foreground = Brushes.IndianRed,
+            TextWrapping = TextWrapping.Wrap,
+            IsVisible = false
+        };
+
         var panel = new StackPanel { Spacing = 12 };
+        panel.Children.Add(errorText);
         panel.Children.Add(new TextBlock
         {
             Text = request.LockoutRemaining is { } remaining
@@ -138,6 +152,48 @@ internal static class SecurityVerificationDialog
             Command = verifyAvailability
         });
 
+        // FluentAvalonia closes the dialog on any button click. Holding the
+        // closing deferral keeps the dialog open while credentials are
+        // verified, so a rejection can be shown inline and retried.
+        SecurityVerificationResult? finalResult = null;
+        dialog.Closing += async (_, args) =>
+        {
+            if (!Equals(args.Result, "verify"))
+                return;
+
+            var deferral = args.GetDeferral();
+            try
+            {
+                var response = new SecurityVerificationResponse(
+                    password.Text ?? string.Empty,
+                    totp.Text ?? string.Empty,
+                    UsbPresent: usbPresent);
+                var result = await Task.Run(() => verify(response, cancellationToken));
+                if (result.IsAuthorized)
+                {
+                    finalResult = result;
+                }
+                else
+                {
+                    args.Cancel = true;
+                    ShowError(result);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                args.Cancel = true;
+            }
+            catch (Exception)
+            {
+                args.Cancel = true;
+                ShowError(new SecurityVerificationResult(false, SecurityVerificationFailure.FactorUnavailable));
+            }
+            finally
+            {
+                deferral.Complete();
+            }
+        };
+
         if (usbRequired)
         {
             var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
@@ -153,11 +209,23 @@ internal static class SecurityVerificationDialog
 
         return await dialog.ShowAsync() switch
         {
-            "preview" => new SecurityVerificationResponse(string.Empty, string.Empty, false, PreviewRequested: true),
-            "verify" => new SecurityVerificationResponse(password.Text ?? string.Empty, totp.Text ?? string.Empty,
-                UsbPresent: usbPresent),
-            _ => new SecurityVerificationResponse(string.Empty, string.Empty, false, Cancelled: true)
+            "preview" => new SecurityVerificationResult(false, SecurityVerificationFailure.PreviewRequested),
+            "verify" => finalResult ?? new SecurityVerificationResult(false, SecurityVerificationFailure.Cancelled),
+            _ => new SecurityVerificationResult(false, SecurityVerificationFailure.Cancelled)
         };
+
+        void ShowError(SecurityVerificationResult result)
+        {
+            errorText.Text = result.Failure switch
+            {
+                SecurityVerificationFailure.LockedOut => result.LockoutRemaining is { } lockout
+                    ? string.Format(SR.M_VerificationLockedFormat, Math.Ceiling(lockout.TotalSeconds))
+                    : SR.M_VerificationInvalid,
+                SecurityVerificationFailure.InvalidCredentials => SR.M_VerificationInvalid,
+                _ => SR.M_VerificationUnavailable
+            };
+            errorText.IsVisible = true;
+        }
     }
 
     private sealed class VerificationAvailabilityCommand(Func<bool> canExecute) : ICommand

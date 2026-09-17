@@ -98,6 +98,8 @@
   <data name="M_VerificationAllFactors" xml:space="preserve"><value>Complete all selected verification methods</value></data>
   <data name="M_VerificationAnyFactor" xml:space="preserve"><value>Complete any selected verification method to continue</value></data>
   <data name="M_VerificationLockedFormat" xml:space="preserve"><value>Verification is locked, try again in {0} seconds</value></data>
+  <data name="M_VerificationInvalid" xml:space="preserve"><value>The password or verification code is incorrect</value></data>
+  <data name="M_VerificationUnavailable" xml:space="preserve"><value>Unable to complete verification, try again later</value></data>
   <data name="M_LockoutFormat" xml:space="preserve"><value>Verification is locked, try again in {0} seconds</value></data>
   <data name="M_UsbPresent" xml:space="preserve"><value>Bound USB drive is connected</value></data>
   <data name="M_UsbMissing" xml:space="preserve"><value>Bound USB drive is not detected</value></data>

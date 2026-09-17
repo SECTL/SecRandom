@@ -8,23 +8,24 @@ public sealed class SecurityVerificationPrompt : ISecurityVerificationPrompt
 {
     private bool _isShowing;
 
-    public async Task<SecurityVerificationResponse> RequestAsync(
+    public async Task<SecurityVerificationResult> RequestAsync(
         TopLevel xamlRoot,
         SecurityVerificationRequest request,
+        Func<SecurityVerificationResponse, CancellationToken, Task<SecurityVerificationResult>> verify,
         CancellationToken cancellationToken = default)
     {
         if (_isShowing)
-            return new SecurityVerificationResponse(string.Empty, string.Empty, false, Cancelled: true);
+            return new SecurityVerificationResult(false, SecurityVerificationFailure.Cancelled);
 
         _isShowing = true;
         try
         {
-            return await SecurityVerificationDialog.ShowAsync(xamlRoot, request)
+            return await SecurityVerificationDialog.ShowAsync(xamlRoot, request, verify, cancellationToken)
                 .WaitAsync(cancellationToken);
         }
         catch (OperationCanceledException)
         {
-            return new SecurityVerificationResponse(string.Empty, string.Empty, false, Cancelled: true);
+            return new SecurityVerificationResult(false, SecurityVerificationFailure.Cancelled);
         }
         finally
         {
