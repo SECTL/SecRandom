@@ -1724,23 +1724,38 @@ public partial class App : Application
 
     public static void ShowSettingsWindow(string? pageId)
     {
-        ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeSettingsAsync(
-            async () =>
-            {
-                await ShowSettingsWindowCoreAsync();
-                SettingsView.Current?.ExitPreview();
-                if (!string.IsNullOrWhiteSpace(pageId))
-                    SettingsView.Current?.NavigateToPage(pageId);
-            },
-            () =>
-            {
-                Dispatcher.UIThread.Post(() =>
+        var wasHiddenByLinkage = _floatingWindow is { IsHiddenByCourseLinkage: true };
+        ObserveTask(ShowSettingsWindowCoreAsync(pageId, wasHiddenByLinkage),
+            "Settings window authorization failed.");
+    }
+
+    private static async Task ShowSettingsWindowCoreAsync(string? pageId, bool wasHiddenByLinkage)
+    {
+        try
+        {
+            await IAppHost.GetService<ISecurityService>().AuthorizeSettingsAsync(
+                async () =>
                 {
-                    ObserveTask(ShowSettingsPreviewAsync(pageId),
-                        "Settings preview display failed.");
-                }, DispatcherPriority.Background);
-                return Task.CompletedTask;
-            }), "Settings window authorization failed.");
+                    await ShowSettingsWindowCoreAsync();
+                    SettingsView.Current?.ExitPreview();
+                    if (!string.IsNullOrWhiteSpace(pageId))
+                        SettingsView.Current?.NavigateToPage(pageId);
+                },
+                () =>
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        ObserveTask(ShowSettingsPreviewAsync(pageId),
+                            "Settings preview display failed.");
+                    }, DispatcherPriority.Background);
+                    return Task.CompletedTask;
+                });
+        }
+        finally
+        {
+            if (wasHiddenByLinkage && _floatingWindow is { IsVisible: true })
+                _floatingWindow.Hide();
+        }
     }
 
     private static async Task ShowSettingsPreviewAsync(string? pageId)
