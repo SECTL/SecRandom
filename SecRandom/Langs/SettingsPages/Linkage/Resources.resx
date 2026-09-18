@@ -150,7 +150,6 @@
   <data name="M_ScheduleError_ClassIslandTimerStopped" xml:space="preserve"><value>ClassIsland 计时器未运行</value></data>
   <data name="M_ScheduleError_ClassIslandScheduleDisabled" xml:space="preserve"><value>ClassIsland 未启用课程表</value></data>
   <data name="M_ScheduleError_ClassIslandScheduleUnloaded" xml:space="preserve"><value>ClassIsland 尚未加载当天课程表</value></data>
-  <data name="M_ScheduleError_ClassIslandTimeUnconfirmed" xml:space="preserve"><value>ClassIsland 尚未确认当前课程时间状态</value></data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState" xml:space="preserve"><value>ClassIsland 返回了未支持的当前状态：{0}</value></data>
   <data name="M_ScheduleError_ClassIslandReadFailed" xml:space="preserve"><value>无法读取 ClassIsland 的课程状态</value></data>
 </root>

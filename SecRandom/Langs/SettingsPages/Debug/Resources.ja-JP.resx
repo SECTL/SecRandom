@@ -268,9 +268,6 @@
   <data name="M_ScheduleError_ClassIslandScheduleUnloaded" xml:space="preserve">
     <value>ClassIsland が当日の時間割を読み込んでいません。</value>
   </data>
-  <data name="M_ScheduleError_ClassIslandTimeUnconfirmed" xml:space="preserve">
-    <value>ClassIsland が現在の授業時間状態を確認していません。</value>
-  </data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState" xml:space="preserve">
     <value>ClassIsland から未対応の現在状態が返されました: {0}。</value>
   </data>
