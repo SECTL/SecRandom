@@ -112,6 +112,7 @@ public partial class App : Application
     private static NotificationChannelSettings? _quickDrawNotificationSettings;
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
+    private static Window? _dialogHost;
     private static Task? _runtimeServicesStartupTask;
     private NativeMenuItem? _floatingWindowMenuItem;
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
@@ -140,15 +141,21 @@ public partial class App : Application
         if (_mobileViewHost is not null && TopLevel.GetTopLevel(_mobileViewHost) is { } mobileRoot)
             return mobileRoot;
 
-        if (_floatingWindow is { PlatformImpl: not null } floatingRoot)
+        if (_dialogHost is not { IsVisible: true, PlatformImpl: not null })
         {
-            if (!floatingRoot.IsVisible)
-                floatingRoot.Show();
-            floatingRoot.Activate();
-            return floatingRoot;
+            _dialogHost?.Close();
+            _dialogHost = new Window
+            {
+                ShowInTaskbar = false,
+                WindowDecorations = WindowDecorations.None,
+                CanResize = false,
+                Width = 0,
+                Height = 0,
+                Opacity = 0
+            };
+            _dialogHost.Show();
         }
-
-        throw new InvalidOperationException("No active application TopLevel is available.");
+        return _dialogHost;
     }
 
     public event EventHandler? AppStarted;
@@ -1724,38 +1731,29 @@ public partial class App : Application
 
     public static void ShowSettingsWindow(string? pageId)
     {
-        var wasHiddenByLinkage = _floatingWindow is { IsHiddenByCourseLinkage: true };
-        ObserveTask(ShowSettingsWindowCoreAsync(pageId, wasHiddenByLinkage),
+        ObserveTask(ShowSettingsWindowCoreAsync(pageId),
             "Settings window authorization failed.");
     }
 
-    private static async Task ShowSettingsWindowCoreAsync(string? pageId, bool wasHiddenByLinkage)
+    private static async Task ShowSettingsWindowCoreAsync(string? pageId)
     {
-        try
-        {
-            await IAppHost.GetService<ISecurityService>().AuthorizeSettingsAsync(
-                async () =>
+        await IAppHost.GetService<ISecurityService>().AuthorizeSettingsAsync(
+            async () =>
+            {
+                await ShowSettingsWindowCoreAsync();
+                SettingsView.Current?.ExitPreview();
+                if (!string.IsNullOrWhiteSpace(pageId))
+                    SettingsView.Current?.NavigateToPage(pageId);
+            },
+            () =>
+            {
+                Dispatcher.UIThread.Post(() =>
                 {
-                    await ShowSettingsWindowCoreAsync();
-                    SettingsView.Current?.ExitPreview();
-                    if (!string.IsNullOrWhiteSpace(pageId))
-                        SettingsView.Current?.NavigateToPage(pageId);
-                },
-                () =>
-                {
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        ObserveTask(ShowSettingsPreviewAsync(pageId),
-                            "Settings preview display failed.");
-                    }, DispatcherPriority.Background);
-                    return Task.CompletedTask;
-                });
-        }
-        finally
-        {
-            if (wasHiddenByLinkage && _floatingWindow is { IsVisible: true })
-                _floatingWindow.Hide();
-        }
+                    ObserveTask(ShowSettingsPreviewAsync(pageId),
+                        "Settings preview display failed.");
+                }, DispatcherPriority.Background);
+                return Task.CompletedTask;
+            });
     }
 
     private static async Task ShowSettingsPreviewAsync(string? pageId)
