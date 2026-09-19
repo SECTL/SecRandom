@@ -2,34 +2,33 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using ClassIsland.Shared.Enums;
-using ClassIsland.Shared.IPC;
 using ClassIsland.Shared.IPC.Abstractions.Services;
-using dotnetCampus.Ipc.CompilerServices.GeneratedProxies;
-using dotnetCampus.Ipc.Pipes;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Models.Linkage;
 
 namespace SecRandom.Services.Linkage;
 
-public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource> logger) : ICourseScheduleSource
+public sealed class ClassIslandScheduleSource : ICourseScheduleSource
 {
-    private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(5);
-    private static readonly TimeSpan JsonRouteReadyDelay = TimeSpan.FromSeconds(1);
-    private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(5);
-    private readonly SemaphoreSlim _connectionGate = new(1, 1);
-    private IpcClient? _client;
-    private IPublicLessonsService? _lessons;
+    private readonly ClassIslandIpcConnection _ipcConnection;
+    private readonly ILogger<ClassIslandScheduleSource> _logger;
     private string _lastKnownCourseName = string.Empty;
     private DateOnly? _lastKnownCourseDate;
     private DateTime? _lastKnownCourseEnd;
-    private DateTimeOffset _nextConnectAttempt = DateTimeOffset.MinValue;
 
     public string SourceName => "ClassIsland";
     public event EventHandler? StateChanged;
 
+    public ClassIslandScheduleSource(ClassIslandIpcConnection ipcConnection, ILogger<ClassIslandScheduleSource> logger)
+    {
+        _ipcConnection = ipcConnection;
+        _logger = logger;
+        _ipcConnection.StateChanged += (_, _) => StateChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public async Task<CourseScheduleSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)
     {
-        var lessons = await GetLessonsAsync(cancellationToken).ConfigureAwait(false);
+        var lessons = await _ipcConnection.GetLessonsServiceAsync(cancellationToken).ConfigureAwait(false);
         if (lessons is null)
             return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandUnavailable);
 
@@ -91,6 +90,7 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
                 lastEnd.TimeOfDay <= now.TimeOfDay
                 ? (TimeSpan?)(now - lastEnd)
                 : null;
+            // Version 只包含稳定的定位信息（时间点索引 + 状态），不含倒计时字段：联动的语义比较依赖它
             return new CourseScheduleSnapshot(
                 true,
                 state,
@@ -105,87 +105,9 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
         }
         catch (Exception exception)
         {
-            logger.LogDebug(exception, "读取 ClassIsland 日程状态失败。");
-            InvalidateConnection();
+            _logger.LogDebug(exception, "读取 ClassIsland 日程状态失败。");
             return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandReadFailed);
         }
-    }
-
-    private async Task<IPublicLessonsService?> GetLessonsAsync(CancellationToken cancellationToken)
-    {
-        if (_lessons is not null)
-            return _lessons;
-        if (DateTimeOffset.UtcNow < _nextConnectAttempt)
-            return null;
-
-        await _connectionGate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            if (_lessons is not null)
-                return _lessons;
-            if (DateTimeOffset.UtcNow < _nextConnectAttempt)
-                return null;
-
-            var client = new IpcClient();
-            client.JsonIpcProvider.AddNotifyHandler(IpcRoutedNotifyIds.OnClassNotifyId, OnClassIslandStateChanged);
-            client.JsonIpcProvider.AddNotifyHandler(IpcRoutedNotifyIds.OnBreakingTimeNotifyId, OnClassIslandStateChanged);
-            client.JsonIpcProvider.AddNotifyHandler(IpcRoutedNotifyIds.OnAfterSchoolNotifyId, OnClassIslandStateChanged);
-            client.JsonIpcProvider.AddNotifyHandler(IpcRoutedNotifyIds.CurrentTimeStateChangedNotifyId, OnClassIslandStateChanged);
-            await client.Connect().WaitAsync(ConnectTimeout, cancellationToken).ConfigureAwait(false);
-            // ClassIsland establishes its JSON routed peer asynchronously after the transport connection.
-            await Task.Delay(JsonRouteReadyDelay, cancellationToken).ConfigureAwait(false);
-            if (client.PeerProxy is null)
-            {
-                DisposeClient(client);
-                ScheduleRetry();
-                return null;
-            }
-
-            _client = client;
-            _lessons = GeneratedIpcFactory.CreateIpcProxy<IPublicLessonsService>(client.Provider, client.PeerProxy);
-            _nextConnectAttempt = DateTimeOffset.MinValue;
-            logger.LogInformation("已连接到 ClassIsland IPC：管道={PipeName}。", IpcClient.PipeName);
-            return _lessons;
-        }
-        catch (Exception exception)
-        {
-            logger.LogDebug(exception, "连接 ClassIsland IPC 失败，将在 {RetryDelay} 后重试。", RetryDelay);
-            InvalidateConnection();
-            ScheduleRetry();
-            return null;
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
-    }
-
-    private void OnClassIslandStateChanged()
-    {
-        StateChanged?.Invoke(this, EventArgs.Empty);
-    }
-
-    private void InvalidateConnection()
-    {
-        _lessons = null;
-        DisposeClient(_client);
-        _client = null;
-    }
-
-    private static void DisposeClient(IpcClient? client)
-    {
-        try
-        {
-            client?.Provider.Dispose();
-        }
-        catch (Exception)
-        {
-        }
-    }
-
-    private void ScheduleRetry()
-    {
-        _nextConnectAttempt = DateTimeOffset.UtcNow.Add(RetryDelay);
     }
 
     private static string NormalizeSubjectName(string? name)
