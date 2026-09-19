@@ -1032,7 +1032,16 @@ internal sealed class SecurityService(
     public bool IsGlobalSudoModeActive()
     {
         if (_sudoModeExpirationUtc is { } expiration)
-            return _timeProvider.GetUtcNow() < expiration;
+        {
+            var now = _timeProvider.GetUtcNow();
+            if (now >= expiration)
+            {
+                _sudoModeExpirationUtc = null;
+                SudoModeChanged?.Invoke();
+                return false;
+            }
+            return true;
+        }
         return false;
     }
 
