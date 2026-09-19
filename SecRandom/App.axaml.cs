@@ -115,6 +115,8 @@ public partial class App : Application
     private static Task? _runtimeServicesStartupTask;
     private NativeMenuItem? _floatingWindowMenuItem;
     private NativeMenuItem? _exitSudoModeMenuItem;
+    private NativeMenuItem? _exitSudoModeSeparator;
+    private Timer? _sudoModeRefreshTimer;
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     private IHost? _mobileHost;
     private ISingleViewApplicationLifetime? _singleViewLifetime;
@@ -1121,10 +1123,13 @@ public partial class App : Application
         taskBarIconService.MainTaskBarIcon.Menu = menu;
         _floatingWindowMenuItem = menu?.Items.ElementAtOrDefault(3) as NativeMenuItem;
         _exitSudoModeMenuItem = menu?.Items.ElementAtOrDefault(9) as NativeMenuItem;
+        _exitSudoModeSeparator = menu?.Items.ElementAtOrDefault(8) as NativeMenuItem;
         RefreshTrayWindowMenuItems();
         RefreshSudoMenuItem();
         
         IAppHost.GetService<ISecurityService>().SudoModeChanged += RefreshSudoMenuItem;
+        
+        _sudoModeRefreshTimer = new Timer(_ => Dispatcher.UIThread.Post(RefreshSudoMenuItem), null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
         taskBarIconService.MainTaskBarIcon.IsVisible = true;
         taskBarIconService.MainTaskBarIcon.Clicked += MainTaskBarIconOnClicked;
         IAppHost.GetService<DesktopIntegrationService>().EnsureConfiguredIntegrations();
@@ -1148,6 +1153,8 @@ public partial class App : Application
     private async Task StopAsync(bool requestLifetimeShutdown)
     {
         IAppHost.TryGetService<ISecurityService>().SudoModeChanged -= RefreshSudoMenuItem;
+        _sudoModeRefreshTimer?.Dispose();
+        _sudoModeRefreshTimer = null;
 
         lock (_shutdownGate)
         {
@@ -2157,7 +2164,27 @@ public partial class App : Application
         if (_exitSudoModeMenuItem is not null)
         {
             var securityService = IAppHost.GetService<ISecurityService>();
-            _exitSudoModeMenuItem.IsVisible = securityService.IsGlobalSudoModeActive();
+            var isVisible = securityService.IsGlobalSudoModeActive();
+            _exitSudoModeMenuItem.IsVisible = isVisible;
+            
+            if (_exitSudoModeSeparator is not null)
+            {
+                var menu = this.FindResource(@"AppMenu") as NativeMenu;
+                if (menu is not null)
+                {
+                    if (isVisible && !menu.Items.Contains(_exitSudoModeSeparator))
+                    {
+                        // Insert separator before Exit Sudo Mode item
+                        var index = menu.Items.IndexOf(_exitSudoModeMenuItem);
+                        if (index >= 0)
+                            menu.Items.Insert(index, _exitSudoModeSeparator);
+                    }
+                    else if (!isVisible && menu.Items.Contains(_exitSudoModeSeparator))
+                    {
+                        menu.Items.Remove(_exitSudoModeSeparator);
+                    }
+                }
+            }
         }
     }
 
