@@ -58,8 +58,11 @@ public sealed class CourseLinkageService
             var next = source is null
                 ? CourseScheduleSnapshot.Unavailable("Off")
                 : await source.GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
-            if (Equals(_snapshot, next))
+
+            // Semantic comparison: ignore time-varying fields (countdown timers)
+            if (SnapshotsEqual(_snapshot, next))
                 return;
+
             _snapshot = next;
             stateChanged = true;
         }
@@ -71,7 +74,7 @@ public sealed class CourseLinkageService
         {
             _logger.LogWarning(exception, "刷新课程联动状态失败。");
             var unavailable = CourseScheduleSnapshot.Unavailable("Unknown", exception.Message);
-            if (!Equals(_snapshot, unavailable))
+            if (!SnapshotsEqual(_snapshot, unavailable))
             {
                 _snapshot = unavailable;
                 stateChanged = true;
@@ -84,6 +87,18 @@ public sealed class CourseLinkageService
 
         if (stateChanged)
             NotifyStateChanged();
+    }
+
+    private static bool SnapshotsEqual(CourseScheduleSnapshot a, CourseScheduleSnapshot b)
+    {
+        return a.IsAvailable == b.IsAvailable
+            && a.State == b.State
+            && a.Source == b.Source
+            && a.Version == b.Version
+            && a.CurrentCourse?.Name == b.CurrentCourse?.Name
+            && a.PreviousCourse?.Name == b.PreviousCourse?.Name
+            && a.NextCourse?.Name == b.NextCourse?.Name
+            && a.Error == b.Error;
     }
 
     public bool IsConfirmedBreakTime => _snapshot.IsAvailable
@@ -126,8 +141,9 @@ public sealed class CourseLinkageService
 
     public TimeSpan GetNextRefreshDelay()
     {
+        // Only poll when completely unavailable - otherwise rely on events
         if (Settings.DataSource == LinkageDataSource.ClassIsland && !_snapshot.IsAvailable)
-            return TimeSpan.FromSeconds(5);
+            return TimeSpan.FromMinutes(5);
 
         List<TimeSpan> candidates = [];
         if (_snapshot.TimeUntilNextCourse is { } untilNext && untilNext > TimeSpan.Zero)

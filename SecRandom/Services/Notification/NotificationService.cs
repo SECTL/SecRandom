@@ -1,11 +1,11 @@
 using Avalonia.Threading;
 using ClassIsland.Shared.IPC;
-using dotnetCampus.Ipc.CompilerServices.GeneratedProxies;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Services.Linkage;
 using SecRandom.Shared.Models.Profile;
 using SecRandom4Ci.Interface.Enums;
 using SecRandom4Ci.Interface.Models;
@@ -16,26 +16,22 @@ namespace SecRandom.Services.Notification;
 
 public sealed class NotificationService : IDisposable
 {
-    private static readonly Version MinimumPluginVersion = new(1, 2, 0, 0);
-    private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan InvocationTimeout = TimeSpan.FromSeconds(1);
-    private static readonly TimeSpan JsonRouteReadyDelay = TimeSpan.FromMilliseconds(100);
     private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(5);
 
     private readonly MainConfigHandler _configHandler;
     private readonly ILogger<NotificationService> _logger;
+    private readonly ClassIslandIpcConnection _ipcConnection;
     private readonly CryptoRandomSource _previewRandom = new();
     private readonly SemaphoreSlim _sendGate = new(1, 1);
-    private IpcClient? _classIslandClient;
-    private ISecRandomService? _classIslandService;
-    private DateTimeOffset _nextClassIslandConnectAttempt = DateTimeOffset.MinValue;
     private bool _quickDrawBuiltInPreviewActive;
     private bool _isDisposed;
 
-    public NotificationService(MainConfigHandler configHandler, ILogger<NotificationService> logger)
+    public NotificationService(MainConfigHandler configHandler, ILogger<NotificationService> logger, ClassIslandIpcConnection ipcConnection)
     {
         _configHandler = configHandler;
         _logger = logger;
+        _ipcConnection = ipcConnection;
     }
 
     public void QueueStudents(
@@ -270,90 +266,52 @@ public sealed class NotificationService : IDisposable
             if (_isDisposed)
                 return;
 
-            var service = await GetClassIslandServiceAsync().ConfigureAwait(false);
+            var service = await _ipcConnection.GetNotificationServiceAsync().ConfigureAwait(false);
             if (service is null)
             {
                 builtInFallback?.Invoke();
                 return;
             }
 
-            if (!string.Equals(
-                    await InvokeClassIslandAsync(service.IsAlive).ConfigureAwait(false),
-                    "Yes",
-                    StringComparison.Ordinal))
+            string? isAlive = null;
+            try
+            {
+                isAlive = service.IsAlive();
+            }
+            catch (AggregateException aggEx) when (aggEx.InnerExceptions.Count == 1)
+            {
+                System.Diagnostics.Debug.WriteLine($"IPC notification IsAlive failed: {aggEx.InnerExceptions[0].Message}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"IPC notification IsAlive failed: {ex.Message}");
+            }
+
+            if (!string.Equals(isAlive, "Yes", StringComparison.Ordinal))
             {
                 _logger.LogDebug("SecRandom4Ci 通知服务未响应。");
-                InvalidateClassIslandConnection();
-                ScheduleClassIslandRetry();
                 builtInFallback?.Invoke();
                 return;
             }
 
-            await InvokeClassIslandAsync(() => service.ShowNotification(notification)).ConfigureAwait(false);
-        }
-        catch (Exception exception)
-        {
-            _logger.LogDebug(exception, "通过 SecRandom4Ci 插件发送 ClassIsland 通知失败。");
-            InvalidateClassIslandConnection();
-            ScheduleClassIslandRetry();
-            builtInFallback?.Invoke();
+            try
+            {
+                service.ShowNotification(notification);
+            }
+            catch (AggregateException aggEx) when (aggEx.InnerExceptions.Count == 1)
+            {
+                System.Diagnostics.Debug.WriteLine($"IPC notification ShowNotification failed: {aggEx.InnerExceptions[0].Message}");
+                builtInFallback?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "通过 SecRandom4Ci 插件发送 ClassIsland 通知失败。");
+                builtInFallback?.Invoke();
+            }
         }
         finally
         {
             _sendGate.Release();
-        }
-    }
-
-    private async Task<ISecRandomService?> GetClassIslandServiceAsync()
-    {
-        if (_isDisposed)
-            return null;
-        if (_classIslandService is not null)
-            return _classIslandService;
-        if (DateTimeOffset.UtcNow < _nextClassIslandConnectAttempt)
-            return null;
-
-        IpcClient? client = null;
-        try
-        {
-            client = new IpcClient();
-            await client.Connect().WaitAsync(ConnectTimeout).ConfigureAwait(false);
-            // ClassIsland initializes the JSON routed peer after the named pipe connects.
-            await Task.Delay(JsonRouteReadyDelay).ConfigureAwait(false);
-            if (client.PeerProxy is null)
-            {
-                DisposeClient(client);
-                ScheduleClassIslandRetry();
-                return null;
-            }
-
-            var service = client.Provider.CreateIpcProxy<ISecRandomService>(client.PeerProxy);
-            var pluginVersion = await InvokeClassIslandAsync(service.GetPluginVersion).ConfigureAwait(false);
-            if (pluginVersion is null || pluginVersion < MinimumPluginVersion ||
-                !string.Equals(
-                    await InvokeClassIslandAsync(service.IsAlive).ConfigureAwait(false),
-                    "Yes",
-                    StringComparison.Ordinal))
-            {
-                _logger.LogDebug("SecRandom4Ci 插件不可用或版本低于 {MinimumPluginVersion}。", MinimumPluginVersion);
-                DisposeClient(client);
-                ScheduleClassIslandRetry();
-                return null;
-            }
-
-            _classIslandClient = client;
-            _classIslandService = service;
-            _nextClassIslandConnectAttempt = DateTimeOffset.MinValue;
-            _logger.LogInformation("已连接到 ClassIsland IPC，SecRandom4Ci {PluginVersion} 通知服务可用。", pluginVersion);
-            return _classIslandService;
-        }
-        catch (Exception exception)
-        {
-            _logger.LogDebug(exception, "连接 ClassIsland IPC 的 SecRandom4Ci 通知服务失败。");
-            DisposeClient(client);
-            InvalidateClassIslandConnection();
-            ScheduleClassIslandRetry();
-            return null;
         }
     }
 
@@ -396,42 +354,6 @@ public sealed class NotificationService : IDisposable
         return candidates.Take(count).ToList();
     }
 
-    private void InvalidateClassIslandConnection()
-    {
-        _classIslandService = null;
-        DisposeClient(_classIslandClient);
-        _classIslandClient = null;
-    }
-
-    private static void DisposeClient(IpcClient? client)
-    {
-        if (client is null)
-            return;
-
-        try
-        {
-            client.Provider.Dispose();
-        }
-        catch (Exception)
-        {
-        }
-    }
-
-    private static Task<T> InvokeClassIslandAsync<T>(Func<T> invoke)
-    {
-        return Task.Run(invoke).WaitAsync(InvocationTimeout);
-    }
-
-    private static Task InvokeClassIslandAsync(Action invoke)
-    {
-        return Task.Run(invoke).WaitAsync(InvocationTimeout);
-    }
-
-    private void ScheduleClassIslandRetry()
-    {
-        _nextClassIslandConnectAttempt = DateTimeOffset.UtcNow.Add(RetryDelay);
-    }
-
     private static ResultType GetResultType(NotificationSettingsType type)
     {
         return type switch
@@ -467,6 +389,5 @@ public sealed class NotificationService : IDisposable
     public void Dispose()
     {
         _isDisposed = true;
-        InvalidateClassIslandConnection();
     }
 }
