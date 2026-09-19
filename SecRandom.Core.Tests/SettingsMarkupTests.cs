@@ -402,7 +402,7 @@ public class SettingsMarkupTests
         Assert.Contains("Click=\"ChangePassword_OnClick\"", markup, StringComparison.Ordinal);
         Assert.Contains("Click=\"RemovePassword_OnClick\"", markup, StringComparison.Ordinal);
         Assert.Contains("UpdateSecuritySettingsAsync", source, StringComparison.Ordinal);
-        Assert.Contains("BeginTotpSetupAsync(xamlRoot", source, StringComparison.Ordinal);
+        Assert.Contains("BeginTotpSetupAsync(", source, StringComparison.Ordinal);
         Assert.Contains("GetUsbDevicesAsync", source, StringComparison.Ordinal);
     }
 

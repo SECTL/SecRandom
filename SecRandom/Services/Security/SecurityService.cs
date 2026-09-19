@@ -6,7 +6,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Avalonia.Controls;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs;
@@ -121,7 +120,7 @@ internal sealed class SecurityService(
                 GetRequiredFactors(metadata),
                 Settings.RequireAllSelectedFactors,
                 GetLockoutRemaining(metadata.LockedUntilUtc));
-            var result = await prompt.RequestAsync(App.Current.GetRootWindow(), request, VerifyAsync, cancellationToken);
+            var result = await prompt.RequestAsync(request, VerifyAsync, cancellationToken);
             if (!result.IsAuthorized)
             {
                 logger.LogInformation("Security authorization rejected for {Operations}: {Failure}", string.Join(',', operations), result.Failure);
@@ -143,12 +142,10 @@ internal sealed class SecurityService(
     }
 
     public Task<bool> AuthorizePasswordAsync(
-        TopLevel xamlRoot,
         Func<Task> action,
         CancellationToken cancellationToken = default)
     {
         return AuthorizePasswordCoreAsync(
-            xamlRoot,
             async _ =>
             {
                 await action();
@@ -183,7 +180,7 @@ internal sealed class SecurityService(
                 Settings.RequireAllSelectedFactors,
                 GetLockoutRemaining(metadata.LockedUntilUtc),
                 Settings.AllowSettingsPreview);
-            var result = await prompt.RequestAsync(App.Current.GetRootWindow(), request, VerifyAsync, cancellationToken);
+            var result = await prompt.RequestAsync(request, VerifyAsync, cancellationToken);
             if (result.Failure == SecurityVerificationFailure.PreviewRequested && request.AllowPreview)
             {
                 await previewAction();
@@ -205,11 +202,10 @@ internal sealed class SecurityService(
     }
 
     public Task<bool> UpdateSecuritySettingsAsync(
-        TopLevel xamlRoot,
         Action update,
         CancellationToken cancellationToken = default)
     {
-        return AuthorizePasswordCoreAsync(xamlRoot, context =>
+        return AuthorizePasswordCoreAsync(context =>
         {
             lock (_gate)
             {
@@ -291,7 +287,6 @@ internal sealed class SecurityService(
     }
 
     private async Task<bool> AuthorizePasswordCoreAsync(
-        TopLevel xamlRoot,
         Func<SecurityCredentialContext, Task<bool>> action,
         CancellationToken cancellationToken)
     {
@@ -352,7 +347,7 @@ internal sealed class SecurityService(
                 }
             }
 
-            var result = await prompt.RequestAsync(xamlRoot, request, VerifyPasswordAsync, cancellationToken);
+            var result = await prompt.RequestAsync(request, VerifyPasswordAsync, cancellationToken);
             if (!result.IsAuthorized || context is null)
                 return false;
 
@@ -466,12 +461,7 @@ internal sealed class SecurityService(
         }
     }
 
-    public Task<string?> BeginTotpSetupAsync(CancellationToken cancellationToken = default)
-    {
-        return BeginTotpSetupAsync(App.Current.GetRootWindow(), cancellationToken);
-    }
-
-    public async Task<string?> BeginTotpSetupAsync(TopLevel xamlRoot, CancellationToken cancellationToken = default)
+    public async Task<string?> BeginTotpSetupAsync(CancellationToken cancellationToken = default)
     {
         lock (_gate)
         {
@@ -481,7 +471,7 @@ internal sealed class SecurityService(
         }
 
         string? secret = null;
-        var authorized = await AuthorizePasswordCoreAsync(xamlRoot, context =>
+        var authorized = await AuthorizePasswordCoreAsync(context =>
         {
             lock (_gate)
             {
@@ -584,15 +574,10 @@ internal sealed class SecurityService(
         }
     }
 
-    public Task<bool> BindUsbAsync(string deviceId, CancellationToken cancellationToken = default)
-    {
-        return BindUsbAsync(App.Current.GetRootWindow(), deviceId, cancellationToken);
-    }
-
-    public async Task<bool> BindUsbAsync(TopLevel xamlRoot, string deviceId, CancellationToken cancellationToken = default)
+    public async Task<bool> BindUsbAsync(string deviceId, CancellationToken cancellationToken = default)
     {
         var bound = false;
-        var authorized = await AuthorizePasswordCoreAsync(xamlRoot, context =>
+        var authorized = await AuthorizePasswordCoreAsync(context =>
         {
             lock (_gate)
                 bound = BindUsbCore(context, deviceId);
@@ -651,15 +636,10 @@ internal sealed class SecurityService(
         }
     }
 
-    public Task<bool> UnbindUsbAsync(string bindingId, CancellationToken cancellationToken = default)
-    {
-        return UnbindUsbAsync(App.Current.GetRootWindow(), bindingId, cancellationToken);
-    }
-
-    public async Task<bool> UnbindUsbAsync(TopLevel xamlRoot, string bindingId, CancellationToken cancellationToken = default)
+    public async Task<bool> UnbindUsbAsync(string bindingId, CancellationToken cancellationToken = default)
     {
         var unbound = false;
-        var authorized = await AuthorizePasswordCoreAsync(xamlRoot, context =>
+        var authorized = await AuthorizePasswordCoreAsync(context =>
         {
             lock (_gate)
                 unbound = UnbindUsbCore(context, bindingId);

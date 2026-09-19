@@ -112,7 +112,6 @@ public partial class App : Application
     private static NotificationChannelSettings? _quickDrawNotificationSettings;
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
-    private static Window? _dialogHost;
     private static Task? _runtimeServicesStartupTask;
     private NativeMenuItem? _floatingWindowMenuItem;
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
@@ -128,35 +127,6 @@ public partial class App : Application
     public new static App Current => (Application.Current as App)!;
     internal bool IsStopping => _isStopping;
     public static bool IsDesktop;
-
-    public TopLevel GetRootWindow()
-    {
-        if (_desktopLifetime?.Windows
-                .Where(window => window.GetType().Name != "TrayPopupRoot"
-                                 && window is { IsActive: true, IsVisible: true, PlatformImpl: not null })
-                .OrderBy(window => ReferenceEquals(window, _floatingWindow) ? 1 : 0)
-                .FirstOrDefault() is TopLevel desktopRoot)
-            return desktopRoot;
-
-        if (_mobileViewHost is not null && TopLevel.GetTopLevel(_mobileViewHost) is { } mobileRoot)
-            return mobileRoot;
-
-        if (_dialogHost is not { IsVisible: true, PlatformImpl: not null })
-        {
-            _dialogHost?.Close();
-            _dialogHost = new Window
-            {
-                ShowInTaskbar = false,
-                WindowDecorations = WindowDecorations.None,
-                CanResize = false,
-                Width = 0,
-                Height = 0,
-                Opacity = 0
-            };
-            _dialogHost.Show();
-        }
-        return _dialogHost;
-    }
 
     public event EventHandler? AppStarted;
     public event EventHandler? AppStopping;
@@ -1731,11 +1701,11 @@ public partial class App : Application
 
     public static void ShowSettingsWindow(string? pageId)
     {
-        ObserveTask(ShowSettingsWindowCoreAsync(pageId),
+        ObserveTask(ShowSettingsWindowWithAuthAsync(pageId),
             "Settings window authorization failed.");
     }
 
-    private static async Task ShowSettingsWindowCoreAsync(string? pageId)
+    private static async Task ShowSettingsWindowWithAuthAsync(string? pageId)
     {
         await IAppHost.GetService<ISecurityService>().AuthorizeSettingsAsync(
             async () =>
