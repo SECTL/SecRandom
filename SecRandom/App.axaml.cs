@@ -878,7 +878,11 @@ public partial class App : Application
                 services.AddSingleton<VoiceAnnouncementService>();
                 services.AddSingleton<IVoiceAnnouncementService>(serviceProvider =>
                     serviceProvider.GetRequiredService<VoiceAnnouncementService>());
-                services.AddSingleton<NotificationService>();
+                services.AddSingleton<NotificationService>(serviceProvider =>
+                    new NotificationService(
+                        serviceProvider.GetRequiredService<MainConfigHandler>(),
+                        serviceProvider.GetRequiredService<ILogger<NotificationService>>(),
+                        serviceProvider.GetRequiredService<ClassIslandIpcConnection>()));
                 services.AddSingleton(serviceProvider => new MusicLibraryService(
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
                     serviceProvider.GetRequiredService<ILogger<MusicLibraryService>>(),
@@ -888,6 +892,7 @@ public partial class App : Application
                 services.AddSingleton<CsesScheduleParser>();
                 services.AddSingleton<ICsesScheduleStore, CsesScheduleStore>();
                 services.AddSingleton<CsesScheduleSource>();
+                services.AddSingleton<ClassIslandIpcConnection>();
                 services.AddSingleton<ClassIslandScheduleSource>();
                 services.AddSingleton<CourseLinkageService>();
                 services.AddSingleton<LinkageDrawCoordinator>();
