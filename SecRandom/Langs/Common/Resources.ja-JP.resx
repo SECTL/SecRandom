@@ -122,4 +122,5 @@
     <data name="C_PickButtonText" xml:space="preserve">
         <value>抽</value>
     </data>
+    <data name="Menu_ExitSudoMode" xml:space="preserve"><value>Sudo モードを終了</value></data>
 </root>

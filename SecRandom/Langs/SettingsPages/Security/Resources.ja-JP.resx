@@ -110,5 +110,10 @@
   <data name="M_TotpSaved" xml:space="preserve"><value>TOTP 設定を保存しました。</value></data>
   <data name="M_TotpSaveFailed" xml:space="preserve"><value>コードが無効です。TOTP 設定は保存されませんでした。</value></data>
   <data name="M_UsbUpdated" xml:space="preserve"><value>USB 登録を更新しました。</value></data>
-  <data name="M_UsbUpdateFailed" xml:space="preserve"><value>USB 登録を更新できません。ドライブの接続と書き込み権限を確認してください。</value></data>
+<data name="M_UsbUpdateFailed" xml:space="preserve"><value>USB 登録を更新できません。ドライブの接続と書き込み権限を確認してください。</value></data>
+  <data name="S_SudoModeDuration" xml:space="preserve"><value>Sudo 有効期間</value></data>
+  <data name="S_SudoModeDuration_D" xml:space="preserve"><value>認証後に Sudo モードが有効な期間。設定ページはこの設定に従わず、閉じると無効になります</value></data>
+  <data name="S_SudoModeDurationUnit" xml:space="preserve"><value>秒</value></data>
+  <data name="Menu_ExitSudoMode" xml:space="preserve"><value>Sudo モードを終了</value></data>
+  <data name="M_SudoModeExited" xml:space="preserve"><value>Sudo モードを無効にしました</value></data>
 </root>

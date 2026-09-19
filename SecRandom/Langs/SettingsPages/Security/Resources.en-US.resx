@@ -111,4 +111,9 @@
   <data name="M_TotpSaveFailed" xml:space="preserve"><value>Invalid code. TOTP settings were not saved.</value></data>
   <data name="M_UsbUpdated" xml:space="preserve"><value>USB binding updated.</value></data>
   <data name="M_UsbUpdateFailed" xml:space="preserve"><value>Unable to update USB binding. Confirm that the drive is connected and writable.</value></data>
+  <data name="S_SudoModeDuration" xml:space="preserve"><value>Sudo Duration</value></data>
+  <data name="S_SudoModeDuration_D" xml:space="preserve"><value>How long sudo mode remains active after a successful verification; the settings page does not follow this duration and expires when closed</value></data>
+  <data name="S_SudoModeDurationUnit" xml:space="preserve"><value>seconds</value></data>
+  <data name="Menu_ExitSudoMode" xml:space="preserve"><value>Exit Sudo Mode</value></data>
+  <data name="M_SudoModeExited" xml:space="preserve"><value>Sudo mode deactivated</value></data>
 </root>

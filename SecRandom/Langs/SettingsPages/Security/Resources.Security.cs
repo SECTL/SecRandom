@@ -98,4 +98,9 @@ public partial class Resources
     public static string M_UsbUpdated => Text(nameof(M_UsbUpdated));
     public static string M_UsbUpdateFailed => Text(nameof(M_UsbUpdateFailed));
     public static string M_Copied => Text(nameof(M_Copied));
+    public static string S_SudoModeDuration => Text(nameof(S_SudoModeDuration));
+    public static string S_SudoModeDuration_D => Text(nameof(S_SudoModeDuration_D));
+    public static string S_SudoModeDurationUnit => Text(nameof(S_SudoModeDurationUnit));
+    public static string Menu_ExitSudoMode => Text(nameof(Menu_ExitSudoMode));
+    public static string M_SudoModeExited => Text(nameof(M_SudoModeExited));
 }

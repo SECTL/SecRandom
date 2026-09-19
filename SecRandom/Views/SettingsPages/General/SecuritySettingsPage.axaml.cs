@@ -30,6 +30,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
     public SecuritySettingsPage()
     {
         Settings = ViewModel.Config.SecuritySettings;
+        SudoModeDurationValue = Settings.SudoModeDurationSeconds;
         FactorOptions =
         [
             new(SR.S_Password, () => Settings.PasswordEnabled, value => Settings.PasswordEnabled = value),
@@ -59,6 +60,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
     public string TotpButtonText { get; private set; } = SR.C_SetTotp;
     public bool IsLockedOut { get; private set; }
     public string LockoutText { get; private set; } = string.Empty;
+    public double SudoModeDurationValue { get; set; }
 
     event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
     {
@@ -275,6 +277,18 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
         if (success) this.ShowSuccessToast(SR.M_UsbUpdated);
         else this.ShowErrorToast(SR.M_UsbUpdateFailed);
         RefreshSecurityState();
+    }
+
+    private void SudoModeDuration_OnValueChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+    {
+        if (_refreshing)
+            return;
+
+        if (e.NewValue is { } newValue && (int)newValue != Settings.SudoModeDurationSeconds)
+        {
+            Settings.SudoModeDurationSeconds = (int)newValue;
+            ConfigHandler.Save();
+        }
     }
 
     private async Task ApplySecuritySettingsUpdateAsync(TopLevel xamlRoot, Action update, Action restoreView)

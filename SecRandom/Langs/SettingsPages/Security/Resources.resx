@@ -140,4 +140,9 @@
   <data name="M_TotpCode" xml:space="preserve"><value>验证码</value></data>
   <data name="C_Copy" xml:space="preserve"><value>复制</value></data>
   <data name="M_Copied" xml:space="preserve"><value>已复制</value></data>
+  <data name="S_SudoModeDuration" xml:space="preserve"><value>Sudo 有效时长</value></data>
+  <data name="S_SudoModeDuration_D" xml:space="preserve"><value>验证通过后的免验证有效时长，设置页面不遵循此设置，关闭设置页面即失效</value></data>
+  <data name="S_SudoModeDurationUnit" xml:space="preserve"><value>秒</value></data>
+  <data name="Menu_ExitSudoMode" xml:space="preserve"><value>退出 Sudo 模式</value></data>
+  <data name="M_SudoModeExited" xml:space="preserve"><value>已退出 Sudo 模式</value></data>
 </root>

@@ -33,6 +33,10 @@ internal sealed class SecurityService(
     private readonly SemaphoreSlim _authorizationGate = new(1, 1);
     private string? _pendingTotpSecret;
     private SecurityCredentialContext? _pendingTotpContext;
+    private DateTimeOffset? _sudoModeExpirationUtc;
+    private bool _settingsSudoActive;
+
+    public event Action? SudoModeChanged;
 
     private SecuritySettingsConfig Settings => configHandler.Data.SecuritySettings;
 
@@ -61,6 +65,18 @@ internal sealed class SecurityService(
     {
         if (!Settings.SecurityEnabled)
             return false;
+
+        // Check the appropriate sudo mode based on operation
+        if (operation == SecurityOperation.OpenSettings)
+        {
+            if (_settingsSudoActive)
+                return false;
+        }
+        else
+        {
+            if (_sudoModeExpirationUtc is { } expiration && _timeProvider.GetUtcNow() < expiration)
+                return false;
+        }
 
         var metadata = credentialStore.LoadMetadata();
         if (!metadata.IsReadable)
@@ -127,6 +143,8 @@ internal sealed class SecurityService(
                 logger.LogInformation("Security authorization rejected for {Operations}: {Failure}", string.Join(',', operations), result.Failure);
                 return false;
             }
+
+            ActivateSudoMode();
 
             await action();
             return true;
@@ -195,6 +213,9 @@ internal sealed class SecurityService(
                 return new SecurityAuthorizationResult(false);
             }
 
+            ActivateSudoMode();
+            _settingsSudoActive = true;
+
             await action();
             return new SecurityAuthorizationResult(true);
         }
@@ -209,6 +230,18 @@ internal sealed class SecurityService(
         Action update,
         CancellationToken cancellationToken = default)
     {
+        if (_settingsSudoActive)
+        {
+            lock (_gate)
+            {
+                update();
+                var metadata = credentialStore.LoadMetadata();
+                NormalizeSettings(metadata);
+                configHandler.Save();
+            }
+            return Task.FromResult(true);
+        }
+
         return AuthorizePasswordCoreAsync(xamlRoot, context =>
         {
             lock (_gate)
@@ -218,6 +251,7 @@ internal sealed class SecurityService(
                 configHandler.Save();
             }
 
+            _settingsSudoActive = true;
             return Task.FromResult(false);
         }, cancellationToken);
     }
@@ -982,6 +1016,57 @@ internal sealed class SecurityService(
         Settings.ProtectLotteryStart = false;
         Settings.ProtectLotteryReset = false;
         Settings.ProtectLinkage = false;
+    }
+
+    public bool IsSudoModeActive()
+    {
+        if (_settingsSudoActive)
+            return true;
+
+        if (_sudoModeExpirationUtc is { } expiration)
+            return _timeProvider.GetUtcNow() < expiration;
+
+        return false;
+    }
+
+    public bool IsGlobalSudoModeActive()
+    {
+        if (_sudoModeExpirationUtc is { } expiration)
+        {
+            var now = _timeProvider.GetUtcNow();
+            if (now >= expiration)
+            {
+                _sudoModeExpirationUtc = null;
+                SudoModeChanged?.Invoke();
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public void DeactivateGlobalSudoMode()
+    {
+        _sudoModeExpirationUtc = null;
+        SudoModeChanged?.Invoke();
+    }
+
+    public void DeactivateSudoMode()
+    {
+        _settingsSudoActive = false;
+        _sudoModeExpirationUtc = null;
+        SudoModeChanged?.Invoke();
+    }
+
+    public void DeactivateSettingsSudoMode()
+    {
+        _settingsSudoActive = false;
+    }
+
+    private void ActivateSudoMode()
+    {
+        _sudoModeExpirationUtc = _timeProvider.GetUtcNow().AddSeconds(Settings.SudoModeDurationSeconds);
+        SudoModeChanged?.Invoke();
     }
 
     private UsbDriveInfo? FindDevice(string deviceId)

@@ -94,6 +94,12 @@ public interface ISecurityService
     Task<bool> UnbindUsbAsync(string bindingId, CancellationToken cancellationToken = default);
     Task<bool> UnbindUsbAsync(TopLevel xamlRoot, string bindingId, CancellationToken cancellationToken = default);
     bool TryUpdateSettings(Action update);
+    bool IsSudoModeActive();
+    bool IsGlobalSudoModeActive();
+    void DeactivateGlobalSudoMode();
+    void DeactivateSudoMode();
+    void DeactivateSettingsSudoMode();
+    event Action? SudoModeChanged;
 }
 
 public sealed record UsbBindingInfo(string Id, string DisplayName, bool IsPresent);
