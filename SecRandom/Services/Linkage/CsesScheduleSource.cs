@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using SecRandom.Core.Models.Linkage;
@@ -34,7 +34,6 @@ internal static class ScheduleErrorCodes
     public const string ClassIslandTimerStopped = "classisland.timer-stopped";
     public const string ClassIslandScheduleDisabled = "classisland.schedule-disabled";
     public const string ClassIslandScheduleUnloaded = "classisland.schedule-unloaded";
-    public const string ClassIslandTimeUnconfirmed = "classisland.time-unconfirmed";
     public const string ClassIslandUnsupportedState = "classisland.unsupported-state";
     public const string ClassIslandReadFailed = "classisland.read-failed";
 }

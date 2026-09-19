@@ -244,7 +244,6 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
             ScheduleErrorCodes.ClassIslandTimerStopped => "M_ScheduleError_ClassIslandTimerStopped",
             ScheduleErrorCodes.ClassIslandScheduleDisabled => "M_ScheduleError_ClassIslandScheduleDisabled",
             ScheduleErrorCodes.ClassIslandScheduleUnloaded => "M_ScheduleError_ClassIslandScheduleUnloaded",
-            ScheduleErrorCodes.ClassIslandTimeUnconfirmed => "M_ScheduleError_ClassIslandTimeUnconfirmed",
             ScheduleErrorCodes.ClassIslandUnsupportedState => "M_ScheduleError_ClassIslandUnsupportedState",
             ScheduleErrorCodes.ClassIslandReadFailed => "M_ScheduleError_ClassIslandReadFailed",
             _ => null

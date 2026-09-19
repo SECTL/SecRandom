@@ -110,7 +110,6 @@ public sealed class SecurityServiceTests : IDisposable
         fixture.ConfigService.ResetSaveCount();
 
         var updated = await fixture.Service.UpdateSecuritySettingsAsync(
-            null!,
             () => fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true,
             TestContext.Current.CancellationToken);
 
@@ -128,7 +127,6 @@ public sealed class SecurityServiceTests : IDisposable
         fixture.ConfigService.ResetSaveCount();
 
         var updated = await fixture.Service.UpdateSecuritySettingsAsync(
-            null!,
             () => fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true,
             TestContext.Current.CancellationToken);
 
@@ -180,7 +178,7 @@ public sealed class SecurityServiceTests : IDisposable
         var fixture = CreateFixture(Password("wrong"));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
 
-        var secret = await fixture.Service.BeginTotpSetupAsync(null!, TestContext.Current.CancellationToken);
+        var secret = await fixture.Service.BeginTotpSetupAsync(TestContext.Current.CancellationToken);
 
         Assert.Null(secret);
         Assert.Equal([SecurityFactor.Password], Assert.Single(fixture.Prompt.Requests).RequiredFactors);
@@ -210,7 +208,7 @@ public sealed class SecurityServiceTests : IDisposable
             Password("secret1"),
             new UsbDriveInfo("H:", "Remove password USB", "volume:remove-password", usbRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        Assert.True(await fixture.Service.BindUsbAsync(null!, "volume:remove-password", TestContext.Current.CancellationToken));
+        Assert.True(await fixture.Service.BindUsbAsync("volume:remove-password", TestContext.Current.CancellationToken));
         Assert.True(File.Exists(Path.Combine(usbRoot, ".SecRandom.safety.key")));
 
         var removed = await fixture.Service.RemovePasswordAsync("secret1", TestContext.Current.CancellationToken);
@@ -224,7 +222,7 @@ public sealed class SecurityServiceTests : IDisposable
     {
         var fixture = CreateFixture(Password("secret1"));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        var secret = await fixture.Service.BeginTotpSetupAsync(null!, TestContext.Current.CancellationToken);
+        var secret = await fixture.Service.BeginTotpSetupAsync(TestContext.Current.CancellationToken);
         Assert.NotNull(secret);
 
         await fixture.Service.CancelTotpSetupAsync(secret, TestContext.Current.CancellationToken);
@@ -240,7 +238,7 @@ public sealed class SecurityServiceTests : IDisposable
         var writeFault = new ThrowOnNthCredentialWrite();
         var fixture = CreateFixture(Password("secret1"), writeFault);
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        var secret = await fixture.Service.BeginTotpSetupAsync(null!, TestContext.Current.CancellationToken);
+        var secret = await fixture.Service.BeginTotpSetupAsync(TestContext.Current.CancellationToken);
         Assert.NotNull(secret);
         writeFault.ThrowOnWrite = writeFault.WriteCalls + 1;
 
@@ -273,7 +271,7 @@ public sealed class SecurityServiceTests : IDisposable
             Password("secret1"),
             new UsbDriveInfo("P:", "Authorization USB", "volume:usb-any", usbRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        Assert.True(await fixture.Service.BindUsbAsync(null!, "volume:usb-any", TestContext.Current.CancellationToken));
+        Assert.True(await fixture.Service.BindUsbAsync("volume:usb-any", TestContext.Current.CancellationToken));
         fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true;
         fixture.ConfigHandler.Data.SecuritySettings.UsbBindingEnabled = true;
         fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = false;
@@ -293,7 +291,7 @@ public sealed class SecurityServiceTests : IDisposable
             Password("secret1"),
             new UsbDriveInfo("Q:", "Authorization USB", "volume:usb-all", usbRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        Assert.True(await fixture.Service.BindUsbAsync(null!, "volume:usb-all", TestContext.Current.CancellationToken));
+        Assert.True(await fixture.Service.BindUsbAsync("volume:usb-all", TestContext.Current.CancellationToken));
         fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true;
         fixture.ConfigHandler.Data.SecuritySettings.UsbBindingEnabled = true;
         fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = true;
@@ -336,7 +334,7 @@ public sealed class SecurityServiceTests : IDisposable
             new UsbDriveInfo("F:", "Backup USB", "volume:F", secondRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
 
-        var bound = await fixture.Service.BindUsbAsync(null!, "volume:E", TestContext.Current.CancellationToken);
+        var bound = await fixture.Service.BindUsbAsync("volume:E", TestContext.Current.CancellationToken);
         var devices = await fixture.Service.GetUsbDevicesAsync(TestContext.Current.CancellationToken);
 
         Assert.True(bound);
@@ -356,7 +354,7 @@ public sealed class SecurityServiceTests : IDisposable
             Password("secret1"),
             new UsbDriveInfo("E:", "Portable USB", "volume:4A2B", originalRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        Assert.True(await fixture.Service.BindUsbAsync(null!, "volume:4A2B", TestContext.Current.CancellationToken));
+        Assert.True(await fixture.Service.BindUsbAsync("volume:4A2B", TestContext.Current.CancellationToken));
 
         Directory.Move(originalRoot, movedRoot);
         fixture.UsbCatalog.SetDevices(new UsbDriveInfo("F:", "Portable USB", "volume:4A2B", movedRoot));
@@ -376,7 +374,7 @@ public sealed class SecurityServiceTests : IDisposable
             Password("secret1"),
             new UsbDriveInfo("E:", "Marker USB", "volume:missing-marker", usbRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        Assert.True(await fixture.Service.BindUsbAsync(null!, "volume:missing-marker", TestContext.Current.CancellationToken));
+        Assert.True(await fixture.Service.BindUsbAsync("volume:missing-marker", TestContext.Current.CancellationToken));
 
         File.Delete(Path.Combine(usbRoot, ".SecRandom.safety.key"));
 
@@ -384,7 +382,7 @@ public sealed class SecurityServiceTests : IDisposable
         Assert.False(device.IsBound);
         Assert.True(device.IsPresent);
 
-        Assert.True(await fixture.Service.BindUsbAsync(null!, "volume:missing-marker", TestContext.Current.CancellationToken));
+        Assert.True(await fixture.Service.BindUsbAsync("volume:missing-marker", TestContext.Current.CancellationToken));
         Assert.Single(await fixture.Service.GetUsbBindingsAsync(TestContext.Current.CancellationToken));
     }
 
@@ -397,7 +395,7 @@ public sealed class SecurityServiceTests : IDisposable
             new UsbDriveInfo("G:", "Rejected USB", "volume:G", usbRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
 
-        var bound = await fixture.Service.BindUsbAsync(null!, "volume:G", TestContext.Current.CancellationToken);
+        var bound = await fixture.Service.BindUsbAsync("volume:G", TestContext.Current.CancellationToken);
 
         Assert.False(bound);
         Assert.False(File.Exists(Path.Combine(usbRoot, ".SecRandom.safety.key")));
@@ -413,7 +411,7 @@ public sealed class SecurityServiceTests : IDisposable
             new UsbDriveInfo("I:", "Path input USB", "volume:path-input", usbRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
 
-        var bound = await fixture.Service.BindUsbAsync(null!, usbRoot, TestContext.Current.CancellationToken);
+        var bound = await fixture.Service.BindUsbAsync(usbRoot, TestContext.Current.CancellationToken);
 
         Assert.False(bound);
         Assert.False(File.Exists(Path.Combine(usbRoot, ".SecRandom.safety.key")));
@@ -431,7 +429,7 @@ public sealed class SecurityServiceTests : IDisposable
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
         writeFault.ThrowOnWrite = writeFault.WriteCalls + 2;
 
-        var bound = await fixture.Service.BindUsbAsync(null!, "volume:save-failure", TestContext.Current.CancellationToken);
+        var bound = await fixture.Service.BindUsbAsync("volume:save-failure", TestContext.Current.CancellationToken);
 
         Assert.False(bound);
         Assert.False(File.Exists(Path.Combine(usbRoot, ".SecRandom.safety.key")));
@@ -449,7 +447,7 @@ public sealed class SecurityServiceTests : IDisposable
             new UsbDriveInfo("M:", "Existing key USB", "volume:existing-key", usbRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
 
-        var bound = await fixture.Service.BindUsbAsync(null!, "volume:existing-key", TestContext.Current.CancellationToken);
+        var bound = await fixture.Service.BindUsbAsync("volume:existing-key", TestContext.Current.CancellationToken);
 
         Assert.False(bound);
         Assert.Equal("existing-token", File.ReadAllText(existingKeyPath, System.Text.Encoding.ASCII));
@@ -466,11 +464,11 @@ public sealed class SecurityServiceTests : IDisposable
             writeFault,
             new UsbDriveInfo("K:", "Unbind persistence USB", "volume:unbind-save-failure", usbRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        Assert.True(await fixture.Service.BindUsbAsync(null!, "volume:unbind-save-failure", TestContext.Current.CancellationToken));
+        Assert.True(await fixture.Service.BindUsbAsync("volume:unbind-save-failure", TestContext.Current.CancellationToken));
         var binding = Assert.Single(await fixture.Service.GetUsbBindingsAsync(TestContext.Current.CancellationToken));
         writeFault.ThrowOnWrite = writeFault.WriteCalls + 2;
 
-        var unbound = await fixture.Service.UnbindUsbAsync(null!, binding.Id, TestContext.Current.CancellationToken);
+        var unbound = await fixture.Service.UnbindUsbAsync(binding.Id, TestContext.Current.CancellationToken);
 
         Assert.False(unbound);
         Assert.True(File.Exists(Path.Combine(usbRoot, ".SecRandom.safety.key")));
@@ -484,17 +482,17 @@ public sealed class SecurityServiceTests : IDisposable
         var drive = new UsbDriveInfo("N:", "Pending marker USB", "volume:pending-marker", usbRoot);
         var fixture = CreateFixture(Password("secret1"), drive);
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        Assert.True(await fixture.Service.BindUsbAsync(null!, drive.DeviceId, TestContext.Current.CancellationToken));
+        Assert.True(await fixture.Service.BindUsbAsync(drive.DeviceId, TestContext.Current.CancellationToken));
 
         var markerPath = Path.Combine(usbRoot, ".SecRandom.safety.key");
         var originalToken = File.ReadAllText(markerPath, System.Text.Encoding.ASCII);
         var binding = Assert.Single(await fixture.Service.GetUsbBindingsAsync(TestContext.Current.CancellationToken));
         fixture.UsbCatalog.SetDevices();
 
-        Assert.True(await fixture.Service.UnbindUsbAsync(null!, binding.Id, TestContext.Current.CancellationToken));
+        Assert.True(await fixture.Service.UnbindUsbAsync(binding.Id, TestContext.Current.CancellationToken));
         fixture.UsbCatalog.SetDevices(drive);
 
-        Assert.True(await fixture.Service.BindUsbAsync(null!, drive.DeviceId, TestContext.Current.CancellationToken));
+        Assert.True(await fixture.Service.BindUsbAsync(drive.DeviceId, TestContext.Current.CancellationToken));
         Assert.NotEqual(originalToken, File.ReadAllText(markerPath, System.Text.Encoding.ASCII));
         Assert.Single(await fixture.Service.GetUsbBindingsAsync(TestContext.Current.CancellationToken));
     }
@@ -509,7 +507,7 @@ public sealed class SecurityServiceTests : IDisposable
             writeFault,
             new UsbDriveInfo("L:", "Password removal USB", "volume:remove-password-save-failure", usbRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        Assert.True(await fixture.Service.BindUsbAsync(null!, "volume:remove-password-save-failure", TestContext.Current.CancellationToken));
+        Assert.True(await fixture.Service.BindUsbAsync("volume:remove-password-save-failure", TestContext.Current.CancellationToken));
         writeFault.ThrowOnWrite = writeFault.WriteCalls + 1;
 
         var removed = await fixture.Service.RemovePasswordAsync("secret1", TestContext.Current.CancellationToken);
@@ -529,7 +527,7 @@ public sealed class SecurityServiceTests : IDisposable
             Password("secret1"),
             new UsbDriveInfo("O:", "Replaced key USB", "volume:remove-password-replaced-key", usbRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        Assert.True(await fixture.Service.BindUsbAsync(null!, "volume:remove-password-replaced-key", TestContext.Current.CancellationToken));
+        Assert.True(await fixture.Service.BindUsbAsync("volume:remove-password-replaced-key", TestContext.Current.CancellationToken));
         File.WriteAllText(keyPath, "replacement-token", System.Text.Encoding.ASCII);
 
         var removed = await fixture.Service.RemovePasswordAsync("secret1", TestContext.Current.CancellationToken);
@@ -599,13 +597,13 @@ public sealed class SecurityServiceTests : IDisposable
     {
         public List<SecurityVerificationRequest> Requests { get; } = [];
 
-        public Task<SecurityVerificationResponse> RequestAsync(
-            TopLevel xamlRoot,
+        public Task<SecurityVerificationResult> RequestAsync(
             SecurityVerificationRequest request,
+            Func<SecurityVerificationResponse, CancellationToken, Task<SecurityVerificationResult>> verify,
             CancellationToken cancellationToken = default)
         {
             Requests.Add(request);
-            return Task.FromResult(response);
+            return verify(response, cancellationToken);
         }
     }
 

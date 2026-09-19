@@ -20,7 +20,6 @@ namespace SecRandom.Services.Security;
 internal static class SecurityVerificationDialog
 {
     public static async Task<SecurityVerificationResult> ShowAsync(
-        TopLevel xamlRoot,
         SecurityVerificationRequest request,
         Func<SecurityVerificationResponse, CancellationToken, Task<SecurityVerificationResult>> verify,
         CancellationToken cancellationToken = default)
@@ -136,9 +135,12 @@ internal static class SecurityVerificationDialog
             panel.Children.Add(usbStatusPanel);
         }
 
+        var host = new SecurityDialogHost();
+        host.Show();
+
         var dialog = new FATaskDialog
         {
-            XamlRoot = xamlRoot,
+            XamlRoot = host,
             Title = SR.M_VerificationDialogTitle,
             Header = SR.M_VerificationDialogTitle,
             Content = panel
@@ -207,12 +209,19 @@ internal static class SecurityVerificationDialog
             timer.Start();
         }
 
-        return await dialog.ShowAsync() switch
+        try
         {
-            "preview" => new SecurityVerificationResult(false, SecurityVerificationFailure.PreviewRequested),
-            "verify" => finalResult ?? new SecurityVerificationResult(false, SecurityVerificationFailure.Cancelled),
-            _ => new SecurityVerificationResult(false, SecurityVerificationFailure.Cancelled)
-        };
+            return await dialog.ShowAsync() switch
+            {
+                "preview" => new SecurityVerificationResult(false, SecurityVerificationFailure.PreviewRequested),
+                "verify" => finalResult ?? new SecurityVerificationResult(false, SecurityVerificationFailure.Cancelled),
+                _ => new SecurityVerificationResult(false, SecurityVerificationFailure.Cancelled)
+            };
+        }
+        finally
+        {
+            host.Close();
+        }
 
         void ShowError(SecurityVerificationResult result)
         {

@@ -1,6 +1,5 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Avalonia.Controls;
 
 namespace SecRandom.Services.Security;
 
@@ -9,7 +8,6 @@ public sealed class SecurityVerificationPrompt : ISecurityVerificationPrompt
     private bool _isShowing;
 
     public async Task<SecurityVerificationResult> RequestAsync(
-        TopLevel xamlRoot,
         SecurityVerificationRequest request,
         Func<SecurityVerificationResponse, CancellationToken, Task<SecurityVerificationResult>> verify,
         CancellationToken cancellationToken = default)
@@ -20,7 +18,7 @@ public sealed class SecurityVerificationPrompt : ISecurityVerificationPrompt
         _isShowing = true;
         try
         {
-            return await SecurityVerificationDialog.ShowAsync(xamlRoot, request, verify, cancellationToken)
+            return await SecurityVerificationDialog.ShowAsync(request, verify, cancellationToken)
                 .WaitAsync(cancellationToken);
         }
         catch (OperationCanceledException)

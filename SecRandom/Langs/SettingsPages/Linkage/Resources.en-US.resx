@@ -135,7 +135,6 @@
   <data name="M_ScheduleError_ClassIslandTimerStopped"><value>The ClassIsland timer is not running.</value></data>
   <data name="M_ScheduleError_ClassIslandScheduleDisabled"><value>ClassIsland has not enabled its timetable.</value></data>
   <data name="M_ScheduleError_ClassIslandScheduleUnloaded"><value>ClassIsland has not loaded today's timetable.</value></data>
-  <data name="M_ScheduleError_ClassIslandTimeUnconfirmed"><value>ClassIsland has not confirmed the current class-time state.</value></data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState"><value>ClassIsland returned an unsupported current state: {0}.</value></data>
   <data name="M_ScheduleError_ClassIslandReadFailed"><value>Unable to read the ClassIsland class state.</value></data>
 </root>

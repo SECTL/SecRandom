@@ -179,13 +179,13 @@ public sealed class PluginDrawServiceTests : IDisposable
             return true;
         }
 
-        public Task<bool> AuthorizePasswordAsync(TopLevel xamlRoot, Func<Task> action, CancellationToken cancellationToken = default)
+        public Task<bool> AuthorizePasswordAsync(Func<Task> action, CancellationToken cancellationToken = default)
             => AuthorizeAsync(SecurityOperation.OpenSettings, action, cancellationToken);
 
         public Task<SecurityAuthorizationResult> AuthorizeSettingsAsync(Func<Task> action, Func<Task> previewAction, CancellationToken cancellationToken = default)
             => Task.FromResult(new SecurityAuthorizationResult(allow, false));
 
-        public Task<bool> UpdateSecuritySettingsAsync(TopLevel xamlRoot, Action update, CancellationToken cancellationToken = default)
+        public Task<bool> UpdateSecuritySettingsAsync(Action update, CancellationToken cancellationToken = default)
         {
             if (allow)
                 update();
@@ -199,9 +199,6 @@ public sealed class PluginDrawServiceTests : IDisposable
             => Task.FromResult(allow);
 
         public Task<string?> BeginTotpSetupAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult<string?>(null);
-
-        public Task<string?> BeginTotpSetupAsync(TopLevel xamlRoot, CancellationToken cancellationToken = default)
             => Task.FromResult<string?>(null);
 
         public Task CancelTotpSetupAsync(string secret, CancellationToken cancellationToken = default)
@@ -219,13 +216,7 @@ public sealed class PluginDrawServiceTests : IDisposable
         public Task<bool> BindUsbAsync(string deviceId, CancellationToken cancellationToken = default)
             => Task.FromResult(allow);
 
-        public Task<bool> BindUsbAsync(TopLevel xamlRoot, string deviceId, CancellationToken cancellationToken = default)
-            => Task.FromResult(allow);
-
         public Task<bool> UnbindUsbAsync(string bindingId, CancellationToken cancellationToken = default)
-            => Task.FromResult(allow);
-
-        public Task<bool> UnbindUsbAsync(TopLevel xamlRoot, string bindingId, CancellationToken cancellationToken = default)
             => Task.FromResult(allow);
 
         public bool TryUpdateSettings(Action update)

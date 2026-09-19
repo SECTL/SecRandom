@@ -128,27 +128,6 @@ public partial class App : Application
     internal bool IsStopping => _isStopping;
     public static bool IsDesktop;
 
-    public TopLevel GetRootWindow()
-    {
-        if (_desktopLifetime?.Windows
-                .Where(window => window.GetType().Name != "TrayPopupRoot"
-                                 && window is { IsActive: true, IsVisible: true, PlatformImpl: not null })
-                .OrderBy(window => ReferenceEquals(window, _floatingWindow) ? 1 : 0)
-                .FirstOrDefault() is TopLevel desktopRoot)
-            return desktopRoot;
-
-        if (_mobileViewHost is not null && TopLevel.GetTopLevel(_mobileViewHost) is { } mobileRoot)
-            return mobileRoot;
-
-        if (_floatingWindow is { PlatformImpl: not null } floatingRoot)
-        {
-            floatingRoot.Activate();
-            return floatingRoot;
-        }
-
-        throw new InvalidOperationException("No active application TopLevel is available.");
-    }
-
     public event EventHandler? AppStarted;
     public event EventHandler? AppStopping;
 
@@ -1722,7 +1701,13 @@ public partial class App : Application
 
     public static void ShowSettingsWindow(string? pageId)
     {
-        ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeSettingsAsync(
+        ObserveTask(ShowSettingsWindowWithAuthAsync(pageId),
+            "Settings window authorization failed.");
+    }
+
+    private static async Task ShowSettingsWindowWithAuthAsync(string? pageId)
+    {
+        await IAppHost.GetService<ISecurityService>().AuthorizeSettingsAsync(
             async () =>
             {
                 await ShowSettingsWindowCoreAsync();
@@ -1738,7 +1723,7 @@ public partial class App : Application
                         "Settings preview display failed.");
                 }, DispatcherPriority.Background);
                 return Task.CompletedTask;
-            }), "Settings window authorization failed.");
+            });
     }
 
     private static async Task ShowSettingsPreviewAsync(string? pageId)

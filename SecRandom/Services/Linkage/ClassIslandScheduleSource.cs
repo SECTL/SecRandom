@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using ClassIsland.Shared.Enums;
@@ -21,6 +21,7 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
     private IPublicLessonsService? _lessons;
     private string _lastKnownCourseName = string.Empty;
     private DateOnly? _lastKnownCourseDate;
+    private DateTime? _lastKnownCourseEnd;
     private DateTimeOffset _nextConnectAttempt = DateTimeOffset.MinValue;
 
     public string SourceName => "ClassIsland";
@@ -40,13 +41,14 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
                 return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandScheduleDisabled);
             if (!lessons.IsClassPlanLoaded)
                 return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandScheduleUnloaded);
-            if (!lessons.IsLessonConfirmed)
-                return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandTimeUnconfirmed);
 
             var state = lessons.CurrentState switch
             {
                 TimeState.OnClass => CourseTimeState.OnClass,
-                TimeState.Breaking => CourseTimeState.Breaking,
+                // ClassIsland 在最后一节课后报告 AfterSchool，在第一节课前或时间表未覆盖的间隙报告 None，
+                // PrepareOnClass 为预留的上课准备状态。这些都是明确的非上课时段，与 CSES 源一致视为
+                // 课间并保持可用，由启用窗口决定是否豁免。
+                TimeState.Breaking or TimeState.None or TimeState.AfterSchool or TimeState.PrepareOnClass => CourseTimeState.Breaking,
                 _ => CourseTimeState.Unknown
             };
             if (state == CourseTimeState.Unknown)
@@ -68,6 +70,9 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
             var currentItem = lessons.CurrentTimeLayoutItem;
             var start = ParseTime(currentItem?.StartTime, now.TimeOfDay);
             var end = ParseTime(currentItem?.EndTime, now.TimeOfDay);
+            // 记录当前课程结束时间，供课后禁用延迟窗口计算使用
+            if (state == CourseTimeState.OnClass && currentItem?.EndTime is { } endTime)
+                _lastKnownCourseEnd = now.Date + endTime;
             var current = string.IsNullOrEmpty(currentName)
                 ? null
                 : new CourseInfo(currentName, DayOfWeekNumber(now.DayOfWeek), TimeOnly.FromTimeSpan(start), TimeOnly.FromTimeSpan(end));
@@ -85,6 +90,12 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
             var currentCourseRemaining = state == CourseTimeState.OnClass
                 ? Positive(lessons.OnBreakingTimeLeftTime)
                 : null;
+            // 与 CSES 源一致：课后经过的时间驱动课后禁用延迟窗口与刷新调度
+            var sincePreviousEnd = _lastKnownCourseEnd is { } lastEnd &&
+                lastEnd.Date == now.Date &&
+                lastEnd.TimeOfDay <= now.TimeOfDay
+                ? (TimeSpan?)(now - lastEnd)
+                : null;
             return new CourseScheduleSnapshot(
                 true,
                 state,
@@ -93,7 +104,7 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
                 next,
                 currentCourseRemaining,
                 nextCourseIn,
-                null,
+                sincePreviousEnd,
                 SourceName,
                 $"{lessons.CurrentSelectedIndex}:{lessons.CurrentState}");
         }

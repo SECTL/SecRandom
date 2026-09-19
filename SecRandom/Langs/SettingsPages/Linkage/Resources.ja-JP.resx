@@ -135,7 +135,6 @@
   <data name="M_ScheduleError_ClassIslandTimerStopped"><value>ClassIsland のタイマーが動作していません。</value></data>
   <data name="M_ScheduleError_ClassIslandScheduleDisabled"><value>ClassIsland で時間割が有効になっていません。</value></data>
   <data name="M_ScheduleError_ClassIslandScheduleUnloaded"><value>ClassIsland が当日の時間割を読み込んでいません。</value></data>
-  <data name="M_ScheduleError_ClassIslandTimeUnconfirmed"><value>ClassIsland が現在の授業時間状態を確認していません。</value></data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState"><value>ClassIsland から未対応の現在状態が返されました: {0}。</value></data>
   <data name="M_ScheduleError_ClassIslandReadFailed"><value>ClassIsland の授業状態を読み取れません。</value></data>
 </root>
