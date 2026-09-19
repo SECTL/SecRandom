@@ -114,6 +114,7 @@ public partial class App : Application
     private static MainWindow? _settingsWindow;
     private static Task? _runtimeServicesStartupTask;
     private NativeMenuItem? _floatingWindowMenuItem;
+    private NativeMenuItem? _exitSudoModeMenuItem;
     private static IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     private IHost? _mobileHost;
     private ISingleViewApplicationLifetime? _singleViewLifetime;
@@ -1119,7 +1120,11 @@ public partial class App : Application
         var menu = this.FindResource(@"AppMenu") as NativeMenu;
         taskBarIconService.MainTaskBarIcon.Menu = menu;
         _floatingWindowMenuItem = menu?.Items.ElementAtOrDefault(3) as NativeMenuItem;
+        _exitSudoModeMenuItem = menu?.Items.ElementAtOrDefault(9) as NativeMenuItem;
         RefreshTrayWindowMenuItems();
+        RefreshSudoMenuItem();
+        
+        IAppHost.GetService<ISecurityService>().SudoModeChanged += RefreshSudoMenuItem;
         taskBarIconService.MainTaskBarIcon.IsVisible = true;
         taskBarIconService.MainTaskBarIcon.Clicked += MainTaskBarIconOnClicked;
         IAppHost.GetService<DesktopIntegrationService>().EnsureConfiguredIntegrations();
@@ -1142,6 +1147,8 @@ public partial class App : Application
 
     private async Task StopAsync(bool requestLifetimeShutdown)
     {
+        IAppHost.TryGetService<ISecurityService>().SudoModeChanged -= RefreshSudoMenuItem;
+
         lock (_shutdownGate)
         {
             if (_isStopping)
@@ -2080,6 +2087,8 @@ public partial class App : Application
             return;
         }
 
+        RefreshSudoMenuItem();
+
         var taskBarIconService = IAppHost.Host!.Services
             .GetServices<IHostedService>().OfType<TaskBarIconService>().First();
 
@@ -2143,9 +2152,23 @@ public partial class App : Application
                 : SecRandom.Langs.Common.Resources.Menu_ShowFloatingWindow;
     }
 
+    private void RefreshSudoMenuItem()
+    {
+        if (_exitSudoModeMenuItem is not null)
+        {
+            var securityService = IAppHost.GetService<ISecurityService>();
+            _exitSudoModeMenuItem.IsVisible = securityService.IsGlobalSudoModeActive();
+        }
+    }
+
     private void MenuItemOpenSettings_OnClick(object? sender, EventArgs e)
     {
         ShowSettingsWindow();
+    }
+
+    private void MenuItemExitSudoMode_OnClick(object? sender, EventArgs e)
+    {
+        IAppHost.GetService<ISecurityService>().DeactivateGlobalSudoMode();
     }
 
     private void MenuItemRestartProgram_OnClick(object? sender, EventArgs e)

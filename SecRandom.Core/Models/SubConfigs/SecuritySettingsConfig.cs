@@ -24,6 +24,8 @@ public partial class SecuritySettingsConfig : ObservableObject
     [ObservableProperty] private bool _protectLotteryReset;
     [ObservableProperty] private bool _protectLinkage;
 
+    [ObservableProperty] private int _sudoModeDurationSeconds = 60;
+
     // Compatibility bridges for the original placeholder fields.
     public bool VerifyBeforeSensitiveOperations
     {
