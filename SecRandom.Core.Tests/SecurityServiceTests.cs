@@ -307,6 +307,25 @@ public sealed class SecurityServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task VerifyAsync_WhenAnySelectedFactorModeHasOnlyTotp_AuthorizesWithoutPassword()
+    {
+        var fixture = CreateFixture(Password("secret1"));
+        await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
+        var secret = await fixture.Service.BeginTotpSetupAsync(null!, TestContext.Current.CancellationToken);
+        Assert.NotNull(secret);
+        Assert.True(await fixture.Service.ConfirmTotpAsync(secret, CreateTotpCode(secret), TestContext.Current.CancellationToken));
+        fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true;
+        fixture.ConfigHandler.Data.SecuritySettings.TotpEnabled = true;
+        fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = false;
+
+        var result = await fixture.Service.VerifyAsync(
+            new SecurityVerificationResponse(string.Empty, CreateTotpCode(secret), UsbPresent: false),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsAuthorized);
+    }
+
+    [Fact]
     public void SecurityVerificationEligibility_RequiresAnyOrAllSelectedFactorInput()
     {
         var anyFactorRequest = new SecurityVerificationRequest(

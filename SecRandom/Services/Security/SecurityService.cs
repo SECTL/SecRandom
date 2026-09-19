@@ -213,9 +213,12 @@ internal sealed class SecurityService(
         {
             lock (_gate)
             {
+                var requireAllBefore = Settings.RequireAllSelectedFactors;
                 update();
                 NormalizeSettings(context.Credentials);
                 configHandler.Save();
+                if (requireAllBefore != Settings.RequireAllSelectedFactors)
+                    TrySaveCredentials(context);
             }
 
             return Task.FromResult(false);
@@ -245,7 +248,10 @@ internal sealed class SecurityService(
             var usbPassed = factors.Contains(SecurityFactor.Usb) &&
                             response.UsbPresent &&
                             metadata.UsbBindings.Any(IsBindingPresent);
-            if (!Settings.RequireAllSelectedFactors && usbPassed)
+            var totpStandalone = factors.Contains(SecurityFactor.Totp) &&
+                                 metadata.TotpSecret is not null &&
+                                 TotpService.Verify(metadata.TotpSecret, response.TotpCode, _timeProvider.GetUtcNow());
+            if (!Settings.RequireAllSelectedFactors && (usbPassed || totpStandalone))
             {
                 metadata.FailedAttempts = 0;
                 metadata.LockedUntilUtc = null;
@@ -798,6 +804,11 @@ internal sealed class SecurityService(
     {
         try
         {
+            // 「全部已选验证方式均需验证」模式下 TOTP 密钥仅存在于加密负载内；
+            // 「任意已选验证方式」模式下同时在信封写入明文副本，供免密校验 TOTP 使用。
+            context.Metadata.TotpSecret = Settings.RequireAllSelectedFactors
+                ? null
+                : context.Credentials.TotpSecret;
             credentialStore.Save(context);
             return true;
         }
