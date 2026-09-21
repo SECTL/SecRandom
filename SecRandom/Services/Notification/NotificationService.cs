@@ -282,6 +282,10 @@ public sealed class NotificationService : IDisposable
             {
                 System.Diagnostics.Debug.WriteLine($"IPC notification IsAlive failed: {aggEx.InnerExceptions[0].Message}");
             }
+            catch (dotnetCampus.Ipc.Exceptions.IpcPeerConnectionBrokenException)
+            {
+                // Peer disconnected during IsAlive check
+            }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"IPC notification IsAlive failed: {ex.Message}");
@@ -301,6 +305,11 @@ public sealed class NotificationService : IDisposable
             catch (AggregateException aggEx) when (aggEx.InnerExceptions.Count == 1)
             {
                 System.Diagnostics.Debug.WriteLine($"IPC notification ShowNotification failed: {aggEx.InnerExceptions[0].Message}");
+                builtInFallback?.Invoke();
+            }
+            catch (dotnetCampus.Ipc.Exceptions.IpcPeerConnectionBrokenException)
+            {
+                // Peer disconnected during notification - trigger fallback silently
                 builtInFallback?.Invoke();
             }
             catch (Exception ex)

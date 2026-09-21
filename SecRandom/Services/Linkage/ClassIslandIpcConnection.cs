@@ -236,8 +236,15 @@ public sealed class ClassIslandIpcConnection : IDisposable
         InvalidateConnection();
         ScheduleRetry();
         
-        // Trigger reconnection in background
-        _ = Task.Run(() => TryConnectAsync(CancellationToken.None));
+        // Delay reconnection to avoid race with ClassIsland's broadcast loop
+        // ClassIsland broadcasts currentTimeStateChanged every second; 
+        // immediate reconnect can race with its BroadcastNotificationAsync
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
+            if (!_isDisposed)
+                await TryConnectAsync(CancellationToken.None).ConfigureAwait(false);
+        });
         
         // Notify state changed on disconnection
         StateChanged?.Invoke(this, EventArgs.Empty);
