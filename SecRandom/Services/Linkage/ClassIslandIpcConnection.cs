@@ -234,7 +234,9 @@ public sealed class ClassIslandIpcConnection : IDisposable
 
         _logger.LogDebug("ClassIsland IPC 连接已断开，将尝试重连。");
         InvalidateConnection();
-        ScheduleRetry();
+        // 重置重试时间，允许立即重连（500ms 后）
+        _nextConnectAttempt = DateTimeOffset.MinValue;
+        _currentRetryDelay = MinRetryDelay;
         
         // Delay reconnection to avoid race with ClassIsland's broadcast loop
         // ClassIsland broadcasts currentTimeStateChanged every second; 
