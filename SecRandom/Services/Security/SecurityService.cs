@@ -213,7 +213,6 @@ internal sealed class SecurityService(
                 return new SecurityAuthorizationResult(false);
             }
 
-            ActivateSudoMode();
             _settingsSudoActive = true;
 
             await action();
