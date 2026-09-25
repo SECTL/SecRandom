@@ -10,13 +10,20 @@ using SecRandom4Ci.Interface.Services;
 
 namespace SecRandom.Services.Linkage;
 
+/// <summary>
+/// ClassIsland IPC 的唯一连接入口。课程联动与 SecRandom4Ci 通知共用同一条 <see cref="IpcClient"/>，
+/// 避免两个服务各建一条管道并各自订阅广播（issue #274 的 CPU 自激来源之一）。
+/// </summary>
 public sealed class ClassIslandIpcConnection : IDisposable
 {
     private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan JsonRouteReadyDelay = TimeSpan.FromSeconds(1);
-    private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan IpcCallTimeout = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan LessonsWaitTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan NotificationWaitTimeout = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan MinRetryDelay = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan ReconnectDelay = TimeSpan.FromMilliseconds(500);
     private static readonly Version MinimumPluginVersion = new(1, 2, 0, 0);
 
     private readonly ILogger<ClassIslandIpcConnection> _logger;
@@ -29,7 +36,7 @@ public sealed class ClassIslandIpcConnection : IDisposable
     private DateTimeOffset _nextConnectAttempt = DateTimeOffset.MinValue;
     private TimeSpan _currentRetryDelay = MinRetryDelay;
     private bool _isDisposed;
-    private volatile int _connectionState; // 0=disconnected, 1=connecting, 2=connected
+    private volatile int _connectionState; // 0=disconnected, 1=connecting
 
     public IPublicLessonsService? LessonsService
     {
@@ -71,47 +78,77 @@ public sealed class ClassIslandIpcConnection : IDisposable
         _logger = logger;
     }
 
-    public async Task<IPublicLessonsService?> GetLessonsServiceAsync(CancellationToken cancellationToken = default)
-    {
-        var service = LessonsService;
-        if (service is not null)
-            return service;
+    public Task<IPublicLessonsService?> GetLessonsServiceAsync(CancellationToken cancellationToken = default)
+        => WaitForLessonsServiceAsync(LessonsWaitTimeout, cancellationToken);
 
-        // Trigger connection if not already trying
-        if (Interlocked.CompareExchange(ref _connectionState, 1, 0) == 0)
-        {
-            _ = Task.Run(() => TryConnectAsync(cancellationToken));
-        }
-
-        // Wait for connection with timeout
-        var timeout = TimeSpan.FromSeconds(10);
-        var start = DateTime.UtcNow;
-        while (DateTime.UtcNow - start < timeout)
-        {
-            service = LessonsService;
-            if (service is not null)
-                return service;
-            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
-        }
-        return null;
-    }
-
+    /// <summary>
+    /// 通知发送路径只等一个很短的窗口：拿不到就立刻走内置回退。等待时间过长会把内置通知
+    /// （以及抽取前就该打开的 QuickDraw 结果窗口）拖到十秒之后。
+    /// </summary>
     public async Task<ISecRandomService?> GetNotificationServiceAsync(CancellationToken cancellationToken = default)
     {
         var service = NotificationService;
         if (service is not null)
             return service;
 
-        // Ensure connection is attempted
-        await GetLessonsServiceAsync(cancellationToken).ConfigureAwait(false);
+        await WaitForLessonsServiceAsync(NotificationWaitTimeout, cancellationToken).ConfigureAwait(false);
         return NotificationService;
     }
 
-    private async Task TryConnectAsync(CancellationToken cancellationToken)
+    private async Task<IPublicLessonsService?> WaitForLessonsServiceAsync(
+        TimeSpan waitTimeout,
+        CancellationToken cancellationToken)
+    {
+        var service = LessonsService;
+        if (service is not null)
+            return service;
+
+        // 退避期内直接返回：否则每次调用都要白等一整个超时窗口
+        if (_isDisposed || DateTimeOffset.UtcNow < NextConnectAttempt)
+            return null;
+
+        if (Interlocked.CompareExchange(ref _connectionState, 1, 0) == 0 && !_isDisposed)
+            _ = Task.Run(() => TryConnectAsync());
+
+        var deadline = DateTimeOffset.UtcNow + waitTimeout;
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            service = LessonsService;
+            if (service is not null)
+                return service;
+            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+        }
+
+        return null;
+    }
+
+    private DateTimeOffset NextConnectAttempt
+    {
+        get
+        {
+            lock (_stateLock)
+            {
+                return _nextConnectAttempt;
+            }
+        }
+        set
+        {
+            lock (_stateLock)
+            {
+                _nextConnectAttempt = value;
+            }
+        }
+    }
+
+    private async Task TryConnectAsync()
     {
         try
         {
-            await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
+            await EnsureConnectedAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogDebug(exception, "连接 ClassIsland IPC 时发生未处理异常。");
         }
         finally
         {
@@ -121,7 +158,7 @@ public sealed class ClassIslandIpcConnection : IDisposable
 
     private async Task<bool> EnsureConnectedAsync(CancellationToken cancellationToken)
     {
-        if (DateTimeOffset.UtcNow < _nextConnectAttempt)
+        if (_isDisposed || DateTimeOffset.UtcNow < NextConnectAttempt)
             return false;
 
         await _connectionGate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -130,12 +167,13 @@ public sealed class ClassIslandIpcConnection : IDisposable
             if (IsConnected)
                 return true;
 
-            if (DateTimeOffset.UtcNow < _nextConnectAttempt)
+            if (_isDisposed || DateTimeOffset.UtcNow < NextConnectAttempt)
                 return false;
 
             var client = new IpcClient();
-            
-            // Subscribe to ClassIsland lifecycle notifications (NOT CurrentTimeStateChanged which fires every second)
+
+            // 只订阅生命周期事件。ClassIsland 只在状态变化时广播 CurrentTimeStateChanged，
+            // 每秒变化的是它自己的主计时器；倒计时由刷新时按需读取，不需要额外订阅。
             client.JsonIpcProvider.AddNotifyHandler(IpcRoutedNotifyIds.OnClassNotifyId, OnClassIslandStateChanged);
             client.JsonIpcProvider.AddNotifyHandler(IpcRoutedNotifyIds.OnBreakingTimeNotifyId, OnClassIslandStateChanged);
             client.JsonIpcProvider.AddNotifyHandler(IpcRoutedNotifyIds.OnAfterSchoolNotifyId, OnClassIslandStateChanged);
@@ -157,32 +195,33 @@ public sealed class ClassIslandIpcConnection : IDisposable
 
                 var lessons = GeneratedIpcFactory.CreateIpcProxy<IPublicLessonsService>(client.Provider, client.PeerProxy);
 
-                // Test if lessons service works (ClassIsland core IPC)
-                bool lessonsWork = false;
-                try
-                {
-                    _ = lessons.IsTimerRunning;
-                    lessonsWork = true;
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Lessons service test failed: {ex.Message}");
-                }
+                // 探测课程服务可用性；属性读取也带超时，避免 ClassIsland 卡住时连接流程被拖死
+                var lessonsProbe = await TryInvokeWithTimeoutAsync(() => lessons.IsTimerRunning, IpcCallTimeout)
+                    .ConfigureAwait(false);
+                var lessonsWork = lessonsProbe.Success;
 
-                // Try to get notification service (SecRandom4Ci plugin - optional)
+                // SecRandom4Ci 插件为可选依赖，但必须通过版本门槛（旧插件不满足通知契约）
                 ISecRandomService? notification = null;
                 try
                 {
                     notification = client.Provider.CreateIpcProxy<ISecRandomService>(client.PeerProxy);
-                    var isAlive = notification.IsAlive();
-                    if (!string.Equals(isAlive, "Yes", StringComparison.Ordinal))
+                    var aliveProbe = await TryInvokeWithTimeoutAsync(notification.IsAlive, IpcCallTimeout)
+                        .ConfigureAwait(false);
+                    var versionProbe = await TryInvokeWithTimeoutAsync(notification.GetPluginVersion, IpcCallTimeout)
+                        .ConfigureAwait(false);
+                    var isAlive = aliveProbe.Success ? aliveProbe.Value : null;
+                    var pluginVersion = versionProbe.Success ? versionProbe.Value : null;
+                    if (!IsNotificationServiceUsable(isAlive, pluginVersion))
                     {
+                        _logger.LogDebug(
+                            "SecRandom4Ci 插件不可用或版本低于 {MinimumPluginVersion}：IsAlive={IsAlive}，版本={PluginVersion}。",
+                            MinimumPluginVersion, isAlive, pluginVersion);
                         notification = null;
                     }
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Notification service not available: {ex.Message}");
+                    _logger.LogDebug(exception, "获取 SecRandom4Ci 通知服务失败。");
                     notification = null;
                 }
 
@@ -194,10 +233,13 @@ public sealed class ClassIslandIpcConnection : IDisposable
                     return false;
                 }
 
-                _client = client;
-                _lessonsService = lessons;
-                _notificationService = notification;
-                _nextConnectAttempt = DateTimeOffset.MinValue;
+                lock (_stateLock)
+                {
+                    _client = client;
+                    _lessonsService = lessons;
+                    _notificationService = notification;
+                }
+                NextConnectAttempt = DateTimeOffset.MinValue;
                 _currentRetryDelay = MinRetryDelay;
 
                 if (notification is not null)
@@ -209,7 +251,6 @@ public sealed class ClassIslandIpcConnection : IDisposable
                     _logger.LogInformation("已连接到 ClassIsland IPC：管道={PipeName}，仅课程联动可用（未安装 SecRandom4Ci 插件）。", IpcClient.PipeName);
                 }
 
-                // Notify state changed on successful connection
                 StateChanged?.Invoke(this, EventArgs.Empty);
                 return true;
             }
@@ -227,6 +268,29 @@ public sealed class ClassIslandIpcConnection : IDisposable
         }
     }
 
+    /// <summary>
+    /// 通知服务是否可用：插件必须自报存活，并且版本不低于通知契约的最低要求。
+    /// </summary>
+    internal static bool IsNotificationServiceUsable(string? isAlive, Version? pluginVersion)
+        => string.Equals(isAlive, "Yes", StringComparison.Ordinal)
+           && pluginVersion is not null
+           && pluginVersion >= MinimumPluginVersion;
+
+    /// <summary>
+    /// 同步 IPC 调用不能无限等待：ClassIsland 卡住时按超时返回失败，让调用方走“不可用”分支。
+    /// </summary>
+    private static async Task<(bool Success, T Value)> TryInvokeWithTimeoutAsync<T>(Func<T> invoke, TimeSpan timeout)
+    {
+        try
+        {
+            return (true, await Task.Run(invoke).WaitAsync(timeout).ConfigureAwait(false));
+        }
+        catch (Exception)
+        {
+            return (false, default!);
+        }
+    }
+
     private void OnPeerConnectionBroken()
     {
         if (_isDisposed)
@@ -234,21 +298,24 @@ public sealed class ClassIslandIpcConnection : IDisposable
 
         _logger.LogDebug("ClassIsland IPC 连接已断开，将尝试重连。");
         InvalidateConnection();
-        // 重置重试时间，允许立即重连（500ms 后）
-        _nextConnectAttempt = DateTimeOffset.MinValue;
+        // 断开后允许立即重连，但留一点间隔，避免与 ClassIsland 的广播/管道清理抢时序
+        NextConnectAttempt = DateTimeOffset.MinValue;
         _currentRetryDelay = MinRetryDelay;
-        
-        // Delay reconnection to avoid race with ClassIsland's broadcast loop
-        // ClassIsland broadcasts currentTimeStateChanged every second; 
-        // immediate reconnect can race with its BroadcastNotificationAsync
+
         _ = Task.Run(async () =>
         {
-            await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
-            if (!_isDisposed)
-                await TryConnectAsync(CancellationToken.None).ConfigureAwait(false);
+            try
+            {
+                await Task.Delay(ReconnectDelay).ConfigureAwait(false);
+                if (!_isDisposed)
+                    await TryConnectAsync().ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogDebug(exception, "ClassIsland IPC 重连失败，等待下一次刷新重试。");
+            }
         });
-        
-        // Notify state changed on disconnection
+
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -262,13 +329,15 @@ public sealed class ClassIslandIpcConnection : IDisposable
 
     private void InvalidateConnection()
     {
+        IpcClient? client;
         lock (_stateLock)
         {
+            client = _client;
+            _client = null;
             _lessonsService = null;
             _notificationService = null;
         }
-        DisposeClient(_client);
-        _client = null;
+        DisposeClient(client);
     }
 
     private static void DisposeClient(IpcClient? client)
@@ -287,7 +356,7 @@ public sealed class ClassIslandIpcConnection : IDisposable
 
     private void ScheduleRetry()
     {
-        _nextConnectAttempt = DateTimeOffset.UtcNow.Add(_currentRetryDelay);
+        NextConnectAttempt = DateTimeOffset.UtcNow.Add(_currentRetryDelay);
         _currentRetryDelay = TimeSpan.FromSeconds(Math.Min(_currentRetryDelay.TotalSeconds * 2, MaxRetryDelay.TotalSeconds));
     }
 
@@ -298,6 +367,6 @@ public sealed class ClassIslandIpcConnection : IDisposable
 
         _isDisposed = true;
         InvalidateConnection();
-        _connectionGate.Dispose();
+        // 不释放 _connectionGate：进行中的等待/连接可能仍持有它
     }
 }

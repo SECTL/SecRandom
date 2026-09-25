@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -59,11 +59,14 @@ public sealed class CourseLinkageService
                 ? CourseScheduleSnapshot.Unavailable("Off")
                 : await source.GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
 
-            // Semantic comparison: ignore time-varying fields (countdown timers)
-            if (SnapshotsEqual(_snapshot, next))
+            // 语义比较只用来决定“是否通知订阅者”：倒计时字段每秒都在变，按 record 全量相等判断会不断
+            // 触发 StateChanged，把 CourseLinkageHostedService 变成自激刷新循环（issue #274）。
+            // 但快照本身必须始终更新 —— 课前解禁、课后禁用延迟、课前重置和刷新调度都只从这里读倒计时。
+            var stateChangedSemantically = !SnapshotsEqual(_snapshot, next);
+            _snapshot = next;
+            if (!stateChangedSemantically)
                 return;
 
-            _snapshot = next;
             stateChanged = true;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -74,11 +77,8 @@ public sealed class CourseLinkageService
         {
             _logger.LogWarning(exception, "刷新课程联动状态失败。");
             var unavailable = CourseScheduleSnapshot.Unavailable("Unknown", exception.Message);
-            if (!SnapshotsEqual(_snapshot, unavailable))
-            {
-                _snapshot = unavailable;
-                stateChanged = true;
-            }
+            stateChanged = !SnapshotsEqual(_snapshot, unavailable);
+            _snapshot = unavailable;
         }
         finally
         {
