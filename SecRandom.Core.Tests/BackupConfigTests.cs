@@ -37,6 +37,7 @@ public class BackupConfigTests
 
         Assert.False(backup.CloudAutoBackupEnabled);
         Assert.Equal(5, backup.CloudAutoBackupMaxCount);
+        Assert.Equal(string.Empty, backup.CloudDeviceAlias);
         Assert.False(backup.CloudIncludeImages);
         Assert.False(backup.CloudIncludeAudio);
         Assert.True(backup.CloudIncludeConfig);

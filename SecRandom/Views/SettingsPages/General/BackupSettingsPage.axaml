@@ -221,6 +221,15 @@
                         </fa:FASettingsExpander.Footer>
                     </fa:FASettingsExpander>
 
+                    <fa:FASettingsExpander x:Name="S_CloudDeviceAlias"
+                                           Header="{x:Static lsb:Resources.S_CloudDeviceAlias}"
+                                           Description="{x:Static lsb:Resources.S_CloudDeviceAlias_D}"
+                                           IconSource="{sr:FluentIconSource {sr:Fi TagFilled}}">
+                        <fa:FASettingsExpander.Footer>
+                            <TextBox Text="{Binding Settings.CloudDeviceAlias}" MinWidth="200" />
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+
                     <fa:FASettingsExpander x:Name="S_CloudAutoBackup"
                                            Header="{x:Static lsb:Resources.S_CloudAutoBackup}"
                                            Description="{x:Static lsb:Resources.S_CloudAutoBackup_D}"

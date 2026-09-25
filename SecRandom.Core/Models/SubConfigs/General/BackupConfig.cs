@@ -17,6 +17,14 @@ public partial class BackupConfig : ObservableObject
     [ObservableProperty] private int _cloudAutoBackupMaxCount = 5;
 
     /// <summary>
+    ///     Device alias stamped into every cloud backup id, so several signed-in devices can tell
+    ///     their own backups apart in the cloud list and keep their own retention budget. It is a
+    ///     user-visible display label rather than a device identity, so the device UUID still never
+    ///     reaches the cloud; empty means the host name is used.
+    /// </summary>
+    [ObservableProperty] private string _cloudDeviceAlias = string.Empty;
+
+    /// <summary>
     ///     Cloud backup content is selected separately from the local backup, and it is shorter on
     ///     purpose: logs, the device identity, the generated voice cache, draw proofs, and theme
     ///     resources have no row because a cloud archive may never carry them. Images stay off by

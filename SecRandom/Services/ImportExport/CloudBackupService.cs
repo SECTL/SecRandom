@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Services.Archive;
+using SecRandom.Core.Services.Config;
 using SecRandom.Services.Auth;
 using SecRandom.Shared;
 
@@ -19,7 +20,8 @@ public sealed record CloudBackupDescriptor(
     long TotalBytes,
     int PartCount,
     bool IsComplete,
-    string? ManifestFileId)
+    string? ManifestFileId,
+    string DeviceTag = "")
 {
     public bool CanRestore => IsComplete && !string.IsNullOrWhiteSpace(ManifestFileId);
 }
@@ -34,12 +36,15 @@ public sealed record CloudBackupProgress(string Stage, int Completed, int Total)
 ///     Account cloud-sync orchestration for the signed-in SECTL account: packages a cloud backup
 ///     archive, uploads it as verified parts plus a trailing manifest, lists the backups that belong
 ///     to this application scope, rebuilds one after per-part and whole-archive verification, and
-///     deletes backups. The anonymous device-transfer channel stays on SecRandom Sync; this service
-///     only ever talks to the authenticated SECTL personal cloud API.
+///     deletes backups. Every upload stamps a device alias into its id, so the list tells several
+///     signed-in devices apart and retention stays per device. The anonymous device-transfer channel
+///     stays on SecRandom Sync; this service only ever talks to the authenticated SECTL personal
+///     cloud API.
 /// </summary>
 public sealed class CloudBackupService(
     SectlAuthService authService,
     SectlCloudStorageClient cloudClient,
+    MainConfigHandler configHandler,
     IImportExportService importExportService,
     ILogger<CloudBackupService> logger)
 {
@@ -69,7 +74,8 @@ public sealed class CloudBackupService(
     public async Task<CloudBackupDescriptor> UploadAsync(IProgress<CloudBackupProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var backupId = CloudBackupPackage.CreateBackupId(DateTime.UtcNow);
+        var deviceTag = ResolveDeviceTag();
+        var backupId = CloudBackupPackage.CreateBackupId(DateTime.UtcNow, deviceTag);
         var archivePath = GetCloudCachePath($"{backupId}.zip");
         var uploaded = new List<SectlCloudFile>();
         try
@@ -102,7 +108,7 @@ public sealed class CloudBackupService(
             logger.LogInformation("云端备份上传完成：备份={BackupId}，分片={Parts}，大小={Bytes}。",
                 backupId, parts.Count, archive.LongLength);
             return new CloudBackupDescriptor(backupId, manifest.ArchiveName, DateTimeOffset.UtcNow,
-                archive.LongLength, parts.Count, true, manifestFile.FileId);
+                archive.LongLength, parts.Count, true, manifestFile.FileId, deviceTag);
         }
         catch
         {
@@ -117,9 +123,10 @@ public sealed class CloudBackupService(
 
     /// <summary>
     ///     Automatic cloud backup. It uploads exactly like the manual path, but it also owns the
-    ///     account's storage budget: an exhausted quota removes this application's oldest backup and
-    ///     retries, and the configured retention limit drops everything beyond it. A manual upload
-    ///     never deletes anything implicitly, so a failure there still surfaces as a quota error.
+    ///     account's storage budget: an exhausted quota removes the account-wide oldest backup and
+    ///     retries, while the configured retention limit only drops this device's own surplus so
+    ///     another signed-in machine keeps its backups. A manual upload never deletes anything
+    ///     implicitly, so a failure there still surfaces as a quota error.
     /// </summary>
     public async Task<CloudBackupDescriptor> UploadAutomaticAsync(int maximumBackups,
         IProgress<CloudBackupProgress>? progress = null, CancellationToken cancellationToken = default)
@@ -227,8 +234,27 @@ public sealed class CloudBackupService(
     }
 
     /// <summary>
+    ///     Newest upload time among this device's own backups, so the automatic cadence is per device
+    ///     and another signed-in machine's uploads do not postpone this one. Null means this device has
+    ///     not uploaded yet.
+    /// </summary>
+    public async Task<DateTimeOffset?> GetLatestOwnBackupTimeAsync(CancellationToken cancellationToken = default)
+    {
+        var deviceTag = ResolveDeviceTag();
+        if (deviceTag.Length == 0)
+            return null;
+
+        var backups = await ListAsync(cancellationToken).ConfigureAwait(false);
+        return backups
+            .Where(backup => string.Equals(backup.DeviceTag, deviceTag, StringComparison.OrdinalIgnoreCase))
+            .Select(backup => backup.CreatedAt)
+            .Max();
+    }
+
+    /// <summary>
     ///     Cloud state is never cached, so the oldest backup is rediscovered from the account on
-    ///     every attempt; <see cref="ListAsync" /> orders newest first.
+    ///     every attempt; <see cref="ListAsync" /> orders newest first. Quota pressure is the one
+    ///     deletion that deliberately crosses device boundaries.
     /// </summary>
     private async Task<CloudBackupDescriptor?> FindOldestAsync(CancellationToken cancellationToken)
     {
@@ -236,16 +262,23 @@ public sealed class CloudBackupService(
         return backups.Count == 0 ? null : backups[^1];
     }
 
-    /// <summary>Keeps at most <paramref name="maximumBackups" /> backups; 0 means unlimited.</summary>
+    /// <summary>Keeps at most <paramref name="maximumBackups" /> of this device's own backups.</summary>
     private async Task TrimAsync(int maximumBackups, CancellationToken cancellationToken)
     {
         if (maximumBackups <= 0)
             return;
 
+        var deviceTag = ResolveDeviceTag();
+        if (deviceTag.Length == 0)
+            return;
+
         var backups = await ListAsync(cancellationToken).ConfigureAwait(false);
-        foreach (var expired in backups.Skip(maximumBackups))
+        var own = backups
+            .Where(backup => string.Equals(backup.DeviceTag, deviceTag, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+        foreach (var expired in own.Skip(maximumBackups))
         {
-            logger.LogInformation("云端备份超过保留上限，删除最早的备份：备份={BackupId}。", expired.BackupId);
+            logger.LogInformation("云端备份超过保留上限，删除本设备最早的备份：备份={BackupId}。", expired.BackupId);
             await DeleteAsync(expired, cancellationToken).ConfigureAwait(false);
         }
     }
@@ -321,6 +354,22 @@ public sealed class CloudBackupService(
     private static bool IsManifest(string fileName) =>
         CloudBackupPackage.TryParseFileName(fileName, out _, out _, out _, out var isManifest) && isManifest;
 
+    /// <summary>
+    ///     Alias stamped on this device's uploads: the configured alias when set, otherwise the host
+    ///     name. It is a user-visible display label, not a device identity — the device UUID stays out
+    ///     of every cloud archive and restore.
+    /// </summary>
+    private string ResolveDeviceTag()
+    {
+        var configured = configHandler.Data.General.Backup.CloudDeviceAlias;
+        var deviceName = string.IsNullOrWhiteSpace(configured) ? Environment.MachineName : configured;
+        return CloudBackupPackage.BuildDeviceTag(deviceName);
+    }
+
+    /// <summary>Backup list label: the id, plus the device alias when the id carries one.</summary>
+    private static string BuildDisplayName(string backupId, string deviceTag) =>
+        deviceTag.Length == 0 ? backupId : $"{backupId} ({deviceTag})";
+
     private static string GetCloudCachePath(string fileName) =>
         Utils.GetFilePath("cache", "cloud-backup", fileName);
 
@@ -358,7 +407,9 @@ public sealed class CloudBackupService(
                 .Where(timestamp => timestamp.HasValue)
                 .OrderByDescending(timestamp => timestamp)
                 .FirstOrDefault();
-            return new CloudBackupDescriptor(BackupId, BackupId, created, size, Parts.Count, isComplete, Manifest?.FileId);
+            var deviceTag = CloudBackupPackage.TryGetDeviceTag(BackupId, out var tag) ? tag : string.Empty;
+            return new CloudBackupDescriptor(BackupId, BuildDisplayName(BackupId, deviceTag), created,
+                size, Parts.Count, isComplete, Manifest?.FileId, deviceTag);
         }
     }
 }

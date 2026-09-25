@@ -347,13 +347,15 @@ public sealed class CloudBackupServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task UploadAutomaticAsync_WhenBackupsExceedTheRetentionLimit_DeletesTheOldestOnes()
+    public async Task UploadAutomaticAsync_WhenOwnBackupsExceedTheRetentionLimit_KeepsAnotherDevicesBackups()
     {
         var deleted = new List<string>();
         var files = new List<(string FileId, string FileName, long Size)>();
-        files.AddRange(BuildBackupFiles("20260801-120000-aaaa0001"));
-        files.AddRange(BuildBackupFiles("20260810-120000-bbbb0002"));
-        files.AddRange(BuildBackupFiles("20260820-120000-cccc0003"));
+        files.AddRange(BuildBackupFiles("20260801-120000-aaaa0001_dev-a"));
+        files.AddRange(BuildBackupFiles("20260810-120000-bbbb0002_dev-a"));
+        files.AddRange(BuildBackupFiles("20260820-120000-cccc0003_dev-a"));
+        files.AddRange(BuildBackupFiles("20260805-120000-dddd0004_dev-b"));
+        files.AddRange(BuildBackupFiles("20260815-120000-eeee0005_dev-b"));
         var handler = new RecordingHandler(request =>
         {
             var path = request.RequestUri!.AbsolutePath;
@@ -371,18 +373,91 @@ public sealed class CloudBackupServiceTests : IDisposable
 
             throw new InvalidOperationException($"Unexpected request: {request.Method} {request.RequestUri}");
         });
-        var service = CreateService(handler, CreateArchiveBytes(CloudBackupPackage.DefaultPartBytes));
+        var service = CreateService(handler, CreateArchiveBytes(CloudBackupPackage.DefaultPartBytes), "dev-a");
 
         await service.UploadAutomaticAsync(1, cancellationToken: TestContext.Current.CancellationToken);
 
+        // Only this device's surplus is trimmed, oldest first, so dev-b keeps both of its backups.
         Assert.Equal([
-            "/api/cloud/files/f-20260810-120000-bbbb0002-p1",
-            "/api/cloud/files/f-20260810-120000-bbbb0002-m",
-            "/api/cloud/files/f-20260801-120000-aaaa0001-p1",
-            "/api/cloud/files/f-20260801-120000-aaaa0001-m"
+            "/api/cloud/files/f-20260810-120000-bbbb0002_dev-a-p1",
+            "/api/cloud/files/f-20260810-120000-bbbb0002_dev-a-m",
+            "/api/cloud/files/f-20260801-120000-aaaa0001_dev-a-p1",
+            "/api/cloud/files/f-20260801-120000-aaaa0001_dev-a-m"
         ], deleted);
-        Assert.Equal(2, files.Count);
-        Assert.All(files, file => Assert.Contains("20260820-120000-cccc0003", file.FileId));
+        Assert.Equal([
+            "f-20260820-120000-cccc0003_dev-a-p1",
+            "f-20260820-120000-cccc0003_dev-a-m",
+            "f-20260805-120000-dddd0004_dev-b-p1",
+            "f-20260805-120000-dddd0004_dev-b-m",
+            "f-20260815-120000-eeee0005_dev-b-p1",
+            "f-20260815-120000-eeee0005_dev-b-m"
+        ], files.Select(file => file.FileId));
+    }
+
+    [Fact]
+    public async Task UploadAsync_StampsTheDeviceAliasIntoEveryCloudFileName()
+    {
+        var uploadedNames = new List<string>();
+        var handler = new RecordingHandler(request =>
+        {
+            if (request.RequestUri!.AbsolutePath.EndsWith("/upload", StringComparison.Ordinal))
+            {
+                uploadedNames.Add(ReadUploadedName(request));
+                return Json("{\"success\":true,\"file_id\":\"file-1\",\"filename\":\"part.srpart\",\"size\":1}");
+            }
+
+            throw new InvalidOperationException($"Unexpected request: {request.Method} {request.RequestUri}");
+        });
+        var service = CreateService(handler, CreateArchiveBytes(CloudBackupPackage.DefaultPartBytes), "dev-a");
+
+        var descriptor = await service.UploadAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal("dev-a", descriptor.DeviceTag);
+        Assert.True(CloudBackupPackage.TryGetDeviceTag(descriptor.BackupId, out var deviceTag));
+        Assert.Equal("dev-a", deviceTag);
+        Assert.Equal(2, uploadedNames.Count);
+        Assert.All(uploadedNames, name => Assert.Contains("_dev-a", name, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ListAsync_ExposesTheDeviceAliasAndKeepsUntaggedBackupsUsable()
+    {
+        var handler = new RecordingHandler(_ => Json(BuildListResponse(
+            ("f-tagged-m", CloudBackupPackage.BuildManifestName("20260810-120000-bbbb0002_dev-a"), 10),
+            ("f-tagged-p", CloudBackupPackage.BuildPartName("20260810-120000-bbbb0002_dev-a", 1, 1), 10),
+            ("f-legacy-m", CloudBackupPackage.BuildManifestName("20260801-120000-aaaa0001"), 10),
+            ("f-legacy-p", CloudBackupPackage.BuildPartName("20260801-120000-aaaa0001", 1, 1), 10))));
+        var service = CreateService(handler);
+
+        var backups = await service.ListAsync(TestContext.Current.CancellationToken);
+
+        var tagged = backups.Single(item => item.BackupId == "20260810-120000-bbbb0002_dev-a");
+        Assert.Equal("dev-a", tagged.DeviceTag);
+        Assert.Equal("20260810-120000-bbbb0002_dev-a (dev-a)", tagged.DisplayName);
+
+        // A backup uploaded before device aliases existed stays listable and restorable; it is merely
+        // never attributed to a device, so retention never deletes it implicitly.
+        var legacy = backups.Single(item => item.BackupId == "20260801-120000-aaaa0001");
+        Assert.Equal(string.Empty, legacy.DeviceTag);
+        Assert.Equal("20260801-120000-aaaa0001", legacy.DisplayName);
+        Assert.True(legacy.CanRestore);
+    }
+
+    [Fact]
+    public async Task GetLatestOwnBackupTimeAsync_CountsOnlyThisDevicesUploads()
+    {
+        var handler = new RecordingHandler(_ => Json(BuildListResponse(
+            ("f-other-p", CloudBackupPackage.BuildPartName("20260820-120000-cccc0003_dev-b", 1, 1), 10),
+            ("f-other-m", CloudBackupPackage.BuildManifestName("20260820-120000-cccc0003_dev-b"), 10))));
+
+        var otherOnly = CreateService(handler, deviceAlias: "dev-a");
+        var ownDevice = CreateService(handler, deviceAlias: "dev-b");
+
+        // dev-a has not uploaded yet, even though the account holds dev-b's newer backup.
+        Assert.Null(await otherOnly.GetLatestOwnBackupTimeAsync(TestContext.Current.CancellationToken));
+        // The same listing does decide dev-b's cadence, so the filter is the alias rather than "no data".
+        Assert.Equal(new DateTimeOffset(2026, 8, 30, 12, 0, 0, TimeSpan.Zero),
+            await ownDevice.GetLatestOwnBackupTimeAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -413,18 +488,20 @@ public sealed class CloudBackupServiceTests : IDisposable
             Directory.Delete(_dataRoot, recursive: true);
     }
 
-    private CloudBackupService CreateService(RecordingHandler handler, byte[]? archive = null)
+    private CloudBackupService CreateService(RecordingHandler handler, byte[]? archive = null, string deviceAlias = "")
     {
         var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://appwrite.sectl.cn/") };
         var factory = new StubHttpClientFactory(httpClient);
+        var config = new MainConfigModel();
+        config.General.Backup.CloudDeviceAlias = deviceAlias;
         var configHandler = new MainConfigHandler(
             NullLogger<MainConfigHandler>.Instance,
-            new TestConfigService(new MainConfigModel()));
+            new TestConfigService(config));
         var deviceUuidStore = new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance);
         var authService = new SectlAuthService(factory, deviceUuidStore);
         SetToken(authService, new SectlToken("access-token", "refresh-token", "user-1", 3600));
         var cloudClient = new SectlCloudStorageClient(authService, factory, NullLogger<SectlCloudStorageClient>.Instance);
-        return new CloudBackupService(authService, cloudClient, new FakeImportExportService(archive ?? []),
+        return new CloudBackupService(authService, cloudClient, configHandler, new FakeImportExportService(archive ?? []),
             NullLogger<CloudBackupService>.Instance);
     }
 

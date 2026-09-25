@@ -231,11 +231,17 @@
     <data name="S_CloudIncludes_D" xml:space="preserve">
         <value>选择需要包含在备份文件中的数据</value>
     </data>
+    <data name="S_CloudDeviceAlias" xml:space="preserve">
+        <value>设备别名</value>
+    </data>
+    <data name="S_CloudDeviceAlias_D" xml:space="preserve">
+        <value>用于区分不同设备的云端备份，会显示在云端文件名中；留空则使用本机名称</value>
+    </data>
     <data name="S_CloudAutoBackup" xml:space="preserve">
         <value>云端自动备份</value>
     </data>
     <data name="S_CloudAutoBackup_D" xml:space="preserve">
-        <value>按设定的间隔自动备份到云端，云空间不足时会删除最早的云端备份</value>
+        <value>按设定的间隔自动备份到云端，云空间不足时会删除整个账号最早的云端备份</value>
     </data>
     <data name="S_CloudAutoBackup_IntervalDays" xml:space="preserve">
         <value>自动备份间隔</value>
@@ -247,7 +253,7 @@
         <value>自动备份上限</value>
     </data>
     <data name="S_CloudAutoBackup_MaxCount_D" xml:space="preserve">
-        <value>设置云端最多保留的备份数量（个），0为不限制，超出后自动删除最早的备份</value>
+        <value>设置本设备在云端最多保留的备份数量（个），0为不限制，超出后自动删除本设备最早的备份</value>
     </data>
     <data name="S_CloudBackup_List" xml:space="preserve">
         <value>云端备份管理</value>

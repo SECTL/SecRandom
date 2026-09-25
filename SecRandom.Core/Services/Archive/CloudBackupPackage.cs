@@ -25,6 +25,13 @@ public static partial class CloudBackupPackage
     public const string ManifestSuffix = "-manifest.json";
 
     /// <summary>
+    ///     Longest device alias a backup id carries. The alias is part of every cloud file name, so it
+    ///     stays short enough for the whole id to remain inside <see cref="IsSafeBackupId" />'s
+    ///     64-character limit and readable in the cloud dashboard listing.
+    /// </summary>
+    public const int MaxDeviceTagLength = 16;
+
+    /// <summary>
     ///     512 KiB of archive bytes per part. The upload body is a base64 JSON payload, so one part
     ///     stays around 700 KiB and remains safely inside the conservative 1 MiB request budget of
     ///     the SECTL cloud function origin.
@@ -42,8 +49,69 @@ public static partial class CloudBackupPackage
     [GeneratedRegex("^(?<id>.+)-p(?<index>\\d{2,3})of(?<count>\\d{2,3})$", RegexOptions.CultureInvariant)]
     private static partial Regex PartNamePattern();
 
-    public static string CreateBackupId(DateTime utcNow) =>
-        $"{utcNow:yyyyMMdd-HHmmss}-{Convert.ToHexString(RandomNumberGenerator.GetBytes(4)).ToLowerInvariant()}";
+    /// <summary>
+    ///     Shape of an id this package generates: a timestamp, the random suffix, and the optional
+    ///     device alias. Only ids matching it report a device alias, so a foreign id uploaded by an
+    ///     older build or crafted through the cloud dashboard is never attributed to a device.
+    /// </summary>
+    [GeneratedRegex("^\\d{8}-\\d{6}-[0-9a-f]{8}(?<tag>_[A-Za-z0-9-]{1,16})?$", RegexOptions.CultureInvariant)]
+    private static partial Regex BackupIdPattern();
+
+    public static string CreateBackupId(DateTime utcNow, string? deviceTag = null)
+    {
+        var id = $"{utcNow:yyyyMMdd-HHmmss}-{Convert.ToHexString(RandomNumberGenerator.GetBytes(4)).ToLowerInvariant()}";
+        var tag = NormalizeDeviceTag(deviceTag);
+        return tag.Length == 0 ? id : $"{id}_{tag}";
+    }
+
+    /// <summary>
+    ///     Builds the alias stamped on this device's backups. A configured alias wins; otherwise the
+    ///     host name is used, and a host name without ASCII-safe characters falls back to a short
+    ///     digest so its backups stay attributable. An empty result means the id carries no alias.
+    /// </summary>
+    public static string BuildDeviceTag(string? deviceName)
+    {
+        var normalized = NormalizeDeviceTag(deviceName);
+        if (normalized.Length > 0)
+            return normalized;
+
+        return string.IsNullOrWhiteSpace(deviceName)
+            ? string.Empty
+            : Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(deviceName.Trim())))[..4].ToLowerInvariant();
+    }
+
+    /// <summary>Reads the alias this package encoded into a backup id.</summary>
+    public static bool TryGetDeviceTag(string? backupId, out string deviceTag)
+    {
+        deviceTag = string.Empty;
+        if (string.IsNullOrWhiteSpace(backupId))
+            return false;
+
+        var match = BackupIdPattern().Match(backupId);
+        if (!match.Success || !match.Groups["tag"].Success)
+            return false;
+
+        deviceTag = match.Groups["tag"].Value[1..];
+        return true;
+    }
+
+    private static string NormalizeDeviceTag(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
+
+        var builder = new StringBuilder(MaxDeviceTagLength);
+        foreach (var character in value.Trim())
+        {
+            if (!char.IsAsciiLetterOrDigit(character) && character != '-')
+                continue;
+            builder.Append(character);
+            if (builder.Length == MaxDeviceTagLength)
+                break;
+        }
+
+        return builder.ToString();
+    }
 
     public static string BuildPartName(string backupId, int index, int partCount) =>
         $"{FilePrefix}{backupId}-p{index:D2}of{partCount:D2}{PartExtension}";

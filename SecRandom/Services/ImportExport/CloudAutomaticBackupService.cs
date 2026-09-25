@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
@@ -11,8 +10,8 @@ namespace SecRandom.Services.ImportExport;
 /// <summary>
 ///     Desktop-only automatic cloud backup. It runs on the configured cadence while the app is open
 ///     and a SECTL account is signed in, and delegates every storage decision to
-///     <see cref="CloudBackupService" />, which keeps the account inside its quota and retention
-///     budget by removing this application's oldest backups.
+///     <see cref="CloudBackupService" />, which keeps the account inside its quota and keeps each
+///     signed-in device inside its own retention budget.
 /// </summary>
 public sealed class CloudAutomaticBackupService(
     MainConfigHandler configHandler,
@@ -68,13 +67,13 @@ public sealed class CloudAutomaticBackupService(
     }
 
     /// <summary>
-    ///     The newest cloud backup decides the cadence, so a manual upload also postpones the next
-    ///     automatic one instead of stacking a duplicate right after it.
+    ///     This device's newest cloud backup decides the cadence, so a manual upload also postpones the
+    ///     next automatic one instead of stacking a duplicate right after it, while a second signed-in
+    ///     machine's uploads neither postpone nor trigger this device.
     /// </summary>
     private async Task<bool> IsDueAsync(int intervalDays, CancellationToken cancellationToken)
     {
-        var backups = await cloudBackupService.ListAsync(cancellationToken).ConfigureAwait(false);
-        var newest = backups.Select(backup => backup.CreatedAt).Max();
+        var newest = await cloudBackupService.GetLatestOwnBackupTimeAsync(cancellationToken).ConfigureAwait(false);
         return newest is null || DateTimeOffset.UtcNow - newest.Value >= TimeSpan.FromDays(intervalDays);
     }
 }

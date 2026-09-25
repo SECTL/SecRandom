@@ -1041,6 +1041,24 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 设备别名.
+        /// </summary>
+        public static string S_CloudDeviceAlias {
+            get {
+                return ResourceManager.GetString("S_CloudDeviceAlias", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 用于区分不同设备的云端备份，会显示在云端文件名中；留空则使用本机名称.
+        /// </summary>
+        public static string S_CloudDeviceAlias_D {
+            get {
+                return ResourceManager.GetString("S_CloudDeviceAlias_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 云端备份内容.
         /// </summary>
         public static string S_CloudIncludes {
@@ -1059,7 +1077,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 按设定的间隔自动备份到云端，云空间不足时会删除最早的云端备份.
+        ///   Looks up a localized string similar to 按设定的间隔自动备份到云端，云空间不足时会删除整个账号最早的云端备份.
         /// </summary>
         public static string S_CloudAutoBackup_D {
             get {
@@ -1095,7 +1113,7 @@ namespace SecRandom.Langs.SettingsPages.General.Backup {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 设置云端最多保留的备份数量（个），0为不限制，超出后自动删除最早的备份.
+        ///   Looks up a localized string similar to 设置本设备在云端最多保留的备份数量（个），0为不限制，超出后自动删除本设备最早的备份.
         /// </summary>
         public static string S_CloudAutoBackup_MaxCount_D {
             get {

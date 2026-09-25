@@ -177,6 +177,79 @@ public sealed class CloudBackupPackageTests
         Assert.True(CloudBackupPackage.IsCloudBackupFileName(CloudBackupPackage.BuildManifestName(first)));
     }
 
+    [Fact]
+    public void CreateBackupId_WithADeviceTag_RoundTripsThroughTheFileNameAndStaysSafe()
+    {
+        var timestamp = new DateTime(2026, 8, 30, 9, 8, 7, DateTimeKind.Utc);
+
+        var backupId = CloudBackupPackage.CreateBackupId(timestamp, "DESKTOP-ABC");
+
+        Assert.True(CloudBackupPackage.IsSafeBackupId(backupId));
+        Assert.True(CloudBackupPackage.TryGetDeviceTag(backupId, out var deviceTag));
+        Assert.Equal("DESKTOP-ABC", deviceTag);
+
+        // The tag rides along inside the part and manifest names, so the cloud listing is enough to
+        // attribute a backup without downloading its manifest.
+        var manifestName = CloudBackupPackage.BuildManifestName(backupId);
+        Assert.True(CloudBackupPackage.TryParseFileName(manifestName, out var parsedId, out _, out _, out var isManifest));
+        Assert.True(isManifest);
+        Assert.Equal(backupId, parsedId);
+        Assert.True(CloudBackupPackage.TryGetDeviceTag(parsedId, out var parsedTag));
+        Assert.Equal("DESKTOP-ABC", parsedTag);
+
+        var partName = CloudBackupPackage.BuildPartName(backupId, 1, 2);
+        Assert.True(CloudBackupPackage.TryParseFileName(partName, out var partId, out var partIndex, out var partCount, out _));
+        Assert.Equal(backupId, partId);
+        Assert.Equal(1, partIndex);
+        Assert.Equal(2, partCount);
+    }
+
+    [Fact]
+    public void CreateBackupId_WithoutADeviceTag_CarriesNoTag()
+    {
+        var backupId = CloudBackupPackage.CreateBackupId(new DateTime(2026, 8, 30, 9, 8, 7, DateTimeKind.Utc));
+
+        Assert.False(CloudBackupPackage.TryGetDeviceTag(backupId, out var deviceTag));
+        Assert.Equal(string.Empty, deviceTag);
+    }
+
+    [Fact]
+    public void BuildDeviceTag_KeepsSafeCharactersAndCapsTheLength()
+    {
+        Assert.Equal("DESKTOP-ABC", CloudBackupPackage.BuildDeviceTag(" DESKTOP-ABC "));
+        // Unsafe characters are dropped rather than replaced, so a fully non-ASCII name still reaches
+        // the digest fallback instead of turning into a row of dashes.
+        Assert.Equal("homepc", CloudBackupPackage.BuildDeviceTag("home pc!"));
+
+        var capped = CloudBackupPackage.BuildDeviceTag("abcdefghijklmnopqrstuvwxyz");
+        Assert.Equal(CloudBackupPackage.MaxDeviceTagLength, capped.Length);
+        Assert.Equal("abcdefghijklmnop", capped);
+    }
+
+    [Fact]
+    public void BuildDeviceTag_FallsBackToAStableDigestWhenNothingIsAsciiSafe()
+    {
+        var first = CloudBackupPackage.BuildDeviceTag("教室电脑");
+        var second = CloudBackupPackage.BuildDeviceTag("教室电脑");
+
+        Assert.Equal(4, first.Length);
+        Assert.Equal(first, second);
+        Assert.True(CloudBackupPackage.IsSafeBackupId(CloudBackupPackage.CreateBackupId(DateTime.UtcNow, first)));
+        Assert.Equal(string.Empty, CloudBackupPackage.BuildDeviceTag(""));
+    }
+
+    [Fact]
+    public void TryGetDeviceTag_ReportsNoTagForForeignIds()
+    {
+        Assert.False(CloudBackupPackage.TryGetDeviceTag("20260830-120000-abcd1234", out _));
+        // An id an older build uploaded, and one crafted through the cloud dashboard, are both foreign:
+        // neither may be attributed to a device.
+        Assert.False(CloudBackupPackage.TryGetDeviceTag("20260830-120000-abcd1234_", out _));
+        Assert.False(CloudBackupPackage.TryGetDeviceTag("holiday_photos", out _));
+        Assert.False(CloudBackupPackage.TryGetDeviceTag("20260830-120000-abcd123456", out _));
+        Assert.False(CloudBackupPackage.TryGetDeviceTag(null, out _));
+    }
+
     private static CloudBackupManifest Clone(CloudBackupManifest manifest) =>
         CloudBackupPackage.DeserializeManifest(CloudBackupPackage.SerializeManifest(manifest));
 
