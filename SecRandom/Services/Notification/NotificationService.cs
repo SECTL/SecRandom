@@ -17,7 +17,6 @@ namespace SecRandom.Services.Notification;
 public sealed class NotificationService : IDisposable
 {
     private static readonly TimeSpan InvocationTimeout = TimeSpan.FromSeconds(1);
-    private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(5);
 
     private readonly MainConfigHandler _configHandler;
     private readonly ILogger<NotificationService> _logger;
@@ -276,19 +275,19 @@ public sealed class NotificationService : IDisposable
             string? isAlive = null;
             try
             {
-                isAlive = service.IsAlive();
+                isAlive = await InvokeClassIslandAsync(service.IsAlive).ConfigureAwait(false);
             }
             catch (AggregateException aggEx) when (aggEx.InnerExceptions.Count == 1)
             {
-                System.Diagnostics.Debug.WriteLine($"IPC notification IsAlive failed: {aggEx.InnerExceptions[0].Message}");
+                _logger.LogDebug(aggEx.InnerExceptions[0], "SecRandom4Ci 通知服务 IsAlive 调用失败。");
             }
             catch (dotnetCampus.Ipc.Exceptions.IpcPeerConnectionBrokenException)
             {
                 // Peer disconnected during IsAlive check
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                System.Diagnostics.Debug.WriteLine($"IPC notification IsAlive failed: {ex.Message}");
+                _logger.LogDebug(exception, "SecRandom4Ci 通知服务 IsAlive 调用失败。");
             }
 
             if (!string.Equals(isAlive, "Yes", StringComparison.Ordinal))
@@ -300,11 +299,11 @@ public sealed class NotificationService : IDisposable
 
             try
             {
-                service.ShowNotification(notification);
+                await InvokeClassIslandAsync(() => service.ShowNotification(notification)).ConfigureAwait(false);
             }
             catch (AggregateException aggEx) when (aggEx.InnerExceptions.Count == 1)
             {
-                System.Diagnostics.Debug.WriteLine($"IPC notification ShowNotification failed: {aggEx.InnerExceptions[0].Message}");
+                _logger.LogDebug(aggEx.InnerExceptions[0], "通过 SecRandom4Ci 插件发送 ClassIsland 通知失败。");
                 builtInFallback?.Invoke();
             }
             catch (dotnetCampus.Ipc.Exceptions.IpcPeerConnectionBrokenException)
@@ -323,6 +322,15 @@ public sealed class NotificationService : IDisposable
             _sendGate.Release();
         }
     }
+
+    /// <summary>
+    /// SecRandom4Ci 的代理方法是同步 IPC 调用，ClassIsland 卡住时不能无限等待。
+    /// </summary>
+    private static Task<T> InvokeClassIslandAsync<T>(Func<T> invoke)
+        => Task.Run(invoke).WaitAsync(InvocationTimeout);
+
+    private static Task InvokeClassIslandAsync(Action invoke)
+        => Task.Run(invoke).WaitAsync(InvocationTimeout);
 
     private static NotificationItem CreateStudentItem(ProfileStudent student)
     {

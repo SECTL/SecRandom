@@ -16,9 +16,17 @@ using SecRandom.Services.Linkage;
 namespace SecRandom.Core.Tests;
 
 /// <summary>
-/// ClassIsland 联动状态映射。ClassIsland 只在当前时间落在上课/课间时间点内时才把
-/// IsLessonConfirmed 置为 true，因此放学（AfterSchool）与开课前（None）必然是 false，
-/// 但它们同样是数据源明确给出的非上课时段，不能被当作“状态不可信”而放行（issue #278）。
+/// ClassIsland 联动的状态映射与刷新语义。
+/// <para>
+/// ClassIsland 只在当前时间落在上课/课间时间点内时才把 IsLessonConfirmed 置为 true，
+/// 因此放学（AfterSchool）与开课前（None）必然是 false，但它们同样是数据源明确给出的非上课时段，
+/// 不能被当作“状态不可信”而放行（issue #278）。
+/// </para>
+/// <para>
+/// 刷新时必须始终写入新快照、只在语义发生变化时通知订阅者：倒计时字段每秒都在变，
+/// 按全量相等判断会自激刷新（issue #274），而完全丢弃这些字段又会让课前解禁、课后禁用延迟
+/// 与课前重置读到陈旧的倒计时。
+/// </para>
 /// </summary>
 public sealed class ClassIslandScheduleSourceTests
 {
@@ -38,99 +46,126 @@ public sealed class ClassIslandScheduleSourceTests
     [Fact]
     public async Task AfterSchool_IsConfirmedNonClassTime()
     {
-        var result = await EvaluateAsync(lessons => lessons.CurrentState = TimeState.AfterSchool);
+        var harness = new LinkageHarness();
+        harness.Lessons.CurrentState = TimeState.AfterSchool;
+        await harness.RefreshAsync();
 
-        Assert.True(result.Snapshot.IsAvailable, $"error={result.Snapshot.Error}");
-        Assert.Equal(CourseTimeState.Breaking, result.Snapshot.State);
-        Assert.True(result.Restricted);
+        Assert.True(harness.Snapshot.IsAvailable, $"error={harness.Snapshot.Error}");
+        Assert.Equal(CourseTimeState.Breaking, harness.Snapshot.State);
+        Assert.True(harness.Restricted);
     }
 
     [Fact]
     public async Task BeforeFirstClass_IsConfirmedNonClassTime()
     {
-        var result = await EvaluateAsync(lessons =>
-        {
-            lessons.CurrentState = TimeState.None;
-            lessons.OnClassLeftTime = TimeSpan.FromMinutes(40);
-        });
+        var harness = new LinkageHarness();
+        harness.Lessons.CurrentState = TimeState.None;
+        harness.Lessons.OnClassLeftTime = TimeSpan.FromMinutes(40);
+        await harness.RefreshAsync();
 
-        Assert.True(result.Snapshot.IsAvailable, $"error={result.Snapshot.Error}");
-        Assert.Equal(TimeSpan.FromMinutes(40), result.Snapshot.TimeUntilNextCourse);
-        Assert.True(result.Restricted);
+        Assert.True(harness.Snapshot.IsAvailable, $"error={harness.Snapshot.Error}");
+        Assert.Equal(TimeSpan.FromMinutes(40), harness.Snapshot.TimeUntilNextCourse);
+        Assert.True(harness.Restricted);
     }
 
     [Fact]
     public async Task BeforeFirstClass_InsidePreClassEnableWindow_IsPermitted()
     {
-        var result = await EvaluateAsync(
-            lessons =>
-            {
-                lessons.CurrentState = TimeState.None;
-                lessons.OnClassLeftTime = TimeSpan.FromSeconds(10);
-            },
-            preClassEnableSeconds: 300);
+        var harness = new LinkageHarness(preClassEnableSeconds: 300);
+        harness.Lessons.CurrentState = TimeState.None;
+        harness.Lessons.OnClassLeftTime = TimeSpan.FromSeconds(10);
+        await harness.RefreshAsync();
 
-        Assert.True(result.Snapshot.IsAvailable, $"error={result.Snapshot.Error}");
-        Assert.False(result.Restricted);
+        Assert.True(harness.Snapshot.IsAvailable, $"error={harness.Snapshot.Error}");
+        Assert.False(harness.Restricted);
     }
 
     [Fact]
     public async Task AfterSchool_InsidePostClassDisableDelay_IsPermitted()
     {
         var now = DateTime.Now;
-        var result = await EvaluateAsync(
-            lessons =>
-            {
-                lessons.CurrentState = TimeState.OnClass;
-                lessons.CurrentTimeLayoutItem = ClassTime(now, TimeSpan.FromMinutes(50), TimeSpan.FromMinutes(5));
-                lessons.OnBreakingTimeLeftTime = TimeSpan.FromMinutes(5);
-            },
-            postClassDelaySeconds: 600,
-            beforeSecondRefresh: lessons =>
-            {
-                lessons.CurrentState = TimeState.AfterSchool;
-                lessons.CurrentTimeLayoutItem = TimeLayoutItem.Empty;
-                lessons.OnBreakingTimeLeftTime = TimeSpan.Zero;
-            });
+        var harness = new LinkageHarness(postClassDelaySeconds: 600);
+        harness.Lessons.CurrentState = TimeState.OnClass;
+        harness.Lessons.CurrentTimeLayoutItem = ClassTime(now, TimeSpan.FromMinutes(50), TimeSpan.FromMinutes(5));
+        harness.Lessons.OnBreakingTimeLeftTime = TimeSpan.FromMinutes(5);
+        await harness.RefreshAsync();
 
-        Assert.True(result.Snapshot.IsAvailable, $"error={result.Snapshot.Error}");
-        Assert.False(result.Restricted);
+        harness.Lessons.CurrentState = TimeState.AfterSchool;
+        harness.Lessons.CurrentTimeLayoutItem = TimeLayoutItem.Empty;
+        harness.Lessons.OnBreakingTimeLeftTime = TimeSpan.Zero;
+        await harness.RefreshAsync();
+
+        Assert.True(harness.Snapshot.IsAvailable, $"error={harness.Snapshot.Error}");
+        Assert.False(harness.Restricted);
     }
 
     [Fact]
     public async Task OnClass_IsNotRestricted()
     {
-        var result = await EvaluateAsync(lessons => lessons.CurrentState = TimeState.OnClass);
+        var harness = new LinkageHarness();
+        harness.Lessons.CurrentState = TimeState.OnClass;
+        await harness.RefreshAsync();
 
-        Assert.True(result.Snapshot.IsAvailable, $"error={result.Snapshot.Error}");
-        Assert.Equal(CourseTimeState.OnClass, result.Snapshot.State);
-        Assert.False(result.Restricted);
+        Assert.True(harness.Snapshot.IsAvailable, $"error={harness.Snapshot.Error}");
+        Assert.Equal(CourseTimeState.OnClass, harness.Snapshot.State);
+        Assert.False(harness.Restricted);
     }
 
     [Fact]
     public async Task Break_OutsidePreClassEnableWindow_IsRestricted()
     {
-        var result = await EvaluateAsync(lessons =>
-        {
-            lessons.CurrentState = TimeState.Breaking;
-            lessons.OnClassLeftTime = TimeSpan.FromMinutes(40);
-        });
+        var harness = new LinkageHarness();
+        harness.Lessons.CurrentState = TimeState.Breaking;
+        harness.Lessons.OnClassLeftTime = TimeSpan.FromMinutes(40);
+        await harness.RefreshAsync();
 
-        Assert.True(result.Snapshot.IsAvailable, $"error={result.Snapshot.Error}");
-        Assert.True(result.Restricted);
+        Assert.True(harness.Snapshot.IsAvailable, $"error={harness.Snapshot.Error}");
+        Assert.True(harness.Restricted);
     }
 
     [Fact]
     public async Task ScheduleNotLoaded_StaysPermissive()
     {
-        var result = await EvaluateAsync(lessons =>
-        {
-            lessons.IsClassPlanLoaded = false;
-            lessons.CurrentState = TimeState.None;
-        });
+        var harness = new LinkageHarness();
+        harness.Lessons.IsClassPlanLoaded = false;
+        harness.Lessons.CurrentState = TimeState.None;
+        await harness.RefreshAsync();
 
-        Assert.False(result.Snapshot.IsAvailable);
-        Assert.False(result.Restricted);
+        Assert.False(harness.Snapshot.IsAvailable);
+        Assert.False(harness.Restricted);
+    }
+
+    [Fact]
+    public async Task Refresh_WhenOnlyCountdownChanges_UpdatesSnapshotWithoutNotifying()
+    {
+        var harness = new LinkageHarness();
+        harness.Lessons.CurrentState = TimeState.Breaking;
+        harness.Lessons.OnClassLeftTime = TimeSpan.FromMinutes(40);
+        await harness.RefreshAsync();
+        var notifications = harness.StateChangedCount;
+
+        harness.Lessons.OnClassLeftTime = TimeSpan.FromMinutes(10);
+        await harness.RefreshAsync();
+
+        Assert.Equal(notifications, harness.StateChangedCount);
+        Assert.Equal(TimeSpan.FromMinutes(10), harness.Snapshot.TimeUntilNextCourse);
+    }
+
+    [Fact]
+    public async Task Refresh_WhenPreClassEnableWindowOpens_UnrestrictsWithoutNotifying()
+    {
+        var harness = new LinkageHarness(preClassEnableSeconds: 300);
+        harness.Lessons.CurrentState = TimeState.Breaking;
+        harness.Lessons.OnClassLeftTime = TimeSpan.FromMinutes(40);
+        await harness.RefreshAsync();
+        Assert.True(harness.Restricted);
+        var notifications = harness.StateChangedCount;
+
+        harness.Lessons.OnClassLeftTime = TimeSpan.FromSeconds(10);
+        await harness.RefreshAsync();
+
+        Assert.False(harness.Restricted);
+        Assert.Equal(notifications, harness.StateChangedCount);
     }
 
     private static TimeLayoutItem ClassTime(DateTime now, TimeSpan startedAgo, TimeSpan endedAgo) => new()
@@ -140,50 +175,49 @@ public sealed class ClassIslandScheduleSourceTests
         EndTime = now.TimeOfDay - endedAgo
     };
 
-    private static async Task<LinkageResult> EvaluateAsync(
-        Action<FakeLessons> configure,
-        int preClassEnableSeconds = 0,
-        int postClassDelaySeconds = 0,
-        Action<FakeLessons>? beforeSecondRefresh = null)
+    private sealed class LinkageHarness
     {
-        var config = new MainConfigModel();
-        config.LinkageSettings.DataSource = LinkageDataSource.ClassIsland;
-        config.LinkageSettings.InstantDrawDisable = true;
-        config.LinkageSettings.PreClassEnableTime = preClassEnableSeconds;
-        config.LinkageSettings.PostClassDisableDelay = postClassDelaySeconds;
-
-        var handler = new MainConfigHandler(
-            NullLogger<MainConfigHandler>.Instance,
-            new TestConfigService(config));
-        var store = new FakeCsesScheduleStore();
-        var classIsland = new ClassIslandScheduleSource(NullLogger<ClassIslandScheduleSource>.Instance);
-        var lessons = new FakeLessons();
-        configure(lessons);
-        // ClassIslandScheduleSource 只在首次读取时建立 IPC 连接，预先注入假实现即可在无 ClassIsland 的
-        // 环境中验证状态映射；字段改名时这里的异常会直接失败，提醒同步测试。
-        var field = typeof(ClassIslandScheduleSource).GetField(
-                        "_lessons", BindingFlags.Instance | BindingFlags.NonPublic)
-                    ?? throw new InvalidOperationException("ClassIslandScheduleSource._lessons 字段已改名。");
-        field.SetValue(classIsland, lessons);
-
-        var service = new CourseLinkageService(
-            handler,
-            store,
-            new CsesScheduleSource(store),
-            classIsland,
-            NullLogger<CourseLinkageService>.Instance);
-
-        await service.RefreshAsync();
-        if (beforeSecondRefresh is not null)
+        public LinkageHarness(
+            int preClassEnableSeconds = 0,
+            int postClassDelaySeconds = 0,
+            bool instantDrawDisable = true)
         {
-            beforeSecondRefresh(lessons);
-            await service.RefreshAsync();
+            var config = new MainConfigModel();
+            config.LinkageSettings.DataSource = LinkageDataSource.ClassIsland;
+            config.LinkageSettings.InstantDrawDisable = instantDrawDisable;
+            config.LinkageSettings.PreClassEnableTime = preClassEnableSeconds;
+            config.LinkageSettings.PostClassDisableDelay = postClassDelaySeconds;
+
+            var handler = new MainConfigHandler(
+                NullLogger<MainConfigHandler>.Instance,
+                new TestConfigService(config));
+            var store = new FakeCsesScheduleStore();
+            var connection = new ClassIslandIpcConnection(NullLogger<ClassIslandIpcConnection>.Instance);
+            // 预先注入假的课程服务：真实实现只在尚未连接时才去建立 IPC，这样就能在没有
+            // ClassIsland 的环境里驱动完整的状态映射；字段改名时这里会直接失败，提醒同步测试。
+            var field = typeof(ClassIslandIpcConnection).GetField(
+                            "_lessonsService", BindingFlags.Instance | BindingFlags.NonPublic)
+                        ?? throw new InvalidOperationException("ClassIslandIpcConnection._lessonsService 字段已改名。");
+            field.SetValue(connection, Lessons);
+
+            var source = new ClassIslandScheduleSource(connection, NullLogger<ClassIslandScheduleSource>.Instance);
+            Service = new CourseLinkageService(
+                handler,
+                store,
+                new CsesScheduleSource(store),
+                source,
+                NullLogger<CourseLinkageService>.Instance);
+            Service.StateChanged += (_, _) => StateChangedCount++;
         }
 
-        return new LinkageResult(service.Snapshot, service.IsConfirmedNonClassTime);
-    }
+        public FakeLessons Lessons { get; } = new();
+        public CourseLinkageService Service { get; }
+        public int StateChangedCount { get; private set; }
+        public CourseScheduleSnapshot Snapshot => Service.Snapshot;
+        public bool Restricted => Service.IsConfirmedNonClassTime;
 
-    private sealed record LinkageResult(CourseScheduleSnapshot Snapshot, bool Restricted);
+        public Task RefreshAsync() => Service.RefreshAsync();
+    }
 
     /// <summary>
     /// 复刻 ClassIsland LessonsService.ProcessLessons() 的上报结果：只有落在上课/课间时间点内时

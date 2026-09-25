@@ -119,6 +119,7 @@ public sealed class PluginDrawServiceTests : IDisposable
         services.AddSingleton<CsesScheduleParser>();
         services.AddSingleton<ICsesScheduleStore, CsesScheduleStore>();
         services.AddSingleton<CsesScheduleSource>();
+        services.AddSingleton<ClassIslandIpcConnection>();
         services.AddSingleton<ClassIslandScheduleSource>();
         services.AddSingleton<CourseLinkageService>();
         services.AddSingleton<ISecurityService>(_ => new StubSecurityService(allowAuthorization));

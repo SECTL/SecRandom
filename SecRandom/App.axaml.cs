@@ -1075,11 +1075,7 @@ public partial class App : Application
                 services.AddSingleton<VoiceAnnouncementService>();
                 services.AddSingleton<IVoiceAnnouncementService>(serviceProvider =>
                     serviceProvider.GetRequiredService<VoiceAnnouncementService>());
-                services.AddSingleton<NotificationService>(serviceProvider =>
-                    new NotificationService(
-                        serviceProvider.GetRequiredService<MainConfigHandler>(),
-                        serviceProvider.GetRequiredService<ILogger<NotificationService>>(),
-                        serviceProvider.GetRequiredService<ClassIslandIpcConnection>()));
+                services.AddSingleton<NotificationService>();
                 services.AddSingleton(serviceProvider => new MusicLibraryService(
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
                     serviceProvider.GetRequiredService<ILogger<MusicLibraryService>>(),
