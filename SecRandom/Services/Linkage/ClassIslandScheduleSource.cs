@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using ClassIsland.Shared.Enums;
@@ -42,15 +42,10 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
             if (!lessons.IsClassPlanLoaded)
                 return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandScheduleUnloaded);
 
-            var state = lessons.CurrentState switch
-            {
-                TimeState.OnClass => CourseTimeState.OnClass,
-                // ClassIsland 在最后一节课后报告 AfterSchool，在第一节课前或时间表未覆盖的间隙报告 None，
-                // PrepareOnClass 为预留的上课准备状态。这些都是明确的非上课时段，与 CSES 源一致视为
-                // 课间并保持可用，由启用窗口决定是否豁免。
-                TimeState.Breaking or TimeState.None or TimeState.AfterSchool or TimeState.PrepareOnClass => CourseTimeState.Breaking,
-                _ => CourseTimeState.Unknown
-            };
+            // ClassIsland 只在当前时间落在上课/课间时间点内时才置 IsLessonConfirmed，放学与课前必然为 false，
+            // 因此这里不能再把 IsLessonConfirmed 当作可用性门槛；今天没有课表的情况由上面的
+            // IsClassPlanLoaded 继续保证放行
+            var state = MapCurrentState(lessons.CurrentState);
             if (state == CourseTimeState.Unknown)
                 return CourseScheduleSnapshot.Unavailable(SourceName,
                     $"{ScheduleErrorCodes.ClassIslandUnsupportedState}:{lessons.CurrentState}");
@@ -198,6 +193,19 @@ public sealed class ClassIslandScheduleSource(ILogger<ClassIslandScheduleSource>
         var normalized = name?.Trim() ?? string.Empty;
         return normalized is "" or "???" ? string.Empty : normalized;
     }
+
+    /// <summary>
+    /// 把 ClassIsland 的时间状态映射为课程联动状态。ClassIsland 在最后一节课后报告 AfterSchool，
+    /// 在第一节课前或时间表未覆盖的间隙报告 None，PrepareOnClass 为预留的上课准备状态。这些都是
+    /// 明确的非上课时段，与 CSES 源一致视为课间并保持快照可用，再由课前解禁与课后延迟窗口决定豁免。
+    /// </summary>
+    internal static CourseTimeState MapCurrentState(TimeState state) => state switch
+    {
+        TimeState.OnClass => CourseTimeState.OnClass,
+        TimeState.Breaking or TimeState.None or TimeState.AfterSchool or TimeState.PrepareOnClass
+            => CourseTimeState.Breaking,
+        _ => CourseTimeState.Unknown
+    };
 
     private static TimeSpan? Positive(TimeSpan value) => value > TimeSpan.Zero ? value : null;
 
