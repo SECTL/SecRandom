@@ -8,6 +8,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
@@ -39,6 +40,17 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
         SelectedFactorOptions =
             new AvaloniaList<MultiSelectSettingOption>(FactorOptions.Where(option => option.IsSelected));
         SelectedFactorOptions.CollectionChanged += SelectedFactorOptionsOnCollectionChanged;
+        IntegrityActionOptions =
+        [
+            new(SettingsIntegrityAction.Confirm, SR.O_IntegrityAction_Confirm),
+            new(SettingsIntegrityAction.AutoRestore, SR.O_IntegrityAction_AutoRestore)
+        ];
+        IntegrityRestoreSourceOptions =
+        [
+            new(SettingsIntegrityRestoreSource.Local, SR.O_IntegrityRestoreSource_Local),
+            new(SettingsIntegrityRestoreSource.LocalThenCloud, SR.O_IntegrityRestoreSource_LocalThenCloud),
+            new(SettingsIntegrityRestoreSource.CloudThenLocal, SR.O_IntegrityRestoreSource_CloudThenLocal)
+        ];
         DataContext = this;
         InitializeComponent();
         SubscribeSettings();
@@ -49,6 +61,11 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
     public SecuritySettingsConfig Settings { get; }
     public AvaloniaList<MultiSelectSettingOption> FactorOptions { get; }
     public AvaloniaList<MultiSelectSettingOption> SelectedFactorOptions { get; }
+    public AvaloniaList<SettingOption<SettingsIntegrityAction>> IntegrityActionOptions { get; }
+    public AvaloniaList<SettingOption<SettingsIntegrityRestoreSource>> IntegrityRestoreSourceOptions { get; }
+    public SettingOption<SettingsIntegrityAction>? SelectedIntegrityActionOption { get; private set; }
+    public SettingOption<SettingsIntegrityRestoreSource>? SelectedIntegrityRestoreSourceOption { get; private set; }
+    public bool IsAutoRestoreSelected => Settings.SettingsIntegrityAction == SettingsIntegrityAction.AutoRestore;
     public bool CanEnableSecurity { get; private set; }
     public bool IsSecurityEnabled { get; private set; }
     public bool HasPassword { get; private set; }
@@ -148,6 +165,12 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             LockoutText = state.LockoutRemaining is { } remaining
                 ? string.Format(SR.M_LockoutFormat, Math.Ceiling(remaining.TotalSeconds))
                 : string.Empty;
+            // 配置可能被手工改写成未知枚举值，这里回退到默认项而不是让下拉框绑定抛异常
+            SelectedIntegrityActionOption = IntegrityActionOptions
+                .FirstOrDefault(option => option.Value == Settings.SettingsIntegrityAction) ?? IntegrityActionOptions[0];
+            SelectedIntegrityRestoreSourceOption = IntegrityRestoreSourceOptions
+                .FirstOrDefault(option => option.Value == Settings.SettingsIntegrityRestoreSource)
+                ?? IntegrityRestoreSourceOptions[0];
             SynchronizeSelectedFactorOptions();
         }
         finally
@@ -157,7 +180,9 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
                      {
                           nameof(CanEnableSecurity), nameof(IsSecurityEnabled), nameof(HasPassword), nameof(CanSetPassword),
                           nameof(CanConfigureAdditionalFactors), nameof(CanEditFactorSelection), nameof(CanEditProtectedOperations),
-                          nameof(TotpButtonText), nameof(IsLockedOut), nameof(LockoutText)
+                          nameof(TotpButtonText), nameof(IsLockedOut), nameof(LockoutText),
+                          nameof(SelectedIntegrityActionOption), nameof(SelectedIntegrityRestoreSourceOption),
+                          nameof(IsAutoRestoreSelected)
                      })
                 NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
@@ -202,6 +227,47 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             xamlRoot,
             () => setValue(requested),
             () => toggle.IsChecked = current);
+    }
+
+    /// <summary>
+    ///     篡改处理方式与恢复来源共用一套流程：先按旧值回退下拉框，再走安全密码授权后写入设置。
+    /// </summary>
+    private async void IntegrityAction_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_refreshing || sender is not ComboBox combo ||
+            combo.SelectedItem is not SettingOption<SettingsIntegrityAction> option ||
+            option.Value == Settings.SettingsIntegrityAction)
+            return;
+
+        if (TopLevel.GetTopLevel(this) is not { } xamlRoot)
+        {
+            RefreshSecurityState();
+            return;
+        }
+
+        await ApplySecuritySettingsUpdateAsync(
+            xamlRoot,
+            () => Settings.SettingsIntegrityAction = option.Value,
+            () => combo.SelectedItem = SelectedIntegrityActionOption);
+    }
+
+    private async void IntegrityRestoreSource_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_refreshing || sender is not ComboBox combo ||
+            combo.SelectedItem is not SettingOption<SettingsIntegrityRestoreSource> option ||
+            option.Value == Settings.SettingsIntegrityRestoreSource)
+            return;
+
+        if (TopLevel.GetTopLevel(this) is not { } xamlRoot)
+        {
+            RefreshSecurityState();
+            return;
+        }
+
+        await ApplySecuritySettingsUpdateAsync(
+            xamlRoot,
+            () => Settings.SettingsIntegrityRestoreSource = option.Value,
+            () => combo.SelectedItem = SelectedIntegrityRestoreSourceOption);
     }
 
     private async void SetPassword_OnClick(object? sender, RoutedEventArgs e)
@@ -314,6 +380,10 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             case nameof(SecuritySettingsConfig.AllowSettingsPreview):
                 getValue = () => Settings.AllowSettingsPreview;
                 setValue = value => Settings.AllowSettingsPreview = value;
+                return true;
+            case nameof(SecuritySettingsConfig.SettingsIntegrityCheckEnabled):
+                getValue = () => Settings.SettingsIntegrityCheckEnabled;
+                setValue = value => Settings.SettingsIntegrityCheckEnabled = value;
                 return true;
             case nameof(SecuritySettingsConfig.ProtectOpenSettings):
                 getValue = () => Settings.ProtectOpenSettings;

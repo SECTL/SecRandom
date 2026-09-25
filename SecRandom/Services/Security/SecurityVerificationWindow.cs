@@ -112,6 +112,17 @@ internal static class SecurityVerificationDialog
         {
             panel.Children.Add(new TextBlock { Text = SR.S_Totp });
             panel.Children.Add(totp);
+            if (!request.RequireAllSelectedFactors && !request.TotpStandaloneReady)
+            {
+                // 免密副本只在主密码验证后被刷新，升级后的首次免密校验必然失败，
+                // 这里提前说明原因而不是只显示「验证失败」
+                panel.Children.Add(new TextBlock
+                {
+                    Text = SR.M_VerificationTotpStandalonePending,
+                    TextWrapping = TextWrapping.Wrap,
+                    Opacity = 0.7
+                });
+            }
         }
 
         if (usbRequired)

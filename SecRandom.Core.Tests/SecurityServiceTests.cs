@@ -307,6 +307,142 @@ public sealed class SecurityServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task VerifyAsync_WhenAnySelectedFactorModeHasOnlyTotp_AuthorizesWithoutPassword()
+    {
+        var (fixture, secret) = await CreateTotpFixtureAsync();
+        fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = false;
+
+        var result = await fixture.Service.VerifyAsync(
+            new SecurityVerificationResponse(string.Empty, CreateTotpCode(secret), UsbPresent: false),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsAuthorized);
+    }
+
+    [Fact]
+    public async Task VerifyAsync_WhenAllSelectedFactorModeHasOnlyTotp_RejectsAuthorization()
+    {
+        var (fixture, secret) = await CreateTotpFixtureAsync();
+        fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = true;
+
+        var result = await fixture.Service.VerifyAsync(
+            new SecurityVerificationResponse(string.Empty, CreateTotpCode(secret), UsbPresent: false),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsAuthorized);
+        Assert.Equal(SecurityVerificationFailure.InvalidCredentials, result.Failure);
+    }
+
+    [Fact]
+    public async Task VerifyAsync_WhenTotpIsRejected_CountsFailuresAndLocksOut()
+    {
+        var (fixture, secret) = await CreateTotpFixtureAsync();
+        fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = false;
+
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            var rejected = await fixture.Service.VerifyAsync(
+                new SecurityVerificationResponse(string.Empty, WrongTotpCode(secret), UsbPresent: false),
+                TestContext.Current.CancellationToken);
+            Assert.False(rejected.IsAuthorized);
+            Assert.Equal(SecurityVerificationFailure.InvalidCredentials, rejected.Failure);
+        }
+
+        Assert.NotNull(fixture.Service.GetUiState().LockoutRemaining);
+        var locked = await fixture.Service.VerifyAsync(
+            new SecurityVerificationResponse(string.Empty, CreateTotpCode(secret), UsbPresent: false),
+            TestContext.Current.CancellationToken);
+        Assert.False(locked.IsAuthorized);
+        Assert.Equal(SecurityVerificationFailure.LockedOut, locked.Failure);
+    }
+
+    [Fact]
+    public async Task VerifyAsync_WhenStandaloneTotpCopyIsMissing_RejectsUntilThePasswordIsVerifiedOnce()
+    {
+        var (fixture, secret) = await CreateTotpFixtureAsync();
+        fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = false;
+        File.Delete(fixture.StandaloneTotpPath);
+
+        var rejected = await fixture.Service.VerifyAsync(
+            new SecurityVerificationResponse(string.Empty, CreateTotpCode(secret), UsbPresent: false),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(rejected.IsAuthorized);
+        Assert.Null(fixture.CredentialStore.LoadStandaloneTotp());
+
+        var passwordResult = await fixture.Service.VerifyAsync(Password("secret1"), TestContext.Current.CancellationToken);
+        Assert.True(passwordResult.IsAuthorized);
+        Assert.Equal(secret, fixture.CredentialStore.LoadStandaloneTotp());
+
+        var authorized = await fixture.Service.VerifyAsync(
+            new SecurityVerificationResponse(string.Empty, CreateTotpCode(secret), UsbPresent: false),
+            TestContext.Current.CancellationToken);
+        Assert.True(authorized.IsAuthorized);
+    }
+
+    [Fact]
+    public async Task ConfirmTotpAsync_WhenAnyFactorModeIsActive_KeepsTheSeedOutOfTheCredentialEnvelope()
+    {
+        var (fixture, secret) = await CreateTotpFixtureAsync();
+
+        Assert.Equal(secret, fixture.CredentialStore.LoadStandaloneTotp());
+        Assert.True(File.Exists(fixture.StandaloneTotpPath));
+        Assert.DoesNotContain(secret, File.ReadAllText(fixture.CredentialsPath), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ConfirmTotpAsync_WhenStandaloneTotpPersistenceFails_ReportsFailureWithoutLeavingASecret()
+    {
+        var writeFault = new ThrowOnNthCredentialWrite();
+        var fixture = CreateFixture(Password("secret1"), writeFault);
+        await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
+        var secret = await fixture.Service.BeginTotpSetupAsync(null!, TestContext.Current.CancellationToken);
+        Assert.NotNull(secret);
+        writeFault.ThrowOnWrite = writeFault.WriteCalls + 2;
+
+        var saved = await fixture.Service.ConfirmTotpAsync(secret, CreateTotpCode(secret), TestContext.Current.CancellationToken);
+
+        Assert.False(saved);
+        Assert.Null(fixture.CredentialStore.LoadStandaloneTotp());
+    }
+
+    [Fact]
+    public async Task UpdateSecuritySettingsAsync_WhenSwitchingFactorMode_SyncsTheStandaloneTotpCopy()
+    {
+        var (fixture, secret) = await CreateTotpFixtureAsync();
+        Assert.Equal(secret, fixture.CredentialStore.LoadStandaloneTotp());
+
+        var switchedToAll = await fixture.Service.UpdateSecuritySettingsAsync(
+            null!,
+            () => fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = true,
+            TestContext.Current.CancellationToken);
+
+        Assert.True(switchedToAll);
+        Assert.True(fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors);
+        Assert.False(File.Exists(fixture.StandaloneTotpPath));
+
+        var switchedToAny = await fixture.Service.UpdateSecuritySettingsAsync(
+            null!,
+            () => fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = false,
+            TestContext.Current.CancellationToken);
+
+        Assert.True(switchedToAny);
+        Assert.False(fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors);
+        Assert.Equal(secret, fixture.CredentialStore.LoadStandaloneTotp());
+    }
+
+    [Fact]
+    public async Task RemovePasswordAsync_WhenTotpIsConfigured_DeletesTheStandaloneTotpCopy()
+    {
+        var (fixture, _) = await CreateTotpFixtureAsync();
+
+        Assert.True(await fixture.Service.RemovePasswordAsync("secret1", TestContext.Current.CancellationToken));
+
+        Assert.Null(fixture.CredentialStore.LoadStandaloneTotp());
+        Assert.False(File.Exists(fixture.StandaloneTotpPath));
+    }
+
+    [Fact]
     public void SecurityVerificationEligibility_RequiresAnyOrAllSelectedFactorInput()
     {
         var anyFactorRequest = new SecurityVerificationRequest(
@@ -558,8 +694,9 @@ public sealed class SecurityServiceTests : IDisposable
         var configService = new TestConfigService(new MainConfigModel());
         var configHandler = new MainConfigHandler(NullLogger<MainConfigHandler>.Instance, configService);
         var prompt = new ScriptedPrompt(response);
+        var credentialDirectory = Path.Combine(_temporaryRoot, Guid.NewGuid().ToString("N"));
         var credentialStore = new SecurityCredentialStore(
-            Path.Combine(_temporaryRoot, Guid.NewGuid().ToString("N"), "credentials.json"),
+            Path.Combine(credentialDirectory, "credentials.json"),
             CredentialKdfParameters.Test,
             writeFault is null ? null : writeFault.BeforeWrite);
         var usbCatalog = new TestUsbDeviceCatalog(devices);
@@ -569,7 +706,14 @@ public sealed class SecurityServiceTests : IDisposable
             prompt,
             usbCatalog,
             NullLogger<SecurityService>.Instance);
-        return new SecurityFixture(service, configHandler, configService, prompt, usbCatalog);
+        return new SecurityFixture(
+            service,
+            configHandler,
+            configService,
+            prompt,
+            usbCatalog,
+            credentialStore,
+            credentialDirectory);
     }
 
     private string CreateUsbDirectory(string name)
@@ -588,24 +732,50 @@ public sealed class SecurityServiceTests : IDisposable
         return Assert.IsType<string>(method.Invoke(null, [secret, DateTimeOffset.UtcNow.ToUnixTimeSeconds() / 30]));
     }
 
+    private static string WrongTotpCode(string secret)
+    {
+        var code = CreateTotpCode(secret);
+        return string.Equals(code, "000000", StringComparison.Ordinal) ? "111111" : "000000";
+    }
+
+    private async Task<(SecurityFixture Fixture, string Secret)> CreateTotpFixtureAsync()
+    {
+        var fixture = CreateFixture(Password("secret1"));
+        await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
+        var secret = await fixture.Service.BeginTotpSetupAsync(null!, TestContext.Current.CancellationToken);
+        Assert.NotNull(secret);
+        Assert.True(await fixture.Service.ConfirmTotpAsync(secret, CreateTotpCode(secret), TestContext.Current.CancellationToken));
+        fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true;
+        fixture.ConfigHandler.Data.SecuritySettings.TotpEnabled = true;
+        return (fixture, secret);
+    }
+
     private sealed record SecurityFixture(
         SecurityService Service,
         MainConfigHandler ConfigHandler,
         TestConfigService ConfigService,
         ScriptedPrompt Prompt,
-        TestUsbDeviceCatalog UsbCatalog);
+        TestUsbDeviceCatalog UsbCatalog,
+        SecurityCredentialStore CredentialStore,
+        string CredentialDirectory)
+    {
+        public string CredentialsPath => Path.Combine(CredentialDirectory, "credentials.json");
+
+        public string StandaloneTotpPath => Path.Combine(CredentialDirectory, "totp-standalone.json");
+    }
 
     private sealed class ScriptedPrompt(SecurityVerificationResponse response) : ISecurityVerificationPrompt
     {
         public List<SecurityVerificationRequest> Requests { get; } = [];
 
-        public Task<SecurityVerificationResponse> RequestAsync(
+        public Task<SecurityVerificationResult> RequestAsync(
             TopLevel xamlRoot,
             SecurityVerificationRequest request,
+            Func<SecurityVerificationResponse, CancellationToken, Task<SecurityVerificationResult>> verify,
             CancellationToken cancellationToken = default)
         {
             Requests.Add(request);
-            return Task.FromResult(response);
+            return verify(response, cancellationToken);
         }
     }
 

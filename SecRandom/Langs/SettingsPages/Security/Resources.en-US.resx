@@ -29,7 +29,36 @@
   <data name="S_Factors" xml:space="preserve"><value>Verification Methods</value></data>
   <data name="S_Factors_D" xml:space="preserve"><value>A password protects the credentials; add other configured methods when needed</value></data>
   <data name="S_RequireAll" xml:space="preserve"><value>Require All Selected Methods</value></data>
-  <data name="S_RequireAll_D" xml:space="preserve"><value>When on, complete all selected verification methods; when off, any one selected method is sufficient</value></data>
+  <data name="S_RequireAll_D" xml:space="preserve"><value>When on, complete all selected verification methods; when off, any one selected method is sufficient — using TOTP this way stores its secret in a readable form inside the data directory</value></data>
+  <data name="S_IntegritySection" xml:space="preserve"><value>Tamper Protection</value></data>
+  <data name="S_SettingsIntegrity" xml:space="preserve"><value>Settings File Tamper Check</value></data>
+  <data name="S_SettingsIntegrity_D" xml:space="preserve"><value>Records a fingerprint of the whole settings file and verifies at startup that it was not changed outside the app</value></data>
+  <data name="S_IntegrityAction" xml:space="preserve"><value>Tamper Response</value></data>
+  <data name="S_IntegrityAction_D" xml:space="preserve"><value>Action to take when the check finds the settings file changed outside the app</value></data>
+  <data name="O_IntegrityAction_Confirm" xml:space="preserve"><value>Require the security password before continuing</value></data>
+  <data name="O_IntegrityAction_AutoRestore" xml:space="preserve"><value>Automatically restore the latest backup</value></data>
+  <data name="S_IntegrityRestoreSource" xml:space="preserve"><value>Restore Source</value></data>
+  <data name="S_IntegrityRestoreSource_D" xml:space="preserve"><value>Backup sources tried in order during automatic restore; cloud backups need a signed-in account</value></data>
+  <data name="O_IntegrityRestoreSource_Local" xml:space="preserve"><value>Local backups only</value></data>
+  <data name="O_IntegrityRestoreSource_LocalThenCloud" xml:space="preserve"><value>Local first, cloud when missing</value></data>
+  <data name="O_IntegrityRestoreSource_CloudThenLocal" xml:space="preserve"><value>Cloud first, local when that fails</value></data>
+  <data name="M_IntegrityDialogTitle" xml:space="preserve"><value>Settings File Tamper Check</value></data>
+  <data name="M_IntegrityDetectedHeader" xml:space="preserve"><value>The settings file was modified outside the app</value></data>
+  <data name="M_IntegrityDetectedFormat" xml:space="preserve"><value>Last recorded: {0} (version {1})&#10;Current file modification time: {2}&#10;&#10;Confirm with the security password to accept the current settings file, otherwise the app will exit</value></data>
+  <data name="M_IntegrityUnknownValue" xml:space="preserve"><value>Unknown</value></data>
+  <data name="M_IntegrityRecoverTitle" xml:space="preserve"><value>Settings File Auto Recovery</value></data>
+  <data name="M_IntegrityRecovering" xml:space="preserve"><value>Restoring the settings file from backup, please wait</value></data>
+  <data name="M_IntegrityRecoverSuccessFormat" xml:space="preserve"><value>Restored the settings file from the {0} backup "{1}"&#10;The previous settings file was saved as: {2}&#10;&#10;The app will restart automatically in a few seconds</value></data>
+  <data name="M_IntegrityRecoverFailedFormat" xml:space="preserve"><value>Automatic recovery failed: {0}</value></data>
+  <data name="M_IntegrityRecoverFallback" xml:space="preserve"><value>Confirm the current settings file with the security password, otherwise the app will exit</value></data>
+  <data name="M_IntegritySourceLocal" xml:space="preserve"><value>local</value></data>
+  <data name="M_IntegritySourceCloud" xml:space="preserve"><value>cloud</value></data>
+  <data name="M_IntegrityNoBackup" xml:space="preserve"><value>No usable backup containing the settings file was found</value></data>
+  <data name="M_IntegrityNotSignedIn" xml:space="preserve"><value>No account is signed in, so cloud backups are unavailable</value></data>
+  <data name="M_IntegrityBackupInvalid" xml:space="preserve"><value>The backup is invalid or does not contain the settings file</value></data>
+  <data name="C_IntegrityAccept" xml:space="preserve"><value>Verify and Continue</value></data>
+  <data name="C_IntegrityExit" xml:space="preserve"><value>Exit</value></data>
+  <data name="C_IntegrityRecoverContinue" xml:space="preserve"><value>Continue</value></data>
   <data name="S_WindowOperations" xml:space="preserve"><value>Windows and App</value></data>
   <data name="S_WindowOperations_D" xml:space="preserve"><value>Protect settings, window visibility, and app lifecycle actions</value></data>
   <data name="S_DrawOperations" xml:space="preserve"><value>Draws</value></data>
@@ -99,6 +128,7 @@
   <data name="M_VerificationAnyFactor" xml:space="preserve"><value>Complete any selected verification method to continue</value></data>
   <data name="M_VerificationLockedFormat" xml:space="preserve"><value>Verification is locked, try again in {0} seconds</value></data>
   <data name="M_VerificationInvalid" xml:space="preserve"><value>The password or verification code is incorrect</value></data>
+  <data name="M_VerificationTotpStandalonePending" xml:space="preserve"><value>TOTP-only verification is not enabled on this device yet; verify once with the master password first</value></data>
   <data name="M_VerificationUnavailable" xml:space="preserve"><value>Unable to complete verification, try again later</value></data>
   <data name="M_LockoutFormat" xml:space="preserve"><value>Verification is locked, try again in {0} seconds</value></data>
   <data name="M_UsbPresent" xml:space="preserve"><value>Bound USB drive is connected</value></data>

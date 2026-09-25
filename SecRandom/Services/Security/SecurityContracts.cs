@@ -19,11 +19,17 @@ public enum SecurityVerificationFailure
     PreviewRequested
 }
 
+/// <summary>
+/// 安全验证对话框的输入要求。<see cref="TotpStandaloneReady"/> 由服务层在
+/// 「任意已选验证方式」模式下按免密 TOTP 副本是否存在填写：为 false 时对话框
+/// 会提示用户先用主密码验证一次，而不是笼统报验证失败。
+/// </summary>
 public sealed record SecurityVerificationRequest(
     IReadOnlyList<SecurityFactor> RequiredFactors,
     bool RequireAllSelectedFactors,
     TimeSpan? LockoutRemaining,
-    bool AllowPreview = false);
+    bool AllowPreview = false,
+    bool TotpStandaloneReady = true);
 
 public sealed record SecurityVerificationResponse(
     string Password,

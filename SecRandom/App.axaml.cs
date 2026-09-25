@@ -6,6 +6,7 @@ using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Layout;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Platform;
@@ -102,6 +103,7 @@ using RollCallNotificationSettingsPage = SecRandom.Views.SettingsPages.Notificat
 using SecuritySettingsPage = SecRandom.Views.SettingsPages.General.SecuritySettingsPage;
 using VoiceSettingsPage = SecRandom.Views.SettingsPages.Notification.VoiceSettingsPage;
 using CR = SecRandom.Langs.Common.Resources;
+using SecurityResources = SecRandom.Langs.SettingsPages.Security.Resources;
 
 namespace SecRandom;
 
@@ -124,6 +126,7 @@ public partial class App : Application
     private readonly object _shutdownGate = new();
     private bool _isStopping;
     private bool _isOobeActive;
+    private SettingsIntegrityService? _settingsIntegrity;
     public new static App Current => (Application.Current as App)!;
     internal bool IsStopping => _isStopping;
     public static bool IsDesktop;
@@ -257,6 +260,26 @@ public partial class App : Application
             if (IAppHost.GetService<FirstRunOobeService>().IsRequired())
             {
                 ShowFirstRunOobe(desktop, startupProtocolUri);
+                base.OnFrameworkInitializationCompleted();
+                return;
+            }
+
+            // 防篡改校验是设置文件的启动闸门：记录不符时按配置自动恢复，或先用安全密码确认当前内容
+            _settingsIntegrity = IAppHost.GetService<SettingsIntegrityService>();
+            if (_settingsIntegrity.GetPendingMismatch() is { } settingsMismatch)
+            {
+                if (IAppHost.GetService<MainConfigHandler>().Data.SecuritySettings.SettingsIntegrityAction
+                    == SettingsIntegrityAction.AutoRestore)
+                {
+                    WriteDesktopStartupDiagnostic("Settings integrity check is attempting automatic recovery.");
+                    ShowSettingsIntegrityRecovery(desktop, startupProtocolUri, settingsMismatch);
+                }
+                else
+                {
+                    WriteDesktopStartupDiagnostic("Settings integrity check requires confirmation.");
+                    ShowSettingsIntegrityGate(desktop, startupProtocolUri, settingsMismatch);
+                }
+
                 base.OnFrameworkInitializationCompleted();
                 return;
             }
@@ -538,6 +561,189 @@ public partial class App : Application
     }
 
     /// <summary>
+    ///     设置文件防篡改校验未通过时的启动闸门。确认流程与首次运行向导一致：
+    ///     先把闸门窗口作为主窗口，待用户用安全密码接受当前设置文件后再继续正常启动。
+    /// </summary>
+    private void ShowSettingsIntegrityGate(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        string? startupProtocolUri,
+        SettingsIntegrityMismatch mismatch,
+        string? recoveryFailure = null)
+    {
+        var gate = CreateSettingsIntegrityGate(desktop, startupProtocolUri, mismatch, recoveryFailure);
+        desktop.MainWindow = gate;
+        gate.Show();
+    }
+
+    /// <summary>
+    ///     篡改处理方式为「自动恢复」时的启动流程：先从备份恢复设置文件，成功后自动重启应用；
+    ///     没有可用备份或恢复失败则回退到安全密码确认闸门，并把失败原因写进确认对话框。
+    /// </summary>
+    private void ShowSettingsIntegrityRecovery(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        string? startupProtocolUri,
+        SettingsIntegrityMismatch mismatch)
+    {
+        var host = CreateStartupGateWindow();
+        host.Background = this.FindResource("SolidBackgroundFillColorBaseBrush") as IBrush;
+        host.Content = CreateIntegrityRecoveryContent(SecurityResources.M_IntegrityRecovering, showProgress: true);
+        desktop.MainWindow = host;
+
+        // Opened 在 Dispatcher 事件循环内异步运行，恢复期间界面不会阻塞
+        host.Opened += async (_, _) =>
+        {
+            var outcome = await IAppHost.GetService<SettingsIntegrityRecoveryService>().TryRecoverAsync();
+            if (outcome.Succeeded)
+            {
+                host.Content = CreateIntegrityRecoveryContent(
+                    string.Format(
+                        SecurityResources.M_IntegrityRecoverSuccessFormat,
+                        outcome.FromCloud ? SecurityResources.M_IntegritySourceCloud : SecurityResources.M_IntegritySourceLocal,
+                        outcome.BackupName ?? SecurityResources.M_IntegrityUnknownValue,
+                        outcome.PreRestorePath ?? SecurityResources.M_IntegrityUnknownValue),
+                    showProgress: false);
+                WriteDesktopStartupDiagnostic("Settings file restored from backup; restarting the application.");
+                await Task.Delay(TimeSpan.FromSeconds(3));
+                Restart();
+                return;
+            }
+
+            var failure = DescribeIntegrityRecoveryFailure(outcome);
+            WriteDesktopStartupDiagnostic($"Settings integrity automatic recovery failed: {failure}");
+            // 先显示确认闸门再关闭本窗口，避免出现「最后一个窗口关闭」而直接结束进程
+            ShowSettingsIntegrityGate(desktop, startupProtocolUri, mismatch, failure);
+            host.Close();
+        };
+
+        host.Show();
+    }
+
+    private static string DescribeIntegrityRecoveryFailure(SettingsIntegrityRecoveryResult outcome) =>
+        outcome.Status switch
+        {
+            SettingsIntegrityRecoveryStatus.CloudNotSignedIn => SecurityResources.M_IntegrityNotSignedIn,
+            SettingsIntegrityRecoveryStatus.Failed => string.IsNullOrWhiteSpace(outcome.Detail)
+                ? SecurityResources.M_IntegrityBackupInvalid
+                : outcome.Detail!,
+            _ => SecurityResources.M_IntegrityNoBackup
+        };
+
+    private Control CreateIntegrityRecoveryContent(string message, bool showProgress)
+    {
+        var content = new StackPanel
+        {
+            Spacing = 12,
+            MaxWidth = 560,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        if (showProgress)
+        {
+            content.Children.Add(new FAProgressRing
+            {
+                IsActive = true,
+                Width = 40,
+                Height = 40,
+                HorizontalAlignment = HorizontalAlignment.Center
+            });
+        }
+
+        content.Children.Add(new TextBlock
+        {
+            Text = SecurityResources.M_IntegrityRecoverTitle,
+            FontSize = 20,
+            FontWeight = FontWeight.SemiBold,
+            TextWrapping = TextWrapping.Wrap,
+            TextAlignment = TextAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center
+        });
+        content.Children.Add(new TextBlock
+        {
+            Text = message,
+            TextWrapping = TextWrapping.Wrap,
+            TextAlignment = TextAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center
+        });
+        return content;
+    }
+
+    private Window CreateSettingsIntegrityGate(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        string? startupProtocolUri,
+        SettingsIntegrityMismatch mismatch,
+        string? recoveryFailure)
+    {
+        var host = CreateStartupGateWindow();
+
+        // Opened 在 Dispatcher 事件循环内异步运行，不会阻塞 UI 线程
+        host.Opened += async (_, _) =>
+        {
+            var fallback = SecurityResources.M_IntegrityUnknownValue;
+            var message = string.Format(
+                SecurityResources.M_IntegrityDetectedFormat,
+                mismatch.RecordedAtUtc.ToLocalTime().ToString("g"),
+                string.IsNullOrWhiteSpace(mismatch.RecordedAppVersion) ? fallback : mismatch.RecordedAppVersion,
+                mismatch.FileModifiedAtUtc?.ToLocalTime().ToString("g") ?? fallback);
+            if (!string.IsNullOrWhiteSpace(recoveryFailure))
+                message = $"{string.Format(SecurityResources.M_IntegrityRecoverFailedFormat, recoveryFailure)}{Environment.NewLine}{Environment.NewLine}{message}";
+            var dialog = new FATaskDialog
+            {
+                XamlRoot = host,
+                Title = SecurityResources.M_IntegrityDialogTitle,
+                Header = SecurityResources.M_IntegrityDetectedHeader,
+                Content = new TextBlock { TextWrapping = TextWrapping.Wrap, Text = message }
+            };
+            dialog.Buttons.Add(new FATaskDialogButton(SecurityResources.C_IntegrityExit, "exit"));
+            dialog.Buttons.Add(new FATaskDialogButton(SecurityResources.C_IntegrityAccept, "accept") { IsDefault = true });
+
+            if (!Equals(await dialog.ShowAsync(), "accept"))
+            {
+                host.Close();
+                RequestDesktopShutdown();
+                return;
+            }
+
+            var accepted = await IAppHost.GetService<ISecurityService>().AuthorizePasswordAsync(
+                host,
+                () =>
+                {
+                    _settingsIntegrity?.AcceptCurrentFile();
+                    return Task.CompletedTask;
+                });
+            if (!accepted)
+            {
+                // 未通过密码确认即视为拒绝当前设置文件，不再继续启动
+                host.Close();
+                RequestDesktopShutdown();
+                return;
+            }
+
+            WriteDesktopStartupDiagnostic("Settings integrity confirmed, continuing desktop startup.");
+            ContinueDesktopStartup(desktop, startupProtocolUri);
+            host.Close();
+            ShowMainWindow();
+        };
+
+        return host;
+    }
+
+    /// <summary>
+    ///     启动闸门共用的宿主窗口：全屏透明无边框，内容由闸门自己填充，
+    ///     保证在 Host 启动前也能弹出一个不抢任务栏位置的遮罩窗口。
+    /// </summary>
+    private static Window CreateStartupGateWindow() => new()
+    {
+        SizeToContent = SizeToContent.Manual,
+        WindowState = WindowState.Maximized,
+        ShowInTaskbar = false,
+        CanResize = false,
+        WindowDecorations = WindowDecorations.None,
+        Background = null,
+        TransparencyLevelHint = new[] { WindowTransparencyLevel.Transparent }
+    };
+
+    /// <summary>
     ///     创建多实例对话框宿主窗口。
     ///     宿主窗口本身不可见；对话框在 <see cref="Window.Opened"/> 异步事件中弹出，
     ///     避免在同步的 <see cref="OnFrameworkInitializationCompleted"/> 中阻塞 UI 线程。
@@ -546,16 +752,7 @@ public partial class App : Application
         IClassicDesktopStyleApplicationLifetime _,
         string? startupProtocolUri = null)
     {
-        var host = new Window
-        {
-            SizeToContent = SizeToContent.Manual,
-            WindowState = WindowState.Maximized,
-            ShowInTaskbar = false,
-            CanResize = false,
-            WindowDecorations = WindowDecorations.None,
-            Background = null,
-            TransparencyLevelHint = new[] { WindowTransparencyLevel.Transparent }
-        };
+        var host = CreateStartupGateWindow();
 
         // Opened 事件在 Dispatcher 事件循环内异步运行，不会死锁 UI 线程
         host.Opened += async (_, _) =>
@@ -896,6 +1093,14 @@ public partial class App : Application
                 services.AddSingleton<IUsbDeviceCatalog, UsbDeviceCatalog>();
                 services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
                 services.AddSingleton<ISecurityService, SecurityService>();
+                services.AddSingleton(serviceProvider => new SettingsIntegrityService(
+                    serviceProvider.GetRequiredService<MainConfigHandler>(),
+                    serviceProvider.GetRequiredService<SecurityCredentialStore>(),
+                    serviceProvider.GetRequiredService<ILogger<SettingsIntegrityService>>()));
+                services.AddSingleton(serviceProvider => new SettingsIntegrityRecoveryService(
+                    serviceProvider.GetRequiredService<MainConfigHandler>(),
+                    serviceProvider.GetRequiredService<IImportExportService>(),
+                    serviceProvider.GetRequiredService<ILogger<SettingsIntegrityRecoveryService>>()));
 
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
                 services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");

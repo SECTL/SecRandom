@@ -29,7 +29,36 @@
   <data name="S_Factors" xml:space="preserve"><value>認証方式</value></data>
   <data name="S_Factors_D" xml:space="preserve"><value>パスワードは認証情報を保護し、設定済みの方式を追加できます</value></data>
   <data name="S_RequireAll" xml:space="preserve"><value>選択したすべての方式を要求</value></data>
-  <data name="S_RequireAll_D" xml:space="preserve"><value>オンの場合は選択したすべての認証方式が必要で、オフの場合はいずれか一つで続行できます</value></data>
+  <data name="S_RequireAll_D" xml:space="preserve"><value>オンの場合は選択したすべての認証方式が必要で、オフの場合はいずれか一つで続行でき、TOTP を選ぶとシークレットがデータディレクトリに読み取り可能な形式で保存されます</value></data>
+  <data name="S_IntegritySection" xml:space="preserve"><value>改ざん対策</value></data>
+  <data name="S_SettingsIntegrity" xml:space="preserve"><value>設定ファイルの改ざんチェック</value></data>
+  <data name="S_SettingsIntegrity_D" xml:space="preserve"><value>有効にすると設定ファイル全体のフィンガープリントを記録し、起動時にアプリ以外から変更されていないかを確認します</value></data>
+  <data name="S_IntegrityAction" xml:space="preserve"><value>改ざん時の動作</value></data>
+  <data name="S_IntegrityAction_D" xml:space="preserve"><value>設定ファイルがアプリ以外から変更されているのを検出したときに実行する操作</value></data>
+  <data name="O_IntegrityAction_Confirm" xml:space="preserve"><value>安全パスワードで確認してから続行する</value></data>
+  <data name="O_IntegrityAction_AutoRestore" xml:space="preserve"><value>最新のバックアップから自動的に復元する</value></data>
+  <data name="S_IntegrityRestoreSource" xml:space="preserve"><value>復元データの取得元</value></data>
+  <data name="S_IntegrityRestoreSource_D" xml:space="preserve"><value>自動復元時に順番に試すバックアップの取得元で、クラウドバックアップにはログインが必要です</value></data>
+  <data name="O_IntegrityRestoreSource_Local" xml:space="preserve"><value>ローカルバックアップのみ</value></data>
+  <data name="O_IntegrityRestoreSource_LocalThenCloud" xml:space="preserve"><value>ローカル優先、なければクラウド</value></data>
+  <data name="O_IntegrityRestoreSource_CloudThenLocal" xml:space="preserve"><value>クラウド優先、失敗時はローカル</value></data>
+  <data name="M_IntegrityDialogTitle" xml:space="preserve"><value>設定ファイルの改ざんチェック</value></data>
+  <data name="M_IntegrityDetectedHeader" xml:space="preserve"><value>設定ファイルが外部から変更されました</value></data>
+  <data name="M_IntegrityDetectedFormat" xml:space="preserve"><value>最後の記録: {0}（バージョン {1}）&#10;現在のファイル更新時刻: {2}&#10;&#10;パスワードで確認すると現在の設定ファイルを採用します。確認できない場合はアプリを終了します</value></data>
+  <data name="M_IntegrityUnknownValue" xml:space="preserve"><value>不明</value></data>
+  <data name="M_IntegrityRecoverTitle" xml:space="preserve"><value>設定ファイルの自動復元</value></data>
+  <data name="M_IntegrityRecovering" xml:space="preserve"><value>バックアップから設定ファイルを復元しています。しばらくお待ちください</value></data>
+  <data name="M_IntegrityRecoverSuccessFormat" xml:space="preserve"><value>{0}バックアップ「{1}」から設定ファイルを復元しました&#10;復元前の設定ファイルは次に保存しました: {2}&#10;&#10;数秒後にアプリが自動的に再起動します</value></data>
+  <data name="M_IntegrityRecoverFailedFormat" xml:space="preserve"><value>自動復元に失敗しました: {0}</value></data>
+  <data name="M_IntegrityRecoverFallback" xml:space="preserve"><value>安全パスワードで現在の設定ファイルを確認してください。確認しない場合はアプリが終了します</value></data>
+  <data name="M_IntegritySourceLocal" xml:space="preserve"><value>ローカル</value></data>
+  <data name="M_IntegritySourceCloud" xml:space="preserve"><value>クラウド</value></data>
+  <data name="M_IntegrityNoBackup" xml:space="preserve"><value>設定ファイルを含む利用可能なバックアップが見つかりません</value></data>
+  <data name="M_IntegrityNotSignedIn" xml:space="preserve"><value>アカウントにログインしていないため、クラウドバックアップを利用できません</value></data>
+  <data name="M_IntegrityBackupInvalid" xml:space="preserve"><value>バックアップが無効か、設定ファイルが含まれていません</value></data>
+  <data name="C_IntegrityAccept" xml:space="preserve"><value>認証して続行</value></data>
+  <data name="C_IntegrityExit" xml:space="preserve"><value>終了</value></data>
+  <data name="C_IntegrityRecoverContinue" xml:space="preserve"><value>続行</value></data>
   <data name="S_WindowOperations" xml:space="preserve"><value>ウィンドウとアプリ</value></data>
   <data name="S_WindowOperations_D" xml:space="preserve"><value>設定、ウィンドウ表示、アプリ操作を保護します</value></data>
   <data name="S_DrawOperations" xml:space="preserve"><value>抽選</value></data>
@@ -99,6 +128,7 @@
   <data name="M_VerificationAnyFactor" xml:space="preserve"><value>選択した認証方式のいずれかを完了すると続行できます</value></data>
   <data name="M_VerificationLockedFormat" xml:space="preserve"><value>認証がロックされています、{0} 秒後に再試行してください</value></data>
   <data name="M_VerificationInvalid" xml:space="preserve"><value>パスワードまたは認証コードが正しくありません</value></data>
+  <data name="M_VerificationTotpStandalonePending" xml:space="preserve"><value>この端末では TOTP 単独認証はまだ有効ではありません。まずパスワードで一度認証してください</value></data>
   <data name="M_VerificationUnavailable" xml:space="preserve"><value>認証を完了できません、しばらくしてから再試行してください</value></data>
   <data name="M_LockoutFormat" xml:space="preserve"><value>認証がロックされています、{0} 秒後に再試行してください</value></data>
   <data name="M_UsbPresent" xml:space="preserve"><value>登録済み USB ドライブが接続されています</value></data>

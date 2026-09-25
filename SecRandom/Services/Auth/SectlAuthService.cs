@@ -51,10 +51,6 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
         {
             if (File.Exists(_tokenPath))
                 _token = JsonSerializer.Deserialize<SectlToken>(await File.ReadAllTextAsync(_tokenPath, cancellationToken), JsonOptions);
-            if (IsSignedIn)
-            {
-                await InitializeAccountDataWithRetryAsync(cancellationToken);
-            }
         }
         catch
         {
@@ -64,7 +60,30 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
 
         _initialized = true;
 
+        // 本地登录状态必须先放行：账号资料与头像来自网络，而启动链路会在 Host 启动前等待本方法，
+        // 设置窗口又等待该启动任务，慢网络下会把开窗卡到几十秒；资料改在后台补齐并由 StateChanged 刷新。
         StateChanged?.Invoke(this, EventArgs.Empty);
+        if (IsSignedIn)
+            _ = RefreshAccountDataAsync(cancellationToken);
+    }
+
+    /// <summary>
+    ///     后台拉取账号资料与头像。失败时保留已加载的 token，只清空资料，
+    ///     并通过 <see cref="StateChanged" /> 让界面从「资料不可用」自行收敛。
+    /// </summary>
+    private async Task RefreshAccountDataAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await InitializeAccountDataWithRetryAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            StateChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     private async Task InitializeAccountDataWithRetryAsync(CancellationToken cancellationToken)

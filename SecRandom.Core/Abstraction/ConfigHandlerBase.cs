@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using SecRandom.Shared.Abstraction;
@@ -32,6 +32,12 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
     public T Data { get; private set; }
     public event EventHandler? Reloaded;
 
+    /// <summary>
+    ///     配置文件成功写入磁盘后触发。应用层用它记录整份配置的防篡改指纹，
+    ///     因此必须在 <see cref="ConfigServiceBase.SaveConfig{T}" /> 之后触发。
+    /// </summary>
+    public event EventHandler? Saved;
+
     private ILogger Logger { get; }
     private ConfigServiceBase ConfigService { get; }
     private Func<T> FallbackFactory { get; }
@@ -49,6 +55,7 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
     {
         Logger.LogInformation("Saving config file.");
         ConfigService.SaveConfig(Data);
+        Saved?.Invoke(this, EventArgs.Empty);
     }
 
     public virtual void Delete()

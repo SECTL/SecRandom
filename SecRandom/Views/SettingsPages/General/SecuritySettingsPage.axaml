@@ -177,6 +177,48 @@
                           IsEnabled="{Binding CanEditProtectedOperations}" />
             </fa:FASettingsExpander>
 
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText x:Name="S_IntegritySection" Text="{x:Static lsp:Resources.S_IntegritySection}" Glyph="{sr:Fi LockShieldFilled}" Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_SettingsIntegrity"
+                                    Header="{x:Static lsp:Resources.S_SettingsIntegrity}"
+                                    Description="{x:Static lsp:Resources.S_SettingsIntegrity_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi LockShieldFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.SettingsIntegrityCheckEnabled, Mode=OneWay}"
+                                  Tag="SettingsIntegrityCheckEnabled"
+                                  IsCheckedChanged="SecurityOption_OnIsCheckedChanged"
+                                  IsEnabled="{Binding CanEditProtectedOperations}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_IntegrityAction"
+                                    Header="{x:Static lsp:Resources.S_IntegrityAction}"
+                                    Description="{x:Static lsp:Resources.S_IntegrityAction_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi LockShieldFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox MinWidth="240"
+                              ItemsSource="{Binding IntegrityActionOptions}"
+                              SelectedItem="{Binding SelectedIntegrityActionOption, Mode=OneWay}"
+                              SelectionChanged="IntegrityAction_OnSelectionChanged"
+                              IsEnabled="{Binding CanEditProtectedOperations}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_IntegrityRestoreSource"
+                                    Header="{x:Static lsp:Resources.S_IntegrityRestoreSource}"
+                                    Description="{x:Static lsp:Resources.S_IntegrityRestoreSource_D}"
+                                    IsVisible="{Binding IsAutoRestoreSelected}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi LockShieldFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox MinWidth="240"
+                              ItemsSource="{Binding IntegrityRestoreSourceOptions}"
+                              SelectedItem="{Binding SelectedIntegrityRestoreSourceOption, Mode=OneWay}"
+                              SelectionChanged="IntegrityRestoreSource_OnSelectionChanged"
+                              IsEnabled="{Binding CanEditProtectedOperations}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <TextBlock Text="{Binding LockoutText}"
                        IsVisible="{Binding IsLockedOut}"
                        Foreground="{DynamicResource SystemFillColorCriticalBrush}" />

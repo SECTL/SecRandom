@@ -19,6 +19,8 @@ namespace SecRandom.Services.Security;
 internal sealed class SecurityCredentialStore
 {
     private const int FormatVersion = 2;
+    private const int StandaloneTotpFormatVersion = 1;
+    private const string StandaloneTotpFileName = "totp-standalone.json";
     private const int VerifierLength = 32;
     private const int EncryptionKeyLength = 32;
     private const int DerivedMaterialLength = VerifierLength + EncryptionKeyLength;
@@ -44,6 +46,11 @@ internal sealed class SecurityCredentialStore
         _beforeWrite = beforeWrite;
     }
 
+    private string StandaloneTotpPath =>
+        Path.Combine(
+            Path.GetDirectoryName(_path) ?? throw new InvalidOperationException("The credential path has no directory."),
+            StandaloneTotpFileName);
+
     public bool CanStoreSecrets => true;
 
     public SecurityCredentialMetadata LoadMetadata()
@@ -66,7 +73,8 @@ internal sealed class SecurityCredentialStore
                 envelope.Nonce,
                 envelope.Tag,
                 envelope.Ciphertext,
-                isReadable: true);
+                isReadable: true,
+                settingsIntegrity: envelope.SettingsIntegrity);
         }
         catch (IOException)
         {
@@ -214,6 +222,85 @@ internal sealed class SecurityCredentialStore
             File.Delete(_path);
     }
 
+    /// <summary>
+    /// 「任意已选验证方式」模式下校验 TOTP 时无法先用主密码解开信封，因此该模式把种子
+    /// 以可读形式保存在凭据文件旁边的独立文件中，供免密校验使用。该目录已被排除出全部
+    /// 导出、云备份与 Android DocumentsProvider；切回「全部已选验证方式」或移除密码时
+    /// 会删除此文件。
+    /// </summary>
+    public string? LoadStandaloneTotp()
+    {
+        try
+        {
+            var path = StandaloneTotpPath;
+            if (!File.Exists(path))
+                return null;
+            var payload = JsonSerializer.Deserialize<StandaloneTotpSecret>(File.ReadAllText(path), _jsonOptions);
+            return payload is not null &&
+                   payload.FormatVersion == StandaloneTotpFormatVersion &&
+                   !string.IsNullOrWhiteSpace(payload.Secret)
+                ? payload.Secret
+                : null;
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    public void SaveStandaloneTotp(string secret)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(secret);
+        if (string.Equals(LoadStandaloneTotp(), secret, StringComparison.Ordinal))
+            return;
+
+        var path = StandaloneTotpPath;
+        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? throw new InvalidOperationException("The standalone TOTP path has no directory."));
+        _beforeWrite?.Invoke();
+        var temporaryPath = path + ".tmp";
+        File.WriteAllText(
+            temporaryPath,
+            JsonSerializer.Serialize(
+                new StandaloneTotpSecret { FormatVersion = StandaloneTotpFormatVersion, Secret = secret },
+                _jsonOptions),
+            Encoding.UTF8);
+        TryRestrictToOwner(temporaryPath);
+        File.Move(temporaryPath, path, true);
+    }
+
+    public void DeleteStandaloneTotp()
+    {
+        var path = StandaloneTotpPath;
+        if (!File.Exists(path))
+            return;
+
+        _beforeWrite?.Invoke();
+        File.Delete(path);
+    }
+
+    private static void TryRestrictToOwner(string path)
+    {
+        if (OperatingSystem.IsWindows())
+            return;
+
+        try
+        {
+            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        }
+        catch (Exception)
+        {
+            // 收紧文件权限是尽力而为的加固，失败不影响免密种子的读写
+        }
+    }
+
     private SecurityCredentials DecryptCredentials(SecurityCredentialMetadata metadata, byte[] encryptionKey)
     {
         if (metadata.Password is null || string.IsNullOrWhiteSpace(metadata.Nonce) ||
@@ -290,7 +377,8 @@ internal sealed class SecurityCredentialStore
             LockedUntilUtc = metadata.LockedUntilUtc,
             Nonce = metadata.Nonce!,
             Tag = metadata.Tag!,
-            Ciphertext = metadata.Ciphertext!
+            Ciphertext = metadata.Ciphertext!,
+            SettingsIntegrity = metadata.SettingsIntegrity
         };
     }
 
@@ -443,7 +531,8 @@ internal sealed class SecurityCredentialMetadata(
     string? nonce,
     string? tag,
     string? ciphertext,
-    bool isReadable)
+    bool isReadable,
+    SettingsIntegrityRecord? settingsIntegrity = null)
 {
     public static SecurityCredentialMetadata CreateEmpty() => new(null, false, [], 0, null, null, null, null, true);
     public static SecurityCredentialMetadata CreateInvalid() => new(null, false, [], 0, null, null, null, null, false);
@@ -457,6 +546,9 @@ internal sealed class SecurityCredentialMetadata(
     public string? Tag { get; set; } = tag;
     public string? Ciphertext { get; set; } = ciphertext;
     public bool IsReadable { get; } = isReadable;
+
+    /// <summary>settings.json 的整份文件指纹记录；为 null 表示未开启防篡改校验。</summary>
+    public SettingsIntegrityRecord? SettingsIntegrity { get; set; } = settingsIntegrity;
 
     private static UsbBindingCredential CloneBinding(UsbBindingCredential binding)
     {
@@ -503,6 +595,23 @@ internal sealed class SecurityCredentialEnvelope
     public required string Nonce { get; init; }
     public required string Tag { get; init; }
     public required string Ciphertext { get; init; }
+    public SettingsIntegrityRecord? SettingsIntegrity { get; init; }
+}
+
+/// <summary>
+///     settings.json 的整份文件指纹记录。它与锁定状态同级存放在凭据信封的明文部分，
+///     因此无需主密码即可刷新和校验；代价是能改凭据文件的人也能改这份指纹，
+///     所以它属于"防误改、防普通用户"级别的保护，而不是密码学意义上的防伪。
+/// </summary>
+internal sealed class SettingsIntegrityRecord
+{
+    public const int CurrentFormatVersion = 1;
+
+    public int FormatVersion { get; init; } = CurrentFormatVersion;
+    public required string Digest { get; init; }
+    public DateTimeOffset RecordedAtUtc { get; init; }
+    public string? RecordedAppVersion { get; init; }
+    public long Generation { get; init; }
 }
 
 internal sealed record SecurityCredentialAuthenticationData(
@@ -512,6 +621,16 @@ internal sealed record SecurityCredentialAuthenticationData(
     IReadOnlyList<UsbBindingCredential> UsbBindings);
 
 internal sealed record SecurityCredentialSecrets(string? TotpSecret);
+
+/// <summary>
+/// 「任意已选验证方式」模式下免密校验 TOTP 所用的种子副本。它与凭据信封分离，
+/// 因此可读种子不会进入受 AES-GCM 与认证附加数据保护的 credentials.json。
+/// </summary>
+internal sealed class StandaloneTotpSecret
+{
+    public int FormatVersion { get; init; }
+    public required string Secret { get; init; }
+}
 
 internal sealed class SecurityCredentials
 {

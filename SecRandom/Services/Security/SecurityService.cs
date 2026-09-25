@@ -120,7 +120,8 @@ internal sealed class SecurityService(
             var request = new SecurityVerificationRequest(
                 GetRequiredFactors(metadata),
                 Settings.RequireAllSelectedFactors,
-                GetLockoutRemaining(metadata.LockedUntilUtc));
+                GetLockoutRemaining(metadata.LockedUntilUtc),
+                TotpStandaloneReady: credentialStore.LoadStandaloneTotp() is not null);
             var result = await prompt.RequestAsync(App.Current.GetRootWindow(), request, VerifyAsync, cancellationToken);
             if (!result.IsAuthorized)
             {
@@ -182,7 +183,8 @@ internal sealed class SecurityService(
                 GetRequiredFactors(metadata),
                 Settings.RequireAllSelectedFactors,
                 GetLockoutRemaining(metadata.LockedUntilUtc),
-                Settings.AllowSettingsPreview);
+                Settings.AllowSettingsPreview,
+                TotpStandaloneReady: credentialStore.LoadStandaloneTotp() is not null);
             var result = await prompt.RequestAsync(App.Current.GetRootWindow(), request, VerifyAsync, cancellationToken);
             if (result.Failure == SecurityVerificationFailure.PreviewRequested && request.AllowPreview)
             {
@@ -213,8 +215,16 @@ internal sealed class SecurityService(
         {
             lock (_gate)
             {
+                var requireAllBefore = Settings.RequireAllSelectedFactors;
                 update();
                 NormalizeSettings(context.Credentials);
+                if (requireAllBefore != Settings.RequireAllSelectedFactors && !TrySaveCredentials(context))
+                {
+                    // 「任意已选验证方式」模式需要 TOTP 免密副本；副本写入失败时回滚模式，
+                    // 而不是留下一个无法在磁盘上执行的配置
+                    Settings.RequireAllSelectedFactors = requireAllBefore;
+                }
+
                 configHandler.Save();
             }
 
@@ -245,13 +255,31 @@ internal sealed class SecurityService(
             var usbPassed = factors.Contains(SecurityFactor.Usb) &&
                             response.UsbPresent &&
                             metadata.UsbBindings.Any(IsBindingPresent);
-            if (!Settings.RequireAllSelectedFactors && usbPassed)
+            // 「任意已选验证方式」模式下 TOTP 也能单独通过：该模式会用凭据文件旁的
+            // 免密副本校验验证码，因此不需要先解开信封
+            var totpPassed = factors.Contains(SecurityFactor.Totp) &&
+                             credentialStore.LoadStandaloneTotp() is { } standaloneTotp &&
+                             TotpService.Verify(standaloneTotp, response.TotpCode, _timeProvider.GetUtcNow());
+            if (!Settings.RequireAllSelectedFactors && (usbPassed || totpPassed))
             {
                 metadata.FailedAttempts = 0;
                 metadata.LockedUntilUtc = null;
                 if (!TrySaveMetadata(metadata))
                     return Task.FromResult(new SecurityVerificationResult(false, SecurityVerificationFailure.FactorUnavailable));
                 return Task.FromResult(SecurityVerificationResult.Allowed);
+            }
+
+            if (!Settings.RequireAllSelectedFactors && string.IsNullOrEmpty(response.Password))
+            {
+                // 没有提交主密码，说明这是一次免密尝试（例如验证码错误）。它无法再借助
+                // 信封解锁通过，但仍要计入失败次数，以便限制验证码暴破
+                metadata.FailedAttempts++;
+                if (metadata.FailedAttempts >= LockoutFailureLimit)
+                    metadata.LockedUntilUtc = _timeProvider.GetUtcNow().Add(LockoutDuration);
+                if (!TrySaveMetadata(metadata))
+                    return Task.FromResult(new SecurityVerificationResult(false, SecurityVerificationFailure.FactorUnavailable));
+                return Task.FromResult(new SecurityVerificationResult(false, SecurityVerificationFailure.InvalidCredentials,
+                    GetLockoutRemaining(metadata.LockedUntilUtc)));
             }
 
             var unlockResult = credentialStore.TryUnlock(response.Password, out var context);
@@ -453,6 +481,8 @@ internal sealed class SecurityService(
                     TryDeleteUsbKey(binding);
             }
 
+            // 凭据文件已删除，免密 TOTP 副本必须一并移除，避免可读种子继续留在磁盘上
+            DiscardStandaloneTotp();
             _pendingTotpContext?.Dispose();
             _pendingTotpContext = null;
             _pendingTotpSecret = null;
@@ -799,7 +829,6 @@ internal sealed class SecurityService(
         try
         {
             credentialStore.Save(context);
-            return true;
         }
         catch (CryptographicException exception)
         {
@@ -815,6 +844,43 @@ internal sealed class SecurityService(
         {
             logger.LogWarning(exception, "Security credential persistence was denied.");
             return false;
+        }
+
+        // 信封先落盘，再同步免密 TOTP 副本，避免出现「新种子 / 旧信封」的错配
+        try
+        {
+            if (Settings.RequireAllSelectedFactors || string.IsNullOrWhiteSpace(context.Credentials.TotpSecret))
+                credentialStore.DeleteStandaloneTotp();
+            else
+                credentialStore.SaveStandaloneTotp(context.Credentials.TotpSecret);
+            return true;
+        }
+        catch (CryptographicException exception)
+        {
+            logger.LogWarning(exception, "Standalone TOTP persistence is unavailable.");
+        }
+        catch (IOException exception)
+        {
+            logger.LogWarning(exception, "Standalone TOTP persistence failed.");
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            logger.LogWarning(exception, "Standalone TOTP persistence was denied.");
+        }
+
+        DiscardStandaloneTotp();
+        return false;
+    }
+
+    private void DiscardStandaloneTotp()
+    {
+        try
+        {
+            credentialStore.DeleteStandaloneTotp();
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "Standalone TOTP cleanup failed.");
         }
     }
 
@@ -898,7 +964,10 @@ internal sealed class SecurityService(
         bool ProtectQuickDrawReset,
         bool ProtectLotteryStart,
         bool ProtectLotteryReset,
-        bool ProtectLinkage)
+        bool ProtectLinkage,
+        bool SettingsIntegrityCheckEnabled,
+        SettingsIntegrityAction SettingsIntegrityAction,
+        SettingsIntegrityRestoreSource SettingsIntegrityRestoreSource)
     {
         public static SecuritySettingsSnapshot Capture(SecuritySettingsConfig settings) => new(
             settings.SecurityEnabled,
@@ -918,8 +987,10 @@ internal sealed class SecurityService(
             settings.ProtectQuickDrawReset,
             settings.ProtectLotteryStart,
             settings.ProtectLotteryReset,
-            settings.ProtectLinkage);
-
+            settings.ProtectLinkage,
+            settings.SettingsIntegrityCheckEnabled,
+            settings.SettingsIntegrityAction,
+            settings.SettingsIntegrityRestoreSource);
         public void Restore(SecuritySettingsConfig settings)
         {
             settings.SecurityEnabled = SecurityEnabled;
@@ -940,6 +1011,9 @@ internal sealed class SecurityService(
             settings.ProtectLotteryStart = ProtectLotteryStart;
             settings.ProtectLotteryReset = ProtectLotteryReset;
             settings.ProtectLinkage = ProtectLinkage;
+            settings.SettingsIntegrityCheckEnabled = SettingsIntegrityCheckEnabled;
+            settings.SettingsIntegrityAction = SettingsIntegrityAction;
+            settings.SettingsIntegrityRestoreSource = SettingsIntegrityRestoreSource;
         }
     }
 
@@ -966,10 +1040,16 @@ internal sealed class SecurityService(
             Settings.SecurityEnabled = false;
             DisableOperationProtections();
         }
+
+        // 防篡改校验属于安全保护的一部分，保护关闭时一并关闭
+        if (!Settings.SecurityEnabled)
+            Settings.SettingsIntegrityCheckEnabled = false;
     }
 
     private void DisableOperationProtections()
     {
+        // 防篡改校验以安全凭据为锚点，保护被整体关闭时它也不再成立
+        Settings.SettingsIntegrityCheckEnabled = false;
         Settings.ProtectOpenSettings = false;
         Settings.ProtectToggleMainWindow = false;
         Settings.ProtectToggleFloatingWindow = false;
@@ -1078,6 +1158,10 @@ internal sealed class SecurityService(
             Settings.SecurityEnabled = false;
             DisableOperationProtections();
         }
+
+        // 防篡改校验属于安全保护的一部分，保护关闭时一并关闭
+        if (!Settings.SecurityEnabled)
+            Settings.SettingsIntegrityCheckEnabled = false;
     }
 
     private void TryDeleteUsbKeyAtPath(string rootPath)

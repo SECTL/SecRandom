@@ -58,7 +58,36 @@
   <data name="S_Factors" xml:space="preserve"><value>验证方式</value></data>
   <data name="S_Factors_D" xml:space="preserve"><value>密码用于保护凭据；可额外选择已经配置的验证方式</value></data>
   <data name="S_RequireAll" xml:space="preserve"><value>全部已选验证方式均需验证</value></data>
-   <data name="S_RequireAll_D" xml:space="preserve"><value>开启时必须完成全部已选验证方式；关闭时任一已选方式通过即可继续</value></data>
+   <data name="S_RequireAll_D" xml:space="preserve"><value>开启时必须完成全部已选验证方式；关闭时任选一种已选方式通过即可继续，此时 TOTP 密钥会以可读形式保存在数据目录中</value></data>
+   <data name="S_IntegritySection" xml:space="preserve"><value>防篡改</value></data>
+   <data name="S_SettingsIntegrity" xml:space="preserve"><value>设置文件防篡改校验</value></data>
+   <data name="S_SettingsIntegrity_D" xml:space="preserve"><value>开启后记录整份设置文件的指纹，启动时校验该文件是否被程序之外修改</value></data>
+   <data name="S_IntegrityAction" xml:space="preserve"><value>篡改处理方式</value></data>
+   <data name="S_IntegrityAction_D" xml:space="preserve"><value>校验发现设置文件被程序之外修改后要执行的操作</value></data>
+   <data name="O_IntegrityAction_Confirm" xml:space="preserve"><value>需要安全密码确认后继续</value></data>
+   <data name="O_IntegrityAction_AutoRestore" xml:space="preserve"><value>自动恢复最近一次备份</value></data>
+   <data name="S_IntegrityRestoreSource" xml:space="preserve"><value>恢复数据来源</value></data>
+   <data name="S_IntegrityRestoreSource_D" xml:space="preserve"><value>自动恢复时依次尝试的备份来源，云端备份需要已登录账号</value></data>
+   <data name="O_IntegrityRestoreSource_Local" xml:space="preserve"><value>仅本地备份</value></data>
+   <data name="O_IntegrityRestoreSource_LocalThenCloud" xml:space="preserve"><value>本地优先，缺失时使用云端备份</value></data>
+   <data name="O_IntegrityRestoreSource_CloudThenLocal" xml:space="preserve"><value>云端优先，失败时使用本地备份</value></data>
+   <data name="M_IntegrityDialogTitle" xml:space="preserve"><value>设置文件防篡改校验</value></data>
+   <data name="M_IntegrityDetectedHeader" xml:space="preserve"><value>设置文件已被外部修改</value></data>
+   <data name="M_IntegrityDetectedFormat" xml:space="preserve"><value>最后一次记录：{0}（版本 {1}）&#10;当前文件修改时间：{2}&#10;&#10;请使用安全密码确认以接受当前设置文件，否则程序将退出</value></data>
+   <data name="M_IntegrityUnknownValue" xml:space="preserve"><value>未知</value></data>
+   <data name="M_IntegrityRecoverTitle" xml:space="preserve"><value>设置文件自动恢复</value></data>
+   <data name="M_IntegrityRecovering" xml:space="preserve"><value>正在从备份恢复设置文件，请稍候</value></data>
+   <data name="M_IntegrityRecoverSuccessFormat" xml:space="preserve"><value>已从{0}备份「{1}」恢复设置文件&#10;恢复前的设置文件已另存为：{2}&#10;&#10;应用将在几秒后自动重启</value></data>
+   <data name="M_IntegrityRecoverFailedFormat" xml:space="preserve"><value>自动恢复失败：{0}</value></data>
+   <data name="M_IntegrityRecoverFallback" xml:space="preserve"><value>请使用安全密码确认当前设置文件，否则程序将退出</value></data>
+   <data name="M_IntegritySourceLocal" xml:space="preserve"><value>本地</value></data>
+   <data name="M_IntegritySourceCloud" xml:space="preserve"><value>云端</value></data>
+   <data name="M_IntegrityNoBackup" xml:space="preserve"><value>未找到包含设置文件的可用备份</value></data>
+   <data name="M_IntegrityNotSignedIn" xml:space="preserve"><value>未登录账号，云端备份不可用</value></data>
+   <data name="M_IntegrityBackupInvalid" xml:space="preserve"><value>备份无效或不包含设置文件</value></data>
+   <data name="C_IntegrityAccept" xml:space="preserve"><value>验证并继续</value></data>
+   <data name="C_IntegrityExit" xml:space="preserve"><value>退出程序</value></data>
+   <data name="C_IntegrityRecoverContinue" xml:space="preserve"><value>继续</value></data>
   <data name="S_WindowOperations" xml:space="preserve"><value>窗口与应用</value></data>
   <data name="S_WindowOperations_D" xml:space="preserve"><value>保护设置入口、窗口显隐及应用生命周期操作</value></data>
   <data name="S_DrawOperations" xml:space="preserve"><value>抽取</value></data>
@@ -117,6 +146,7 @@
   <data name="M_VerificationAnyFactor" xml:space="preserve"><value>完成任一已选验证方式即可继续</value></data>
   <data name="M_VerificationLockedFormat" xml:space="preserve"><value>验证已锁定，请在 {0} 秒后重试</value></data>
   <data name="M_VerificationInvalid" xml:space="preserve"><value>密码或验证码错误，请检查后重试</value></data>
+  <data name="M_VerificationTotpStandalonePending" xml:space="preserve"><value>TOTP 单独验证尚未在此设备启用，请先用主密码完成一次验证</value></data>
   <data name="M_VerificationUnavailable" xml:space="preserve"><value>无法完成验证，请稍后重试</value></data>
   <data name="M_LockoutFormat" xml:space="preserve"><value>验证已锁定，请在 {0} 秒后再试</value></data>
   <data name="M_UsbPresent" xml:space="preserve"><value>已连接绑定的 U 盘</value></data>
