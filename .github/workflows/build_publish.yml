@@ -808,6 +808,10 @@ jobs:
           version="${version#V}"
           output="artifacts/mobile/SecRandom-v${version}-ios-arm64-unsigned.ipa"
           mkdir -p artifacts/mobile
+          # The AOT step dominates this job. The iOS SDK parallelizes it to
+          # Environment.ProcessorCount / 2, which is integer 1 on the 3 vCPU macOS runner and
+          # therefore compiles the assemblies strictly serially; two workers use the machine
+          # without exhausting the runner's 7 GB when LLVM AOT is in flight.
           dotnet publish SecRandom.iOS/SecRandom.iOS.csproj \
             -c Release \
             -f net10.0-ios \
@@ -820,6 +824,7 @@ jobs:
             -p:ArchiveOnBuild=false \
             -p:BuildInParallel=false \
             -p:UseSharedCompilation=false \
+            -p:AotCompileMaxDegreeOfParallelism=2 \
             -p:IpaPackagePath="$GITHUB_WORKSPACE/$output"
           test -s "$output"
           unzip -l "$output" | grep -q 'Payload/.*\.app/Info.plist'
