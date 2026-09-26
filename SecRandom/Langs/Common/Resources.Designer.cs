@@ -237,6 +237,12 @@ namespace SecRandom.Langs.Common {
             }
         }
         
+        public static string Menu_ExitSudoMode {
+            get {
+                return ResourceManager.GetString("Menu_ExitSudoMode", resourceCulture);
+            }
+        }
+        
         public static string App_Description {
             get {
                 return ResourceManager.GetString("App_Description", resourceCulture);

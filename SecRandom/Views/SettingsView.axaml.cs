@@ -100,6 +100,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
             RestorePreviewControls();
             if (_isMobile)
                 RefreshMobileDrawSessions();
+            IAppHost.TryGetService<ISecurityService>()?.DeactivateSettingsSudoMode();
             if (ReferenceEquals(Current, this))
                 Current = null;
         };
