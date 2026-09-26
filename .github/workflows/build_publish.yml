@@ -923,8 +923,8 @@ jobs:
             $releaseOutput = './artifacts/release/output'
             $artifacts = Get-ChildItem $releaseOutput -File | ForEach-Object {
               $name = $_.Name
-              $kind, $runtimeKind, $os, $arch = if ($name -match '^SecRandom-v.+-(?<rid>(win|linux|osx)-(?<arch>x64|x86|arm64))-portable-(?<runtime>full|light)\.zip$') {
-                $platform = switch ($Matches[2]) { 'win' { 'windows' } 'linux' { 'linux' } 'osx' { 'macos' } }
+              $kind, $runtimeKind, $os, $arch = if ($name -match '^SecRandom-v.+-(?<rid>(?<os>win|linux|osx)-(?<arch>x64|x86|arm64))-portable-(?<runtime>full|light)\.zip$') {
+                $platform = switch ($Matches.os) { 'win' { 'windows' } 'linux' { 'linux' } 'osx' { 'macos' } }
                 @('portable-zip', $(if ($Matches.runtime -eq 'full') { 'self-contained' } else { 'framework-dependent' }), $platform, $Matches.arch)
               } elseif ($name -match '^SecRandom-v.+-(?<rid>win-(?<arch>x64|x86|arm64))-setup\.exe$') {
                 @('windows-exe', 'self-contained', 'windows', $Matches.arch)
