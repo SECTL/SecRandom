@@ -989,6 +989,7 @@ jobs:
           name: SecRandom ${{ github.event.inputs.release_tag }}
           artifacts: "./artifacts/release/output/*.zip,./artifacts/release/output/*.exe,./artifacts/release/output/*.deb,./artifacts/release/output/*.pkg,./artifacts/release/output/*.apk,./artifacts/release/output/*.ipa,./artifacts/release/output/SecRandom-update-manifest.json,./artifacts/release/output/SecRandom-update-manifest.sig"
           draft: true
+          prerelease: ${{ contains(github.event.inputs.release_tag, '-') }}
           bodyFile: ./release-note.md
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.event.inputs.release_tag }}
