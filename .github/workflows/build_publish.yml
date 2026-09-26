@@ -15,8 +15,31 @@ permissions:
   contents: read
 
 jobs:
+  # Release publication is gated on metadata.yaml: clients resolve a channel to a release tag there
+  # and reject the release manifest when its tag/channel disagree, so a stale channel entry
+  # publishes an update nobody can reach. This job is skipped on ordinary push builds, which is
+  # why the build jobs below gate on "success or skipped" instead of a bare needs: dependency.
+  validate_release:
+    name: Validate_Release_Metadata
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.release_tag }}
+
+      - name: Validate metadata channel
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+        run: ./scripts/validate-release-metadata.ps1
+
   build_desktop:
     name: Build_${{ matrix.os }}_${{ matrix.arch }}
+    needs: validate_release
+    if: ${{ always() && !cancelled() && (needs.validate_release.result == 'success' || needs.validate_release.result == 'skipped') }}
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-24.04' || (matrix.os == 'macos' && 'macos-15' || 'windows-2022') }}
     strategy:
       fail-fast: false
@@ -503,6 +526,8 @@ jobs:
 
   build_pluginsdk:
     name: Build_PluginSDK
+    needs: validate_release
+    if: ${{ always() && !cancelled() && (needs.validate_release.result == 'success' || needs.validate_release.result == 'skipped') }}
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -582,6 +607,8 @@ jobs:
 
   build_android:
     name: Build_Android_${{ matrix.arch }}
+    needs: validate_release
+    if: ${{ always() && !cancelled() && (needs.validate_release.result == 'success' || needs.validate_release.result == 'skipped') }}
     runs-on: ubuntu-24.04
     env:
       arch: ${{ matrix.arch }}
@@ -729,6 +756,8 @@ jobs:
 
   build_ios:
     name: Build_iOS
+    needs: validate_release
+    if: ${{ always() && !cancelled() && (needs.validate_release.result == 'success' || needs.validate_release.result == 'skipped') }}
     runs-on: macos-26
 
     steps:
@@ -826,6 +855,13 @@ jobs:
           submodules: recursive
           ref: ${{ github.event.inputs.release_tag }}
 
+      - name: Validate release metadata
+        id: release_metadata
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+        run: ./scripts/validate-release-metadata.ps1
+
       - name: Download Artifacts
         uses: actions/download-artifact@v8
         with:
@@ -883,12 +919,7 @@ jobs:
               throw 'UPDATE_MANIFEST_PRIVATE_KEY_PEM_BASE64 does not match SecRandom/Assets/Updates/release-public-key.txt.'
             }
             $releaseTag = $env:RELEASE_TAG
-            $channel = if ($releaseTag -match '-alpha(?:\.|$)') { 'alpha' } elseif ($releaseTag -match '-beta(?:\.|$)') { 'beta' } elseif ($releaseTag -match '-') { throw "Unsupported prerelease tag: $releaseTag" } else { 'release' }
-            $metadata = Get-Content -LiteralPath metadata.yaml -Raw
-            $channelMatch = [regex]::Match($metadata, "(?ms)^  ${channel}:\s*\r?\n\s+tag:\s*(?<tag>\S+)\s*$")
-            if (-not $channelMatch.Success -or $channelMatch.Groups['tag'].Value -ne $releaseTag) {
-              throw "metadata.yaml channel '$channel' must point to release tag $releaseTag."
-            }
+            $channel = '${{ steps.release_metadata.outputs.channel }}'
             $releaseOutput = './artifacts/release/output'
             $artifacts = Get-ChildItem $releaseOutput -File | ForEach-Object {
               $name = $_.Name
