@@ -1,8 +1,7 @@
-﻿namespace SecRandom.Core.Tests;
+namespace SecRandom.Core.Tests;
 
 using OnlineStatusPayload = global::SecRandom.Services.OnlineStatusService.OnlineStatusPayload;
 using OnlineStatusPolicy = global::SecRandom.Services.OnlineStatusService.OnlineStatusPolicy;
-using IpLocationCache = global::SecRandom.Services.OnlineStatusService.IpLocationCache;
 using MainConfigModel = global::SecRandom.Core.Models.MainConfigModel;
 using OnlineStatusMode = global::SecRandom.Core.Enums.Configs.OnlineStatusMode;
 using PrivacySettingsConfig = global::SecRandom.Core.Models.SubConfigs.General.PrivacySettingsConfig;
@@ -84,30 +83,26 @@ public class PrivacySettingsConfigTests
     }
 
     [Fact]
-    public void OnlineStatusAnonymousPolicy_MasksIpLocationPayload()
+    public void OnlineStatusPayloadCarriesNoAddressOrRegion()
     {
         OnlineStatusPolicy policy = OnlineStatusPolicy.From(OnlineStatusMode.Anonymous);
-        IpLocationCache cache = new(
-            "203.0.113.10",
-            "中国",
-            "浙江",
-            "杭州",
-            "西湖",
-            DateTimeOffset.UtcNow);
-
         OnlineStatusPayload payload = OnlineStatusPayload.Create(
             "platform",
             Guid.Parse("01234567-89ab-cdef-0123-456789abcdef"),
-            "windows-desktop",
-            policy.IncludeIpLocation ? cache : IpLocationCache.Anonymous);
+            "windows-desktop");
 
         Assert.True(policy.IsEnabled);
-        Assert.False(policy.IncludeIpLocation);
-        Assert.Equal("0.0.0.0", payload.IpAddress);
-        Assert.Equal("未知", payload.Country);
-        Assert.Equal("未知", payload.Province);
-        Assert.Equal("未知", payload.City);
-        Assert.Equal("未知", payload.District);
+        Assert.Equal("platform", payload.PlatformId);
+        Assert.Equal("01234567-89ab-cdef-0123-456789abcdef", payload.DeviceUuid);
+        Assert.Equal("windows-desktop", payload.DeviceType);
+
+        // The service derives the address and its region from the connection, so the client must not
+        // ship either — and both reporting modes now send exactly the same fields.
+        string serialized = System.Text.Json.JsonSerializer.Serialize(
+            payload,
+            new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+        foreach (string field in new[] { "ip_address", "country", "province", "city", "district" })
+            Assert.DoesNotContain(field, serialized, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -116,6 +111,5 @@ public class PrivacySettingsConfigTests
         OnlineStatusPolicy policy = OnlineStatusPolicy.From(OnlineStatusMode.Off);
 
         Assert.False(policy.IsEnabled);
-        Assert.False(policy.IncludeIpLocation);
     }
 }

@@ -7,6 +7,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Verification;
+using SecRandom.Services;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Linkage;
 using SecRandom.Services.Plugins;
@@ -114,6 +115,8 @@ public sealed class PluginDrawServiceTests : IDisposable
         services.AddCoreRuntimeServices();
         services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
         services.AddSingleton<IWitnessClient>(_ => new StubWitnessClient());
+        services.AddSingleton<ITimestampAuthorityClient>(_ => new StubTimestampAuthorityClient());
+        services.AddSingleton<ProofChainStore>();
         services.AddSingleton<DrawProofExportService>();
         services.AddSingleton<DrawProofAttestationService>();
         services.AddSingleton<CsesScheduleParser>();
@@ -124,6 +127,9 @@ public sealed class PluginDrawServiceTests : IDisposable
         services.AddSingleton<CourseLinkageService>();
         services.AddSingleton<ISecurityService>(_ => new StubSecurityService(allowAuthorization));
         services.AddSingleton<LinkageDrawCoordinator>();
+        // Draw reporting is best-effort and gated by the privacy mode; the default test privacy mode
+        // reports, so the service writes its counter file into the per-test data root.
+        services.AddSingleton<PlatformUsageReportService>();
         services.AddTransient<RollCallDrawService>();
         services.AddTransient<LotteryDrawService>();
         services.AddSingleton<IPluginDrawService, PluginDrawService>();
@@ -149,14 +155,24 @@ public sealed class PluginDrawServiceTests : IDisposable
 
     private sealed class StubWitnessClient : IWitnessClient
     {
-        public Task<string> AttestAsync(DrawProof proof, CancellationToken cancellationToken)
+        public Task<WitnessAttestationResult> AttestAsync(DrawProof proof, CancellationToken cancellationToken)
         {
-            return Task.FromResult("attested");
+            return Task.FromResult(new WitnessAttestationResult("attested", null));
         }
 
         public Task<DrawProof> NotarizeAsync(FormalNotarizationRequest request, CancellationToken cancellationToken)
         {
             return Task.FromResult(new DrawProof());
+        }
+    }
+
+    private sealed class StubTimestampAuthorityClient : ITimestampAuthorityClient
+    {
+        public bool IsEnabled => false;
+
+        public Task<string> TimestampAsync(ReadOnlyMemory<byte> hash, CancellationToken cancellationToken)
+        {
+            return Task.FromResult("timestamp-token");
         }
     }
 

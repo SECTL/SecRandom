@@ -97,7 +97,9 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
             new(LR.S_Includes_Cses, () => Settings.CloudIncludeCses,
                 value => Settings.CloudIncludeCses = value),
             new(LR.S_Includes_Images, () => Settings.CloudIncludeImages,
-                value => Settings.CloudIncludeImages = value)
+                value => Settings.CloudIncludeImages = value),
+            new(LR.S_Includes_Proofs, () => Settings.CloudIncludeProofs,
+                value => Settings.CloudIncludeProofs = value)
         ];
         SelectedCloudIncludeOptions = BuildSelectedOptions(CloudIncludeOptions);
         DataContext = this;

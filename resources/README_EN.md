@@ -59,8 +59,15 @@ SecRandom is a fair random-selection application for classrooms, teams, events, 
 
 | Mode | What it can do | What it cannot prove |
 |---|---|---|
-| Offline proof | Review a completed draw process | It is not a pre-draw server witness; it cannot prove that the local program or real-world roster was not modified |
+| Offline proof | Review a completed draw process; later edits, deletions, and a wiped-and-rebuilt chain are all detectable | It cannot prove that the local program, random seed, or roster was unchanged **before** the draw, nor rule out repeated trials and selection before it |
 | Online witnessing | Protect the draw flow after the server locks it | It cannot prove that the roster is authentic, complete, or unfiltered before submission |
+
+Notes:
+
+- Every draw saves a locally replayable proof immediately and submits that same proof for server replay signing; its digest also goes to a third-party time-stamp authority (the digest only — never the roster or the draw content)
+- Local proofs form an append-only hash chain, so deleting or rewriting one leaves a gap; the service remembers the chain head it has seen for each device, so wiping local proofs and rebuilding the chain is reported as a backwards chain position
+- A proof commits a digest of the "record id to name/number/group" mapping of the roster it used, so editing the list **after** the draw to point a winning record at someone else is detectable
+- Filtering the roster **before** the draw (deleting or disabling a student first) cannot be proven: the digest only covers the roster as it stood at draw time. Covering that would need a "confirm the roster with a third party before drawing" flow, which is not implemented
 
 ## Technical evolution
 

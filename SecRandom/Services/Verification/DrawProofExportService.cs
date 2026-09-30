@@ -15,6 +15,7 @@ namespace SecRandom.Services.Verification;
 
 public sealed class DrawProofExportService(
     MainConfigHandler configHandler,
+    ProofChainStore chainStore,
     ILogger<DrawProofExportService> logger)
 {
     private const int MaximumFileNameLength = 240;
@@ -28,19 +29,22 @@ public sealed class DrawProofExportService(
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.KebabCaseLower) }
     };
 
-    public string Save(DrawProof proof, DrawProofExportContext context)
+    public DrawProofExportResult Save(DrawProof proof, DrawProofExportContext context)
     {
         RemoveExpiredProofs(configHandler.Data.General.ProofRetention.RetentionDays);
-        var timestamp = TimeZoneInfo.ConvertTime(proof.CreatedAtUtc, ChinaStandardTime);
+        var chained = proof with { Chain = chainStore.NextChain(proof) };
+        var timestamp = TimeZoneInfo.ConvertTime(chained.CreatedAtUtc, ChinaStandardTime);
         var path = Utils.GetFilePath(
             "proofs",
             timestamp.ToString("yyyy-MM"),
             timestamp.ToString("yyyy-MM-dd"),
-            CreateFileName(proof, context));
-        SaveAtPath(path, proof);
+            CreateFileName(chained, context));
+        SaveAtPath(path, chained);
         RemoveProofsOverStorageLimit(configHandler.Data.General.ProofRetention.MaximumStorageBytes);
-        logger.LogInformation("已导出抽取证明：ProofId={ProofId}，模式={Mode}，路径={Path}。", proof.ProofId, proof.Mode, path);
-        return path;
+        logger.LogInformation(
+            "已导出抽取证明：ProofId={ProofId}，模式={Mode}，链序={ChainIndex}，路径={Path}。",
+            chained.ProofId, chained.Mode, chained.Chain?.Index, path);
+        return new DrawProofExportResult(path, chained);
     }
 
     public void SaveAtPath(string path, DrawProof proof)
@@ -113,12 +117,17 @@ public sealed class DrawProofExportService(
             return;
 
         var cutoff = DateTime.UtcNow.AddDays(-retentionDays);
+        List<long> removed = [];
         foreach (var path in Directory.EnumerateFiles(root, "*.srproof.json", SearchOption.AllDirectories))
         {
             try
             {
                 if (File.GetLastWriteTimeUtc(path) < cutoff)
+                {
+                    if (TryReadChainIndex(path, out var chainIndex))
+                        removed.Add(chainIndex);
                     File.Delete(path);
+                }
             }
             catch (IOException exception)
             {
@@ -129,6 +138,8 @@ public sealed class DrawProofExportService(
                 logger.LogDebug(exception, "无权删除过期证明文件：{Path}。", path);
             }
         }
+
+        chainStore.RecordRemovedIndices(removed, ProofChainEvent.RetentionCleanup);
     }
 
     private void RemoveProofsOverStorageLimit(long maximumStorageBytes)
@@ -145,6 +156,7 @@ public sealed class DrawProofExportService(
             .OrderBy(file => file.LastWriteTimeUtc)
             .ToList();
         var totalBytes = files.Sum(file => file.Length);
+        List<long> removed = [];
         foreach (var file in files)
         {
             if (totalBytes <= maximumStorageBytes)
@@ -153,6 +165,8 @@ public sealed class DrawProofExportService(
             try
             {
                 var length = file.Length;
+                if (TryReadChainIndex(file.FullName, out var chainIndex))
+                    removed.Add(chainIndex);
                 file.Delete();
                 totalBytes -= length;
             }
@@ -165,6 +179,18 @@ public sealed class DrawProofExportService(
                 logger.LogDebug(exception, "无权删除超限证明文件：{Path}。", file.FullName);
             }
         }
+
+        chainStore.RecordRemovedIndices(removed, ProofChainEvent.StorageLimitCleanup);
+    }
+
+    private bool TryReadChainIndex(string path, out long chainIndex)
+    {
+        chainIndex = 0;
+        if (!TryRead(path, out var proof) || proof?.Chain is null)
+            return false;
+
+        chainIndex = proof.Chain.Index;
+        return true;
     }
 
     private static TimeZoneInfo GetChinaStandardTime()
@@ -206,6 +232,8 @@ public sealed class DrawProofExportService(
         value.Length <= maximumLength ? value : value[..maximumLength];
 
 }
+
+public sealed record DrawProofExportResult(string Path, DrawProof Proof);
 
 public sealed record DrawProofExportContext(string ListName, IReadOnlyList<string> FilterLabels)
 {

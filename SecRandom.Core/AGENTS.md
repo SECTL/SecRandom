@@ -30,6 +30,7 @@ SecRandom.Core/
 ├── Services/Archive/     # Platform-neutral v3 backup/archive engine (DataArchiveService + post-import hooks)
 ├── Services/Config/      # Config handlers over Shared config models
 ├── Services/Profiles/    # Host-internal profile persistence runtime shared by desktop/mobile
+├── Services/Stats/       # Platform-neutral usage counters (day/ISO week/month/total) and the SECTL increment payload
 ├── Services/Ipc/         # Strict URL/IPC request parsing and normalization
 ├── Services/Logging/     # Console/file logging providers/formatters
 ├── Extensions/Registry/  # DI/page registration helpers
@@ -58,6 +59,7 @@ SecRandom.Core/
 | Roster import              | `Services/Profiles/RosterImportParser.cs`                                        | Shared roster spreadsheet parsing/column mapping used by desktop and mobile import flows. |
 | Temporary draw records     | `Services/Draw/DrawTemporaryRecordService.cs`                                   | Host-internal student/prize temporary records shared by desktop and mobile hosts; automatic exhausted-round resets use `ResetStudentList`/`ResetPrizeList` to atomically overwrite an empty file, while manual `Clear*` operations keep their destructive semantics. |
 | Feature availability       | `Services/FeatureAvailabilityService.cs`                                        | `MoreSettings.LotteryEnabled` runtime gate behind `IFeatureAvailabilityService`. |
+| Usage statistics counters  | `Services/Stats/UsageMetricCounter.cs`                                           | Platform-neutral per-day/ISO-week/month/total event counters plus the pinned SECTL increment payload shape (`platform_id`/`field_key`/`delta`/`period`, field keys identical to the v2 client). Pure state: the app-layer `PlatformUsageReportService` owns persistence, debounce, and HTTP, so the counting rules stay testable. |
 | Data archive runtime       | `Services/Archive/`                                                              | `DataArchiveService` (v3 settings/data transfer, manifest/SHA-256, staging commit/rollback, snapshots) with `IArchivePostImportHooks` seam for platform follow-up; registered by `AddCoreRuntimeServices`. `ArchiveKind.CloudBackup` plus the `CloudBackupRoots` ceiling and `ResolveCloudBackupRoots(BackupConfig)` define the account cloud-sync archive, and `CloudBackupPackage` owns its part/manifest format. |
 | Roll-call algorithms       | `Abstraction/Services/IRollCallAlgorithm.cs`, `Services/Draw/RollCallAlgorithms.cs` | Host-registered fair/random weighting strategies with stable Id/Name; winner selection and verification remain in the existing DrawEngine/verification pipeline. |
 | Lottery algorithms         | `Abstraction/Services/ILotteryAlgorithm.cs`, `Services/Draw/RollCallAlgorithms.cs` | Host-registered inventory/weighted prize candidate strategies with stable Id/Name; assignment and transactional commit remain in the app draw service. |

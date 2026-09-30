@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Verification;
@@ -22,6 +23,8 @@ public sealed class VerificationDrawCoordinator(
     IVerificationKernel kernel,
     DrawProofExportService proofExporter,
     DrawProofAttestationService attestationService,
+    ProofChainStore chainStore,
+    IProfileService profileService,
     MainConfigHandler configHandler,
     IWitnessClient witnessClient)
 {
@@ -38,7 +41,8 @@ public sealed class VerificationDrawCoordinator(
     {
         var verificationMode = configHandler.Data.General.Verification.Mode;
         var includeInternalRules = verificationMode != VerificationMode.FormalNotarized;
-        var input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName, includeInternalRules);
+        var rosterDigest = ComputeStudentRosterDigest(exportContext.ListName, profileService.StudentListConfig);
+        var input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName, includeInternalRules, rosterDigest);
         return DrawAsync(input, candidates, exportContext, parentProofId, verificationMode, cancellationToken);
     }
 
@@ -51,8 +55,32 @@ public sealed class VerificationDrawCoordinator(
     {
         var verificationMode = configHandler.Data.General.Verification.Mode;
         var includeInternalRules = verificationMode != VerificationMode.FormalNotarized;
-        var input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts, includeInternalRules);
+        var rosterDigest = ComputePrizeRosterDigest(exportContext.ListName, profileService.PrizeListConfig);
+        var input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts, includeInternalRules, rosterDigest);
         return DrawAsync(input, prizes, exportContext, null, verificationMode, cancellationToken);
+    }
+
+    /// <summary>
+    ///     Commits the roster the draw was taken from so that renaming someone afterwards cannot silently
+    ///     re-point a winning record id at a different person. The digest is omitted when the active profile
+    ///     is not the list the caller drew from, so a stale profile can never produce a wrong commitment.
+    /// </summary>
+    private static string ComputeStudentRosterDigest(string listName, StudentListConfig? config)
+    {
+        if (config is null || string.IsNullOrWhiteSpace(listName)
+            || !string.Equals(config.Name, listName, StringComparison.Ordinal))
+            return string.Empty;
+
+        return RosterDigest.Compute(config.Data);
+    }
+
+    private static string ComputePrizeRosterDigest(string listName, PrizeListConfig? config)
+    {
+        if (config is null || string.IsNullOrWhiteSpace(listName)
+            || !string.Equals(config.Name, listName, StringComparison.Ordinal))
+            return string.Empty;
+
+        return RosterDigest.Compute(config.Data);
     }
 
     private async Task<VerificationDrawOutcome<TCandidate>> DrawAsync<TCandidate>(
@@ -71,6 +99,7 @@ public sealed class VerificationDrawCoordinator(
         VerificationKernelResult result;
         if (verificationMode == VerificationMode.FormalNotarized)
         {
+            var head = chainStore.Read();
             var request = new FormalNotarizationRequest
             {
                 ProofId = Guid.NewGuid(),
@@ -78,7 +107,9 @@ public sealed class VerificationDrawCoordinator(
                 InputHash = WitnessClient.ToBase64Url(inputHash),
                 ZeroSeedRequest = WitnessClient.ToBase64Url(VerificationWireCodec.EncodeDrawRequest(input, new byte[32])),
                 AuditPayload = WitnessClient.ToBase64Url(input.AuditPayload),
-                ClientNonce = WitnessClient.ToBase64Url(VerificationSeedDerivation.CreateCsprngNonce())
+                ClientNonce = WitnessClient.ToBase64Url(VerificationSeedDerivation.CreateCsprngNonce()),
+                ChainIndex = head.HeadIndex,
+                ChainHash = head.HeadHash
             };
             proof = await witnessClient.NotarizeAsync(request, cancellationToken).ConfigureAwait(false);
             result = VerificationWireCodec.DecodeDrawResponse(GetResponse(proof));
@@ -95,7 +126,7 @@ public sealed class VerificationDrawCoordinator(
         }
         var outcome = Complete(records, recordLookup, result, proof, exportContext, FreezeWeights(input));
         if (proof.Mode == VerificationProofMode.OfflineReproducible)
-            attestationService.Request(outcome.ProofPath);
+            attestationService.Request(outcome.Proof, outcome.ProofPath);
         return outcome;
     }
 
@@ -120,8 +151,8 @@ public sealed class VerificationDrawCoordinator(
             ? record
             : throw new InvalidDataException("Verification kernel returned a record outside the frozen pool."))
             .ToList();
-        var proofPath = proofExporter.Save(proof, exportContext);
-        return new VerificationDrawOutcome<TCandidate>(winners, proof, proofPath, frozenWeights);
+        var exported = proofExporter.Save(proof, exportContext);
+        return new VerificationDrawOutcome<TCandidate>(winners, exported.Proof, exported.Path, frozenWeights);
     }
 
     private static DrawProof CreateProof(

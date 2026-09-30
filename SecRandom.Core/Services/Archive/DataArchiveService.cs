@@ -62,7 +62,7 @@ public sealed class DataArchiveService(
     /// </summary>
     public static readonly string[] CloudBackupRoots =
     [
-        "config/settings.json", "list", "history", "TEMP", "audio/music", "CSES", "images", "Language"
+        "config/settings.json", "list", "history", "TEMP", "audio/music", "CSES", "images", "Language", "proofs"
     ];
 
     /// <summary>Cloud roots whose content has no row in the cloud backup-content selection.</summary>
@@ -114,6 +114,7 @@ public sealed class DataArchiveService(
         if (backup.CloudIncludeAudio) selection.Add("audio");
         if (backup.CloudIncludeCses) selection.Add("CSES");
         if (backup.CloudIncludeImages) selection.Add("images");
+        if (backup.CloudIncludeProofs) selection.Add("proofs");
 
         return CloudBackupRoots
             .Where(root => AlwaysSelectedCloudRoots.Contains(root, StringComparer.OrdinalIgnoreCase)

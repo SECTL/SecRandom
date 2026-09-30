@@ -38,7 +38,8 @@ public sealed class RollCallDrawService(
     IProfileCatalogManager profileCatalogManager,
     IDrawTemporaryRecordService temporaryRecords,
     IDrawCommitService drawCommits,
-    VerificationDrawCoordinator verification)
+    VerificationDrawCoordinator verification,
+    PlatformUsageReportService usageReport)
 {
     public RollCallDrawSnapshot GetSnapshot(string group, string gender)
     {
@@ -99,6 +100,8 @@ public sealed class RollCallDrawService(
             (int)configHandler.Data.RollCallSettings.DrawType,
             weights,
             request.CourseName));
+        // Counted only after the commit succeeded, so a rolled-back draw is never reported as a draw.
+        usageReport.RecordRollCall();
         return new RollCallDrawResult(outcome.Winners, outcome.Proof.ProofId, drawRoundId, outcome.FrozenWeights);
     }
 
@@ -148,7 +151,8 @@ public sealed class LotteryDrawService(
     IProfileCatalogManager profileCatalogManager,
     IDrawTemporaryRecordService temporaryRecords,
     IDrawCommitService drawCommits,
-    VerificationDrawCoordinator verification)
+    VerificationDrawCoordinator verification,
+    PlatformUsageReportService usageReport)
 {
     public LotteryDrawSnapshot GetSnapshot(string studentListName, string group, string gender)
     {
@@ -232,6 +236,7 @@ public sealed class LotteryDrawService(
             (int)configHandler.Data.LotterySettings.DrawType,
             (int)configHandler.Data.RollCallSettings.DrawType,
             request.CourseName));
+        usageReport.RecordLottery();
         return new LotteryDrawResult(prizes.Winners, assigned, prizes.Proof.ProofId, roundId);
     }
 

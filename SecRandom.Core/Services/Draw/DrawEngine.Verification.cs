@@ -32,7 +32,8 @@ public partial class DrawEngine
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType,
         string courseName,
-        bool includeInternalRules)
+        bool includeInternalRules,
+        string rosterDigest = "")
     {
         var preparedCandidates = candidates.Where(student => student.IsCandidate).ToList();
         if (preparedCandidates.Count == 0 || count <= 0 || count > preparedCandidates.Count)
@@ -86,7 +87,7 @@ public partial class DrawEngine
                 shareDebtPersonalHorizonRounds = ShareDebtPersonalHorizonRounds,
                 shareDebtDimensionHorizonPerPick = ShareDebtDimensionHorizonPerPick,
                 shareDebtRandomFloor = ShareDebtRandomFloor
-            })
+            }, rosterDigest)
         };
     }
 
@@ -103,7 +104,8 @@ public partial class DrawEngine
     public VerificationDrawInput CreatePrizeVerificationInput(
         int count,
         IReadOnlyDictionary<string, int> temporaryCounts,
-        bool includeInternalRules)
+        bool includeInternalRules,
+        string rosterDigest = "")
     {
         var historyCache = BuildPrizeTemporaryHistoryCache(PrizeList.Prizes, temporaryCounts);
         var usable = FilterPrizes(_ => true, count, historyCache);
@@ -143,7 +145,7 @@ public partial class DrawEngine
                 halfRepeatLimit = lotteryDrawType == LotteryDrawType.Pan && lotteryDrawMode == DrawMode.HalfRepeat
                     ? GetLotteryRepeatThreshold()
                     : (int?)null
-            })
+            }, rosterDigest)
         };
     }
 
@@ -286,7 +288,8 @@ public partial class DrawEngine
         IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates,
         IReadOnlyDictionary<TCandidate, History> historyCache,
         bool includeInternalRules,
-        object? fairness = null)
+        object? fairness = null,
+        string rosterDigest = "")
         where TCandidate : IAttachableSettingsObject
     {
         var historyByRecordId = historyCache.ToDictionary(pair => GetRecordId(pair.Key), pair => pair.Value);
@@ -341,6 +344,8 @@ public partial class DrawEngine
             internalCandidateCount = ordered.Count(candidate => candidate.internalSettingApplied),
             internalExcludedCandidateCount,
             fairness,
+            // The roster's RecordId-to-display mapping. Anonymous: a digest only, never names or numbers.
+            rosterDigest = string.IsNullOrWhiteSpace(rosterDigest) ? null : rosterDigest,
             candidates = ordered
         });
     }

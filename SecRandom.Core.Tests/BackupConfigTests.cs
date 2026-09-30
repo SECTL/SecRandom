@@ -40,6 +40,7 @@ public class BackupConfigTests
         Assert.Equal(string.Empty, backup.CloudDeviceAlias);
         Assert.False(backup.CloudIncludeImages);
         Assert.False(backup.CloudIncludeAudio);
+        Assert.False(backup.CloudIncludeProofs);
         Assert.True(backup.CloudIncludeConfig);
         Assert.True(backup.CloudIncludeList);
         Assert.True(backup.CloudIncludeHistory);

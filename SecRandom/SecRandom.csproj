@@ -35,6 +35,11 @@
         <ProjectReference Include="..\SecRandom.Platforms\SecRandom.Platforms.csproj" />
         <ProjectReference Include="..\SecRandom.Platforms.Abstractions\SecRandom.Platforms.Abstractions.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+        <!-- RFC 3161 time-stamp tokens are not part of the shared framework; the package is fully managed. -->
+        <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.0" />
+    </ItemGroup>
     
     <ItemGroup>
         <EmbeddedResource Update="Langs\Common\Resources.resx">

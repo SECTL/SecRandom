@@ -43,7 +43,7 @@
         <value>在线状态</value>
     </data>
     <data name="S_OnlineStatus_Mode_D" xml:space="preserve">
-        <value>正常上报包含粗略位置信息，匿名上报仅计入在线人数不报位置，停止则不上报在线状态</value>
+        <value>客户端只上报设备标识与设备类型，位置由服务端按访问地址统计，不再上报 IP 或城市；选择停止则完全不上报在线状态</value>
     </data>
     <data name="O_OnlineStatusMode_Full" xml:space="preserve">
         <value>正常上报</value>

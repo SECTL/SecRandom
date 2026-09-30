@@ -1000,6 +1000,9 @@ public partial class App : Application
                 services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
                 services.AddSingleton<TelemetryRuntimeService>();
                 services.AddHostedService<OnlineStatusService>();
+                services.AddSingleton<PlatformUsageReportService>();
+                services.AddHostedService(serviceProvider =>
+                    serviceProvider.GetRequiredService<PlatformUsageReportService>());
 
                 // 服务
                 services.AddTransient<RollCallDrawService>();
@@ -1031,10 +1034,14 @@ public partial class App : Application
                     services.AddSingleton<TimerViewModel>();
                     services.AddSingleton<TimerViewService>();
                 }
+                services.AddSingleton<ProofChainStore>();
                 services.AddSingleton<DrawProofExportService>();
+                services.AddSingleton<ProofIntegrityVerifier>();
                 services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
                 services.AddHttpClient<IWitnessClient, WitnessClient>(client =>
                     client.Timeout = TimeSpan.FromSeconds(3));
+                services.AddHttpClient<ITimestampAuthorityClient, TimestampAuthorityClient>(client =>
+                    client.Timeout = TimeSpan.FromSeconds(10));
                 services.AddSingleton<DrawProofAttestationService>();
                 services.AddHostedService(serviceProvider =>
                     serviceProvider.GetRequiredService<DrawProofAttestationService>());

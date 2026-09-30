@@ -26,7 +26,7 @@ public sealed class WitnessClient(
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.KebabCaseLower) }
     };
 
-    public async Task<string> AttestAsync(
+    public async Task<WitnessAttestationResult> AttestAsync(
         DrawProof proof,
         CancellationToken cancellationToken)
     {
@@ -52,7 +52,7 @@ public sealed class WitnessClient(
             receipt.Mode != proof.Mode)
             throw new InvalidDataException("Server attestation is not bound to this proof.");
 
-        return envelope.Token;
+        return new WitnessAttestationResult(envelope.Token, envelope.Chain);
     }
 
     public async Task<DrawProof> NotarizeAsync(

@@ -406,6 +406,28 @@ public sealed class DataArchiveServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task CloudBackupCarriesProofsOnlyWhenTheSelectionAsksForThem()
+    {
+        using var provider = CreateProvider();
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        config.Data.General.Backup.CloudIncludeConfig = false;
+        config.Data.General.Backup.CloudIncludeList = false;
+        config.Data.General.Backup.CloudIncludeHistory = false;
+        config.Data.General.Backup.CloudIncludeCses = false;
+        config.Data.General.Backup.CloudIncludeProofs = true;
+        config.Save();
+        File.WriteAllText(Utils.GetFilePath("proofs", "draw.srproof.json"), "{}");
+
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        Assert.Contains("proofs", archive.GetCloudBackupRoots());
+
+        var destination = Path.Combine(_exportDirectory, "cloud-proofs.zip");
+        await archive.ExportCloudBackupAsync(destination, TestContext.Current.CancellationToken);
+
+        Assert.Contains("proofs/draw.srproof.json", ReadManifestPaths(destination));
+    }
+
+    [Fact]
     public async Task InspectCloudBackup_RejectsArchivesOfOtherKinds()
     {
         using var provider = CreateProvider();

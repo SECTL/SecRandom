@@ -42,6 +42,40 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_ProofQueue"
+                                    Header="{x:Static lv:Resources.S_ProofQueue}"
+                                    Description="{x:Static lv:Resources.S_ProofQueue_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock x:Name="ProofQueueStatusText"
+                                   VerticalAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   MaxWidth="320" />
+                        <Button x:Name="RetryProofQueueButton"
+                                Content="{x:Static lv:Resources.C_RetryProofQueue}"
+                                Click="RetryProofQueue_OnClick" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_ProofIntegrity"
+                                    Header="{x:Static lv:Resources.S_ProofIntegrity}"
+                                    Description="{x:Static lv:Resources.S_ProofIntegrity_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi ShieldCheckmarkFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock x:Name="ProofIntegrityStatusText"
+                                   VerticalAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   MaxWidth="360" />
+                        <Button x:Name="VerifyProofsButton"
+                                Content="{x:Static lv:Resources.C_VerifyProofs}"
+                                Click="VerifyProofs_OnClick" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_LocalProofStorageLimit"
                                     Header="{x:Static lv:Resources.S_LocalProofStorageLimit}"
                                     Description="{x:Static lv:Resources.S_LocalProofStorageLimit_D}"

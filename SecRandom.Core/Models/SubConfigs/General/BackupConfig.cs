@@ -26,9 +26,11 @@ public partial class BackupConfig : ObservableObject
 
     /// <summary>
     ///     Cloud backup content is selected separately from the local backup, and it is shorter on
-    ///     purpose: logs, the device identity, the generated voice cache, draw proofs, and theme
-    ///     resources have no row because a cloud archive may never carry them. Images stay off by
-    ///     default because member/prize pictures are what fills the account quota fastest.
+    ///     purpose: logs, the device identity, the generated voice cache, and theme resources have no
+    ///     row because a cloud archive may never carry them. Images stay off by default because
+    ///     member/prize pictures are what fills the account quota fastest, and draw proofs stay off by
+    ///     default because uploading them is a deliberate choice — they are the only copy of the local
+    ///     evidence chain once a proof has been deleted locally.
     /// </summary>
     [ObservableProperty] private bool _cloudIncludeConfig = true;
     [ObservableProperty] private bool _cloudIncludeList = true;
@@ -36,6 +38,7 @@ public partial class BackupConfig : ObservableObject
     [ObservableProperty] private bool _cloudIncludeAudio = false;
     [ObservableProperty] private bool _cloudIncludeCses = true;
     [ObservableProperty] private bool _cloudIncludeImages = false;
+    [ObservableProperty] private bool _cloudIncludeProofs = false;
 
     [ObservableProperty] private bool _includeConfig = true;
     [ObservableProperty] private bool _includeList = true;
