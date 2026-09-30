@@ -3,31 +3,29 @@ using SecRandom.Core.Services.Stats;
 namespace SecRandom.Core.Tests;
 
 /// <summary>
-///     The usage counters feed the SECTL statistics API with the same field keys the v2 client has always
-///     reported, so a v3 installation shows up in the same figures. Period rollover, ISO week stamps, and
-///     retry restore are the parts worth pinning down.
+///     The usage counters feed the SECTL statistics API. Only the daily figure is reported: the service
+///     derives weekly/monthly/lifetime totals from the daily rows, so one request per event is enough.
 /// </summary>
 public sealed class UsageMetricCounterTests
 {
     private static readonly DateTimeOffset Noon = new(2026, 9, 30, 12, 0, 0, TimeSpan.FromHours(8));
 
     [Fact]
-    public void RollCallQueuesAllFourPeriodIncrements()
+    public void RollCallQueuesExactlyOneDailyIncrement()
     {
         var counter = new UsageMetricCounter();
 
         counter.Record(UsageMetricCounter.RollCall, Noon);
 
         var pending = counter.TakePending();
-        Assert.Equal(4, pending.Count);
-        Assert.Equal(1, pending[("daily_roll_call_count", "2026-09-30")]);
-        Assert.Equal(1, pending[("weekly_roll_call_count", "2026-W40")]);
-        Assert.Equal(1, pending[("monthly_roll_call_count", "2026-09")]);
-        Assert.Equal(1, pending[("total_roll_call_count", "all")]);
+        var increment = Assert.Single(pending);
+        Assert.Equal("daily_roll_call_count", increment.Key.FieldKey);
+        Assert.Equal("2026-09-30", increment.Key.Period);
+        Assert.Equal(1, increment.Value);
     }
 
     [Fact]
-    public void EachEventUsesItsOwnFieldKeys()
+    public void EachEventUsesItsOwnDailyFieldKey()
     {
         var counter = new UsageMetricCounter();
 
@@ -36,17 +34,30 @@ public sealed class UsageMetricCounterTests
         counter.Record(UsageMetricCounter.AppLaunch, Noon);
 
         var pending = counter.TakePending();
-        Assert.Equal(12, pending.Count);
+        Assert.Equal(3, pending.Count);
+        Assert.Equal(1, pending[("daily_roll_call_count", "2026-09-30")]);
         Assert.Equal(1, pending[("daily_lottery_count", "2026-09-30")]);
-        Assert.Equal(1, pending[("total_lottery_count", "all")]);
         Assert.Equal(1, pending[("daily_app_launch_count", "2026-09-30")]);
-        Assert.Equal(1, pending[("total_app_launch_count", "all")]);
-        Assert.Equal(1, counter.Count(UsageMetricCounter.RollCall, "daily"));
-        Assert.Equal(1, counter.Count(UsageMetricCounter.Lottery, "daily"));
+        Assert.Equal(1, counter.Count(UsageMetricCounter.RollCall));
     }
 
     [Fact]
-    public void NewDayClearsDailyButKeepsLifetimeTotal()
+    public void SameDayAccumulatesIntoOneIncrement()
+    {
+        var counter = new UsageMetricCounter();
+
+        counter.Record(UsageMetricCounter.RollCall, Noon);
+        counter.Record(UsageMetricCounter.RollCall, Noon.AddMinutes(5));
+        counter.Record(UsageMetricCounter.RollCall, Noon.AddHours(2));
+
+        var pending = counter.TakePending();
+        var increment = Assert.Single(pending);
+        Assert.Equal(3, increment.Value);
+        Assert.Equal(3, counter.Count(UsageMetricCounter.RollCall));
+    }
+
+    [Fact]
+    public void NewDayStartsFromOneAndForgetsYesterday()
     {
         var counter = new UsageMetricCounter();
         counter.Record(UsageMetricCounter.RollCall, Noon);
@@ -55,40 +66,12 @@ public sealed class UsageMetricCounterTests
 
         counter.Record(UsageMetricCounter.RollCall, Noon.AddDays(1));
 
-        // The API receives deltas, so one new event is always a delta of one per period.
         var pending = counter.TakePending();
-        Assert.Equal(1, pending[("daily_roll_call_count", "2026-10-01")]);
-        Assert.Equal(1, pending[("total_roll_call_count", "all")]);
-        // The local counters are what carry the history forward.
-        Assert.Equal(1, counter.Count(UsageMetricCounter.RollCall, "daily"));
-        Assert.Equal(3, counter.Count(UsageMetricCounter.RollCall, "total"));
-    }
-
-    [Fact]
-    public void NewMonthClearsMonthlyAndKeepsWeekly()
-    {
-        var counter = new UsageMetricCounter();
-        counter.Record(UsageMetricCounter.Lottery, new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.FromHours(8)));
-        counter.TakePending();
-
-        counter.Record(UsageMetricCounter.Lottery, new DateTimeOffset(2026, 10, 1, 12, 0, 0, TimeSpan.FromHours(8)));
-
-        var pending = counter.TakePending();
-        Assert.Equal(1, pending[("monthly_lottery_count", "2026-10")]);
-        Assert.Equal(1, pending[("weekly_lottery_count", "2026-W40")]);
-        Assert.Equal(1, pending[("daily_lottery_count", "2026-10-01")]);
-        Assert.Equal(1, counter.Count(UsageMetricCounter.Lottery, "monthly"));
-        Assert.Equal(2, counter.Count(UsageMetricCounter.Lottery, "weekly"));
-        Assert.Equal(2, counter.Count(UsageMetricCounter.Lottery, "total"));
-    }
-
-    [Fact]
-    public void WeeklyStampFollowsIsoWeekYears()
-    {
-        // 2026 is a 53-week ISO year: its last days and the first days of 2027 share week 2026-W53.
-        Assert.Equal("2026-W40", UsageMetricCounter.PeriodWeekly(Noon));
-        Assert.Equal("2026-W53", UsageMetricCounter.PeriodWeekly(new DateTimeOffset(2027, 1, 1, 12, 0, 0, TimeSpan.FromHours(8))));
-        Assert.Equal("2027-W01", UsageMetricCounter.PeriodWeekly(new DateTimeOffset(2027, 1, 4, 12, 0, 0, TimeSpan.FromHours(8))));
+        var increment = Assert.Single(pending);
+        Assert.Equal("2026-10-01", increment.Key.Period);
+        Assert.Equal(1, increment.Value);
+        Assert.Equal(1, counter.Count(UsageMetricCounter.RollCall));
+        Assert.Equal("2026-10-01", counter.Day);
     }
 
     [Fact]
@@ -105,11 +88,10 @@ public sealed class UsageMetricCounterTests
 
         var retried = counter.TakePending();
         Assert.Equal(2, retried[("daily_roll_call_count", "2026-09-30")]);
-        Assert.Equal(2, retried[("total_roll_call_count", "all")]);
     }
 
     [Fact]
-    public void SnapshotRoundTripKeepsCountersAndPeriods()
+    public void SnapshotRoundTripKeepsTheDayAndCounters()
     {
         var counter = new UsageMetricCounter();
         counter.Record(UsageMetricCounter.AppLaunch, Noon);
@@ -118,11 +100,9 @@ public sealed class UsageMetricCounterTests
         var restored = UsageMetricCounter.FromSnapshot(counter.Snapshot());
 
         Assert.Equal("2026-09-30", restored.Day);
-        Assert.Equal("2026-W40", restored.Week);
-        Assert.Equal("2026-09", restored.Month);
-        Assert.Equal(1, restored.Count(UsageMetricCounter.AppLaunch, "total"));
-        Assert.Equal(1, restored.Count(UsageMetricCounter.Lottery, "monthly"));
-        Assert.Equal(0, restored.Count(UsageMetricCounter.RollCall, "total"));
+        Assert.Equal(1, restored.Count(UsageMetricCounter.AppLaunch));
+        Assert.Equal(1, restored.Count(UsageMetricCounter.Lottery));
+        Assert.Equal(0, restored.Count(UsageMetricCounter.RollCall));
     }
 
     [Fact]
@@ -136,15 +116,15 @@ public sealed class UsageMetricCounterTests
     [Fact]
     public void ReportedFieldKeysStayStable()
     {
+        // 只报每日：周/月/总由服务端从每日推，客户端不再多发三条请求
         var keys = UsageMetricCounter.KnownFieldKeys();
 
+        Assert.Equal(3, keys.Count);
         Assert.Contains("daily_roll_call_count", keys);
-        Assert.Contains("weekly_roll_call_count", keys);
-        Assert.Contains("monthly_roll_call_count", keys);
-        Assert.Contains("total_roll_call_count", keys);
         Assert.Contains("daily_lottery_count", keys);
         Assert.Contains("daily_app_launch_count", keys);
-        Assert.Equal(12, keys.Count);
+        Assert.DoesNotContain("weekly_roll_call_count", keys);
+        Assert.DoesNotContain("total_roll_call_count", keys);
     }
 
     [Fact]
