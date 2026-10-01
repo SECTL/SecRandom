@@ -22,6 +22,15 @@ public sealed class CloudBackupPackageTests
     }
 
     [Fact]
+    public void BuildManifest_RejectsArchiveAboveTransferLimit()
+    {
+        var oversizedArchive = new byte[16 * 1024 * 1024 + 1];
+
+        Assert.Throws<InvalidDataException>(() => CloudBackupPackage.BuildManifest(
+            BackupId, [oversizedArchive], oversizedArchive.Length, ["list"], DateTime.UtcNow, "v3.0.0", oversizedArchive));
+    }
+
+    [Fact]
     public void BuildManifest_RecordsPartNamesLengthsAndHashes()
     {
         var archive = CreateBytes(CloudBackupPackage.DefaultPartBytes + 5);
@@ -134,6 +143,41 @@ public sealed class CloudBackupPackageTests
         Assert.Throws<InvalidDataException>(() => CloudBackupPackage.ValidateManifest(wrongLength));
 
         Assert.Throws<InvalidDataException>(() => CloudBackupPackage.ValidateManifest(null));
+    }
+
+    [Fact]
+    public void ValidateManifest_RejectsArchiveLengthAboveArchiveTransferLimit()
+    {
+        var archive = CreateBytes(64);
+        var parts = CloudBackupPackage.Slice(archive, CloudBackupPackage.DefaultPartBytes);
+        var manifest = CloudBackupPackage.BuildManifest(BackupId, parts, CloudBackupPackage.DefaultPartBytes,
+            ["list"], DateTime.UtcNow, "v3.0.0", archive);
+        manifest.ArchiveBytes = 2L * 1024 * 1024 * 1024;
+        manifest.Parts[0].Length = manifest.ArchiveBytes;
+
+        Assert.Throws<InvalidDataException>(() => CloudBackupPackage.ValidateManifest(manifest));
+        Assert.Throws<InvalidDataException>(() => CloudBackupPackage.MergeAndVerify(manifest, [archive]));
+    }
+
+    [Fact]
+    public void ValidateManifest_RejectsInvalidPartSizingAndNullParts()
+    {
+        var archive = CreateBytes(64);
+        var parts = CloudBackupPackage.Slice(archive, CloudBackupPackage.DefaultPartBytes);
+        var manifest = CloudBackupPackage.BuildManifest(BackupId, parts, CloudBackupPackage.DefaultPartBytes,
+            ["list"], DateTime.UtcNow, "v3.0.0", archive);
+
+        var zeroPartBytes = Clone(manifest);
+        zeroPartBytes.PartBytes = 0;
+        Assert.Throws<InvalidDataException>(() => CloudBackupPackage.ValidateManifest(zeroPartBytes));
+
+        var oversizedPart = Clone(manifest);
+        oversizedPart.PartBytes = 1;
+        Assert.Throws<InvalidDataException>(() => CloudBackupPackage.ValidateManifest(oversizedPart));
+
+        var nullParts = Clone(manifest);
+        nullParts.Parts = null!;
+        Assert.Throws<InvalidDataException>(() => CloudBackupPackage.ValidateManifest(nullParts));
     }
 
     [Fact]

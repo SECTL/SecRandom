@@ -278,6 +278,16 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                 DrawMethod: (int)Config.QuickDrawSettings.DrawType,
                 Weights: weights,
                 CourseName: courseName));
+            try
+            {
+                _verificationDrawCoordinator.Publish(drawOutcome);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "闪抽已提交，但抽取证明发布失败，证明将保持待发布状态。ProofId={ProofId}",
+                    drawOutcome.Proof.ProofId);
+            }
+
             LastDrawnStudent = drawn[0];
             _notificationAutoCloseTime = showBuiltInNotificationAnimation
                 ? ResolveNotificationAutoCloseTime()

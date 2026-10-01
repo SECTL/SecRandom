@@ -126,6 +126,7 @@ public partial class App : Application
     private readonly object _shutdownGate = new();
     private bool _isStopping;
     private bool _isOobeActive;
+    private bool _settingsIntegrityConfirmationPending;
     private SettingsIntegrityService? _settingsIntegrity;
     public new static App Current => (Application.Current as App)!;
     internal bool IsStopping => _isStopping;
@@ -570,6 +571,7 @@ public partial class App : Application
         SettingsIntegrityMismatch mismatch,
         string? recoveryFailure = null)
     {
+        _settingsIntegrityConfirmationPending = true;
         var gate = CreateSettingsIntegrityGate(desktop, startupProtocolUri, mismatch, recoveryFailure);
         desktop.MainWindow = gate;
         gate.Show();
@@ -719,6 +721,7 @@ public partial class App : Application
                 return;
             }
 
+            _settingsIntegrityConfirmationPending = false;
             WriteDesktopStartupDiagnostic("Settings integrity confirmed, continuing desktop startup.");
             ContinueDesktopStartup(desktop, startupProtocolUri);
             host.Close();
@@ -836,6 +839,8 @@ public partial class App : Application
         {
             if (_isOobeActive)
                 return;
+            if (!SettingsIntegrityCommandGate.IsAllowed(_settingsIntegrityConfirmationPending))
+                return;
 
             switch (command)
             {
@@ -871,12 +876,17 @@ public partial class App : Application
         if (_isOobeActive)
             return Task.FromResult(new IpcResponseEnvelope(true, "url",
                 new IpcBusinessResult("error", "初始设置尚未完成。", "oobe_required")));
+        if (_settingsIntegrityConfirmationPending)
+            return Task.FromResult(IpcResponseEnvelope.TransportFailure("url", "integrity_confirmation_required", "设置文件完整性尚未确认。"));
 
         return IAppHost.GetService<ProtocolCommandRouter>().HandleIpcAsync(request, cancellationToken);
     }
 
     private void HandleProtocolUri(string value)
     {
+        if (!SettingsIntegrityCommandGate.IsAllowed(_settingsIntegrityConfirmationPending))
+            return;
+
         ObserveTask(IAppHost.GetService<ProtocolCommandRouter>().HandleUrlAsync(value),
             "Protocol URL handling failed.");
     }

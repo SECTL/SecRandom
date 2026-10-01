@@ -12,6 +12,7 @@ using Org.BouncyCastle.Crypto.Signers;
 using SecRandom.Shared.Updates;
 using YamlDotNet.Serialization;
 using SecRandom.Mobile;
+using SecRandom.Services.Updates;
 using LR = SecRandom.Langs.Mobile.Resources;
 
 namespace SecRandom.Services.Mobile;
@@ -21,6 +22,10 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
     private const string Repository = "SECTL/SecRandom";
     private const string ManifestFileName = "SecRandom-update-manifest.json";
     private const string SignatureFileName = "SecRandom-update-manifest.sig";
+    private const int MaxMetadataBytes = 256 * 1024;
+    private const int MaxManifestBytes = 4 * 1024 * 1024;
+    private const int MaxSignatureBytes = 64;
+    private const int MaxArtifactBytes = 512 * 1024 * 1024;
     private static readonly Uri MetadataUri = new("https://raw.githubusercontent.com/SECTL/SecRandom/master/metadata.yaml");
     private static readonly Uri MirrorPrefix = new("https://ghproxy.sectl.cn/");
     private readonly IDeserializer _yaml = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
@@ -97,7 +102,7 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
         {
             IsBusy = true;
             Status = LR.M_DownloadingUpdate;
-            var bytes = await DownloadWithFallbackAsync(_artifact.AssetName, cancellationToken);
+            var bytes = await DownloadWithFallbackAsync(_artifact.AssetName, MaxArtifactBytes, cancellationToken);
             VerifyArtifact(bytes, _artifact);
             var path = await installer.StagePackageAsync(bytes, _artifact.AssetName, cancellationToken);
             Status = LR.M_OpeningInstaller;
@@ -120,14 +125,14 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
         {
             try
             {
-                var metadata = await httpClient.GetStringAsync(GetMetadataUri(source), cancellationToken);
+                var metadata = Encoding.UTF8.GetString(await BoundedContentReader.GetAsync(httpClient, GetMetadataUri(source), MaxMetadataBytes, cancellationToken));
                 var document = _yaml.Deserialize<MetadataDocument>(metadata) ?? throw new InvalidDataException(LR.M_EmptyMetadata);
                 var tag = document.Channels?.GetValueOrDefault("release")?.Tag;
                 if (string.IsNullOrWhiteSpace(tag))
                     throw new InvalidDataException(LR.M_MissingReleaseChannel);
 
-                var manifestBytes = await DownloadAsync(source, tag, ManifestFileName, cancellationToken);
-                var signatureBytes = await DownloadAsync(source, tag, SignatureFileName, cancellationToken);
+                var manifestBytes = await DownloadAsync(source, tag, ManifestFileName, MaxManifestBytes, cancellationToken);
+                var signatureBytes = await DownloadAsync(source, tag, SignatureFileName, MaxSignatureBytes, cancellationToken);
                 VerifyManifest(manifestBytes, signatureBytes, tag);
                 var manifest = JsonSerializer.Deserialize(manifestBytes, MobileUpdateJsonContext.Default.UpdateManifest)
                                 ?? throw new InvalidDataException(LR.M_ManifestInvalid);
@@ -142,17 +147,17 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
         throw new InvalidOperationException(LR.M_ManifestUnavailable);
     }
 
-    private async Task<byte[]> DownloadWithFallbackAsync(string assetName, CancellationToken cancellationToken)
+    private async Task<byte[]> DownloadWithFallbackAsync(string assetName, int maxBytes, CancellationToken cancellationToken)
     {
         foreach (var source in GetSources())
         {
             try
             {
-                var metadata = await httpClient.GetStringAsync(GetMetadataUri(source), cancellationToken);
+                var metadata = Encoding.UTF8.GetString(await BoundedContentReader.GetAsync(httpClient, GetMetadataUri(source), MaxMetadataBytes, cancellationToken));
                 var document = _yaml.Deserialize<MetadataDocument>(metadata) ?? throw new InvalidDataException(LR.M_EmptyMetadata);
                 var tag = document.Channels?.GetValueOrDefault("release")?.Tag;
                 if (!string.IsNullOrWhiteSpace(tag))
-                    return await DownloadAsync(source, tag, assetName, cancellationToken);
+                    return await DownloadAsync(source, tag, assetName, maxBytes, cancellationToken);
             }
             catch (Exception) when (source != UpdateSource.GitHub)
             {
@@ -168,11 +173,11 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
         ? MetadataUri
         : new Uri($"{MirrorPrefix}{MetadataUri.AbsoluteUri}");
 
-    private Task<byte[]> DownloadAsync(UpdateSource source, string tag, string assetName, CancellationToken cancellationToken)
+    private Task<byte[]> DownloadAsync(UpdateSource source, string tag, string assetName, int maxBytes, CancellationToken cancellationToken)
     {
         var direct = $"https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(assetName)}";
         var uri = source == UpdateSource.GitHub ? new Uri(direct) : new Uri($"{MirrorPrefix}{direct}");
-        return httpClient.GetByteArrayAsync(uri, cancellationToken);
+        return BoundedContentReader.GetAsync(httpClient, uri, maxBytes, cancellationToken);
     }
 
     private static void VerifyArtifact(byte[] bytes, UpdateArtifact artifact)

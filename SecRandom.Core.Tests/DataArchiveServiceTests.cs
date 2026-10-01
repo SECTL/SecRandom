@@ -368,6 +368,68 @@ public sealed class DataArchiveServiceTests : IDisposable
         Assert.False(Directory.Exists(staging) && Directory.EnumerateFiles(staging, "*.source").Any());
     }
 
+    [Theory]
+    [InlineData("config/settings.json/child")]
+    [InlineData("config/device-uuid.json/child")]
+    [InlineData("CONFIG/SETTINGS.JSON/child")]
+    [InlineData("config\\device-uuid.json\\child")]
+    [InlineData("config/settings.json/child/")]
+    public async Task ImportAllData_RejectsDescendantsOfFixedFileRootsBeforeMutation(string entryPath)
+    {
+        using var provider = CreateProvider();
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        config.Save();
+        var identityPath = Utils.GetFilePath("config", "device-uuid.json");
+        File.WriteAllText(identityPath, "local-device");
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var source = Path.Combine(_exportDirectory, "fixed-file-descendant.zip");
+        await archive.ExportAllDataAsync(source, TestContext.Current.CancellationToken);
+        StampProducerVersion(source, TestV3ProducerVersion);
+        AddArchiveEntry(source, entryPath, Encoding.UTF8.GetBytes("child"));
+        var settingsBefore = File.ReadAllBytes(config.Data.ConfigFilePath);
+
+        var inspectionException = await Assert.ThrowsAsync<InvalidDataException>(
+            () => archive.InspectAllDataAsync(source, TestContext.Current.CancellationToken));
+        var importException = await Assert.ThrowsAsync<InvalidDataException>(
+            () => archive.ImportAllDataAsync(source, TestContext.Current.CancellationToken));
+
+        Assert.Contains("非法", inspectionException.Message);
+        Assert.Contains("非法", importException.Message);
+
+        Assert.Equal(settingsBefore, File.ReadAllBytes(config.Data.ConfigFilePath));
+        Assert.Equal("local-device", File.ReadAllText(identityPath));
+        var backup = Path.Combine(_dataRoot, "backup");
+        Assert.False(Directory.Exists(backup) && Directory.EnumerateFiles(backup, "*pre_import*.zip").Any());
+    }
+
+    [Theory]
+    [InlineData("config/settings.json")]
+    [InlineData("config/device-uuid.json")]
+    public void CommitCandidate_RestoresOldFixedFileWhenDirectoryCandidateCannotBeInstalled(string root)
+    {
+        using var provider = CreateProvider();
+        provider.GetRequiredService<MainConfigHandler>().Save();
+        var target = Path.Combine(_dataRoot, root.Replace('/', Path.DirectorySeparatorChar));
+        File.WriteAllText(target, "old-file");
+        var staging = Path.Combine(_dataRoot, ".import-staging", "directory-candidate");
+        var candidate = Path.Combine(staging, root.Replace('/', Path.DirectorySeparatorChar));
+        Directory.CreateDirectory(candidate);
+        File.WriteAllText(Path.Combine(candidate, "child"), "candidate");
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var method = typeof(DataArchiveService).GetMethod("CommitCandidate", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        IReadOnlyList<string> roots = [root];
+
+        var exception = Assert.Throws<TargetInvocationException>(
+            () => method.Invoke(archive, [staging, roots, false, new List<string>()]));
+
+        Assert.NotNull(exception.InnerException);
+        Assert.True(File.Exists(target));
+        Assert.False(Directory.Exists(target));
+        Assert.Equal("old-file", File.ReadAllText(target));
+        Assert.True(Directory.Exists(candidate));
+        Assert.False(File.Exists(Path.Combine(staging, "previous", root.Replace('/', Path.DirectorySeparatorChar))));
+    }
+
     [Fact]
     public void CommitCandidate_RollsBackCommittedRootsWhenALaterRootFails()
     {

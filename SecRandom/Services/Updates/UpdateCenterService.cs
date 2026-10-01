@@ -37,6 +37,10 @@ public sealed class UpdateCenterService(
     private const string Repository = "SECTL/SecRandom";
     private const string ManifestFileName = "SecRandom-update-manifest.json";
     private const string SignatureFileName = "SecRandom-update-manifest.sig";
+    private const int MaxMetadataBytes = 256 * 1024;
+    private const int MaxManifestBytes = 4 * 1024 * 1024;
+    private const int MaxSignatureBytes = 64;
+    private const int MaxArtifactBytes = 512 * 1024 * 1024;
     private static readonly Uri GitHubRawMetadataUri = new("https://raw.githubusercontent.com/SECTL/SecRandom/master/metadata.yaml");
     private static readonly Uri GitHubMirrorPrefix = new("https://ghproxy.sectl.cn/");
     private readonly HttpClient _httpClient = httpClient;
@@ -170,7 +174,7 @@ public sealed class UpdateCenterService(
         {
             Phase = UpdateOperationPhase.Downloading;
             StatusMessage = string.Format(CultureInfo.CurrentUICulture, Text("M_StatusDownloading"), SelectedArtifact.AssetName);
-            var package = await DownloadAssetWithFallbackAsync(_manifest.Tag, SelectedArtifact.AssetName, cancellationToken);
+            var package = await DownloadAssetWithFallbackAsync(_manifest.Tag, SelectedArtifact.AssetName, MaxArtifactBytes, cancellationToken);
             Phase = UpdateOperationPhase.Verifying;
             StatusMessage = Text("M_StatusVerifying");
             VerifyArtifact(package, SelectedArtifact);
@@ -259,7 +263,8 @@ public sealed class UpdateCenterService(
         var metadataUri = source == UpdateSource.GitHub
             ? GitHubRawMetadataUri
             : new Uri($"{GitHubMirrorPrefix}{GitHubRawMetadataUri.AbsoluteUri}");
-        var yaml = await _httpClient.GetStringAsync(metadataUri, cancellationToken);
+        var metadataBytes = await BoundedContentReader.GetAsync(_httpClient, metadataUri, MaxMetadataBytes, cancellationToken);
+        var yaml = Encoding.UTF8.GetString(metadataBytes);
         var metadata = _yamlDeserializer.Deserialize<MetadataDocument>(yaml) ?? throw new InvalidDataException(Text("M_MetadataEmpty"));
         if (metadata.SchemaVersion != 2 || !string.Equals(metadata.Product, Product, StringComparison.Ordinal) || metadata.Channels is null)
             throw new InvalidDataException(Text("M_MetadataInvalid"));
@@ -269,7 +274,7 @@ public sealed class UpdateCenterService(
             : throw new InvalidDataException(string.Format(CultureInfo.CurrentUICulture, Text("M_MetadataChannelMissing"), name));
     }
 
-    private async Task<byte[]> DownloadAssetAsync(UpdateSource source, string tag, string assetName, CancellationToken cancellationToken)
+    private async Task<byte[]> DownloadAssetAsync(UpdateSource source, string tag, string assetName, int maxBytes, CancellationToken cancellationToken)
     {
         Uri uri = source switch
         {
@@ -277,7 +282,7 @@ public sealed class UpdateCenterService(
             UpdateSource.GitHubMirror => new Uri($"{GitHubMirrorPrefix}https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(assetName)}"),
             _ => throw new ArgumentOutOfRangeException(nameof(source))
         };
-        return await _httpClient.GetByteArrayAsync(uri, cancellationToken);
+        return await BoundedContentReader.GetAsync(_httpClient, uri, maxBytes, cancellationToken);
     }
 
     private UpdateManifest VerifyAndDeserializeManifest(byte[] manifestBytes, byte[] signatureBytes, string expectedTag, UpdateChannel expectedChannel)
@@ -494,8 +499,8 @@ public sealed class UpdateCenterService(
             try
             {
                 var tag = await GetChannelTagAsync(source, channel, cancellationToken);
-                var manifestBytes = await DownloadAssetAsync(source, tag, ManifestFileName, cancellationToken);
-                var signatureBytes = await DownloadAssetAsync(source, tag, SignatureFileName, cancellationToken);
+                var manifestBytes = await DownloadAssetAsync(source, tag, ManifestFileName, MaxManifestBytes, cancellationToken);
+                var signatureBytes = await DownloadAssetAsync(source, tag, SignatureFileName, MaxSignatureBytes, cancellationToken);
                 return (source, VerifyAndDeserializeManifest(manifestBytes, signatureBytes, tag, channel));
             }
             catch (OperationCanceledException)
@@ -523,14 +528,14 @@ public sealed class UpdateCenterService(
         return [UpdateSource.GitHubMirror, UpdateSource.GitHub];
     }
 
-    private async Task<byte[]> DownloadAssetWithFallbackAsync(string tag, string assetName, CancellationToken cancellationToken)
+    private async Task<byte[]> DownloadAssetWithFallbackAsync(string tag, string assetName, int maxBytes, CancellationToken cancellationToken)
     {
         Exception? lastException = null;
         foreach (var source in GetSources().OrderBy(source => source == _activeSource ? 0 : 1))
         {
             try
             {
-                return await DownloadAssetAsync(source, tag, assetName, cancellationToken);
+                return await DownloadAssetAsync(source, tag, assetName, maxBytes, cancellationToken);
             }
             catch (OperationCanceledException)
             {

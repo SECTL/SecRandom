@@ -523,21 +523,27 @@ public sealed class DataArchiveService(
                 var target = Path.Combine(_dataDirectory, root.Replace('/', Path.DirectorySeparatorChar));
                 var old = Path.Combine(previous, root.Replace('/', Path.DirectorySeparatorChar));
                 Directory.CreateDirectory(Path.GetDirectoryName(old)!);
-                if (root.Equals("config/settings.json", StringComparison.OrdinalIgnoreCase))
+                var targetMovedToPrevious = false;
+                if (File.Exists(target))
                 {
-                    if (File.Exists(target)) File.Move(target, old, true);
-                    Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-                    File.Move(candidate, target, true);
+                    File.Move(target, old, true);
+                    targetMovedToPrevious = true;
                 }
-                else
+                else if (Directory.Exists(target))
                 {
-                    if (File.Exists(target)) File.Move(target, old, true);
-                    else if (Directory.Exists(target)) Directory.Move(target, old);
-                    Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-                    if (File.Exists(candidate)) File.Move(candidate, target, true);
-                    else Directory.Move(candidate, target);
+                    Directory.Move(target, old);
+                    targetMovedToPrevious = true;
                 }
-                committed.Add((target, old));
+
+                if (targetMovedToPrevious)
+                    committed.Add((target, old));
+
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                if (IsFixedFileRoot(root) || File.Exists(candidate)) File.Move(candidate, target, true);
+                else Directory.Move(candidate, target);
+
+                if (!targetMovedToPrevious)
+                    committed.Add((target, old));
             }
 
             var logs = Path.Combine(staging, "logs");
@@ -660,9 +666,11 @@ public sealed class DataArchiveService(
         foreach (var entry in archive.Entries)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            var path = NormalizePath(entry.FullName);
+            if (IsDescendantOfFixedFileRoot(path) || (string.IsNullOrEmpty(entry.Name) && IsFixedFileRoot(path)))
+                throw new InvalidDataException("归档包含非法、过大或重复的文件路径。");
             if (string.IsNullOrEmpty(entry.Name))
                 continue;
-            var path = NormalizePath(entry.FullName);
             if (path.Length == 0 || entry.Length > MaxEntryBytes || !paths.Add(path))
                 throw new InvalidDataException("归档包含非法、过大或重复的文件路径。");
             total = checked(total + entry.Length);
@@ -717,9 +725,23 @@ public sealed class DataArchiveService(
             file.Delete();
     }
 
+    private static bool IsFixedFileRoot(string path)
+    {
+        return path.Equals("config/settings.json", StringComparison.OrdinalIgnoreCase)
+               || path.Equals(DeviceUuidPath, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsDescendantOfFixedFileRoot(string path)
+    {
+        return path.StartsWith("config/settings.json/", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith(DeviceUuidPath + "/", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static bool IsManagedPath(string path)
     {
         path = NormalizePath(path);
+        if (IsDescendantOfFixedFileRoot(path))
+            return false;
         if (path.StartsWith("config/security/", StringComparison.OrdinalIgnoreCase) || path.StartsWith("config/voice/", StringComparison.OrdinalIgnoreCase) || path.StartsWith("backup/", StringComparison.OrdinalIgnoreCase) || path.StartsWith(".import-staging/", StringComparison.OrdinalIgnoreCase) || path.StartsWith("crashes/", StringComparison.OrdinalIgnoreCase))
             return false;
         return AllDataRoots.Any(root => path.Equals(root, StringComparison.OrdinalIgnoreCase) || path.StartsWith(root + "/", StringComparison.OrdinalIgnoreCase));

@@ -15,6 +15,11 @@ public sealed class PluginManager : IPluginManager
     public const string PluginManifestFileName = "manifest.yml";
     public const string UninstallMarkerFileName = ".uninstall";
     public const string DisabledMarkerFileName = ".disabled";
+    private const long MaxPackageBytes = 64L * 1024 * 1024;
+    private const int MaxPackageEntryCount = 1024;
+    private const long MaxManifestBytes = 64L * 1024;
+    private const long MaxEntryBytes = 64L * 1024 * 1024;
+    private const long MaxTotalUncompressedBytes = 256L * 1024 * 1024;
 
     private readonly List<PluginInfo> _plugins = [];
     private readonly Dictionary<string, PluginLoadContext> _loadContexts = new(StringComparer.OrdinalIgnoreCase);
@@ -143,6 +148,7 @@ public sealed class PluginManager : IPluginManager
         }
 
         using var package = ZipFile.OpenRead(packagePath);
+        ValidatePackageBudget(packagePath, package);
         var manifest = ReadManifest(package);
         ValidateManifest(manifest);
         if (package.GetEntry(manifest.EntranceAssembly.Replace('\\', '/')) is null)
@@ -300,11 +306,17 @@ public sealed class PluginManager : IPluginManager
     {
         foreach (var packagePath in Directory.EnumerateFiles(PluginPackagesDirectory, "*" + PluginPackageExtension))
         {
+            if (File.Exists(packagePath + ".rejected"))
+                continue;
+
             try
             {
                 PluginManifest manifest;
                 using (var package = ZipFile.OpenRead(packagePath))
+                {
+                    ValidatePackageBudget(packagePath, package);
                     manifest = ReadManifest(package);
+                }
                 ValidateManifest(manifest);
 
                 var targetPath = Path.Combine(PluginsDirectory, manifest.Id);
@@ -317,11 +329,26 @@ public sealed class PluginManager : IPluginManager
                     if (!File.Exists(stagedManifestPath))
                         throw new InvalidDataException("Plugin package does not contain manifest.yml at its root.");
 
-                    ValidateManifest(ReadManifest(File.ReadAllText(stagedManifestPath)));
-                    if (Directory.Exists(targetPath))
-                        Directory.Delete(targetPath, recursive: true);
-                    Directory.Move(stagingPath, targetPath);
-                    File.Delete(packagePath);
+                    ValidateManifest(ReadManifestFile(stagedManifestPath));
+                    var backupPath = targetPath + ".replaced-" + Guid.NewGuid().ToString("N");
+                    var hadExisting = Directory.Exists(targetPath);
+                    if (hadExisting)
+                        Directory.Move(targetPath, backupPath);
+                    try
+                    {
+                        Directory.Move(stagingPath, targetPath);
+                        File.Delete(packagePath);
+                        if (Directory.Exists(backupPath))
+                            Directory.Delete(backupPath, recursive: true);
+                    }
+                    catch
+                    {
+                        if (Directory.Exists(targetPath))
+                            Directory.Delete(targetPath, recursive: true);
+                        if (hadExisting && Directory.Exists(backupPath))
+                            Directory.Move(backupPath, targetPath);
+                        throw;
+                    }
                 }
                 finally
                 {
@@ -329,9 +356,18 @@ public sealed class PluginManager : IPluginManager
                         Directory.Delete(stagingPath, recursive: true);
                 }
             }
-            catch (Exception)
+            catch (Exception exception)
             {
-                // Keep a package that cannot be processed so it can be replaced or inspected by the user.
+                if (exception is PluginPackageBudgetException)
+                {
+                    try
+                    {
+                        File.WriteAllText(packagePath + ".rejected", exception.Message);
+                    }
+                    catch
+                    {
+                    }
+                }
             }
         }
     }
@@ -347,7 +383,7 @@ public sealed class PluginManager : IPluginManager
                 if (!File.Exists(manifestPath))
                     continue;
 
-                var manifest = ReadManifest(File.ReadAllText(manifestPath));
+                var manifest = ReadManifestFile(manifestPath);
                 ValidateManifest(manifest);
                 info = new PluginInfo
                 {
@@ -440,6 +476,75 @@ public sealed class PluginManager : IPluginManager
         plugin.Info.LoadStatus = PluginLoadStatus.Loaded;
     }
 
+    private static PluginManifest ReadManifestFile(string path)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using var bounded = new BoundedReadStream(stream, MaxManifestBytes);
+        using var reader = new StreamReader(bounded);
+        var yaml = reader.ReadToEnd();
+        if (bounded.Count > MaxManifestBytes)
+            throw new InvalidDataException("Plugin manifest exceeds the resource budget.");
+        return ReadManifest(yaml);
+    }
+
+    private static void ValidatePackageBudget(string packagePath, ZipArchive package)
+    {
+        var packageBytes = new FileInfo(packagePath).Length;
+        ValidatePackageBudget(package, packageBytes, MaxPackageBytes, MaxPackageEntryCount, MaxManifestBytes, MaxEntryBytes, MaxTotalUncompressedBytes);
+    }
+
+    internal static void ValidatePackageBudgetForTests(
+        ZipArchive package,
+        long packageSize,
+        long maxPackageBytes,
+        int maxEntryCount,
+        long maxManifestBytes,
+        long maxEntryBytes,
+        long maxTotalBytes)
+        => ValidatePackageBudget(package, packageSize, maxPackageBytes, maxEntryCount, maxManifestBytes, maxEntryBytes, maxTotalBytes);
+
+    private static void ValidatePackageBudget(
+        ZipArchive package,
+        long packageSize,
+        long maxPackageBytes,
+        int maxEntryCount,
+        long maxManifestBytes,
+        long maxEntryBytes,
+        long maxTotalBytes)
+    {
+        if (packageSize > maxPackageBytes)
+            throw new InvalidDataException("Plugin package exceeds the compressed size budget.");
+        if (package.Entries.Count > maxEntryCount)
+            throw new InvalidDataException("Plugin package contains too many entries.");
+
+        long totalBytes = 0;
+        foreach (var entry in package.Entries)
+        {
+            var limit = string.Equals(entry.FullName.Replace('\\', '/'), PluginManifestFileName, StringComparison.Ordinal)
+                ? maxManifestBytes
+                : maxEntryBytes;
+            using var input = entry.Open();
+            var count = CountStreamBytes(input, limit, ref totalBytes, maxTotalBytes);
+            if (count > limit)
+                throw new InvalidDataException("Plugin package entry exceeds the resource budget.");
+        }
+    }
+
+    private static long CountStreamBytes(Stream input, long entryLimit, ref long totalBytes, long totalLimit)
+    {
+        var buffer = new byte[81920];
+        long count = 0;
+        int read;
+        while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            count += read;
+            totalBytes += read;
+            if (count > entryLimit || totalBytes > totalLimit)
+                throw new InvalidDataException("Plugin package exceeds the uncompressed resource budget.");
+        }
+        return count;
+    }
+
     private static IReadOnlyList<DiscoveredPlugin> ResolveLoadOrder(IEnumerable<DiscoveredPlugin> plugins)
     {
         var nodes = plugins.ToDictionary(x => x.Info.Manifest.Id, StringComparer.OrdinalIgnoreCase);
@@ -489,12 +594,80 @@ public sealed class PluginManager : IPluginManager
         }
     }
 
+    private static void CopyWithBudget(Stream input, Stream output, long entryLimit, ref long totalBytes, long totalLimit)
+    {
+        var buffer = new byte[81920];
+        long entryBytes = 0;
+        int read;
+        while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            entryBytes += read;
+            totalBytes += read;
+            if (entryBytes > entryLimit || totalBytes > totalLimit)
+                throw new InvalidDataException("Plugin package exceeds the uncompressed resource budget.");
+            output.Write(buffer, 0, read);
+        }
+    }
+
+    private sealed class PluginPackageBudgetException(string message) : Exception(message);
+
+    private sealed class BoundedReadStream(Stream inner, long limit) : Stream
+    {
+        public long Count { get; private set; }
+        public override bool CanRead => inner.CanRead;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => Count; set => throw new NotSupportedException(); }
+        public override void Flush() => throw new NotSupportedException();
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            var allowed = (int)Math.Min(count, limit - Count + 1);
+            if (allowed <= 0)
+            {
+                var extra = inner.Read(buffer, offset, 1);
+                Count += extra;
+                return extra;
+            }
+            var read = inner.Read(buffer, offset, allowed);
+            Count += read;
+            return read;
+        }
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            var allowed = (int)Math.Min(buffer.Length, limit - Count + 1);
+            if (allowed <= 0)
+            {
+                var extra = await inner.ReadAsync(buffer[..1], cancellationToken).ConfigureAwait(false);
+                Count += extra;
+                return extra;
+            }
+            var read = await inner.ReadAsync(buffer[..allowed], cancellationToken).ConfigureAwait(false);
+            Count += read;
+            return read;
+        }
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) inner.Dispose();
+            base.Dispose(disposing);
+        }
+        public override ValueTask DisposeAsync() => inner.DisposeAsync();
+    }
+
     private static PluginManifest ReadManifest(ZipArchive package)
     {
         var entry = package.GetEntry(PluginManifestFileName)
                      ?? throw new InvalidDataException("Plugin package does not contain manifest.yml.");
-        using var reader = new StreamReader(entry.Open());
-        return ReadManifest(reader.ReadToEnd());
+        using var input = entry.Open();
+        using var bounded = new BoundedReadStream(input, MaxManifestBytes);
+        using var reader = new StreamReader(bounded);
+        var yaml = reader.ReadToEnd();
+        if (bounded.Count > MaxManifestBytes)
+            throw new InvalidDataException("Plugin manifest exceeds the resource budget.");
+        return ReadManifest(yaml);
     }
 
     private static PluginManifest ReadManifest(string yaml)
@@ -511,6 +684,7 @@ public sealed class PluginManager : IPluginManager
     {
         var fullTargetPath = Path.GetFullPath(targetPath) + Path.DirectorySeparatorChar;
         using var archive = ZipFile.OpenRead(packagePath);
+        long totalBytes = 0;
         foreach (var entry in archive.Entries)
         {
             var destinationPath = Path.GetFullPath(Path.Combine(targetPath, entry.FullName));
@@ -528,7 +702,9 @@ public sealed class PluginManager : IPluginManager
             var directory = Path.GetDirectoryName(destinationPath);
             if (!string.IsNullOrEmpty(directory))
                 Directory.CreateDirectory(directory);
-            entry.ExtractToFile(destinationPath, overwrite: true);
+            using var input = entry.Open();
+            using var output = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            CopyWithBudget(input, output, MaxEntryBytes, ref totalBytes, MaxTotalUncompressedBytes);
         }
     }
 

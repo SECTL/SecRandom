@@ -124,10 +124,16 @@ public sealed class VerificationDrawCoordinator(
             result = kernel.Draw(input, seed);
             proof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OfflineReproducible, parentProofId, null);
         }
-        var outcome = Complete(records, recordLookup, result, proof, exportContext, FreezeWeights(input));
-        if (proof.Mode == VerificationProofMode.OfflineReproducible)
-            attestationService.Request(outcome.Proof, outcome.ProofPath);
-        return outcome;
+        return Complete(records, recordLookup, result, proof, exportContext, FreezeWeights(input));
+    }
+
+    public void Publish<TCandidate>(VerificationDrawOutcome<TCandidate> outcome)
+        where TCandidate : class
+    {
+        ArgumentNullException.ThrowIfNull(outcome);
+        var exported = proofExporter.Save(outcome.Proof, outcome.ExportContext);
+        if (outcome.Proof.Mode == VerificationProofMode.OfflineReproducible)
+            attestationService.Request(exported.Proof, exported.Path);
     }
 
     private static IReadOnlyDictionary<Guid, double> FreezeWeights(VerificationDrawInput input)
@@ -151,8 +157,7 @@ public sealed class VerificationDrawCoordinator(
             ? record
             : throw new InvalidDataException("Verification kernel returned a record outside the frozen pool."))
             .ToList();
-        var exported = proofExporter.Save(proof, exportContext);
-        return new VerificationDrawOutcome<TCandidate>(winners, exported.Proof, exported.Path, frozenWeights);
+        return new VerificationDrawOutcome<TCandidate>(winners, proof, frozenWeights, exportContext);
     }
 
     private static DrawProof CreateProof(
@@ -222,5 +227,5 @@ public sealed class VerificationDrawCoordinator(
 public sealed record VerificationDrawOutcome<TCandidate>(
     IReadOnlyList<TCandidate> Winners,
     DrawProof Proof,
-    string ProofPath,
-    IReadOnlyDictionary<Guid, double> FrozenWeights);
+    IReadOnlyDictionary<Guid, double> FrozenWeights,
+    DrawProofExportContext ExportContext);

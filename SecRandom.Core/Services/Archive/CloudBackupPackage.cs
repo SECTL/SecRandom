@@ -43,6 +43,7 @@ public static partial class CloudBackupPackage
 
     private const int MaxPartCount = 64;
     private const long JsonEnvelopeOverheadBytes = 1024;
+    private const long MaxArchiveBytes = 16L * 1024 * 1024;
 
     private static JsonSerializerOptions ManifestJsonOptions => ConfigServiceBase.JsonOptions;
 
@@ -199,6 +200,9 @@ public static partial class CloudBackupPackage
             throw new InvalidDataException("云端备份分片不能为空。");
         if (parts.Count > MaxPartCount)
             throw new InvalidDataException("云端备份分片数量超过限制。");
+        if (partBytes is <= 0 or > DefaultPartBytes || archive.LongLength > MaxArchiveBytes ||
+            parts.Any(part => part is null || part.LongLength > partBytes))
+            throw new InvalidDataException("云端备份分片或归档长度无效。");
 
         var manifest = new CloudBackupManifest
         {
@@ -226,6 +230,7 @@ public static partial class CloudBackupPackage
             });
         }
 
+        ValidateManifest(manifest);
         return manifest;
     }
 
@@ -260,19 +265,35 @@ public static partial class CloudBackupPackage
     {
         if (manifest is null || manifest.Format != Format || manifest.SchemaVersion != SchemaVersion)
             throw new InvalidDataException("云端备份清单格式不受支持。");
-        if (!IsSafeBackupId(manifest.BackupId) || manifest.Parts.Count is < 1 or > MaxPartCount)
+        if (manifest.Parts is null || !IsSafeBackupId(manifest.BackupId) ||
+            !string.Equals(manifest.ArchiveName, BuildArchiveName(manifest.BackupId), StringComparison.Ordinal) ||
+            manifest.Parts.Count is < 1 or > MaxPartCount)
             throw new InvalidDataException("云端备份清单内容无效。");
+        if (manifest.PartBytes is <= 0 or > DefaultPartBytes)
+            throw new InvalidDataException("云端备份清单的分片大小无效。");
 
         for (var index = 0; index < manifest.Parts.Count; index++)
         {
             var part = manifest.Parts[index];
-            if (part.Index != index + 1 || part.Length < 0 ||
+            if (part is null || part.Index != index + 1 || part.Length < 0 || part.Length > manifest.PartBytes ||
+                !IsSha256(part.Sha256) ||
                 !TryParseFileName(part.Name, out var partBackupId, out var partIndex, out var partCount, out var isManifest) ||
                 isManifest || partBackupId != manifest.BackupId || partIndex != part.Index || partCount != manifest.Parts.Count)
                 throw new InvalidDataException("云端备份清单的分片描述无效。");
         }
 
-        if (manifest.ArchiveBytes < 0 || manifest.Parts.Sum(part => part.Length) != manifest.ArchiveBytes)
+        if (manifest.ArchiveBytes is < 0 or > MaxArchiveBytes || !IsSha256(manifest.ArchiveSha256))
+            throw new InvalidDataException("云端备份清单的归档长度无效。");
+
+        long declaredPartBytes = 0;
+        foreach (var part in manifest.Parts)
+        {
+            if (part.Length > MaxArchiveBytes - declaredPartBytes)
+                throw new InvalidDataException("云端备份清单的归档长度无效。");
+            declaredPartBytes += part.Length;
+        }
+
+        if (declaredPartBytes != manifest.ArchiveBytes)
             throw new InvalidDataException("云端备份清单的归档长度无效。");
     }
 
@@ -299,6 +320,9 @@ public static partial class CloudBackupPackage
         if (base64Length + JsonEnvelopeOverheadBytes > MaxUploadBodyBytes)
             throw new InvalidDataException("云端备份分片体积超过上传限制。");
     }
+
+    private static bool IsSha256(string? value) =>
+        value is { Length: 64 } && value.All(Uri.IsHexDigit);
 
     public static string Hash(byte[] content) => Convert.ToHexString(SHA256.HashData(content));
 }

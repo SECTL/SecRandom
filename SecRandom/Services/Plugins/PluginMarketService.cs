@@ -39,6 +39,9 @@ public sealed class PluginMarketService(
     private const string IndexRepository = "SECTL/SecRandom-PluginIndex";
     private const string IndexFileName = "index.json";
     private const string SignatureFileName = "index.json.sig";
+    private const int MaxIndexBytes = 4 * 1024 * 1024;
+    private const int MaxSignatureBytes = 64;
+    private const int MaxPackageBytes = 64 * 1024 * 1024;
     private static readonly Uri GitHubMirrorPrefix = new("https://ghproxy.sectl.cn/");
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -192,14 +195,14 @@ public sealed class PluginMarketService(
     {
         var indexBytes = await DownloadWithFallbackAsync(
             $"{IndexRepository}/releases/download/{IndexReleaseTag}/{IndexFileName}",
-            cancellationToken).ConfigureAwait(false);
+            MaxIndexBytes, cancellationToken).ConfigureAwait(false);
         var signatureBytes = await DownloadWithFallbackAsync(
             $"{IndexRepository}/releases/download/{IndexReleaseTag}/{SignatureFileName}",
-            cancellationToken).ConfigureAwait(false);
+            MaxSignatureBytes, cancellationToken).ConfigureAwait(false);
         return (indexBytes, signatureBytes);
     }
 
-    private async Task<byte[]> DownloadWithFallbackAsync(string resource, CancellationToken cancellationToken)
+    private async Task<byte[]> DownloadWithFallbackAsync(string resource, int maxBytes, CancellationToken cancellationToken)
     {
         var direct = resource.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || resource.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
@@ -208,12 +211,12 @@ public sealed class PluginMarketService(
         var mirror = new Uri($"{GitHubMirrorPrefix}{direct.AbsoluteUri}");
         try
         {
-            return await httpClient.GetByteArrayAsync(mirror, cancellationToken).ConfigureAwait(false);
+            return await SecRandom.Services.Updates.BoundedContentReader.GetAsync(httpClient, mirror, maxBytes, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception mirrorException) when (mirrorException is not OperationCanceledException)
         {
             logger.LogDebug("Plugin market mirror failed; falling back to GitHub: {Url}", direct);
-            return await httpClient.GetByteArrayAsync(direct, cancellationToken).ConfigureAwait(false);
+            return await SecRandom.Services.Updates.BoundedContentReader.GetAsync(httpClient, direct, maxBytes, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -222,7 +225,7 @@ public sealed class PluginMarketService(
         if (string.IsNullOrWhiteSpace(entry.DownloadUrl))
             throw new InvalidDataException(string.Format(SR.M_DownloadUrlMissing, entry.Id));
 
-        var bytes = await DownloadWithFallbackAsync(entry.DownloadUrl, cancellationToken).ConfigureAwait(false);
+        var bytes = await DownloadWithFallbackAsync(entry.DownloadUrl, MaxPackageBytes, cancellationToken).ConfigureAwait(false);
 
         var tempDirectory = Path.Combine(Path.GetTempPath(), "SecRandomPluginMarket");
         Directory.CreateDirectory(tempDirectory);

@@ -75,6 +75,70 @@ public sealed class PluginDrawServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task DrawStudents_WhenCommitFails_DoesNotPublishProofOrAdvanceChain()
+    {
+        using var provider = CreateProvider(allowAuthorization: true);
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        config.Data.RollCallSettings.DrawMode = DrawMode.Repeat;
+        config.Save();
+
+        var profile = provider.GetRequiredService<IProfileService>();
+        var student = new Student { Name = "Ada", RecordId = Guid.NewGuid() };
+        profile.CurrentStudentList!.Students.Add(student);
+        profile.SaveProfile();
+
+        var historyPath = profile.CurrentStudentHistory!.ConfigFilePath;
+        File.Delete(historyPath);
+        Directory.CreateDirectory(historyPath);
+
+        var chain = provider.GetRequiredService<ProofChainStore>();
+        Assert.Equal(0, chain.Read().HeadIndex);
+
+        var service = provider.GetRequiredService<RollCallDrawService>();
+        await Assert.ThrowsAnyAsync<Exception>(() => service.DrawAsync(
+            new RollCallDrawRequest("default", string.Empty, string.Empty, 1, string.Empty),
+            TestContext.Current.CancellationToken));
+
+        Assert.Empty(provider.GetRequiredService<DrawProofExportService>().EnumerateProofPaths());
+        Assert.Equal(0, chain.Read().HeadIndex);
+        Assert.Equal(0, provider.GetRequiredService<DrawProofAttestationService>().GetStatus().PendingCount);
+    }
+
+    [Fact]
+    public async Task DrawLottery_WhenCommitFails_DoesNotPublishEitherProof()
+    {
+        using var provider = CreateProvider(allowAuthorization: true);
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        config.Data.RollCallSettings.DrawMode = DrawMode.Repeat;
+        config.Data.LotterySettings.DrawMode = DrawMode.Repeat;
+        config.Data.LotterySettings.DrawType = LotteryDrawType.Pan;
+        config.Save();
+
+        var profile = provider.GetRequiredService<IProfileService>();
+        var prize = new Prize { Name = "Book", RecordId = Guid.NewGuid() };
+        var student = new Student { Name = "Lin", RecordId = Guid.NewGuid() };
+        profile.CurrentPrizeList!.Prizes.Add(prize);
+        profile.CurrentStudentList!.Students.Add(student);
+        profile.SaveProfile();
+
+        var historyPath = profile.CurrentPrizeHistory!.ConfigFilePath;
+        File.Delete(historyPath);
+        Directory.CreateDirectory(historyPath);
+
+        var chain = provider.GetRequiredService<ProofChainStore>();
+        Assert.Equal(0, chain.Read().HeadIndex);
+
+        var service = provider.GetRequiredService<LotteryDrawService>();
+        await Assert.ThrowsAnyAsync<Exception>(() => service.DrawAsync(
+            new LotteryDrawRequest("default", "default", string.Empty, string.Empty, 1, string.Empty),
+            TestContext.Current.CancellationToken));
+
+        Assert.Empty(provider.GetRequiredService<DrawProofExportService>().EnumerateProofPaths());
+        Assert.Equal(0, chain.Read().HeadIndex);
+        Assert.Equal(0, provider.GetRequiredService<DrawProofAttestationService>().GetStatus().PendingCount);
+    }
+
+    [Fact]
     public async Task DrawLottery_Authorized_DrawsPrizesAndOptionalAssignments()
     {
         using var provider = CreateProvider(allowAuthorization: true);

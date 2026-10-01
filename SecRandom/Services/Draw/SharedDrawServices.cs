@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
@@ -39,7 +40,8 @@ public sealed class RollCallDrawService(
     IDrawTemporaryRecordService temporaryRecords,
     IDrawCommitService drawCommits,
     VerificationDrawCoordinator verification,
-    PlatformUsageReportService usageReport)
+    PlatformUsageReportService usageReport,
+    ILogger<RollCallDrawService> logger)
 {
     public RollCallDrawSnapshot GetSnapshot(string group, string gender)
     {
@@ -100,6 +102,15 @@ public sealed class RollCallDrawService(
             (int)configHandler.Data.RollCallSettings.DrawType,
             weights,
             request.CourseName));
+        try
+        {
+            verification.Publish(outcome);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "点名已提交，但抽取证明发布失败，证明将保持待发布状态。ProofId={ProofId}", outcome.Proof.ProofId);
+        }
+
         // Counted only after the commit succeeded, so a rolled-back draw is never reported as a draw.
         usageReport.RecordRollCall();
         return new RollCallDrawResult(outcome.Winners, outcome.Proof.ProofId, drawRoundId, outcome.FrozenWeights);
@@ -152,7 +163,8 @@ public sealed class LotteryDrawService(
     IDrawTemporaryRecordService temporaryRecords,
     IDrawCommitService drawCommits,
     VerificationDrawCoordinator verification,
-    PlatformUsageReportService usageReport)
+    PlatformUsageReportService usageReport,
+    ILogger<LotteryDrawService> logger)
 {
     public LotteryDrawSnapshot GetSnapshot(string studentListName, string group, string gender)
     {
@@ -215,11 +227,13 @@ public sealed class LotteryDrawService(
             temporaryRecords.GetPrizeCounts(GetPrizePoolName()), snapshot.Prizes,
             DrawProofExportContext.ForPrizes(GetPrizePoolName()), cancellationToken).ConfigureAwait(false);
         IReadOnlyList<Student> assigned = [];
+        VerificationDrawOutcome<Student>? assignedOutcome = null;
         if (hasStudentAssignment)
         {
-            assigned = (await verification.DrawStudentsAsync(count, snapshot.EligibleStudents, DrawSettingsType.RollCall,
+            assignedOutcome = await verification.DrawStudentsAsync(count, snapshot.EligibleStudents, DrawSettingsType.RollCall,
                 DrawProofExportContext.ForStudents(GetStudentListName(), request.Group, request.Gender, request.CourseName),
-                prizes.Proof.ProofId, request.CourseName, cancellationToken).ConfigureAwait(false)).Winners;
+                prizes.Proof.ProofId, request.CourseName, cancellationToken).ConfigureAwait(false);
+            assigned = assignedOutcome.Winners;
             if (assigned.Count != prizes.Winners.Count)
                 return null;
         }
@@ -236,6 +250,10 @@ public sealed class LotteryDrawService(
             (int)configHandler.Data.LotterySettings.DrawType,
             (int)configHandler.Data.RollCallSettings.DrawType,
             request.CourseName));
+        PublishProof(prizes);
+        if (assignedOutcome is not null)
+            PublishProof(assignedOutcome);
+
         usageReport.RecordLottery();
         return new LotteryDrawResult(prizes.Winners, assigned, prizes.Proof.ProofId, roundId);
     }
@@ -245,6 +263,19 @@ public sealed class LotteryDrawService(
         temporaryRecords.ClearPrizeList(GetPrizePoolName());
         if (!string.IsNullOrWhiteSpace(studentListName))
             temporaryRecords.ClearStudentScope(GetStudentListName(), gender, group);
+    }
+
+    private void PublishProof<TCandidate>(VerificationDrawOutcome<TCandidate> outcome)
+        where TCandidate : class
+    {
+        try
+        {
+            verification.Publish(outcome);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "抽奖已提交，但抽取证明发布失败，证明将保持待发布状态。ProofId={ProofId}", outcome.Proof.ProofId);
+        }
     }
 
     private IReadOnlyList<Student> GetEligibleStudents(string selectedList, string group, string gender)
