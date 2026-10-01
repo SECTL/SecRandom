@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <root>
     <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
@@ -38,5 +38,8 @@
     </data>
     <data name="M_Nothing" xml:space="preserve">
         <value>这里还什么都没有喵～</value>
+    </data>
+    <data name="M_InvalidProfileDefault" xml:space="preserve">
+        <value>设置中的默认名单名称无效</value>
     </data>
 </root>

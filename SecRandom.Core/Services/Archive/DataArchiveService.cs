@@ -15,6 +15,7 @@ using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
+using SecRandom.Shared.Abstraction;
 
 namespace SecRandom.Core.Services.Archive;
 
@@ -266,12 +267,6 @@ public sealed class DataArchiveService(
                 if (requiredKind is { } kind && inspection.Kind != kind)
                     throw new InvalidDataException("该文件不是云端备份归档。");
 
-                SaveCurrentState();
-                var snapshot = string.Empty;
-                if (createSnapshot)
-                    snapshot = CreateArchive(CreateBackupPath("pre_import_all_data"), ArchiveKind.PreImportAllData,
-                        AllDataRoots, cancellationToken);
-
                 var staging = Path.Combine(_dataDirectory, ".import-staging", Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(staging);
                 try
@@ -280,6 +275,13 @@ public sealed class DataArchiveService(
                     var importedFiles = ExtractCurrentArchive(sourceCopy, staging, cancellationToken);
 
                     ValidateCandidate(staging);
+
+                    SaveCurrentState();
+                    var snapshot = string.Empty;
+                    if (createSnapshot)
+                        snapshot = CreateArchive(CreateBackupPath("pre_import_all_data"), ArchiveKind.PreImportAllData,
+                            AllDataRoots, cancellationToken);
+
                     var rootsToCommit = inspection.Kind == ArchiveKind.AllData
                         ? AllDataRoots
                         : inspection.Roots;
@@ -631,6 +633,19 @@ public sealed class DataArchiveService(
 
     private static void ValidateSettingsCandidate(MainConfigModel candidate)
     {
+        foreach (var name in new[]
+                 {
+                     candidate.RollCallSettings.DefaultClass,
+                     candidate.QuickDrawSettings.DefaultClass,
+                     candidate.LotterySettings.DefaultPool
+                 })
+        {
+            if (name == string.Empty)
+                continue;
+            if (!ProfileConfigBase.IsValidProfileName(name))
+                throw new InvalidDataException(SecRandom.Core.Langs.Common.Resources.M_InvalidProfileDefault);
+        }
+
         if (candidate.General.Basic.MainWindowWidth <= 0 || candidate.General.Basic.MainWindowHeight <= 0 ||
             candidate.General.Basic.SettingsWindowWidth <= 0 || candidate.General.Basic.SettingsWindowHeight <= 0)
             throw new InvalidDataException("设置中的窗口尺寸无效。");

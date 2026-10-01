@@ -7,6 +7,7 @@ using System.Text.Json.Nodes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
+using SecRandom.Core.Abstraction;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Config;
@@ -279,6 +280,75 @@ public sealed class DataArchiveServiceTests : IDisposable
         Assert.Equal(1, hooks.SettingsCalls);
         Assert.Equal(0, hooks.AllDataCalls);
         Assert.Contains("hook-warning-settings", result.Warnings);
+    }
+
+    [Theory]
+    [InlineData("rollcall", false)]
+    [InlineData("quickdraw", false)]
+    [InlineData("lottery", false)]
+    [InlineData("rollcall", true)]
+    [InlineData("quickdraw", true)]
+    [InlineData("lottery", true)]
+    public async Task Import_RejectsUnsafeProfileDefaultsBeforeSnapshotOrSettingsMutation(string selection, bool zip)
+    {
+        var hooks = new RecordingHooks();
+        using var provider = CreateProvider(hooks);
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        config.Save();
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var source = Path.Combine(_exportDirectory, zip ? "unsafe-default.zip" : "unsafe-default.json");
+        if (zip)
+            await archive.ExportAllDataAsync(source, TestContext.Current.CancellationToken);
+        else
+            await archive.ExportSettingsAsync(source, TestContext.Current.CancellationToken);
+        StampProducerVersion(source, TestV3ProducerVersion);
+        var candidate = JsonSerializer.Deserialize<SecRandom.Core.Models.MainConfigModel>(
+            JsonSerializer.Serialize(config.Data, ConfigServiceBase.JsonOptions), ConfigServiceBase.JsonOptions)!;
+        switch (selection)
+        {
+            case "rollcall": candidate.RollCallSettings.DefaultClass = "../outside"; break;
+            case "quickdraw": candidate.QuickDrawSettings.DefaultClass = "..\\outside"; break;
+            case "lottery": candidate.LotterySettings.DefaultPool = "CON"; break;
+        }
+        var candidateBytes = JsonSerializer.SerializeToUtf8Bytes(candidate, ConfigServiceBase.JsonOptions);
+        if (zip)
+        {
+            ArchiveManifest manifest;
+            using (var original = ZipFile.OpenRead(source))
+                manifest = ReadManifest(original);
+            var settingsEntry = manifest.Files.Single(file => file.Path == "config/settings.json");
+            settingsEntry.Length = candidateBytes.LongLength;
+            settingsEntry.Sha256 = Convert.ToHexString(SHA256.HashData(candidateBytes));
+            RewriteArchive(source, (name, bytes) => name switch
+            {
+                "config/settings.json" => candidateBytes,
+                "manifest.json" => JsonSerializer.SerializeToUtf8Bytes(manifest),
+                _ => bytes
+            });
+        }
+        else
+        {
+            var envelope = JsonNode.Parse(File.ReadAllText(source))!;
+            envelope["settings"] = JsonNode.Parse(candidateBytes);
+            File.WriteAllText(source, envelope.ToJsonString());
+        }
+        var settingsPath = config.Data.ConfigFilePath;
+        var settingsBefore = File.ReadAllText(settingsPath);
+        var profile = provider.GetRequiredService<SecRandom.Core.Abstraction.Services.IProfileService>();
+        var studentName = profile.StudentListConfig!.Name;
+        var prizeName = profile.PrizeListConfig!.Name;
+
+        await Assert.ThrowsAsync<InvalidDataException>(() => zip
+            ? archive.ImportAllDataAsync(source, TestContext.Current.CancellationToken)
+            : archive.ImportSettingsAsync(source, TestContext.Current.CancellationToken));
+
+        Assert.Equal(settingsBefore, File.ReadAllText(settingsPath));
+        Assert.Equal(studentName, profile.StudentListConfig.Name);
+        Assert.Equal(prizeName, profile.PrizeListConfig.Name);
+        Assert.Equal(0, hooks.SettingsCalls);
+        Assert.Equal(0, hooks.AllDataCalls);
+        var backup = Path.Combine(_dataRoot, "backup");
+        Assert.False(Directory.Exists(backup) && Directory.EnumerateFiles(backup, "*pre_import*.zip").Any());
     }
 
     [Fact]

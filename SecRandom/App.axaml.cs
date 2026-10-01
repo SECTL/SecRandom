@@ -1070,7 +1070,11 @@ public partial class App : Application
                 services.AddSingleton<ProtocolCommandRouter>();
                 services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
                 services.AddSingleton<ISpeechProvider, EdgeTtsSpeechProvider>();
-                services.AddHttpClient("omnitts", client => client.Timeout = TimeSpan.FromSeconds(30));
+                services.AddHttpClient("omnitts", client => client.Timeout = TimeSpan.FromSeconds(30))
+                    .ConfigurePrimaryHttpMessageHandler(() => new System.Net.Http.HttpClientHandler
+                    {
+                        AllowAutoRedirect = false
+                    });
                 services.AddSingleton<OmniTtsCredentialStore>();
                 services.AddSingleton<MiMoVoiceReferenceStore>();
                 services.AddSingleton<OmniTtsSpeechProvider>();
@@ -1980,12 +1984,20 @@ public partial class App : Application
         if (shouldShow)
         {
             await ShowSettingsWindowCoreAsync();
-            SettingsView.Current?.NavigateToPage(pageId);
+            NavigateSettingsWindowPage(pageId, preview);
         }
         else
         {
             _settingsWindow?.Hide();
         }
+    }
+
+    private static void NavigateSettingsWindowPage(string pageId, bool preview)
+    {
+        if (preview)
+            SettingsView.Current?.NavigateToPreviewPage(pageId);
+        else
+            SettingsView.Current?.NavigateToPage(pageId);
     }
 
     private static async Task ShowSettingsWindowCoreAsync()

@@ -39,4 +39,7 @@
     <data name="M_Nothing" xml:space="preserve">
         <value>There is nothing here yet</value>
     </data>
+    <data name="M_InvalidProfileDefault" xml:space="preserve">
+        <value>The default list name in the settings is invalid</value>
+    </data>
 </root>

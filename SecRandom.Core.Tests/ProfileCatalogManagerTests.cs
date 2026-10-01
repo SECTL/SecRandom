@@ -19,6 +19,97 @@ public sealed class ProfileCatalogManagerTests : IDisposable
         ConfigureDataRootForTests(_dataRoot);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData(".")]
+    [InlineData("..")]
+    [InlineData("../outside")]
+    [InlineData("..\\outside")]
+    [InlineData("/outside")]
+    [InlineData("C:\\outside")]
+    [InlineData("C:outside")]
+    [InlineData("\\\\server\\share")]
+    [InlineData("class/name")]
+    [InlineData("class\\name")]
+    [InlineData("class:stream")]
+    [InlineData("class?")]
+    [InlineData("class*")]
+    [InlineData("class\"")]
+    [InlineData("class<")]
+    [InlineData("class>")]
+    [InlineData("class|")]
+    [InlineData("class\u0001")]
+    [InlineData("class.")]
+    [InlineData("class ")]
+    [InlineData("CON")]
+    [InlineData("nul.txt")]
+    [InlineData("COM1")]
+    [InlineData("lpt9.backup")]
+    [InlineData("COM\u00b9")]
+    [InlineData("LPT\u00b2")]
+    public void ProfilePaths_RejectUnsafeSingleFileNames(string name)
+    {
+        SecRandom.Shared.Abstraction.ProfileConfigBase[] models =
+        [new StudentList(name), new StudentHistory(name), new PrizeList(name), new PrizeHistory(name)];
+
+        foreach (var model in models)
+            Assert.Throws<ArgumentException>(() => model.ConfigFilePath);
+    }
+
+    [Theory]
+    [InlineData("class-a")]
+    [InlineData("Class 1")]
+    [InlineData("班级一")]
+    [InlineData("pool.v3")]
+    [InlineData("COM10")]
+    public void ProfilePaths_PreserveNormalNames(string name)
+    {
+        Assert.Equal(Utils.GetFilePath("list", "roll_call_list", $"{name}.json"), new StudentList(name).ConfigFilePath);
+        Assert.Equal(Utils.GetFilePath("history", "roll_call_history", $"{name}.json"), new StudentHistory(name).ConfigFilePath);
+        Assert.Equal(Utils.GetFilePath("list", "lottery_list", $"{name}.json"), new PrizeList(name).ConfigFilePath);
+        Assert.Equal(Utils.GetFilePath("history", "lottery_history", $"{name}.json"), new PrizeHistory(name).ConfigFilePath);
+        Assert.Equal(string.Empty, new StudentList().Name);
+        Assert.Equal(string.Empty, new PrizeList().Name);
+    }
+
+    [Theory]
+    [InlineData("../outside")]
+    [InlineData("..\\outside")]
+    [InlineData("CON")]
+    public void ProfileSwitch_RejectsUnsafeNamesBeforeSavingCurrentProfile(string name)
+    {
+        using var provider = CreateProvider();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var studentPath = profile.CurrentStudentList!.ConfigFilePath;
+        var prizePath = profile.CurrentPrizeList!.ConfigFilePath;
+        var studentBefore = File.ReadAllText(studentPath);
+        var prizeBefore = File.ReadAllText(prizePath);
+        profile.CurrentStudentList.Students.Add(new Student { Name = "unsaved" });
+        profile.CurrentPrizeList.Prizes.Add(new Prize { Name = "unsaved" });
+
+        Assert.Throws<ArgumentException>(() => profile.LoadStudentProfile(name));
+        Assert.Throws<ArgumentException>(() => profile.LoadPrizeProfile(name));
+
+        Assert.Equal(studentBefore, File.ReadAllText(studentPath));
+        Assert.Equal(prizeBefore, File.ReadAllText(prizePath));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ProfileStartup_RejectsUnsafeConfiguredDefault(bool prize)
+    {
+        using var provider = CreateProvider();
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        if (prize)
+            config.Data.LotterySettings.DefaultPool = "../outside";
+        else
+            config.Data.RollCallSettings.DefaultClass = "../outside";
+
+        Assert.Throws<ArgumentException>(() => provider.GetRequiredService<IProfileService>());
+    }
+
     [Fact]
     public void CreateEnumerateExists_AndDuplicateCreateIsRejected()
     {

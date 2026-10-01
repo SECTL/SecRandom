@@ -142,7 +142,7 @@
     <value>API キー</value>
   </data>
   <data name="S_OmniTts_ApiKey_D">
-    <value>キーはローカルの独立ファイルのみに保存、設定・ログ・バックアップには書き込まない</value>
+    <value>キーは提供元と URL のスキーム・ホスト・ポートに紐付くため、接続先変更や旧形式のキーは再入力が必要、パスのみの変更では継続利用できる；キーはローカルの独立ファイルのみに保存、設定・ログ・バックアップには書き込まない</value>
   </data>
   <data name="C_OmniTtsSaveKey">
     <value>キーを保存</value>
@@ -277,4 +277,5 @@
   <data name="S_OmniTtsBatchScope_D">
     <value>出席名簿または抽選名簿を選び、現在のエンジンと音声でローカル音声キャッシュを生成</value>
   </data>
+  <data name="M_OmniTtsInvalidBaseUrl"><value>有効な HTTPS API URL を入力してください、HTTP はループバックのみ許可され、ユーザー情報・クエリ・フラグメントは使用できません</value></data>
 </root>

@@ -23,7 +23,7 @@ public partial class StudentHistory : ProfileConfigBase
 
     [JsonIgnore]
     public override string ConfigFilePath =>
-        Utils.GetFilePath("history", "roll_call_history", $"{Name}.json");
+        GetProfileFilePath("history", "roll_call_history");
 
     public ObservableDictionary<string, History> Students { get; set; } = [];
     public ObservableDictionary<string, int> GroupStats { get; set; } = [];

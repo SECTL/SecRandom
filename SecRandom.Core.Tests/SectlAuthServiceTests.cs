@@ -90,6 +90,35 @@ public sealed class SectlAuthServiceTests
         Assert.Equal(["access-token", "refreshed-access-token"], heartbeatTokens);
     }
 
+    [Theory]
+    [InlineData("https://appwrite.sectl.cn/avatar.png", true)]
+    [InlineData("https://avatar.example.test/avatar.png", false)]
+    [InlineData("http://appwrite.sectl.cn/avatar.png", false)]
+    [InlineData("https://appwrite.sectl.cn:8443/avatar.png", false)]
+    [InlineData("https://appwrite.sectl.cn.attacker.test/avatar.png", false)]
+    public async Task AvatarDownload_OnlyUsesTrustedHttpsOriginWithoutBearer(string url, bool shouldSend)
+    {
+        var sent = false;
+        string? authorization = null;
+        var client = new HttpClient(new StubHttpMessageHandler(request =>
+        {
+            sent = true;
+            authorization = request.Headers.Authorization?.ToString();
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent([1, 2, 3]) };
+        }));
+        var service = CreateService(client);
+        SetToken(service, new SectlToken("dummy-access-token", "dummy-refresh-token", "user-1", 3600));
+        var method = typeof(SectlAuthService).GetMethod("GetAvatarBytesAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var result = await (Task<byte[]?>)method.Invoke(service, [url, TestContext.Current.CancellationToken])!;
+
+        Assert.Equal(shouldSend, sent);
+        Assert.Null(authorization);
+        if (shouldSend)
+            Assert.Equal(new byte[] { 1, 2, 3 }, result);
+        else
+            Assert.Null(result);
+    }
+
     private static SectlAuthService CreateService(HttpClient client)
     {
         var configHandler = new MainConfigHandler(

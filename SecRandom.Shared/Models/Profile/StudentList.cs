@@ -20,7 +20,7 @@ public class StudentList : ProfileConfigBase, IAttachableSettingsObject
 
     [JsonIgnore]
     public override string ConfigFilePath =>
-        Utils.GetFilePath("list", "roll_call_list", $"{Name}.json");
+        GetProfileFilePath("list", "roll_call_list");
 
     public ObservableCollection<Student> Students { get; set; } = [];
 

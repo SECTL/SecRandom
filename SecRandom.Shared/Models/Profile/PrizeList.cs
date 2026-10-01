@@ -20,7 +20,7 @@ public class PrizeList : ProfileConfigBase, IAttachableSettingsObject
 
     [JsonIgnore]
     public override string ConfigFilePath =>
-        Utils.GetFilePath("list", "lottery_list", $"{Name}.json");
+        GetProfileFilePath("list", "lottery_list");
 
     public ObservableCollection<Prize> Prizes { get; set; } = [];
 

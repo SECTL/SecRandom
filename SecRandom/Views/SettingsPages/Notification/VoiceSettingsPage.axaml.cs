@@ -191,7 +191,7 @@ public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
         }
     }
 
-    public string OmniTtsKeyStatus => CredentialStore.HasKey(SelectedOmniTtsProvider)
+    public string OmniTtsKeyStatus => CredentialStore.HasKey(SelectedOmniTtsProvider, Settings.OmniTtsApiBaseUrl)
         ? Langs.SettingsPages.Voice.Resources.M_OmniTtsKeyConfigured
         : Langs.SettingsPages.Voice.Resources.M_OmniTtsKeyNotConfigured;
 
@@ -328,6 +328,12 @@ public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName is nameof(VoiceSettingsConfig.OmniTtsProvider) or nameof(VoiceSettingsConfig.OmniTtsApiBaseUrl))
+        {
+            OmniTtsApiKeyDraft = string.Empty;
+            OnPropertyChanged(nameof(OmniTtsKeyStatus));
+        }
+
         if (e.PropertyName == nameof(VoiceSettingsConfig.VoiceEngine))
         {
             OnPropertyChanged(nameof(IsSystemTtsSelected));
@@ -678,7 +684,13 @@ public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
             return;
         }
 
-        CredentialStore.SetKey(SelectedOmniTtsProvider, OmniTtsApiKeyDraft);
+        if (OmniTtsCredentialStore.NormalizeOrigin(Settings.OmniTtsApiBaseUrl) is null)
+        {
+            this.ShowWarningToast(Langs.SettingsPages.Voice.Resources.M_OmniTtsInvalidBaseUrl);
+            return;
+        }
+
+        CredentialStore.SetKey(SelectedOmniTtsProvider, Settings.OmniTtsApiBaseUrl, OmniTtsApiKeyDraft);
         OmniTtsApiKeyDraft = string.Empty;
         OnPropertyChanged(nameof(OmniTtsKeyStatus));
         this.ShowSuccessToast(Langs.SettingsPages.Voice.Resources.M_OmniTtsKeySaved);
@@ -686,7 +698,7 @@ public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
 
     private void ClearOmniTtsKeyButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        CredentialStore.ClearKey(SelectedOmniTtsProvider);
+        CredentialStore.ClearKey(SelectedOmniTtsProvider, Settings.OmniTtsApiBaseUrl);
         OmniTtsApiKeyDraft = string.Empty;
         OnPropertyChanged(nameof(OmniTtsKeyStatus));
         this.ShowSuccessToast(Langs.SettingsPages.Voice.Resources.M_OmniTtsKeyCleared);
@@ -842,11 +854,16 @@ public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
 
         void RefreshKeyStatus()
         {
-            keyStatus.Text = CredentialStore.HasKey(GetSelectedProvider(providerPicker))
+            keyStatus.Text = CredentialStore.HasKey(GetSelectedProvider(providerPicker), baseUrlBox.Text)
                 ? Langs.SettingsPages.Voice.Resources.M_OmniTtsKeyConfigured
                 : Langs.SettingsPages.Voice.Resources.M_OmniTtsKeyNotConfigured;
         }
 
+        baseUrlBox.TextChanged += (_, _) =>
+        {
+            apiKeyBox.Text = string.Empty;
+            RefreshKeyStatus();
+        };
         providerPicker.SelectionChanged += (_, _) =>
         {
             baseUrlBox.Text = OmniTtsSpeechProvider.GetDefaultBaseUrl(GetSelectedProvider(providerPicker));
@@ -865,7 +882,13 @@ public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
                 return;
             }
 
-            CredentialStore.SetKey(GetSelectedProvider(providerPicker), apiKey);
+            if (OmniTtsCredentialStore.NormalizeOrigin(baseUrlBox.Text) is null)
+            {
+                this.ShowWarningToast(Langs.SettingsPages.Voice.Resources.M_OmniTtsInvalidBaseUrl);
+                return;
+            }
+
+            CredentialStore.SetKey(GetSelectedProvider(providerPicker), baseUrlBox.Text, apiKey);
             apiKeyBox.Text = string.Empty;
             RefreshKeyStatus();
             this.ShowSuccessToast(Langs.SettingsPages.Voice.Resources.M_OmniTtsKeySaved);
@@ -873,7 +896,7 @@ public partial class VoiceSettingsPage : UserControl, INotifyPropertyChanged
         var clearKeyButton = new Button { Content = Langs.SettingsPages.Voice.Resources.C_OmniTtsClearKey };
         clearKeyButton.Click += (_, _) =>
         {
-            CredentialStore.ClearKey(GetSelectedProvider(providerPicker));
+            CredentialStore.ClearKey(GetSelectedProvider(providerPicker), baseUrlBox.Text);
             apiKeyBox.Text = string.Empty;
             RefreshKeyStatus();
             this.ShowSuccessToast(Langs.SettingsPages.Voice.Resources.M_OmniTtsKeyCleared);

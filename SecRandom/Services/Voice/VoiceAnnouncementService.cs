@@ -250,7 +250,7 @@ public sealed class VoiceAnnouncementService(
             throw new InvalidOperationException("The selected voice engine is not available on this platform.");
         if (provider.Engine == OmniTtsSpeechProvider.OmniEngine &&
             omniTtsCredentialStore is not null &&
-            !omniTtsCredentialStore.HasKey(settings.OmniTtsProvider))
+            !omniTtsCredentialStore.HasKey(settings.OmniTtsProvider, settings.OmniTtsApiBaseUrl))
             throw new InvalidOperationException("OmniTTS API key is not configured.");
 
         await _batchGate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -315,7 +315,7 @@ public sealed class VoiceAnnouncementService(
             }
             else if (provider.Engine == OmniTtsSpeechProvider.OmniEngine &&
                      omniTtsCredentialStore is not null &&
-                     !omniTtsCredentialStore.HasKey(settings.OmniTtsProvider))
+                     !omniTtsCredentialStore.HasKey(settings.OmniTtsProvider, settings.OmniTtsApiBaseUrl))
             {
                 if (!_speechProviders.TryGetValue(EdgeTtsSpeechProvider.EdgeEngine, out provider))
                 {

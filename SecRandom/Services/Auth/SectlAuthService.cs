@@ -350,14 +350,14 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
     {
         if (string.IsNullOrWhiteSpace(avatarUrl)
             || !Uri.TryCreate(avatarUrl, UriKind.Absolute, out var uri)
-            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            || uri.Scheme != Uri.UriSchemeHttps
+            || !string.Equals(uri.GetLeftPart(UriPartial.Authority), ApiBaseUrl, StringComparison.OrdinalIgnoreCase)
+            || !string.IsNullOrEmpty(uri.UserInfo))
             return null;
 
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-            if (!string.IsNullOrWhiteSpace(_token?.AccessToken))
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token.AccessToken);
             using var response = await httpClientFactory.CreateClient().SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode)
                 return null;

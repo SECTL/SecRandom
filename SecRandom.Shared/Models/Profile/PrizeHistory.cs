@@ -23,7 +23,7 @@ public partial class PrizeHistory : ProfileConfigBase
 
     [JsonIgnore]
     public override string ConfigFilePath =>
-        Utils.GetFilePath("history", "lottery_history", $"{Name}.json");
+        GetProfileFilePath("history", "lottery_history");
 
     public ObservableDictionary<string, History> Prizes { get; set; } = [];
     public ObservableDictionary<string, int> GroupStats { get; set; } = [];

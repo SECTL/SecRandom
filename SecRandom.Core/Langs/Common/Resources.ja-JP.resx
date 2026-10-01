@@ -38,4 +38,7 @@
     <data name="M_Nothing" xml:space="preserve">
         <value>ここにはまだ何もありません</value>
     </data>
+    <data name="M_InvalidProfileDefault" xml:space="preserve">
+        <value>設定内の既定の名簿名が無効です</value>
+    </data>
 </root>

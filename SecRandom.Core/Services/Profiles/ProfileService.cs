@@ -5,6 +5,7 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Shared;
+using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services;
@@ -54,8 +55,9 @@ public static partial class CoreRuntimeServiceCollectionExtensions
 
     public void LoadStudentProfile(string name, bool saveCurrent = true)
     {
-        if (string.IsNullOrWhiteSpace(name))
+        if (name == string.Empty)
             return;
+        ProfileConfigBase.ValidateProfileName(name);
 
         if (StudentListConfig?.Name == name && StudentHistoryConfig?.Name == name)
         {
@@ -81,8 +83,9 @@ public static partial class CoreRuntimeServiceCollectionExtensions
 
     public void LoadPrizeProfile(string name, bool saveCurrent = true)
     {
-        if (string.IsNullOrWhiteSpace(name))
+        if (name == string.Empty)
             return;
+        ProfileConfigBase.ValidateProfileName(name);
 
         if (PrizeListConfig?.Name == name && PrizeHistoryConfig?.Name == name)
         {
@@ -359,8 +362,11 @@ public static partial class CoreRuntimeServiceCollectionExtensions
 
     private static string ResolveProfileName(string rootA, string rootB, string preferredName)
     {
+        if (preferredName != string.Empty)
+            ProfileConfigBase.ValidateProfileName(preferredName);
+
         var directory = Utils.GetDirectoryPath(rootA, rootB);
-        if (!string.IsNullOrWhiteSpace(preferredName))
+        if (preferredName != string.Empty)
         {
             var preferredPath = Path.Combine(directory, $"{preferredName}.json");
             if (File.Exists(preferredPath))
@@ -369,7 +375,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
 
         var existing = Directory.GetFiles(directory, "*.json")
             .Select(Path.GetFileNameWithoutExtension)
-            .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name));
+            .FirstOrDefault(ProfileConfigBase.IsValidProfileName);
 
         return string.IsNullOrWhiteSpace(existing) ? "default" : existing;
     }

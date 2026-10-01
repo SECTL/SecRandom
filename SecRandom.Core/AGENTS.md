@@ -77,6 +77,7 @@ SecRandom.Core/
 - `ViewPresentation.Modal` renders without an automatic navigation bar. Modal callers own close/back behavior and must explicitly handle a close result when their flow depends on one.
 - Existing Core services may use `IAppHost.GetService<T>()` during the transition, but `DrawEngine` and new reusable runtime services use constructor injection. Construct `DrawEngine` with `MainConfigHandler`, `IProfileService`, and `ILogger<DrawEngine>`; do not add a new static-Host dependency.
 - `IProfileService.LoadStudentProfile(name)` switches the app-layer active point-call student list and matching history; callers should use it instead of constructing profile configs directly when changing the active roll-call list.
+- Profile startup/switching validates nonempty names with `ProfileConfigBase` before path access or saving the active profile. Archive settings validation checks roll-call/quick-draw `DefaultClass` and lottery `DefaultPool` before snapshots or commit; the exact empty string means no selection, not a file name.
 - Registration helpers are responsible for both keyed DI and `PagesRegistryService` metadata.
 - `DrawEngine` is partial: keep filtering in `DrawEngine.Filter.cs`, weight math in `DrawEngine.WeightCalculator.cs`,
   orchestration in `DrawEngine.cs`.

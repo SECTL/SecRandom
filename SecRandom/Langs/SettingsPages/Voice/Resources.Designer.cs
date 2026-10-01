@@ -20,6 +20,8 @@ namespace SecRandom.Langs.SettingsPages.Voice {
         private static global::System.Resources.ResourceManager resourceMan;
         private static global::System.Globalization.CultureInfo resourceCulture;
 
+        public static string M_OmniTtsInvalidBaseUrl => ResourceManager.GetString("M_OmniTtsInvalidBaseUrl", resourceCulture);
+
         internal Resources() {
         }
 

@@ -144,13 +144,14 @@ public sealed class OmniTtsSpeechProvider(
     public async Task<IReadOnlyList<string>> GetModelsAsync(CancellationToken cancellationToken = default)
     {
         var provider = Settings.OmniTtsProvider;
-        var key = credentialStore.GetKey(provider);
+        var baseUrl = Settings.OmniTtsApiBaseUrl?.Trim() ?? string.Empty;
+        var key = credentialStore.GetKey(provider, baseUrl);
         if (string.IsNullOrWhiteSpace(key))
             return [];
 
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, BuildModelsUrl(Settings.OmniTtsApiBaseUrl, provider));
+            var request = new HttpRequestMessage(HttpMethod.Get, BuildModelsUrl(baseUrl, provider));
             AddApiKeyHeader(request, provider, key);
             using var response = await _http.Value
                 .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
@@ -181,7 +182,8 @@ public sealed class OmniTtsSpeechProvider(
     {
         cancellationToken.ThrowIfCancellationRequested();
         var provider = Settings.OmniTtsProvider;
-        var key = credentialStore.GetKey(provider);
+        var baseUrl = Settings.OmniTtsApiBaseUrl?.Trim() ?? string.Empty;
+        var key = credentialStore.GetKey(provider, baseUrl);
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException("OmniTTS API key is not configured.");
         if (string.IsNullOrWhiteSpace(Settings.OmniTtsModel))
@@ -200,20 +202,21 @@ public sealed class OmniTtsSpeechProvider(
 
         return provider switch
         {
-            OmniTtsProvider.MiMo => await SynthesizeMiMoAsync(request, key, cancellationToken).ConfigureAwait(false),
-            OmniTtsProvider.Gemini => await SynthesizeGeminiAsync(request, key, cancellationToken).ConfigureAwait(false),
-            _ => await SynthesizeOpenAiCompatibleAsync(request, provider, key, cancellationToken).ConfigureAwait(false)
+            OmniTtsProvider.MiMo => await SynthesizeMiMoAsync(request, baseUrl, key, cancellationToken).ConfigureAwait(false),
+            OmniTtsProvider.Gemini => await SynthesizeGeminiAsync(request, baseUrl, key, cancellationToken).ConfigureAwait(false),
+            _ => await SynthesizeOpenAiCompatibleAsync(request, provider, baseUrl, key, cancellationToken).ConfigureAwait(false)
         };
     }
 
     private async Task<SpeechAudio> SynthesizeOpenAiCompatibleAsync(
         SpeechSynthesisRequest request,
         OmniTtsProvider provider,
+        string baseUrl,
         string key,
         CancellationToken cancellationToken)
     {
         var settings = Settings;
-        var baseUrl = settings.OmniTtsApiBaseUrl.TrimEnd('/');
+        baseUrl = baseUrl.TrimEnd('/');
         if (!baseUrl.EndsWith("/v1", StringComparison.OrdinalIgnoreCase))
             baseUrl += "/v1";
         var url = $"{baseUrl}/audio/speech";
@@ -250,13 +253,14 @@ public sealed class OmniTtsSpeechProvider(
 
     private async Task<SpeechAudio> SynthesizeMiMoAsync(
         SpeechSynthesisRequest request,
+        string baseUrl,
         string key,
         CancellationToken cancellationToken)
     {
         var settings = Settings;
         var isVoiceClone = IsMiMoVoiceCloneModel(settings.OmniTtsModel);
         var isVoiceDesign = IsMiMoVoiceDesignModel(settings.OmniTtsModel);
-        var baseUrl = settings.OmniTtsApiBaseUrl.TrimEnd('/');
+        baseUrl = baseUrl.TrimEnd('/');
         if (baseUrl.EndsWith("/v1", StringComparison.OrdinalIgnoreCase))
             baseUrl = baseUrl[..^3];
         var url = $"{baseUrl}/v1/chat/completions";
@@ -339,6 +343,7 @@ public sealed class OmniTtsSpeechProvider(
 
     private async Task<SpeechAudio> SynthesizeGeminiAsync(
         SpeechSynthesisRequest request,
+        string baseUrl,
         string key,
         CancellationToken cancellationToken)
     {
@@ -362,7 +367,7 @@ public sealed class OmniTtsSpeechProvider(
             }
         };
 
-        using var apiRequest = new HttpRequestMessage(HttpMethod.Post, $"{BuildGeminiApiBaseUrl(Settings.OmniTtsApiBaseUrl)}/interactions")
+        using var apiRequest = new HttpRequestMessage(HttpMethod.Post, $"{BuildGeminiApiBaseUrl(baseUrl)}/interactions")
         {
             Content = JsonContent.Create(body)
         };
@@ -400,13 +405,14 @@ public sealed class OmniTtsSpeechProvider(
 
     private async Task<IReadOnlyList<VoiceOption>> GetFishAudioVoicesAsync(CancellationToken cancellationToken)
     {
-        var key = credentialStore.GetKey(OmniTtsProvider.FishAudio);
+        var baseUrl = Settings.OmniTtsApiBaseUrl?.Trim() ?? string.Empty;
+        var key = credentialStore.GetKey(OmniTtsProvider.FishAudio, baseUrl);
         if (string.IsNullOrWhiteSpace(key))
             return [];
 
         try
         {
-            var baseUrl = Settings.OmniTtsApiBaseUrl.TrimEnd('/');
+            baseUrl = baseUrl.TrimEnd('/');
             if (!baseUrl.EndsWith("/v1", StringComparison.OrdinalIgnoreCase))
                 baseUrl += "/v1";
             var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/voices");

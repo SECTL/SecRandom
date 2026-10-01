@@ -19,42 +19,64 @@ public sealed class OmniTtsCredentialStore
     private readonly object _gate = new();
     private Dictionary<string, string>? _cache;
 
-    private string FilePath => Utils.GetFilePath("config", "voice", "omnitts-keys.json");
-
-    public string? GetKey(OmniTtsProvider provider)
+    public string? GetKey(OmniTtsProvider provider, string? baseUrl)
     {
+        var storageKey = GetStorageKey(provider, baseUrl);
+        if (storageKey is null)
+            return null;
         lock (_gate)
         {
             _cache ??= LoadCore();
-            return _cache.TryGetValue(GetStorageKey(provider), out var key) && !string.IsNullOrWhiteSpace(key)
+            return _cache.TryGetValue(storageKey, out var key) && !string.IsNullOrWhiteSpace(key)
                 ? key
                 : null;
         }
     }
 
-    public bool HasKey(OmniTtsProvider provider) => !string.IsNullOrWhiteSpace(GetKey(provider));
+    public bool HasKey(OmniTtsProvider provider, string? baseUrl) => !string.IsNullOrWhiteSpace(GetKey(provider, baseUrl));
 
-    public void SetKey(OmniTtsProvider provider, string key)
+    public void SetKey(OmniTtsProvider provider, string? baseUrl, string key)
     {
+        var storageKey = GetStorageKey(provider, baseUrl)
+                         ?? throw new ArgumentException("The API base URL must use HTTPS, or HTTP on loopback, without user information, a query or a fragment.", nameof(baseUrl));
         lock (_gate)
         {
             _cache ??= LoadCore();
-            _cache[GetStorageKey(provider)] = key.Trim();
+            _cache[storageKey] = key.Trim();
             SaveCore(_cache);
         }
     }
 
-    public void ClearKey(OmniTtsProvider provider)
+    public void ClearKey(OmniTtsProvider provider, string? baseUrl)
     {
+        var storageKey = GetStorageKey(provider, baseUrl);
+        if (storageKey is null)
+            return;
         lock (_gate)
         {
             _cache ??= LoadCore();
-            _cache.Remove(GetStorageKey(provider));
+            _cache.Remove(storageKey);
             SaveCore(_cache);
         }
     }
 
-    private static string GetStorageKey(OmniTtsProvider provider) => provider.ToString();
+    public static string? NormalizeOrigin(string? baseUrl)
+    {
+        if (!Uri.TryCreate(baseUrl?.Trim(), UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttps && (uri.Scheme != Uri.UriSchemeHttp || !uri.IsLoopback)) ||
+            string.IsNullOrEmpty(uri.Host) || !string.IsNullOrEmpty(uri.UserInfo) ||
+            !string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment))
+            return null;
+
+        var host = uri.IdnHost.ToLowerInvariant();
+        if (uri.HostNameType == UriHostNameType.IPv6 && !host.StartsWith('['))
+            host = $"[{host}]";
+        return $"{uri.Scheme}://{host}{(uri.IsDefaultPort ? string.Empty : $":{uri.Port}")}";
+    }
+
+    // Provider-only entries have no trusted destination and are deliberately never upgraded from settings.
+    private static string? GetStorageKey(OmniTtsProvider provider, string? baseUrl) =>
+        Enum.IsDefined(provider) && NormalizeOrigin(baseUrl) is { } origin ? $"{provider}|{origin}" : null;
 
     private static Dictionary<string, string> LoadCore()
     {

@@ -21,11 +21,8 @@ public sealed class SecRandomDocumentsProvider : DocumentsProvider
 {
     private const string RootId = "secrandom";
     private const string RootDocumentId = "root";
-    private const string DataDirectoryName = "data";
     private const string EncodedPathPrefix = "path:";
     private const string DefaultMimeType = "application/octet-stream";
-    private const string ProtectedSecurityDirectory = "config/security";
-    private const string ProtectedVoiceDirectory = "config/voice";
 
     private static readonly string[] DefaultRootProjection =
     [
@@ -182,8 +179,7 @@ public sealed class SecRandomDocumentsProvider : DocumentsProvider
 
     public override void DeleteDocument(string? documentId)
     {
-        EnsureMutableDocument(documentId);
-        var path = GetPathForDocumentId(documentId);
+        var path = GetMutablePathForDocumentId(documentId);
         var parentId = GetDocumentIdForPath(Path.GetDirectoryName(path)!);
 
         if (Directory.Exists(path))
@@ -198,8 +194,7 @@ public sealed class SecRandomDocumentsProvider : DocumentsProvider
 
     public override string RenameDocument(string? documentId, string? displayName)
     {
-        EnsureMutableDocument(documentId);
-        var sourcePath = GetPathForDocumentId(documentId);
+        var sourcePath = GetMutablePathForDocumentId(documentId);
         var parentPath = Path.GetDirectoryName(sourcePath)!;
         var destinationPath = GetCanonicalContainedPath(Path.Combine(parentPath, ValidateDisplayName(displayName)));
         if (File.Exists(destinationPath) || Directory.Exists(destinationPath))
@@ -212,8 +207,7 @@ public sealed class SecRandomDocumentsProvider : DocumentsProvider
 
     public override string CopyDocument(string? sourceDocumentId, string? targetParentDocumentId)
     {
-        EnsureMutableDocument(sourceDocumentId);
-        var sourcePath = GetPathForDocumentId(sourceDocumentId);
+        var sourcePath = GetMutablePathForDocumentId(sourceDocumentId);
         var targetParentPath = GetPathForDocumentId(targetParentDocumentId);
         EnsureDirectory(targetParentPath);
         EnsureDirectoryIsNotWithinSource(sourcePath, targetParentPath);
@@ -227,8 +221,7 @@ public sealed class SecRandomDocumentsProvider : DocumentsProvider
     public override string MoveDocument(string? sourceDocumentId, string? sourceParentDocumentId,
         string? targetParentDocumentId)
     {
-        EnsureMutableDocument(sourceDocumentId);
-        var sourcePath = GetPathForDocumentId(sourceDocumentId);
+        var sourcePath = GetMutablePathForDocumentId(sourceDocumentId);
         var sourceParentPath = GetPathForDocumentId(sourceParentDocumentId);
         var targetParentPath = GetPathForDocumentId(targetParentDocumentId);
         EnsureDirectory(targetParentPath);
@@ -296,9 +289,8 @@ public sealed class SecRandomDocumentsProvider : DocumentsProvider
 
         var isDirectory = Directory.Exists(path);
         var isRoot = string.Equals(path, RootPath, StringComparison.Ordinal);
-        var isDataRoot = string.Equals(path, DataPath, StringComparison.Ordinal);
         var flags = isDirectory ? DocumentContractFlags.DirSupportsCreate : DocumentContractFlags.SupportsWrite;
-        if (!isRoot && !isDataRoot)
+        if (DocumentsPathPolicy.CanMutate(path, RootPath, DataPath))
         {
             flags |= DocumentContractFlags.SupportsDelete |
                      DocumentContractFlags.SupportsRename |
@@ -381,22 +373,10 @@ public sealed class SecRandomDocumentsProvider : DocumentsProvider
         // so canonicalization must be the security boundary: a symlink that stays inside the
         // canonical data root is safe, while anything resolving outside it is rejected.
         var canonicalPath = new JavaFile(path).CanonicalPath;
-        if (!string.Equals(canonicalPath, RootPath, StringComparison.Ordinal)
-            && !string.Equals(canonicalPath, DataPath, StringComparison.Ordinal)
-            && !IsContainedBy(canonicalPath, DataPath))
-            throw new JavaFileNotFoundException("The document path is outside the provider root.");
-        if (IsProtectedPath(canonicalPath))
-            throw new JavaFileNotFoundException("The requested document is protected.");
+        if (!DocumentsPathPolicy.IsAccessible(canonicalPath, RootPath, DataPath))
+            throw new JavaFileNotFoundException("The document path is outside the provider root or protected.");
 
         return canonicalPath;
-    }
-
-    private bool IsProtectedPath(string path)
-    {
-        var protectedSecurityPath = Path.Combine(DataPath, ProtectedSecurityDirectory.Replace('/', Path.DirectorySeparatorChar));
-        var protectedVoicePath = Path.Combine(DataPath, ProtectedVoiceDirectory.Replace('/', Path.DirectorySeparatorChar));
-        return string.Equals(path, protectedSecurityPath, StringComparison.Ordinal) || IsContainedBy(path, protectedSecurityPath)
-               || string.Equals(path, protectedVoicePath, StringComparison.Ordinal) || IsContainedBy(path, protectedVoicePath);
     }
 
     private static bool IsContainedBy(string childPath, string parentPath) =>
@@ -480,11 +460,13 @@ public sealed class SecRandomDocumentsProvider : DocumentsProvider
             throw new JavaFileNotFoundException($"File '{path}' does not exist.");
     }
 
-    private static void EnsureMutableDocument(string? documentId)
+    private string GetMutablePathForDocumentId(string? documentId)
     {
-        if (string.Equals(documentId, RootDocumentId, StringComparison.Ordinal)
-            || string.Equals(documentId, GetDocumentIdForRelativePath(DataDirectoryName), StringComparison.Ordinal))
-            throw new Java.Lang.UnsupportedOperationException("The provider root cannot be modified.");
+        var canonicalPath = GetPathForDocumentId(documentId);
+        if (!DocumentsPathPolicy.CanMutate(canonicalPath, RootPath, DataPath))
+            throw new Java.Lang.UnsupportedOperationException("The provider root and protected directory ancestors cannot be modified.");
+
+        return canonicalPath;
     }
 
     private static void EnsureDirectoryIsNotWithinSource(string sourcePath, string targetParentPath)
