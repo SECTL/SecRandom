@@ -774,10 +774,11 @@ jobs:
         with:
           xcode-version: '26.6'
 
+      # Keep the SDK and workload set paired with the selected Xcode version.
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 10.0.401
 
       - name: Get Latest Tag
         id: get_tag
@@ -796,7 +797,9 @@ jobs:
 
       - name: Install iOS workload
         shell: bash
-        run: dotnet workload install ios
+        run: |
+          dotnet workload install ios --version 10.0.401
+          dotnet workload --info
 
       - name: Publish unsigned iOS arm64 IPA
         shell: bash
