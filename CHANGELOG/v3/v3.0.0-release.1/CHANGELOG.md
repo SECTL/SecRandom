@@ -1,19 +1,17 @@
-<img width="1800" height="766" alt="新版本" src="https://github.com/SECTL/SecRandom/blob/master/SecRandom/Assets/Banners/secrandom-banner-cn.png" />
+<img width="1800" height="766" alt="新版本" src="https://appwrite.sectl.cn/v1/storage/buckets/6aa6310b0002788356a3/files/6abfd32700194d38efb2/view?project=69bd6e700005458848db" />
 
-> [!caution]
+> [!note]
 >
-> # 抢先体验 Beta 版
+> # v3.0.0 正式版发布
 >
-> 您正在使用我们的最新功能预览版。为了在正式版中给您带来更完美的体验，我们需要您的帮助与反馈。
->
-> **⚠️ 风险提示**：此版本尚在打磨中，可能存在偶发异常或未知问题，**请务必避免用于关键业务或生产环境**。
+> 感谢您一路以来的等待与支持，基于全新 Avalonia 架构的 **v3.0.0 正式版**现已发布，可直接用于日常教学等正式场景。
 >
 > **📣 我们需要您**：如果发现任何 Bug，或有功能改进建议，欢迎随时前往 **GitHub Issues** 提交反馈。
 >
-> 感谢您成为我们的首批体验官！
+> 感谢您陪伴 SecRandom 一路走到这里！
 
 
-# v3.0.0 - Nonomi (十六夜野宫) Beta 2
+# v3.0.0 - Nonomi (十六夜野宫) release 1
 
 ## 🚀 主要更新
 

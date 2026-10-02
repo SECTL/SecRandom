@@ -5,61 +5,42 @@ namespace SecRandom.Core.Tests;
 
 /// <summary>
 ///     The version-usage counter answers "how many people are on this build": the service dedups by identity and
-///     keeps one current version per identity, so the payload has to carry exactly one identity and the API's own
-///     field names — camel-casing them or sending both identities would silently corrupt the figure.
+///     keeps one current version per identity. This client sends only the pseudo-anonymous device UUID — never an
+///     account id — and the payload has to keep that shape with the API's own field names.
 /// </summary>
 public sealed class VersionUsageReportPayloadTests
 {
     private const string DeviceUuid = "01234567-89AB-CDEF-0123-456789ABCDEF";
+    private const string LowerDeviceUuid = "01234567-89ab-cdef-0123-456789abcdef";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     [Fact]
-    public void SignedInAccountWinsAndTheDeviceIdentityIsOmitted()
+    public void PayloadCarriesTheVersionAndTheDeviceUuidOnly()
     {
-        var payload = VersionUsageReportPayload.Create("pf_abc", "1.8.0", " user-1 ", DeviceUuid);
+        var payload = VersionUsageReportPayload.Create("pf_abc", "v3.0.0-alpha.2", $" {DeviceUuid} ");
 
-        Assert.Equal("user-1", payload.UserId);
-        Assert.Null(payload.DeviceUuid);
-        Assert.Equal("user-1", payload.Identity);
-
-        string json = JsonSerializer.Serialize(payload, JsonOptions);
-        Assert.Contains("\"user_id\":\"user-1\"", json);
-        Assert.DoesNotContain("device_uuid", json);
-    }
-
-    [Fact]
-    public void SignedOutInstallationReportsTheDeviceUuid()
-    {
-        var payload = VersionUsageReportPayload.Create("pf_abc", "1.8.0", "   ", DeviceUuid);
-
-        Assert.Null(payload.UserId);
+        Assert.Equal("pf_abc", payload.PlatformId);
+        Assert.Equal("v3.0.0-alpha.2", payload.Version);
         // 与在线状态上报同为小写形态，同一台设备只对应一个身份字符串
-        Assert.Equal("01234567-89ab-cdef-0123-456789abcdef", payload.DeviceUuid);
-        Assert.Equal(payload.DeviceUuid, payload.Identity);
+        Assert.Equal(LowerDeviceUuid, payload.DeviceUuid);
 
         string json = JsonSerializer.Serialize(payload, JsonOptions);
-        Assert.Contains("\"device_uuid\":\"01234567-89ab-cdef-0123-456789abcdef\"", json);
-        Assert.DoesNotContain("user_id", json);
-    }
-
-    [Fact]
-    public void PayloadKeepsTheApiFieldNames()
-    {
-        string json = JsonSerializer.Serialize(
-            VersionUsageReportPayload.Create("pf_abc", "v3.0.0-alpha.2", null, DeviceUuid),
-            JsonOptions);
-
         Assert.Contains("\"platform_id\":\"pf_abc\"", json);
         Assert.Contains("\"version\":\"v3.0.0-alpha.2\"", json);
+        Assert.Contains($"\"device_uuid\":\"{LowerDeviceUuid}\"", json);
         Assert.DoesNotContain("platformId", json);
+        Assert.DoesNotContain("deviceUuid", json);
+        // 账号 ID 永远不上报，版本人数不能与 SECTL 账号关联
+        Assert.DoesNotContain("user_id", json);
         Assert.DoesNotContain("userId", json);
-        Assert.DoesNotContain("identity", json);
     }
 
     [Fact]
-    public void ReportWithoutAnyIdentityIsRejected()
+    public void ReportWithoutAUsableDeviceUuidIsRejected()
     {
-        Assert.Throws<ArgumentException>(() => VersionUsageReportPayload.Create("pf_abc", "1.8.0", null, "  "));
+        Assert.Throws<ArgumentException>(() => VersionUsageReportPayload.Create("pf_abc", "1.8.0", null));
+        Assert.Throws<ArgumentException>(() => VersionUsageReportPayload.Create("pf_abc", "1.8.0", "   "));
+        Assert.Throws<ArgumentException>(() => VersionUsageReportPayload.Create("pf_abc", "1.8.0", "not-a-uuid"));
     }
 
     [Theory]
@@ -76,7 +57,7 @@ public sealed class VersionUsageReportPayloadTests
     {
         Assert.Equal(supported, VersionUsageReportPayload.IsSupportedVersion(version));
         if (!supported)
-            Assert.Throws<ArgumentException>(() => VersionUsageReportPayload.Create("pf_abc", version, "user-1", null));
+            Assert.Throws<ArgumentException>(() => VersionUsageReportPayload.Create("pf_abc", version, DeviceUuid));
     }
 
     [Fact]

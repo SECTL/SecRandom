@@ -9,16 +9,15 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services;
-using SecRandom.Services.Auth;
 using SecRandom.Services.Config;
 using SecRandom.Shared;
 
 namespace SecRandom.Core.Tests;
 
 /// <summary>
-///     Version-usage reporting is a one-shot, identity-deduplicated report: once per start, once more when the
-///     signed-in account changes, never a duplicate for an identity the service already credited, and nothing at
-///     all while online-status reporting is off.
+///     Version-usage reporting is one best-effort request per start: it carries the build version plus the device
+///     UUID (never an account id), it is not gated by the online-status privacy switch, and it must not run on the
+///     thread that starts the application.
 /// </summary>
 public sealed class PlatformVersionReportServiceTests : IDisposable
 {
@@ -39,7 +38,7 @@ public sealed class PlatformVersionReportServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task StartupReportCarriesTheVersionAndTheDeviceIdentity()
+    public async Task StartupReportCarriesTheVersionAndTheDeviceUuidOnce()
     {
         var reports = new ConcurrentQueue<string>();
         var reported = new TaskCompletionSource();
@@ -49,6 +48,8 @@ public sealed class PlatformVersionReportServiceTests : IDisposable
         try
         {
             await reported.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+            // 只上报一次：没有轮询、也没有身份变化补报
+            await Task.Delay(300, TestContext.Current.CancellationToken);
         }
         finally
         {
@@ -59,8 +60,9 @@ public sealed class PlatformVersionReportServiceTests : IDisposable
         JsonElement body = JsonDocument.Parse(Assert.Single(reports)).RootElement;
         Assert.Equal(PlatformId, body.GetProperty("platform_id").GetString());
         Assert.Equal(GlobalConstants.Version, body.GetProperty("version").GetString());
-        Assert.False(body.TryGetProperty("user_id", out _));
         Assert.True(Guid.TryParse(body.GetProperty("device_uuid").GetString(), out _));
+        // 账号 ID 不上报
+        Assert.False(body.TryGetProperty("user_id", out _));
     }
 
     [Fact]
@@ -71,7 +73,7 @@ public sealed class PlatformVersionReportServiceTests : IDisposable
         config.General.PrivacySettings.OnlineStatusMode = OnlineStatusMode.Off;
         var reports = new ConcurrentQueue<string>();
         var reported = new TaskCompletionSource();
-        var service = CreateService(reports, reported, config: config);
+        var service = CreateService(reports, reported, config);
 
         await service.StartAsync(TestContext.Current.CancellationToken);
         try
@@ -89,19 +91,21 @@ public sealed class PlatformVersionReportServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task SignInReportsAgainWithTheAccountIdentity()
+    public async Task UnreachableEndpointIsSwallowed()
     {
         var reports = new ConcurrentQueue<string>();
-        var reported = new TaskCompletionSource();
-        var identity = new StubIdentitySource();
-        var service = CreateService(reports, reported, identity);
+        var attempted = new TaskCompletionSource();
+        var client = new HttpClient(new StubHttpMessageHandler(_ =>
+        {
+            attempted.TrySetResult();
+            throw new HttpRequestException("offline");
+        }));
+        var service = CreateService(reports, reported: null, config: null, client);
 
         await service.StartAsync(TestContext.Current.CancellationToken);
         try
         {
-            await reported.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
-            identity.SetUserId("user-1");
-            await WaitUntilAsync(() => reports.Count >= 2, TimeSpan.FromSeconds(5));
+            await attempted.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         }
         finally
         {
@@ -109,72 +113,21 @@ public sealed class PlatformVersionReportServiceTests : IDisposable
             service.Dispose();
         }
 
-        string[] bodies = reports.ToArray();
-        Assert.Equal(2, bodies.Length);
-        JsonElement startup = JsonDocument.Parse(bodies[0]).RootElement;
-        JsonElement signedIn = JsonDocument.Parse(bodies[1]).RootElement;
-        Assert.False(startup.TryGetProperty("user_id", out _));
-        Assert.Equal("user-1", signedIn.GetProperty("user_id").GetString());
-        Assert.False(signedIn.TryGetProperty("device_uuid", out _));
-    }
-
-    [Fact]
-    public async Task RepeatedIdentityNotificationDoesNotReportTheSameIdentityTwice()
-    {
-        var reports = new ConcurrentQueue<string>();
-        var reported = new TaskCompletionSource();
-        var identity = new StubIdentitySource();
-        var service = CreateService(reports, reported, identity);
-
-        await service.StartAsync(TestContext.Current.CancellationToken);
-        await reported.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
-        identity.RaiseChanged();
-        await Task.Delay(300, TestContext.Current.CancellationToken);
-        await service.StopAsync(TestContext.Current.CancellationToken);
-        service.Dispose();
-
-        Assert.Single(reports);
-    }
-
-    [Fact]
-    public void AuthIdentitySourceForwardsOnlyRealAccountChanges()
-    {
-        var configHandler = new MainConfigHandler(
-            NullLogger<MainConfigHandler>.Instance,
-            new TestConfigService(new MainConfigModel()));
-        var deviceUuidStore = new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance);
-        var authService = new SectlAuthService(
-            new StubHttpClientFactory(new HttpClient(new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)))),
-            deviceUuidStore);
-        SetToken(authService, new SectlToken("access-token", "refresh-token", "user-1", 3600));
-
-        using var source = new SectlStatsAccountIdentitySource(authService);
-        var changes = 0;
-        source.UserIdChanged += (_, _) => changes++;
-        Assert.Equal("user-1", source.UserId);
-
-        // 账号资料刷新也会触发 StateChanged，身份没变就不该再上报一次
-        RaiseStateChanged(authService);
-        Assert.Equal(0, changes);
-
-        SetToken(authService, null);
-        RaiseStateChanged(authService);
-        Assert.Equal(1, changes);
-        Assert.Null(source.UserId);
+        // 统计失败只记日志：不抛异常、不重试、不影响调用方
+        Assert.Empty(reports);
     }
 
     private static PlatformVersionReportService CreateService(
         ConcurrentQueue<string> reports,
         TaskCompletionSource? reported,
-        IStatsAccountIdentitySource? identitySource = null,
-        MainConfigModel? config = null)
+        MainConfigModel? config = null,
+        HttpClient? httpClient = null)
     {
-        // 版本上报自身不再读取隐私设置；这里仍按传入配置建 Host，用来断言开关关闭时也照常上报
         var configHandler = new MainConfigHandler(
             NullLogger<MainConfigHandler>.Instance,
             new TestConfigService(config ?? new MainConfigModel()));
         var deviceUuidStore = new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance);
-        var client = new HttpClient(new StubHttpMessageHandler(request =>
+        var client = httpClient ?? new HttpClient(new StubHttpMessageHandler(request =>
         {
             reports.Enqueue(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
             reported?.TrySetResult();
@@ -182,30 +135,8 @@ public sealed class PlatformVersionReportServiceTests : IDisposable
         }));
         return new PlatformVersionReportService(
             deviceUuidStore,
-            identitySource ?? new StubIdentitySource(),
             new StubHttpClientFactory(client),
             NullLogger<PlatformVersionReportService>.Instance);
-    }
-
-    private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
-    {
-        var deadline = DateTime.UtcNow + timeout;
-        while (!condition() && DateTime.UtcNow < deadline)
-            await Task.Delay(25, TestContext.Current.CancellationToken);
-    }
-
-    private static void SetToken(SectlAuthService service, SectlToken? token)
-    {
-        var field = typeof(SectlAuthService).GetField("_token", BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.NotNull(field);
-        field!.SetValue(service, token);
-    }
-
-    private static void RaiseStateChanged(SectlAuthService service)
-    {
-        var field = typeof(SectlAuthService).GetField("StateChanged", BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.NotNull(field);
-        ((EventHandler?)field!.GetValue(service))?.Invoke(service, EventArgs.Empty);
     }
 
     private static void ConfigureDataRootForTests(string dataRoot) =>
@@ -217,26 +148,6 @@ public sealed class PlatformVersionReportServiceTests : IDisposable
     private static MethodInfo GetUtilsMethod(string name) =>
         typeof(Utils).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)
         ?? throw new InvalidOperationException($@"Utils.{name} was not found.");
-
-    private sealed class StubIdentitySource : IStatsAccountIdentitySource
-    {
-        private string? _userId;
-
-        public string? UserId => _userId;
-
-        public event EventHandler? UserIdChanged;
-
-        public void SetUserId(string? userId)
-        {
-            if (string.Equals(_userId, userId, StringComparison.Ordinal))
-                return;
-
-            _userId = userId;
-            RaiseChanged();
-        }
-
-        public void RaiseChanged() => UserIdChanged?.Invoke(this, EventArgs.Empty);
-    }
 
     private sealed class StubHttpClientFactory(HttpClient client) : IHttpClientFactory
     {
