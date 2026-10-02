@@ -184,11 +184,7 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
                     return x;
                 }));
 
-        var settingsPageInfo = new PageInfo(@"settings", FluentIcons.SettingsFilled, null, PageLocation.Bottom)
-        {
-            Name = Langs.Common.Resources.Feat_Settings
-        };
-        var settingsItem = settingsPageInfo.ToNavigationViewItemBase();
+        var settingsItem = CreateSettingsNavigationItem();
         if (applySampleNav)
         {
             settingsItem.Classes.Add(@"SampleAppNav");
@@ -205,6 +201,24 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
             _navigationView?.PaneDisplayMode = FANavigationViewPaneDisplayMode.LeftMinimal;
             ViewModel.IsNavPaneToggleButtonVisible = true;
         }
+    }
+
+    /// <summary>
+    /// 构建设置入口。该入口打开独立设置窗口（桌面）或独立移动端设置视图，而不是本框架内的页面，
+    /// 因此它不能参与导航选中，否则左侧高亮会离开仍然可见的当前页面。
+    /// </summary>
+    public static FANavigationViewItemBase CreateSettingsNavigationItem()
+    {
+        var settingsPageInfo = new PageInfo(@"settings", FluentIcons.SettingsFilled, null, PageLocation.Bottom)
+        {
+            Name = Langs.Common.Resources.Feat_Settings
+        };
+
+        var settingsItem = settingsPageInfo.ToNavigationViewItemBase();
+        if (settingsItem is FANavigationViewItem navigationItem)
+            navigationItem.SelectsOnInvoked = false;
+
+        return settingsItem;
     }
 
     public void SelectNavigationItemById(string id)

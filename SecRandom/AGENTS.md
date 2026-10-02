@@ -159,7 +159,7 @@ SecRandom/
 - Mobile route ViewModels belong in `ViewModels/Mobile/`; register them in the mobile branch of `BuildHost()` and keep page code-behind limited to visual-host responsibilities such as dialogs and animations.
 - Use `IAppHost.GetService<T>()` for existing service resolution patterns in views and services.
 - Views usually set `DataContext = this` and expose a `ViewModel` property.
-- Main default page: `main.rollCall`; settings default page: `settings.overview`, which separates aggregate roll-call list statistics from aggregate lottery-pool statistics.
+- Main default page: `main.rollCall`; settings default page: `settings.overview`, which separates aggregate roll-call list statistics from aggregate lottery-pool statistics. The main sidebar's settings entry opens the desktop settings window or the independent mobile `SettingsView` rather than a page in `MainView`'s own frame, so it is built by `MainView.CreateSettingsNavigationItem()` with `FANavigationViewItem.SelectsOnInvoked = false`: invoking it must not move the pane highlight off the main page that stays visible. The phone shell already restores its bottom tab the same way in `MobileRootView.SynchronizeBottomNavigation`.
 - The roll-call main page is bottom-pinned in the main window sidebar (`PageLocation.Bottom`), full-width, and title-hidden. Keep its page chrome controlled by `MoreSettings`.
 - Lottery main page ID is `main.lottery`; quick draw is not registered as a main navigation page, but its settings page remains `settings.picking.quickDraw`.
 - More settings includes roll-call and lottery page management options for the control panel side and per-control visibility; wire built-in draw pages through `MainConfigModel.MoreSettings` instead of duplicating local UI flags.
