@@ -95,6 +95,23 @@
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_Protection" Text="{x:Static lsp:Resources.S_Protection}" Glyph="{sr:Fi LockClosedFilled}" Margin="0 0 0 4" />
 
+            <fa:FASettingsExpander x:Name="S_SudoModeDuration"
+                                    Header="{x:Static lsp:Resources.S_SudoModeDuration}"
+                                   Description="{x:Static lsp:Resources.S_SudoModeDuration_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ClockFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <NumericUpDown Minimum="10" Maximum="600" Increment="10"
+                                       Value="{Binding SudoModeDurationValue}"
+                                       FormatString="F0"
+                                       IsEnabled="{Binding CanEditProtectedOperations}"
+                                       ValueChanged="SudoModeDuration_OnValueChanged" />
+                        <TextBlock Text="{x:Static lsp:Resources.S_SudoModeDurationUnit}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_WindowOperations"
                                     Header="{x:Static lsp:Resources.S_WindowOperations}"
                                    Description="{x:Static lsp:Resources.S_WindowOperations_D}"

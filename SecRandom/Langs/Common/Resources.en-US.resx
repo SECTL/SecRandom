@@ -268,4 +268,7 @@ Move the entire portable package to a writable location, or adjust the directory
     <data name="C_PickButtonText" xml:space="preserve">
         <value>Go</value>
     </data>
+    <data name="Menu_ExitSudoMode" xml:space="preserve">
+        <value>Exit Sudo Mode</value>
+    </data>
 </root>

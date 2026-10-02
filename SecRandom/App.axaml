@@ -50,6 +50,12 @@
 
             <NativeMenuItem Header="{x:Static langs:Resources.Menu_ExitProgram}"
                             Click="MenuItemExitProgram_OnClick" />
+
+            <NativeMenuItemSeparator />
+
+            <NativeMenuItem Header="{x:Static langs:Resources.Menu_ExitSudoMode}"
+                            Click="MenuItemExitSudoMode_OnClick"
+                            IsVisible="False" />
         </NativeMenu>
     </Application.Resources>
 </Application>
