@@ -13,8 +13,10 @@ namespace SecRandom.Services;
 ///     Reports how many draws and launches this installation performs to the SECTL statistics API.
 ///     The v2 client has always sent this (`daily_roll_call_count` and friends), which is why the service-side
 ///     dashboards show traffic that the v3 client never contributed to; without it a v3 installation is
-///     invisible in every usage figure. The field keys, period formats, and report cadence match the v2
-///     reporter so both generations feed the same counters.
+///     invisible in every usage figure. The field keys and report cadence match the v2 reporter so both
+///     generations feed the same counters.
+///     An increment carries no time at all: the service side stamps it with its own receive time, so the
+///     client's clock and timezone can never move an event into another day, week, or month bucket.
 ///     Reporting is gated by <see cref="OnlineStatusMode.Off" /> and is always best-effort: no failure here
 ///     may ever reach a draw.
 /// </summary>
@@ -86,6 +88,8 @@ public sealed class PlatformUsageReportService : IHostedService, IDisposable
         {
             lock (_stateGate)
             {
+                // The local time only stamps the day counter kept in this installation's own state file;
+                // nothing time-related leaves the device.
                 _counter.Record(eventName, DateTimeOffset.Now);
                 Save();
             }
@@ -114,17 +118,17 @@ public sealed class PlatformUsageReportService : IHostedService, IDisposable
 
         try
         {
-            IReadOnlyDictionary<(string FieldKey, string Period), long> pending;
+            IReadOnlyDictionary<string, long> pending;
             lock (_stateGate)
                 pending = _counter.TakePending();
             if (pending.Count == 0)
                 return;
 
-            Dictionary<(string FieldKey, string Period), long> failed = [];
-            foreach (var ((fieldKey, period), delta) in pending)
+            Dictionary<string, long> failed = [];
+            foreach (var (fieldKey, delta) in pending)
             {
-                if (!await SendAsync(fieldKey, period, delta).ConfigureAwait(false))
-                    failed[(fieldKey, period)] = delta;
+                if (!await SendAsync(fieldKey, delta).ConfigureAwait(false))
+                    failed[fieldKey] = delta;
             }
 
             if (failed.Count == 0)
@@ -144,14 +148,14 @@ public sealed class PlatformUsageReportService : IHostedService, IDisposable
         }
     }
 
-    private async Task<bool> SendAsync(string fieldKey, string period, long delta)
+    private async Task<bool> SendAsync(string fieldKey, long delta)
     {
         try
         {
             using var response = await _httpClient.PostAsync(
                 IncrementUri,
                 JsonContent.Create(
-                    new UsageIncrementPayload(PlatformId, fieldKey, delta, period),
+                    new UsageIncrementPayload(PlatformId, fieldKey, delta),
                     options: JsonOptions))
                 .ConfigureAwait(false);
             return response.IsSuccessStatusCode;

@@ -315,5 +315,28 @@ public sealed class PluginDrawServiceTests : IDisposable
                 update();
             return allow;
         }
+
+        public bool IsSudoModeActive() => false;
+
+        public bool IsGlobalSudoModeActive() => false;
+
+        public void DeactivateGlobalSudoMode()
+        {
+        }
+
+        public void DeactivateSudoMode()
+        {
+        }
+
+        public void DeactivateSettingsSudoMode()
+        {
+        }
+
+        // 抽奖测试不涉及 Sudo 状态变化，接口要求的事件只保留一个空实现
+        public event Action? SudoModeChanged
+        {
+            add { }
+            remove { }
+        }
     }
 }

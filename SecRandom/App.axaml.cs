@@ -1005,6 +1005,7 @@ public partial class App : Application
                         client.Timeout = TimeSpan.FromSeconds(60);
                     });
                     services.AddSingleton<SectlCloudStorageClient>();
+                    services.AddSingleton<IStatsAccountIdentitySource, SectlStatsAccountIdentitySource>();
                     services.AddSingleton<CloudBackupService>();
                     services.AddSingleton<CloudAutomaticBackupService>();
                     services.AddHostedService(serviceProvider =>
@@ -1016,6 +1017,10 @@ public partial class App : Application
                 services.AddSingleton<PlatformUsageReportService>();
                 services.AddHostedService(serviceProvider =>
                     serviceProvider.GetRequiredService<PlatformUsageReportService>());
+                // 版本使用人数上报：启动一次，登录身份变化时补报一次
+                services.AddSingleton<PlatformVersionReportService>();
+                services.AddHostedService(serviceProvider =>
+                    serviceProvider.GetRequiredService<PlatformVersionReportService>());
 
                 // 服务
                 services.AddTransient<RollCallDrawService>();
@@ -1030,6 +1035,8 @@ public partial class App : Application
                 if (isMobile)
                 {
                     MobilePlatformServiceRoot currentMobilePlatform = mobilePlatform!;
+                    // 移动端没有账号体系，统计上报只使用设备身份
+                    services.AddSingleton<IStatsAccountIdentitySource, NullStatsAccountIdentitySource>();
                     services.AddSingleton<MobileMediaLibraryService>();
                     services.AddSingleton<IMobileMediaPlayer>(currentMobilePlatform.MediaPlayer);
                     if (currentMobilePlatform.KeyboardOcclusionSource is { } keyboardOcclusionSource)
