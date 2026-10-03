@@ -995,6 +995,7 @@ public partial class App : Application
                 services.AddSingleton<AnnouncementService>();
                 if (!isMobile)
                 {
+                    services.AddSingleton<SectlTokenStore>();
                     services.AddSingleton<SectlAuthService>();
                     services.AddSingleton<SectlHeartbeatService>();
                     services.AddHostedService(serviceProvider =>

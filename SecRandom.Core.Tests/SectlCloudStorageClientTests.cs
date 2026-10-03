@@ -238,7 +238,8 @@ public sealed class SectlCloudStorageClientTests
             NullLogger<MainConfigHandler>.Instance,
             new TestConfigService(new MainConfigModel()));
         var deviceUuidStore = new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance);
-        var authService = new SectlAuthService(factory, deviceUuidStore);
+        var authService = new SectlAuthService(TestTokenStore.Create(), factory, deviceUuidStore,
+            NullLogger<SectlAuthService>.Instance);
         if (signedIn)
             SetToken(authService, new SectlToken("access-token", "refresh-token", "user-1", 3600));
         return new SectlCloudStorageClient(authService, factory, NullLogger<SectlCloudStorageClient>.Instance);

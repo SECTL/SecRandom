@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Services.Config;
@@ -13,7 +14,19 @@ using SecRandom.Shared;
 
 namespace SecRandom.Services.Auth;
 
-public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, DeviceUuidStore deviceUuidStore)
+/// <summary>
+///     Desktop SECTL OAuth session. It owns the access/refresh pair, the refresh policy, and the one
+///     authorized-request boundary other SECTL APIs use.
+///     The refresh endpoint rotates the refresh token on every success and invalidates the previous
+///     one immediately, so this service must (1) persist the new pair atomically before the new
+///     access token is used, (2) collapse concurrent refreshes into one flight, and (3) treat a
+///     rejected refresh token as terminal instead of retrying it in a loop.
+/// </summary>
+public sealed class SectlAuthService(
+    SectlTokenStore tokenStore,
+    IHttpClientFactory httpClientFactory,
+    DeviceUuidStore deviceUuidStore,
+    ILogger<SectlAuthService> logger)
 {
     public const string ClientId = "69c8cd6a0012dd3ea10a";
     public const string ApiBaseUrl = "https://appwrite.sectl.cn";
@@ -26,20 +39,49 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
     private const string OAuthScope = "user:read cloud:read cloud:write";
     private static readonly Uri HeartbeatUri = new($"{ApiBaseUrl}/api/oauth/heartbeat");
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    /// <summary>Fallback access-token lifetime when the service omits or invalidates <c>expires_in</c>.</summary>
+    private const int DefaultAccessTokenLifetimeSeconds = 3600;
+
+    /// <summary>
+    ///     Refresh token lifetime. It runs from the first authorization and rotation never extends
+    ///     it, so the client stops refreshing — instead of looping against a dead token — once the
+    ///     window is over.
+    /// </summary>
+    private static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(180);
+
+    /// <summary>Refresh this long before the access token expires so a request never carries a dying token.</summary>
+    private static readonly TimeSpan AccessTokenRefreshLead = TimeSpan.FromMinutes(5);
+
+    private static readonly TimeSpan RefreshRequestTimeout = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan RefreshLockTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan MaximumBackoff = TimeSpan.FromSeconds(65);
     private static readonly TimeSpan[] InitializationRetryDelays =
     [
         TimeSpan.Zero,
         TimeSpan.FromMilliseconds(500),
         TimeSpan.FromSeconds(1)
     ];
-    private readonly string _tokenPath = Utils.GetFilePath("config", "sectl-auth.json");
+
+    private readonly object _refreshGate = new();
+    private readonly string _tokenPath = tokenStore.Path;
+    private Task<SectlRefreshOutcome>? _inflightRefresh;
     private SectlToken? _token;
+    private int _sessionVersion;
     private bool _initialized;
 
     public SectlToken? Token => _token;
     public bool IsSignedIn => !string.IsNullOrWhiteSpace(_token?.AccessToken);
     public SectlUser? User { get; private set; }
     public byte[]? AvatarBytes { get; private set; }
+
+    /// <summary>
+    ///     Set when the server permanently refused the stored credentials (a reused, revoked, or
+    ///     expired refresh token, a wrong client, or a revoked access token). The local session has
+    ///     been cleared at that point and the user has to authorize again.
+    /// </summary>
+    public bool RequiresReauthorization { get; private set; }
+
     public event EventHandler? StateChanged;
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
@@ -49,13 +91,11 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
 
         try
         {
-            if (File.Exists(_tokenPath))
-                _token = JsonSerializer.Deserialize<SectlToken>(await File.ReadAllTextAsync(_tokenPath, cancellationToken), JsonOptions);
+            _token = await tokenStore.LoadAsync(cancellationToken).ConfigureAwait(false);
         }
         catch
         {
-            User = null;
-            AvatarBytes = null;
+            _token = null;
         }
 
         _initialized = true;
@@ -175,8 +215,16 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
         tokenRequest.Headers.UserAgent.ParseAdd(BuildUserAgent());
         using var result = await client.SendAsync(tokenRequest, timeout.Token);
         result.EnsureSuccessStatusCode();
-        _token = await result.Content.ReadFromJsonAsync<SectlToken>(JsonOptions, timeout.Token) ?? throw new InvalidOperationException("SECTL 未返回 token。");
-        await SaveAsync();
+        var issued = await result.Content.ReadFromJsonAsync<SectlToken>(JsonOptions, timeout.Token) ?? throw new InvalidOperationException("SECTL 未返回 token。");
+        var authorizedAt = DateTimeOffset.UtcNow;
+        var authorized = issued with
+        {
+            AccessTokenExpiresAt = authorizedAt.AddSeconds(ResolveAccessTokenLifetime(issued)),
+            // The 180-day refresh window starts here and rotation never moves it.
+            RefreshTokenIssuedAt = authorizedAt
+        };
+        await tokenStore.SaveAsync(authorized, timeout.Token);
+        SetSession(authorized);
         await InitializeAccountDataWithRetryAsync(timeout.Token);
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -190,18 +238,16 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token!.AccessToken);
             try { await client.SendAsync(request, cancellationToken); } catch { }
         }
-        _token = null;
-        User = null;
-        AvatarBytes = null;
-        if (File.Exists(_tokenPath)) File.Delete(_tokenPath);
+
+        ClearSession("signed_out", requiresReauthorization: false);
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
-    ///     Sends an authenticated SECTL API request and refreshes the access token once when the
-    ///     service rejects it, so a long-running desktop session keeps working after expiry. Callers
-    ///     pass a request factory because a rejected request must be rebuilt for the retry; token
-    ///     storage and refresh policy stay inside this service.
+    ///     Sends an authenticated SECTL API request: it refreshes the access token before the call
+    ///     when the stored token is about to expire, and once more when the service rejects it.
+    ///     Callers pass a request factory because a rejected request must be rebuilt for the retry;
+    ///     token storage and refresh policy stay inside this service.
     /// </summary>
     public async Task<HttpResponseMessage> SendAuthorizedAsync(
         Func<HttpRequestMessage> createRequest,
@@ -209,7 +255,7 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(createRequest);
-        var accessToken = _token?.AccessToken;
+        var accessToken = await GetUsableAccessTokenAsync(cancellationToken).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(accessToken))
             throw new InvalidOperationException("SECTL 账号未登录。");
 
@@ -218,11 +264,26 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
         if (response.StatusCode != HttpStatusCode.Unauthorized)
             return response;
 
-        if (!await TryRefreshTokenAsync(cancellationToken).ConfigureAwait(false))
+        var description = await ReadErrorDescriptionAsync(response, cancellationToken).ConfigureAwait(false);
+        if (IsAccessTokenRevoked(description))
+        {
+            // The access token was revoked server-side; a refresh cannot succeed, so end the local
+            // session instead of rotating a refresh token that is already dead.
+            logger.LogWarning("SECTL 访问令牌已被吊销，需要重新授权。");
+            ClearSession("access_token_revoked", requiresReauthorization: true);
+            StateChanged?.Invoke(this, EventArgs.Empty);
+            return response;
+        }
+
+        if (!await RefreshForRejectedTokenAsync(accessToken, cancellationToken).ConfigureAwait(false))
+            return response;
+
+        var retryToken = _token?.AccessToken;
+        if (string.IsNullOrWhiteSpace(retryToken))
             return response;
 
         response.Dispose();
-        return await SendWithTokenAsync(createRequest, _token!.AccessToken, completionOption, cancellationToken)
+        return await SendWithTokenAsync(createRequest, retryToken, completionOption, cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -254,7 +315,7 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
 
     private async Task<bool> SendHeartbeatAsync(bool allowRefresh, CancellationToken cancellationToken)
     {
-        string? accessToken = _token?.AccessToken;
+        string? accessToken = await GetUsableAccessTokenAsync(cancellationToken).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(accessToken))
             return false;
 
@@ -264,11 +325,21 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
             .SendAsync(request, cancellationToken)
             .ConfigureAwait(false);
 
-        if (response.StatusCode == HttpStatusCode.Unauthorized
-            && allowRefresh
-            && await TryRefreshTokenAsync(cancellationToken).ConfigureAwait(false))
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            return await SendHeartbeatAsync(allowRefresh: false, cancellationToken).ConfigureAwait(false);
+            var description = await ReadErrorDescriptionAsync(response, cancellationToken).ConfigureAwait(false);
+            if (IsAccessTokenRevoked(description))
+            {
+                logger.LogWarning("SECTL 访问令牌已被吊销，需要重新授权。");
+                ClearSession("access_token_revoked", requiresReauthorization: true);
+                StateChanged?.Invoke(this, EventArgs.Empty);
+                return false;
+            }
+
+            if (allowRefresh && await RefreshForRejectedTokenAsync(accessToken, cancellationToken).ConfigureAwait(false))
+                return await SendHeartbeatAsync(allowRefresh: false, cancellationToken).ConfigureAwait(false);
+
+            return false;
         }
 
         return response.IsSuccessStatusCode;
@@ -285,14 +356,26 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
     private async Task<SectlUser?> GetOAuthUserInfoAsync(CancellationToken cancellationToken, bool allowRefresh)
     {
         if (!IsSignedIn) return null;
+        var accessToken = await GetUsableAccessTokenAsync(cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(accessToken)) return null;
+
         var client = httpClientFactory.CreateClient();
         using var request = new HttpRequestMessage(HttpMethod.Get, $"{ApiBaseUrl}/api/oauth/userinfo");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token!.AccessToken);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         using var response = await client.SendAsync(request, cancellationToken);
-        if (response.StatusCode == HttpStatusCode.Unauthorized
-            && allowRefresh
-            && await TryRefreshTokenAsync(cancellationToken))
-            return await GetOAuthUserInfoAsync(cancellationToken, allowRefresh: false);
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            var description = await ReadErrorDescriptionAsync(response, cancellationToken);
+            if (IsAccessTokenRevoked(description))
+            {
+                ClearSession("access_token_revoked", requiresReauthorization: true);
+                StateChanged?.Invoke(this, EventArgs.Empty);
+                return null;
+            }
+
+            if (allowRefresh && await RefreshForRejectedTokenAsync(accessToken, cancellationToken))
+                return await GetOAuthUserInfoAsync(cancellationToken, allowRefresh: false);
+        }
 
         if (!response.IsSuccessStatusCode) return null;
 
@@ -300,19 +383,193 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
         return SectlUser.TryParse(payload);
     }
 
-    private async Task<bool> TryRefreshTokenAsync(CancellationToken cancellationToken)
+    /// <summary>
+    ///     Returns an access token that is not about to expire. A token inside the refresh lead
+    ///     window is refreshed first; a transient refresh failure still returns the current token
+    ///     while it is valid, because the session is not endangered by a short outage.
+    /// </summary>
+    private async Task<string?> GetUsableAccessTokenAsync(CancellationToken cancellationToken)
     {
-        var currentToken = _token;
-        var refreshToken = currentToken?.RefreshToken;
-        if (string.IsNullOrWhiteSpace(refreshToken))
-            return false;
+        var token = _token;
+        if (token is null || string.IsNullOrWhiteSpace(token.AccessToken))
+            return null;
+        if (!IsExpiringWithin(token, AccessTokenRefreshLead))
+            return token.AccessToken;
 
+        var outcome = await RefreshSingleFlightAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
+        if (outcome.Status == SectlRefreshStatus.Succeeded)
+            return _token?.AccessToken;
+        if (outcome.Status == SectlRefreshStatus.Ended)
+            return null;
+        return IsExpired(token) ? null : token.AccessToken;
+    }
+
+    /// <summary>
+    ///     Refreshes after the service rejected an access token that had not reached its stored
+    ///     expiry (the server may have revoked it early). Nothing is refreshed when another caller
+    ///     already replaced that token.
+    /// </summary>
+    private async Task<bool> RefreshForRejectedTokenAsync(string rejectedAccessToken, CancellationToken cancellationToken)
+    {
+        // A session cleared by a concurrent terminal outcome has nothing left to retry with.
+        if (string.IsNullOrWhiteSpace(_token?.AccessToken))
+            return false;
+        if (!string.Equals(_token.AccessToken, rejectedAccessToken, StringComparison.Ordinal))
+            return true;
+
+        var outcome = await RefreshSingleFlightAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
+        return outcome.Status == SectlRefreshStatus.Succeeded
+               && !string.IsNullOrWhiteSpace(_token?.AccessToken)
+               && !string.Equals(_token.AccessToken, rejectedAccessToken, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     Collapses every concurrent refresh into one flight. The shared flight deliberately does
+    ///     not carry a caller token: one caller giving up must not abort a rotation the other
+    ///     callers are waiting for. Callers observe their own cancellation while awaiting it.
+    /// </summary>
+    private Task<SectlRefreshOutcome> RefreshSingleFlightAsync()
+    {
+        lock (_refreshGate)
+        {
+            if (_inflightRefresh is { IsCompleted: false } running)
+                return running;
+
+            var flight = RefreshAsync();
+            _inflightRefresh = flight;
+            return flight;
+        }
+    }
+
+    private async Task<SectlRefreshOutcome> RefreshAsync()
+    {
+        try
+        {
+            return await RefreshCoreAsync().ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "SECTL 令牌刷新出现未预期的错误。");
+            return SectlRefreshOutcome.Unavailable("unexpected_error", retryable: false);
+        }
+        finally
+        {
+            lock (_refreshGate)
+            {
+                _inflightRefresh = null;
+            }
+        }
+    }
+
+    private async Task<SectlRefreshOutcome> RefreshCoreAsync()
+    {
+        var current = _token;
+        var refreshToken = current?.RefreshToken;
+        if (current is null || string.IsNullOrWhiteSpace(refreshToken))
+        {
+            // Without a refresh token there is nothing to rotate; the user has to authorize again.
+            logger.LogWarning("SECTL 本地令牌缺少 refresh token，需要重新授权。");
+            ClearSession("refresh_token_missing", requiresReauthorization: true);
+            StateChanged?.Invoke(this, EventArgs.Empty);
+            return SectlRefreshOutcome.Ended("refresh_token_missing");
+        }
+
+        if (current.RefreshTokenIssuedAt is { } issuedAt && DateTimeOffset.UtcNow - issuedAt >= RefreshTokenLifetime)
+        {
+            logger.LogWarning("SECTL refresh token 已满 180 天，无法再轮换，需要重新授权。");
+            ClearSession("refresh_token_expired", requiresReauthorization: true);
+            StateChanged?.Invoke(this, EventArgs.Empty);
+            return SectlRefreshOutcome.Ended("refresh_token_expired");
+        }
+
+        var sessionVersion = Volatile.Read(ref _sessionVersion);
+
+        // Refreshing rotates a single-use token, so the whole read/rotate/write sequence holds a
+        // cross-process lock: another window's process must never rotate the same token twice.
+        var fileLock = await tokenStore.TryAcquireLockAsync(RefreshLockTimeout, CancellationToken.None)
+            .ConfigureAwait(false);
+        try
+        {
+            if (fileLock is null)
+                logger.LogDebug("SECTL 刷新锁未取得，改用进程内单飞与磁盘重读保证一致性。");
+
+            // Another process may have rotated the pair while this flight waited. Adopting the
+            // token already on disk is exactly the recovery for an unknown network outcome.
+            if (await AdoptRotatedTokenAsync(refreshToken).ConfigureAwait(false) is { } adopted)
+                return adopted;
+
+            for (var attempt = 1; ; attempt++)
+            {
+                var outcome = await SendRefreshRequestAsync(refreshToken).ConfigureAwait(false);
+                if (outcome.Status == SectlRefreshStatus.Succeeded && outcome.Token is { } rotated)
+                {
+                    if (sessionVersion != Volatile.Read(ref _sessionVersion))
+                        return SectlRefreshOutcome.Ended("session_changed");
+
+                    await ApplyRotatedTokenAsync(rotated, current).ConfigureAwait(false);
+                    return SectlRefreshOutcome.Success();
+                }
+
+                if (outcome.Status == SectlRefreshStatus.Ended)
+                {
+                    logger.LogWarning(
+                        "SECTL refresh token 被服务端终态拒绝（{Code}）：{Description}；停止重试并要求重新授权。",
+                        outcome.ErrorCode, outcome.Description);
+                    ClearSession(outcome.ErrorCode ?? "invalid_grant", requiresReauthorization: true);
+                    StateChanged?.Invoke(this, EventArgs.Empty);
+                    return outcome;
+                }
+
+                var attemptLimit = outcome.NetworkUnknown ? 2 : 3;
+                if (!outcome.Retryable || attempt >= attemptLimit)
+                {
+                    logger.LogWarning("SECTL 令牌刷新暂时不可用（{Code}），保留本地会话并等待下次重试。",
+                        outcome.ErrorCode);
+                    return outcome;
+                }
+
+                var delay = ComputeBackoff(outcome, attempt);
+                logger.LogDebug("SECTL 令牌刷新暂不可用（{Code}），{DelayMs}ms 后重试第 {Attempt} 次。",
+                    outcome.ErrorCode, (int)delay.TotalMilliseconds, attempt + 1);
+                await Task.Delay(delay, CancellationToken.None).ConfigureAwait(false);
+
+                if (await AdoptRotatedTokenAsync(refreshToken).ConfigureAwait(false) is { } rotatedAfterBackoff)
+                    return rotatedAfterBackoff;
+            }
+        }
+        finally
+        {
+            fileLock?.Dispose();
+        }
+    }
+
+    /// <summary>
+    ///     Adopts a newer pair written to the token file by another process, so two processes never
+    ///     rotate the same single-use refresh token in sequence.
+    /// </summary>
+    private async Task<SectlRefreshOutcome?> AdoptRotatedTokenAsync(string usedRefreshToken)
+    {
+        var stored = await tokenStore.LoadAsync(CancellationToken.None).ConfigureAwait(false);
+        if (stored is null || string.IsNullOrWhiteSpace(stored.AccessToken))
+            return null;
+        if (string.IsNullOrWhiteSpace(stored.RefreshToken)
+            || string.Equals(stored.RefreshToken, usedRefreshToken, StringComparison.Ordinal))
+            return null;
+
+        SetSession(stored);
+        logger.LogInformation("检测到其他进程已完成 SECTL 令牌轮换，复用磁盘上的新令牌。");
+        return SectlRefreshOutcome.Success();
+    }
+
+    private async Task<SectlRefreshOutcome> SendRefreshRequestAsync(string refreshToken)
+    {
+        using var timeout = new CancellationTokenSource(RefreshRequestTimeout);
         try
         {
             var client = httpClientFactory.CreateClient();
-            var publicIp = await GetPublicIpAsync(client, cancellationToken);
+            var publicIp = await GetPublicIpAsync(client, timeout.Token).ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(publicIp))
-                return false;
+                return SectlRefreshOutcome.NetworkFailure("ip_unavailable");
 
             var payload = new
             {
@@ -322,27 +579,200 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
                 device_uuid = deviceUuidStore.GetOrCreate().ToString(),
                 ip_address = publicIp
             };
-            using var response = await client.PostAsJsonAsync($"{ApiBaseUrl}/api/oauth/refresh", payload, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-                return false;
-
-            var refreshed = await response.Content.ReadFromJsonAsync<SectlToken>(JsonOptions, cancellationToken);
-            if (refreshed is null || string.IsNullOrWhiteSpace(refreshed.AccessToken))
-                return false;
-
-            _token = refreshed with
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiBaseUrl}/api/oauth/refresh")
             {
-                RefreshToken = string.IsNullOrWhiteSpace(refreshed.RefreshToken)
-                    ? refreshToken
-                    : refreshed.RefreshToken,
-                UserId = refreshed.UserId ?? currentToken?.UserId
+                Content = JsonContent.Create(payload, options: JsonOptions)
             };
-            await SaveAsync();
-            return true;
+            request.Headers.UserAgent.ParseAdd(BuildUserAgent());
+            using var response = await client.SendAsync(request, timeout.Token).ConfigureAwait(false);
+            var body = await response.Content.ReadAsStringAsync(timeout.Token).ConfigureAwait(false);
+            return ClassifyRefreshResponse(response, body);
         }
-        catch
+        catch (OperationCanceledException)
         {
-            return false;
+            // The refresh request timed out: the server may or may not have rotated the pair.
+            return SectlRefreshOutcome.NetworkFailure("timeout");
+        }
+        catch (HttpRequestException exception)
+        {
+            return SectlRefreshOutcome.NetworkFailure($"network_error: {exception.Message}");
+        }
+    }
+
+    private static SectlRefreshOutcome ClassifyRefreshResponse(HttpResponseMessage response, string body)
+    {
+        var (code, description, retryAfter) = ParseOAuthError(body, response);
+        if (response.IsSuccessStatusCode)
+        {
+            var token = TryDeserializeToken(body);
+            return token is null || string.IsNullOrWhiteSpace(token.AccessToken)
+                ? SectlRefreshOutcome.Unavailable("invalid_response")
+                : SectlRefreshOutcome.Success(token);
+        }
+
+        return response.StatusCode switch
+        {
+            // 400 invalid_grant means the stored refresh token was already used, revoked, or has
+            // expired. Retrying the same value can never succeed, and doing so is what produces the
+            // server-side reuse detection storm, so the session ends here.
+            HttpStatusCode.BadRequest => SectlRefreshOutcome.Ended(code ?? "invalid_grant", description),
+            HttpStatusCode.Unauthorized => SectlRefreshOutcome.Ended(code ?? "invalid_client", description),
+            HttpStatusCode.TooManyRequests => SectlRefreshOutcome.RateLimited(code ?? "rate_limited", retryAfter),
+            HttpStatusCode.ServiceUnavailable => SectlRefreshOutcome.ServiceUnavailable(code ?? "temporarily_unavailable", retryAfter),
+            _ when (int)response.StatusCode >= 500 => SectlRefreshOutcome.ServiceUnavailable(code ?? $"http_{(int)response.StatusCode}", retryAfter),
+            _ => SectlRefreshOutcome.Unavailable(code ?? $"http_{(int)response.StatusCode}")
+        };
+    }
+
+    private async Task ApplyRotatedTokenAsync(SectlToken rotated, SectlToken previous)
+    {
+        var applied = rotated with
+        {
+            // A rotation always returns a new refresh token; falling back to the previous one keeps a
+            // session alive if an older service build omits it.
+            RefreshToken = string.IsNullOrWhiteSpace(rotated.RefreshToken) ? previous.RefreshToken : rotated.RefreshToken,
+            UserId = rotated.UserId ?? previous.UserId,
+            AccessTokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(ResolveAccessTokenLifetime(rotated)),
+            RefreshTokenIssuedAt = previous.RefreshTokenIssuedAt
+        };
+
+        // 先落盘再用：刷新令牌单次使用，进程若在这两步之间崩溃，旧令牌已失效而新令牌尚未保存。
+        try
+        {
+            await tokenStore.SaveAsync(applied).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            // The server has already rotated, so refusing the new pair would also cost this process
+            // its session. Keep running on the in-memory pair and try to persist it again later.
+            logger.LogError(exception, "SECTL 新令牌写入磁盘失败，本次仅在内存中继续使用。");
+        }
+
+        SetSession(applied);
+        logger.LogInformation("SECTL 访问令牌已刷新并写入磁盘。");
+    }
+
+    private void SetSession(SectlToken token)
+    {
+        _token = token;
+        RequiresReauthorization = false;
+        Interlocked.Increment(ref _sessionVersion);
+    }
+
+    private void ClearSession(string reason, bool requiresReauthorization)
+    {
+        var wasSignedIn = _token is not null;
+        Interlocked.Increment(ref _sessionVersion);
+        _token = null;
+        User = null;
+        AvatarBytes = null;
+        RequiresReauthorization = requiresReauthorization;
+        tokenStore.Delete();
+        if (wasSignedIn)
+            logger.LogInformation("SECTL 会话已结束：{Reason}。", reason);
+    }
+
+    private static TimeSpan ComputeBackoff(SectlRefreshOutcome outcome, int attempt)
+    {
+        if (outcome.RetryAfter is { } hinted && hinted > TimeSpan.Zero)
+            return hinted > MaximumBackoff ? MaximumBackoff : hinted;
+
+        var baseDelay = outcome.ErrorCode is "rate_limited"
+            ? TimeSpan.FromSeconds(1)
+            : TimeSpan.FromMilliseconds(500);
+        var scaled = baseDelay * Math.Pow(2, attempt - 1) + TimeSpan.FromMilliseconds(Random.Shared.Next(0, 250));
+        return scaled > MaximumBackoff ? MaximumBackoff : scaled;
+    }
+
+    private static SectlToken? TryDeserializeToken(string body)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<SectlToken>(body, JsonOptions);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static (string? Code, string? Description, TimeSpan? RetryAfter) ParseOAuthError(
+        string? body, HttpResponseMessage? response = null)
+    {
+        string? code = null;
+        string? description = null;
+        TimeSpan? retryAfter = null;
+        if (!string.IsNullOrWhiteSpace(body))
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(body);
+                if (document.RootElement.ValueKind == JsonValueKind.Object)
+                {
+                    code = ReadString(document.RootElement, "error") ?? ReadString(document.RootElement, "code");
+                    description = ReadString(document.RootElement, "error_description")
+                                  ?? ReadString(document.RootElement, "message");
+                    if (document.RootElement.TryGetProperty("retry_after_ms", out var retryMilliseconds)
+                        && retryMilliseconds.ValueKind == JsonValueKind.Number
+                        && retryMilliseconds.TryGetDouble(out var value)
+                        && value > 0)
+                        retryAfter = TimeSpan.FromMilliseconds(value);
+                }
+            }
+            catch (JsonException)
+            {
+                description = Truncate(body.Trim(), 200);
+            }
+        }
+
+        if (retryAfter is null && response is not null)
+        {
+            var header = response.Headers.RetryAfter;
+            if (header?.Delta is { } delta && delta > TimeSpan.Zero)
+                retryAfter = delta;
+            else if (header?.Date is { } date)
+                retryAfter = date - DateTimeOffset.UtcNow;
+        }
+
+        return (code, description, retryAfter);
+    }
+
+    private static string? ReadString(JsonElement element, string propertyName) =>
+        element.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.String
+            ? property.GetString()
+            : null;
+
+    private static string Truncate(string value, int maximumLength) =>
+        value.Length <= maximumLength ? value : value[..maximumLength] + "…";
+
+    private static bool IsAccessTokenRevoked(string? description) =>
+        description is not null && description.Contains("revoked", StringComparison.OrdinalIgnoreCase);
+
+    private static int ResolveAccessTokenLifetime(SectlToken token) =>
+        token.ExpiresIn > 0 ? token.ExpiresIn : DefaultAccessTokenLifetimeSeconds;
+
+    private static bool IsExpiringWithin(SectlToken token, TimeSpan lead) =>
+        token.AccessTokenExpiresAt is { } expiresAt && expiresAt - DateTimeOffset.UtcNow <= lead;
+
+    private static bool IsExpired(SectlToken token) =>
+        token.AccessTokenExpiresAt is { } expiresAt && expiresAt <= DateTimeOffset.UtcNow;
+
+    /// <summary>
+    ///     Reads the OAuth error body of a rejected request. The body is buffered by the content
+    ///     implementation, so a caller that keeps the response can still read it afterwards.
+    /// </summary>
+    private static async Task<string?> ReadErrorDescriptionAsync(HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            var (_, description, _) = ParseOAuthError(body, response);
+            return description;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return null;
         }
     }
 
@@ -397,23 +827,73 @@ public sealed class SectlAuthService(IHttpClientFactory httpClientFactory, Devic
     private static string BuildUserAgent() =>
         $"SecRandom/{GlobalConstants.Version} ({RuntimeInformation.OSDescription}; {Environment.MachineName})";
 
-    private async Task SaveAsync()
+    private static string Base64Url(byte[] bytes) => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+    /// <summary>How one refresh attempt ended, including whether retrying it can help.</summary>
+    private enum SectlRefreshStatus
     {
-        var directory = Path.GetDirectoryName(_tokenPath)!;
-        Directory.CreateDirectory(directory);
-        var temporary = $"{_tokenPath}.{Guid.NewGuid():N}.tmp";
-        await File.WriteAllTextAsync(temporary, JsonSerializer.Serialize(_token, JsonOptions), Encoding.UTF8);
-        File.Move(temporary, _tokenPath, true);
+        Succeeded,
+        /// <summary>Rate limited or temporarily unavailable: back off and retry the same refresh.</summary>
+        Transient,
+        /// <summary>The credential is permanently refused: no retry can succeed.</summary>
+        Ended
     }
 
-    private static string Base64Url(byte[] bytes) => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    private readonly record struct SectlRefreshOutcome(
+        SectlRefreshStatus Status,
+        SectlToken? Token = null,
+        string? ErrorCode = null,
+        string? Description = null,
+        bool Retryable = false,
+        bool NetworkUnknown = false,
+        TimeSpan? RetryAfter = null)
+    {
+        public static SectlRefreshOutcome Success(SectlToken? token = null) =>
+            new(SectlRefreshStatus.Succeeded, Token: token);
+
+        public static SectlRefreshOutcome Ended(string code, string? description = null) =>
+            new(SectlRefreshStatus.Ended, ErrorCode: code, Description: description);
+
+        public static SectlRefreshOutcome RateLimited(string code, TimeSpan? retryAfter) =>
+            new(SectlRefreshStatus.Transient, ErrorCode: code, Retryable: true, RetryAfter: retryAfter);
+
+        public static SectlRefreshOutcome ServiceUnavailable(string code, TimeSpan? retryAfter) =>
+            new(SectlRefreshStatus.Transient, ErrorCode: code, Retryable: true, RetryAfter: retryAfter);
+
+        public static SectlRefreshOutcome Unavailable(string code, bool retryable = true) =>
+            new(SectlRefreshStatus.Transient, ErrorCode: code, Retryable: retryable);
+
+        /// <summary>
+        ///     The request never produced a usable answer (timeout, disconnect, or no public IP). The
+        ///     service may already have rotated the pair, so the caller re-reads the token file
+        ///     before this outcome is treated as a failure.
+        /// </summary>
+        public static SectlRefreshOutcome NetworkFailure(string code) =>
+            new(SectlRefreshStatus.Transient, ErrorCode: code, Retryable: true, NetworkUnknown: true);
+    }
 }
 
 public sealed record SectlToken(
     [property: JsonPropertyName("access_token")] string AccessToken,
     [property: JsonPropertyName("refresh_token")] string? RefreshToken,
     [property: JsonPropertyName("user_id")] string? UserId,
-    [property: JsonPropertyName("expires_in")] int ExpiresIn);
+    [property: JsonPropertyName("expires_in")] int ExpiresIn)
+{
+    /// <summary>
+    ///     Local expiry of <see cref="AccessToken" />, stamped when the pair is persisted. Files
+    ///     written before this field existed leave it empty, which only means the token is refreshed
+    ///     after a rejection instead of shortly before it expires.
+    /// </summary>
+    [JsonPropertyName("access_token_expires_at")]
+    public DateTimeOffset? AccessTokenExpiresAt { get; init; }
+
+    /// <summary>
+    ///     When the fixed 180-day refresh window started (the first authorization). Rotation keeps
+    ///     this value, because a rotation never extends the window.
+    /// </summary>
+    [JsonPropertyName("refresh_token_issued_at")]
+    public DateTimeOffset? RefreshTokenIssuedAt { get; init; }
+}
 
 public sealed record SectlUser(
     [property: JsonPropertyName("user_id")] string? UserId,
