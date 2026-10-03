@@ -1,22 +1,28 @@
+using System.Buffers.Binary;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Interfaces;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.Draw;
+using SecRandom.Core.Models.Verification;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Services.Draw.Exceptions;
+using SecRandom.Core.Services.Verification;
 using SecRandom.Shared.Models.Profile;
 
 CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
@@ -50,20 +56,47 @@ static class AuditRunner
     public static AuditReport Run()
     {
         var config = BuildConfig();
+        var kernel = new ManagedVerificationKernel();
 
         using var shortHost = BuildHost(config, BuildProfile());
-
-        ProfileRecordIdentityDiagnostics.Reset();
+        var shortProfile = (FakeProfileService)shortHost.Services.GetRequiredService<IProfileService>();
         var shortEngine = CreateEngine(shortHost, new DeterministicRandomSource(20260626));
-        var shortStudentSummary = SimulateStudents(shortEngine, (FakeProfileService)shortHost.Services.GetRequiredService<IProfileService>(), ShortStudentIterations, "学生短期抽取结果");
-        var shortPrizeSummary = SimulatePrizes(shortEngine, (FakeProfileService)shortHost.Services.GetRequiredService<IProfileService>(), ShortPrizeIterations, "奖品短期抽取结果");
 
         ProfileRecordIdentityDiagnostics.Reset();
-        using var longHost = BuildHost(config, BuildProfile());
+        var shortStudentSummary = SimulateStudents(
+            shortEngine,
+            kernel,
+            shortProfile,
+            new DeterministicSeedSource("SecRandom.FairnessAudit/student/short"),
+            ShortStudentIterations,
+            "学生短期抽取结果");
+        var shortPrizeSummary = SimulatePrizes(
+            shortEngine,
+            kernel,
+            shortProfile,
+            new DeterministicSeedSource("SecRandom.FairnessAudit/prize/short"),
+            ShortPrizeIterations,
+            "奖品短期抽取结果");
 
+        using var longHost = BuildHost(config, BuildProfile());
+        var longProfile = (FakeProfileService)longHost.Services.GetRequiredService<IProfileService>();
         var longEngine = CreateEngine(longHost, new DeterministicRandomSource(20260627));
-        var studentSummary = SimulateStudents(longEngine, (FakeProfileService)longHost.Services.GetRequiredService<IProfileService>(), StudentIterations, "学生长期公平性");
-        var prizeSummary = SimulatePrizes(longEngine, (FakeProfileService)longHost.Services.GetRequiredService<IProfileService>(), PrizeIterations, "奖品长期公平性");
+
+        ProfileRecordIdentityDiagnostics.Reset();
+        var studentSummary = SimulateStudents(
+            longEngine,
+            kernel,
+            longProfile,
+            new DeterministicSeedSource("SecRandom.FairnessAudit/student/long"),
+            StudentIterations,
+            "学生长期公平性");
+        var prizeSummary = SimulatePrizes(
+            longEngine,
+            kernel,
+            longProfile,
+            new DeterministicSeedSource("SecRandom.FairnessAudit/prize/long"),
+            PrizeIterations,
+            "奖品长期公平性");
 
         return new AuditReport(
             shortStudentSummary,
@@ -124,6 +157,10 @@ static class AuditRunner
             {
                 DrawMode = DrawMode.Repeat,
                 DrawType = LotteryDrawType.Pan,
+                // The algorithm id and the draw type must agree, exactly as the settings page keeps them:
+                // leaving the "builtin.inventory" default next to a Pan draw type would expand every prize by
+                // its remaining stock (300k tickets here) and measure a pool no Pan draw would ever freeze.
+                AlgorithmId = "builtin.weighted",
                 HalfRepeat = 1
             },
             DefaultDrawSettings = new DefaultDrawSettingsConfig(),
@@ -170,44 +207,141 @@ static class AuditRunner
         return new FakeProfileService(studentList, studentHistory, prizeList, prizeHistory);
     }
 
-    private static AuditSummary SimulateStudents(DrawEngine engine, FakeProfileService profile, int iterations, string title)
+    /// <summary>
+    ///     Replays the production student path: the same frozen request the app builds
+    ///     (<see cref="DrawEngine.CreateStudentVerificationInput(int, IReadOnlyCollection{Student}, DrawSettingsType, string)"/>)
+    ///     is sampled by the production kernel, and the drawn member is written back into history afterwards so the
+    ///     fairness weights keep the same feedback loop the app has.
+    /// </summary>
+    private static AuditSummary SimulateStudents(
+        DrawEngine engine,
+        IVerificationKernel kernel,
+        FakeProfileService profile,
+        DeterministicSeedSource seeds,
+        int iterations,
+        string title)
     {
+        var students = profile.CurrentStudentList?.Students.ToList()
+                       ?? throw new InvalidOperationException("审计名单缺少学生列表。");
+        var studentsByRecordId = students.ToDictionary(student => student.RecordId);
+        if (studentsByRecordId.Count != students.Count)
+            throw new InvalidOperationException("审计名单存在重复的 RecordId，无法把中奖记录映射回具体学生。");
+
         var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+        var seed = new byte[32];
         var stopwatch = Stopwatch.StartNew();
 
         for (var i = 0; i < iterations; i++)
         {
-            var result = engine.DrawStudent(1, _ => true);
-            if (!result.IsSuccess)
-                throw new InvalidOperationException($"student draw failed: {result.Status}");
+            var input = CreateStudentVerificationInput(engine, students, i);
+            seeds.FillNextSeed(seed);
+            var winners = kernel.Draw(input, seed).Winners;
+            if (winners.Count != input.Count)
+                throw new InvalidOperationException($"采样器返回 {winners.Count} 个中奖记录，与请求数量 {input.Count} 不一致。");
 
-            var student = result.Result[0];
-            counts[student.Name] = counts.GetValueOrDefault(student.Name) + 1;
-            BumpStudentHistory(profile.CurrentStudentHistory!, student);
+            foreach (var winner in winners)
+            {
+                if (!studentsByRecordId.TryGetValue(winner.RecordId, out var student))
+                    throw new InvalidOperationException($"采样器返回了冻结名单之外的学生记录 {winner.RecordId:D}。");
+
+                counts[student.Name] = counts.GetValueOrDefault(student.Name) + 1;
+                BumpStudentHistory(profile.CurrentStudentHistory!, student);
+            }
         }
 
         stopwatch.Stop();
+        AssertCountsMatchIterations(counts, iterations, "学生");
         return new AuditSummary(title, iterations, stopwatch.Elapsed, counts);
     }
 
-    private static AuditSummary SimulatePrizes(DrawEngine engine, FakeProfileService profile, int iterations, string title)
+    /// <summary>
+    ///     Replays the production prize path over a frozen <see cref="DrawEngine.CreatePrizeVerificationInput(int, IReadOnlyDictionary{string, int}, bool, string)"/>
+    ///     request with an empty temporary-record set (no per-round inventory carried over).
+    /// </summary>
+    private static AuditSummary SimulatePrizes(
+        DrawEngine engine,
+        IVerificationKernel kernel,
+        FakeProfileService profile,
+        DeterministicSeedSource seeds,
+        int iterations,
+        string title)
     {
+        var prizes = profile.CurrentPrizeList?.Prizes.ToList()
+                     ?? throw new InvalidOperationException("审计奖池缺少奖品列表。");
+        var prizesByRecordId = prizes.ToDictionary(prize => prize.RecordId);
+        if (prizesByRecordId.Count != prizes.Count)
+            throw new InvalidOperationException("审计奖池存在重复的 RecordId，无法把中奖记录映射回具体奖品。");
+
+        var temporaryCounts = new Dictionary<string, int>(StringComparer.Ordinal);
         var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+        var seed = new byte[32];
         var stopwatch = Stopwatch.StartNew();
 
         for (var i = 0; i < iterations; i++)
         {
-            var result = engine.DrawPrize(1, _ => true);
-            if (!result.IsSuccess)
-                throw new InvalidOperationException($"prize draw failed: {result.Status}");
+            var input = CreatePrizeVerificationInput(engine, temporaryCounts, i);
+            seeds.FillNextSeed(seed);
+            var winners = kernel.Draw(input, seed).Winners;
+            if (winners.Count != input.Count)
+                throw new InvalidOperationException($"采样器返回 {winners.Count} 个中奖记录，与请求数量 {input.Count} 不一致。");
 
-            var prize = result.Result[0];
-            counts[prize.Name] = counts.GetValueOrDefault(prize.Name) + 1;
-            BumpPrizeHistory(profile.CurrentPrizeHistory!, prize);
+            foreach (var winner in winners)
+            {
+                if (!prizesByRecordId.TryGetValue(winner.RecordId, out var prize))
+                    throw new InvalidOperationException($"采样器返回了冻结奖池之外的奖品记录 {winner.RecordId:D}。");
+
+                counts[prize.Name] = counts.GetValueOrDefault(prize.Name) + 1;
+                BumpPrizeHistory(profile.CurrentPrizeHistory!, prize);
+            }
         }
 
         stopwatch.Stop();
+        AssertCountsMatchIterations(counts, iterations, "奖品");
         return new AuditSummary(title, iterations, stopwatch.Elapsed, counts);
+    }
+
+    /// <summary>
+    ///     <see cref="NoEligibleCandidatesException"/> means the frozen pool carried no drawable weight at all. That is a
+    ///     normal "nothing to draw" outcome in the app, but in an audit it means the measured run proved nothing, so it
+    ///     must fail loudly instead of being counted as a successful draw.
+    /// </summary>
+    private static VerificationDrawInput CreateStudentVerificationInput(
+        DrawEngine engine,
+        IReadOnlyList<Student> students,
+        int iteration)
+    {
+        try
+        {
+            return engine.CreateStudentVerificationInput(1, students, DrawSettingsType.RollCall, courseName: "");
+        }
+        catch (NoEligibleCandidatesException exception)
+        {
+            throw new InvalidOperationException(
+                $"第 {iteration + 1} 次学生抽取没有可抽取的权重，审计结果无效。", exception);
+        }
+    }
+
+    private static VerificationDrawInput CreatePrizeVerificationInput(
+        DrawEngine engine,
+        IReadOnlyDictionary<string, int> temporaryCounts,
+        int iteration)
+    {
+        try
+        {
+            return engine.CreatePrizeVerificationInput(1, temporaryCounts, includeInternalRules: true);
+        }
+        catch (NoEligibleCandidatesException exception)
+        {
+            throw new InvalidOperationException(
+                $"第 {iteration + 1} 次奖品抽取没有可抽取的权重，审计结果无效。", exception);
+        }
+    }
+
+    private static void AssertCountsMatchIterations(IReadOnlyDictionary<string, int> counts, int iterations, string label)
+    {
+        var total = counts.Values.Sum();
+        if (total != iterations)
+            throw new InvalidOperationException($"{label}计数合计 {total}，与迭代次数 {iterations} 不一致。");
     }
 
     private static void BumpStudentHistory(StudentHistory history, Student student)
@@ -264,6 +398,14 @@ th{background:#f1f5f9}
 <body>
 <div class="wrap">
 <h1>SecRandom 公平性验证</h1>
+<p class="muted">测量对象是生产采样路径：DrawEngine.CreateStudentVerificationInput / CreatePrizeVerificationInput 冻结出与真实抽取相同的请求，再交给 ManagedVerificationKernel 采样；每次抽取后按应用相同的方式回写历史，形成同样的历史反馈闭环。</p>
+<p class="muted">本次配置：点名每轮抽 1 人（RollCall，公平权重，允许重复）；奖池每轮抽 1 份（Pan，奖盘加权无放回，临时记录为空）。每次抽取使用由 SHA-256(标签 + 计数器) 派生的新 32 字节种子，因此结果可复现且不会复用种子。</p>
+<div class="panel" style="border-color:#f59e0b;background:#fffbeb">
+<h2>能证明什么 / 不能证明什么</h2>
+<p><b>能证明：</b>在固定名单与固定规则下，生产采样器输出的分布与期望一致——各候选没有系统性偏好，历史加权闭环没有被破坏，单次抽取不会重复命中同一记录。</p>
+<p><b>不能证明：</b>不证明本机二进制未被替换，不证明真实名单的真实性与完整性，不证明抽取证明文件的存储与保全，也不证明抽取前不存在人为挑选结果。</p>
+<p>注意：点名开启平均间隔保护后，候选池在采样前就被按历史次数收窄，因此长期计数会几乎完全相等（卡方接近 0）。这首先说明的是候选门控在起作用，并不单独证明采样器内部的权重分配。</p>
+</div>
 <p class="muted">先看短期样本波动，再看长期分布和历史记录读取压力。</p>
 """);
 
@@ -281,7 +423,9 @@ th{background:#f1f5f9}
 """);
             AppendHistoryRow(sb, "学生", HistoryReadStats.StudentPrimaryLookups, HistoryReadStats.StudentLegacyLookups, StudentSummary.Total);
             AppendHistoryRow(sb, "奖品", HistoryReadStats.PrizePrimaryLookups, HistoryReadStats.PrizeLegacyLookups, PrizeSummary.Total);
-            sb.Append("</tbody></table></div></div></body></html>");
+            sb.Append("</tbody></table>");
+            sb.Append("<p class=\"muted\">奖品列为 0 是正常的：冻结奖池只读取临时记录（temporaryCounts），不会通过 RecordId 查询持久化历史；学生列则每次抽取会按候选人数读取历史。</p>");
+            sb.Append("</div></div></body></html>");
             return sb.ToString();
         }
 
@@ -354,8 +498,14 @@ th{background:#f1f5f9}
             string drawGender = "",
             int drawMethod = 0,
             IReadOnlyDictionary<Student, double>? weights = null,
-            string courseName = "") { }
-        public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount) { }
+            string courseName = "",
+            string? drawRoundId = null) { }
+        public void RecordPrizeHistory(
+            IReadOnlyList<Prize> prizes,
+            DateTime now,
+            int requestedCount,
+            int drawMethod = 0,
+            string? drawRoundId = null) { }
         public void ClearCurrentStudentHistory() { }
         public void ClearCurrentPrizeHistory() { }
         public void SaveProfile() { }
@@ -375,5 +525,23 @@ th{background:#f1f5f9}
 
         public int NextInt32(int maxExclusive) => _random.Next(maxExclusive);
         public double NextDouble() => _random.NextDouble();
+    }
+
+    /// <summary>
+    ///     Reproducible but varying 32-byte kernel seeds: every draw uses SHA-256 over a fixed label and a monotonic
+    ///     counter, so a rerun replays exactly the same sequence while never reusing a seed across draws.
+    /// </summary>
+    private sealed class DeterministicSeedSource(string label)
+    {
+        private ulong _counter;
+
+        public void FillNextSeed(Span<byte> destination)
+        {
+            Span<byte> material = stackalloc byte[64];
+            material.Clear();
+            var written = Encoding.ASCII.GetBytes(label, material);
+            BinaryPrimitives.WriteUInt64LittleEndian(material[written..], ++_counter);
+            SHA256.HashData(material[..(written + sizeof(ulong))], destination);
+        }
     }
 }

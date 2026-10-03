@@ -3,11 +3,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Services.Draw.Exceptions;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.Profile;
@@ -248,6 +250,75 @@ public sealed class CoreRuntimeServicesTests : IDisposable
         var prize = Assert.Single(editor.GetPrizes());
         Assert.True(editor.RemovePrize(prize.RecordId.ToString("D")));
         Assert.Empty(profile.CurrentPrizeList!.Prizes);
+    }
+
+    [Fact]
+    public void StudentTemporaryRecords_AreNotHiddenBySwitchingTheDrawFilter()
+    {
+        using var provider = CreateProvider();
+        var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
+        var student = new Student { Name = "Switch", RecordId = Guid.NewGuid() };
+
+        temporary.RecordStudents("filter-class", "男", "A组", [student]);
+
+        var recordId = student.RecordId.ToString("D");
+        Assert.Equal(1, temporary.GetStudentCounts("filter-class", "男", "A组")[recordId]);
+        // Switching the group/gender filter must not restart the repeat limit for an already drawn member.
+        Assert.Equal(1, temporary.GetStudentCounts("filter-class", string.Empty, string.Empty)[recordId]);
+        Assert.Equal(1, temporary.GetStudentCounts("filter-class", "女", "B组")[recordId]);
+    }
+
+    [Fact]
+    public void StudentTemporaryRecords_MergeLegacyFilterBucketsOnUpgrade()
+    {
+        using var provider = CreateProvider();
+        var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
+        var student = new Student { Name = "Legacy", RecordId = Guid.NewGuid() };
+        var recordId = ProfileRecordIdentity.EnsureRecordId(student);
+
+        var legacy = $$"""
+                       {
+                         "listName": "legacy-class",
+                         "updatedAt": "2026-01-02T00:00:00+00:00",
+                         "scopes": {
+                           "gender=男|group=A组": { "records": { "{{recordId}}": { "name": "Legacy", "id": "1", "count": 2, "lastDrawnTime": "2026-01-01T00:00:00+00:00" } } },
+                           "gender=女|group=B组": { "records": { "{{recordId}}": { "name": "Legacy", "id": "1", "count": 3, "lastDrawnTime": "2026-01-02T00:00:00+00:00" } } }
+                         }
+                       }
+                       """;
+        var legacyPath = Utils.GetFilePath("TEMP", "roll_call_record_legacy-class.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(legacyPath)!);
+        File.WriteAllText(legacyPath, legacy);
+
+        // The upgrade must sum the old per-filter buckets instead of silently restarting the count.
+        Assert.Equal(5, temporary.GetStudentCounts("legacy-class", string.Empty, string.Empty)[recordId]);
+    }
+
+    [Fact]
+    public void VerificationInput_ReportsNoEligibleCandidatesWhenEveryMemberIsInsideTheShieldWindow()
+    {
+        using var provider = CreateProvider();
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        config.Data.RollCallSettings.DefaultClass = "shield-class";
+        config.Data.RollCallSettings.AlgorithmId = "builtin.fair";
+        config.Data.FairDrawSettings.FairDraw = true;
+        config.Data.FairDrawSettings.FairDrawGroup = false;
+        config.Data.FairDrawSettings.FairDrawGender = false;
+        config.Data.FairDrawSettings.ShieldEnabled = true;
+        config.Data.FairDrawSettings.ShieldTime = 60;
+        config.Data.FairDrawSettings.ShieldTimeUnit = ShieldTimeUnit.Minutes;
+        config.Save();
+
+        var profile = provider.GetRequiredService<IProfileService>();
+        var student = new Student { Name = "Shielded", RecordId = Guid.NewGuid() };
+        profile.CurrentStudentList!.Students.Add(student);
+        profile.SaveProfile();
+        profile.RecordStudentHistory([student], DateTime.Now, 1);
+
+        var engine = provider.GetRequiredService<DrawEngine>();
+
+        Assert.Throws<NoEligibleCandidatesException>(() =>
+            engine.CreateStudentVerificationInput(1, [student], DrawSettingsType.RollCall));
     }
 
     public void Dispose()

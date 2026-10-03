@@ -51,7 +51,7 @@ SecRandom/Views/SettingsPages/
 | Update settings | `Update/UpdateSettingsPage.axaml(.cs)` | Shared `settings.update` bottom-nav entry for desktop and mobile. |
 | Account access | `../../Services/Auth/SectlAuthService.cs`, `../SettingsView.axaml(.cs)` | Desktop settings title bar shows the signed-in account and keeps OAuth PKCE sign-in/sign-out in the account flyout. |
 | Notification settings | `Notification/VoiceSettingsPage.axaml(.cs)` etc. | Voice/music and notification channel entries under `settings.notification`. |
-| History management | `History/HistoryManagementSettingsPage.axaml(.cs)` | Clears roll-call/lottery histories through active-profile or named-profile handlers; `settings.history.management`. |
+| History management | `History/HistoryManagementSettingsPage.axaml(.cs)` | Clears roll-call/lottery histories through active-profile or named-profile handlers and exports them: each row pairs a scope ComboBox (全部名单/全部奖池 plus every existing profile) with 导出, then uses `StorageProvider.SaveFilePickerAsync` with `*.xlsx`/`*.csv` choices and delegates all file generation to Core `IHistoryExportService`; the mobile path writes a temporary file and copies it into `OpenWriteAsync` when `TryGetLocalPath()` is null; `settings.history.management`. |
 | Log viewer | `LogViewer/LogViewerSettingsPage.axaml(.cs)` | Hidden page `settings.logs`; opened from the settings shell more-options menu. |
 | About / external links | `About/AboutSettingsPage.axaml(.cs)` | `settings.about` bottom-nav; `Process.Start` for external URLs. |
 | Shell navigation semantics | `../SettingsView.axaml.cs` | Default page `settings.overview`, history stack, generated menu. |

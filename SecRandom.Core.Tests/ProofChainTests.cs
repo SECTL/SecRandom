@@ -143,6 +143,67 @@ public sealed class ProofChainTests : IDisposable
         Assert.False(TimestampAuthorityClient.Validate(string.Empty, hash).IsValid);
     }
 
+    [Fact]
+    public void RecordedRemovalsOnlyAdvanceTheFloorOverAContiguousPrefix()
+    {
+        using var provider = CreateProvider();
+        var chainStore = provider.GetRequiredService<ProofChainStore>();
+
+        chainStore.RecordRemovedIndices([10], ProofChainEvent.StorageLimitCleanup);
+        Assert.Equal(0, chainStore.Read().RetainedFromIndex);
+
+        chainStore.RecordRemovedIndices([1], ProofChainEvent.StorageLimitCleanup);
+        Assert.Equal(1, chainStore.Read().RetainedFromIndex);
+
+        chainStore.RecordRemovedIndices([2], ProofChainEvent.RetentionCleanup);
+        // Index 10 is recorded but still not contiguous, so the floor stops at 2 instead of jumping to 10.
+        Assert.Equal(2, chainStore.Read().RetainedFromIndex);
+    }
+
+    [Fact]
+    public void SparseCleanupCannotHideAnUnrecordedDeletion()
+    {
+        using var provider = CreateProvider();
+        var exporter = provider.GetRequiredService<DrawProofExportService>();
+        var chainStore = provider.GetRequiredService<ProofChainStore>();
+        var verifier = provider.GetRequiredService<ProofIntegrityVerifier>();
+
+        var first = exporter.Save(CreateProof(new DateTimeOffset(2026, 9, 30, 1, 0, 0, TimeSpan.Zero)), Context());
+        exporter.Save(CreateProof(new DateTimeOffset(2026, 9, 30, 1, 5, 0, TimeSpan.Zero)), Context());
+        var third = exporter.Save(CreateProof(new DateTimeOffset(2026, 9, 30, 1, 10, 0, TimeSpan.Zero)), Context());
+
+        // The oldest proof disappears without being recorded, while an unrelated cleanup claims only the
+        // newest index. That must not reclassify the surviving hole as retention-expired.
+        File.Delete(first.Path);
+        chainStore.RecordRemovedIndices([third.Proof.Chain!.Index], ProofChainEvent.StorageLimitCleanup);
+
+        Assert.Equal(0, chainStore.Read().RetainedFromIndex);
+        var report = verifier.Verify(TestContext.Current.CancellationToken);
+        Assert.False(report.IsHealthy);
+        Assert.Contains(report.Issues, issue => issue.Kind == ProofIntegrityIssueKind.Gap);
+    }
+
+    [Fact]
+    public void StorageLimitCleanupKeepsTheProofItJustSaved()
+    {
+        using var provider = CreateProvider();
+        var exporter = provider.GetRequiredService<DrawProofExportService>();
+        var verifier = provider.GetRequiredService<ProofIntegrityVerifier>();
+        var config = provider.GetRequiredService<MainConfigHandler>();
+
+        config.Data.General.ProofRetention.RetentionDays = 0;
+        // Far below the size of a single proof: the proof written by this save must still survive, otherwise
+        // the chain head would point at a file that never landed and the attestation queue at a dead path.
+        config.Data.General.ProofRetention.MaximumStorageBytes = 1;
+
+        var saved = exporter.Save(CreateProof(new DateTimeOffset(2026, 9, 30, 1, 0, 0, TimeSpan.Zero)), Context());
+
+        Assert.True(File.Exists(saved.Path));
+        var report = verifier.Verify(TestContext.Current.CancellationToken);
+        Assert.Equal(1, report.Chained);
+        Assert.Equal(0, report.MissingTail);
+    }
+
     private static ServiceProvider CreateProvider()
     {
         var services = new ServiceCollection();

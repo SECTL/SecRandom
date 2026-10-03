@@ -55,12 +55,16 @@ public partial class DrawEngine
         }
         catch (Exception exception) when (exception is CandidateNotFoundException or RepeatLimitExhaustedException)
         {
-            throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.", exception);
+            // The repeat limit or the mandatory average-gap gate removed every prepared candidate. That is
+            // the same "nothing drawable right now" state as an all-zero weight pool, so it must reach
+            // callers as a status instead of failing the whole draw.
+            throw new NoEligibleCandidatesException("The prepared student pool has no drawable candidate.", exception);
         }
 
         var frozen = FreezeCandidates(prepared.WeightedCandidates, includeInternalRules);
         if (count > frozen.Count)
             throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.");
+        EnsureDrawableWeight(frozen, count);
         var hasInternalRules = includeInternalRules
                                && prepared.WeightedCandidates.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
         var algorithmProfile = GetStudentAlgorithmProfile(drawType, drawMode, hasInternalRules);
@@ -108,7 +112,16 @@ public partial class DrawEngine
         string rosterDigest = "")
     {
         var historyCache = BuildPrizeTemporaryHistoryCache(PrizeList.Prizes, temporaryCounts);
-        var usable = FilterPrizes(_ => true, count, historyCache);
+        List<Prize> usable;
+        try
+        {
+            usable = FilterPrizes(_ => true, count, historyCache);
+        }
+        catch (Exception exception) when (exception is CandidateNotFoundException or RepeatLimitExhaustedException)
+        {
+            throw new NoEligibleCandidatesException("The prepared prize pool has no drawable candidate.", exception);
+        }
+
         var weighted = BuildPrizeCandidates(usable, historyCache);
         if (count <= 0 || count > weighted.Count)
             throw new InvalidOperationException("The prepared prize pool cannot satisfy this draw.");
@@ -116,6 +129,7 @@ public partial class DrawEngine
         var frozen = FreezeCandidates(weighted, includeInternalRules);
         if (count > frozen.Count)
             throw new InvalidOperationException("The prepared prize pool cannot satisfy this draw.");
+        EnsureDrawableWeight(frozen, count);
         var hasInternalRules = includeInternalRules
                                && weighted.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
         var lotteryDrawType = ConfigData.LotterySettings.DrawType;
@@ -210,6 +224,19 @@ public partial class DrawEngine
         DrawMode.HalfRepeat => "half-repeat",
         _ => "unknown"
     };
+
+    /// <summary>
+    ///     Rejects a frozen pool that cannot actually produce <paramref name="count"/> winners. Shielded
+    ///     students stay in the pool with weight 0 so the anonymous audit payload still lists them, so the
+    ///     pool size alone never guarantees a draw; without this check the kernel would be handed an
+    ///     all-zero weight set and fail the whole draw.
+    /// </summary>
+    private static void EnsureDrawableWeight(IReadOnlyList<VerificationCandidate> frozen, int count)
+    {
+        var drawable = frozen.Count(candidate => candidate.IsGuaranteed || candidate.WeightMicros > 0);
+        if (drawable < count)
+            throw new NoEligibleCandidatesException("The frozen candidate pool has no drawable weight.");
+    }
 
     private static IReadOnlyList<VerificationCandidate> FreezeCandidates<TCandidate>(
         IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates,

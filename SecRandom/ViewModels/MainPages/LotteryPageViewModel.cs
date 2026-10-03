@@ -327,7 +327,17 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
                 var drawCompletedFirst = await Task.WhenAny(drawTask, previewTask).ConfigureAwait(true) == drawTask;
                 var drawResult = await drawTask.ConfigureAwait(true);
                 if (drawResult is null)
-                    throw new InvalidOperationException("No eligible lottery candidates.");
+                {
+                    // Nothing is currently drawable: the pool is exhausted after repeat filtering, or every
+                    // remaining member/prize is temporarily excluded (post-draw shield).
+                    StopPreview();
+                    _lastResultPrizes.Clear();
+                    ResultItems.Clear();
+                    IsResultVisible = false;
+                    StatusText = SR.M_NoCandidates;
+                    return;
+                }
+
                 drawn = drawResult.Prizes.ToList();
                 assignedStudents = drawResult.AssignedStudents.ToList();
                 if (drawCompletedFirst && !previewTask.IsCompleted)
@@ -847,13 +857,21 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
         try
         {
-            return (await _verificationDrawCoordinator.DrawStudentsAsync(
+            var outcome = await _verificationDrawCoordinator.DrawStudentsAsync(
                 count,
                 candidates,
                 DrawSettingsType.RollCall,
                 DrawProofExportContext.ForStudents(SelectedStudentListName, CurrentGroupScope, CurrentGenderScope, courseName),
                 parentProofId,
-                courseName).ConfigureAwait(true)).Winners.ToList();
+                courseName).ConfigureAwait(true);
+            if (outcome is null)
+            {
+                // Every remaining student is temporarily excluded (post-draw shield); nothing is assignable.
+                StatusText = SR.M_NoRemainingStudents;
+                return null;
+            }
+
+            return outcome.Winners.ToList();
         }
         catch (Exception exception)
         {

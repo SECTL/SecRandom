@@ -81,7 +81,9 @@ public sealed class ProofChainStore(ILogger<ProofChainStore> logger)
 
     /// <summary>
     ///     Records proofs the app itself removed (retention or storage-limit cleanup) so their absence is
-    ///     explained instead of looking like tampering.
+    ///     explained instead of looking like tampering. Only a contiguous run starting right above the
+    ///     current floor may advance <see cref="ProofChainHead.RetainedFromIndex"/>: a sparse deletion such
+    ///     as index 10 while 1-9 still exist must not turn those surviving gaps into "expired" files.
     /// </summary>
     public void RecordRemovedIndices(IEnumerable<long> indices, ProofChainEvent reason)
     {
@@ -94,11 +96,31 @@ public sealed class ProofChainStore(ILogger<ProofChainStore> logger)
         lock (_gate)
         {
             var head = EnsureHeadLocked();
-            var highest = removed.Max();
-            if (highest <= head.RetainedFromIndex)
+            if (head.RemovedIndices is null)
+                head.RemovedIndices = [];
+
+            var changed = false;
+            foreach (var index in removed)
+            {
+                if (index <= head.RetainedFromIndex || head.RemovedIndices.Contains(index))
+                    continue;
+
+                head.RemovedIndices.Add(index);
+                changed = true;
+            }
+
+            while (head.RemovedIndices.Remove(head.RetainedFromIndex + 1))
+            {
+                head.RetainedFromIndex++;
+                changed = true;
+            }
+
+            // Anything at or below the floor is already explained by the floor itself.
+            changed |= head.RemovedIndices.RemoveAll(index => index <= head.RetainedFromIndex) > 0;
+            if (!changed)
                 return;
 
-            head.RetainedFromIndex = highest;
+            head.RemovedIndices.Sort();
             PersistLocked(reason);
         }
     }
@@ -203,6 +225,12 @@ internal sealed class ProofChainHeadDocument
     public string HeadHash { get; set; } = string.Empty;
 
     public long RetainedFromIndex { get; set; }
+
+    /// <summary>
+    ///     Removed indices above the floor that are not yet a contiguous prefix. They are what allows a later
+    ///     deletion to close the hole and advance the floor without ever over-claiming.
+    /// </summary>
+    public List<long> RemovedIndices { get; set; } = [];
 
     public string? LastEvent { get; set; }
 

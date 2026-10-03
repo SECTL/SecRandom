@@ -329,7 +329,17 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
                 var drawCompletedFirst = await Task.WhenAny(drawTask, previewTask).ConfigureAwait(true) == drawTask;
                 var drawResult = await drawTask.ConfigureAwait(true);
                 if (drawResult is null)
-                    throw new InvalidOperationException("No eligible point-call candidates.");
+                {
+                    // The list still has eligible members but every one of them is temporarily excluded
+                    // (post-draw shield), so this is a drawable-member state, not a failed draw.
+                    _previewCts?.Cancel();
+                    await (_drawAudioService?.StopAnimationMusicAsync(0, immediate: true) ?? Task.CompletedTask)
+                        .ConfigureAwait(false);
+                    ClearUncommittedPreview();
+                    StatusText = SR.M_NoCandidates;
+                    return;
+                }
+
                 drawnStudents = drawResult.Students.ToList();
                 if (drawCompletedFirst && !previewTask.IsCompleted)
                     await PlayAnimationMusicAsync(DrawMusicAttachedSettingsResolver.GetAnimationMusic(

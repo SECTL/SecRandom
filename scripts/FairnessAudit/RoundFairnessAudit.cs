@@ -333,6 +333,12 @@ th{background:#f1f5f9}
 <div class="wrap">
 <h1>SecRandom 100 轮公平抽取审计</h1>
 <p class="muted">50 名学生，100 轮，每轮抽 5 到 10 人。单轮内无重复，轮后只累积历史权重，不保留当轮名单。</p>
+<div class="panel" style="border-color:#f59e0b;background:#fffbeb">
+<h2>能证明什么 / 不能证明什么</h2>
+<p><b>测量对象：</b>本报告调用的是旧版加权引擎 <code>DrawEngine.DrawStudent</code>，<b>不覆盖</b>生产采样路径（ManagedVerificationKernel 对冻结请求的采样）。生产路径的分布见 fairness-audit.html，本报告只用于对照旧引擎的轮次行为。</p>
+<p><b>能证明：</b>旧版加权引擎在固定名单与规则下的轮次分布与期望一致，单轮内无重复。</p>
+<p><b>不能证明：</b>不证明本机二进制未被替换，不证明真实名单的真实性与完整性，不证明抽取证明文件的存储与保全，也不证明抽取前不存在人为挑选结果。</p>
+</div>
 """);
 
             AppendMetrics(sb);
@@ -521,8 +527,14 @@ th{background:#f1f5f9}
             string drawGender = "",
             int drawMethod = 0,
             IReadOnlyDictionary<Student, double>? weights = null,
-            string courseName = "") { }
-        public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount) { }
+            string courseName = "",
+            string? drawRoundId = null) { }
+        public void RecordPrizeHistory(
+            IReadOnlyList<Prize> prizes,
+            DateTime now,
+            int requestedCount,
+            int drawMethod = 0,
+            string? drawRoundId = null) { }
         public void ClearCurrentStudentHistory() { }
         public void ClearCurrentPrizeHistory() { }
         public void SaveProfile() { }

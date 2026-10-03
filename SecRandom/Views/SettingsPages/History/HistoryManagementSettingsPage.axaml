@@ -11,6 +11,37 @@
               x:DataType="local:HistoryManagementSettingsPage">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro settings">
+            <sr:IconText x:Name="S_ExportHistory"
+                         Text="{x:Static lsp:Resources.S_ExportHistory}"
+                         Glyph="{sr:Fi ArrowDownloadFilled}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_ExportHistory_RollCall"
+                                   Header="{x:Static lsp:Resources.S_ExportHistory_RollCall}"
+                                   Description="{x:Static lsp:Resources.S_ExportHistory_RollCall_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PersonFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ComboBox x:Name="ExportRollCallCombo" MinWidth="180" />
+                        <Button Content="{x:Static lsp:Resources.C_Export}"
+                                Click="ExportRollCallHistory_OnClick" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_ExportHistory_Lottery"
+                                   Header="{x:Static lsp:Resources.S_ExportHistory_Lottery}"
+                                   Description="{x:Static lsp:Resources.S_ExportHistory_Lottery_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LotteryFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ComboBox x:Name="ExportLotteryCombo" MinWidth="180" />
+                        <Button Content="{x:Static lsp:Resources.C_Export}"
+                                Click="ExportLotteryHistory_OnClick" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <sr:IconText x:Name="S_ClearHistory"
                          Text="{x:Static lsp:Resources.S_ClearHistory}"
                          Glyph="{sr:Fi DeleteFilled}"

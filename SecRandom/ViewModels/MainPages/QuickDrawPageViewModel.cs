@@ -245,7 +245,22 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             try
             {
                 var drawCompletedFirst = await Task.WhenAny(verificationDrawTask, previewTask).ConfigureAwait(true) == verificationDrawTask;
-                drawOutcome = await verificationDrawTask.ConfigureAwait(true);
+                var completedOutcome = await verificationDrawTask.ConfigureAwait(true);
+                if (completedOutcome is null)
+                {
+                    // The list still has members but every one of them is temporarily excluded (post-draw
+                    // shield), so this is a state message rather than a failed draw.
+                    StopPreview();
+                    if (showBuiltInNotificationAnimation)
+                        _notificationService?.CancelBuiltInNotificationPresentation(NotificationSettingsType.QuickDraw);
+                    ResultItems.Clear();
+                    LastDrawnStudent = null;
+                    IsResultVisible = false;
+                    StatusText = QuickDrawResources.M_NoMembers;
+                    return;
+                }
+
+                drawOutcome = completedOutcome;
                 drawn = drawOutcome.Winners.ToList();
                 if (drawCompletedFirst && !previewTask.IsCompleted)
                     await _drawAudioService.StartAnimationMusicAsync(

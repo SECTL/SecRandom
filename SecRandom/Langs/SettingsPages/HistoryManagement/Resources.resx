@@ -85,4 +85,118 @@
   <data name="M_SelectFirst" xml:space="preserve">
     <value>请先选择要清除历史记录的项目</value>
   </data>
+  <data name="S_ExportHistory" xml:space="preserve">
+    <value>导出历史记录</value>
+  </data>
+  <data name="S_ExportHistory_RollCall" xml:space="preserve">
+    <value>导出点名历史</value>
+  </data>
+  <data name="S_ExportHistory_RollCall_D" xml:space="preserve">
+    <value>将选定名单的点名历史导出为 Excel 或 CSV 文件，CSV 只包含抽取明细</value>
+  </data>
+  <data name="S_ExportHistory_Lottery" xml:space="preserve">
+    <value>导出抽奖历史</value>
+  </data>
+  <data name="S_ExportHistory_Lottery_D" xml:space="preserve">
+    <value>将选定奖池的抽奖历史导出为 Excel 或 CSV 文件，CSV 只包含抽取明细</value>
+  </data>
+  <data name="C_Export" xml:space="preserve">
+    <value>导出</value>
+  </data>
+  <data name="C_ExportRollCallName" xml:space="preserve">
+    <value>点名历史</value>
+  </data>
+  <data name="C_ExportLotteryName" xml:space="preserve">
+    <value>抽奖历史</value>
+  </data>
+  <data name="O_AllLists" xml:space="preserve">
+    <value>全部名单</value>
+  </data>
+  <data name="O_AllPools" xml:space="preserve">
+    <value>全部奖池</value>
+  </data>
+  <data name="M_SelectExportFirst" xml:space="preserve">
+    <value>请先选择要导出的项目</value>
+  </data>
+  <data name="M_ExportSuccess" xml:space="preserve">
+    <value>已导出 {0} 条历史记录</value>
+  </data>
+  <data name="M_ExportFailed" xml:space="preserve">
+    <value>导出失败：{0}</value>
+  </data>
+  <data name="M_NoHistoryToExport" xml:space="preserve">
+    <value>没有可导出的历史记录</value>
+  </data>
+  <data name="E_ProfileRollCall" xml:space="preserve">
+    <value>名单</value>
+  </data>
+  <data name="E_ProfileLottery" xml:space="preserve">
+    <value>奖池</value>
+  </data>
+  <data name="E_DrawTime" xml:space="preserve">
+    <value>抽取时间</value>
+  </data>
+  <data name="E_RecordNumber" xml:space="preserve">
+    <value>学号</value>
+  </data>
+  <data name="E_RecordName" xml:space="preserve">
+    <value>姓名</value>
+  </data>
+  <data name="E_Gender" xml:space="preserve">
+    <value>性别</value>
+  </data>
+  <data name="E_Group" xml:space="preserve">
+    <value>小组</value>
+  </data>
+  <data name="E_DrawMethod" xml:space="preserve">
+    <value>抽取方式</value>
+  </data>
+  <data name="E_DrawCount" xml:space="preserve">
+    <value>抽取人数</value>
+  </data>
+  <data name="E_DrawGender" xml:space="preserve">
+    <value>性别限制</value>
+  </data>
+  <data name="E_DrawGroup" xml:space="preserve">
+    <value>小组限制</value>
+  </data>
+  <data name="E_Subject" xml:space="preserve">
+    <value>课程</value>
+  </data>
+  <data name="E_Weight" xml:space="preserve">
+    <value>权重</value>
+  </data>
+  <data name="E_TotalCount" xml:space="preserve">
+    <value>累计次数</value>
+  </data>
+  <data name="E_LastDrawTime" xml:space="preserve">
+    <value>最近抽取时间</value>
+  </data>
+  <data name="E_MethodRandom" xml:space="preserve">
+    <value>随机抽取</value>
+  </data>
+  <data name="E_MethodWeight" xml:space="preserve">
+    <value>公平抽取</value>
+  </data>
+  <data name="E_AllGenders" xml:space="preserve">
+    <value>不限性别</value>
+  </data>
+  <data name="E_AllGroups" xml:space="preserve">
+    <value>不限小组</value>
+  </data>
+  <data name="E_BreakSubject" xml:space="preserve">
+    <value>课间</value>
+  </data>
+  <data name="E_SheetRollCallRecords" xml:space="preserve">
+    <value>点名记录</value>
+  </data>
+  <data name="E_SheetRollCallSummary" xml:space="preserve">
+    <value>点名汇总</value>
+  </data>
+  <data name="E_SheetLotteryRecords" xml:space="preserve">
+    <value>抽奖记录</value>
+  </data>
+  <data name="E_SheetLotterySummary" xml:space="preserve">
+    <value>抽奖汇总</value>
+  </data>
 </root>

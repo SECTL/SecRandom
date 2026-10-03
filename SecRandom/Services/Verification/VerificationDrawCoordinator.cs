@@ -12,6 +12,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Verification;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Services.Draw.Exceptions;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Shared.Models.Profile;
 using SecRandom.Shared.Models.Verification;
@@ -26,11 +27,17 @@ public sealed class VerificationDrawCoordinator(
     ProofChainStore chainStore,
     IProfileService profileService,
     MainConfigHandler configHandler,
-    IWitnessClient witnessClient)
+    IWitnessClient witnessClient,
+    ILogger<VerificationDrawCoordinator> logger)
 {
     public bool IsEnabled => true;
 
-    public Task<VerificationDrawOutcome<Student>> DrawStudentsAsync(
+    /// <summary>
+    ///     Returns <see langword="null"/> when the frozen pool has no drawable weight at all (for example
+    ///     when every remaining member is still inside the post-draw shield window). That is a normal
+    ///     outcome, not an error: callers surface it as <c>DrawStatus.NoEligibleCandidates</c>.
+    /// </summary>
+    public async Task<VerificationDrawOutcome<Student>?> DrawStudentsAsync(
         int count,
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType,
@@ -42,11 +49,27 @@ public sealed class VerificationDrawCoordinator(
         var verificationMode = configHandler.Data.General.Verification.Mode;
         var includeInternalRules = verificationMode != VerificationMode.FormalNotarized;
         var rosterDigest = ComputeStudentRosterDigest(exportContext.ListName, profileService.StudentListConfig);
-        var input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName, includeInternalRules, rosterDigest);
-        return DrawAsync(input, candidates, exportContext, parentProofId, verificationMode, cancellationToken);
+        VerificationDrawInput input;
+        try
+        {
+            input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName, includeInternalRules, rosterDigest);
+        }
+        catch (NoEligibleCandidatesException exception)
+        {
+            logger.LogWarning(exception,
+                "点名抽取没有可抽取的成员：请求数量={Count}，名单={ListName}。",
+                count, exportContext.ListName);
+            return null;
+        }
+
+        return await DrawAsync(input, candidates, exportContext, parentProofId, verificationMode, cancellationToken)
+            .ConfigureAwait(false);
     }
 
-    public Task<VerificationDrawOutcome<Prize>> DrawPrizesAsync(
+    /// <summary>
+    ///     Returns <see langword="null"/> when the frozen prize pool has no drawable weight at all.
+    /// </summary>
+    public async Task<VerificationDrawOutcome<Prize>?> DrawPrizesAsync(
         int count,
         IReadOnlyDictionary<string, int> temporaryCounts,
         IReadOnlyCollection<Prize> prizes,
@@ -56,29 +79,54 @@ public sealed class VerificationDrawCoordinator(
         var verificationMode = configHandler.Data.General.Verification.Mode;
         var includeInternalRules = verificationMode != VerificationMode.FormalNotarized;
         var rosterDigest = ComputePrizeRosterDigest(exportContext.ListName, profileService.PrizeListConfig);
-        var input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts, includeInternalRules, rosterDigest);
-        return DrawAsync(input, prizes, exportContext, null, verificationMode, cancellationToken);
+        VerificationDrawInput input;
+        try
+        {
+            input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts, includeInternalRules, rosterDigest);
+        }
+        catch (NoEligibleCandidatesException exception)
+        {
+            logger.LogWarning(exception,
+                "抽奖没有可抽取的奖品：请求数量={Count}，奖池={ListName}。",
+                count, exportContext.ListName);
+            return null;
+        }
+
+        return await DrawAsync(input, prizes, exportContext, null, verificationMode, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>
     ///     Commits the roster the draw was taken from so that renaming someone afterwards cannot silently
     ///     re-point a winning record id at a different person. The digest is omitted when the active profile
-    ///     is not the list the caller drew from, so a stale profile can never produce a wrong commitment.
+    ///     is not the list the caller drew from, so a stale profile can never produce a wrong commitment —
+    ///     and an omission is always logged, because a proof without a digest cannot be told apart from one
+    ///     that was never meant to carry it.
     /// </summary>
-    private static string ComputeStudentRosterDigest(string listName, StudentListConfig? config)
+    private string ComputeStudentRosterDigest(string listName, StudentListConfig? config)
     {
         if (config is null || string.IsNullOrWhiteSpace(listName)
             || !string.Equals(config.Name, listName, StringComparison.Ordinal))
+        {
+            logger.LogWarning(
+                "抽取证明未绑定名单摘要：活动名单={ActiveListName}，本次抽取名单={DrawnListName}。该证明无法把中奖记录编号还原到具体成员。",
+                config?.Name, listName);
             return string.Empty;
+        }
 
         return RosterDigest.Compute(config.Data);
     }
 
-    private static string ComputePrizeRosterDigest(string listName, PrizeListConfig? config)
+    private string ComputePrizeRosterDigest(string listName, PrizeListConfig? config)
     {
         if (config is null || string.IsNullOrWhiteSpace(listName)
             || !string.Equals(config.Name, listName, StringComparison.Ordinal))
+        {
+            logger.LogWarning(
+                "抽取证明未绑定奖池摘要：活动奖池={ActiveListName}，本次抽取奖池={DrawnListName}。该证明无法把中奖记录编号还原到具体奖品。",
+                config?.Name, listName);
             return string.Empty;
+        }
 
         return RosterDigest.Compute(config.Data);
     }

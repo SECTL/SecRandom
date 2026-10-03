@@ -238,5 +238,233 @@ namespace SecRandom.Langs.SettingsPages.HistoryManagement {
                 return ResourceManager.GetString("M_SelectFirst", resourceCulture);
             }
         }
+
+        public static string S_ExportHistory {
+            get {
+                return ResourceManager.GetString("S_ExportHistory", resourceCulture);
+            }
+        }
+
+        public static string S_ExportHistory_RollCall {
+            get {
+                return ResourceManager.GetString("S_ExportHistory_RollCall", resourceCulture);
+            }
+        }
+
+        public static string S_ExportHistory_RollCall_D {
+            get {
+                return ResourceManager.GetString("S_ExportHistory_RollCall_D", resourceCulture);
+            }
+        }
+
+        public static string S_ExportHistory_Lottery {
+            get {
+                return ResourceManager.GetString("S_ExportHistory_Lottery", resourceCulture);
+            }
+        }
+
+        public static string S_ExportHistory_Lottery_D {
+            get {
+                return ResourceManager.GetString("S_ExportHistory_Lottery_D", resourceCulture);
+            }
+        }
+
+        public static string C_Export {
+            get {
+                return ResourceManager.GetString("C_Export", resourceCulture);
+            }
+        }
+
+        public static string C_ExportRollCallName {
+            get {
+                return ResourceManager.GetString("C_ExportRollCallName", resourceCulture);
+            }
+        }
+
+        public static string C_ExportLotteryName {
+            get {
+                return ResourceManager.GetString("C_ExportLotteryName", resourceCulture);
+            }
+        }
+
+        public static string O_AllLists {
+            get {
+                return ResourceManager.GetString("O_AllLists", resourceCulture);
+            }
+        }
+
+        public static string O_AllPools {
+            get {
+                return ResourceManager.GetString("O_AllPools", resourceCulture);
+            }
+        }
+
+        public static string M_SelectExportFirst {
+            get {
+                return ResourceManager.GetString("M_SelectExportFirst", resourceCulture);
+            }
+        }
+
+        public static string M_ExportSuccess {
+            get {
+                return ResourceManager.GetString("M_ExportSuccess", resourceCulture);
+            }
+        }
+
+        public static string M_ExportFailed {
+            get {
+                return ResourceManager.GetString("M_ExportFailed", resourceCulture);
+            }
+        }
+
+        public static string M_NoHistoryToExport {
+            get {
+                return ResourceManager.GetString("M_NoHistoryToExport", resourceCulture);
+            }
+        }
+
+        public static string E_ProfileRollCall {
+            get {
+                return ResourceManager.GetString("E_ProfileRollCall", resourceCulture);
+            }
+        }
+
+        public static string E_ProfileLottery {
+            get {
+                return ResourceManager.GetString("E_ProfileLottery", resourceCulture);
+            }
+        }
+
+        public static string E_DrawTime {
+            get {
+                return ResourceManager.GetString("E_DrawTime", resourceCulture);
+            }
+        }
+
+        public static string E_RecordNumber {
+            get {
+                return ResourceManager.GetString("E_RecordNumber", resourceCulture);
+            }
+        }
+
+        public static string E_RecordName {
+            get {
+                return ResourceManager.GetString("E_RecordName", resourceCulture);
+            }
+        }
+
+        public static string E_Gender {
+            get {
+                return ResourceManager.GetString("E_Gender", resourceCulture);
+            }
+        }
+
+        public static string E_Group {
+            get {
+                return ResourceManager.GetString("E_Group", resourceCulture);
+            }
+        }
+
+        public static string E_DrawMethod {
+            get {
+                return ResourceManager.GetString("E_DrawMethod", resourceCulture);
+            }
+        }
+
+        public static string E_DrawCount {
+            get {
+                return ResourceManager.GetString("E_DrawCount", resourceCulture);
+            }
+        }
+
+        public static string E_DrawGender {
+            get {
+                return ResourceManager.GetString("E_DrawGender", resourceCulture);
+            }
+        }
+
+        public static string E_DrawGroup {
+            get {
+                return ResourceManager.GetString("E_DrawGroup", resourceCulture);
+            }
+        }
+
+        public static string E_Subject {
+            get {
+                return ResourceManager.GetString("E_Subject", resourceCulture);
+            }
+        }
+
+        public static string E_Weight {
+            get {
+                return ResourceManager.GetString("E_Weight", resourceCulture);
+            }
+        }
+
+        public static string E_TotalCount {
+            get {
+                return ResourceManager.GetString("E_TotalCount", resourceCulture);
+            }
+        }
+
+        public static string E_LastDrawTime {
+            get {
+                return ResourceManager.GetString("E_LastDrawTime", resourceCulture);
+            }
+        }
+
+        public static string E_MethodRandom {
+            get {
+                return ResourceManager.GetString("E_MethodRandom", resourceCulture);
+            }
+        }
+
+        public static string E_MethodWeight {
+            get {
+                return ResourceManager.GetString("E_MethodWeight", resourceCulture);
+            }
+        }
+
+        public static string E_AllGenders {
+            get {
+                return ResourceManager.GetString("E_AllGenders", resourceCulture);
+            }
+        }
+
+        public static string E_AllGroups {
+            get {
+                return ResourceManager.GetString("E_AllGroups", resourceCulture);
+            }
+        }
+
+        public static string E_BreakSubject {
+            get {
+                return ResourceManager.GetString("E_BreakSubject", resourceCulture);
+            }
+        }
+
+        public static string E_SheetRollCallRecords {
+            get {
+                return ResourceManager.GetString("E_SheetRollCallRecords", resourceCulture);
+            }
+        }
+
+        public static string E_SheetRollCallSummary {
+            get {
+                return ResourceManager.GetString("E_SheetRollCallSummary", resourceCulture);
+            }
+        }
+
+        public static string E_SheetLotteryRecords {
+            get {
+                return ResourceManager.GetString("E_SheetLotteryRecords", resourceCulture);
+            }
+        }
+
+        public static string E_SheetLotterySummary {
+            get {
+                return ResourceManager.GetString("E_SheetLotterySummary", resourceCulture);
+            }
+        }
     }
 }

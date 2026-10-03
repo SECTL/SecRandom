@@ -336,15 +336,8 @@ public sealed class ProtocolCommandRouter(
     {
         var values = options.ToArray();
         var value = ProtocolRequestParser.GetLast(query, "gender", "name", "text", "value");
-        var gender = value?.ToLowerInvariant() switch
-        {
-            "all" => values.FirstOrDefault(),
-            "male" => values.FirstOrDefault(item => string.Equals(item, "男", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(item, "male", StringComparison.OrdinalIgnoreCase)),
-            "female" => values.FirstOrDefault(item => string.Equals(item, "女", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(item, "female", StringComparison.OrdinalIgnoreCase)),
-            _ => ResolveOption(value, ProtocolRequestParser.GetLast(query, "gender_index", "index"), values, null)
-        };
+        var gender = GenderOptionResolver.Resolve(value, values)
+                     ?? ResolveOption(value, ProtocolRequestParser.GetLast(query, "gender_index", "index"), values, null);
         if (gender is null)
             throw new ProtocolCommandException("invalid_parameter", string.Format(LR.M_InvalidParameterFormat, label));
         setGender(gender);

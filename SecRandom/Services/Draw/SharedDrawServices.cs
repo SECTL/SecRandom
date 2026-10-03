@@ -87,6 +87,9 @@ public sealed class RollCallDrawService(
             DrawProofExportContext.ForStudents(GetListName(), request.Group, request.Gender, request.CourseName),
             courseName: request.CourseName,
             cancellationToken: cancellationToken).ConfigureAwait(false);
+        // Every remaining member can be temporarily excluded (post-draw shield), so nothing is drawable yet.
+        if (outcome is null)
+            return null;
         var weights = outcome.Winners.ToDictionary(student => student, student =>
         {
             ProfileRecordIdentity.EnsureRecordId(student);
@@ -226,6 +229,8 @@ public sealed class LotteryDrawService(
         var prizes = await verification.DrawPrizesAsync(count,
             temporaryRecords.GetPrizeCounts(GetPrizePoolName()), snapshot.Prizes,
             DrawProofExportContext.ForPrizes(GetPrizePoolName()), cancellationToken).ConfigureAwait(false);
+        if (prizes is null)
+            return null;
         IReadOnlyList<Student> assigned = [];
         VerificationDrawOutcome<Student>? assignedOutcome = null;
         if (hasStudentAssignment)
@@ -233,6 +238,8 @@ public sealed class LotteryDrawService(
             assignedOutcome = await verification.DrawStudentsAsync(count, snapshot.EligibleStudents, DrawSettingsType.RollCall,
                 DrawProofExportContext.ForStudents(GetStudentListName(), request.Group, request.Gender, request.CourseName),
                 prizes.Proof.ProofId, request.CourseName, cancellationToken).ConfigureAwait(false);
+            if (assignedOutcome is null)
+                return null;
             assigned = assignedOutcome.Winners;
             if (assigned.Count != prizes.Winners.Count)
                 return null;
