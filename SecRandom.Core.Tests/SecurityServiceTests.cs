@@ -33,6 +33,35 @@ public sealed class SecurityServiceTests : IDisposable
     }
 
     [Fact]
+    public void SecurityCredentialStore_WhenSaving_RestrictsTheCredentialDirectoryToTheCurrentUser()
+    {
+        var path = Path.Combine(_temporaryRoot, "security", "credentials.json");
+        var store = new SecurityCredentialStore(path, CredentialKdfParameters.Test);
+        using (var context = store.Create("secret1"))
+            store.Save(context);
+
+        var directory = Path.GetDirectoryName(path)!;
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.True(new DirectoryInfo(directory).GetAccessControl().AreAccessRulesProtected);
+        }
+        else
+        {
+            Assert.Equal(
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute,
+                File.GetUnixFileMode(directory));
+            Assert.Equal(
+                UnixFileMode.UserRead | UnixFileMode.UserWrite,
+                File.GetUnixFileMode(path));
+        }
+
+        // 收紧权限不能把程序自己挡在外面
+        var unlock = store.TryUnlock("secret1", out var unlocked);
+        using (unlocked)
+            Assert.Equal(CredentialUnlockResult.Succeeded, unlock);
+    }
+
+    [Fact]
     public void SecurityCredentialStore_WhenOnlyLegacyFileExists_DoesNotReadIt()
     {
         var path = Path.Combine(_temporaryRoot, "security", "credentials.json");
@@ -378,6 +407,21 @@ public sealed class SecurityServiceTests : IDisposable
             new SecurityVerificationResponse(string.Empty, CreateTotpCode(secret), UsbPresent: false),
             TestContext.Current.CancellationToken);
         Assert.True(authorized.IsAuthorized);
+    }
+
+    [Fact]
+    public async Task VerifyAsync_WhenTheStandaloneTotpCopyIsCorrupted_RejectsInsteadOfThrowing()
+    {
+        var (fixture, _) = await CreateTotpFixtureAsync();
+        fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = false;
+        File.WriteAllText(fixture.StandaloneTotpPath, "{\"FormatVersion\":1,\"Secret\":\"NOT-BASE32!\"}");
+
+        var result = await fixture.Service.VerifyAsync(
+            new SecurityVerificationResponse(string.Empty, "123456", UsbPresent: false),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsAuthorized);
+        Assert.Equal(SecurityVerificationFailure.InvalidCredentials, result.Failure);
     }
 
     [Fact]

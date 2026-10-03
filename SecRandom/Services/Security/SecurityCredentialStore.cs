@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
+using System.Security.AccessControl;
 using System.Security.Cryptography;
+using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using Org.BouncyCastle.Crypto.Generators;
@@ -30,6 +33,7 @@ internal sealed class SecurityCredentialStore
     private readonly CredentialKdfParameters _defaultKdfParameters;
     private readonly Action? _beforeWrite;
     private readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
+    private bool _directoryProtected;
 
     public SecurityCredentialStore()
         : this(Utils.GetFilePath("config", "security", "credentials.json"), CredentialKdfParameters.Default)
@@ -44,6 +48,8 @@ internal sealed class SecurityCredentialStore
         _path = path;
         _defaultKdfParameters = defaultKdfParameters ?? CredentialKdfParameters.Default;
         _beforeWrite = beforeWrite;
+        // 已经存在的安装也要在下一次启动时收紧目录权限，而不是等到下次保存凭据
+        EnsureDirectoryProtection();
     }
 
     private string StandaloneTotpPath =>
@@ -264,6 +270,7 @@ internal sealed class SecurityCredentialStore
 
         var path = StandaloneTotpPath;
         Directory.CreateDirectory(Path.GetDirectoryName(path) ?? throw new InvalidOperationException("The standalone TOTP path has no directory."));
+        EnsureDirectoryProtection();
         _beforeWrite?.Invoke();
         var temporaryPath = path + ".tmp";
         File.WriteAllText(
@@ -286,6 +293,93 @@ internal sealed class SecurityCredentialStore
         File.Delete(path);
     }
 
+    /// <summary>
+    ///     凭据目录只允许当前用户访问。目录里的 <c>credentials.json</c> 是加密的，但同目录还放着
+    ///     「任意已选验证方式」模式下的免密 TOTP 副本，因此目录权限是唯一能挡住「同机其他账户读取」
+    ///     与「整份数据被拷贝后仍可读」这类本地读取的边界。加固失败不影响凭据读写。
+    /// </summary>
+    private void EnsureDirectoryProtection()
+    {
+        if (_directoryProtected)
+            return;
+
+        var directory = Path.GetDirectoryName(_path);
+        if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+            return;
+
+        _directoryProtected = true;
+        TryRestrictDirectoryToOwner(directory);
+    }
+
+    private static void TryRestrictDirectoryToOwner(string directory)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            TryProtectDirectoryOnWindows(directory);
+            return;
+        }
+
+        try
+        {
+            File.SetUnixFileMode(
+                directory,
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        }
+        catch (Exception)
+        {
+            // 收紧目录权限是尽力而为的加固，失败不影响凭据读写
+        }
+    }
+
+    /// <summary>
+    ///     Windows 上默认 ACL 通常允许 Users / Authenticated Users 读取整个 data 目录，这里断开继承
+    ///     并只保留当前用户（外加 SYSTEM 与 Administrators，避免目录变得无法管理）。一条规则都没能
+    ///     加上时保持原样，不写出空 DACL。
+    /// </summary>
+    [SupportedOSPlatform("windows")]
+    private static void TryProtectDirectoryOnWindows(string directory)
+    {
+        try
+        {
+            var security = new DirectorySecurity();
+            security.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
+            var granted = AddFullControl(security, WindowsIdentity.GetCurrent().User);
+            granted |= AddFullControl(security, new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null));
+            granted |= AddFullControl(security, new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null));
+            if (!granted)
+                return;
+
+            new DirectoryInfo(directory).SetAccessControl(security);
+        }
+        catch (Exception)
+        {
+            // 例如 FAT/exFAT/网络位置上没有 ACL 支持；保持原样而不是让凭据变得不可读写
+        }
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static bool AddFullControl(DirectorySecurity security, IdentityReference? identity)
+    {
+        if (identity is null)
+            return false;
+
+        try
+        {
+            security.AddAccessRule(new FileSystemAccessRule(
+                identity,
+                FileSystemRights.FullControl,
+                InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                PropagationFlags.None,
+                AccessControlType.Allow));
+            return true;
+        }
+        catch (Exception)
+        {
+            // 单个 SID 无法解析（例如域控上缺少内建组）时跳过，不影响其余规则
+            return false;
+        }
+    }
+
     private static void TryRestrictToOwner(string path)
     {
         if (OperatingSystem.IsWindows())
@@ -297,7 +391,7 @@ internal sealed class SecurityCredentialStore
         }
         catch (Exception)
         {
-            // 收紧文件权限是尽力而为的加固，失败不影响免密种子的读写
+            // 收紧文件权限是尽力而为的加固，失败不影响凭据与免密种子的读写
         }
     }
 
@@ -384,10 +478,13 @@ internal sealed class SecurityCredentialStore
 
     private void WriteEnvelope(SecurityCredentialEnvelope envelope)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(_path) ?? throw new InvalidOperationException("The credential path has no directory."));
+        var directory = Path.GetDirectoryName(_path) ?? throw new InvalidOperationException("The credential path has no directory.");
+        Directory.CreateDirectory(directory);
+        EnsureDirectoryProtection();
         _beforeWrite?.Invoke();
         var temporaryPath = _path + ".tmp";
         File.WriteAllText(temporaryPath, JsonSerializer.Serialize(envelope, _jsonOptions), Encoding.UTF8);
+        TryRestrictToOwner(temporaryPath);
         File.Move(temporaryPath, _path, true);
     }
 

@@ -43,12 +43,20 @@ internal static class TotpService
             return false;
 
         var timestamp = now.ToUnixTimeSeconds() / 30;
-        for (var offset = -1L; offset <= 1; offset++)
+        try
         {
-            if (CryptographicOperations.FixedTimeEquals(
-                    Encoding.ASCII.GetBytes(CreateCode(secret, timestamp + offset)),
-                    Encoding.ASCII.GetBytes(code)))
-                return true;
+            for (var offset = -1L; offset <= 1; offset++)
+            {
+                if (CryptographicOperations.FixedTimeEquals(
+                        Encoding.ASCII.GetBytes(CreateCode(secret, timestamp + offset)),
+                        Encoding.ASCII.GetBytes(code)))
+                    return true;
+            }
+        }
+        catch (FormatException)
+        {
+            // 磁盘上的种子被改坏或写入非法 Base32 时按验证失败处理，不把异常抛进验证流程
+            return false;
         }
 
         return false;
