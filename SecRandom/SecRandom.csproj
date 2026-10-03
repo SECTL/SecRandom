@@ -20,6 +20,8 @@
         <AvaloniaResource Include="Assets\**" Condition="'$(SecRandomBundleAssetsInAssembly)' == 'true'" />
         <AvaloniaResource Include="Assets\Updates\release-public-key.txt"
                           Condition="'$(SecRandomBundleAssetsInAssembly)' != 'true'" />
+        <AvaloniaResource Include="Assets\Plugins\plugin-market-public-key.txt"
+                          Condition="'$(SecRandomBundleAssetsInAssembly)' != 'true'" />
         <None Update="Assets\**" Condition="'$(SecRandomBundleAssetsInAssembly)' != 'true'">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <CopyToPublishDirectory>Always</CopyToPublishDirectory>

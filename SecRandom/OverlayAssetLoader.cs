@@ -121,9 +121,14 @@ public sealed class OverlayAssetLoader(
 
     private bool IsHandledAvaresUri(Uri uri)
     {
+        // Uri lower-cases the authority of an absolute URI while the "avares" scheme is unregistered and
+        // preserves its spelling once something registers that scheme (Avalonia's AppBuilder.Setup does).
+        // The app's static font families are created before Avalonia starts, so their keys reach this
+        // loader as "avares://secrandom/..."; compare case-insensitively or those keys resolve to no asset
+        // at all and the first text layout fails with "Could not create glyphTypeface".
         return uri.IsAbsoluteUri
                && uri.Scheme.Equals("avares", StringComparison.OrdinalIgnoreCase)
-               && uri.Authority.Equals(assemblyName, StringComparison.Ordinal)
+               && uri.Authority.Equals(assemblyName, StringComparison.OrdinalIgnoreCase)
                && Uri.UnescapeDataString(uri.AbsolutePath).StartsWith(_avaresPrefix, StringComparison.Ordinal);
     }
 
