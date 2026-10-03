@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.iOS;
 using CoreGraphics;
 using Foundation;
+using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
@@ -18,6 +19,8 @@ public static class MobileEntryPoint
 {
     public static void Main(string[] args)
     {
+        // iOS 有托管入口，GetEntryAssembly() 可用；这里仍显式发布头程序集，与 Android 头保持同一契约
+        GlobalConstants.SetVersionAssembly(typeof(MobileEntryPoint).Assembly);
         UIApplication.Main(args, null, typeof(AppDelegate));
     }
 }

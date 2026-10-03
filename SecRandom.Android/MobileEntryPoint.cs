@@ -8,6 +8,7 @@ using Avalonia;
 using Avalonia.Android;
 using CameraView;
 using CameraView.Platforms.Android;
+using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Platforms;
 using SecRandom.Platforms.Abstractions;
@@ -28,6 +29,9 @@ public class MobileApplication : AvaloniaAndroidApplication<App>
 
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
+        // Android 没有托管 Main，Assembly.GetEntryAssembly() 恒为 null；不显式发布头程序集时，
+        // 版本元数据会回退到不含 git 信息的 SecRandom.Core 并显示为 v0.0.0.0
+        GlobalConstants.SetVersionAssembly(typeof(MobileApplication).Assembly);
         RegisterUnhandledExceptionHooks();
         var screenLayout = Resources?.Configuration?.ScreenLayout ?? ScreenLayout.SizeNormal;
         var isTablet = (screenLayout & ScreenLayout.SizeMask) >= ScreenLayout.SizeLarge;

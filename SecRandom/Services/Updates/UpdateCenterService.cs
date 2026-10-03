@@ -116,7 +116,7 @@ public sealed class UpdateCenterService(
             var channel = GetChannel();
             var (source, manifest) = await GetManifestAsync(channel, cancellationToken);
             _activeSource = source;
-            if (!force && !IsNewerVersion(manifest.Version, GlobalConstants.Version))
+            if (!force && !UpdateVersionComparer.IsNewer(manifest.Version, GlobalConstants.Version))
             {
                 Phase = UpdateOperationPhase.UpToDate;
                 StatusMessage = Text("M_StatusUpToDate");
@@ -311,21 +311,6 @@ public sealed class UpdateCenterService(
         if (key.Length != Ed25519PublicKeyParameters.KeySize || key.All(static value => value == 0))
             throw new CryptographicException(Text("M_PublicKeyInvalid"));
         return key;
-    }
-
-    private static bool IsNewerVersion(string candidate, string current)
-    {
-        return TryParseVersion(candidate, out var candidateVersion) && TryParseVersion(current, out var currentVersion)
-            && candidateVersion > currentVersion;
-    }
-
-    private static bool TryParseVersion(string text, out Version version)
-    {
-        var normalized = text.Trim().TrimStart('v', 'V');
-        var prereleaseIndex = normalized.IndexOf('-');
-        if (prereleaseIndex >= 0)
-            normalized = normalized[..prereleaseIndex];
-        return Version.TryParse(normalized, out version!);
     }
 
     private bool IsCompatibleArtifact(UpdateArtifact artifact)

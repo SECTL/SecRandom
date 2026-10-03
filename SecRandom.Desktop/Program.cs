@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Platform;
 using SecRandom;
+using SecRandom.Core;
 using SecRandom.Extensions;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
@@ -30,6 +31,8 @@ internal sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // 版本元数据由头程序集承载；显式发布可让桌面端与移动头共用同一条解析路径
+        GlobalConstants.SetVersionAssembly(typeof(Program).Assembly);
         // UiAccess startup reads the persisted topmost setting, so data-root selection must precede it.
         Utils.PrepareDesktopDataRoot();
         if (!UiAccessStartup.ShouldContinue(args))

@@ -5,17 +5,58 @@ namespace SecRandom.Core;
 
 public static class GlobalConstants
 {
-    private static readonly Assembly VersionAssembly = Assembly.GetEntryAssembly() ?? typeof(GlobalConstants).Assembly;
-    private static readonly (string Tag, string Branch, string CommitHash) VersionParts = GetVersionParts();
+    private static readonly object VersionSourceGate = new();
+    private static Assembly? _versionAssembly;
+    private static VersionMetadata? _versionMetadata;
 
-    public static string Tag => VersionParts.Tag;
-    public static string Branch => VersionParts.Branch;
-    public static string CommitHash => VersionParts.CommitHash[..Math.Min(7, VersionParts.CommitHash.Length)];
-    public static string FullCommitHash => VersionParts.CommitHash;
+    /// <summary>
+    ///     Assembly this build's version metadata is read from. The metadata is compiled into the platform head
+    ///     assembly (root AssemblyInfo.cs plus the GitInfo generator), and Android has no managed entry point, so
+    ///     <see cref="Assembly.GetEntryAssembly" /> returns null there and the head must publish itself through
+    ///     <see cref="SetVersionAssembly" />; otherwise the version falls back to this library, which carries no
+    ///     build metadata and renders as v0.0.0.0.
+    /// </summary>
+    private static Assembly VersionAssembly =>
+        _versionAssembly ?? Assembly.GetEntryAssembly() ?? typeof(GlobalConstants).Assembly;
+
+    private static VersionMetadata Metadata
+    {
+        get
+        {
+            var cached = _versionMetadata;
+            if (cached is not null)
+                return cached;
+
+            lock (VersionSourceGate)
+                return _versionMetadata ??= ReadMetadata(VersionAssembly);
+        }
+    }
+
+    internal static Assembly VersionSource => VersionAssembly;
+
+    /// <summary>
+    ///     Publishes the platform head assembly that carries this build's
+    ///     <see cref="AssemblyInformationalVersionAttribute" />. Platform heads call this during startup, before any
+    ///     version value is read; re-publishing clears the cached metadata.
+    /// </summary>
+    public static void SetVersionAssembly(Assembly assembly)
+    {
+        ArgumentNullException.ThrowIfNull(assembly);
+        lock (VersionSourceGate)
+        {
+            _versionAssembly = assembly;
+            _versionMetadata = null;
+        }
+    }
+
+    public static string Tag => Metadata.Tag;
+    public static string Branch => Metadata.Branch;
+    public static string CommitHash => Metadata.CommitHash[..Math.Min(7, Metadata.CommitHash.Length)];
+    public static string FullCommitHash => Metadata.CommitHash;
 
     public static string CodeName => @"Nonomi";
     public static string Version => Tag.StartsWith("v", StringComparison.OrdinalIgnoreCase) ? Tag : $@"v{Tag}";
-    public static string AssemblyVersion => VersionAssembly
+    public static string AssemblyVersion => VersionSource
         .GetCustomAttribute<AssemblyVersionAttribute>()?.Version ?? "0.0.0.0";
     public static string DisplayVersion => $@"{Version} (Codename {CodeName})";
     public static string VersionLong => $@"{Version}-{CodeName}-{CommitHash}({Branch})";
@@ -44,21 +85,23 @@ public static class GlobalConstants
     public static FontFamily DefaultAvaFontFamily { get; } =
         new(@"avares://SecRandom/Assets/Fonts/MiSans/#MiSans");
 
-    private static (string Tag, string Branch, string CommitHash) GetVersionParts()
+    internal static VersionMetadata ReadMetadata(Assembly assembly)
     {
-        var informationalVersion = VersionAssembly
+        var informationalVersion = assembly
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion;
         if (string.IsNullOrWhiteSpace(informationalVersion))
-            return ("0.0.0.0", "Unknown", "Unknown");
+            return new VersionMetadata("0.0.0.0", "Unknown", "Unknown");
 
         var separator = informationalVersion.IndexOf('+');
-        var generatedGitInfo = VersionAssembly.GetType("SecRandom.GitInfo");
+        var generatedGitInfo = assembly.GetType("SecRandom.GitInfo");
         var branch = generatedGitInfo?.GetField("Branch", BindingFlags.Public | BindingFlags.Static)?.GetValue(null) as string
                      ?? generatedGitInfo?.GetProperty("Branch", BindingFlags.Public | BindingFlags.Static)?.GetValue(null) as string
                      ?? "Unknown";
         return separator < 0
-            ? (informationalVersion, branch, "Unknown")
-            : (informationalVersion[..separator], branch, informationalVersion[(separator + 1)..]);
+            ? new VersionMetadata(informationalVersion, branch, "Unknown")
+            : new VersionMetadata(informationalVersion[..separator], branch, informationalVersion[(separator + 1)..]);
     }
 }
+
+internal sealed record VersionMetadata(string Tag, string Branch, string CommitHash);

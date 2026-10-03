@@ -80,6 +80,7 @@ SecRandom.Core/
 - `IProfileService.LoadStudentProfile(name)` switches the app-layer active point-call student list and matching history; callers should use it instead of constructing profile configs directly when changing the active roll-call list.
 - Profile startup/switching validates nonempty names with `ProfileConfigBase` before path access or saving the active profile. Archive settings validation checks roll-call/quick-draw `DefaultClass` and lottery `DefaultPool` before snapshots or commit; the exact empty string means no selection, not a file name.
 - Registration helpers are responsible for both keyed DI and `PagesRegistryService` metadata.
+- Build metadata is never generated inside Core: the platform head assembly carries it (root `AssemblyInfo.cs` plus `EnableGitInfoGenerator`), and every head publishes itself through `GlobalConstants.SetVersionAssembly` before any version value is read. Android has no managed entry point, so `Assembly.GetEntryAssembly()` is null there and the version would otherwise fall back to this library and render as `v0.0.0.0` across the settings title bar, `producer_version`, export file names, and telemetry. Keep the entry-assembly fallback for desktop and test hosts, and never reintroduce a Core-local `SecRandom.GitInfo` type.
 - `DrawEngine` is partial: keep filtering in `DrawEngine.Filter.cs`, weight math in `DrawEngine.WeightCalculator.cs`,
   orchestration in `DrawEngine.cs`.
 - Weighted drawing validates count, candidates, and weights before sampling; preserve explicit `DrawStatus` returns over
