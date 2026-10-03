@@ -466,5 +466,113 @@ namespace SecRandom.Langs.SettingsPages.HistoryManagement {
                 return ResourceManager.GetString("E_SheetLotterySummary", resourceCulture);
             }
         }
+
+        public static string C_ExportProfiles {
+            get {
+                return ResourceManager.GetString("C_ExportProfiles", resourceCulture);
+            }
+        }
+
+        public static string C_ExportSubject {
+            get {
+                return ResourceManager.GetString("C_ExportSubject", resourceCulture);
+            }
+        }
+
+        public static string C_ExportTimeRange {
+            get {
+                return ResourceManager.GetString("C_ExportTimeRange", resourceCulture);
+            }
+        }
+
+        public static string C_ExportStartDate {
+            get {
+                return ResourceManager.GetString("C_ExportStartDate", resourceCulture);
+            }
+        }
+
+        public static string C_ExportEndDate {
+            get {
+                return ResourceManager.GetString("C_ExportEndDate", resourceCulture);
+            }
+        }
+
+        public static string C_ExportSort {
+            get {
+                return ResourceManager.GetString("C_ExportSort", resourceCulture);
+            }
+        }
+
+        public static string C_ExportFormat {
+            get {
+                return ResourceManager.GetString("C_ExportFormat", resourceCulture);
+            }
+        }
+
+        public static string O_AllSubjects {
+            get {
+                return ResourceManager.GetString("O_AllSubjects", resourceCulture);
+            }
+        }
+
+        public static string O_TimeAll {
+            get {
+                return ResourceManager.GetString("O_TimeAll", resourceCulture);
+            }
+        }
+
+        public static string O_TimeLast7Days {
+            get {
+                return ResourceManager.GetString("O_TimeLast7Days", resourceCulture);
+            }
+        }
+
+        public static string O_TimeLast30Days {
+            get {
+                return ResourceManager.GetString("O_TimeLast30Days", resourceCulture);
+            }
+        }
+
+        public static string O_TimeCustom {
+            get {
+                return ResourceManager.GetString("O_TimeCustom", resourceCulture);
+            }
+        }
+
+        public static string O_SortTimeDesc {
+            get {
+                return ResourceManager.GetString("O_SortTimeDesc", resourceCulture);
+            }
+        }
+
+        public static string O_SortTimeAsc {
+            get {
+                return ResourceManager.GetString("O_SortTimeAsc", resourceCulture);
+            }
+        }
+
+        public static string O_FormatXlsx {
+            get {
+                return ResourceManager.GetString("O_FormatXlsx", resourceCulture);
+            }
+        }
+
+        public static string O_FormatCsv {
+            get {
+                return ResourceManager.GetString("O_FormatCsv", resourceCulture);
+            }
+        }
+
+        public static string M_SelectExportProfiles {
+            get {
+                return ResourceManager.GetString("M_SelectExportProfiles", resourceCulture);
+            }
+        }
+
+        public static string M_ExportInvalidRange {
+            get {
+                return ResourceManager.GetString("M_ExportInvalidRange", resourceCulture);
+            }
+        }
     }
 }

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO.Compression;
 using System.Text;
 using MiniExcelLibs;
 using SecRandom.Core.Abstraction.Services;
@@ -8,10 +9,14 @@ using SecRandom.Shared.Models.Profile;
 namespace SecRandom.Core.Services.HistoryQuery;
 
 /// <summary>
-///     历史记录导出：只通过 <see cref="IHistoryQueryService" /> 读取非破坏性快照，
-///     因此导出既不会切换当前活跃档案，也不会改写任何历史文件。
+///     历史记录导出：只通过 <see cref="IHistoryQueryService" /> 与 <see cref="IProfileCatalogManager" />
+///     读取非破坏性快照，因此导出既不会切换当前活跃档案，也不会改写任何历史文件。
+///     行的口径与设置里的点名/抽奖历史查看页保持一致：先列名单里的可抽成员，再补上只在历史里出现过的记录，
+///     所以“从未被抽到的人”同样会出现在汇总工作表里。
 /// </summary>
-internal sealed class HistoryExportService(IHistoryQueryService historyQueryService) : IHistoryExportService
+internal sealed class HistoryExportService(
+    IHistoryQueryService historyQueryService,
+    IProfileCatalogManager profileCatalogManager) : IHistoryExportService
 {
     private const string BreakCourseMarker = "__break__";
     private const int MaxSheetNameLength = 31;
@@ -20,6 +25,41 @@ internal sealed class HistoryExportService(IHistoryQueryService historyQueryServ
     private const string CsvLineBreak = "\r\n";
 
     private static readonly char[] InvalidSheetNameCharacters = ['\\', '/', '?', '*', '[', ']', ':'];
+
+    public IReadOnlyList<string> GetProfileNames(HistoryExportKind kind)
+    {
+        var listNames = kind == HistoryExportKind.RollCall
+            ? profileCatalogManager.GetStudentListNames()
+            : profileCatalogManager.GetPrizeListNames();
+        var historyNames = kind == HistoryExportKind.RollCall
+            ? historyQueryService.GetStudentHistoryNames()
+            : historyQueryService.GetPrizeHistoryNames();
+
+        return listNames
+            .Concat(historyNames)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    public IReadOnlyList<string> GetSubjectOptions(
+        HistoryExportKind kind,
+        IReadOnlyList<string> profileNames)
+    {
+        ArgumentNullException.ThrowIfNull(profileNames);
+
+        var names = profileNames.Count > 0 ? profileNames : GetProfileNames(kind);
+
+        return names
+            .Where(profileName => !string.IsNullOrWhiteSpace(profileName))
+            .SelectMany(profileName => BuildProfileViews(kind, profileName))
+            .SelectMany(view => view.Items)
+            .Select(item => item.CourseName)
+            .Where(subject => !string.IsNullOrWhiteSpace(subject))
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(subject => subject, StringComparer.CurrentCulture)
+            .ToArray();
+    }
 
     public Task<HistoryExportResult> ExportAsync(
         Stream output,
@@ -41,78 +81,196 @@ internal sealed class HistoryExportService(IHistoryQueryService historyQueryServ
         HistoryExportLabels labels,
         CancellationToken cancellationToken)
     {
-        var details = new List<HistoryExportDetail>();
-        var summaries = new List<HistoryExportSummary>();
-        var profileCount = 0;
+        var profiles = new List<ProfileExport>();
+        var recordCount = 0;
 
         foreach (var profileName in ResolveProfileNames(request))
         {
             cancellationToken.ThrowIfCancellationRequested();
-
-            var records = LoadRecords(request.Kind, profileName);
-            if (records is null || records.Count == 0)
+            if (string.IsNullOrWhiteSpace(profileName))
                 continue;
 
-            profileCount++;
-            foreach (var (key, record) in records)
+            var details = new List<HistoryExportDetail>();
+            var summaries = new List<HistoryExportSummary>();
+
+            foreach (var view in BuildProfileViews(request.Kind, profileName))
+                AppendView(details, summaries, view, profileName, request, labels);
+
+            if (details.Count == 0 && summaries.Count == 0)
+                continue;
+
+            SortDetails(details, request.Sort);
+            SortSummaries(summaries);
+
+            profiles.Add(new ProfileExport(profileName, details, summaries));
+            recordCount += details.Count;
+        }
+
+        // 没有任何可导出内容时不写文件，交由调用方提示用户。
+        if (profiles.Count == 0)
+            return new HistoryExportResult(0, 0, 0);
+
+        if (profiles.Count == 1)
+        {
+            WriteProfileFile(output, profiles[0], request, labels);
+            return new HistoryExportResult(1, recordCount, 1);
+        }
+
+        // 多个名单：一个名单一个文件，统一打包成一个 ZIP。
+        using (var archive = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            foreach (var profile in profiles)
             {
-                summaries.Add(BuildSummary(profileName, key, record, labels));
-                foreach (var item in record.Histories)
-                    details.Add(BuildDetail(profileName, key, item, labels));
+                var entry = archive.CreateEntry(
+                    BuildEntryName(request, labels, profile.ProfileName),
+                    CompressionLevel.Optimal);
+                using var entryStream = entry.Open();
+                WriteProfileFile(entryStream, profile, request, labels);
             }
         }
 
-        // 没有明细就没有导出的意义：不写文件，交由调用方提示用户。
-        if (details.Count == 0)
-            return new HistoryExportResult(0, 0);
-
-        SortDetails(details);
-        SortSummaries(summaries);
-
-        var detailRows = details.Select(entry => entry.ToRow(request.Kind, labels)).ToList();
-        var summaryRows = summaries.Select(entry => entry.ToRow(request.Kind, labels)).ToList();
-
-        if (request.Format == HistoryExportFormat.Csv)
-        {
-            // CSV 没有工作表概念，只承载抽取明细；汇总表只存在于 XLSX。
-            WriteCsv(output, detailRows);
-        }
-        else
-        {
-            var (recordsSheet, summarySheet) = ResolveSheetNames(request.Kind, labels);
-            WriteXlsx(output, recordsSheet, summarySheet, detailRows, summaryRows);
-        }
-
-        return new HistoryExportResult(profileCount, details.Count);
+        return new HistoryExportResult(profiles.Count, recordCount, profiles.Count);
     }
 
-    private IReadOnlyList<string> ResolveProfileNames(HistoryExportRequest request)
+    private IReadOnlyList<string> ResolveProfileNames(HistoryExportRequest request) =>
+        request.ProfileNames is { Count: > 0 } ? request.ProfileNames : GetProfileNames(request.Kind);
+
+    private void AppendView(
+        List<HistoryExportDetail> details,
+        List<HistoryExportSummary> summaries,
+        ProfileRecordView view,
+        string profileName,
+        HistoryExportRequest request,
+        HistoryExportLabels labels)
     {
-        if (!string.IsNullOrWhiteSpace(request.ProfileName))
-            return [request.ProfileName];
+        var items = view.Items.Where(item => MatchesFilter(item, request.Filter)).ToList();
 
-        return request.Kind == HistoryExportKind.RollCall
-            ? historyQueryService.GetStudentHistoryNames()
-            : historyQueryService.GetPrizeHistoryNames();
+        foreach (var item in items)
+            details.Add(BuildDetail(profileName, view, item, labels));
+
+        summaries.Add(BuildSummary(profileName, view, items, labels));
     }
 
-    private IReadOnlyDictionary<string, History>? LoadRecords(HistoryExportKind kind, string profileName) =>
+    private static bool MatchesFilter(HistoryItem item, HistoryExportFilter filter)
+    {
+        if (!string.IsNullOrWhiteSpace(filter.Subject)
+            && !string.Equals(item.CourseName, filter.Subject, StringComparison.Ordinal))
+            return false;
+
+        if (filter.FromInclusive is { } from && item.DrawTime < from)
+            return false;
+
+        if (filter.ToInclusive is { } to && item.DrawTime > to)
+            return false;
+
+        return true;
+    }
+
+    /// <summary>
+    ///     按名单可抽成员 + 历史孤儿记录摊平一个名单的历史。名单缺失或读取失败时退化为纯历史视图，
+    ///     因此导出永远不会因为名单文件损坏而少导出历史记录。
+    /// </summary>
+    private IReadOnlyList<ProfileRecordView> BuildProfileViews(HistoryExportKind kind, string profileName) =>
         kind == HistoryExportKind.RollCall
-            ? historyQueryService.LoadStudentHistory(profileName)?.Students
-            : historyQueryService.LoadPrizeHistory(profileName)?.Prizes;
+            ? BuildStudentViews(profileName)
+            : BuildPrizeViews(profileName);
+
+    private IReadOnlyList<ProfileRecordView> BuildStudentViews(string profileName)
+    {
+        var views = new List<ProfileRecordView>();
+        HashSet<string> claimedKeys = new(StringComparer.Ordinal);
+        var history = historyQueryService.LoadStudentHistory(profileName);
+        var list = profileCatalogManager.LoadStudentList(profileName);
+
+        if (list is not null && list.Students.Count > 0)
+        {
+            var students = list.Students.ToList();
+            var uniqueLegacyKeys = ProfileRecordIdentity.BuildUniqueStudentLegacyKeySet(students);
+
+            foreach (var student in students.Where(student => student.IsCandidate))
+            {
+                var key = ProfileRecordIdentity.EnsureRecordId(student);
+                var record = history is null
+                    ? null
+                    : ProfileRecordIdentity.GetStudentHistory(history, student, uniqueLegacyKeys.Contains);
+
+                claimedKeys.Add(key);
+                foreach (var legacyKey in ProfileRecordIdentity.GetLegacyStudentHistoryKeys(student)
+                             .Where(uniqueLegacyKeys.Contains))
+                    claimedKeys.Add(legacyKey);
+
+                views.Add(new ProfileRecordView(
+                    key, true, student.Id, student.Name, student.Gender, student.Group, record?.Histories ?? []));
+            }
+        }
+
+        AppendOrphanViews(views, claimedKeys, history?.Students);
+        return views;
+    }
+
+    private IReadOnlyList<ProfileRecordView> BuildPrizeViews(string profileName)
+    {
+        var views = new List<ProfileRecordView>();
+        HashSet<string> claimedKeys = new(StringComparer.Ordinal);
+        var history = historyQueryService.LoadPrizeHistory(profileName);
+        var list = profileCatalogManager.LoadPrizeList(profileName);
+
+        if (list is not null && list.Prizes.Count > 0)
+        {
+            var prizes = list.Prizes.ToList();
+            var uniqueLegacyKeys = ProfileRecordIdentity.BuildUniquePrizeLegacyKeySet(prizes);
+
+            foreach (var prize in prizes.Where(prize => prize.IsCandidate))
+            {
+                var key = ProfileRecordIdentity.EnsureRecordId(prize);
+                var record = history is null
+                    ? null
+                    : ProfileRecordIdentity.GetPrizeHistory(history, prize, uniqueLegacyKeys.Contains);
+
+                claimedKeys.Add(key);
+                foreach (var legacyKey in ProfileRecordIdentity.GetLegacyPrizeHistoryKeys(prize)
+                             .Where(uniqueLegacyKeys.Contains))
+                    claimedKeys.Add(legacyKey);
+
+                views.Add(new ProfileRecordView(
+                    key, true, prize.Id, prize.Name, string.Empty, string.Empty, record?.Histories ?? []));
+            }
+        }
+
+        AppendOrphanViews(views, claimedKeys, history?.Prizes);
+        return views;
+    }
+
+    private static void AppendOrphanViews(
+        List<ProfileRecordView> views,
+        HashSet<string> claimedKeys,
+        IReadOnlyDictionary<string, History>? records)
+    {
+        if (records is null)
+            return;
+
+        foreach (var (key, record) in records)
+        {
+            if (claimedKeys.Contains(key))
+                continue;
+
+            views.Add(new ProfileRecordView(key, false, string.Empty, string.Empty, string.Empty, string.Empty, record.Histories));
+        }
+    }
 
     private static HistoryExportDetail BuildDetail(
         string profileName,
-        string key,
+        ProfileRecordView view,
         HistoryItem item,
         HistoryExportLabels labels)
     {
         return new HistoryExportDetail(
+            view.Key,
             profileName,
-            DisplayName(item.RecordName, item.RecordNumber, key),
-            item.RecordNumber,
-            item.RecordGender,
-            item.RecordGroup,
+            FirstNonBlank(item.RecordName, view.Name, view.Key),
+            FirstNonBlank(item.RecordNumber, view.Number),
+            FirstNonBlank(item.RecordGender, view.Gender),
+            FirstNonBlank(item.RecordGroup, view.Group),
             item.DrawTime,
             item.DrawMethod == (int)DrawType.Random ? labels.MethodRandom : labels.MethodWeight,
             item.DrawNumbers,
@@ -126,48 +284,65 @@ internal sealed class HistoryExportService(IHistoryQueryService historyQueryServ
 
     private static HistoryExportSummary BuildSummary(
         string profileName,
-        string key,
-        History record,
+        ProfileRecordView view,
+        IReadOnlyList<HistoryItem> items,
         HistoryExportLabels labels)
     {
-        var latest = record.Histories.MaxBy(item => item.DrawTime);
-        var lastDrawTime = latest?.DrawTime ?? record.LastDrawnTime;
+        var identity = ResolveIdentity(view, items);
+        var latest = items.Count > 0 ? items.MaxBy(item => item.DrawTime) : null;
+        var latestFair = items
+            .Where(item => item.DrawMethod == (int)DrawType.Fair)
+            .MaxBy(item => item.DrawTime);
 
         return new HistoryExportSummary(
+            view.Key,
             profileName,
-            latest is null ? key : DisplayName(latest.RecordName, latest.RecordNumber, key),
-            latest?.RecordNumber ?? string.Empty,
-            latest?.RecordGender ?? string.Empty,
-            latest?.RecordGroup ?? string.Empty,
-            record.TotalCount,
-            lastDrawTime > DateTime.MinValue ? (DateTime?)lastDrawTime : null,
-            FormatLatestWeight(record));
+            identity.Number,
+            identity.Name,
+            identity.Gender,
+            identity.Group,
+            items.Count,
+            latest?.DrawTime,
+            latestFair is null ? string.Empty : latestFair.Weight.ToString(WeightFormat, CultureInfo.InvariantCulture));
     }
 
     /// <summary>
-    ///     历史快照里可能缺少姓名（旧记录的键就是学号/姓名本身），回落顺序与
-    ///     <c>HistoryQueryService.DisplayName</c> 保持一致，避免导出出现空姓名单元格。
+    ///     名单成员用名单上的身份（未抽到也照样出现在汇总表），历史孤儿记录退化为最新一条快照，
+    ///     都没有时退回历史键，与查看页的口径一致。
     /// </summary>
-    private static string DisplayName(string name, string number, string fallback) =>
-        !string.IsNullOrWhiteSpace(name) ? name : !string.IsNullOrWhiteSpace(number) ? number : fallback;
-
-    private static string FormatLatestWeight(History record)
+    private static (string Number, string Name, string Gender, string Group) ResolveIdentity(
+        ProfileRecordView view,
+        IReadOnlyList<HistoryItem> items)
     {
-        for (var index = record.Histories.Count - 1; index >= 0; index--)
+        if (view.FromRoster)
+            return (view.Number, FirstNonBlank(view.Name, view.Key), view.Gender, view.Group);
+
+        var latest = items.Count > 0 ? items.MaxBy(item => item.DrawTime) : null;
+        return (
+            FirstNonBlank(latest?.RecordNumber),
+            FirstNonBlank(latest?.RecordName, latest?.RecordNumber, view.Key),
+            FirstNonBlank(latest?.RecordGender),
+            FirstNonBlank(latest?.RecordGroup));
+    }
+
+    private static string FirstNonBlank(params string?[] values)
+    {
+        foreach (var value in values)
         {
-            var item = record.Histories[index];
-            if (item.DrawMethod == (int)DrawType.Fair)
-                return item.Weight.ToString(WeightFormat, CultureInfo.InvariantCulture);
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
         }
 
         return string.Empty;
     }
 
-    private static void SortDetails(List<HistoryExportDetail> details)
+    private static void SortDetails(List<HistoryExportDetail> details, HistoryExportSort sort)
     {
-        details.Sort(static (left, right) =>
+        details.Sort((left, right) =>
         {
-            var byTime = right.DrawTime.CompareTo(left.DrawTime);
+            var byTime = sort == HistoryExportSort.TimeAscending
+                ? left.DrawTime.CompareTo(right.DrawTime)
+                : right.DrawTime.CompareTo(left.DrawTime);
             if (byTime != 0)
                 return byTime;
 
@@ -209,6 +384,92 @@ internal sealed class HistoryExportService(IHistoryQueryService historyQueryServ
         return string.Compare(left, right, StringComparison.CurrentCulture);
     }
 
+    private static string BuildEntryName(
+        HistoryExportRequest request,
+        HistoryExportLabels labels,
+        string profileName)
+    {
+        var kindName = request.Kind == HistoryExportKind.RollCall ? labels.RollCallFileName : labels.LotteryFileName;
+        var extension = request.Format == HistoryExportFormat.Csv ? "csv" : "xlsx";
+        return $"{SanitizeFileName(kindName)}-{SanitizeFileName(profileName)}.{extension}";
+    }
+
+    private static string SanitizeFileName(string name)
+    {
+        var builder = new StringBuilder(name.Length);
+        foreach (var character in name)
+            builder.Append(Path.GetInvalidFileNameChars().Contains(character) ? '_' : character);
+
+        var sanitized = builder.ToString().Trim();
+        return string.IsNullOrWhiteSpace(sanitized) ? "history" : sanitized;
+    }
+
+    private static void WriteProfileFile(
+        Stream output,
+        ProfileExport profile,
+        HistoryExportRequest request,
+        HistoryExportLabels labels)
+    {
+        var detailRows = profile.Details.Select(entry => entry.ToRow(request.Kind, labels)).ToList();
+        var summaryRows = profile.Summaries.Select(entry => entry.ToRow(request.Kind, labels)).ToList();
+
+        if (request.Format == HistoryExportFormat.Csv)
+        {
+            // CSV 没有工作表概念，只承载抽取明细；汇总表与每人一张表只存在于 XLSX。
+            WriteCsv(output, detailRows);
+            return;
+        }
+
+        var (recordsSheet, summarySheet) = ResolveSheetNames(request.Kind, labels);
+        var sheets = new Dictionary<string, object>(StringComparer.Ordinal)
+        {
+            [recordsSheet] = detailRows,
+            [summarySheet] = summaryRows
+        };
+
+        // 有记录的成员再各占一张工作表，方便直接翻到某个人的全部抽取记录；
+        // 一次都没被抽到（或本次筛选没有命中）的成员不单独建表。
+        var detailsByRecord = profile.Details
+            .GroupBy(detail => detail.RecordKey, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.Ordinal);
+        HashSet<string> usedSheetNames = new(StringComparer.OrdinalIgnoreCase) { recordsSheet, summarySheet };
+
+        foreach (var summary in profile.Summaries)
+        {
+            if (!detailsByRecord.TryGetValue(summary.RecordKey, out var rows))
+                continue;
+
+            sheets[BuildUniqueSheetName(BuildRecordSheetName(summary), usedSheetNames)] =
+                rows.Select(entry => entry.ToRow(request.Kind, labels)).ToList();
+        }
+
+        WriteXlsx(output, sheets);
+    }
+
+    /// <summary>单个成员的工作表名：有学号时带上学号，避免同名学生互相覆盖。</summary>
+    private static string BuildRecordSheetName(HistoryExportSummary summary) =>
+        string.IsNullOrWhiteSpace(summary.RecordNumber)
+            ? summary.DisplayName
+            : $"{summary.RecordNumber} {summary.DisplayName}".Trim();
+
+    private static string BuildUniqueSheetName(string baseName, HashSet<string> usedSheetNames)
+    {
+        var sanitized = SanitizeSheetName(baseName, "Sheet");
+        var candidate = sanitized;
+        var suffix = 2;
+
+        while (!usedSheetNames.Add(candidate))
+        {
+            var tail = $" ({suffix++})";
+            var head = sanitized.Length + tail.Length > MaxSheetNameLength
+                ? sanitized[..(MaxSheetNameLength - tail.Length)]
+                : sanitized;
+            candidate = $"{head}{tail}";
+        }
+
+        return candidate;
+    }
+
     private static (string Records, string Summary) ResolveSheetNames(
         HistoryExportKind kind,
         HistoryExportLabels labels)
@@ -239,23 +500,11 @@ internal sealed class HistoryExportService(IHistoryQueryService historyQueryServ
         return string.IsNullOrWhiteSpace(sanitized) ? fallback : sanitized;
     }
 
-    private static void WriteXlsx(
-        Stream output,
-        string recordsSheet,
-        string summarySheet,
-        IReadOnlyList<Dictionary<string, object?>> detailRows,
-        IReadOnlyList<Dictionary<string, object?>> summaryRows)
+    private static void WriteXlsx(Stream output, Dictionary<string, object> sheets)
     {
         // 先写进内存流再整体拷贝：调用方拿到的可能是不支持定位的存储流（例如 Android SAF）。
         using var buffer = new MemoryStream();
-        MiniExcel.SaveAs(
-            buffer,
-            new Dictionary<string, object>(StringComparer.Ordinal)
-            {
-                [recordsSheet] = detailRows,
-                [summarySheet] = summaryRows
-            },
-            excelType: ExcelType.XLSX);
+        MiniExcel.SaveAs(buffer, sheets, excelType: ExcelType.XLSX);
 
         buffer.Position = 0;
         buffer.CopyTo(output);
@@ -263,8 +512,6 @@ internal sealed class HistoryExportService(IHistoryQueryService historyQueryServ
 
     private static void WriteCsv(Stream output, IReadOnlyList<Dictionary<string, object?>> rows)
     {
-        var headers = rows[0].Keys.ToArray();
-
         // Excel 只有在文件带 UTF-8 BOM 时才按 UTF-8 解析 CSV，否则中文表头与姓名都会乱码。
         using var writer = new StreamWriter(
             output,
@@ -272,6 +519,13 @@ internal sealed class HistoryExportService(IHistoryQueryService historyQueryServ
             bufferSize: 1024,
             leaveOpen: true);
 
+        if (rows.Count == 0)
+        {
+            writer.Flush();
+            return;
+        }
+
+        var headers = rows[0].Keys.ToArray();
         writer.Write(string.Join(',', headers.Select(EscapeCsv)));
         writer.Write(CsvLineBreak);
 
@@ -286,7 +540,22 @@ internal sealed class HistoryExportService(IHistoryQueryService historyQueryServ
 
     private static string EscapeCsv(string value) => $"\"{value.Replace("\"", "\"\"")}\"";
 
+    private sealed record ProfileExport(
+        string ProfileName,
+        List<HistoryExportDetail> Details,
+        List<HistoryExportSummary> Summaries);
+
+    private sealed record ProfileRecordView(
+        string Key,
+        bool FromRoster,
+        string Number,
+        string Name,
+        string Gender,
+        string Group,
+        IReadOnlyList<HistoryItem> Items);
+
     private sealed record HistoryExportDetail(
+        string RecordKey,
         string ProfileName,
         string DisplayName,
         string RecordNumber,
@@ -318,9 +587,10 @@ internal sealed class HistoryExportService(IHistoryQueryService historyQueryServ
     }
 
     private sealed record HistoryExportSummary(
+        string RecordKey,
         string ProfileName,
-        string DisplayName,
         string RecordNumber,
+        string DisplayName,
         string Gender,
         string Group,
         int TotalCount,

@@ -92,13 +92,13 @@
     <value>导出点名历史</value>
   </data>
   <data name="S_ExportHistory_RollCall_D" xml:space="preserve">
-    <value>将选定名单的点名历史导出为 Excel 或 CSV 文件，CSV 只包含抽取明细</value>
+    <value>导出点名历史，可选择名单、课程、时间范围与排序，每次导出都包含所选名单的全部人员；选一个名单导出一个文件，选多个名单打包为 ZIP，未被抽到的人员同样会出现在汇总表</value>
   </data>
   <data name="S_ExportHistory_Lottery" xml:space="preserve">
     <value>导出抽奖历史</value>
   </data>
   <data name="S_ExportHistory_Lottery_D" xml:space="preserve">
-    <value>将选定奖池的抽奖历史导出为 Excel 或 CSV 文件，CSV 只包含抽取明细</value>
+    <value>导出抽奖历史，可选择奖池、时间范围与排序，每次导出都包含所选奖池的全部奖品；选一个奖池导出一个文件，选多个奖池打包为 ZIP，未被抽到的奖品同样会出现在汇总表</value>
   </data>
   <data name="C_Export" xml:space="preserve">
     <value>导出</value>
@@ -119,7 +119,7 @@
     <value>请先选择要导出的项目</value>
   </data>
   <data name="M_ExportSuccess" xml:space="preserve">
-    <value>已导出 {0} 条历史记录</value>
+    <value>已导出 {0} 条记录（{1} 个项目）</value>
   </data>
   <data name="M_ExportFailed" xml:space="preserve">
     <value>导出失败：{0}</value>
@@ -198,5 +198,59 @@
   </data>
   <data name="E_SheetLotterySummary" xml:space="preserve">
     <value>抽奖汇总</value>
+  </data>
+  <data name="C_ExportProfiles" xml:space="preserve">
+    <value>导出范围</value>
+  </data>
+  <data name="C_ExportSubject" xml:space="preserve">
+    <value>课程</value>
+  </data>
+  <data name="C_ExportTimeRange" xml:space="preserve">
+    <value>时间范围</value>
+  </data>
+  <data name="C_ExportStartDate" xml:space="preserve">
+    <value>开始日期</value>
+  </data>
+  <data name="C_ExportEndDate" xml:space="preserve">
+    <value>结束日期</value>
+  </data>
+  <data name="C_ExportSort" xml:space="preserve">
+    <value>时间排序</value>
+  </data>
+  <data name="C_ExportFormat" xml:space="preserve">
+    <value>文件格式</value>
+  </data>
+  <data name="O_AllSubjects" xml:space="preserve">
+    <value>全部课程</value>
+  </data>
+  <data name="O_TimeAll" xml:space="preserve">
+    <value>全部时间</value>
+  </data>
+  <data name="O_TimeLast7Days" xml:space="preserve">
+    <value>最近 7 天</value>
+  </data>
+  <data name="O_TimeLast30Days" xml:space="preserve">
+    <value>最近 30 天</value>
+  </data>
+  <data name="O_TimeCustom" xml:space="preserve">
+    <value>自定义</value>
+  </data>
+  <data name="O_SortTimeDesc" xml:space="preserve">
+    <value>时间倒序</value>
+  </data>
+  <data name="O_SortTimeAsc" xml:space="preserve">
+    <value>时间正序</value>
+  </data>
+  <data name="O_FormatXlsx" xml:space="preserve">
+    <value>Excel（.xlsx）</value>
+  </data>
+  <data name="O_FormatCsv" xml:space="preserve">
+    <value>CSV（.csv）</value>
+  </data>
+  <data name="M_SelectExportProfiles" xml:space="preserve">
+    <value>请至少选择一个要导出的项目</value>
+  </data>
+  <data name="M_ExportInvalidRange" xml:space="preserve">
+    <value>自定义时间范围的开始或结束日期无效</value>
   </data>
 </root>
