@@ -564,6 +564,23 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
         _ = ShowRestartDialog();
     }
 
+    /// <summary>
+    ///     Follow-up an operation that replaced persisted data needs: the desktop restart dialog,
+    ///     because only a desktop head can relaunch its own process, or a mobile view-tree reload,
+    ///     because the mobile host must show the restored configuration without restarting.
+    /// </summary>
+    public void RequestRestartOrMobileReload()
+    {
+        if (App.IsDesktop)
+        {
+            RequestRestartApp();
+            return;
+        }
+
+        if (IAppHost.TryGetService<IMobileRootViewReloader>() is { } reloader)
+            _ = reloader.ReloadAsync();
+    }
+
     private async Task ShowRestartDialog()
     {
         if (_isPreviewMode || _isShowingRestartDialog) return;

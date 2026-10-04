@@ -56,6 +56,27 @@ public sealed class MobilePlatformServiceRoot : IPlatformServiceRoot, IWindowFea
     public Func<string, bool>? PathLauncher { get; set; }
 
     /// <summary>
+    ///     Platform heads provide the native system-browser opener (Android <c>ACTION_VIEW</c>,
+    ///     iOS <c>UIApplication.OpenUrl</c>). Without it the shared launcher cannot open a link on a
+    ///     mobile platform, which is also what the SECTL sign-in flow needs.
+    /// </summary>
+    public Func<string, bool>? UriLauncher { get; set; }
+
+    /// <summary>
+    ///     User-facing device label the platform head supplies (Android <c>Build.Model</c>, iOS
+    ///     <c>UIDevice.Model</c>). Android and iOS report <c>localhost</c> as their host name, so
+    ///     without this every phone would stamp the same cloud-backup device alias.
+    /// </summary>
+    public string? DeviceName { get; set; }
+
+    /// <summary>
+    ///     Platform heads may replace the authorization browser. iOS does, because
+    ///     ASWebAuthenticationSession captures the custom-scheme redirect itself; every other head
+    ///     keeps the shared launcher that opens the system browser and waits for the deep link.
+    /// </summary>
+    public Services.Auth.IAuthBrowser? AuthBrowser { get; set; }
+
+    /// <summary>
     /// Platform heads may attach a startup error sink (for example Android.Util.Log) for Host-build failures.
     /// </summary>
     public Action<Exception>? StartupErrorLogger { get; set; }

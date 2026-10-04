@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Config;
+using SecRandom.Mobile;
+using SecRandom.Platforms.Abstractions;
 using SecRandom.Services.Auth;
 using SecRandom.Shared;
 
@@ -58,7 +60,8 @@ public sealed class CloudBackupService(
     SectlCloudStorageClient cloudClient,
     MainConfigHandler configHandler,
     IImportExportService importExportService,
-    ILogger<CloudBackupService> logger)
+    ILogger<CloudBackupService> logger,
+    IPlatformServiceRoot? platform = null)
 {
     public bool IsSignedIn => authService.IsSignedIn;
 
@@ -381,14 +384,20 @@ public sealed class CloudBackupService(
         CloudBackupPackage.TryParseFileName(fileName, out _, out _, out _, out var isManifest) && isManifest;
 
     /// <summary>
-    ///     Alias stamped on this device's uploads: the configured alias when set, otherwise the host
-    ///     name. It is a user-visible display label, not a device identity — the device UUID stays out
-    ///     of every cloud archive and restore.
+    ///     Alias stamped on this device's uploads: the configured alias when set, otherwise the device
+    ///     label the platform head supplies, otherwise the host name. Android and iOS report
+    ///     <c>localhost</c> as their host name, so the head's label is what keeps two phones from
+    ///     sharing one alias — and with it one retention bucket. The alias is a user-visible display
+    ///     label, not a device identity: the device UUID stays out of every cloud archive and restore.
     /// </summary>
     private string ResolveDeviceTag()
     {
         var configured = configHandler.Data.General.Backup.CloudDeviceAlias;
-        var deviceName = string.IsNullOrWhiteSpace(configured) ? Environment.MachineName : configured;
+        var deviceName = !string.IsNullOrWhiteSpace(configured)
+            ? configured
+            : (platform as MobilePlatformServiceRoot)?.DeviceName is { Length: > 0 } platformName
+                ? platformName
+                : Environment.MachineName;
         return CloudBackupPackage.BuildDeviceTag(deviceName);
     }
 

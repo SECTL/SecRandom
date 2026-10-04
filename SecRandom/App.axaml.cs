@@ -935,6 +935,14 @@ public partial class App : Application
                 if (isMobile)
                 {
                     services.AddPlatformServices(platform);
+                    // 手机端 OAuth 回调经自定义 scheme 回到应用：平台 head 把深链交给该路由器，
+                    // 由移动 broker 完成授权码交换；桌面端仍走本机 loopback 监听。
+                    services.AddSingleton<MobileAuthCallbackRouter>();
+                    services.AddSingleton<IAuthRedirectBrokerFactory, MobileAuthRedirectBrokerFactory>();
+                    // iOS 用 ASWebAuthenticationSession 自己截获回调，其余移动端仍用系统浏览器 + 深链。
+                    services.AddSingleton<IAuthBrowser>(serviceProvider =>
+                        mobilePlatform!.AuthBrowser ?? new ExternalLauncherAuthBrowser(
+                            serviceProvider.GetRequiredService<IExternalLauncher>()));
                     services.AddSingleton<SingleViewHostProvider>();
                     services.AddSingleton<IViewHostProvider>(provider =>
                         provider.GetRequiredService<SingleViewHostProvider>());
@@ -948,6 +956,10 @@ public partial class App : Application
                 else
                 {
                     services.AddPlatformServices(platform);
+                    services.AddSingleton<IAuthRedirectBrokerFactory, LoopbackAuthRedirectBrokerFactory>();
+                    services.AddSingleton<IAuthBrowser>(serviceProvider =>
+                        new ExternalLauncherAuthBrowser(
+                            serviceProvider.GetRequiredService<IExternalLauncher>()));
                     services.AddSingleton<DesktopViewHostProvider>();
                     services.AddSingleton<IViewHostProvider>(serviceProvider =>
                         serviceProvider.GetRequiredService<DesktopViewHostProvider>());
@@ -1001,24 +1013,23 @@ public partial class App : Application
                     client.Timeout = TimeSpan.FromSeconds(15);
                 });
                 services.AddSingleton<AnnouncementService>();
-                if (!isMobile)
+                // SECTL 账号与云备份在桌面和移动端都注册：移动端用自定义 scheme + 系统浏览器完成
+                // 授权（见 MobileAuthRedirectBroker），云备份的归档引擎本来就是平台中立的。
+                services.AddSingleton<SectlTokenStore>();
+                services.AddSingleton<SectlAuthService>();
+                services.AddSingleton<SectlHeartbeatService>();
+                services.AddHostedService(serviceProvider =>
+                    serviceProvider.GetRequiredService<SectlHeartbeatService>());
+                services.AddHttpClient("sectl-cloud", client =>
                 {
-                    services.AddSingleton<SectlTokenStore>();
-                    services.AddSingleton<SectlAuthService>();
-                    services.AddSingleton<SectlHeartbeatService>();
-                    services.AddHostedService(serviceProvider =>
-                        serviceProvider.GetRequiredService<SectlHeartbeatService>());
-                    services.AddHttpClient("sectl-cloud", client =>
-                    {
-                        client.BaseAddress = new Uri("https://appwrite.sectl.cn/");
-                        client.Timeout = TimeSpan.FromSeconds(60);
-                    });
-                    services.AddSingleton<SectlCloudStorageClient>();
-                    services.AddSingleton<CloudBackupService>();
-                    services.AddSingleton<CloudAutomaticBackupService>();
-                    services.AddHostedService(serviceProvider =>
-                        serviceProvider.GetRequiredService<CloudAutomaticBackupService>());
-                }
+                    client.BaseAddress = new Uri("https://appwrite.sectl.cn/");
+                    client.Timeout = TimeSpan.FromSeconds(60);
+                });
+                services.AddSingleton<SectlCloudStorageClient>();
+                services.AddSingleton<CloudBackupService>();
+                services.AddSingleton<CloudAutomaticBackupService>();
+                services.AddHostedService(serviceProvider =>
+                    serviceProvider.GetRequiredService<CloudAutomaticBackupService>());
                 services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
                 services.AddSingleton<TelemetryRuntimeService>();
                 services.AddHostedService<OnlineStatusService>();
@@ -1075,7 +1086,11 @@ public partial class App : Application
                 services.AddSingleton<SettingsSearchService>();
                 services.AddSingleton<FirstRunOobeService>();
                 services.AddSingleton<OobeDataSetupService>();
-                services.AddSingleton<IArchivePostImportHooks, DesktopArchivePostImportHooks>();
+                // 导入后的平台跟进：桌面会重新同步开机启动/URL 协议注册，移动端没有这些集成。
+                if (isMobile)
+                    services.AddSingleton<IArchivePostImportHooks, MobileArchivePostImportHooks>();
+                else
+                    services.AddSingleton<IArchivePostImportHooks, DesktopArchivePostImportHooks>();
                 services.AddSingleton<IArchivePreImportGuard, SecurityArchivePreImportGuard>();
                 services.AddSingleton<IImportExportService, ImportExportService>();
                 services.AddSingleton<ISentryFeedbackClient, SentryFeedbackClient>();

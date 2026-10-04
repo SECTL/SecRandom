@@ -26,7 +26,8 @@ public sealed class SectlAuthService(
     SectlTokenStore tokenStore,
     IHttpClientFactory httpClientFactory,
     DeviceUuidStore deviceUuidStore,
-    ILogger<SectlAuthService> logger)
+    ILogger<SectlAuthService> logger,
+    IAuthRedirectBrokerFactory redirectBrokerFactory)
 {
     public const string ClientId = "69c8cd6a0012dd3ea10a";
     public const string ApiBaseUrl = "https://appwrite.sectl.cn";
@@ -105,6 +106,37 @@ public sealed class SectlAuthService(
         StateChanged?.Invoke(this, EventArgs.Empty);
         if (IsSignedIn)
             _ = RefreshAccountDataAsync(cancellationToken);
+        else
+            _ = ResumePendingAuthorizationAsync(cancellationToken);
+    }
+
+    /// <summary>
+    ///     Completes an authorization whose redirect arrived in an earlier process lifetime. Android and
+    ///     iOS may reclaim a backgrounded app while the user is signing in, so the attempt recorded
+    ///     before the browser opened is exchanged on the next start instead of asking the user to
+    ///     authorize again. The broker has already matched the returned state against that attempt.
+    /// </summary>
+    public async Task ResumePendingAuthorizationAsync(CancellationToken cancellationToken = default)
+    {
+        if (IsSignedIn)
+            return;
+
+        try
+        {
+            using var broker = redirectBrokerFactory.Create();
+            var redirect = await broker.TakePendingRedirectAsync(cancellationToken).ConfigureAwait(false);
+            if (redirect is null)
+                return;
+
+            await CompleteAuthorizationAsync(redirect, expectedState: null, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "恢复未完成的 SECTL 授权失败。");
+        }
     }
 
     /// <summary>
@@ -160,19 +192,20 @@ public sealed class SectlAuthService(
 
     public async Task SignInAsync(CancellationToken cancellationToken = default)
     {
-        var port = GetFreePort();
-        var redirectUri = $"http://localhost:{port}/callback";
         var verifier = Base64Url(RandomNumberGenerator.GetBytes(32));
         var challenge = Base64Url(SHA256.HashData(Encoding.UTF8.GetBytes(verifier)));
         var state = Base64Url(RandomNumberGenerator.GetBytes(16));
-        using var listener = new HttpListener();
-        listener.Prefixes.Add($"{redirectUri}/");
-        listener.Start();
+
+        using var broker = redirectBrokerFactory.Create();
+        var attempt = new AuthRedirectAttempt(broker.CreateRedirectUri(), state, verifier);
+        // The desktop broker starts its loopback listener here; a mobile broker records the attempt,
+        // because the redirect may come back to a process that was reclaimed in the meantime.
+        await broker.PrepareAsync(attempt, cancellationToken).ConfigureAwait(false);
 
         var query = string.Join("&", new Dictionary<string, string>
         {
             ["client_id"] = ClientId,
-            ["redirect_uri"] = redirectUri,
+            ["redirect_uri"] = attempt.RedirectUri,
             ["response_type"] = "code",
             ["code_challenge"] = challenge,
             ["code_challenge_method"] = "S256",
@@ -180,42 +213,52 @@ public sealed class SectlAuthService(
             ["state"] = state
         }.Select(pair => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
 
-        var launcher = IAppHost.GetService<Desktop.IExternalLauncher>();
-        if (!launcher.TryOpenUri($"{BrowserBaseUrl}/oauth/authorize?{query}"))
+        var authorizeUrl = $"{BrowserBaseUrl}/oauth/authorize?{query}";
+        // 桌面与 Android 交给系统浏览器，回调通过 loopback 或自定义 scheme 深链回来；
+        // iOS 用 ASWebAuthenticationSession，回调由该浏览器直接交回。
+        if (!IAppHost.GetService<IAuthBrowser>().TryOpenAuthorization(authorizeUrl))
             throw new InvalidOperationException("无法打开浏览器。");
 
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(TimeSpan.FromMinutes(5));
-        var context = await listener.GetContextAsync().WaitAsync(timeout.Token);
-        var request = context.Request;
-        var response = context.Response;
-        var code = request.QueryString["code"];
-        var returnedState = request.QueryString["state"];
-        var error = request.QueryString["error_description"] ?? request.QueryString["error"];
-        var html = string.IsNullOrWhiteSpace(code)
-            ? "<h1>Authorization failed</h1><p>You can close this window.</p>"
-            : "<h1>Authorization successful</h1><p>You can close this window.</p>";
-        var bytes = Encoding.UTF8.GetBytes($"<html><meta charset='utf-8'><body>{html}</body></html>");
-        response.ContentType = "text/html; charset=utf-8";
-        response.ContentLength64 = bytes.Length;
-        await response.OutputStream.WriteAsync(bytes, timeout.Token);
-        response.Close();
-        if (!string.IsNullOrWhiteSpace(error)) throw new InvalidOperationException($"SECTL 授权失败：{error}");
-        if (string.IsNullOrWhiteSpace(code) || !string.Equals(state, returnedState, StringComparison.Ordinal))
+        AuthRedirectResult redirect;
+        try
+        {
+            redirect = await broker.WaitForRedirectAsync(attempt, cancellationToken).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            // 授权页被关掉或服务端拒绝了 redirect_uri 时，回调永远不会到达：给用户一个明确的结论，
+            // 而不是让界面一直停在“登录中”。
+            throw new InvalidOperationException("登录超时，请重试。");
+        }
+
+        await CompleteAuthorizationAsync(redirect, state, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Exchanges an authorization code for the token pair. <paramref name="expectedState" /> is the
+    ///     state this sign-in attempt generated; pass <see langword="null" /> only when the broker has
+    ///     already matched the redirect against the attempt it recorded.
+    /// </summary>
+    private async Task CompleteAuthorizationAsync(AuthRedirectResult redirect, string? expectedState,
+        CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(redirect.Error))
+            throw new InvalidOperationException($"SECTL 授权失败：{redirect.Error}");
+        var stateMatches = expectedState is null || string.Equals(expectedState, redirect.State, StringComparison.Ordinal);
+        if (string.IsNullOrWhiteSpace(redirect.Code) || !stateMatches)
             throw new InvalidOperationException("SECTL 授权回调无效。");
 
         var client = httpClientFactory.CreateClient();
-        var publicIp = await GetPublicIpAsync(client, timeout.Token)
-            ?? throw new InvalidOperationException("无法获取公网 IP，授权已取消，请检查网络连接。");
-        var payload = new { grant_type = "authorization_code", code, client_id = ClientId, redirect_uri = redirectUri, code_verifier = verifier, device_uuid = deviceUuidStore.GetOrCreate().ToString(), ip_address = publicIp };
+        // 客户端不再自行解析并上报公网 IP：服务端从连接来源即可得知地址，本机地址只上传设备标识。
+        var payload = new { grant_type = "authorization_code", code = redirect.Code, client_id = ClientId, redirect_uri = redirect.RedirectUri, code_verifier = redirect.CodeVerifier, device_uuid = deviceUuidStore.GetOrCreate().ToString() };
         using var tokenRequest = new HttpRequestMessage(HttpMethod.Post, $"{ApiBaseUrl}/api/oauth/token")
         {
             Content = JsonContent.Create(payload, options: JsonOptions)
         };
         tokenRequest.Headers.UserAgent.ParseAdd(BuildUserAgent());
-        using var result = await client.SendAsync(tokenRequest, timeout.Token);
+        using var result = await client.SendAsync(tokenRequest, cancellationToken);
         result.EnsureSuccessStatusCode();
-        var issued = await result.Content.ReadFromJsonAsync<SectlToken>(JsonOptions, timeout.Token) ?? throw new InvalidOperationException("SECTL 未返回 token。");
+        var issued = await result.Content.ReadFromJsonAsync<SectlToken>(JsonOptions, cancellationToken) ?? throw new InvalidOperationException("SECTL 未返回 token。");
         var authorizedAt = DateTimeOffset.UtcNow;
         var authorized = issued with
         {
@@ -223,9 +266,9 @@ public sealed class SectlAuthService(
             // The 180-day refresh window starts here and rotation never moves it.
             RefreshTokenIssuedAt = authorizedAt
         };
-        await tokenStore.SaveAsync(authorized, timeout.Token);
+        await tokenStore.SaveAsync(authorized, cancellationToken);
         SetSession(authorized);
-        await InitializeAccountDataWithRetryAsync(timeout.Token);
+        await InitializeAccountDataWithRetryAsync(cancellationToken);
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -567,17 +610,12 @@ public sealed class SectlAuthService(
         try
         {
             var client = httpClientFactory.CreateClient();
-            var publicIp = await GetPublicIpAsync(client, timeout.Token).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(publicIp))
-                return SectlRefreshOutcome.NetworkFailure("ip_unavailable");
-
             var payload = new
             {
                 grant_type = "refresh_token",
                 refresh_token = refreshToken,
                 client_id = ClientId,
-                device_uuid = deviceUuidStore.GetOrCreate().ToString(),
-                ip_address = publicIp
+                device_uuid = deviceUuidStore.GetOrCreate().ToString()
             };
             using var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiBaseUrl}/api/oauth/refresh")
             {
@@ -799,24 +837,6 @@ public sealed class SectlAuthService(
         }
     }
 
-    private static async Task<string?> GetPublicIpAsync(HttpClient client, CancellationToken cancellationToken)
-    {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://uapis.cn/api/v1/network/myip");
-        using var response = await client.SendAsync(request, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-            return null;
-
-        var document = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
-        if (document.ValueKind == JsonValueKind.Object && document.TryGetProperty("ip", out var value))
-        {
-            var ip = value.GetString();
-            if (IPAddress.TryParse(ip, out _))
-                return ip;
-        }
-
-        return null;
-    }
-
     private static int GetFreePort()
     {
         using var tcp = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
@@ -864,9 +884,9 @@ public sealed class SectlAuthService(
             new(SectlRefreshStatus.Transient, ErrorCode: code, Retryable: retryable);
 
         /// <summary>
-        ///     The request never produced a usable answer (timeout, disconnect, or no public IP). The
-        ///     service may already have rotated the pair, so the caller re-reads the token file
-        ///     before this outcome is treated as a failure.
+        ///     The request never produced a usable answer (timeout or disconnect). The service may
+        ///     already have rotated the pair, so the caller re-reads the token file before this
+        ///     outcome is treated as a failure.
         /// </summary>
         public static SectlRefreshOutcome NetworkFailure(string code) =>
             new(SectlRefreshStatus.Transient, ErrorCode: code, Retryable: true, NetworkUnknown: true);

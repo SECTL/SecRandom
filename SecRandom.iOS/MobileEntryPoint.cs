@@ -36,9 +36,35 @@ public sealed class AppDelegate : AvaloniaAppDelegate<global::SecRandom.App>
         {
             MediaPlayer = new IosMobileMediaPlayer(),
             KeyboardOcclusionSource = new IosKeyboardOcclusionSource(),
+            UriLauncher = TryOpenExternalUri,
+            AuthBrowser = new IosAuthBrowser(),
+            DeviceName = ResolveDeviceName(),
             UsesDesktopMainView = UIDevice.CurrentDevice.UserInterfaceIdiom == UIUserInterfaceIdiom.Pad
         });
         return base.CustomizeAppBuilder(builder);
+    }
+
+    /// <summary>用系统浏览器打开外部链接（例如云储存页面）。</summary>
+    private static bool TryOpenExternalUri(string url)
+    {
+        var target = NSUrl.FromString(url);
+        if (target is null)
+            return false;
+
+        // UIApplication.OpenUrl(NSUrl) is deprecated on iOS 10+; the options overload reports its
+        // outcome through a callback, which this signature cannot await.
+        UIApplication.SharedApplication.OpenUrl(target, new UIApplicationOpenUrlOptions(), null);
+        return true;
+    }
+
+    /// <summary>
+    ///     云备份上传使用的设备别名。iOS 的 host name 是 localhost，用户可见的设备名比它更适合
+    ///     区分同账号下的多台设备（iOS 16 起未申请设备名权限时回落到机型）。
+    /// </summary>
+    private static string ResolveDeviceName()
+    {
+        var name = UIDevice.CurrentDevice.Name;
+        return string.IsNullOrWhiteSpace(name) ? UIDevice.CurrentDevice.Model : name;
     }
 
     // 与 Android 头同型：未处理异常送入 TelemetryRuntimeService，由其按隐私开关决定是否上传。

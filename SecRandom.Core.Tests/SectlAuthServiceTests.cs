@@ -16,8 +16,6 @@ public sealed class SectlAuthServiceTests
     private const string RefreshedTokenJson =
         "{\"access_token\":\"refreshed-access-token\",\"refresh_token\":\"refreshed-refresh-token\",\"user_id\":\"user-1\",\"expires_in\":3600}";
 
-    private const string PublicIpJson = "{\"ip\":\"203.0.113.10\"}";
-
     [Fact]
     public async Task SendHeartbeatAsync_UsesOAuthHeartbeatEndpointAndBearerToken()
     {
@@ -61,9 +59,6 @@ public sealed class SectlAuthServiceTests
                     ? new HttpResponseMessage(HttpStatusCode.Unauthorized)
                     : new HttpResponseMessage(HttpStatusCode.NoContent);
             }
-
-            if (request.RequestUri.Host == "uapis.cn")
-                return Json(PublicIpJson);
 
             if (path == "/api/oauth/refresh")
                 return Json(RefreshedTokenJson);
@@ -112,9 +107,6 @@ public sealed class SectlAuthServiceTests
                     ? new HttpResponseMessage(HttpStatusCode.Unauthorized)
                     : new HttpResponseMessage(HttpStatusCode.NoContent);
 
-            if (request.RequestUri.Host == "uapis.cn")
-                return Json(PublicIpJson);
-
             if (path == "/api/oauth/refresh")
                 return Json(RefreshedTokenJson);
 
@@ -139,8 +131,6 @@ public sealed class SectlAuthServiceTests
             string path = request.RequestUri!.AbsolutePath;
             if (path == "/api/oauth/heartbeat")
                 return new HttpResponseMessage(HttpStatusCode.Unauthorized);
-            if (request.RequestUri.Host == "uapis.cn")
-                return Json(PublicIpJson);
             if (path == "/api/oauth/refresh")
                 return Json("{\"error\":\"invalid_grant\",\"error_description\":\"Refresh token reused\"}",
                     HttpStatusCode.BadRequest);
@@ -175,8 +165,6 @@ public sealed class SectlAuthServiceTests
                 return request.Headers.Authorization?.Parameter == "access-token"
                     ? new HttpResponseMessage(HttpStatusCode.Unauthorized)
                     : new HttpResponseMessage(HttpStatusCode.NoContent);
-            if (request.RequestUri.Host == "uapis.cn")
-                return Json(PublicIpJson);
             if (path == "/api/oauth/refresh")
             {
                 refreshAttempts++;
@@ -210,8 +198,6 @@ public sealed class SectlAuthServiceTests
                 return request.Headers.Authorization?.Parameter == "access-token"
                     ? new HttpResponseMessage(HttpStatusCode.Unauthorized)
                     : new HttpResponseMessage(HttpStatusCode.NoContent);
-            if (request.RequestUri.Host == "uapis.cn")
-                return Json(PublicIpJson);
             if (path == "/api/oauth/refresh")
             {
                 refreshAttempts++;
@@ -264,8 +250,6 @@ public sealed class SectlAuthServiceTests
             string path = request.RequestUri!.AbsolutePath;
             if (path == "/api/oauth/heartbeat")
                 return new HttpResponseMessage(HttpStatusCode.NoContent);
-            if (request.RequestUri.Host == "uapis.cn")
-                return Json(PublicIpJson);
             if (path == "/api/oauth/refresh")
                 return Json(RefreshedTokenJson);
 
@@ -346,8 +330,6 @@ public sealed class SectlAuthServiceTests
             string path = request.RequestUri!.AbsolutePath;
             if (path == "/api/oauth/heartbeat")
                 return new HttpResponseMessage(HttpStatusCode.Unauthorized);
-            if (request.RequestUri.Host == "uapis.cn")
-                return Json(PublicIpJson);
             if (path == "/api/oauth/refresh")
                 throw new HttpRequestException("connection reset");
 
@@ -410,7 +392,24 @@ public sealed class SectlAuthServiceTests
             Assert.Null(result);
     }
 
-    /// <summary>Heartbeat rejected once, then accepted; refresh rotates; public IP resolves.</summary>
+    [Fact]
+    public async Task OAuthRequests_CarryNoClientResolvedAddress()
+    {
+        var handler = CreateRotationHandler();
+        var (service, _) = CreateService(handler);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600));
+
+        bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(sent);
+        // 地址由服务端从连接来源得出，客户端既不调用第三方 IP 查询服务，也不随请求上传 IP。
+        Assert.All(handler.Requests, request => Assert.Equal("appwrite.sectl.cn", request.Uri.Host));
+        var refresh = Assert.Single(handler.Requests, item => item.Path == "/api/oauth/refresh");
+        Assert.DoesNotContain("ip_address", refresh.Body!, StringComparison.Ordinal);
+        Assert.Contains("device_uuid", refresh.Body!, StringComparison.Ordinal);
+    }
+
+    /// <summary>Heartbeat rejected once, then accepted; refresh rotates.</summary>
     private static RecordingHandler CreateRotationHandler() => new((request, _) =>
     {
         string path = request.RequestUri!.AbsolutePath;
@@ -418,15 +417,14 @@ public sealed class SectlAuthServiceTests
             return request.Headers.Authorization?.Parameter == "access-token"
                 ? new HttpResponseMessage(HttpStatusCode.Unauthorized)
                 : new HttpResponseMessage(HttpStatusCode.NoContent);
-        if (request.RequestUri.Host == "uapis.cn")
-            return Json(PublicIpJson);
         if (path == "/api/oauth/refresh")
             return Json(RefreshedTokenJson);
 
         throw new Xunit.Sdk.XunitException($"Unexpected request: {request.Method} {request.RequestUri}");
     });
 
-    private static (SectlAuthService Service, SectlTokenStore Store) CreateService(HttpMessageHandler handler)
+    private static (SectlAuthService Service, SectlTokenStore Store) CreateService(HttpMessageHandler handler,
+        IAuthRedirectBrokerFactory? redirectBrokerFactory = null)
     {
         var httpClient = new HttpClient(handler) { BaseAddress = new Uri(SectlAuthService.ApiBaseUrl) };
         var factory = new StubHttpClientFactory(httpClient);
@@ -435,7 +433,8 @@ public sealed class SectlAuthServiceTests
             new TestConfigService(new MainConfigModel()));
         var deviceUuidStore = new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance);
         var store = TestTokenStore.Create();
-        return (new SectlAuthService(store, factory, deviceUuidStore, NullLogger<SectlAuthService>.Instance), store);
+        return (new SectlAuthService(store, factory, deviceUuidStore, NullLogger<SectlAuthService>.Instance,
+            redirectBrokerFactory ?? new LoopbackAuthRedirectBrokerFactory()), store);
     }
 
     private static void SetToken(SectlAuthService service, SectlToken token)
@@ -462,6 +461,64 @@ public sealed class SectlAuthServiceTests
 
     private static HttpResponseMessage Json(string body, HttpStatusCode status = HttpStatusCode.OK) =>
         new(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
+
+    /// <summary>
+    ///     Phone sign-in callback: the authorization code comes back through the app's custom scheme and
+    ///     may reach a process that was reclaimed while the browser was open, so the recorded attempt is
+    ///     exchanged on the next start instead of asking the user to authorize again.
+    /// </summary>
+    [Fact]
+    public async Task ResumePendingAuthorizationAsync_ExchangesTheRecordedMobileRedirect()
+    {
+        const string verifier = "recorded-code-verifier";
+        const string redirectUri = "cn.sectl.secrandom.mobile://oauth/callback";
+        var handler = new RecordingHandler((request, _) =>
+            request.RequestUri!.AbsolutePath == "/api/oauth/token"
+                ? Json(RefreshedTokenJson)
+                : new HttpResponseMessage(HttpStatusCode.NotFound));
+        var broker = new ScriptedRedirectBroker(new AuthRedirectResult(redirectUri, "recorded-state", verifier,
+            "authorization-code", null));
+        var (service, store) = CreateService(handler, new SingleBrokerFactory(broker));
+
+        await service.ResumePendingAuthorizationAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(service.IsSignedIn);
+        var request = Assert.Single(handler.Requests, item => item.Path == "/api/oauth/token");
+        Assert.Equal("/api/oauth/token", request.Path);
+        Assert.Equal("authorization-code", JsonField(request.Body, "code"));
+        Assert.Equal(verifier, JsonField(request.Body, "code_verifier"));
+        Assert.Equal(redirectUri, JsonField(request.Body, "redirect_uri"));
+        Assert.Equal("refreshed-access-token", ReadStoredToken(store)?.AccessToken);
+    }
+
+    [Fact]
+    public async Task ResumePendingAuthorizationAsync_WithoutARecordedRedirect_SendsNothing()
+    {
+        var handler = new RecordingHandler((_, _) =>
+            throw new Xunit.Sdk.XunitException("Nothing was authorized, so nothing may be exchanged."));
+        var (service, store) = CreateService(handler, new SingleBrokerFactory(new ScriptedRedirectBroker(null)));
+
+        await service.ResumePendingAuthorizationAsync(TestContext.Current.CancellationToken);
+
+        Assert.False(service.IsSignedIn);
+        Assert.Empty(handler.Requests);
+        Assert.Null(await store.LoadAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task ResumePendingAuthorizationAsync_WhenTheExchangeFails_StaysSignedOutWithoutThrowing()
+    {
+        var handler = new RecordingHandler((_, _) => Json("{\"error\":\"invalid_grant\"}", HttpStatusCode.BadRequest));
+        var broker = new ScriptedRedirectBroker(new AuthRedirectResult(
+            "cn.sectl.secrandom.mobile://oauth/callback", "state", "verifier", "stale-code", null));
+        var (service, store) = CreateService(handler, new SingleBrokerFactory(broker));
+
+        // 后台恢复路径：失败只能记日志，不能把异常抛到启动链路。
+        await service.ResumePendingAuthorizationAsync(TestContext.Current.CancellationToken);
+
+        Assert.False(service.IsSignedIn);
+        Assert.Null(await store.LoadAsync(TestContext.Current.CancellationToken));
+    }
 
     private sealed record RecordedRequest(HttpMethod Method, Uri Uri, string? Authorization, string? Body)
     {
@@ -507,6 +564,39 @@ public sealed class SectlAuthServiceTests
     private sealed class StubHttpClientFactory(HttpClient client) : IHttpClientFactory
     {
         public HttpClient CreateClient(string name) => client;
+    }
+
+    /// <summary>Hands the service one scripted broker, as the platform registration would.</summary>
+    private sealed class SingleBrokerFactory(IAuthRedirectBroker broker) : IAuthRedirectBrokerFactory
+    {
+        public IAuthRedirectBroker Create() => broker;
+    }
+
+    /// <summary>
+    ///     A broker that already has an answer, which is what a resumed mobile attempt sees: the
+    ///     redirect plus the PKCE verifier recorded before the browser opened.
+    /// </summary>
+    private sealed class ScriptedRedirectBroker(AuthRedirectResult? redirect) : IAuthRedirectBroker
+    {
+        public TimeSpan WaitTimeout => TimeSpan.FromSeconds(5);
+
+        public string CreateRedirectUri() => "cn.sectl.secrandom.mobile://oauth/callback";
+
+        public Task PrepareAsync(AuthRedirectAttempt attempt, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task<AuthRedirectResult> WaitForRedirectAsync(AuthRedirectAttempt attempt,
+            CancellationToken cancellationToken = default) =>
+            redirect is null
+                ? throw new InvalidOperationException("此用例不应等待回调。")
+                : Task.FromResult(redirect);
+
+        public Task<AuthRedirectResult?> TakePendingRedirectAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(redirect);
+
+        public void Dispose()
+        {
+        }
     }
 
     private sealed class TestConfigService(MainConfigModel config) : ConfigServiceBase

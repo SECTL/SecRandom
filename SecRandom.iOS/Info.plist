@@ -8,6 +8,20 @@
 	<string>SecRandom</string>
 	<key>CFBundleIdentifier</key>
 	<string>cn.sectl.secrandom.mobile</string>
+	<!-- SECTL 登录回调：授权页跳回 cn.sectl.secrandom.mobile://oauth/callback -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>cn.sectl.secrandom.mobile.oauth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>cn.sectl.secrandom.mobile</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
 	<key>CFBundleIcons</key>

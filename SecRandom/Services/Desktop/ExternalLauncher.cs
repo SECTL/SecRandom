@@ -22,7 +22,13 @@ public sealed class ExternalLauncher(IPlatformServiceRoot platform, ILogger<Exte
         return TryStart(path, isUri: false);
     }
 
-    public bool TryOpenUri(string uri) => TryStart(uri, isUri: true);
+    public bool TryOpenUri(string uri)
+    {
+        if (platform is MobilePlatformServiceRoot { UriLauncher: { } mobileUriLauncher })
+            return mobileUriLauncher(uri);
+
+        return TryStart(uri, isUri: true);
+    }
 
     private bool TryStart(string target, bool isUri)
     {

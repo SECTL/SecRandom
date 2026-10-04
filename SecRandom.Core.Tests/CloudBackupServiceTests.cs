@@ -539,7 +539,7 @@ public sealed class CloudBackupServiceTests : IDisposable
             new TestConfigService(config));
         var deviceUuidStore = new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance);
         var authService = new SectlAuthService(TestTokenStore.Create(), factory, deviceUuidStore,
-            NullLogger<SectlAuthService>.Instance);
+            NullLogger<SectlAuthService>.Instance, new LoopbackAuthRedirectBrokerFactory());
         SetToken(authService, new SectlToken("access-token", "refresh-token", "user-1", 3600));
         var cloudClient = new SectlCloudStorageClient(authService, factory, NullLogger<SectlCloudStorageClient>.Instance);
         return new CloudBackupService(authService, cloudClient, configHandler, new FakeImportExportService(archive ?? []),

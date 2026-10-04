@@ -674,7 +674,7 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
             await _importExportService.ImportCloudBackupAsync(archivePath);
             _logger.LogInformation("已恢复云端备份：备份={BackupId}。", descriptor.BackupId);
             this.ShowSuccessToast(LR.M_CloudRestoreSuccess);
-            SettingsView.Current?.RequestRestartApp();
+            SettingsView.Current?.RequestRestartOrMobileReload();
         }
         catch (OperationCanceledException)
         {
@@ -896,7 +896,7 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         {
             await _importExportService.RestoreBackupAsync(backup.FilePath);
             RefreshBackups();
-            SettingsView.Current?.RequestRestartApp();
+            SettingsView.Current?.RequestRestartOrMobileReload();
             _logger.LogInformation("已恢复备份：文件={FileName}。", backup.FileName);
             this.ShowSuccessToast(LR.M_RestoreSuccess);
         }
