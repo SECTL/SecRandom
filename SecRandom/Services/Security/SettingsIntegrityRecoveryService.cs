@@ -43,6 +43,10 @@ internal sealed record SettingsIntegrityRecoveryResult(
 ///     <c>config/settings.json</c> 的备份，先把当前文件另存为「恢复前」副本，再用备份内容
 ///     原子替换，最后重载配置以刷新指纹记录。只处理设置文件本身，名单、历史等其他数据不变；
 ///     任何一步失败都保留原文件，让启动流程回退到安全密码确认闸门。
+///     <para>
+///         恢复只使用本机自己的备份：本地 <c>data/backup</c> 归档，以及本机上传到账号云端的备份。
+///         另一台设备上传的云端备份描述的是那台机器的配置，永远不会被用来自动恢复本机设置文件。
+///     </para>
 /// </summary>
 internal sealed class SettingsIntegrityRecoveryService
 {
@@ -120,15 +124,16 @@ internal sealed class SettingsIntegrityRecoveryService
         };
 
     /// <summary>
-    ///     云端候选的尝试顺序：先本机上传的备份，再其他设备的；每组内部仍按上传时间从新到旧。
-    ///     设置文件属于本机，另一台机器的配置只能在「本机没有任何可用备份」时兜底，所以设备归属
-    ///     排在新旧之前。设备别名为空（主机名无法生成安全别名）时没有本机组，退化为纯时间排序。
+    ///     云端候选只保留本机上传的备份，组内按上传时间从新到旧。设置文件描述的是它所在的那台机器，
+    ///     另一台设备的备份既不是本机的配置，也不能当作本机备份的兜底，所以它永远不会成为候选：
+    ///     本机没有自己的可用备份时宁可不恢复，退回本地备份或安全密码闸门。
+    ///     设备别名为空（主机名无法生成安全别名）时没有本机组，因此没有任何云端候选。
     /// </summary>
     internal static IReadOnlyList<CloudBackupDescriptor> OrderCloudCandidates(
         IEnumerable<CloudBackupDescriptor> backups, string? deviceTag) =>
         backups.Where(item => item.CanRestore)
-            .OrderByDescending(item => CloudBackupService.IsOwnBackup(item, deviceTag ?? string.Empty))
-            .ThenByDescending(item => item.CreatedAt ?? DateTimeOffset.MinValue)
+            .Where(item => CloudBackupService.IsOwnBackup(item, deviceTag ?? string.Empty))
+            .OrderByDescending(item => item.CreatedAt ?? DateTimeOffset.MinValue)
             .ToArray();
 
     /// <summary>
@@ -217,17 +222,19 @@ internal sealed class SettingsIntegrityRecoveryService
             return Failed(true, Describe(exception));
         }
 
+        // 只认本机上传的备份：其他设备的备份是那台机器的配置，本机没有自己的可用备份时宁可不恢复，
+        // 也不能拿别的设备的设置来覆盖本机。
+        var candidates = OrderCloudCandidates(backups, cloud.DeviceTag);
+        if (candidates.Count == 0 && backups.Any(item => item.CanRestore))
+        {
+            _logger.LogWarning("云端没有本机上传的可用备份，其他设备的备份不用于设置文件恢复：云端可用备份={Count}。",
+                backups.Count(item => item.CanRestore));
+        }
+
         string? lastDetail = null;
-        foreach (var descriptor in OrderCloudCandidates(backups, cloud.DeviceTag))
+        foreach (var descriptor in candidates)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (!cloud.IsOwnBackup(descriptor))
-            {
-                // 本机没有可用备份时才轮到别的设备：另一台机器的 settings.json 描述的是那台机器的配置，
-                // 只能当作兜底，不能因为「它更新」就优先采用。
-                _logger.LogWarning("本机没有可用的云端备份，改用其他设备的备份：备份={BackupId}。", descriptor.BackupId);
-            }
-
             string archivePath;
             try
             {

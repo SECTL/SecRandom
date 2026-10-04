@@ -38,7 +38,7 @@
   <data name="O_IntegrityAction_Confirm" xml:space="preserve"><value>安全パスワードで確認してから続行する</value></data>
   <data name="O_IntegrityAction_AutoRestore" xml:space="preserve"><value>最新のバックアップから自動的に復元する</value></data>
   <data name="S_IntegrityRestoreSource" xml:space="preserve"><value>復元データの取得元</value></data>
-  <data name="S_IntegrityRestoreSource_D" xml:space="preserve"><value>自動復元時に順番に試すバックアップの取得元で、クラウドバックアップにはログインが必要であり、このデバイスがアップロードしたものを優先します</value></data>
+  <data name="S_IntegrityRestoreSource_D" xml:space="preserve"><value>自動復元時に順番に試すバックアップの取得元で、クラウドバックアップにはログインが必要であり、このデバイスがアップロードしたものだけを使用し、他のデバイスのバックアップは使用しません</value></data>
   <data name="O_IntegrityRestoreSource_Local" xml:space="preserve"><value>ローカルバックアップのみ</value></data>
   <data name="O_IntegrityRestoreSource_LocalThenCloud" xml:space="preserve"><value>ローカル優先、なければクラウド</value></data>
   <data name="O_IntegrityRestoreSource_CloudThenLocal" xml:space="preserve"><value>クラウド優先、失敗時はローカル</value></data>

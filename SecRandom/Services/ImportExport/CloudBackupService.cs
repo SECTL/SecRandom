@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -14,6 +13,11 @@ using SecRandom.Shared;
 
 namespace SecRandom.Services.ImportExport;
 
+/// <summary>
+///     One cloud backup as the listing sees it. <paramref name="IsEncrypted" /> marks a package
+///     uploaded by the removed client-side encryption feature: this build cannot derive its key, so it
+///     stays listed but is never offered for restore.
+/// </summary>
 public sealed record CloudBackupDescriptor(
     string BackupId,
     string DisplayName,
@@ -25,7 +29,7 @@ public sealed record CloudBackupDescriptor(
     string DeviceTag = "",
     bool IsEncrypted = false)
 {
-    public bool CanRestore => IsComplete && !string.IsNullOrWhiteSpace(ManifestFileId);
+    public bool CanRestore => IsComplete && !string.IsNullOrWhiteSpace(ManifestFileId) && !IsEncrypted;
 }
 
 public sealed record CloudBackupProgress(string Stage, int Completed, int Total)
@@ -43,11 +47,10 @@ public sealed record CloudBackupProgress(string Stage, int Completed, int Total)
 ///     stays on SecRandom Sync; this service only ever talks to the authenticated SECTL personal
 ///     cloud API.
 ///     <para>
-///         When encryption is enabled the archive is sealed with AES-256-GCM before it is sliced, so the
-///         account cloud stores a ciphertext the service (or anyone who replaces it with another
-///         endpoint) cannot read. The key is derived from a user passphrase and cached per salt in
-///         <see cref="CloudBackupKeyStore" />, which is why the second signed-in machine takes the same
-///         passphrase once instead of on every upload.
+///         The account cloud stores the archive as it was produced: client-side encryption was removed
+///         on purpose, because a passphrase made the cloud copy useless to anyone who lost it. Account
+///         access is now the only key, so any device signed into the same account can list and restore
+///         every backup.
 ///     </para>
 /// </summary>
 public sealed class CloudBackupService(
@@ -55,13 +58,9 @@ public sealed class CloudBackupService(
     SectlCloudStorageClient cloudClient,
     MainConfigHandler configHandler,
     IImportExportService importExportService,
-    CloudBackupKeyStore keyStore,
     ILogger<CloudBackupService> logger)
 {
     public bool IsSignedIn => authService.IsSignedIn;
-
-    /// <summary>Whether this device holds a key it can encrypt an upload with.</summary>
-    public bool HasEncryptionKey => keyStore.HasKey;
 
     /// <summary>
     ///     Alias stamped on this device's uploads, empty when the host name yields no ASCII-safe tag.
@@ -104,12 +103,6 @@ public sealed class CloudBackupService(
     public async Task<CloudBackupDescriptor> UploadAsync(IProgress<CloudBackupProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        // The encryption requirement is resolved before anything is packaged or uploaded, so an enabled
-        // setting without a key can never end as a plaintext upload.
-        var keyEntry = configHandler.Data.General.Backup.CloudEncryptionEnabled
-            ? keyStore.GetActiveEntry() ?? throw new CloudBackupEncryptionRequiredException()
-            : null;
-
         var deviceTag = ResolveDeviceTag();
         var backupId = CloudBackupPackage.CreateBackupId(DateTime.UtcNow, deviceTag);
         var archivePath = GetCloudCachePath($"{backupId}.zip");
@@ -122,21 +115,11 @@ public sealed class CloudBackupService(
             await importExportService.ExportCloudBackupAsync(archivePath, cancellationToken).ConfigureAwait(false);
             var archive = await File.ReadAllBytesAsync(archivePath, cancellationToken).ConfigureAwait(false);
 
-            // The parts always carry exactly what the account cloud stores: the archive itself for a
-            // plaintext backup, its ciphertext once encryption is on. Everything the manifest hashes
-            // and every part name refers to that payload.
-            var payload = archive;
-            CloudBackupEncryption? encryption = null;
-            if (keyEntry is not null)
-            {
-                var sealedBackup = CloudBackupCipher.Seal(archive, keyEntry.Key, keyEntry.Salt, keyEntry.Parameters);
-                payload = sealedBackup.Payload;
-                encryption = sealedBackup.Encryption;
-            }
-
-            var parts = CloudBackupPackage.Slice(payload, CloudBackupPackage.DefaultPartBytes);
+            // The parts carry exactly what the account cloud stores: the archive itself. Everything the
+            // manifest hashes and every part name refers to that payload.
+            var parts = CloudBackupPackage.Slice(archive, CloudBackupPackage.DefaultPartBytes);
             var manifest = CloudBackupPackage.BuildManifest(backupId, parts, CloudBackupPackage.DefaultPartBytes,
-                roots, DateTime.UtcNow, GlobalConstants.Version, payload, encryption);
+                roots, DateTime.UtcNow, GlobalConstants.Version, archive);
             CloudBackupPackage.ValidateManifest(manifest);
 
             for (var index = 0; index < parts.Count; index++)
@@ -149,15 +132,15 @@ public sealed class CloudBackupService(
             }
 
             var manifestFile = await cloudClient
-                .UploadAsync(CloudBackupPackage.BuildManifestName(backupId, encryption is not null), "application/json",
+                .UploadAsync(CloudBackupPackage.BuildManifestName(backupId), "application/json",
                     CloudBackupPackage.SerializeManifest(manifest), cancellationToken)
                 .ConfigureAwait(false);
             uploaded.Add(manifestFile);
             progress?.Report(new CloudBackupProgress(CloudBackupProgress.DoneStage, parts.Count + 1, parts.Count + 1));
-            logger.LogInformation("云端备份上传完成：备份={BackupId}，分片={Parts}，大小={Bytes}，加密={Encrypted}。",
-                backupId, parts.Count, payload.LongLength, encryption is not null);
+            logger.LogInformation("云端备份上传完成：备份={BackupId}，分片={Parts}，大小={Bytes}。",
+                backupId, parts.Count, archive.LongLength);
             return new CloudBackupDescriptor(backupId, manifest.ArchiveName, DateTimeOffset.UtcNow,
-                payload.LongLength, parts.Count, true, manifestFile.FileId, deviceTag, encryption is not null);
+                archive.LongLength, parts.Count, true, manifestFile.FileId, deviceTag);
         }
         catch
         {
@@ -205,14 +188,12 @@ public sealed class CloudBackupService(
     }
 
     /// <summary>
-    ///     Downloads one backup, verifies every part and the rebuilt payload, opens it with the cached
-    ///     key (asking <paramref name="passphraseProvider" /> once when this device never derived the
-    ///     key for that salt), and returns the local verified archive path. The caller owns the restore
-    ///     step so the existing inspection, confirmation, snapshot, and restart flow stays unchanged.
+    ///     Downloads one backup, verifies every part and the rebuilt archive, and returns the local
+    ///     verified archive path. The caller owns the restore step so the existing inspection,
+    ///     confirmation, snapshot, and restart flow stays unchanged.
     /// </summary>
     public async Task<string> DownloadAsync(CloudBackupDescriptor descriptor,
-        CancellationToken cancellationToken = default,
-        Func<CloudBackupEncryption, CancellationToken, Task<string?>>? passphraseProvider = null)
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(descriptor);
         if (!descriptor.CanRestore)
@@ -224,9 +205,6 @@ public sealed class CloudBackupService(
         if (!string.Equals(manifest.BackupId, descriptor.BackupId, StringComparison.Ordinal))
             throw new InvalidDataException("云端备份清单与备份标识不匹配。");
         CloudBackupPackage.ValidateManifest(manifest);
-
-        // The manifest, not the file name, decides whether a payload is encrypted.
-        var key = await ResolveKeyAsync(manifest, passphraseProvider, cancellationToken).ConfigureAwait(false);
 
         var files = await cloudClient.ListFilesAsync(cancellationToken).ConfigureAwait(false);
         var partsByName = new Dictionary<string, SectlCloudFile>(StringComparer.Ordinal);
@@ -242,110 +220,12 @@ public sealed class CloudBackupService(
             parts[index] = await cloudClient.DownloadAsync(partFile.FileId, cancellationToken).ConfigureAwait(false);
         }
 
-        var payload = CloudBackupPackage.MergeAndVerify(manifest, parts);
-        var archive = manifest.Encryption is null
-            ? payload
-            : CloudBackupCipher.Open(payload, key!, manifest.Encryption);
+        var archive = CloudBackupPackage.MergeAndVerify(manifest, parts);
         var archivePath = GetCloudCachePath($"{descriptor.BackupId}.zip");
         await File.WriteAllBytesAsync(archivePath, archive, cancellationToken).ConfigureAwait(false);
-        logger.LogInformation("云端备份已下载并校验：备份={BackupId}，分片={Parts}，大小={Bytes}，加密={Encrypted}。",
-            descriptor.BackupId, manifest.Parts.Count, archive.LongLength, manifest.Encryption is not null);
+        logger.LogInformation("云端备份已下载并校验：备份={BackupId}，分片={Parts}，大小={Bytes}。",
+            descriptor.BackupId, manifest.Parts.Count, archive.LongLength);
         return archivePath;
-    }
-
-    /// <summary>
-    ///     Enables encryption for this account. When the account already holds an encrypted backup its
-    ///     salt and KDF parameters are adopted instead of a fresh salt being generated, because that is
-    ///     what makes every machine that enters the same passphrase derive the same key. A passphrase
-    ///     that does not match the existing backup is rejected here, before any upload happens.
-    /// </summary>
-    public async Task<CloudBackupKeyEntry> ConfigureEncryptionAsync(string passphrase,
-        CancellationToken cancellationToken = default)
-    {
-        if (!CloudBackupCipher.IsPassphraseValid(passphrase))
-            throw new CloudBackupEncryptionException(
-                $"云端备份加密口令至少需要 {CloudBackupCipher.PassphraseMinimumLength} 个字符。");
-
-        var existing = await FindExistingEncryptionAsync(cancellationToken).ConfigureAwait(false);
-        if (existing is null)
-            return keyStore.CreateKey(passphrase);
-
-        var parameters = CloudBackupKdfParameters.FromManifest(existing);
-        var key = CloudBackupCipher.DeriveKey(passphrase, existing.Salt, parameters);
-        try
-        {
-            if (!CloudBackupCipher.VerifyKey(existing, key))
-                throw new CloudBackupWrongPassphraseException();
-            return keyStore.SaveDerivedKey(existing.Salt, key, parameters);
-        }
-        finally
-        {
-            CryptographicOperations.ZeroMemory(key);
-        }
-    }
-
-    /// <summary>Forgets this device's cached keys; encrypted cloud backups then ask for the passphrase.</summary>
-    public void ClearEncryptionKey() => keyStore.Clear();
-
-    /// <summary>
-    ///     Encryption block of the newest encrypted backup in the account, or null when the account has
-    ///     none yet. Read failures propagate on purpose: falling back to a fresh salt after a listing
-    ///     failure would silently give this device a key no other machine can derive.
-    /// </summary>
-    private async Task<CloudBackupEncryption?> FindExistingEncryptionAsync(CancellationToken cancellationToken)
-    {
-        var backups = await ListAsync(cancellationToken).ConfigureAwait(false);
-        var candidate = backups.FirstOrDefault(backup => backup.IsEncrypted && backup.CanRestore);
-        if (candidate is null)
-        {
-            logger.LogInformation("账号内没有已加密的云端备份，将使用新的加密盐。");
-            return null;
-        }
-
-        var manifestBytes = await cloudClient.DownloadAsync(candidate.ManifestFileId!, cancellationToken)
-            .ConfigureAwait(false);
-        var manifest = CloudBackupPackage.DeserializeManifest(manifestBytes);
-        if (manifest.Encryption is not null &&
-            string.Equals(manifest.BackupId, candidate.BackupId, StringComparison.Ordinal))
-            return manifest.Encryption;
-
-        throw new InvalidDataException("云端已有备份的加密信息无法读取，请稍后重试。");
-    }
-
-    /// <summary>
-    ///     Resolves the key for an encrypted manifest: the cached derivation when this device already
-    ///     has it, otherwise one derivation from the passphrase the caller supplies. A verified key is
-    ///     cached, so a restore or an automatic upload only asks once per salt.
-    /// </summary>
-    private async Task<byte[]?> ResolveKeyAsync(CloudBackupManifest manifest,
-        Func<CloudBackupEncryption, CancellationToken, Task<string?>>? passphraseProvider,
-        CancellationToken cancellationToken)
-    {
-        if (manifest.Encryption is not { } encryption)
-            return null;
-
-        if (keyStore.FindBySalt(encryption.Salt) is { } cached)
-            return cached.Key;
-
-        if (passphraseProvider is not null)
-        {
-            var passphrase = await passphraseProvider(encryption, cancellationToken).ConfigureAwait(false);
-            if (!string.IsNullOrWhiteSpace(passphrase))
-            {
-                var parameters = CloudBackupKdfParameters.FromManifest(encryption);
-                var derived = CloudBackupCipher.DeriveKey(passphrase, encryption.Salt, parameters);
-                if (!CloudBackupCipher.VerifyKey(encryption, derived))
-                {
-                    CryptographicOperations.ZeroMemory(derived);
-                    throw new CloudBackupWrongPassphraseException();
-                }
-
-                keyStore.SaveDerivedKey(encryption.Salt, derived, parameters);
-                return derived;
-            }
-        }
-
-        throw new CloudBackupEncryptionException("该云端备份已加密，输入加密口令后才能恢复。");
     }
 
     /// <summary>
@@ -543,8 +423,8 @@ public sealed class CloudBackupService(
         public int DeclaredPartCount { get; set; }
 
         /// <summary>
-        ///     Taken from the file names, so the listing can show the encryption state without
-        ///     downloading a manifest per backup. A restore still follows the manifest itself.
+        ///     Taken from the file names, so the listing can flag a package the removed encryption
+        ///     feature uploaded without downloading a manifest per backup.
         /// </summary>
         public bool IsEncrypted { get; set; }
 

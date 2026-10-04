@@ -230,31 +230,6 @@
                         </fa:FASettingsExpander.Footer>
                     </fa:FASettingsExpander>
 
-                    <fa:FASettingsExpander x:Name="S_CloudEncryption"
-                                           Header="{x:Static lsb:Resources.S_CloudEncryption}"
-                                           Description="{x:Static lsb:Resources.S_CloudEncryption_D}"
-                                           IconSource="{sr:FluentIconSource {sr:Fi LockClosedFilled}}">
-                        <fa:FASettingsExpander.Footer>
-                            <ToggleSwitch IsChecked="{Binding Settings.CloudEncryptionEnabled}" />
-                        </fa:FASettingsExpander.Footer>
-
-                        <fa:FASettingsExpanderItem x:Name="S_CloudEncryption_Passphrase"
-                                                   Content="{x:Static lsb:Resources.S_CloudEncryption_Passphrase}"
-                                                   Description="{x:Static lsb:Resources.S_CloudEncryption_Passphrase_D}">
-                            <fa:FASettingsExpanderItem.Footer>
-                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding CloudEncryptionKeyText}" VerticalAlignment="Center" />
-                                    <Button Content="{x:Static lsb:Resources.C_CloudEncryption_Set}"
-                                            IsEnabled="{Binding !IsCloudBusy}"
-                                            Click="CloudEncryptionSetPassphrase_OnClick" />
-                                    <Button Content="{x:Static lsb:Resources.C_CloudEncryption_Clear}"
-                                            IsEnabled="{Binding !IsCloudBusy}"
-                                            Click="CloudEncryptionClearPassphrase_OnClick" />
-                                </StackPanel>
-                            </fa:FASettingsExpanderItem.Footer>
-                        </fa:FASettingsExpanderItem>
-                    </fa:FASettingsExpander>
-
                     <fa:FASettingsExpander x:Name="S_CloudAutoBackup"
                                            Header="{x:Static lsb:Resources.S_CloudAutoBackup}"
                                            Description="{x:Static lsb:Resources.S_CloudAutoBackup_D}"
@@ -326,10 +301,6 @@
                                 <DataGridTextColumn Width="1.2*" MinWidth="160"
                                                     Header="{x:Static lsb:Resources.C_CloudBackup_Backups_DateTime}"
                                                     Binding="{Binding DateTime}" />
-
-                                <DataGridTextColumn Width="*" MinWidth="96"
-                                                    Header="{x:Static lsb:Resources.C_CloudBackup_Backups_Encryption}"
-                                                    Binding="{Binding EncryptionText}" />
 
                                 <DataGridTextColumn Width="*" MinWidth="96"
                                                     Header="{x:Static lsb:Resources.C_CloudBackup_Backups_Size}"

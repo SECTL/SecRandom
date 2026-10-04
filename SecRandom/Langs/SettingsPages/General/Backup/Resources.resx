@@ -399,97 +399,10 @@
     <data name="M_CloudStoragePageFailed" xml:space="preserve">
         <value>无法打开云储存页面</value>
     </data>
-    <data name="S_CloudEncryption" xml:space="preserve">
-        <value>云端备份加密</value>
+    <data name="C_CloudBackup_LegacyEncrypted" xml:space="preserve">
+        <value>旧版加密，无法恢复</value>
     </data>
-    <data name="S_CloudEncryption_D" xml:space="preserve">
-        <value>默认关闭；开启后在设备端加密再上传，云端只保存无法读取的密文</value>
-    </data>
-    <data name="S_CloudEncryption_Passphrase" xml:space="preserve">
-        <value>加密口令</value>
-    </data>
-    <data name="S_CloudEncryption_Passphrase_D" xml:space="preserve">
-        <value>用于派生加密密钥，派生密钥缓存在本机安全目录中，重启后无需重复输入</value>
-    </data>
-    <data name="C_CloudEncryption_Set" xml:space="preserve">
-        <value>设置口令</value>
-    </data>
-    <data name="C_CloudEncryption_Clear" xml:space="preserve">
-        <value>清除口令</value>
-    </data>
-    <data name="C_CloudEncryption_KeySet" xml:space="preserve">
-        <value>已设置加密口令</value>
-    </data>
-    <data name="C_CloudEncryption_KeyMissing" xml:space="preserve">
-        <value>尚未设置加密口令</value>
-    </data>
-    <data name="C_CloudEncryption_PassphrasePlaceholder" xml:space="preserve">
-        <value>请输入加密口令</value>
-    </data>
-    <data name="C_CloudBackup_Backups_Encryption" xml:space="preserve">
-        <value>加密</value>
-    </data>
-    <data name="C_CloudBackup_Encrypted" xml:space="preserve">
-        <value>已加密</value>
-    </data>
-    <data name="C_CloudBackup_Plaintext" xml:space="preserve">
-        <value>明文</value>
-    </data>
-    <data name="M_CloudEncryptionSetTitle" xml:space="preserve">
-        <value>设置云端备份加密口令</value>
-    </data>
-    <data name="M_CloudEncryptionSetContent" xml:space="preserve">
-        <value>口令用于派生加密密钥，请妥善保管；遗忘后已加密的云端备份将无法恢复</value>
-    </data>
-    <data name="M_CloudEncryptionConfirmTitle" xml:space="preserve">
-        <value>确认加密口令</value>
-    </data>
-    <data name="M_CloudEncryptionConfirmContent" xml:space="preserve">
-        <value>请再次输入同一个口令</value>
-    </data>
-    <data name="M_CloudEncryptionConfirmPrimary" xml:space="preserve">
-        <value>确定</value>
-    </data>
-    <data name="M_CloudEncryptionTooShort" xml:space="preserve">
-        <value>加密口令至少需要 {0} 个字符</value>
-    </data>
-    <data name="M_CloudEncryptionMismatch" xml:space="preserve">
-        <value>两次输入的口令不一致</value>
-    </data>
-    <data name="M_CloudEncryptionSetSuccess" xml:space="preserve">
-        <value>加密口令已设置</value>
-    </data>
-    <data name="M_CloudEncryptionFailed" xml:space="preserve">
-        <value>设置加密口令失败</value>
-    </data>
-    <data name="M_CloudEncryptionClearTitle" xml:space="preserve">
-        <value>清除加密口令</value>
-    </data>
-    <data name="M_CloudEncryptionClearContent" xml:space="preserve">
-        <value>清除后本机不再缓存加密密钥，恢复已加密的云端备份时需要重新输入口令</value>
-    </data>
-    <data name="M_CloudEncryptionClearPrimary" xml:space="preserve">
-        <value>清除</value>
-    </data>
-    <data name="M_CloudEncryptionEnableCancelled" xml:space="preserve">
-        <value>已取消开启云端备份加密：没有设置加密口令</value>
-    </data>
-    <data name="M_CloudEncryptionClearSuccess" xml:space="preserve">
-        <value>已清除本机缓存的加密密钥</value>
-    </data>
-    <data name="M_CloudEncryptionDisabled" xml:space="preserve">
-        <value>已关闭云端备份加密，之后的云端备份将以明文上传</value>
-    </data>
-    <data name="M_CloudEncryptionRequiredForUpload" xml:space="preserve">
-        <value>云端备份已开启加密，请先设置加密口令</value>
-    </data>
-    <data name="M_CloudDecryptTitle" xml:space="preserve">
-        <value>输入云端备份加密口令</value>
-    </data>
-    <data name="M_CloudDecryptContent" xml:space="preserve">
-        <value>该云端备份已加密，输入上传时使用的口令才能恢复</value>
-    </data>
-    <data name="M_CloudWrongPassphrase" xml:space="preserve">
-        <value>加密口令不正确，该云端备份仍未解锁</value>
+    <data name="M_CloudLegacyEncrypted" xml:space="preserve">
+        <value>该备份由旧版本以加密口令上传，当前版本已移除加密功能，无法恢复它</value>
     </data>
 </root>

@@ -111,19 +111,19 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
     }
 
     [Fact]
-    public void OrderCloudCandidates_PrefersThisDevicesBackupOverANewerOneFromAnotherDevice()
+    public void OrderCloudCandidates_UsesOnlyThisDevicesBackupsEvenWhenAnotherDeviceHasANewerOne()
     {
         var own = CloudBackup("own", "dev-a", DateTimeOffset.UtcNow.AddDays(-5));
         var other = CloudBackup("other", "dev-b", DateTimeOffset.UtcNow);
 
         var ordered = SettingsIntegrityRecoveryService.OrderCloudCandidates([other, own], "dev-a");
 
-        // Another machine's settings.json describes that machine; being newer must not outrank it.
-        Assert.Equal(["own", "other"], ordered.Select(item => item.BackupId));
+        // Another machine's settings.json describes that machine, so it is never a restore candidate.
+        Assert.Equal(["own"], ordered.Select(item => item.BackupId));
     }
 
     [Fact]
-    public void OrderCloudCandidates_OrdersEachDeviceGroupNewestFirst()
+    public void OrderCloudCandidates_OrdersThisDevicesBackupsNewestFirst()
     {
         var ownOlder = CloudBackup("own-old", "dev-a", DateTimeOffset.UtcNow.AddDays(-3));
         var ownNewer = CloudBackup("own-new", "dev-a", DateTimeOffset.UtcNow.AddDays(-1));
@@ -131,18 +131,19 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
 
         var ordered = SettingsIntegrityRecoveryService.OrderCloudCandidates([ownOlder, other, ownNewer], "dev-a");
 
-        Assert.Equal(["own-new", "own-old", "other"], ordered.Select(item => item.BackupId));
+        Assert.Equal(["own-new", "own-old"], ordered.Select(item => item.BackupId));
     }
 
     [Fact]
-    public void OrderCloudCandidates_FallsBackToOtherDevicesWhenThisDeviceHasNone()
+    public void OrderCloudCandidates_WithoutThisDevicesBackups_ReturnsNothing()
     {
         var older = CloudBackup("other-old", "dev-b", DateTimeOffset.UtcNow.AddDays(-2));
         var newer = CloudBackup("other-new", "dev-c", DateTimeOffset.UtcNow);
 
         var ordered = SettingsIntegrityRecoveryService.OrderCloudCandidates([older, newer], "dev-a");
 
-        Assert.Equal(["other-new", "other-old"], ordered.Select(item => item.BackupId));
+        // No own backup means no recovery from the cloud at all: the local file stays untouched.
+        Assert.Empty(ordered);
     }
 
     [Fact]
@@ -157,15 +158,15 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
     }
 
     [Fact]
-    public void OrderCloudCandidates_WithoutADeviceTag_KeepsPureNewestFirst()
+    public void OrderCloudCandidates_WithoutADeviceTag_ReturnsNothing()
     {
-        // A host name that yields no ASCII-safe alias means there is no own-device group to prefer.
+        // A host name that yields no ASCII-safe alias means no backup can be attributed to this device.
         var older = CloudBackup("older", "dev-a", DateTimeOffset.UtcNow.AddDays(-1));
         var newer = CloudBackup("newer", "dev-b", DateTimeOffset.UtcNow);
 
         var ordered = SettingsIntegrityRecoveryService.OrderCloudCandidates([older, newer], string.Empty);
 
-        Assert.Equal(["newer", "older"], ordered.Select(item => item.BackupId));
+        Assert.Empty(ordered);
     }
 
     private static CloudBackupDescriptor CloudBackup(string backupId, string deviceTag, DateTimeOffset createdAt,

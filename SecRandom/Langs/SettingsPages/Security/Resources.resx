@@ -67,7 +67,7 @@
    <data name="O_IntegrityAction_Confirm" xml:space="preserve"><value>需要安全密码确认后继续</value></data>
    <data name="O_IntegrityAction_AutoRestore" xml:space="preserve"><value>自动恢复最近一次备份</value></data>
    <data name="S_IntegrityRestoreSource" xml:space="preserve"><value>恢复数据来源</value></data>
-   <data name="S_IntegrityRestoreSource_D" xml:space="preserve"><value>自动恢复时依次尝试的备份来源，云端备份需要已登录账号，且优先使用本机上传的备份</value></data>
+   <data name="S_IntegrityRestoreSource_D" xml:space="preserve"><value>自动恢复时依次尝试的备份来源，云端备份需要已登录账号且只使用本机上传的备份，不会使用其他设备的备份</value></data>
    <data name="O_IntegrityRestoreSource_Local" xml:space="preserve"><value>仅本地备份</value></data>
    <data name="O_IntegrityRestoreSource_LocalThenCloud" xml:space="preserve"><value>本地优先，缺失时使用云端备份</value></data>
    <data name="O_IntegrityRestoreSource_CloudThenLocal" xml:space="preserve"><value>云端优先，失败时使用本地备份</value></data>

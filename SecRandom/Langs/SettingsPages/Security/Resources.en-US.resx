@@ -38,7 +38,7 @@
   <data name="O_IntegrityAction_Confirm" xml:space="preserve"><value>Require the security password before continuing</value></data>
   <data name="O_IntegrityAction_AutoRestore" xml:space="preserve"><value>Automatically restore the latest backup</value></data>
   <data name="S_IntegrityRestoreSource" xml:space="preserve"><value>Restore Source</value></data>
-  <data name="S_IntegrityRestoreSource_D" xml:space="preserve"><value>Backup sources tried in order during automatic restore; cloud backups need a signed-in account and this device's own uploads are preferred</value></data>
+  <data name="S_IntegrityRestoreSource_D" xml:space="preserve"><value>Backup sources tried in order during automatic restore; cloud backups need a signed-in account and only this device's own uploads are used, never another device's backup</value></data>
   <data name="O_IntegrityRestoreSource_Local" xml:space="preserve"><value>Local backups only</value></data>
   <data name="O_IntegrityRestoreSource_LocalThenCloud" xml:space="preserve"><value>Local first, cloud when missing</value></data>
   <data name="O_IntegrityRestoreSource_CloudThenLocal" xml:space="preserve"><value>Cloud first, local when that fails</value></data>
