@@ -34,6 +34,7 @@ namespace SecRandom.Views;
 public partial class MainView : ViewBase, IFANavigationPageFactory
 {
     private const string DefaultMainPageId = "main.rollCall";
+    private const string LotteryPageId = "main.lottery";
 
     private readonly FAFrame? _navigationFrame;
     private readonly FANavigationView? _navigationView;
@@ -152,10 +153,13 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
         
         ViewModel.NavigationViewItems.Clear();
         ViewModel.NavigationViewFooterItems.Clear();
+        ViewModel.FlattenNavigationItems.Clear();
 
+        // 运行时能力开关不得增删导航项：FluentAvalonia 在 FooterMenuItemsSource 集合变化时会重建
+        // 内部选择源，从而丢弃页脚选中项并以 null 触发 ItemInvoked，最终在 RaiseItemInvoked 抛
+        // NullReferenceException。因此抽奖入口始终存在，只由 ApplyFeatureAvailability 控制显隐。
         ViewModel.NavigationViewItems
             .AddRange(PagesRegistryService.MainItems
-                .Where(IsPageAvailable)
                 .Where(info => info.Location == PageLocation.Top)
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
                 .Select(x =>
@@ -170,7 +174,6 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 
         ViewModel.NavigationViewFooterItems
             .AddRange(PagesRegistryService.MainItems
-                .Where(IsPageAvailable)
                 .Where(info => info.Location == PageLocation.Bottom)
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
                 .Select(x =>
@@ -190,6 +193,8 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
         }
         
         ViewModel.NavigationViewFooterItems.Add(settingsItem);
+
+        ApplyFeatureAvailability();
         
         if (applySampleNav)
         {
@@ -200,6 +205,29 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
             _navigationView?.PaneDisplayMode = FANavigationViewPaneDisplayMode.LeftMinimal;
             ViewModel.IsNavPaneToggleButtonVisible = true;
         }
+    }
+
+    /// <summary>
+    /// 应用运行时功能可用性。抽奖入口保留在导航集合中，仅切换可见性，避免改动集合导致导航选中态丢失。
+    /// </summary>
+    private void ApplyFeatureAvailability()
+    {
+        var isLotteryAvailable = _featureAvailability.IsLotteryEnabled;
+
+        foreach (var item in ViewModel.NavigationViewItems.Concat(ViewModel.NavigationViewFooterItems))
+            SetPageItemVisibility(item, LotteryPageId, isLotteryAvailable);
+    }
+
+    private static void SetPageItemVisibility(object item, string pageId, bool isVisible)
+    {
+        if (item is not FANavigationViewItem navigationItem)
+            return;
+
+        if (navigationItem.Tag is PageInfo info && info.Id == pageId)
+            navigationItem.IsVisible = isVisible;
+
+        foreach (var child in navigationItem.MenuItems)
+            SetPageItemVisibility(child, pageId, isVisible);
     }
 
     /// <summary>
@@ -229,15 +257,15 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 
     private bool IsPageAvailable(PageInfo info)
     {
-        return info.Id != "main.lottery" || _featureAvailability.IsLotteryEnabled;
+        return info.Id != LotteryPageId || _featureAvailability.IsLotteryEnabled;
     }
 
     private void FeatureAvailabilityOnChanged(object? sender, EventArgs e)
     {
         Dispatcher.UIThread.Post(() =>
         {
-            BuildNavigationMenuItems();
-            if (ViewModel.SelectedPageInfo?.Id == "main.lottery" && !_featureAvailability.IsLotteryEnabled)
+            ApplyFeatureAvailability();
+            if (ViewModel.SelectedPageInfo?.Id == LotteryPageId && !_featureAvailability.IsLotteryEnabled)
                 SelectNavigationItemById(DefaultMainPageId);
         });
     }
@@ -245,7 +273,11 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
     private void SelectNavigationItem(PageInfo info)
     {
         var item = ViewModel.FlattenNavigationItems.FirstOrDefault(item => Equals(item.Tag, info));
-        ViewModel.SelectedNavigationViewItem = item;
+
+        // 不向 FANavigationView 写入 null 选中项：该过渡在 FluentAvalonia 的待触发标志仍置位时会以
+        // null 触发 ItemInvoked 并抛 NullReferenceException。找不到入口时保留原高亮。
+        if (item is not null)
+            ViewModel.SelectedNavigationViewItem = item;
     }
 
     public void OpenDrawer(object content)
