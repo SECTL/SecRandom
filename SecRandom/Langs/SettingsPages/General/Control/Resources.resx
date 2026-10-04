@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+                id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true">
+
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <data name="Page_Title" xml:space="preserve">
+        <value>集控</value>
+    </data>
+    <data name="S_RemoteControl" xml:space="preserve">
+        <value>远程控制</value>
+    </data>
+    <data name="S_RemoteControl_Enabled" xml:space="preserve">
+        <value>允许被远程控制</value>
+    </data>
+    <data name="S_RemoteControl_Enabled_D" xml:space="preserve">
+        <value>这是本机自己的开关，关闭后无论服务端下发什么命令都不会执行</value>
+    </data>
+    <data name="S_RemoteControl_GroupId" xml:space="preserve">
+        <value>所属组 ID</value>
+    </data>
+    <data name="S_RemoteControl_GroupId_D" xml:space="preserve">
+        <value>由控制台建组后提供；节点必须先在该组注册，否则连接会被拒绝</value>
+    </data>
+    <data name="S_RemoteControl_ServerUrl" xml:space="preserve">
+        <value>节点通道地址</value>
+    </data>
+    <data name="S_RemoteControl_ServerUrl_D" xml:space="preserve">
+        <value>默认使用线上节点通道；仅回环地址允许明文 ws 连接</value>
+    </data>
+    <data name="S_RemoteControl_NodeId" xml:space="preserve">
+        <value>节点 ID</value>
+    </data>
+    <data name="S_RemoteControl_NodeId_D" xml:space="preserve">
+        <value>安装时生成并长期保持不变，注册节点时把它填进控制台</value>
+    </data>
+    <data name="S_RemoteControl_Status" xml:space="preserve">
+        <value>连接状态</value>
+    </data>
+    <data name="S_RemoteControl_Status_D" xml:space="preserve">
+        <value>断线后按退避自动重连；重试也没有意义的失败会停在这里等待修正</value>
+    </data>
+    <data name="S_RemoteControl_DrawLocked" xml:space="preserve">
+        <value>抽取锁定</value>
+    </data>
+    <data name="S_RemoteControl_DrawLocked_D" xml:space="preserve">
+        <value>由控制台设置；锁定后本机不再允许抽取</value>
+    </data>
+    <data name="C_Reconnect" xml:space="preserve">
+        <value>立即重连</value>
+    </data>
+    <data name="M_EndpointRejected" xml:space="preserve">
+        <value>节点通道地址无效，未保存</value>
+    </data>
+    <data name="M_Status_Disabled" xml:space="preserve">
+        <value>已关闭</value>
+    </data>
+    <data name="M_Status_Idle" xml:space="preserve">
+        <value>等待登录或填写组 ID</value>
+    </data>
+    <data name="M_Status_Connecting" xml:space="preserve">
+        <value>连接中</value>
+    </data>
+    <data name="M_Status_Connected" xml:space="preserve">
+        <value>已连接</value>
+    </data>
+    <data name="M_Status_WaitingToRetry" xml:space="preserve">
+        <value>等待重连</value>
+    </data>
+    <data name="M_Status_Blocked" xml:space="preserve">
+        <value>已停止重试</value>
+    </data>
+    <data name="M_Detail_NotConfigured" xml:space="preserve">
+        <value>还没有填写所属组 ID</value>
+    </data>
+    <data name="M_Detail_NotSignedIn" xml:space="preserve">
+        <value>尚未登录 SECTL 账号</value>
+    </data>
+    <data name="M_Detail_NodeNotFound" xml:space="preserve">
+        <value>该组下没有这个节点，请先在控制台注册</value>
+    </data>
+    <data name="M_Detail_GroupNotFound" xml:space="preserve">
+        <value>组不存在，或当前账号不是该组成员</value>
+    </data>
+    <data name="M_Detail_InvalidRequest" xml:space="preserve">
+        <value>请求格式错误，这是客户端问题</value>
+    </data>
+    <data name="M_Detail_Unauthorized" xml:space="preserve">
+        <value>服务端拒绝了本机节点凭据，请确认服务端已为节点通道启用 Bearer 认证并接受本平台</value>
+    </data>
+    <data name="M_Detail_EndpointInvalid" xml:space="preserve">
+        <value>节点通道地址无效</value>
+    </data>
+</root>

@@ -1,0 +1,86 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.General"
+             xmlns:lc="clr-namespace:SecRandom.Langs.SettingsPages.General.Control"
+             xmlns:vm="clr-namespace:SecRandom.ViewModels.SettingsPages"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SecRandom.Views.SettingsPages.General.ControlSettingsPage"
+             x:DataType="vm:ControlSettingsPageViewModel">
+    <ScrollViewer>
+        <StackPanel Classes="page-container animated-intro settings">
+            <sr:IconText x:Name="S_RemoteControl"
+                         Text="{x:Static lc:Resources.S_RemoteControl}"
+                         Glyph="{sr:Fi PlugConnectedFilled}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_RemoteControl_Enabled"
+                                   Header="{x:Static lc:Resources.S_RemoteControl_Enabled}"
+                                   Description="{x:Static lc:Resources.S_RemoteControl_Enabled_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ShieldCheckmarkFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding RemoteControlEnabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <Separator Margin="0 12 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_RemoteControl_GroupId"
+                                   Header="{x:Static lc:Resources.S_RemoteControl_GroupId}"
+                                   Description="{x:Static lc:Resources.S_RemoteControl_GroupId_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <TextBox Text="{Binding GroupId}" MinWidth="260" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_RemoteControl_ServerUrl"
+                                   Header="{x:Static lc:Resources.S_RemoteControl_ServerUrl}"
+                                   Description="{x:Static lc:Resources.S_RemoteControl_ServerUrl_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi GlobeFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <TextBox Text="{Binding ServerUrl}" MinWidth="260" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_RemoteControl_NodeId"
+                                   Header="{x:Static lc:Resources.S_RemoteControl_NodeId}"
+                                   Description="{x:Static lc:Resources.S_RemoteControl_NodeId_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TagFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <SelectableTextBlock Text="{Binding NodeId}" FontFamily="Consolas,monospace" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_RemoteControl_Status"
+                                   Header="{x:Static lc:Resources.S_RemoteControl_Status}"
+                                   Description="{x:Static lc:Resources.S_RemoteControl_Status_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi DesktopPulseFilled}}">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding StatusDetail}" Opacity="0.7" VerticalAlignment="Center" />
+                    <Button Content="{x:Static lc:Resources.C_Reconnect}"
+                            Command="{Binding ReconnectCommand}" />
+                </StackPanel>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_RemoteControl_DrawLocked"
+                                   Header="{x:Static lc:Resources.S_RemoteControl_DrawLocked}"
+                                   Description="{x:Static lc:Resources.S_RemoteControl_DrawLocked_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LockClosedFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <TextBlock Text="{Binding DrawLocked}" VerticalAlignment="Center" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <TextBlock Text="{x:Static lc:Resources.M_EndpointRejected}"
+                       IsVisible="{Binding HasEndpointError}"
+                       Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                       TextWrapping="Wrap"
+                       Margin="0 8 0 0" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

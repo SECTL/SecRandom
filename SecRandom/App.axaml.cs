@@ -35,6 +35,7 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Archive;
@@ -51,6 +52,7 @@ using PerformanceSettingsConfig = SecRandom.Core.Models.SubConfigs.General.Perfo
 using SecRandom.Services;
 using SecRandom.Services.Config;
 using SecRandom.Services.Auth;
+using SecRandom.Services.ControlNode;
 using SecRandom.Services.Announcements;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
@@ -1143,6 +1145,27 @@ public partial class App : Application
                 services.AddSingleton<CourseLinkageService>();
                 services.AddSingleton<LinkageDrawCoordinator>();
                 services.AddHostedService<CourseLinkageHostedService>();
+
+                // 集控节点（control-v1，见 docs/client-protocol.md）：出站长连接 + 本机开关 + 远程抽取。
+                // 桌面三平台共享同一份实现；移动端留到后续阶段，因此这里只在桌面注册。
+                if (!isMobile)
+                {
+                    services.AddSingleton(new ControlNodeClientOptions
+                    {
+                        Platform = ResolveControlPlatformName(),
+                        Version = GlobalConstants.Version
+                    });
+                    services.AddSingleton<IControlNodeStateStore, FileControlNodeStateStore>();
+                    services.AddSingleton<IControlDrawGate, ControlDrawGateService>();
+                    services.AddSingleton<IControlNodeStatusSource, ControlNodeStatusSource>();
+                    services.AddSingleton<IControlNodeCredentialProvider, ControlNodeCredentialProvider>();
+                    services.AddSingleton<IControlNodeTransportFactory, WebSocketControlNodeTransportFactory>();
+                    services.AddSingleton<IControlCommandDispatcher, ControlCommandDispatcher>();
+                    services.AddSingleton<ControlNodeClient>();
+                    services.AddHostedService<ControlNodeHostedService>();
+                    // 单例：这个 ViewModel 订阅了节点状态与连接状态，每次打开设置页都新建一个会累积订阅。
+                    services.AddSingleton<ControlSettingsPageViewModel>();
+                }
                 services.AddSingleton<SecurityCredentialStore>();
                 services.AddSingleton<IUsbDeviceCatalog, UsbDeviceCatalog>();
                 services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
@@ -1236,6 +1259,12 @@ public partial class App : Application
                 services.AddSettingsPage<VerificationSettingsPage>(Langs.SettingsPages.General.Verification
                     .Resources.Page_Title);
                 services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
+                if (!isMobile)
+                {
+                    // 集控节点只在桌面注册，页面与它成对出现。
+                    services.AddSettingsPage<ControlSettingsPage>(
+                        Langs.SettingsPages.General.Control.Resources.Page_Title);
+                }
 
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_Personalized, "settings.personalized",
@@ -1894,6 +1923,13 @@ public partial class App : Application
     }
 
     #region Windows
+
+    /// <summary>集控协议里的平台标识：<c>windows</c> / <c>linux</c> / <c>macos</c>。</summary>
+    private static string ResolveControlPlatformName() =>
+        OperatingSystem.IsWindows() ? "windows"
+        : OperatingSystem.IsMacOS() ? "macos"
+        : OperatingSystem.IsLinux() ? "linux"
+        : "unknown";
 
     public static void ShowMainWindow() => ShowMainWindow(null);
 

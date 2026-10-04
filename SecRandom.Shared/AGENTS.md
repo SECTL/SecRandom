@@ -19,6 +19,7 @@ SecRandom.Shared/
 ├── ComponentModels/   # ObservableDictionary helper type
 ├── Extensions/        # Dependency-light helpers for shared interfaces
 ├── Interfaces/        # Attached settings contracts
+├── Models/ControlNode/ # control-v1 frame/capability contracts (UI-free)
 ├── Models/Profile/    # Student/prize list/history data models
 ├── Models/            # AttachableSettingsObject base model
 ├── Updates/           # UI-free signed release manifest and package-marker DTOs
@@ -97,6 +98,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 - `ProfileRecordIdentity` is the boundary helper for filling missing/duplicate `RecordId` values and resolving legacy `Id`/`Name` history keys without ambiguous fallback.
 - `Student` and `Prize` include persisted optional metadata fields such as `Tags`; keep new fields backward-compatible with empty defaults.
 - `ProfileListOrderingExtensions` is the shared presentation ordering for students and prizes: numeric IDs sort first, followed by other IDs, then records without IDs by `CurrentCulture` name order. Use it in list-management and remaining-list UI so every language and draw surface stays consistent.
+- `Models/ControlNode/` holds the `control-v1` node-channel contracts: one tolerant `ControlFrame` record (all fields nullable, unknown fields ignored, `desired_state_revision` as `long` because the service generates ~1.7×10¹² values), capability/frame-type/error-code/reject-reason string constants, and `ControlProtocolJson` for (de)serialization. Keep them dependency-free and serialization-only: the transport, session, and draw-gate behavior live in `SecRandom.Core/Services/ControlNode/` and the app layer.
 - IPC DTOs under `Models/Ipc/` are serialization-only contracts. Keep them free of UI/runtime services and do not emit internal `RecordId` values in external projections.
 - Update DTOs under `Updates/` remain serialization-only. Manifest signature verification, network access, package extraction, and installer process execution belong in the app layer.
 - Mobile Android releases use the same signed manifest with `android-apk` artifacts. The manifest contract remains distribution-neutral; downloading, package installation, and iOS distribution handling stay in the corresponding app layer.

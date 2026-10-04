@@ -381,6 +381,29 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             return Task.CompletedTask;
         });
 
+    /// <summary>
+    ///     集控节点远程触发的一次快抽。
+    /// </summary>
+    /// <remarks>
+    ///     远程命令**绝不拉起交互式验证**：教室机可能没人，一个等密码输入的对话框会让命令一直挂着。
+    ///     因此先用非交互闸门判定，需要本机输入密码/TOTP/USB 时直接拒绝（控制台看到"设备拒绝"），
+    ///     通过后再走与本地、IPC 完全相同的抽取与事务提交路径。
+    /// </remarks>
+    public async Task<bool> StartRemoteDrawAsync(CancellationToken cancellationToken = default)
+    {
+        SecurityOperation[] operations = [SecurityOperation.QuickDrawStart, SecurityOperation.LinkageAction];
+        if (_linkageDrawCoordinator.EvaluateGate(operations) != LinkageDrawGate.Allowed)
+            return false;
+
+        LastDrawnStudent = null;
+        var authorized = await _linkageDrawCoordinator.AuthorizeAsync(
+            operations,
+            StartAuthorizedTriggeredDrawAsync,
+            cancellationToken);
+
+        return authorized && LastDrawnStudent is not null;
+    }
+
     private void RefreshStudentLists()
     {
         StudentListNames.Clear();

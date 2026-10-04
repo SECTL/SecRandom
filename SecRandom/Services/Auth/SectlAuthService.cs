@@ -330,6 +330,32 @@ public sealed class SectlAuthService(
             .ConfigureAwait(false);
     }
 
+    /// <summary>
+    ///     Returns the access token a non-HTTP transport should present as a bearer credential.
+    /// </summary>
+    /// <remarks>
+    ///     The control node channel opens a WebSocket and puts the token in an <c>Authorization</c>
+    ///     header (never a query parameter, which would land in access logs), so it cannot go through
+    ///     <see cref="SendAuthorizedAsync" />. It still needs the same policy: refresh before the stored
+    ///     expiry, and rotate once after the server rejects the token. Callers that get a rejected token
+    ///     ask again with <paramref name="forceRefresh" /> set.
+    /// </remarks>
+    public async Task<string?> TryGetAccessTokenAsync(bool forceRefresh = false, CancellationToken cancellationToken = default)
+    {
+        if (!forceRefresh)
+            return await GetUsableAccessTokenAsync(cancellationToken).ConfigureAwait(false);
+
+        var outcome = await RefreshSingleFlightAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
+        if (outcome.Status == SectlRefreshStatus.Ended)
+            return null;
+        if (outcome.Status == SectlRefreshStatus.Succeeded)
+            return _token?.AccessToken;
+
+        // A transient refresh failure must not drop a token that is still valid.
+        var token = _token;
+        return token is not null && !IsExpired(token) ? token.AccessToken : null;
+    }
+
     private async Task<HttpResponseMessage> SendWithTokenAsync(Func<HttpRequestMessage> createRequest, string accessToken,
         HttpCompletionOption completionOption, CancellationToken cancellationToken)
     {

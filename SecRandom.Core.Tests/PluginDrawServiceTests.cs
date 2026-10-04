@@ -7,6 +7,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Services;
 using SecRandom.Services.Draw;
@@ -191,6 +192,8 @@ public sealed class PluginDrawServiceTests : IDisposable
         services.AddSingleton<ClassIslandScheduleSource>();
         services.AddSingleton<CourseLinkageService>();
         services.AddSingleton<ISecurityService>(_ => new StubSecurityService(allowAuthorization));
+        // 集控锁定在这些测试里始终是放开的：这里只验证插件抽取的授权与提交链路。
+        services.AddSingleton<IControlDrawGate>(_ => new AlwaysUnlockedDrawGate());
         services.AddSingleton<LinkageDrawCoordinator>();
         // Draw reporting is best-effort and gated by the privacy mode; the default test privacy mode
         // reports, so the service writes its counter file into the per-test data root.
@@ -342,5 +345,10 @@ public sealed class PluginDrawServiceTests : IDisposable
             add { }
             remove { }
         }
+    }
+
+    private sealed class AlwaysUnlockedDrawGate : IControlDrawGate
+    {
+        public bool IsDrawLocked => false;
     }
 }
