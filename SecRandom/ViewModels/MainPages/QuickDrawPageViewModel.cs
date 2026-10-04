@@ -707,8 +707,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (settings is not { IsAttachSettingsEnabled: true } || string.IsNullOrWhiteSpace(settings.ImagePath))
             return null;
 
-        try { return File.Exists(settings.ImagePath) ? new Bitmap(settings.ImagePath) : null; }
-        catch { return null; }
+        return DrawImageCache.Load(settings.ImagePath);
     }
 
     private async void StartCooldown()
