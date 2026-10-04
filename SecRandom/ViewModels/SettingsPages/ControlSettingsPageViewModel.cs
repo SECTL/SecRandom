@@ -28,6 +28,7 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
 {
     private readonly IControlNodeStateStore _stateStore;
     private readonly ControlNodeClient _client;
+    private readonly ControlNodeClientOptions _options;
     private readonly ILogger<ControlSettingsPageViewModel> _logger;
     private bool _suppressPersist;
 
@@ -35,14 +36,17 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         MainConfigHandler configHandler,
         IControlNodeStateStore stateStore,
         ControlNodeClient client,
+        ControlNodeClientOptions options,
         ILogger<ControlSettingsPageViewModel> logger) : base(configHandler)
     {
         _stateStore = stateStore;
         _client = client;
+        _options = options;
         _logger = logger;
 
         RefreshFromState(_stateStore.Current);
         ApplyLinkState(_client.LinkState);
+        HostName = _options.HostName;
 
         _stateStore.Changed += OnStateStoreChanged;
         _client.LinkStateChanged += OnLinkStateChanged;
@@ -56,6 +60,17 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     [ObservableProperty] private string _serverUrl = string.Empty;
 
     [ObservableProperty] private string _nodeId = string.Empty;
+
+    /// <summary>
+    ///     控制台里显示的名称。**由用户在这台机器上填写**；留空则上报 <see cref="HostName" />。
+    /// </summary>
+    [ObservableProperty] private string _displayName = string.Empty;
+
+    /// <summary>留空时上报的回落值（主机名）。同时作为输入框水印，省得用户去猜。</summary>
+    public string HostName { get; }
+
+    /// <summary>输入框的上限，直接取协议上限，避免这里再写一个字面量 64。</summary>
+    public int DisplayNameMaxLength => ControlNodeDisplayName.MaxLength;
 
     [ObservableProperty] private string _statusText = string.Empty;
 
@@ -99,6 +114,17 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         _client.Wake();
     }
 
+    partial void OnDisplayNameChanged(string value)
+    {
+        if (_suppressPersist)
+            return;
+
+        // 名字保留用户输入的原样（含首尾空白），规范化只发生在落盘与上报两个边界：
+        // 每次按键都 Trim 会跟输入光标打架——想在词中间打空格都做不到。
+        _stateStore.Update(state => state with { DisplayName = value });
+        _client.Wake();
+    }
+
     partial void OnServerUrlChanged(string value)
     {
         if (_suppressPersist)
@@ -132,6 +158,7 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
             GroupId = state.GroupId;
             ServerUrl = state.ServerUrl;
             NodeId = state.NodeId;
+            DisplayName = state.DisplayName ?? string.Empty;
             DrawLocked = state.DrawLocked;
         }
         finally

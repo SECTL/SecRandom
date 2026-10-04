@@ -32,7 +32,13 @@ public sealed class ControlSettingsPatchHandler(
         // 整份 patch 先全部校验通过才动手：改了一半的设备比整体失败更难排查
         // ——老师看到的是"有些设置变了、有些没变"。
         if (!ControlSettingsWhitelist.TryPlan(payload, out var changes, out var reason))
-            return ControlCommandOutcome.Failure(reason);
+        {
+            // 拒绝时把**可写清单**一起给出去：控制台能直接列出"这台机器允许改哪些设置"，
+            // 管理员不用去翻协议文档，也不用猜是自己名字写错了还是设备不支持。
+            return ControlCommandOutcome.Failure(
+                reason,
+                new { writable_paths = ControlSettingsWhitelist.WritablePaths });
+        }
 
         try
         {

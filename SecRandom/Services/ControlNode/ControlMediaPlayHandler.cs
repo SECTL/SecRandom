@@ -24,12 +24,35 @@ public sealed class ControlMediaPlayHandler(
         CancellationToken cancellationToken)
     {
         if (!ControlMediaPlayRequest.TryParse(payload, out var request, out var reason) || request is null)
-            return ControlCommandOutcome.Failure(reason);
+        {
+            // 解析失败也有话说：文本超长要告诉管理员**超了多少**，动作不支持要告诉他
+            // **支持哪些**。否则控制台上只有一个码，等于让人自己猜协议。
+            return ControlCommandOutcome.Failure(
+                reason,
+                new
+                {
+                    supported_actions = new[] { ControlMediaPlayRequest.AnnounceAction },
+                    max_text_length = ControlMediaPlayRequest.MaxTextLength
+                });
+        }
 
         // 老师关掉了语音＝这台机器不再出声。此时回"成功"会让控制台以为教室里已经播了，
         // 而真实情况是没人听到——远程操作最忌讳这种沉默失败。
+        //
+        // ⚠️ 必须**带回是哪一项关着**：只回 media_disabled 的话，管理员在控制台上
+        // 只看到一个词，既不知道是设备没装语音、还是被谁关了，也不知道该怎么办。
+        // 这个 detail 正好够控制台给出"打开语音"的下一步。
         if (!config.Data.VoiceSettings.VoiceEnable)
-            return ControlCommandOutcome.Failure("media_disabled");
+        {
+            return ControlCommandOutcome.Failure(
+                "media_disabled",
+                new
+                {
+                    voice_enable = false,
+                    // 打开它的写法直接给出来：控制台不需要自己拼协议路径。
+                    fix = new { capability = "settings.write", patch = new Dictionary<string, object?> { ["voice.enable"] = true } }
+                });
+        }
 
         try
         {

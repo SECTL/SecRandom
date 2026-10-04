@@ -37,6 +37,33 @@ public sealed class ControlNodeContractsTests
         Assert.False(root.TryGetProperty("desired_state_revision", out _));
     }
 
+    /// <summary>
+    ///     显示名用协议的 <c>display_name</c>；**没有名字时整个字段缺席**。
+    /// </summary>
+    /// <remarks>
+    ///     缺席与空串在服务端是两件事：缺席 = 保持原值，空串 = 清除。因此"本机没有名字可报"
+    ///     绝不能序列化成空串，否则会把管理端预置的名字抹掉。
+    /// </remarks>
+    [Fact]
+    public void SerializedFrame_CarriesDisplayName_AndOmitsItWhenThereIsNone()
+    {
+        var json = ControlProtocolJson.Serialize(new ControlFrame
+        {
+            Type = ControlFrameTypes.Hello,
+            NodeId = "node-1",
+            GroupId = "grp-1",
+            DisplayName = "301班讲台机"
+        });
+
+        using var document = JsonDocument.Parse(json);
+        Assert.Equal("301班讲台机", document.RootElement.GetProperty("display_name").GetString());
+
+        var bare = ControlProtocolJson.Serialize(new ControlFrame { Type = ControlFrameTypes.Hello });
+
+        using var bareDocument = JsonDocument.Parse(bare);
+        Assert.False(bareDocument.RootElement.TryGetProperty("display_name", out _));
+    }
+
     [Fact]
     public void TryParse_AcceptsUnknownFields_AndRejectsFramesWithoutType()
     {
@@ -119,7 +146,9 @@ public sealed class ControlNodeContractsTests
                 GroupId = "grp_9f8e7d6c5b4a",
                 RemoteControlEnabled = true,
                 AppliedDesiredStateRevision = 1_759_572_000_123,
-                DrawLocked = true
+                DrawLocked = true,
+                // 名字是用户在设置页填的东西，必须跨重启保留——丢了就每重启一次回落到主机名。
+                DisplayName = "301班讲台机"
             });
 
             // "重启"：新实例必须读回同一个身份与已应用的期望状态。
@@ -129,7 +158,13 @@ public sealed class ControlNodeContractsTests
             Assert.True(reloaded.Current.RemoteControlEnabled);
             Assert.Equal(1_759_572_000_123, reloaded.Current.AppliedDesiredStateRevision);
             Assert.True(reloaded.Current.DrawLocked);
+            Assert.Equal("301班讲台机", reloaded.Current.DisplayName);
             Assert.True(reloaded.Current.IsConfigured);
+
+            // 全是空白一律当"没填"：否则会带着一串空格去上报，看起来像"这台机器没有名字"。
+            store.Update(state => state with { DisplayName = "   " });
+            var cleared = new FileControlNodeStateStore(NullLogger<FileControlNodeStateStore>.Instance);
+            Assert.Null(cleared.Current.DisplayName);
         }
         finally
         {

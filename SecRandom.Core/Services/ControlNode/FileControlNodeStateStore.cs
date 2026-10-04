@@ -96,6 +96,8 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
             NodeId = stored?.NodeId?.Trim() is { Length: > 0 } nodeId ? nodeId : NewNodeId(),
             GroupId = stored?.GroupId?.Trim() ?? string.Empty,
             ServerUrl = stored?.ServerUrl?.Trim() is { Length: > 0 } serverUrl ? serverUrl : ControlNodeClientOptions.DefaultEndpoint,
+            // 名字保留用户输入的原样（只把"全是空白"统一成"没填"），Trim 交给上报时的解析。
+            DisplayName = string.IsNullOrWhiteSpace(stored?.DisplayName) ? null : stored!.DisplayName,
             RemoteControlEnabled = stored?.RemoteControlEnabled ?? false,
             AppliedDesiredStateRevision = stored?.AppliedDesiredStateRevision ?? ControlDesiredState.NeverSetRevision,
             DrawLocked = stored?.DrawLocked ?? false
@@ -121,6 +123,7 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
                 NodeId = state.NodeId,
                 GroupId = string.IsNullOrWhiteSpace(state.GroupId) ? null : state.GroupId,
                 ServerUrl = state.ServerUrl,
+                DisplayName = string.IsNullOrWhiteSpace(state.DisplayName) ? null : state.DisplayName,
                 RemoteControlEnabled = state.RemoteControlEnabled,
                 AppliedDesiredStateRevision = state.AppliedDesiredStateRevision,
                 DrawLocked = state.DrawLocked,
@@ -149,6 +152,9 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
         public string? GroupId { get; set; }
 
         public string? ServerUrl { get; set; }
+
+        /// <summary>控制台显示名。空/缺省表示用户没填，上报时回落到主机名。</summary>
+        public string? DisplayName { get; set; }
 
         public bool RemoteControlEnabled { get; set; }
 

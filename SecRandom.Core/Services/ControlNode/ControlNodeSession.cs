@@ -322,7 +322,19 @@ public sealed class ControlNodeSession
             _logger.LogInformation(
                 "集控命令 {CommandId} 已过期或缺少可用的 expires_at（{ExpiresAt}），丢弃且不执行。",
                 commandId, frame.ExpiresAt?.ToString("O") ?? "缺失/无法解析");
-            await AckAsync(commandId, new ControlCommandAck(false, ControlRejectReasons.Expired), cancellationToken)
+            await AckAsync(
+                    commandId,
+                    new ControlCommandAck(
+                        false,
+                        ControlRejectReasons.Expired,
+                        // 缺 expires_at 与"确实过期"是两件事：前者是控制端没带，
+                        // 后者是路上耽搁了。管理员看到的原因不应该一样。
+                        ControlCommandOutcome.ToDetail(new
+                        {
+                            has_expires_at = frame.ExpiresAt is not null,
+                            expires_at = frame.ExpiresAt?.ToString("O")
+                        })),
+                    cancellationToken)
                 .ConfigureAwait(false);
             return;
         }
@@ -330,7 +342,13 @@ public sealed class ControlNodeSession
         // ② 本机开关：这是设备自己的闸，与服务端判定无关。关闭时拒绝一切动作命令。
         if (!_stateStore.Current.RemoteControlEnabled)
         {
-            await AckAsync(commandId, new ControlCommandAck(false, ControlRejectReasons.LocalRemoteDisabled), cancellationToken)
+            await AckAsync(
+                    commandId,
+                    new ControlCommandAck(
+                        false,
+                        ControlRejectReasons.LocalRemoteDisabled,
+                        ControlCommandOutcome.ToDetail(new { remote_control_enabled = false })),
+                    cancellationToken)
                 .ConfigureAwait(false);
             return;
         }
@@ -340,7 +358,19 @@ public sealed class ControlNodeSession
         if (!_dispatcher.CanExecute(capability))
         {
             _logger.LogInformation("集控命令 {CommandId} 的能力不受支持：{Capability}", commandId, capability);
-            await AckAsync(commandId, new ControlCommandAck(false, ControlRejectReasons.CapabilityUnsupported), cancellationToken)
+            await AckAsync(
+                    commandId,
+                    new ControlCommandAck(
+                        false,
+                        ControlRejectReasons.CapabilityUnsupported,
+                        // 把本机能力清单带回去：控制台能直接说"这台机器不支持 X，它支持 Y Z"，
+                        // 而不是让管理员去猜是不是权限问题。
+                        ControlCommandOutcome.ToDetail(new
+                        {
+                            capability,
+                            supported = _dispatcher.DeclaredCapabilities
+                        })),
+                    cancellationToken)
                 .ConfigureAwait(false);
             return;
         }
@@ -358,7 +388,17 @@ public sealed class ControlNodeSession
         if (!TryAcceptWithinRateLimit())
         {
             _logger.LogWarning("集控命令 {CommandId} 超过本机限流窗口，已拒绝。", commandId);
-            await AckAsync(commandId, new ControlCommandAck(false, ControlRejectReasons.RateLimited), cancellationToken)
+            await AckAsync(
+                    commandId,
+                    new ControlCommandAck(
+                        false,
+                        ControlRejectReasons.RateLimited,
+                        ControlCommandOutcome.ToDetail(new
+                        {
+                            max_commands = MaxCommandsPerWindow,
+                            window_seconds = CommandRateWindow.TotalSeconds
+                        })),
+                    cancellationToken)
                 .ConfigureAwait(false);
             return;
         }
@@ -373,7 +413,7 @@ public sealed class ControlNodeSession
             var outcome = await _dispatcher
                 .ExecuteAsync(new ControlCommandInvocation(commandId, capability, frame.Kind, frame.Payload), cancellationToken)
                 .ConfigureAwait(false);
-            result = new ControlCommandResult(outcome.Ok, outcome.Reason);
+            result = new ControlCommandResult(outcome.Ok, outcome.Reason, outcome.Detail);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -382,7 +422,10 @@ public sealed class ControlNodeSession
         catch (Exception exception)
         {
             _logger.LogWarning(exception, "集控命令 {CommandId} 执行失败。", commandId);
-            result = new ControlCommandResult(false, ControlRejectReasons.ExecutionFailed);
+            result = new ControlCommandResult(
+                false,
+                ControlRejectReasons.ExecutionFailed,
+                ControlCommandOutcome.ToDetail(new { exception = exception.GetType().Name }));
         }
 
         _ledger.Remember(commandId, new ControlCommandRecord(ack, result));
@@ -422,7 +465,8 @@ public sealed class ControlNodeSession
             Type = ControlFrameTypes.Ack,
             CommandId = commandId,
             Accepted = ack.Accepted,
-            Reason = ack.Reason
+            Reason = ack.Reason,
+            Detail = ack.Detail
         }, cancellationToken);
 
     private Task ResultAsync(string commandId, ControlCommandResult result, CancellationToken cancellationToken) =>
@@ -431,7 +475,8 @@ public sealed class ControlNodeSession
             Type = ControlFrameTypes.Result,
             CommandId = commandId,
             Ok = result.Ok,
-            Reason = result.Reason
+            Reason = result.Reason,
+            Detail = result.Detail
         }, cancellationToken);
 
     private async Task SendAckAndResultAsync(
@@ -492,6 +537,8 @@ public sealed class ControlNodeSession
             Version = _options.Version,
             Capabilities = _dispatcher.DeclaredCapabilities,
             LocalRemoteAllowed = state.RemoteControlEnabled,
+            // 用户填的名字优先，留空则上报主机名（见 ControlNodeDisplayName）。
+            DisplayName = ControlNodeDisplayName.Resolve(state.DisplayName, _options.HostName),
 
             DesiredStateRevision = state.AppliedDesiredStateRevision
         };
@@ -505,6 +552,8 @@ public sealed class ControlNodeSession
             Type = ControlFrameTypes.Heartbeat,
             Capabilities = _dispatcher.DeclaredCapabilities,
             LocalRemoteAllowed = state.RemoteControlEnabled,
+            // 改了名字要随下一次心跳生效；状态变化本身会立刻唤醒一次心跳，不必等满间隔。
+            DisplayName = ControlNodeDisplayName.Resolve(state.DisplayName, _options.HostName),
             DesiredStateRevision = state.AppliedDesiredStateRevision
         };
     }

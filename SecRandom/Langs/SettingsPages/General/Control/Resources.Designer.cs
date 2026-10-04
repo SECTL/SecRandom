@@ -202,6 +202,24 @@ namespace SecRandom.Langs.SettingsPages.General.Control {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 显示名称.
+        /// </summary>
+        public static string S_RemoteControl_DisplayName {
+            get {
+                return ResourceManager.GetString("S_RemoteControl_DisplayName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 控制台节点列表里显示的名字；留空则上报本机主机名.
+        /// </summary>
+        public static string S_RemoteControl_DisplayName_D {
+            get {
+                return ResourceManager.GetString("S_RemoteControl_DisplayName_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 抽取锁定.
         /// </summary>
         public static string S_RemoteControl_DrawLocked {

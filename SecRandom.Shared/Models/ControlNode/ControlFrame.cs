@@ -51,6 +51,24 @@ public sealed record ControlFrame
     public bool? LocalRemoteAllowed { get; init; }
 
     /// <summary>
+    ///     设备显示名。**由用户在这台机器上填写**；留空时上报主机名。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         服务端取值三态：字段缺失 / <c>null</c> ⇒ **保持原值**，空串 ⇒ **清除**，
+    ///         非空 ⇒ 更新。因此"没有名字可报"时应当**整帧里不出现这个字段**，
+    ///         而不是发空串——空串会把管理端预置的名字抹掉。
+    ///         回落主机名由 <c>ControlNodeDisplayName.Resolve</c> 负责，发送侧不要各写一份。
+    ///     </para>
+    ///     <para>
+    ///         规范化（零宽字符、内部空白折叠、长度上限）由服务端在入口完成；
+    ///         客户端只提供用户真正想显示的名字。
+    ///     </para>
+    /// </remarks>
+    [JsonPropertyName("display_name")]
+    public string? DisplayName { get; init; }
+
+    /// <summary>
     ///     当前班级。**客户端不再上报这个字段**，仅为容忍旧实现/其它客户端保留解析。
     /// </summary>
     /// <remarks>
@@ -81,6 +99,21 @@ public sealed record ControlFrame
     /// <summary>拒绝或失败的原因码。</summary>
     [JsonPropertyName("reason")]
     public string? Reason { get; init; }
+
+    /// <summary>
+    ///     <c>command.ack</c> / <c>command.result</c> 的结构化上下文（可选）。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         原因码只回答"哪一类失败"，这里回答"具体什么情况"：语音关着、文本 212 字超过上限、
+    ///         哪一条设置路径不可写……没有它，控制台只能显示一个单词，管理员无从判断该怎么办。
+    ///     </para>
+    ///     <para>
+    ///         刻意**不带人话文案**：文案要按看控制台的人的语言渲染，而不是按设备本机的语言。
+    ///     </para>
+    /// </remarks>
+    [JsonPropertyName("detail")]
+    public JsonElement? Detail { get; init; }
 
     // ---- 服务端 → 节点：握手结果与命令 --------------------------------------
 

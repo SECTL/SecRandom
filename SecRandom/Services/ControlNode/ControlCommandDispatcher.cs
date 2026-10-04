@@ -75,7 +75,7 @@ public sealed class ControlCommandDispatcher(
         if (invocation.Capability is ControlCapabilities.SettingsWrite or ControlCapabilities.RosterWrite
             && await IsDrawInProgressAsync().ConfigureAwait(false))
         {
-            return ControlCommandOutcome.Failure("busy");
+            return ControlCommandOutcome.Failure("busy", new { drawing = true });
         }
 
         return invocation.Capability switch
@@ -89,7 +89,9 @@ public sealed class ControlCommandDispatcher(
                 await settingsPatch.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
             ControlCapabilities.RosterWrite =>
                 await rosterPush.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
-            _ => ControlCommandOutcome.Failure(ControlRejectReasons.CapabilityUnsupported)
+            _ => ControlCommandOutcome.Failure(
+                ControlRejectReasons.CapabilityUnsupported,
+                new { capability = invocation.Capability, supported = DeclaredCapabilities })
         };
     }
 
@@ -111,7 +113,7 @@ public sealed class ControlCommandDispatcher(
     private async Task<ControlCommandOutcome> TriggerQuickDrawAsync(CancellationToken cancellationToken)
     {
         if (drawGate.IsDrawLocked)
-            return ControlCommandOutcome.Failure("draw_locked");
+            return ControlCommandOutcome.Failure("draw_locked", new { draw_locked = true });
 
         try
         {

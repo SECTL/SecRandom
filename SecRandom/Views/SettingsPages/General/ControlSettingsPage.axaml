@@ -55,6 +55,19 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_RemoteControl_DisplayName"
+                                   Header="{x:Static lc:Resources.S_RemoteControl_DisplayName}"
+                                   Description="{x:Static lc:Resources.S_RemoteControl_DisplayName_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <!-- 留空则上报主机名：把回落值直接做成水印，用户一眼能看见"不填会显示成什么"。 -->
+                    <TextBox Text="{Binding DisplayName}"
+                             MinWidth="260"
+                             MaxLength="{Binding DisplayNameMaxLength}"
+                             PlaceholderText="{Binding HostName}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_RemoteControl_Status"
                                    Header="{x:Static lc:Resources.S_RemoteControl_Status}"
                                    Description="{x:Static lc:Resources.S_RemoteControl_Status_D}"

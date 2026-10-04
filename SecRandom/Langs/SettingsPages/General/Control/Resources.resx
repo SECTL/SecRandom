@@ -54,6 +54,12 @@
     <data name="S_RemoteControl_NodeId_D" xml:space="preserve">
         <value>安装时生成并长期保持不变，注册节点时把它填进控制台</value>
     </data>
+    <data name="S_RemoteControl_DisplayName" xml:space="preserve">
+        <value>显示名称</value>
+    </data>
+    <data name="S_RemoteControl_DisplayName_D" xml:space="preserve">
+        <value>控制台节点列表里显示的名字；留空则上报本机主机名</value>
+    </data>
     <data name="S_RemoteControl_Status" xml:space="preserve">
         <value>连接状态</value>
     </data>

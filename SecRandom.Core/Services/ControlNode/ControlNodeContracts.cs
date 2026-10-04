@@ -79,6 +79,16 @@ public sealed record ControlNodeState
 
     public bool RemoteControlEnabled { get; init; }
 
+    /// <summary>
+    ///     控制台里显示的名称。**由用户在这台机器上填写**；留空时上报主机名。
+    /// </summary>
+    /// <remarks>
+    ///     取值本身保持原样（含首尾空白），规范化只发生在两个边界：落盘时统一成"空白即无"，
+    ///     上报时由 <see cref="ControlNodeDisplayName.Resolve" /> 解析。
+    ///     在每次按键时 Trim 会跟用户的输入光标打架（想在词中间打空格都做不到）。
+    /// </remarks>
+    public string? DisplayName { get; init; }
+
     public long AppliedDesiredStateRevision { get; init; }
 
     /// <summary>最近一次应用的期望状态字段，离线期间也据此保持一致。</summary>
@@ -112,19 +122,45 @@ public sealed record ControlCommandInvocation(
     JsonElement? Payload);
 
 /// <param name="Ok">执行是否成功。拒绝（未执行）不走这个结果。</param>
-/// <param name="Reason">失败原因码，成功时为 <c>null</c>。</param>
-public readonly record struct ControlCommandOutcome(bool Ok, string? Reason)
+/// <param name="Reason">
+///     失败原因码。**只是一个稳定的码**，不带参数——参数走 <paramref name="Detail" />。
+/// </param>
+/// <param name="Detail">
+///     结构化上下文（可选）。原因码回答"哪一类失败"，这里回答"具体是什么情况"，
+///     例如 <c>media_disabled</c> 配上 <c>{ "voice_enable": false }</c>。
+/// </param>
+/// <remarks>
+///     <para>
+///         为什么不让设备直接回一句人话：文案要按**看控制台的人**的语言渲染，
+///         而不是按设备本机的语言。设备只回"码 + 结构化事实"，控制台/服务端负责翻译，
+///         否则一台日语教室机就会把日语提示塞给中文管理员。
+///     </para>
+///     <para>
+///         也不把参数编进原因码（<c>not_writable:xxx</c>）：那样控制台只能靠切字符串猜，
+///         码本身也不再稳定。参数永远放 <paramref name="Detail" />。
+///     </para>
+/// </remarks>
+public readonly record struct ControlCommandOutcome(bool Ok, string? Reason, JsonElement? Detail = null)
 {
     public static ControlCommandOutcome Success { get; } = new(true, null);
 
-    public static ControlCommandOutcome Failure(string reason) => new(false, reason);
+    public static ControlCommandOutcome Failure(string reason, object? detail = null) =>
+        new(false, reason, ToDetail(detail));
+
+    /// <summary>把匿名对象/字典转成 detail；<c>null</c> 表示没有额外上下文。</summary>
+    public static JsonElement? ToDetail(object? detail) => detail switch
+    {
+        null => null,
+        JsonElement element => element,
+        _ => JsonSerializer.SerializeToElement(detail, ControlProtocolJson.Options)
+    };
 }
 
 /// <summary><c>command.ack</c>：我**愿意**执行吗？</summary>
-public readonly record struct ControlCommandAck(bool Accepted, string? Reason);
+public readonly record struct ControlCommandAck(bool Accepted, string? Reason, JsonElement? Detail = null);
 
 /// <summary><c>command.result</c>：我**执行成功**了吗？</summary>
-public readonly record struct ControlCommandResult(bool Ok, string? Reason);
+public readonly record struct ControlCommandResult(bool Ok, string? Reason, JsonElement? Detail = null);
 
 /// <summary>
 ///     一条命令的完整回执。
@@ -196,6 +232,16 @@ public sealed record ControlNodeClientOptions
 
     /// <summary>上报给服务端的客户端版本。</summary>
     public string Version { get; init; } = "0.0.0";
+
+    /// <summary>
+    ///     设备显示名的**回落值**：用户没在设置页填名字时上报它。
+    /// </summary>
+    /// <remarks>
+    ///     默认取主机名。放在这里而不是各处直接读 <see cref="Environment.MachineName" />，
+    ///     是为了让会话状态机在测试里能注入一个确定的值，也保证"设置页的提示"与
+    ///     "真正上报的值"永远是同一个来源。
+    /// </remarks>
+    public string HostName { get; init; } = Environment.MachineName;
 
     /// <summary>等待 <c>hello.ack</c> 的上限。服务端等 <c>hello</c> 的上限是 15 秒。</summary>
     public TimeSpan HandshakeTimeout { get; init; } = TimeSpan.FromSeconds(15);

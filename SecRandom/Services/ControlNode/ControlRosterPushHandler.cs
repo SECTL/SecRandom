@@ -34,14 +34,22 @@ public sealed class ControlRosterPushHandler(
         CancellationToken cancellationToken)
     {
         if (!ControlRosterPushRequest.TryParse(payload, out var request, out var reason) || request is null)
-            return ControlCommandOutcome.Failure(reason);
+        {
+            return ControlCommandOutcome.Failure(
+                reason,
+                new
+                {
+                    supported_modes = new[] { RosterWriteModes.Replace, RosterWriteModes.Merge },
+                    max_students = ControlRosterPushRequest.MaxStudents
+                });
+        }
 
         try
         {
             return await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 if (!ProfileConfigBase.IsValidProfileName(request.ListName))
-                    return ControlCommandOutcome.Failure("invalid_list_name");
+                    return ControlCommandOutcome.Failure("invalid_list_name", new { list_name = request.ListName });
 
                 var backupPath = BackupExistingList(request.ListName);
 
@@ -50,7 +58,11 @@ public sealed class ControlRosterPushHandler(
                     : request.Students;
 
                 if (!catalog.ReplaceStudents(request.ListName, students))
-                    return ControlCommandOutcome.Failure("roster_write_failed");
+                {
+                    return ControlCommandOutcome.Failure(
+                        "roster_write_failed",
+                        new { list_name = request.ListName, count = students.Count });
+                }
 
                 if (request.Activate)
                 {

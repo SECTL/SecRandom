@@ -15,18 +15,24 @@ public sealed class ControlNodeProtocolTests
 {
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
 
+    /// <summary>测试里的"主机名"：显示名留空时就该上报它。</summary>
+    private const string TestHostName = "sr-test-host";
+
     private static ControlNodeClientOptions Options(TimeSpan? handshakeTimeout = null) => new()
     {
         Platform = "windows",
         Version = "v3.1.2",
-        HandshakeTimeout = handshakeTimeout ?? TimeSpan.FromSeconds(5)
+        HandshakeTimeout = handshakeTimeout ?? TimeSpan.FromSeconds(5),
+        // 回落值固定下来，断言才不依赖跑测试那台机器的主机名。
+        HostName = TestHostName
     };
 
-    private static ControlNodeState State(bool remoteControlEnabled = true) => new()
+    private static ControlNodeState State(bool remoteControlEnabled = true, string? displayName = null) => new()
     {
         NodeId = "b3f1c2d4e5a6",
         GroupId = "grp_9f8e7d6c5b4a",
-        RemoteControlEnabled = remoteControlEnabled
+        RemoteControlEnabled = remoteControlEnabled,
+        DisplayName = displayName
     };
 
     private static (ControlNodeSession Session, FakeNodeTransport Transport, InMemoryStateStore Store, RecordingDispatcher Dispatcher)
@@ -117,6 +123,8 @@ public sealed class ControlNodeProtocolTests
         Assert.Equal("v3.1.2", hello.Version);
         Assert.False(hello.LocalRemoteAllowed);
         Assert.Equal(ControlDesiredState.NeverSetRevision, hello.DesiredStateRevision);
+        // 显示名留空 ⇒ 上报主机名：控制台里不该只看到一串随机 node_id。
+        Assert.Equal(TestHostName, hello.DisplayName);
         Assert.Equal(["node.status.read", "draw.lock", "draw.trigger"], hello.Capabilities);
         // 班级名（名单名）**不上报**：控制平面不需要知道这间教室在上哪个班的课。
         // 钉住它是因为"顺手把当前名单名加进 hello"看起来很像无害的便利改进。
@@ -194,6 +202,73 @@ public sealed class ControlNodeProtocolTests
         await runTask;
     }
 
+    /// <summary>
+    ///     失败结果必须**带上结构化 detail**：只回一个原因码，控制台就只能显示一个单词，
+    ///     管理员既不知道具体是什么情况，也不知道下一步该做什么。
+    /// </summary>
+    [Fact]
+    public async Task CommandFailure_CarriesStructuredDetailOntoTheWire()
+    {
+        var dispatcher = new RecordingDispatcher
+        {
+            Handler = _ => ControlCommandOutcome.Failure(
+                "media_disabled",
+                new { voice_enable = false })
+        };
+        var (session, transport, _, _) = CreateSession(dispatcher: dispatcher);
+
+        var runTask = RunAsync(session, transport);
+        await transport.WaitForSentAsync(frame => frame.Type == ControlFrameTypes.Hello);
+        transport.Push(HelloAck(heartbeatSeconds: 1));
+        await transport.WaitForSentAsync(frame => frame.Type == ControlFrameTypes.Heartbeat);
+
+        transport.Push(Command(
+            ControlCapabilities.DrawTrigger,
+            expiresAt: TimeProvider.System.GetUtcNow().AddMinutes(5)));
+        await transport.WaitForSentAsync(frame => frame.Type == ControlFrameTypes.Result);
+        var result = transport.SentOfType(ControlFrameTypes.Result).Single();
+
+        Assert.False(result.Ok);
+        Assert.Equal("media_disabled", result.Reason);
+        Assert.NotNull(result.Detail);
+        Assert.False(result.Detail!.Value.GetProperty("voice_enable").GetBoolean());
+
+        transport.Close();
+        await runTask;
+    }
+
+    /// <summary>
+    ///     拒绝（ack=false）同样要带 detail：例如"本机远控开关关着"或"不支持这条能力"，
+    ///     光一个 local_remote_disabled / capability_unsupported 看不出是谁的问题。
+    /// </summary>
+    [Fact]
+    public async Task AckRejection_CarriesStructuredDetailOntoTheWire()
+    {
+        // 本机开关关着：这是设备自己的闸，命令在能力检查之前就被拒。
+        var (session, transport, _, _) = CreateSession(State(remoteControlEnabled: false));
+
+        var runTask = RunAsync(session, transport);
+        await transport.WaitForSentAsync(frame => frame.Type == ControlFrameTypes.Hello);
+        transport.Push(HelloAck(heartbeatSeconds: 1));
+        await transport.WaitForSentAsync(frame => frame.Type == ControlFrameTypes.Heartbeat);
+
+        transport.Push(Command(
+            ControlCapabilities.DrawTrigger,
+            expiresAt: TimeProvider.System.GetUtcNow().AddMinutes(5)));
+
+        await transport.WaitForSentAsync(
+            frame => frame.Type == ControlFrameTypes.Ack && frame.Accepted == false);
+
+        var ack = transport.SentOfType(ControlFrameTypes.Ack).Single();
+
+        Assert.Equal(ControlRejectReasons.LocalRemoteDisabled, ack.Reason);
+        Assert.NotNull(ack.Detail);
+        Assert.False(ack.Detail!.Value.GetProperty("remote_control_enabled").GetBoolean());
+
+        transport.Close();
+        await runTask;
+    }
+
     [Fact]
     public async Task HeartbeatInterval_ComesFromTheServer_NotFromTheClient()
     {
@@ -228,6 +303,58 @@ public sealed class ControlNodeProtocolTests
             TimeSpan.FromSeconds(5));
 
         Assert.True(transport.Sent.Count(frame => frame.Type == ControlFrameTypes.Heartbeat) > before);
+
+        transport.Close();
+        await runTask;
+    }
+
+    /// <summary>
+    ///     用户在设置页填了显示名就上报它，**优先于主机名**（见 <c>ControlNodeDisplayName</c>）。
+    /// </summary>
+    [Fact]
+    public async Task ConfiguredDisplayName_WinsOverTheHostName_OnHelloAndHeartbeat()
+    {
+        var (session, transport, _, _) = CreateSession(State(displayName: "301班讲台机"));
+
+        var runTask = RunAsync(session, transport);
+        await transport.WaitForSentAsync(frame => frame.Type == ControlFrameTypes.Hello);
+
+        Assert.Equal("301班讲台机", transport.Sent[0].DisplayName);
+
+        // 心跳带同一个名字：控制台里改名后不必重连也能看到。
+        // 用 1 秒间隔让**周期**心跳真的发出来（间隔 3600 就只能靠状态变化唤醒）。
+        transport.Push(HelloAck(heartbeatSeconds: 1));
+        await transport.WaitForSentAsync(
+            frame => frame.Type == ControlFrameTypes.Heartbeat,
+            TimeSpan.FromSeconds(5));
+
+        Assert.All(
+            transport.SentOfType(ControlFrameTypes.Heartbeat),
+            frame => Assert.Equal("301班讲台机", frame.DisplayName));
+
+        transport.Close();
+        await runTask;
+    }
+
+    /// <summary>
+    ///     改名要走"状态变化立刻上报"，不必等满一个心跳间隔——否则用户改完名字在控制台上
+    ///     半天看不到变化，会以为没生效。
+    /// </summary>
+    [Fact]
+    public async Task DisplayNameChange_IsReportedOnTheNextHeartbeatWithoutWaitingForTheInterval()
+    {
+        var (session, transport, store, _) = CreateSession();
+        var runTask = RunAsync(session, transport);
+        await transport.WaitForSentAsync(frame => frame.Type == ControlFrameTypes.Hello);
+
+        transport.Push(HelloAck(heartbeatSeconds: 3600));
+        await Task.Delay(100);
+
+        store.Update(state => state with { DisplayName = "改过的名字" });
+
+        await transport.WaitForSentAsync(
+            frame => frame.Type == ControlFrameTypes.Heartbeat && frame.DisplayName == "改过的名字",
+            TimeSpan.FromSeconds(5));
 
         transport.Close();
         await runTask;
