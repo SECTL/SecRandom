@@ -826,6 +826,34 @@ internal sealed class SecurityService(
         }
     }
 
+    /// <summary>
+    ///     导入/恢复前的一次新鲜验证。这里刻意不看任何 Sudo 状态：一次导入就能把整套防护换成
+    ///     被放宽的版本，所以只有「当前确实开着保护且存在可验证凭据」时才要求验证，否则放行
+    ///     （没有可放宽的保护，也没有可用于验证的凭据）。调用方必须已经处于能弹出验证对话框的
+    ///     线程上，宿主由 <c>SecurityArchivePreImportGuard</c> 负责把归档线程切回 UI 线程。
+    /// </summary>
+    public async Task<bool> AuthorizeProtectionDowngradeAsync(
+        SecuritySettingsConfig candidate,
+        CancellationToken cancellationToken = default)
+    {
+        lock (_gate)
+        {
+            if (!Settings.SecurityEnabled)
+                return true;
+
+            var metadata = credentialStore.LoadMetadata();
+            if (!metadata.IsReadable || GetRequiredFactors(metadata).Count == 0)
+                return true;
+
+            var current = SecuritySettingsSnapshot.Capture(Settings);
+            if (!current.IsProtectionDowngrade(SecuritySettingsSnapshot.Capture(candidate)))
+                return true;
+        }
+
+        // 调用方负责已经处于能弹出验证对话框的线程上（见 SecurityArchivePreImportGuard）
+        return await AuthorizePasswordAsync(VerificationRootWindow, () => Task.CompletedTask, cancellationToken);
+    }
+
     private List<SecurityFactor> GetRequiredFactors(SecurityCredentialMetadata metadata)
     {
         var factors = new List<SecurityFactor>();

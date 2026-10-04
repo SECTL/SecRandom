@@ -41,4 +41,7 @@
     <data name="M_InvalidProfileDefault" xml:space="preserve">
         <value>設定内の既定の名簿名が無効です</value>
     </data>
+    <data name="M_ImportSecurityDenied" xml:space="preserve">
+        <value>このバックアップはセキュリティ保護を緩めるため、認証が成功するまでインポートを中止しました</value>
+    </data>
 </root>

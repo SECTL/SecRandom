@@ -31,6 +31,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         services.AddTransient<DrawEngine>();
         services.AddSingleton<IFeatureAvailabilityService, FeatureAvailabilityService>();
         services.AddSingleton<IArchivePostImportHooks, NullArchivePostImportHooks>();
+        services.AddSingleton<IArchivePreImportGuard, NullArchivePreImportGuard>();
         services.AddSingleton<DataArchiveService>();
         return services;
     }

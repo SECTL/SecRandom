@@ -1068,6 +1068,7 @@ public partial class App : Application
                 services.AddSingleton<FirstRunOobeService>();
                 services.AddSingleton<OobeDataSetupService>();
                 services.AddSingleton<IArchivePostImportHooks, DesktopArchivePostImportHooks>();
+                services.AddSingleton<IArchivePreImportGuard, SecurityArchivePreImportGuard>();
                 services.AddSingleton<IImportExportService, ImportExportService>();
                 services.AddSingleton<ISentryFeedbackClient, SentryFeedbackClient>();
                 services.AddSingleton<IUserFeedbackService, UserFeedbackService>();

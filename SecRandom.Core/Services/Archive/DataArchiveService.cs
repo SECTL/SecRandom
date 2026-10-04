@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Models;
+using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
@@ -29,6 +30,7 @@ public sealed class DataArchiveService(
     MainConfigHandler configHandler,
     IProfileService profileService,
     IArchivePostImportHooks postImportHooks,
+    IArchivePreImportGuard preImportGuard,
     ILogger<DataArchiveService> logger)
 {
     /// <summary>
@@ -182,6 +184,8 @@ public sealed class DataArchiveService(
                     var warnings = new List<string>(inspection.Warnings);
                     var candidate = ReadSettingsCandidate(sourceCopy);
                     ValidateSettingsCandidate(candidate);
+                    // 放宽防护的候选配置必须在写入前拿到一次新鲜验证
+                    AuthorizeSecuritySettings(candidate.SecuritySettings);
 
                     SaveCurrentState();
                     var snapshot = CreateArchive(CreateBackupPath("pre_import_settings"), ArchiveKind.PreImportSettings,
@@ -624,9 +628,14 @@ public sealed class DataArchiveService(
 
     private void ValidateCandidate(string staging)
     {
-        var settings = Path.Combine(staging, "config", "settings.json");
-        if (File.Exists(settings))
-            ValidateSettingsCandidate(DeserializeSettings(File.ReadAllText(settings)));
+        var candidate = ReadCandidateSettings(staging);
+        if (candidate is not null)
+        {
+            ValidateSettingsCandidate(candidate);
+            // 放宽防护的候选配置必须在写入前拿到一次新鲜验证
+            AuthorizeSecuritySettings(candidate.SecuritySettings);
+        }
+
         foreach (var path in Directory.Exists(Path.Combine(staging, "list"))
                      ? Directory.EnumerateFiles(Path.Combine(staging, "list"), "*.json", SearchOption.AllDirectories)
                      : [])
@@ -635,6 +644,27 @@ public sealed class DataArchiveService(
                      ? Directory.EnumerateFiles(Path.Combine(staging, "history"), "*.json", SearchOption.AllDirectories)
                      : [])
             using (JsonDocument.Parse(File.ReadAllText(path))) { }
+    }
+
+    /// <summary>
+    ///     归档里可能没有 settings.json（例如只带名单的归档），此时没有可比较的安全设置。
+    /// </summary>
+    private static MainConfigModel? ReadCandidateSettings(string staging)
+    {
+        var settings = Path.Combine(staging, "config", "settings.json");
+        return File.Exists(settings) ? DeserializeSettings(File.ReadAllText(settings)) : null;
+    }
+
+    /// <summary>
+    ///     保护开关就住在被导入的 settings.json 里，所以这里必须问一次宿主：候选配置一旦放宽
+    ///     防护，就要先通过新鲜验证，否则一份构造出来的备份可以直接把安全保护关掉。
+    /// </summary>
+    private void AuthorizeSecuritySettings(SecuritySettingsConfig candidate)
+    {
+        if (preImportGuard.AuthorizeSecuritySettings(candidate))
+            return;
+
+        throw new InvalidOperationException(SecRandom.Core.Langs.Common.Resources.M_ImportSecurityDenied);
     }
 
     private static void ValidateSettingsCandidate(MainConfigModel candidate)

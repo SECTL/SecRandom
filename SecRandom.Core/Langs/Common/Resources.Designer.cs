@@ -102,6 +102,15 @@ namespace SecRandom.Core.Langs.Common {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 这份备份会放宽安全保护，未通过安全验证，已取消导入.
+        /// </summary>
+        public static string M_ImportSecurityDenied {
+            get {
+                return ResourceManager.GetString("M_ImportSecurityDenied", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 这里还什么都没有喵～.
         /// </summary>
         public static string M_Nothing {

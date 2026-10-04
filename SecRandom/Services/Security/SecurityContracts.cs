@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Models.SubConfigs;
 
 namespace SecRandom.Services.Security;
 
@@ -100,6 +101,14 @@ public interface ISecurityService
     Task<bool> UnbindUsbAsync(string bindingId, CancellationToken cancellationToken = default);
     Task<bool> UnbindUsbAsync(TopLevel xamlRoot, string bindingId, CancellationToken cancellationToken = default);
     bool TryUpdateSettings(Action update);
+
+    /// <summary>
+    ///     导入/恢复一份会放宽防护的配置前的授权检查：当前有保护且有可验证的凭据时要求重新
+    ///     输入密码，任何 Sudo 状态都不生效；没有可放宽的保护时直接放行。
+    /// </summary>
+    Task<bool> AuthorizeProtectionDowngradeAsync(
+        SecuritySettingsConfig candidate,
+        CancellationToken cancellationToken = default);
     bool IsSudoModeActive();
     bool IsGlobalSudoModeActive();
     void DeactivateGlobalSudoMode();

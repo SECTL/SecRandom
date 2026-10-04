@@ -643,14 +643,29 @@ public sealed class DataArchiveServiceTests : IDisposable
             Directory.Delete(_exportDirectory, recursive: true);
     }
 
-    private static ServiceProvider CreateProvider(IArchivePostImportHooks? hooks = null)
+    private static ServiceProvider CreateProvider(
+        IArchivePostImportHooks? hooks = null,
+        IArchivePreImportGuard? preImportGuard = null)
     {
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.None));
         services.AddCoreRuntimeServices();
         if (hooks is not null)
             services.AddSingleton(hooks);
+        if (preImportGuard is not null)
+            services.AddSingleton(preImportGuard);
         return services.BuildServiceProvider();
+    }
+
+    private sealed class RecordingPreImportGuard(bool allow) : IArchivePreImportGuard
+    {
+        public List<SecRandom.Core.Models.SubConfigs.SecuritySettingsConfig> Candidates { get; } = [];
+
+        public bool AuthorizeSecuritySettings(SecRandom.Core.Models.SubConfigs.SecuritySettingsConfig candidate)
+        {
+            Candidates.Add(candidate);
+            return allow;
+        }
     }
 
     private static IReadOnlyList<string> ReadManifestPaths(string archivePath)
@@ -671,6 +686,88 @@ public sealed class DataArchiveServiceTests : IDisposable
                     ?? throw new InvalidOperationException("manifest.json was not found in the archive.");
         return JsonSerializer.Deserialize<ArchiveManifest>(ReadEntryText(entry))
                ?? throw new InvalidOperationException("manifest.json could not be read.");
+    }
+
+    [Fact]
+    public async Task ImportSettings_WhenThePreImportGuardDeniesTheLoosenedConfiguration_KeepsCurrentData()
+    {
+        var guard = new RecordingPreImportGuard(allow: false);
+        using var provider = CreateProvider(preImportGuard: guard);
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        config.Data.SecuritySettings.SecurityEnabled = true;
+        config.Data.SecuritySettings.ProtectExit = true;
+        config.Save();
+
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var source = Path.Combine(_exportDirectory, "denied-downgrade.json");
+        await archive.ExportSettingsAsync(source, TestContext.Current.CancellationToken);
+        StampProducerVersion(source, TestV3ProducerVersion);
+        RewriteSettingsEnvelope(source, config, candidate =>
+        {
+            candidate.SecuritySettings.SecurityEnabled = false;
+            candidate.SecuritySettings.ProtectExit = false;
+        });
+
+        var settingsPath = config.Data.ConfigFilePath;
+        var settingsBefore = File.ReadAllText(settingsPath);
+        var backup = Path.Combine(_dataRoot, "backup");
+        var backupsBefore = Directory.Exists(backup) ? Directory.GetFiles(backup).Length : 0;
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => archive.ImportSettingsAsync(source, TestContext.Current.CancellationToken));
+
+        Assert.Contains("安全验证", exception.Message);
+        Assert.Equal(settingsBefore, File.ReadAllText(settingsPath));
+        Assert.True(config.Data.SecuritySettings.SecurityEnabled);
+        Assert.True(config.Data.SecuritySettings.ProtectExit);
+        // 拒绝发生在快照之前：既不写数据也不留恢复包
+        Assert.Equal(backupsBefore, Directory.Exists(backup) ? Directory.GetFiles(backup).Length : 0);
+
+        var candidate = Assert.Single(guard.Candidates);
+        Assert.False(candidate.SecurityEnabled);
+    }
+
+    [Fact]
+    public async Task ImportSettings_WhenThePreImportGuardAllowsTheConfiguration_CommitsIt()
+    {
+        var guard = new RecordingPreImportGuard(allow: true);
+        using var provider = CreateProvider(preImportGuard: guard);
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        config.Data.SecuritySettings.SecurityEnabled = true;
+        config.Data.General.Backup.AutoBackupIntervalDays = 7;
+        config.Save();
+
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var source = Path.Combine(_exportDirectory, "allowed-downgrade.json");
+        await archive.ExportSettingsAsync(source, TestContext.Current.CancellationToken);
+        StampProducerVersion(source, TestV3ProducerVersion);
+        RewriteSettingsEnvelope(source, config, candidate =>
+            candidate.SecuritySettings.SecurityEnabled = false);
+        config.Data.General.Backup.AutoBackupIntervalDays = 3;
+        config.Save();
+
+        var result = await archive.ImportSettingsAsync(source, TestContext.Current.CancellationToken);
+
+        Assert.Equal(7, config.Data.General.Backup.AutoBackupIntervalDays);
+        Assert.False(config.Data.SecuritySettings.SecurityEnabled);
+        Assert.Single(guard.Candidates);
+        Assert.True(File.Exists(result.SnapshotPath));
+    }
+
+    /// <summary>
+    ///     用当前的配置做一份副本、按需求改完再写回设置信封，用来构造「会放宽防护」的导入物。
+    /// </summary>
+    private static void RewriteSettingsEnvelope(
+        string source,
+        MainConfigHandler config,
+        Action<SecRandom.Core.Models.MainConfigModel> mutate)
+    {
+        var candidate = JsonSerializer.Deserialize<SecRandom.Core.Models.MainConfigModel>(
+            JsonSerializer.Serialize(config.Data, ConfigServiceBase.JsonOptions), ConfigServiceBase.JsonOptions)!;
+        mutate(candidate);
+        var envelope = JsonNode.Parse(File.ReadAllText(source))!;
+        envelope["settings"] = JsonNode.Parse(JsonSerializer.SerializeToUtf8Bytes(candidate, ConfigServiceBase.JsonOptions));
+        File.WriteAllText(source, envelope.ToJsonString());
     }
 
     /// <summary>Appends one file entry to an existing archive and keeps its manifest consistent.</summary>

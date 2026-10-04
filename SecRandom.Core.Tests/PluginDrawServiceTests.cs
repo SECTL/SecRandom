@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Verification;
@@ -272,6 +273,9 @@ public sealed class PluginDrawServiceTests : IDisposable
                 update();
             return Task.FromResult(allow);
         }
+
+        public Task<bool> AuthorizeProtectionDowngradeAsync(SecuritySettingsConfig candidate, CancellationToken cancellationToken = default)
+            => Task.FromResult(allow);
 
         public Task<bool> SetPasswordAsync(string password, string? currentPassword = null, CancellationToken cancellationToken = default)
             => Task.FromResult(allow);
