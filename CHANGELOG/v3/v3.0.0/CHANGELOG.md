@@ -11,7 +11,7 @@
 > 感谢您陪伴 SecRandom 一路走到这里！
 
 
-# v3.0.0 - Nonomi (十六夜野宫) release 1
+# v3.0.0 - Nonomi (十六夜野宫)
 
 ## 🚀 主要更新
 
