@@ -16,6 +16,16 @@ public interface IControlNodeTransport : IAsyncDisposable
 
     /// <summary>接收一帧。返回 <c>null</c> 表示连接已经结束。</summary>
     Task<ControlFrame?> ReceiveAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    ///     对端关闭连接时给出的原因，例如服务端接管同一 <c>node_id</c> 时的 <c>replaced</c>。
+    /// </summary>
+    /// <remarks>
+    ///     协议里多数断开是静默的（服务端不发错误帧），但"同一 <c>node_id</c> 被新连接接管"
+    ///     这一种带 close reason。把它透出来，"莫名掉线"才能变成"有另一台机器在用同一个 node_id"
+    ///     这种可以直接排查的结论。没有原因时为 <c>null</c>。
+    /// </remarks>
+    string? CloseReason { get; }
 }
 
 /// <summary>建立一条节点连接。带凭据的地址由实现负责，凭据**不得进入 URL**。</summary>
@@ -90,11 +100,6 @@ public interface IControlNodeStateStore
     event EventHandler<ControlNodeState>? Changed;
 }
 
-/// <summary>节点向服务端上报的即时状态（当前班级等）。</summary>
-public interface IControlNodeStatusSource
-{
-    string? CurrentClass { get; }
-}
 
 /// <param name="CommandId">命令 ID。幂等键。</param>
 /// <param name="Capability">命令声明的能力。</param>

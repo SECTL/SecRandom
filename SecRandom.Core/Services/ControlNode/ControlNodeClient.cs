@@ -26,7 +26,6 @@ public sealed class ControlNodeClient
     private readonly IControlNodeCredentialProvider _credentialProvider;
     private readonly IControlNodeStateStore _stateStore;
     private readonly IControlCommandDispatcher _dispatcher;
-    private readonly IControlNodeStatusSource _statusSource;
     private readonly ControlNodeClientOptions _options;
     private readonly ILogger<ControlNodeClient> _logger;
     private readonly ILogger<ControlNodeSession> _sessionLogger;
@@ -39,7 +38,6 @@ public sealed class ControlNodeClient
         IControlNodeCredentialProvider credentialProvider,
         IControlNodeStateStore stateStore,
         IControlCommandDispatcher dispatcher,
-        IControlNodeStatusSource statusSource,
         ControlNodeClientOptions options,
         ILogger<ControlNodeClient> logger,
         ILogger<ControlNodeSession> sessionLogger)
@@ -48,7 +46,6 @@ public sealed class ControlNodeClient
         _credentialProvider = credentialProvider;
         _stateStore = stateStore;
         _dispatcher = dispatcher;
-        _statusSource = statusSource;
         _options = options;
         _logger = logger;
         _sessionLogger = sessionLogger;
@@ -184,9 +181,22 @@ public sealed class ControlNodeClient
                 .ConfigureAwait(false);
 
             var session = new ControlNodeSession(
-                transport, _stateStore, _dispatcher, _statusSource, _options, _sessionLogger);
+                transport, _stateStore, _dispatcher, _options, _sessionLogger);
 
-            return await session.RunAsync(cancellationToken).ConfigureAwait(false);
+            // 只有**收到 hello.ack 之后**才算连上：从发起到握手之间，凭据可能被拒、
+            // 节点可能未登记、服务端可能不可达。少了这一步，界面上永远看不到"已连接"。
+            void OnHandshaken(object? sender, int heartbeatSeconds) =>
+                SetLinkState(new ControlNodeLinkState(ControlNodeLinkStatus.Connected));
+
+            session.Handshaken += OnHandshaken;
+            try
+            {
+                return await session.RunAsync(cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                session.Handshaken -= OnHandshaken;
+            }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

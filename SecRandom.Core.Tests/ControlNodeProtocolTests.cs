@@ -43,7 +43,6 @@ public sealed class ControlNodeProtocolTests
             transport,
             store,
             commands,
-            new StaticStatusSource("高一（1）班"),
             Options(handshakeTimeout),
             NullLogger<ControlNodeSession>.Instance,
             timeProvider);
@@ -119,7 +118,9 @@ public sealed class ControlNodeProtocolTests
         Assert.False(hello.LocalRemoteAllowed);
         Assert.Equal(ControlDesiredState.NeverSetRevision, hello.DesiredStateRevision);
         Assert.Equal(["node.status.read", "draw.lock", "draw.trigger"], hello.Capabilities);
-        Assert.Equal("高一（1）班", hello.CurrentClass);
+        // 班级名（名单名）**不上报**：控制平面不需要知道这间教室在上哪个班的课。
+        // 钉住它是因为"顺手把当前名单名加进 hello"看起来很像无害的便利改进。
+        Assert.Null(hello.CurrentClass);
 
         transport.Push(HelloAck());
         await Task.Delay(50);
@@ -167,6 +168,30 @@ public sealed class ControlNodeProtocolTests
         var result = await runTask;
         Assert.Equal(ControlSessionEndReason.ConnectionLost, result.Reason);
         Assert.Equal("handshake_timeout", result.Detail);
+    }
+
+    /// <summary>
+    ///     握手成功必须**触发事件**，否则上层只能一直显示"连接中"：
+    ///     发起连接 ≠ 连上（凭据可能被拒、节点可能未登记）。
+    /// </summary>
+    [Fact]
+    public async Task HandshakeRaisesTheHandshakenEvent_SoTheUiCanShowConnected()
+    {
+        var (session, transport, _, _) = CreateSession();
+        var seen = new List<int>();
+        session.Handshaken += (_, seconds) => seen.Add(seconds);
+
+        var runTask = RunAsync(session, transport);
+        await transport.WaitForSentAsync(frame => frame.Type == ControlFrameTypes.Hello);
+
+        Assert.Empty(seen);
+        transport.Push(HelloAck(heartbeatSeconds: 1));
+        await transport.WaitForSentAsync(frame => frame.Type == ControlFrameTypes.Heartbeat, TimeSpan.FromSeconds(5));
+
+        Assert.Equal([1], seen);
+
+        transport.Close();
+        await runTask;
     }
 
     [Fact]
@@ -230,6 +255,60 @@ public sealed class ControlNodeProtocolTests
 
         transport.Close();
         await runTask;
+    }
+
+    [Fact]
+    public async Task CommandWithoutUsableExpiresAt_IsRejectedInsteadOfExecuted()
+    {
+        // 协议 §11 自查清单：expires_at **解析失败也拒绝**。
+        // 缺失与无法解析对节点是同一件事——无法证明"还没过期"就不能执行，
+        // 但仍然要回 ack，让控制台看到"设备拒绝了"而不是"设备掉线了"。
+        var (session, transport, _, dispatcher) = CreateSession();
+        var runTask = RunAsync(session, transport);
+        await transport.WaitForSentAsync(frame => frame.Type == ControlFrameTypes.Hello);
+        transport.Push(HelloAck());
+
+        transport.Push(new ControlFrame
+        {
+            Type = ControlFrameTypes.Command,
+            CommandId = "cmd_no_expiry",
+            Capability = ControlCapabilities.DrawTrigger
+        });
+
+        var malformed = ControlProtocolJson.TryParse(
+            """{"type":"command","command_id":"cmd_bad_expiry","capability":"draw.trigger","expires_at":"not-a-date"}""");
+        Assert.NotNull(malformed);
+        Assert.Null(malformed!.ExpiresAt);
+        transport.Push(malformed);
+
+        await transport.WaitForSentAsync(
+            _ => transport.SentOfType(ControlFrameTypes.Ack).Count == 2,
+            TimeSpan.FromSeconds(5));
+
+        Assert.Empty(dispatcher.Invocations);
+        Assert.All(
+            transport.SentOfType(ControlFrameTypes.Ack),
+            ack => Assert.Equal(ControlRejectReasons.Expired, ack.Reason));
+
+        transport.Close();
+        await runTask;
+    }
+
+    [Fact]
+    public async Task ServerCloseReason_IsSurfacedInTheSessionResult()
+    {
+        // 同一 node_id 被新连接接管时，服务端会带 reason=replaced 关闭旧连接（协议 §5）。
+        // 这条原因必须能带出来，否则"莫名掉线"与"两台机器共用一个 node_id"分不清。
+        var (session, transport, _, _) = CreateSession();
+        var runTask = RunAsync(session, transport);
+        await transport.WaitForSentAsync(frame => frame.Type == ControlFrameTypes.Hello);
+        transport.Push(HelloAck());
+
+        transport.Close("replaced");
+
+        var result = await runTask;
+        Assert.Equal(ControlSessionEndReason.ConnectionLost, result.Reason);
+        Assert.Equal("replaced", result.Detail);
     }
 
     [Fact]
@@ -528,7 +607,6 @@ public sealed class ControlNodeProtocolTests
             transport,
             store,
             new RecordingDispatcher(),
-            new StaticStatusSource(null),
             Options(),
             NullLogger<ControlNodeSession>.Instance);
 
@@ -601,6 +679,8 @@ public sealed class ControlNodeProtocolTests
         public IReadOnlyList<ControlFrame> SentOfType(string type) =>
             Sent.Where(frame => frame.Type == type).ToList();
 
+        public string? CloseReason { get; private set; }
+
         public Task SendAsync(ControlFrame frame, CancellationToken cancellationToken)
         {
             lock (_gate)
@@ -616,7 +696,11 @@ public sealed class ControlNodeProtocolTests
 
         public void Push(ControlFrame frame) => _inbound.Writer.TryWrite(frame);
 
-        public void Close() => _inbound.Writer.TryWrite(null);
+        public void Close(string? reason = null)
+        {
+            CloseReason = reason;
+            _inbound.Writer.TryWrite(null);
+        }
 
         public ValueTask DisposeAsync()
         {
@@ -728,10 +812,5 @@ public sealed class ControlNodeProtocolTests
 
             return Task.FromResult(Handler?.Invoke(invocation) ?? ControlCommandOutcome.Success);
         }
-    }
-
-    private sealed class StaticStatusSource(string? currentClass) : IControlNodeStatusSource
-    {
-        public string? CurrentClass { get; } = currentClass;
     }
 }

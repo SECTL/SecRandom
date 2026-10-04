@@ -23,7 +23,7 @@ public sealed class ControlNodeSession
     private readonly IControlNodeTransport _transport;
     private readonly IControlNodeStateStore _stateStore;
     private readonly IControlCommandDispatcher _dispatcher;
-    private readonly IControlNodeStatusSource _statusSource;
+
     private readonly ControlNodeClientOptions _options;
     private readonly ILogger _logger;
     private readonly TimeProvider _timeProvider;
@@ -42,7 +42,7 @@ public sealed class ControlNodeSession
         IControlNodeTransport transport,
         IControlNodeStateStore stateStore,
         IControlCommandDispatcher dispatcher,
-        IControlNodeStatusSource statusSource,
+
         ControlNodeClientOptions options,
         ILogger<ControlNodeSession> logger,
         TimeProvider? timeProvider = null)
@@ -50,7 +50,7 @@ public sealed class ControlNodeSession
         _transport = transport;
         _stateStore = stateStore;
         _dispatcher = dispatcher;
-        _statusSource = statusSource;
+
         _options = options;
         _logger = logger;
         _timeProvider = timeProvider ?? TimeProvider.System;
@@ -60,6 +60,16 @@ public sealed class ControlNodeSession
 
     /// <summary>服务端下发的心跳间隔；握手前为 <c>null</c>。</summary>
     public int? NegotiatedHeartbeatSeconds { get; private set; }
+
+    /// <summary>
+    ///     握手成功（收到 <c>hello.ack</c>）时触发，参数是服务端下发的心跳间隔（秒）。
+    /// </summary>
+    /// <remarks>
+    ///     连接状态必须由这条事件驱动，而不是"发起连接时就算连上了"：
+    ///     从发起连接到握手完成之间，凭据可能被拒、节点可能未登记、服务端可能不可达。
+    ///     没有它，上层只能一直显示"连接中"——连上了也看不出来。
+    /// </remarks>
+    public event EventHandler<int>? Handshaken;
 
     public async Task<ControlSessionResult> RunAsync(CancellationToken cancellationToken)
     {
@@ -123,6 +133,16 @@ public sealed class ControlNodeSession
             _stateStore.Current.NodeId, _stateStore.Current.GroupId, NegotiatedHeartbeatSeconds,
             _stateStore.Current.AppliedDesiredStateRevision);
 
+        // 通知上层"真的连上了"。订阅方抛异常不能带走连接循环。
+        try
+        {
+            Handshaken?.Invoke(this, NegotiatedHeartbeatSeconds.Value);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogDebug(exception, "集控握手事件订阅方抛出异常。");
+        }
+
         using var sessionSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var heartbeatTask = RunHeartbeatAsync(NegotiatedHeartbeatSeconds.Value, sessionSource);
 
@@ -156,7 +176,13 @@ public sealed class ControlNodeSession
                 }
 
                 if (frame is null)
+                {
+                    // 对端关闭时的原因（例如同一 node_id 被新连接接管 = replaced）要带出去：
+                    // 协议里多数断开是静默的，"莫名掉线"和"有另一台机器用同一个 node_id"
+                    // 必须能分辨，否则排查只能靠猜。
+                    detail = _transport.CloseReason is { Length: > 0 } closeReason ? closeReason : "peer_closed";
                     break;
+                }
 
                 await DispatchAsync(frame, sessionSource.Token).ConfigureAwait(false);
             }
@@ -289,9 +315,13 @@ public sealed class ControlNodeSession
         // ① 过期检查必须最先，且必须在执行之前。
         //    网络乱序与重连补投都可能让一条过期命令到达；补执行三小时前的"立即抽取"
         //    在课间生效是完全不可接受的，所以这里**不依赖服务端已经拦过**。
-        if (frame.ExpiresAt is { } expiresAt && _timeProvider.GetUtcNow() >= expiresAt)
+        //    **缺失或解析不出来同样拒绝**：无法证明"还没过期"就不能执行（协议 §11 自查清单）；
+        //    这一帧仍要回 ack，让控制台看到"设备拒绝了"而不是"设备掉线了"。
+        if (frame.ExpiresAt is not { } expiresAt || _timeProvider.GetUtcNow() >= expiresAt)
         {
-            _logger.LogInformation("集控命令 {CommandId} 已过期（{ExpiresAt:O}），丢弃且不执行。", commandId, expiresAt);
+            _logger.LogInformation(
+                "集控命令 {CommandId} 已过期或缺少可用的 expires_at（{ExpiresAt}），丢弃且不执行。",
+                commandId, frame.ExpiresAt?.ToString("O") ?? "缺失/无法解析");
             await AckAsync(commandId, new ControlCommandAck(false, ControlRejectReasons.Expired), cancellationToken)
                 .ConfigureAwait(false);
             return;
@@ -462,7 +492,7 @@ public sealed class ControlNodeSession
             Version = _options.Version,
             Capabilities = _dispatcher.DeclaredCapabilities,
             LocalRemoteAllowed = state.RemoteControlEnabled,
-            CurrentClass = Normalize(_statusSource.CurrentClass),
+
             DesiredStateRevision = state.AppliedDesiredStateRevision
         };
     }
@@ -475,12 +505,9 @@ public sealed class ControlNodeSession
             Type = ControlFrameTypes.Heartbeat,
             Capabilities = _dispatcher.DeclaredCapabilities,
             LocalRemoteAllowed = state.RemoteControlEnabled,
-            CurrentClass = Normalize(_statusSource.CurrentClass),
             DesiredStateRevision = state.AppliedDesiredStateRevision
         };
     }
-
-    private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private async Task<bool> SendFrameAsync(ControlFrame frame, CancellationToken cancellationToken)
     {

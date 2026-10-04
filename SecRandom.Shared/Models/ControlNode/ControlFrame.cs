@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -49,6 +50,14 @@ public sealed record ControlFrame
     [JsonPropertyName("local_remote_allowed")]
     public bool? LocalRemoteAllowed { get; init; }
 
+    /// <summary>
+    ///     当前班级。**客户端不再上报这个字段**，仅为容忍旧实现/其它客户端保留解析。
+    /// </summary>
+    /// <remarks>
+    ///     班级名（点名单名称）属于教学场景里的隐私内容：控制平面只需要知道"哪台机器、
+     ///     支持什么能力、开没开本机开关"，不需要知道这间教室在上哪个班的课。
+    ///     因此发送侧（<c>hello</c> / <c>heartbeat</c>）不再填充它，也不要再填。
+    /// </remarks>
     [JsonPropertyName("current_class")]
     public string? CurrentClass { get; init; }
 
@@ -92,8 +101,22 @@ public sealed record ControlFrame
     [JsonPropertyName("payload")]
     public JsonElement? Payload { get; init; }
 
-    /// <summary>过期时间。**必须在执行之前检查**，已过则丢弃。</summary>
+    /// <summary>
+    ///     过期时间。**必须在执行之前检查**；已过则丢弃。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         反序列化是**宽容**的：无法解析的值会变成 <c>null</c> 而不是抛异常。
+    ///         否则一个格式怪异的 <c>expires_at</c> 会让整帧解析失败，节点只能静默断开连接——
+    ///         而协议要求的是"解析失败也拒绝这条命令"（回 <c>accepted: false</c>），
+    ///         让控制台能看见设备到底拒绝还是掉线了。
+    ///     </para>
+    ///     <para>
+    ///         因此**缺失与无法解析对节点是同一件事**：无法证明"还没过期"，就不能执行。
+    ///     </para>
+    /// </remarks>
     [JsonPropertyName("expires_at")]
+    [JsonConverter(typeof(LenientDateTimeOffsetJsonConverter))]
     public DateTimeOffset? ExpiresAt { get; init; }
 
     /// <summary>握手被拒时的错误码，见 <see cref="ControlErrorCodes" />。</summary>
@@ -103,8 +126,7 @@ public sealed record ControlFrame
 
 /// <summary>
 ///     帧的序列化设置。
-/// </summary>
-/// <remarks>
+/// </summary><remarks>
 ///     所有字段都带显式 <see cref="JsonPropertyNameAttribute" />，因此命名策略不参与；
 ///     写出的空字段一律省略（与服务端"字段缺失与 <c>null</c> 等价"的约定一致），
 ///     读取时大小写不敏感，单帧上限由传输层按协议设为 64 KiB。
@@ -139,8 +161,7 @@ public static class ControlProtocolJson
     }
 
     /// <summary>读取 <c>desired_state</c> 载荷中的 <c>draw_locked</c>；其它字段一律忽略。</summary>
-    public static ControlDesiredState? ReadDesiredState(JsonElement? payload)
-    {
+    public static ControlDesiredState? ReadDesiredState(JsonElement? payload)    {
         if (payload is not { ValueKind: JsonValueKind.Object } element)
             return null;
 
@@ -153,5 +174,41 @@ public static class ControlProtocolJson
             JsonValueKind.False => new ControlDesiredState(false),
             _ => null
         };
+    }
+}
+
+/// <summary>
+///     <c>expires_at</c> 的宽容读取：解析不出来就是 <c>null</c>，绝不抛异常。
+/// </summary>
+/// <remarks>
+///     若这里抛 <c>JsonException</c>，整帧反序列化会失败，节点只能静默断开 ——
+///     而协议要求"解析失败也拒绝这条命令"，让控制台看到一次明确的 <c>accepted: false</c>。
+/// </remarks>
+internal sealed class LenientDateTimeOffsetJsonConverter : JsonConverter<DateTimeOffset?>
+{
+    public override DateTimeOffset? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Null)
+            return null;
+
+        if (reader.TokenType != JsonTokenType.String)
+        {
+            // 数字时间戳等其它形状：跳过而不报错，交给调用方按"无法确认未过期"拒绝。
+            reader.Skip();
+            return null;
+        }
+
+        var raw = reader.GetString();
+        return DateTimeOffset.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)
+            ? parsed
+            : null;
+    }
+
+    public override void Write(Utf8JsonWriter writer, DateTimeOffset? value, JsonSerializerOptions options)
+    {
+        if (value is { } timestamp)
+            writer.WriteStringValue(timestamp);
+        else
+            writer.WriteNullValue();
     }
 }

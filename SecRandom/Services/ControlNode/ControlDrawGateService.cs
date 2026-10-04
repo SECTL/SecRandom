@@ -1,4 +1,3 @@
-using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.ControlNode;
 
 namespace SecRandom.Services.ControlNode;
@@ -20,10 +19,4 @@ public sealed class ControlDrawGateService(IControlNodeStateStore stateStore) : 
             return state.RemoteControlEnabled && state.DrawLocked;
         }
     }
-}
-
-/// <summary>节点上报的即时状态：当前班级取当前点名学生名单名。</summary>
-public sealed class ControlNodeStatusSource(IProfileService profileService) : IControlNodeStatusSource
-{
-    public string? CurrentClass => profileService.StudentListConfig?.Name;
 }

@@ -20,6 +20,9 @@ public sealed class WebSocketControlNodeTransport(ClientWebSocket socket, ILogge
     private const int MaxFrameBytes = 64 * 1024;
     private const int ReceiveBufferSize = 4096;
 
+    /// <inheritdoc />
+    public string? CloseReason { get; private set; }
+
     public async Task SendAsync(ControlFrame frame, CancellationToken cancellationToken)
     {
         var payload = Encoding.UTF8.GetBytes(ControlProtocolJson.Serialize(frame));
@@ -42,7 +45,17 @@ public sealed class WebSocketControlNodeTransport(ClientWebSocket socket, ILogge
                 .ConfigureAwait(false);
 
             if (result.MessageType == WebSocketMessageType.Close)
+            {
+                // 关闭码与原因要留下来：服务端接管同一 node_id 时会用 CloseStatusDescription="replaced"。
+                CloseReason = string.IsNullOrWhiteSpace(result.CloseStatusDescription)
+                    ? result.CloseStatus?.ToString()
+                    : result.CloseStatusDescription;
+
+                if (!string.IsNullOrWhiteSpace(CloseReason))
+                    logger.LogInformation("集控节点连接被对端关闭：{Reason}", CloseReason);
+
                 return null;
+            }
 
             if (result.MessageType != WebSocketMessageType.Text)
             {

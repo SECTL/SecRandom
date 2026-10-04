@@ -1157,9 +1157,13 @@ public partial class App : Application
                     });
                     services.AddSingleton<IControlNodeStateStore, FileControlNodeStateStore>();
                     services.AddSingleton<IControlDrawGate, ControlDrawGateService>();
-                    services.AddSingleton<IControlNodeStatusSource, ControlNodeStatusSource>();
                     services.AddSingleton<IControlNodeCredentialProvider, ControlNodeCredentialProvider>();
                     services.AddSingleton<IControlNodeTransportFactory, WebSocketControlNodeTransportFactory>();
+                    // 三个能力执行器各自独立：它们依赖的界面/配置/名单服务互不相同，
+                    // 拆开才能在测试里单独替换，也避免分发器变成一个巨大的文件。
+                    services.AddSingleton<ControlMediaPlayHandler>();
+                    services.AddSingleton<ControlSettingsPatchHandler>();
+                    services.AddSingleton<ControlRosterPushHandler>();
                     services.AddSingleton<IControlCommandDispatcher, ControlCommandDispatcher>();
                     services.AddSingleton<ControlNodeClient>();
                     services.AddHostedService<ControlNodeHostedService>();
