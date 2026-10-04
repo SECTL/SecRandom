@@ -34,6 +34,8 @@ public sealed class ControlCommandDispatcher(
     ControlMediaPlayHandler mediaPlay,
     ControlSettingsPatchHandler settingsPatch,
     ControlRosterPushHandler rosterPush,
+    ControlRosterReadHandler rosterRead,
+    ControlSettingsReadHandler settingsRead,
     ILogger<ControlCommandDispatcher> logger) : IControlCommandDispatcher
 {
     public IReadOnlyList<string> DeclaredCapabilities { get; } =
@@ -43,7 +45,9 @@ public sealed class ControlCommandDispatcher(
         ControlCapabilities.DrawTrigger,
         ControlCapabilities.MediaPlay,
         ControlCapabilities.SettingsWrite,
-        ControlCapabilities.RosterWrite
+        ControlCapabilities.RosterWrite,
+        ControlCapabilities.RosterRead,
+        ControlCapabilities.SettingsRead
     ];
 
     /// <summary>
@@ -61,6 +65,8 @@ public sealed class ControlCommandDispatcher(
         ControlCapabilities.MediaPlay => true,
         ControlCapabilities.SettingsWrite => true,
         ControlCapabilities.RosterWrite => true,
+        ControlCapabilities.RosterRead => true,
+        ControlCapabilities.SettingsRead => true,
         _ => false
     };
 
@@ -89,6 +95,10 @@ public sealed class ControlCommandDispatcher(
                 await settingsPatch.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
             ControlCapabilities.RosterWrite =>
                 await rosterPush.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
+            ControlCapabilities.RosterRead =>
+                await rosterRead.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
+            ControlCapabilities.SettingsRead =>
+                await settingsRead.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
             _ => ControlCommandOutcome.Failure(
                 ControlRejectReasons.CapabilityUnsupported,
                 new { capability = invocation.Capability, supported = DeclaredCapabilities })

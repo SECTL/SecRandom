@@ -413,7 +413,7 @@ public sealed class ControlNodeSession
             var outcome = await _dispatcher
                 .ExecuteAsync(new ControlCommandInvocation(commandId, capability, frame.Kind, frame.Payload), cancellationToken)
                 .ConfigureAwait(false);
-            result = new ControlCommandResult(outcome.Ok, outcome.Reason, outcome.Detail);
+            result = new ControlCommandResult(outcome.Ok, outcome.Reason, outcome.Detail, outcome.Payload);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -476,7 +476,8 @@ public sealed class ControlNodeSession
             CommandId = commandId,
             Ok = result.Ok,
             Reason = result.Reason,
-            Detail = result.Detail
+            Detail = result.Detail,
+            Payload = result.Payload
         }, cancellationToken);
 
     private async Task SendAckAndResultAsync(

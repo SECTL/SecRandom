@@ -59,7 +59,7 @@ public sealed record ControlMediaPlayRequest(string Action, string Text)
 
 /// <summary>一条经过校验的设置变更。</summary>
 /// <param name="Path">协议里的路径名（如 <c>voice.volume</c>）。</param>
-/// <param name="Value">已按该路径的类型与范围校验过的值（<see cref="int" /> 或 <see cref="bool" />）。</param>
+/// <param name="Value">已按该路径的类型与范围校验过的值（<see cref="bool" />、<see cref="int" />、<see cref="double" />、<see cref="string" /> 或枚举成员）。</param>
 public sealed record ControlSettingsChange(string Path, object Value);
 
 /// <summary>
@@ -67,13 +67,20 @@ public sealed record ControlSettingsChange(string Path, object Value);
 /// </summary>
 /// <remarks>
 ///     <para>
-///         为什么是白名单而不是黑名单：设置文件是整个应用的配置面，黑名单只要漏一项
+///         这个类现在只是 <see cref="ControlSettingsCatalog" /> 的对外壳：目录从
+///         <c>MainConfigModel</c> 反射推导，新增一项设置不必再改这里。
+///         <c>TryPlan</c> / <c>Apply</c> / <c>WritablePaths</c> 的签名与原因码保持不变，
+///         因为桌面端的 <c>ControlSettingsPatchHandler</c> 和既有回归测试都按它们工作。
+///     </para>
+///     <para>
+///         为什么仍然是白名单式：设置文件是整个应用的配置面，黑名单只要漏一项
 ///         （或者将来新增一项）就等于把那一项悄悄开放了。白名单漏项只是"暂时还不能改"，
 ///         看得见、也提得出需求。
 ///     </para>
 ///     <para>
 ///         <b>安全设置、集控自身设置、桌面集成、更新设置永远不进名单。</b>前两者是设备所有权
 ///         （能关掉密码／能把自己接到别的组、把地址指向别的服务器），后两者是持久化与运行面入口。
+///         逐条排除规则见 <see cref="ControlSettingsCatalog" />。
 ///     </para>
 ///     <para>
 ///         路径名是**协议的一部分**：控制台按它下发，改名等于让旧控制台发来的 patch 全部被拒。
@@ -81,33 +88,8 @@ public sealed record ControlSettingsChange(string Path, object Value);
 /// </remarks>
 public static class ControlSettingsWhitelist
 {
-    private delegate bool TryConvert(JsonElement element, out object value, out string reason);
-
-    private sealed record PatchField(TryConvert Convert, Action<MainConfigModel, object> Apply);
-
-    private static readonly Dictionary<string, PatchField> Fields = new(StringComparer.Ordinal)
-    {
-        ["roll_call.half_repeat"] =
-            Integer(1, 20, static (model, value) => model.RollCallSettings.HalfRepeat = value),
-        ["quick_draw.disable_after_click"] =
-            Integer(1, 20, static (model, value) => model.QuickDrawSettings.DisableAfterClick = value),
-        ["lottery.half_repeat"] =
-            Integer(1, 20, static (model, value) => model.LotterySettings.HalfRepeat = value),
-
-        ["notification.roll_call.enabled"] =
-            Boolean(static (model, value) => model.NotificationSettings.RollCall.Enabled = value),
-        ["notification.quick_draw.enabled"] =
-            Boolean(static (model, value) => model.NotificationSettings.QuickDraw.Enabled = value),
-        ["notification.lottery.enabled"] =
-            Boolean(static (model, value) => model.NotificationSettings.Lottery.Enabled = value),
-
-        ["voice.enable"] = Boolean(static (model, value) => model.VoiceSettings.VoiceEnable = value),
-        ["voice.volume"] = Integer(0, 100, static (model, value) => model.VoiceSettings.VolumeSize = value),
-        ["voice.speech_rate"] = Integer(50, 200, static (model, value) => model.VoiceSettings.SpeechRate = value)
-    };
-
     /// <summary>可远程写入的路径清单（按路径排序，便于展示与比对）。</summary>
-    public static IReadOnlyList<string> WritablePaths { get; } = [.. Fields.Keys.Order(StringComparer.Ordinal)];
+    public static IReadOnlyList<string> WritablePaths { get; } = [.. ControlSettingsCatalog.WritablePaths];
 
     /// <summary>
     ///     校验整份 patch 并给出可应用的计划。**任何一项不可写就整体失败**，
@@ -116,92 +98,12 @@ public static class ControlSettingsWhitelist
     public static bool TryPlan(
         JsonElement? payload,
         out IReadOnlyList<ControlSettingsChange> changes,
-        out string reason)
-    {
-        changes = [];
-        reason = ControlRejectReasons.InvalidCommand;
-
-        if (payload is not { ValueKind: JsonValueKind.Object } root)
-            return false;
-
-        if (!root.TryGetProperty("patch", out var patch) || patch.ValueKind != JsonValueKind.Object)
-            return false;
-
-        // 空 patch 视为无效：它既没表达意图，也不该被当成"成功执行"记进日志。
-        if (!patch.EnumerateObject().Any())
-            return false;
-
-        var planned = new List<ControlSettingsChange>();
-
-        foreach (var property in patch.EnumerateObject())
-        {
-            if (!Fields.TryGetValue(property.Name, out var field))
-            {
-                reason = $"not_writable:{property.Name}";
-                return false;
-            }
-
-            if (!field.Convert(property.Value, out var value, out var detail))
-            {
-                reason = $"invalid_value:{property.Name}:{detail}";
-                return false;
-            }
-
-            planned.Add(new ControlSettingsChange(property.Name, value));
-        }
-
-        changes = planned;
-        return true;
-    }
+        out string reason) =>
+        ControlSettingsCatalog.TryPlan(payload, out changes, out reason);
 
     /// <summary>把已校验的变更应用到配置模型上。调用方负责线程与落盘。</summary>
-    public static void Apply(MainConfigModel model, IReadOnlyList<ControlSettingsChange> changes)
-    {
-        ArgumentNullException.ThrowIfNull(model);
-        ArgumentNullException.ThrowIfNull(changes);
-
-        foreach (var change in changes)
-            Fields[change.Path].Apply(model, change.Value);
-    }
-
-    private static PatchField Boolean(Action<MainConfigModel, bool> apply) => new(
-        (JsonElement element, out object value, out string reason) =>
-        {
-            if (element.ValueKind is JsonValueKind.True or JsonValueKind.False)
-            {
-                value = element.GetBoolean();
-                reason = string.Empty;
-                return true;
-            }
-
-            value = false;
-            reason = "type_mismatch";
-            return false;
-        },
-        (model, value) => apply(model, (bool)value));
-
-    private static PatchField Integer(int minimum, int maximum, Action<MainConfigModel, int> apply) => new(
-        (JsonElement element, out object value, out string reason) =>
-        {
-            if (element.ValueKind == JsonValueKind.Number && element.TryGetInt32(out var number))
-            {
-                if (number < minimum || number > maximum)
-                {
-                    value = 0;
-                    reason = $"out_of_range:{minimum}..{maximum}";
-                    return false;
-                }
-
-                value = number;
-                reason = string.Empty;
-                return true;
-            }
-
-            value = 0;
-            reason = "type_mismatch";
-            return false;
-        },
-        (model, value) => apply(model, (int)value));
+    public static void Apply(MainConfigModel model, IReadOnlyList<ControlSettingsChange> changes) =>
+        ControlSettingsCatalog.Apply(model, changes);
 }
 
 /// <summary><c>roster.write</c> 的写入模式。</summary>

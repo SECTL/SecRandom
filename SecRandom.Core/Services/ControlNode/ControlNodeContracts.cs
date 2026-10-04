@@ -129,6 +129,9 @@ public sealed record ControlCommandInvocation(
 ///     结构化上下文（可选）。原因码回答"哪一类失败"，这里回答"具体是什么情况"，
 ///     例如 <c>media_disabled</c> 配上 <c>{ "voice_enable": false }</c>。
 /// </param>
+/// <param name="Payload">
+///     <c>query</c> 类命令返回的数据本体（可选）。服务端与中转都不解释它，只搬运。
+/// </param>
 /// <remarks>
 ///     <para>
 ///         为什么不让设备直接回一句人话：文案要按**看控制台的人**的语言渲染，
@@ -140,9 +143,17 @@ public sealed record ControlCommandInvocation(
 ///         码本身也不再稳定。参数永远放 <paramref name="Detail" />。
 ///     </para>
 /// </remarks>
-public readonly record struct ControlCommandOutcome(bool Ok, string? Reason, JsonElement? Detail = null)
+public readonly record struct ControlCommandOutcome(
+    bool Ok,
+    string? Reason,
+    JsonElement? Detail = null,
+    JsonElement? Payload = null)
 {
     public static ControlCommandOutcome Success { get; } = new(true, null);
+
+    /// <summary>查询类命令的成功返回：带上数据本体。</summary>
+    public static ControlCommandOutcome SuccessWith(object payload) =>
+        new(true, null, null, ToDetail(payload));
 
     public static ControlCommandOutcome Failure(string reason, object? detail = null) =>
         new(false, reason, ToDetail(detail));
@@ -160,7 +171,11 @@ public readonly record struct ControlCommandOutcome(bool Ok, string? Reason, Jso
 public readonly record struct ControlCommandAck(bool Accepted, string? Reason, JsonElement? Detail = null);
 
 /// <summary><c>command.result</c>：我**执行成功**了吗？</summary>
-public readonly record struct ControlCommandResult(bool Ok, string? Reason, JsonElement? Detail = null);
+public readonly record struct ControlCommandResult(
+    bool Ok,
+    string? Reason,
+    JsonElement? Detail = null,
+    JsonElement? Payload = null);
 
 /// <summary>
 ///     一条命令的完整回执。

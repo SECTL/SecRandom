@@ -1164,6 +1164,8 @@ public partial class App : Application
                     services.AddSingleton<ControlMediaPlayHandler>();
                     services.AddSingleton<ControlSettingsPatchHandler>();
                     services.AddSingleton<ControlRosterPushHandler>();
+                    services.AddSingleton<ControlRosterReadHandler>();
+                    services.AddSingleton<ControlSettingsReadHandler>();
                     services.AddSingleton<IControlCommandDispatcher, ControlCommandDispatcher>();
                     services.AddSingleton<ControlNodeClient>();
                     services.AddHostedService<ControlNodeHostedService>();

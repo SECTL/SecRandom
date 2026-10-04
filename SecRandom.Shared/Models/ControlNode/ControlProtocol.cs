@@ -33,6 +33,15 @@ public static class ControlCapabilities
     /// <summary>读名单。名单含学生姓名，权限高于状态读取。</summary>
     public const string RosterRead = "roster.read";
 
+    /// <summary>
+    ///     读设置。**只读**：按分类返回设置及其类型/范围/是否可远程写，**不含任何凭据**。
+    /// </summary>
+    /// <remarks>
+    ///     权限低于 <see cref="SettingsWrite" />：看得见和改得动是两件事，
+    ///     老师应该能看见自己这台机器的配置，改它才需要管理员。
+    /// </remarks>
+    public const string SettingsRead = "settings.read";
+
     /// <summary>写名单。</summary>
     public const string RosterWrite = "roster.write";
 
