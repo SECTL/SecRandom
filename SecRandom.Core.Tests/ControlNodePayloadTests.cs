@@ -102,20 +102,86 @@ public sealed class ControlNodePayloadTests
     }
 
     /// <summary>
-    ///     安全设置、集控自身设置、桌面集成、更新设置**永远**不在白名单里。
-    ///     这条断言是防回归的：将来有人"顺手"把某项加进去，这里会直接红。
+    ///     安全设置、更新、备份、桌面集成（自启/协议注册）不允许远程修改。
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         判定用**路径分段**而不是子串：子串规则会把无辜字段一起误伤——
+    ///         <c>voice.system_volume_control</c>、<c>more.roll_call_control_panel_position</c>、
+    ///         <c>more.*_quantity_control</c> 只是恰好以 <c>control</c> 结尾，和"集控设置"无关。
+    ///         段规则既挡住真正的敏感子树（<c>general.backup.*</c> 的 <c>backup</c> 段），
+    ///         又不会连带禁掉普通开关。
+    ///     </para>
+    ///     <para>
+    ///         另有一批**逐条列出**的只读项（置顶模式、后台驻留、启动即显示、同意项、
+    ///         证明留存策略、URL 协议注册）：它们不是靠命名规律识别的，必须显式出现，
+    ///         否则将来有人复制一个类似命名就会悄悄放开。
+    ///     </para>
+    /// </remarks>
     [Fact]
-    public void 设置白名单_永远不包含安全集控桌面集成与更新()
+    public void 设置白名单_不包含安全更新备份与桌面集成()
     {
+        string[] forbiddenSegments = ["security", "update", "backup", "autostart", "protocol"];
+
         foreach (var path in ControlSettingsWhitelist.WritablePaths)
         {
-            Assert.DoesNotContain("security", path, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("control", path, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("update", path, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("autostart", path, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("protocol", path, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("backup", path, StringComparison.OrdinalIgnoreCase);
+            var segments = path.Split('.');
+
+            foreach (var segment in segments)
+            {
+                Assert.DoesNotContain(
+                    segment, forbiddenSegments, StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
+        // 显式只读项：改了它们等于改这台机器的启动方式、提权方式、同意的条款或证据留存。
+        string[] alwaysReadOnly =
+        [
+            "general.basic.main_window_topmost_mode",
+            "floating_window.floating_window_topmost_mode",
+            "general.basic.background_resident",
+            "general.basic.show_startup_window",
+            "general.basic.url_protocol",
+            "general.basic.guide_completed",
+            "general.basic.accepted_eula_version",
+            "general.basic.accepted_privacy_policy_version",
+            "general.basic.accepted_gpl_version",
+            "general.basic.accepted_verification_notice_version"
+        ];
+
+        foreach (var path in alwaysReadOnly)
+        {
+            Assert.DoesNotContain(
+                path, ControlSettingsWhitelist.WritablePaths, StringComparer.Ordinal);
+        }
+
+        Assert.DoesNotContain(
+            ControlSettingsWhitelist.WritablePaths,
+            path => path.StartsWith("general.proof_retention.", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    ///     被旧的子串规则误伤的普通开关必须**可写**。
+    /// </summary>
+    /// <remarks>
+    ///     钉住这条是因为它们看起来"像是集控设置"（名字里带 control），
+    ///     很容易在下一次收紧规则时被顺手禁掉——而它们只是界面布局与音量控制的开关。
+    /// </remarks>
+    [Fact]
+    public void 设置白名单_包含被名字误伤的普通开关()
+    {
+        string[] innocent =
+        [
+            "voice.system_volume_control",
+            "more.roll_call_control_panel_position",
+            "more.lottery_control_panel_position",
+            "more.roll_call_quantity_control",
+            "more.lottery_quantity_control"
+        ];
+
+        foreach (var path in innocent)
+        {
+            Assert.Contains(path, ControlSettingsWhitelist.WritablePaths);
         }
     }
 

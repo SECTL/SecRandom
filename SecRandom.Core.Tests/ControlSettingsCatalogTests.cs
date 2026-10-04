@@ -122,9 +122,18 @@ public sealed class ControlSettingsCatalogTests
         Assert.Contains("\"max\":100", json);
         Assert.DoesNotContain("\"Path\"", json);
 
-        // 控制台拿到的整体形状就是 { "categories": [ { "id": …, "fields": [ … ] } ] }。
+        // 标签与说明也在同一条字段上：控制台的每一行既要知道改什么，也要知道这一行叫什么。
+        Assert.Contains("\"label\":", json);
+        Assert.Contains("\"description\":", json);
+        Assert.Equal(ControlSettingsLabels.GetFieldLabel("voice.volume"), volume.Label);
+        Assert.Equal(ControlSettingsLabels.GetFieldDescription("voice.volume"), volume.Description);
+        Assert.False(string.IsNullOrWhiteSpace(volume.Label));
+
+        // 控制台拿到的整体形状就是
+        // { "categories": [ { "id": …, "label": …, "description": …, "fields": [ … ] } ] }。
         var envelope = JsonSerializer.Serialize(new { categories = described });
-        Assert.StartsWith("{\"categories\":[{\"id\":\"float_position\",\"fields\":[", envelope);
+        Assert.StartsWith("{\"categories\":[{\"id\":\"float_position\",\"label\":\"", envelope);
+        Assert.Contains("\",\"description\":null,\"fields\":[", envelope);
     }
 
     // ---------------------------------------------------------------- settings.write 的既有契约
@@ -141,6 +150,20 @@ public sealed class ControlSettingsCatalogTests
         Assert.Equal(
             ControlSettingsCatalog.WritablePaths.Order(StringComparer.Ordinal).ToArray(),
             ControlSettingsWhitelist.WritablePaths.Order(StringComparer.Ordinal).ToArray());
+
+        // 已发布路径同时是控制台上最早出现的那批控件：加上标签/说明以后它们也得有名字，
+        // 否则旧控制台看到的是一排突然变成空白的设置。
+        var fields = ControlSettingsCatalog.Describe(new MainConfigModel())
+            .SelectMany(category => category.Fields)
+            .Where(field => ShippedPaths.Contains(field.Path, StringComparer.Ordinal))
+            .ToList();
+
+        Assert.Equal(ShippedPaths.Length, fields.Count);
+        Assert.All(fields, field =>
+        {
+            Assert.True(field.Writable);
+            Assert.False(string.IsNullOrWhiteSpace(field.Label));
+        });
     }
 
     [Fact]
@@ -180,11 +203,17 @@ public sealed class ControlSettingsCatalogTests
             ControlSettingsCatalog.WritablePaths.Order(StringComparer.Ordinal).ToArray(),
             writable.Order(StringComparer.Ordinal).ToArray());
 
-        // 子串级封禁：路径里出现这些词一律只读（宁可误伤一项，也不能漏放设备所有权）。
+        // 段级封禁：路径按 "." 拆开后，任一段与这些词完全相等就只读。
+        // 这里刻意断言**段**而不是子串：子串匹配曾经把 voice.system_volume_control 和
+        // more.*_control_panel_position 一起判成只读，它们跟设备所有权没有半点关系。
         foreach (var path in writable)
         {
-            foreach (var token in new[] { "security", "control", "update", "backup", "autostart", "protocol" })
-                Assert.DoesNotContain(token, path, StringComparison.OrdinalIgnoreCase);
+            foreach (var segment in path.Split('.'))
+            {
+                Assert.DoesNotContain(
+                    segment,
+                    new[] { "security", "control", "update", "backup", "autostart", "protocol" });
+            }
         }
 
         // 整类只读：安全、更新（以及通用下面的备份、证明留存）照常描述，但一个可写字段都没有。
@@ -233,8 +262,65 @@ public sealed class ControlSettingsCatalogTests
                     || path.Contains("token", StringComparison.OrdinalIgnoreCase));
     }
 
-    // ---------------------------------------------------------------- 写：校验
+    /// <summary>
+    ///     名字里带 <c>control</c>、但跟集控无关的设置必须保持可写。
+    /// </summary>
+    /// <remarks>
+    ///     它们曾经被子串规则误伤：路径里出现 "control" 就整条只读，于是"系统音量控制"和
+    ///     "控制面板在左还是在右"这两类纯本机偏好被当成设备所有权挡住，管理员只会看到"设备不允许改"。
+    ///     这条断言钉住的是**判定口径**（按 "." 拆段后整段相等），不是这三个路径本身：
+    ///     以后再有带 control 字样的普通设置，只要它不是单独成段，就不该被拦。
+    /// </remarks>
+    [Fact]
+    public void 排除面_与集控无关的control字样设置保持可写()
+    {
+        string[] mustStayWritable =
+        [
+            "more.roll_call_control_panel_position",
+            "more.lottery_control_panel_position",
+            "voice.system_volume_control"
+        ];
 
+        var writable = ControlSettingsCatalog.WritablePaths.ToHashSet(StringComparer.Ordinal);
+        foreach (var path in mustStayWritable)
+            Assert.Contains(path, writable);
+
+        var fields = ControlSettingsCatalog.Describe(new MainConfigModel())
+            .SelectMany(category => category.Fields)
+            .ToDictionary(field => field.Path, StringComparer.Ordinal);
+
+        foreach (var path in mustStayWritable)
+        {
+            Assert.True(fields[path].Writable, $"{path} 又被误判成只读了");
+            Assert.False(string.IsNullOrWhiteSpace(fields[path].Label));
+        }
+
+        // 可写不等于"整类开放"：安全与更新这两个类目仍然一个可写字段都没有，
+        // 备份与证明留存同样照旧。
+        foreach (var categoryId in new[] { "security", "update" })
+            Assert.All(
+                ControlSettingsCatalog.Describe(new MainConfigModel())
+                    .Single(category => category.Id == categoryId)
+                    .Fields,
+                field => Assert.False(field.Writable));
+
+        // 而且真的写得进去：校验与应用走一遍，确认放开的不只是清单上的一个字符串。
+        var planned = ControlSettingsCatalog.TryPlan(
+            Payload("""{ "patch": { "voice.system_volume_control": true, "more.roll_call_control_panel_position": "Left" } }"""),
+            out var changes,
+            out var reason);
+
+        Assert.True(planned, reason);
+        Assert.Equal(2, changes.Count);
+
+        var model = new MainConfigModel();
+        model.VoiceSettings.SystemVolumeControl = false;
+        ControlSettingsCatalog.Apply(model, changes);
+
+        Assert.True(model.VoiceSettings.SystemVolumeControl);
+    }
+
+    // ---------------------------------------------------------------- 写：校验
     [Fact]
     public void 写入_未知路径整体拒绝并带回具体路径()
     {

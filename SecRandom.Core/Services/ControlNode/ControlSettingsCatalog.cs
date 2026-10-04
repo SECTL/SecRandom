@@ -37,7 +37,7 @@ namespace SecRandom.Core.Services.ControlNode;
 ///     <para>
 ///         相对的，策略性排除（安全、集控、更新、备份、桌面集成……）**照常描述但 Writable=false**：
 ///         控制台要能告诉管理员"这台机器有这项设置，是控制面不允许改"，而不是让人以为设备没有它，
-///         于是去猜是自己名字写错了。每一类只读的原因见 <see cref="ReadOnlyPathTokens" /> 与
+///         于是去猜是自己名字写错了。每一类只读的原因见 <see cref="ReadOnlyPathSegments" /> 与
 ///         <see cref="ReadOnlyPaths" />。
 ///     </para>
 ///     <para>
@@ -106,19 +106,27 @@ public static class ControlSettingsCatalog
         [nameof(VoiceSettingsConfig.SpeechRate)] = (50, 200)
     };
 
-    /// <summary>路径里出现这些词（子串匹配，不分大小写）就只读。</summary>
+    /// <summary>路径**按 <c>.</c> 拆开后某一段与这些词完全相等**就只读。</summary>
     /// <remarks>
-    ///     这个规则刻意做得粗：<c>security</c>/<c>update</c> 是设备所有权（能关掉密码、能改更新源），
-    ///     <c>backup</c> 是持久化入口，<c>autostart</c>/<c>protocol</c> 是开机与系统级集成，
-    ///     而 <c>control</c> 必须同时挡住集控自身设置和"控制面板位置"这类纯界面词——
-    ///     一旦要靠人判断哪个 control 是哪个，就等于把"以后新增的 control 属性默认开放"写进了代码。
-    ///     误伤的代价只是"这一项暂时改不了"，漏放的代价是远程拿到了设备所有权。
-    ///     <see cref="ControlSettingsWhitelist" /> 的既有回归测试也是按这些子串断言的。
+    ///     <para>
+    ///         <c>security</c>/<c>update</c> 是设备所有权（能关掉密码、能改更新源），<c>backup</c> 是持久化入口，
+    ///         <c>autostart</c> 是开机集成：这些整类都不该由控制面改，整段挡住比逐条列举更难漏。
+    ///     </para>
+    ///     <para>
+    ///         这里是**段相等**而不是子串匹配。子串规则曾经把 <c>voice.system_volume_control</c>
+    ///         （系统音量控制）和 <c>more.*_control_panel_position</c>（控制面板在左还是在右）一起判成只读——
+    ///         它们跟"集控"毫无关系，只是名字里带了 control，管理员看到的是"这项设备不支持远程改"这种假原因。
+    ///         按段比较以后，只有真的整段叫 <c>control</c> 的路径（目前不存在：集控自身的开关、组 ID、
+    ///         节点地址都住在 <c>data/config/control/node-state.json</c>，从来不在 settings.json 里）才会被挡住；
+    ///         将来真出现 <c>general.control.*</c> 这类字段，它同样会被这一段规则挡住。
+    ///     </para>
     /// </remarks>
-    private static readonly string[] ReadOnlyPathTokens =
-        ["security", "control", "update", "backup", "autostart", "protocol"];
+    private static readonly HashSet<string> ReadOnlyPathSegments = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "security", "update", "backup", "autostart", "protocol"
+    };
 
-    /// <summary>这些字段单独点名只读（子串规则盖不住它们）。</summary>
+    /// <summary>这些字段单独点名只读（段规则盖不住它们）。</summary>
     private static readonly HashSet<string> ReadOnlyPaths = new(StringComparer.Ordinal)
     {
         // 置顶模式：UiAccess 会请求提权并在重启后生效，不是控制面能替这台机器决定的事。
@@ -128,6 +136,10 @@ public static class ControlSettingsCatalog
         // 桌面集成/常驻：远程开自启或常驻＝远程让这个节点"关不掉"。
         "general.basic.background_resident",
         "general.basic.show_startup_window",
+
+        // URL 协议注册：它的路径段是 url_protocol 而不是 protocol，段规则盖不住，
+        // 但它和 autostart 一样是系统级集成（注册 secrandom:// 并常驻 IPC），必须逐条点名。
+        "general.basic.url_protocol",
 
         // 模型里标着 Hidden Configs 的项：引导完成标记与四份协议/声明的"已同意"版本。
         // 远程改它们等于替这台机器的主人按下"我已阅读并同意"。
@@ -194,12 +206,18 @@ public static class ControlSettingsCatalog
                     plan.Writable,
                     plan.Min,
                     plan.Max,
-                    plan.Options));
+                    plan.Options,
+                    ControlSettingsLabels.GetFieldLabel(plan.Path),
+                    ControlSettingsLabels.GetFieldDescription(plan.Path)));
             }
 
             // 空类目不出现在表单里：一个没有字段的分组只会让人以为加载失败了。
             if (fields.Count > 0)
-                categories.Add(new ControlSettingCategory(category.Id, fields));
+                categories.Add(new ControlSettingCategory(
+                    category.Id,
+                    ControlSettingsLabels.GetCategoryLabel(category.Id),
+                    null,
+                    fields));
         }
 
         return categories;
@@ -468,9 +486,11 @@ public static class ControlSettingsCatalog
 
     private static bool IsWritable(string path)
     {
-        foreach (var token in ReadOnlyPathTokens)
+        // 段相等而不是子串：只有整段就叫 security/update/backup/autostart/protocol 的路径才是设备所有权，
+        // 名字里带这些字样的普通设置（system_volume_control、*_control_panel_position）不该被误伤。
+        foreach (var segment in path.Split('.'))
         {
-            if (path.Contains(token, StringComparison.OrdinalIgnoreCase))
+            if (ReadOnlyPathSegments.Contains(segment))
                 return false;
         }
 
@@ -617,9 +637,19 @@ public static class ControlSettingsCatalog
 
 /// <summary>一个设置分组（协议里的 <c>category</c>）。</summary>
 /// <param name="Id">类目 id（如 <c>voice</c>）。</param>
+/// <param name="Label">
+///     类目名，按设备当前的界面语言来自这台机器自己的设置页措辞（如 <c>语音</c>）。
+///     控制台**不再自己维护**设置分类的文案：多一处副本就多一种说法。
+/// </param>
+/// <param name="Description">
+///     类目说明。类目只是分组，控制台已经用字段自己的说明渲染每一行，因此这里固定为 <c>null</c>；
+///     保留该键是为了让控制台不必区分"没有说明"和"没下发这个字段"。
+/// </param>
 /// <param name="Fields">该分组里的字段，按路径字母序。</param>
 public sealed record ControlSettingCategory(
     [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("label")] string Label,
+    [property: JsonPropertyName("description")] string? Description,
     [property: JsonPropertyName("fields")] IReadOnlyList<ControlSettingField> Fields);
 
 /// <summary>目录里的一条设置字段。</summary>
@@ -634,6 +664,15 @@ public sealed record ControlSettingCategory(
 /// <param name="Min">数值下限，未知为 <c>null</c>。</param>
 /// <param name="Max">数值上限，未知为 <c>null</c>。</param>
 /// <param name="Options"><c>enum</c> 的成员名；其他类型为 <c>null</c>。</param>
+/// <param name="Label">
+///     字段名，按设备当前的界面语言取自这台机器自己的设置页（如 <c>音量</c>）。
+///     永远非空：查不到时退化成属性名的英文短语，也绝不返回空串——空标签在控制台里只是一行没有名字的设置。
+///     回退链见 <see cref="ControlSettingsLabels" />。
+/// </param>
+/// <param name="Description">
+///     一句话说明（如 <c>播报时使用的音量大小</c>），同样来自设置页的 <c>_D</c> 文案；
+///     设置页与设备都没有写过说明时为 <c>null</c>，此时控制台只显示标签。
+/// </param>
 public sealed record ControlSettingField(
     [property: JsonPropertyName("path")] string Path,
     [property: JsonPropertyName("category")] string Category,
@@ -642,4 +681,6 @@ public sealed record ControlSettingField(
     [property: JsonPropertyName("writable")] bool Writable,
     [property: JsonPropertyName("min")] double? Min = null,
     [property: JsonPropertyName("max")] double? Max = null,
-    [property: JsonPropertyName("options")] IReadOnlyList<string>? Options = null);
+    [property: JsonPropertyName("options")] IReadOnlyList<string>? Options = null,
+    [property: JsonPropertyName("label")] string Label = "",
+    [property: JsonPropertyName("description")] string? Description = null);
