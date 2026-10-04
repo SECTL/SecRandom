@@ -29,6 +29,8 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     private TimeSpan _lastLapTime;
     private int _presetCategoryIndex;
     private bool _showStopwatchMilliseconds;
+    private int _attachedViewCount;
+    private bool _refreshTimerRunning;
 
     public TimerViewModel(MainConfigHandler configHandler)
     {
@@ -36,8 +38,28 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
         LoadRecentPresets();
         _refreshHandler = (_, _) => Refresh();
         _refreshTimer.Tick += _refreshHandler;
-        _refreshTimer.Start();
+        // 定时器不在这里启动：只有视图可见且计时真的在走时才需要刷新
         Refresh();
+    }
+
+    /// <summary>
+    ///     计时器视图或迷你窗可见时调用。两者可能同时存在（迷你窗由完整视图打开），因此按引用计数。
+    /// </summary>
+    public void AttachRefresh()
+    {
+        _attachedViewCount++;
+        Refresh();
+    }
+
+    /// <summary>
+    ///     计时器视图或迷你窗从可视树移除时调用。
+    /// </summary>
+    public void DetachRefresh()
+    {
+        if (_attachedViewCount > 0)
+            _attachedViewCount--;
+
+        UpdateRefreshTimer();
     }
 
     public bool IsCountdownMode => _mode == TimerMode.Countdown;
@@ -339,6 +361,39 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
             nameof(SelectedTime), nameof(HoursText), nameof(MinutesText), nameof(SecondsText), nameof(StartPauseIcon)
         })
             OnPropertyChanged(name);
+
+        UpdateRefreshTimer();
+    }
+
+    /// <summary>
+    ///     只在真正需要驱动界面时运行定时器：计时进行中需要 33ms（秒表毫秒显示与进度环），
+    ///     时钟模式可见时每秒刷新一次即可，静止的倒计时/秒表则完全不需要 tick。
+    ///     这样关闭计时器窗口后不会再有 30Hz 的空转刷新。
+    /// </summary>
+    private void UpdateRefreshTimer()
+    {
+        if (_disposed)
+            return;
+
+        var ticking = _attachedViewCount > 0 && _isRunning;
+        var clockVisible = _attachedViewCount > 0 && !_isRunning && IsClockMode;
+        var shouldRun = ticking || clockVisible;
+
+        if (shouldRun)
+        {
+            var interval = ticking ? TimeSpan.FromMilliseconds(33) : TimeSpan.FromSeconds(1);
+            if (_refreshTimer.Interval != interval)
+                _refreshTimer.Interval = interval;
+        }
+
+        if (shouldRun == _refreshTimerRunning)
+            return;
+
+        _refreshTimerRunning = shouldRun;
+        if (shouldRun)
+            _refreshTimer.Start();
+        else
+            _refreshTimer.Stop();
     }
 
     private void UpdateTime()

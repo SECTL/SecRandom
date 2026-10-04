@@ -12,11 +12,13 @@ namespace SecRandom.Views.MainPages;
 public sealed partial class TimerMiniWindow : Window
 {
     private readonly Action _restore;
+    private readonly TimerViewModel _viewModel;
     private bool _allowClose;
 
     public TimerMiniWindow(TimerViewModel viewModel, Action restore)
     {
         _restore = restore;
+        _viewModel = viewModel;
         DataContext = viewModel;
         InitializeComponent();
         if (App.IsMicaSupported)
@@ -31,6 +33,8 @@ public sealed partial class TimerMiniWindow : Window
 
         Loaded += OnLoaded;
         Closing += OnClosing;
+        Opened += (_, _) => _viewModel.AttachRefresh();
+        Closed += (_, _) => _viewModel.DetachRefresh();
     }
 
     internal void AllowClose() => _allowClose = true;

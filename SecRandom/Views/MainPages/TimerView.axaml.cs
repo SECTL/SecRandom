@@ -15,6 +15,10 @@ public sealed partial class TimerView : ViewBase
         Header = ViewModel.PageTitle;
         DataContext = ViewModel;
         InitializeComponent();
+
+        // 只在本视图可见期间驱动 33ms 刷新，页面关闭后计时器不再空转
+        AttachedToVisualTree += (_, _) => ViewModel.AttachRefresh();
+        DetachedFromVisualTree += (_, _) => ViewModel.DetachRefresh();
     }
 
     public TimerViewModel ViewModel { get; } = IAppHost.GetService<TimerViewModel>();
