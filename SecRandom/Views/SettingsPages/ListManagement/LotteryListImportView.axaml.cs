@@ -26,7 +26,12 @@ namespace SecRandom.Views.SettingsPages.ListManagement;
 public partial class LotteryListImportView : UserControl, INotifyPropertyChanged, IDrawerCloseAware
 {
     private Action<IReadOnlyList<Prize>> _importHandler;
-    private readonly List<Dictionary<string, string>> _rows = [];
+        private IReadOnlyList<IReadOnlyList<string?>> _grid = [];
+    private RosterImportTable _table = new([], []);
+    private string[] _sheetNames = [];
+    private string? _filePath;
+    private string? _loadedSheetName;
+    private string? _temporaryPath;
     private bool _canImport;
     private string? _countColumn;
     private string? _idColumn;
@@ -77,6 +82,8 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
         _selectedImportModeOption = ImportModes[0];
         DataContext = this;
         InitializeComponent();
+        RegionSelector.RegionChanged += OnRegionChanged;
+        RegionSelector.SheetSelectionChanged += OnSheetSelectionChanged;
         Loaded += (_, _) => _ = LoadCameraOptionsAsync();
     }
 
@@ -303,27 +310,129 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
             temporaryPath = true;
         }
 
-        List<Dictionary<string, string>> rows;
+        // 换工作表要按新工作表重新读取，所以非本地路径的临时副本保留到抽屉关闭
+        ReleaseTemporaryFile();
+        _temporaryPath = temporaryPath ? path : null;
+        _filePath = path;
+        _sheetNames = ReadSheetNames(path);
         try
         {
-            rows = MiniExcel.Query(path, useHeaderRow: true)
-                .Cast<IDictionary<string, object?>>()
-                .Select(row => row.ToDictionary(pair => pair.Key, pair => ConvertCell(pair.Value)))
-                .ToList();
+            LoadSheet(_sheetNames.FirstOrDefault());
         }
-        finally
+        catch
         {
-            if (temporaryPath && File.Exists(path))
-                File.Delete(path);
+            ReleaseTemporaryFile();
+            throw;
         }
 
-        _rows.Clear();
-        _rows.AddRange(rows);
         SelectedFileName = file.Name;
-        RebuildColumnOptions(rows.FirstOrDefault()?.Keys ?? Enumerable.Empty<string>());
+        _logger.LogInformation("已加载奖品池导入文件：文件={FileName}，工作表={SheetName}，行数={RowCount}。",
+            file.Name, _loadedSheetName ?? "-", _grid.Count);
+    }
+
+    /// <summary>CSV 不是 zip 包也没有工作表概念，老式 .xls 可能枚举不出工作表名，两种情况都按单表处理。</summary>
+    private string[] ReadSheetNames(string path)
+    {
+        if (string.Equals(Path.GetExtension(path), ".csv", StringComparison.OrdinalIgnoreCase))
+            return [];
+
+        try
+        {
+            return MiniExcel.GetSheetNames(path).ToArray();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "读取工作表名失败，按默认工作表继续：文件={FileName}。", Path.GetFileName(path));
+            return [];
+        }
+    }
+
+    private void LoadSheet(string? sheetName)
+    {
+        if (string.IsNullOrEmpty(_filePath))
+            return;
+
+        _grid = MiniExcel.Query(_filePath, useHeaderRow: false, sheetName: sheetName)
+            .Cast<IDictionary<string, object?>>()
+            .Select(ToCells)
+            .ToList();
+        _loadedSheetName = sheetName;
+        RegionSelector.Load(_sheetNames, sheetName, _grid, HeaderKeywords);
+        ApplyRegion();
+    }
+
+    /// <summary>区域是列名与数据行的唯一来源，区域一变就重建列映射并刷新预览。</summary>
+    private void ApplyRegion()
+    {
+        _table = RosterImportRegionBuilder.Build(_grid, RegionSelector.CurrentRegion);
+        RebuildColumnOptions(_table.Columns);
         AutoMapColumns();
         RefreshPreview();
-        _logger.LogInformation("已加载奖品池导入文件：文件={FileName}，行数={RowCount}。", file.Name, rows.Count);
+    }
+
+    private void OnRegionChanged(object? sender, EventArgs e) => ApplyRegion();
+
+    private void OnSheetSelectionChanged(object? sender, string sheetName)
+    {
+        if (_isDrawerClosed || string.IsNullOrEmpty(_filePath) || _loadedSheetName == sheetName)
+            return;
+
+        try
+        {
+            LoadSheet(sheetName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "切换奖品池导入工作表失败：文件={FileName}，工作表={SheetName}。",
+                Path.GetFileName(_filePath), sheetName);
+            StatusText = string.Format(LR.M_LoadFailed, ex.Message);
+            // 读取失败时退回上一个工作表，避免下拉显示与实际数据不一致
+            if (_loadedSheetName is { } previous && previous != sheetName)
+            {
+                try
+                {
+                    LoadSheet(previous);
+                }
+                catch (Exception restoreFailure)
+                {
+                    _logger.LogWarning(restoreFailure, "恢复到上一个工作表同样失败：工作表={SheetName}。", previous);
+                }
+            }
+        }
+    }
+
+    private void ReleaseTemporaryFile()
+    {
+        var path = _temporaryPath;
+        _temporaryPath = null;
+        if (path is null)
+            return;
+
+        try
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // 关闭抽屉时的临时文件清理失败不值得打断流程
+        }
+    }
+
+    /// <summary>原始网格按列字母落位，行序与 Excel 行号一致（MiniExcel 会补齐中间空行）。</summary>
+    private static string?[] ToCells(IDictionary<string, object?> row)
+    {
+        var cells = new string?[row.Count];
+        foreach (var pair in row)
+        {
+            var index = RosterImportRegionBuilder.ColumnIndex(pair.Key);
+            if (index < 1 || index > cells.Length)
+                continue;
+
+            cells[index - 1] = ConvertCell(pair.Value);
+        }
+
+        return cells;
     }
 
     private static async Task<string> CopyToTemporaryFileAsync(IStorageFile file)
@@ -364,6 +473,16 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
         TagsColumn = RosterImportParser.FindBestColumn(RequiredColumnOptions, RosterImportParser.SplitKeywords(LR.K_TagsColumns)) ?? LR.C_NoneColumn;
     }
 
+    /// <summary>自动识别表头行与自动映射列共用同一套关键字。</summary>
+    private static IReadOnlyList<string> HeaderKeywords =>
+    [
+        .. RosterImportParser.SplitKeywords(LR.K_IdColumns),
+        .. RosterImportParser.SplitKeywords(LR.K_NameColumns),
+        .. RosterImportParser.SplitKeywords(LR.K_WeightColumns),
+        .. RosterImportParser.SplitKeywords(LR.K_CountColumns),
+        .. RosterImportParser.SplitKeywords(LR.K_TagsColumns)
+    ];
+
     private PrizeRosterColumnMapping CurrentMapping => new(
         IsSelectedColumn(IdColumn) ? IdColumn : null,
         IsSelectedColumn(NameColumn) ? NameColumn : null,
@@ -374,15 +493,17 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
     private void RefreshPreview()
     {
         PreviewRows.Clear();
-        foreach (var row in _rows.Take(3))
+        foreach (var row in _table.Rows.Take(3))
             PreviewRows.Add(CreatePreviewRow(row));
 
-        CanImport = _rows.Count > 0 && (IsSelectedColumn(IdColumn) || IsSelectedColumn(NameColumn));
-        StatusText = _rows.Count == 0
+        CanImport = _table.Rows.Count > 0 && (IsSelectedColumn(IdColumn) || IsSelectedColumn(NameColumn));
+        StatusText = _grid.Count == 0
             ? LR.M_SelectFileFirst
-            : CanImport
-                ? string.Format(LR.M_FileLoaded, _rows.Count)
-                : LR.M_SelectRequiredColumns;
+            : _table.Rows.Count == 0
+                ? Text("M_RegionEmpty")
+                : CanImport
+                    ? string.Format(LR.M_FileLoaded, _table.Rows.Count)
+                    : LR.M_SelectRequiredColumns;
         NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasPreview)));
     }
 
@@ -406,7 +527,7 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
             return;
         }
 
-        var parseResult = RosterImportParser.ParsePrizes(_rows, CurrentMapping);
+        var parseResult = RosterImportParser.ParsePrizes(_table.Rows, CurrentMapping);
         SubmitPrizes(parseResult.Items, parseResult.DuplicatedNames);
     }
 
@@ -465,7 +586,8 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
         await StopQrScannerAsync();
         SelectFileImportSource();
         await SelectFileAsync();
-        if (_rows.Count == 0)
+        // 用户取消选择时保持「请选择文件」；读取失败时保留失败原因
+        if (_grid.Count == 0 && _filePath is null)
             StatusText = LR.M_SelectFileFirst;
     }
 
@@ -509,7 +631,13 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
 
     private void ResetPreviewAndImportState()
     {
-        _rows.Clear();
+        ReleaseTemporaryFile();
+        _filePath = null;
+        _loadedSheetName = null;
+        _sheetNames = [];
+        _grid = [];
+        _table = new RosterImportTable([], []);
+        RegionSelector.Clear();
         _qrPrizes = null;
         PreviewRows.Clear();
         SelectedFileName = LR.C_NoFileSelected;
@@ -878,6 +1006,7 @@ public partial class LotteryListImportView : UserControl, INotifyPropertyChanged
         _isDrawerClosed = true;
         CancelSessionCodeVerification();
         await StopQrScannerAsync();
+        ReleaseTemporaryFile();
     }
 
     private static bool IsSelectedColumn(string? column)

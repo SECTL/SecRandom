@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.ListManagement"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="400"
+             x:Class="SecRandom.Views.SettingsPages.ListManagement.RosterImportRegionSelector"
+             x:DataType="local:RosterImportRegionSelector">
+    <GroupBox IsVisible="{Binding HasGrid}" Header="{Binding ImportRegionLabel}">
+        <StackPanel Spacing="4">
+            <TextBlock Text="{Binding ImportRegionDescription}"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+            <sr:Field Label="{Binding SheetLabel}" IsVisible="{Binding HasSheetSelection}">
+                <ComboBox ItemsSource="{Binding SheetOptions}"
+                          SelectedItem="{Binding SelectedSheet, Mode=TwoWay}" />
+            </sr:Field>
+
+            <sr:Field Label="{Binding HeaderRowLabel}">
+                <ComboBox ItemsSource="{Binding HeaderRowOptions}"
+                          SelectedItem="{Binding SelectedHeaderRowOption, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="local:RosterImportHeaderRowOption">
+                            <TextBlock Text="{Binding Label}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </sr:Field>
+
+            <TextBlock Text="{Binding HeaderRowWarning}"
+                       IsVisible="{Binding HasHeaderRowWarning}"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource SystemFillColorCautionBrush}" />
+
+            <sr:Field Label="{Binding DataRangeLabel}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <NumericUpDown Width="120" Minimum="1" Increment="1"
+                                   Maximum="{Binding RowCountMaximum}"
+                                   Value="{Binding DataFirstRow, Mode=TwoWay}" />
+                    <TextBlock Text="{Binding DataRangeSeparator}" VerticalAlignment="Center" />
+                    <NumericUpDown Width="120" Minimum="1" Increment="1"
+                                   Maximum="{Binding RowCountMaximum}"
+                                   Value="{Binding DataLastRow, Mode=TwoWay}" />
+                </StackPanel>
+            </sr:Field>
+
+            <TextBlock Text="{Binding RegionHint}"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,0"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+            <!-- 列表里始终只有 5 行，窗口跟着上方选中的表头行滑动 -->
+            <ListBox MaxHeight="200"
+                     Padding="0"
+                     ItemsSource="{Binding RawRows}"
+                     SelectedItem="{Binding SelectedRawRow, Mode=TwoWay}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="local:RosterImportRawRow">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{Binding RowLabel}"
+                                       MinWidth="52"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <TextBlock Text="{Binding RegionHintDetail}"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+        </StackPanel>
+    </GroupBox>
+</UserControl>

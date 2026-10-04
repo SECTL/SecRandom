@@ -21,20 +21,34 @@ public static class RosterImportParser
 
         foreach (var column in columns)
         {
-            var normalizedColumn = column.ToLowerInvariant();
-            for (var i = 0; i < keywords.Count; i++)
-            {
-                var keyword = keywords[i].ToLowerInvariant();
-                var score = normalizedColumn == keyword ? 100 - i : normalizedColumn.Contains(keyword) ? 50 - i : 0;
-                if (score <= bestScore)
-                    continue;
+            var score = ScoreColumn(column, keywords);
+            if (score <= bestScore)
+                continue;
 
-                bestScore = score;
-                bestColumn = column;
-            }
+            bestScore = score;
+            bestColumn = column;
         }
 
         return bestColumn;
+    }
+
+    /// <summary>
+    /// 单个单元格对关键字列表的匹配得分：精确命中高于包含命中，关键字越靠前得分越高。
+    /// 自动映射列与自动识别表头行共用这一套规则。
+    /// </summary>
+    public static int ScoreColumn(string column, IReadOnlyList<string> keywords)
+    {
+        var normalizedColumn = column.ToLowerInvariant();
+        var bestScore = 0;
+        for (var i = 0; i < keywords.Count; i++)
+        {
+            var keyword = keywords[i].ToLowerInvariant();
+            var score = normalizedColumn == keyword ? 100 - i : normalizedColumn.Contains(keyword) ? 50 - i : 0;
+            if (score > bestScore)
+                bestScore = score;
+        }
+
+        return bestScore;
     }
 
     public static string GetValue(IReadOnlyDictionary<string, string> row, string? column)

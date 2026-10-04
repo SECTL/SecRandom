@@ -66,4 +66,18 @@
   <data name="C_CopySyncPortalAddress"><value>复制链接</value></data>
   <data name="C_CameraOne"><value>摄像头 1</value></data>
   <data name="C_CameraTwo"><value>摄像头 2</value></data>
+  <data name="C_ImportRegion"><value>导入区域</value></data>
+  <data name="C_ImportRegion_D"><value>选择工作表、表头行和数据行范围，区域以外的内容不会被导入</value></data>
+  <data name="C_Sheet"><value>工作表</value></data>
+  <data name="C_HeaderRow"><value>表头行</value></data>
+  <data name="C_HeaderRowFormat"><value>第 {0} 行</value></data>
+  <data name="C_HeaderRowNone"><value>无表头（用 A、B、C 作为列名）</value></data>
+  <data name="C_DataRange"><value>数据行范围</value></data>
+  <data name="C_DataRangeSeparator"><value>至</value></data>
+  <data name="C_RowFormat"><value>第 {0} 行</value></data>
+  <data name="C_RegionRawHint"><value>点击下面任意一行，可将其设为表头行</value></data>
+  <data name="C_RegionRawHint_D"><value>这里只显示表头行附近的 5 行，更靠后的行请在上方「表头行」里选择</value></data>
+  <data name="C_RegionBlankRow"><value>（空行）</value></data>
+  <data name="M_RegionEmpty"><value>当前导入区域内没有可导入的数据行，请调整导入区域</value></data>
+  <data name="M_HeaderRowNotDetected"><value>未能自动识别表头行，已按第一行处理，请手动确认</value></data>
 </root>

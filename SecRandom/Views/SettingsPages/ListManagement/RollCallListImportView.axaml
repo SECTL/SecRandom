@@ -51,6 +51,9 @@
                 </StackPanel>
             </GroupBox>
 
+            <local:RosterImportRegionSelector x:Name="RegionSelector"
+                                              IsVisible="{Binding IsFileImportMode}" />
+
             <GroupBox IsVisible="{Binding IsQrImportMode}" Header="{Binding QrImportLabel}">
                 <StackPanel Spacing="10">
                     <ComboBox IsVisible="{Binding HasCameraSelection}"

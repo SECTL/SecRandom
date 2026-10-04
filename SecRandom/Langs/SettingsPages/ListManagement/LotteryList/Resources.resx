@@ -100,7 +100,7 @@
         <value>选择 Excel/CSV 文件</value>
     </data>
     <data name="C_SupportedFormats" xml:space="preserve">
-        <value>支持 .xlsx、.xls、.csv；第一行会作为列名</value>
+        <value>支持 .xlsx、.xls、.csv；导入区域可自行选择</value>
     </data>
     <data name="C_ColumnMapping" xml:space="preserve">
         <value>列映射</value>

@@ -33,4 +33,18 @@
 <data name="C_CopySyncPortalAddress"><value>リンクをコピー</value></data>
   <data name="C_CameraOne"><value>カメラ 1</value></data>
   <data name="C_CameraTwo"><value>カメラ 2</value></data>
+  <data name="C_ImportRegion"><value>取り込み範囲</value></data>
+  <data name="C_ImportRegion_D"><value>ワークシート、見出し行、データ行の範囲を選択します。範囲外の内容は取り込みません</value></data>
+  <data name="C_Sheet"><value>ワークシート</value></data>
+  <data name="C_HeaderRow"><value>見出し行</value></data>
+  <data name="C_HeaderRowFormat"><value>{0} 行目</value></data>
+  <data name="C_HeaderRowNone"><value>見出し行なし（A、B、C を列名にします）</value></data>
+  <data name="C_DataRange"><value>データ行の範囲</value></data>
+  <data name="C_DataRangeSeparator"><value>～</value></data>
+  <data name="C_RowFormat"><value>{0} 行目</value></data>
+  <data name="C_RegionRawHint"><value>下の行を選択すると、その行を見出し行に設定できます</value></data>
+  <data name="C_RegionRawHint_D"><value>見出し行の前後 5 行のみ表示します。それ以降の行は上の「見出し行」で選択してください</value></data>
+  <data name="C_RegionBlankRow"><value>（空行）</value></data>
+  <data name="M_RegionEmpty"><value>選択した範囲にデータ行がありません。取り込み範囲を調整してください</value></data>
+  <data name="M_HeaderRowNotDetected"><value>見出し行を自動判別できなかったため 1 行目として扱います。手動で確認してください</value></data>
 </root>
