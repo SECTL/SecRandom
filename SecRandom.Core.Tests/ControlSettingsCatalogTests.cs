@@ -1,6 +1,7 @@
 using System.Text.Json;
 using SecRandom.Core.Models;
 using SecRandom.Core.Services.ControlNode;
+using SecRandom.Shared.Models.ControlNode;
 
 namespace SecRandom.Core.Tests;
 
@@ -129,11 +130,148 @@ public sealed class ControlSettingsCatalogTests
         Assert.Equal(ControlSettingsLabels.GetFieldDescription("voice.volume"), volume.Description);
         Assert.False(string.IsNullOrWhiteSpace(volume.Label));
 
+        // **三语映射不再随字段下发**：每个字段多带 6 段文案，五类设置一起读就会顶穿单帧上限
+        // （真实故障：帧根本没发出去，控制台干等到命令过期）。控制台一次只显示一种语言，
+        // 语言改从请求的 `locale` 传进来，响应里只回那一份。
+        Assert.DoesNotContain("\"labels\"", json);
+        Assert.DoesNotContain("\"descriptions\"", json);
+
         // 控制台拿到的整体形状就是
         // { "categories": [ { "id": …, "label": …, "description": …, "fields": [ … ] } ] }。
         var envelope = JsonSerializer.Serialize(new { categories = described });
         Assert.StartsWith("{\"categories\":[{\"id\":\"float_position\",\"label\":\"", envelope);
         Assert.Contains("\",\"description\":null,\"fields\":[", envelope);
+        Assert.DoesNotContain("\"labels\"", envelope);
+        Assert.DoesNotContain("\"descriptions\"", envelope);
+
+        using var document = JsonDocument.Parse(envelope);
+        var firstCategory = document.RootElement.GetProperty("categories")[0];
+
+        Assert.Equal("float_position", firstCategory.GetProperty("id").GetString());
+        // 单语言那一份跟着设备界面语言走，这里不钉具体措辞（测试进程的语言不是这条断言的主题）。
+        Assert.Equal(
+            ControlSettingsLabels.GetCategoryLabel("float_position"),
+            firstCategory.GetProperty("label").GetString());
+
+        // 类目没有说明：这里必须是 null，而不是空串。
+        Assert.Equal(JsonValueKind.Null, firstCategory.GetProperty("description").ValueKind);
+    }
+
+    /// <summary>
+    ///     请求里带 <c>locale</c> 时，标签与说明按**控制台的语言**取，而不是设备语言。
+    /// </summary>
+    /// <remarks>
+    ///     这是"中文控制台看英文机器"的解药：设备自己那份 <c>CurrentUICulture</c> 不该决定管理员看到什么。
+    ///     认不出来的语言标签退回设备语言——一个区域子标签不能让人读不到设置。
+    ///     日文那一语只与取词结果比，不在这里钉具体措辞（那是文案，不是契约）。
+    /// </remarks>
+    [Fact]
+    public void 请求语言决定文案语言()
+    {
+        static ControlSettingField VolumeFor(string? locale) =>
+            ControlSettingsCatalog.Describe(new MainConfigModel(), locale)
+                .Single(category => category.Id == "voice")
+                .Fields
+                .Single(field => field.Path == "voice.volume");
+
+        // 请求的语言就是拿到的语言。
+        Assert.Equal("Voice volume", VolumeFor("en-US").Label);
+        // 两字母标签按语言前缀归一（控制台与设备的语言包版本不必一致）。
+        Assert.Equal("Voice volume", VolumeFor("en").Label);
+        Assert.Equal(
+            ControlSettingsLabels.GetFieldLabels("voice.volume")!["ja-JP"],
+            VolumeFor("ja-JP").Label);
+
+        // 认不出来的语言退回设备语言，且**绝不是空标题**。
+        var unknownLanguage = VolumeFor("de-DE");
+        Assert.Equal(ControlSettingsLabels.GetFieldLabel("voice.volume"), unknownLanguage.Label);
+        Assert.False(string.IsNullOrWhiteSpace(unknownLanguage.Label));
+
+        // 说明与标签走同一套语言，不出现"标题英文、说明中文"。
+        Assert.Equal(ControlSettingsLabels.GetFieldDescription("voice.volume", "en-US"), VolumeFor("en-US").Description);
+    }
+
+    /// <summary>
+    ///     **载荷预算回归**：控制台一次要读的那五类，必须在单帧预算之内。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         这条断言是用一次真实故障换来的：三语映射让五类设置的响应超过 64 KiB，
+    ///         传输层把帧丢掉（那里除了丢做不了别的），控制台只看到一条永远等不到结果的查询。
+    ///         尺寸是**会随设置项增长而漂移**的东西，所以必须由一条断言看着，而不是靠人记着。
+    ///     </para>
+    ///     <para>
+    ///         取的是控制台实际请求的那一组分类（<c>READABLE_SETTING_CATEGORIES</c>），
+    ///         设备日后再加字段时这里会先失败，而不是先炸在生产上。
+    ///     </para>
+    /// </remarks>
+    [Fact]
+    public void 控制台请求的五类设置载荷在单帧预算之内()
+    {
+        string[] readable = ["roll_call", "quick_draw", "lottery", "notification", "voice"];
+
+        foreach (var locale in new[] { null, "zh-CN", "en-US", "ja-JP" })
+        {
+            var categories = ControlSettingsCatalog
+                .Describe(new MainConfigModel(), locale)
+                .Where(category => readable.Contains(category.Id))
+                .ToList();
+
+            var bytes = ControlProtocolJson.MeasureBytes(new { categories });
+
+            Assert.True(
+                bytes <= ControlProtocolJson.PayloadBudgetBytes,
+                $"locale={locale ?? "设备"} 的五类设置载荷 {bytes} 字节，超过预算 {ControlProtocolJson.PayloadBudgetBytes} 字节；" +
+                "要么让控制台一次少读几类，要么收窄字段。");
+        }
+    }
+
+    /// <summary>
+    ///     三语取词机制本身：不许出现空串，也不许出现"取不到却占着键"。
+    /// </summary>
+    /// <remarks>
+    ///     映射不再随字段下发，但请求里的 <c>locale</c> 正是走这条机制取词的——它坏了，
+    ///     控制台拿到的就是一行没有名字的设置。
+    /// </remarks>
+    [Fact]
+    public void 三语取词_没有空串也没有空语言()
+    {
+        var labels = ControlSettingsLabels.GetFieldLabels("voice.volume");
+        AssertMap(labels, "字段 voice.volume 的标签");
+        AssertMap(ControlSettingsLabels.GetFieldDescriptions("voice.volume"), "字段 voice.volume 的说明");
+        AssertMap(ControlSettingsLabels.GetCategoryLabels("voice"), "类目 voice 的标签");
+
+        Assert.Equal(3, labels!.Count);
+    }
+
+    /// <summary>查不到文案的路径给 <c>null</c>，字段上只有兜底标签，且不再有映射键。</summary>
+    /// <remarks>
+    ///     目录将来新增一条设置、而对照表还没来得及配对文案时走的就是这条路径。
+    ///     兜底标签必须仍在（旧控制台不能看到空白），而映射键干脆不出现——没有翻译就是没有。
+    /// </remarks>
+    [Fact]
+    public void 序列化_查不到文案时没有映射键且标签仍有兜底()
+    {
+        Assert.Null(ControlSettingsLabels.GetFieldLabels("future_group.voice_enable"));
+        Assert.Null(ControlSettingsLabels.GetFieldDescriptions("future_group.voice_enable"));
+        Assert.Null(ControlSettingsLabels.GetCategoryLabels("future_group"));
+        Assert.Null(ControlSettingsLabels.GetCategoryDescriptions("future_group"));
+
+        var field = new ControlSettingField(
+            "future_group.voice_enable",
+            "future_group",
+            "bool",
+            true,
+            true,
+            Label: ControlSettingsLabels.GetFieldLabel("future_group.voice_enable"),
+            Description: ControlSettingsLabels.GetFieldDescription("future_group.voice_enable"));
+
+        var json = JsonSerializer.Serialize(field);
+
+        // 标签仍然有兜底（旧控制台不能看到空白），而映射键根本不出现：没有翻译就是没有。
+        Assert.Contains("\"label\":\"Voice enable\"", json);
+        Assert.DoesNotContain("\"labels\"", json);
+        Assert.DoesNotContain("\"descriptions\"", json);
     }
 
     // ---------------------------------------------------------------- settings.write 的既有契约
@@ -453,5 +591,16 @@ public sealed class ControlSettingsCatalogTests
         ControlSettingsCatalog.Apply(model, [new ControlSettingsChange("security.security_enabled", true)]);
 
         Assert.Equal(before, model.SecuritySettings.SecurityEnabled);
+    }
+
+    /// <summary>三语映射要么整个是 <c>null</c>，要么只包含三种语言且没有空串。</summary>
+    private static void AssertMap(IReadOnlyDictionary<string, string>? map, string what)
+    {
+        if (map is null)
+            return;
+
+        Assert.NotEmpty(map);
+        Assert.All(map.Keys, key => Assert.Contains(key, new[] { "zh-CN", "en-US", "ja-JP" }));
+        Assert.All(map.Values, value => Assert.False(string.IsNullOrWhiteSpace(value), $"{what}里有空串"));
     }
 }

@@ -18,11 +18,18 @@ namespace SecRandom.Services.ControlNode;
 ///     <para>
 ///         已经实现并声明的：<c>node.status.read</c>（心跳上报）、<c>draw.lock</c>（期望状态）、
 ///         <c>draw.trigger</c>、<c>media.play</c>（语音播报）、<c>settings.write</c>（白名单设置）、
-///         <c>roster.write</c>（名单下发）。
+///         <c>roster.write</c>（名单下发，点名叫 students、抽奖靠 <c>roster_kind</c>+<c>prizes</c>）、
+///         <c>roster.read</c>（读名单）与 <c>settings.read</c>（读设置目录）。
 ///     </para>
 ///     <para>
-///         **读类能力（<c>roster.read</c> / <c>proof.list</c>）不声明**：服务端目前只接受
-///         <c>action</c> 与 <c>set_desired_state</c> 两种 kind，没有查询通道，声明了也永远收不到命令。
+///         两条读能力走的是**查询**（服务端下发 <c>kind: "query"</c>，答案在
+///         <c>command.result.result_payload</c> 里回来）。它们真的会到达——早先写过
+///         "服务端没有查询通道、声明了也收不到"，那是查询通道上线之前的旧结论，
+///         留着它会让下一个人把能用的功能当成死代码。
+///     </para>
+///     <para>
+///         <c>proof.list</c> 仍未实现，因此不声明：声明一个执行不了的能力，
+///         控制台看到的会是一条"设备已接受但失败"的运行故障。
 ///     </para>
 ///     <para>
 ///         <c>node.restart</c> 已被服务端主动否决（不在授权表里），客户端也**不得实现**：

@@ -58,6 +58,11 @@ public static class ControlCapabilities
     public const string RestartRemoved = "node.restart";
 
     /// <summary>集控节点当前可能声明的能力全集（不含已否决的 <see cref="RestartRemoved" />）。</summary>
+    /// <remarks>
+    ///     跟着 <c>ControlCommandDispatcher.DeclaredCapabilities</c> 走：那张表才是"今天真的声明了什么"。
+    ///     这里漏一项不会让功能坏掉（没有任何生产代码按它过滤），但会让下一个读代码的人
+    ///     以为某个能力不存在——它已经这样误导过一次。
+    /// </remarks>
     public static IReadOnlyList<string> Known { get; } =
     [
         StatusRead,
@@ -67,6 +72,7 @@ public static class ControlCapabilities
         MediaPlay,
         RosterRead,
         RosterWrite,
+        SettingsRead,
         SettingsWrite
     ];
 }
@@ -146,6 +152,13 @@ public static class ControlCommandKinds
 
     /// <summary>期望状态：不是"做一次"，而是"应该是什么样"，靠 <c>revision</c> 单调收敛。</summary>
     public const string SetDesiredState = "set_desired_state";
+
+    /// <summary>查询型：读一次状态，答案在 <c>command.result.result_payload</c> 里回来，存活期很短。</summary>
+    /// <remarks>
+    ///     客户端**不按 <c>kind</c> 分派**（服务端也不校验它），而是按能力分派；
+    ///     这条常量是为了让载荷契约能被写清楚，不是为了在这里做分支。
+    /// </remarks>
+    public const string Query = "query";
 }
 
 /// <summary>

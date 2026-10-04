@@ -17,7 +17,7 @@ namespace SecRandom.Services.ControlNode;
 public sealed class WebSocketControlNodeTransport(ClientWebSocket socket, ILogger<WebSocketControlNodeTransport> logger)
     : IControlNodeTransport
 {
-    private const int MaxFrameBytes = 64 * 1024;
+    private const int MaxFrameBytes = ControlProtocolJson.MaxFrameBytes;
     private const int ReceiveBufferSize = 4096;
 
     /// <inheritdoc />
@@ -27,7 +27,7 @@ public sealed class WebSocketControlNodeTransport(ClientWebSocket socket, ILogge
     {
         var payload = Encoding.UTF8.GetBytes(ControlProtocolJson.Serialize(frame));
         if (payload.Length > MaxFrameBytes)
-            throw new InvalidOperationException($"集控帧超过 {MaxFrameBytes} 字节上限：{frame.Type}");
+            throw new ControlFrameTooLargeException(frame.Type, payload.Length, MaxFrameBytes);
 
         await socket.SendAsync(payload, WebSocketMessageType.Text, endOfMessage: true, cancellationToken)
             .ConfigureAwait(false);

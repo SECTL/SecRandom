@@ -149,4 +149,93 @@ public sealed class ControlSettingsLabelsTests
         Assert.Null(ControlSettingsLabels.GetFieldDescription("future_group.voice_enable"));
         Assert.Equal("Future group", ControlSettingsLabels.GetCategoryLabel("future_group"));
     }
+
+    // ---------------------------------------------------------------- 三语映射
+
+    /// <summary>
+    ///     同一条文案一次给出中英日三语，控制台才能挑自己界面语言的那一份。
+    /// </summary>
+    /// <remarks>
+    ///     这里的断言**不设置界面语言**，因为三语映射本来就不该随设备语言变化；下面那几条才在指定语言下取值。
+    /// </remarks>
+    [Fact]
+    public void 三语_已知字段与类目一次给全三种语言()
+    {
+        var labels = ControlSettingsLabels.GetFieldLabels("voice.volume");
+
+        Assert.NotNull(labels);
+        Assert.Equal(new[] { "zh-CN", "en-US", "ja-JP" }, labels!.Keys.ToArray());
+        Assert.Equal("语音音量", labels["zh-CN"]);
+        Assert.Equal("Voice volume", labels["en-US"]);
+        Assert.False(string.IsNullOrWhiteSpace(labels["ja-JP"]));
+
+        var descriptions = ControlSettingsLabels.GetFieldDescriptions("voice.volume");
+
+        Assert.NotNull(descriptions);
+        Assert.Equal(new[] { "zh-CN", "en-US", "ja-JP" }, descriptions!.Keys.ToArray());
+        Assert.Equal("设置播报音量", descriptions["zh-CN"]);
+        Assert.Equal("Set announcement volume", descriptions["en-US"]);
+
+        var categoryLabels = ControlSettingsLabels.GetCategoryLabels("voice");
+
+        Assert.NotNull(categoryLabels);
+        Assert.Equal(new[] { "zh-CN", "en-US", "ja-JP" }, categoryLabels!.Keys.ToArray());
+        Assert.Equal("语音", categoryLabels["zh-CN"]);
+        Assert.Equal("Voice", categoryLabels["en-US"]);
+
+        // 类目只是分组，客户端从来没有写过类目级说明：这里永远是 null。
+        Assert.Null(ControlSettingsLabels.GetCategoryDescriptions("voice"));
+    }
+
+    /// <summary>三语映射与设备当前的界面语言无关：同一台中文设备，英文控制台读到的仍然是英文。</summary>
+    [Fact]
+    public void 三语_不随设备界面语言变化()
+    {
+        var baseline = Rendered(ControlSettingsLabels.GetFieldLabels("voice.volume"));
+
+        Assert.NotEmpty(baseline);
+        Assert.Equal(baseline, UnderCulture("zh-CN", () => Rendered(ControlSettingsLabels.GetFieldLabels("voice.volume"))));
+        Assert.Equal(baseline, UnderCulture("en-US", () => Rendered(ControlSettingsLabels.GetFieldLabels("voice.volume"))));
+        Assert.Equal(baseline, UnderCulture("ja-JP", () => Rendered(ControlSettingsLabels.GetFieldLabels("voice.volume"))));
+    }
+
+    /// <summary>单语言的那两份按设备语言取值（旧控制台只认它们），请求带 locale 时按请求的语言取值。</summary>
+    [Fact]
+    public void 三语_单语言文案按设备语言_请求语言可以覆盖它()
+    {
+        var chinese = UnderCulture("zh-CN", () => Field("voice.volume"));
+        var english = UnderCulture("en-US", () => Field("voice.volume"));
+
+        Assert.Equal("语音音量", chinese.Label);
+        Assert.Equal("Voice volume", english.Label);
+        Assert.NotEqual(chinese.Label, english.Label);
+
+        // 取词机制本身：三语映射的每一语与"那一语下的单语言取值"一致。
+        Assert.Equal(chinese.Label, ControlSettingsLabels.GetFieldLabels("voice.volume")!["zh-CN"]);
+        Assert.Equal(english.Label, ControlSettingsLabels.GetFieldLabels("voice.volume")!["en-US"]);
+        Assert.Equal(chinese.Description, ControlSettingsLabels.GetFieldDescriptions("voice.volume")!["zh-CN"]);
+        Assert.Equal(english.Description, ControlSettingsLabels.GetFieldDescriptions("voice.volume")!["en-US"]);
+
+        // **请求的语言优先于设备语言**：中文设备 + 英文控制台要看英文，反之亦然。
+        Assert.Equal("Voice volume", ControlSettingsLabels.GetFieldLabel("voice.volume", "en-US"));
+        Assert.Equal("语音音量", ControlSettingsLabels.GetFieldLabel("voice.volume", "zh-CN"));
+
+        // 认不出来的语言标签退回设备语言，而不是给出空标题。
+        Assert.Equal(chinese.Label, ControlSettingsLabels.GetFieldLabel("voice.volume", "de-DE"));
+        Assert.Equal(chinese.Label, ControlSettingsLabels.GetFieldLabel("voice.volume", null));
+
+        // 类目标签同理。
+        Assert.Equal(
+            "语音",
+            UnderCulture("zh-CN", () => DescribeAll().Single(category => category.Id == "voice").Label));
+        Assert.Equal(
+            "Voice",
+            UnderCulture("en-US", () => DescribeAll().Single(category => category.Id == "voice").Label));
+        Assert.Equal("Voice", ControlSettingsLabels.GetCategoryLabel("voice", "en-US"));
+        Assert.Equal("音声", ControlSettingsLabels.GetCategoryLabel("voice", "ja-JP"));
+    }
+
+    /// <summary>把三语映射摊成可逐字比较的字符串：字典本身没有值相等语义，比不了内容。</summary>
+    private static string[] Rendered(IReadOnlyDictionary<string, string>? map) =>
+        map is null ? [] : [.. map.Select(pair => $"{pair.Key}={pair.Value}")];
 }

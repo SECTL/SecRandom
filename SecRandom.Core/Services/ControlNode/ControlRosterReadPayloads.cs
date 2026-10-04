@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SecRandom.Core.Services.Profiles;
 using SecRandom.Shared.Models.ControlNode;
+using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.ControlNode;
 
@@ -72,7 +74,82 @@ public sealed record ControlRosterReadRequest(
 /// <summary><c>roster.read</c> 的返回：按名单分组的成员。</summary>
 public sealed record ControlRosterReadResponse(
     [property: JsonPropertyName("roster_kind")] string RosterKind,
-    [property: JsonPropertyName("lists")] IReadOnlyList<ControlRosterListPayload> Lists);
+    [property: JsonPropertyName("lists")] IReadOnlyList<ControlRosterListPayload> Lists)
+{
+    /// <summary>
+    ///     把响应缩到载荷预算之内：必要时丢掉末尾的成员，并把 <c>truncated</c> 标出来。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         为什么不是"超了就整条失败"：名单读取**有前缀可用**——控制台要的是"有哪些名单、
+    ///         大概多少人"，看到前 300 人远比一条读不到更有用，而 <c>count</c>/<c>total</c>/<c>truncated</c>
+    ///         三个字段本来就是为这件事设计的（界面上那句"只回传了前 N 条"就是它）。
+    ///     </para>
+    ///     <para>
+    ///         成员的体积差别很大（有人带标签、有人不带），所以先按实测字节估一个能留下的人数，
+    ///         再实测一次收敛；最多收紧几轮就停，绝不无限循环。
+    ///     </para>
+    /// </remarks>
+    public static ControlRosterReadResponse TrimToBudget(ControlRosterReadResponse response)
+    {
+        ArgumentNullException.ThrowIfNull(response);
+
+        var current = response;
+        for (var attempt = 0; attempt < 8; attempt++)
+        {
+            var bytes = ControlProtocolJson.MeasureBytes(current);
+            if (bytes <= ControlProtocolJson.PayloadBudgetBytes)
+                return current;
+
+            var members = current.Lists.Sum(list => list.Members.Count);
+            if (members == 0)
+                return current;
+
+            // 按实测比例缩，再留 2% 余量；至少砍掉一个，否则估算原地不动会白跑一轮。
+            var ratio = (double)ControlProtocolJson.PayloadBudgetBytes / bytes;
+            var target = (int)Math.Floor(members * ratio * 0.98);
+            if (target >= members)
+                target = members - 1;
+
+            current = ShrinkTo(current, target);
+        }
+
+        return current;
+    }
+
+    /// <summary>按名单顺序把总成员数缩到 <paramref name="target" />，各份按原有人数等比例保留。</summary>
+    private static ControlRosterReadResponse ShrinkTo(ControlRosterReadResponse response, int target)
+    {
+        var total = response.Lists.Sum(list => list.Members.Count);
+        var lists = new List<ControlRosterListPayload>(response.Lists.Count);
+        var remaining = Math.Max(0, target);
+
+        for (var index = 0; index < response.Lists.Count; index++)
+        {
+            var list = response.Lists[index];
+            var share = total == 0
+                ? 0
+                : (int)Math.Floor((double)list.Members.Count / total * target);
+
+            // 最后一份吃掉取整误差，这样比例缩完的总数正好是 target。
+            var keep = index == response.Lists.Count - 1
+                ? Math.Min(list.Members.Count, remaining)
+                : Math.Min(list.Members.Count, share);
+            keep = Math.Clamp(keep, 0, remaining);
+            remaining -= keep;
+
+            lists.Add(list with
+            {
+                Count = keep,
+                // `Total` 是"过滤后该名单真实有多少人"，因此 `keep < Total` 就是"这次没给全"。
+                Truncated = list.Truncated || keep < list.Total,
+                Members = keep == list.Members.Count ? list.Members : [.. list.Members.Take(keep)]
+            });
+        }
+
+        return response with { Lists = lists };
+    }
+}
 
 /// <param name="Name">名单/奖池名。</param>
 /// <param name="IsDefault">是否是本机当前默认使用的那一份。</param>
@@ -90,6 +167,10 @@ public sealed record ControlRosterListPayload(
 /// <param name="Id">学号 / 奖品编号（可为空：名单允许只有姓名）。</param>
 /// <param name="Count">奖品的数量（学生为 <c>null</c>）。</param>
 /// <param name="Weight">奖品的权重（学生为 <c>null</c>）。</param>
+/// <param name="Tags">
+///     标签。客户端把标签存成一个空格分隔的串（导入时就是这么规范化的），这里拆成数组，
+///     控制台才能像本机列表页那样逐条渲染"标签"列。没有标签时为 <c>null</c>。
+/// </param>
 public sealed record ControlRosterMemberPayload(
     [property: JsonPropertyName("id")] string? Id,
     [property: JsonPropertyName("name")] string? Name,
@@ -97,4 +178,51 @@ public sealed record ControlRosterMemberPayload(
     [property: JsonPropertyName("group")] string? Group,
     [property: JsonPropertyName("count")] int? Count,
     [property: JsonPropertyName("weight")] double? Weight,
-    [property: JsonPropertyName("enabled")] bool Enabled);
+    [property: JsonPropertyName("enabled")] bool Enabled,
+    [property: JsonPropertyName("tags")] IReadOnlyList<string>? Tags = null)
+{
+    /// <summary>把一个学生投影成控制台看到的成员。</summary>
+    /// <remarks>
+    ///     投影留在 Core 而不是列表读取处理器里：**哪一项是"没有值"、哪一项是"有值"** 就是在这里定的，
+    ///     放在应用层就只能靠人读代码，放在这里可以被单元测试逐条钉住。
+    /// </remarks>
+    public static ControlRosterMemberPayload FromStudent(Student student) => new(
+        NullIfBlank(student.Id),
+        NullIfBlank(student.Name),
+        NullIfBlank(student.Gender),
+        NullIfBlank(student.Group),
+        null,
+        null,
+        student.Exists,
+        NormalizeTags(student.Tags));
+
+    /// <summary>把一个奖品投影成控制台看到的成员（学生独有的性别与分组对奖品是 <c>null</c>）。</summary>
+    public static ControlRosterMemberPayload FromPrize(Prize prize) => new(
+        NullIfBlank(prize.Id),
+        NullIfBlank(prize.Name),
+        null,
+        null,
+        prize.Count,
+        prize.Weight,
+        prize.Exists,
+        NormalizeTags(prize.Tags));
+
+    /// <summary>把列表里的标签串拆成协议里的标签数组；没有标签时返回 <c>null</c>。</summary>
+    /// <remarks>
+    ///     <para>
+    ///         拆分沿用名单导入的 <see cref="RosterImportParser.SplitTags" />：去空白、丢空项、去掉重复，
+    ///         并且认得逗号/分号/竖线这些分隔符。导入就是按它把标签规范化成一个空格分隔的串存下来的，
+    ///         读出去时用同一条规则，才不会出现"导入三个标签、控制台看到四个"。
+    ///     </para>
+    ///     <para>
+    ///         没有标签时给 <c>null</c> 而不是空数组——空数组和缺失在协议里都是"没有"，但成员是这条命令里
+    ///         数量最多的对象，<c>null</c> 能省掉每一个成员的 <c>"tags":[]</c>（帧上限 64 KiB）。
+    ///     </para>
+    /// </remarks>
+    public static IReadOnlyList<string>? NormalizeTags(string? tags) =>
+        RosterImportParser.SplitTags(tags ?? string.Empty) is { Count: > 0 } split ? split : null;
+
+    /// <summary>空字符串与缺失在协议里是同一件事：都没有值，不要用 <c>""</c> 冒充有值。</summary>
+    private static string? NullIfBlank(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+}

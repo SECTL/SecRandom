@@ -564,6 +564,24 @@ public sealed class ControlNodeSession
         await _sendGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            return await SendOnceAsync(frame, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _sendGate.Release();
+        }
+    }
+
+    /// <summary>发一帧；**超限的回执**要改回一条最小的失败结果，而不是让它无声消失。</summary>
+    /// <remarks>
+    ///     丢帧的代价不对等：设备侧只是少发一帧，控制台侧是"查询永远没有结果"，最后只能靠命令
+    ///     过期收场，而日志里那条记录还是 <c>debug</c> 级别（真实故障就是这么被埋掉的）。
+    ///     回一条最小的失败结果既装得下，也让对端立刻知道"答案太大，没能给你"。
+    /// </remarks>
+    private async Task<bool> SendOnceAsync(ControlFrame frame, CancellationToken cancellationToken)
+    {
+        try
+        {
             await _transport.SendAsync(frame, cancellationToken).ConfigureAwait(false);
             return true;
         }
@@ -571,14 +589,59 @@ public sealed class ControlNodeSession
         {
             throw;
         }
-        catch (Exception exception)
+        catch (ControlFrameTooLargeException exception)
         {
-            _logger.LogDebug(exception, "集控帧发送失败：{Type}", frame.Type);
+            if (frame.Type == ControlFrameTypes.Result)
+            {
+                _logger.LogWarning(
+                    exception, "集控回执超过帧上限，改回最小失败结果：{CommandId}", frame.CommandId);
+
+                return await TrySendOversizedResultNoticeAsync(frame, exception, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            _logger.LogWarning(exception, "集控帧超过帧上限，无法发送：{Type}", frame.Type);
             return false;
         }
-        finally
+        catch (Exception exception)
         {
-            _sendGate.Release();
+            _logger.LogWarning(exception, "集控帧发送失败：{Type}", frame.Type);
+            return false;
+        }
+    }
+
+    /// <summary>把一个超限回执替换成最小的失败结果。连它都发不出去，就只能记日志了。</summary>
+    private async Task<bool> TrySendOversizedResultNoticeAsync(
+        ControlFrame frame,
+        ControlFrameTooLargeException exception,
+        CancellationToken cancellationToken)
+    {
+        var notice = new ControlFrame
+        {
+            Type = ControlFrameTypes.Result,
+            CommandId = frame.CommandId,
+            Ok = false,
+            Reason = "payload_too_large",
+            Detail = ControlCommandOutcome.ToDetail(new
+            {
+                limit = exception.Limit,
+                bytes = exception.Bytes
+            })
+        };
+
+        try
+        {
+            await _transport.SendAsync(notice, cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception noticeException)
+        {
+            _logger.LogError(noticeException, "集控超限回执的兜底帧也发不出去：{CommandId}", frame.CommandId);
+            return false;
         }
     }
 

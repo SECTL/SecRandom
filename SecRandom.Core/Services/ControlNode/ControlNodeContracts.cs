@@ -4,6 +4,24 @@ using SecRandom.Shared.Models.ControlNode;
 namespace SecRandom.Core.Services.ControlNode;
 
 /// <summary>
+///     一个帧超过协议上限（64 KiB）——它**根本发不出去**，不是网络故障。
+/// </summary>
+/// <remarks>
+///     单独一个异常类型，是为了让会话能把"这一帧太大"与"连接坏了"分开：
+///     前者可以改回一条最小的失败回执（它一定装得下），让对端立刻知道答案没能给；
+///     后者只能失败并等重连。靠比字符串来判断这件事，迟早会因为一句文案改了就失效。
+/// </remarks>
+public sealed class ControlFrameTooLargeException(string frameType, int bytes, int limit)
+    : InvalidOperationException($"集控帧超过 {limit} 字节上限：{frameType}（实测 {bytes} 字节）")
+{
+    public string FrameType { get; } = frameType;
+
+    public int Bytes { get; } = bytes;
+
+    public int Limit { get; } = limit;
+}
+
+/// <summary>
 ///     集控节点通道的传输边界。
 /// </summary>
 /// <remarks>

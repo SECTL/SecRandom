@@ -184,7 +184,21 @@ public static class ControlSettingsCatalog
     ///     子配置对象缺失（反序列化出 <c>null</c>）时，那边的字段与空类目都不会出现——
     ///     目录不假装一个读不到的对象存在。
     /// </remarks>
-    public static IReadOnlyList<ControlSettingCategory> Describe(MainConfigModel model)
+    public static IReadOnlyList<ControlSettingCategory> Describe(MainConfigModel model) =>
+        Describe(model, locale: null);
+
+    /// <summary>
+    ///     同 <see cref="Describe(MainConfigModel)" />，但按**控制台请求的语言**取标签与说明。
+    /// </summary>
+    /// <param name="locale">
+    ///     控制台的界面语言（如 <c>zh-CN</c>）。<c>null</c> / 认不出来时按设备当前的界面语言取值。
+    /// </param>
+    /// <remarks>
+    ///     为什么语言在请求里而不是把三语映射一次给全：三语映射等于每个字段多带 6 段文案，
+    ///     五类设置一起读就会顶穿单帧上限——这不是估算，是一次真实故障（帧根本没发出去，
+    ///     控制台干等到过期）。控制台一次只显示一种语言，让**请求**说它要哪一种就够了。
+    /// </remarks>
+    public static IReadOnlyList<ControlSettingCategory> Describe(MainConfigModel model, string? locale)
     {
         ArgumentNullException.ThrowIfNull(model);
 
@@ -207,15 +221,15 @@ public static class ControlSettingsCatalog
                     plan.Min,
                     plan.Max,
                     plan.Options,
-                    ControlSettingsLabels.GetFieldLabel(plan.Path),
-                    ControlSettingsLabels.GetFieldDescription(plan.Path)));
+                    ControlSettingsLabels.GetFieldLabel(plan.Path, locale),
+                    ControlSettingsLabels.GetFieldDescription(plan.Path, locale)));
             }
 
             // 空类目不出现在表单里：一个没有字段的分组只会让人以为加载失败了。
             if (fields.Count > 0)
                 categories.Add(new ControlSettingCategory(
                     category.Id,
-                    ControlSettingsLabels.GetCategoryLabel(category.Id),
+                    ControlSettingsLabels.GetCategoryLabel(category.Id, locale),
                     null,
                     fields));
         }
@@ -638,7 +652,7 @@ public static class ControlSettingsCatalog
 /// <summary>一个设置分组（协议里的 <c>category</c>）。</summary>
 /// <param name="Id">类目 id（如 <c>voice</c>）。</param>
 /// <param name="Label">
-///     类目名，按设备当前的界面语言来自这台机器自己的设置页措辞（如 <c>语音</c>）。
+///     类目名，按**控制台请求的语言**取自这台机器自己的设置页措辞（没请求时就是设备当前的界面语言）。
 ///     控制台**不再自己维护**设置分类的文案：多一处副本就多一种说法。
 /// </param>
 /// <param name="Description">
@@ -665,12 +679,13 @@ public sealed record ControlSettingCategory(
 /// <param name="Max">数值上限，未知为 <c>null</c>。</param>
 /// <param name="Options"><c>enum</c> 的成员名；其他类型为 <c>null</c>。</param>
 /// <param name="Label">
-///     字段名，按设备当前的界面语言取自这台机器自己的设置页（如 <c>音量</c>）。
+///     字段名，按**控制台请求的语言**取自这台机器自己的设置页（如 <c>音量</c>）；
+///     没请求语言时就是设备当前的界面语言（旧控制台只认它，这一语义没有变）。
 ///     永远非空：查不到时退化成属性名的英文短语，也绝不返回空串——空标签在控制台里只是一行没有名字的设置。
 ///     回退链见 <see cref="ControlSettingsLabels" />。
 /// </param>
 /// <param name="Description">
-///     一句话说明（如 <c>播报时使用的音量大小</c>），同样来自设置页的 <c>_D</c> 文案；
+///     一句话说明（如 <c>播报时使用的音量大小</c>），同样来自设置页的 <c>_D</c> 文案，语言与 <paramref name="Label" /> 一致；
 ///     设置页与设备都没有写过说明时为 <c>null</c>，此时控制台只显示标签。
 /// </param>
 public sealed record ControlSettingField(

@@ -36,6 +36,13 @@ namespace SecRandom.Core.Services.ControlNode;
 ///         所以查不到就返回 <c>null</c>。资源标签的说明按设置页自己的约定取"标签键 + <c>_D</c>"。
 ///     </para>
 ///     <para>
+///         每一条文案会下发**两份**：<c>label</c>/<c>description</c> 是按设备当前界面语言解析的那一份
+///         （旧控制台只认它），<c>labels</c>/<c>descriptions</c> 是中英日三语各一份——控制台的界面语言
+///         可以和这台设备不一样，一台中文设备面对英文管理员时，把设备语言的中文当成"这条设置的标签"是错的。
+///         三语那份的键固定是 <c>zh-CN</c>/<c>en-US</c>/<c>ja-JP</c>，取不到的那一语不出现这个键，
+///         一个键都取不到时整份映射是 <c>null</c>，控制台据此回落到设备语言的那一份。
+///     </para>
+///     <para>
 ///         这张表按**字段令牌**（路径最后一段，如 <c>half_repeat</c>）建索引，因为四个抽取设置页共用同一批
 ///         设置项：一条 <c>half_repeat</c> 同时覆盖默认/点名/闪抽/抽奖四个类目。路径级条目用于少数
 ///         **同名不同义**的字段（<c>algorithm_id</c>、<c>mode</c>、通知渠道的 <c>enabled</c>/<c>display_duration</c>），
@@ -81,6 +88,18 @@ public static class ControlSettingsLabels
     private static readonly CultureInfo[] JapaneseFallback = [Japanese, English, Chinese];
     private static readonly CultureInfo[] EnglishFallback = [English, Chinese];
     private static readonly CultureInfo[] ChineseFallback = [Chinese, English];
+
+    /// <summary>
+    ///     随目录一起下发的三语，以及**每一语自己的回退链**：控制台的界面语言可能和这台设备的不一样，
+    ///     所以三种语言要一次给全，让它自己挑。键名就是语言标签，顺序固定（中 → 英 → 日），
+    ///     与下面 <c>Lit</c>/<c>Text</c> 的书写口径一致。
+    /// </summary>
+    private static readonly (string Key, CultureInfo[] Fallback)[] PublishedLanguages =
+    [
+        ("zh-CN", ChineseFallback),
+        ("en-US", EnglishFallback),
+        ("ja-JP", JapaneseFallback)
+    ];
 
     private static readonly Lazy<Assembly?> AppAssembly = new(ResolveAppAssembly);
 
@@ -629,23 +648,181 @@ public static class ControlSettingsLabels
         if (ResolveSpec(path) is not { } spec)
             return null;
 
-        // 说明默认沿用设置页自己的约定：标签键 + "_D"。字面量标签没有这条约定，必须显式给说明。
-        var description = spec.Description
-                          ?? (spec.Label.Key is { } key ? spec.Label with { Key = key + "_D" } : null);
-
-        if (description is null)
-            return null;
-
         foreach (var culture in CultureChain())
         {
-            if (Resolve(description, culture) is { Length: > 0 } text)
+            if (ResolveDescription(spec, culture) is { Length: > 0 } text)
                 return text;
         }
 
         return null;
     }
 
+    // ---------------------------------------------------------------- 对外接口：三语映射
+
+    /// <summary>
+    ///     取类目标签的三语映射，键固定是 <c>zh-CN</c> / <c>en-US</c> / <c>ja-JP</c>；
+    ///     这个类目一条文案都取不到时返回 <c>null</c>。
+    /// </summary>
+    /// <remarks>
+    ///     单语言的 <see cref="GetCategoryLabel" /> 是"这台设备当前的界面语言"，只有设备语言的控制台能用。
+    ///     控制台管理员完全可以用英文界面去看一台中文设备，那时他需要的是英文原文，而不是设备语言的中文。
+    /// </remarks>
+    public static IReadOnlyDictionary<string, string>? GetCategoryLabels(string categoryId)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(categoryId);
+
+        return CategoryLabels.TryGetValue(categoryId, out var spec)
+            ? ResolveAll(culture => Resolve(spec, culture))
+            : null;
+    }
+
+    /// <summary>取字段标签的三语映射；这个字段一条文案都取不到时返回 <c>null</c>。</summary>
+    /// <param name="path">协议路径，如 <c>voice.volume</c>。</param>
+    public static IReadOnlyDictionary<string, string>? GetFieldLabels(string path)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+
+        return ResolveSpec(path) is { } spec
+            ? ResolveAll(culture => Resolve(spec.Label, culture))
+            : null;
+    }
+
+    /// <summary>
+    ///     取类目说明的三语映射；**永远是 <c>null</c>**，因为客户端从来没有写过类目级的说明。
+    /// </summary>
+    /// <remarks>
+    ///     类目只是控制台表单里的分组标题，设置页把每一句说明都写在具体某一条设置上
+    ///     （见 <see cref="ControlSettingCategory.Description" />）。保留这个入口是为了让控制台对类目和
+    ///     字段走同一条取词路径：今天它一定为空，将来真的写了类目说明也不必再改协议。
+    /// </remarks>
+    public static IReadOnlyDictionary<string, string>? GetCategoryDescriptions(string categoryId)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(categoryId);
+
+        return null;
+    }
+
+    /// <summary>取字段说明的三语映射；查不到说明时返回 <c>null</c>（与单语言接口一致，说明不复述属性名）。</summary>
+    /// <param name="path">协议路径，如 <c>voice.volume</c>。</param>
+    public static IReadOnlyDictionary<string, string>? GetFieldDescriptions(string path)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+
+        return ResolveSpec(path) is { } spec
+            ? ResolveAll(culture => ResolveDescription(spec, culture))
+            : null;
+    }
+
+    // ---------------------------------------------------------------- 对外接口：按控制台请求的语言取词
+
+    /// <summary>
+    ///     把请求里的 <c>locale</c> 归一到发布的三语键；认不出来返回 <c>null</c>（当作"没给"）。
+    /// </summary>
+    /// <remarks>
+    ///     只比语言前缀：<c>zh</c> / <c>zh-Hans</c> / <c>zh-CN</c> 都算中文。控制台与设备装的语言包
+    ///     版本不一定一致，为一个区域子标签把整次读取判失败没有任何好处；认不出来就退回设备语言。
+    /// </remarks>
+    public static string? NormalizePublishedLocale(string? locale)
+    {
+        if (string.IsNullOrWhiteSpace(locale))
+            return null;
+
+        var tag = locale.Trim().ToLowerInvariant();
+        if (tag.StartsWith("zh", StringComparison.Ordinal)) return "zh-CN";
+        if (tag.StartsWith("ja", StringComparison.Ordinal)) return "ja-JP";
+        if (tag.StartsWith("en", StringComparison.Ordinal)) return "en-US";
+        return null;
+    }
+
+    /// <summary>
+    ///     按控制台请求的语言取字段标签；那一语取不到词时回落到设备语言的标签。
+    /// </summary>
+    /// <remarks>
+    ///     为什么不让控制台自己从三语映射里挑：一张三语映射等于每个字段多带 6 段文案，
+    ///     五类设置一起读就顶穿了单帧上限（真发生过）。控制台一次只能显示一种语言，
+    ///     所以**语言放在请求里**，响应里只回那一份。
+    /// </remarks>
+    public static string GetFieldLabel(string path, string? locale)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+
+        return PickPublished(GetFieldLabels(path), locale) ?? GetFieldLabel(path);
+    }
+
+    /// <summary>按控制台请求的语言取字段说明；没有说明时返回 <c>null</c>。</summary>
+    public static string? GetFieldDescription(string path, string? locale)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+
+        return PickPublished(GetFieldDescriptions(path), locale) ?? GetFieldDescription(path);
+    }
+
+    /// <summary>按控制台请求的语言取类目标签；那一语取不到词时回落到设备语言的标签。</summary>
+    public static string GetCategoryLabel(string categoryId, string? locale)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(categoryId);
+
+        return PickPublished(GetCategoryLabels(categoryId), locale) ?? GetCategoryLabel(categoryId);
+    }
+
+    /// <summary>从三语映射里取出请求的那一语；没请求或那一语缺词时返回 <c>null</c>。</summary>
+    private static string? PickPublished(IReadOnlyDictionary<string, string>? published, string? locale)
+    {
+        if (published is null || NormalizePublishedLocale(locale) is not { } key)
+            return null;
+
+        return published.TryGetValue(key, out var text) && text.Length > 0 ? text : null;
+    }
+
+    /// <summary>
+    ///     按发布的三语各取一次词，得到 <c>{"zh-CN": …, "en-US": …, "ja-JP": …}</c>；一条都取不到时返回 <c>null</c>。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         每一语走的是**它自己的**回退链，与这台设备当前的界面语言无关：日语缺词退英语再退中文基资源，
+    ///         英语缺词退中文，中文缺词退英语。这正是同一个词在三种语言下的既有取词口径，
+    ///         只是把设备语言那一次换成了固定的一语。
+    ///     </para>
+    ///     <para>
+    ///         取不到的那一语**不出现这个键**，而不是给一个空串：空串到了控制台就是"有设置名、没说明"的假文案，
+    ///         与"这条设置本来就没有说明"分不开。三语都取不到时整个映射是 <c>null</c>，
+    ///         控制台据此回到设备语言的 <c>label</c>/<c>description</c>。
+    ///     </para>
+    ///     <para>
+    ///         这里刻意**不**套用单语言接口最后那级"属性名短语"兜底：那串英文不是任何一语的翻译，
+    ///         把它塞进 <c>ja-JP</c> 只会让日语控制台把英文当成日语。缺词时让控制台回落到 <c>label</c>，
+    ///         它拿到的正是同一个兜底串。
+    ///     </para>
+    /// </remarks>
+    private static IReadOnlyDictionary<string, string>? ResolveAll(Func<CultureInfo, string?> resolve)
+    {
+        Dictionary<string, string>? published = null;
+
+        foreach (var (key, fallback) in PublishedLanguages)
+        {
+            foreach (var culture in fallback)
+            {
+                if (resolve(culture) is not { Length: > 0 } text)
+                    continue;
+
+                published ??= new Dictionary<string, string>(PublishedLanguages.Length, StringComparer.Ordinal);
+                published[key] = text;
+                break;
+            }
+        }
+
+        return published;
+    }
+
     // ---------------------------------------------------------------- 解析
+
+    /// <summary>说明的出处：条目自己写了就用它，否则沿用设置页"标签键 + <c>_D</c>"的约定。</summary>
+    /// <remarks>字面量条目没有"<c>_D</c>"这条约定（它没有资源键），说明必须显式写出来，否则就是没有说明。</remarks>
+    private static LabelSpec? DescriptionSpec(FieldSpec spec) =>
+        spec.Description ?? (spec.Label.Key is { } key ? spec.Label with { Key = key + "_D" } : null);
+
+    private static string? ResolveDescription(FieldSpec spec, CultureInfo culture) =>
+        Resolve(DescriptionSpec(spec), culture);
 
     private static FieldSpec? ResolveSpec(string path)
     {

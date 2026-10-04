@@ -166,6 +166,19 @@ public sealed record ControlFrame
 /// </remarks>
 public static class ControlProtocolJson
 {
+    /// <summary>单帧的 UTF-8 字节上限。**协议如此**：超了服务端直接断连，不会有错误帧。</summary>
+    public const int MaxFrameBytes = 64 * 1024;
+
+    /// <summary>
+    ///     查询载荷的预算：留出信封（<c>type</c>/<c>command_id</c>/<c>ok</c>/<c>reason</c> 与转义）的余量。
+    /// </summary>
+    /// <remarks>
+    ///     读取类能力必须**自己**按这个预算收缩载荷，而不是等到发送时才炸：
+    ///     发送失败发生在传输层，那里除了把帧丢掉做不了别的，控制台只会干等到命令过期——
+    ///     这条上限本来就是拿一次真实故障换来的。
+    /// </remarks>
+    public const int PayloadBudgetBytes = MaxFrameBytes - 4 * 1024;
+
     public static JsonSerializerOptions Options { get; } = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -173,6 +186,10 @@ public static class ControlProtocolJson
     };
 
     public static string Serialize(ControlFrame frame) => JsonSerializer.Serialize(frame, Options);
+
+    /// <summary>一段载荷序列化后的 UTF-8 字节数——预算检查用它，口径与传输层一致。</summary>
+    public static int MeasureBytes(object payload) =>
+        JsonSerializer.SerializeToUtf8Bytes(payload, Options).Length;
 
     /// <summary>
     ///     解析一帧。无法解析或缺 <c>type</c> 时返回 <c>null</c>——调用方应当忽略该帧。

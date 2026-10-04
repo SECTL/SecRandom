@@ -269,7 +269,10 @@ public sealed class ControlNodePayloadTests
 
         var merged = ControlRosterMerge.Merge(
             existing,
-            [new Student { Id = "01", Name = "张三丰", Group = "B" }, new Student { Id = "03", Name = "王五" }]);
+            [
+                new ControlRosterStudentInput("01", "张三丰", string.Empty, "B", true),
+                new ControlRosterStudentInput("03", "王五", string.Empty, string.Empty, true)
+            ]);
 
         Assert.Equal(3, merged.Count);
 
@@ -286,9 +289,134 @@ public sealed class ControlNodePayloadTests
     [Fact]
     public void 名单下发_合并模式在本地名单不存在时等于替换()
     {
-        var merged = ControlRosterMerge.Merge(null, [new Student { Id = "01", Name = "张三" }]);
+        var merged = ControlRosterMerge.Merge(
+            null, [new ControlRosterStudentInput("01", "张三", string.Empty, string.Empty, true)]);
 
         Assert.Single(merged);
+    }
+
+    [Fact]
+    public void 名单下发_合并模式未下发标签时保留设备上的标签()
+    {
+        var existing = new StudentList("高一（1）班")
+        {
+            Students =
+            [
+                new Student { Id = "01", Name = "张三", Tags = "尖子 组长" },
+                new Student { Id = "02", Name = "李四", Tags = "住宿" }
+            ]
+        };
+
+        // 控制台只改了一个人的名字，tags 整条都没提。
+        var merged = ControlRosterMerge.Merge(
+            existing, [new ControlRosterStudentInput("01", "张三丰", string.Empty, string.Empty, true)]);
+
+        // 这一行的标签必须原样留着，别人更不该被动到——"没提"不是"清空"。
+        Assert.Equal("尖子 组长", merged[0].Tags);
+        Assert.Equal("住宿", merged[1].Tags);
+    }
+
+    [Fact]
+    public void 名单下发_合并模式下发标签时覆盖且规范化()
+    {
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload("""
+                    { "list_name": "高一（1）班", "mode": "merge",
+                      "students": [ { "id": "01", "name": "张三",
+                                      "tags": [ "  尖子 ", "", "组长", "尖子", "三好;住宿" ] } ] }
+                    """),
+            out var request,
+            out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.NotNull(request);
+
+        // 规范化与读通道同一个 helper：trim、丢空项、去重，元素里的分号同样按导入的分隔符拆开。
+        Assert.Equal(new[] { "尖子", "组长", "三好", "住宿" }, request.Students[0].Tags);
+
+        var existing = new StudentList("高一（1）班")
+        {
+            Students = [new Student { Id = "01", Name = "张三", Tags = "旧标签" }]
+        };
+
+        var merged = ControlRosterMerge.Merge(existing, request.Students);
+
+        Assert.Equal("尖子 组长 三好 住宿", merged[0].Tags);
+    }
+
+    [Fact]
+    public void 名单下发_合并模式空数组明确清空标签()
+    {
+        var existing = new StudentList("高一（1）班")
+        {
+            Students = [new Student { Id = "01", Name = "张三", Tags = "尖子 组长" }]
+        };
+
+        var merged = ControlRosterMerge.Merge(
+            existing,
+            [new ControlRosterStudentInput("01", "张三", string.Empty, string.Empty, true, [])]);
+
+        Assert.Equal(string.Empty, merged[0].Tags);
+    }
+
+    [Fact]
+    public void 名单下发_替换模式未下发标签等于没有标签()
+    {
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload("""
+                    { "list_name": "高一（1）班", "mode": "replace",
+                      "students": [ { "id": "01", "name": "张三" }, { "id": "02", "name": "李四", "tags": [ "住宿" ] } ] }
+                    """),
+            out var request,
+            out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.NotNull(request);
+
+        // 缺失的 tags 是"本次没下发"，不是"清空"——两者在载荷这一层必须还能分辨。
+        Assert.Null(request.Students[0].Tags);
+        Assert.Equal(new[] { "住宿" }, request.Students[1].Tags);
+
+        // replace 按载荷重建整份名单：没下发标签的行显式落成空标签，而不是靠模型默认值恰好为空。
+        Assert.Equal(string.Empty, request.Students[0].ToStudent().Tags);
+        Assert.Equal("住宿", request.Students[1].ToStudent().Tags);
+    }
+
+    [Theory]
+    [InlineData("""{ "id": "01" }""")]
+    [InlineData("""{ "id": "01", "tags": null }""")]
+    public void 名单下发_缺省与显式null都是本次未下发标签(string entry)
+    {
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload($$"""{ "list_name": "高一", "students": [ {{entry}} ] }"""), out var request, out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.Null(request!.Students[0].Tags);
+    }
+
+    [Fact]
+    public void 名单下发_空数组是明确清空而不是没下发()
+    {
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload("""{ "list_name": "高一", "students": [ { "id": "01", "tags": [] } ] }"""),
+            out var request,
+            out var reason);
+
+        Assert.True(parsed, reason);
+        var emptyTags = request!.Students[0].Tags;
+        Assert.NotNull(emptyTags);
+        Assert.Empty(emptyTags);
+
+        // 给了但规范化后一个都不剩，同样是"明确清空"。
+        var blank = ControlRosterPushRequest.TryParse(
+            Payload("""{ "list_name": "高一", "students": [ { "id": "01", "tags": [ "  ", ";" ] } ] }"""),
+            out var blankRequest,
+            out var blankReason);
+
+        Assert.True(blank, blankReason);
+        var blankTags = blankRequest!.Students[0].Tags;
+        Assert.NotNull(blankTags);
+        Assert.Empty(blankTags);
     }
 
     [Theory]
@@ -298,6 +426,10 @@ public sealed class ControlNodePayloadTests
     [InlineData("""{ "list_name": "高一", "students": "01,02" }""", "invalid_command")]
     [InlineData("""{ "students": [ { "id": "01" } ] }""", "invalid_command")]
     [InlineData("""{ "list_name": "高一", "mode": "upsert", "students": [ { "id": "01" } ] }""", "unsupported_mode:upsert")]
+    [InlineData("""{ "list_name": "高一", "students": [ { "id": "01", "tags": "尖子 组长" } ] }""", "invalid_command")]
+    [InlineData("""{ "list_name": "高一", "students": [ { "id": "01", "tags": { "a": 1 } } ] }""", "invalid_command")]
+    [InlineData("""{ "list_name": "高一", "students": [ { "id": "01", "tags": [ "尖子", 7 ] } ] }""", "invalid_command")]
+    [InlineData("""{ "list_name": "高一", "students": [ { "id": "01", "tags": [ "尖子", null ] } ] }""", "invalid_command")]
     public void 名单下发_非法载荷被拒绝(string json, string expectedReason)
     {
         var parsed = ControlRosterPushRequest.TryParse(Payload(json), out var request, out var reason);
@@ -320,5 +452,312 @@ public sealed class ControlNodePayloadTests
 
         Assert.False(parsed);
         Assert.Equal($"roster_too_large:{ControlRosterPushRequest.MaxStudents}", reason);
+    }
+
+    // ---------------------------------------------------------------- roster.write（奖池）
+
+    /// <summary>
+    ///     同一条 <c>roster.write</c> 能力靠 <c>roster_kind</c> + 数组名分流到奖池。
+    /// </summary>
+    /// <remarks>
+    ///     这条分支从协议落地那天起就是缺的：控制台一直在发 <c>roster_kind: "prizes"</c>，
+    ///     客户端却只会找 <c>students</c>，于是每一次奖池下发都被判成 <c>invalid_command</c>。
+    /// </remarks>
+    [Fact]
+    public void 奖池下发_奖品载荷被解析成奖品输入()
+    {
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload("""
+                    { "list_name": "元旦抽奖", "mode": "merge", "activate": true, "roster_kind": "prizes",
+                      "prizes": [ { "id": "p1", "name": "一等奖", "count": 2, "weight": 1.5, "enabled": true,
+                                    "tags": [ "甲", "乙" ] },
+                                  { "name": "二等奖", "enabled": false } ] }
+                    """),
+            out var request,
+            out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.NotNull(request);
+        Assert.True(request.IsPrizeRoster);
+        Assert.Equal(ControlRosterPushRequest.PrizesKind, request.RosterKind);
+        Assert.Equal("元旦抽奖", request.ListName);
+        Assert.Equal(RosterWriteModes.Merge, request.Mode);
+        Assert.True(request.Activate);
+
+        // 奖池载荷里没有学生：两种数组不会同时出现。
+        Assert.Empty(request.Students);
+
+        var prizes = request.Prizes!;
+        Assert.Equal(2, prizes.Count);
+        Assert.Equal("p1", prizes[0].Id);
+        Assert.Equal("一等奖", prizes[0].Name);
+        Assert.Equal(2, prizes[0].Count);
+        Assert.Equal(1.5, prizes[0].Weight);
+        Assert.True(prizes[0].Exists);
+        Assert.Equal(new[] { "甲", "乙" }, prizes[0].Tags);
+
+        // 缺 count / weight 用手写载荷的默认值（与 Prize 自己的默认值一致），缺 enabled 算启用。
+        Assert.Equal(1, prizes[1].Count);
+        Assert.Equal(1, prizes[1].Weight);
+        Assert.False(prizes[1].Exists);
+    }
+
+    [Theory]
+    [InlineData("""{ "list_name": "高一（1）班", "students": [ { "id": "01", "name": "张三" } ] }""")]
+    [InlineData("""{ "list_name": "高一（1）班", "roster_kind": "students", "students": [ { "id": "01", "name": "张三" } ] }""")]
+    // 非字符串的 roster_kind 与读通道一样按缺省处理：类型不对时"猜一个类型"比"拒收"更危险，
+    // 所以两边都退回点名，而不是把 7 拼进原因码。
+    [InlineData("""{ "list_name": "高一（1）班", "roster_kind": 7, "students": [ { "id": "01", "name": "张三" } ] }""")]
+    public void 名单下发_缺省与显式students都走学生路径(string json)
+    {
+        var parsed = ControlRosterPushRequest.TryParse(Payload(json), out var request, out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.NotNull(request);
+        Assert.False(request.IsPrizeRoster);
+        Assert.Equal(ControlRosterPushRequest.StudentsKind, request.RosterKind);
+        Assert.Null(request.Prizes);
+        Assert.Single(request.Students);
+    }
+
+    [Fact]
+    public void 奖池下发_合并模式就地更新以保住历史身份()
+    {
+        var recordId = Guid.NewGuid();
+        var existing = new PrizeList("元旦抽奖")
+        {
+            Prizes =
+            [
+                new Prize { RecordId = recordId, Id = "p1", Name = "一等奖", Count = 2, Weight = 1.5 },
+                // 没有编号的奖品只能按名字认人——这一条同时钉住"编号为空时回落到 name"。
+                new Prize { Id = string.Empty, Name = "二等奖", Tags = "文具" }
+            ]
+        };
+
+        var nameMatchedRecordId = existing.Prizes[1].RecordId;
+
+        var merged = ControlRosterMerge.MergePrizes(
+            existing,
+            [
+                new ControlRosterPrizeInput("p1", "特等奖", 3, 2.0, true),
+                new ControlRosterPrizeInput(string.Empty, "二等奖", 5, 1, true),
+                new ControlRosterPrizeInput("p3", "三等奖", 1, 1, true)
+            ]);
+
+        Assert.Equal(3, merged.Count);
+
+        // 命中者**就地更新**：RecordId 必须还是原来那个，否则抽奖历史与公平性统计会和这个奖项断掉。
+        Assert.Equal(recordId, merged[0].RecordId);
+        Assert.Equal("特等奖", merged[0].Name);
+        Assert.Equal(3, merged[0].Count);
+        Assert.Equal(2.0, merged[0].Weight);
+
+        // 按名字命中的那一条同样就地更新；这次没下发 tags，标签留着。
+        Assert.Equal(nameMatchedRecordId, merged[1].RecordId);
+        Assert.Equal(5, merged[1].Count);
+        Assert.Equal("文具", merged[1].Tags);
+
+        // 未提及的本地奖品保留，新奖品追加。
+        Assert.Equal("三等奖", merged[2].Name);
+    }
+
+    [Fact]
+    public void 奖池下发_合并模式在本地奖池不存在时等于替换()
+    {
+        var merged = ControlRosterMerge.MergePrizes(
+            null, [new ControlRosterPrizeInput("p1", "一等奖", 1, 1, true)]);
+
+        Assert.Single(merged);
+    }
+
+    [Fact]
+    public void 奖池下发_合并模式未下发标签时保留设备上的标签()
+    {
+        var existing = new PrizeList("元旦抽奖")
+        {
+            Prizes =
+            [
+                new Prize { Id = "p1", Name = "一等奖", Tags = "甲 乙" },
+                new Prize { Id = "p2", Name = "二等奖", Tags = "丙" }
+            ]
+        };
+
+        // 控制台只改了数量，tags 整条都没提。
+        var merged = ControlRosterMerge.MergePrizes(
+            existing, [new ControlRosterPrizeInput("p1", "一等奖", 5, 1, true)]);
+
+        // 这一行的标签必须原样留着，别人更不该被动到——"没提"不是"清空"。
+        Assert.Equal("甲 乙", merged[0].Tags);
+        Assert.Equal("丙", merged[1].Tags);
+        Assert.Equal(5, merged[0].Count);
+    }
+
+    [Fact]
+    public void 奖池下发_合并模式下发标签时覆盖且规范化()
+    {
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload("""
+                    { "list_name": "元旦抽奖", "mode": "merge", "roster_kind": "prizes",
+                      "prizes": [ { "id": "p1", "name": "一等奖",
+                                    "tags": [ "  甲 ", "", "乙", "甲", "丙;丁" ] } ] }
+                    """),
+            out var request,
+            out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.NotNull(request);
+
+        // 规范化与读通道同一个 helper：trim、丢空项、去重，元素里的分号同样按导入的分隔符拆开。
+        Assert.Equal(new[] { "甲", "乙", "丙", "丁" }, request.Prizes![0].Tags);
+
+        var existing = new PrizeList("元旦抽奖")
+        {
+            Prizes = [new Prize { Id = "p1", Name = "一等奖", Tags = "旧标签" }]
+        };
+
+        var merged = ControlRosterMerge.MergePrizes(existing, request.Prizes!);
+
+        Assert.Equal("甲 乙 丙 丁", merged[0].Tags);
+    }
+
+    [Fact]
+    public void 奖池下发_合并模式空数组明确清空标签()
+    {
+        var existing = new PrizeList("元旦抽奖")
+        {
+            Prizes = [new Prize { Id = "p1", Name = "一等奖", Tags = "甲 乙" }]
+        };
+
+        var merged = ControlRosterMerge.MergePrizes(
+            existing, [new ControlRosterPrizeInput("p1", "一等奖", 1, 1, true, [])]);
+
+        Assert.Equal(string.Empty, merged[0].Tags);
+    }
+
+    [Theory]
+    [InlineData("""{ "id": "p1", "name": "一等奖" }""")]
+    [InlineData("""{ "id": "p1", "name": "一等奖", "tags": null }""")]
+    public void 奖池下发_缺省与显式null都是本次未下发标签(string entry)
+    {
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload($$"""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [ {{entry}} ] }"""),
+            out var request, out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.Null(request!.Prizes![0].Tags);
+    }
+
+    [Fact]
+    public void 奖池下发_空数组是明确清空而不是没下发()
+    {
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload("""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [ { "id": "p1", "tags": [] } ] }"""),
+            out var request, out var reason);
+
+        Assert.True(parsed, reason);
+        var emptyTags = request!.Prizes![0].Tags;
+        Assert.NotNull(emptyTags);
+        Assert.Empty(emptyTags);
+
+        // 给了但规范化后一个都不剩，同样是"明确清空"。
+        var blank = ControlRosterPushRequest.TryParse(
+            Payload("""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [ { "id": "p1", "tags": [ "  ", ";" ] } ] }"""),
+            out var blankRequest, out var blankReason);
+
+        Assert.True(blank, blankReason);
+        var blankTags = blankRequest!.Prizes![0].Tags;
+        Assert.NotNull(blankTags);
+        Assert.Empty(blankTags);
+    }
+
+    [Fact]
+    public void 奖池下发_替换模式未下发标签等于没有标签()
+    {
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload("""
+                    { "list_name": "元旦抽奖", "mode": "replace", "roster_kind": "prizes",
+                      "prizes": [ { "id": "p1", "name": "一等奖" }, { "id": "p2", "name": "二等奖", "tags": [ "文具" ] } ] }
+                    """),
+            out var request,
+            out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.NotNull(request);
+
+        // 缺失的 tags 是"本次没下发"，不是"清空"——两者在载荷这一层必须还能分辨。
+        Assert.Null(request.Prizes![0].Tags);
+        Assert.Equal(new[] { "文具" }, request.Prizes[1].Tags);
+
+        // replace 按载荷重建整份奖池：没下发标签的奖品显式落成空标签，而不是靠模型默认值恰好为空。
+        Assert.Equal(string.Empty, request.Prizes[0].ToPrize().Tags);
+        Assert.Equal("文具", request.Prizes[1].ToPrize().Tags);
+    }
+
+    [Theory]
+    [InlineData("""{ "name": "一等奖" }""", 1, 1d)]
+    [InlineData("""{ "name": "一等奖", "count": 2, "weight": 3 }""", 2, 3d)]
+    [InlineData("""{ "name": "一等奖", "count": 2.0, "weight": 1.5 }""", 2, 1.5d)]
+    [InlineData("""{ "name": "一等奖", "count": null, "weight": null }""", 1, 1d)]
+    public void 奖池下发_数量与权重缺省时用默认值(string entry, int expectedCount, double expectedWeight)
+    {
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload($$"""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [ {{entry}} ] }"""),
+            out var request, out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.Equal(expectedCount, request!.Prizes![0].Count);
+        Assert.Equal(expectedWeight, request.Prizes[0].Weight);
+    }
+
+    [Theory]
+    [InlineData("""{ "list_name": "元旦抽奖", "roster_kind": "prizes" }""", "invalid_command")]
+    [InlineData("""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": {} }""", "invalid_command")]
+    [InlineData("""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "students": [ { "id": "01" } ] }""", "invalid_command")]
+    [InlineData("""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [] }""", "empty_roster")]
+    [InlineData("""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [ { "id": "  " } ] }""", "empty_roster")]
+    [InlineData("""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [ "p1" ] }""", "invalid_prize_entry")]
+    [InlineData("""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [ { "name": "一等奖", "count": "2" } ] }""", "invalid_prize_entry")]
+    [InlineData("""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [ { "name": "一等奖", "count": 2.5 } ] }""", "invalid_prize_entry")]
+    [InlineData("""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [ { "name": "一等奖", "weight": true } ] }""", "invalid_prize_entry")]
+    [InlineData("""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [ { "name": "一等奖", "tags": "文具" } ] }""", "invalid_command")]
+    [InlineData("""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [ { "name": "一等奖", "tags": { "a": 1 } } ] }""", "invalid_command")]
+    [InlineData("""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [ { "name": "一等奖", "tags": [ "文具", 7 ] } ] }""", "invalid_command")]
+    [InlineData("""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [ { "name": "一等奖", "tags": [ "文具", null ] } ] }""", "invalid_command")]
+    [InlineData("""{ "list_name": "  ", "roster_kind": "prizes", "prizes": [ { "name": "一等奖" } ] }""", "invalid_list_name")]
+    [InlineData("""{ "list_name": "元旦抽奖", "mode": "upsert", "roster_kind": "prizes", "prizes": [ { "name": "一等奖" } ] }""", "unsupported_mode:upsert")]
+    [InlineData("""{ "list_name": "元旦抽奖", "roster_kind": "classes", "prizes": [ { "name": "一等奖" } ] }""", "unsupported_roster_kind:classes")]
+    [InlineData("""{ "list_name": "高一（1）班", "roster_kind": "teachers", "students": [ { "id": "01" } ] }""", "unsupported_roster_kind:teachers")]
+    public void 奖池下发_非法载荷被拒绝(string json, string expectedReason)
+    {
+        var parsed = ControlRosterPushRequest.TryParse(Payload(json), out var request, out var reason);
+
+        Assert.False(parsed);
+        Assert.Null(request);
+        Assert.Equal(expectedReason, reason);
+    }
+
+    /// <summary>
+    ///     奖池的上限与名单**是同一个数**：控制台对两种名单共用一条行数上限。
+    /// </summary>
+    /// <remarks>
+    ///     两个数字只要分叉，控制台就会发出"本地校验通过、设备判超限"的载荷，
+    ///     而那是最难查的一类问题——两边都"没错"。
+    /// </remarks>
+    [Fact]
+    public void 奖池下发_超过奖品条数上限被拒绝()
+    {
+        Assert.Equal(ControlRosterPushRequest.MaxStudents, ControlRosterPushRequest.MaxPrizes);
+
+        var prizes = string.Join(
+            ",",
+            Enumerable.Range(1, ControlRosterPushRequest.MaxPrizes + 1)
+                .Select(index => $$"""{ "id": "p{{index}}" }"""));
+
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload($$"""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [{{prizes}}] }"""),
+            out _, out var reason);
+
+        Assert.False(parsed);
+        Assert.Equal($"roster_too_large:{ControlRosterPushRequest.MaxPrizes}", reason);
     }
 }

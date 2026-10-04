@@ -54,13 +54,17 @@ public sealed class ControlRosterReadHandler(
                     request.RosterKind, ControlRosterReadRequest.Students, StringComparison.Ordinal);
 
                 var lists = students ? ReadStudentLists(request) : ReadPrizeLists(request);
+                var response = ControlRosterReadResponse.TrimToBudget(
+                    new ControlRosterReadResponse(request.RosterKind, lists));
 
                 logger.LogInformation(
-                    "集控已读取名单：{Kind}（{Lists} 份，按名单过滤：{Filter}）",
-                    request.RosterKind, lists.Count, request.ListName ?? "无");
+                    "集控已读取名单：{Kind}（{Lists} 份，{Members} 名成员，按名单过滤：{Filter}）",
+                    request.RosterKind,
+                    response.Lists.Count,
+                    response.Lists.Sum(list => list.Members.Count),
+                    request.ListName ?? "无");
 
-                return ControlCommandOutcome.SuccessWith(
-                    new ControlRosterReadResponse(request.RosterKind, lists));
+                return ControlCommandOutcome.SuccessWith(response);
             });
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -97,14 +101,7 @@ public sealed class ControlRosterReadHandler(
 
             var members = candidates
                 .Take(ControlRosterReadRequest.MaxMembersPerList)
-                .Select(student => new ControlRosterMemberPayload(
-                    NullIfBlank(student.Id),
-                    NullIfBlank(student.Name),
-                    NullIfBlank(student.Gender),
-                    NullIfBlank(student.Group),
-                    null,
-                    null,
-                    student.Exists))
+                .Select(ControlRosterMemberPayload.FromStudent)
                 .ToList();
 
             payloads.Add(new ControlRosterListPayload(
@@ -142,14 +139,7 @@ public sealed class ControlRosterReadHandler(
 
             var members = candidates
                 .Take(ControlRosterReadRequest.MaxMembersPerList)
-                .Select(prize => new ControlRosterMemberPayload(
-                    NullIfBlank(prize.Id),
-                    NullIfBlank(prize.Name),
-                    null,
-                    null,
-                    prize.Count,
-                    prize.Weight,
-                    prize.Exists))
+                .Select(ControlRosterMemberPayload.FromPrize)
                 .ToList();
 
             payloads.Add(new ControlRosterListPayload(
@@ -163,8 +153,4 @@ public sealed class ControlRosterReadHandler(
 
         return payloads;
     }
-
-    /// <summary>空字符串与缺失在协议里是同一件事：都没有值，不要用 <c>""</c> 冒充有值。</summary>
-    private static string? NullIfBlank(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
