@@ -1,7 +1,9 @@
 using Avalonia.Controls;
 using Microsoft.Extensions.Logging.Abstractions;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models;
+using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.Security;
 using System.Reflection;
@@ -718,6 +720,238 @@ public sealed class SecurityServiceTests : IDisposable
         Assert.False(File.Exists(keyPath));
     }
 
+    [Fact]
+    public async Task SudoMode_DefaultsToEnabledAndStopsApplyingOnceDisabled()
+    {
+        var fixture = await CreateProtectedFixtureAsync();
+        var settings = fixture.ConfigHandler.Data.SecuritySettings;
+        Assert.True(settings.SudoModeEnabled);
+        Assert.Equal(20, settings.SudoModeDurationSeconds);
+
+        settings.ProtectRollCallStart = true;
+        settings.ProtectOpenSettings = true;
+
+        await fixture.Service.AuthorizeAsync(
+            SecurityOperation.RollCallStart, () => Task.CompletedTask, TestContext.Current.CancellationToken);
+        Assert.False(fixture.Service.RequiresVerification(SecurityOperation.RollCallStart));
+
+        settings.SudoModeEnabled = false;
+
+        Assert.False(fixture.Service.IsGlobalSudoModeActive());
+        Assert.False(fixture.Service.IsSudoModeActive());
+        Assert.True(fixture.Service.RequiresVerification(SecurityOperation.RollCallStart));
+        Assert.True(fixture.Service.RequiresVerification(SecurityOperation.OpenSettings));
+    }
+
+    [Fact]
+    public async Task SettingsSudoMode_WhenTheDurationElapses_RequiresVerificationAgain()
+    {
+        var time = new TestTimeProvider(DateTimeOffset.UnixEpoch);
+        var fixture = await CreateProtectedFixtureAsync(time);
+        var settings = fixture.ConfigHandler.Data.SecuritySettings;
+        settings.ProtectOpenSettings = true;
+
+        var opened = await fixture.Service.AuthorizeSettingsAsync(
+            () => Task.CompletedTask, () => Task.CompletedTask, TestContext.Current.CancellationToken);
+
+        Assert.True(opened.IsAuthorized);
+        Assert.Single(fixture.Prompt.Requests);
+        Assert.False(fixture.Service.RequiresVerification(SecurityOperation.OpenSettings));
+
+        time.Now = time.Now.AddSeconds(settings.SudoModeDurationSeconds + 1);
+
+        Assert.True(fixture.Service.RequiresVerification(SecurityOperation.OpenSettings));
+    }
+
+    [Fact]
+    public async Task SettingsSudoMode_WhenTheSettingsWindowCloses_StopsImmediately()
+    {
+        var fixture = await CreateProtectedFixtureAsync();
+        fixture.ConfigHandler.Data.SecuritySettings.ProtectOpenSettings = true;
+
+        await fixture.Service.AuthorizeSettingsAsync(
+            () => Task.CompletedTask, () => Task.CompletedTask, TestContext.Current.CancellationToken);
+        Assert.False(fixture.Service.RequiresVerification(SecurityOperation.OpenSettings));
+
+        fixture.Service.DeactivateSettingsSudoMode();
+
+        Assert.True(fixture.Service.RequiresVerification(SecurityOperation.OpenSettings));
+    }
+
+    [Fact]
+    public async Task SudoMode_KeepsTheGlobalAndSettingsWindowTimersIndependent()
+    {
+        var fixture = await CreateProtectedFixtureAsync();
+        var settings = fixture.ConfigHandler.Data.SecuritySettings;
+        settings.ProtectOpenSettings = true;
+        settings.ProtectRollCallStart = true;
+
+        await fixture.Service.AuthorizeAsync(
+            SecurityOperation.RollCallStart, () => Task.CompletedTask, TestContext.Current.CancellationToken);
+
+        Assert.True(fixture.Service.IsGlobalSudoModeActive());
+        Assert.False(fixture.Service.RequiresVerification(SecurityOperation.RollCallStart));
+        // 全局 Sudo 不能代替设置窗口的验证
+        Assert.True(fixture.Service.RequiresVerification(SecurityOperation.OpenSettings));
+    }
+
+    [Fact]
+    public async Task RequiresVerification_WhenTheClassTimeExceptionIsRequested_IgnoresSudoMode()
+    {
+        var fixture = await CreateProtectedFixtureAsync();
+        fixture.ConfigHandler.Data.SecuritySettings.ProtectRollCallStart = true;
+
+        await fixture.Service.AuthorizeAsync(
+            SecurityOperation.RollCallStart, () => Task.CompletedTask, TestContext.Current.CancellationToken);
+        Assert.False(fixture.Service.RequiresVerification(SecurityOperation.RollCallStart));
+
+        var authorized = await fixture.Service.AuthorizeAsync(
+            [SecurityOperation.RollCallStart, SecurityOperation.BypassClassTimeRestriction],
+            () => Task.CompletedTask,
+            TestContext.Current.CancellationToken);
+
+        Assert.True(authorized);
+        Assert.Equal(2, fixture.Prompt.Requests.Count);
+    }
+
+    [Fact]
+    public async Task UpdateSecuritySettingsAsync_WhenProtectionIsLoosened_RequiresAFreshPasswordUnderSudo()
+    {
+        var fixture = await CreateProtectedFixtureAsync();
+        var settings = fixture.ConfigHandler.Data.SecuritySettings;
+        settings.ProtectOpenSettings = true;
+        settings.ProtectExit = true;
+        settings.ProtectRollCallStart = true;
+
+        await fixture.Service.AuthorizeSettingsAsync(
+            () => Task.CompletedTask, () => Task.CompletedTask, TestContext.Current.CancellationToken);
+        Assert.Single(fixture.Prompt.Requests);
+
+        var loosened = await fixture.Service.UpdateSecuritySettingsAsync(
+            null!, () => settings.ProtectExit = false, TestContext.Current.CancellationToken);
+
+        Assert.True(loosened);
+        Assert.False(settings.ProtectExit);
+        Assert.Equal(2, fixture.Prompt.Requests.Count);
+
+        // 同一次新鲜验证之后，这个窗口内的其余放宽改动不再重复验证
+        var loosenedAgain = await fixture.Service.UpdateSecuritySettingsAsync(
+            null!, () => settings.ProtectRollCallStart = false, TestContext.Current.CancellationToken);
+
+        Assert.True(loosenedAgain);
+        Assert.False(settings.ProtectRollCallStart);
+        Assert.Equal(2, fixture.Prompt.Requests.Count);
+    }
+
+    [Fact]
+    public async Task UpdateSecuritySettingsAsync_WhenProtectionIsTightened_ReusesTheSettingsSudoWindow()
+    {
+        var fixture = await CreateProtectedFixtureAsync();
+        var settings = fixture.ConfigHandler.Data.SecuritySettings;
+        settings.ProtectOpenSettings = true;
+
+        await fixture.Service.AuthorizeSettingsAsync(
+            () => Task.CompletedTask, () => Task.CompletedTask, TestContext.Current.CancellationToken);
+
+        var tightened = await fixture.Service.UpdateSecuritySettingsAsync(
+            null!, () => settings.ProtectExit = true, TestContext.Current.CancellationToken);
+
+        Assert.True(tightened);
+        Assert.True(settings.ProtectExit);
+        Assert.Single(fixture.Prompt.Requests);
+    }
+
+    [Fact]
+    public async Task UpdateSecuritySettingsAsync_WhenTheSudoDurationIsLengthened_RequiresAFreshPassword()
+    {
+        var fixture = await CreateProtectedFixtureAsync();
+        var settings = fixture.ConfigHandler.Data.SecuritySettings;
+        settings.ProtectOpenSettings = true;
+
+        await fixture.Service.AuthorizeSettingsAsync(
+            () => Task.CompletedTask, () => Task.CompletedTask, TestContext.Current.CancellationToken);
+
+        var shortened = await fixture.Service.UpdateSecuritySettingsAsync(
+            null!, () => settings.SudoModeDurationSeconds = 10, TestContext.Current.CancellationToken);
+
+        Assert.True(shortened);
+        Assert.Equal(10, settings.SudoModeDurationSeconds);
+        Assert.Single(fixture.Prompt.Requests);
+
+        var lengthened = await fixture.Service.UpdateSecuritySettingsAsync(
+            null!, () => settings.SudoModeDurationSeconds = 600, TestContext.Current.CancellationToken);
+
+        Assert.True(lengthened);
+        Assert.Equal(600, settings.SudoModeDurationSeconds);
+        Assert.Equal(2, fixture.Prompt.Requests.Count);
+    }
+
+    [Fact]
+    public async Task AuthorizeProtectionDowngradeAsync_WhenNothingIsProtected_AllowsWithoutVerification()
+    {
+        var fixture = CreateFixture(Password("secret1"));
+        await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
+
+        var authorized = await fixture.Service.AuthorizeProtectionDowngradeAsync(
+            new SecuritySettingsConfig { SecurityEnabled = false },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(authorized);
+        Assert.Empty(fixture.Prompt.Requests);
+    }
+
+    [Fact]
+    public async Task AuthorizeProtectionDowngradeAsync_WhenTheCandidateKeepsProtection_AllowsWithoutVerification()
+    {
+        var fixture = await CreateProtectedFixtureAsync();
+        fixture.ConfigHandler.Data.SecuritySettings.ProtectExit = true;
+
+        var authorized = await fixture.Service.AuthorizeProtectionDowngradeAsync(
+            new SecuritySettingsConfig { SecurityEnabled = true, PasswordEnabled = true, ProtectExit = true },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(authorized);
+        Assert.Empty(fixture.Prompt.Requests);
+    }
+
+    [Fact]
+    public async Task AuthorizeProtectionDowngradeAsync_WhenTheCandidateLoosensProtection_RequiresAFreshPassword()
+    {
+        var fixture = await CreateProtectedFixtureAsync();
+        var settings = fixture.ConfigHandler.Data.SecuritySettings;
+        settings.ProtectOpenSettings = true;
+        settings.ProtectExit = true;
+
+        // 设置窗口的 Sudo 已经生效，但导入前的这次检查不允许被它覆盖
+        await fixture.Service.AuthorizeSettingsAsync(
+            () => Task.CompletedTask, () => Task.CompletedTask, TestContext.Current.CancellationToken);
+        Assert.Single(fixture.Prompt.Requests);
+
+        var authorized = await fixture.Service.AuthorizeProtectionDowngradeAsync(
+            new SecuritySettingsConfig { SecurityEnabled = true, PasswordEnabled = true },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(authorized);
+        Assert.Equal(2, fixture.Prompt.Requests.Count);
+    }
+
+    [Fact]
+    public async Task AuthorizeProtectionDowngradeAsync_WhenThePasswordIsRejected_RefusesTheDowngrade()
+    {
+        var fixture = CreateFixture(Password("wrong"));
+        await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
+        var settings = fixture.ConfigHandler.Data.SecuritySettings;
+        settings.SecurityEnabled = true;
+        settings.ProtectExit = true;
+
+        var authorized = await fixture.Service.AuthorizeProtectionDowngradeAsync(
+            new SecuritySettingsConfig { SecurityEnabled = true, PasswordEnabled = true },
+            TestContext.Current.CancellationToken);
+
+        Assert.False(authorized);
+        Assert.Single(fixture.Prompt.Requests);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_temporaryRoot))
@@ -726,12 +960,26 @@ public sealed class SecurityServiceTests : IDisposable
 
     private SecurityFixture CreateFixture(SecurityVerificationResponse response, params UsbDriveInfo[] devices)
     {
-        return CreateFixture(response, null, devices);
+        return CreateFixtureCore(response, null, null, devices);
     }
 
     private SecurityFixture CreateFixture(
         SecurityVerificationResponse response,
         ThrowOnNthCredentialWrite? writeFault,
+        params UsbDriveInfo[] devices)
+    {
+        return CreateFixtureCore(response, writeFault, null, devices);
+    }
+
+    private SecurityFixture CreateFixture(SecurityVerificationResponse response, TimeProvider timeProvider)
+    {
+        return CreateFixtureCore(response, null, timeProvider);
+    }
+
+    private SecurityFixture CreateFixtureCore(
+        SecurityVerificationResponse response,
+        ThrowOnNthCredentialWrite? writeFault,
+        TimeProvider? timeProvider,
         params UsbDriveInfo[] devices)
     {
         Directory.CreateDirectory(_temporaryRoot);
@@ -749,7 +997,9 @@ public sealed class SecurityServiceTests : IDisposable
             credentialStore,
             prompt,
             usbCatalog,
-            NullLogger<SecurityService>.Instance);
+            NullLogger<SecurityService>.Instance,
+            bindingMarker: null,
+            timeProvider: timeProvider);
         return new SecurityFixture(
             service,
             configHandler,
@@ -758,6 +1008,23 @@ public sealed class SecurityServiceTests : IDisposable
             usbCatalog,
             credentialStore,
             credentialDirectory);
+    }
+
+    private sealed class TestTimeProvider(DateTimeOffset now) : TimeProvider
+    {
+        public DateTimeOffset Now { get; set; } = now;
+
+        public override DateTimeOffset GetUtcNow() => Now;
+    }
+
+    private async Task<SecurityFixture> CreateProtectedFixtureAsync(TimeProvider? timeProvider = null)
+    {
+        var fixture = timeProvider is null
+            ? CreateFixture(Password("secret1"))
+            : CreateFixture(Password("secret1"), timeProvider);
+        await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
+        fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true;
+        return fixture;
     }
 
     private string CreateUsbDirectory(string name)

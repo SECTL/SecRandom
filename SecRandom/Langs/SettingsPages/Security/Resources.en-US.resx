@@ -141,9 +141,16 @@
   <data name="M_TotpSaveFailed" xml:space="preserve"><value>Invalid code. TOTP settings were not saved.</value></data>
   <data name="M_UsbUpdated" xml:space="preserve"><value>USB binding updated.</value></data>
   <data name="M_UsbUpdateFailed" xml:space="preserve"><value>Unable to update USB binding. Confirm that the drive is connected and writable.</value></data>
-  <data name="S_SudoModeDuration" xml:space="preserve"><value>Sudo Duration</value></data>
-  <data name="S_SudoModeDuration_D" xml:space="preserve"><value>How long sudo mode remains active after a successful verification; the settings page does not follow this duration and expires when closed</value></data>
-  <data name="S_SudoModeDurationUnit" xml:space="preserve"><value>seconds</value></data>
+  <data name="S_SudoMode" xml:space="preserve"><value>Sudo Mode</value></data>
+  <data name="S_SudoMode_D" xml:space="preserve"><value>Verify once and skip repeated verification for a while; operations and the settings window keep independent timers</value></data>
+  <data name="S_SudoMode_Enabled" xml:space="preserve"><value>Enable Sudo Mode</value></data>
+  <data name="S_SudoMode_Enabled_D" xml:space="preserve"><value>When off, every protected action asks for verification again</value></data>
+  <data name="S_SudoMode_Duration" xml:space="preserve"><value>Sudo Duration</value></data>
+  <data name="S_SudoMode_Duration_D" xml:space="preserve"><value>How long verification is skipped after a successful one</value></data>
+  <data name="C_SudoModeDurationUnit" xml:space="preserve"><value>seconds</value></data>
+  <data name="C_SudoMode_OperationScope" xml:space="preserve"><value>Operations: draws, resets, window toggles, exiting the app, shortcuts and IPC commands</value></data>
+  <data name="C_SudoMode_SettingsScope" xml:space="preserve"><value>Settings window: after opening settings with verification, changes in this window are covered too, while closing the window ends it immediately; changes that loosen protection, such as turning security off, clearing a factor, disabling the settings-integrity check or lengthening this duration, always ask for the security password again</value></data>
+  <data name="C_SudoMode_CredentialScope" xml:space="preserve"><value>Never affected: setting up TOTP, changing or removing the password and binding a USB device always ask again</value></data>
   <data name="Menu_ExitSudoMode" xml:space="preserve"><value>Exit Sudo Mode</value></data>
   <data name="M_SudoModeExited" xml:space="preserve"><value>Sudo mode deactivated</value></data>
 </root>

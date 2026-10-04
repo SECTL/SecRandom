@@ -349,9 +349,12 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
         {
             categoryControl = FindSettingsControl(pageRoot, settings.CategoryControlId);
             _logger?.LogInformation("分类控件: {Control}", categoryControl);
-
-            if (categoryControl is FASettingsExpander settingsExpander) settingsExpander.IsExpanded = true;
         }
+
+        // 子设置可能嵌在折叠的展开卡片里：先展开离目标控件最近的 FASettingsExpander，
+        // 否则 BringIntoView 和高亮都落在不可见的控件上
+        var settingsExpander = FindSettingsExpander(settingsControl) ?? FindSettingsExpander(categoryControl);
+        if (settingsExpander is not null) settingsExpander.IsExpanded = true;
 
         Dispatcher.UIThread.Post(() =>
         {
@@ -371,6 +374,14 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
                ?? pageRoot.GetVisualDescendants().OfType<Control>()
                    .FirstOrDefault(control => control.Name == controlId);
     }
+
+    private static FASettingsExpander? FindSettingsExpander(Control? control) =>
+        control switch
+        {
+            null => null,
+            FASettingsExpander expander => expander,
+            _ => control.GetVisualAncestors().OfType<FASettingsExpander>().FirstOrDefault()
+        };
 
     private void ClearSearch()
     {

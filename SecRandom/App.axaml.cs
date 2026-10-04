@@ -1353,9 +1353,19 @@ public partial class App : Application
             .GetServices<IHostedService>().OfType<TaskBarIconService>().First();
         var menu = this.FindResource(@"AppMenu") as NativeMenu;
         taskBarIconService.MainTaskBarIcon.Menu = menu;
-        _floatingWindowMenuItem = menu?.Items.ElementAtOrDefault(3) as NativeMenuItem;
-        _exitSudoModeMenuItem = menu?.Items.ElementAtOrDefault(9) as NativeMenuItem;
-        _exitSudoModeSeparator = menu?.Items.ElementAtOrDefault(8) as NativeMenuItem;
+        _floatingWindowMenuItem = FindTrayMenuItem(menu, SecRandom.Langs.Common.Resources.Menu_ShowFloatingWindow)
+                                  ?? menu?.Items.ElementAtOrDefault(3) as NativeMenuItem;
+        _exitSudoModeMenuItem = FindTrayMenuItem(menu, SecRandom.Langs.Common.Resources.Menu_ExitSudoMode)
+                                ?? menu?.Items.ElementAtOrDefault(9) as NativeMenuItem;
+        if (menu is not null && _exitSudoModeMenuItem is not null)
+        {
+            // 托盘菜单里的分隔线即使菜单项隐藏也仍然占位，因此按菜单项的实际位置取它，
+            // 而不是写死索引：新增或删除任意一项都不应该让这条分隔线错位
+            var exitSudoModeIndex = menu.Items.IndexOf(_exitSudoModeMenuItem);
+            _exitSudoModeSeparator = exitSudoModeIndex > 0
+                ? menu.Items[exitSudoModeIndex - 1] as NativeMenuItemSeparator
+                : null;
+        }
         RefreshTrayWindowMenuItems();
         RefreshSudoMenuItem();
         
@@ -1384,7 +1394,8 @@ public partial class App : Application
 
     private async Task StopAsync(bool requestLifetimeShutdown)
     {
-        IAppHost.TryGetService<ISecurityService>().SudoModeChanged -= RefreshSudoMenuItem;
+        // Host 可能已在停机流程中释放，TryGetService 会返回 null
+        IAppHost.TryGetService<ISecurityService>()?.SudoModeChanged -= RefreshSudoMenuItem;
         _sudoModeRefreshTimer?.Dispose();
         _sudoModeRefreshTimer = null;
 
@@ -2399,12 +2410,17 @@ public partial class App : Application
                 : SecRandom.Langs.Common.Resources.Menu_ShowFloatingWindow;
     }
 
+    private static NativeMenuItem? FindTrayMenuItem(NativeMenu? menu, string header) =>
+        menu?.Items
+            .OfType<NativeMenuItem>()
+            .FirstOrDefault(item => string.Equals(item.Header?.ToString(), header, StringComparison.Ordinal));
+
     private void RefreshSudoMenuItem()
     {
         if (_exitSudoModeMenuItem is not null)
         {
             var securityService = IAppHost.GetService<ISecurityService>();
-            var isVisible = securityService.IsGlobalSudoModeActive();
+            var isVisible = securityService.IsSudoModeActive();
             _exitSudoModeMenuItem.IsVisible = isVisible;
             
             if (_exitSudoModeSeparator is not null)
@@ -2435,7 +2451,8 @@ public partial class App : Application
 
     private void MenuItemExitSudoMode_OnClick(object? sender, EventArgs e)
     {
-        IAppHost.GetService<ISecurityService>().DeactivateGlobalSudoMode();
+        // 「退出 Sudo 模式」应当结束所有免验证状态：全局计时器与设置窗口的授权都不能留下
+        IAppHost.GetService<ISecurityService>().DeactivateSudoMode();
     }
 
     private void MenuItemRestartProgram_OnClick(object? sender, EventArgs e)

@@ -170,9 +170,16 @@
   <data name="M_TotpCode" xml:space="preserve"><value>验证码</value></data>
   <data name="C_Copy" xml:space="preserve"><value>复制</value></data>
   <data name="M_Copied" xml:space="preserve"><value>已复制</value></data>
-  <data name="S_SudoModeDuration" xml:space="preserve"><value>Sudo 有效时长</value></data>
-  <data name="S_SudoModeDuration_D" xml:space="preserve"><value>验证通过后的免验证有效时长，设置页面不遵循此设置，关闭设置页面即失效</value></data>
-  <data name="S_SudoModeDurationUnit" xml:space="preserve"><value>秒</value></data>
+  <data name="S_SudoMode" xml:space="preserve"><value>Sudo 模式</value></data>
+  <data name="S_SudoMode_D" xml:space="preserve"><value>验证一次后在有效期内免重复验证，操作与设置窗口分别独立计时</value></data>
+  <data name="S_SudoMode_Enabled" xml:space="preserve"><value>启用 Sudo 模式</value></data>
+  <data name="S_SudoMode_Enabled_D" xml:space="preserve"><value>关闭后每一次受保护操作都需要重新验证</value></data>
+  <data name="S_SudoMode_Duration" xml:space="preserve"><value>Sudo 有效时长</value></data>
+  <data name="S_SudoMode_Duration_D" xml:space="preserve"><value>验证通过后的免验证时长</value></data>
+  <data name="C_SudoModeDurationUnit" xml:space="preserve"><value>秒</value></data>
+  <data name="C_SudoMode_OperationScope" xml:space="preserve"><value>操作范围：抽取、重置、开关窗口、退出程序、快捷键与 IPC 指令</value></data>
+  <data name="C_SudoMode_SettingsScope" xml:space="preserve"><value>设置窗口范围：打开设置验证后，本窗口内的设置改动同样免验证，但关闭窗口会立即失效；关闭安全保护、取消验证方式、关闭防篡改校验或延长本时长等放宽防护的改动，始终需要重新输入安全密码</value></data>
+  <data name="C_SudoMode_CredentialScope" xml:space="preserve"><value>不受影响的操作：配置 TOTP、修改或移除密码、绑定 USB 设备始终需要重新验证</value></data>
   <data name="Menu_ExitSudoMode" xml:space="preserve"><value>退出 Sudo 模式</value></data>
   <data name="M_SudoModeExited" xml:space="preserve"><value>已退出 Sudo 模式</value></data>
 </root>

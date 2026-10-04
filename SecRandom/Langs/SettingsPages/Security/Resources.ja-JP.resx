@@ -141,9 +141,16 @@
   <data name="M_TotpSaveFailed" xml:space="preserve"><value>コードが無効です。TOTP 設定は保存されませんでした。</value></data>
   <data name="M_UsbUpdated" xml:space="preserve"><value>USB 登録を更新しました。</value></data>
 <data name="M_UsbUpdateFailed" xml:space="preserve"><value>USB 登録を更新できません。ドライブの接続と書き込み権限を確認してください。</value></data>
-  <data name="S_SudoModeDuration" xml:space="preserve"><value>Sudo 有効期間</value></data>
-  <data name="S_SudoModeDuration_D" xml:space="preserve"><value>認証後に Sudo モードが有効な期間。設定ページはこの設定に従わず、閉じると無効になります</value></data>
-  <data name="S_SudoModeDurationUnit" xml:space="preserve"><value>秒</value></data>
+  <data name="S_SudoMode" xml:space="preserve"><value>Sudo モード</value></data>
+  <data name="S_SudoMode_D" xml:space="preserve"><value>一度認証すると一定時間は再認証を省略でき、操作と設定ウィンドウはそれぞれ独立して計時します</value></data>
+  <data name="S_SudoMode_Enabled" xml:space="preserve"><value>Sudo モードを有効にする</value></data>
+  <data name="S_SudoMode_Enabled_D" xml:space="preserve"><value>オフにすると保護された操作は毎回再認証が必要になります</value></data>
+  <data name="S_SudoMode_Duration" xml:space="preserve"><value>Sudo 有効期間</value></data>
+  <data name="S_SudoMode_Duration_D" xml:space="preserve"><value>認証成功後に再認証を省略する時間</value></data>
+  <data name="C_SudoModeDurationUnit" xml:space="preserve"><value>秒</value></data>
+  <data name="C_SudoMode_OperationScope" xml:space="preserve"><value>操作：抽選、リセット、ウィンドウの表示切り替え、アプリの終了、ショートカット、IPC コマンド</value></data>
+  <data name="C_SudoMode_SettingsScope" xml:space="preserve"><value>設定ウィンドウ：設定を開く際の認証後はこのウィンドウ内の変更も省略できますが、閉じると即座に無効になります。保護を緩める変更（セキュリティ保護の停止、認証方式の解除、改ざんチェックの停止、この時間の延長など）は常にパスワードの再入力が必要です</value></data>
+  <data name="C_SudoMode_CredentialScope" xml:space="preserve"><value>影響を受けない操作：TOTP の設定、パスワードの変更・削除、USB デバイスの登録は常に再認証が必要です</value></data>
   <data name="Menu_ExitSudoMode" xml:space="preserve"><value>Sudo モードを終了</value></data>
   <data name="M_SudoModeExited" xml:space="preserve"><value>Sudo モードを無効にしました</value></data>
 </root>

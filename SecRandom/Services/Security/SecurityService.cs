@@ -12,6 +12,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Platforms.Abstractions;
+using IntegrityAction = SecRandom.Core.Enums.Configs.SettingsIntegrityAction;
 
 namespace SecRandom.Services.Security;
 
@@ -34,11 +35,21 @@ internal sealed class SecurityService(
     private string? _pendingTotpSecret;
     private SecurityCredentialContext? _pendingTotpContext;
     private DateTimeOffset? _sudoModeExpirationUtc;
-    private bool _settingsSudoActive;
+    private DateTimeOffset? _settingsSudoExpirationUtc;
+
+    // 放宽防护的改动不接受「打开设置」时那一次验证，必须有一次专门为它发生的密码验证；
+    // 该验证之后同样按 SudoModeDurationSeconds 计时，避免连续调整时反复弹窗
+    private DateTimeOffset? _protectionDowngradeAuthorizationUtc;
 
     public event Action? SudoModeChanged;
 
     private SecuritySettingsConfig Settings => configHandler.Data.SecuritySettings;
+
+    /// <summary>
+    ///     安全验证对话框的宿主根窗口。宿主尚未建立时（单元测试直接驱动本服务）
+    ///     没有可用的 <see cref="App" /> 实例，此时返回 null 而不是抛出异常。
+    /// </summary>
+    private static TopLevel VerificationRootWindow => App.Current?.GetRootWindow()!;
 
     public SecuritySettingsUiState GetUiState()
     {
@@ -66,15 +77,23 @@ internal sealed class SecurityService(
         if (!Settings.SecurityEnabled)
             return false;
 
+        // 这两项不接受任何免验证状态：放宽安全设置本身要重新验证，
+        // 「上课时间禁止抽取」的例外验证也不能被一段 Sudo 窗口覆盖
+        if (operation is SecurityOperation.ChangeSecuritySettings or SecurityOperation.BypassClassTimeRestriction)
+            return true;
+
         // Check the appropriate sudo mode based on operation
         if (operation == SecurityOperation.OpenSettings)
         {
-            if (_settingsSudoActive)
+            if (IsSettingsSudoModeActive())
                 return false;
         }
         else
         {
-            if (_sudoModeExpirationUtc is { } expiration && _timeProvider.GetUtcNow() < expiration)
+            // 这里刻意不调用 IsGlobalSudoModeActive：它会触发 SudoModeChanged，
+            // 而本方法可能从非 UI 线程被调用，托盘菜单项的刷新必须留在 UI 线程
+            if (Settings.SudoModeEnabled &&
+                _sudoModeExpirationUtc is { } expiration && _timeProvider.GetUtcNow() < expiration)
                 return false;
         }
 
@@ -138,14 +157,14 @@ internal sealed class SecurityService(
                 Settings.RequireAllSelectedFactors,
                 GetLockoutRemaining(metadata.LockedUntilUtc),
                 TotpStandaloneReady: credentialStore.LoadStandaloneTotp() is not null);
-            var result = await prompt.RequestAsync(App.Current.GetRootWindow(), request, VerifyAsync, cancellationToken);
+            var result = await prompt.RequestAsync(VerificationRootWindow, request, VerifyAsync, cancellationToken);
             if (!result.IsAuthorized)
             {
                 logger.LogInformation("Security authorization rejected for {Operations}: {Failure}", string.Join(',', operations), result.Failure);
                 return false;
             }
 
-            ActivateSudoMode();
+            ActivateGlobalSudoMode();
 
             await action();
             return true;
@@ -203,7 +222,7 @@ internal sealed class SecurityService(
                 GetLockoutRemaining(metadata.LockedUntilUtc),
                 Settings.AllowSettingsPreview,
                 TotpStandaloneReady: credentialStore.LoadStandaloneTotp() is not null);
-            var result = await prompt.RequestAsync(App.Current.GetRootWindow(), request, VerifyAsync, cancellationToken);
+            var result = await prompt.RequestAsync(VerificationRootWindow, request, VerifyAsync, cancellationToken);
             if (result.Failure == SecurityVerificationFailure.PreviewRequested && request.AllowPreview)
             {
                 await previewAction();
@@ -215,7 +234,7 @@ internal sealed class SecurityService(
                 return new SecurityAuthorizationResult(false);
             }
 
-            _settingsSudoActive = true;
+            ActivateSettingsSudoMode();
 
             await action();
             return new SecurityAuthorizationResult(true);
@@ -231,22 +250,30 @@ internal sealed class SecurityService(
         Action update,
         CancellationToken cancellationToken = default)
     {
-        if (_settingsSudoActive)
+        lock (_gate)
         {
-            lock (_gate)
+            if (IsSettingsSudoModeActive())
             {
+                var snapshot = SecuritySettingsSnapshot.Capture(Settings);
                 update();
-                var metadata = credentialStore.LoadMetadata();
-                NormalizeSettings(metadata);
-                configHandler.Save();
+                NormalizeSettings(credentialStore.LoadMetadata());
+                if (!snapshot.IsProtectionDowngrade(SecuritySettingsSnapshot.Capture(Settings)) ||
+                    IsProtectionDowngradeAuthorized())
+                {
+                    configHandler.Save();
+                    return Task.FromResult(true);
+                }
+
+                // 放宽防护的改动不能靠设置页 sudo 免验证：先撤回这次试改，再走密码验证
+                snapshot.Restore(Settings);
             }
-            return Task.FromResult(true);
         }
 
         return AuthorizePasswordCoreAsync(xamlRoot, context =>
         {
             lock (_gate)
             {
+                var snapshot = SecuritySettingsSnapshot.Capture(Settings);
                 var requireAllBefore = Settings.RequireAllSelectedFactors;
                 update();
                 NormalizeSettings(context.Credentials);
@@ -257,10 +284,13 @@ internal sealed class SecurityService(
                     Settings.RequireAllSelectedFactors = requireAllBefore;
                 }
 
+                if (snapshot.IsProtectionDowngrade(SecuritySettingsSnapshot.Capture(Settings)))
+                    _protectionDowngradeAuthorizationUtc = _timeProvider.GetUtcNow();
+
                 configHandler.Save();
             }
 
-            _settingsSudoActive = true;
+            ActivateSettingsSudoMode();
             return Task.FromResult(false);
         }, cancellationToken);
     }
@@ -531,7 +561,7 @@ internal sealed class SecurityService(
 
     public Task<string?> BeginTotpSetupAsync(CancellationToken cancellationToken = default)
     {
-        return BeginTotpSetupAsync(App.Current.GetRootWindow(), cancellationToken);
+        return BeginTotpSetupAsync(VerificationRootWindow, cancellationToken);
     }
 
     public async Task<string?> BeginTotpSetupAsync(TopLevel xamlRoot, CancellationToken cancellationToken = default)
@@ -649,7 +679,7 @@ internal sealed class SecurityService(
 
     public Task<bool> BindUsbAsync(string deviceId, CancellationToken cancellationToken = default)
     {
-        return BindUsbAsync(App.Current.GetRootWindow(), deviceId, cancellationToken);
+        return BindUsbAsync(VerificationRootWindow, deviceId, cancellationToken);
     }
 
     public async Task<bool> BindUsbAsync(TopLevel xamlRoot, string deviceId, CancellationToken cancellationToken = default)
@@ -716,7 +746,7 @@ internal sealed class SecurityService(
 
     public Task<bool> UnbindUsbAsync(string bindingId, CancellationToken cancellationToken = default)
     {
-        return UnbindUsbAsync(App.Current.GetRootWindow(), bindingId, cancellationToken);
+        return UnbindUsbAsync(VerificationRootWindow, bindingId, cancellationToken);
     }
 
     public async Task<bool> UnbindUsbAsync(TopLevel xamlRoot, string bindingId, CancellationToken cancellationToken = default)
@@ -1000,7 +1030,9 @@ internal sealed class SecurityService(
         bool ProtectLinkage,
         bool SettingsIntegrityCheckEnabled,
         SettingsIntegrityAction SettingsIntegrityAction,
-        SettingsIntegrityRestoreSource SettingsIntegrityRestoreSource)
+        SettingsIntegrityRestoreSource SettingsIntegrityRestoreSource,
+        int SudoModeDurationSeconds,
+        bool SudoModeEnabled)
     {
         public static SecuritySettingsSnapshot Capture(SecuritySettingsConfig settings) => new(
             settings.SecurityEnabled,
@@ -1023,7 +1055,9 @@ internal sealed class SecurityService(
             settings.ProtectLinkage,
             settings.SettingsIntegrityCheckEnabled,
             settings.SettingsIntegrityAction,
-            settings.SettingsIntegrityRestoreSource);
+            settings.SettingsIntegrityRestoreSource,
+            settings.SudoModeDurationSeconds,
+            settings.SudoModeEnabled);
         public void Restore(SecuritySettingsConfig settings)
         {
             settings.SecurityEnabled = SecurityEnabled;
@@ -1047,7 +1081,41 @@ internal sealed class SecurityService(
             settings.SettingsIntegrityCheckEnabled = SettingsIntegrityCheckEnabled;
             settings.SettingsIntegrityAction = SettingsIntegrityAction;
             settings.SettingsIntegrityRestoreSource = SettingsIntegrityRestoreSource;
+            settings.SudoModeDurationSeconds = SudoModeDurationSeconds;
+            settings.SudoModeEnabled = SudoModeEnabled;
         }
+
+        /// <summary>
+        ///     判断这次改动是否放宽了防护。放宽防护的动作不接受任何既有的免验证状态，
+        ///     否则一次授权就能把整套防护拆掉。
+        /// </summary>
+        public bool IsProtectionDowngrade(SecuritySettingsSnapshot after) =>
+            Removed(SecurityEnabled, after.SecurityEnabled)
+            || Removed(PasswordEnabled, after.PasswordEnabled)
+            || Removed(TotpEnabled, after.TotpEnabled)
+            || Removed(UsbBindingEnabled, after.UsbBindingEnabled)
+            || Removed(RequireAllSelectedFactors, after.RequireAllSelectedFactors)
+            || Added(AllowSettingsPreview, after.AllowSettingsPreview)
+            || Removed(SettingsIntegrityCheckEnabled, after.SettingsIntegrityCheckEnabled)
+            || (SettingsIntegrityAction == IntegrityAction.Confirm &&
+                after.SettingsIntegrityAction == IntegrityAction.AutoRestore)
+            || Removed(ProtectOpenSettings, after.ProtectOpenSettings)
+            || Removed(ProtectToggleMainWindow, after.ProtectToggleMainWindow)
+            || Removed(ProtectToggleFloatingWindow, after.ProtectToggleFloatingWindow)
+            || Removed(ProtectRestart, after.ProtectRestart)
+            || Removed(ProtectExit, after.ProtectExit)
+            || Removed(ProtectRollCallStart, after.ProtectRollCallStart)
+            || Removed(ProtectRollCallReset, after.ProtectRollCallReset)
+            || Removed(ProtectQuickDrawStart, after.ProtectQuickDrawStart)
+            || Removed(ProtectQuickDrawReset, after.ProtectQuickDrawReset)
+            || Removed(ProtectLotteryStart, after.ProtectLotteryStart)
+            || Removed(ProtectLotteryReset, after.ProtectLotteryReset)
+            || Removed(ProtectLinkage, after.ProtectLinkage)
+            || after.SudoModeDurationSeconds > SudoModeDurationSeconds;
+
+        private static bool Removed(bool before, bool after) => before && !after;
+
+        private static bool Added(bool before, bool after) => !before && after;
     }
 
     private void NormalizeSettings(SecurityCredentials credentials)
@@ -1099,17 +1167,20 @@ internal sealed class SecurityService(
 
     public bool IsSudoModeActive()
     {
-        if (_settingsSudoActive)
+        if (IsSettingsSudoModeActive())
             return true;
 
-        if (_sudoModeExpirationUtc is { } expiration)
-            return _timeProvider.GetUtcNow() < expiration;
-
-        return false;
+        return IsGlobalSudoModeActive();
     }
 
     public bool IsGlobalSudoModeActive()
     {
+        if (!Settings.SudoModeEnabled)
+        {
+            _sudoModeExpirationUtc = null;
+            return false;
+        }
+
         if (_sudoModeExpirationUtc is { } expiration)
         {
             var now = _timeProvider.GetUtcNow();
@@ -1132,18 +1203,72 @@ internal sealed class SecurityService(
 
     public void DeactivateSudoMode()
     {
-        _settingsSudoActive = false;
+        _settingsSudoExpirationUtc = null;
+        _protectionDowngradeAuthorizationUtc = null;
         _sudoModeExpirationUtc = null;
         SudoModeChanged?.Invoke();
     }
 
     public void DeactivateSettingsSudoMode()
     {
-        _settingsSudoActive = false;
+        _settingsSudoExpirationUtc = null;
+        _protectionDowngradeAuthorizationUtc = null;
     }
 
-    private void ActivateSudoMode()
+    private bool IsSettingsSudoModeActive()
     {
+        if (!Settings.SudoModeEnabled)
+        {
+            _settingsSudoExpirationUtc = null;
+            return false;
+        }
+
+        if (_settingsSudoExpirationUtc is not { } expiration)
+            return false;
+
+        var now = _timeProvider.GetUtcNow();
+        if (now < expiration)
+            return true;
+
+        _settingsSudoExpirationUtc = null;
+        return false;
+    }
+
+    /// <summary>
+    ///     放宽防护的改动必须有一次专门为它发生的密码验证；这次验证同样按时长过期，
+    ///     否则每调一个开关就要重新输一次密码。
+    /// </summary>
+    private bool IsProtectionDowngradeAuthorized()
+    {
+        if (!Settings.SudoModeEnabled)
+        {
+            _protectionDowngradeAuthorizationUtc = null;
+            return false;
+        }
+
+        if (_protectionDowngradeAuthorizationUtc is not { } authorizedAt)
+            return false;
+
+        if (_timeProvider.GetUtcNow() < authorizedAt.AddSeconds(Settings.SudoModeDurationSeconds))
+            return true;
+
+        _protectionDowngradeAuthorizationUtc = null;
+        return false;
+    }
+
+    private void ActivateSettingsSudoMode()
+    {
+        if (!Settings.SudoModeEnabled)
+            return;
+
+        _settingsSudoExpirationUtc = _timeProvider.GetUtcNow().AddSeconds(Settings.SudoModeDurationSeconds);
+    }
+
+    private void ActivateGlobalSudoMode()
+    {
+        if (!Settings.SudoModeEnabled)
+            return;
+
         _sudoModeExpirationUtc = _timeProvider.GetUtcNow().AddSeconds(Settings.SudoModeDurationSeconds);
         SudoModeChanged?.Invoke();
     }

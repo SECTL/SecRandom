@@ -42,7 +42,12 @@ public partial class SecuritySettingsConfig : ObservableObject
     [ObservableProperty] private bool _protectLotteryReset;
     [ObservableProperty] private bool _protectLinkage;
 
-    [ObservableProperty] private int _sudoModeDurationSeconds = 60;
+    /// <summary>
+    ///     Sudo 模式总开关。关闭后每一次受保护操作都要重新验证。
+    /// </summary>
+    [ObservableProperty] private bool _sudoModeEnabled = true;
+
+    [ObservableProperty] private int _sudoModeDurationSeconds = 20;
 
     // Compatibility bridges for the original placeholder fields.
     public bool VerifyBeforeSensitiveOperations

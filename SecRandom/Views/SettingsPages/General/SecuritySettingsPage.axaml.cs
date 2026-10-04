@@ -74,6 +74,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
     public bool CanConfigureAdditionalFactors { get; private set; }
     public bool CanEditFactorSelection { get; private set; }
     public bool CanEditProtectedOperations { get; private set; }
+    public bool CanEditSudoModeDuration => CanEditProtectedOperations && Settings.SudoModeEnabled;
     public string TotpButtonText { get; private set; } = SR.C_SetTotp;
     public bool IsLockedOut { get; private set; }
     public string LockoutText { get; private set; } = string.Empty;
@@ -167,6 +168,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             LockoutText = state.LockoutRemaining is { } remaining
                 ? string.Format(SR.M_LockoutFormat, Math.Ceiling(remaining.TotalSeconds))
                 : string.Empty;
+            SudoModeDurationValue = Settings.SudoModeDurationSeconds;
             // 配置可能被手工改写成未知枚举值，这里回退到默认项而不是让下拉框绑定抛异常
             SelectedIntegrityActionOption = IntegrityActionOptions
                 .FirstOrDefault(option => option.Value == Settings.SettingsIntegrityAction) ?? IntegrityActionOptions[0];
@@ -183,6 +185,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
                           nameof(CanEnableSecurity), nameof(IsSecurityEnabled), nameof(HasPassword), nameof(CanSetPassword),
                           nameof(CanConfigureAdditionalFactors), nameof(CanEditFactorSelection), nameof(CanEditProtectedOperations),
                           nameof(TotpButtonText), nameof(IsLockedOut), nameof(LockoutText),
+                          nameof(SudoModeDurationValue), nameof(CanEditSudoModeDuration),
                           nameof(SelectedIntegrityActionOption), nameof(SelectedIntegrityRestoreSourceOption),
                           nameof(IsAutoRestoreSelected)
                      })
@@ -345,16 +348,30 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
         RefreshSecurityState();
     }
 
-    private void SudoModeDuration_OnValueChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+    private async void SudoModeDuration_OnValueChanged(object? sender, NumericUpDownValueChangedEventArgs e)
     {
-        if (_refreshing)
+        if (_refreshing || e.NewValue is not { } newValue)
             return;
 
-        if (e.NewValue is { } newValue && (int)newValue != Settings.SudoModeDurationSeconds)
+        var requested = (int)newValue;
+        if (requested == Settings.SudoModeDurationSeconds)
+            return;
+
+        if (TopLevel.GetTopLevel(this) is not { } xamlRoot)
         {
-            Settings.SudoModeDurationSeconds = (int)newValue;
-            ConfigHandler.Save();
+            RefreshSecurityState();
+            return;
         }
+
+        // 放宽免验证时长属于放宽防护，和其余安全项一样走受验证保护的写入边界
+        await ApplySecuritySettingsUpdateAsync(
+            xamlRoot,
+            () => Settings.SudoModeDurationSeconds = requested,
+            () =>
+            {
+                SudoModeDurationValue = Settings.SudoModeDurationSeconds;
+                NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SudoModeDurationValue)));
+            });
     }
 
     private async Task ApplySecuritySettingsUpdateAsync(TopLevel xamlRoot, Action update, Action restoreView)
@@ -387,6 +404,10 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
     {
         switch (optionName)
         {
+            case nameof(SecuritySettingsConfig.SudoModeEnabled):
+                getValue = () => Settings.SudoModeEnabled;
+                setValue = value => Settings.SudoModeEnabled = value;
+                return true;
             case nameof(SecuritySettingsConfig.RequireAllSelectedFactors):
                 getValue = () => Settings.RequireAllSelectedFactors;
                 setValue = value => Settings.RequireAllSelectedFactors = value;
