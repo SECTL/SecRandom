@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml;
+using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Styling;
@@ -25,6 +26,7 @@ using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Abstraction.Services.Views;
+using SecRandom.Core.Behaviors;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
@@ -43,7 +45,9 @@ using SecRandom.Core.Views;
 using SecRandom.Shared.Models.Ipc;
 using SecRandom.Shared;
 using SecRandom.Dialogs;
+using SecRandom.Helpers;
 using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.AppearanceSettingsConfig;
+using PerformanceSettingsConfig = SecRandom.Core.Models.SubConfigs.General.PerformanceSettingsConfig;
 using SecRandom.Services;
 using SecRandom.Services.Config;
 using SecRandom.Services.Auth;
@@ -131,6 +135,7 @@ public partial class App : Application
     private bool _isOobeActive;
     private bool _settingsIntegrityConfirmationPending;
     private SettingsIntegrityService? _settingsIntegrity;
+    private StyleInclude? _reducedMotionStyles;
     public new static App Current => (Application.Current as App)!;
     internal bool IsStopping => _isStopping;
     public static bool IsDesktop;
@@ -189,6 +194,9 @@ public partial class App : Application
 
         // 在 XAML 资源加载完成后立即应用外观设置（早于 BuildHost，确保重复实例对话框也能跟随主题）
         ApplyStartupAppearance(settings.Appearance);
+
+        // 低配模式必须早于任何视图创建：入场动画策略要在面板首次附加到可视树之前生效
+        ApplyPerformanceSettings(settings.General.PerformanceSettings);
 
         if (!Design.IsDesignMode && !OperatingSystem.IsMacOS() && !OperatingSystem.IsAndroid() &&
             !OperatingSystem.IsIOS())
@@ -1793,6 +1801,43 @@ public partial class App : Application
             Resources[@"CodeInlineColor"] = this.FindResource(@"SystemAccentColorDark2");
             Resources[@"QuoteBorderColor"] = this.FindResource(@"SystemAccentColor");
         });
+    }
+
+    /// <summary>
+    ///     低配模式：关闭入场/弹出动画，把位图缩放质量从 HighQuality 降到 LowQuality。
+    ///     <para>
+    ///         启动时必须在任何视图创建之前调用，因为 <see cref="IntroAnimationPolicy" /> 只在
+    ///         「是否给子元素打动画标记」这一点上拦截；视图建好之后再关会让已打标记的元素停住。
+    ///     </para>
+    /// </summary>
+    private void ApplyPerformanceSettings(PerformanceSettingsConfig settings)
+    {
+        IntroAnimationPolicy.IsEnabled = !settings.LowSpecMode;
+
+        if (settings.LowSpecMode)
+        {
+            _reducedMotionStyles ??= new StyleInclude(new Uri(@"avares://SecRandom/"))
+            {
+                Source = new Uri(@"avares://SecRandom/Styles/ReducedMotion.axaml")
+            };
+
+            if (!Styles.Contains(_reducedMotionStyles))
+                Styles.Add(_reducedMotionStyles);
+        }
+        else if (_reducedMotionStyles is not null && Styles.Contains(_reducedMotionStyles))
+        {
+            Styles.Remove(_reducedMotionStyles);
+        }
+
+        UiRenderQuality.ApplyAll();
+    }
+
+    /// <summary>
+    ///     设置页修改低配模式后重新应用；已打开的页面不追溯入场动画，动画只影响之后创建的视图。
+    /// </summary>
+    public void RefreshPerformanceSettings()
+    {
+        ApplyPerformanceSettings(IAppHost.GetService<MainConfigHandler>().Data.General.PerformanceSettings);
     }
 
     private void ApplyThemeSettings(AppearanceSettingsConfig settings)

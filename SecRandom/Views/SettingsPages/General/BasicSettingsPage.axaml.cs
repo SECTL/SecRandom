@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Globalization;
 using Avalonia.Controls;
@@ -32,6 +32,7 @@ public partial class BasicSettingsPage : UserControl
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public BasicSettingsConfig Settings { get; }
     public CrashRecoverySettingsConfig CrashRecoverySettings => ViewModel.Config.General.CrashRecovery;
+    public PerformanceSettingsConfig PerformanceSettings => ViewModel.Config.General.PerformanceSettings;
     public bool IsUiAccessSupported => OperatingSystem.IsWindows();
     public string MainWindowTopmostModeDescription => IsUiAccessSupported
         ? LR.S_Behavior_MainWindowTopmostMode_D
@@ -47,6 +48,7 @@ public partial class BasicSettingsPage : UserControl
 
         Settings.PropertyChanged += SettingsOnPropertyChanged;
         CrashRecoverySettings.PropertyChanged += CrashRecoverySettingsOnPropertyChanged;
+        PerformanceSettings.PropertyChanged += PerformanceSettingsOnPropertyChanged;
         _isSubscribed = true;
     }
 
@@ -57,7 +59,18 @@ public partial class BasicSettingsPage : UserControl
 
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
         CrashRecoverySettings.PropertyChanged -= CrashRecoverySettingsOnPropertyChanged;
+        PerformanceSettings.PropertyChanged -= PerformanceSettingsOnPropertyChanged;
         _isSubscribed = false;
+    }
+
+    private void PerformanceSettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        ConfigHandler.Save();
+        App.Current.RefreshPerformanceSettings();
+
+        // 动画与图片质量可以即时生效，但窗口合成级别（Mica / 透明）只能在窗口构造期决定，
+        // 已经打开的窗口不会变化，因此按项目约定请求重启，避免出现"看起来没生效"。
+        SettingsView.Current?.RequestRestartApp();
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)

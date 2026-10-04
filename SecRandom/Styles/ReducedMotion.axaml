@@ -1,0 +1,14 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--
+        低配模式覆盖样式：只在低配模式开启时由 App 追加到 Application.Styles 末尾，
+        依赖「同优先级下后加入的样式胜出」来压掉 StylesBase.axaml 里的 Carousel 切页过渡。
+
+        这里只处理纯过渡属性（切页时的位移/淡入），不涉及任何跨帧的状态标记，
+        因此可以随时挂载/卸载，不存在内容停留在中间态的风险。
+        页面入场动画与弹窗开场动画由 IntroAnimationPolicy 在行为层拦截。
+    -->
+    <Style Selector="Carousel.animated">
+        <Setter Property="PageTransition" Value="{x:Null}" />
+    </Style>
+</Styles>

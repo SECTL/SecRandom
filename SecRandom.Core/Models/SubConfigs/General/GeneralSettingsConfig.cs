@@ -11,6 +11,7 @@ public partial class GeneralSettingsConfig : ObservableObject
     [ObservableProperty] private CrashRecoverySettingsConfig _crashRecovery = new();
     [ObservableProperty] private ProofRetentionConfig _proofRetention = new();
     [ObservableProperty] private VerificationSettingsConfig _verification = new();
+    [ObservableProperty] private PerformanceSettingsConfig _performanceSettings = new();
 
     public void ApplyLegacyBasic(BasicSettingsConfig? legacyBasic)
     {

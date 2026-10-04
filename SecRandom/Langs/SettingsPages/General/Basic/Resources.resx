@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <root>
     <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
@@ -107,5 +107,14 @@
     </data>
     <data name="S_Behavior_DisableCrashedPlugin_D" xml:space="preserve">
         <value>插件导致崩溃时自动禁用该插件，下次启动不再加载</value>
+    </data>
+    <data name="S_Performance" xml:space="preserve">
+        <value>性能</value>
+    </data>
+    <data name="S_Performance_LowSpecMode" xml:space="preserve">
+        <value>低配模式</value>
+    </data>
+    <data name="S_Performance_LowSpecMode_D" xml:space="preserve">
+        <value>关闭页面与弹窗动画、降低图片缩放质量，并停用主窗口与设置窗口的半透明背景；不影响抽取动画与悬浮窗，需重启生效</value>
     </data>
 </root>

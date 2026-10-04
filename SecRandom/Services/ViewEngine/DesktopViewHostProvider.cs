@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using FluentAvalonia.UI.Windowing;
 using SecRandom.Core.Views;
+using SecRandom.Helpers;
 
 namespace SecRandom.Services.ViewEngine;
 
@@ -193,7 +194,7 @@ internal sealed class DesktopViewHostWindow : FAAppWindow, IViewHost
 
     private void WindowOnLoaded(object? sender, RoutedEventArgs e)
     {
-        if (App.IsMicaSupported)
+        if (App.IsMicaSupported && UiMotion.UseWindowCompositionEffects)
         {
             TransparencyLevelHint = [WindowTransparencyLevel.Mica];
             Background = Brushes.Transparent;

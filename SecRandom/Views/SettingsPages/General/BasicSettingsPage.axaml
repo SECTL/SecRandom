@@ -119,6 +119,21 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText x:Name="S_Performance"
+                         Text="{x:Static lsb:Resources.S_Performance}"
+                         Glyph="{sr:Fi GaugeFilled}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_Performance_LowSpecMode"
+                                   Header="{x:Static lsb:Resources.S_Performance_LowSpecMode}"
+                                   Description="{x:Static lsb:Resources.S_Performance_LowSpecMode_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi BatterySaverFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding PerformanceSettings.LowSpecMode}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

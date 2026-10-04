@@ -33,6 +33,9 @@ public class PopupIntroAnimationBehavior
     {
         if (!GetIsIntroAnimationEnabled(control)) return;
 
+        // 低配模式：不挂载开场动画。这里没有任何预设的 Opacity=0，直接不监听即可。
+        if (!IntroAnimationPolicy.IsEnabled) return;
+
         switch (control)
         {
             case PopupRoot popupRoot:

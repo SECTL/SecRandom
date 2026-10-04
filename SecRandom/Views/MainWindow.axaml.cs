@@ -11,6 +11,7 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
+using SecRandom.Helpers;
 using SecRandom.Platforms.Abstractions;
 using SecRandom.Services.Platform;
 
@@ -69,7 +70,7 @@ public partial class MainWindow : FAAppWindow
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        if (App.IsMicaSupported)
+        if (App.IsMicaSupported && UiMotion.UseWindowCompositionEffects)
         {
             TransparencyLevelHint = [WindowTransparencyLevel.Mica];
             Background = Brushes.Transparent;

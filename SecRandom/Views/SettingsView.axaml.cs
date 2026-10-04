@@ -29,6 +29,7 @@ using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Views;
+using SecRandom.Helpers;
 using SecRandom.Models;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Auth;
@@ -105,9 +106,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
                 Current = null;
         };
 
-        TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
-        RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
-        RenderOptions.SetEdgeMode(this, EdgeMode.Antialias);
+        UiRenderQuality.Apply(this);
     }
 
     public static SettingsView? Current { get; private set; }
@@ -1065,12 +1064,12 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
             if (updateNavigationSelection)
                 ViewModel.SelectedNavigationViewItem = item;
             ViewModel.SelectedPageInfo = info;
-            NavigationFrame.NavigateFromObject(info);
+            UiMotion.NavigateFromObject(NavigationFrame, info);
         }
         catch (Exception e)
         {
             _logger?.LogError(e, "Failed navigating to page {PageId}", info.Id);
-            NavigationFrame.NavigateFromObject(e);
+            UiMotion.NavigateFromObject(NavigationFrame, e);
         }
 
         CloseDrawer();

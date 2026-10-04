@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Views;
+using SecRandom.Helpers;
 using SecRandom.Services.Mobile;
 using LR = SecRandom.Langs.Mobile.Resources;
 
@@ -156,7 +157,7 @@ public sealed partial class MobileRootView : ViewBase, IFANavigationPageFactory
             return false;
 
         _destination = destination;
-        _pageOutlet.NavigateFromObject(GetRootPageId(destination));
+        UiMotion.NavigateFromObject(_pageOutlet, GetRootPageId(destination));
         UpdateDestinationChrome();
         return true;
     }

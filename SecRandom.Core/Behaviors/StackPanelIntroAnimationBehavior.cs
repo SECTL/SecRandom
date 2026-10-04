@@ -68,6 +68,10 @@ public class StackPanelIntroAnimationBehavior
 
     private static void HandleIsIntroAnimationChanged(Panel panel, AvaloniaPropertyChangedEventArgs args)
     {
+        // 低配模式只在这里拦截：CanPlayAnimation 一旦被置位，子元素的 Opacity=0 就已经生效，
+        // 此时再阻止 StartAnimation 会留下永久不可见的内容。
+        if (!IntroAnimationPolicy.IsEnabled) return;
+
         if (!GetIsIntroAnimationEnabled(panel) || GetIsAnimationPlayingStarted(panel)) return;
 
         var animable = panel.Children

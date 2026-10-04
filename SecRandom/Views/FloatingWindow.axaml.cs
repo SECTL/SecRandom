@@ -20,6 +20,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Helpers;
 using SecRandom.Services.Linkage;
 using SecRandom.Services;
 using SecRandom.Services.Platform;
@@ -64,9 +65,7 @@ public partial class FloatingWindow : Window
         TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
         this.ApplyPlatformFeatures(WindowFeatures.ToolWindow, enabled: true);
 
-        TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
-        RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
-        RenderOptions.SetEdgeMode(this, EdgeMode.Antialias);
+        UiRenderQuality.Apply(this);
 
         Closing += OnClosing;
         AddHandler(PointerPressedEvent, OnPointerPressed, RoutingStrategies.Tunnel, handledEventsToo: true);

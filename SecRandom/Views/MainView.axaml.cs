@@ -22,6 +22,7 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Models.UI;
 using SecRandom.Core.Services;
 using SecRandom.Core.Views;
+using SecRandom.Helpers;
 using SecRandom.Mobile;
 using SecRandom.Platforms.Abstractions;
 using SecRandom.Services;
@@ -60,9 +61,7 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
                 Current = null;
         };
 
-        TextOptions.SetTextRenderingMode(this, TextRenderingMode.Antialias);
-        RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
-        RenderOptions.SetEdgeMode(this, EdgeMode.Antialias);
+        UiRenderQuality.Apply(this);
     }
 
     public static MainView? Current { get; private set; }
@@ -274,7 +273,8 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
         ViewModel.FrameContent = null;
         SelectNavigationItem(info);
         ViewModel.SelectedPageInfo = info;
-        _navigationFrame?.NavigateFromObject(info);
+        if (_navigationFrame is not null)
+            UiMotion.NavigateFromObject(_navigationFrame, info);
         CloseDrawer();
     }
 
