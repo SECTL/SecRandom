@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Collections;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using FluentAvalonia.UI.Controls;
@@ -51,6 +52,8 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
     private string _cloudAccountText = string.Empty;
     private string _cloudQuotaText = string.Empty;
     private string _cloudListStatusText = string.Empty;
+    private string _cloudEncryptionKeyText = string.Empty;
+    private bool _isRevertingCloudEncryption;
     private CancellationTokenSource? _cloudOperation;
     private readonly Dictionary<string, CloudBackupDescriptor> _cloudDescriptors = new(StringComparer.Ordinal);
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
@@ -231,6 +234,23 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    ///     Whether this device can encrypt an upload right now: with encryption on and no passphrase
+    ///     configured, the row explains what is missing instead of letting an upload fail later.
+    /// </summary>
+    public string CloudEncryptionKeyText
+    {
+        get => _cloudEncryptionKeyText;
+        private set
+        {
+            if (_cloudEncryptionKeyText == value)
+                return;
+
+            _cloudEncryptionKeyText = value;
+            OnPropertyChanged();
+        }
+    }
+
     event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
     {
         add => NotifyPropertyChanged += value;
@@ -245,6 +265,7 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         SubscribeSettings();
         SubscribeAccount();
         SubscribeCloudBackupEvents();
+        RefreshCloudEncryptionPresentation();
         if (IsCloudVisible)
         {
             // Entering the page always shows a current list and a current quota, so the page does not
@@ -265,6 +286,76 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         ConfigHandler.Save();
+        if (e.PropertyName != nameof(BackupConfig.CloudEncryptionEnabled))
+            return;
+
+        RefreshCloudEncryptionPresentation();
+        if (!Settings.CloudEncryptionEnabled)
+        {
+            this.ShowWarningToast(LR.M_CloudEncryptionDisabled);
+            return;
+        }
+
+        // The key is never persisted, so switching encryption on has to obtain one now: otherwise the
+        // switch would look enabled while every upload and the automatic cadence stayed blocked.
+        if (!_isRevertingCloudEncryption && _cloudBackupService?.HasEncryptionKey != true)
+            _ = EnsureCloudEncryptionAsync();
+    }
+
+    /// <summary>
+    ///     Prompts for a passphrase when encryption was just enabled without one, and takes the switch
+    ///     back if the user cancels — an enabled switch with no key is a state the page must not show.
+    /// </summary>
+    private async Task EnsureCloudEncryptionAsync()
+    {
+        if (_cloudBackupService is null || _isCloudBusy)
+        {
+            RevertCloudEncryptionSwitch();
+            return;
+        }
+
+        SetCloudBusy(true);
+        try
+        {
+            var passphrase = await PromptNewCloudPassphraseAsync();
+            if (passphrase is null)
+            {
+                RevertCloudEncryptionSwitch();
+                this.ShowWarningToast(LR.M_CloudEncryptionEnableCancelled);
+                return;
+            }
+
+            if (!await ApplyCloudPassphraseAsync(passphrase))
+                RevertCloudEncryptionSwitch();
+        }
+        finally
+        {
+            EndCloudOperation();
+        }
+    }
+
+    private void RevertCloudEncryptionSwitch()
+    {
+        _isRevertingCloudEncryption = true;
+        try
+        {
+            Settings.CloudEncryptionEnabled = false;
+        }
+        finally
+        {
+            _isRevertingCloudEncryption = false;
+        }
+    }
+
+    /// <summary>
+    ///     Projects whether this run can encrypt an upload. It is a projection of the key store, not of
+    ///     configuration, because neither the passphrase nor the derived key is ever written to disk.
+    /// </summary>
+    private void RefreshCloudEncryptionPresentation()
+    {
+        CloudEncryptionKeyText = _cloudBackupService?.HasEncryptionKey == true
+            ? LR.C_CloudEncryption_KeySet
+            : LR.C_CloudEncryption_KeyMissing;
     }
 
     private void SubscribeSettings()
@@ -565,6 +656,11 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
             return;
         }
 
+        // With encryption on the upload cannot start without a passphrase; asking here is the only
+        // place that can still avoid a plaintext upload, because the service refuses to fall back.
+        if (Settings.CloudEncryptionEnabled && !_cloudBackupService.HasEncryptionKey && !await ConfigureCloudEncryptionAsync())
+            return;
+
         _cloudOperation = new CancellationTokenSource();
         SetCloudBusy(true, uploading: true);
         try
@@ -600,6 +696,174 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         catch (ObjectDisposedException)
         {
             // The operation already finished; there is nothing left to cancel.
+        }
+    }
+
+    /// <summary>
+    ///     Sets or replaces the cloud backup passphrase. When the account already holds an encrypted
+    ///     backup the service adopts its salt, so entering the same passphrase as another machine keeps
+    ///     both devices readable; a passphrase that does not match is rejected before any upload.
+    /// </summary>
+    private async void CloudEncryptionSetPassphrase_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_cloudBackupService is null || _isCloudBusy)
+            return;
+
+        var passphrase = await PromptNewCloudPassphraseAsync();
+        if (passphrase is null)
+            return;
+
+        await ApplyCloudPassphraseAsync(passphrase);
+    }
+
+    private async void CloudEncryptionClearPassphrase_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_cloudBackupService is null || _isCloudBusy)
+            return;
+
+        var result = await new FAContentDialog
+        {
+            Title = LR.M_CloudEncryptionClearTitle,
+            Content = LR.M_CloudEncryptionClearContent,
+            PrimaryButtonText = LR.M_CloudEncryptionClearPrimary,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+        if (result != FAContentDialogResult.Primary)
+            return;
+
+        _cloudBackupService.ClearEncryptionKey();
+        RefreshCloudEncryptionPresentation();
+        this.ShowSuccessToast(LR.M_CloudEncryptionClearSuccess);
+    }
+
+    /// <summary>
+    ///     Configures encryption from the upload row, where a missing passphrase would otherwise abort
+    ///     the upload. Returns whether an upload may now proceed.
+    /// </summary>
+    private async Task<bool> ConfigureCloudEncryptionAsync()
+    {
+        if (_cloudBackupService is null)
+            return false;
+
+        var passphrase = await PromptNewCloudPassphraseAsync();
+        if (passphrase is null)
+        {
+            this.ShowWarningToast(LR.M_CloudEncryptionRequiredForUpload);
+            return false;
+        }
+
+        return await ApplyCloudPassphraseAsync(passphrase);
+    }
+
+    private async Task<bool> ApplyCloudPassphraseAsync(string passphrase)
+    {
+        if (_cloudBackupService is null)
+            return false;
+
+        SetCloudBusy(true);
+        try
+        {
+            await _cloudBackupService.ConfigureEncryptionAsync(passphrase);
+            RefreshCloudEncryptionPresentation();
+            this.ShowSuccessToast(LR.M_CloudEncryptionSetSuccess);
+            return true;
+        }
+        catch (CloudBackupEncryptionException ex)
+        {
+            this.ShowErrorToast(ex.Message);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "设置云端备份加密口令失败。");
+            await ShowErrorDialogAsync(LR.M_CloudEncryptionFailed, DescribeCloudError(ex));
+            return false;
+        }
+        finally
+        {
+            EndCloudOperation();
+        }
+    }
+
+    /// <summary>
+    ///     Prompts for a new passphrase twice, so a typo cannot silently become the only key to every
+    ///     later backup. Null means the user cancelled.
+    /// </summary>
+    private async Task<string?> PromptNewCloudPassphraseAsync()
+    {
+        while (true)
+        {
+            var first = await PromptCloudPassphraseAsync(LR.M_CloudEncryptionSetTitle, LR.M_CloudEncryptionSetContent);
+            if (first is null)
+                return null;
+            if (!CloudBackupCipher.IsPassphraseValid(first))
+            {
+                this.ShowWarningToast(
+                    string.Format(LR.M_CloudEncryptionTooShort, CloudBackupCipher.PassphraseMinimumLength));
+                continue;
+            }
+
+            var second = await PromptCloudPassphraseAsync(LR.M_CloudEncryptionConfirmTitle, LR.M_CloudEncryptionConfirmContent);
+            if (second is null)
+                return null;
+            if (!string.Equals(first, second, StringComparison.Ordinal))
+            {
+                this.ShowWarningToast(LR.M_CloudEncryptionMismatch);
+                continue;
+            }
+
+            return first;
+        }
+    }
+
+    /// <summary>One masked passphrase prompt; null means the user cancelled.</summary>
+    private async Task<string?> PromptCloudPassphraseAsync(string title, string content)
+    {
+        var input = new TextBox
+        {
+            PasswordChar = '●',
+            MinWidth = 320,
+            PlaceholderText = LR.C_CloudEncryption_PassphrasePlaceholder
+        };
+        InputMethod.SetIsInputMethodEnabled(input, false);
+        var result = await new FAContentDialog
+        {
+            Title = title,
+            Content = new StackPanel
+            {
+                Spacing = 12,
+                Children =
+                {
+                    new TextBlock { Text = content, TextWrapping = Avalonia.Media.TextWrapping.Wrap },
+                    input
+                }
+            },
+            PrimaryButtonText = LR.M_CloudEncryptionConfirmPrimary,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+
+        return result == FAContentDialogResult.Primary ? input.Text : null;
+    }
+
+    /// <summary>
+    ///     Downloads a backup, re-prompting on a wrong passphrase: that is the one failure the user can
+    ///     fix on the spot, so a typo does not end the restore.
+    /// </summary>
+    private async Task<string> DownloadCloudBackupAsync(CloudBackupDescriptor descriptor, CancellationToken cancellationToken)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                return await _cloudBackupService!.DownloadAsync(descriptor, cancellationToken,
+                    (_, _) => PromptCloudPassphraseAsync(LR.M_CloudDecryptTitle, LR.M_CloudDecryptContent));
+            }
+            catch (CloudBackupWrongPassphraseException) when (attempt < 2)
+            {
+                this.ShowWarningToast(LR.M_CloudWrongPassphrase);
+            }
         }
     }
 
@@ -656,7 +920,9 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         string? archivePath = null;
         try
         {
-            archivePath = await _cloudBackupService.DownloadAsync(descriptor, _cloudOperation.Token);
+            // The manifest decides whether a passphrase is needed; the provider is only called for a
+            // backup this device has no cached key for, so a normal restore never re-prompts.
+            archivePath = await DownloadCloudBackupAsync(descriptor, _cloudOperation.Token);
             ImportInspection inspection = await _importExportService.InspectCloudBackupAsync(archivePath);
             if (!inspection.IsSupportedV3)
             {
@@ -746,6 +1012,8 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         Size = FormatSize(descriptor.TotalBytes),
         IsComplete = descriptor.IsComplete,
         PartCount = descriptor.PartCount,
+        IsEncrypted = descriptor.IsEncrypted,
+        EncryptionText = descriptor.IsEncrypted ? LR.C_CloudBackup_Encrypted : LR.C_CloudBackup_Plaintext,
         StatusText = descriptor.IsComplete ? string.Empty : LR.C_CloudBackup_Incomplete
     };
 
@@ -757,6 +1025,9 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         SectlCloudStorageException { Code: "invalid_token" or "unauthorized" } => LR.M_CloudSignedOut,
         SectlCloudStorageException { Code: "cloud_timeout" } => LR.M_CloudServerTimeout,
         SectlCloudStorageException { Code: "internal_error" or "upload_failed" or "invalid_response" } => LR.M_CloudServerError,
+        CloudBackupWrongPassphraseException => LR.M_CloudWrongPassphrase,
+        CloudBackupEncryptionRequiredException => LR.M_CloudEncryptionRequiredForUpload,
+        CloudBackupEncryptionException encryption => encryption.Message,
         InvalidOperationException => LR.M_CloudSignedOut,
         _ => exception.Message
     };

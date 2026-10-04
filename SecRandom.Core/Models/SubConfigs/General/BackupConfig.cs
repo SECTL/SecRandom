@@ -25,6 +25,18 @@ public partial class BackupConfig : ObservableObject
     [ObservableProperty] private string _cloudDeviceAlias = string.Empty;
 
     /// <summary>
+    ///     Encrypts the cloud backup client-side (AES-256-GCM over the whole archive) before it leaves
+    ///     the device, so the account cloud only ever stores a ciphertext. It is off by default: an
+    ///     existing installation must not start sending a form of backup the user did not ask for, and
+    ///     plaintext stays the behaviour a user who never opens this page already has. With it on, an
+    ///     upload without a configured passphrase fails or is skipped rather than falling back to
+    ///     plaintext, the derived key lives only in memory for the current run (see
+    ///     <c>CloudBackupKeyStore</c>), and turning it back off uploads plaintext again after an explicit
+    ///     warning.
+    /// </summary>
+    [ObservableProperty] private bool _cloudEncryptionEnabled;
+
+    /// <summary>
     ///     Cloud backup content is selected separately from the local backup, and it is shorter on
     ///     purpose: logs, the device identity, the generated voice cache, and theme resources have no
     ///     row because a cloud archive may never carry them. Images stay off by default because

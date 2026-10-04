@@ -481,6 +481,255 @@ public sealed class CloudBackupServiceTests : IDisposable
         Assert.Equal(1, announced);
     }
 
+    [Fact]
+    public async Task UploadAsync_WithEncryptionEnabledAndNoKey_UploadsNothing()
+    {
+        var uploads = 0;
+        var handler = new RecordingHandler(request =>
+        {
+            uploads++;
+            return Json("{\"success\":true,\"file_id\":\"new-1\",\"filename\":\"part.srpart\",\"size\":1}");
+        });
+        var service = CreateService(handler, CreateArchiveBytes(128), encryptionEnabled: true);
+
+        await Assert.ThrowsAsync<CloudBackupEncryptionRequiredException>(() =>
+            service.UploadAsync(cancellationToken: TestContext.Current.CancellationToken));
+
+        // The point of the exception is that an enabled setting never degrades into a plaintext upload.
+        Assert.Equal(0, uploads);
+    }
+
+    [Fact]
+    public async Task UploadAsync_WithEncryption_UploadsOnlyCiphertextAndMarksTheManifest()
+    {
+        var archive = CreateArchiveBytes(CloudBackupPackage.DefaultPartBytes + 17);
+        var uploaded = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+        var handler = new RecordingHandler(request =>
+        {
+            var name = ReadUploadedName(request);
+            uploaded[name] = ReadUploadedBytes(request);
+            return Json($"{{\"success\":true,\"file_id\":\"f-{uploaded.Count}\",\"filename\":\"{name}\",\"size\":1}}");
+        });
+        var keyStore = new CloudBackupKeyStore();
+        keyStore.CreateKey("a sufficient passphrase", parameters: CloudBackupKdfParameters.Test);
+        var service = CreateService(handler, archive, keyStore: keyStore, encryptionEnabled: true);
+
+        var descriptor = await service.UploadAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(descriptor.IsEncrypted);
+        var manifestName = uploaded.Keys.Single(name => name.EndsWith(CloudBackupPackage.ManifestSuffix, StringComparison.Ordinal));
+        Assert.Contains(CloudBackupPackage.EncryptionMarker, manifestName);
+        Assert.All(uploaded.Keys.Where(name => name.EndsWith(CloudBackupPackage.PartExtension, StringComparison.Ordinal)),
+            name => Assert.Contains(CloudBackupPackage.EncryptionMarker, name));
+
+        var manifest = CloudBackupPackage.DeserializeManifest(uploaded[manifestName]);
+        Assert.Equal(CloudBackupPackage.EncryptedSchemaVersion, manifest.SchemaVersion);
+        Assert.NotNull(manifest.Encryption);
+
+        // Every uploaded byte is a payload the account cloud cannot read: no part equals the archive,
+        // and the manifest carries no plaintext archive either.
+        var parts = manifest.Parts.Select(part => uploaded[part.Name]).ToArray();
+        var payload = CloudBackupPackage.MergeAndVerify(manifest, parts);
+        Assert.False(payload.SequenceEqual(archive));
+        var key = keyStore.FindBySalt(manifest.Encryption!.Salt)!.Key;
+        Assert.Equal(archive, CloudBackupCipher.Open(payload, key, manifest.Encryption));
+    }
+
+    [Fact]
+    public async Task UploadAsync_WithEncryptionDisabled_UploadsAPlaintextPackage()
+    {
+        var archive = CreateArchiveBytes(512);
+        var uploaded = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+        var handler = new RecordingHandler(request =>
+        {
+            var name = ReadUploadedName(request);
+            uploaded[name] = ReadUploadedBytes(request);
+            return Json($"{{\"success\":true,\"file_id\":\"f-{uploaded.Count}\",\"filename\":\"{name}\",\"size\":1}}");
+        });
+
+        // The switch, not the absence of a key, has to decide: a device that already holds a passphrase
+        // must still upload plaintext once the user turns cloud encryption off.
+        var keyStore = new CloudBackupKeyStore();
+        keyStore.CreateKey("a sufficient passphrase", parameters: CloudBackupKdfParameters.Test);
+        var service = CreateService(handler, archive, keyStore: keyStore, encryptionEnabled: false);
+
+        var descriptor = await service.UploadAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(descriptor.IsEncrypted);
+        var manifestName = uploaded.Keys.Single(name => name.EndsWith(CloudBackupPackage.ManifestSuffix, StringComparison.Ordinal));
+        Assert.DoesNotContain(CloudBackupPackage.EncryptionMarker, manifestName);
+        Assert.All(uploaded.Keys, name => Assert.DoesNotContain(CloudBackupPackage.EncryptionMarker, name));
+
+        var manifest = CloudBackupPackage.DeserializeManifest(uploaded[manifestName]);
+        Assert.Equal(CloudBackupPackage.SchemaVersion, manifest.SchemaVersion);
+        Assert.Null(manifest.Encryption);
+
+        // Turning the feature off restores the original package shape: the parts are the archive itself.
+        var parts = manifest.Parts.Select(part => uploaded[part.Name]).ToArray();
+        Assert.Equal(archive, CloudBackupPackage.MergeAndVerify(manifest, parts));
+    }
+
+    [Fact]
+    public async Task DownloadAsync_WithAnEncryptedBackup_UsesTheCachedKey()
+    {
+        var archive = CreateArchiveBytes(2048);
+        var keyStore = new CloudBackupKeyStore();
+        var keyEntry = keyStore.CreateKey("a sufficient passphrase", parameters: CloudBackupKdfParameters.Test);
+        var sealedBackup = CloudBackupCipher.Seal(archive, keyEntry.Key, keyEntry.Salt, keyEntry.Parameters);
+        var parts = CloudBackupPackage.Slice(sealedBackup.Payload, CloudBackupPackage.DefaultPartBytes);
+        var manifest = CloudBackupPackage.BuildManifest("20260830-120000-aaaa0001", parts,
+            CloudBackupPackage.DefaultPartBytes, ["list"], DateTime.UtcNow, "v3.0.0", sealedBackup.Payload,
+            sealedBackup.Encryption);
+        var content = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            ["f-manifest"] = CloudBackupPackage.SerializeManifest(manifest)
+        };
+        for (var index = 0; index < parts.Count; index++)
+            content[$"f-part-{index + 1}"] = parts[index];
+        var fileList = BuildListResponse(
+            [("f-manifest", CloudBackupPackage.BuildManifestName(manifest.BackupId, encrypted: true), 10),
+             .. manifest.Parts.Select(part => ($"f-part-{part.Index}", part.Name, (long)part.Length))]);
+        var handler = new RecordingHandler(request => Download(request, content)) { Files = fileList };
+        var service = CreateService(handler, keyStore: keyStore, encryptionEnabled: true);
+        var descriptor = (await service.ListAsync(TestContext.Current.CancellationToken)).Single();
+
+        Assert.True(descriptor.IsEncrypted);
+        var archivePath = await service.DownloadAsync(descriptor, TestContext.Current.CancellationToken);
+
+        Assert.Equal(archive, await File.ReadAllBytesAsync(archivePath, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task DownloadAsync_WithAnEncryptedBackup_DerivesCachesAndReusesThePassphrase()
+    {
+        var archive = CreateArchiveBytes(1024);
+        var salt = CloudBackupCipher.CreateSalt();
+        var key = CloudBackupCipher.DeriveKey("the account passphrase", salt, CloudBackupKdfParameters.Test);
+        var sealedBackup = CloudBackupCipher.Seal(archive, key, salt, CloudBackupKdfParameters.Test);
+        var parts = CloudBackupPackage.Slice(sealedBackup.Payload, CloudBackupPackage.DefaultPartBytes);
+        var manifest = CloudBackupPackage.BuildManifest("20260830-120000-aaaa0001", parts,
+            CloudBackupPackage.DefaultPartBytes, ["list"], DateTime.UtcNow, "v3.0.0", sealedBackup.Payload,
+            sealedBackup.Encryption);
+        var content = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            ["f-manifest"] = CloudBackupPackage.SerializeManifest(manifest)
+        };
+        for (var index = 0; index < parts.Count; index++)
+            content[$"f-part-{index + 1}"] = parts[index];
+        var fileList = BuildListResponse(
+            [("f-manifest", CloudBackupPackage.BuildManifestName(manifest.BackupId, encrypted: true), 10),
+             .. manifest.Parts.Select(part => ($"f-part-{part.Index}", part.Name, (long)part.Length))]);
+        var handler = new RecordingHandler(request => Download(request, content)) { Files = fileList };
+        var keyStore = new CloudBackupKeyStore();
+        var service = CreateService(handler, keyStore: keyStore, encryptionEnabled: true);
+        var descriptor = (await service.ListAsync(TestContext.Current.CancellationToken)).Single();
+        var prompts = 0;
+
+        var archivePath = await service.DownloadAsync(descriptor, TestContext.Current.CancellationToken,
+            (_, _) =>
+            {
+                prompts++;
+                return Task.FromResult<string?>("the account passphrase");
+            });
+
+        Assert.Equal(archive, await File.ReadAllBytesAsync(archivePath, TestContext.Current.CancellationToken));
+        Assert.Equal(1, prompts);
+        // A key that opened a backup becomes this device's key for that salt, so the next restore (or
+        // an automatic upload) no longer asks.
+        Assert.Equal(key, keyStore.FindBySalt(salt)!.Key);
+    }
+
+    [Fact]
+    public async Task DownloadAsync_WithAWrongPassphrase_ReportsItAndKeepsTheBackupLocked()
+    {
+        var archive = CreateArchiveBytes(1024);
+        var salt = CloudBackupCipher.CreateSalt();
+        var key = CloudBackupCipher.DeriveKey("the account passphrase", salt, CloudBackupKdfParameters.Test);
+        var sealedBackup = CloudBackupCipher.Seal(archive, key, salt, CloudBackupKdfParameters.Test);
+        var parts = CloudBackupPackage.Slice(sealedBackup.Payload, CloudBackupPackage.DefaultPartBytes);
+        var manifest = CloudBackupPackage.BuildManifest("20260830-120000-aaaa0001", parts,
+            CloudBackupPackage.DefaultPartBytes, ["list"], DateTime.UtcNow, "v3.0.0", sealedBackup.Payload,
+            sealedBackup.Encryption);
+        var content = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            ["f-manifest"] = CloudBackupPackage.SerializeManifest(manifest)
+        };
+        for (var index = 0; index < parts.Count; index++)
+            content[$"f-part-{index + 1}"] = parts[index];
+        var fileList = BuildListResponse(
+            [("f-manifest", CloudBackupPackage.BuildManifestName(manifest.BackupId, encrypted: true), 10),
+             .. manifest.Parts.Select(part => ($"f-part-{part.Index}", part.Name, (long)part.Length))]);
+        var handler = new RecordingHandler(request => Download(request, content)) { Files = fileList };
+        var keyStore = new CloudBackupKeyStore();
+        var service = CreateService(handler, keyStore: keyStore, encryptionEnabled: true);
+        var descriptor = (await service.ListAsync(TestContext.Current.CancellationToken)).Single();
+
+        await Assert.ThrowsAsync<CloudBackupWrongPassphraseException>(() =>
+            service.DownloadAsync(descriptor, TestContext.Current.CancellationToken,
+                (_, _) => Task.FromResult<string?>("not the passphrase")));
+
+        // The rejected passphrase must not be cached, or the wrong key would be reused silently.
+        Assert.False(keyStore.HasKey);
+    }
+
+    [Fact]
+    public async Task ConfigureEncryptionAsync_AdoptsTheSaltOfAnExistingEncryptedBackup()
+    {
+        var archive = CreateArchiveBytes(256);
+        var salt = CloudBackupCipher.CreateSalt();
+        var key = CloudBackupCipher.DeriveKey("the shared passphrase", salt, CloudBackupKdfParameters.Test);
+        var sealedBackup = CloudBackupCipher.Seal(archive, key, salt, CloudBackupKdfParameters.Test);
+        var parts = CloudBackupPackage.Slice(sealedBackup.Payload, CloudBackupPackage.DefaultPartBytes);
+        var manifest = CloudBackupPackage.BuildManifest("20260830-120000-aaaa0001", parts,
+            CloudBackupPackage.DefaultPartBytes, ["list"], DateTime.UtcNow, "v3.0.0", sealedBackup.Payload,
+            sealedBackup.Encryption);
+        var content = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            ["f-manifest"] = CloudBackupPackage.SerializeManifest(manifest)
+        };
+        var fileList = BuildListResponse(
+            [("f-manifest", CloudBackupPackage.BuildManifestName(manifest.BackupId, encrypted: true), 10),
+             .. manifest.Parts.Select(part => ($"f-part-{part.Index}", part.Name, (long)part.Length))]);
+        var handler = new RecordingHandler(request => Download(request, content)) { Files = fileList };
+        var keyStore = new CloudBackupKeyStore();
+        var service = CreateService(handler, keyStore: keyStore, encryptionEnabled: true);
+
+        var entry = await service.ConfigureEncryptionAsync("the shared passphrase", TestContext.Current.CancellationToken);
+
+        // Adopting the account's salt is what makes two machines that enter the same passphrase derive
+        // the same key, which is the whole point of typing it only once per machine.
+        Assert.Equal(salt, entry.Salt);
+        Assert.Equal(key, entry.Key);
+    }
+
+    [Fact]
+    public async Task ConfigureEncryptionAsync_RejectsAPassphraseThatDoesNotMatchTheCloud()
+    {
+        var archive = CreateArchiveBytes(256);
+        var salt = CloudBackupCipher.CreateSalt();
+        var key = CloudBackupCipher.DeriveKey("the shared passphrase", salt, CloudBackupKdfParameters.Test);
+        var sealedBackup = CloudBackupCipher.Seal(archive, key, salt, CloudBackupKdfParameters.Test);
+        var parts = CloudBackupPackage.Slice(sealedBackup.Payload, CloudBackupPackage.DefaultPartBytes);
+        var manifest = CloudBackupPackage.BuildManifest("20260830-120000-aaaa0001", parts,
+            CloudBackupPackage.DefaultPartBytes, ["list"], DateTime.UtcNow, "v3.0.0", sealedBackup.Payload,
+            sealedBackup.Encryption);
+        var content = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            ["f-manifest"] = CloudBackupPackage.SerializeManifest(manifest)
+        };
+        var fileList = BuildListResponse(
+            [("f-manifest", CloudBackupPackage.BuildManifestName(manifest.BackupId, encrypted: true), 10),
+             .. manifest.Parts.Select(part => ($"f-part-{part.Index}", part.Name, (long)part.Length))]);
+        var handler = new RecordingHandler(request => Download(request, content)) { Files = fileList };
+        var keyStore = new CloudBackupKeyStore();
+        var service = CreateService(handler, keyStore: keyStore, encryptionEnabled: true);
+
+        await Assert.ThrowsAsync<CloudBackupWrongPassphraseException>(() =>
+            service.ConfigureEncryptionAsync("a different passphrase", TestContext.Current.CancellationToken));
+
+        Assert.False(keyStore.HasKey);
+    }
+
     public void Dispose()
     {
         ResetDataRootForTests();
@@ -488,12 +737,14 @@ public sealed class CloudBackupServiceTests : IDisposable
             Directory.Delete(_dataRoot, recursive: true);
     }
 
-    private CloudBackupService CreateService(RecordingHandler handler, byte[]? archive = null, string deviceAlias = "")
+    private CloudBackupService CreateService(RecordingHandler handler, byte[]? archive = null, string deviceAlias = "",
+        CloudBackupKeyStore? keyStore = null, bool encryptionEnabled = false)
     {
         var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://appwrite.sectl.cn/") };
         var factory = new StubHttpClientFactory(httpClient);
         var config = new MainConfigModel();
         config.General.Backup.CloudDeviceAlias = deviceAlias;
+        config.General.Backup.CloudEncryptionEnabled = encryptionEnabled;
         var configHandler = new MainConfigHandler(
             NullLogger<MainConfigHandler>.Instance,
             new TestConfigService(config));
@@ -503,7 +754,7 @@ public sealed class CloudBackupServiceTests : IDisposable
         SetToken(authService, new SectlToken("access-token", "refresh-token", "user-1", 3600));
         var cloudClient = new SectlCloudStorageClient(authService, factory, NullLogger<SectlCloudStorageClient>.Instance);
         return new CloudBackupService(authService, cloudClient, configHandler, new FakeImportExportService(archive ?? []),
-            NullLogger<CloudBackupService>.Instance);
+            keyStore ?? new CloudBackupKeyStore(), NullLogger<CloudBackupService>.Instance);
     }
 
     private static HttpResponseMessage Download(HttpRequestMessage request, IReadOnlyDictionary<string, byte[]> content)
@@ -525,6 +776,15 @@ public sealed class CloudBackupServiceTests : IDisposable
     {
         var body = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
         return JsonNode.Parse(body)!["file"]!["name"]!.GetValue<string>();
+    }
+
+    /// <summary>Decodes one uploaded part or manifest back to the bytes the cloud would store.</summary>
+    private static byte[] ReadUploadedBytes(HttpRequestMessage request)
+    {
+        var body = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+        var data = JsonNode.Parse(body)!["file"]!["data"]!.GetValue<string>();
+        var separator = data.IndexOf("base64,", StringComparison.Ordinal);
+        return Convert.FromBase64String(data[(separator + "base64,".Length)..]);
     }
 
     private static string BuildListResponse(params (string FileId, string FileName, long Size)[] files)

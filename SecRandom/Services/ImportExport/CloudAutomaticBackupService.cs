@@ -20,6 +20,13 @@ public sealed class CloudAutomaticBackupService(
 {
     private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(1);
 
+    /// <summary>
+    ///     Logs the "encryption enabled but no passphrase" state once per process instead of every
+    ///     hourly check, because it is a standing condition the user has to act on rather than a
+    ///     failure that resolves on retry.
+    /// </summary>
+    private bool _warnedMissingEncryptionKey;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Task.Yield();
@@ -55,6 +62,21 @@ public sealed class CloudAutomaticBackupService(
         var settings = configHandler.Data.General.Backup;
         if (!settings.CloudAutoBackupEnabled || !cloudBackupService.IsSignedIn)
             return;
+
+        // Encryption is on but this device has no passphrase yet: nothing may be uploaded, because
+        // falling back to plaintext would silently defeat the setting the user turned on.
+        if (settings.CloudEncryptionEnabled && !cloudBackupService.HasEncryptionKey)
+        {
+            if (!_warnedMissingEncryptionKey)
+            {
+                _warnedMissingEncryptionKey = true;
+                logger.LogWarning("云端自动备份已跳过：已开启加密但尚未设置加密口令。");
+            }
+
+            return;
+        }
+
+        _warnedMissingEncryptionKey = false;
 
         var intervalDays = Math.Max(1, settings.CloudAutoBackupIntervalDays);
         if (!await IsDueAsync(intervalDays, cancellationToken).ConfigureAwait(false))

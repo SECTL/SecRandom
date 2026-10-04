@@ -1006,6 +1006,7 @@ public partial class App : Application
                         client.Timeout = TimeSpan.FromSeconds(60);
                     });
                     services.AddSingleton<SectlCloudStorageClient>();
+                    services.AddSingleton<CloudBackupKeyStore>();
                     services.AddSingleton<CloudBackupService>();
                     services.AddSingleton<CloudAutomaticBackupService>();
                     services.AddHostedService(serviceProvider =>

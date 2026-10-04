@@ -2,10 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Versioning;
-using System.Security.AccessControl;
 using System.Security.Cryptography;
-using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using Org.BouncyCastle.Crypto.Generators;
@@ -279,7 +276,7 @@ internal sealed class SecurityCredentialStore
                 new StandaloneTotpSecret { FormatVersion = StandaloneTotpFormatVersion, Secret = secret },
                 _jsonOptions),
             Encoding.UTF8);
-        TryRestrictToOwner(temporaryPath);
+        SecurityPathProtection.RestrictFileToOwner(temporaryPath);
         File.Move(temporaryPath, path, true);
     }
 
@@ -308,91 +305,7 @@ internal sealed class SecurityCredentialStore
             return;
 
         _directoryProtected = true;
-        TryRestrictDirectoryToOwner(directory);
-    }
-
-    private static void TryRestrictDirectoryToOwner(string directory)
-    {
-        if (OperatingSystem.IsWindows())
-        {
-            TryProtectDirectoryOnWindows(directory);
-            return;
-        }
-
-        try
-        {
-            File.SetUnixFileMode(
-                directory,
-                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
-        }
-        catch (Exception)
-        {
-            // 收紧目录权限是尽力而为的加固，失败不影响凭据读写
-        }
-    }
-
-    /// <summary>
-    ///     Windows 上默认 ACL 通常允许 Users / Authenticated Users 读取整个 data 目录，这里断开继承
-    ///     并只保留当前用户（外加 SYSTEM 与 Administrators，避免目录变得无法管理）。一条规则都没能
-    ///     加上时保持原样，不写出空 DACL。
-    /// </summary>
-    [SupportedOSPlatform("windows")]
-    private static void TryProtectDirectoryOnWindows(string directory)
-    {
-        try
-        {
-            var security = new DirectorySecurity();
-            security.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
-            var granted = AddFullControl(security, WindowsIdentity.GetCurrent().User);
-            granted |= AddFullControl(security, new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null));
-            granted |= AddFullControl(security, new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null));
-            if (!granted)
-                return;
-
-            new DirectoryInfo(directory).SetAccessControl(security);
-        }
-        catch (Exception)
-        {
-            // 例如 FAT/exFAT/网络位置上没有 ACL 支持；保持原样而不是让凭据变得不可读写
-        }
-    }
-
-    [SupportedOSPlatform("windows")]
-    private static bool AddFullControl(DirectorySecurity security, IdentityReference? identity)
-    {
-        if (identity is null)
-            return false;
-
-        try
-        {
-            security.AddAccessRule(new FileSystemAccessRule(
-                identity,
-                FileSystemRights.FullControl,
-                InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
-                PropagationFlags.None,
-                AccessControlType.Allow));
-            return true;
-        }
-        catch (Exception)
-        {
-            // 单个 SID 无法解析（例如域控上缺少内建组）时跳过，不影响其余规则
-            return false;
-        }
-    }
-
-    private static void TryRestrictToOwner(string path)
-    {
-        if (OperatingSystem.IsWindows())
-            return;
-
-        try
-        {
-            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
-        }
-        catch (Exception)
-        {
-            // 收紧文件权限是尽力而为的加固，失败不影响凭据与免密种子的读写
-        }
+        SecurityPathProtection.RestrictDirectoryToOwner(directory);
     }
 
     private SecurityCredentials DecryptCredentials(SecurityCredentialMetadata metadata, byte[] encryptionKey)
@@ -484,7 +397,7 @@ internal sealed class SecurityCredentialStore
         _beforeWrite?.Invoke();
         var temporaryPath = _path + ".tmp";
         File.WriteAllText(temporaryPath, JsonSerializer.Serialize(envelope, _jsonOptions), Encoding.UTF8);
-        TryRestrictToOwner(temporaryPath);
+        SecurityPathProtection.RestrictFileToOwner(temporaryPath);
         File.Move(temporaryPath, _path, true);
     }
 
