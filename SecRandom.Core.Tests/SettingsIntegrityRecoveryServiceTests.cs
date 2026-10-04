@@ -110,6 +110,69 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
         Assert.Equal(SettingsIntegrityRecoveryStatus.NoBackupAvailable, result.Status);
     }
 
+    [Fact]
+    public void OrderCloudCandidates_PrefersThisDevicesBackupOverANewerOneFromAnotherDevice()
+    {
+        var own = CloudBackup("own", "dev-a", DateTimeOffset.UtcNow.AddDays(-5));
+        var other = CloudBackup("other", "dev-b", DateTimeOffset.UtcNow);
+
+        var ordered = SettingsIntegrityRecoveryService.OrderCloudCandidates([other, own], "dev-a");
+
+        // Another machine's settings.json describes that machine; being newer must not outrank it.
+        Assert.Equal(["own", "other"], ordered.Select(item => item.BackupId));
+    }
+
+    [Fact]
+    public void OrderCloudCandidates_OrdersEachDeviceGroupNewestFirst()
+    {
+        var ownOlder = CloudBackup("own-old", "dev-a", DateTimeOffset.UtcNow.AddDays(-3));
+        var ownNewer = CloudBackup("own-new", "dev-a", DateTimeOffset.UtcNow.AddDays(-1));
+        var other = CloudBackup("other", "dev-b", DateTimeOffset.UtcNow);
+
+        var ordered = SettingsIntegrityRecoveryService.OrderCloudCandidates([ownOlder, other, ownNewer], "dev-a");
+
+        Assert.Equal(["own-new", "own-old", "other"], ordered.Select(item => item.BackupId));
+    }
+
+    [Fact]
+    public void OrderCloudCandidates_FallsBackToOtherDevicesWhenThisDeviceHasNone()
+    {
+        var older = CloudBackup("other-old", "dev-b", DateTimeOffset.UtcNow.AddDays(-2));
+        var newer = CloudBackup("other-new", "dev-c", DateTimeOffset.UtcNow);
+
+        var ordered = SettingsIntegrityRecoveryService.OrderCloudCandidates([older, newer], "dev-a");
+
+        Assert.Equal(["other-new", "other-old"], ordered.Select(item => item.BackupId));
+    }
+
+    [Fact]
+    public void OrderCloudCandidates_SkipsIncompleteBackups()
+    {
+        var incomplete = CloudBackup("half", "dev-a", DateTimeOffset.UtcNow, complete: false);
+        var usable = CloudBackup("usable", "dev-a", DateTimeOffset.UtcNow.AddDays(-1));
+
+        var ordered = SettingsIntegrityRecoveryService.OrderCloudCandidates([incomplete, usable], "dev-a");
+
+        Assert.Equal(["usable"], ordered.Select(item => item.BackupId));
+    }
+
+    [Fact]
+    public void OrderCloudCandidates_WithoutADeviceTag_KeepsPureNewestFirst()
+    {
+        // A host name that yields no ASCII-safe alias means there is no own-device group to prefer.
+        var older = CloudBackup("older", "dev-a", DateTimeOffset.UtcNow.AddDays(-1));
+        var newer = CloudBackup("newer", "dev-b", DateTimeOffset.UtcNow);
+
+        var ordered = SettingsIntegrityRecoveryService.OrderCloudCandidates([older, newer], string.Empty);
+
+        Assert.Equal(["newer", "older"], ordered.Select(item => item.BackupId));
+    }
+
+    private static CloudBackupDescriptor CloudBackup(string backupId, string deviceTag, DateTimeOffset createdAt,
+        bool complete = true) =>
+        new(backupId, $"{backupId} ({deviceTag})", createdAt, 10, 1, complete,
+            complete ? $"manifest-{backupId}" : null, deviceTag);
+
     public void Dispose()
     {
         if (Directory.Exists(_temporaryRoot))

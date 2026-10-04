@@ -120,6 +120,18 @@ internal sealed class SettingsIntegrityRecoveryService
         };
 
     /// <summary>
+    ///     云端候选的尝试顺序：先本机上传的备份，再其他设备的；每组内部仍按上传时间从新到旧。
+    ///     设置文件属于本机，另一台机器的配置只能在「本机没有任何可用备份」时兜底，所以设备归属
+    ///     排在新旧之前。设备别名为空（主机名无法生成安全别名）时没有本机组，退化为纯时间排序。
+    /// </summary>
+    internal static IReadOnlyList<CloudBackupDescriptor> OrderCloudCandidates(
+        IEnumerable<CloudBackupDescriptor> backups, string? deviceTag) =>
+        backups.Where(item => item.CanRestore)
+            .OrderByDescending(item => CloudBackupService.IsOwnBackup(item, deviceTag ?? string.Empty))
+            .ThenByDescending(item => item.CreatedAt ?? DateTimeOffset.MinValue)
+            .ToArray();
+
+    /// <summary>
     ///     失败信息展示最有用的那条：真实的文件/恢复错误优先于「没有可用备份」，而「未登录账号」
     ///     只在用户明确选择云端优先时才有意义。
     /// </summary>
@@ -206,10 +218,16 @@ internal sealed class SettingsIntegrityRecoveryService
         }
 
         string? lastDetail = null;
-        foreach (var descriptor in backups.Where(item => item.CanRestore)
-                     .OrderByDescending(item => item.CreatedAt ?? DateTimeOffset.MinValue))
+        foreach (var descriptor in OrderCloudCandidates(backups, cloud.DeviceTag))
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (!cloud.IsOwnBackup(descriptor))
+            {
+                // 本机没有可用备份时才轮到别的设备：另一台机器的 settings.json 描述的是那台机器的配置，
+                // 只能当作兜底，不能因为「它更新」就优先采用。
+                _logger.LogWarning("本机没有可用的云端备份，改用其他设备的备份：备份={BackupId}。", descriptor.BackupId);
+            }
+
             string archivePath;
             try
             {
