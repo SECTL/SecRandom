@@ -33,6 +33,59 @@ public readonly record struct RemoteDrawWindowPlan(bool Restore, bool Show, bool
         new(Restore: isMinimized, Show: !isVisible, Activate: true);
 }
 
+/// <summary>远程抽取的结果要落在哪种宿主上。</summary>
+public enum RemoteDrawSurface
+{
+    /// <summary>桌面：有独立主窗口，可以还原 / 显示 / 激活。</summary>
+    DesktopWindow,
+
+    /// <summary>
+    ///     单窗口宿主（平板）：主界面本身就是宿主里的当前页，没有 Window 可以还原、显示或激活。
+    /// </summary>
+    SingleViewHost
+}
+
+/// <summary>
+///     远程抽取"把结果送到最前"这一步该做什么。
+/// </summary>
+/// <remarks>
+///     <para>
+///         之所以要单独一个纯函数：桌面与平板的宿主形态不同，而"没做置前"和"做了但做不到"看起来一模一样。
+///         把决策抽出来，测试就能钉住**平板不会去碰一个根本不存在的窗口**，也不必真的跑一台平板。
+///     </para>
+///     <para>
+///         <b>平板能做什么、不能做什么</b>：单窗口宿主里主界面已经是当前页，因此
+///         "把结果送到最前"只剩两件能做的事——把目标页切到主界面里（调用方做）、以及激活视图会话。
+///         <b>把整个应用从后台提到前台是做不到的</b>：Android 与 iPadOS 都不允许应用自行这么做，
+///         这不是本项目的降级，而是平台约束。应用已经在前台时（教室里那台平板常驻在抽取页上），
+///         结果会立刻可见。
+///     </para>
+/// </remarks>
+/// <param name="Surface">结果落在哪种宿主上。</param>
+/// <param name="Restore">桌面：窗口最小化时需要先还原。</param>
+/// <param name="Show">桌面：窗口当前不可见时需要显示。</param>
+/// <param name="Activate">桌面：是否激活到前台（这条路径上永远为真）。</param>
+public readonly record struct RemoteDrawFocusPlan(RemoteDrawSurface Surface, bool Restore, bool Show, bool Activate)
+{
+    /// <summary>按宿主形态决定"置前"要做哪几件事。</summary>
+    /// <remarks>
+    ///     单窗口宿主上一律返回"什么都不做"：那里没有窗口状态可读，
+    ///     <see cref="RemoteDrawSurface.SingleViewHost" /> 本身就是"别再去找窗口"的指令。
+    /// </remarks>
+    public static RemoteDrawFocusPlan Resolve(bool isDesktop, bool isWindowVisible, bool isWindowMinimized)
+    {
+        if (!isDesktop)
+            return new RemoteDrawFocusPlan(RemoteDrawSurface.SingleViewHost, false, false, false);
+
+        var window = RemoteDrawWindowPlan.Resolve(isWindowVisible, isWindowMinimized);
+        return new RemoteDrawFocusPlan(
+            RemoteDrawSurface.DesktopWindow,
+            window.Restore,
+            window.Show,
+            window.Activate);
+    }
+}
+
 /// <summary>
 ///     用两个抽取页面 ViewModel 真正执行一次远程抽取。
 /// </summary>

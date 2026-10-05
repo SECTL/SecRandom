@@ -960,7 +960,10 @@ public partial class App : Application
         if (IAppHost.Host is not null) return;
         var mobilePlatform = platform as MobilePlatformServiceRoot;
         var isMobile = mobilePlatform is not null;
-        var useMobileUI = isMobile && !mobilePlatform!.UsesDesktopMainView;
+        // 宿主形态只在这里判一次：平板同时是控制端（远程抽取页）与被控端（集控节点），
+        // 手机只是控制端。所有分支都读这一份结果，免得下次加平台时漏掉某个 if。
+        var hostShape = AppHostShape.Resolve(isMobile, mobilePlatform?.UsesDesktopMainView == true);
+        var useMobileUI = hostShape.UsesMobileShell;
 
         IAppHost.Host = Host
             .CreateDefaultBuilder()
@@ -1185,15 +1188,22 @@ public partial class App : Application
                 services.AddHostedService<CourseLinkageHostedService>();
 
                 // 集控节点（control-v1，见 docs/client-protocol.md）：出站长连接 + 本机开关 + 远程抽取。
-                // 桌面三平台共享同一份实现；手机端只是控制台侧（往桌面节点下发 draw.trigger），
-                // 本机没有节点，因此只注册一个永不开锁的闸门——LinkageDrawCoordinator 桌面与手机共用，
-                // 少了这条注册整台 Host 都起不来（Host.StartAsync 构造 GlobalShortcutService 时会拉到它）。
-                if (!isMobile)
+                // **桌面与平板**都是被控端（平板用的是桌面主界面，教室里同样需要被控制）；
+                // 手机端只是控制台侧（往节点下发 draw.trigger），本机没有节点，因此只注册一个永不开锁的闸门
+                // ——LinkageDrawCoordinator 桌面与手机共用，少了这条注册整台 Host 都起不来
+                // （Host.StartAsync 构造 GlobalShortcutService 时会拉到它）。
+                if (hostShape.RunsControlNode)
                 {
                     services.AddSingleton(new ControlNodeClientOptions
                     {
                         Platform = ResolveControlPlatformName(),
-                        Version = GlobalConstants.Version
+                        Version = GlobalConstants.Version,
+                        // 主机名在移动平台上是没有意义的（Android/iOS 都报 localhost）：平板既然是被控端，
+                        // 控制台里就不能每台都叫 localhost。平台 head 提供的设备名（Build.Model / UIDevice.Model）优先，
+                        // 用户自己在集控设置页填的显示名仍然覆盖它（见 ControlNodeDisplayName.Resolve）。
+                        HostName = string.IsNullOrWhiteSpace(mobilePlatform?.DeviceName)
+                            ? Environment.MachineName
+                            : mobilePlatform!.DeviceName!
                     });
                     services.AddSingleton<IControlNodeStateStore, FileControlNodeStateStore>();
                     services.AddSingleton<IControlDrawGate, ControlDrawGateService>();
@@ -1219,7 +1229,7 @@ public partial class App : Application
                     // 单例：这个 ViewModel 订阅了节点状态与连接状态，每次打开设置页都新建一个会累积订阅。
                     services.AddSingleton<ControlSettingsPageViewModel>();
                 }
-                else
+                else if (hostShape.UsesUnlockedDrawGate)
                 {
                     // 手机端没有本地集控节点，但 LinkageDrawCoordinator 仍然要求这个闸门可解析。
                     services.AddSingleton<IControlDrawGate, UnlockedControlDrawGate>();
@@ -1303,6 +1313,12 @@ public partial class App : Application
                     services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
                     services.AddMainPage<LotteryPage>(Langs.Common.Resources.Feat_Lottery);
                     services.AddMainPage<HistoryPage>(Langs.Common.Resources.Feat_History);
+
+                    // 平板：它同时是控制端，但用的是**桌面主界面**（单窗口宿主里的 MainView），没有底部导航栏，
+                    // 因此"远程抽取"作为侧栏的一项出现。页面与 ViewModel 与手机端**完全同一份**
+                    // （MobileRemoteDrawPage / MobileRemoteDrawViewModel），协议一改只有一处要改。
+                    if (hostShape.UsesDesktopMainView)
+                        services.AddMainPage<MobileRemoteDrawPage>(MobileResources.P_RemoteDraw);
                 }
 
                 // 设置界面 Views
@@ -1332,9 +1348,9 @@ public partial class App : Application
                 services.AddSettingsPage<VerificationSettingsPage>(Langs.SettingsPages.General.Verification
                     .Resources.Page_Title);
                 services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
-                if (!isMobile)
+                if (hostShape.RunsControlNode)
                 {
-                    // 集控节点只在桌面注册，页面与它成对出现。
+                    // 集控节点与集控设置页成对出现：跑节点的宿主（桌面/平板）才该看到这个页面。
                     services.AddSettingsPage<ControlSettingsPage>(
                         Langs.SettingsPages.General.Control.Resources.Page_Title);
                 }
@@ -1997,10 +2013,16 @@ public partial class App : Application
 
     #region Windows
 
-    /// <summary>集控协议里的平台标识：<c>windows</c> / <c>linux</c> / <c>macos</c>。</summary>
+    /// <summary>集控协议里的平台标识：<c>windows</c> / <c>linux</c> / <c>macos</c> / <c>android</c> / <c>ios</c>。</summary>
+    /// <remarks>
+    ///     平板也是被控端，所以移动平台必须报出自己的真实平台名：一律回落成 <c>unknown</c> 的话，
+    ///     控制台的节点列表里每一台平板都看不出是 iPad 还是 Android 平板。
+    /// </remarks>
     private static string ResolveControlPlatformName() =>
         OperatingSystem.IsWindows() ? "windows"
         : OperatingSystem.IsMacOS() ? "macos"
+        : OperatingSystem.IsAndroid() ? "android"
+        : OperatingSystem.IsIOS() ? "ios"
         : OperatingSystem.IsLinux() ? "linux"
         : "unknown";
 
@@ -2012,7 +2034,7 @@ public partial class App : Application
     }
 
     /// <summary>
-    ///     远程抽取结果的展示路径：显示主窗口、切到指定页，并把它**还原 + 激活到前台**。
+    ///     远程抽取结果的展示路径：显示主界面、切到指定页，并把它**还原 + 激活到前台**。
     /// </summary>
     /// <remarks>
     ///     <para>
@@ -2025,6 +2047,11 @@ public partial class App : Application
     ///         不是后台弹窗；普通显示、浮窗与通知渠道仍遵守用户的"不抢焦点/置顶模式"设置。
     ///         这里只做还原/显示/激活，**不**去拨 Topmost（理由见 <see cref="RemoteDrawWindowPlan" />）。
     ///     </para>
+    ///     <para>
+    ///         <b>平板（单窗口宿主）走的是同一条路，但"置前"落在别的动作上</b>：那里没有 <c>MainWindow</c>，
+    ///         主界面就是宿主里的当前页，因此能做的只有"把目标页切到主界面里 + 激活视图会话"；
+    ///         把整个应用从后台提到前台是 Android/iPadOS 不允许的（见 <see cref="RemoteDrawFocusPlan" />）。
+    ///     </para>
     /// </remarks>
     public static Task ShowMainWindowForRemoteDrawAsync(string? pageId = null) =>
         ShowMainWindowForRemoteDrawCoreAsync(pageId);
@@ -2033,13 +2060,19 @@ public partial class App : Application
     {
         await ShowMainWindowCoreAsync(pageId).ConfigureAwait(true);
 
-        if (_mainWindow is not { } window)
+        var window = _mainWindow;
+        var plan = RemoteDrawFocusPlan.Resolve(
+            App.IsDesktop,
+            isWindowVisible: window?.IsVisible ?? false,
+            isWindowMinimized: window?.WindowState == WindowState.Minimized);
+
+        // 单窗口宿主（平板）：没有窗口可还原/显示/激活——目标页已经在 ShowMainWindowCoreAsync 里切好了，
+        // 主界面又是宿主里的当前页，因此这里**什么都不做**才是正确行为，而不是悄悄去建一个桌面窗口。
+        if (plan.Surface == RemoteDrawSurface.SingleViewHost || window is null)
             return;
 
         void BringToFront()
         {
-            var plan = RemoteDrawWindowPlan.Resolve(window.IsVisible, window.WindowState == WindowState.Minimized);
-
             // 顺序不能反：最小化的窗口要先还原，否则激活只会得到一个仍然最小化的窗口。
             if (plan.Restore)
                 window.WindowState = WindowState.Normal;
@@ -2063,7 +2096,11 @@ public partial class App : Application
         try
         {
             WriteDesktopStartupDiagnostic("Showing main window.");
-            if (_mainWindow is null)
+
+            // 桌面：主界面在一个独立窗口里，没有就建一个。
+            // 单窗口宿主（平板/手机）：没有 Window 这个概念，主界面是宿主里的视图（平板是 MainView，手机是根视图），
+            // 因此这里**只**激活那份视图会话，绝不构造桌面窗口——在平板上建一个 Window 只会得到一个没人能看到的窗口。
+            if (_mainWindow is null && App.IsDesktop)
             {
                 WriteDesktopStartupDiagnostic("Creating main window and view host.");
                 var mainWindow = _mainWindow = new MainWindow(MainWindowSettingsScope.Primary)
@@ -2079,9 +2116,10 @@ public partial class App : Application
                 };
             }
 
+            // ReuseExistingView（默认 true）：已经显示过的主界面会被**激活**而不是重复压一层。
             await IAppHost.GetService<IViewEngine>().ShowAsync(
-                DesktopViewIds.Main,
-                new ViewShowOptions { HostId = DesktopViewIds.Main }).ConfigureAwait(true);
+                App.IsDesktop ? DesktopViewIds.Main : GetMobileInitialViewId(),
+                new ViewShowOptions { HostId = App.IsDesktop ? DesktopViewIds.Main : null }).ConfigureAwait(true);
             WriteDesktopStartupDiagnostic("Main window view displayed.");
             if (!string.IsNullOrWhiteSpace(pageId))
                 MainView.Current?.SelectNavigationItemById(pageId);
