@@ -745,5 +745,8 @@
     <data name="RD_Resetting" xml:space="preserve"><value>正在重置…</value></data>
     <data name="RD_ResetDone" xml:space="preserve"><value>已重置本轮，清掉 {0} 条抽取进度</value></data>
     <data name="RD_ResetConfirm" xml:space="preserve"><value>再点一次确认重置</value></data>
-    <data name="RD_NoResult" xml:space="preserve"><value>还没有结果。下发抽取后，设备回执里抽到的人或奖品会显示在这里</value></data>
+    <data name="RD_NoResult" xml:space="preserve"><value>还没有结果</value></data>
+    <data name="RD_NoResult_D" xml:space="preserve"><value>下发抽取后，设备回执里抽到的人或奖品会显示在这里</value></data>
+    <data name="RD_SelfBadge" xml:space="preserve"><value>本机</value></data>
+    <data name="RD_SelfSelectedHint" xml:space="preserve"><value>这是本机；要给本机点名或抽奖，请用主界面的『点名』『抽奖』页面</value></data>
 </root>

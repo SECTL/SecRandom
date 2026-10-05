@@ -39,60 +39,63 @@
                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
             <DockPanel LastChildFill="True">
 
-                <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0 0 0 12">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock Classes="section-title" Text="{x:Static langs:Resources.RD_Drawn}" />
-                        <TextBlock Text="{Binding ViewModel.DrawnCountText}"
-                                   VerticalAlignment="Center"
-                                   Opacity="0.7" />
-                    </StackPanel>
-                    <TextBlock Classes="hint" Text="{Binding ViewModel.DeviceSummary}" />
-                </StackPanel>
-
                 <!-- 回执状态：未抽/执行中/失败/超时/被拒都走这一行（文案由 VM 按错误码给）。 -->
                 <StackPanel DockPanel.Dock="Bottom" Spacing="6" Margin="0 12 0 0">
                     <ProgressBar IsIndeterminate="True" IsVisible="{Binding ViewModel.IsBusy}" />
                     <TextBlock Text="{Binding ViewModel.StatusText}" TextWrapping="Wrap" />
                 </StackPanel>
 
+                <!--
+                    左侧不再有"抽到了 + 当前设备摘要"的标题块：当前设备在右侧控制区已经有了
+                    （设备名 · 在线 · 组名 + 刷新），左侧再放一份是重复，而设备选择本来也不在左侧做。
+                    保留的是**真实回执数据**——抽到的条数（DrawnCountText）与成员列表。
+                -->
                 <Grid>
-                    <!-- 有回执成员：只渲染回执里的成员。 -->
-                    <ScrollViewer IsVisible="{Binding ViewModel.HasResult}"
-                                  VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding ViewModel.DrawnMembers}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="cp:NodeCommandDrawnMember">
-                                    <Border Padding="10" Margin="0 0 0 8" CornerRadius="6"
-                                            Background="{DynamicResource SubtleFillColorSecondaryBrush}">
-                                        <StackPanel Orientation="Horizontal" Spacing="12">
-                                            <TextBlock Text="{Binding DisplayLabel}" FontSize="20" FontWeight="SemiBold" />
-                                            <TextBlock Text="{Binding SecondaryLabel}" FontSize="14"
-                                                       Opacity="0.6" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+                    <!-- 有回执成员：先给条数，再列回执里的成员。 -->
+                    <DockPanel IsVisible="{Binding ViewModel.HasResult}">
+                        <TextBlock DockPanel.Dock="Top"
+                                   Margin="0 0 0 8"
+                                   FontWeight="SemiBold"
+                                   Text="{Binding ViewModel.DrawnCountText}" />
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding ViewModel.DrawnMembers}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="cp:NodeCommandDrawnMember">
+                                        <Border Padding="10" Margin="0 0 0 8" CornerRadius="6"
+                                                Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                                <TextBlock Text="{Binding DisplayLabel}" FontSize="20" FontWeight="SemiBold" />
+                                                <TextBlock Text="{Binding SecondaryLabel}" FontSize="14"
+                                                           Opacity="0.6" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
 
-                    <!-- 没有可显示的结果：空态/失败态都在这里，理由由 VM 的 EmptyStateText 给出。 -->
+                    <!--
+                        没有可显示的结果：**两行**空态（还没有结果 / 回执里会出现什么）。
+                        垂直居中——面板很高，靠上或靠角都会像"少了个按钮"。
+                        这里**不再放刷新**：同一动作只在一个地方出现，刷新在右侧控制区。
+                    -->
                     <StackPanel IsVisible="{Binding !ViewModel.HasResult}"
                                 VerticalAlignment="Center" HorizontalAlignment="Center"
-                                MaxWidth="420" Spacing="10">
-                        <TextBlock Text="{x:Static langs:Resources.RD_NoResult}"
-                                   TextAlignment="Center" TextWrapping="Wrap" Opacity="0.65" />
+                                MaxWidth="420" Spacing="8">
+                        <TextBlock Text="{Binding ViewModel.ResultPlaceholderTitle}"
+                                   TextAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding ViewModel.ResultPlaceholderHint}"
+                                   TextAlignment="Center" TextWrapping="Wrap" Opacity="0.7" />
                         <TextBlock Text="{Binding ViewModel.EmptyStateText}"
                                    IsVisible="{Binding ViewModel.HasEmptyState}"
                                    TextAlignment="Center" TextWrapping="Wrap" />
-                        <!-- 未登录/凭据失效时直接给下一步，不留一个只能看的空白区。 -->
-                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                            <Button Content="{x:Static langs:Resources.RD_Refresh}"
-                                    Command="{Binding ViewModel.RefreshCommand}" />
-                            <Button Classes="accent"
-                                    Content="{x:Static langs:Resources.RD_SignIn}"
-                                    Command="{Binding ViewModel.SignInCommand}"
-                                    IsVisible="{Binding ViewModel.NeedsSignIn}" />
-                        </StackPanel>
+                        <!-- 登录是**这里才有**的动作（控制区没有登录入口），因此保留；刷新则已去掉。 -->
+                        <Button Classes="accent"
+                                Content="{x:Static langs:Resources.RD_SignIn}"
+                                Command="{Binding ViewModel.SignInCommand}"
+                                IsVisible="{Binding ViewModel.NeedsSignIn}"
+                                HorizontalAlignment="Center" />
                     </StackPanel>
                 </Grid>
             </DockPanel>
@@ -104,7 +107,7 @@
         -->
         <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Spacing="10">
-                <TextBlock Classes="hint" Text="{x:Static langs:Resources.RD_Hint}" />
+                <!-- 控制区顶部就不再放引导语了：右侧第一项直接是「抽取类型」，说明由左侧空态承担。 -->
 
                 <sr:Field Label="{x:Static langs:Resources.RD_Kind}">
                     <ComboBox ItemsSource="{Binding ViewModel.DrawKindOptions}"
@@ -138,7 +141,16 @@
                         <DataTemplate x:DataType="vm:DeviceRow">
                             <Border Classes.device-disabled="{Binding !IsUsable}" Padding="2">
                                 <StackPanel Spacing="2">
-                                    <TextBlock Text="{Binding DeviceLabel}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="{Binding DeviceLabel}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <!-- 本机徽章：只标识、不过滤，本机照样留在列表里可选。 -->
+                                        <Border IsVisible="{Binding IsSelf}"
+                                                VerticalAlignment="Center"
+                                                CornerRadius="4" Padding="6 1"
+                                                Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                                            <TextBlock Text="{Binding SelfBadgeText}" FontSize="11" Opacity="0.85" />
+                                        </Border>
+                                    </StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <TextBlock Text="{Binding GroupLabel}" FontSize="12" Opacity="0.7" />
                                         <TextBlock Text="{Binding StatusText}" FontSize="12" Opacity="0.7" />
@@ -151,6 +163,12 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
+
+                <!-- 选中本机：明确说一句怎么给本机抽，但不禁止选择（有人确实要给它下发命令）。 -->
+                <TextBlock Classes="hint"
+                           Text="{Binding ViewModel.SelfSelectedHint}"
+                           IsVisible="{Binding ViewModel.IsSelfSelected}"
+                           Foreground="{DynamicResource SystemFillColorCautionBrush}" />
 
                 <!-- 部分组读不到：只说那一组（带服务端错误码），其余设备照常可用。 -->
                 <Border IsVisible="{Binding ViewModel.HasUnavailableGroups}"

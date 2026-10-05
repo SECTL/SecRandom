@@ -28,8 +28,14 @@ namespace SecRandom.Views.MainPages;
 ///         结果区**只显示远端设备回执里真的返回了什么**（<c>detail.drawn</c>）：没有回执就一条成员都不列，
 ///         只显示状态文案（还没抽/失败/超时/被拒）。前端不造结果，也不在缺回执时编一句"抽到了某某"。
 ///     </para>
+/// <remarks>
+///     <para>
+///         <b>页面不报自己的名字</b>（<c>hidePageTitle: true</c>）：与点名/抽奖页一致——主界面侧栏已经写着
+///         「远程抽取」，页内再顶一行同名的标题只会占掉首屏。标题由外壳（`MainView` 的 TitleContainer，
+///         绑 `SelectedPageInfo.Name`）负责，导航标签照旧用它，只是不再画进内容区。
+///     </para>
 /// </remarks>
-[PageInfo(MobilePageIds.RemoteDraw, FluentIcons.SendFilled, location: PageLocation.Bottom)]
+[PageInfo(MobilePageIds.RemoteDraw, FluentIcons.SendFilled, location: PageLocation.Bottom, hidePageTitle: true)]
 public sealed partial class RemoteDrawPage : UserControl
 {
     public RemoteDrawPage(MobileRemoteDrawViewModel viewModel)

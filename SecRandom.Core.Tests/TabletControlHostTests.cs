@@ -214,8 +214,10 @@ public sealed class TabletControlHostTests
             source,
             StringComparison.Ordinal);
 
-        // ViewModel 必须注册在**共享**分支：两个视图都要能解析它，而它原来只写在 `if (isMobile)` 里。
-        Assert.Contains("services.AddTransient<MobileRemoteDrawViewModel>();", source, StringComparison.Ordinal);
+        // ViewModel 必须注册在**共享**分支，并且拿得到本机节点身份（手机没有节点 → GetService 返回 null，
+        // 设备列表里一台都不标"本机"）。它原来只写在 `if (isMobile)` 里，桌面因此解析不到。
+        Assert.Contains("new MobileRemoteDrawViewModel(", source, StringComparison.Ordinal);
+        Assert.Contains("provider.GetService<IControlNodeStateStore>()", source, StringComparison.Ordinal);
         var mobileOnlyViews = SectionOf(source, "// 杂项 Views", "// 界面 Views");
         Assert.DoesNotContain("MobileRemoteDrawViewModel", mobileOnlyViews, StringComparison.Ordinal);
     }
@@ -288,6 +290,135 @@ public sealed class TabletControlHostTests
         {
             PagesRegistryService.MainItems.Clear();
         }
+    }
+
+    [Fact]
+    public void 桌面版式_页面不重复报名字而导航标签保留()
+    {
+        var page = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/MainPages/RemoteDrawPage.axaml"));
+
+        // 页内不再有"远程抽取"标题（连资源键都不引用）：标题由 MainView 的 TitleContainer 承担，
+        // 与点名/抽奖页的 title-hidden 一致。以后谁"顺手加回来"这里会红。
+        Assert.DoesNotContain("P_RemoteDraw", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("N_RemoteDraw", page, StringComparison.Ordinal);
+
+        // 让外壳不画标题行的开关就是 PageInfo.HidePageTitle（MainView.axaml 绑 SelectedPageInfo.HidePageTitle）。
+        Assert.True(typeof(RemoteDrawPage).GetCustomAttribute<PageInfo>()!.HidePageTitle);
+
+        // 侧栏那一条是导航标签，必须继续用同一个资源键——删的是页内标题，不是导航名。
+        var source = ReadAppSource();
+        Assert.Contains(
+            "services.AddMainPage<RemoteDrawPage>(MobileResources.P_RemoteDraw);",
+            source,
+            StringComparison.Ordinal);
+
+        // 标题行消失后内容会顶到内容区上沿：两栏本身留了外边距，首行是结果计数/空态，不会贴边、也不会空一条。
+        Assert.Contains("Margin=\"16\"", page, StringComparison.Ordinal);
+        Assert.Contains("ViewModel.DrawnCountText", page, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void 桌面版式_结果区不重复设备信息与刷新入口()
+    {
+        var xaml = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/MainPages/RemoteDrawPage.axaml"));
+
+        // 按"右：控制区"注释切两半：左侧结果区 / 右侧控制区。
+        var split = xaml.IndexOf("============ 右：控制区", StringComparison.Ordinal);
+        Assert.True(split > 0, "找不到右侧控制区的分界注释");
+        var resultArea = xaml[..split];
+        var controlArea = xaml[split..];
+
+        // 结果区不再有"抽到了"标题、也不再有当前设备摘要：当前设备在右侧控制区已经有一份。
+        Assert.DoesNotContain("RD_Drawn", resultArea, StringComparison.Ordinal);
+        Assert.DoesNotContain("ViewModel.DeviceSummary", resultArea, StringComparison.Ordinal);
+
+        // 结果计数是**真实回执数据**，必须留着（防止"删多了"）。
+        Assert.Contains("ViewModel.DrawnCountText", resultArea, StringComparison.Ordinal);
+
+        // 同一动作只在一个地方出现：刷新只在控制区，结果区不再绑刷新命令。
+        Assert.DoesNotContain("RefreshCommand", resultArea, StringComparison.Ordinal);
+        Assert.Contains("RefreshCommand", controlArea, StringComparison.Ordinal);
+
+        // 控制区顶部那行引导语也去掉了：第一项直接是「抽取类型」（手机页仍保留它，那边只有这一句引导）。
+        Assert.DoesNotContain("Resources.RD_Hint", xaml, StringComparison.Ordinal);
+        var phoneXaml = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/Mobile/MobileRemoteDrawPage.axaml"));
+        Assert.Contains("Resources.RD_Hint", phoneXaml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void 手机版式_结果区在控制项之前且不重复底部文案()
+    {
+        var xaml = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/Mobile/MobileRemoteDrawPage.axaml"));
+
+        // 结构断言：结果区（DrawnMembers 所在的那个 Border）必须出现在第一个控制项之前。
+        var resultIndex = xaml.IndexOf("ViewModel.DrawnMembers", StringComparison.Ordinal);
+        var firstControlIndex = xaml.IndexOf("Resources.RD_Kind", StringComparison.Ordinal);
+        Assert.True(resultIndex > 0 && firstControlIndex > 0, "找不到结果区或第一个控制项");
+        Assert.True(
+            resultIndex < firstControlIndex,
+            $"手机页结果区必须排在控制项之前（result={resultIndex}, firstControl={firstControlIndex}）");
+
+        // 结果区封顶且可滚动：结果多时不许把下面的控制项顶出屏幕。
+        Assert.Contains("MaxHeight=\"200\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("VerticalScrollBarVisibility=\"Auto\"", xaml, StringComparison.Ordinal);
+
+        // 抽取按钮下方不再重复结果/失败文案（只留进行中状态），也照样不放刷新入口。
+        var drawButtonIndex = xaml.IndexOf("ViewModel.DrawCommand", StringComparison.Ordinal);
+        Assert.True(drawButtonIndex > 0, "找不到抽取按钮");
+        var belowDrawButton = xaml[drawButtonIndex..];
+        Assert.DoesNotContain("ViewModel.StatusText", belowDrawButton, StringComparison.Ordinal);
+        Assert.DoesNotContain("ViewModel.DrawnMembers", belowDrawButton, StringComparison.Ordinal);
+        Assert.DoesNotContain("ResultPlaceholderTitle", belowDrawButton, StringComparison.Ordinal);
+        Assert.Contains("ViewModel.IsBusy", belowDrawButton, StringComparison.Ordinal);
+
+        // 顶部结果区不放刷新（刷新在控制区）。
+        var resultArea = xaml[..firstControlIndex];
+        Assert.DoesNotContain("RefreshCommand", resultArea, StringComparison.Ordinal);
+        Assert.Contains("RefreshCommand", xaml[firstControlIndex..], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void 空态与提示文案_两个视图共用同一份且三语齐全()
+    {
+        // 文案来源在 VM 里（两个视图都绑它），视图不再各自引资源键——否则改一次要改两处。
+        var desktop = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/MainPages/RemoteDrawPage.axaml"));
+        var phone = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/Mobile/MobileRemoteDrawPage.axaml"));
+
+        foreach (var xaml in new[] { desktop, phone })
+        {
+            Assert.Contains("ViewModel.ResultPlaceholderTitle", xaml, StringComparison.Ordinal);
+            Assert.Contains("ViewModel.ResultPlaceholderHint", xaml, StringComparison.Ordinal);
+            Assert.DoesNotContain("Resources.RD_NoResult", xaml, StringComparison.Ordinal);
+        }
+
+        // 三语齐全，且两行都**不以句末标点结尾**（用户明确要求）。
+        foreach (var resource in new[] { "Resources.resx", "Resources.en-US.resx", "Resources.ja-JP.resx" })
+        {
+            var text = File.ReadAllText(GetRepositoryPath(Path.Combine("SecRandom/Langs/Mobile", resource)));
+            Assert.Contains("RD_NoResult\"", text, StringComparison.Ordinal);
+            Assert.Contains("RD_NoResult_D\"", text, StringComparison.Ordinal);
+
+            foreach (var key in new[] { "RD_NoResult", "RD_NoResult_D" })
+            {
+                var value = ExtractResourceValue(text, key);
+                Assert.False(
+                    value.EndsWith('。') || value.EndsWith('.') || value.EndsWith('．'),
+                    $"{resource} 的 {key} 不该以句末标点结尾：{value}");
+            }
+        }
+    }
+
+    /// <summary>从一个 resx 文件里取出某个键的取值（够用即可，不引 XML 解析）。</summary>
+    private static string ExtractResourceValue(string resx, string key)
+    {
+        var start = resx.IndexOf($"name=\"{key}\"", StringComparison.Ordinal);
+        Assert.True(start >= 0, $"resx 里找不到键 {key}");
+
+        var valueStart = resx.IndexOf("<value>", start, StringComparison.Ordinal);
+        var valueEnd = resx.IndexOf("</value>", valueStart, StringComparison.Ordinal);
+        Assert.True(valueStart >= 0 && valueEnd > valueStart, $"键 {key} 没有取值");
+
+        return resx[(valueStart + "<value>".Length)..valueEnd];
     }
 
     [Fact]

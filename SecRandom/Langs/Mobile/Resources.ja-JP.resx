@@ -745,5 +745,8 @@
     <data name="RD_Resetting" xml:space="preserve"><value>リセット中…</value></data>
     <data name="RD_ResetDone" xml:space="preserve"><value>ラウンドをリセットし、抽選記録を {0} 件消去しました</value></data>
     <data name="RD_ResetConfirm" xml:space="preserve"><value>もう一度タップして確定</value></data>
-    <data name="RD_NoResult" xml:space="preserve"><value>結果はまだありません。送信すると、端末の応答に含まれる当選者や景品がここに表示されます</value></data>
+    <data name="RD_NoResult" xml:space="preserve"><value>結果はまだありません</value></data>
+    <data name="RD_NoResult_D" xml:space="preserve"><value>送信すると、端末の応答に含まれる当選者や景品がここに表示されます</value></data>
+    <data name="RD_SelfBadge" xml:space="preserve"><value>この端末</value></data>
+    <data name="RD_SelfSelectedHint" xml:space="preserve"><value>これはこの端末です。この端末で点呼や抽選を行うには、メイン画面の「点呼」「抽選」ページを使ってください</value></data>
 </root>

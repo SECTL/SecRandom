@@ -48,8 +48,12 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     private readonly IControlPlaneDevicePreferenceStore _preferences;
     private readonly SectlAuthService _auth;
     private readonly ILogger<MobileRemoteDrawViewModel> _logger;
+    private readonly IControlNodeStateStore? _nodeStateStore;
     private bool _subscribed;
     private bool _selectingDevice;
+
+    /// <summary>设备加载的序号：新请求一开始就作废旧请求（取代 = 这条流程上的"取消"）。</summary>
+    private int _deviceLoadToken;
 
     /// <summary>凭据失效（刷新后仍 401）：页面要给出"重新登录"，而不是空态。</summary>
     private bool _requiresSignIn;
@@ -59,13 +63,16 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         IControlPlaneClient client,
         IControlPlaneDevicePreferenceStore preferences,
         SectlAuthService auth,
-        ILogger<MobileRemoteDrawViewModel> logger)
+        ILogger<MobileRemoteDrawViewModel> logger,
+        IControlNodeStateStore? nodeStateStore = null)
         : base(configHandler)
     {
         _client = client;
         _preferences = preferences;
         _auth = auth;
         _logger = logger;
+        // 手机没有本地集控节点，因此这里允许为 null —— 那种情况下设备列表里一台都不标"本机"。
+        _nodeStateStore = nodeStateStore;
         IsSignedIn = auth.IsSignedIn;
 
         // 选项在这里现建：界面语言可以在运行中切换，缓存在静态字段里就会冻结在首次访问时的那一国语言。
@@ -138,6 +145,36 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     public bool HasSelection => SelectedDevice is not null;
 
     public bool HasRoster => SelectedRoster is not null;
+
+    /// <summary>
+    ///     本机节点 id（没有节点身份的宿主，例如手机，返回空串）。
+    /// </summary>
+    /// <remarks>
+    ///     只读本机状态文件，**不额外发请求、也不动协议**：服务端本来就把 node_id 放在设备行里，
+    ///     本机自己也知道自己是谁，两边比一下就够了。
+    /// </remarks>
+    private string OwnNodeId => _nodeStateStore?.Current.NodeId ?? string.Empty;
+
+    /// <summary>选中的那台就是本机：页面要给出明确说明，避免"把命令下给自己"。</summary>
+    /// <remarks>
+    ///     只提示、**不禁止**选择：有人确实想给本机下发命令，直接禁掉会变成一句说不清的拒绝。
+    /// </remarks>
+    public bool IsSelfSelected => SelectedDevice?.IsSelf == true;
+
+    /// <summary>选中本机时给出的说明（两个视图共用同一份文案）。</summary>
+    public static string SelfSelectedHint => LR.RD_SelfSelectedHint;
+
+    /// <summary>
+    ///     结果区空态的第一行（"还没有结果"）。
+    /// </summary>
+    /// <remarks>
+    ///     空态文案放在 **VM** 里而不是各视图里各绑一个资源键：两个视图共用同一份来源，
+    ///     否则改一次文案要改两处，迟早有一边留着旧话。
+    /// </remarks>
+    public static string ResultPlaceholderTitle => LR.RD_NoResult;
+
+    /// <summary>结果区空态的第二行（回执里会出现什么）。</summary>
+    public static string ResultPlaceholderHint => LR.RD_NoResult_D;
 
     public bool HasResult => DrawnMembers.Count > 0;
 
@@ -579,8 +616,125 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     /// <summary>
     ///     拉取"我的组 → 每组的设备"，合并成一份扁平列表。
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <b>加载态必须在所有退出路径上被清掉</b>（成功、失败、0 台、异常、被更新的请求取代）。
+    ///         这条流程曾经在成功路径上只清了 <see cref="IsLoadingDevices" /> 却**没清状态行**，
+    ///         于是设备早就读到了，左下角还挂着"正在读取设备…"（三端同错，因为状态在共享 VM 里）。
+    ///         现在收成 <see cref="BeginDeviceLoad" /> / <see cref="EndDeviceLoad" /> 一对：
+    ///         开始只在一处写、结束只在 <c>finally</c> 里跑，漏清变成不可能。
+    ///     </para>
+    ///     <para>
+    ///         <b>取代（supersede）</b>：每次加载领一个序号，只有"还是最新的那次"才允许提交结果、
+    ///         才允许清加载态。旧请求晚回来时既不会把新请求的转圈清掉，也不会把过期的设备列表写上去。
+    ///         这里没有取消令牌（请求本身很短，取消只会多一条竞态），取代就是等价的下线路径。
+    ///     </para>
+    /// </remarks>
     private async Task LoadDevicesAsync()
     {
+        var token = BeginDeviceLoad();
+
+        try
+        {
+            IReadOnlyList<GroupDto> groups;
+            try
+            {
+                groups = await _client.GetGroupsAsync().ConfigureAwait(true);
+            }
+            catch (Exception exception)
+            {
+                // 失败**一定**要落进 LoadFailure：只写状态行的话，页面的空态会继续显示
+                // "这些组里还没有设备"，用户看到的仍然是"没有组"，而不是"请求失败了"。
+                if (token == _deviceLoadToken)
+                    ApplyFailure(exception, "读取控制面分组失败。");
+                return;
+            }
+
+            var rows = new List<DeviceRow>();
+            var failed = new List<string>();
+            var gate = new SemaphoreSlim(GroupLoadConcurrency);
+
+            // 并发但有上限；单组失败只记这一组，别的组照常可用（否则一个坏组会让整页变空）。
+            await Task.WhenAll(groups.Select(async group =>
+            {
+                await gate.WaitAsync().ConfigureAwait(false);
+                try
+                {
+                    if (string.IsNullOrWhiteSpace(group.GroupId))
+                        return;
+
+                    var nodes = await _client.GetNodesAsync(group.GroupId!).ConfigureAwait(false);
+                    lock (rows)
+                    {
+                        foreach (var node in nodes)
+                        {
+                            if (!string.IsNullOrWhiteSpace(node.NodeId))
+                                rows.Add(new DeviceRow(group, node, DeviceRow.IsSameNode(OwnNodeId, node.NodeId)));
+                        }
+                    }
+                }
+                catch (Exception exception)
+                {
+                    // **"这个组读失败"与"这个组没有设备"是两件事**：404/401/网络错误必须显示出来，
+                    // 否则整页会落进"还没有设备"的空态，把服务端错误说成设备不存在（线上就是这样）。
+                    _logger.LogWarning(
+                        exception,
+                        "读取组 {Group} 的设备失败：{Reason}",
+                        group.GroupId,
+                        exception is ControlPlaneException { RequestUri: { } uri } controlPlane
+                            ? $"{controlPlane.Kind}/{controlPlane.Code} {uri}"
+                            : exception.Message);
+
+                    lock (failed)
+                        failed.Add(string.Format(
+                            LR.RD_GroupLoadFailed,
+                            group.DisplayLabel,
+                            exception is ControlPlaneException { Code: { } code } known ? known.Code : "unknown"));
+                }
+                finally
+                {
+                    gate.Release();
+                }
+            })).ConfigureAwait(true);
+
+            gate.Dispose();
+
+            // 被更新的请求取代了：这份结果已经过期，一条都不要写进界面（新请求会自己写）。
+            if (token != _deviceLoadToken)
+                return;
+
+            // 在线优先、同组相邻：老师扫一眼就能找到那台正在亮着的机器。
+            foreach (var row in rows
+                         .OrderByDescending(static row => row.IsUsable)
+                         .ThenByDescending(static row => row.IsOnline)
+                         .ThenBy(static row => row.GroupLabel, StringComparer.Ordinal)
+                         .ThenBy(static row => row.DeviceLabel, StringComparer.Ordinal))
+            {
+                Devices.Add(row);
+            }
+
+            foreach (var message in failed)
+                UnavailableGroups.Add(message);
+
+            ApplyPreferredDevice();
+
+            // 一组设备都没读到、但组本身读到了：不是网络失败，而是"组里没有设备"或"部分组读不到"，
+            // 两者都由 UnavailableGroups / 空态文案说明，因此这里**清掉**失败标记（它只表示"列表没拿到"）。
+            RefreshDerived();
+        }
+        finally
+        {
+            // 成功、失败、异常、被取代都在这里收口：只有"还是最新那次"才允许收掉加载态。
+            EndDeviceLoad(token);
+        }
+    }
+
+    /// <summary>开始一次设备加载：只在这一处置加载态与进度文案。</summary>
+    private int BeginDeviceLoad()
+    {
+        // 序号即"作废上一轮"：新请求一开始，旧请求的结果与收尾就不再有效。
+        var token = ++_deviceLoadToken;
+
         IsLoadingDevices = true;
         LoadFailure = string.Empty;
         StatusText = LR.RD_LoadingDevices;
@@ -589,88 +743,23 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         SelectedDevice = null;
         RefreshDerived();
 
-        IReadOnlyList<GroupDto> groups;
-        try
-        {
-            groups = await _client.GetGroupsAsync().ConfigureAwait(true);
-        }
-        catch (Exception exception)
-        {
-            // 失败**一定**要落进 LoadFailure：只写状态行的话，页面的空态会继续显示
-            // "这些组里还没有设备"，用户看到的仍然是"没有组"，而不是"请求失败了"。
-            ApplyFailure(exception, "读取控制面分组失败。");
-            IsLoadingDevices = false;
-            RefreshDerived();
+        return token;
+    }
+
+    /// <summary>结束一次设备加载：<b>所有</b>退出路径都经过这里，漏清不可能。</summary>
+    private void EndDeviceLoad(int token)
+    {
+        // 被更新的请求取代：把状态留给新请求，别在这里清掉它的转圈。
+        if (token != _deviceLoadToken)
             return;
-        }
 
-        var rows = new List<DeviceRow>();
-        var failed = new List<string>();
-        var gate = new SemaphoreSlim(GroupLoadConcurrency);
-
-        // 并发但有上限；单组失败只记这一组，别的组照常可用（否则一个坏组会让整页变空）。
-        await Task.WhenAll(groups.Select(async group =>
-        {
-            await gate.WaitAsync().ConfigureAwait(false);
-            try
-            {
-                if (string.IsNullOrWhiteSpace(group.GroupId))
-                    return;
-
-                var nodes = await _client.GetNodesAsync(group.GroupId!).ConfigureAwait(false);
-                lock (rows)
-                {
-                    foreach (var node in nodes)
-                    {
-                        if (!string.IsNullOrWhiteSpace(node.NodeId))
-                            rows.Add(new DeviceRow(group, node));
-                    }
-                }
-            }
-            catch (Exception exception)
-            {
-                // **"这个组读失败"与"这个组没有设备"是两件事**：404/401/网络错误必须显示出来，
-                // 否则整页会落进"还没有设备"的空态，把服务端错误说成设备不存在（线上就是这样）。
-                _logger.LogWarning(
-                    exception,
-                    "读取组 {Group} 的设备失败：{Reason}",
-                    group.GroupId,
-                    exception is ControlPlaneException { RequestUri: { } uri } controlPlane
-                        ? $"{controlPlane.Kind}/{controlPlane.Code} {uri}"
-                        : exception.Message);
-
-                lock (failed)
-                    failed.Add(string.Format(
-                        LR.RD_GroupLoadFailed,
-                        group.DisplayLabel,
-                        exception is ControlPlaneException { Code: { } code } known ? known.Code : "unknown"));
-            }
-            finally
-            {
-                gate.Release();
-            }
-        })).ConfigureAwait(true);
-
-        gate.Dispose();
-
-        // 在线优先、同组相邻：老师扫一眼就能找到那台正在亮着的机器。
-        foreach (var row in rows
-                     .OrderByDescending(static row => row.IsUsable)
-                     .ThenByDescending(static row => row.IsOnline)
-                     .ThenBy(static row => row.GroupLabel, StringComparer.Ordinal)
-                     .ThenBy(static row => row.DeviceLabel, StringComparer.Ordinal))
-        {
-            Devices.Add(row);
-        }
-
-        foreach (var message in failed)
-            UnavailableGroups.Add(message);
-
-        ApplyPreferredDevice();
-
-        // 一组设备都没读到、但组本身读到了：不是网络失败，而是"组里没有设备"或"部分组读不到"，
-        // 两者都由 UnavailableGroups / 空态文案说明，因此这里**清掉**失败标记（它只表示"列表没拿到"）。
         IsLoadingDevices = false;
+
+        // 读完之后不留下"正在读取设备"的残影：这一行显示的就是那句进度文案时清空它
+        // （台数在上面的"共 N 台设备"里已经有了）；失败时 ApplyFailure 已经写成原因，这里不动它。
+        if (string.Equals(StatusText, LR.RD_LoadingDevices, StringComparison.Ordinal))
+            StatusText = string.Empty;
+
         RefreshDerived();
     }
 
@@ -884,6 +973,7 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         OnPropertyChanged(nameof(HasRoster));
         OnPropertyChanged(nameof(HasResult));
         OnPropertyChanged(nameof(DrawnCountText));
+        OnPropertyChanged(nameof(IsSelfSelected));
         OnPropertyChanged(nameof(HasUnavailableGroups));
         OnPropertyChanged(nameof(HasEmptyState));
         OnPropertyChanged(nameof(HasLoadFailure));

@@ -745,5 +745,8 @@ Clearing history before fair drawing helps keep the new member’s chance from b
     <data name="RD_Resetting" xml:space="preserve"><value>Resetting…</value></data>
     <data name="RD_ResetDone" xml:space="preserve"><value>Round reset; cleared {0} draw record(s)</value></data>
     <data name="RD_ResetConfirm" xml:space="preserve"><value>Tap again to confirm</value></data>
-    <data name="RD_NoResult" xml:space="preserve"><value>No result yet. Once a draw is sent, the members or prizes in the device's receipt appear here</value></data>
+    <data name="RD_NoResult" xml:space="preserve"><value>No result yet</value></data>
+    <data name="RD_NoResult_D" xml:space="preserve"><value>Once a draw is sent, the members or prizes in the device's receipt appear here</value></data>
+    <data name="RD_SelfBadge" xml:space="preserve"><value>This device</value></data>
+    <data name="RD_SelfSelectedHint" xml:space="preserve"><value>This is the local device; to draw on it, use the Roll call and Lottery pages of the main view</value></data>
 </root>

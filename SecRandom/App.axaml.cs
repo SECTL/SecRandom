@@ -1293,7 +1293,15 @@ public partial class App : Application
                 // "远程抽取"页的 ViewModel：**桌面/平板/手机三个宿主共用同一份**。它只跟协议有关，
                 // 与谁是控制端/被控端无关，因此注册在共享分支；页面每次进入都重建（FAFrame 不快取），
                 // 它自己会记住上次选中的设备，不需要做成单例。
-                services.AddTransient<MobileRemoteDrawViewModel>();
+                // 用显式工厂而不是纯约定注册：本机节点身份只有桌面/平板有（手机没有本地节点），
+                // 传 null = 设备列表里一台都不标"本机"，而不是让容器去猜一个可选参数。
+                services.AddTransient(provider => new MobileRemoteDrawViewModel(
+                    provider.GetRequiredService<MainConfigHandler>(),
+                    provider.GetRequiredService<IControlPlaneClient>(),
+                    provider.GetRequiredService<IControlPlaneDevicePreferenceStore>(),
+                    provider.GetRequiredService<SectlAuthService>(),
+                    provider.GetRequiredService<ILogger<MobileRemoteDrawViewModel>>(),
+                    provider.GetService<IControlNodeStateStore>()));
                 services.AddTransient<LotteryHistoryViewModel>();
 
                 // 杂项 Views

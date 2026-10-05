@@ -766,6 +766,198 @@ public sealed class MobileRemoteDrawTests : IDisposable
         Assert.DoesNotContain(LR.RD_ResetDone.Split('{')[0], viewModel.StatusText, StringComparison.Ordinal);
     }
 
+    // ---------------------------------------------------------------- 本机标识与结果空态
+
+    [Theory]
+    [InlineData("node-1", "node-1", true)]
+    [InlineData("node-1", "NODE-1", true)]     // 大小写不同不是两台机器
+    [InlineData(" node-1 ", "node-1", true)]   // 首尾空白同理
+    [InlineData("node-1", "node-2", false)]
+    [InlineData("", "node-1", false)]          // 本机身份没配置：一台都不标
+    [InlineData("   ", "node-1", false)]
+    [InlineData("node-1", "", false)]
+    [InlineData("node-1", null, false)]
+    [InlineData(null, null, false)]
+    public void 本机标识_按nodeid比对且容忍大小写与空白(string? ownNodeId, string? candidateNodeId, bool expected) =>
+        Assert.Equal(expected, DeviceRow.IsSameNode(ownNodeId, candidateNodeId));
+
+    [Fact]
+    public void 本机标识_只有本机那一行带徽章文案()
+    {
+        var self = Row("n1", isSelf: true);
+        var other = Row("n2");
+
+        // 本机**留在列表里**（只是标出来）：藏起来会让人以为设备没连上，也没法给它下发命令。
+        Assert.True(self.IsSelf);
+        Assert.Equal(LR.RD_SelfBadge, self.SelfBadgeText);
+
+        Assert.False(other.IsSelf);
+        Assert.Equal(string.Empty, other.SelfBadgeText);
+    }
+
+    [Fact]
+    public void 本机提示_只在选中本机时出现()
+    {
+        var (viewModel, _) = CreateViewModel();
+
+        viewModel.SelectedDevice = Row("n2");
+        Assert.False(viewModel.IsSelfSelected);
+
+        viewModel.SelectedDevice = Row("n1", isSelf: true);
+        Assert.True(viewModel.IsSelfSelected);
+
+        // 提示文案来自共享 VM，两个视图都绑它。
+        Assert.False(string.IsNullOrWhiteSpace(MobileRemoteDrawViewModel.SelfSelectedHint));
+    }
+
+    [Fact]
+    public void 结果空态_两行文案非空且出现回执后不再显示()
+    {
+        var (viewModel, _) = CreateViewModel();
+
+        Assert.False(string.IsNullOrWhiteSpace(MobileRemoteDrawViewModel.ResultPlaceholderTitle));
+        Assert.False(string.IsNullOrWhiteSpace(MobileRemoteDrawViewModel.ResultPlaceholderHint));
+        Assert.False(viewModel.HasResult);
+
+        viewModel.DrawnMembers.Add(new NodeCommandDrawnMember("01", "张三"));
+
+        Assert.True(viewModel.HasResult);
+        Assert.Contains("1", viewModel.DrawnCountText, StringComparison.Ordinal);
+    }
+
+    private static DeviceRow Row(string nodeId, bool isSelf = false) => new(
+        new GroupDto { GroupId = "g1", Name = "高一（1）班", Role = "admin" },
+        new NodeDto
+        {
+            NodeId = nodeId,
+            DisplayName = nodeId,
+            Online = true,
+            LocalRemoteAllowed = true,
+            Capabilities = [ControlCapabilities.DrawTrigger, ControlCapabilities.RosterRead]
+        },
+        isSelf);
+
+    // ---------------------------------------------------------------- 设备加载态（"已读到却仍显示正在读取设备"的回归）
+
+    [Fact]
+    public async Task 加载态_成功后清掉并且不再显示加载文案()
+    {
+        var (viewModel, client) = await CreateSignedInViewModelAsync();
+        client.GroupsAsync = () => Task.FromResult<IReadOnlyList<GroupDto>>([Group("g1")]);
+        client.NodesAsync = _ => Task.FromResult<IReadOnlyList<NodeDto>>([Node("n1")]);
+
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+
+        // 这三条一起才说明"读完了"：布尔清掉、文案不再挂着、列表真的有东西。
+        Assert.False(viewModel.IsLoadingDevices);
+        Assert.DoesNotContain(LR.RD_LoadingDevices, viewModel.StatusText, StringComparison.Ordinal);
+        Assert.Single(viewModel.Devices);
+    }
+
+    [Fact]
+    public async Task 加载态_失败后清掉并保留失败原因()
+    {
+        var (viewModel, client) = await CreateSignedInViewModelAsync();
+        client.GroupsAsync = () => Task.FromException<IReadOnlyList<GroupDto>>(
+            new ControlPlaneException("network_error", ControlPlaneErrorKind.Network));
+
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.IsLoadingDevices);
+        Assert.NotEmpty(viewModel.LoadFailure);
+        Assert.DoesNotContain(LR.RD_LoadingDevices, viewModel.StatusText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task 加载态_零台设备时清掉并落到空态()
+    {
+        var (viewModel, client) = await CreateSignedInViewModelAsync();
+        client.GroupsAsync = () => Task.FromResult<IReadOnlyList<GroupDto>>([Group("g1")]);
+        // 默认 nodes 为空：组读到了，但组里没有设备。
+
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.IsLoadingDevices);
+        Assert.Empty(viewModel.Devices);
+        Assert.Equal(LR.RD_NoDevicesHint, viewModel.EmptyStateText);
+        Assert.DoesNotContain(LR.RD_LoadingDevices, viewModel.StatusText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task 加载态_被更新的请求取代时旧请求不清新请求的状态()
+    {
+        var (viewModel, client) = await CreateSignedInViewModelAsync();
+        var firstGate = new TaskCompletionSource<IReadOnlyList<GroupDto>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var calls = 0;
+
+        client.GroupsAsync = () => Interlocked.Increment(ref calls) == 1
+            ? firstGate.Task
+            : Task.FromResult<IReadOnlyList<GroupDto>>([Group("g1")]);
+        client.NodesAsync = _ => Task.FromResult<IReadOnlyList<NodeDto>>([Node("n1")]);
+
+        // 旧请求卡住；新请求（换设备/切类型/再点刷新都会走这条路）立刻跑完。
+        var stale = viewModel.RefreshCommand.ExecuteAsync(null);
+        var fresh = viewModel.RefreshCommand.ExecuteAsync(null);
+        await fresh;
+
+        Assert.False(viewModel.IsLoadingDevices);
+        Assert.Single(viewModel.Devices);
+
+        // 旧请求这时才回来：它既不许改回设备列表，也不许把新请求的加载态/状态行动掉。
+        firstGate.SetResult([Group("g9")]);
+        await stale;
+
+        Assert.False(viewModel.IsLoadingDevices);
+        Assert.DoesNotContain(LR.RD_LoadingDevices, viewModel.StatusText, StringComparison.Ordinal);
+        Assert.Single(viewModel.Devices);
+        Assert.Equal("n1", viewModel.Devices[0].NodeId);
+    }
+
+    /// <summary>
+    ///     建一个**已登录**的 VM。
+    /// </summary>
+    /// <remarks>
+    ///     设备加载路径在未登录时会直接早退（那是对的：没登录就没有组可读），
+    ///     因此要测加载态就必须先有一对令牌。
+    /// </remarks>
+    private async Task<(MobileRemoteDrawViewModel ViewModel, RecordingControlPlaneClient Client)> CreateSignedInViewModelAsync()
+    {
+        var configHandler = new MainConfigHandler(
+            NullLogger<MainConfigHandler>.Instance,
+            new TestConfigService(new MainConfigModel()));
+        var tokenStore = TestTokenStore.Create();
+        await tokenStore.SaveAsync(new SectlToken("access", "refresh", "user-1", 3600), CancellationToken.None);
+
+        var auth = new SectlAuthService(
+            tokenStore,
+            new StubHttpClientFactory(new HttpClient()),
+            new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance),
+            NullLogger<SectlAuthService>.Instance,
+            new LoopbackAuthRedirectBrokerFactory());
+        await auth.InitializeAsync();
+
+        var client = new RecordingControlPlaneClient();
+        var viewModel = new MobileRemoteDrawViewModel(
+            configHandler,
+            client,
+            new FileControlPlaneDevicePreferenceStore(_preferencePath),
+            auth,
+            NullLogger<MobileRemoteDrawViewModel>.Instance);
+
+        return (viewModel, client);
+    }
+
+    private static GroupDto Group(string groupId) => new() { GroupId = groupId, Name = groupId, Role = "admin" };
+
+    private static NodeDto Node(string nodeId) => new()
+    {
+        NodeId = nodeId,
+        DisplayName = nodeId,
+        Online = true,
+        LocalRemoteAllowed = true,
+        Capabilities = [ControlCapabilities.DrawTrigger, ControlCapabilities.RosterRead]
+    };
+
     // ---------------------------------------------------------------- 测试替身
 
     private static readonly RemoteDrawKindOption LotteryKind = RemoteDrawKindOption.CreateLottery();
@@ -873,6 +1065,14 @@ public sealed class MobileRemoteDrawTests : IDisposable
 
         public Func<ControlPlaneCommandRequest, NodeCommandDto> Responder { get; set; } = _ => Completed();
 
+        /// <summary>读组的行为（默认空：多数用例只关心选中设备之后的行为）。</summary>
+        public Func<Task<IReadOnlyList<GroupDto>>> GroupsAsync { get; set; } =
+            () => Task.FromResult<IReadOnlyList<GroupDto>>([]);
+
+        /// <summary>读某组设备的行为（默认空）。</summary>
+        public Func<string, Task<IReadOnlyList<NodeDto>>> NodesAsync { get; set; } =
+            _ => Task.FromResult<IReadOnlyList<NodeDto>>([]);
+
         public ControlPlaneCommandRequest LastSubmission => Submissions[^1];
 
         /// <summary>某条能力最后一次下发的载荷。</summary>
@@ -883,10 +1083,10 @@ public sealed class MobileRemoteDrawTests : IDisposable
             Submissions.Last(request => string.Equals(request.Capability, capability, StringComparison.Ordinal));
 
         public Task<IReadOnlyList<GroupDto>> GetGroupsAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<GroupDto>>([]);
+            GroupsAsync();
 
         public Task<IReadOnlyList<NodeDto>> GetNodesAsync(string groupId, CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<NodeDto>>([]);
+            NodesAsync(groupId);
 
         public Task<NodeCommandDto> SubmitCommandAsync(
             string groupId,
