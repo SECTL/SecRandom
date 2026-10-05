@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 
 namespace SecRandom.Core.Views;
@@ -30,15 +31,25 @@ public class ViewHostControl : UserControl, IViewHost
             IsVisible = false,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch,
-            Background = new SolidColorBrush(Color.FromArgb(96, 0, 0, 0)),
             Child = _modalPresenter
         };
+        if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
+        {
+            _modalOverlay.Background = new SolidColorBrush(Color.FromArgb(96, 0, 0, 0));
+        }
         _root = new Grid();
         _root.Children.Add(_navigationPage);
         _root.Children.Add(_modalOverlay);
         Content = _root;
         IsVisible = false;
         IsHitTestVisible = false;
+        Styles.Add(new Style(x => x.Is<ContentPage>())
+        {
+            Setters =
+            {
+                new Setter(BackgroundProperty, null)
+            }
+        });
     }
 
     public string HostId { get; }

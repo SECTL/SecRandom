@@ -14,7 +14,7 @@
             <Setter Property="Background" Value="{x:Null}" />
         </Style>
         
-        <Style Selector="ContentPage">
+        <Style Selector=":is(ContentPage)">
             <Setter Property="Background" Value="{x:Null}" />
         </Style>
     </faWindowing:FAAppWindow.Styles>
