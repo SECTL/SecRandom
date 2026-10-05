@@ -2,6 +2,9 @@ using Avalonia.Threading;
 using CameraView;
 using CameraView.Models;
 using CameraView.Services;
+using Microsoft.Extensions.Logging;
+using SecRandom.Core.Abstraction;
+using SecRandom.Mobile;
 using SecRandom.Platforms.Abstractions;
 using SkiaSharp;
 
@@ -11,11 +14,25 @@ namespace SecRandom.Services.RosterTransfer;
 /// CameraView implementation for the platforms that ship its native provider: Windows, Android, and iOS.
 /// </summary>
 public sealed class CameraViewRosterQrCameraCapture(CameraViewControl cameraControl,
-    PlatformCameraFacing facing) : IRosterQrCameraCapture
+    PlatformCameraFacing facing, IMobileCameraCaptureStore captureStore) : IRosterQrCameraCapture
 {
     private static readonly TimeSpan CaptureInterval = TimeSpan.FromMilliseconds(60);
     private static readonly TimeSpan PreviewFrameFallbackDelay = TimeSpan.FromMilliseconds(750);
+
+    /// <summary>
+    ///     A photo capture costs one full-resolution file on Android, so the fallback cannot retry forever
+    ///     while preview frames stay silent: preview frames remain the primary source and keep scanning alive.
+    /// </summary>
+    private const int MaxPhotoCaptureFallbackAttempts = 3;
+
+    /// <summary>
+    ///     A capture file younger than this may still be waiting for the camera backend to read it, so the
+    ///     session-boundary sweeps leave it to the next cleanup instead of breaking an unrelated capture.
+    /// </summary>
+    private static readonly TimeSpan StaleCaptureAge = TimeSpan.FromSeconds(5);
+
     private readonly CameraViewControl _cameraControl = cameraControl;
+    private readonly IMobileCameraCaptureStore _captureStore = captureStore;
     private readonly CameraFacing _cameraFacing = facing == PlatformCameraFacing.Front
         ? CameraFacing.Front
         : CameraFacing.Back;
@@ -26,6 +43,8 @@ public sealed class CameraViewRosterQrCameraCapture(CameraViewControl cameraCont
     private bool _disposed;
     private int _hasReceivedPreviewFrame;
     private int _isDispatchingPreviewFrame;
+    private int _photoCaptureAttempts;
+    private int _photoFallbackExhausted;
 
     public event EventHandler<string>? CameraError;
 
@@ -41,6 +60,11 @@ public sealed class CameraViewRosterQrCameraCapture(CameraViewControl cameraCont
         var permissions = CameraProviderFactory.CreatePermissions(provider);
         if (!await permissions.CheckPermissionAsync() && !await permissions.RequestPermissionAsync())
             return RosterQrCameraStartResult.PermissionDenied;
+
+        // Capture files a previous session (or an older build) left on the device are reclaimed before this
+        // session starts, so the fallback below never grows a pile of original images. A capture another
+        // session still has to read is younger than the grace window and stays for the next cleanup.
+        await ClearCaptureStoreAsync(StaleCaptureAge).ConfigureAwait(false);
 
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _cancellation = cancellation;
@@ -100,6 +124,8 @@ public sealed class CameraViewRosterQrCameraCapture(CameraViewControl cameraCont
             _cameraInitialized = false;
             cancellation?.Dispose();
         }
+
+        await ClearCaptureStoreAsync(StaleCaptureAge).ConfigureAwait(false);
     }
 
     private async void CameraControl_OnPhotoCaptured(object? sender, byte[] imageBytes)
@@ -112,6 +138,8 @@ public sealed class CameraViewRosterQrCameraCapture(CameraViewControl cameraCont
         try
         {
             await RosterQrCameraDispatcher.DispatchFrameAsync(onFrame, imageBytes);
+            // The backend reads the capture before raising this event, so the file can go right away.
+            await ClearCaptureStoreAsync(TimeSpan.Zero).ConfigureAwait(false);
             if (ReferenceEquals(cancellation, _cancellation) && !cancellation.IsCancellationRequested &&
                 Volatile.Read(ref _hasReceivedPreviewFrame) == 0)
                 await CaptureNextFrameAsync(cancellation.Token);
@@ -207,9 +235,54 @@ public sealed class CameraViewRosterQrCameraCapture(CameraViewControl cameraCont
             return;
 
         await Task.Delay(CaptureInterval, cancellationToken);
-        if (!cancellationToken.IsCancellationRequested && _cancellation is { } active &&
-            active.Token == cancellationToken && Volatile.Read(ref _hasReceivedPreviewFrame) == 0)
-            await RunOnUiThreadAsync(_cameraControl.TakePhotoAsync);
+        if (cancellationToken.IsCancellationRequested || _cancellation is not { } active ||
+            active.Token != cancellationToken || Volatile.Read(ref _hasReceivedPreviewFrame) != 0)
+        {
+            return;
+        }
+
+        // A photo capture costs one full-resolution file on Android, so a session that never receives preview
+        // frames stops capturing instead of retrying forever. The session stays alive on purpose: preview
+        // frames usually arrive late rather than never, and scanning resumes on its own once they do.
+        if (Interlocked.Increment(ref _photoCaptureAttempts) > MaxPhotoCaptureFallbackAttempts)
+        {
+            if (Volatile.Read(ref _hasReceivedPreviewFrame) == 0 &&
+                Interlocked.Exchange(ref _photoFallbackExhausted, 1) == 0)
+            {
+                LogWarning("The QR camera received no preview frame; the photo fallback stopped after {Attempts} captures.",
+                    MaxPhotoCaptureFallbackAttempts);
+            }
+
+            return;
+        }
+
+        await RunOnUiThreadAsync(_cameraControl.TakePhotoAsync);
+    }
+
+    /// <summary>
+    ///     Reclaims the originals the camera backend writes per shutter release. A failure here must never
+    ///     surface as a camera error, because scanning still works from preview frames.
+    /// </summary>
+    private async Task ClearCaptureStoreAsync(TimeSpan minimumAge)
+    {
+        try
+        {
+            await _captureStore.ClearLeftoversAsync(minimumAge).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            LogWarning(exception, "Unable to reclaim camera capture files.");
+        }
+    }
+
+    private static void LogWarning(string message, params object?[] arguments)
+    {
+        IAppHost.TryGetService<ILogger<CameraViewRosterQrCameraCapture>>()?.LogWarning(message, arguments);
+    }
+
+    private static void LogWarning(Exception exception, string message)
+    {
+        IAppHost.TryGetService<ILogger<CameraViewRosterQrCameraCapture>>()?.LogWarning(exception, message);
     }
 
     private static Task RunOnUiThreadAsync(Func<Task> action)

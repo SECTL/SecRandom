@@ -20,6 +20,30 @@ public interface IControlDrawGate
 }
 
 /// <summary>
+///     没有本地集控节点的宿主使用的闸门：永远不锁定。
+/// </summary>
+/// <remarks>
+///     <para>
+///         手机端只是集控的<b>控制台侧</b>（<c>MobileRemoteDrawViewModel</c> 把 <c>draw.trigger</c> 下发给
+///         桌面节点），本机没有出站节点通道，也就不会有服务端下发的 <c>draw_locked</c>。
+///     </para>
+///     <para>
+///         但 <c>LinkageDrawCoordinator</c> 在桌面与手机上是同一份注册，它<b>必须</b>能解析到
+///         <see cref="IControlDrawGate" />：缺失时不是"少个可选功能"，而是整台 Host 起不来——
+///         <c>Host.StartAsync</c> 解析 <c>IEnumerable&lt;IHostedService&gt;</c> 时会构造
+///         <c>GlobalShortcutService</c>，它注入的抽取页 ViewModel 一路拉到这个闸门。
+///     </para>
+///     <para>
+///         桌面端<b>刻意不使用</b>这个实现：真实闸门（<c>ControlDrawGateService</c>）的注册一旦丢失，
+///         应该当场失败，而不是悄悄放行每一次抽取。
+///     </para>
+/// </remarks>
+public sealed class UnlockedControlDrawGate : IControlDrawGate
+{
+    public bool IsDrawLocked => false;
+}
+
+/// <summary>
 ///     节点通道地址校验。
 /// </summary>
 /// <remarks>

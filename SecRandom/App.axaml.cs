@@ -337,6 +337,8 @@ public partial class App : Application
                 controlled.Exit += (_, _) => _ = StopMobileHostAsync();
 
             ObserveTask(StartMobileHostAsync(_mobileHost), "Mobile runtime service startup failed.");
+            // 相机后端的拍照文件落在应用数据目录之外：启动时后台回收一次，升级后不必再等下一次扫码。
+            _ = ClearMobileCameraCaptureCacheAsync(_mobileHost);
         }
         catch (Exception exception)
         {
@@ -346,6 +348,25 @@ public partial class App : Application
             _mobileHost?.Dispose();
             _mobileHost = null;
             ShowMobileStartupFailure(exception);
+        }
+    }
+
+    /// <summary>
+    ///     回收相机后端写在应用数据目录之外的拍照文件。启动阶段没有任何扫码会话，因此不看宽限时间。
+    /// </summary>
+    private static async Task ClearMobileCameraCaptureCacheAsync(IHost host)
+    {
+        try
+        {
+            await host.Services.GetRequiredService<IMobileCameraCaptureStore>()
+                .ClearLeftoversAsync(TimeSpan.Zero)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            // 回收失败只是少清一次缓存，绝不能连累启动。
+            IAppHost.TryGetService<ILogger<App>>()?
+                .LogWarning(exception, "Unable to reclaim leftover camera capture files.");
         }
     }
 
@@ -961,6 +982,8 @@ public partial class App : Application
                 {
                     services.AddPlatformServices(platform);
                     services.AddSingleton<IAuthRedirectBrokerFactory, LoopbackAuthRedirectBrokerFactory>();
+                    // 桌面端的 QR 取景由 OpenCV 在内存中完成，没有相机后端文件需要回收。
+                    services.AddSingleton<IMobileCameraCaptureStore>(UnsupportedMobileCameraCaptureStore.Instance);
                     services.AddSingleton<IAuthBrowser>(serviceProvider =>
                         new ExternalLauncherAuthBrowser(
                             serviceProvider.GetRequiredService<IExternalLauncher>()));
@@ -1058,6 +1081,9 @@ public partial class App : Application
                 if (isMobile)
                 {
                     MobilePlatformServiceRoot currentMobilePlatform = mobilePlatform!;
+                    // CameraView 的 Android 拍照后端会把每次快门写成一张原图并留在应用外部目录里，
+                    // 平台 head 提供回收实现，QR 扫码会话与启动清理都走这条中立接缝。
+                    services.AddSingleton<IMobileCameraCaptureStore>(currentMobilePlatform.CameraCaptureStore);
                     services.AddSingleton<MobileMediaLibraryService>();
                     services.AddSingleton<IMobileMediaPlayer>(currentMobilePlatform.MediaPlayer);
                     if (currentMobilePlatform.KeyboardOcclusionSource is { } keyboardOcclusionSource)
@@ -1149,7 +1175,9 @@ public partial class App : Application
                 services.AddHostedService<CourseLinkageHostedService>();
 
                 // 集控节点（control-v1，见 docs/client-protocol.md）：出站长连接 + 本机开关 + 远程抽取。
-                // 桌面三平台共享同一份实现；移动端留到后续阶段，因此这里只在桌面注册。
+                // 桌面三平台共享同一份实现；手机端只是控制台侧（往桌面节点下发 draw.trigger），
+                // 本机没有节点，因此只注册一个永不开锁的闸门——LinkageDrawCoordinator 桌面与手机共用，
+                // 少了这条注册整台 Host 都起不来（Host.StartAsync 构造 GlobalShortcutService 时会拉到它）。
                 if (!isMobile)
                 {
                     services.AddSingleton(new ControlNodeClientOptions
@@ -1177,6 +1205,11 @@ public partial class App : Application
                     services.AddHostedService<ControlNodeHostedService>();
                     // 单例：这个 ViewModel 订阅了节点状态与连接状态，每次打开设置页都新建一个会累积订阅。
                     services.AddSingleton<ControlSettingsPageViewModel>();
+                }
+                else
+                {
+                    // 手机端没有本地集控节点，但 LinkageDrawCoordinator 仍然要求这个闸门可解析。
+                    services.AddSingleton<IControlDrawGate, UnlockedControlDrawGate>();
                 }
                 services.AddSingleton<SecurityCredentialStore>();
                 services.AddSingleton<IUsbDeviceCatalog, UsbDeviceCatalog>();

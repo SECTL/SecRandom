@@ -94,6 +94,14 @@ public sealed class MobilePlatformServiceRoot : IPlatformServiceRoot, IWindowFea
     public IPlatformCameraDeviceCatalog CameraDevices { get; set; } =
         UnsupportedPlatformCameraDeviceCatalog.Instance;
 
+    /// <summary>
+    ///     Platform heads replace this when their camera backend writes capture files outside the application
+    ///     data root. Android does, because CameraView keeps one full-resolution JPEG per shutter release in
+    ///     the app's external files directory; iOS composes every frame in memory and keeps the no-op default.
+    /// </summary>
+    public IMobileCameraCaptureStore CameraCaptureStore { get; set; } =
+        UnsupportedMobileCameraCaptureStore.Instance;
+
     public global::SecRandom.Platforms.Abstractions.WindowFeatures SupportedFeatures =>
         global::SecRandom.Platforms.Abstractions.WindowFeatures.None;
 

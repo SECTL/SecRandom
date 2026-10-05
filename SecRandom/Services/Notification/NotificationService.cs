@@ -257,6 +257,62 @@ public sealed class NotificationService : IDisposable
                 showPreview);
     }
 
+    /// <summary>
+    ///     按「闪抽」结果窗的设置，把一段文本显示到设备的结果窗上（集控 <c>media.play</c> 的
+    ///     <c>show_quick_draw_window</c>）。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         为什么**不**用 <c>App.ShowQuickDrawWindow()</c>：那一个是真的**再抽一次**
+    ///         （会多抽一个人出来，课堂上属于事故）。这里要的是"把这次要播报的话显示出来让全班看见"，
+    ///         所以走 <see cref="ShowBuiltIn" /> 这条正常显示路径，并用
+    ///         <c>preserveQuickDrawResult: false</c> 让这次播报的文本**替换掉**上一次的抽取结果。
+    ///     </para>
+    ///     <para>
+    ///         **有意不判** <c>basicSettings.Enabled</c>：那一道开关管的是**设备自己的自动送达**
+    ///         （<see cref="Queue" /> 那条路），而这是一次操作员点名要的显示。本地把自动通知关了就
+    ///         悄悄不显示的话，控制台会以为教室里已经看见了——正是协议禁止的沉默失败。
+    ///         对着"`draw.trigger` 在通知关着时照样抽、只是不做那套动画"的既有做法，
+    ///         这里也是"远程动作照做，本机开关只管自动送达"。
+    ///         窗口的**外观**仍然完全按本机设置来（时长 / 动画 / 透明度 / 位置）。
+    ///     </para>
+    ///     <para>
+    ///         **必须由调用方在 UI 线程上调用**：这里要读窗口状态、创建/激活窗口并驱动结果动画。
+    ///         集控那条路是线程池线程，所以 <c>ControlMediaPlayHandler</c> 用
+    ///         <c>Dispatcher.UIThread.InvokeAsync</c> 切过去（<see cref="ShowBuiltIn" /> 里的
+    ///         <c>App.ShowQuickDrawNotificationWindow</c> 自己还会再 Post 一次，双保险）。
+    ///     </para>
+    /// </remarks>
+    public void ShowQuickDrawText(string text)
+    {
+        if (_isDisposed || string.IsNullOrWhiteSpace(text))
+            return;
+
+        var config = _configHandler.Data;
+        var basicSettings = config.GetOverrideNotificationSettings(
+            NotificationSettingsType.QuickDraw,
+            OverridableNotificationSettingsType.Basic);
+        var serviceSettings = config.GetOverrideNotificationSettings(
+            NotificationSettingsType.QuickDraw,
+            OverridableNotificationSettingsType.Service);
+        var windowSettings = config.GetOverrideNotificationSettings(
+            NotificationSettingsType.QuickDraw,
+            OverridableNotificationSettingsType.NotificationWindow);
+
+        // 取值与 Queue 里那一套逐字对应：设置页正在预览时抑制一次滚动动画，免得两次动画叠在一起。
+        var showPreview = !_quickDrawBuiltInPreviewActive;
+        _quickDrawBuiltInPreviewActive = false;
+
+        ShowBuiltIn(
+            NotificationSettingsType.QuickDraw,
+            [text],
+            basicSettings,
+            serviceSettings,
+            windowSettings,
+            preserveQuickDrawResult: false,
+            showPreview: showPreview);
+    }
+
     private async Task SendToClassIslandAsync(NotificationData notification, Action? builtInFallback)
     {
         await _sendGate.WaitAsync().ConfigureAwait(false);

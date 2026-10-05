@@ -11,21 +11,98 @@ namespace SecRandom.Core.Services.ControlNode;
 ///     <c>media.play</c> 的载荷。
 /// </summary>
 /// <remarks>
-///     第一版只支持 <c>announce</c>（语音播报）。<c>show</c>（在屏幕上显示任意文本）本机还没有
-///     承载它的界面，因此**明确拒绝**而不是假装成功——控制台要能区分"设备会播报"和"设备会上屏"。
+///     <para>
+///         动作只支持 <c>announce</c>（语音播报）。<c>show</c>（在屏幕上显示任意文本）本机还没有
+///         承载它的界面，因此**明确拒绝**而不是假装成功——控制台要能区分"设备会播报"和"设备会上屏"。
+///     </para>
+///     <para>
+///         §4.5.7 的三个选项（<c>show_quick_draw_window</c> / <c>system_volume_percent</c> /
+///         <c>voice_volume_percent</c>）在本记录里解析。**缺失与显式 <c>null</c> 都算"没给"**：
+///         不传就是什么都不动，行为与从前逐字相同；一旦给了就必须合法，坏值**整条拒绝**——
+///         把它悄悄降级成"没给"，控制台会以为窗口开了、音量调了，而教室里什么都没发生。
+///     </para>
+///     <para>
+///         三个选项的**执行**在 <c>ControlMediaPlayHandler</c>（要界面与 DI，测不动）；
+///         能被单测钉住的判定留在 Core：本记录负责格式，<see cref="ControlMediaPlayPlatformSupport" />
+///         负责"格式没问题但本机做不到"，<see cref="TemporaryVoiceVolume" /> 负责临时音量的生与灭。
+///     </para>
 /// </remarks>
-public sealed record ControlMediaPlayRequest(string Action, string Text)
+/// <param name="Action">动作名，见 <see cref="AnnounceAction" />。</param>
+/// <param name="Text">已裁剪的播报文本。</param>
+/// <param name="ShowQuickDrawWindow">
+///     <c>true</c> = 播报前先把设备的结果窗显示出来。
+///     只认字面量 <c>true</c>：缺失或显式 <c>null</c> 是"没给"（<c>null</c>），
+///     而 <c>false</c> 与任何非 <c>true</c> 的值（含字符串 <c>"true"</c>）都是"不显示"。
+/// </param>
+/// <param name="SystemVolumePercent">
+///     临时把 PC 系统音量设成这个百分比（0–100）；<c>null</c> = 这次不改。
+///     本机今天没有系统音量的实现，见 <see cref="ControlMediaPlayPlatformSupport" />。
+/// </param>
+/// <param name="VoiceVolumePercent">
+///     临时把本应用的播报音量（设置路径 <c>voice.volume</c>）设成这个百分比（0–100）；<c>null</c> = 这次不改。
+/// </param>
+public sealed record ControlMediaPlayRequest(
+    string Action,
+    string Text,
+    bool? ShowQuickDrawWindow = null,
+    int? SystemVolumePercent = null,
+    int? VoiceVolumePercent = null)
 {
     /// <summary>播报文本上限（字符）。</summary>
     public const int MaxTextLength = 200;
 
     public const string AnnounceAction = "announce";
 
+    /// <summary><c>show_quick_draw_window</c> 的协议字段名。</summary>
+    public const string ShowQuickDrawWindowField = "show_quick_draw_window";
+
+    /// <summary><c>system_volume_percent</c> 的协议字段名。</summary>
+    public const string SystemVolumePercentField = "system_volume_percent";
+
+    /// <summary><c>voice_volume_percent</c> 的协议字段名。</summary>
+    public const string VoiceVolumePercentField = "voice_volume_percent";
+
+    /// <summary>音量选项允许的下界（含）。</summary>
+    public const int MinVolumePercent = 0;
+
+    /// <summary>音量选项允许的上界（含）。</summary>
+    public const int MaxVolumePercent = 100;
+
+    /// <summary>这条命令带了"临时改音量"的选项吗？</summary>
+    /// <remarks>
+    ///     看的是**载荷给没给**，不是"本机最后改没改成"：本机做不到的字段在 handler 里更早一步就被拒了。
+    ///     它的用途只有一个——决定要不要**等播报结束**再回执：
+    ///     "已开始播报"就返回的话，<c>finally</c> 里的恢复会把正在播的那段音频改掉（见 handler 的注释）。
+    /// </remarks>
+    public bool HasTemporaryVolume => SystemVolumePercent is not null || VoiceVolumePercent is not null;
+
     /// <summary>把载荷解析成一个有效的播报请求；失败时给出可直接回给控制台的原因码。</summary>
-    public static bool TryParse(JsonElement? payload, out ControlMediaPlayRequest? request, out string reason)
+    public static bool TryParse(JsonElement? payload, out ControlMediaPlayRequest? request, out string reason) =>
+        TryParse(payload, out request, out reason, out _);
+
+    /// <summary>
+    ///     同 <see cref="TryParse(JsonElement?, out ControlMediaPlayRequest?, out string)" />，
+    ///     另外给出可直接放进 <c>result_context</c> 的 <paramref name="hint" />。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         为什么 hint 走一个**单独的重载**而不是塞进原因码：协议要求拒绝时回
+    ///         <c>result_context { "hint": … }</c>（说清**是哪个字段、允许什么**），而原因码要保持稳定
+    ///         （控制台按码分支，参数一律放 detail，理由见 <c>ControlCommandOutcome</c> 的注释）。
+    ///     </para>
+    ///     <para>
+    ///         原来的三参数签名与返回约定**一字未动**：老调用点与既有单测照原样编译。
+    ///     </para>
+    /// </remarks>
+    public static bool TryParse(
+        JsonElement? payload,
+        out ControlMediaPlayRequest? request,
+        out string reason,
+        out string? hint)
     {
         request = null;
         reason = ControlRejectReasons.InvalidCommand;
+        hint = null;
 
         if (payload is not { ValueKind: JsonValueKind.Object } root)
             return false;
@@ -54,7 +131,68 @@ public sealed record ControlMediaPlayRequest(string Action, string Text)
             return false;
         }
 
-        request = new ControlMediaPlayRequest(action, text);
+        // 选项校验排在 action / text **之后**：老载荷的拒绝原因码与既有诊断的优先级都不被新字段抢走
+        // （"动作不支持""文本超长"该先说还是先说）。
+        //
+        // 顺序与字段声明一致（show → system → voice）。show 没有"非法值"这种结局：协议只认字面量 true，
+        // 其余一律按"不显示"处理，所以它不参与拒绝。
+        if (!TryReadVolumePercent(root, SystemVolumePercentField, out var systemVolumePercent))
+        {
+            hint = $"{SystemVolumePercentField} 必须是 {MinVolumePercent}-{MaxVolumePercent} 的整数；"
+                   + "省略或为 null 表示这次不改系统音量。";
+            return false;
+        }
+
+        if (!TryReadVolumePercent(root, VoiceVolumePercentField, out var voiceVolumePercent))
+        {
+            hint = $"{VoiceVolumePercentField} 必须是 {MinVolumePercent}-{MaxVolumePercent} 的整数；"
+                   + "省略或为 null 表示这次不改播报音量。";
+            return false;
+        }
+
+        // 只认字面量 true：字符串 "true" / 数字 / 对象一律按"不显示"（§4.5.7 明文），因为它们
+        // 表达不了"显示"这个意图；而显式 false 与缺失都只是"不显示"，不是错误。
+        bool? showQuickDrawWindow = null;
+        if (root.TryGetProperty(ShowQuickDrawWindowField, out var showElement)
+            && showElement.ValueKind != JsonValueKind.Null)
+            showQuickDrawWindow = showElement.ValueKind == JsonValueKind.True;
+
+        request = new ControlMediaPlayRequest(
+            action,
+            text,
+            showQuickDrawWindow,
+            systemVolumePercent,
+            voiceVolumePercent);
+
+        return true;
+    }
+
+    /// <summary>
+    ///     读一个 0–100 的整数百分比选项：缺失或 <c>null</c> 是"没给"，给了就必须合法。
+    /// </summary>
+    /// <remarks>
+    ///     与 <see cref="ControlRosterPushRequest" /> 里 <c>count</c> 的读法一致：按 <c>double</c> 判定，
+    ///     JSON 里 <c>40.0</c> 与 <c>40</c> 是同一个数（手写载荷带小数点不该被判成坏数据），
+    ///     而 <c>40.5</c> 这种分数百分比没有意义。
+    ///     **非 number 一律拒绝**（含字符串 <c>"40"</c> 与 <c>true</c>），不猜、不降级成"没给"：
+    ///     降级会让控制台以为音量调过了。
+    /// </remarks>
+    private static bool TryReadVolumePercent(JsonElement root, string propertyName, out int? percent)
+    {
+        percent = null;
+
+        if (!root.TryGetProperty(propertyName, out var element) || element.ValueKind == JsonValueKind.Null)
+            return true;
+
+        if (element.ValueKind != JsonValueKind.Number
+            || !element.TryGetDouble(out var raw)
+            || !double.IsFinite(raw)
+            || raw != Math.Floor(raw)
+            || raw < MinVolumePercent
+            || raw > MaxVolumePercent)
+            return false;
+
+        percent = (int)raw;
         return true;
     }
 }

@@ -74,6 +74,148 @@ public sealed class ControlNodePayloadTests
         Assert.Equal("invalid_command", reason);
     }
 
+    // -------------------------------------------- media.play 的三个选项（§4.5.7）
+
+    [Fact]
+    public void 播报载荷_老载荷不带选项时三个字段都是没给()
+    {
+        var parsed = ControlMediaPlayRequest.TryParse(
+            Payload("""{ "action": "announce", "text": "请第一组上台" }"""), out var request, out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.NotNull(request);
+        Assert.Null(request.ShowQuickDrawWindow);
+        Assert.Null(request.SystemVolumePercent);
+        Assert.Null(request.VoiceVolumePercent);
+        Assert.False(request.HasTemporaryVolume);
+
+        // 值相等即"逐字不变"：老载荷解析出来的记录必须与从前那个两参数构造完全一致。
+        Assert.Equal(new ControlMediaPlayRequest("announce", "请第一组上台"), request);
+    }
+
+    [Fact]
+    public void 播报载荷_显式null与缺键一样是没给()
+    {
+        var parsed = ControlMediaPlayRequest.TryParse(
+            Payload("""
+                    { "text": "hi", "show_quick_draw_window": null,
+                      "system_volume_percent": null, "voice_volume_percent": null }
+                    """),
+            out var request,
+            out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.NotNull(request);
+        Assert.Null(request.ShowQuickDrawWindow);
+        Assert.Null(request.SystemVolumePercent);
+        Assert.Null(request.VoiceVolumePercent);
+        Assert.False(request.HasTemporaryVolume);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(40)]
+    [InlineData(100)]
+    public void 播报载荷_音量选项接受0到100的整数(int percent)
+    {
+        var parsed = ControlMediaPlayRequest.TryParse(
+            Payload($$"""
+                     { "text": "hi", "system_volume_percent": {{percent}}, "voice_volume_percent": {{percent}} }
+                     """),
+            out var request,
+            out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.NotNull(request);
+        Assert.Equal(percent, request.SystemVolumePercent);
+        Assert.Equal(percent, request.VoiceVolumePercent);
+        Assert.True(request.HasTemporaryVolume);
+    }
+
+    [Fact]
+    public void 播报载荷_音量为0是明确设成静音而不是没给()
+    {
+        // 本节最要紧的一条：把"没碰过"落成 0，一次普通播报就会把教室机的音量清零；
+        // 反过来把 0 当成"没给"，管理员发的"静音播报"就永远不生效。
+        var muted = ControlMediaPlayRequest.TryParse(
+            Payload("""{ "text": "hi", "system_volume_percent": 0, "voice_volume_percent": 0 }"""),
+            out var silentRequest,
+            out var silentReason);
+        var untouched = ControlMediaPlayRequest.TryParse(
+            Payload("""{ "text": "hi" }"""), out var plainRequest, out var plainReason);
+
+        Assert.True(muted, silentReason);
+        Assert.True(untouched, plainReason);
+        Assert.Equal(0, silentRequest!.VoiceVolumePercent);
+        Assert.Equal(0, silentRequest.SystemVolumePercent);
+        Assert.Null(plainRequest!.VoiceVolumePercent);
+        Assert.Null(plainRequest.SystemVolumePercent);
+    }
+
+    [Fact]
+    public void 播报载荷_带小数点的整数值按整数接受()
+    {
+        // JSON 里 40.0 与 40 是同一个数：手写载荷带小数点不该被判成坏数据
+        // （与 roster 的 count / weight 同一条约定）；40.5 才是没有意义的分数百分比。
+        var parsed = ControlMediaPlayRequest.TryParse(
+            Payload("""{ "text": "hi", "voice_volume_percent": 40.0 }"""), out var request, out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.Equal(40, request!.VoiceVolumePercent);
+    }
+
+    [Theory]
+    [InlineData("""{ "text": "hi", "system_volume_percent": 101 }""", "system_volume_percent")]
+    [InlineData("""{ "text": "hi", "system_volume_percent": -1 }""", "system_volume_percent")]
+    [InlineData("""{ "text": "hi", "system_volume_percent": 40.5 }""", "system_volume_percent")]
+    [InlineData("""{ "text": "hi", "system_volume_percent": "40" }""", "system_volume_percent")]
+    [InlineData("""{ "text": "hi", "system_volume_percent": true }""", "system_volume_percent")]
+    [InlineData("""{ "text": "hi", "voice_volume_percent": 101 }""", "voice_volume_percent")]
+    [InlineData("""{ "text": "hi", "voice_volume_percent": -1 }""", "voice_volume_percent")]
+    [InlineData("""{ "text": "hi", "voice_volume_percent": 40.5 }""", "voice_volume_percent")]
+    [InlineData("""{ "text": "hi", "voice_volume_percent": "80" }""", "voice_volume_percent")]
+    [InlineData("""{ "text": "hi", "voice_volume_percent": [] }""", "voice_volume_percent")]
+    public void 播报载荷_音量选项非法时整条拒绝并指出字段(string json, string field)
+    {
+        // 不许悄悄降级成"没给"：降级会让控制台以为音量调过了，而教室里根本没变。
+        var parsed = ControlMediaPlayRequest.TryParse(Payload(json), out var request, out var reason, out var hint);
+
+        Assert.False(parsed);
+        Assert.Null(request);
+        Assert.Equal("invalid_command", reason);
+        Assert.NotNull(hint);
+        Assert.Contains(field, hint);
+        Assert.Contains("0-100", hint);
+    }
+
+    [Theory]
+    [InlineData("""{ "text": "hi", "show_quick_draw_window": true }""", true)]
+    [InlineData("""{ "text": "hi", "show_quick_draw_window": false }""", false)]
+    [InlineData("""{ "text": "hi", "show_quick_draw_window": "true" }""", false)]
+    [InlineData("""{ "text": "hi", "show_quick_draw_window": 1 }""", false)]
+    [InlineData("""{ "text": "hi", "show_quick_draw_window": null }""", null)]
+    [InlineData("""{ "text": "hi" }""", null)]
+    public void 播报载荷_闪抽开关只认字面量true(string json, bool? expected)
+    {
+        // 协议明文：只认 JSON 的 true；字符串 "true" 按 false 处理（没有"半显示"这种语义），
+        // 而缺失 / null 是"没给"。
+        var parsed = ControlMediaPlayRequest.TryParse(Payload(json), out var request, out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.Equal(expected, request!.ShowQuickDrawWindow);
+    }
+
+    [Fact]
+    public void 播报载荷_三参数重载仍然不给hint()
+    {
+        // 老签名（三个 out 参数）是既有调用点与单测用的那个：它必须继续可编译、行为不变。
+        var parsed = ControlMediaPlayRequest.TryParse(
+            Payload("""{ "text": "hi", "voice_volume_percent": 200 }"""), out _, out var reason);
+
+        Assert.False(parsed);
+        Assert.Equal("invalid_command", reason);
+    }
+
     // ---------------------------------------------------------------- settings.write
 
     [Fact]

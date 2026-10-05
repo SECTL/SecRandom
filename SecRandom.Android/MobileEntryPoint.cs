@@ -40,6 +40,7 @@ public class MobileApplication : AvaloniaAndroidApplication<App>
             UpdateInstaller = new AndroidUpdateInstaller(),
             MediaPlayer = new AndroidMobileMediaPlayer(),
             CameraDevices = new AndroidCameraDeviceCatalog(this),
+            CameraCaptureStore = new AndroidCameraCaptureStore(this),
             PathLauncher = AndroidDataDirectoryLauncher.TryOpenPath,
             UriLauncher = TryOpenExternalUri,
             DeviceName = Build.Model,

@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Threading;
 using OpenCvSharp;
 using SecRandom.Controls;
+using SecRandom.Mobile;
 using SecRandom.Platforms.Abstractions;
 
 namespace SecRandom.Services.RosterTransfer;
@@ -46,11 +47,14 @@ public interface IRosterQrCameraCaptureFactory
 /// Keeps native camera provider selection in the composition layer instead of list-import views.
 /// </summary>
 public sealed class RosterQrCameraCaptureFactory(IPlatformServiceRoot platform,
-    IPlatformCameraDeviceCatalog cameraDevices) : IRosterQrCameraCaptureFactory
+    IPlatformCameraDeviceCatalog cameraDevices, IMobileCameraCaptureStore cameraCaptureStore)
+    : IRosterQrCameraCaptureFactory
 {
     private readonly PlatformKind _platformKind = platform?.Kind ?? throw new ArgumentNullException(nameof(platform));
     private readonly IPlatformCameraDeviceCatalog _cameraDevices = cameraDevices ??
         throw new ArgumentNullException(nameof(cameraDevices));
+    private readonly IMobileCameraCaptureStore _cameraCaptureStore = cameraCaptureStore ??
+        throw new ArgumentNullException(nameof(cameraCaptureStore));
 
     public bool IsPreviewSupported => true;
 
@@ -78,7 +82,7 @@ public sealed class RosterQrCameraCaptureFactory(IPlatformServiceRoot platform,
                 "macOS AVFoundation", device.CaptureIndex),
             _ => new CameraViewRosterQrCameraCapture((previewControl as RosterQrCameraPreview)?.GetOrCreateCameraView()
                 ?? throw new ArgumentException("The active camera provider requires a roster camera preview host.",
-                    nameof(previewControl)), device?.Facing ?? PlatformCameraFacing.Default)
+                    nameof(previewControl)), device?.Facing ?? PlatformCameraFacing.Default, _cameraCaptureStore)
         };
     }
 }
