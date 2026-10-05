@@ -120,7 +120,14 @@
                                        Description="{x:Static lc:Resources.S_RemoteControl_ServerUrl_D}"
                                        IconSource="{sr:FluentIconSource {sr:Fi GlobeFilled}}">
                     <fa:FASettingsExpander.Footer>
-                        <TextBox Text="{Binding ServerUrl}" MinWidth="260" />
+                        <!-- 与下面那条控制面地址用同一套结构（定宽输入框 + 同一个"恢复默认"文案），
+                             两行的总宽度才会一致，不会一条长一条短。 -->
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBox Text="{Binding ServerUrl}" Width="260" />
+                            <Button Content="{x:Static lc:Resources.C_RestoreDefaultEndpoint}"
+                                    Command="{Binding ResetServerUrlCommand}"
+                                    IsEnabled="{Binding IsServerUrlCustom}" />
+                        </StackPanel>
                     </fa:FASettingsExpander.Footer>
                 </fa:FASettingsExpander>
 
@@ -138,7 +145,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <!-- 留空即回到默认：水印就是默认地址，用户一眼能看到"不填会连哪"。 -->
                             <TextBox Text="{Binding ControlPlaneEndpoint}"
-                                     MinWidth="260"
+                                     Width="260"
                                      PlaceholderText="{Binding ControlPlaneEndpointDefault}" />
                             <Button Content="{x:Static lc:Resources.C_RestoreDefaultEndpoint}"
                                     Command="{Binding ResetControlPlaneEndpointCommand}"

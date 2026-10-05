@@ -96,6 +96,9 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     /// <summary>地址校验失败：仅提示，**无效地址绝不落盘**。</summary>
     [ObservableProperty] private bool _hasEndpointError;
 
+    /// <summary>节点通道地址当前是否不是默认值（"恢复默认"按钮据此启用）。</summary>
+    [ObservableProperty] private bool _isServerUrlCustom;
+
     /// <summary>
     ///     控制面地址设置卡是否可见。
     /// </summary>
@@ -146,6 +149,15 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     {
         _controlPlaneEndpointStore.ResetToDefault();
         RefreshControlPlaneEndpoint();
+    }
+
+    /// <summary>丢弃自定义节点通道地址，回到线上默认。</summary>
+    [RelayCommand]
+    private void ResetServerUrl()
+    {
+        // 只走状态存储这一条写路径：它原子落盘并触发 Changed，界面从同一个事件刷新。
+        _stateStore.Update(state => state with { ServerUrl = ControlNodeClientOptions.DefaultEndpoint });
+        _client.Wake();
     }
 
     /// <summary>在浏览器里打开集控平台网页控制台（配了第三方地址就打开那一家）。</summary>
@@ -224,13 +236,22 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         {
             // 无效地址绝不落盘：否则节点会带着一个连不上的地址进入"已停止重试"。
             HasEndpointError = true;
+            RefreshServerUrlCustomFlag();
             return;
         }
 
         HasEndpointError = false;
         _stateStore.Update(state => state with { ServerUrl = endpoint });
         _client.Wake();
+        RefreshServerUrlCustomFlag();
     }
+
+    /// <summary>节点通道地址是否偏离默认值（"恢复默认"按钮据此启用）。</summary>
+    private void RefreshServerUrlCustomFlag() =>
+        IsServerUrlCustom = !string.Equals(
+            (ServerUrl ?? string.Empty).Trim(),
+            ControlNodeClientOptions.DefaultEndpoint,
+            StringComparison.OrdinalIgnoreCase);
 
     private void OnStateStoreChanged(object? sender, ControlNodeState state) =>
         RunOnUiThread(() => RefreshFromState(state));
@@ -268,6 +289,7 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
             RemoteControlEnabled = state.RemoteControlEnabled;
             GroupId = state.GroupId;
             ServerUrl = state.ServerUrl;
+            RefreshServerUrlCustomFlag();
             NodeId = state.NodeId;
             DisplayName = state.DisplayName ?? string.Empty;
             DrawLocked = state.DrawLocked;
