@@ -30,6 +30,12 @@ public class DebugStrings
     public string S_InternalSettings => Get(nameof(S_InternalSettings));
     public string C_EnableInternalSettings => Get(nameof(C_EnableInternalSettings));
     public string C_EnableInternalSettings_D => Get(nameof(C_EnableInternalSettings_D));
+    public string S_ControlPlaneEndpoint => Get(nameof(S_ControlPlaneEndpoint));
+    public string C_RevealControlPlaneEndpoint => Get(nameof(C_RevealControlPlaneEndpoint));
+    public string C_RevealControlPlaneEndpoint_D => Get(nameof(C_RevealControlPlaneEndpoint_D));
+    public string M_ControlPlaneEndpoint_ConfirmTitle => Get(nameof(M_ControlPlaneEndpoint_ConfirmTitle));
+    public string M_ControlPlaneEndpoint => Get(nameof(M_ControlPlaneEndpoint));
+    public string M_ControlPlaneEndpoint_Risk => Get(nameof(M_ControlPlaneEndpoint_Risk));
     public string S_UpdateDiagnostics => Get(nameof(S_UpdateDiagnostics));
     public string C_RefreshUpdate => Get(nameof(C_RefreshUpdate));
     public string C_RefreshUpdate_D => Get(nameof(C_RefreshUpdate_D));

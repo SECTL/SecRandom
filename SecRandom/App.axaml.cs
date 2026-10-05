@@ -1254,10 +1254,16 @@ public partial class App : Application
                 services.AddSingleton<IControlPlaneClient>(provider => new ControlPlaneClient(
                     provider.GetRequiredService<IAuthorizedApiSender>(),
                     provider.GetRequiredService<ILogger<ControlPlaneClient>>(),
-                    ControlPlaneClient.DefaultBaseUrl));
+                    endpointStore: provider.GetRequiredService<IControlPlaneEndpointStore>()));
 
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
                 services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");
+                // 控制面基址是可配置的（自建/私有部署），但它**不进 settings.json**：这个地址每次请求都会
+                // 收到本账号的令牌，一次设置导入不该能把令牌指到别的服务器上。见 IControlPlaneEndpointStore。
+                services.AddSingleton<IControlPlaneEndpointStore>(provider => new FileControlPlaneEndpointStore(
+                    provider.GetRequiredService<ILogger<FileControlPlaneEndpointStore>>()));
+                // 这张设置卡默认藏着，由调试页的总开关放出来（与"内幕设置"同一条运行时逻辑）。
+                services.AddSingleton<IControlPlaneEndpointSettingsGate, ControlPlaneEndpointSettingsGate>();
                 services.AddAttachedSettingsControl<SpecificAnnouncementAttachedSettingsControl>(
                     Langs.AttachedSettings.Resources.C_SpecificVoice);
 

@@ -17,6 +17,7 @@ using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Config;
 using SecRandom.Controls.AttachedSettings;
+using SecRandom.Services.ControlPlane;
 using SecRandom.Services.Linkage;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Updates;
@@ -33,18 +34,24 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
     private readonly MainConfigHandler _configHandler = IAppHost.GetService<MainConfigHandler>();
     private readonly CourseLinkageService _courseLinkage = IAppHost.GetService<CourseLinkageService>();
     private readonly UpdateCenterService _updateCenter = IAppHost.GetService<UpdateCenterService>();
+    private readonly IControlPlaneEndpointSettingsGate _controlPlaneEndpointGate =
+        IAppHost.GetService<IControlPlaneEndpointSettingsGate>();
     private string _updateDiagnostics = string.Empty;
     private string _linkageAndNotificationDiagnostics = string.Empty;
     private string _platformDiagnostics = string.Empty;
     private string _dataAndPathDiagnostics = string.Empty;
     private bool _isInternalSettingsEnabled;
     private bool _isUpdatingInternalSettingsToggle;
+    private bool _isControlPlaneEndpointRevealed;
+    private bool _isUpdatingControlPlaneEndpointToggle;
 
     public DebugSettingsPage()
     {
         DataContext = this;
         InitializeComponent();
         InternalSettingsToggle.IsCheckedChanged += InternalSettingsToggle_OnIsCheckedChanged;
+        ControlPlaneEndpointToggle.IsCheckedChanged += ControlPlaneEndpointToggle_OnIsCheckedChanged;
+        IsControlPlaneEndpointRevealed = _controlPlaneEndpointGate.IsRevealed;
         RefreshDiagnostics();
     }
 
@@ -76,6 +83,13 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
     {
         get => _isInternalSettingsEnabled;
         private set => SetDiagnostic(ref _isInternalSettingsEnabled, value, nameof(IsInternalSettingsEnabled));
+    }
+
+    /// <summary>控制面地址设置卡的总开关（只对本次运行有效）。</summary>
+    public bool IsControlPlaneEndpointRevealed
+    {
+        get => _isControlPlaneEndpointRevealed;
+        private set => SetDiagnostic(ref _isControlPlaneEndpointRevealed, value, nameof(IsControlPlaneEndpointRevealed));
     }
 
     public DebugResources Strings { get; } = new();
@@ -174,6 +188,50 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
     {
         await _courseLinkage.RefreshAsync();
         RefreshDiagnostics();
+    }
+
+    /// <summary>
+    ///     总开关：打开后集控设置页才显示控制面地址设置卡。
+    /// </summary>
+    /// <remarks>
+    ///     与"内幕设置"逐条对齐：**只对本次运行有效**、不落盘、重启后自动隐藏；
+    ///     打开前用一次确认对话把后果说清楚（这里是把账号令牌送到另一个地址，比"内幕设置"更不可逆）。
+    /// </remarks>
+    private async void ControlPlaneEndpointToggle_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
+    {
+        if (_isUpdatingControlPlaneEndpointToggle || sender is not ToggleSwitch toggle)
+            return;
+
+        if (toggle.IsChecked != true)
+        {
+            _controlPlaneEndpointGate.SetRevealed(false);
+            IsControlPlaneEndpointRevealed = false;
+            return;
+        }
+
+        var result = await new FAContentDialog
+        {
+            Title = DebugResources.Get("M_ControlPlaneEndpoint_ConfirmTitle"),
+            Content = new TextBlock
+            {
+                Text = $"{DebugResources.Get("M_ControlPlaneEndpoint")}{Environment.NewLine}{Environment.NewLine}{DebugResources.Get("M_ControlPlaneEndpoint_Risk")}",
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap
+            },
+            PrimaryButtonText = DebugResources.Get("C_Enable"),
+            CloseButtonText = DebugResources.Get("C_Cancel"),
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+
+        if (result != FAContentDialogResult.Primary)
+        {
+            _isUpdatingControlPlaneEndpointToggle = true;
+            toggle.IsChecked = false;
+            _isUpdatingControlPlaneEndpointToggle = false;
+            return;
+        }
+
+        _controlPlaneEndpointGate.SetRevealed(true);
+        IsControlPlaneEndpointRevealed = true;
     }
 
     private void RefreshDiagnostics()

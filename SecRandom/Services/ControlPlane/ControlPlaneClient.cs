@@ -69,7 +69,8 @@ public sealed class ControlPlaneClient(
     IAuthorizedApiSender sender,
     ILogger<ControlPlaneClient> logger,
     string? baseUrl = null,
-    Func<TimeSpan, CancellationToken, Task>? delay = null) : IControlPlaneClient
+    Func<TimeSpan, CancellationToken, Task>? delay = null,
+    IControlPlaneEndpointStore? endpointStore = null) : IControlPlaneClient
 {
     /// <summary>控制面服务的生产地址。</summary>
     /// <remarks>
@@ -84,6 +85,10 @@ public sealed class ControlPlaneClient(
     ///         基址必须独立成常量，且默认只指向生产域名——开发用的回环地址必须在构造时显式传入，
     ///         绝不能作为缺省值，否则手机端会永远连本机。
     ///     </para>
+    ///     <para>
+    ///         它是**默认值**，不再是编译期唯一可能的地址：自建/私有部署把地址写进
+    ///         <see cref="IControlPlaneEndpointStore" />，由调试页总开关放出来的那张设置卡维护。
+    ///     </para>
     /// </remarks>
     public const string ProductionBaseUrl = "https://secrandom-control.sectl.cn";
 
@@ -95,13 +100,25 @@ public sealed class ControlPlaneClient(
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private readonly string _baseUrl = (baseUrl ?? DefaultBaseUrl).TrimEnd('/');
+    /// <summary>构造时显式给定的基址（测试与联调用）。给了它就不再读 <see cref="_endpointStore" />。</summary>
+    private readonly string? _fixedBaseUrl = string.IsNullOrWhiteSpace(baseUrl) ? null : baseUrl.TrimEnd('/');
+
+    private readonly IControlPlaneEndpointStore? _endpointStore = endpointStore;
+
+    /// <summary>
+    ///     本次请求真正要打的基址。
+    /// </summary>
+    /// <remarks>
+    ///     **每次请求都重新取**，而不是构造时定死：地址是可以在设置里改的，改完还要重启应用
+    ///     才能生效，那就等于"这个设置是假的"。
+    /// </remarks>
+    private string BaseUrl => _fixedBaseUrl ?? _endpointStore?.Current ?? DefaultBaseUrl;
     private readonly Func<TimeSpan, CancellationToken, Task> _delay = delay ?? Task.Delay;
 
     public async Task<IReadOnlyList<GroupDto>> GetGroupsAsync(CancellationToken cancellationToken = default)
     {
         var body = await SendForBodyAsync(
-            () => new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/v1/groups"),
+            () => new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/v1/groups"),
             cancellationToken).ConfigureAwait(false);
 
         return Deserialize<List<GroupDto>>(body);
@@ -112,7 +129,7 @@ public sealed class ControlPlaneClient(
         ArgumentException.ThrowIfNullOrWhiteSpace(groupId);
 
         var body = await SendForBodyAsync(
-            () => new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/v1/groups/{Escape(groupId)}/nodes"),
+            () => new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/v1/groups/{Escape(groupId)}/nodes"),
             cancellationToken).ConfigureAwait(false);
 
         return Deserialize<List<NodeDto>>(body);
@@ -129,7 +146,7 @@ public sealed class ControlPlaneClient(
         ArgumentNullException.ThrowIfNull(request);
 
         return SendForCommandAsync(
-            () => new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/v1/groups/{Escape(groupId)}/nodes/{Escape(nodeId)}/commands")
+            () => new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/v1/groups/{Escape(groupId)}/nodes/{Escape(nodeId)}/commands")
             {
                 Content = new StringContent(
                     JsonSerializer.Serialize(request, JsonOptions),
@@ -148,7 +165,7 @@ public sealed class ControlPlaneClient(
         ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
 
         return SendForCommandAsync(
-            () => new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/v1/groups/{Escape(groupId)}/commands/{Escape(commandId)}"),
+            () => new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/v1/groups/{Escape(groupId)}/commands/{Escape(commandId)}"),
             cancellationToken);
     }
 

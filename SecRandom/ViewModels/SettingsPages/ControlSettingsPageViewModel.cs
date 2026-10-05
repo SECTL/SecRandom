@@ -5,6 +5,8 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
+using SecRandom.Services.ControlPlane;
+using SecRandom.Services.Desktop;
 using SecRandom.Shared.Models.ControlNode;
 using LR = SecRandom.Langs.SettingsPages.General.Control.Resources;
 
@@ -29,6 +31,9 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     private readonly IControlNodeStateStore _stateStore;
     private readonly ControlNodeClient _client;
     private readonly ControlNodeClientOptions _options;
+    private readonly IControlPlaneEndpointStore _controlPlaneEndpointStore;
+    private readonly IControlPlaneEndpointSettingsGate _controlPlaneEndpointGate;
+    private readonly IExternalLauncher _externalLauncher;
     private readonly ILogger<ControlSettingsPageViewModel> _logger;
     private bool _suppressPersist;
 
@@ -37,19 +42,28 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         IControlNodeStateStore stateStore,
         ControlNodeClient client,
         ControlNodeClientOptions options,
+        IControlPlaneEndpointStore controlPlaneEndpointStore,
+        IControlPlaneEndpointSettingsGate controlPlaneEndpointGate,
+        IExternalLauncher externalLauncher,
         ILogger<ControlSettingsPageViewModel> logger) : base(configHandler)
     {
         _stateStore = stateStore;
         _client = client;
         _options = options;
+        _controlPlaneEndpointStore = controlPlaneEndpointStore;
+        _controlPlaneEndpointGate = controlPlaneEndpointGate;
+        _externalLauncher = externalLauncher;
         _logger = logger;
 
         RefreshFromState(_stateStore.Current);
+        RefreshControlPlaneEndpoint();
+        IsControlPlaneEndpointVisible = _controlPlaneEndpointGate.IsRevealed;
         ApplyLinkState(_client.LinkState);
         HostName = _options.HostName;
 
         _stateStore.Changed += OnStateStoreChanged;
         _client.LinkStateChanged += OnLinkStateChanged;
+        _controlPlaneEndpointGate.Changed += OnControlPlaneEndpointGateChanged;
     }
 
     /// <summary>本机是否允许被集控。**这是设备自己的闸，服务端只读它。**</summary>
@@ -82,10 +96,41 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     /// <summary>地址校验失败：仅提示，**无效地址绝不落盘**。</summary>
     [ObservableProperty] private bool _hasEndpointError;
 
+    /// <summary>
+    ///     控制面地址设置卡是否可见。
+    /// </summary>
+    /// <remarks>
+    ///     默认隐藏，只有调试页的总开关打开后才出现——改了它等于决定"这台设备的控制台连哪个平台"，
+    ///     不是一项日常设置。开关只对本次运行有效（见 <see cref="IControlPlaneEndpointSettingsGate" />）。
+    /// </remarks>
+    [ObservableProperty] private bool _isControlPlaneEndpointVisible;
+
+    /// <summary>控制台（手机/平板）访问集控平台所用的基址。留空即回到线上默认。</summary>
+    [ObservableProperty] private string _controlPlaneEndpoint = string.Empty;
+
+    /// <summary>控制面地址无效：仅提示，**无效地址绝不落盘**。</summary>
+    [ObservableProperty] private bool _hasControlPlaneEndpointError;
+
+    /// <summary>当前是否用的是自定义地址（"恢复默认"按钮据此启用）。</summary>
+    [ObservableProperty] private bool _isControlPlaneEndpointCustom;
+
+    /// <summary>
+    ///     "打开集控平台"按钮的文案。
+    /// </summary>
+    /// <remarks>
+    ///     配了第三方地址就**明说**打开的是哪一家：让按钮写着"SecRandom 集控平台"却跳到别人的服务器，
+    ///     是这页面上最容易被误点的一处。
+    /// </remarks>
+    [ObservableProperty] private string _openControlPlaneLabel = string.Empty;
+
+    /// <summary>线上默认地址，作为输入框水印：用户一眼能看到"不填会连哪"。</summary>
+    public string ControlPlaneEndpointDefault => ControlPlaneClient.DefaultBaseUrl;
+
     public void Dispose()
     {
         _stateStore.Changed -= OnStateStoreChanged;
         _client.LinkStateChanged -= OnLinkStateChanged;
+        _controlPlaneEndpointGate.Changed -= OnControlPlaneEndpointGateChanged;
     }
 
     [RelayCommand]
@@ -93,6 +138,50 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     {
         // 终态（未注册 / 不是组成员 / 地址错误）会一直等着，这个按钮让用户修正后立刻重试。
         _client.Wake();
+    }
+
+    /// <summary>丢弃自定义控制面地址，回到线上默认。</summary>
+    [RelayCommand]
+    private void ResetControlPlaneEndpoint()
+    {
+        _controlPlaneEndpointStore.ResetToDefault();
+        RefreshControlPlaneEndpoint();
+    }
+
+    /// <summary>在浏览器里打开集控平台网页控制台（配了第三方地址就打开那一家）。</summary>
+    [RelayCommand]
+    private void OpenControlPlane()
+    {
+        var url = _controlPlaneEndpointStore.Current;
+        if (!_externalLauncher.TryOpenUri(url))
+            _logger.LogWarning("打开集控平台失败：{Url}", url);
+    }
+
+    partial void OnControlPlaneEndpointChanged(string value)
+    {
+        if (_suppressPersist)
+            return;
+
+        var endpoint = value?.Trim() ?? string.Empty;
+
+        // 清空输入框 = 回到默认：这条比"空值是非法输入"更好用，也让水印（默认地址）名副其实。
+        if (endpoint.Length == 0)
+        {
+            _controlPlaneEndpointStore.ResetToDefault();
+            HasControlPlaneEndpointError = false;
+            RefreshControlPlaneEndpoint();
+            return;
+        }
+
+        if (!_controlPlaneEndpointStore.TryUpdate(endpoint, out _))
+        {
+            // 无效地址绝不落盘：否则控制台会带着一个连不上的基址，每次请求都失败。
+            HasControlPlaneEndpointError = true;
+            return;
+        }
+
+        HasControlPlaneEndpointError = false;
+        RefreshControlPlaneEndpoint();
     }
 
     partial void OnRemoteControlEnabledChanged(bool value)
@@ -148,6 +237,28 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
 
     private void OnLinkStateChanged(object? sender, ControlNodeLinkState state) =>
         RunOnUiThread(() => ApplyLinkState(state));
+
+    private void OnControlPlaneEndpointGateChanged(object? sender, EventArgs e) =>
+        RunOnUiThread(() => IsControlPlaneEndpointVisible = _controlPlaneEndpointGate.IsRevealed);
+
+    /// <summary>把存储里的控制面地址投影到界面（写入过程要被抑制，否则会回环写一遍）。</summary>
+    private void RefreshControlPlaneEndpoint()
+    {
+        _suppressPersist = true;
+        try
+        {
+            ControlPlaneEndpoint = _controlPlaneEndpointStore.Current;
+            IsControlPlaneEndpointCustom = _controlPlaneEndpointStore.IsCustom;
+            HasControlPlaneEndpointError = false;
+            OpenControlPlaneLabel = IsControlPlaneEndpointCustom
+                ? LR.C_OpenControlPlane_ThirdParty
+                : LR.C_OpenControlPlane_Official;
+        }
+        finally
+        {
+            _suppressPersist = false;
+        }
+    }
 
     private void RefreshFromState(ControlNodeState state)
     {
