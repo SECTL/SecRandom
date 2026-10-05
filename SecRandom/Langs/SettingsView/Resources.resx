@@ -232,7 +232,7 @@
         <value>背景与动机</value>
     </data>
     <data name="C_Feedback_MotivationPlaceholder" xml:space="preserve">
-        <value>为什么需要这个功能？它解决了什么场景？</value>
+        <value>为什么需要这个功能？它解决了什么场景</value>
     </data>
     <data name="C_Feedback_Request" xml:space="preserve">
         <value>想要实现或优化的功能</value>
@@ -287,7 +287,7 @@
   <data name="C_TransferOpenCamera" xml:space="preserve"><value>打开相机</value></data>
   <data name="C_TransferStopCamera" xml:space="preserve"><value>停止相机</value></data>
   <data name="M_TransferFailed" xml:space="preserve"><value>传输失败：{0}</value></data>
-  <data name="M_TransferWrongContent" xml:space="preserve"><value>收到的传输类型与当前操作不匹配。</value></data>
+  <data name="M_TransferWrongContent" xml:space="preserve"><value>收到的传输类型与当前操作不匹配</value></data>
   <data name="C_TransferCopyAddress" xml:space="preserve"><value>复制地址</value></data>
   <data name="C_TransferSessionCodeLabel" xml:space="preserve"><value>会话码</value></data>
   <data name="C_TransferFrames" xml:space="preserve"><value>传输帧</value></data>

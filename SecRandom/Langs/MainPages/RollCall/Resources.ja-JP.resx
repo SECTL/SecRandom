@@ -23,7 +23,7 @@
   <data name="M_CountSummaryFormat" xml:space="preserve"><value>メンバー数: {0} | 残り: {1}</value></data>
   <data name="M_NoCandidates" xml:space="preserve"><value>抽選できるメンバーがいません</value></data>
   <data name="M_NoEligibleCandidates" xml:space="preserve"><value>重み条件を満たすメンバーがいません</value></data>
-  <data name="M_RepeatLimitExhausted" xml:space="preserve"><value>残りのメンバーが不足しています。記録をリセットするか、条件を調整してください。</value></data>
+  <data name="M_RepeatLimitExhausted" xml:space="preserve"><value>残りのメンバーが不足しています。記録をリセットするか、条件を調整してください</value></data>
   <data name="M_InvalidWeight" xml:space="preserve"><value>重みの設定が無効です</value></data>
   <data name="M_DrawFailed" xml:space="preserve"><value>抽選に失敗しました</value></data>
   <data name="M_ResultSeparator" xml:space="preserve"><value>、</value></data>

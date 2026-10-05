@@ -98,7 +98,7 @@ SecRandom 以 GNU GPLv3 许可发布；GPLv3 允许您运行、研究、修改�
   <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>注册 secrandom:// 链接以允许外部程序唤起 SecRandom</value></data>
   <data name="C_PrivacyTitle" xml:space="preserve"><value>隐私</value></data>
     <data name="C_PrivacyDescription" xml:space="preserve"><value>选择应用启动后可发送的诊断和在线状态信息，后续可随时在设置中调整</value></data>
-    <data name="C_PrivacyEncouragement" xml:space="preserve"><value>求求了嘛~开启会对我们未来的更新会起到更大的帮助！</value></data>
+    <data name="C_PrivacyEncouragement" xml:space="preserve"><value>求求了嘛~开启会对我们未来的更新会起到更大的帮助</value></data>
   <data name="C_SentryTelemetry" xml:space="preserve"><value>启用 Sentry 遥测</value></data>
     <data name="C_SentryTelemetryDescription" xml:space="preserve"><value>开启后上传崩溃、日志、追踪和性能分析数据；不会控制在线状态统计</value></data>
   <data name="C_OnlineStatus" xml:space="preserve"><value>在线状态</value></data>

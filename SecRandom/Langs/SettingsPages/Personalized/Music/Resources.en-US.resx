@@ -16,13 +16,13 @@
   <data name="C_Stop" xml:space="preserve"><value>Stop</value></data>
   <data name="C_Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="C_Delete" xml:space="preserve"><value>Delete</value></data>
-  <data name="M_Empty" xml:space="preserve"><value>No music has been imported.</value></data>
-  <data name="M_ImportFailed" xml:space="preserve"><value>Unable to import the selected music files.</value></data>
-  <data name="M_PreviewFailed" xml:space="preserve"><value>Unable to preview this music file.</value></data>
+  <data name="M_Empty" xml:space="preserve"><value>No music has been imported</value></data>
+  <data name="M_ImportFailed" xml:space="preserve"><value>Unable to import the selected music files</value></data>
+  <data name="M_PreviewFailed" xml:space="preserve"><value>Unable to preview this music file</value></data>
   <data name="M_DeleteTitle" xml:space="preserve"><value>Delete music</value></data>
-  <data name="M_DeleteContent" xml:space="preserve"><value>Deleting "{0}" resets every draw setting that references it to no music.</value></data>
+  <data name="M_DeleteContent" xml:space="preserve"><value>Deleting "{0}" resets every draw setting that references it to no music</value></data>
   <data name="M_DeletePrimary" xml:space="preserve"><value>Delete</value></data>
-  <data name="M_DeleteFailed" xml:space="preserve"><value>Unable to delete this music file.</value></data>
-  <data name="M_DeleteSuccess" xml:space="preserve"><value>Deleted "{0}".</value></data>
-  <data name="M_Imported" xml:space="preserve"><value>Imported {0} track(s).</value></data>
+  <data name="M_DeleteFailed" xml:space="preserve"><value>Unable to delete this music file</value></data>
+  <data name="M_DeleteSuccess" xml:space="preserve"><value>Deleted "{0}"</value></data>
+  <data name="M_Imported" xml:space="preserve"><value>Imported {0} track(s)</value></data>
 </root>

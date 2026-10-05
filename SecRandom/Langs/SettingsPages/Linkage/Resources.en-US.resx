@@ -46,19 +46,19 @@
     <value>Clear timetable</value>
   </data>
   <data name="M_CsesMissing">
-    <value>No valid CSES timetable has been imported.</value>
+    <value>No valid CSES timetable has been imported</value>
   </data>
   <data name="M_CsesImported">
     <value>CSES timetable imported: {0}</value>
   </data>
   <data name="M_CsesCleared">
-    <value>CSES timetable cleared.</value>
+    <value>CSES timetable cleared</value>
   </data>
   <data name="M_CsesClearTitle">
     <value>Clear Timetable</value>
   </data>
   <data name="M_CsesClearContent">
-    <value>Clear the currently imported CSES timetable?</value>
+    <value>Clear the currently imported CSES timetable</value>
   </data>
   <data name="C_Confirm">
     <value>Confirm</value>
@@ -124,17 +124,17 @@
     <value>Enable operations this many seconds before class</value>
   </data>
   <data name="M_CsesSummary"><value>{0} classes, from {1:HH:mm} to {2:HH:mm}</value></data>
-  <data name="M_CsesErrorEmpty"><value>The CSES timetable file is empty.</value></data>
-  <data name="M_CsesErrorRoot"><value>The CSES timetable file root must be an object.</value></data>
-  <data name="M_CsesErrorNoItems"><value>The CSES timetable file contains no valid classes.</value></data>
-  <data name="M_CsesErrorInvalidItem"><value>The class format is invalid.</value></data>
-  <data name="M_CsesErrorInvalidTime"><value>Class “{0}” must start before it ends.</value></data>
-  <data name="M_CsesErrorOverlap"><value>Classes overlap on weekday {0}.</value></data>
-  <data name="M_ScheduleError_CsesMissing"><value>No valid CSES timetable has been imported.</value></data>
-  <data name="M_ScheduleError_ClassIslandUnavailable"><value>Unable to connect to ClassIsland.</value></data>
-  <data name="M_ScheduleError_ClassIslandTimerStopped"><value>The ClassIsland timer is not running.</value></data>
-  <data name="M_ScheduleError_ClassIslandScheduleDisabled"><value>ClassIsland has not enabled its timetable.</value></data>
-  <data name="M_ScheduleError_ClassIslandScheduleUnloaded"><value>ClassIsland has not loaded today's timetable.</value></data>
-  <data name="M_ScheduleError_ClassIslandUnsupportedState"><value>ClassIsland returned an unsupported current state: {0}.</value></data>
-  <data name="M_ScheduleError_ClassIslandReadFailed"><value>Unable to read the ClassIsland class state.</value></data>
+  <data name="M_CsesErrorEmpty"><value>The CSES timetable file is empty</value></data>
+  <data name="M_CsesErrorRoot"><value>The CSES timetable file root must be an object</value></data>
+  <data name="M_CsesErrorNoItems"><value>The CSES timetable file contains no valid classes</value></data>
+  <data name="M_CsesErrorInvalidItem"><value>The class format is invalid</value></data>
+  <data name="M_CsesErrorInvalidTime"><value>Class “{0}” must start before it ends</value></data>
+  <data name="M_CsesErrorOverlap"><value>Classes overlap on weekday {0}</value></data>
+  <data name="M_ScheduleError_CsesMissing"><value>No valid CSES timetable has been imported</value></data>
+  <data name="M_ScheduleError_ClassIslandUnavailable"><value>Unable to connect to ClassIsland</value></data>
+  <data name="M_ScheduleError_ClassIslandTimerStopped"><value>The ClassIsland timer is not running</value></data>
+  <data name="M_ScheduleError_ClassIslandScheduleDisabled"><value>ClassIsland has not enabled its timetable</value></data>
+  <data name="M_ScheduleError_ClassIslandScheduleUnloaded"><value>ClassIsland has not loaded today's timetable</value></data>
+  <data name="M_ScheduleError_ClassIslandUnsupportedState"><value>ClassIsland returned an unsupported current state: {0}</value></data>
+  <data name="M_ScheduleError_ClassIslandReadFailed"><value>Unable to read the ClassIsland class state</value></data>
 </root>

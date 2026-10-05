@@ -28,7 +28,7 @@
   <data name="H_DrawNumbers" xml:space="preserve"><value>Roll-call quantity</value></data>
   <data name="H_LotteryNumbers" xml:space="preserve"><value>Draw count</value></data>
   <data name="H_StudentId" xml:space="preserve"><value>Sequence/ID</value></data>
-  <data name="H_Serial" xml:space="preserve"><value>No.</value></data>
+  <data name="H_Serial" xml:space="preserve"><value>No</value></data>
   <data name="H_Gender" xml:space="preserve"><value>Gender</value></data>
   <data name="H_Group" xml:space="preserve"><value>Segment</value></data>
   <data name="H_Subject" xml:space="preserve"><value>Course</value></data>

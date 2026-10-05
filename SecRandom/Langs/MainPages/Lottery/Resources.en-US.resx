@@ -25,7 +25,7 @@
   <data name="M_DrawFailed" xml:space="preserve"><value>Lottery failed</value></data>
   <data name="M_NoCandidates" xml:space="preserve"><value>No prizes are available to draw</value></data>
   <data name="M_NoEligibleCandidates" xml:space="preserve"><value>No prizes meet the weighting criteria</value></data>
-  <data name="M_RepeatLimitExhausted" xml:space="preserve"><value>Not enough prizes remain. Reset the records or adjust the prize pool.</value></data>
+  <data name="M_RepeatLimitExhausted" xml:space="preserve"><value>Not enough prizes remain. Reset the records or adjust the prize pool</value></data>
   <data name="M_InvalidWeight" xml:space="preserve"><value>Invalid weight settings</value></data>
   <data name="M_Drawing" xml:space="preserve"><value>Drawing...</value></data>
   <data name="M_RemainingCountFormat" xml:space="preserve"><value>Remaining: {0} / Drawn: {1}</value></data>

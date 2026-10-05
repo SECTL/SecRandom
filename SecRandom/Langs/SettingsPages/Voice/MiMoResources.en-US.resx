@@ -13,7 +13,7 @@
   <data name="M_MiMoVoiceCloneImportFailed" xml:space="preserve"><value>Could not import reference audio</value></data>
   <data name="M_MiMoVoiceCloneCleared" xml:space="preserve"><value>Reference audio removed</value></data>
   <data name="M_MiMoVoiceCloneConsentTitle" xml:space="preserve"><value>Authorization confirmation</value></data>
-  <data name="M_MiMoVoiceCloneConsentContent" xml:space="preserve"><value>Confirm that you have explicit authorization to use this recording for voice cloning.</value></data>
+  <data name="M_MiMoVoiceCloneConsentContent" xml:space="preserve"><value>Confirm that you have explicit authorization to use this recording for voice cloning</value></data>
   <data name="C_MiMoVoiceCloneConsent" xml:space="preserve"><value>I confirm</value></data>
   <data name="C_MiMoVoiceCloneCancel" xml:space="preserve"><value>Cancel</value></data>
 </root>

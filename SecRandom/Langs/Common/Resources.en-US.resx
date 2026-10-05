@@ -142,7 +142,7 @@ Move the entire portable package to a writable location, or adjust the directory
         <value>A fair random tool based on dynamic weighting, putting an end to disputes in draws and decisions</value>
     </data>
     <data name="App_License" xml:space="preserve">
-        <value>This project is licensed under the GNU General Public License v3.0.</value>
+        <value>This project is licensed under the GNU General Public License v3.0</value>
     </data>
     <data name="C_ToBeWritten" xml:space="preserve">
         <value>(To be written)</value>
@@ -254,7 +254,7 @@ Move the entire portable package to a writable location, or adjust the directory
         <value>Application Already Running</value>
     </data>
     <data name="MultiInstance_Message" xml:space="preserve">
-        <value>Another instance of SecRandom is already running.</value>
+        <value>Another instance of SecRandom is already running</value>
     </data>
     <data name="MultiInstance_OpenExisting" xml:space="preserve">
         <value>Show Running Instance</value>

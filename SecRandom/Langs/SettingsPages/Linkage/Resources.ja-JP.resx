@@ -46,19 +46,19 @@
     <value>時間割を消去</value>
   </data>
   <data name="M_CsesMissing">
-    <value>有効な CSES 時間割はまだインポートされていません。</value>
+    <value>有効な CSES 時間割はまだインポートされていません</value>
   </data>
   <data name="M_CsesImported">
     <value>CSES 時間割をインポートしました: {0}</value>
   </data>
   <data name="M_CsesCleared">
-    <value>CSES 時間割を消去しました。</value>
+    <value>CSES 時間割を消去しました</value>
   </data>
   <data name="M_CsesClearTitle">
     <value>時間割を消去</value>
   </data>
   <data name="M_CsesClearContent">
-    <value>現在インポートされている CSES 時間割を消去しますか？</value>
+    <value>現在インポートされている CSES 時間割を消去しますか</value>
   </data>
   <data name="C_Confirm">
     <value>確認</value>
@@ -124,17 +124,17 @@
     <value>授業の何秒前に制限を解除するか指定します</value>
   </data>
   <data name="M_CsesSummary"><value>授業は {0} 件（{1:HH:mm}～{2:HH:mm}）です</value></data>
-  <data name="M_CsesErrorEmpty"><value>CSES 時間割ファイルが空です。</value></data>
-  <data name="M_CsesErrorRoot"><value>CSES 時間割ファイルのルートはオブジェクトである必要があります。</value></data>
-  <data name="M_CsesErrorNoItems"><value>CSES 時間割ファイルに有効な授業がありません。</value></data>
-  <data name="M_CsesErrorInvalidItem"><value>授業の形式が無効です。</value></data>
-  <data name="M_CsesErrorInvalidTime"><value>授業「{0}」の開始時刻は終了時刻より前である必要があります。</value></data>
-  <data name="M_CsesErrorOverlap"><value>曜日 {0} の授業時間が重複しています。</value></data>
-  <data name="M_ScheduleError_CsesMissing"><value>有効な CSES 時間割はまだインポートされていません。</value></data>
-  <data name="M_ScheduleError_ClassIslandUnavailable"><value>ClassIsland に接続できません。</value></data>
-  <data name="M_ScheduleError_ClassIslandTimerStopped"><value>ClassIsland のタイマーが動作していません。</value></data>
-  <data name="M_ScheduleError_ClassIslandScheduleDisabled"><value>ClassIsland で時間割が有効になっていません。</value></data>
-  <data name="M_ScheduleError_ClassIslandScheduleUnloaded"><value>ClassIsland が当日の時間割を読み込んでいません。</value></data>
-  <data name="M_ScheduleError_ClassIslandUnsupportedState"><value>ClassIsland から未対応の現在状態が返されました: {0}。</value></data>
-  <data name="M_ScheduleError_ClassIslandReadFailed"><value>ClassIsland の授業状態を読み取れません。</value></data>
+  <data name="M_CsesErrorEmpty"><value>CSES 時間割ファイルが空です</value></data>
+  <data name="M_CsesErrorRoot"><value>CSES 時間割ファイルのルートはオブジェクトである必要があります</value></data>
+  <data name="M_CsesErrorNoItems"><value>CSES 時間割ファイルに有効な授業がありません</value></data>
+  <data name="M_CsesErrorInvalidItem"><value>授業の形式が無効です</value></data>
+  <data name="M_CsesErrorInvalidTime"><value>授業「{0}」の開始時刻は終了時刻より前である必要があります</value></data>
+  <data name="M_CsesErrorOverlap"><value>曜日 {0} の授業時間が重複しています</value></data>
+  <data name="M_ScheduleError_CsesMissing"><value>有効な CSES 時間割はまだインポートされていません</value></data>
+  <data name="M_ScheduleError_ClassIslandUnavailable"><value>ClassIsland に接続できません</value></data>
+  <data name="M_ScheduleError_ClassIslandTimerStopped"><value>ClassIsland のタイマーが動作していません</value></data>
+  <data name="M_ScheduleError_ClassIslandScheduleDisabled"><value>ClassIsland で時間割が有効になっていません</value></data>
+  <data name="M_ScheduleError_ClassIslandScheduleUnloaded"><value>ClassIsland が当日の時間割を読み込んでいません</value></data>
+  <data name="M_ScheduleError_ClassIslandUnsupportedState"><value>ClassIsland から未対応の現在状態が返されました: {0}</value></data>
+  <data name="M_ScheduleError_ClassIslandReadFailed"><value>ClassIsland の授業状態を読み取れません</value></data>
 </root>

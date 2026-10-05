@@ -36,7 +36,7 @@
         <value>Opening the system installer</value>
     </data>
     <data name="M_StartupFailed" xml:space="preserve">
-        <value>Mobile initialization failed. Please restart the app; if the problem persists, submit the Android log.</value>
+        <value>Mobile initialization failed. Please restart the app; if the problem persists, submit the Android log</value>
     </data>
     <data name="M_InstallerOpened" xml:space="preserve">
         <value>Handed off to the system installer</value>
@@ -45,37 +45,37 @@
         <value>Failed to install the update: {0}</value>
     </data>
     <data name="M_EmptyMetadata" xml:space="preserve">
-        <value>Update metadata is empty.</value>
+        <value>Update metadata is empty</value>
     </data>
     <data name="M_MissingReleaseChannel" xml:space="preserve">
-        <value>Update metadata is missing the release channel.</value>
+        <value>Update metadata is missing the release channel</value>
     </data>
     <data name="M_ManifestUnavailable" xml:space="preserve">
-        <value>Unable to fetch the update manifest.</value>
+        <value>Unable to fetch the update manifest</value>
     </data>
     <data name="M_PackageUnavailable" xml:space="preserve">
-        <value>Unable to download the update package.</value>
+        <value>Unable to download the update package</value>
     </data>
     <data name="M_PackageLengthInvalid" xml:space="preserve">
-        <value>Update package length verification failed.</value>
+        <value>Update package length verification failed</value>
     </data>
     <data name="M_PackageHashInvalid" xml:space="preserve">
-        <value>Update package hash verification failed.</value>
+        <value>Update package hash verification failed</value>
     </data>
     <data name="M_ManifestSignatureInvalid" xml:space="preserve">
-        <value>The update manifest signature is invalid.</value>
+        <value>The update manifest signature is invalid</value>
     </data>
     <data name="M_ManifestInvalid" xml:space="preserve">
-        <value>The update manifest is invalid.</value>
+        <value>The update manifest is invalid</value>
     </data>
     <data name="M_ManifestTagMismatch" xml:space="preserve">
-        <value>The update manifest does not match the release tag.</value>
+        <value>The update manifest does not match the release tag</value>
     </data>
     <data name="M_AndroidContextUnavailable" xml:space="preserve">
-        <value>The Android context is unavailable.</value>
+        <value>The Android context is unavailable</value>
     </data>
     <data name="M_AndroidOnlyInstaller" xml:space="preserve">
-        <value>System installation is only available on Android.</value>
+        <value>System installation is only available on Android</value>
     </data>
     <data name="N_Draw" xml:space="preserve">
         <value>Draw</value>
@@ -261,13 +261,13 @@ Clearing history before fair drawing helps keep the new member’s chance from b
         <value>Could not open Settings</value>
     </data>
     <data name="M_GeneralMobileOnly" xml:space="preserve">
-        <value>The mobile app adapts to the system language, window, and background policies automatically; desktop-only options are not shown here.</value>
+        <value>The mobile app adapts to the system language, window, and background policies automatically; desktop-only options are not shown here</value>
     </data>
     <data name="M_BackupMobileUnavailable" xml:space="preserve">
-        <value>Mobile backup and restore will become available once a full transaction with system file access authorization is provided.</value>
+        <value>Mobile backup and restore will become available once a full transaction with system file access authorization is provided</value>
     </data>
     <data name="M_AboutLicense" xml:space="preserve">
-        <value>SecRandom is a fair drawing tool for events and organizations, released under the GPLv3 license.</value>
+        <value>SecRandom is a fair drawing tool for events and organizations, released under the GPLv3 license</value>
     </data>
     <data name="C_Back" xml:space="preserve">
         <value>Back to Settings</value>
@@ -381,7 +381,7 @@ Clearing history before fair drawing helps keep the new member’s chance from b
         <value>Go to Draw</value>
     </data>
     <data name="M_NoHistoryPrompt" xml:space="preserve">
-        <value>Results will appear here after you finish a roll call or lottery.</value>
+        <value>Results will appear here after you finish a roll call or lottery</value>
     </data>
     <data name="M_TimeJustNow" xml:space="preserve">
         <value>Just now</value>
@@ -447,13 +447,13 @@ Clearing history before fair drawing helps keep the new member’s chance from b
         <value>The list is empty</value>
     </data>
     <data name="M_EmptyStudentListHint" xml:space="preserve">
-        <value>Add members to start a roll call.</value>
+        <value>Add members to start a roll call</value>
     </data>
     <data name="M_EmptyPrizePool" xml:space="preserve">
         <value>The prize pool is empty</value>
     </data>
     <data name="M_EmptyPrizePoolHint" xml:space="preserve">
-        <value>Add prizes to start a lottery.</value>
+        <value>Add prizes to start a lottery</value>
     </data>
     <data name="C_ExportAllData" xml:space="preserve">
         <value>Export All Data</value>
@@ -468,7 +468,7 @@ Clearing history before fair drawing helps keep the new member’s chance from b
         <value>Import Settings</value>
     </data>
     <data name="M_BackupPickerHint" xml:space="preserve">
-        <value>Export and import through the system file picker. Files are validated against the SecRandom v3 format before import; unsupported files will not change any data.</value>
+        <value>Export and import through the system file picker. Files are validated against the SecRandom v3 format before import; unsupported files will not change any data</value>
     </data>
     <data name="S_AllData" xml:space="preserve">
         <value>All Data</value>
@@ -492,13 +492,13 @@ Clearing history before fair drawing helps keep the new member’s chance from b
         <value>SecRandom Data Archive</value>
     </data>
     <data name="M_ExportCancelled" xml:space="preserve">
-        <value>Export cancelled.</value>
+        <value>Export cancelled</value>
     </data>
     <data name="M_WritingToTarget" xml:space="preserve">
         <value>Writing to the selected location…</value>
     </data>
     <data name="M_AllDataExported" xml:space="preserve">
-        <value>All data exported to the selected location.</value>
+        <value>All data exported to the selected location</value>
     </data>
     <data name="M_ExportFailed" xml:space="preserve">
         <value>Export failed: {0}</value>
@@ -513,7 +513,7 @@ Clearing history before fair drawing helps keep the new member’s chance from b
         <value>SecRandom Settings File</value>
     </data>
     <data name="M_SettingsExported" xml:space="preserve">
-        <value>Settings exported to the selected location.</value>
+        <value>Settings exported to the selected location</value>
     </data>
     <data name="M_PickingBackupFile" xml:space="preserve">
         <value>Choosing a backup file…</value>
@@ -525,7 +525,7 @@ Clearing history before fair drawing helps keep the new member’s chance from b
         <value>Choose a Settings Backup</value>
     </data>
     <data name="M_ImportCancelled" xml:space="preserve">
-        <value>Import cancelled.</value>
+        <value>Import cancelled</value>
     </data>
     <data name="M_ReadingBackup" xml:space="preserve">
         <value>Reading the backup file…</value>
@@ -534,10 +534,10 @@ Clearing history before fair drawing helps keep the new member’s chance from b
         <value>Validating the backup…</value>
     </data>
     <data name="M_ValidationPassed" xml:space="preserve">
-        <value>Validation passed. Confirm to start importing.</value>
+        <value>Validation passed. Confirm to start importing</value>
     </data>
     <data name="M_ValidationUnsupported" xml:space="preserve">
-        <value>This file is not a supported SecRandom v3 export and cannot be imported.</value>
+        <value>This file is not a supported SecRandom v3 export and cannot be imported</value>
     </data>
     <data name="M_ReadOrValidateFailed" xml:space="preserve">
         <value>Failed to read or validate: {0}</value>
@@ -561,40 +561,40 @@ Clearing history before fair drawing helps keep the new member’s chance from b
         <value>Cancel</value>
     </data>
     <data name="M_BackupServiceUnavailable" xml:space="preserve">
-        <value>The backup service is unavailable.</value>
+        <value>The backup service is unavailable</value>
     </data>
     <data name="M_Importing" xml:space="preserve">
         <value>Importing…</value>
     </data>
     <data name="M_ImportCompleted" xml:space="preserve">
-        <value>Import completed. {0} files imported.</value>
+        <value>Import completed. {0} files imported</value>
     </data>
     <data name="M_ImportFailed" xml:space="preserve">
         <value>Import failed: {0}</value>
     </data>
     <data name="M_PendingImportExists" xml:space="preserve">
-        <value>Please confirm or cancel the current import first.</value>
+        <value>Please confirm or cancel the current import first</value>
     </data>
     <data name="M_StorageUnavailable" xml:space="preserve">
-        <value>This platform does not support the system file picker, so backup operations are unavailable.</value>
+        <value>This platform does not support the system file picker, so backup operations are unavailable</value>
     </data>
     <data name="C_ViewOnGitHub" xml:space="preserve">
         <value>View Project on GitHub</value>
     </data>
     <data name="M_BrowserUnavailable" xml:space="preserve">
-        <value>A browser cannot be opened on this platform.</value>
+        <value>A browser cannot be opened on this platform</value>
     </data>
     <data name="M_OpenBrowserFailed" xml:space="preserve">
-        <value>Unable to open a browser. Please visit github.com/SECTL/SecRandom manually.</value>
+        <value>Unable to open a browser. Please visit github.com/SECTL/SecRandom manually</value>
     </data>
     <data name="M_InAppUpdateUnsupported" xml:space="preserve">
         <value>In-app updates are not supported on this platform</value>
     </data>
     <data name="M_IosUpdateDeferred" xml:space="preserve">
-        <value>iOS distribution and updates will be provided in a future release. Please get new versions from the project release page.</value>
+        <value>iOS distribution and updates will be provided in a future release. Please get new versions from the project release page</value>
     </data>
     <data name="M_UpdateSecurityNote" xml:space="preserve">
-        <value>Update packages are verified for length and hash against an Ed25519-signed manifest, then handed to the system installer.</value>
+        <value>Update packages are verified for length and hash against an Ed25519-signed manifest, then handed to the system installer</value>
     </data>
     <data name="C_StartDraw" xml:space="preserve"><value>Start</value></data>
     <data name="C_RemainingList" xml:space="preserve"><value>View Remaining</value></data>
@@ -620,7 +620,7 @@ Clearing history before fair drawing helps keep the new member’s chance from b
     <data name="M_RemainingTitle" xml:space="preserve"><value>Remaining Members</value></data>
     <data name="M_NoRemaining" xml:space="preserve"><value>No members remain in the current scope</value></data>
     <data name="M_DrawResultCount" xml:space="preserve"><value>{0} members drawn</value></data>
-    <data name="M_ListTableHint" xml:space="preserve"><value>Swipe the table horizontally to view more fields.</value></data>
+    <data name="M_ListTableHint" xml:space="preserve"><value>Swipe the table horizontally to view more fields</value></data>
     <data name="M_MoreStudentTitle" xml:space="preserve"><value>More Member Settings</value></data>
     <data name="M_MorePrizeTitle" xml:space="preserve"><value>More Prize Settings</value></data>
     <data name="H_Enabled" xml:space="preserve"><value>Enabled</value></data>
@@ -660,10 +660,10 @@ Clearing history before fair drawing helps keep the new member’s chance from b
     <data name="C_Preview" xml:space="preserve"><value>Preview</value></data>
     <data name="C_Stop" xml:space="preserve"><value>Stop</value></data>
     <data name="M_NoImageSelected" xml:space="preserve"><value>No image selected</value></data>
-    <data name="M_RecordRequiresName" xml:space="preserve"><value>Enter an ID or name.</value></data>
-    <data name="M_InvalidPrizeValues" xml:space="preserve"><value>Weight and inventory must be non-negative.</value></data>
-    <data name="M_MediaImportFailed" xml:space="preserve"><value>The selected media file could not be imported.</value></data>
-    <data name="M_SaveFailed" xml:space="preserve"><value>The changes could not be saved.</value></data>
+    <data name="M_RecordRequiresName" xml:space="preserve"><value>Enter an ID or name</value></data>
+    <data name="M_InvalidPrizeValues" xml:space="preserve"><value>Weight and inventory must be non-negative</value></data>
+    <data name="M_MediaImportFailed" xml:space="preserve"><value>The selected media file could not be imported</value></data>
+    <data name="M_SaveFailed" xml:space="preserve"><value>The changes could not be saved</value></data>
     <data name="O_NoMusic" xml:space="preserve"><value>No music</value></data>
     <data name="O_RandomMusic" xml:space="preserve"><value>Play randomly</value></data>
     <data name="N_RemoteDraw" xml:space="preserve"><value>Remote</value></data>
@@ -673,7 +673,7 @@ Clearing history before fair drawing helps keep the new member’s chance from b
     <data name="RD_Device" xml:space="preserve"><value>Device</value></data>
     <data name="RD_Online" xml:space="preserve"><value>Online</value></data>
     <data name="RD_Offline" xml:space="preserve"><value>Offline</value></data>
-    <data name="RD_OfflineHint" xml:space="preserve"><value>The device is offline; the command is delivered once it reconnects.</value></data>
+    <data name="RD_OfflineHint" xml:space="preserve"><value>The device is offline; the command is delivered once it reconnects</value></data>
     <data name="RD_Refresh" xml:space="preserve"><value>Refresh</value></data>
     <data name="RD_LoadRoster" xml:space="preserve"><value>Load rosters</value></data>
     <data name="RD_List" xml:space="preserve"><value>Roster</value></data>
@@ -686,40 +686,40 @@ Clearing history before fair drawing helps keep the new member’s chance from b
     <data name="RD_Loading" xml:space="preserve"><value>Loading…</value></data>
     <data name="RD_Drawn" xml:space="preserve"><value>Drawn</value></data>
     <data name="RD_DrawnCount" xml:space="preserve"><value>Drew {0}</value></data>
-    <data name="RD_SignedOut" xml:space="preserve"><value>Sign in to your SECTL account in Settings first.</value></data>
-    <data name="RD_NoGroups" xml:space="preserve"><value>This account has not joined any group yet.</value></data>
-    <data name="RD_NoNodes" xml:space="preserve"><value>This group has no devices yet.</value></data>
-    <data name="RD_NoRoster" xml:space="preserve"><value>No roster loaded yet.</value></data>
-    <data name="RD_NotAdmin" xml:space="preserve"><value>Reading rosters requires the admin role.</value></data>
-    <data name="RD_NotOperator" xml:space="preserve"><value>Triggering a draw requires the operator role.</value></data>
-    <data name="RD_Truncated" xml:space="preserve"><value>The roster is large; only the first {0} members were loaded.</value></data>
+    <data name="RD_SignedOut" xml:space="preserve"><value>Sign in to your SECTL account in Settings first</value></data>
+    <data name="RD_NoGroups" xml:space="preserve"><value>This account has not joined any group yet</value></data>
+    <data name="RD_NoNodes" xml:space="preserve"><value>This group has no devices yet</value></data>
+    <data name="RD_NoRoster" xml:space="preserve"><value>No roster loaded yet</value></data>
+    <data name="RD_NotAdmin" xml:space="preserve"><value>Reading rosters requires the admin role</value></data>
+    <data name="RD_NotOperator" xml:space="preserve"><value>Triggering a draw requires the operator role</value></data>
+    <data name="RD_Truncated" xml:space="preserve"><value>The roster is large; only the first {0} members were loaded</value></data>
     <data name="RD_Total" xml:space="preserve"><value>{0} members</value></data>
-    <data name="RD_Failed" xml:space="preserve"><value>The draw failed.</value></data>
-    <data name="RD_CommandTimeout" xml:space="preserve"><value>The device has not reported back yet; check again later.</value></data>
-    <data name="RD_ListNotFound" xml:space="preserve"><value>That roster does not exist on this device.</value></data>
-    <data name="RD_NotInList" xml:space="preserve"><value>The roster has no member matching the selected filters.</value></data>
-    <data name="RD_OutOfRange" xml:space="preserve"><value>The count is outside the allowed range.</value></data>
-    <data name="RD_NoCandidate" xml:space="preserve"><value>No eligible member matches the filters.</value></data>
-    <data name="RD_InvalidValue" xml:space="preserve"><value>The request was rejected as invalid.</value></data>
-    <data name="RD_InvalidValueField" xml:space="preserve"><value>The value of {0} was rejected.</value></data>
-    <data name="RD_LocalRemoteDisabled" xml:space="preserve"><value>That device has remote control turned off locally.</value></data>
-    <data name="RD_DrawLocked" xml:space="preserve"><value>Drawing is locked on that device.</value></data>
-    <data name="RD_Busy" xml:space="preserve"><value>The device is drawing; try again shortly.</value></data>
-    <data name="RD_NoCapability" xml:space="preserve"><value>That device does not declare the remote-draw capability.</value></data>
-    <data name="RD_Expired" xml:space="preserve"><value>The command expired before it could run.</value></data>
-    <data name="RD_RateLimited" xml:space="preserve"><value>Too many commands; try again later.</value></data>
-    <data name="RD_Denied" xml:space="preserve"><value>The device refused the draw.</value></data>
-    <data name="RD_ClassTime" xml:space="preserve"><value>The device is in class time and refuses draws.</value></data>
-    <data name="RD_Network" xml:space="preserve"><value>Network unavailable; check your connection.</value></data>
-    <data name="RD_Unauthorized" xml:space="preserve"><value>Your session expired; sign in again.</value></data>
-    <data name="RD_Forbidden" xml:space="preserve"><value>Your account is not allowed to do this.</value></data>
-    <data name="RD_NotFound" xml:space="preserve"><value>The target was not found.</value></data>
+    <data name="RD_Failed" xml:space="preserve"><value>The draw failed</value></data>
+    <data name="RD_CommandTimeout" xml:space="preserve"><value>The device has not reported back yet; check again later</value></data>
+    <data name="RD_ListNotFound" xml:space="preserve"><value>That roster does not exist on this device</value></data>
+    <data name="RD_NotInList" xml:space="preserve"><value>The roster has no member matching the selected filters</value></data>
+    <data name="RD_OutOfRange" xml:space="preserve"><value>The count is outside the allowed range</value></data>
+    <data name="RD_NoCandidate" xml:space="preserve"><value>No eligible member matches the filters</value></data>
+    <data name="RD_InvalidValue" xml:space="preserve"><value>The request was rejected as invalid</value></data>
+    <data name="RD_InvalidValueField" xml:space="preserve"><value>The value of {0} was rejected</value></data>
+    <data name="RD_LocalRemoteDisabled" xml:space="preserve"><value>That device has remote control turned off locally</value></data>
+    <data name="RD_DrawLocked" xml:space="preserve"><value>Drawing is locked on that device</value></data>
+    <data name="RD_Busy" xml:space="preserve"><value>The device is drawing; try again shortly</value></data>
+    <data name="RD_NoCapability" xml:space="preserve"><value>That device does not declare the remote-draw capability</value></data>
+    <data name="RD_Expired" xml:space="preserve"><value>The command expired before it could run</value></data>
+    <data name="RD_RateLimited" xml:space="preserve"><value>Too many commands; try again later</value></data>
+    <data name="RD_Denied" xml:space="preserve"><value>The device refused the draw</value></data>
+    <data name="RD_ClassTime" xml:space="preserve"><value>The device is in class time and refuses draws</value></data>
+    <data name="RD_Network" xml:space="preserve"><value>Network unavailable; check your connection</value></data>
+    <data name="RD_Unauthorized" xml:space="preserve"><value>Your session expired; sign in again</value></data>
+    <data name="RD_Forbidden" xml:space="preserve"><value>Your account is not allowed to do this</value></data>
+    <data name="RD_NotFound" xml:space="preserve"><value>The target was not found</value></data>
     <data name="RD_Error" xml:space="preserve"><value>Error: {0}</value></data>
     <data name="RD_SelectedDevice" xml:space="preserve"><value>Current device</value></data>
     <data name="RD_DevicesCount" xml:space="preserve"><value>{0} devices</value></data>
     <data name="RD_LoadingDevices" xml:space="preserve"><value>Loading devices…</value></data>
-    <data name="RD_NoDevicesHint" xml:space="preserve"><value>These groups have no devices yet. A classroom machine must sign in with the same account and join this group.</value></data>
-    <data name="RD_SelectDevice" xml:space="preserve"><value>Pick the device to control.</value></data>
+    <data name="RD_NoDevicesHint" xml:space="preserve"><value>These groups have no devices yet. A classroom machine must sign in with the same account and join this group</value></data>
+    <data name="RD_SelectDevice" xml:space="preserve"><value>Pick the device to control</value></data>
     <data name="RD_RemoteDisabled" xml:space="preserve"><value>Remote control disabled on the device</value></data>
     <data name="RD_MissingRosterCapability" xml:space="preserve"><value>Does not declare roster read; cannot pick a roster</value></data>
     <data name="RD_MissingDrawCapability" xml:space="preserve"><value>Does not declare remote draw</value></data>
@@ -727,9 +727,9 @@ Clearing history before fair drawing helps keep the new member’s chance from b
     <data name="RD_GroupLoadFailed" xml:space="preserve"><value>Could not load {0} (code: {1})</value></data>
     <data name="RD_SignIn" xml:space="preserve"><value>Sign in</value></data>
     <data name="RD_FailureWithCode" xml:space="preserve"><value>{0} (code: {1})</value></data>
-    <data name="RD_GroupsUnavailable" xml:space="preserve"><value>{0} group(s) could not be read; try again.</value></data>
+    <data name="RD_GroupsUnavailable" xml:space="preserve"><value>{0} group(s) could not be read; try again</value></data>
     <data name="MA_SignIn" xml:space="preserve"><value>Sign in with your SECTL account</value></data>
     <data name="MA_SignOut" xml:space="preserve"><value>Sign out</value></data>
-    <data name="MA_SignedOutHint" xml:space="preserve"><value>Not signed in. Sign in to use cloud backup and to control classroom devices from the Remote tab.</value></data>
-    <data name="MA_Reauthorize" xml:space="preserve"><value>Your session expired; sign in again.</value></data>
+    <data name="MA_SignedOutHint" xml:space="preserve"><value>Not signed in. Sign in to use cloud backup and to control classroom devices from the Remote tab</value></data>
+    <data name="MA_Reauthorize" xml:space="preserve"><value>Your session expired; sign in again</value></data>
 </root>

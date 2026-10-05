@@ -37,7 +37,7 @@
      <value>, </value>
   </data>
   <data name="M_RepeatLimitExhausted" xml:space="preserve">
-     <value>Not enough members remain. Reset the records or adjust the filters.</value>
+     <value>Not enough members remain. Reset the records or adjust the filters</value>
   </data>
   <data name="M_InvalidWeight" xml:space="preserve">
      <value>Invalid weight settings</value>

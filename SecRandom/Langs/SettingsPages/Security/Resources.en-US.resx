@@ -111,18 +111,18 @@
   <data name="M_PasswordDialogTitle" xml:space="preserve"><value>Manage Security Password</value></data>
   <data name="M_SetPasswordDialogTitle" xml:space="preserve"><value>Set Security Password</value></data>
   <data name="M_TotpDialogTitle" xml:space="preserve"><value>Set TOTP Code</value></data>
-  <data name="M_TotpSetupDescription" xml:space="preserve"><value>Add this key to your authenticator app, then enter its current 6-digit code.</value></data>
+  <data name="M_TotpSetupDescription" xml:space="preserve"><value>Add this key to your authenticator app, then enter its current 6-digit code</value></data>
   <data name="M_TotpManualKey" xml:space="preserve"><value>Manual Key</value></data>
   <data name="M_TotpCode" xml:space="preserve"><value>Verification Code</value></data>
   <data name="C_Copy" xml:space="preserve"><value>Copy</value></data>
-  <data name="M_Copied" xml:space="preserve"><value>Copied.</value></data>
+  <data name="M_Copied" xml:space="preserve"><value>Copied</value></data>
   <data name="M_UsbDialogTitle" xml:space="preserve"><value>Manage USB Binding</value></data>
-  <data name="M_UsbSetupDescription" xml:space="preserve"><value>Select a removable USB drive from the list. SecRandom.safety.key will be created there.</value></data>
-  <data name="M_UsbShortDescription" xml:space="preserve"><value>Select the USB drive used for verification.</value></data>
+  <data name="M_UsbSetupDescription" xml:space="preserve"><value>Select a removable USB drive from the list. SecRandom.safety.key will be created there</value></data>
+  <data name="M_UsbShortDescription" xml:space="preserve"><value>Select the USB drive used for verification</value></data>
   <data name="M_NoBindableUsb" xml:space="preserve"><value>No unbound removable USB drives are available</value></data>
   <data name="M_NoBoundUsb" xml:space="preserve"><value>No USB drives are currently bound</value></data>
   <data name="M_UsbPickerTitle" xml:space="preserve"><value>Select USB Drive for Security Verification</value></data>
-  <data name="M_SelectUsbFirst" xml:space="preserve"><value>Select a USB drive first.</value></data>
+  <data name="M_SelectUsbFirst" xml:space="preserve"><value>Select a USB drive first</value></data>
   <data name="M_VerificationDialogTitle" xml:space="preserve"><value>Security Verification</value></data>
   <data name="M_VerificationAllFactors" xml:space="preserve"><value>Complete all selected verification methods</value></data>
   <data name="M_VerificationAnyFactor" xml:space="preserve"><value>Complete any selected verification method to continue</value></data>
@@ -133,14 +133,14 @@
   <data name="M_LockoutFormat" xml:space="preserve"><value>Verification is locked, try again in {0} seconds</value></data>
   <data name="M_UsbPresent" xml:space="preserve"><value>Bound USB drive is connected</value></data>
   <data name="M_UsbMissing" xml:space="preserve"><value>Bound USB drive is not detected</value></data>
-  <data name="M_PasswordRemoved" xml:space="preserve"><value>Password removed and security protection disabled.</value></data>
-  <data name="M_PasswordSaved" xml:space="preserve"><value>Password saved.</value></data>
-  <data name="M_PasswordSaveFailed" xml:space="preserve"><value>Unable to save password. It must contain at least 6 characters; confirm the current password when changing it.</value></data>
-  <data name="M_SetPasswordFirst" xml:space="preserve"><value>Set a password first.</value></data>
-  <data name="M_TotpSaved" xml:space="preserve"><value>TOTP settings saved.</value></data>
-  <data name="M_TotpSaveFailed" xml:space="preserve"><value>Invalid code. TOTP settings were not saved.</value></data>
-  <data name="M_UsbUpdated" xml:space="preserve"><value>USB binding updated.</value></data>
-  <data name="M_UsbUpdateFailed" xml:space="preserve"><value>Unable to update USB binding. Confirm that the drive is connected and writable.</value></data>
+  <data name="M_PasswordRemoved" xml:space="preserve"><value>Password removed and security protection disabled</value></data>
+  <data name="M_PasswordSaved" xml:space="preserve"><value>Password saved</value></data>
+  <data name="M_PasswordSaveFailed" xml:space="preserve"><value>Unable to save password. It must contain at least 6 characters; confirm the current password when changing it</value></data>
+  <data name="M_SetPasswordFirst" xml:space="preserve"><value>Set a password first</value></data>
+  <data name="M_TotpSaved" xml:space="preserve"><value>TOTP settings saved</value></data>
+  <data name="M_TotpSaveFailed" xml:space="preserve"><value>Invalid code. TOTP settings were not saved</value></data>
+  <data name="M_UsbUpdated" xml:space="preserve"><value>USB binding updated</value></data>
+  <data name="M_UsbUpdateFailed" xml:space="preserve"><value>Unable to update USB binding. Confirm that the drive is connected and writable</value></data>
   <data name="S_SudoMode" xml:space="preserve"><value>Sudo Mode</value></data>
   <data name="S_SudoMode_D" xml:space="preserve"><value>Verify once and skip repeated verification for a while; operations and the settings window keep independent timers</value></data>
   <data name="S_SudoMode_Enabled" xml:space="preserve"><value>Enable Sudo Mode</value></data>

@@ -7,7 +7,7 @@
   <data name="Page_Title" xml:space="preserve"><value>お知らせ</value></data>
   <data name="C_Refresh" xml:space="preserve"><value>お知らせを更新</value></data>
   <data name="C_Pinned" xml:space="preserve"><value>固定</value></data>
-  <data name="M_LoadError" xml:space="preserve"><value>お知らせを読み込めませんでした。後でもう一度お試しください。</value></data>
-  <data name="M_NetworkError" xml:space="preserve"><value>お知らせサービスに接続できません。ネットワークを確認して再試行してください。</value></data>
+  <data name="M_LoadError" xml:space="preserve"><value>お知らせを読み込めませんでした。後でもう一度お試しください</value></data>
+  <data name="M_NetworkError" xml:space="preserve"><value>お知らせサービスに接続できません。ネットワークを確認して再試行してください</value></data>
   <data name="M_Empty" xml:space="preserve"><value>お知らせはありません</value></data>
 </root>

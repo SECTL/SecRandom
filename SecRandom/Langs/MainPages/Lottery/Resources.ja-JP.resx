@@ -25,7 +25,7 @@
   <data name="M_DrawFailed" xml:space="preserve"><value>抽選に失敗しました</value></data>
   <data name="M_NoCandidates" xml:space="preserve"><value>抽選できる賞品がありません</value></data>
   <data name="M_NoEligibleCandidates" xml:space="preserve"><value>重み条件を満たす賞品がありません</value></data>
-  <data name="M_RepeatLimitExhausted" xml:space="preserve"><value>残りの賞品が不足しています。記録をリセットするか、賞品プールを調整してください。</value></data>
+  <data name="M_RepeatLimitExhausted" xml:space="preserve"><value>残りの賞品が不足しています。記録をリセットするか、賞品プールを調整してください</value></data>
   <data name="M_InvalidWeight" xml:space="preserve"><value>重みの設定が無効です</value></data>
   <data name="M_Drawing" xml:space="preserve"><value>抽選中...</value></data>
   <data name="M_RemainingCountFormat" xml:space="preserve"><value>残り {0} / 抽選済み {1}</value></data>

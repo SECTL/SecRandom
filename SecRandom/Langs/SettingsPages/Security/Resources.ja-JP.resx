@@ -111,18 +111,18 @@
   <data name="M_PasswordDialogTitle" xml:space="preserve"><value>セキュリティパスワードを管理</value></data>
   <data name="M_SetPasswordDialogTitle" xml:space="preserve"><value>セキュリティパスワードを設定</value></data>
   <data name="M_TotpDialogTitle" xml:space="preserve"><value>TOTP コードを設定</value></data>
-  <data name="M_TotpSetupDescription" xml:space="preserve"><value>認証アプリにキーを追加し、現在の 6 桁コードを入力してください。</value></data>
+  <data name="M_TotpSetupDescription" xml:space="preserve"><value>認証アプリにキーを追加し、現在の 6 桁コードを入力してください</value></data>
   <data name="M_TotpManualKey" xml:space="preserve"><value>手動キー</value></data>
   <data name="M_TotpCode" xml:space="preserve"><value>認証コード</value></data>
   <data name="C_Copy" xml:space="preserve"><value>コピー</value></data>
-  <data name="M_Copied" xml:space="preserve"><value>コピーしました。</value></data>
+  <data name="M_Copied" xml:space="preserve"><value>コピーしました</value></data>
   <data name="M_UsbDialogTitle" xml:space="preserve"><value>USB 登録を管理</value></data>
-  <data name="M_UsbSetupDescription" xml:space="preserve"><value>一覧からリムーバブル USB ドライブを選択してください。SecRandom.safety.key がそこに作成されます。</value></data>
-  <data name="M_UsbShortDescription" xml:space="preserve"><value>認証に使用する USB ドライブを選択します。</value></data>
+  <data name="M_UsbSetupDescription" xml:space="preserve"><value>一覧からリムーバブル USB ドライブを選択してください。SecRandom.safety.key がそこに作成されます</value></data>
+  <data name="M_UsbShortDescription" xml:space="preserve"><value>認証に使用する USB ドライブを選択します</value></data>
   <data name="M_NoBindableUsb" xml:space="preserve"><value>登録できるリムーバブル USB ドライブがありません</value></data>
   <data name="M_NoBoundUsb" xml:space="preserve"><value>登録済みの USB ドライブはありません</value></data>
   <data name="M_UsbPickerTitle" xml:space="preserve"><value>セキュリティ認証用 USB ドライブを選択</value></data>
-  <data name="M_SelectUsbFirst" xml:space="preserve"><value>先に USB ドライブを選択してください。</value></data>
+  <data name="M_SelectUsbFirst" xml:space="preserve"><value>先に USB ドライブを選択してください</value></data>
   <data name="M_VerificationDialogTitle" xml:space="preserve"><value>セキュリティ認証</value></data>
   <data name="M_VerificationAllFactors" xml:space="preserve"><value>選択したすべての認証方式を完了してください</value></data>
   <data name="M_VerificationAnyFactor" xml:space="preserve"><value>選択した認証方式のいずれかを完了すると続行できます</value></data>
@@ -133,14 +133,14 @@
   <data name="M_LockoutFormat" xml:space="preserve"><value>認証がロックされています、{0} 秒後に再試行してください</value></data>
   <data name="M_UsbPresent" xml:space="preserve"><value>登録済み USB ドライブが接続されています</value></data>
   <data name="M_UsbMissing" xml:space="preserve"><value>登録済み USB ドライブが検出されません</value></data>
-  <data name="M_PasswordRemoved" xml:space="preserve"><value>パスワードを削除し、セキュリティ保護を無効にしました。</value></data>
-  <data name="M_PasswordSaved" xml:space="preserve"><value>パスワードを保存しました。</value></data>
-  <data name="M_PasswordSaveFailed" xml:space="preserve"><value>パスワードを保存できません。6 文字以上で、変更時は現在のパスワードを確認してください。</value></data>
-  <data name="M_SetPasswordFirst" xml:space="preserve"><value>先にパスワードを設定してください。</value></data>
-  <data name="M_TotpSaved" xml:space="preserve"><value>TOTP 設定を保存しました。</value></data>
-  <data name="M_TotpSaveFailed" xml:space="preserve"><value>コードが無効です。TOTP 設定は保存されませんでした。</value></data>
-  <data name="M_UsbUpdated" xml:space="preserve"><value>USB 登録を更新しました。</value></data>
-<data name="M_UsbUpdateFailed" xml:space="preserve"><value>USB 登録を更新できません。ドライブの接続と書き込み権限を確認してください。</value></data>
+  <data name="M_PasswordRemoved" xml:space="preserve"><value>パスワードを削除し、セキュリティ保護を無効にしました</value></data>
+  <data name="M_PasswordSaved" xml:space="preserve"><value>パスワードを保存しました</value></data>
+  <data name="M_PasswordSaveFailed" xml:space="preserve"><value>パスワードを保存できません。6 文字以上で、変更時は現在のパスワードを確認してください</value></data>
+  <data name="M_SetPasswordFirst" xml:space="preserve"><value>先にパスワードを設定してください</value></data>
+  <data name="M_TotpSaved" xml:space="preserve"><value>TOTP 設定を保存しました</value></data>
+  <data name="M_TotpSaveFailed" xml:space="preserve"><value>コードが無効です。TOTP 設定は保存されませんでした</value></data>
+  <data name="M_UsbUpdated" xml:space="preserve"><value>USB 登録を更新しました</value></data>
+<data name="M_UsbUpdateFailed" xml:space="preserve"><value>USB 登録を更新できません。ドライブの接続と書き込み権限を確認してください</value></data>
   <data name="S_SudoMode" xml:space="preserve"><value>Sudo モード</value></data>
   <data name="S_SudoMode_D" xml:space="preserve"><value>一度認証すると一定時間は再認証を省略でき、操作と設定ウィンドウはそれぞれ独立して計時します</value></data>
   <data name="S_SudoMode_Enabled" xml:space="preserve"><value>Sudo モードを有効にする</value></data>

@@ -5,7 +5,7 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Title" xml:space="preserve"><value>SecRandom Crash Recovery</value></data>
-  <data name="Description" xml:space="preserve"><value>SecRandom encountered an unhandled error. The crash report is shown below. You can copy it to report the issue or restart the application.</value></data>
+  <data name="Description" xml:space="preserve"><value>SecRandom encountered an unhandled error. The crash report is shown below. You can copy it to report the issue or restart the application</value></data>
   <data name="C_CopyReport" xml:space="preserve"><value>Copy report</value></data>
   <data name="C_CopyDone" xml:space="preserve"><value>Copied</value></data>
   <data name="C_CopyFailed" xml:space="preserve"><value>Copy failed</value></data>
@@ -25,9 +25,9 @@
 ```</value></data>
   <data name="C_ReportInApp" xml:space="preserve"><value>In-app feedback</value></data>
   <data name="C_ReportGitHub" xml:space="preserve"><value>GitHub</value></data>
-  <data name="M_ReportSuccess" xml:space="preserve"><value>Crash report submitted through in-app feedback.</value></data>
-  <data name="M_ReportFailed" xml:space="preserve"><value>In-app feedback submission failed. Please report the issue through GitHub.</value></data>
-  <data name="FeedbackExpected" xml:space="preserve"><value>The application should run normally without an unhandled exception.</value></data>
-  <data name="FeedbackActual" xml:space="preserve"><value>The application encountered an unhandled exception and entered crash recovery.</value></data>
-  <data name="FeedbackReproduction" xml:space="preserve"><value>The crash report was collected automatically; see the attached diagnostic information.</value></data>
+  <data name="M_ReportSuccess" xml:space="preserve"><value>Crash report submitted through in-app feedback</value></data>
+  <data name="M_ReportFailed" xml:space="preserve"><value>In-app feedback submission failed. Please report the issue through GitHub</value></data>
+  <data name="FeedbackExpected" xml:space="preserve"><value>The application should run normally without an unhandled exception</value></data>
+  <data name="FeedbackActual" xml:space="preserve"><value>The application encountered an unhandled exception and entered crash recovery</value></data>
+  <data name="FeedbackReproduction" xml:space="preserve"><value>The crash report was collected automatically; see the attached diagnostic information</value></data>
 </root>

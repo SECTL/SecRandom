@@ -67,7 +67,7 @@
     <data name="Menu_OpenMainWindow" xml:space="preserve"><value>メインウィンドウを開く</value></data>
     <data name="Menu_ExitProgram" xml:space="preserve"><value>終了</value></data>
     <data name="App_Description" xml:space="preserve"><value>動的ウェイトに基づく公平なランダムツールで、抽選と決断から論争を排除します</value></data>
-    <data name="App_License" xml:space="preserve"><value>このプロジェクトは GNU General Public License v3.0 の下でライセンスされています。</value></data>
+    <data name="App_License" xml:space="preserve"><value>このプロジェクトは GNU General Public License v3.0 の下でライセンスされています</value></data>
     <data name="C_ToBeWritten" xml:space="preserve"><value>（作成中）</value></data>
     <data name="AttachedSettings_BehindScene" xml:space="preserve"><value>詳細設定</value></data>
     <data name="Settings_Backup" xml:space="preserve"><value>バックアップ設定</value></data>
@@ -108,7 +108,7 @@
         <value>アプリケーションは既に実行中です</value>
     </data>
     <data name="MultiInstance_Message" xml:space="preserve">
-        <value>SecRandom の別のインスタンスが既に実行されています。</value>
+        <value>SecRandom の別のインスタンスが既に実行されています</value>
     </data>
     <data name="MultiInstance_OpenExisting" xml:space="preserve">
         <value>実行中のインスタンスを表示</value>

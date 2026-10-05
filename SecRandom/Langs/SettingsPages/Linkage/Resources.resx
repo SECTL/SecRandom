@@ -73,7 +73,7 @@
     <value>清除课程表</value>
   </data>
   <data name="M_CsesClearContent" xml:space="preserve">
-    <value>确定要清除当前导入的 CSES 课程表吗？</value>
+    <value>确定要清除当前导入的 CSES 课程表吗</value>
   </data>
   <data name="C_Confirm" xml:space="preserve">
     <value>确认</value>

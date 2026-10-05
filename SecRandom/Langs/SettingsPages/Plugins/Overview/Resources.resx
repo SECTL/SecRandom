@@ -252,7 +252,7 @@
     <value>卸载插件</value>
   </data>
   <data name="M_UninstallConfirm" xml:space="preserve">
-    <value>卸载后将在下次启动时移除该插件，插件配置目录会保留，确认卸载？</value>
+    <value>卸载后将在下次启动时移除该插件，插件配置目录会保留，确认卸载</value>
   </data>
   <data name="M_UninstallFailed" xml:space="preserve">
     <value>插件卸载失败：{0}</value>
@@ -279,10 +279,10 @@
     <value>检测到插件依赖循环：{0}</value>
   </data>
   <data name="M_InstallConfirm" xml:space="preserve">
-    <value>安装插件 {0}？{1}安装后将在下次启动时生效。</value>
+    <value>安装插件 {0}？{1}安装后将在下次启动时生效</value>
   </data>
   <data name="M_InstallDependencies" xml:space="preserve">
-    <value>将同时安装 {0} 个依赖插件。</value>
+    <value>将同时安装 {0} 个依赖插件</value>
   </data>
   <data name="C_Update" xml:space="preserve">
     <value>更新</value>

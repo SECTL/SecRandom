@@ -673,7 +673,7 @@
     <data name="RD_Device" xml:space="preserve"><value>目标设备</value></data>
     <data name="RD_Online" xml:space="preserve"><value>在线</value></data>
     <data name="RD_Offline" xml:space="preserve"><value>离线</value></data>
-    <data name="RD_OfflineHint" xml:space="preserve"><value>设备当前离线，命令会在它上线后补投。</value></data>
+    <data name="RD_OfflineHint" xml:space="preserve"><value>设备当前离线，命令会在它上线后补投</value></data>
     <data name="RD_Refresh" xml:space="preserve"><value>刷新</value></data>
     <data name="RD_LoadRoster" xml:space="preserve"><value>读取名单</value></data>
     <data name="RD_List" xml:space="preserve"><value>名单</value></data>
@@ -686,40 +686,40 @@
     <data name="RD_Loading" xml:space="preserve"><value>正在加载…</value></data>
     <data name="RD_Drawn" xml:space="preserve"><value>抽到了</value></data>
     <data name="RD_DrawnCount" xml:space="preserve"><value>抽到 {0} 人</value></data>
-    <data name="RD_SignedOut" xml:space="preserve"><value>尚未登录 SECTL 账号，请先在设置里登录。</value></data>
-    <data name="RD_NoGroups" xml:space="preserve"><value>这个账号还没有加入任何组。</value></data>
-    <data name="RD_NoNodes" xml:space="preserve"><value>这个组里还没有设备。</value></data>
-    <data name="RD_NoRoster" xml:space="preserve"><value>还没有读取名单。</value></data>
-    <data name="RD_NotAdmin" xml:space="preserve"><value>读取名单需要管理员权限。</value></data>
-    <data name="RD_NotOperator" xml:space="preserve"><value>下发抽取需要操作员权限。</value></data>
-    <data name="RD_Truncated" xml:space="preserve"><value>名单较大，只读取了前 {0} 人。</value></data>
+    <data name="RD_SignedOut" xml:space="preserve"><value>尚未登录 SECTL 账号，请先在设置里登录</value></data>
+    <data name="RD_NoGroups" xml:space="preserve"><value>这个账号还没有加入任何组</value></data>
+    <data name="RD_NoNodes" xml:space="preserve"><value>这个组里还没有设备</value></data>
+    <data name="RD_NoRoster" xml:space="preserve"><value>还没有读取名单</value></data>
+    <data name="RD_NotAdmin" xml:space="preserve"><value>读取名单需要管理员权限</value></data>
+    <data name="RD_NotOperator" xml:space="preserve"><value>下发抽取需要操作员权限</value></data>
+    <data name="RD_Truncated" xml:space="preserve"><value>名单较大，只读取了前 {0} 人</value></data>
     <data name="RD_Total" xml:space="preserve"><value>共 {0} 人</value></data>
-    <data name="RD_Failed" xml:space="preserve"><value>抽取失败。</value></data>
-    <data name="RD_CommandTimeout" xml:space="preserve"><value>设备还没有回执，请稍后再看。</value></data>
-    <data name="RD_ListNotFound" xml:space="preserve"><value>这台机器上没有这个名单。</value></data>
-    <data name="RD_NotInList" xml:space="preserve"><value>这个名单里没有所选的条件。</value></data>
-    <data name="RD_OutOfRange" xml:space="preserve"><value>人数超出可选范围。</value></data>
-    <data name="RD_NoCandidate" xml:space="preserve"><value>该名单里没有符合条件的人。</value></data>
-    <data name="RD_InvalidValue" xml:space="preserve"><value>请求内容不合法。</value></data>
-    <data name="RD_InvalidValueField" xml:space="preserve"><value>字段 {0} 的取值不被接受。</value></data>
-    <data name="RD_LocalRemoteDisabled" xml:space="preserve"><value>这台机器关闭了本机远控。</value></data>
-    <data name="RD_DrawLocked" xml:space="preserve"><value>这台机器的抽取被锁定。</value></data>
-    <data name="RD_Busy" xml:space="preserve"><value>设备正在抽取，请稍后再试。</value></data>
-    <data name="RD_NoCapability" xml:space="preserve"><value>这台设备没有声明远程抽取能力。</value></data>
-    <data name="RD_Expired" xml:space="preserve"><value>命令已过期，没有被执行。</value></data>
-    <data name="RD_RateLimited" xml:space="preserve"><value>命令太频繁，请稍后再试。</value></data>
-    <data name="RD_Denied" xml:space="preserve"><value>设备拒绝了这次抽取。</value></data>
-    <data name="RD_ClassTime" xml:space="preserve"><value>现在是上课时间，设备不允许抽取。</value></data>
-    <data name="RD_Network" xml:space="preserve"><value>网络不可用，请检查连接。</value></data>
-    <data name="RD_Unauthorized" xml:space="preserve"><value>登录状态已失效，请重新登录。</value></data>
-    <data name="RD_Forbidden" xml:space="preserve"><value>当前账号没有权限执行这一步。</value></data>
-    <data name="RD_NotFound" xml:space="preserve"><value>目标不存在。</value></data>
+    <data name="RD_Failed" xml:space="preserve"><value>抽取失败</value></data>
+    <data name="RD_CommandTimeout" xml:space="preserve"><value>设备还没有回执，请稍后再看</value></data>
+    <data name="RD_ListNotFound" xml:space="preserve"><value>这台机器上没有这个名单</value></data>
+    <data name="RD_NotInList" xml:space="preserve"><value>这个名单里没有所选的条件</value></data>
+    <data name="RD_OutOfRange" xml:space="preserve"><value>人数超出可选范围</value></data>
+    <data name="RD_NoCandidate" xml:space="preserve"><value>该名单里没有符合条件的人</value></data>
+    <data name="RD_InvalidValue" xml:space="preserve"><value>请求内容不合法</value></data>
+    <data name="RD_InvalidValueField" xml:space="preserve"><value>字段 {0} 的取值不被接受</value></data>
+    <data name="RD_LocalRemoteDisabled" xml:space="preserve"><value>这台机器关闭了本机远控</value></data>
+    <data name="RD_DrawLocked" xml:space="preserve"><value>这台机器的抽取被锁定</value></data>
+    <data name="RD_Busy" xml:space="preserve"><value>设备正在抽取，请稍后再试</value></data>
+    <data name="RD_NoCapability" xml:space="preserve"><value>这台设备没有声明远程抽取能力</value></data>
+    <data name="RD_Expired" xml:space="preserve"><value>命令已过期，没有被执行</value></data>
+    <data name="RD_RateLimited" xml:space="preserve"><value>命令太频繁，请稍后再试</value></data>
+    <data name="RD_Denied" xml:space="preserve"><value>设备拒绝了这次抽取</value></data>
+    <data name="RD_ClassTime" xml:space="preserve"><value>现在是上课时间，设备不允许抽取</value></data>
+    <data name="RD_Network" xml:space="preserve"><value>网络不可用，请检查连接</value></data>
+    <data name="RD_Unauthorized" xml:space="preserve"><value>登录状态已失效，请重新登录</value></data>
+    <data name="RD_Forbidden" xml:space="preserve"><value>当前账号没有权限执行这一步</value></data>
+    <data name="RD_NotFound" xml:space="preserve"><value>目标不存在</value></data>
     <data name="RD_Error" xml:space="preserve"><value>出错：{0}</value></data>
     <data name="RD_SelectedDevice" xml:space="preserve"><value>当前设备</value></data>
     <data name="RD_DevicesCount" xml:space="preserve"><value>共 {0} 台设备</value></data>
     <data name="RD_LoadingDevices" xml:space="preserve"><value>正在读取设备…</value></data>
-    <data name="RD_NoDevicesHint" xml:space="preserve"><value>这些组里还没有设备。教室机需要用同一个账号登录并加入本组。</value></data>
-    <data name="RD_SelectDevice" xml:space="preserve"><value>请选择要控制的设备。</value></data>
+    <data name="RD_NoDevicesHint" xml:space="preserve"><value>这些组里还没有设备。教室机需要用同一个账号登录并加入本组</value></data>
+    <data name="RD_SelectDevice" xml:space="preserve"><value>请选择要控制的设备</value></data>
     <data name="RD_RemoteDisabled" xml:space="preserve"><value>本机已禁用远控</value></data>
     <data name="RD_MissingRosterCapability" xml:space="preserve"><value>未声明名单读取，无法选名单</value></data>
     <data name="RD_MissingDrawCapability" xml:space="preserve"><value>未声明远程抽取</value></data>
@@ -727,9 +727,9 @@
     <data name="RD_GroupLoadFailed" xml:space="preserve"><value>读取失败：{0}（{1}）</value></data>
     <data name="RD_SignIn" xml:space="preserve"><value>登录</value></data>
     <data name="RD_FailureWithCode" xml:space="preserve"><value>{0}（错误码：{1}）</value></data>
-    <data name="RD_GroupsUnavailable" xml:space="preserve"><value>有 {0} 个组没读到，请重试。</value></data>
+    <data name="RD_GroupsUnavailable" xml:space="preserve"><value>有 {0} 个组没读到，请重试</value></data>
     <data name="MA_SignIn" xml:space="preserve"><value>登录思拓创联账号</value></data>
     <data name="MA_SignOut" xml:space="preserve"><value>退出登录</value></data>
-    <data name="MA_SignedOutHint" xml:space="preserve"><value>未登录。登录后可以云备份，并在"抽取"页远程控制教室设备。</value></data>
-    <data name="MA_Reauthorize" xml:space="preserve"><value>登录状态已失效，请重新登录。</value></data>
+    <data name="MA_SignedOutHint" xml:space="preserve"><value>未登录。登录后可以云备份，并在"抽取"页远程控制教室设备</value></data>
+    <data name="MA_Reauthorize" xml:space="preserve"><value>登录状态已失效，请重新登录</value></data>
 </root>

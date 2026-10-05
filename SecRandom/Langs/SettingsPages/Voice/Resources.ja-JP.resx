@@ -49,13 +49,13 @@
     <value>試聴</value>
   </data>
   <data name="C_TestVoiceText">
-    <value>これは音声読み上げのテストです。</value>
+    <value>これは音声読み上げのテストです</value>
   </data>
   <data name="M_VoicesRefreshed">
-    <value>音声一覧を更新しました。</value>
+    <value>音声一覧を更新しました</value>
   </data>
   <data name="M_TestVoiceCompleted">
-    <value>試聴が完了しました。</value>
+    <value>試聴が完了しました</value>
   </data>
   <data name="M_TestVoiceFailed">
     <value>試聴に失敗しました</value>

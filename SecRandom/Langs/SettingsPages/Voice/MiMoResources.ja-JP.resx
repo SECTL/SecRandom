@@ -13,7 +13,7 @@
   <data name="M_MiMoVoiceCloneImportFailed" xml:space="preserve"><value>参照音声を読み込めませんでした</value></data>
   <data name="M_MiMoVoiceCloneCleared" xml:space="preserve"><value>参照音声を削除しました</value></data>
   <data name="M_MiMoVoiceCloneConsentTitle" xml:space="preserve"><value>使用許諾の確認</value></data>
-  <data name="M_MiMoVoiceCloneConsentContent" xml:space="preserve"><value>この録音を音声クローンに使用する明示的な許諾があることを確認してください。</value></data>
+  <data name="M_MiMoVoiceCloneConsentContent" xml:space="preserve"><value>この録音を音声クローンに使用する明示的な許諾があることを確認してください</value></data>
   <data name="C_MiMoVoiceCloneConsent" xml:space="preserve"><value>確認しました</value></data>
   <data name="C_MiMoVoiceCloneCancel" xml:space="preserve"><value>キャンセル</value></data>
 </root>

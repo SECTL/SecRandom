@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
   <data name="M_InternalSettings_ConfirmTitle" xml:space="preserve">
-    <value>内幕設定を有効化しますか？</value>
+    <value>内幕設定を有効化しますか</value>
   </data>
   <data name="S_DebugEntry" xml:space="preserve">
     <value>デバッグ入口</value>
@@ -16,7 +16,7 @@
     <value>非表示</value>
   </data>
   <data name="M_DebugShown" xml:space="preserve">
-    <value>デバッグ入口を表示しました。</value>
+    <value>デバッグ入口を表示しました</value>
   </data>
   <data name="Page_Title" xml:space="preserve">
     <value>デバッグ</value>
@@ -58,10 +58,10 @@
     <value>プラグイン機能はテスト中で、有効にするとサイドバー項目を表示します</value>
   </data>
   <data name="M_ShowPluginSettings_Title" xml:space="preserve">
-    <value>プラグイン管理を表示しますか？</value>
+    <value>プラグイン管理を表示しますか</value>
   </data>
   <data name="M_ShowPluginSettings" xml:space="preserve">
-    <value>プラグイン機能はテスト中で、動作や画面が変更される場合があります。このスイッチは今回の実行中だけプラグイン管理のサイドバー項目を表示します。正式公開後はデバッグページから削除され、既定で表示されます。</value>
+    <value>プラグイン機能はテスト中で、動作や画面が変更される場合があります。このスイッチは今回の実行中だけプラグイン管理のサイドバー項目を表示します。正式公開後はデバッグページから削除され、既定で表示されます</value>
   </data>
   <data name="C_Show" xml:space="preserve">
     <value>表示</value>
@@ -86,10 +86,10 @@
 
 内幕設定は候補の重みに影響し、公平性、公開性、監査可能性が必要な抽選には適しません。通常の検証モードで内幕設定を有効にした人が選ばれた場合、検証ファイルのアップロード時に通知が表示される場合があります。
 
-内幕設定は公平抽選ルールより優先度が低く、今回選ばれたメンバーまたは賞品が次回も選ばれる保証はありません。</value>
+内幕設定は公平抽選ルールより優先度が低く、今回選ばれたメンバーまたは賞品が次回も選ばれる保証はありません</value>
   </data>
   <data name="M_InternalSettings_FormalNotarization" xml:space="preserve">
-    <value>正式公証モードでは内幕設定は使用されません。内幕設定が有効でも、今回の正式公証抽選は内幕設定を含まない候補者プールと重みで実行されます。</value>
+    <value>正式公証モードでは内幕設定は使用されません。内幕設定が有効でも、今回の正式公証抽選は内幕設定を含まない候補者プールと重みで実行されます</value>
   </data>
   <data name="C_Enable" xml:space="preserve">
     <value>有効化</value>
@@ -254,24 +254,24 @@
     <value>存在しない</value>
   </data>
   <data name="M_ScheduleError_CsesMissing" xml:space="preserve">
-    <value>有効な CSES 時間割はまだインポートされていません。</value>
+    <value>有効な CSES 時間割はまだインポートされていません</value>
   </data>
   <data name="M_ScheduleError_ClassIslandUnavailable" xml:space="preserve">
-    <value>ClassIsland に接続できません。</value>
+    <value>ClassIsland に接続できません</value>
   </data>
   <data name="M_ScheduleError_ClassIslandTimerStopped" xml:space="preserve">
-    <value>ClassIsland のタイマーが動作していません。</value>
+    <value>ClassIsland のタイマーが動作していません</value>
   </data>
   <data name="M_ScheduleError_ClassIslandScheduleDisabled" xml:space="preserve">
-    <value>ClassIsland で時間割が有効になっていません。</value>
+    <value>ClassIsland で時間割が有効になっていません</value>
   </data>
   <data name="M_ScheduleError_ClassIslandScheduleUnloaded" xml:space="preserve">
-    <value>ClassIsland が当日の時間割を読み込んでいません。</value>
+    <value>ClassIsland が当日の時間割を読み込んでいません</value>
   </data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState" xml:space="preserve">
-    <value>ClassIsland から未対応の現在状態が返されました: {0}。</value>
+    <value>ClassIsland から未対応の現在状態が返されました: {0}</value>
   </data>
   <data name="M_ScheduleError_ClassIslandReadFailed" xml:space="preserve">
-    <value>ClassIsland の授業状態を読み取れません。</value>
+    <value>ClassIsland の授業状態を読み取れません</value>
   </data>
 </root>
