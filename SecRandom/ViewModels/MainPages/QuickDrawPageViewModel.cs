@@ -341,6 +341,20 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         ClearHistoryCore();
     }
 
+    /// <summary>远程重置的非交互闸门：需要本机验证时返回拒绝。</summary>
+    public RemoteDrawOutcome? EvaluateRemoteReset() =>
+        ControlDrawGateRejections.From(_linkageDrawCoordinator.EvaluateGate(SecurityOperation.QuickDrawReset));
+
+    /// <summary>
+    ///     集控远程重置的**展示态**清理：快抽窗回到"还没抽过"的样子，不弹任何验证框。
+    /// </summary>
+    /// <remarks>
+    ///     复用 <see cref="ClearHistoryCore" />（清结果列表、清 <c>LastDrawnStudent</c>、隐藏结果区、
+    ///     恢复提示语），而不是只清临时记录——窗口里留着上一次抽到的人，看起来就是没重置。
+    ///     快抽与点名共用同一份学生临时记录，所以远程重置学生会同时清这两个页面的展示态。
+    /// </remarks>
+    public void ResetRemotePresentation() => ClearHistoryCore();
+
     private void ClearHistoryCore()
     {
         _notificationAutoCloseTime = null;

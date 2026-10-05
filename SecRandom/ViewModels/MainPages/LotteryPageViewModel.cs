@@ -28,6 +28,7 @@ using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Linkage;
+using SecRandom.Services.ControlNode;
 using SecRandom.Services.Notification;
 using SecRandom.Services.Security;
 using SecRandom.Services.Verification;
@@ -392,6 +393,20 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             return;
         ResetDisplayCore(showToast: true);
     }
+
+    /// <summary>远程重置的非交互闸门：需要本机验证时返回拒绝。</summary>
+    public RemoteDrawOutcome? EvaluateRemoteReset() =>
+        ControlDrawGateRejections.From(_linkageDrawCoordinator.EvaluateGate(SecurityOperation.LotteryReset));
+
+    /// <summary>
+    ///     集控远程重置的**展示态**清理：抽奖页回到"还没抽过"的样子，不弹任何验证框。
+    /// </summary>
+    /// <remarks>
+    ///     复用 <see cref="ResetDisplayCore" />（清结果区、清 <c>_lastResultPrizes</c>、隐藏结果、
+    ///     刷新奖池剩余/候选计数），而不是只清临时记录——数据清了但页面上还挂着上一次的奖品，
+    ///     看起来就是重置没生效。
+    /// </remarks>
+    public void ResetRemotePresentation() => ResetDisplayCore(showToast: false);
 
     private void ResetDisplayCore(bool showToast = false)
     {

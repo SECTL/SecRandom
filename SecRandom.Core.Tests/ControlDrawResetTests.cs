@@ -187,13 +187,120 @@ public sealed class ControlDrawResetTests : IDisposable
         Assert.Contains("drawReset.ExecuteAsync", source, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void 重置会同时清掉页面的展示态()
+    {
+        // "数据清了但页面还挂着上一轮抽到的人"= 用户看到的"重置没生效"。
+        // 因此除了数据，还必须复用各页面本地点一次重置的那条路径。
+        using var provider = CreateProvider();
+        var catalog = provider.GetRequiredService<IProfileCatalogManager>();
+        var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
+        var presenter = new FakeResetPresenter();
+        var handler = CreateHandler(provider, presenter);
+
+        Assert.True(catalog.ReplaceStudents("测试 1", [new Student { Id = "12", Name = "学生12" }]));
+        temporary.RecordStudents("测试 1", string.Empty, string.Empty, [new Student { Id = "12", Name = "学生12" }]);
+
+        var outcome = handler.Apply(new ControlDrawResetRequest(ControlDrawResetRequest.TargetRollCall, "测试 1"));
+
+        Assert.True(outcome.Ok, outcome.Reason);
+        Assert.Equal(1, presenter.GateCalls);
+        Assert.Equal(1, presenter.ClearCalls);
+        Assert.Equal(0, temporary.GetStudentCounts("测试 1", string.Empty, string.Empty).Values.Sum());
+    }
+
+    [Fact]
+    public void 需要本机验证时拒绝重置并且什么都不清()
+    {
+        // 远程命令绝不弹验证框；拒绝时必须"数据与展示态都没动"，否则会出现自相矛盾的中间状态。
+        using var provider = CreateProvider();
+        var catalog = provider.GetRequiredService<IProfileCatalogManager>();
+        var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
+        var presenter = new FakeResetPresenter { GateResult = RemoteDrawOutcome.Denied("local_verification_required") };
+        var handler = CreateHandler(provider, presenter);
+
+        Assert.True(catalog.ReplaceStudents("测试 1", [new Student { Id = "12", Name = "学生12" }]));
+        temporary.RecordStudents("测试 1", string.Empty, string.Empty, [new Student { Id = "12", Name = "学生12" }]);
+
+        var historyPath = Utils.GetFilePath("history", "roll_call", "测试 1.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(historyPath)!);
+        var historyBytes = "{\"records\":[]}"u8.ToArray();
+        File.WriteAllBytes(historyPath, historyBytes);
+
+        var outcome = handler.Apply(new ControlDrawResetRequest(ControlDrawResetRequest.TargetRollCall, "测试 1"));
+
+        Assert.False(outcome.Ok);
+        Assert.Equal("draw_denied", outcome.Reason);
+        Assert.Equal(0, presenter.ClearCalls);
+        Assert.Equal(1, temporary.GetStudentCounts("测试 1", string.Empty, string.Empty).Values.Sum());
+        Assert.Equal(historyBytes, File.ReadAllBytes(historyPath));
+    }
+
+    [Fact]
+    public void 点名与快抽共用学生记录所以两者展示态一起清()
+    {
+        // 只清一个页面的话，另一个页面还挂着上一轮抽到的人——数据归零、界面在说谎。
+        Assert.Equal(
+            [DrawResetSurface.RollCall, DrawResetSurface.Quick],
+            ControlDrawResetTargets.SurfacesFor(ControlDrawResetRequest.TargetRollCall));
+        Assert.Equal(
+            [DrawResetSurface.RollCall, DrawResetSurface.Quick],
+            ControlDrawResetTargets.SurfacesFor(ControlDrawResetRequest.TargetQuick));
+        Assert.Equal(
+            [DrawResetSurface.Lottery],
+            ControlDrawResetTargets.SurfacesFor(ControlDrawResetRequest.TargetLottery));
+    }
+
+    [Fact]
+    public void 三个页面都提供非交互的展示态重置入口()
+    {
+        // 展示态清理必须复用各页面既有的本地重置路径（而不是另写一套只清数据的逻辑）。
+        var rollCall = File.ReadAllText(GetRepositoryPath("SecRandom/ViewModels/MainPages/RollCallPageViewModel.cs"));
+        var quick = File.ReadAllText(GetRepositoryPath("SecRandom/ViewModels/MainPages/QuickDrawPageViewModel.cs"));
+        var lottery = File.ReadAllText(GetRepositoryPath("SecRandom/ViewModels/MainPages/LotteryPageViewModel.cs"));
+
+        Assert.Contains("public void ResetRemotePresentation() => ResetDrawHistoryCore(showToast: false);", rollCall, StringComparison.Ordinal);
+        Assert.Contains("public void ResetRemotePresentation() => ClearHistoryCore();", quick, StringComparison.Ordinal);
+        Assert.Contains("public void ResetRemotePresentation() => ResetDisplayCore(showToast: false);", lottery, StringComparison.Ordinal);
+
+        // 闸门判定与清理分开：先判定，数据清完再清展示态。
+        foreach (var source in new[] { rollCall, quick, lottery })
+            Assert.Contains("public RemoteDrawOutcome? EvaluateRemoteReset()", source, StringComparison.Ordinal);
+
+        var presenter = File.ReadAllText(GetRepositoryPath("SecRandom/Services/ControlNode/ControlPageDrawResetPresenter.cs"));
+        Assert.Contains("ControlDrawResetTargets.SurfacesFor", presenter, StringComparison.Ordinal);
+        Assert.Contains("ResetRemotePresentation()", presenter, StringComparison.Ordinal);
+        Assert.Contains("EvaluateRemoteReset()", presenter, StringComparison.Ordinal);
+    }
+
     private static JsonElement Parse(string json) => JsonDocument.Parse(json).RootElement.Clone();
 
-    private static ControlDrawResetHandler CreateHandler(ServiceProvider provider) =>
+    private static ControlDrawResetHandler CreateHandler(
+        ServiceProvider provider,
+        IControlDrawResetPresenter? presenter = null) =>
         new(
             provider.GetRequiredService<IDrawTemporaryRecordService>(),
             provider.GetRequiredService<IProfileCatalogManager>(),
+            presenter ?? new FakeResetPresenter(),
             provider.GetRequiredService<ILogger<ControlDrawResetHandler>>());
+
+    /// <summary>假展示层：单测只需要知道"该拒绝时拒绝了、该清时清了"。</summary>
+    private sealed class FakeResetPresenter : IControlDrawResetPresenter
+    {
+        public RemoteDrawOutcome? GateResult { get; set; }
+
+        public int GateCalls { get; private set; }
+
+        public int ClearCalls { get; private set; }
+
+        public RemoteDrawOutcome? EvaluateGate(ControlDrawResetRequest request)
+        {
+            GateCalls++;
+            return GateResult;
+        }
+
+        public void ClearPresentation(ControlDrawResetRequest request) => ClearCalls++;
+    }
 
     private static ServiceProvider CreateProvider()
     {

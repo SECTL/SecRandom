@@ -29,6 +29,7 @@ namespace SecRandom.Services.ControlNode;
 public sealed class ControlDrawResetHandler(
     IDrawTemporaryRecordService temporaryRecords,
     IProfileCatalogManager catalog,
+    IControlDrawResetPresenter presenter,
     ILogger<ControlDrawResetHandler> logger)
 {
     public async Task<ControlCommandOutcome> ExecuteAsync(
@@ -52,7 +53,7 @@ public sealed class ControlDrawResetHandler(
 
         try
         {
-            return await Dispatcher.UIThread.InvokeAsync(() => Apply(request));
+            return await Dispatcher.UIThread.InvokeAsync(() => Apply(request)).GetTask();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -66,16 +67,30 @@ public sealed class ControlDrawResetHandler(
     }
 
     /// <summary>
-    ///     真正执行重置（同步、无界面依赖，便于单测直接调用）。
+    ///     真正执行重置：先过非交互闸门，再清数据，最后清页面展示态。
     /// </summary>
     /// <remarks>
-    ///     给了 <c>list_name</c> 就只清那一份；没给就把这一类**全部名单的桶**都清掉。
-    ///     <c>cleared</c> 报的是清掉的临时记录条数——它是"这一轮抽到过几个人/几个奖品"，
-    ///     与历史记录条数无关。
+    ///     <para>
+    ///         顺序是刻意的：<b>闸门 → 数据 → 展示态</b>。先清数据再判定，一旦判定失败就会出现
+    ///         "数据已归零、页面还挂着旧结果"（或反过来）的自相矛盾状态。
+    ///     </para>
+    ///     <para>
+    ///         数据只清临时记录、绝不碰历史；展示态走各页面既有的重置路径
+    ///         （<c>ResetDrawHistoryCore</c> / <c>ClearHistoryCore</c> / <c>ResetDisplayCore</c>），
+    ///         等价于在本地点一次重置——否则"数据清了但页面还是上一轮"，用户会以为没生效。
+    ///     </para>
     /// </remarks>
     public ControlCommandOutcome Apply(ControlDrawResetRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        // 1) 非交互闸门：需要本机输密码就拒绝，**此时什么都还没清**。
+        if (presenter.EvaluateGate(request) is { } rejection)
+        {
+            return ControlCommandOutcome.Failure(
+                rejection.Reason ?? "draw_denied",
+                ControlDrawExecutionFactory.DescribeFailure(rejection));
+        }
 
         var listName = request.ListName;
         if (listName is not null && !Exists(request, listName))
@@ -85,6 +100,7 @@ public sealed class ControlDrawResetHandler(
                 new { field = "list_name", why = "not_found" });
         }
 
+        // 2) 数据：只清临时记录（计数先取，清完就取不到了）。
         var names = listName is not null
             ? [listName]
             : request.ClearsPrizes
@@ -97,13 +113,15 @@ public sealed class ControlDrawResetHandler(
             cleared += request.ClearsPrizes ? ResetPrizes(name) : ResetStudents(name);
         }
 
+        // 3) 展示态：复用各页面本地点"重置"的那条路径，让教室机看起来真的回到新一轮。
+        presenter.ClearPresentation(request);
+
         logger.LogInformation(
             "集控远程重置：目标={Target}，名单={List}，清掉临时记录={Cleared}",
             request.Target,
             listName ?? "(全部)",
             cleared);
 
-        // 成功回执按协议给 detail；同时把"不动历史"写进 detail，免得消费方猜。
         return new ControlCommandOutcome(
             true,
             null,

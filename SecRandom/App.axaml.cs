@@ -1210,7 +1210,8 @@ public partial class App : Application
                     // 真正动手的那一步在 ControlPageDrawExecutor 里（要回到 UI 线程）。
                     services.AddSingleton<IControlDrawExecutor, ControlPageDrawExecutor>();
                     services.AddSingleton<ControlDrawTriggerHandler>();
-                    // 远程重置：只清临时记录（抽取进度），不碰历史。
+                    // 远程重置：只清临时记录（抽取进度），不碰历史；展示态复用各页面本地重置路径。
+                    services.AddSingleton<IControlDrawResetPresenter, ControlPageDrawResetPresenter>();
                     services.AddSingleton<ControlDrawResetHandler>();
                     services.AddSingleton<IControlCommandDispatcher, ControlCommandDispatcher>();
                     services.AddSingleton<ControlNodeClient>();
