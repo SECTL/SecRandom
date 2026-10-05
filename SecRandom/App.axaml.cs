@@ -560,13 +560,8 @@ public partial class App : Application
         _floatingWindow = new FloatingWindow();
         _floatingWindow.Opened += (_, _) => RefreshTrayWindowMenuItems();
         _floatingWindow.Closed += (_, _) => _floatingWindow = null;
-        if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.StartupDisplayFloatingWindow)
-        {
-            _floatingWindow.Hide();
-            _floatingWindow.SetUserVisibilityIntent(false);
-        }
-
         desktop.MainWindow = _floatingWindow;
+        ApplyFloatingWindowStartupVisibility();
 
         WriteDesktopStartupDiagnostic("Initializing desktop application chrome.");
         InitializeApp();
@@ -575,6 +570,55 @@ public partial class App : Application
             Dispatcher.UIThread.Post(() => HandleProtocolUri(startupProtocolUri), DispatcherPriority.Render);
 
         Dispatcher.UIThread.UnhandledException += App_OnDispatcherUnhandledException;
+    }
+
+    /// <summary>
+    ///     按"启动时显示悬浮窗"设置收口悬浮窗的初始可见性。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         这件事必须在这里收口，否则两条启动路径拿不到同一个结果。生命周期在
+    ///         <c>ClassicDesktopStyleApplicationLifetime.StartCore</c> 里**无条件**显示一次
+    ///         <c>MainWindow</c>（<c>ShowMainWindow()</c> 只被 StartCore 调用一次，且不做可见性判断）：
+    ///     </para>
+    ///     <list type="bullet">
+    ///         <item><description>正常启动：本方法跑在 Start **之前**，那次显示替我们把悬浮窗打开；</description></item>
+    ///         <item><description>
+    ///             引导（OOBE）与设置防篡改闸门之后的重启：Start 早就跑过了，**不会再有人**显示这个新赋值的
+    ///             <c>MainWindow</c> —— "OOBE 结束后悬浮窗不出现"就是这条路径。
+    ///         </description></item>
+    ///     </list>
+    ///     <para>
+    ///         关闭时也不能就地 <c>Hide()</c>：此时窗口还没被显示过，而 <c>Window.Hide()</c> 对
+    ///         <c>_shown == false</c> 的窗口直接返回（连可见性都不改），StartCore 随后的显示照样会发生。
+    ///         所以把收口动作排到 Start 那一轮之后再执行；并以"用户是否想看"为闸 —— 期间用户若从托盘
+    ///         重新打开悬浮窗，这里就不再关它。课程联动已经把它藏起来时同理不恢复。
+    ///     </para>
+    /// </remarks>
+    private void ApplyFloatingWindowStartupVisibility()
+    {
+        if (_floatingWindow is not { } window)
+            return;
+
+        if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.StartupDisplayFloatingWindow)
+            window.SetUserVisibilityIntent(false);
+
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (_floatingWindow is not { } current)
+                    return;
+
+                if (!current.UserWantsVisible)
+                {
+                    current.Hide();
+                    return;
+                }
+
+                if (!current.IsHiddenByCourseLinkage)
+                    RestoreWithoutActivating(current);
+            },
+            DispatcherPriority.Loaded);
     }
 
     private void ShowFirstRunOobe(IClassicDesktopStyleApplicationLifetime desktop, string? startupProtocolUri)
