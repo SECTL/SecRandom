@@ -76,8 +76,9 @@
                                                 HorizontalAlignment="Center">
                                         <ContentControl Content="{Binding}"
                                                         ContentTemplate="{StaticResource QuickDrawAvatarTemplate}"
+                                                        VerticalAlignment="Center"
                                                         IsVisible="{Binding IsImageBeforeText}" />
-                                        <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                        <StackPanel Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding DisplayText}"
                                                        TextAlignment="Center"
                                                        Foreground="{Binding TextBrush}"
@@ -91,6 +92,7 @@
                                         </StackPanel>
                                         <ContentControl Content="{Binding}"
                                                         ContentTemplate="{StaticResource QuickDrawAvatarTemplate}"
+                                                        VerticalAlignment="Center"
                                                         IsVisible="{Binding IsImageAfterText}" />
                                     </StackPanel>
                                 </Border>
