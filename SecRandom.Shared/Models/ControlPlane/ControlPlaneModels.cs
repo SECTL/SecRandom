@@ -23,7 +23,7 @@ public sealed record GroupDto
 
     [JsonPropertyName("name")] public string? Name { get; init; }
 
-    /// <summary>当前账号在这个组里的角色：<c>admin</c> / <c>operator</c> / 其它。</summary>
+    /// <summary>当前账号在这个组里的角色：<c>owner</c> / <c>admin</c> / <c>operator</c> / 其它。</summary>
     [JsonPropertyName("role")] public string? Role { get; init; }
 
     [JsonPropertyName("owner_user_id")] public string? OwnerUserId { get; init; }
@@ -34,17 +34,42 @@ public sealed record GroupDto
 
     public string DisplayLabel => string.IsNullOrWhiteSpace(Name) ? GroupId ?? string.Empty : Name!;
 
-    public bool IsAdmin => IsRole("admin");
+    /// <summary>
+    ///     当前账号在这个组里的权限等级：<c>owner</c>/<c>admin</c> = 2，<c>operator</c> = 1，
+    ///     已知但只读的角色 = 0；**不认识的取值是 <c>null</c>（不作判断）**。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         线上返回的角色里有 <c>owner</c>（组所有者）。早先这里只认 <c>admin</c>/<c>operator</c>，
+    ///         于是组所有者的手机看到的是一台台"权限不足"的机器——账号明明是对的。
+    ///         角色取值域归服务端所有，客户端只能按已知取值判断，"不认识"不等于"没权限"。
+    ///     </para>
+    ///     <para>
+    ///         不认识的取值按"不拦"处理：拦错了合法账号就用不了，而放行了服务端照样会回 403，
+    ///         界面再如实显示"当前账号没有权限"。权威判定留给服务端。
+    ///     </para>
+    /// </remarks>
+    public int? RoleRank => Role?.Trim().ToLowerInvariant() switch
+    {
+        "owner" or "admin" => 2,
+        "operator" => 1,
+        "viewer" or "readonly" or "read-only" or "member" or "guest" => 0,
+        _ => null
+    };
 
-    public bool IsOperator => IsRole("operator");
+    /// <summary>能否读名单（<c>roster.read</c> 需要管理员）。未知角色不在这里拦。</summary>
+    public bool CanReadRoster => RoleRank is null or >= 2;
 
-    /// <summary>能否对组内节点下发命令（管理员天然可以）。</summary>
-    public bool CanOperateNodes => IsAdmin || IsOperator;
+    /// <summary>能否对组内节点下发命令（<c>operator</c> 及以上）。未知角色不在这里拦。</summary>
+    public bool CanOperateNodes => RoleRank is null or >= 1;
 
-    /// <summary>能否读名单（<c>roster.read</c> 需要 Admin）。</summary>
-    public bool CanReadRoster => IsAdmin;
+    /// <summary>角色取值已知且确实不够：界面据此给出"权限不足"的解释。</summary>
+    public bool IsKnownInsufficientRole => RoleRank == 0;
 
-    private bool IsRole(string role) => string.Equals(Role, role, StringComparison.OrdinalIgnoreCase);
+    public bool IsAdmin => RoleRank >= 2;
+
+    /// <summary>至少是 <c>operator</c>（含管理员与所有者）。</summary>
+    public bool IsOperator => RoleRank >= 1;
 }
 
 /// <summary>组内的一台设备（节点）。</summary>

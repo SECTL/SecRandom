@@ -67,13 +67,15 @@ public sealed class ControlPlaneException : Exception
         ControlPlaneErrorKind kind,
         int? statusCode = null,
         JsonElement? detail = null,
-        string? message = null)
+        string? message = null,
+        string? requestUri = null)
         : base(message ?? code)
     {
         Code = code;
         Kind = kind;
         StatusCode = statusCode;
         Detail = detail;
+        RequestUri = requestUri;
     }
 
     public string Code { get; }
@@ -83,6 +85,15 @@ public sealed class ControlPlaneException : Exception
     public int? StatusCode { get; }
 
     public JsonElement? Detail { get; }
+
+    /// <summary>
+    ///     失败的那个请求的完整地址。
+    /// </summary>
+    /// <remarks>
+    ///     线上排查"某个请求 404"时，第一件要知道的就是**打到了哪个 URL**：域名拼错、路径少一段、
+    ///     参数没转义，都只能从这一条看出来。挂在异常上，日志与界面才能给出真凭实据，而不是让人去猜。
+    /// </remarks>
+    public string? RequestUri { get; }
 
     /// <summary>把 HTTP 状态码映射成分类；未知状态码归到服务端错误而不是"未知"。</summary>
     public static ControlPlaneErrorKind ClassifyStatus(HttpStatusCode statusCode) => statusCode switch

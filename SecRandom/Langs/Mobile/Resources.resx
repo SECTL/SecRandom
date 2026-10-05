@@ -724,5 +724,12 @@
     <data name="RD_MissingRosterCapability" xml:space="preserve"><value>未声明名单读取，无法选名单</value></data>
     <data name="RD_MissingDrawCapability" xml:space="preserve"><value>未声明远程抽取</value></data>
     <data name="RD_OfflineQueued" xml:space="preserve"><value>离线，上线后执行</value></data>
-    <data name="RD_GroupLoadFailed" xml:space="preserve"><value>读取失败：{0}</value></data>
+    <data name="RD_GroupLoadFailed" xml:space="preserve"><value>读取失败：{0}（{1}）</value></data>
+    <data name="RD_SignIn" xml:space="preserve"><value>登录</value></data>
+    <data name="RD_FailureWithCode" xml:space="preserve"><value>{0}（错误码：{1}）</value></data>
+    <data name="RD_GroupsUnavailable" xml:space="preserve"><value>有 {0} 个组没读到，请重试。</value></data>
+    <data name="MA_SignIn" xml:space="preserve"><value>登录思拓创联账号</value></data>
+    <data name="MA_SignOut" xml:space="preserve"><value>退出登录</value></data>
+    <data name="MA_SignedOutHint" xml:space="preserve"><value>未登录。登录后可以云备份，并在"抽取"页远程控制教室设备。</value></data>
+    <data name="MA_Reauthorize" xml:space="preserve"><value>登录状态已失效，请重新登录。</value></data>
 </root>

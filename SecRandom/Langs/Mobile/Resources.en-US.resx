@@ -724,5 +724,12 @@ Clearing history before fair drawing helps keep the new member’s chance from b
     <data name="RD_MissingRosterCapability" xml:space="preserve"><value>Does not declare roster read; cannot pick a roster</value></data>
     <data name="RD_MissingDrawCapability" xml:space="preserve"><value>Does not declare remote draw</value></data>
     <data name="RD_OfflineQueued" xml:space="preserve"><value>Offline; runs after it reconnects</value></data>
-    <data name="RD_GroupLoadFailed" xml:space="preserve"><value>Could not load: {0}</value></data>
+    <data name="RD_GroupLoadFailed" xml:space="preserve"><value>Could not load {0} (code: {1})</value></data>
+    <data name="RD_SignIn" xml:space="preserve"><value>Sign in</value></data>
+    <data name="RD_FailureWithCode" xml:space="preserve"><value>{0} (code: {1})</value></data>
+    <data name="RD_GroupsUnavailable" xml:space="preserve"><value>{0} group(s) could not be read; try again.</value></data>
+    <data name="MA_SignIn" xml:space="preserve"><value>Sign in with your SECTL account</value></data>
+    <data name="MA_SignOut" xml:space="preserve"><value>Sign out</value></data>
+    <data name="MA_SignedOutHint" xml:space="preserve"><value>Not signed in. Sign in to use cloud backup and to control classroom devices from the Remote tab.</value></data>
+    <data name="MA_Reauthorize" xml:space="preserve"><value>Your session expired; sign in again.</value></data>
 </root>

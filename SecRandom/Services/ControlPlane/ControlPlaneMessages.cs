@@ -42,6 +42,30 @@ public static class ControlPlaneMessages
         };
     }
 
+    /// <summary>
+    ///     同一句话，但对非鉴权类失败**带上服务端错误码**。
+    /// </summary>
+    /// <remarks>
+    ///     线上"某个请求 404"的排查里，"目标不存在"四个字把原因说没了——是域名错了、路径少了、
+    ///     还是这个组真的没了？带上 <c>http_404</c> 这种原样错误码，用户截图给运维时才算一条线索。
+    ///     未登录、超时与网络不可达除外：那几种情况下错误码不增加任何信息。
+    /// </remarks>
+    public static string DescribeWithCode(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        var friendly = Describe(exception);
+        if (exception is not ControlPlaneException controlPlane)
+            return friendly;
+
+        if (controlPlane.Kind is ControlPlaneErrorKind.Unauthorized
+            or ControlPlaneErrorKind.Timeout
+            or ControlPlaneErrorKind.Network)
+            return friendly;
+
+        return string.Format(LR.RD_FailureWithCode, friendly, controlPlane.Code);
+    }
+
     /// <summary>命令跑完了但没成功时的一句话。</summary>
     public static string DescribeCommand(NodeCommandDto command)
     {

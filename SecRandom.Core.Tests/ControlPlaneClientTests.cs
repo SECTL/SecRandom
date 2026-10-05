@@ -28,6 +28,123 @@ public sealed class ControlPlaneClientTests
     private const string GroupId = "group 1";
     private const string NodeId = "node/2";
 
+    /// <summary>线上实测的响应体（同一账号在控制台里能看到的那个组）。</summary>
+    private const string ProductionGroupsBody = """
+        [{"group_id":"grp_01ab30b332e6","name":"高三教学楼","owner_user_id":"69c78f81003173a586ca","owner_display_name":"黎泽懿_Aionflux","created_at":"2026-10-04T11:45:05.014+00:00","role":"owner"}]
+        """;
+
+    // ---------------------------------------------------------------- 线上故障的回归点
+
+    [Fact]
+    public async Task 生产响应体必须解析出组id名字与角色()
+    {
+        // 线上"手机拿不到组"的排查，必须能在真实响应体上复现或排除。
+        var sender = new FakeSender().Respond(HttpStatusCode.OK, ProductionGroupsBody);
+        var client = CreateClient(sender, out _);
+
+        var group = Assert.Single(await client.GetGroupsAsync());
+
+        Assert.Equal("grp_01ab30b332e6", group.GroupId);
+        Assert.Equal("高三教学楼", group.Name);
+        Assert.Equal("owner", group.Role);
+        Assert.Equal("黎泽懿_Aionflux", group.OwnerDisplayName);
+    }
+
+    [Fact]
+    public async Task 生产响应里的owner必须被当成有权限的角色()
+    {
+        var sender = new FakeSender().Respond(HttpStatusCode.OK, ProductionGroupsBody);
+        var client = CreateClient(sender, out _);
+
+        var group = Assert.Single(await client.GetGroupsAsync());
+
+        // 服务端返回的角色就是 owner。只认 admin/operator 的话，组所有者本人会被判成"权限不足"。
+        Assert.Equal(2, group.RoleRank);
+        Assert.True(group.IsAdmin);
+        Assert.True(group.IsOperator);
+        Assert.True(group.CanReadRoster);
+        Assert.True(group.CanOperateNodes);
+        Assert.False(group.IsKnownInsufficientRole);
+    }
+
+    [Theory]
+    [InlineData("owner", true, true)]
+    [InlineData("admin", true, true)]
+    [InlineData("operator", false, true)]
+    [InlineData("viewer", false, false)]
+    [InlineData("readonly", false, false)]
+    // 不认识的角色不拦：拦错了合法账号就用不了，越权时服务端照样会回 403。
+    [InlineData("supervisor", true, true)]
+    [InlineData(null, true, true)]
+    public void 角色等级决定能不能读名单与下发命令(string? role, bool canReadRoster, bool canOperate)
+    {
+        var group = new GroupDto { GroupId = "g1", Role = role };
+
+        Assert.Equal(canReadRoster, group.CanReadRoster);
+        Assert.Equal(canOperate, group.CanOperateNodes);
+    }
+
+    [Fact]
+    public async Task 请求必须打到生产控制面域名而不是账号接口()
+    {
+        // 线上故障就是这一条：集控控制面是**独立域名**，打到账号/云存储那套接口会拿 404，
+        // 页面再把它显示成"没有组/没有设备"，于是看起来像账号不在任何组里。
+        Assert.Equal("https://secrandom-control.sectl.cn", ControlPlaneClient.DefaultBaseUrl);
+        Assert.DoesNotContain("appwrite", ControlPlaneClient.DefaultBaseUrl, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("localhost", ControlPlaneClient.DefaultBaseUrl, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("127.0.0.1", ControlPlaneClient.DefaultBaseUrl, StringComparison.Ordinal);
+
+        var sender = new FakeSender().Respond(HttpStatusCode.OK, "[]");
+        var client = new ControlPlaneClient(sender, NullLogger<ControlPlaneClient>.Instance);
+        await client.GetGroupsAsync();
+
+        var request = Assert.Single(sender.Requests);
+        Assert.Equal(HttpMethod.Get, request.Method);
+        Assert.Equal("https://secrandom-control.sectl.cn/v1/groups", request.Uri.AbsoluteUri);
+    }
+
+    [Fact]
+    public async Task 按组拉节点的地址是协议约定的那一条()
+    {
+        var sender = new FakeSender().Respond(HttpStatusCode.OK, "[]");
+        var client = new ControlPlaneClient(sender, NullLogger<ControlPlaneClient>.Instance);
+
+        await client.GetNodesAsync("grp_01ab30b332e6");
+
+        var request = Assert.Single(sender.Requests);
+        Assert.Equal(
+            "https://secrandom-control.sectl.cn/v1/groups/grp_01ab30b332e6/nodes",
+            request.Uri.AbsoluteUri);
+    }
+
+    [Fact]
+    public async Task 失败时异常必须带上真正打出去的地址与服务端错误码()
+    {
+        // 排查"某个请求 404"时，第一件要知道的就是打到了哪个 URL。
+        var sender = new FakeSender().Respond(HttpStatusCode.NotFound, """{ "error": "not_found" }""");
+        var client = CreateClient(sender, out _);
+
+        var exception = await Assert.ThrowsAsync<ControlPlaneException>(() => client.GetGroupsAsync());
+
+        Assert.Equal("not_found", exception.Code);
+        Assert.Equal(ControlPlaneErrorKind.NotFound, exception.Kind);
+        Assert.Equal("https://control.example/v1/groups", exception.RequestUri);
+    }
+
+    [Fact]
+    public async Task 未登录时归类成需要登录而不是未知错误()
+    {
+        // 授权边界在没有登录时抛 InvalidOperationException；不归类的话界面只会显示
+        // "出错：SECTL 账号未登录。"，既不像"去登录"也不像"凭据失效"。
+        var sender = new FakeSender { ThrowOnSend = new InvalidOperationException("SECTL 账号未登录。") };
+        var client = CreateClient(sender, out _);
+
+        var exception = await Assert.ThrowsAsync<ControlPlaneException>(() => client.GetGroupsAsync());
+
+        Assert.Equal("not_signed_in", exception.Code);
+        Assert.Equal(ControlPlaneErrorKind.Unauthorized, exception.Kind);
+    }
+
     // ---------------------------------------------------------------- 解析
 
     [Fact]
@@ -345,6 +462,9 @@ public sealed class ControlPlaneClientTests
 
         public int Calls { get; private set; }
 
+        /// <summary>让发送器直接抛异常（模拟"未登录"这类授权边界失败）。</summary>
+        public Exception? ThrowOnSend { get; init; }
+
         public FakeSender Respond(HttpStatusCode status, string body, string contentType = "application/json")
         {
             _responses.Enqueue(() => new HttpResponseMessage(status)
@@ -370,6 +490,9 @@ public sealed class ControlPlaneClientTests
         {
             Calls++;
 
+            if (ThrowOnSend is { } failure)
+                throw failure;
+
             using var request = createRequest();
             var body = request.Content is null
                 ? string.Empty
@@ -381,7 +504,11 @@ public sealed class ControlPlaneClientTests
                 ? _responses.Dequeue()
                 : _always ?? throw new InvalidOperationException("测试没有为这次调用准备响应。");
 
-            return factory();
+            var response = factory();
+            // 生产里 HttpClient 会把请求挂到响应上，异常里的 URL 就是这么来的；假发送器要照做，
+            // 否则"异常带 URL"这条只有线上才成立。
+            response.RequestMessage ??= request;
+            return response;
         }
     }
 }

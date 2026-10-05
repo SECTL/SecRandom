@@ -285,6 +285,104 @@ public sealed class MobileRemoteDrawTests : IDisposable
         Assert.Contains("ViewModel.DrawCommand", page, StringComparison.Ordinal);
     }
 
+    // ---------------------------------------------------------------- 四种状态的区分
+
+    /// <summary>
+    ///     "失败"绝不能被渲染成"空数据"。
+    /// </summary>
+    /// <remarks>
+    ///     线上就是这一条出的问题：按组拉节点的请求拿了 404，页面却显示
+    ///     「这些组里还没有设备。教室机需要用同一个账号登录，并加入本组」——
+    ///     用户看到的是"没有设备"，而事实是"请求失败了"。
+    /// </remarks>
+    [Fact]
+    public void 状态区分_请求失败时说的是失败原因而不是没有设备()
+    {
+        var failure = string.Format(LR.RD_FailureWithCode, LR.RD_NotFound, "http_404");
+
+        var text = MobileRemoteDrawViewModel.ResolveEmptyState(
+            isSignedIn: true,
+            isLoading: false,
+            hasDevices: false,
+            loadFailure: failure,
+            failedGroupCount: 0,
+            unavailableReason: null,
+            roleHint: null,
+            hasRoster: false);
+
+        Assert.Equal(failure, text);
+        Assert.DoesNotContain(LR.RD_NoDevicesHint, text, StringComparison.Ordinal);
+        Assert.Contains("http_404", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void 状态区分_未登录时说的是未登录而不是没有设备()
+    {
+        var text = MobileRemoteDrawViewModel.ResolveEmptyState(
+            isSignedIn: false,
+            isLoading: false,
+            hasDevices: false,
+            loadFailure: null,
+            failedGroupCount: 0,
+            unavailableReason: null,
+            roleHint: null,
+            hasRoster: false);
+
+        Assert.Equal(LR.RD_SignedOut, text);
+    }
+
+    [Fact]
+    public void 状态区分_组读失败与组里没有设备是两件事()
+    {
+        // 有组读失败、且一台设备都没读到：必须说"有 N 个组没读到"。
+        var failed = MobileRemoteDrawViewModel.ResolveEmptyState(
+            isSignedIn: true,
+            isLoading: false,
+            hasDevices: false,
+            loadFailure: null,
+            failedGroupCount: 2,
+            unavailableReason: null,
+            roleHint: null,
+            hasRoster: false);
+
+        Assert.Equal(string.Format(LR.RD_GroupsUnavailable, 2), failed);
+        Assert.DoesNotContain(LR.RD_NoDevicesHint, failed, StringComparison.Ordinal);
+
+        // 真的读到 0 台设备（200 + 空数组）才是"还没有设备"。
+        var empty = MobileRemoteDrawViewModel.ResolveEmptyState(
+            isSignedIn: true,
+            isLoading: false,
+            hasDevices: false,
+            loadFailure: null,
+            failedGroupCount: 0,
+            unavailableReason: null,
+            roleHint: null,
+            hasRoster: false);
+
+        Assert.Equal(LR.RD_NoDevicesHint, empty);
+    }
+
+    [Fact]
+    public void 状态区分_网络不可达有自己的说法()
+    {
+        var text = ControlPlaneMessages.DescribeWithCode(
+            new ControlPlaneException("network_error", ControlPlaneErrorKind.Network));
+
+        Assert.Equal(LR.RD_Network, text);
+    }
+
+    [Fact]
+    public void 状态区分_失败文案带上服务端错误码但未登录不带()
+    {
+        var notFound = ControlPlaneMessages.DescribeWithCode(
+            new ControlPlaneException("http_404", ControlPlaneErrorKind.NotFound));
+        var unauthorized = ControlPlaneMessages.DescribeWithCode(
+            new ControlPlaneException("not_signed_in", ControlPlaneErrorKind.Unauthorized));
+
+        Assert.Contains("http_404", notFound, StringComparison.Ordinal);
+        Assert.Equal(LR.RD_Unauthorized, unauthorized);
+    }
+
     // ---------------------------------------------------------------- 三语覆盖
 
     [Fact]
@@ -295,7 +393,9 @@ public sealed class MobileRemoteDrawTests : IDisposable
         foreach (var reference in new[]
                  {
                      @"SecRandom/Views/Mobile/MobileRemoteDrawPage.axaml",
+                     @"SecRandom/Views/Mobile/Settings/MobileSettingsCatalogPage.axaml",
                      @"SecRandom/ViewModels/Mobile/MobileRemoteDrawViewModel.cs",
+                     @"SecRandom/ViewModels/Mobile/MobileAccountSectionViewModel.cs",
                      @"SecRandom/ViewModels/Mobile/DeviceRow.cs",
                      @"SecRandom/ViewModels/Mobile/RosterOption.cs",
                      @"SecRandom/Services/ControlPlane/ControlPlaneMessages.cs"

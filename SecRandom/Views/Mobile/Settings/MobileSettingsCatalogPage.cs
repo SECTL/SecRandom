@@ -4,6 +4,7 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services;
 using SecRandom.Services.Mobile;
+using SecRandom.ViewModels.Mobile;
 using SecRandom.Views.Mobile;
 
 namespace SecRandom.Views.Mobile.Settings;
@@ -16,9 +17,12 @@ public sealed partial class MobileSettingsCatalogPage : Avalonia.Controls.UserCo
 {
     private readonly IMobileSettingsNavigator _settingsNavigator;
 
-    public MobileSettingsCatalogPage(IMobileSettingsNavigator settingsNavigator)
+    public MobileSettingsCatalogPage(
+        IMobileSettingsNavigator settingsNavigator,
+        MobileAccountSectionViewModel account)
     {
         _settingsNavigator = settingsNavigator;
+        Account = account;
         InitializeComponent();
         var pages = PagesRegistryService.SettingsItems
             .Where(page => !page.IsSeparator && !page.IsHide && page.Id != MobilePageIds.Settings)
@@ -48,9 +52,15 @@ public sealed partial class MobileSettingsCatalogPage : Avalonia.Controls.UserCo
 
         Items = items;
         DataContext = this;
+
+        // 页面是 keyed 瞬态、FAFrame 不缓存，离开设置页就该退订，否则每次进来都会多挂一个订阅。
+        DetachedFromVisualTree += (_, _) => Account.Dispose();
     }
 
     public IReadOnlyList<MobileSettingsCatalogItem> Items { get; }
+
+    /// <summary>设置页顶部的账号区（登录状态实时跟随）。</summary>
+    public MobileAccountSectionViewModel Account { get; }
 
     private static MobileSettingsCatalogEntry CreateEntry(PageInfo page) => new(page.Id, page.Name, page.IconGlyph);
 

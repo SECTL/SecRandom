@@ -71,12 +71,23 @@ public sealed class ControlPlaneClient(
     string? baseUrl = null,
     Func<TimeSpan, CancellationToken, Task>? delay = null) : IControlPlaneClient
 {
-    /// <summary>控制面所在的服务地址。</summary>
+    /// <summary>控制面服务的生产地址。</summary>
     /// <remarks>
-    ///     与服务端约定的是**相对**路径（<c>/v1/groups</c>…），因此这里只拼一个基址；
-    ///     服务端上线后若挂在别的路径下，改这一行即可，不必翻遍客户端。
+    ///     <para>
+    ///         集控控制面**不是** SECTL 账号/云存储那一套接口：它是独立域名 <c>secrandom-control.sectl.cn</c>，
+    ///         只有令牌是同一套（Bearer 走 <see cref="IAuthorizedApiSender" />）。
+    ///     </para>
+    ///     <para>
+    ///         早先这里复用了 <c>SectlAuthService.ApiBaseUrl</c>（<c>appwrite.sectl.cn</c>），
+    ///         于是手机把 <c>/v1/groups</c> 打到了 Appwrite 网关上拿到 404；
+    ///         页面又把这个失败渲染成"没有设备/没有组"，线上表现就是"同一个账号却拿不到组"。
+    ///         基址必须独立成常量，且默认只指向生产域名——开发用的回环地址必须在构造时显式传入，
+    ///         绝不能作为缺省值，否则手机端会永远连本机。
+    ///     </para>
     /// </remarks>
-    public static string DefaultBaseUrl => SectlAuthService.ApiBaseUrl;
+    public const string ProductionBaseUrl = "https://secrandom-control.sectl.cn";
+
+    public static string DefaultBaseUrl => ProductionBaseUrl;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -202,6 +213,16 @@ public sealed class ControlPlaneClient(
         {
             throw;
         }
+        catch (InvalidOperationException exception)
+        {
+            // 授权边界在"没有登录"时抛的就是这个异常（SectlAuthService 的既有契约）。
+            // 不把它单独归类的话，界面只能显示一句"出错：SECTL 账号未登录。"，
+            // 既不像"去登录"，也不像"凭据失效"，用户不知道下一步该做什么。
+            throw new ControlPlaneException(
+                "not_signed_in",
+                ControlPlaneErrorKind.Unauthorized,
+                message: exception.Message);
+        }
         catch (Exception exception) when (exception is HttpRequestException or IOException)
         {
             throw new ControlPlaneException(
@@ -216,10 +237,12 @@ public sealed class ControlPlaneClient(
             if (response.IsSuccessStatusCode)
                 return body;
 
-            var exception = CreateException(response.StatusCode, body);
+            // 记下**真正打出去的地址**：线上"拿不到组"的排查就是从这一条开始收敛的。
+            var requestUri = response.RequestMessage?.RequestUri?.ToString();
+            var exception = CreateException(response.StatusCode, body, requestUri);
             logger.LogWarning(
-                "控制面请求失败：状态={Status}，错误码={Code}，分类={Kind}",
-                (int)response.StatusCode, exception.Code, exception.Kind);
+                "控制面请求失败：状态={Status}，URL={Url}，错误码={Code}，分类={Kind}",
+                (int)response.StatusCode, requestUri ?? "unknown", exception.Code, exception.Kind);
             throw exception;
         }
     }
@@ -232,7 +255,7 @@ public sealed class ControlPlaneClient(
     ///     读不到就用 <c>http_&lt;状态码&gt;</c>。**永远不丢码**：手机端显示的是分类，
     ///     但日志与反馈里必须留下服务端说的那个词。
     /// </remarks>
-    private static ControlPlaneException CreateException(HttpStatusCode statusCode, string body)
+    private static ControlPlaneException CreateException(HttpStatusCode statusCode, string body, string? requestUri = null)
     {
         string? code = null;
         string? description = null;
@@ -264,7 +287,8 @@ public sealed class ControlPlaneClient(
             string.IsNullOrWhiteSpace(code) ? ControlPlaneException.FallbackCode(statusCode) : code!,
             ControlPlaneException.ClassifyStatus(statusCode),
             (int)statusCode,
-            message: description ?? code ?? ControlPlaneException.FallbackCode(statusCode));
+            message: description ?? code ?? ControlPlaneException.FallbackCode(statusCode),
+            requestUri: requestUri);
     }
 
     /// <summary>

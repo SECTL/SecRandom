@@ -3,10 +3,66 @@
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              xmlns:local="clr-namespace:SecRandom.Views.Mobile.Settings"
+             xmlns:langs="using:SecRandom.Langs.Mobile"
              x:Class="SecRandom.Views.Mobile.Settings.MobileSettingsCatalogPage"
              x:DataType="local:MobileSettingsCatalogPage">
     <ScrollViewer x:Name="PageScroll">
-        <ItemsControl ItemsSource="{Binding Items}">
+        <StackPanel Classes="page-container" Orientation="Vertical">
+            <!-- 账号区固定在设置页最顶部：手机端没有标题栏账号入口，未登录时这里是唯一的登录入口。 -->
+            <Border Margin="0 0 0 12"
+                    Padding="14"
+                    CornerRadius="8"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <StackPanel Spacing="10">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Panel Width="44" Height="44">
+                            <Border CornerRadius="22"
+                                    Background="{DynamicResource AccentFillColorDefaultBrush}"
+                                    IsVisible="{Binding Account.ShowPlaceholder}" />
+                            <Border CornerRadius="22"
+                                    Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                    IsVisible="{Binding Account.ShowInitial}">
+                                <TextBlock Text="{Binding Account.Initial}"
+                                           FontSize="18"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                            </Border>
+                            <Image Source="{Binding Account.Avatar}"
+                                   Stretch="UniformToFill"
+                                   IsVisible="{Binding Account.HasAvatar}" />
+                        </Panel>
+                        <StackPanel VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="{Binding Account.DisplayName}"
+                                       FontWeight="SemiBold"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding Account.IsSignedIn}" />
+                            <TextBlock Text="{x:Static langs:Resources.MA_SignedOutHint}"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding !Account.IsSignedIn}" />
+                            <TextBlock Text="{x:Static langs:Resources.MA_Reauthorize}"
+                                       FontSize="12"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding Account.RequiresReauthorization}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Button Classes="accent"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Content="{x:Static langs:Resources.MA_SignIn}"
+                            Command="{Binding Account.SignInCommand}"
+                            IsEnabled="{Binding !Account.IsBusy}"
+                            IsVisible="{Binding !Account.IsSignedIn}" />
+                    <Button HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Content="{x:Static langs:Resources.MA_SignOut}"
+                            Command="{Binding Account.SignOutCommand}"
+                            IsEnabled="{Binding !Account.IsBusy}"
+                            IsVisible="{Binding Account.IsSignedIn}" />
+                </StackPanel>
+            </Border>
+
+            <ItemsControl ItemsSource="{Binding Items}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <StackPanel Classes="page-container" Orientation="Vertical" />
@@ -40,6 +96,7 @@
                     </fa:FASettingsExpander>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
-        </ItemsControl>
+            </ItemsControl>
+        </StackPanel>
     </ScrollViewer>
 </UserControl>

@@ -51,6 +51,9 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     private bool _subscribed;
     private bool _selectingDevice;
 
+    /// <summary>凭据失效（刷新后仍 401）：页面要给出"重新登录"，而不是空态。</summary>
+    private bool _requiresSignIn;
+
     public MobileRemoteDrawViewModel(
         MainConfigHandler configHandler,
         IControlPlaneClient client,
@@ -88,6 +91,15 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
 
     [ObservableProperty] private string _statusText = string.Empty;
 
+    /// <summary>加载设备列表时的失败说明；成功或还没加载过时为空。</summary>
+    /// <remarks>
+    ///     <b>必须单独成一个字段，并且抢在"没有组/没有设备"之前显示。</b>
+    ///     线上就是这么坏的：请求打错域名拿了 404，页面却只显示"这些组里还没有设备"，
+    ///     同一个账号在控制台里明明看得见组，用户只能得出"手机拿不到组"的结论。
+    ///     把失败呈现成"没有数据"是最糟的一种错误处理——它把故障伪装成正常状态。
+    /// </remarks>
+    [ObservableProperty] private string _loadFailure = string.Empty;
+
     [ObservableProperty] private bool _isSignedIn;
 
     [ObservableProperty] private DeviceRow? _selectedDevice;
@@ -113,43 +125,95 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
 
     public bool HasUnavailableGroups => UnavailableGroups.Count > 0;
 
-    /// <summary>该说点什么的时候（空态或降级原因）为真。</summary>
+    /// <summary>该说点什么的时候（失败、空态或降级原因）为真。</summary>
     public bool HasEmptyState => EmptyStateText.Length > 0;
+
+    /// <summary>上次加载失败了（页面必须显示失败原因，而不是"没有设备"）。</summary>
+    public bool HasLoadFailure => LoadFailure.Length > 0;
+
+    /// <summary>需要重新登录：未登录，或凭据已失效。</summary>
+    public bool NeedsSignIn => !IsSignedIn || _requiresSignIn;
 
     public string DeviceSummary => SelectedDevice?.Summary ?? string.Empty;
 
     public string DevicesCountText => string.Format(LR.RD_DevicesCount, Devices.Count);
 
-    /// <summary>能不能"读取名单"：选中设备 + 组角色够 + 设备声明了名单读取。</summary>
+    /// <summary>能不能"读取名单"：选中设备可用、本机没关远控、设备声明了名单读取、组角色够。</summary>
     public bool CanLoadRoster =>
         !IsBusy
         && IsSignedIn
-        && SelectedDevice is { IsUsable: true, IsRemoteDisabled: false }
-        && SelectedDevice.SupportsRosterRead;
+        && SelectedDevice is { IsUsable: true }
+        && SelectedDevice.SupportsRosterRead
+        && SelectedDevice.Group.CanReadRoster;
 
-    /// <summary>能不能抽：还要有已读到的名单。</summary>
+    /// <summary>能不能抽：还要有已读到的名单、设备声明了抽取、组角色够。</summary>
     public bool CanDraw =>
-        CanLoadRoster && SelectedDevice!.SupportsDraw && HasRoster;
+        CanLoadRoster
+        && SelectedDevice!.SupportsDraw
+        && SelectedDevice.Group.CanOperateNodes
+        && HasRoster;
 
-    /// <summary>该显示的空态/降级说明；不需要时为空白。</summary>
-    public string EmptyStateText
+    /// <summary>该显示的失败/空态/降级说明；不需要时为空白。</summary>
+    /// <remarks>
+    ///     判定顺序就是这个页面的"用户体验优先级"：**失败先说失败**，然后才是未登录、
+    ///     正在加载、没有设备。把失败排到后面，就会出现"网络断了却告诉用户没有组"这种把人带偏的提示。
+    /// </remarks>
+    public string EmptyStateText => ResolveEmptyState(
+        IsSignedIn,
+        IsLoadingDevices,
+        HasDevices,
+        LoadFailure,
+        UnavailableGroups.Count,
+        SelectedDevice?.UnavailableReason,
+        SelectedDevice?.Group.IsKnownInsufficientRole == true
+            ? SelectedDevice.Group.CanReadRoster ? LR.RD_NotOperator : LR.RD_NotAdmin
+            : null,
+        HasRoster);
+
+    /// <summary>
+    ///     失败/空态文案的判定（纯函数，便于单测）。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         四种状态必须分开，顺序错了就会把故障说成空数据——线上就是"请求 404"被渲染成
+    ///         "这些组里还没有设备"：
+    ///     </para>
+    ///     <list type="number">
+    ///         <item>请求失败（未登录/凭据失效/网络/服务端错误码）→ 直接说失败原因；</item>
+    ///         <item>未登录 → 未登录文案；</item>
+    ///         <item>正在加载 → 加载中文案；</item>
+    ///         <item><b>有组读取失败且一台设备都没读到</b> → "有 N 个组没读到"，<b>不是</b>"没有设备"；</item>
+    ///         <item>真的读到 0 台设备 → 才是"还没有设备"。</item>
+    ///     </list>
+    /// </remarks>
+    public static string ResolveEmptyState(
+        bool isSignedIn,
+        bool isLoading,
+        bool hasDevices,
+        string? loadFailure,
+        int failedGroupCount,
+        string? unavailableReason,
+        string? roleHint,
+        bool hasRoster)
     {
-        get
+        if (!string.IsNullOrWhiteSpace(loadFailure))
+            return loadFailure!;
+
+        if (!isSignedIn)
+            return LR.RD_SignedOut;
+
+        if (isLoading)
+            return LR.RD_LoadingDevices;
+
+        if (!hasDevices)
         {
-            if (!IsSignedIn)
-                return LR.RD_SignedOut;
-
-            if (IsLoadingDevices)
-                return LR.RD_LoadingDevices;
-
-            if (!HasDevices)
-                return LR.RD_NoDevicesHint;
-
-            if (SelectedDevice is null)
-                return LR.RD_SelectDevice;
-
-            return SelectedDevice.UnavailableReason ?? (HasRoster ? string.Empty : LR.RD_NoRoster);
+            // 关键的一条：**读失败**不等于**没有设备**。
+            return failedGroupCount > 0
+                ? string.Format(LR.RD_GroupsUnavailable, failedGroupCount)
+                : LR.RD_NoDevicesHint;
         }
+
+        return unavailableReason ?? roleHint ?? (hasRoster ? string.Empty : LR.RD_NoRoster);
     }
 
     /// <summary>进页面时调用：记住的设备优先，其次第一台在线的。</summary>
@@ -157,6 +221,38 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     {
         Subscribe();
         IsSignedIn = _auth.IsSignedIn;
+        _requiresSignIn = _auth.RequiresReauthorization;
+        RefreshDerived();
+
+        if (!IsSignedIn)
+        {
+            LoadFailure = string.Empty;
+            RefreshDerived();
+            return;
+        }
+
+        await LoadDevicesAsync().ConfigureAwait(true);
+    }
+
+    /// <summary>凭据失效时给用户的下一步：重新走一次 SECTL 登录，然后重新拉设备。</summary>
+    [RelayCommand]
+    private async Task SignInAsync()
+    {
+        try
+        {
+            await _auth.SignInAsync().ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "重新登录 SECTL 账号失败。");
+            LoadFailure = ControlPlaneMessages.Describe(exception);
+            RefreshDerived();
+            return;
+        }
+
+        IsSignedIn = _auth.IsSignedIn;
+        _requiresSignIn = _auth.RequiresReauthorization;
+        LoadFailure = string.Empty;
         RefreshDerived();
 
         if (!IsSignedIn)
@@ -169,8 +265,10 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     private async Task RefreshAsync()
     {
         IsSignedIn = _auth.IsSignedIn;
+        _requiresSignIn = _auth.RequiresReauthorization;
         if (!IsSignedIn)
         {
+            LoadFailure = string.Empty;
             RefreshDerived();
             return;
         }
@@ -215,8 +313,7 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         }
         catch (Exception exception)
         {
-            _logger.LogWarning(exception, "读取教室机名单失败。");
-            StatusText = ControlPlaneMessages.Describe(exception);
+            ApplyFailure(exception, "读取教室机名单失败。");
         }
         finally
         {
@@ -280,8 +377,7 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         }
         catch (Exception exception)
         {
-            _logger.LogWarning(exception, "远程抽取失败。");
-            StatusText = ControlPlaneMessages.Describe(exception);
+            ApplyFailure(exception, "远程抽取失败。");
         }
         finally
         {
@@ -298,6 +394,7 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     private async Task LoadDevicesAsync()
     {
         IsLoadingDevices = true;
+        LoadFailure = string.Empty;
         StatusText = LR.RD_LoadingDevices;
         Devices.Clear();
         UnavailableGroups.Clear();
@@ -311,8 +408,9 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         }
         catch (Exception exception)
         {
-            _logger.LogWarning(exception, "读取控制面分组失败。");
-            StatusText = ControlPlaneMessages.Describe(exception);
+            // 失败**一定**要落进 LoadFailure：只写状态行的话，页面的空态会继续显示
+            // "这些组里还没有设备"，用户看到的仍然是"没有组"，而不是"请求失败了"。
+            ApplyFailure(exception, "读取控制面分组失败。");
             IsLoadingDevices = false;
             RefreshDerived();
             return;
@@ -343,9 +441,21 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
             }
             catch (Exception exception)
             {
-                _logger.LogWarning(exception, "读取组 {Group} 的设备失败。", group.GroupId);
+                // **"这个组读失败"与"这个组没有设备"是两件事**：404/401/网络错误必须显示出来，
+                // 否则整页会落进"还没有设备"的空态，把服务端错误说成设备不存在（线上就是这样）。
+                _logger.LogWarning(
+                    exception,
+                    "读取组 {Group} 的设备失败：{Reason}",
+                    group.GroupId,
+                    exception is ControlPlaneException { RequestUri: { } uri } controlPlane
+                        ? $"{controlPlane.Kind}/{controlPlane.Code} {uri}"
+                        : exception.Message);
+
                 lock (failed)
-                    failed.Add(string.Format(LR.RD_GroupLoadFailed, group.DisplayLabel));
+                    failed.Add(string.Format(
+                        LR.RD_GroupLoadFailed,
+                        group.DisplayLabel,
+                        exception is ControlPlaneException { Code: { } code } known ? known.Code : "unknown"));
             }
             finally
             {
@@ -370,8 +480,27 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
 
         ApplyPreferredDevice();
 
+        // 一组设备都没读到、但组本身读到了：不是网络失败，而是"组里没有设备"或"部分组读不到"，
+        // 两者都由 UnavailableGroups / 空态文案说明，因此这里**清掉**失败标记（它只表示"列表没拿到"）。
         IsLoadingDevices = false;
         RefreshDerived();
+    }
+
+    /// <summary>把一个失败同时落到状态行与失败态，并识别"凭据失效"。</summary>
+    private void ApplyFailure(Exception exception, string logMessage)
+    {
+        _logger.LogWarning(
+            exception,
+            "{Message}{Url}",
+            logMessage,
+            exception is ControlPlaneException { RequestUri: { } uri } ? $"（{uri}）" : string.Empty);
+
+        var message = ControlPlaneMessages.DescribeWithCode(exception);
+        StatusText = message;
+        LoadFailure = message;
+
+        if (exception is ControlPlaneException { Kind: ControlPlaneErrorKind.Unauthorized })
+            _requiresSignIn = true;
     }
 
     /// <summary>记住的设备优先，其次第一台能用的、再其次第一台在线的、最后第一台。</summary>
@@ -516,8 +645,15 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
 
     private void OnAuthStateChanged(object? sender, EventArgs e)
     {
+        var wasSignedIn = IsSignedIn;
         IsSignedIn = _auth.IsSignedIn;
+        _requiresSignIn = _auth.RequiresReauthorization;
         RefreshDerived();
+
+        // 登录态是启动后异步装回来的（也可能刚在设置页登录完）：页面已经打开时，这次变化必须自己
+        // 把设备列表拉起来，否则用户看到的是一个不会再刷新的"未登录"空态。
+        if (!wasSignedIn && IsSignedIn && !HasDevices && !IsLoadingDevices && LoadFailure.Length == 0)
+            _ = RefreshAsync();
     }
 
     private void RefreshDerived()
@@ -528,6 +664,8 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         OnPropertyChanged(nameof(HasResult));
         OnPropertyChanged(nameof(HasUnavailableGroups));
         OnPropertyChanged(nameof(HasEmptyState));
+        OnPropertyChanged(nameof(HasLoadFailure));
+        OnPropertyChanged(nameof(NeedsSignIn));
         OnPropertyChanged(nameof(DeviceSummary));
         OnPropertyChanged(nameof(DevicesCountText));
         OnPropertyChanged(nameof(CanLoadRoster));

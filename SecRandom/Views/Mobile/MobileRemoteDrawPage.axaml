@@ -22,12 +22,23 @@
             <TextBlock Text="{x:Static langs:Resources.P_RemoteDraw}" FontSize="20" FontWeight="SemiBold" />
             <TextBlock Text="{x:Static langs:Resources.RD_Hint}" Opacity="0.7" TextWrapping="Wrap" />
 
-            <!-- 未登录、没有组、没有设备、角色不足、设备不支持：每一种都要说清楚，不留空白页。 -->
+            <!-- 未登录、请求失败、没有组、没有设备、角色不足、设备不支持：每一种都要说清楚，不留空白页。 -->
             <Border IsVisible="{Binding ViewModel.HasEmptyState}"
                     Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="8"
                     Padding="12">
-                <TextBlock Text="{Binding ViewModel.EmptyStateText}" TextWrapping="Wrap" />
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{Binding ViewModel.EmptyStateText}" TextWrapping="Wrap" />
+                    <!-- 每一个非"正常空数据"的状态都给下一步：重试；未登录/凭据失效时直接去登录。 -->
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="{x:Static langs:Resources.RD_Refresh}"
+                                Command="{Binding ViewModel.RefreshCommand}" />
+                        <Button Classes="accent"
+                                Content="{x:Static langs:Resources.RD_SignIn}"
+                                Command="{Binding ViewModel.SignInCommand}"
+                                IsVisible="{Binding ViewModel.NeedsSignIn}" />
+                    </StackPanel>
+                </StackPanel>
             </Border>
 
             <!-- 设备选择：跨组扁平列表，名称/组/在线/本机开关/能否抽取一眼看全。 -->
@@ -67,18 +78,23 @@
                 </ListBox.ItemTemplate>
             </ListBox>
 
-            <!-- 部分组读不到：只说那一组，其余设备照常可用。 -->
+            <!-- 部分组读不到：只说那一组（带服务端错误码），其余设备照常可用。 -->
             <Border IsVisible="{Binding ViewModel.HasUnavailableGroups}"
                     Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="8"
                     Padding="12">
-                <ItemsControl ItemsSource="{Binding ViewModel.UnavailableGroups}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="system:String">
-                            <TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <StackPanel Spacing="8">
+                    <ItemsControl ItemsSource="{Binding ViewModel.UnavailableGroups}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="system:String">
+                                <TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Content="{x:Static langs:Resources.RD_Refresh}"
+                            Command="{Binding ViewModel.RefreshCommand}"
+                            HorizontalAlignment="Left" />
+                </StackPanel>
             </Border>
 
             <Button Content="{x:Static langs:Resources.RD_LoadRoster}"

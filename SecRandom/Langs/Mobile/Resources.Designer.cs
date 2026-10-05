@@ -548,4 +548,11 @@ public class Resources
     public static string RD_MissingDrawCapability => ResourceManager.GetString("RD_MissingDrawCapability", resourceCulture)!;
     public static string RD_OfflineQueued => ResourceManager.GetString("RD_OfflineQueued", resourceCulture)!;
     public static string RD_GroupLoadFailed => ResourceManager.GetString("RD_GroupLoadFailed", resourceCulture)!;
+    public static string RD_SignIn => ResourceManager.GetString("RD_SignIn", resourceCulture)!;
+    public static string RD_FailureWithCode => ResourceManager.GetString("RD_FailureWithCode", resourceCulture)!;
+    public static string RD_GroupsUnavailable => ResourceManager.GetString("RD_GroupsUnavailable", resourceCulture)!;
+    public static string MA_SignIn => ResourceManager.GetString("MA_SignIn", resourceCulture)!;
+    public static string MA_SignOut => ResourceManager.GetString("MA_SignOut", resourceCulture)!;
+    public static string MA_SignedOutHint => ResourceManager.GetString("MA_SignedOutHint", resourceCulture)!;
+    public static string MA_Reauthorize => ResourceManager.GetString("MA_Reauthorize", resourceCulture)!;
 }

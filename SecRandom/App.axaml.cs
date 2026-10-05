@@ -381,6 +381,16 @@ public partial class App : Application
             if (_mobileStopping || !ReferenceEquals(host, _mobileHost))
                 return;
 
+            // 登录态必须在这里从磁盘装回来（与桌面 StartRuntimeServicesAsync 的顺序一致：Host 启动前）。
+            // 漏掉这一步的症状是"App 重启后账号就退出了"：token 文件一直好好地躺在
+            // data/config/sectl-auth.json 里，但进程内会话是空的，于是控制面/云备份全都表现为"未登录"，
+            // 而手机端设置页与集控页又会把它显示成"没有组/没有设备"，看起来像账号本身出了问题。
+            // InitializeAsync 只读本地、不联网，因此放在 Host 启动前不会拖慢启动。
+            if (host.Services.GetService<SectlAuthService>() is { } auth)
+                await auth.InitializeAsync().ConfigureAwait(false);
+            if (_mobileStopping || !ReferenceEquals(host, _mobileHost))
+                return;
+
             await host.StartAsync().ConfigureAwait(false);
             if (_mobileStopping || !ReferenceEquals(host, _mobileHost))
                 return;
@@ -1269,6 +1279,8 @@ public partial class App : Application
                     // 手机端"远程抽取"页的 ViewModel：页面每次进入都重建（FAFrame 不快取），
                     // 它自己会记住上次选中的设备，因此不需要做成单例。
                     services.AddTransient<MobileRemoteDrawViewModel>();
+                    // 设置页顶部的账号区：页面每次进入重建，订阅在页面离树时释放。
+                    services.AddTransient<MobileAccountSectionViewModel>();
                 }
                 else
                 {
