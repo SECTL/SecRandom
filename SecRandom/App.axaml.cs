@@ -210,7 +210,7 @@ public partial class App : Application
 
 #if DEBUG
         // 附加开发者工具
-        this.AttachDeveloperTools();
+        this.AttachDevTools();
 #endif
     }
 
