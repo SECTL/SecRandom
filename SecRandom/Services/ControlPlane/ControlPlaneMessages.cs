@@ -97,9 +97,13 @@ public static class ControlPlaneMessages
                 "expired" => LR.RD_Expired,
                 "rate_limited" => LR.RD_RateLimited,
                 "execution_failed" => LR.RD_Failed,
-                "draw_denied" => string.Equals(command.DetailReason, "blocked_by_class_time", StringComparison.Ordinal)
-                    ? LR.RD_ClassTime
-                    : LR.RD_Denied,
+                "draw_denied" => command.DetailReason switch
+                {
+                    "blocked_by_class_time" => LR.RD_ClassTime,
+                    // 本机把它自己的抽奖功能关掉了：那不是"拒绝了"，而是这台机器压根没有这个功能。
+                    "lottery_disabled" => LR.RD_LotteryDisabled,
+                    _ => LR.RD_Denied
+                },
                 _ => string.Format(LR.RD_Error, code)
             };
 
@@ -130,9 +134,36 @@ public static class ControlPlaneMessages
             return DescribeCommand(command);
 
         var drawn = command.DrawnMembers();
-        return drawn.Count > 0
-            ? string.Format(LR.RD_DrawnCount, drawn.Count)
-            : LR.RD_ResultUnreadable;
+        if (drawn.Count == 0)
+            return LR.RD_ResultUnreadable;
+
+        // 量词跟着回执里的目标走：抽奖抽回来的是奖品，说成"抽到 2 人"就错了。
+        return string.Equals(command.ResultTarget, "lottery", StringComparison.Ordinal)
+            ? string.Format(LR.RD_DrawnPrizeCount, drawn.Count)
+            : string.Format(LR.RD_DrawnCount, drawn.Count);
+    }
+
+    /// <summary>
+    ///     一次"重置本轮"该显示什么。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <b>重置不是抽取。</b>它成功时回执里没有 <c>drawn</c>，只有一个 <c>cleared</c> 条数；
+    ///         拿 <see cref="DescribeDrawResult" /> 去渲染它，用户会看到"回执里没有可显示的成员"——
+    ///         明明重置成功了，屏幕上却像出了错。
+    ///     </para>
+    ///     <para>
+    ///         回执里读不到条数时按 0 显示：重置本身已经成功，条数只是补充信息，
+    ///         为此编一句"未知"反而会让人以为重置没生效。
+    ///     </para>
+    /// </remarks>
+    public static string DescribeResetResult(NodeCommandDto command)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        return command.IsSucceeded
+            ? string.Format(LR.RD_ResetDone, command.ResultClearedCount ?? 0)
+            : DescribeCommand(command);
     }
 
     private static string DescribeInvalidValue(string? field, string? why) => why switch

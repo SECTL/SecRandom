@@ -65,6 +65,10 @@ public interface IControlDrawExecutor
     Task<ControlDrawExecution> DrawRollCallAsync(
         ControlDrawTriggerRequest request,
         CancellationToken cancellationToken);
+
+    Task<ControlDrawExecution> DrawLotteryAsync(
+        ControlDrawTriggerRequest request,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -96,9 +100,16 @@ public sealed class ControlDrawTriggerHandler(
 
         try
         {
-            var execution = request.IsRollCall
-                ? await executor.DrawRollCallAsync(request, cancellationToken).ConfigureAwait(false)
-                : await executor.DrawQuickAsync(cancellationToken).ConfigureAwait(false);
+            // 三条目标各有各的会话：快抽没有参数，点名与抽奖各自带着自己的名单/奖池与数量。
+            // 用 target 分派而不是"带参数就走点名"，是因为抽奖与点名的候选池、页面和回执目标都不同。
+            var execution = request.Target switch
+            {
+                ControlDrawTriggerRequest.TargetRollCall =>
+                    await executor.DrawRollCallAsync(request, cancellationToken).ConfigureAwait(false),
+                ControlDrawTriggerRequest.TargetLottery =>
+                    await executor.DrawLotteryAsync(request, cancellationToken).ConfigureAwait(false),
+                _ => await executor.DrawQuickAsync(cancellationToken).ConfigureAwait(false)
+            };
 
             // 抽取结果放 **detail**（协议里 command.result.detail），不是查询用的 result_payload：
             // 手机与旧控制台都按 detail 读这条回执。

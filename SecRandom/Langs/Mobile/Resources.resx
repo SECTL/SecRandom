@@ -734,4 +734,15 @@
     <data name="MA_Reauthorize" xml:space="preserve"><value>登录状态已失效，请重新登录</value></data>
     <data name="RD_ResultUnreadable" xml:space="preserve"><value>设备已执行，但回执里没有可显示的成员</value></data>
     <data name="RD_NoRosterCandidate" xml:space="preserve"><value>这个名单里没有可抽取的成员</value></data>
+    <data name="RD_Kind" xml:space="preserve"><value>抽取类型</value></data>
+    <data name="RD_KindRollCall" xml:space="preserve"><value>点名</value></data>
+    <data name="RD_KindLottery" xml:space="preserve"><value>抽奖</value></data>
+    <data name="RD_Pool" xml:space="preserve"><value>奖池</value></data>
+    <data name="RD_LotteryNoScope" xml:space="preserve"><value>抽奖不按性别与分组筛选</value></data>
+    <data name="RD_DrawnPrizeCount" xml:space="preserve"><value>抽到 {0} 个奖品</value></data>
+    <data name="RD_LotteryDisabled" xml:space="preserve"><value>这台机器已关闭抽奖功能</value></data>
+    <data name="RD_Reset" xml:space="preserve"><value>重置本轮</value></data>
+    <data name="RD_Resetting" xml:space="preserve"><value>正在重置…</value></data>
+    <data name="RD_ResetDone" xml:space="preserve"><value>已重置本轮，清掉 {0} 条抽取进度</value></data>
+    <data name="RD_ResetConfirm" xml:space="preserve"><value>再点一次确认重置</value></data>
 </root>

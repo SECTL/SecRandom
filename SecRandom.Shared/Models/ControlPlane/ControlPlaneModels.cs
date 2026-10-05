@@ -278,11 +278,31 @@ public sealed record NodeCommandDto
 
     public string? ResultListName => ResultString("list_name");
 
+    /// <summary>回执里的目标（<c>roll_call</c> / <c>quick</c> / <c>lottery</c>）；没有时为空。</summary>
+    /// <remarks>
+    ///     手机端据此决定结果文案的量词：抽奖抽回来的是奖品，说成"抽到 2 人"就错了。
+    ///     读的是设备回执**自己**说的目标，而不是客户端发出去的那个——回执才是既成事实。
+    /// </remarks>
+    public string? ResultTarget => ResultString("target");
+
     public int? ResultCount =>
         ResultDetail is { ValueKind: JsonValueKind.Object } detail
         && detail.TryGetProperty("count", out var count)
         && count.ValueKind == JsonValueKind.Number
         && count.TryGetInt32(out var value)
+            ? value
+            : null;
+
+    /// <summary><c>draw.reset</c> 回执里清掉的临时记录条数；没有这个字段时为 <c>null</c>。</summary>
+    /// <remarks>
+    ///     与 <see cref="ResultCount" /> 分开：重置回执里的 <c>cleared</c> 是"清掉了几条抽取进度"，
+    ///     不是"抽到了几个"。两者同名会让手机把重置结果显示成抽奖结果。
+    /// </remarks>
+    public int? ResultClearedCount =>
+        TryGetResultObject(out var result)
+        && result.TryGetProperty("cleared", out var cleared)
+        && cleared.ValueKind == JsonValueKind.Number
+        && cleared.TryGetInt32(out var value)
             ? value
             : null;
 

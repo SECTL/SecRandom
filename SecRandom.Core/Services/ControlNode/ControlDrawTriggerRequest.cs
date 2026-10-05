@@ -20,15 +20,25 @@ namespace SecRandom.Core.Services.ControlNode;
 ///         而是协议要求——旧控制台已经在生产里发了命令。
 ///     </para>
 ///     <para>
+///         <b>抽奖与点名共用一条通道，但不共用条件。</b>点名可以按性别/分组筛人，奖品没有这两个属性，
+///         所以 <c>target=lottery</c> 时 <c>gender</c>/<c>group</c> **存在即拒绝**
+///         （<c>invalid_value:gender:not_applicable</c> / <c>invalid_value:group:not_applicable</c>）。
+///         刻意不静默忽略：控制台/手机里留着一个"筛选条件"输入框、发过来却被丢掉，
+///         用户会以为"按这个条件抽的"，而结果是按整池抽的——这种"看起来生效了"的谎言比直接拒绝更难发现。
+///     </para>
+///     <para>
 ///         条件的**取值合法性**不在这里判定：解析阶段不知道这台机器上有哪些名单、哪个名单里有谁，
-///         那些判断归 <see cref="ControlDrawConditions" />（拿到名单成员之后）与调用方（名单是否存在）。
+///         那些判断归 <see cref="ControlDrawConditions" />（拿到名单成员或奖池奖品之后）与调用方（名单/奖池是否存在）。
 ///     </para>
 /// </remarks>
-/// <param name="Target">抽取目标：<see cref="TargetQuick" />（快抽，默认）或 <see cref="TargetRollCall" />（点名）。</param>
-/// <param name="ListName">点名抽取要用的名单名；空表示用本机当前的默认点名名单。</param>
-/// <param name="Count">抽取人数；空表示 1。只对点名有意义（快抽固定抽 1 个）。</param>
-/// <param name="Gender">性别条件；空表示不限。取值必须存在于该名单。</param>
-/// <param name="Group">分组条件；空表示不限。取值必须存在于该名单。</param>
+/// <param name="Target">
+///     抽取目标：<see cref="TargetQuick" />（快抽，默认）、<see cref="TargetRollCall" />（点名）
+///     或 <see cref="TargetLottery" />（抽奖）。
+/// </param>
+/// <param name="ListName">点名要用的名单名 / 抽奖要用的奖池名；空表示用本机当前的默认点名名单或默认奖池。</param>
+/// <param name="Count">抽取人数（点名）或数量（抽奖）；空表示 1。快抽固定抽 1 个。</param>
+/// <param name="Gender">性别条件；空表示不限。取值必须存在于该名单；抽奖时存在即拒绝。</param>
+/// <param name="Group">分组条件；空表示不限。取值必须存在于该名单；抽奖时存在即拒绝。</param>
 public sealed record ControlDrawTriggerRequest(
     string Target,
     string? ListName,
@@ -42,9 +52,13 @@ public sealed record ControlDrawTriggerRequest(
     /// <summary>点名：在指定名单、指定条件下用点名会话抽取，结果留在教室机屏幕上。</summary>
     public const string TargetRollCall = "roll_call";
 
+    /// <summary>抽奖：在指定奖池里用抽奖会话抽取，结果同样留在教室机屏幕上。</summary>
+    public const string TargetLottery = "lottery";
+
     /// <summary>单次远程抽取的人数上限。</summary>
     /// <remarks>
-    ///     真正的上限是名单里符合条件的人数（见 <see cref="ControlDrawConditions.TryResolve" />）；
+    ///     真正的上限是名单里符合条件的人数（见 <see cref="ControlDrawConditions.TryResolve" />）
+    ///     或奖池里的可用奖品数（见 <see cref="ControlDrawConditions.TryResolvePrizes" />）；
     ///     这个数只是"一眼看去就不像课堂操作"的粗闸门，免得一个手滑的 99999 被当成合法请求一路带到抽取层。
     /// </remarks>
     public const int MaxCount = 200;
@@ -53,6 +67,8 @@ public sealed record ControlDrawTriggerRequest(
     public static ControlDrawTriggerRequest QuickTarget { get; } = new(TargetQuick, null, null, null, null);
 
     public bool IsRollCall => string.Equals(Target, TargetRollCall, StringComparison.Ordinal);
+
+    public bool IsLottery => string.Equals(Target, TargetLottery, StringComparison.Ordinal);
 
     /// <summary>解析载荷；失败时 <paramref name="reason" /> 是可直接回给控制台的原因码。</summary>
     /// <remarks>
@@ -83,7 +99,7 @@ public sealed record ControlDrawTriggerRequest(
             }
 
             target = (targetElement.GetString() ?? string.Empty).Trim();
-            if (target is not (TargetQuick or TargetRollCall))
+            if (target is not (TargetQuick or TargetRollCall or TargetLottery))
             {
                 reason = "invalid_value:target:unsupported";
                 return false;
@@ -94,6 +110,23 @@ public sealed record ControlDrawTriggerRequest(
             || !TryReadOptionalText(element, "gender", out var gender, out reason)
             || !TryReadOptionalText(element, "group", out var group, out reason))
             return false;
+
+        // 抽奖没有性别/分组这两个维度：**存在即拒绝**，不静默丢掉（理由见类型注释）。
+        // 顺序固定 gender 在前：两个都写了时先报性别，控制台改完一个再看下一个。
+        if (string.Equals(target, TargetLottery, StringComparison.Ordinal))
+        {
+            if (gender is not null)
+            {
+                reason = "invalid_value:gender:not_applicable";
+                return false;
+            }
+
+            if (group is not null)
+            {
+                reason = "invalid_value:group:not_applicable";
+                return false;
+            }
+        }
 
         int? count = null;
         if (element.TryGetProperty("count", out var countElement))
@@ -227,18 +260,70 @@ public static class ControlDrawConditions
             .Distinct(StringComparer.Ordinal)
             .Order(StringComparer.Ordinal)
             .ToList();
+
+    /// <summary>
+    ///     按奖池校验一次抽奖请求；奖池不存在（<paramref name="prizes" /> 为 <c>null</c>）也在这里拒绝。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         与点名那条的差别只有一个：**没有条件**。奖品没有性别与分组，抽奖只按可用库存收敛数量，
+    ///         因此这里不认 <c>gender</c>/<c>group</c>——它们早在解析阶段就被 <c>not_applicable</c> 拒掉了。
+    ///     </para>
+    ///     <para>
+    ///         把"奖池不存在"也收进来，是为了让"名字写错"与"奖池里没有奖品"各有各的原因码：
+    ///         调用方只要把从目录里读到的奖池快照递进来（读不到就递 <c>null</c>），
+    ///         不必自己拼原因码，也不必先判断一次存在性再判断一次数量。
+    ///     </para>
+    ///     <para>
+    ///         候选取 <see cref="Prize.IsCandidate" />（启用且编号或奖品名非空），与本地抽取的候选池同一条规则。
+    ///     </para>
+    /// </remarks>
+    public static bool TryResolvePrizes(
+        IReadOnlyList<Prize>? prizes,
+        ControlDrawTriggerRequest request,
+        out IReadOnlyList<Prize> matched,
+        out string reason)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        matched = [];
+        reason = string.Empty;
+
+        if (prizes is null)
+        {
+            reason = "invalid_value:list_name:not_found";
+            return false;
+        }
+
+        var candidates = prizes.Where(static prize => prize.IsCandidate).ToList();
+        if (candidates.Count == 0)
+        {
+            reason = "invalid_value:list_name:no_candidate";
+            return false;
+        }
+
+        if (request.Count is { } count && count > candidates.Count)
+        {
+            reason = $"invalid_value:count:out_of_range:1..{candidates.Count}";
+            return false;
+        }
+
+        matched = candidates;
+        return true;
+    }
 }
 
 /// <summary>回执里"抽到了谁"的一条记录。</summary>
 /// <remarks>
-///     只带学号与姓名：这是回执，不是名单查询——回执会进控制台日志与手机屏幕，
+///     只带编号与名称：这是回执，不是名单查询——回执会进控制台日志与手机屏幕，
 ///     带的字段越少，被顺手记进别处的越多。两者都可能为空（名单允许只有姓名或只有学号）。
+///     抽奖回执用的是奖品的编号与奖品名，形状完全一样——控制台与手机不需要区分两种实体。
 /// </remarks>
 public sealed record ControlDrawnMember(
     [property: JsonPropertyName("id")] string? Id,
     [property: JsonPropertyName("name")] string? Name);
 
-/// <summary>把抽到的成员投影成回执里的最小记录。</summary>
+/// <summary>把抽到的成员或奖品投影成回执里的最小记录。</summary>
 public static class ControlDrawnMembers
 {
     public static IReadOnlyList<ControlDrawnMember> FromStudents(IEnumerable<Student> students) =>
@@ -251,6 +336,19 @@ public static class ControlDrawnMembers
         return new ControlDrawnMember(
             string.IsNullOrWhiteSpace(student.Id) ? null : student.Id.Trim(),
             string.IsNullOrWhiteSpace(student.Name) ? null : student.Name.Trim());
+    }
+
+    /// <summary>抽奖回执：奖品的编号与名称（<c>Prize</c> 与 <c>Student</c> 的可见字段同名同义）。</summary>
+    public static IReadOnlyList<ControlDrawnMember> FromPrizes(IEnumerable<Prize> prizes) =>
+        [.. prizes.Select(FromPrize)];
+
+    public static ControlDrawnMember FromPrize(Prize prize)
+    {
+        ArgumentNullException.ThrowIfNull(prize);
+
+        return new ControlDrawnMember(
+            string.IsNullOrWhiteSpace(prize.Id) ? null : prize.Id.Trim(),
+            string.IsNullOrWhiteSpace(prize.Name) ? null : prize.Name.Trim());
     }
 }
 

@@ -734,4 +734,15 @@
     <data name="MA_Reauthorize" xml:space="preserve"><value>ログイン状態が無効です。再度ログインしてください</value></data>
     <data name="RD_ResultUnreadable" xml:space="preserve"><value>端末は実行しましたが、結果にメンバーが含まれていません</value></data>
     <data name="RD_NoRosterCandidate" xml:space="preserve"><value>この名簿には抽選できるメンバーがいません</value></data>
+    <data name="RD_Kind" xml:space="preserve"><value>抽選の種類</value></data>
+    <data name="RD_KindRollCall" xml:space="preserve"><value>点呼</value></data>
+    <data name="RD_KindLottery" xml:space="preserve"><value>抽選</value></data>
+    <data name="RD_Pool" xml:space="preserve"><value>賞品プール</value></data>
+    <data name="RD_LotteryNoScope" xml:space="preserve"><value>抽選では性別とグループによる絞り込みを行いません</value></data>
+    <data name="RD_DrawnPrizeCount" xml:space="preserve"><value>{0} 個の賞品を抽選しました</value></data>
+    <data name="RD_LotteryDisabled" xml:space="preserve"><value>この端末では抽選機能が無効です</value></data>
+    <data name="RD_Reset" xml:space="preserve"><value>このラウンドをリセット</value></data>
+    <data name="RD_Resetting" xml:space="preserve"><value>リセット中…</value></data>
+    <data name="RD_ResetDone" xml:space="preserve"><value>ラウンドをリセットし、抽選記録を {0} 件消去しました</value></data>
+    <data name="RD_ResetConfirm" xml:space="preserve"><value>もう一度タップして確定</value></data>
 </root>

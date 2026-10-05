@@ -83,4 +83,21 @@ public sealed class ControlPageDrawExecutor : IControlDrawExecutor
                 ControlDrawTriggerRequest.TargetRollCall,
                 outcome.ListName ?? request.ListName);
         });
+
+    public Task<ControlDrawExecution> DrawLotteryAsync(
+        ControlDrawTriggerRequest request,
+        CancellationToken cancellationToken) =>
+        Dispatcher.UIThread.InvokeAsync(async () =>
+        {
+            var lottery = IAppHost.GetService<LotteryPageViewModel>();
+
+            // 与点名同一条展示逻辑，只是切到抽奖页：远程抽奖的结果同样必须落在教室看得见的那一页上。
+            await App.ShowMainWindowForRemoteDrawAsync("main.lottery").ConfigureAwait(true);
+
+            var outcome = await lottery.StartRemoteDrawAsync(request, cancellationToken).ConfigureAwait(true);
+            return ControlDrawExecutionFactory.From(
+                outcome,
+                ControlDrawTriggerRequest.TargetLottery,
+                outcome.ListName ?? request.ListName);
+        });
 }

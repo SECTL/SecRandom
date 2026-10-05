@@ -93,7 +93,7 @@ public sealed class ControlDrawTriggerPayloadTests
     [InlineData("""[]""", "invalid_command")]
     [InlineData("\"draw\"", "invalid_command")]
     [InlineData("""5""", "invalid_command")]
-    [InlineData("""{ "target": "lottery" }""", "invalid_value:target:unsupported")]
+    [InlineData("""{ "target": "raffle" }""", "invalid_value:target:unsupported")]
     [InlineData("""{ "target": 1 }""", "invalid_value:target:type_mismatch")]
     [InlineData("""{ "target": "roll_call", "list_name": 5 }""", "invalid_value:list_name:type_mismatch")]
     [InlineData("""{ "target": "roll_call", "gender": true }""", "invalid_value:gender:type_mismatch")]
@@ -110,6 +110,111 @@ public sealed class ControlDrawTriggerPayloadTests
         Assert.Equal(expectedReason, reason);
         Assert.Equal(ControlDrawTriggerRequest.QuickTarget, request);
     }
+
+    // ---------------------------------------------------------------- 抽奖目标
+
+    [Fact]
+    public void 抽奖载荷带的是奖池名与数量()
+    {
+        var parsed = ControlDrawTriggerRequest.TryParse(
+            Payload("""{ "target": "lottery", "list_name": "  元旦抽奖  ", "count": 2 }"""),
+            out var request,
+            out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.True(request.IsLottery);
+        Assert.False(request.IsRollCall);
+        // 抽奖的 list_name 是**奖池名**：字段名与点名共用，含义由 target 决定。
+        Assert.Equal("元旦抽奖", request.ListName);
+        Assert.Equal(2, request.Count);
+        Assert.Null(request.Gender);
+        Assert.Null(request.Group);
+    }
+
+    [Theory]
+    // 奖品没有性别与分组。存在即拒绝，**不静默忽略**：静默忽略会让控制台以为"按这个条件抽的"。
+    [InlineData("""{ "target": "lottery", "list_name": "元旦抽奖", "gender": "男" }""", "invalid_value:gender:not_applicable")]
+    [InlineData("""{ "target": "lottery", "list_name": "元旦抽奖", "group": "第一组" }""", "invalid_value:group:not_applicable")]
+    public void 抽奖载荷带性别或分组时按不适用拒绝(string json, string expectedReason)
+    {
+        var parsed = ControlDrawTriggerRequest.TryParse(Payload(json), out _, out var reason);
+
+        Assert.False(parsed);
+        Assert.Equal(expectedReason, reason);
+    }
+
+    [Theory]
+    // 空白串仍然等于"没写"：抽奖的 not_applicable 判的是**有值**，不是有字段。
+    // （显式 null 不算"没写"——它不是字符串，与点名走同一条 type_mismatch 规则。）
+    [InlineData("""{ "target": "lottery", "list_name": "元旦抽奖", "gender": "  ", "group": "" }""")]
+    [InlineData("""{ "target": "lottery", "list_name": "元旦抽奖" }""")]
+    public void 抽奖载荷里的空条件等于没写(string json)
+    {
+        var parsed = ControlDrawTriggerRequest.TryParse(Payload(json), out var request, out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.Null(request.Gender);
+        Assert.Null(request.Group);
+    }
+
+    // ---------------------------------------------------------------- 奖池条件
+
+    [Fact]
+    public void 奖池不存在时按名单未找到拒绝()
+    {
+        // 读不到奖池＝名字写错了（或那份奖池被删了）：调用方递进来的就是 null。
+        var resolved = ControlDrawConditions.TryResolvePrizes(null, Lottery(null, 1), out var matched, out var reason);
+
+        Assert.False(resolved);
+        Assert.Empty(matched);
+        Assert.Equal("invalid_value:list_name:not_found", reason);
+    }
+
+    [Fact]
+    public void 奖池里没有可抽的奖品时拒绝()
+    {
+        // 停用的奖品与"编号和名称都空"的奖品都不算候选，与本地抽取的候选池同一条规则。
+        var pool = new[] { Prize("P01", exists: false), Prize(string.Empty, name: string.Empty) };
+
+        Assert.False(ControlDrawConditions.TryResolvePrizes(pool, Lottery(null, 1), out _, out var reason));
+        Assert.Equal("invalid_value:list_name:no_candidate", reason);
+    }
+
+    [Fact]
+    public void 抽奖数量超过奖池库存时按可用奖品数报越界()
+    {
+        var pool = new[] { Prize("P01"), Prize("P02"), Prize("P03", exists: false) };
+
+        Assert.False(ControlDrawConditions.TryResolvePrizes(pool, Lottery(null, 3), out _, out var reason));
+        // 上限是**可用奖品数**（2），不是池子里的总数（3）：控制台看到的上界必须真的抽得到。
+        Assert.Equal("invalid_value:count:out_of_range:1..2", reason);
+    }
+
+    [Fact]
+    public void 抽奖数量在库存之内时通过并且只留下可抽的奖品()
+    {
+        var pool = new[] { Prize("P01"), Prize("P02"), Prize("P03", exists: false) };
+
+        Assert.True(ControlDrawConditions.TryResolvePrizes(pool, Lottery(null, 2), out var matched, out var reason), reason);
+        Assert.Equal(["P01", "P02"], matched.Select(prize => prize.Id));
+    }
+
+    [Fact]
+    public void 抽奖不写数量时按一个通过()
+    {
+        Assert.True(ControlDrawConditions.TryResolvePrizes([Prize("P01")], Lottery(null, null), out var matched, out var reason), reason);
+        Assert.Single(matched);
+    }
+
+    private static ControlDrawTriggerRequest Lottery(string? listName, int? count) =>
+        new(ControlDrawTriggerRequest.TargetLottery, listName, count, null, null);
+
+    private static Prize Prize(string id, bool exists = true, string? name = null) => new()
+    {
+        Id = id,
+        Name = name ?? (id.Length == 0 ? string.Empty : $"{id} 号奖品"),
+        Exists = exists
+    };
 
     // ---------------------------------------------------------------- 条件取值域
 

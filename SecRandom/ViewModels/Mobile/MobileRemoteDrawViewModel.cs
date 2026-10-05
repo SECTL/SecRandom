@@ -67,10 +67,18 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         _auth = auth;
         _logger = logger;
         IsSignedIn = auth.IsSignedIn;
+
+        // 选项在这里现建：界面语言可以在运行中切换，缓存在静态字段里就会冻结在首次访问时的那一国语言。
+        DrawKindOptions.Add(RemoteDrawKindOption.CreateRollCall());
+        DrawKindOptions.Add(RemoteDrawKindOption.CreateLottery());
+        _selectedDrawKind = DrawKindOptions[0];
     }
 
     /// <summary>跨组扁平的设备列表（"组 × 节点"一行）。</summary>
     public ObservableCollection<DeviceRow> Devices { get; } = [];
+
+    /// <summary>可选的抽取类型：点名与抽奖。</summary>
+    public ObservableCollection<RemoteDrawKindOption> DrawKindOptions { get; } = [];
 
     /// <summary>读取失败的组：部分失败不能变成整页失败。</summary>
     public ObservableCollection<string> UnavailableGroups { get; } = [];
@@ -106,6 +114,16 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
 
     [ObservableProperty] private RosterOption? _selectedRoster;
 
+    /// <summary>当前抽取类型（点名 / 抽奖）。切换它会清掉上一类的名单与结果。</summary>
+    [ObservableProperty] private RemoteDrawKindOption _selectedDrawKind;
+
+    /// <summary>"重置本轮"等第二次点击确认时为真。</summary>
+    /// <remarks>
+    ///     重置是破坏性动作（抹掉这一轮的抽取进度），因此不做成"点一下就生效"：
+    ///     手机放在讲台上时，一次误触不该把课堂进行到一半的进度清掉。
+    /// </remarks>
+    [ObservableProperty] private bool _isResetConfirmPending;
+
     [ObservableProperty] private string? _selectedGender;
 
     [ObservableProperty] private string? _selectedGroupScope;
@@ -122,6 +140,35 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     public bool HasRoster => SelectedRoster is not null;
 
     public bool HasResult => DrawnMembers.Count > 0;
+
+    /// <summary>当前选的是抽奖：名单下拉读奖池，且没有性别/分组条件。</summary>
+    public bool IsLotteryTarget => string.Equals(
+        SelectedDrawKind?.Target, ControlDrawTriggerRequest.TargetLottery, StringComparison.Ordinal);
+
+    /// <summary>名单下拉的标题：点名读名单，抽奖读奖池。</summary>
+    /// <remarks>奖池不叫名单。用同一个词会让老师以为自己在选点名名单，而抽出来的是奖品。</remarks>
+    public string ListFieldLabel => IsLotteryTarget ? LR.RD_Pool : LR.RD_List;
+
+    /// <summary>性别与分组只在点名时有意义，抽奖时整块隐藏（并给一句解释）。</summary>
+    public bool IsScopeSelectorVisible => HasRoster && !IsLotteryTarget;
+
+    /// <summary>抽奖模式下的解释行：为什么这里没有性别/分组。</summary>
+    public bool IsLotteryScopeHintVisible => IsLotteryTarget;
+
+    /// <summary>
+    ///     能不能"重置本轮"：要有已读到的名单、设备可用、且当前没有别的命令在跑。
+    /// </summary>
+    /// <remarks>
+    ///     重置按钮是**次级按钮**，但它仍然要遵守与抽取相同的可用性前提：
+    ///     没有名单就没有"这一轮"可清，设备不可用则命令注定失败。
+    /// </remarks>
+    public bool CanReset =>
+        !IsBusy
+        && HasRoster
+        && SelectedDevice is { IsUsable: true };
+
+    /// <summary>重置按钮上的文字；等确认时变成提示语。</summary>
+    public string ResetButtonText => IsResetConfirmPending ? LR.RD_ResetConfirm : LR.RD_Reset;
 
     public bool HasUnavailableGroups => UnavailableGroups.Count > 0;
 
@@ -284,25 +331,14 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
             || string.IsNullOrWhiteSpace(device.GroupId) || string.IsNullOrWhiteSpace(device.NodeId))
             return;
 
+        CancelPendingReset();
         IsBusy = true;
         StatusText = LR.RD_Loading;
         RefreshDerived();
 
         try
         {
-            var command = await _client.SubmitCommandAsync(
-                device.GroupId,
-                device.NodeId,
-                new ControlPlaneCommandRequest
-                {
-                    Capability = ControlCapabilities.RosterRead,
-                    Kind = "query",
-                    Payload = JsonSerializer.SerializeToElement(
-                        new RosterReadPayload { RosterKind = "students" },
-                        ControlProtocolJson.Options)
-                }).ConfigureAwait(true);
-
-            var finished = await _client.PollCommandAsync(device.GroupId, command.CommandId!).ConfigureAwait(true);
+            var finished = await RequestRosterAsync(device).ConfigureAwait(true);
             if (!finished.IsSucceeded)
             {
                 StatusText = ControlPlaneMessages.DescribeCommand(finished);
@@ -322,6 +358,35 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         }
     }
 
+    /// <summary>
+    ///     下发一次 <c>roster.read</c> 并轮询到终态。
+    /// </summary>
+    /// <remarks>
+    ///     <c>roster_kind</c> 跟着当前的抽取类型走：点名读成员名单，抽奖读奖池（奖项与奖品）。
+    ///     两条通道的设备侧形状完全一样，区别只在读的是哪一批文件，因此这里共用一次请求。
+    /// </remarks>
+    private async Task<NodeCommandDto> RequestRosterAsync(DeviceRow device)
+    {
+        var command = await _client.SubmitCommandAsync(
+            device.GroupId,
+            device.NodeId,
+            new ControlPlaneCommandRequest
+            {
+                Capability = ControlCapabilities.RosterRead,
+                Kind = "query",
+                Payload = JsonSerializer.SerializeToElement(
+                    new RosterReadPayload
+                    {
+                        RosterKind = IsLotteryTarget
+                            ? ControlRosterReadRequest.Prizes
+                            : ControlRosterReadRequest.Students
+                    },
+                    ControlProtocolJson.Options)
+            }).ConfigureAwait(true);
+
+        return await _client.PollCommandAsync(device.GroupId, command.CommandId!).ConfigureAwait(true);
+    }
+
     [RelayCommand]
     private async Task DrawAsync()
     {
@@ -334,6 +399,7 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         IsBusy = true;
         // 上一次的提示（失败态、上一次抽到的人）必须在这里全部清掉：留着就会出现
         // "这次抽成功了，屏幕上还挂着上一次的失败文案"。
+        CancelPendingReset();
         DrawnMembers.Clear();
         LoadFailure = string.Empty;
         StatusText = LR.RD_Drawing;
@@ -341,17 +407,20 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
 
         try
         {
-            // target=roll_call：手机要的是"在教室里点名抽一次"，不是快抽一次。
-            // 名单与条件按页面上看到的原样下发，设备侧用点名会话与同一套候选规则执行，
+            // target 跟着页面上选的那一类走：点名在教室里点一次名，抽奖在教室里抽一次奖。
+            // 名单/奖池与数量按页面上看到的原样下发，设备侧用对应的会话与同一套候选规则执行，
             // 结果留在教室机屏幕上——远程抽取必须让课堂看得见。
+            //
+            // 抽奖**不带** gender/group：奖品没有这两个维度，设备侧收到就会以 not_applicable 拒绝。
+            // 与其发一个注定被拒的字段，不如在这里就不发（页面上那两块也已经隐藏）。
             var payload = JsonSerializer.SerializeToElement(
                 new DrawTriggerPayload
                 {
-                    Target = "roll_call",
+                    Target = SelectedDrawKind.Target,
                     ListName = roster.Name,
                     Count = Math.Clamp(SelectedCount, 1, Math.Max(1, roster.MemberCount)),
-                    Gender = ScopeOf(SelectedGender),
-                    Group = ScopeOf(SelectedGroupScope)
+                    Gender = IsLotteryTarget ? null : ScopeOf(SelectedGender),
+                    Group = IsLotteryTarget ? null : ScopeOf(SelectedGroupScope)
                 },
                 ControlProtocolJson.Options);
 
@@ -390,6 +459,109 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
             RefreshDerived();
         }
     }
+
+    /// <summary>
+    ///     "重置本轮"：清掉教室机这一轮的抽取进度，让下一轮从头开始。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <b>两步确认。</b>第一次点击只把按钮变成"再点一次确认"，不碰设备：
+    ///         重置是破坏性动作（课堂进行到一半的进度会被清掉），而手机常常放在讲台上被顺手碰到。
+    ///         任何别的动作（换设备、换名单、换抽取类型、重新读取名单）都会取消这个待确认状态，
+    ///         否则一个几分钟前的"确认"会突然生效。
+    ///     </para>
+    ///     <para>
+    ///         <b>成功之后要重读名单。</b>设备把这一轮的临时记录清零了，
+    ///         "剩余/已抽"这类计数就过期了；不重读的话页面还显示着上一轮的数字。
+    ///         重读失败不回滚结论：重置真的成功了，只是数字没刷新，状态行仍然以重置回执为准。
+    ///     </para>
+    ///     <para>
+    ///         <c>target</c> 跟着页面上选的那一类走（点名清学生进度、抽奖清奖品进度），
+    ///         <c>list_name</c> 是当前这一份名单/奖池：只清当前这一份，不碰别的名单的进度。
+    ///     </para>
+    /// </remarks>
+    [RelayCommand]
+    private async Task ResetRoundAsync()
+    {
+        var device = SelectedDevice;
+        var roster = SelectedRoster;
+        if (device is null || roster is null || !device.IsUsable
+            || string.IsNullOrWhiteSpace(device.GroupId) || string.IsNullOrWhiteSpace(device.NodeId))
+            return;
+
+        if (!IsResetConfirmPending)
+        {
+            IsResetConfirmPending = true;
+            StatusText = LR.RD_ResetConfirm;
+            RefreshDerived();
+            return;
+        }
+
+        IsResetConfirmPending = false;
+        IsBusy = true;
+        // 重置之后"抽到了谁"就不再成立了：设备那边这一轮已经归零，界面上还挂着上一轮的人就是在说谎。
+        DrawnMembers.Clear();
+        LoadFailure = string.Empty;
+        StatusText = LR.RD_Resetting;
+        RefreshDerived();
+
+        try
+        {
+            var payload = JsonSerializer.SerializeToElement(
+                new DrawResetPayload
+                {
+                    Target = SelectedDrawKind.Target,
+                    ListName = roster.Name
+                },
+                ControlProtocolJson.Options);
+
+            var command = await _client.SubmitCommandAsync(
+                device.GroupId,
+                device.NodeId,
+                new ControlPlaneCommandRequest
+                {
+                    Capability = ControlCapabilities.DrawReset,
+                    Payload = payload
+                }).ConfigureAwait(true);
+
+            var finished = await _client.PollCommandAsync(device.GroupId, command.CommandId!).ConfigureAwait(true);
+
+            if (finished.IsSucceeded)
+            {
+                try
+                {
+                    var rosterCommand = await RequestRosterAsync(device).ConfigureAwait(true);
+                    if (rosterCommand.IsSucceeded)
+                        ApplyRoster(rosterCommand);
+                    else
+                        _logger.LogWarning(
+                            "远程重置后重读名单失败：status={Status}，detail={Detail}",
+                            rosterCommand.Status,
+                            rosterCommand.ResultDiagnostics ?? "(none)");
+                }
+                catch (Exception exception)
+                {
+                    _logger.LogWarning(exception, "远程重置后重读名单失败。");
+                }
+            }
+
+            // 重置回执是最终结论，放在重读之后：重读名单会写状态行（"共 N 人"），
+            // 顺序反了的话用户看到的会是名单条数，而不是"重置成功、清掉几条"。
+            StatusText = ControlPlaneMessages.DescribeResetResult(finished);
+        }
+        catch (Exception exception)
+        {
+            ApplyFailure(exception, "远程重置失败。");
+        }
+        finally
+        {
+            IsBusy = false;
+            RefreshDerived();
+        }
+    }
+
+    /// <summary>取消"等待确认"的重置：别的动作一来，那个待确认状态就不再代表用户的意图了。</summary>
+    private void CancelPendingReset() => IsResetConfirmPending = false;
 
     public void Dispose() => Unsubscribe();
 
@@ -578,6 +750,7 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
 
     partial void OnSelectedDeviceChanged(DeviceRow? value)
     {
+        CancelPendingReset();
         RefreshDerived();
 
         if (value is null)
@@ -605,6 +778,8 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
 
     partial void OnSelectedRosterChanged(RosterOption? value)
     {
+        CancelPendingReset();
+
         // 条件选项**从这份名单的成员派生**：分组名是老师自己输入的，写死的选项在真实名单上一定选不中。
         GenderOptions.Clear();
         GenderOptions.Add(AnyOption);
@@ -627,6 +802,36 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
 
         RefreshDerived();
     }
+
+    /// <summary>
+    ///     换抽取类型：上一类的名单与结果都不再适用，必须整体清掉。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         点名名单与奖池是两批完全不同的文件，名字也可能撞车（"高一（1）班"可以既是名单名又是奖池名）。
+    ///         留着上一类的选择，用户会以为自己看的还是刚才那份东西，实际发出去的是另一批数据。
+    ///     </para>
+    ///     <para>
+    ///         已经选中可用设备时自动重读一次：切换类型的目的就是"换一批数据看"，
+    ///         还要求用户再点一次"读取名单"才算完成切换，是让用户替我们收尾。
+    ///     </para>
+    /// </remarks>
+    partial void OnSelectedDrawKindChanged(RemoteDrawKindOption value)
+    {
+        CancelPendingReset();
+        Rosters.Clear();
+        SelectedRoster = null;
+        DrawnMembers.Clear();
+        StatusText = string.Empty;
+        SelectedGender = AnyOption;
+        SelectedGroupScope = AnyOption;
+        RefreshDerived();
+
+        if (CanLoadRoster)
+            _ = LoadRosterAsync();
+    }
+
+    partial void OnIsResetConfirmPendingChanged(bool value) => RefreshDerived();
 
     partial void OnIsBusyChanged(bool value) => RefreshDerived();
 
@@ -675,7 +880,13 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         OnPropertyChanged(nameof(DevicesCountText));
         OnPropertyChanged(nameof(CanLoadRoster));
         OnPropertyChanged(nameof(CanDraw));
+        OnPropertyChanged(nameof(CanReset));
         OnPropertyChanged(nameof(EmptyStateText));
+        OnPropertyChanged(nameof(IsLotteryTarget));
+        OnPropertyChanged(nameof(ListFieldLabel));
+        OnPropertyChanged(nameof(IsScopeSelectorVisible));
+        OnPropertyChanged(nameof(IsLotteryScopeHintVisible));
+        OnPropertyChanged(nameof(ResetButtonText));
     }
 
     private static string? ScopeOf(string? option) =>
@@ -709,5 +920,13 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         [JsonPropertyName("group")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? Group { get; init; }
+    }
+
+    /// <summary><c>draw.reset</c> 的载荷（协议字段名钉在这里）。</summary>
+    private sealed record DrawResetPayload
+    {
+        [JsonPropertyName("target")] public required string Target { get; init; }
+
+        [JsonPropertyName("list_name")] public required string ListName { get; init; }
     }
 }

@@ -126,13 +126,18 @@ public sealed class ControlCommandDispatcher(
     }
 
     /// <summary>本机是否正在抽取。读的是页面 ViewModel 的真实状态，而不是猜测。</summary>
+    /// <remarks>
+    ///     三个抽取页都要问：点名声明的忙碌状态只覆盖点名页，抽奖页抽到一半时同样不能被改设置或清进度——
+    ///     <c>draw.reset</c> 尤其不能边抽边清，那一轮的进度会被抹掉，结果与临时记录就对不上了。
+    /// </remarks>
     private static async Task<bool> IsDrawInProgressAsync()
     {
         try
         {
             return await Dispatcher.UIThread.InvokeAsync(
                 () => IAppHost.GetService<QuickDrawPageViewModel>().IsDrawing
-                      || IAppHost.GetService<RollCallPageViewModel>().IsDrawing);
+                      || IAppHost.GetService<RollCallPageViewModel>().IsDrawing
+                      || IAppHost.GetService<LotteryPageViewModel>().IsDrawing);
         }
         catch (Exception)
         {

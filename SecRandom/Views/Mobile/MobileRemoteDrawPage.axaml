@@ -29,6 +29,19 @@
                        Margin="0 4 0 0"
                        TextWrapping="Wrap" />
 
+            <!-- 抽取类型：点名读名单，抽奖读奖池。切换它会连数据源一起换，所以放在最上面而不是塞进条件区。 -->
+            <sr:Field Label="{x:Static langs:Resources.RD_Kind}">
+                <ComboBox ItemsSource="{Binding ViewModel.DrawKindOptions}"
+                          SelectedItem="{Binding ViewModel.SelectedDrawKind}"
+                          HorizontalAlignment="Stretch">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RemoteDrawKindOption">
+                            <TextBlock Text="{Binding Label}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </sr:Field>
+
             <!-- 未登录、请求失败、没有组、没有设备、角色不足、设备不支持：每一种都要说清楚，不留空白页。 -->
             <Border IsVisible="{Binding ViewModel.HasEmptyState}"
                     Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
@@ -109,7 +122,7 @@
                     IsEnabled="{Binding ViewModel.CanLoadRoster}"
                     HorizontalAlignment="Stretch" />
 
-            <sr:Field Label="{x:Static langs:Resources.RD_List}" IsVisible="{Binding ViewModel.HasRoster}">
+            <sr:Field Label="{Binding ViewModel.ListFieldLabel}" IsVisible="{Binding ViewModel.HasRoster}">
                 <ComboBox ItemsSource="{Binding ViewModel.Rosters}"
                           SelectedItem="{Binding ViewModel.SelectedRoster}"
                           HorizontalAlignment="Stretch">
@@ -121,7 +134,14 @@
                 </ComboBox>
             </sr:Field>
 
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding ViewModel.HasRoster}">
+            <!-- 抽奖没有性别/分组这两个维度：两块条件整块隐藏，并说明为什么不显示（而不是留两个空框）。 -->
+            <TextBlock Text="{x:Static langs:Resources.RD_LotteryNoScope}"
+                       IsVisible="{Binding ViewModel.IsLotteryScopeHintVisible}"
+                       FontSize="12"
+                       Opacity="0.7"
+                       TextWrapping="Wrap" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding ViewModel.IsScopeSelectorVisible}">
                 <sr:Field Grid.Column="0" Label="{x:Static langs:Resources.RD_Gender}">
                     <ComboBox ItemsSource="{Binding ViewModel.GenderOptions}"
                               SelectedItem="{Binding ViewModel.SelectedGender}"
@@ -144,6 +164,17 @@
                     Content="{x:Static langs:Resources.RD_Draw}"
                     Command="{Binding ViewModel.DrawCommand}"
                     IsEnabled="{Binding ViewModel.CanDraw}"
+                    HorizontalContentAlignment="Center"
+                    HorizontalAlignment="Stretch" />
+
+            <!--
+                重置本轮：次级按钮（不带 accent），视觉层级低于抽取。
+                它是破坏性动作（清掉这一轮的抽取进度），因此要按两次，第一次只把按钮变成确认提示。
+            -->
+            <Button Content="{Binding ViewModel.ResetButtonText}"
+                    Command="{Binding ViewModel.ResetRoundCommand}"
+                    IsEnabled="{Binding ViewModel.CanReset}"
+                    IsVisible="{Binding ViewModel.HasRoster}"
                     HorizontalContentAlignment="Center"
                     HorizontalAlignment="Stretch" />
 

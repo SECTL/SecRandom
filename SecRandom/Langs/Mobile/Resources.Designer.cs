@@ -557,4 +557,15 @@ public class Resources
     public static string MA_Reauthorize => ResourceManager.GetString("MA_Reauthorize", resourceCulture)!;
     public static string RD_ResultUnreadable => ResourceManager.GetString("RD_ResultUnreadable", resourceCulture)!;
     public static string RD_NoRosterCandidate => ResourceManager.GetString("RD_NoRosterCandidate", resourceCulture)!;
+    public static string RD_Kind => ResourceManager.GetString("RD_Kind", resourceCulture)!;
+    public static string RD_KindRollCall => ResourceManager.GetString("RD_KindRollCall", resourceCulture)!;
+    public static string RD_KindLottery => ResourceManager.GetString("RD_KindLottery", resourceCulture)!;
+    public static string RD_Pool => ResourceManager.GetString("RD_Pool", resourceCulture)!;
+    public static string RD_LotteryNoScope => ResourceManager.GetString("RD_LotteryNoScope", resourceCulture)!;
+    public static string RD_DrawnPrizeCount => ResourceManager.GetString("RD_DrawnPrizeCount", resourceCulture)!;
+    public static string RD_LotteryDisabled => ResourceManager.GetString("RD_LotteryDisabled", resourceCulture)!;
+    public static string RD_Reset => ResourceManager.GetString("RD_Reset", resourceCulture)!;
+    public static string RD_Resetting => ResourceManager.GetString("RD_Resetting", resourceCulture)!;
+    public static string RD_ResetDone => ResourceManager.GetString("RD_ResetDone", resourceCulture)!;
+    public static string RD_ResetConfirm => ResourceManager.GetString("RD_ResetConfirm", resourceCulture)!;
 }
