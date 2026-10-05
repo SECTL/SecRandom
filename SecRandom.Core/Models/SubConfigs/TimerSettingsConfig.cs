@@ -3,27 +3,26 @@ using CommunityToolkit.Mvvm.ComponentModel;
 namespace SecRandom.Core.Models.SubConfigs;
 
 /// <summary>
-///     计时器设置：计时（或时钟显示）走到一定时长之后，自动从大窗缩成小窗。
+///     计时器设置：在计时器页面上**一段时间没有任何操作**之后，自动从大窗缩成小窗。
 /// </summary>
 /// <remarks>
 ///     <para>
-///         阈值按"**开始之后走过了多久**"算，不是"还剩多少"。两种口径看起来只差一个减法，
-///         用起来却相反：按剩余时间算，长倒计时会在一开始就缩下去；按已走过的时间算，
-///         起点是"老师按下开始的那一刻"，与这次要计多久无关。时钟没有"开始"这个动作，
-///         它的"走过多久"就是**已经显示了多久**。
+///         观察的是"人还有没有在动这个页面"，不是"计时走了多久"。老师按下开始、把时间留在屏幕上
+///         不再碰它，到设定时长就该缩成小窗；反过来，正在调时长、切模式、点按钮时不该突然缩下去，
+///         所以任何一次操作都会把这段"无操作时间"清零重算。
 ///     </para>
 ///     <para>
-///         三种模式各有开关：倒计时默认开（"快到点前盯小窗"的主场景），秒表与时钟默认关
-///         （它们往往就是要看大屏，默认缩下去等于替用户做了决定）。
+///         三种模式各有开关：倒计时默认开（"开始计时后专心做别的事"的主场景），秒表与时钟默认关
+///         （它们往往就是要摆在屏幕上看着，默认缩下去等于替用户做了决定）。
 ///     </para>
 ///     <para>
-///         这里的规则是纯函数，只回答"这一刻该不该缩"，哪种模式用哪个开关、走了多久由应用层
-///         <c>TimerViewModel</c> 给出——Core 既不认识窗口，也不认识计时状态。
+///         这里的规则是纯函数，只回答"这一刻该不该缩"；哪种模式、当前模式开没开、离开上一次操作
+///         过了多久由应用层 <c>TimerViewModel</c> 给出——Core 既不认识窗口，也不认识输入事件。
 ///     </para>
 /// </remarks>
 public partial class TimerSettingsConfig : ObservableObject
 {
-    /// <summary>自动缩小阈值的下限（秒）：0 秒等于"一开始就缩"，那不是一个能用的设置。</summary>
+    /// <summary>自动缩小阈值的下限（秒）：0 秒等于"一打开就缩"，那不是一个能用的设置。</summary>
     public const int MinAutoMiniWindowSeconds = 1;
 
     /// <summary>自动缩小阈值的上限（秒，一小时）：再长就只有"别开这个功能"一个意思了。</summary>
@@ -35,7 +34,7 @@ public partial class TimerSettingsConfig : ObservableObject
     /// <summary>秒表：默认关闭——秒表通常就是要看大屏的累计时间。</summary>
     [ObservableProperty] private bool _autoMiniWindowStopwatchEnabled;
 
-    /// <summary>时钟：默认关闭——它没有"开始"，缩小只是把同一块表挪进小窗。</summary>
+    /// <summary>时钟：默认关闭——它没有开始/暂停，缩小只是把同一块表挪进小窗。</summary>
     [ObservableProperty] private bool _autoMiniWindowClockEnabled;
 
     [ObservableProperty] private int _autoMiniWindowAfterSeconds = 10;
@@ -48,11 +47,11 @@ public partial class TimerSettingsConfig : ObservableObject
     ///     这一刻该不该缩成小窗。
     /// </summary>
     /// <param name="enabledForCurrentMode">当前模式的开关（倒计时 / 秒表 / 时钟 各一个）。</param>
-    /// <param name="elapsedSeconds">当前模式已经走过（或已经显示）的秒数。</param>
+    /// <param name="idleSeconds">离开上一次操作已经过了多少秒（打开页面本身算一次操作）。</param>
     /// <param name="alreadyTriggered">
-    ///     这一次会话是否已经缩过一次。一次会话只缩一次：用户把大窗留下来（关掉小窗就还原大窗）之后，
-    ///     每 33ms 的刷新都再缩一次，会把窗口变成一个关不掉的弹窗。
+    ///     这一段无操作时间是否已经缩过一次。同一次无操作只缩一次：用户把小窗关掉会还原大窗，
+    ///     这里要是还缩，每 33ms 的刷新都会再缩一次，大窗就再也留不住了——下一次操作才重新开始算。
     /// </param>
-    public bool ShouldShrinkToMiniWindow(bool enabledForCurrentMode, double elapsedSeconds, bool alreadyTriggered) =>
-        enabledForCurrentMode && !alreadyTriggered && elapsedSeconds >= EffectiveAutoMiniWindowSeconds;
+    public bool ShouldShrinkToMiniWindow(bool enabledForCurrentMode, double idleSeconds, bool alreadyTriggered) =>
+        enabledForCurrentMode && !alreadyTriggered && idleSeconds >= EffectiveAutoMiniWindowSeconds;
 }

@@ -105,7 +105,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Timer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 计时走到设定时长后自动关闭大窗并打开置顶小窗.
+        ///   Looks up a localized string similar to 停留在计时器页面且一段时间没有任何操作后自动关闭大窗并打开置顶小窗.
         /// </summary>
         public static string S_AutoMiniWindow_D {
             get {
@@ -123,7 +123,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Timer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 时钟显示到设定时长后自动缩成小窗.
+        ///   Looks up a localized string similar to 时钟页面无操作到设定时长后自动缩成小窗.
         /// </summary>
         public static string S_AutoMiniWindow_Clock_D {
             get {
@@ -141,7 +141,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Timer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 倒计时进行到设定时长后自动缩成小窗.
+        ///   Looks up a localized string similar to 倒计时页面无操作到设定时长后自动缩成小窗.
         /// </summary>
         public static string S_AutoMiniWindow_Countdown_D {
             get {
@@ -159,7 +159,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Timer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 计时（时钟为显示时长）多少秒之后自动缩成小窗.
+        ///   Looks up a localized string similar to 页面多久没有任何操作之后自动缩成小窗（打开页面本身算一次操作）.
         /// </summary>
         public static string S_AutoMiniWindow_Seconds_D {
             get {
@@ -177,7 +177,7 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Timer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 秒表计时到设定时长后自动缩成小窗.
+        ///   Looks up a localized string similar to 秒表页面无操作到设定时长后自动缩成小窗.
         /// </summary>
         public static string S_AutoMiniWindow_Stopwatch_D {
             get {

@@ -4,8 +4,8 @@ using SecRandom.Core.Models.SubConfigs;
 namespace SecRandom.Core.Tests;
 
 /// <summary>
-///     计时器自动缩小：阈值按"开始之后走过了多久"算（不是剩余多少），
-///     三种模式各有开关（默认只开倒计时），且一次会话只缩一次。
+///     计时器自动缩小：在页面上**一段时间没有任何操作**之后缩成小窗，
+///     三种模式各有开关（默认只开倒计时），且同一段无操作只缩一次。
 /// </summary>
 public sealed class TimerSettingsConfigTests
 {
@@ -25,15 +25,15 @@ public sealed class TimerSettingsConfigTests
     [InlineData(9.9, false)]
     [InlineData(10, true)]
     [InlineData(600, true)]
-    public void 走过阈值才缩(double elapsedSeconds, bool expected)
+    public void 无操作走过阈值才缩(double idleSeconds, bool expected)
     {
         var settings = new TimerSettingsConfig();
 
-        Assert.Equal(expected, settings.ShouldShrinkToMiniWindow(true, elapsedSeconds, alreadyTriggered: false));
+        Assert.Equal(expected, settings.ShouldShrinkToMiniWindow(true, idleSeconds, alreadyTriggered: false));
     }
 
     /// <summary>
-    ///     开关是**按模式**传进来的：没开的模式（默认的秒表与时钟）无论走多久都不缩。
+    ///     开关是**按模式**传进来的：没开的模式（默认的秒表与时钟）无论停多久都不缩。
     /// </summary>
     [Fact]
     public void 没开的模式不缩()
@@ -50,11 +50,11 @@ public sealed class TimerSettingsConfigTests
     }
 
     /// <summary>
-    ///     同一次会话只缩一次：用户关掉小窗会把大窗还原回来，这里要是还缩，
-    ///     每 33ms 的刷新都会再缩一次，大窗就再也留不住了。
+    ///     同一次无操作只缩一次：用户关掉小窗会把大窗还原回来，这里要是还缩，
+    ///     每 33ms 的刷新都会再缩一次，大窗就再也留不住了（下一次操作才会重新开始算）。
     /// </summary>
     [Fact]
-    public void 同一次会话只缩一次()
+    public void 同一段无操作只缩一次()
     {
         var settings = new TimerSettingsConfig();
 
@@ -75,9 +75,9 @@ public sealed class TimerSettingsConfigTests
         Assert.Equal(expected, settings.EffectiveAutoMiniWindowSeconds);
     }
 
-    /// <summary>手改配置文件写出 0 秒时，不应该变成"一开始就缩"。</summary>
+    /// <summary>手改配置文件写出 0 秒时，不应该变成"页面一打开就缩"。</summary>
     [Fact]
-    public void 越界阈值不会让计时一开始就缩()
+    public void 越界阈值不会让页面一打开就缩()
     {
         var settings = new TimerSettingsConfig { AutoMiniWindowAfterSeconds = 0 };
 

@@ -33,8 +33,8 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     private bool _refreshTimerRunning;
     private bool _autoMiniWindowTriggered;
 
-    /// <summary>时钟模式这一次显示是从什么时候开始的；-1 = 当前没有在显示时钟。</summary>
-    private long _clockDisplayStartedAt = -1;
+    /// <summary>页面上最后一次操作发生在哪一刻（_clock 的毫秒数）；打开页面本身算一次操作。</summary>
+    private long _lastActivityAt;
 
     public TimerViewModel(MainConfigHandler configHandler)
     {
@@ -55,11 +55,17 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     /// <summary>
     ///     计时器视图或迷你窗可见时调用。两者可能同时存在（迷你窗由完整视图打开），因此按引用计数。
     /// </summary>
+    /// <remarks>
+    ///     从"没有视图"变成"有视图"（打开页面、或从小窗还原大窗）本身算一次操作：无操作计时从这一刻
+    ///     起算。少了这一步，页面一打开就会拿"上一次操作到现在"的时长去判定——应用开着一小时才打开
+    ///     计时器时，它会在打开的那一瞬间就缩下去。
+    /// </remarks>
     public void AttachRefresh()
     {
+        if (_attachedViewCount == 0)
+            NotifyUserActivity();
+
         _attachedViewCount++;
-        if (IsClockMode)
-            BeginClockDisplay();
         Refresh();
     }
 
@@ -71,10 +77,20 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
         if (_attachedViewCount > 0)
             _attachedViewCount--;
 
-        // 时钟没有"暂停"：窗口收起来就算这一次显示结束，下次打开重新计时
-        if (_attachedViewCount == 0)
-            _clockDisplayStartedAt = -1;
+        UpdateRefreshTimer();
+    }
 
+    /// <summary>
+    ///     页面上发生了一次操作：把"无操作时间"清零，并重新允许自动缩小。
+    /// </summary>
+    /// <remarks>
+    ///     完整视图打开时也要调用一次——"刚打开页面"本身就是一次操作，无操作计时从这一刻起算。
+    ///     指针在窗口里移动也算：鼠标正停在窗口上时把它缩下去，比多等一会儿更让人意外。
+    /// </remarks>
+    public void NotifyUserActivity()
+    {
+        _lastActivityAt = _clock.ElapsedMilliseconds;
+        _autoMiniWindowTriggered = false;
         UpdateRefreshTimer();
     }
 
@@ -267,16 +283,6 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
         _finished = false;
         _autoMiniWindowTriggered = false;
         _mode = mode;
-        if (mode == TimerMode.Clock)
-        {
-            if (_attachedViewCount > 0)
-                BeginClockDisplay();
-        }
-        else
-        {
-            _clockDisplayStartedAt = -1;
-        }
-
         Refresh();
     }
 
@@ -398,9 +404,13 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
 
     /// <summary>
     ///     只在真正需要驱动界面时运行定时器：计时进行中需要 33ms（秒表毫秒显示与进度环），
-    ///     时钟模式可见时每秒刷新一次即可，静止的倒计时/秒表则完全不需要 tick。
+    ///     时钟模式可见时每秒刷新一次即可，静止的倒计时/秒表在**看着自动缩小时**每秒一次。
     ///     这样关闭计时器窗口后不会再有 30Hz 的空转刷新。
     /// </summary>
+    /// <remarks>
+    ///     「看着自动缩小」这一支不能省：页面停着不动时既没有计时在走、也不是时钟模式，
+    ///     如果这里不跑，"无操作一段时间"就永远等不到人来判定——那正是这个功能要处理的场景。
+    /// </remarks>
     private void UpdateRefreshTimer()
     {
         if (_disposed)
@@ -408,7 +418,8 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
 
         var ticking = _attachedViewCount > 0 && _isRunning;
         var clockVisible = _attachedViewCount > 0 && !_isRunning && IsClockMode;
-        var shouldRun = ticking || clockVisible;
+        var autoMiniWindowWatch = IsAutoMiniWindowWatchActive();
+        var shouldRun = ticking || clockVisible || autoMiniWindowWatch;
 
         if (shouldRun)
         {
@@ -427,13 +438,19 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
             _refreshTimer.Stop();
     }
 
+    /// <summary>还需要盯着"有没有操作"：页面开着、当前模式开了自动缩小、这一段无操作还没缩过。</summary>
+    private bool IsAutoMiniWindowWatchActive() =>
+        _attachedViewCount > 0
+        && !_autoMiniWindowTriggered
+        && IsAutoMiniWindowEnabledForCurrentMode();
+
     /// <summary>
-    ///     计时（或时钟显示）走过设定阈值时请求一次自动缩小。只评估、不切窗口：窗口归 TimerViewService 管。
+    ///     页面上一段时间没有任何操作时请求一次自动缩小。只评估、不切窗口：窗口归 TimerViewService 管。
     /// </summary>
     /// <remarks>
-    ///     走过的时间按**本次会话已经走了多久**算：倒计时用"总时长 − 剩余"，秒表用累计时间，
-    ///     时钟用它**已经显示了多久**（它没有开始/暂停，窗口开着就是在走）。三种模式各有开关，
-    ///     默认只开倒计时。时钟模式在窗口没显示时不计时，因此必须挂在可视期间才有意义。
+    ///     看的是**人有没有在动这个页面**，不是计时走了多久：按开始、选预设、切模式、点按钮、鼠标在窗口里动，
+    ///     任何一次都会把无操作计时清零（见 <see cref="NotifyUserActivity" />）。三种模式各有开关，
+    ///     默认只开倒计时；同一段无操作只缩一次，下一次操作才重新开始算。
     /// </remarks>
     private void TryRequestAutoMiniWindow()
     {
@@ -441,30 +458,26 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
             return;
 
         var settings = _configHandler.Data.TimerSettings;
-        var (enabled, elapsedSeconds) = _mode switch
-        {
-            TimerMode.Countdown when _isRunning =>
-                (settings.AutoMiniWindowCountdownEnabled, _totalSeconds - _remaining.TotalSeconds),
-            TimerMode.Stopwatch when _isRunning =>
-                (settings.AutoMiniWindowStopwatchEnabled, _elapsed.TotalSeconds),
-            TimerMode.Clock when _clockDisplayStartedAt >= 0 =>
-                (settings.AutoMiniWindowClockEnabled,
-                    (_clock.ElapsedMilliseconds - _clockDisplayStartedAt) / 1000d),
-            _ => (false, 0d)
-        };
+        var idleSeconds = (_clock.ElapsedMilliseconds - _lastActivityAt) / 1000d;
 
-        if (!settings.ShouldShrinkToMiniWindow(enabled, elapsedSeconds, _autoMiniWindowTriggered))
+        if (!settings.ShouldShrinkToMiniWindow(IsAutoMiniWindowEnabledForCurrentMode(), idleSeconds, _autoMiniWindowTriggered))
             return;
 
         _autoMiniWindowTriggered = true;
         AutoMiniWindowRequested?.Invoke();
     }
 
-    /// <summary>开始一次时钟显示：阈值从头算，这一次已经缩过的标记也一起清掉。</summary>
-    private void BeginClockDisplay()
+    /// <summary>当前模式（倒计时/秒表/时钟）有没有开自动缩小。</summary>
+    private bool IsAutoMiniWindowEnabledForCurrentMode()
     {
-        _clockDisplayStartedAt = _clock.ElapsedMilliseconds;
-        _autoMiniWindowTriggered = false;
+        var settings = _configHandler.Data.TimerSettings;
+        return _mode switch
+        {
+            TimerMode.Countdown => settings.AutoMiniWindowCountdownEnabled,
+            TimerMode.Stopwatch => settings.AutoMiniWindowStopwatchEnabled,
+            TimerMode.Clock => settings.AutoMiniWindowClockEnabled,
+            _ => false
+        };
     }
 
     private void UpdateTime()

@@ -6,15 +6,15 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Page_Title" xml:space="preserve"><value>Timer</value></data>
   <data name="S_AutoMiniWindow" xml:space="preserve"><value>Shrink to the mini window</value></data>
-  <data name="S_AutoMiniWindow_D" xml:space="preserve"><value>Closes the full window and opens the always-on-top mini window once timing passes the configured duration</value></data>
+  <data name="S_AutoMiniWindow_D" xml:space="preserve"><value>Closes the full window and opens the always-on-top mini window once the timer page has been left untouched for the configured duration</value></data>
   <data name="S_AutoMiniWindow_Countdown" xml:space="preserve"><value>Countdown</value></data>
-  <data name="S_AutoMiniWindow_Countdown_D" xml:space="preserve"><value>Shrinks to the mini window once the countdown has been running for the configured duration</value></data>
+  <data name="S_AutoMiniWindow_Countdown_D" xml:space="preserve"><value>Shrinks to the mini window once the countdown page has been left untouched for the configured duration</value></data>
   <data name="S_AutoMiniWindow_Stopwatch" xml:space="preserve"><value>Stopwatch</value></data>
-  <data name="S_AutoMiniWindow_Stopwatch_D" xml:space="preserve"><value>Shrinks to the mini window once the stopwatch has been running for the configured duration</value></data>
+  <data name="S_AutoMiniWindow_Stopwatch_D" xml:space="preserve"><value>Shrinks to the mini window once the stopwatch page has been left untouched for the configured duration</value></data>
   <data name="S_AutoMiniWindow_Clock" xml:space="preserve"><value>Clock</value></data>
-  <data name="S_AutoMiniWindow_Clock_D" xml:space="preserve"><value>Shrinks to the mini window once the clock has been on screen for the configured duration</value></data>
+  <data name="S_AutoMiniWindow_Clock_D" xml:space="preserve"><value>Shrinks to the mini window once the clock page has been left untouched for the configured duration</value></data>
   <data name="S_AutoMiniWindow_Seconds" xml:space="preserve"><value>Auto-shrink delay</value></data>
-  <data name="S_AutoMiniWindow_Seconds_D" xml:space="preserve"><value>How many seconds of timing pass before the mini window opens (for the clock, how long it has been on screen)</value></data>
+  <data name="S_AutoMiniWindow_Seconds_D" xml:space="preserve"><value>How long the page can be left untouched before the mini window opens (opening the page itself counts as an action)</value></data>
   <data name="C_Preset30s" xml:space="preserve"><value>30 s</value></data>
   <data name="C_Preset1m" xml:space="preserve"><value>1 min</value></data>
   <data name="C_Preset5m" xml:space="preserve"><value>5 min</value></data>
