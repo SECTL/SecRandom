@@ -69,6 +69,16 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     /// <summary>本机是否允许被集控。**这是设备自己的闸，服务端只读它。**</summary>
     [ObservableProperty] private bool _remoteControlEnabled;
 
+    /// <summary>
+    ///     本机主界面是否显示"远程抽取"页。**默认关闭**，打开后侧栏立刻出现，关掉立刻消失（不需要重启）。
+    /// </summary>
+    /// <remarks>
+    ///     它决定的是**看得见看不见**，不是能不能抽：真的能不能下发抽取仍由服务端按组成员角色判定。
+    ///     之所以不放进 <c>settings.json</c>、而和"允许被远程控制"共用 <c>node-state.json</c>：
+    ///     这个入口会把本机账号令牌发往控制面，因此一次设置导入不该能替用户打开它。
+    /// </remarks>
+    [ObservableProperty] private bool _remoteDrawPageEnabled;
+
     [ObservableProperty] private string _groupId = string.Empty;
 
     [ObservableProperty] private string _serverUrl = string.Empty;
@@ -205,6 +215,15 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         _client.Wake();
     }
 
+    /// <summary>远程抽取页的显隐开关：只写本机状态，界面从 <c>Changed</c> 事件即时刷新。</summary>
+    partial void OnRemoteDrawPageEnabledChanged(bool value)
+    {
+        if (_suppressPersist)
+            return;
+
+        _stateStore.Update(state => state with { RemoteDrawPageEnabled = value });
+    }
+
     partial void OnGroupIdChanged(string value)
     {
         if (_suppressPersist)
@@ -287,6 +306,7 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         try
         {
             RemoteControlEnabled = state.RemoteControlEnabled;
+            RemoteDrawPageEnabled = state.RemoteDrawPageEnabled;
             GroupId = state.GroupId;
             ServerUrl = state.ServerUrl;
             RefreshServerUrlCustomFlag();

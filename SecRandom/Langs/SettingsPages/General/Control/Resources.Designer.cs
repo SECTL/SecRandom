@@ -238,6 +238,24 @@ namespace SecRandom.Langs.SettingsPages.General.Control {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 在主界面显示远程抽取页.
+        /// </summary>
+        public static string S_RemoteDrawPage {
+            get {
+                return ResourceManager.GetString("S_RemoteDrawPage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 打开后主界面侧栏出现『远程抽取』页，可向本组其他设备下发抽取；使用前需要登录账号，服务端仍按组成员角色判定权限；关闭后立刻隐藏.
+        /// </summary>
+        public static string S_RemoteDrawPage_D {
+            get {
+                return ResourceManager.GetString("S_RemoteDrawPage_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 允许被远程控制.
         /// </summary>
         public static string S_RemoteControl_Enabled {

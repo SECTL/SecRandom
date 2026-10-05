@@ -28,6 +28,17 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <!-- 远程抽取页的显隐：默认关闭，只切换侧栏可见性——**不增删侧栏项**，
+                 运行时改集合会让 FluentAvalonia 丢选中态（见 MainView.BuildNavigationMenuItems）。 -->
+            <fa:FASettingsExpander x:Name="S_RemoteDrawPage"
+                                   Header="{x:Static lc:Resources.S_RemoteDrawPage}"
+                                   Description="{x:Static lc:Resources.S_RemoteDrawPage_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi SendFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding RemoteDrawPageEnabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <sr:IconText x:Name="S_ControlPlatform"
                          Text="{x:Static lc:Resources.S_ControlPlatform}"
                          Glyph="{sr:Fi GlobeFilled}"

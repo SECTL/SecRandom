@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.RegularExpressions;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Services.ControlNode;
 using SecRandom.Mobile;
 using SecRandom.Services.ControlNode;
 using SecRandom.ViewModels.Mobile;
@@ -32,10 +33,10 @@ public sealed class TabletControlHostTests
     // ---------------------------------------------------------------- 宿主形态矩阵
 
     [Theory]
-    //                   isMobile 桌面主界面 | 是移动 是平板 手机壳 跑节点 解锁闸门
-    [InlineData(false, false, false, false, false, true, false)]   // 桌面
-    [InlineData(true, true, true, true, false, true, false)]       // 平板
-    [InlineData(true, false, true, false, true, false, true)]      // 手机
+    //                   isMobile 桌面主界面 | 是移动 是平板 手机壳 跑节点 解锁闸门 侧栏页 底部档 默认隐藏
+    [InlineData(false, false, false, false, false, true, false, true, false, true)]   // 桌面
+    [InlineData(true, true, true, true, false, true, false, true, false, false)]      // 平板
+    [InlineData(true, false, true, false, true, false, true, false, true, false)]     // 手机
     public void 宿主形态_三种形态的角色矩阵(
         bool isMobile,
         bool usesDesktopMainView,
@@ -43,7 +44,10 @@ public sealed class TabletControlHostTests
         bool expectedDesktopMainView,
         bool expectedMobileShell,
         bool expectedRunsControlNode,
-        bool expectedUnlockedGate)
+        bool expectedUnlockedGate,
+        bool expectedRemoteDrawSidebar,
+        bool expectedRemoteDrawBottom,
+        bool expectedRemoteDrawHiddenByDefault)
     {
         var shape = AppHostShape.Resolve(isMobile, usesDesktopMainView);
 
@@ -53,8 +57,36 @@ public sealed class TabletControlHostTests
         Assert.Equal(expectedRunsControlNode, shape.RunsControlNode);
         Assert.Equal(expectedUnlockedGate, shape.UsesUnlockedDrawGate);
 
-        // 控制端入口：手机（底部）与平板（侧栏）都有，桌面没有。
-        Assert.Equal(isMobile, shape.UsesRemoteDrawPage);
+        // 远程抽取页：**三个宿主都有**，只是外壳不同——桌面/平板是主界面侧栏主页面，手机是底部第 5 档。
+        Assert.Equal(expectedRemoteDrawSidebar, shape.UsesRemoteDrawSidebarPage);
+        Assert.Equal(expectedRemoteDrawBottom, shape.UsesRemoteDrawBottomTab);
+        Assert.True(shape.UsesRemoteDrawSidebarPage ^ shape.UsesRemoteDrawBottomTab);
+
+        // 默认隐藏只针对桌面：平板/手机维持升级前就有的样子（教室里平板就是控制台，不能突然少一页）。
+        Assert.Equal(expectedRemoteDrawHiddenByDefault, shape.RemoteDrawEntryHiddenByDefault);
+    }
+
+    [Theory]
+    //                  桌面 开关 | 可见
+    [InlineData(true, false, false)]   // 桌面默认关 → 看不见
+    [InlineData(true, true, true)]     // 桌面用户打开 → 看得见
+    [InlineData(false, false, true)]   // 平板/手机不受这个开关影响：没有开关也必须看得见
+    [InlineData(false, true, true)]
+    public void 可见性_只有桌面受开关约束(bool isDesktop, bool enabledByUser, bool expectedVisible)
+    {
+        Assert.Equal(expectedVisible, AppHostShape.IsRemoteDrawEntryVisible(isDesktop, enabledByUser));
+    }
+
+    [Fact]
+    public void 可见性_默认关闭且状态文件缺省即关闭()
+    {
+        // 模型默认值就是关：新装/升级后不该凭空多出一个会把本机令牌发往控制面的入口。
+        Assert.False(new ControlNodeState().RemoteDrawPageEnabled);
+
+        // 持久化层缺省同样是关（旧 node-state.json 里没有这个字段）。
+        var storeSource = File.ReadAllText(GetRepositoryPath(@"SecRandom.Core/Services/ControlNode/FileControlNodeStateStore.cs"));
+        Assert.Contains("RemoteDrawPageEnabled = stored?.RemoteDrawPageEnabled ?? false", storeSource, StringComparison.Ordinal);
+        Assert.Contains("RemoteDrawPageEnabled = state.RemoteDrawPageEnabled", storeSource, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -101,7 +133,8 @@ public sealed class TabletControlHostTests
         Assert.False(shape.UsesMobileShell);
         Assert.True(shape.RunsControlNode);
         Assert.False(shape.UsesUnlockedDrawGate);
-        Assert.False(shape.UsesRemoteDrawPage);
+        // 桌面照样有远程抽取页，只是默认藏着（见 可见性_ 那组用例）。
+        Assert.True(shape.UsesRemoteDrawSidebarPage);
     }
 
     // ---------------------------------------------------------------- 平板入口与手机共用同一份页面
@@ -155,7 +188,7 @@ public sealed class TabletControlHostTests
     }
 
     [Fact]
-    public void 接线_平板注册侧栏入口而手机保留底部入口()
+    public void 接线_桌面与平板注册侧栏入口而手机保留底部入口()
     {
         var source = ReadAppSource();
 
@@ -163,14 +196,66 @@ public sealed class TabletControlHostTests
         Assert.Contains("var hostShape = AppHostShape.Resolve(", source, StringComparison.Ordinal);
         Assert.Contains("var useMobileUI = hostShape.UsesMobileShell;", source, StringComparison.Ordinal);
 
-        // 平板：远程抽取页注册成主界面侧栏的一项。
+        // 桌面 + 平板：远程抽取页注册成主界面侧栏的一项（桌面只是默认隐藏它，注册永远都在）。
+        Assert.Contains("if (hostShape.UsesRemoteDrawSidebarPage)", source, StringComparison.Ordinal);
         Assert.Contains("services.AddMainPage<MobileRemoteDrawPage>(MobileResources.P_RemoteDraw);", source, StringComparison.Ordinal);
 
-        // 手机：底部导航按 key 取同一个页面——这条注册不能被平板的入口取代。
+        // 手机：底部导航按 key 取同一个页面——这条注册不能被侧栏入口取代。
         Assert.Contains(
             "services.AddKeyedTransient<UserControl, MobileRemoteDrawPage>(MobilePageIds.RemoteDraw);",
             source,
             StringComparison.Ordinal);
+
+        // ViewModel 必须注册在**共享**分支：桌面要能解析它，而它原来只写在 `if (isMobile)` 里。
+        Assert.Contains("services.AddTransient<MobileRemoteDrawViewModel>();", source, StringComparison.Ordinal);
+        var mobileOnlyViews = SectionOf(source, "// 杂项 Views", "// 界面 Views");
+        Assert.DoesNotContain("MobileRemoteDrawViewModel", mobileOnlyViews, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void 接线_开关只切换显隐而绝不增删侧栏项()
+    {
+        var source = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/MainView.axaml.cs"));
+
+        // 远程抽取入口与抽奖入口走同一套 SetPageItemVisibility：只动 IsVisible。
+        Assert.Contains("SetPageItemVisibility(item, RemoteDrawPageId, isRemoteDrawVisible);", source, StringComparison.Ordinal);
+
+        // 集控状态变化 → 立刻重算显隐（不需要重启）。
+        Assert.Contains("store.Changed += NodeStateOnChanged;", source, StringComparison.Ordinal);
+        Assert.Contains("NodeStateStore?.Changed -= NodeStateOnChanged;", source, StringComparison.Ordinal);
+
+        // 运行时**不许**动这两个集合：FluentAvalonia 在集合变化时会丢页脚选中态并以 null 触发 ItemInvoked。
+        var handler = SectionOf(source, "private void NodeStateOnChanged", "private void SelectNavigationItem");
+        Assert.DoesNotContain("NavigationViewItems.Add", handler, StringComparison.Ordinal);
+        Assert.DoesNotContain("NavigationViewItems.Remove", handler, StringComparison.Ordinal);
+        Assert.DoesNotContain("FooterMenuItemsSource", handler, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void 接线_集控页开关只写本机状态且三语齐全()
+    {
+        var viewModelSource = File.ReadAllText(GetRepositoryPath(@"SecRandom/ViewModels/SettingsPages/ControlSettingsPageViewModel.cs"));
+        Assert.Contains("state with { RemoteDrawPageEnabled = value }", viewModelSource, StringComparison.Ordinal);
+        Assert.Contains("RemoteDrawPageEnabled = state.RemoteDrawPageEnabled;", viewModelSource, StringComparison.Ordinal);
+
+        var xaml = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/SettingsPages/General/ControlSettingsPage.axaml"));
+        Assert.Contains("x:Name=\"S_RemoteDrawPage\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("IsChecked=\"{Binding RemoteDrawPageEnabled}\"", xaml, StringComparison.Ordinal);
+
+        // 三语都必须有：少一语的键会在那个界面语言下变成空行。
+        foreach (var resource in new[] { "Resources.resx", "Resources.en-US.resx", "Resources.ja-JP.resx" })
+        {
+            var text = File.ReadAllText(GetRepositoryPath(Path.Combine(
+                "SecRandom/Langs/SettingsPages/General/Control", resource)));
+            Assert.Contains("S_RemoteDrawPage\"", text, StringComparison.Ordinal);
+            Assert.Contains("S_RemoteDrawPage_D\"", text, StringComparison.Ordinal);
+        }
+
+        // 手写的 Designer 也要有对应属性，否则 XAML 的 x:Static 直接编译不过（这里只是把原因写清楚）。
+        var designer = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Langs/SettingsPages/General/Control/Resources.Designer.cs"));
+        Assert.Contains("public static string S_RemoteDrawPage", designer, StringComparison.Ordinal);
+        Assert.Contains("public static string S_RemoteDrawPage_D", designer, StringComparison.Ordinal);
     }
 
     [Fact]

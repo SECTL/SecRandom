@@ -57,22 +57,22 @@ public sealed class MainViewSettingsNavigationTests
         };
 
         var settingsControl = (Control)settings;
-        var center = settingsControl.TranslatePoint(
-            new Point(settingsControl.Bounds.Width / 2, settingsControl.Bounds.Height / 2), window);
-        Assert.NotNull(center);
 
-        // 按下与抬起分两个调度帧：headless 里窗口的布局/模板/渲染都排在调度器队列上，
-        // 同一个帧里连着发按下+抬起时，抬起可能在项自己的模板/指针捕获落地之前就被处理掉，
-        // 于是 ItemInvoked 根本不触发（这条用例历史上就是这么假红的）。
-        window.MouseDown(center.Value, MouseButton.Left);
+        // 用**键盘**激活而不是合成鼠标点击：这条用例要验的是"设置入口被调用时不抢选中态"，
+        // 而合成点击额外依赖命中测试——它要求按钮的视觉树在那一帧恰好可命中，
+        // headless 宿主并发跑别的测试类时并不可靠（实测同一份二进制在 -v q 下 8/10 假红、-v n 下 0/10）。
+        // 键盘激活走的是同一个 ItemInvoked 出口，却只依赖"焦点 + 按键路由"这些确定性的逻辑状态。
+        Assert.True(settingsControl.Focus(), "设置入口没有拿到键盘焦点");
         PumpUi(window);
-        window.MouseUp(center.Value, MouseButton.Left);
+
+        window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        window.KeyReleaseQwerty(PhysicalKey.Enter, RawInputModifiers.None);
         PumpUi(window);
 
         Assert.True(
             invoked is not null,
-            $"设置入口没有触发 ItemInvoked：itemBounds={settingsControl.Bounds}, center={center}, " +
-            $"selected={navigation.SelectedItem}, clientSize={window.ClientSize}");
+            $"设置入口没有触发 ItemInvoked：focused={settingsControl.IsFocused}, " +
+            $"bounds={settingsControl.Bounds}, selected={navigation.SelectedItem}, clientSize={window.ClientSize}");
         Assert.Equal("settings", invoked.Id);
         Assert.Same(rollCall, navigation.SelectedItem);
 

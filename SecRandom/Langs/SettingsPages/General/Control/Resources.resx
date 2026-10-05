@@ -153,4 +153,10 @@
     <data name="C_OpenControlPlane_ThirdParty" xml:space="preserve">
         <value>打开第三方托管集控平台</value>
     </data>
+    <data name="S_RemoteDrawPage" xml:space="preserve">
+        <value>在主界面显示远程抽取页</value>
+    </data>
+    <data name="S_RemoteDrawPage_D" xml:space="preserve">
+        <value>打开后主界面侧栏出现『远程抽取』页，可向本组其他设备下发抽取；使用前需要登录账号，服务端仍按组成员角色判定权限；关闭后立刻隐藏</value>
+    </data>
 </root>
