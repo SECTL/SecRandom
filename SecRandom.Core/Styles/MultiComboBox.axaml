@@ -122,10 +122,17 @@
                                     IsVisible="{TemplateBinding InnerLeftContent,
                                                             Converter={x:Static ObjectConverters.IsNotNull}}" />
 
+                                <!--
+                                    PART_SelectionBox is filled by the control with its own view of
+                                    SelectedItems (see MultiComboBox). Binding the tag list straight to
+                                    the mutable SelectedItems collection lets a page-side change handler
+                                    that rebuilds that collection re-entrantly desynchronize the panel's
+                                    container list, which crashed the container generator.
+                                -->
                                 <ItemsControl
+                                    x:Name="PART_SelectionBox"
                                     Grid.Column="1"
-                                    VerticalAlignment="Center"
-                                    ItemsSource="{TemplateBinding SelectedItems}">
+                                    VerticalAlignment="Center">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <WrapPanel Orientation="Horizontal" Background="Transparent"

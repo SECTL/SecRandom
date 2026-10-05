@@ -115,11 +115,26 @@ public class MultiComboBoxItem : ContentControl
 
     internal void UpdateSelection()
     {
+        if (_parent?.SelectedItems is { } selected)
+            SetSelectedInternal(selected.Contains(DataContext));
+    }
+
+    /// <summary>
+    ///     Clears the selection without writing back into <c>MultiComboBox.SelectedItems</c>.
+    /// </summary>
+    /// <remarks>
+    ///     <c>MultiComboBox.Remove</c> removes the item from the collection itself. Letting this
+    ///     control also write the collection raised a second change notification from inside the
+    ///     removal, which left the tag panel's container list indexed from a stale position.
+    /// </remarks>
+    internal void ClearSelection() => SetSelectedInternal(false);
+
+    private void SetSelectedInternal(bool value)
+    {
         _updateInternal = true;
         try
         {
-            if (_parent?.SelectedItems is { } selected)
-                SetCurrentValue(IsSelectedProperty, selected.Contains(DataContext));
+            SetCurrentValue(IsSelectedProperty, value);
         }
         finally
         {
