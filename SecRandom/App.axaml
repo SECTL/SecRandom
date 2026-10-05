@@ -21,6 +21,7 @@
         <FontFamily x:Key="FluentSystemIconsResizeable">avares://SecRandom/Assets/Fonts/#FluentSystemIcons-Resizable</FontFamily>
         <FontFamily x:Key="AppFontFamily">avares://SecRandom/Assets/Fonts/MiSans/#MiSans</FontFamily>
         <FontFamily x:Key="ContentControlThemeFontFamily">avares://SecRandom/Assets/Fonts/MiSans/#MiSans</FontFamily>
+        <FontFamily x:Key="MiSansFont">avares://SecRandom/Assets/Fonts/MiSans/#MiSans</FontFamily>
         <FontWeight x:Key="AppFontWeight">Normal</FontWeight>
 
         <NativeMenu x:Key="AppMenu">

@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Views;
 using SecRandom.ViewModels.MainPages;

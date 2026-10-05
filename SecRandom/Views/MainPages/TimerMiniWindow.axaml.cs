@@ -21,15 +21,8 @@ public sealed partial class TimerMiniWindow : Window
         _viewModel = viewModel;
         DataContext = viewModel;
         InitializeComponent();
-        if (App.IsMicaSupported)
-        {
-            TransparencyLevelHint = [WindowTransparencyLevel.Mica];
-            Background = Brushes.Transparent;
-        }
-        else
-        {
-            TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
-        }
+        
+        TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
 
         Loaded += OnLoaded;
         Closing += OnClosing;
@@ -41,7 +34,8 @@ public sealed partial class TimerMiniWindow : Window
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        Width = 220;
+        Width = 256;
+        DisplayTime.FontFeatures = [FontFeature.Parse("+tnum")];
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
@@ -75,6 +69,4 @@ public sealed partial class TimerMiniWindow : Window
 
         return false;
     }
-
-    private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 }

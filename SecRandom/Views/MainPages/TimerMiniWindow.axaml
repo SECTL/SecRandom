@@ -4,7 +4,7 @@
         xmlns:vm="using:SecRandom.ViewModels.MainPages"
         x:Class="SecRandom.Views.MainPages.TimerMiniWindow"
         x:DataType="vm:TimerViewModel"
-        Width="220" MinWidth="220" SizeToContent="Width"
+        Width="256" MinWidth="256" SizeToContent="Width"
         Height="132" MinHeight="132" MaxHeight="132"
         WindowStartupLocation="CenterScreen"
         WindowDecorations="None"
@@ -23,6 +23,8 @@
               Background="Transparent"
               PointerPressed="OnPointerPressed">
             <TextBlock Grid.Row="0" Text="{Binding DisplayTime}"
+                       x:Name="DisplayTime"
+                       FontFamily="{DynamicResource MiSansFont}"
                        Theme="{StaticResource DisplayTextBlockStyle}"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center" />

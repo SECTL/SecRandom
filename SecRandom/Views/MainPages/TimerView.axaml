@@ -50,6 +50,8 @@
                                    HorizontalAlignment="Center"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Text="{Binding DisplayTime}"
+                                   FontFeatures="+tnum"
+                                   FontFamily="{DynamicResource MiSansFont}"
                                    HorizontalAlignment="Center"
                                    Theme="{StaticResource DisplayTextBlockStyle}"
                                    PointerPressed="DisplayTime_OnClick" />
@@ -77,6 +79,8 @@
 
                     <StackPanel Grid.Row="2" Spacing="8" VerticalAlignment="Center">
                         <TextBlock Text="{Binding DisplayTime}"
+                                   FontFeatures="+tnum"
+                                   FontFamily="{DynamicResource MiSansFont}"
                                    HorizontalAlignment="Center"
                                    Theme="{StaticResource DisplayTextBlockStyle}"
                                    PointerPressed="DisplayTime_OnClick" />
@@ -103,6 +107,8 @@
 
                     <StackPanel Grid.Row="2" Spacing="8" VerticalAlignment="Center">
                         <TextBlock Text="{Binding DisplayTime}"
+                                   FontFeatures="+tnum"
+                                   FontFamily="{DynamicResource MiSansFont}"
                                    HorizontalAlignment="Center"
                                    Theme="{StaticResource DisplayTextBlockStyle}"
                                    PointerPressed="DisplayTime_OnClick" />

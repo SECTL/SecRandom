@@ -1,3 +1,8 @@
+# WARNING
+
+DO NOT WRITE THIS WHEN THE PROJECT CAN COMPILE NORMALLY:
+`private void InitializeComponent() => AvaloniaXamlLoader.Load(this);`
+
 # PROJECT KNOWLEDGE BASE
 
 <!--
