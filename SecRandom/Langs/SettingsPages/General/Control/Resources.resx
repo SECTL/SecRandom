@@ -117,4 +117,46 @@
     <data name="M_Detail_EndpointInvalid" xml:space="preserve">
         <value>节点通道地址无效</value>
     </data>
+    <data name="S_ControlPlatform" xml:space="preserve">
+        <value>集控平台</value>
+    </data>
+    <data name="S_NodeInfo" xml:space="preserve">
+        <value>节点信息</value>
+    </data>
+    <data name="S_ConnectionStatus" xml:space="preserve">
+        <value>连接与状态</value>
+    </data>
+    <data name="S_AdvancedConnections" xml:space="preserve">
+        <value>高级连接设置</value>
+    </data>
+    <data name="S_ControlPlaneEndpoint" xml:space="preserve">
+        <value>控制面地址</value>
+    </data>
+    <data name="S_ControlPlaneEndpoint_D" xml:space="preserve">
+        <value>控制台访问集控平台所用的基址，留空即回到线上默认地址</value>
+    </data>
+    <data name="C_RestoreDefaultEndpoint" xml:space="preserve">
+        <value>恢复默认</value>
+    </data>
+    <data name="M_ControlPlaneEndpointRejected" xml:space="preserve">
+        <value>控制面地址无效，未保存：必须使用 https，只有回环地址允许明文 http</value>
+    </data>
+    <data name="S_OpenControlPlane" xml:space="preserve">
+        <value>集控平台</value>
+    </data>
+    <data name="S_OpenControlPlane_D" xml:space="preserve">
+        <value>在浏览器中打开集控平台网页控制台，管理加入本组的设备</value>
+    </data>
+    <data name="C_OpenControlPlane_Official" xml:space="preserve">
+        <value>打开SecRandom集控平台</value>
+    </data>
+    <data name="C_OpenControlPlane_ThirdParty" xml:space="preserve">
+        <value>打开第三方托管集控平台</value>
+    </data>
+    <data name="S_RemoteDrawPage" xml:space="preserve">
+        <value>在主界面显示远程抽取页</value>
+    </data>
+    <data name="S_RemoteDrawPage_D" xml:space="preserve">
+        <value>打开后主界面侧栏出现『远程抽取』页，可向本组其他设备下发抽取；使用前需要登录账号，服务端仍按组成员角色判定权限；关闭后立刻隐藏</value>
+    </data>
 </root>

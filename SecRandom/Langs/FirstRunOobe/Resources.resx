@@ -39,7 +39,7 @@ SecRandom 以 GNU GPLv3 许可发布；GPLv3 允许您运行、研究、修改�
   <data name="C_Title" xml:space="preserve"><value>SecRandom 初始设置</value></data>
   <data name="C_Intro" xml:space="preserve"><value>先阅读可验证抽取须知，并完成必要的隐私政策与 GPLv3 确认；其余内容可随时在设置中调整</value></data>
   <data name="C_WelcomeTitle" xml:space="preserve"><value>欢迎使用 SecRandom</value></data>
-  <data name="C_WelcomeDescription" xml:space="preserve"><value>接下来将用几步完成首次设置；可验证抽取须知、隐私政策与 GPLv3 确认是必需的，名单、抽奖、外观和桌面集成均可跳过，并可随时在设置中修改</value></data>
+  <data name="C_WelcomeDescription" xml:space="preserve"><value>接下来将用几步完成首次设置；可验证抽取须知、隐私政策与 GPLv3 确认是必需的，名单、抽奖、外观、桌面集成和集控均可跳过，并可随时在设置中修改</value></data>
   <data name="C_Language" xml:space="preserve"><value>语言</value></data>
   <data name="C_LegalTitle" xml:space="preserve"><value>隐私政策与开源许可</value></data>
   <data name="C_LegalDescription" xml:space="preserve"><value>继续使用前，请先阅读可验证抽取须知，再确认隐私政策与 GNU GPLv3；隐私选项默认开启，您可以在下方调整</value></data>
@@ -96,6 +96,22 @@ SecRandom 以 GNU GPLv3 许可发布；GPLv3 允许您运行、研究、修改�
   <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>设置软件启动时是否自动显示主窗口</value></data>
   <data name="C_ExternalIntegration" xml:space="preserve"><value>外部链接与联动</value></data>
   <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>注册 secrandom:// 链接以允许外部程序唤起 SecRandom</value></data>
+  <data name="C_ControlTitle" xml:space="preserve"><value>集控</value></data>
+  <data name="C_ControlDescription" xml:space="preserve"><value>开启后这台设备会作为集控节点连入集控平台，可被远程查看状态、锁定抽取并下发抽取；开关与身份保存在本机自己的状态文件里，导入设置不会替您打开它</value></data>
+  <data name="C_ControlRemoteEnabled" xml:space="preserve"><value>允许被远程控制</value></data>
+  <data name="C_ControlRemoteEnabledDescription" xml:space="preserve"><value>这是本机自己的开关，关闭后无论集控平台下发什么命令都不会执行</value></data>
+  <data name="C_ControlDisplayName" xml:space="preserve"><value>显示名称</value></data>
+  <data name="C_ControlDisplayNameDescription" xml:space="preserve"><value>集控平台设备列表里显示的名字；留空则上报主机名</value></data>
+  <data name="C_ControlNodeId" xml:space="preserve"><value>节点 ID</value></data>
+  <data name="C_ControlNodeIdDescription" xml:space="preserve"><value>安装时生成并长期保持不变，在集控平台注册这台设备时用它</value></data>
+  <data name="C_ControlGroupId" xml:space="preserve"><value>所属组 ID</value></data>
+  <data name="C_ControlGroupIdDescription" xml:space="preserve"><value>由集控平台建组后提供；节点必须先在该组注册，否则连接会被拒绝</value></data>
+  <data name="C_ControlPlatform" xml:space="preserve"><value>集控平台</value></data>
+  <data name="C_ControlPlatformDescription" xml:space="preserve"><value>在浏览器中打开集控平台网页控制台，管理加入本组的设备</value></data>
+  <data name="C_OpenControlPlane_Official" xml:space="preserve"><value>打开SecRandom集控平台</value></data>
+  <data name="C_OpenControlPlane_ThirdParty" xml:space="preserve"><value>打开第三方托管集控平台</value></data>
+  <data name="M_ControlConnectAfterSetup" xml:space="preserve"><value>这台设备会在完成设置并启动后连接集控平台，届时可在「设置 > 通用 > 集控」查看连接状态</value></data>
+  <data name="M_ControlPlatformOpenFailed" xml:space="preserve"><value>打开集控平台失败，请在设置中重试</value></data>
   <data name="C_PrivacyTitle" xml:space="preserve"><value>隐私</value></data>
     <data name="C_PrivacyDescription" xml:space="preserve"><value>选择应用启动后可发送的诊断和在线状态信息，后续可随时在设置中调整</value></data>
     <data name="C_PrivacyEncouragement" xml:space="preserve"><value>求求了嘛~开启会对我们未来的更新会起到更大的帮助</value></data>
@@ -107,11 +123,12 @@ SecRandom 以 GNU GPLv3 许可发布；GPLv3 允许您运行、研究、修改�
   <data name="O_OnlineStatusMode_Anonymous" xml:space="preserve"><value>匿名上报</value></data>
   <data name="O_OnlineStatusMode_Off" xml:space="preserve"><value>停止上报</value></data>
   <data name="C_CompleteTitle" xml:space="preserve"><value>完成设置</value></data>
-  <data name="C_CompleteDescription" xml:space="preserve"><value>已阅读可验证抽取须知并确认隐私政策与 GPLv3 后，点击完成即可进入 SecRandom；名单、抽奖、外观、桌面集成和隐私均可在设置中再次调整</value></data>
+  <data name="C_CompleteDescription" xml:space="preserve"><value>已阅读可验证抽取须知并确认隐私政策与 GPLv3 后，点击完成即可进入 SecRandom；名单、抽奖、外观、桌面集成、集控和隐私均可在设置中再次调整</value></data>
   <data name="C_CompletedItems" xml:space="preserve"><value>已配置项目</value></data>
   <data name="C_CompletedClass" xml:space="preserve"><value>点名名单与奖品池可在名单管理中维护</value></data>
   <data name="C_CompletedAppearance" xml:space="preserve"><value>抽奖入口、主题和浮窗外观可在设置中修改</value></data>
   <data name="C_CompletedIntegration" xml:space="preserve"><value>外部链接开关不会关闭应用内部的单实例通信</value></data>
+  <data name="C_CompletedControl" xml:space="preserve"><value>集控开关、显示名称与所属组均可在集控设置中修改</value></data>
   <data name="C_CompletedPrivacy" xml:space="preserve"><value>遥测和在线状态均可在隐私设置中更改</value></data>
   <data name="C_OverwriteTitle" xml:space="preserve"><value>确认覆盖名单</value></data>
   <data name="C_Overwrite" xml:space="preserve"><value>覆盖</value></data>

@@ -730,6 +730,29 @@
     <data name="RD_GroupsUnavailable" xml:space="preserve"><value>有 {0} 个组没读到，请重试</value></data>
     <data name="MA_SignIn" xml:space="preserve"><value>登录思拓创联账号</value></data>
     <data name="MA_SignOut" xml:space="preserve"><value>退出登录</value></data>
-    <data name="MA_SignedOutHint" xml:space="preserve"><value>未登录。登录后可以云备份，并在"抽取"页远程控制教室设备</value></data>
+    <data name="MA_SignedOutHint" xml:space="preserve"><value>未登录</value></data>
     <data name="MA_Reauthorize" xml:space="preserve"><value>登录状态已失效，请重新登录</value></data>
+    <data name="RD_ResultUnreadable" xml:space="preserve"><value>设备已执行，但回执里没有可显示的成员</value></data>
+    <data name="RD_NoRosterCandidate" xml:space="preserve"><value>这个名单里没有可抽取的成员</value></data>
+    <data name="RD_Kind" xml:space="preserve"><value>抽取类型</value></data>
+    <data name="RD_KindRollCall" xml:space="preserve"><value>点名</value></data>
+    <data name="RD_KindLottery" xml:space="preserve"><value>抽奖</value></data>
+    <data name="RD_Pool" xml:space="preserve"><value>奖池</value></data>
+    <data name="RD_LotteryNoScope" xml:space="preserve"><value>抽奖不按性别与分组筛选</value></data>
+    <data name="RD_DrawnPrizeCount" xml:space="preserve"><value>抽到 {0} 个奖品</value></data>
+    <data name="RD_LotteryDisabled" xml:space="preserve"><value>这台机器已关闭抽奖功能</value></data>
+    <data name="RD_Reset" xml:space="preserve"><value>重置本轮</value></data>
+    <data name="RD_Resetting" xml:space="preserve"><value>正在重置…</value></data>
+    <data name="RD_ResetDone" xml:space="preserve"><value>已重置本轮，清掉 {0} 条抽取进度</value></data>
+    <data name="RD_ResetConfirm" xml:space="preserve"><value>再点一次确认重置</value></data>
+    <data name="RD_NoResult" xml:space="preserve"><value>还没有结果</value></data>
+    <data name="RD_NoResult_D" xml:space="preserve"><value>下发抽取后，设备回执里抽到的人或奖品会显示在这里</value></data>
+    <data name="RD_SelfBadge" xml:space="preserve"><value>本机</value></data>
+    <data name="RD_SelfSelectedHint" xml:space="preserve"><value>这是本机；要给本机点名或抽奖，请用主界面的『点名』『抽奖』页面</value></data>
+    <data name="RD_Conditions" xml:space="preserve"><value>抽奖条件</value></data>
+    <data name="RD_PrizeTags" xml:space="preserve"><value>奖品标签</value></data>
+    <data name="RD_PrizeTagsHint" xml:space="preserve"><value>只抽带这些标签的奖品，可多选，不选即整池抽</value></data>
+    <data name="RD_Recipient" xml:space="preserve"><value>发放对象</value></data>
+    <data name="RD_RecipientNone" xml:space="preserve"><value>不指定</value></data>
+    <data name="RD_ConditionsUnsupported" xml:space="preserve"><value>这台设备不支持条件抽取，只能整池抽</value></data>
 </root>

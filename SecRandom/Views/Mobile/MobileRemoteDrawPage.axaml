@@ -19,8 +19,74 @@
     <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="720" Margin="12" Spacing="10" Classes="animated-intro">
 
-            <TextBlock Text="{x:Static langs:Resources.P_RemoteDraw}" FontSize="20" FontWeight="SemiBold" />
-            <TextBlock Text="{x:Static langs:Resources.RD_Hint}" Opacity="0.7" TextWrapping="Wrap" />
+            <!--
+                页面内不再重复标题：导航栏已经显示「远程抽取」（MobileRootView.Header = P_RemoteDraw），
+                正文再写一遍只会占掉首屏并把说明行压低。留下的说明行是这一段的引导语，
+                因此比正文略暗、并与导航栏留出一点间距（页边距 12 + 顶部 4），不让它顶着标题栏。
+            -->
+            <TextBlock Text="{x:Static langs:Resources.RD_Hint}"
+                       Opacity="0.75"
+                       Margin="0 4 0 0"
+                       TextWrapping="Wrap" />
+
+            <!--
+                ============ 顶部结果区 ============
+                与桌面/平板版左侧结果区**同一份来源**（共享 VM）：有结果时给条数 + 回执里的成员，
+                没有回执时给两行空态。抽完之后不用往下找：结果就长在控制项上面。
+                失败/超时/被拒的状态文案也放在这里（全页只有这一处显示结果与失败）。
+
+                高度：空态很矮（两行 + 刷新），有结果时封顶 200 且内部可滚动——
+                结果多时不许把下面的设备/名单/抽取按钮顶出屏幕。
+            -->
+            <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8"
+                    Padding="12">
+                <StackPanel Spacing="8">
+                    <!-- 有回执：条数 + 成员列表（滚动受 MaxHeight 约束）。 -->
+                    <StackPanel IsVisible="{Binding ViewModel.HasResult}" Spacing="8">
+                        <TextBlock Text="{Binding ViewModel.DrawnCountText}" FontWeight="SemiBold" />
+                        <ScrollViewer MaxHeight="200" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding ViewModel.DrawnMembers}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="cp:NodeCommandDrawnMember">
+                                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0 2">
+                                            <TextBlock Text="{Binding DisplayLabel}" FontSize="16" />
+                                            <TextBlock Text="{Binding SecondaryLabel}" Opacity="0.6" FontSize="14" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+
+                    <!-- 没有回执：两行空态（空态只有这么高，不占半屏）。**不放刷新**：刷新在控制区，
+                         同一动作只在一个地方出现。 -->
+                    <StackPanel IsVisible="{Binding !ViewModel.HasResult}" Spacing="4">
+                        <TextBlock Text="{Binding ViewModel.ResultPlaceholderTitle}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding ViewModel.ResultPlaceholderHint}"
+                                   FontSize="12"
+                                   Opacity="0.7"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- 执行中/失败/超时/被拒：都在这一处（文案由 VM 按错误码给）。 -->
+                    <ProgressBar IsIndeterminate="True" IsVisible="{Binding ViewModel.IsBusy}" />
+                    <TextBlock Text="{Binding ViewModel.StatusText}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <!-- 抽取类型：点名读名单，抽奖读奖池。切换它会连数据源一起换，所以放在最上面而不是塞进条件区。 -->
+            <sr:Field Label="{x:Static langs:Resources.RD_Kind}">
+                <ComboBox ItemsSource="{Binding ViewModel.DrawKindOptions}"
+                          SelectedItem="{Binding ViewModel.SelectedDrawKind}"
+                          HorizontalAlignment="Stretch">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RemoteDrawKindOption">
+                            <TextBlock Text="{Binding Label}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </sr:Field>
 
             <!-- 未登录、请求失败、没有组、没有设备、角色不足、设备不支持：每一种都要说清楚，不留空白页。 -->
             <Border IsVisible="{Binding ViewModel.HasEmptyState}"
@@ -62,7 +128,16 @@
                     <DataTemplate x:DataType="vm:DeviceRow">
                         <Border Classes.device-disabled="{Binding !IsUsable}" Padding="2">
                             <StackPanel Spacing="2">
-                                <TextBlock Text="{Binding DeviceLabel}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{Binding DeviceLabel}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <!-- 本机徽章：只标识、不过滤，本机照样留在列表里可选。 -->
+                                    <Border IsVisible="{Binding IsSelf}"
+                                            VerticalAlignment="Center"
+                                            CornerRadius="4" Padding="6 1"
+                                            Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                                        <TextBlock Text="{Binding SelfBadgeText}" FontSize="11" Opacity="0.85" />
+                                    </Border>
+                                </StackPanel>
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <TextBlock Text="{Binding GroupLabel}" FontSize="12" Opacity="0.7" />
                                     <TextBlock Text="{Binding StatusText}" FontSize="12" Opacity="0.7" />
@@ -77,6 +152,14 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+
+            <!-- 选中本机：明确说一句怎么给本机抽，但不禁止选择（有人确实要给它下发命令）。 -->
+            <TextBlock Text="{Binding ViewModel.SelfSelectedHint}"
+                       IsVisible="{Binding ViewModel.IsSelfSelected}"
+                       FontSize="12"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource SystemFillColorCautionBrush}" />
+
 
             <!-- 部分组读不到：只说那一组（带服务端错误码），其余设备照常可用。 -->
             <Border IsVisible="{Binding ViewModel.HasUnavailableGroups}"
@@ -102,7 +185,7 @@
                     IsEnabled="{Binding ViewModel.CanLoadRoster}"
                     HorizontalAlignment="Stretch" />
 
-            <sr:Field Label="{x:Static langs:Resources.RD_List}" IsVisible="{Binding ViewModel.HasRoster}">
+            <sr:Field Label="{Binding ViewModel.ListFieldLabel}" IsVisible="{Binding ViewModel.HasRoster}">
                 <ComboBox ItemsSource="{Binding ViewModel.Rosters}"
                           SelectedItem="{Binding ViewModel.SelectedRoster}"
                           HorizontalAlignment="Stretch">
@@ -114,7 +197,62 @@
                 </ComboBox>
             </sr:Field>
 
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding ViewModel.HasRoster}">
+            <!-- 设备不支持条件集时说明"只能整池抽"；支持的设备在下面给真条件。 -->
+            <TextBlock Text="{x:Static langs:Resources.RD_ConditionsUnsupported}"
+                       IsVisible="{Binding ViewModel.ShowsLotteryConditionsUnsupported}"
+                       FontSize="12"
+                       Opacity="0.7"
+                       TextWrapping="Wrap" />
+
+            <!--
+                抽奖条件（v1）：标签筛奖品 + 发放对象范围。**只有声明了 draw.trigger.conditions 的设备才显示**，
+                取值全部来自设备已读回来的数据（标签来自奖池、名单来自学生名单），不给人自由填的入口。
+            -->
+            <StackPanel IsVisible="{Binding ViewModel.ShowsLotteryConditions}" Spacing="10">
+                <sr:Field Label="{x:Static langs:Resources.RD_PrizeTags}">
+                    <StackPanel Spacing="4">
+                        <sr:MultiComboBox ItemsSource="{Binding ViewModel.PrizeTags}"
+                                          SelectedItems="{Binding ViewModel.SelectedPrizeTags}"
+                                          HorizontalAlignment="Stretch">
+                            <sr:MultiComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:PrizeTagOption">
+                                    <TextBlock Text="{Binding Label}" />
+                                </DataTemplate>
+                            </sr:MultiComboBox.ItemTemplate>
+                        </sr:MultiComboBox>
+                        <TextBlock Text="{x:Static langs:Resources.RD_PrizeTagsHint}"
+                                   FontSize="12"
+                                   Opacity="0.7"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </sr:Field>
+
+                <sr:Field Label="{x:Static langs:Resources.RD_Recipient}">
+                    <ComboBox ItemsSource="{Binding ViewModel.RecipientListNames}"
+                              SelectedItem="{Binding ViewModel.SelectedRecipientList}"
+                              PlaceholderText="{x:Static langs:Resources.RD_RecipientNone}"
+                              HorizontalAlignment="Stretch" />
+                </sr:Field>
+
+                <!-- 范围只在选定了发放名单之后出现：没有名单就没有"发给谁"这回事。 -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8"
+                      IsVisible="{Binding ViewModel.HasRecipientScope}">
+                    <sr:Field Grid.Column="0" Label="{x:Static langs:Resources.RD_Gender}">
+                        <ComboBox ItemsSource="{Binding ViewModel.RecipientGenderOptions}"
+                                  SelectedItem="{Binding ViewModel.SelectedRecipientGender}"
+                                  PlaceholderText="{x:Static langs:Resources.RD_Any}"
+                                  HorizontalAlignment="Stretch" />
+                    </sr:Field>
+                    <sr:Field Grid.Column="1" Label="{x:Static langs:Resources.RD_GroupScope}">
+                        <ComboBox ItemsSource="{Binding ViewModel.RecipientGroupOptions}"
+                                  SelectedItem="{Binding ViewModel.SelectedRecipientGroup}"
+                                  PlaceholderText="{x:Static langs:Resources.RD_Any}"
+                                  HorizontalAlignment="Stretch" />
+                    </sr:Field>
+                </Grid>
+            </StackPanel>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding ViewModel.IsScopeSelectorVisible}">
                 <sr:Field Grid.Column="0" Label="{x:Static langs:Resources.RD_Gender}">
                     <ComboBox ItemsSource="{Binding ViewModel.GenderOptions}"
                               SelectedItem="{Binding ViewModel.SelectedGender}"
@@ -140,28 +278,25 @@
                     HorizontalContentAlignment="Center"
                     HorizontalAlignment="Stretch" />
 
-            <ProgressBar IsIndeterminate="True" IsVisible="{Binding ViewModel.IsBusy}" />
+            <!--
+                重置本轮：次级按钮（不带 accent），视觉层级低于抽取。
+                它是破坏性动作（清掉这一轮的抽取进度），因此要按两次，第一次只把按钮变成确认提示。
+            -->
+            <Button Content="{Binding ViewModel.ResetButtonText}"
+                    Command="{Binding ViewModel.ResetRoundCommand}"
+                    IsEnabled="{Binding ViewModel.CanReset}"
+                    IsVisible="{Binding ViewModel.HasRoster}"
+                    HorizontalContentAlignment="Center"
+                    HorizontalAlignment="Stretch" />
 
-            <TextBlock Text="{Binding ViewModel.StatusText}" TextWrapping="Wrap" />
-
-            <Border IsVisible="{Binding ViewModel.HasResult}"
-                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                    CornerRadius="8"
-                    Padding="12">
-                <StackPanel Spacing="6">
-                    <TextBlock Text="{x:Static langs:Resources.RD_Drawn}" FontWeight="SemiBold" />
-                    <ItemsControl ItemsSource="{Binding ViewModel.DrawnMembers}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="cp:NodeCommandDrawnMember">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="{Binding DisplayLabel}" FontSize="16" />
-                                    <TextBlock Text="{Binding SecondaryLabel}" Opacity="0.6" FontSize="14" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </Border>
+            <!--
+                抽取按钮下方只留**临时的进行中**状态。结果、失败、超时、被拒都已经在顶部结果区显示，
+                这里再放一遍就是同一件事说两次（用户抽完还得往下找的那条旧文案就是这么来的）。
+            -->
+            <TextBlock Text="{x:Static langs:Resources.RD_Drawing}"
+                       IsVisible="{Binding ViewModel.IsBusy}"
+                       FontSize="12"
+                       Opacity="0.7" />
         </StackPanel>
     </ScrollViewer>
 </UserControl>

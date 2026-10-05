@@ -86,23 +86,84 @@ public static class ControlPlaneMessages
             why = parts.ElementAtOrDefault(1);
         }
 
-        if (why is not null || field is not null)
-            return DescribeInvalidValue(field, why);
+        var friendly = why is not null || field is not null
+            ? DescribeInvalidValue(field, why)
+            : code switch
+            {
+                "local_remote_disabled" => LR.RD_LocalRemoteDisabled,
+                "draw_locked" => LR.RD_DrawLocked,
+                "busy" => LR.RD_Busy,
+                "capability_unsupported" => LR.RD_NoCapability,
+                "expired" => LR.RD_Expired,
+                "rate_limited" => LR.RD_RateLimited,
+                "execution_failed" => LR.RD_Failed,
+                "draw_denied" => command.DetailReason switch
+                {
+                    "blocked_by_class_time" => LR.RD_ClassTime,
+                    // 本机把它自己的抽奖功能关掉了：那不是"拒绝了"，而是这台机器压根没有这个功能。
+                    "lottery_disabled" => LR.RD_LotteryDisabled,
+                    _ => LR.RD_Denied
+                },
+                _ => string.Format(LR.RD_Error, code)
+            };
 
-        return code switch
-        {
-            "local_remote_disabled" => LR.RD_LocalRemoteDisabled,
-            "draw_locked" => LR.RD_DrawLocked,
-            "busy" => LR.RD_Busy,
-            "capability_unsupported" => LR.RD_NoCapability,
-            "expired" => LR.RD_Expired,
-            "rate_limited" => LR.RD_RateLimited,
-            "execution_failed" => LR.RD_Failed,
-            "draw_denied" => string.Equals(command.DetailReason, "blocked_by_class_time", StringComparison.Ordinal)
-                ? LR.RD_ClassTime
-                : LR.RD_Denied,
-            _ => string.Format(LR.RD_Error, code)
-        };
+        // 原始原因码一并显示：排查"到底是谁说的没有符合条件的人"只能靠它。
+        return string.Format(LR.RD_FailureWithCode, friendly, code);
+    }
+
+    /// <summary>
+    ///     一次抽取该显示什么。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <b>"设备执行成功但回执里没有成员"绝不能显示成"没有符合条件的人"。</b>
+    ///         线上就是这样：点名在教室机上真的抽成功了（导出证明齐全），手机却显示
+    ///         「该名单里没有符合条件的人」——因为客户端取不到回执成员后回落到了那句文案。
+    ///         两件事必须各有各的说法：一个是设备说的"没人可抽"，一个是客户端没读懂回执。
+    ///     </para>
+    ///     <para>
+    ///         只有设备**明确**返回 <c>no_candidate</c>/<c>no_matching_member</c> 时，
+    ///         才允许说"没有符合条件的人"。
+    ///     </para>
+    /// </remarks>
+    public static string DescribeDrawResult(NodeCommandDto command)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        if (!command.IsSucceeded)
+            return DescribeCommand(command);
+
+        var drawn = command.DrawnMembers();
+        if (drawn.Count == 0)
+            return LR.RD_ResultUnreadable;
+
+        // 量词跟着回执里的目标走：抽奖抽回来的是奖品，说成"抽到 2 人"就错了。
+        return string.Equals(command.ResultTarget, "lottery", StringComparison.Ordinal)
+            ? string.Format(LR.RD_DrawnPrizeCount, drawn.Count)
+            : string.Format(LR.RD_DrawnCount, drawn.Count);
+    }
+
+    /// <summary>
+    ///     一次"重置本轮"该显示什么。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <b>重置不是抽取。</b>它成功时回执里没有 <c>drawn</c>，只有一个 <c>cleared</c> 条数；
+    ///         拿 <see cref="DescribeDrawResult" /> 去渲染它，用户会看到"回执里没有可显示的成员"——
+    ///         明明重置成功了，屏幕上却像出了错。
+    ///     </para>
+    ///     <para>
+    ///         回执里读不到条数时按 0 显示：重置本身已经成功，条数只是补充信息，
+    ///         为此编一句"未知"反而会让人以为重置没生效。
+    ///     </para>
+    /// </remarks>
+    public static string DescribeResetResult(NodeCommandDto command)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        return command.IsSucceeded
+            ? string.Format(LR.RD_ResetDone, command.ResultClearedCount ?? 0)
+            : DescribeCommand(command);
     }
 
     private static string DescribeInvalidValue(string? field, string? why) => why switch
@@ -110,7 +171,9 @@ public static class ControlPlaneMessages
         "not_found" => LR.RD_ListNotFound,
         "not_in_list" => LR.RD_NotInList,
         "out_of_range" => LR.RD_OutOfRange,
-        "no_candidate" or "no_matching_member" => LR.RD_NoCandidate,
+        // 两个"没人"要分开：整份名单没有可抽的人 ≠ 条件筛完没有人。
+        "no_candidate" => LR.RD_NoRosterCandidate,
+        "no_matching_member" => LR.RD_NoCandidate,
         _ => field is { Length: > 0 }
             ? string.Format(LR.RD_InvalidValueField, field)
             : LR.RD_InvalidValue

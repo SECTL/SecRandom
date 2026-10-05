@@ -238,6 +238,24 @@ namespace SecRandom.Langs.SettingsPages.General.Control {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 在主界面显示远程抽取页.
+        /// </summary>
+        public static string S_RemoteDrawPage {
+            get {
+                return ResourceManager.GetString("S_RemoteDrawPage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 打开后主界面侧栏出现『远程抽取』页，可向本组其他设备下发抽取；使用前需要登录账号，服务端仍按组成员角色判定权限；关闭后立刻隐藏.
+        /// </summary>
+        public static string S_RemoteDrawPage_D {
+            get {
+                return ResourceManager.GetString("S_RemoteDrawPage_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 允许被远程控制.
         /// </summary>
         public static string S_RemoteControl_Enabled {
@@ -324,6 +342,114 @@ namespace SecRandom.Langs.SettingsPages.General.Control {
         public static string S_RemoteControl_Status_D {
             get {
                 return ResourceManager.GetString("S_RemoteControl_Status_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 集控平台.
+        /// </summary>
+        public static string S_ControlPlatform {
+            get {
+                return ResourceManager.GetString("S_ControlPlatform", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 节点信息.
+        /// </summary>
+        public static string S_NodeInfo {
+            get {
+                return ResourceManager.GetString("S_NodeInfo", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 连接与状态.
+        /// </summary>
+        public static string S_ConnectionStatus {
+            get {
+                return ResourceManager.GetString("S_ConnectionStatus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 高级连接设置.
+        /// </summary>
+        public static string S_AdvancedConnections {
+            get {
+                return ResourceManager.GetString("S_AdvancedConnections", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 控制面地址.
+        /// </summary>
+        public static string S_ControlPlaneEndpoint {
+            get {
+                return ResourceManager.GetString("S_ControlPlaneEndpoint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 控制台访问集控平台所用的基址，留空即回到线上默认地址.
+        /// </summary>
+        public static string S_ControlPlaneEndpoint_D {
+            get {
+                return ResourceManager.GetString("S_ControlPlaneEndpoint_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 恢复默认.
+        /// </summary>
+        public static string C_RestoreDefaultEndpoint {
+            get {
+                return ResourceManager.GetString("C_RestoreDefaultEndpoint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 控制面地址无效，未保存：必须使用 https，只有回环地址允许明文 http.
+        /// </summary>
+        public static string M_ControlPlaneEndpointRejected {
+            get {
+                return ResourceManager.GetString("M_ControlPlaneEndpointRejected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 集控平台.
+        /// </summary>
+        public static string S_OpenControlPlane {
+            get {
+                return ResourceManager.GetString("S_OpenControlPlane", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 在浏览器中打开集控平台网页控制台，管理加入本组的设备.
+        /// </summary>
+        public static string S_OpenControlPlane_D {
+            get {
+                return ResourceManager.GetString("S_OpenControlPlane_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 打开SecRandom集控平台.
+        /// </summary>
+        public static string C_OpenControlPlane_Official {
+            get {
+                return ResourceManager.GetString("C_OpenControlPlane_Official", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 打开第三方托管集控平台.
+        /// </summary>
+        public static string C_OpenControlPlane_ThirdParty {
+            get {
+                return ResourceManager.GetString("C_OpenControlPlane_ThirdParty", resourceCulture);
             }
         }
     }

@@ -24,10 +24,12 @@ using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Linkage;
+using SecRandom.Services.ControlNode;
 using SecRandom.Services.Notification;
 using SecRandom.Services.Security;
 using SecRandom.Services.Verification;
@@ -59,6 +61,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly LotteryDrawService _lotteryDrawService;
+    private readonly IProfileCatalogManager _profileCatalogManager;
     private readonly NotificationService? _notificationService;
     private readonly IFeatureAvailabilityService _featureAvailability;
     private readonly FileSystemWatcher? _prizeListWatcher;
@@ -95,6 +98,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         VerificationDrawCoordinator verificationDrawCoordinator,
         IFeatureAvailabilityService featureAvailability,
         LotteryDrawService lotteryDrawService,
+        IProfileCatalogManager profileCatalogManager,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         NotificationService? notificationService = null)
         : base(configHandler)
@@ -111,6 +115,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         _linkageDrawCoordinator = linkageDrawCoordinator;
         _verificationDrawCoordinator = verificationDrawCoordinator;
         _lotteryDrawService = lotteryDrawService;
+        _profileCatalogManager = profileCatalogManager;
         _featureAvailability = featureAvailability;
         _notificationService = notificationService;
         if (App.IsDesktop && !OperatingSystem.IsIOS())
@@ -177,6 +182,9 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private StudentImagePositionMode LotteryImagePosition => Config.LotterySettings.OverrideStudentImageSettings
         ? Config.LotterySettings.LotteryImagePosition
         : Config.DefaultDrawSettings.StudentImagePosition;
+    private int LotteryImageSize => Config.LotterySettings.OverrideStudentImageSettings
+        ? Config.LotterySettings.LotteryImageSize
+        : Config.DefaultDrawSettings.StudentImageSize;
     private string CurrentGroupScope => SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup;
     private string CurrentGenderScope => SelectedGender == AllGendersOption ? string.Empty : SelectedGender;
 
@@ -393,6 +401,20 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         ResetDisplayCore(showToast: true);
     }
 
+    /// <summary>远程重置的非交互闸门：需要本机验证时返回拒绝。</summary>
+    public RemoteDrawOutcome? EvaluateRemoteReset() =>
+        ControlDrawGateRejections.From(_linkageDrawCoordinator.EvaluateGate(SecurityOperation.LotteryReset));
+
+    /// <summary>
+    ///     集控远程重置的**展示态**清理：抽奖页回到"还没抽过"的样子，不弹任何验证框。
+    /// </summary>
+    /// <remarks>
+    ///     复用 <see cref="ResetDisplayCore" />（清结果区、清 <c>_lastResultPrizes</c>、隐藏结果、
+    ///     刷新奖池剩余/候选计数），而不是只清临时记录——数据清了但页面上还挂着上一次的奖品，
+    ///     看起来就是重置没生效。
+    /// </remarks>
+    public void ResetRemotePresentation() => ResetDisplayCore(showToast: false);
+
     private void ResetDisplayCore(bool showToast = false)
     {
         _lastResultPrizes.Clear();
@@ -429,6 +451,109 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     }
 
     public Task ToggleDrawFromShortcutAsync() => StartDrawAsync();
+
+    /// <summary>
+    ///     集控 / 手机端远程抽奖：在指定奖池抽一次，结果留在这一页上给课堂看。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         与远程点名是同一条路子（<see cref="RollCallPageViewModel.StartRemoteDrawAsync" />）：
+    ///         走本页既有的抽取与事务提交路径，远程只是"替老师按了按钮"，不是第二条抽取实现。
+    ///         差别只在奖池与数量：奖品没有性别/分组，载荷里带这两个字段的请求早在解析阶段就被拒了。
+    ///     </para>
+    ///     <para>
+    ///         奖池存在性与候选数用 <see cref="IProfileCatalogManager.LoadPrizeList" /> 判定：
+    ///         它读的是**不切换活动档案**的快照，因此"奖池不存在/池里没有可抽的奖品"这些拒绝
+    ///         不会在拒绝之前先把教室机的页面切到别的奖池上。
+    ///     </para>
+    ///     <para>
+    ///         数量先按奖池候选数校验一次，切过来之后再按**本机当前的剩余库存**校验一次：
+    ///         前者是"这个池子一共才 3 个奖品，你要 5 个"，后者是"这一轮已经抽掉 2 个，只剩 1 个"，
+    ///         管理员看到的越界上界必须是后者——否则他会以为还能再抽，实际抽不动。
+    ///     </para>
+    ///     <para>
+    ///         本机没开启抽奖功能时直接拒绝（<c>draw_denied</c> + <c>lottery_disabled</c>）：
+    ///         那台机器上连抽奖页都不存在，远程替它抽一次只会得到一个教室里的意外。
+    ///     </para>
+    /// </remarks>
+    public async Task<RemoteDrawOutcome> StartRemoteDrawAsync(
+        ControlDrawTriggerRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (!_featureAvailability.IsLotteryEnabled)
+            return RemoteDrawOutcome.Denied("lottery_disabled");
+
+        SecurityOperation[] operations = [SecurityOperation.LotteryStart, SecurityOperation.LinkageAction];
+        if (ControlDrawGateRejections.From(_linkageDrawCoordinator.EvaluateGate(operations)) is { } rejection)
+            return rejection;
+
+        if (IsDrawing)
+            return RemoteDrawOutcome.Busy();
+
+        RefreshPrizeLists();
+        var poolName = request.ListName ?? SelectedPrizeListName;
+        if (string.IsNullOrWhiteSpace(poolName) || !PrizeListNames.Contains(poolName))
+            return RemoteDrawOutcome.Invalid("invalid_value:list_name:not_found");
+
+        var prizes = _profileCatalogManager.LoadPrizeList(poolName)?.Prizes;
+        if (!ControlDrawConditions.TryResolvePrizes(prizes, request, out _, out var reason))
+            return RemoteDrawOutcome.Invalid(reason);
+
+        // 发放对象范围（v1 条件集里的第二个维度）：奖品没有性别/分组，但"发给哪个范围的学生"有。
+        // 名单存在性用不切换活动档案的快照判定；范围筛选沿用与点名同一条规则。
+        StudentList? recipientList = null;
+        if (request.Conditions is { StudentList: { } studentListName } conditions)
+        {
+            recipientList = _profileCatalogManager.LoadStudentList(studentListName);
+            if (!ControlDrawConditions.TryResolveRecipients(
+                    recipientList?.Students, conditions, out _, out var recipientReason))
+                return RemoteDrawOutcome.Invalid(recipientReason);
+        }
+
+        // 切换页面选择与共享档案：抽取用的候选池取自共享档案，只改页面选择会抽到上一次的奖池。
+        if (string.Equals(SelectedPrizeListName, poolName, StringComparison.Ordinal))
+            _profileService.LoadPrizeProfile(poolName);
+        else
+            SelectedPrizeListName = poolName;
+
+        // 先切发放对象与范围，再算数量：MaximumDrawCount 与候选池都跟着当前选择走。
+        if (request.Conditions is { StudentList: { } assignmentList } assignmentConditions)
+        {
+            if (!string.Equals(SelectedStudentListName, assignmentList, StringComparison.Ordinal))
+                SelectedStudentListName = assignmentList;
+
+            SelectedGroup = assignmentConditions.Group ?? AllGroupsOption;
+            SelectedGender = assignmentConditions.Gender ?? AllGendersOption;
+        }
+
+        RefreshCounts();
+
+        var requestedCount = request.Count ?? 1;
+        if (requestedCount > MaximumDrawCount)
+            return RemoteDrawOutcome.Invalid($"invalid_value:count:out_of_range:1..{MaximumDrawCount}");
+
+        DrawCount = requestedCount;
+
+        if (!CanStartDraw)
+            return RemoteDrawOutcome.Invalid("invalid_value:list_name:no_candidate");
+
+        // 抽完才换引用：失败路径不清空上一轮结果，因此不能用"结果非空"判断这次是否成功。
+        var previousResult = _lastResultPrizes;
+        var authorized = await _linkageDrawCoordinator.AuthorizeAsync(operations, StartDrawCoreAsync, cancellationToken)
+            .ConfigureAwait(true);
+
+        if (!authorized)
+            return RemoteDrawOutcome.Denied("local_verification_required");
+
+        if (ReferenceEquals(previousResult, _lastResultPrizes) || _lastResultPrizes.Count == 0)
+            return RemoteDrawOutcome.Denied("no_candidate");
+
+        return RemoteDrawOutcome.DrawnFrom(
+            ControlDrawnMembers.FromPrizes(_lastResultPrizes.Select(static prize => prize.Prize)),
+            poolName);
+    }
 
     public async Task<bool> ResetProtocolDrawAsync(bool protectLinkage = false)
     {
@@ -803,7 +928,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             BuildImage(prize),
             IsLotteryImageEnabled,
             LotteryImagePosition,
-            AvatarInitialResolver.Resolve(prize.Name, prize.Id));
+            AvatarInitialResolver.Resolve(prize.Name, prize.Id),
+            LotteryImageSize);
     }
 
     private List<LotteryDisplayPrize> BuildDisplayPrizes(IReadOnlyList<Prize> prizes, IReadOnlyList<Student> assignedStudents)
@@ -1141,10 +1267,12 @@ public sealed record LotteryResultItem(
     Bitmap? Image,
     bool IsImageEnabled,
     StudentImagePositionMode ImagePosition,
-    string Initial)
+    string Initial,
+    int ImageSize)
 {
     public bool IsImageVisible => IsImageEnabled && Image is not null;
     public bool IsPlaceholderVisible => IsImageEnabled && Image is null;
+    public double InitialFontSize => ImageSize * 0.5;
     public Orientation ImageLayoutOrientation => ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Right
         ? Orientation.Horizontal
         : Orientation.Vertical;

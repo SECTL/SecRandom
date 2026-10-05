@@ -6,7 +6,7 @@
              x:DataType="vm:LotteryPageViewModel">
     <UserControl.Resources>
         <DataTemplate x:Key="LotteryAvatarTemplate" DataType="vm:LotteryResultItem">
-            <Border Width="72" Height="72"
+            <Border Width="{Binding ImageSize}" Height="{Binding ImageSize}"
                     Background="{DynamicResource ControlFillColorSecondaryBrush}"
                     BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                     BorderThickness="1"
@@ -18,7 +18,8 @@
                         </Border.Background>
                     </Border>
                     <TextBlock Text="{Binding Initial}" IsVisible="{Binding IsPlaceholderVisible}"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="36"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               FontSize="{Binding InitialFontSize}"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                 </Grid>
@@ -65,8 +66,9 @@
                                             HorizontalAlignment="Center">
                                     <ContentControl Content="{Binding}"
                                                     ContentTemplate="{StaticResource LotteryAvatarTemplate}"
+                                                    VerticalAlignment="Center"
                                                     IsVisible="{Binding IsImageBeforeText}" />
-                                    <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                    <StackPanel Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding DisplayText}" Classes="result-name"
                                                    Foreground="{Binding TextBrush}"
                                                    FontSize="{Binding #RootControl.DataContext.ResultFontSize}"
@@ -79,6 +81,7 @@
                                     </StackPanel>
                                     <ContentControl Content="{Binding}"
                                                     ContentTemplate="{StaticResource LotteryAvatarTemplate}"
+                                                    VerticalAlignment="Center"
                                                     IsVisible="{Binding IsImageAfterText}" />
                                 </StackPanel>
                             </Border>
@@ -87,8 +90,9 @@
                                         HorizontalAlignment="Center">
                                 <ContentControl Content="{Binding}"
                                                 ContentTemplate="{StaticResource LotteryAvatarTemplate}"
+                                                VerticalAlignment="Center"
                                                 IsVisible="{Binding IsImageBeforeText}" />
-                                <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                <StackPanel Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding DisplayText}" Classes="result-name"
                                                Foreground="{Binding TextBrush}"
                                                FontSize="{Binding #RootControl.DataContext.ResultFontSize}"
@@ -101,6 +105,7 @@
                                 </StackPanel>
                                 <ContentControl Content="{Binding}"
                                                 ContentTemplate="{StaticResource LotteryAvatarTemplate}"
+                                                VerticalAlignment="Center"
                                                 IsVisible="{Binding IsImageAfterText}" />
                             </StackPanel>
                         </Grid>

@@ -99,6 +99,8 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
             // 名字保留用户输入的原样（只把"全是空白"统一成"没填"），Trim 交给上报时的解析。
             DisplayName = string.IsNullOrWhiteSpace(stored?.DisplayName) ? null : stored!.DisplayName,
             RemoteControlEnabled = stored?.RemoteControlEnabled ?? false,
+            // 默认关闭：装了新版本不会凭空多出一个"远程抽取"入口，要用户自己在集控页打开。
+            RemoteDrawPageEnabled = stored?.RemoteDrawPageEnabled ?? false,
             AppliedDesiredStateRevision = stored?.AppliedDesiredStateRevision ?? ControlDesiredState.NeverSetRevision,
             DrawLocked = stored?.DrawLocked ?? false
         };
@@ -125,6 +127,7 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
                 ServerUrl = state.ServerUrl,
                 DisplayName = string.IsNullOrWhiteSpace(state.DisplayName) ? null : state.DisplayName,
                 RemoteControlEnabled = state.RemoteControlEnabled,
+                RemoteDrawPageEnabled = state.RemoteDrawPageEnabled,
                 AppliedDesiredStateRevision = state.AppliedDesiredStateRevision,
                 DrawLocked = state.DrawLocked,
                 UpdatedAt = DateTimeOffset.UtcNow
@@ -157,6 +160,9 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
         public string? DisplayName { get; set; }
 
         public bool RemoteControlEnabled { get; set; }
+
+        /// <summary>主界面是否显示"远程抽取"页。缺省（含旧文件）即关闭。</summary>
+        public bool RemoteDrawPageEnabled { get; set; }
 
         public long AppliedDesiredStateRevision { get; set; }
 

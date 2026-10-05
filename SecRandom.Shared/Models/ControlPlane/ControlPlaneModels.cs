@@ -172,29 +172,118 @@ public sealed record NodeCommandDto
     /// </remarks>
     public string? DetailReason => ReadDetailString("reason");
 
+    /// <summary>
+    ///     执行结果对象：设备侧的成功回执本体（<c>{ target, list_name, count, drawn[] }</c>）。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         为什么要在三个字段里找、还要认"JSON 装在字符串里"：设备回的是
+    ///         <c>command.result</c> 的 <c>detail</c>，服务端把它落到 REST 的哪个字段、
+    ///         是当对象存还是当字符串存，客户端无从约定。线上出现过"点名其实抽成功了，
+    ///         手机却显示没有符合条件的人"——回执取不到就是那条假象的来源，
+    ///         因此这里对**所有合理形状**都取一次：<c>result_detail</c> → <c>result_payload</c> → <c>result_context</c>，
+    ///         对象或字符串（字符串里再解一层 JSON）都认。
+    ///     </para>
+    ///     <para>
+    ///         只读不猜：找不到就返回 <c>false</c>，由调用方决定说什么，绝不编一个空结果。
+    ///     </para>
+    /// </remarks>
+    public bool TryGetResultObject(out JsonElement result)
+    {
+        foreach (var candidate in new[] { ResultDetail, ResultPayload, ResultContext })
+        {
+            if (TryResolveObject(candidate, out result))
+                return true;
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <summary>回执原样 JSON，仅在日志/排查时使用（可能包含名单名，不进遥测）。</summary>
+    public string? ResultDiagnostics
+    {
+        get
+        {
+            var candidate = ResultDetail ?? ResultPayload ?? ResultContext;
+            return candidate is { } element ? element.GetRawText() : null;
+        }
+    }
+
     /// <summary>抽到了谁；点名回执的 <c>drawn[]</c>。</summary>
     public IReadOnlyList<NodeCommandDrawnMember> DrawnMembers()
     {
-        if (ResultDetail is not { ValueKind: JsonValueKind.Object } detail
-            || !detail.TryGetProperty("drawn", out var drawn)
+        if (!TryGetResultObject(out var result)
+            || !result.TryGetProperty("drawn", out var drawn)
             || drawn.ValueKind != JsonValueKind.Array)
             return [];
 
         var members = new List<NodeCommandDrawnMember>();
         foreach (var element in drawn.EnumerateArray())
         {
-            if (element.ValueKind != JsonValueKind.Object)
-                continue;
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    members.Add(new NodeCommandDrawnMember(
+                        ReadString(element, "id"),
+                        ReadString(element, "name")));
+                    break;
 
-            members.Add(new NodeCommandDrawnMember(
-                ReadString(element, "id"),
-                ReadString(element, "name")));
+                // 极端情况下服务端可能只留下一个标识（学号或姓名）：当成"只有主标签"的一条，
+                // 总比把整次成功的抽取显示成"没有符合条件的人"强。
+                case JsonValueKind.String:
+                    members.Add(new NodeCommandDrawnMember(element.GetString(), null));
+                    break;
+            }
         }
 
         return members;
     }
 
-    public string? ResultListName => ReadDetailString("list_name");
+    /// <summary>把候选字段解析成对象；字符串形式（JSON 文本）也会再解一层。</summary>
+    private static bool TryResolveObject(JsonElement? candidate, out JsonElement result)
+    {
+        result = default;
+        if (candidate is not { } element)
+            return false;
+
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            result = element;
+            return true;
+        }
+
+        if (element.ValueKind != JsonValueKind.String)
+            return false;
+
+        var text = element.GetString();
+        if (string.IsNullOrWhiteSpace(text))
+            return false;
+
+        try
+        {
+            using var document = JsonDocument.Parse(text);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+                return false;
+
+            // 文档随 using 释放，因此把内容克隆出来再返回。
+            result = document.RootElement.Clone();
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    public string? ResultListName => ResultString("list_name");
+
+    /// <summary>回执里的目标（<c>roll_call</c> / <c>quick</c> / <c>lottery</c>）；没有时为空。</summary>
+    /// <remarks>
+    ///     手机端据此决定结果文案的量词：抽奖抽回来的是奖品，说成"抽到 2 人"就错了。
+    ///     读的是设备回执**自己**说的目标，而不是客户端发出去的那个——回执才是既成事实。
+    /// </remarks>
+    public string? ResultTarget => ResultString("target");
 
     public int? ResultCount =>
         ResultDetail is { ValueKind: JsonValueKind.Object } detail
@@ -204,16 +293,26 @@ public sealed record NodeCommandDto
             ? value
             : null;
 
+    /// <summary><c>draw.reset</c> 回执里清掉的临时记录条数；没有这个字段时为 <c>null</c>。</summary>
+    /// <remarks>
+    ///     与 <see cref="ResultCount" /> 分开：重置回执里的 <c>cleared</c> 是"清掉了几条抽取进度"，
+    ///     不是"抽到了几个"。两者同名会让手机把重置结果显示成抽奖结果。
+    /// </remarks>
+    public int? ResultClearedCount =>
+        TryGetResultObject(out var result)
+        && result.TryGetProperty("cleared", out var cleared)
+        && cleared.ValueKind == JsonValueKind.Number
+        && cleared.TryGetInt32(out var value)
+            ? value
+            : null;
+
     private bool Matches(IReadOnlySet<string> statuses) =>
         !string.IsNullOrWhiteSpace(Status) && statuses.Contains(Status!.Trim());
 
-    private string? ReadDetailString(string name)
-    {
-        if (ResultDetail is not { ValueKind: JsonValueKind.Object } detail)
-            return null;
+    private string? ReadDetailString(string name) =>
+        TryGetResultObject(out var result) ? ReadString(result, name) : null;
 
-        return ReadString(detail, name);
-    }
+    private string? ResultString(string name) => ReadDetailString(name);
 
     private static string? ReadString(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String

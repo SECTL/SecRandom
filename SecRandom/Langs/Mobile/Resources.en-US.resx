@@ -730,6 +730,29 @@ Clearing history before fair drawing helps keep the new member’s chance from b
     <data name="RD_GroupsUnavailable" xml:space="preserve"><value>{0} group(s) could not be read; try again</value></data>
     <data name="MA_SignIn" xml:space="preserve"><value>Sign in with your SECTL account</value></data>
     <data name="MA_SignOut" xml:space="preserve"><value>Sign out</value></data>
-    <data name="MA_SignedOutHint" xml:space="preserve"><value>Not signed in. Sign in to use cloud backup and to control classroom devices from the Remote tab</value></data>
+    <data name="MA_SignedOutHint" xml:space="preserve"><value>Not signed in</value></data>
     <data name="MA_Reauthorize" xml:space="preserve"><value>Your session expired; sign in again</value></data>
+    <data name="RD_ResultUnreadable" xml:space="preserve"><value>The device ran the draw, but the receipt carries no member</value></data>
+    <data name="RD_NoRosterCandidate" xml:space="preserve"><value>This roster has no member that can be drawn</value></data>
+    <data name="RD_Kind" xml:space="preserve"><value>Draw type</value></data>
+    <data name="RD_KindRollCall" xml:space="preserve"><value>Roll call</value></data>
+    <data name="RD_KindLottery" xml:space="preserve"><value>Lottery</value></data>
+    <data name="RD_Pool" xml:space="preserve"><value>Prize pool</value></data>
+    <data name="RD_LotteryNoScope" xml:space="preserve"><value>Lottery does not filter by gender or group</value></data>
+    <data name="RD_DrawnPrizeCount" xml:space="preserve"><value>Drew {0} prize(s)</value></data>
+    <data name="RD_LotteryDisabled" xml:space="preserve"><value>Lottery is turned off on this device</value></data>
+    <data name="RD_Reset" xml:space="preserve"><value>Reset this round</value></data>
+    <data name="RD_Resetting" xml:space="preserve"><value>Resetting…</value></data>
+    <data name="RD_ResetDone" xml:space="preserve"><value>Round reset; cleared {0} draw record(s)</value></data>
+    <data name="RD_ResetConfirm" xml:space="preserve"><value>Tap again to confirm</value></data>
+    <data name="RD_NoResult" xml:space="preserve"><value>No result yet</value></data>
+    <data name="RD_NoResult_D" xml:space="preserve"><value>Once a draw is sent, the members or prizes in the device's receipt appear here</value></data>
+    <data name="RD_SelfBadge" xml:space="preserve"><value>This device</value></data>
+    <data name="RD_SelfSelectedHint" xml:space="preserve"><value>This is the local device; to draw on it, use the Roll call and Lottery pages of the main view</value></data>
+    <data name="RD_Conditions" xml:space="preserve"><value>Draw conditions</value></data>
+    <data name="RD_PrizeTags" xml:space="preserve"><value>Prize tags</value></data>
+    <data name="RD_PrizeTagsHint" xml:space="preserve"><value>Only prizes carrying these tags are drawn; select several, or none for the whole pool</value></data>
+    <data name="RD_Recipient" xml:space="preserve"><value>Recipients</value></data>
+    <data name="RD_RecipientNone" xml:space="preserve"><value>Not specified</value></data>
+    <data name="RD_ConditionsUnsupported" xml:space="preserve"><value>This device does not support conditional draws, so the whole pool is used</value></data>
 </root>

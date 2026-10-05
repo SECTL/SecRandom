@@ -45,6 +45,7 @@ namespace SecRandom.Services.ControlNode;
 /// </remarks>
 public sealed class ControlCommandDispatcher(
     ControlDrawTriggerHandler drawTrigger,
+    ControlDrawResetHandler drawReset,
     ControlMediaPlayHandler mediaPlay,
     ControlSettingsPatchHandler settingsPatch,
     ControlRosterPushHandler rosterPush,
@@ -56,6 +57,11 @@ public sealed class ControlCommandDispatcher(
         ControlCapabilities.StatusRead,
         ControlCapabilities.DrawLock,
         ControlCapabilities.DrawTrigger,
+        // 声明的是**能力标记**而不是一条命令：控制台据此决定要不要发 `conditions`。
+        // 故意不写进 CanExecute（那里返回 false → capability_unsupported），
+        // 因为"支持条件"不是用户能单独执行的一条命令。
+        ControlCapabilities.DrawTriggerConditions,
+        ControlCapabilities.DrawReset,
         ControlCapabilities.MediaPlay,
         ControlCapabilities.SettingsWrite,
         ControlCapabilities.RosterWrite,
@@ -75,6 +81,7 @@ public sealed class ControlCommandDispatcher(
     {
         ControlCapabilities.StatusRead => true,
         ControlCapabilities.DrawTrigger => true,
+        ControlCapabilities.DrawReset => true,
         ControlCapabilities.MediaPlay => true,
         ControlCapabilities.SettingsWrite => true,
         ControlCapabilities.RosterWrite => true,
@@ -89,9 +96,10 @@ public sealed class ControlCommandDispatcher(
     {
         ArgumentNullException.ThrowIfNull(invocation);
 
-        // 改设置与换名单在抽取进行中一律拒绝：这两件事都会改到"正在抽的那一轮"赖以成立的配置
-        // 与候选人，中途生效会让结果与证明对不上。抽取本身（draw.trigger）自己会拒绝重入。
-        if (invocation.Capability is ControlCapabilities.SettingsWrite or ControlCapabilities.RosterWrite
+        // 改设置、换名单与重置在抽取进行中一律拒绝（策略见 ControlDrawBusyGuard）：
+        // 重置尤其不能边抽边清——那一轮的进度会被抹掉，结果与临时记录就对不上了。
+        // 抽取本身（draw.trigger）自己会拒绝重入。
+        if (ControlDrawBusyGuard.IsRefusedWhileDrawing(invocation.Capability)
             && await IsDrawInProgressAsync().ConfigureAwait(false))
         {
             return ControlCommandOutcome.Failure("busy", new { drawing = true });
@@ -103,6 +111,8 @@ public sealed class ControlCommandDispatcher(
             ControlCapabilities.StatusRead => ControlCommandOutcome.Success,
             ControlCapabilities.DrawTrigger =>
                 await drawTrigger.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
+            ControlCapabilities.DrawReset =>
+                await drawReset.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
             ControlCapabilities.MediaPlay =>
                 await mediaPlay.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
             ControlCapabilities.SettingsWrite =>
@@ -120,13 +130,18 @@ public sealed class ControlCommandDispatcher(
     }
 
     /// <summary>本机是否正在抽取。读的是页面 ViewModel 的真实状态，而不是猜测。</summary>
+    /// <remarks>
+    ///     三个抽取页都要问：点名声明的忙碌状态只覆盖点名页，抽奖页抽到一半时同样不能被改设置或清进度——
+    ///     <c>draw.reset</c> 尤其不能边抽边清，那一轮的进度会被抹掉，结果与临时记录就对不上了。
+    /// </remarks>
     private static async Task<bool> IsDrawInProgressAsync()
     {
         try
         {
             return await Dispatcher.UIThread.InvokeAsync(
                 () => IAppHost.GetService<QuickDrawPageViewModel>().IsDrawing
-                      || IAppHost.GetService<RollCallPageViewModel>().IsDrawing);
+                      || IAppHost.GetService<RollCallPageViewModel>().IsDrawing
+                      || IAppHost.GetService<LotteryPageViewModel>().IsDrawing);
         }
         catch (Exception)
         {

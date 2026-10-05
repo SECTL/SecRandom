@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using SecRandom.Shared.Models.ControlNode;
 
 namespace SecRandom.Core.Services.ControlNode;
@@ -59,6 +60,60 @@ public interface IControlNodeTransportFactory
 public sealed record ControlNodeConnectRequest(string Endpoint, string BearerToken, string NodeId, string GroupId);
 
 /// <summary>
+///     <c>node.deregister</c> 的载荷：只要说清楚"注销我在哪个组里的登记"。
+/// </summary>
+/// <remarks>
+///     <para>
+///         <b>调用时机是这条载荷唯一容易搞错的地方</b>：只在**退出登录**与**换组**时发。
+///         退出程序、关窗口、后台驻留结束、崩溃恢复、更新重启都**不发**——服务端"登记即列出"，
+///         离线只显示 <c>online:false</c>；在关闭路径上发注销会让教室机一关软件就从控制台消失。
+///         一句话记法：**退出登录 = 注销；退出程序 = 不注销，保持 offline 可见**。
+///     </para>
+///     <para>
+///         幂等：重复注销、未登记过（<c>node_not_found</c>）都当成功，不得阻塞退出流程。
+///         发送必须带超时（3 秒量级）：注销是尽力而为，令牌一旦清掉就再也发不出去，但不能因此卡住退出。
+///     </para>
+/// </remarks>
+/// <param name="GroupId">要注销的组（"我在这个组里的登记"）；空表示没有可注销的组，调用方应直接跳过。</param>
+public sealed record ControlDeregisterRequest(
+    [property: JsonPropertyName("group_id")] string GroupId)
+{
+    /// <summary>序列化成节点通道的载荷。</summary>
+    public JsonElement ToPayload() =>
+        JsonSerializer.SerializeToElement(this, ControlProtocolJson.Options);
+
+    /// <summary>解析载荷；<c>group_id</c> 缺失或空白都算无效（调用方应跳过而不是发一个空组）。</summary>
+    public static bool TryParse(JsonElement? payload, out ControlDeregisterRequest? request, out string reason)
+    {
+        request = null;
+        reason = string.Empty;
+
+        if (payload is not { } element || element.ValueKind is not JsonValueKind.Object)
+        {
+            reason = "invalid_value:group_id:type_mismatch";
+            return false;
+        }
+
+        if (!element.TryGetProperty("group_id", out var groupElement)
+            || groupElement.ValueKind != JsonValueKind.String)
+        {
+            reason = "invalid_value:group_id:type_mismatch";
+            return false;
+        }
+
+        var groupId = (groupElement.GetString() ?? string.Empty).Trim();
+        if (groupId.Length == 0)
+        {
+            reason = "invalid_value:group_id:empty";
+            return false;
+        }
+
+        request = new ControlDeregisterRequest(groupId);
+        return true;
+    }
+}
+
+/// <summary>
 ///     取当前可用的 SECTL 凭据。
 /// </summary>
 /// <remarks>
@@ -96,6 +151,22 @@ public sealed record ControlNodeState
     public string ServerUrl { get; init; } = ControlNodeClientOptions.DefaultEndpoint;
 
     public bool RemoteControlEnabled { get; init; }
+
+    /// <summary>
+    ///     本机是否在主界面显示"远程抽取"页（控制端入口）。**默认关闭**，只能由用户在这台机器上打开。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         它和 <see cref="RemoteControlEnabled" /> 放在同一个文件里，是因为两者的**安全属性相同**：
+    ///         都是"这台设备自己的开关"，因此都不能进 <c>settings.json</c>——一次设置导入或备份恢复
+    ///         不该能替用户打开一个会把本机令牌发往控制面的入口（见 <c>IControlPlaneEndpointStore</c> 的同类理由）。
+    ///     </para>
+    ///     <para>
+    ///         它**不是**权限决定项：真的能不能抽取仍由服务端按组成员角色判定，这个开关只决定界面显不显示。
+    ///         服务端也永远读不到它，<c>desired_state</c> 里没有对应字段。
+    ///     </para>
+    /// </remarks>
+    public bool RemoteDrawPageEnabled { get; init; }
 
     /// <summary>
     ///     控制台里显示的名称。**由用户在这台机器上填写**；留空时上报主机名。

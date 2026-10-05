@@ -12,7 +12,6 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
-using SecRandom.Core.Services.Config;
 using SecRandom.Models;
 using SecRandom.Services.Security;
 using SecRandom.ViewModels;
@@ -30,7 +29,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
 
     public SecuritySettingsPage()
     {
-        Settings = ViewModel.Config.SecuritySettings;
+        Settings = IAppHost.GetService<SecuritySettingsStore>().Data;
         SudoModeDurationValue = Settings.SudoModeDurationSeconds;
         FactorOptions =
         [
@@ -86,7 +85,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
         remove => NotifyPropertyChanged -= value;
     }
 
-    private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
+    private SecuritySettingsStore SettingsStore { get; } = IAppHost.GetService<SecuritySettingsStore>();
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
@@ -147,7 +146,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (_refreshing) return;
-        ConfigHandler.Save();
+        SettingsStore.Save();
         RefreshSecurityState();
     }
 

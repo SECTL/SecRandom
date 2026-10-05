@@ -277,7 +277,7 @@ public sealed class PluginDrawServiceTests : IDisposable
             return Task.FromResult(allow);
         }
 
-        public Task<bool> AuthorizeProtectionDowngradeAsync(SecuritySettingsConfig candidate, CancellationToken cancellationToken = default)
+        public Task<bool> AuthorizeArchiveImportAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(allow);
 
         public Task<bool> SetPasswordAsync(string password, string? currentPassword = null, CancellationToken cancellationToken = default)

@@ -21,6 +21,7 @@ using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.UI;
 using SecRandom.Core.Services;
+using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Views;
 using SecRandom.Helpers;
 using SecRandom.Mobile;
@@ -28,6 +29,7 @@ using SecRandom.Platforms.Abstractions;
 using SecRandom.Services;
 using SecRandom.Services.Mobile;
 using SecRandom.ViewModels;
+using SecRandom.Views.Mobile;
 
 namespace SecRandom.Views;
 
@@ -35,6 +37,7 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 {
     private const string DefaultMainPageId = "main.rollCall";
     private const string LotteryPageId = "main.lottery";
+    private const string RemoteDrawPageId = MobilePageIds.RemoteDraw;
 
     private readonly FAFrame? _navigationFrame;
     private readonly FANavigationView? _navigationView;
@@ -42,7 +45,27 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
     private AppToastAdorner? _appToastAdorner;
     private bool _isAdornerAdded;
     private bool _isFeatureAvailabilitySubscribed;
+    private bool _isNodeStateSubscribed;
+    private IControlNodeStateStore? _nodeStateStore;
+    private bool _isNodeStateStoreResolved;
     private readonly IFeatureAvailabilityService _featureAvailability = IAppHost.GetService<IFeatureAvailabilityService>();
+
+    /// <summary>
+    ///     本机集控状态存储。手机没有集控节点，因此这里**允许为 null**（解析一次后缓存）。
+    /// </summary>
+    private IControlNodeStateStore? NodeStateStore
+    {
+        get
+        {
+            if (!_isNodeStateStoreResolved)
+            {
+                _nodeStateStore = IAppHost.TryGetService<IControlNodeStateStore>();
+                _isNodeStateStoreResolved = true;
+            }
+
+            return _nodeStateStore;
+        }
+    }
 
     public MainView()
     {
@@ -119,6 +142,8 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
             _isFeatureAvailabilitySubscribed = true;
         }
 
+        SubscribeNodeStateStore();
+
         if (ViewModel.SelectedPageInfo is null) SelectNavigationItemById(DefaultMainPageId);
 
         if (Content is not Control element || _isAdornerAdded) return;
@@ -145,6 +170,25 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
             _featureAvailability.Changed -= FeatureAvailabilityOnChanged;
             _isFeatureAvailabilitySubscribed = false;
         }
+
+        if (_isNodeStateSubscribed)
+        {
+            NodeStateStore?.Changed -= NodeStateOnChanged;
+            _isNodeStateSubscribed = false;
+        }
+    }
+
+    /// <summary>
+    ///     订阅本机集控状态：用户在设置页拨动"远程抽取"开关后，侧栏项要**立刻**显隐，不需要重启。
+    /// </summary>
+    private void SubscribeNodeStateStore()
+    {
+        var store = NodeStateStore;
+        if (store is null || _isNodeStateSubscribed)
+            return;
+
+        store.Changed += NodeStateOnChanged;
+        _isNodeStateSubscribed = true;
     }
 
     private void BuildNavigationMenuItems()
@@ -208,14 +252,35 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
     }
 
     /// <summary>
-    /// 应用运行时功能可用性。抽奖入口保留在导航集合中，仅切换可见性，避免改动集合导致导航选中态丢失。
+    /// 应用运行时功能可用性。抽奖入口与"远程抽取"入口都保留在导航集合中，仅切换可见性，
+    /// 避免改动集合导致导航选中态丢失。
     /// </summary>
     private void ApplyFeatureAvailability()
     {
         var isLotteryAvailable = _featureAvailability.IsLotteryEnabled;
+        var isRemoteDrawVisible = IsRemoteDrawEntryVisible();
 
         foreach (var item in ViewModel.NavigationViewItems.Concat(ViewModel.NavigationViewFooterItems))
+        {
             SetPageItemVisibility(item, LotteryPageId, isLotteryAvailable);
+            SetPageItemVisibility(item, RemoteDrawPageId, isRemoteDrawVisible);
+        }
+    }
+
+    /// <summary>
+    ///     "远程抽取"入口此刻该不该显示。
+    /// </summary>
+    /// <remarks>
+    ///     规则本体在 <see cref="AppHostShape.IsRemoteDrawEntryVisible(bool, bool)" />（可单测的纯函数）：
+    ///     只有桌面受集控页的开关约束并**默认隐藏**，平板与手机维持原样。桌面拿不到状态存储时按"隐藏"处理——
+    ///     少显示一个入口是保守方向，反过来会让一个本该默认关着的入口冒出来。
+    /// </remarks>
+    private bool IsRemoteDrawEntryVisible()
+    {
+        if (!App.IsDesktop)
+            return true;
+
+        return AppHostShape.IsRemoteDrawEntryVisible(isDesktop: true, NodeStateStore?.Current.RemoteDrawPageEnabled == true);
     }
 
     private static void SetPageItemVisibility(object item, string pageId, bool isVisible)
@@ -257,6 +322,9 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 
     private bool IsPageAvailable(PageInfo info)
     {
+        if (info.Id == RemoteDrawPageId && !IsRemoteDrawEntryVisible())
+            return false;
+
         return info.Id != LotteryPageId || _featureAvailability.IsLotteryEnabled;
     }
 
@@ -266,6 +334,22 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
         {
             ApplyFeatureAvailability();
             if (ViewModel.SelectedPageInfo?.Id == LotteryPageId && !_featureAvailability.IsLotteryEnabled)
+                SelectNavigationItemById(DefaultMainPageId);
+        });
+    }
+
+    /// <summary>
+    ///     本机集控状态变化（用户拨了"远程抽取"开关）：立刻重算侧栏显隐，不需要重启。
+    /// </summary>
+    private void NodeStateOnChanged(object? sender, ControlNodeState state)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            ApplyFeatureAvailability();
+
+            // 关掉开关时如果正停在这一页上，就退回主页面：留着一条"看不见却还显示着"的页面
+            // 会让人以为关不掉（与抽奖入口被关掉时的处理保持一致）。
+            if (ViewModel.SelectedPageInfo?.Id == RemoteDrawPageId && !IsRemoteDrawEntryVisible())
                 SelectNavigationItemById(DefaultMainPageId);
         });
     }

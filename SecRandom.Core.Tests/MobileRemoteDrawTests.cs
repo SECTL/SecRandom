@@ -1,6 +1,14 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging.Abstractions;
+using SecRandom.Core.Abstraction;
+using SecRandom.Core.Models;
+using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.ControlNode;
+using SecRandom.Services.Auth;
+using SecRandom.Services.Config;
+using SecRandom.Services.ControlNode;
 using SecRandom.Services.ControlPlane;
 using SecRandom.Shared.Models.ControlNode;
 using SecRandom.Shared.Models.ControlPlane;
@@ -203,7 +211,8 @@ public sealed class MobileRemoteDrawTests : IDisposable
         var message = ControlPlaneMessages.DescribeCommand(FailedCommand(code));
 
         Assert.False(string.IsNullOrWhiteSpace(message));
-        Assert.DoesNotContain(code, message, StringComparison.Ordinal);
+        // 人话 + **原始错误码**：排查时只知道"设备拒绝了"是没法定位的。
+        Assert.Contains(code, message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -214,8 +223,9 @@ public sealed class MobileRemoteDrawTests : IDisposable
         var verification = ControlPlaneMessages.DescribeCommand(
             FailedCommand("draw_denied", new { reason = "local_verification_required" }));
 
-        Assert.Equal(LR.RD_ClassTime, classTime);
-        Assert.Equal(LR.RD_Denied, verification);
+        Assert.StartsWith(LR.RD_ClassTime, classTime, StringComparison.Ordinal);
+        Assert.StartsWith(LR.RD_Denied, verification, StringComparison.Ordinal);
+        Assert.NotEqual(classTime, verification);
     }
 
     [Theory]
@@ -223,7 +233,9 @@ public sealed class MobileRemoteDrawTests : IDisposable
     [InlineData("invalid_value:list_name:not_found", null, null, "RD_ListNotFound", null)]
     [InlineData("invalid_value:gender:not_in_list", null, null, "RD_NotInList", null)]
     [InlineData("invalid_value:count:out_of_range", null, null, "RD_OutOfRange", null)]
-    [InlineData("invalid_value:list_name:no_candidate", null, null, "RD_NoCandidate", null)]
+    // 名单整体没有可抽的人 ≠ 条件筛完没有人：两句文案必须不同。
+    [InlineData("invalid_value:list_name:no_candidate", null, null, "RD_NoRosterCandidate", null)]
+    [InlineData("invalid_value:gender:no_matching_member", null, null, "RD_NoCandidate", null)]
     // 服务端形状：码与字段分开给
     [InlineData("invalid_value", "count", "type_mismatch", "RD_InvalidValueField", "count")]
     [InlineData("invalid_value", "gender", "not_in_list", "RD_NotInList", null)]
@@ -235,9 +247,11 @@ public sealed class MobileRemoteDrawTests : IDisposable
         string? formatField)
     {
         var message = ControlPlaneMessages.DescribeCommand(FailedCommand(code, field, why));
-        var expected = Expected(expectedKey);
+        var expected = formatField is null ? Expected(expectedKey) : string.Format(Expected(expectedKey), formatField);
 
-        Assert.Equal(formatField is null ? expected : string.Format(expected, formatField), message);
+        Assert.StartsWith(expected, message, StringComparison.Ordinal);
+        // 原始错误码一并显示。
+        Assert.Contains(code, message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -383,6 +397,93 @@ public sealed class MobileRemoteDrawTests : IDisposable
         Assert.Equal(LR.RD_Unauthorized, unauthorized);
     }
 
+    // ---------------------------------------------------------------- 抽取结果文案（线上回归）
+
+    [Fact]
+    public void 抽取成功时必须显示抽到谁而不是沿用上一次的失败文案()
+    {
+        var command = new NodeCommandDto
+        {
+            CommandId = "cmd_1",
+            Status = "completed",
+            ResultDetail = JsonDocument.Parse(
+                """{ "target": "roll_call", "list_name": "测试 1", "count": 1, "drawn": [ { "id": "12", "name": "学生12" } ] }""")
+                .RootElement.Clone()
+        };
+
+        var text = ControlPlaneMessages.DescribeDrawResult(command);
+
+        Assert.Equal(string.Format(LR.RD_DrawnCount, 1), text);
+        Assert.DoesNotContain(LR.RD_NoCandidate, text, StringComparison.Ordinal);
+        Assert.DoesNotContain(LR.RD_Failed, text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void 抽取成功但回执没有成员时说的是回执问题而不是没人可抽()
+    {
+        var command = new NodeCommandDto
+        {
+            CommandId = "cmd_1",
+            Status = "completed",
+            ResultDetail = JsonDocument.Parse("""{ "target": "roll_call", "count": 0 }""").RootElement.Clone()
+        };
+
+        var text = ControlPlaneMessages.DescribeDrawResult(command);
+
+        // 只有设备**明确**说没人时才可以显示"没有符合条件的人"。
+        Assert.Equal(LR.RD_ResultUnreadable, text);
+        Assert.DoesNotContain(LR.RD_NoCandidate, text, StringComparison.Ordinal);
+        Assert.DoesNotContain(LR.RD_NoRosterCandidate, text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void 设备说的没人可抽要带上原始错误码并且两种没人分开()
+    {
+        var noMatching = ControlPlaneMessages.DescribeDrawResult(
+            FailedCommand("invalid_value:gender:no_matching_member"));
+        var noCandidate = ControlPlaneMessages.DescribeDrawResult(
+            FailedCommand("invalid_value:list_name:no_candidate"));
+
+        Assert.Contains(LR.RD_NoCandidate, noMatching, StringComparison.Ordinal);
+        Assert.Contains("invalid_value:gender:no_matching_member", noMatching, StringComparison.Ordinal);
+
+        // "名单里没有可抽的人"与"条件筛完没有人"是两件事，不能共用一句文案。
+        Assert.Contains(LR.RD_NoRosterCandidate, noCandidate, StringComparison.Ordinal);
+        Assert.NotEqual(LR.RD_NoCandidate, LR.RD_NoRosterCandidate);
+    }
+
+    // ---------------------------------------------------------------- 置前决策
+
+    [Theory]
+    // 隐藏 → 显示；最小化 → 还原；已可见 → 只激活。
+    [InlineData(false, false, false, true)]
+    [InlineData(true, true, true, false)]
+    [InlineData(true, false, false, false)]
+    public void 远程抽取提示窗口要还原显示并激活(bool isVisible, bool isMinimized, bool restore, bool show)
+    {
+        var plan = RemoteDrawWindowPlan.Resolve(isVisible, isMinimized);
+
+        Assert.Equal(restore, plan.Restore);
+        Assert.Equal(show, plan.Show);
+        Assert.True(plan.Activate);
+    }
+
+    [Fact]
+    public void 接线_抽取页不再重复显示标题()
+    {
+        var page = File.ReadAllText(GetRepositoryPath("SecRandom/Views/Mobile/MobileRemoteDrawPage.axaml"));
+
+        // 页面内那个粗体大标题已被删掉：标题只由导航栏出（MobileRootView.Header）。
+        Assert.DoesNotContain("langs:Resources.P_RemoteDraw", page, StringComparison.Ordinal);
+        // 说明行保留，并且带一点上边距，免得删掉标题后顶着导航栏。
+        Assert.Contains("langs:Resources.RD_Hint", page, StringComparison.Ordinal);
+        Assert.Contains("Margin=\"0 4 0 0\"", page, StringComparison.Ordinal);
+
+        // 导航栏仍然用 P_RemoteDraw，因此这个键不能删（N_RemoteDraw 是底部入口的标签）。
+        var rootView = File.ReadAllText(GetRepositoryPath("SecRandom/Views/Mobile/MobileRootView.cs"));
+        Assert.Contains("LR.P_RemoteDraw", rootView, StringComparison.Ordinal);
+    }
+
     // ---------------------------------------------------------------- 三语覆盖
 
     [Fact]
@@ -429,6 +530,7 @@ public sealed class MobileRemoteDrawTests : IDisposable
         "RD_NotInList" => LR.RD_NotInList,
         "RD_OutOfRange" => LR.RD_OutOfRange,
         "RD_NoCandidate" => LR.RD_NoCandidate,
+        "RD_NoRosterCandidate" => LR.RD_NoRosterCandidate,
         "RD_InvalidValueField" => LR.RD_InvalidValueField,
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, null)
     };
@@ -470,6 +572,629 @@ public sealed class MobileRemoteDrawTests : IDisposable
         Error = error,
         ResultDetail = JsonSerializer.SerializeToElement(detail, ControlProtocolJson.Options)
     };
+
+    // ---------------------------------------------------------------- 抽取类型切换（点名 / 抽奖）
+
+    [Fact]
+    public void 切换类型_抽奖读的是奖池并且没有性别分组()
+    {
+        var (viewModel, client) = CreateViewModel();
+
+        Assert.False(viewModel.IsLotteryTarget);
+        Assert.Equal(LR.RD_List, viewModel.ListFieldLabel);
+
+        viewModel.SelectedDrawKind = LotteryKind;
+        client.Responder = request => request.Capability == ControlCapabilities.RosterRead
+            ? RosterCommand(PrizesResponse("元旦抽奖"))
+            : Completed();
+
+        viewModel.LoadRosterCommand.Execute(null);
+
+        // 数据源换了：点名叫 roster.read 读 students，抽奖要读 prizes。
+        Assert.Equal(ControlCapabilities.RosterRead, client.LastSubmission.Capability);
+        Assert.Equal(
+            ControlRosterReadRequest.Prizes,
+            client.LastSubmission.Payload!.Value.GetProperty("roster_kind").GetString());
+
+        Assert.True(viewModel.IsLotteryTarget);
+        Assert.Equal(LR.RD_Pool, viewModel.ListFieldLabel);
+        // 抽奖没有性别/分组：那两块整块隐藏，并且有一句解释。
+        Assert.False(viewModel.IsScopeSelectorVisible);
+        Assert.True(viewModel.IsLotteryScopeHintVisible);
+    }
+
+    [Fact]
+    public void 切换类型_切回点名时恢复名单与条件()
+    {
+        var (viewModel, client) = CreateViewModel();
+        viewModel.SelectedDrawKind = LotteryKind;
+        client.Responder = _ => RosterCommand(PrizesResponse("元旦抽奖"));
+        viewModel.LoadRosterCommand.Execute(null);
+        Assert.True(viewModel.HasRoster);
+
+        client.Responder = _ => RosterCommand(StudentsResponse("高一（1）班"));
+        viewModel.SelectedDrawKind = RollCallKind;
+        // 换类型＝换一批数据：上一类的名单不能留着（否则发出去的是另一批文件里的名字）。
+        Assert.False(viewModel.IsLotteryTarget);
+        Assert.Equal(LR.RD_List, viewModel.ListFieldLabel);
+    }
+
+    [Fact]
+    public void 抽取_抽奖下发lottery且不带性别分组()
+    {
+        var (viewModel, client) = CreateViewModel();
+        viewModel.SelectedDrawKind = LotteryKind;
+        client.Responder = request => request.Capability switch
+        {
+            ControlCapabilities.RosterRead => RosterCommand(PrizesResponse("元旦抽奖")),
+            _ => DrawnCommand("lottery", "元旦抽奖", 2)
+        };
+
+        viewModel.LoadRosterCommand.Execute(null);
+        viewModel.SelectedCount = 2;
+        viewModel.DrawCommand.Execute(null);
+
+        Assert.Equal(ControlCapabilities.DrawTrigger, client.LastSubmission.Capability);
+        var payload = client.LastSubmission.Payload!.Value;
+        Assert.Equal("lottery", payload.GetProperty("target").GetString());
+        Assert.Equal("元旦抽奖", payload.GetProperty("list_name").GetString());
+        Assert.Equal(2, payload.GetProperty("count").GetInt32());
+
+        // 设备侧对抽奖载荷里的 gender/group 是"存在即拒绝"，所以这里必须**根本不发**这两个键。
+        Assert.False(payload.TryGetProperty("gender", out _));
+        Assert.False(payload.TryGetProperty("group", out _));
+
+        Assert.Equal(2, viewModel.DrawnMembers.Count);
+        Assert.Equal(string.Format(LR.RD_DrawnPrizeCount, 2), viewModel.StatusText);
+    }
+
+    [Fact]
+    public void 抽取_点名仍然带性别与分组且用roll_call目标()
+    {
+        var (viewModel, client) = CreateViewModel();
+        client.Responder = request => request.Capability switch
+        {
+            ControlCapabilities.RosterRead => RosterCommand(StudentsResponse("高一（1）班")),
+            _ => DrawnCommand("roll_call", "高一（1）班", 2)
+        };
+
+        viewModel.LoadRosterCommand.Execute(null);
+        viewModel.SelectedGender = "男";
+        viewModel.DrawCommand.Execute(null);
+
+        var payload = client.LastSubmission.Payload!.Value;
+        Assert.Equal("roll_call", payload.GetProperty("target").GetString());
+        Assert.Equal("男", payload.GetProperty("gender").GetString());
+        Assert.Equal(LR.RD_Any, viewModel.SelectedGroupScope);
+        // "不限"不下发：协议里"没有这个字段"就是不限，发一个"不限"只会让设备去名单里找一个叫"不限"的分组。
+        Assert.Equal(string.Format(LR.RD_DrawnCount, 2), viewModel.StatusText);
+    }
+
+    // ---------------------------------------------------------------- 重置本轮
+
+    [Fact]
+    public void 重置_要按两次才真正下发且第二次才带目标与名单()
+    {
+        var (viewModel, client) = CreateViewModel();
+        client.Responder = request => request.Capability switch
+        {
+            ControlCapabilities.RosterRead => RosterCommand(StudentsResponse("高一（1）班")),
+            ControlCapabilities.DrawReset => ResetCommand(3),
+            _ => DrawnCommand("roll_call", "高一（1）班", 1)
+        };
+
+        viewModel.LoadRosterCommand.Execute(null);
+        viewModel.DrawCommand.Execute(null);
+        Assert.True(viewModel.HasResult);
+
+        viewModel.ResetRoundCommand.Execute(null);
+        // 第一次点击只是把它变成"再点一次确认"：破坏性动作不该一次误触就生效。
+        Assert.True(viewModel.IsResetConfirmPending);
+        Assert.Equal(LR.RD_ResetConfirm, viewModel.ResetButtonText);
+        Assert.Equal(ControlCapabilities.DrawTrigger, client.LastSubmission.Capability);
+
+        viewModel.ResetRoundCommand.Execute(null);
+
+        Assert.False(viewModel.IsResetConfirmPending);
+        Assert.Equal(LR.RD_Reset, viewModel.ResetButtonText);
+        var reset = client.LastSubmissionOf(ControlCapabilities.DrawReset);
+        var payload = reset.Payload!.Value;
+        Assert.Equal("roll_call", payload.GetProperty("target").GetString());
+        Assert.Equal("高一（1）班", payload.GetProperty("list_name").GetString());
+
+        // 成功之后：清掉"抽到了谁"，并用回执里的 cleared 条数显示结果。
+        Assert.False(viewModel.HasResult);
+        Assert.Equal(string.Format(LR.RD_ResetDone, 3), viewModel.StatusText);
+        // 重置之后要重读名单：设备已经把这一轮的进度清零了，页面上的计数得跟着刷新。
+        Assert.Equal(ControlCapabilities.RosterRead, client.LastSubmission.Capability);
+    }
+
+    [Fact]
+    public void 重置_抽奖时清的是奖品进度而不是点名进度()
+    {
+        var (viewModel, client) = CreateViewModel();
+        viewModel.SelectedDrawKind = LotteryKind;
+        client.Responder = request => request.Capability switch
+        {
+            ControlCapabilities.RosterRead => RosterCommand(PrizesResponse("元旦抽奖")),
+            ControlCapabilities.DrawReset => ResetCommand(0),
+            _ => DrawnCommand("lottery", "元旦抽奖", 1)
+        };
+
+        viewModel.LoadRosterCommand.Execute(null);
+        viewModel.ResetRoundCommand.Execute(null);
+        viewModel.ResetRoundCommand.Execute(null);
+
+        var payload = client.LastSubmissionOf(ControlCapabilities.DrawReset).Payload!.Value;
+        Assert.Equal("lottery", payload.GetProperty("target").GetString());
+        Assert.Equal("元旦抽奖", payload.GetProperty("list_name").GetString());
+        Assert.Equal(string.Format(LR.RD_ResetDone, 0), viewModel.StatusText);
+    }
+
+    [Fact]
+    public void 重置_别的动作会取消待确认状态()
+    {
+        var (viewModel, client) = CreateViewModel();
+        client.Responder = _ => RosterCommand(StudentsResponse("高一（1）班"));
+        viewModel.LoadRosterCommand.Execute(null);
+
+        viewModel.ResetRoundCommand.Execute(null);
+        Assert.True(viewModel.IsResetConfirmPending);
+
+        // 用户改主意去了别的名单：几秒钟前那个"确认"代表的意图已经不成立了。
+        viewModel.SelectedDrawKind = LotteryKind;
+
+        Assert.False(viewModel.IsResetConfirmPending);
+        Assert.Equal(LR.RD_Reset, viewModel.ResetButtonText);
+    }
+
+    [Fact]
+    public void 重置_设备侧失败时说失败原因而不是重置成功()
+    {
+        var (viewModel, client) = CreateViewModel();
+        client.Responder = request => request.Capability switch
+        {
+            ControlCapabilities.RosterRead => RosterCommand(StudentsResponse("高一（1）班")),
+            _ => FailedCommand("busy")
+        };
+
+        viewModel.LoadRosterCommand.Execute(null);
+        viewModel.ResetRoundCommand.Execute(null);
+        viewModel.ResetRoundCommand.Execute(null);
+
+        Assert.Contains("busy", viewModel.StatusText, StringComparison.Ordinal);
+        Assert.DoesNotContain(LR.RD_ResetDone.Split('{')[0], viewModel.StatusText, StringComparison.Ordinal);
+    }
+
+    // ---------------------------------------------------------------- 本机标识与结果空态
+
+    [Theory]
+    [InlineData("node-1", "node-1", true)]
+    [InlineData("node-1", "NODE-1", true)]     // 大小写不同不是两台机器
+    [InlineData(" node-1 ", "node-1", true)]   // 首尾空白同理
+    [InlineData("node-1", "node-2", false)]
+    [InlineData("", "node-1", false)]          // 本机身份没配置：一台都不标
+    [InlineData("   ", "node-1", false)]
+    [InlineData("node-1", "", false)]
+    [InlineData("node-1", null, false)]
+    [InlineData(null, null, false)]
+    public void 本机标识_按nodeid比对且容忍大小写与空白(string? ownNodeId, string? candidateNodeId, bool expected) =>
+        Assert.Equal(expected, DeviceRow.IsSameNode(ownNodeId, candidateNodeId));
+
+    [Fact]
+    public void 本机标识_只有本机那一行带徽章文案()
+    {
+        var self = Row("n1", isSelf: true);
+        var other = Row("n2");
+
+        // 本机**留在列表里**（只是标出来）：藏起来会让人以为设备没连上，也没法给它下发命令。
+        Assert.True(self.IsSelf);
+        Assert.Equal(LR.RD_SelfBadge, self.SelfBadgeText);
+
+        Assert.False(other.IsSelf);
+        Assert.Equal(string.Empty, other.SelfBadgeText);
+    }
+
+    [Fact]
+    public void 本机提示_只在选中本机时出现()
+    {
+        var (viewModel, _) = CreateViewModel();
+
+        viewModel.SelectedDevice = Row("n2");
+        Assert.False(viewModel.IsSelfSelected);
+
+        viewModel.SelectedDevice = Row("n1", isSelf: true);
+        Assert.True(viewModel.IsSelfSelected);
+
+        // 提示文案来自共享 VM，两个视图都绑它。
+        Assert.False(string.IsNullOrWhiteSpace(MobileRemoteDrawViewModel.SelfSelectedHint));
+    }
+
+    [Fact]
+    public void 结果空态_两行文案非空且出现回执后不再显示()
+    {
+        var (viewModel, _) = CreateViewModel();
+
+        Assert.False(string.IsNullOrWhiteSpace(MobileRemoteDrawViewModel.ResultPlaceholderTitle));
+        Assert.False(string.IsNullOrWhiteSpace(MobileRemoteDrawViewModel.ResultPlaceholderHint));
+        Assert.False(viewModel.HasResult);
+
+        viewModel.DrawnMembers.Add(new NodeCommandDrawnMember("01", "张三"));
+
+        Assert.True(viewModel.HasResult);
+        Assert.Contains("1", viewModel.DrawnCountText, StringComparison.Ordinal);
+    }
+
+    private static DeviceRow Row(string nodeId, bool isSelf = false, bool supportsConditions = false) => new(
+        new GroupDto { GroupId = "g1", Name = "高一（1）班", Role = "admin" },
+        new NodeDto
+        {
+            NodeId = nodeId,
+            DisplayName = nodeId,
+            Online = true,
+            LocalRemoteAllowed = true,
+            Capabilities = supportsConditions
+                ? [ControlCapabilities.DrawTrigger, ControlCapabilities.RosterRead, ControlCapabilities.DrawTriggerConditions]
+                : [ControlCapabilities.DrawTrigger, ControlCapabilities.RosterRead]
+        },
+        isSelf);
+
+    // ---------------------------------------------------------------- 设备加载态（"已读到却仍显示正在读取设备"的回归）
+
+    [Fact]
+    public async Task 加载态_成功后清掉并且不再显示加载文案()
+    {
+        var (viewModel, client) = await CreateSignedInViewModelAsync();
+        client.GroupsAsync = () => Task.FromResult<IReadOnlyList<GroupDto>>([Group("g1")]);
+        client.NodesAsync = _ => Task.FromResult<IReadOnlyList<NodeDto>>([Node("n1")]);
+
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+
+        // 这三条一起才说明"读完了"：布尔清掉、文案不再挂着、列表真的有东西。
+        Assert.False(viewModel.IsLoadingDevices);
+        Assert.DoesNotContain(LR.RD_LoadingDevices, viewModel.StatusText, StringComparison.Ordinal);
+        Assert.Single(viewModel.Devices);
+    }
+
+    [Fact]
+    public async Task 加载态_失败后清掉并保留失败原因()
+    {
+        var (viewModel, client) = await CreateSignedInViewModelAsync();
+        client.GroupsAsync = () => Task.FromException<IReadOnlyList<GroupDto>>(
+            new ControlPlaneException("network_error", ControlPlaneErrorKind.Network));
+
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.IsLoadingDevices);
+        Assert.NotEmpty(viewModel.LoadFailure);
+        Assert.DoesNotContain(LR.RD_LoadingDevices, viewModel.StatusText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task 加载态_零台设备时清掉并落到空态()
+    {
+        var (viewModel, client) = await CreateSignedInViewModelAsync();
+        client.GroupsAsync = () => Task.FromResult<IReadOnlyList<GroupDto>>([Group("g1")]);
+        // 默认 nodes 为空：组读到了，但组里没有设备。
+
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.IsLoadingDevices);
+        Assert.Empty(viewModel.Devices);
+        Assert.Equal(LR.RD_NoDevicesHint, viewModel.EmptyStateText);
+        Assert.DoesNotContain(LR.RD_LoadingDevices, viewModel.StatusText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task 加载态_被更新的请求取代时旧请求不清新请求的状态()
+    {
+        var (viewModel, client) = await CreateSignedInViewModelAsync();
+        var firstGate = new TaskCompletionSource<IReadOnlyList<GroupDto>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var calls = 0;
+
+        client.GroupsAsync = () => Interlocked.Increment(ref calls) == 1
+            ? firstGate.Task
+            : Task.FromResult<IReadOnlyList<GroupDto>>([Group("g1")]);
+        client.NodesAsync = _ => Task.FromResult<IReadOnlyList<NodeDto>>([Node("n1")]);
+
+        // 旧请求卡住；新请求（换设备/切类型/再点刷新都会走这条路）立刻跑完。
+        var stale = viewModel.RefreshCommand.ExecuteAsync(null);
+        var fresh = viewModel.RefreshCommand.ExecuteAsync(null);
+        await fresh;
+
+        Assert.False(viewModel.IsLoadingDevices);
+        Assert.Single(viewModel.Devices);
+
+        // 旧请求这时才回来：它既不许改回设备列表，也不许把新请求的加载态/状态行动掉。
+        firstGate.SetResult([Group("g9")]);
+        await stale;
+
+        Assert.False(viewModel.IsLoadingDevices);
+        Assert.DoesNotContain(LR.RD_LoadingDevices, viewModel.StatusText, StringComparison.Ordinal);
+        Assert.Single(viewModel.Devices);
+        Assert.Equal("n1", viewModel.Devices[0].NodeId);
+    }
+
+    /// <summary>
+    ///     建一个**已登录**的 VM。
+    /// </summary>
+    /// <remarks>
+    ///     设备加载路径在未登录时会直接早退（那是对的：没登录就没有组可读），
+    ///     因此要测加载态就必须先有一对令牌。
+    /// </remarks>
+    private async Task<(MobileRemoteDrawViewModel ViewModel, RecordingControlPlaneClient Client)> CreateSignedInViewModelAsync()
+    {
+        var configHandler = new MainConfigHandler(
+            NullLogger<MainConfigHandler>.Instance,
+            new TestConfigService(new MainConfigModel()));
+        var tokenStore = TestTokenStore.Create();
+        await tokenStore.SaveAsync(new SectlToken("access", "refresh", "user-1", 3600), CancellationToken.None);
+
+        var auth = new SectlAuthService(
+            tokenStore,
+            new StubHttpClientFactory(new HttpClient()),
+            new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance),
+            NullLogger<SectlAuthService>.Instance,
+            new LoopbackAuthRedirectBrokerFactory());
+        await auth.InitializeAsync();
+
+        var client = new RecordingControlPlaneClient();
+        var viewModel = new MobileRemoteDrawViewModel(
+            configHandler,
+            client,
+            new FileControlPlaneDevicePreferenceStore(_preferencePath),
+            auth,
+            NullLogger<MobileRemoteDrawViewModel>.Instance);
+
+        return (viewModel, client);
+    }
+
+    // ---------------------------------------------------------------- 抽奖条件集（draw.trigger.conditions）
+
+    [Fact]
+    public void 条件集_设备没声明能力时绝不发conditions()
+    {
+        var (viewModel, client) = CreateViewModel();
+        viewModel.SelectedDrawKind = LotteryKind;
+        viewModel.SelectedDevice = Row("n1", supportsConditions: false);
+
+        // 就算界面上残留了条件（换设备、旧状态），也**不许**把它们发出去：
+        // 老设备会把 conditions 当"没写"从而静默按整池抽，那正是红线。
+        viewModel.SelectedRecipientList = "高一（1）班";
+        viewModel.SelectedPrizeTags.Add(new PrizeTagOption("文具"));
+
+        Assert.False(viewModel.SupportsDrawConditions);
+        Assert.False(viewModel.ShowsLotteryConditions);
+        Assert.True(viewModel.ShowsLotteryConditionsUnsupported);
+
+        client.Responder = request => request.Capability switch
+        {
+            ControlCapabilities.RosterRead => RosterCommand(PrizesResponse("元旦抽奖")),
+            _ => DrawnCommand("lottery", "元旦抽奖", 1)
+        };
+        viewModel.LoadRosterCommand.Execute(null);
+        viewModel.DrawCommand.Execute(null);
+
+        var payload = client.LastSubmission.Payload!.Value;
+        Assert.False(payload.TryGetProperty("conditions", out _));
+    }
+
+    [Fact]
+    public void 条件集_声明了能力的抽奖设备会带上标签与发放名单()
+    {
+        var (viewModel, client) = CreateViewModel();
+        viewModel.SelectedDrawKind = LotteryKind;
+
+        client.Responder = request => request.Capability switch
+        {
+            ControlCapabilities.RosterRead => RosterCommand(PrizesResponse("元旦抽奖")),
+            _ => DrawnCommand("lottery", "元旦抽奖", 1)
+        };
+        viewModel.SelectedDevice = Row("n1", supportsConditions: true);
+        Assert.True(viewModel.ShowsLotteryConditions);
+
+        viewModel.LoadRosterCommand.Execute(null);
+        viewModel.SelectedPrizeTags.Add(new PrizeTagOption("一等奖"));
+        viewModel.SelectedRecipientList = "高一（1）班";
+        viewModel.DrawCommand.Execute(null);
+
+        var payload = client.LastSubmission.Payload!.Value;
+        var conditions = payload.GetProperty("conditions");
+        Assert.Equal(1, conditions.GetProperty("version").GetInt32());
+        Assert.Equal("一等奖", conditions.GetProperty("prize_tags")[0].GetString());
+        Assert.Equal("高一（1）班", conditions.GetProperty("student_list").GetString());
+
+        // 顶层 gender/group 对抽奖仍然**根本不发**（设备侧是"存在即拒绝"）。
+        Assert.False(payload.TryGetProperty("gender", out _));
+        Assert.False(payload.TryGetProperty("group", out _));
+    }
+
+    private static GroupDto Group(string groupId) => new() { GroupId = groupId, Name = groupId, Role = "admin" };
+
+    private static NodeDto Node(string nodeId) => new()
+    {
+        NodeId = nodeId,
+        DisplayName = nodeId,
+        Online = true,
+        LocalRemoteAllowed = true,
+        Capabilities = [ControlCapabilities.DrawTrigger, ControlCapabilities.RosterRead]
+    };
+
+    // ---------------------------------------------------------------- 测试替身
+
+    private static readonly RemoteDrawKindOption LotteryKind = RemoteDrawKindOption.CreateLottery();
+
+    private static readonly RemoteDrawKindOption RollCallKind = RemoteDrawKindOption.CreateRollCall();
+
+    private (MobileRemoteDrawViewModel ViewModel, RecordingControlPlaneClient Client) CreateViewModel()
+    {
+        var configHandler = new MainConfigHandler(
+            NullLogger<MainConfigHandler>.Instance,
+            new TestConfigService(new MainConfigModel()));
+        var deviceUuidStore = new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance);
+        var auth = new SectlAuthService(
+            TestTokenStore.Create(),
+            new StubHttpClientFactory(new HttpClient()),
+            deviceUuidStore,
+            NullLogger<SectlAuthService>.Instance,
+            new LoopbackAuthRedirectBrokerFactory());
+
+        var client = new RecordingControlPlaneClient();
+        var viewModel = new MobileRemoteDrawViewModel(
+            configHandler,
+            client,
+            new FileControlPlaneDevicePreferenceStore(_preferencePath),
+            auth,
+            NullLogger<MobileRemoteDrawViewModel>.Instance)
+        {
+            // 设备列表平时是网络拉回来的，这里直接选中一台可用设备：这些断言关心的是选中之后的行为。
+            SelectedDevice = new DeviceRow(
+                new GroupDto { GroupId = "g1", Name = "高一（1）班", Role = "admin" },
+                new NodeDto
+                {
+                    NodeId = "n1",
+                    DisplayName = "讲台机",
+                    Online = true,
+                    LocalRemoteAllowed = true,
+                    Capabilities = [ControlCapabilities.DrawTrigger, ControlCapabilities.RosterRead]
+                })
+        };
+
+        return (viewModel, client);
+    }
+
+    private static NodeCommandDto RosterCommand(ControlRosterReadResponse response) => new()
+    {
+        CommandId = "cmd_roster",
+        Status = "completed",
+        ResultPayload = JsonSerializer.SerializeToElement(response, ControlProtocolJson.Options)
+    };
+
+    private static NodeCommandDto DrawnCommand(string target, string listName, int count) => new()
+    {
+        CommandId = "cmd_draw",
+        Status = "completed",
+        ResultDetail = JsonDocument.Parse(
+            $$"""
+              { "target": "{{target}}", "list_name": "{{listName}}", "count": {{count}},
+                "drawn": [ { "id": "01", "name": "张三" }, { "id": "02", "name": "李四" } ] }
+              """).RootElement.Clone()
+    };
+
+    private static NodeCommandDto ResetCommand(int cleared) => new()
+    {
+        CommandId = "cmd_reset",
+        Status = "completed",
+        ResultDetail = JsonDocument.Parse(
+            $$"""{ "target": "roll_call", "list_name": "高一（1）班", "cleared": {{cleared}} }""")
+            .RootElement.Clone()
+    };
+
+    private static ControlRosterReadResponse StudentsResponse(string name) => new(
+        ControlRosterReadRequest.Students,
+        [
+            new ControlRosterListPayload(
+                name,
+                true,
+                2,
+                2,
+                false,
+                [
+                    new ControlRosterMemberPayload("01", "张三", "男", "A组", null, null, true),
+                    new ControlRosterMemberPayload("02", "李四", "女", "B组", null, null, true)
+                ])
+        ]);
+
+    private static ControlRosterReadResponse PrizesResponse(string name) => new(
+        ControlRosterReadRequest.Prizes,
+        [
+            new ControlRosterListPayload(
+                name,
+                true,
+                2,
+                2,
+                false,
+                [
+                    new ControlRosterMemberPayload("P01", "一等奖", null, null, 1, 1, true),
+                    new ControlRosterMemberPayload("P02", "二等奖", null, null, 3, 1, true)
+                ])
+        ]);
+
+    /// <summary>按能力回一条固定回执的控制面客户端；同时记下最后一次下发的命令本体。</summary>
+    private sealed class RecordingControlPlaneClient : IControlPlaneClient
+    {
+        public List<ControlPlaneCommandRequest> Submissions { get; } = [];
+
+        public Func<ControlPlaneCommandRequest, NodeCommandDto> Responder { get; set; } = _ => Completed();
+
+        /// <summary>读组的行为（默认空：多数用例只关心选中设备之后的行为）。</summary>
+        public Func<Task<IReadOnlyList<GroupDto>>> GroupsAsync { get; set; } =
+            () => Task.FromResult<IReadOnlyList<GroupDto>>([]);
+
+        /// <summary>读某组设备的行为（默认空）。</summary>
+        public Func<string, Task<IReadOnlyList<NodeDto>>> NodesAsync { get; set; } =
+            _ => Task.FromResult<IReadOnlyList<NodeDto>>([]);
+
+        public ControlPlaneCommandRequest LastSubmission => Submissions[^1];
+
+        /// <summary>某条能力最后一次下发的载荷。</summary>
+        /// <remarks>
+        ///     重置成功之后还会再读一次名单，因此"最后一次下发"未必是测试关心的那条命令。
+        /// </remarks>
+        public ControlPlaneCommandRequest LastSubmissionOf(string capability) =>
+            Submissions.Last(request => string.Equals(request.Capability, capability, StringComparison.Ordinal));
+
+        public Task<IReadOnlyList<GroupDto>> GetGroupsAsync(CancellationToken cancellationToken = default) =>
+            GroupsAsync();
+
+        public Task<IReadOnlyList<NodeDto>> GetNodesAsync(string groupId, CancellationToken cancellationToken = default) =>
+            NodesAsync(groupId);
+
+        public Task<NodeCommandDto> SubmitCommandAsync(
+            string groupId,
+            string nodeId,
+            ControlPlaneCommandRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            Submissions.Add(request);
+            return Task.FromResult(new NodeCommandDto { CommandId = $"cmd_{Submissions.Count}", Status = "pending" });
+        }
+
+        public Task<NodeCommandDto> GetCommandAsync(
+            string groupId,
+            string commandId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Responder(LastSubmission));
+
+        public Task<NodeCommandDto> PollCommandAsync(
+            string groupId,
+            string commandId,
+            ControlPlanePollOptions? options = null,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Responder(LastSubmission));
+    }
+
+    private static NodeCommandDto Completed() => new() { CommandId = "cmd", Status = "completed" };
+
+    private sealed class StubHttpClientFactory(HttpClient client) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => client;
+    }
+
+    private sealed class TestConfigService(MainConfigModel config) : ConfigServiceBase
+    {
+        public override bool IsConfigExists<T>(T fallback) => true;
+
+        public override T LoadConfig<T>(T fallback) => config is T typed ? typed : fallback;
+
+        public override void SaveConfig<T>(T value)
+        {
+        }
+
+        public override void DeleteConfig<T>(T value)
+        {
+        }
+    }
 
     private static string GetRepositoryPath(string relativePath) => Path.Combine(
         Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../..")),

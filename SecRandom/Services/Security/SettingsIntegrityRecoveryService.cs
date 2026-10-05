@@ -54,6 +54,7 @@ internal sealed class SettingsIntegrityRecoveryService
     private const string PreRestoreDirectoryName = "integrity";
 
     private readonly MainConfigHandler _configHandler;
+    private readonly SecuritySettingsStore _securitySettings;
     private readonly IImportExportService _importExportService;
     private readonly ILogger<SettingsIntegrityRecoveryService> _logger;
     private readonly string? _configFilePath;
@@ -61,12 +62,14 @@ internal sealed class SettingsIntegrityRecoveryService
 
     public SettingsIntegrityRecoveryService(
         MainConfigHandler configHandler,
+        SecuritySettingsStore securitySettings,
         IImportExportService importExportService,
         ILogger<SettingsIntegrityRecoveryService> logger,
         string? configFilePath = null,
         string? backupDirectory = null)
     {
         _configHandler = configHandler;
+        _securitySettings = securitySettings;
         _importExportService = importExportService;
         _logger = logger;
         _configFilePath = configFilePath;
@@ -78,7 +81,7 @@ internal sealed class SettingsIntegrityRecoveryService
 
     public async Task<SettingsIntegrityRecoveryResult> TryRecoverAsync(CancellationToken cancellationToken = default)
     {
-        var source = _configHandler.Data.SecuritySettings.SettingsIntegrityRestoreSource;
+        var source = _securitySettings.Data.SettingsIntegrityRestoreSource;
         var cloudPreferred = source == SettingsIntegrityRestoreSource.CloudThenLocal;
         SettingsIntegrityRecoveryResult? failure = null;
 

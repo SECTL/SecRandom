@@ -263,9 +263,22 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         ResetDrawHistoryCore(showToast: true);
     }
 
+    /// <summary>远程重置的非交互闸门：需要本机验证时返回拒绝，由调用方回给控制台/手机。</summary>
+    public RemoteDrawOutcome? EvaluateRemoteReset() =>
+        ControlDrawGateRejections.From(_linkageDrawCoordinator.EvaluateGate(SecurityOperation.RollCallReset));
+
+    /// <summary>
+    ///     集控远程重置的**展示态**清理：等价于在本地点一次"重置"，但不弹任何验证框。
+    /// </summary>
+    /// <remarks>
+    ///     复用 <see cref="ResetDrawHistoryCore" /> 这条既有路径（清结果区、隐藏结果、恢复提示语、
+    ///     刷新剩余/候选计数），而不是另写一套"只清数据"的逻辑——只清数据的话，教室里看到的
+    ///     还是上一轮抽到的那个人，看起来就像重置没生效。闸门由调用方在此之前判定。
+    /// </remarks>
+    public void ResetRemotePresentation() => ResetDrawHistoryCore(showToast: false);
+
     private void ResetDrawHistoryCore(bool showToast = false)
-    {
-        _lastResultStudents.Clear();
+    {        _lastResultStudents.Clear();
         ResultItems.Clear();
         _rollCallDrawService.Reset(CurrentGroupScope, CurrentGenderScope);
         IsResultVisible = false;
@@ -876,7 +889,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             image,
             StudentImageSettings.StudentImage,
             StudentImageSettings.StudentImagePosition,
-            AvatarInitialResolver.Resolve(student.Name, student.Id));
+            AvatarInitialResolver.Resolve(student.Name, student.Id),
+            StudentImageSettings.StudentImageSize);
     }
 
     private RollCallRemainingItem CreateRemainingItem(Student student)
@@ -1046,10 +1060,12 @@ public sealed record RollCallResultItem(
     Bitmap? Image,
     bool IsImageEnabled,
     StudentImagePositionMode ImagePosition,
-    string Initial)
+    string Initial,
+    int ImageSize)
 {
     public bool IsImageVisible => IsImageEnabled && Image is not null;
     public bool IsPlaceholderVisible => IsImageEnabled && Image is null;
+    public double InitialFontSize => ImageSize * 0.5;
     public Orientation ImageLayoutOrientation => ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Right
         ? Orientation.Horizontal
         : Orientation.Vertical;

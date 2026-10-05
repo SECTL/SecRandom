@@ -1,6 +1,8 @@
+using System.Globalization;
 using SecRandom.Services.Auth;
 using SecRandom.Shared;
 using SecRandom.ViewModels.Mobile;
+using MobileResources = SecRandom.Langs.Mobile.Resources;
 
 namespace SecRandom.Core.Tests;
 
@@ -134,6 +136,49 @@ public sealed class MobileAuthPersistenceTests : IDisposable
         var app = File.ReadAllText(GetRepositoryPath("SecRandom/App.axaml.cs"));
 
         Assert.Contains("MobileAccountSectionViewModel", app, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void 未登录文案只留最短的未登录()
+    {
+        // 用户明确要求：未登录只显示"未登录"，不要后面那串"登录后可以……"。
+        Assert.Equal("未登录", MobileResources.MA_SignedOutHint);
+        Assert.Equal(
+            "Not signed in",
+            MobileResources.ResourceManager.GetString("MA_SignedOutHint", new CultureInfo("en-US")));
+        Assert.Equal(
+            "未ログイン",
+            MobileResources.ResourceManager.GetString("MA_SignedOutHint", new CultureInfo("ja-JP")));
+
+        // 短标签不带句末标点（三语一致）。
+        foreach (var language in new[] { "zh-CN", "en-US", "ja-JP" })
+        {
+            var text = MobileResources.ResourceManager.GetString("MA_SignedOutHint", new CultureInfo(language))!;
+            Assert.False(
+                text.EndsWith('。') || text.EndsWith('．') || text.EndsWith('.')
+                || text.EndsWith('!') || text.EndsWith('?'),
+                $"{language} 的未登录文案带了句末标点：{text}");
+        }
+    }
+
+    [Fact]
+    public void 账号头像占位在两种主题下都用主题色而不是写死的颜色()
+    {
+        var markup = File.ReadAllText(
+            GetRepositoryPath("SecRandom/Views/Mobile/Settings/MobileSettingsCatalogPage.axaml"));
+
+        // 三种状态共用一个圆：外圈只有一处背景/描边定义，且都是主题资源（浅色与深色各有取值）。
+        Assert.Contains("Background=\"{DynamicResource ControlFillColorSecondaryBrush}\"", markup, StringComparison.Ordinal);
+        Assert.Contains("BorderBrush=\"{DynamicResource CardStrokeColorDefaultBrush}\"", markup, StringComparison.Ordinal);
+        Assert.Contains("ClipToBounds=\"True\"", markup, StringComparison.Ordinal);
+
+        // 未登录不再是"一个不透明强调色的空圆"，而是中性底 + 人形轮廓：
+        // 强调色在深色主题里是一个高饱和圆点，既不像占位，也和已登录首字圆的底色不是同一套 token。
+        Assert.DoesNotContain("AccentFillColorDefaultBrush", markup, StringComparison.Ordinal);
+        Assert.Contains("Glyph=\"{sr:Fi PersonFilled}\"", markup, StringComparison.Ordinal);
+
+        // 不写死颜色：浅/深主题由 DynamicResource 决定。
+        Assert.DoesNotMatch("#[0-9A-Fa-f]{6}", markup);
     }
 
     private static string GetRepositoryPath(string relativePath) => Path.Combine(

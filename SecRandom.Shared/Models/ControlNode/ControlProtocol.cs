@@ -27,6 +27,32 @@ public static class ControlCapabilities
     /// <summary>立即触发一次抽取（动作命令）。</summary>
     public const string DrawTrigger = "draw.trigger";
 
+    /// <summary>
+    ///     设备的 <c>draw.trigger</c> 支持 <c>conditions</c> 子对象（版本 1：标签筛选 + 发放对象范围）。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <b>这是一张"能力声明"，不是一条可下发的命令</b>：控制台必须在发 <c>conditions</c> **之前**
+    ///         先看设备有没有声明它。原因很硬——本次改动之前的设备根本不认识 <c>conditions</c>，
+    ///         会把它当成"没写"从而**静默按整池抽**，而"设了条件其实没生效"是本项目的红线。
+    ///         版本号写在 payload 里挡不住这件事（老设备压根不看 payload），只有能力声明能挡。
+    ///     </para>
+    ///     <para>
+    ///         升版本时**新增**能力名（例如 <c>draw.trigger.conditions.v2</c>），不要改这一条的含义。
+    ///     </para>
+    /// </remarks>
+    public const string DrawTriggerConditions = "draw.trigger.conditions";
+
+    /// <summary>
+    ///     清空"本轮临时记录"（动作命令）。
+    /// </summary>
+    /// <remarks>
+    ///     <b>只清抽取进度，不碰历史记录</b>：历史（<c>data/history/**</c>）是名单的长期账本，
+    ///     远程能清的只有"这一轮抽到谁"的临时状态。名字与文档都必须说到这一点，
+    ///     否则"重置"很容易被理解成"清历史"。
+    /// </remarks>
+    public const string DrawReset = "draw.reset";
+
     /// <summary>显示结果 / 播报。</summary>
     public const string MediaPlay = "media.play";
 
@@ -69,6 +95,7 @@ public static class ControlCapabilities
         ProofList,
         DrawLock,
         DrawTrigger,
+        DrawTriggerConditions,
         MediaPlay,
         RosterRead,
         RosterWrite,
@@ -86,11 +113,35 @@ public static class ControlFrameTypes
     public const string Ack = "command.ack";
     public const string Result = "command.result";
 
+    /// <summary>
+    ///     自我注销：把"我在这个组里的登记"撤掉，服务端据此把本机从该组列表移除。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <b>只在两处发：退出登录、换组。</b>**绝对不在退出程序/关窗口/后台驻留结束/崩溃恢复/更新重启时发**——
+    ///         服务端现在是"登记即列出"，离线只显示 <c>online:false</c>；关掉软件就发注销，
+    ///         等于老师一关教室机，它就从控制台上消失了（这正是用户抱怨过的现象）。
+    ///         区别一句话：**退出登录 = 注销；退出程序 = 不注销，保持 offline 可见**。
+    ///     </para>
+    ///     <para>
+    ///         语义是"只注销自己这个 node_id"（凭据已由节点通道校验），因此**不需要组角色**：
+    ///         教室机的账号往往不是组管理员，走控制台那套 DELETE 会因权限失败。
+    ///     </para>
+    ///     <para>
+    ///         幂等：重复注销、或本机在该组里从未登记过（<c>node_not_found</c>）都按**成功**处理，
+    ///         不能因此报错或阻塞退出流程。
+    ///     </para>
+    /// </remarks>
+    public const string Deregister = "node.deregister";
+
     // 服务端 → 节点
     public const string HelloAck = "hello.ack";
     public const string Command = "command";
     public const string DesiredState = "desired_state";
     public const string Error = "error";
+
+    /// <summary>服务端对 <see cref="Deregister" /> 的确认帧（帧形状与服务端约定后补齐）。</summary>
+    public const string DeregisterAck = "node.deregister.ack";
 }
 
 /// <summary>

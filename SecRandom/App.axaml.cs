@@ -273,6 +273,10 @@ public partial class App : Application
                 throw;
             }
 
+            // 安全设置住在自己的加密文件里：先把它读起来（含旧版明文设置的一次性迁移），
+            // 后面的启动流程才有可信的防护开关可用。
+            _ = IAppHost.GetService<SecuritySettingsStore>();
+
             if (IAppHost.GetService<FirstRunOobeService>().IsRequired())
             {
                 ShowFirstRunOobe(desktop, startupProtocolUri);
@@ -284,7 +288,7 @@ public partial class App : Application
             _settingsIntegrity = IAppHost.GetService<SettingsIntegrityService>();
             if (_settingsIntegrity.GetPendingMismatch() is { } settingsMismatch)
             {
-                if (IAppHost.GetService<MainConfigHandler>().Data.SecuritySettings.SettingsIntegrityAction
+                if (IAppHost.GetService<SecuritySettingsStore>().Data.SettingsIntegrityAction
                     == SettingsIntegrityAction.AutoRestore)
                 {
                     WriteDesktopStartupDiagnostic("Settings integrity check is attempting automatic recovery.");
@@ -556,13 +560,8 @@ public partial class App : Application
         _floatingWindow = new FloatingWindow();
         _floatingWindow.Opened += (_, _) => RefreshTrayWindowMenuItems();
         _floatingWindow.Closed += (_, _) => _floatingWindow = null;
-        if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.StartupDisplayFloatingWindow)
-        {
-            _floatingWindow.Hide();
-            _floatingWindow.SetUserVisibilityIntent(false);
-        }
-
         desktop.MainWindow = _floatingWindow;
+        ApplyFloatingWindowStartupVisibility();
 
         WriteDesktopStartupDiagnostic("Initializing desktop application chrome.");
         InitializeApp();
@@ -571,6 +570,55 @@ public partial class App : Application
             Dispatcher.UIThread.Post(() => HandleProtocolUri(startupProtocolUri), DispatcherPriority.Render);
 
         Dispatcher.UIThread.UnhandledException += App_OnDispatcherUnhandledException;
+    }
+
+    /// <summary>
+    ///     按"启动时显示悬浮窗"设置收口悬浮窗的初始可见性。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         这件事必须在这里收口，否则两条启动路径拿不到同一个结果。生命周期在
+    ///         <c>ClassicDesktopStyleApplicationLifetime.StartCore</c> 里**无条件**显示一次
+    ///         <c>MainWindow</c>（<c>ShowMainWindow()</c> 只被 StartCore 调用一次，且不做可见性判断）：
+    ///     </para>
+    ///     <list type="bullet">
+    ///         <item><description>正常启动：本方法跑在 Start **之前**，那次显示替我们把悬浮窗打开；</description></item>
+    ///         <item><description>
+    ///             引导（OOBE）与设置防篡改闸门之后的重启：Start 早就跑过了，**不会再有人**显示这个新赋值的
+    ///             <c>MainWindow</c> —— "OOBE 结束后悬浮窗不出现"就是这条路径。
+    ///         </description></item>
+    ///     </list>
+    ///     <para>
+    ///         关闭时也不能就地 <c>Hide()</c>：此时窗口还没被显示过，而 <c>Window.Hide()</c> 对
+    ///         <c>_shown == false</c> 的窗口直接返回（连可见性都不改），StartCore 随后的显示照样会发生。
+    ///         所以把收口动作排到 Start 那一轮之后再执行；并以"用户是否想看"为闸 —— 期间用户若从托盘
+    ///         重新打开悬浮窗，这里就不再关它。课程联动已经把它藏起来时同理不恢复。
+    ///     </para>
+    /// </remarks>
+    private void ApplyFloatingWindowStartupVisibility()
+    {
+        if (_floatingWindow is not { } window)
+            return;
+
+        if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.StartupDisplayFloatingWindow)
+            window.SetUserVisibilityIntent(false);
+
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (_floatingWindow is not { } current)
+                    return;
+
+                if (!current.UserWantsVisible)
+                {
+                    current.Hide();
+                    return;
+                }
+
+                if (!current.IsHiddenByCourseLinkage)
+                    RestoreWithoutActivating(current);
+            },
+            DispatcherPriority.Loaded);
     }
 
     private void ShowFirstRunOobe(IClassicDesktopStyleApplicationLifetime desktop, string? startupProtocolUri)
@@ -960,7 +1008,10 @@ public partial class App : Application
         if (IAppHost.Host is not null) return;
         var mobilePlatform = platform as MobilePlatformServiceRoot;
         var isMobile = mobilePlatform is not null;
-        var useMobileUI = isMobile && !mobilePlatform!.UsesDesktopMainView;
+        // 宿主形态只在这里判一次：平板同时是控制端（远程抽取页）与被控端（集控节点），
+        // 手机只是控制端。所有分支都读这一份结果，免得下次加平台时漏掉某个 if。
+        var hostShape = AppHostShape.Resolve(isMobile, mobilePlatform?.UsesDesktopMainView == true);
+        var useMobileUI = hostShape.UsesMobileShell;
 
         IAppHost.Host = Host
             .CreateDefaultBuilder()
@@ -1185,15 +1236,22 @@ public partial class App : Application
                 services.AddHostedService<CourseLinkageHostedService>();
 
                 // 集控节点（control-v1，见 docs/client-protocol.md）：出站长连接 + 本机开关 + 远程抽取。
-                // 桌面三平台共享同一份实现；手机端只是控制台侧（往桌面节点下发 draw.trigger），
-                // 本机没有节点，因此只注册一个永不开锁的闸门——LinkageDrawCoordinator 桌面与手机共用，
-                // 少了这条注册整台 Host 都起不来（Host.StartAsync 构造 GlobalShortcutService 时会拉到它）。
-                if (!isMobile)
+                // **桌面与平板**都是被控端（平板用的是桌面主界面，教室里同样需要被控制）；
+                // 手机端只是控制台侧（往节点下发 draw.trigger），本机没有节点，因此只注册一个永不开锁的闸门
+                // ——LinkageDrawCoordinator 桌面与手机共用，少了这条注册整台 Host 都起不来
+                // （Host.StartAsync 构造 GlobalShortcutService 时会拉到它）。
+                if (hostShape.RunsControlNode)
                 {
                     services.AddSingleton(new ControlNodeClientOptions
                     {
                         Platform = ResolveControlPlatformName(),
-                        Version = GlobalConstants.Version
+                        Version = GlobalConstants.Version,
+                        // 主机名在移动平台上是没有意义的（Android/iOS 都报 localhost）：平板既然是被控端，
+                        // 控制台里就不能每台都叫 localhost。平台 head 提供的设备名（Build.Model / UIDevice.Model）优先，
+                        // 用户自己在集控设置页填的显示名仍然覆盖它（见 ControlNodeDisplayName.Resolve）。
+                        HostName = string.IsNullOrWhiteSpace(mobilePlatform?.DeviceName)
+                            ? Environment.MachineName
+                            : mobilePlatform!.DeviceName!
                     });
                     services.AddSingleton<IControlNodeStateStore, FileControlNodeStateStore>();
                     services.AddSingleton<IControlDrawGate, ControlDrawGateService>();
@@ -1210,27 +1268,33 @@ public partial class App : Application
                     // 真正动手的那一步在 ControlPageDrawExecutor 里（要回到 UI 线程）。
                     services.AddSingleton<IControlDrawExecutor, ControlPageDrawExecutor>();
                     services.AddSingleton<ControlDrawTriggerHandler>();
+                    // 远程重置：只清临时记录（抽取进度），不碰历史；展示态复用各页面本地重置路径。
+                    services.AddSingleton<IControlDrawResetPresenter, ControlPageDrawResetPresenter>();
+                    services.AddSingleton<ControlDrawResetHandler>();
                     services.AddSingleton<IControlCommandDispatcher, ControlCommandDispatcher>();
                     services.AddSingleton<ControlNodeClient>();
                     services.AddHostedService<ControlNodeHostedService>();
                     // 单例：这个 ViewModel 订阅了节点状态与连接状态，每次打开设置页都新建一个会累积订阅。
                     services.AddSingleton<ControlSettingsPageViewModel>();
                 }
-                else
+                else if (hostShape.UsesUnlockedDrawGate)
                 {
                     // 手机端没有本地集控节点，但 LinkageDrawCoordinator 仍然要求这个闸门可解析。
                     services.AddSingleton<IControlDrawGate, UnlockedControlDrawGate>();
                 }
+                services.AddSingleton<SecuritySettingsStore>();
                 services.AddSingleton<SecurityCredentialStore>();
                 services.AddSingleton<IUsbDeviceCatalog, UsbDeviceCatalog>();
                 services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
                 services.AddSingleton<ISecurityService, SecurityService>();
                 services.AddSingleton(serviceProvider => new SettingsIntegrityService(
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
+                    serviceProvider.GetRequiredService<SecuritySettingsStore>(),
                     serviceProvider.GetRequiredService<SecurityCredentialStore>(),
                     serviceProvider.GetRequiredService<ILogger<SettingsIntegrityService>>()));
                 services.AddSingleton(serviceProvider => new SettingsIntegrityRecoveryService(
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
+                    serviceProvider.GetRequiredService<SecuritySettingsStore>(),
                     serviceProvider.GetRequiredService<IImportExportService>(),
                     serviceProvider.GetRequiredService<ILogger<SettingsIntegrityRecoveryService>>()));
 
@@ -1238,10 +1302,16 @@ public partial class App : Application
                 // （SectlAuthService.SendAuthorizedAsync），因此注册在共享分支里。
                 services.AddSingleton<IAuthorizedApiSender, SectlAuthorizedApiSender>();
                 services.AddSingleton<IControlPlaneDevicePreferenceStore, FileControlPlaneDevicePreferenceStore>();
+                // 控制面基址是可配置的（自建/私有部署），但它**不进 settings.json**：这个地址每次请求都会
+                // 收到本账号的令牌，一次设置导入不该能把令牌指到别的服务器上。见 IControlPlaneEndpointStore。
+                services.AddSingleton<IControlPlaneEndpointStore>(provider => new FileControlPlaneEndpointStore(
+                    provider.GetRequiredService<ILogger<FileControlPlaneEndpointStore>>()));
+                // 这张设置卡默认藏着，由调试页的总开关放出来（与"内幕设置"同一条运行时逻辑）。
+                services.AddSingleton<IControlPlaneEndpointSettingsGate, ControlPlaneEndpointSettingsGate>();
                 services.AddSingleton<IControlPlaneClient>(provider => new ControlPlaneClient(
                     provider.GetRequiredService<IAuthorizedApiSender>(),
                     provider.GetRequiredService<ILogger<ControlPlaneClient>>(),
-                    ControlPlaneClient.DefaultBaseUrl));
+                    endpointStore: provider.GetRequiredService<IControlPlaneEndpointStore>()));
 
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
                 services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");
@@ -1264,6 +1334,18 @@ public partial class App : Application
                 services.AddSingleton<LotteryPageViewModel>();
                 services.AddTransient<RollCallHistoryViewModel>();
                 services.AddTransient<HomeSettingsPageViewModel>();
+                // "远程抽取"页的 ViewModel：**桌面/平板/手机三个宿主共用同一份**。它只跟协议有关，
+                // 与谁是控制端/被控端无关，因此注册在共享分支；页面每次进入都重建（FAFrame 不快取），
+                // 它自己会记住上次选中的设备，不需要做成单例。
+                // 用显式工厂而不是纯约定注册：本机节点身份只有桌面/平板有（手机没有本地节点），
+                // 传 null = 设备列表里一台都不标"本机"，而不是让容器去猜一个可选参数。
+                services.AddTransient(provider => new MobileRemoteDrawViewModel(
+                    provider.GetRequiredService<MainConfigHandler>(),
+                    provider.GetRequiredService<IControlPlaneClient>(),
+                    provider.GetRequiredService<IControlPlaneDevicePreferenceStore>(),
+                    provider.GetRequiredService<SectlAuthService>(),
+                    provider.GetRequiredService<ILogger<MobileRemoteDrawViewModel>>(),
+                    provider.GetService<IControlNodeStateStore>()));
                 services.AddTransient<LotteryHistoryViewModel>();
 
                 // 杂项 Views
@@ -1276,9 +1358,6 @@ public partial class App : Application
                     services.AddSingleton<CrashRecoveryViewState>();
                     services.AddTransient<CrashRecoveryView>();
                     services.AddViewRegistration<CrashRecoveryView>("system.crashRecovery");
-                    // 手机端"远程抽取"页的 ViewModel：页面每次进入都重建（FAFrame 不快取），
-                    // 它自己会记住上次选中的设备，因此不需要做成单例。
-                    services.AddTransient<MobileRemoteDrawViewModel>();
                     // 设置页顶部的账号区：页面每次进入重建，订阅在页面离树时释放。
                     services.AddTransient<MobileAccountSectionViewModel>();
                 }
@@ -1299,6 +1378,17 @@ public partial class App : Application
                 {
                     services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
                     services.AddMainPage<LotteryPage>(Langs.Common.Resources.Feat_Lottery);
+
+                    // 桌面/平板：远程抽取排在**抽奖下面**——侧栏顺序由注册顺序 + 同一个 PageLocation 决定，
+                    // 因此这一条必须紧跟在抽奖注册之后，并和抽奖页一样是 Bottom（主界面侧栏的页脚组，
+                    // 桌面三个主页都在这组里；Top 组在这个应用里是空的）。手机走底部第 5 档，不受影响。
+                    //
+                    // 桌面**默认隐藏**这一项（用户在 设置→通用→集控 里打开）：真正"谁看得见"由 MainView
+                    // 按 AppHostShape 的规则切换 IsVisible——注册永远都在，因为运行时增删侧栏项会让
+                    // FluentAvalonia 丢选中态并以 null 触发 ItemInvoked。
+                    if (hostShape.UsesRemoteDrawSidebarPage)
+                        services.AddMainPage<RemoteDrawPage>(MobileResources.P_RemoteDraw);
+
                     services.AddMainPage<HistoryPage>(Langs.Common.Resources.Feat_History);
                 }
 
@@ -1329,9 +1419,9 @@ public partial class App : Application
                 services.AddSettingsPage<VerificationSettingsPage>(Langs.SettingsPages.General.Verification
                     .Resources.Page_Title);
                 services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
-                if (!isMobile)
+                if (hostShape.RunsControlNode)
                 {
-                    // 集控节点只在桌面注册，页面与它成对出现。
+                    // 集控节点与集控设置页成对出现：跑节点的宿主（桌面/平板）才该看到这个页面。
                     services.AddSettingsPage<ControlSettingsPage>(
                         Langs.SettingsPages.General.Control.Resources.Page_Title);
                 }
@@ -1345,6 +1435,9 @@ public partial class App : Application
                     // 手机没有浮窗
                     services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources
                         .Settings_FloatingWindow);
+                    // 计时器页紧随浮窗页：计时器的入口就在浮窗上，且两者都只有桌面端有
+                    services.AddSettingsPage<TimerSettingsPage>(Langs.SettingsPages.Personalized.Timer
+                        .Resources.Page_Title);
                 }
                 services.AddSettingsPage<MusicSettingsPage>(Langs.SettingsPages.Personalized.Music.Resources
                     .Page_Title);
@@ -1994,10 +2087,16 @@ public partial class App : Application
 
     #region Windows
 
-    /// <summary>集控协议里的平台标识：<c>windows</c> / <c>linux</c> / <c>macos</c>。</summary>
+    /// <summary>集控协议里的平台标识：<c>windows</c> / <c>linux</c> / <c>macos</c> / <c>android</c> / <c>ios</c>。</summary>
+    /// <remarks>
+    ///     平板也是被控端，所以移动平台必须报出自己的真实平台名：一律回落成 <c>unknown</c> 的话，
+    ///     控制台的节点列表里每一台平板都看不出是 iPad 还是 Android 平板。
+    /// </remarks>
     private static string ResolveControlPlatformName() =>
         OperatingSystem.IsWindows() ? "windows"
         : OperatingSystem.IsMacOS() ? "macos"
+        : OperatingSystem.IsAndroid() ? "android"
+        : OperatingSystem.IsIOS() ? "ios"
         : OperatingSystem.IsLinux() ? "linux"
         : "unknown";
 
@@ -2008,6 +2107,61 @@ public partial class App : Application
         ObserveTask(ShowMainWindowCoreAsync(pageId), "Failed to show main window.");
     }
 
+    /// <summary>
+    ///     远程抽取结果的展示路径：显示主界面、切到指定页，并把它**还原 + 激活到前台**。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         与 <see cref="ShowMainWindow(string?)" /> 的唯一区别就是"置前"：那条路径只保证窗口被显示，
+    ///         已经打开的窗口会留在后台。远程点名是"必须让教室看见"的行为——老师按下按钮，
+    ///         屏幕上就该出现抽到了谁；只在后台刷新一下，课堂里没人知道发生了什么。
+    ///     </para>
+    ///     <para>
+    ///         <b>为什么可以在这里破例抢前台</b>：这是一条用户明确按下"抽取"才触发的展示路径，
+    ///         不是后台弹窗；普通显示、浮窗与通知渠道仍遵守用户的"不抢焦点/置顶模式"设置。
+    ///         这里只做还原/显示/激活，**不**去拨 Topmost（理由见 <see cref="RemoteDrawWindowPlan" />）。
+    ///     </para>
+    ///     <para>
+    ///         <b>平板（单窗口宿主）走的是同一条路，但"置前"落在别的动作上</b>：那里没有 <c>MainWindow</c>，
+    ///         主界面就是宿主里的当前页，因此能做的只有"把目标页切到主界面里 + 激活视图会话"；
+    ///         把整个应用从后台提到前台是 Android/iPadOS 不允许的（见 <see cref="RemoteDrawFocusPlan" />）。
+    ///     </para>
+    /// </remarks>
+    public static Task ShowMainWindowForRemoteDrawAsync(string? pageId = null) =>
+        ShowMainWindowForRemoteDrawCoreAsync(pageId);
+
+    private static async Task ShowMainWindowForRemoteDrawCoreAsync(string? pageId)
+    {
+        await ShowMainWindowCoreAsync(pageId).ConfigureAwait(true);
+
+        var window = _mainWindow;
+        var plan = RemoteDrawFocusPlan.Resolve(
+            App.IsDesktop,
+            isWindowVisible: window?.IsVisible ?? false,
+            isWindowMinimized: window?.WindowState == WindowState.Minimized);
+
+        // 单窗口宿主（平板）：没有窗口可还原/显示/激活——目标页已经在 ShowMainWindowCoreAsync 里切好了，
+        // 主界面又是宿主里的当前页，因此这里**什么都不做**才是正确行为，而不是悄悄去建一个桌面窗口。
+        if (plan.Surface == RemoteDrawSurface.SingleViewHost || window is null)
+            return;
+
+        void BringToFront()
+        {
+            // 顺序不能反：最小化的窗口要先还原，否则激活只会得到一个仍然最小化的窗口。
+            if (plan.Restore)
+                window.WindowState = WindowState.Normal;
+            if (plan.Show)
+                window.Show();
+            if (plan.Activate)
+                window.Activate();
+        }
+
+        if (Dispatcher.UIThread.CheckAccess())
+            BringToFront();
+        else
+            await Dispatcher.UIThread.InvokeAsync(BringToFront).GetTask().ConfigureAwait(false);
+    }
+
     private static async Task ShowMainWindowCoreAsync(string? pageId = null)
     {
         TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
@@ -2016,7 +2170,11 @@ public partial class App : Application
         try
         {
             WriteDesktopStartupDiagnostic("Showing main window.");
-            if (_mainWindow is null)
+
+            // 桌面：主界面在一个独立窗口里，没有就建一个。
+            // 单窗口宿主（平板/手机）：没有 Window 这个概念，主界面是宿主里的视图（平板是 MainView，手机是根视图），
+            // 因此这里**只**激活那份视图会话，绝不构造桌面窗口——在平板上建一个 Window 只会得到一个没人能看到的窗口。
+            if (_mainWindow is null && App.IsDesktop)
             {
                 WriteDesktopStartupDiagnostic("Creating main window and view host.");
                 var mainWindow = _mainWindow = new MainWindow(MainWindowSettingsScope.Primary)
@@ -2032,9 +2190,10 @@ public partial class App : Application
                 };
             }
 
+            // ReuseExistingView（默认 true）：已经显示过的主界面会被**激活**而不是重复压一层。
             await IAppHost.GetService<IViewEngine>().ShowAsync(
-                DesktopViewIds.Main,
-                new ViewShowOptions { HostId = DesktopViewIds.Main }).ConfigureAwait(true);
+                App.IsDesktop ? DesktopViewIds.Main : GetMobileInitialViewId(),
+                new ViewShowOptions { HostId = App.IsDesktop ? DesktopViewIds.Main : null }).ConfigureAwait(true);
             WriteDesktopStartupDiagnostic("Main window view displayed.");
             if (!string.IsNullOrWhiteSpace(pageId))
                 MainView.Current?.SelectNavigationItemById(pageId);

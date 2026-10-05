@@ -17,4 +17,13 @@ public partial class LotterySettingsConfig : OverridableDrawSettings
     [ObservableProperty] private string _customLotteryShowRandomFormat = LotteryProcessDisplayFormatter.DefaultTemplate;
     [ObservableProperty] private bool _lotteryImage = false;
     [ObservableProperty] private StudentImagePositionMode _lotteryImagePosition = StudentImagePositionMode.Left;
+    [ObservableProperty] private int _lotteryImageSize = DefaultImageSize;
+
+    /// <summary>同 <see cref="ClampImageSize" />：奖品图片的边长同样只认范围内的值。</summary>
+    partial void OnLotteryImageSizeChanged(int value)
+    {
+        var clamped = ClampImageSize(value);
+        if (clamped != value)
+            LotteryImageSize = clamped;
+    }
 }

@@ -89,6 +89,22 @@ SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>SecRandom の起動時にメインウィンドウを自動表示するかを選択します</value></data>
   <data name="C_ExternalIntegration" xml:space="preserve"><value>外部リンクと連携</value></data>
   <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>外部アプリケーションから SecRandom を開けるよう secrandom:// を登録します</value></data>
+  <data name="C_ControlTitle" xml:space="preserve"><value>遠隔管理</value></data>
+  <data name="C_ControlDescription" xml:space="preserve"><value>有効にすると、この端末は集控ノードとして集控プラットフォームへ接続し、状態の参照、抽選のロック、遠隔からの抽選を受け取れるようになります。スイッチと身元は本機専用の状態ファイルに保存され、設定のインポートで有効になることはありません</value></data>
+  <data name="C_ControlRemoteEnabled" xml:space="preserve"><value>リモート制御を許可</value></data>
+  <data name="C_ControlRemoteEnabledDescription" xml:space="preserve"><value>このスイッチは本機だけが持つもので、オフの間は集控プラットフォームから何が届いても実行しません</value></data>
+  <data name="C_ControlDisplayName" xml:space="preserve"><value>表示名</value></data>
+  <data name="C_ControlDisplayNameDescription" xml:space="preserve"><value>集控プラットフォームの端末一覧に表示される名前で、空欄ならホスト名を報告します</value></data>
+  <data name="C_ControlNodeId" xml:space="preserve"><value>ノード ID</value></data>
+  <data name="C_ControlNodeIdDescription" xml:space="preserve"><value>インストール時に生成され以後変わりません。集控プラットフォームへの端末登録に使います</value></data>
+  <data name="C_ControlGroupId" xml:space="preserve"><value>所属グループ ID</value></data>
+  <data name="C_ControlGroupIdDescription" xml:space="preserve"><value>集控プラットフォームでグループを作成すると発行されます。先にそのグループへ登録しないと接続が拒否されます</value></data>
+  <data name="C_ControlPlatform" xml:space="preserve"><value>集控プラットフォーム</value></data>
+  <data name="C_ControlPlatformDescription" xml:space="preserve"><value>ブラウザーで集控プラットフォームの Web コンソールを開き、このグループの端末を管理します</value></data>
+  <data name="C_OpenControlPlane_Official" xml:space="preserve"><value>SecRandom 集控プラットフォームを開く</value></data>
+  <data name="C_OpenControlPlane_ThirdParty" xml:space="preserve"><value>サードパーティ運用の集控プラットフォームを開く</value></data>
+  <data name="M_ControlConnectAfterSetup" xml:space="preserve"><value>この端末は設定完了と起動後に集控プラットフォームへ接続します。接続状態は「設定 > 一般 > 遠隔管理」で確認できます</value></data>
+  <data name="M_ControlPlatformOpenFailed" xml:space="preserve"><value>集控プラットフォームを開けませんでした。設定から再試行してください</value></data>
   <data name="C_PrivacyTitle" xml:space="preserve"><value>プライバシー</value></data>
   <data name="C_PrivacyDescription" xml:space="preserve"><value>起動後に送信できる診断情報とオンライン状態情報を選択します。後から設定で変更できます</value></data>
   <data name="C_PrivacyEncouragement" xml:space="preserve"><value>お願いです〜有効にしていただけると、これからのアップデートにとても役立ちます</value></data>
@@ -100,11 +116,12 @@ SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="O_OnlineStatusMode_Anonymous" xml:space="preserve"><value>匿名報告</value></data>
   <data name="O_OnlineStatusMode_Off" xml:space="preserve"><value>報告しない</value></data>
   <data name="C_CompleteTitle" xml:space="preserve"><value>設定を完了</value></data>
-  <data name="C_CompleteDescription" xml:space="preserve"><value>検証可能な抽選について読み、プライバシーポリシーと GPLv3 を確認したら、完了をクリックして SecRandom を開始します。リスト、抽選、外観、デスクトップ連携、プライバシーは後から変更できます</value></data>
+  <data name="C_CompleteDescription" xml:space="preserve"><value>検証可能な抽選について読み、プライバシーポリシーと GPLv3 を確認したら、完了をクリックして SecRandom を開始します。リスト、抽選、外観、デスクトップ連携、遠隔管理、プライバシーは後から変更できます</value></data>
   <data name="C_CompletedItems" xml:space="preserve"><value>設定済みの項目</value></data>
   <data name="C_CompletedClass" xml:space="preserve"><value>メンバーリストと賞品プールはリスト管理から管理できます</value></data>
   <data name="C_CompletedAppearance" xml:space="preserve"><value>抽選の入口、テーマ、フローティングウィンドウの外観は設定で変更できます</value></data>
   <data name="C_CompletedIntegration" xml:space="preserve"><value>外部リンクの設定は、アプリ内部の単一インスタンス通信を無効にしません</value></data>
+  <data name="C_CompletedControl" xml:space="preserve"><value>リモート制御のスイッチ、表示名、所属グループは遠隔管理の設定で変更できます</value></data>
   <data name="C_CompletedPrivacy" xml:space="preserve"><value>テレメトリとオンライン状態の報告はプライバシー設定で変更できます</value></data>
   <data name="C_OverwriteTitle" xml:space="preserve"><value>リストの上書きを確認</value></data>
   <data name="C_Overwrite" xml:space="preserve"><value>上書き</value></data>

@@ -730,6 +730,29 @@
     <data name="RD_GroupsUnavailable" xml:space="preserve"><value>{0} 件のグループを読み込めませんでした。もう一度お試しください</value></data>
     <data name="MA_SignIn" xml:space="preserve"><value>SECTL アカウントでログイン</value></data>
     <data name="MA_SignOut" xml:space="preserve"><value>ログアウト</value></data>
-    <data name="MA_SignedOutHint" xml:space="preserve"><value>未ログインです。ログインするとクラウドバックアップと「リモート」タブからの教室端末操作が使えます</value></data>
+    <data name="MA_SignedOutHint" xml:space="preserve"><value>未ログイン</value></data>
     <data name="MA_Reauthorize" xml:space="preserve"><value>ログイン状態が無効です。再度ログインしてください</value></data>
+    <data name="RD_ResultUnreadable" xml:space="preserve"><value>端末は実行しましたが、結果にメンバーが含まれていません</value></data>
+    <data name="RD_NoRosterCandidate" xml:space="preserve"><value>この名簿には抽選できるメンバーがいません</value></data>
+    <data name="RD_Kind" xml:space="preserve"><value>抽選の種類</value></data>
+    <data name="RD_KindRollCall" xml:space="preserve"><value>点呼</value></data>
+    <data name="RD_KindLottery" xml:space="preserve"><value>抽選</value></data>
+    <data name="RD_Pool" xml:space="preserve"><value>賞品プール</value></data>
+    <data name="RD_LotteryNoScope" xml:space="preserve"><value>抽選では性別とグループによる絞り込みを行いません</value></data>
+    <data name="RD_DrawnPrizeCount" xml:space="preserve"><value>{0} 個の賞品を抽選しました</value></data>
+    <data name="RD_LotteryDisabled" xml:space="preserve"><value>この端末では抽選機能が無効です</value></data>
+    <data name="RD_Reset" xml:space="preserve"><value>このラウンドをリセット</value></data>
+    <data name="RD_Resetting" xml:space="preserve"><value>リセット中…</value></data>
+    <data name="RD_ResetDone" xml:space="preserve"><value>ラウンドをリセットし、抽選記録を {0} 件消去しました</value></data>
+    <data name="RD_ResetConfirm" xml:space="preserve"><value>もう一度タップして確定</value></data>
+    <data name="RD_NoResult" xml:space="preserve"><value>結果はまだありません</value></data>
+    <data name="RD_NoResult_D" xml:space="preserve"><value>送信すると、端末の応答に含まれる当選者や景品がここに表示されます</value></data>
+    <data name="RD_SelfBadge" xml:space="preserve"><value>この端末</value></data>
+    <data name="RD_SelfSelectedHint" xml:space="preserve"><value>これはこの端末です。この端末で点呼や抽選を行うには、メイン画面の「点呼」「抽選」ページを使ってください</value></data>
+    <data name="RD_Conditions" xml:space="preserve"><value>抽選の条件</value></data>
+    <data name="RD_PrizeTags" xml:space="preserve"><value>景品タグ</value></data>
+    <data name="RD_PrizeTagsHint" xml:space="preserve"><value>これらのタグが付いた景品だけを抽選します。複数選択でき、未選択ならプール全体から抽選します</value></data>
+    <data name="RD_Recipient" xml:space="preserve"><value>配布先</value></data>
+    <data name="RD_RecipientNone" xml:space="preserve"><value>指定しない</value></data>
+    <data name="RD_ConditionsUnsupported" xml:space="preserve"><value>この端末は条件付き抽選に対応していないため、プール全体から抽選します</value></data>
 </root>

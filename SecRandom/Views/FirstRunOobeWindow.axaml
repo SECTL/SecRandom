@@ -293,6 +293,68 @@
                     </StackPanel>
                 </ScrollViewer>
 
+                <!-- 集控：插在「桌面集成」与「隐私」之间。它和桌面集成同属"这台机器怎么接入"的本机设置
+                     （都以本机状态/系统状态为准，都不写 settings.json），而隐私是"本机往外发什么"，
+                     必须留在完成页之前作为最后一项需要用户表态的内容。 -->
+                <ScrollViewer IsVisible="{Binding ViewModel.IsFullSetup}">
+                    <StackPanel Margin="32" Spacing="8">
+                        <TextBlock Text="{x:Static langs:Resources.C_ControlTitle}"
+                                   Theme="{StaticResource TitleTextBlockStyle}" />
+                        <TextBlock Text="{x:Static langs:Resources.C_ControlDescription}"
+                                   Margin="0 0 0 8"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <!-- 身份三项（显示名称 / 节点 ID / 所属组 ID）与集控设置页同样**永远可见**：
+                             地址那一组才是"自建部署才需要动"的高级项，引导流程里不出现。 -->
+                        <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ControlRemoteEnabled}"
+                                               Description="{x:Static langs:Resources.C_ControlRemoteEnabledDescription}"
+                                               IconSource="{sr:FluentIconSource {sr:Fi PlugConnectedFilled}}">
+                            <fa:FASettingsExpander.Footer>
+                                <ToggleSwitch IsChecked="{Binding ViewModel.ControlRemoteEnabled}" />
+                            </fa:FASettingsExpander.Footer>
+                        </fa:FASettingsExpander>
+                        <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ControlDisplayName}"
+                                               Description="{x:Static langs:Resources.C_ControlDisplayNameDescription}"
+                                               IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
+                            <fa:FASettingsExpander.Footer>
+                                <!-- 留空则上报主机名：把回落值直接做成水印，用户一眼能看见"不填会显示成什么"。 -->
+                                <TextBox Text="{Binding ViewModel.ControlDisplayName}"
+                                         MinWidth="260"
+                                         MaxLength="{Binding ViewModel.ControlDisplayNameMaxLength}"
+                                         PlaceholderText="{Binding ViewModel.ControlHostName}" />
+                            </fa:FASettingsExpander.Footer>
+                        </fa:FASettingsExpander>
+                        <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ControlNodeId}"
+                                               Description="{x:Static langs:Resources.C_ControlNodeIdDescription}"
+                                               IconSource="{sr:FluentIconSource {sr:Fi TagFilled}}">
+                            <fa:FASettingsExpander.Footer>
+                                <SelectableTextBlock Text="{Binding ViewModel.ControlNodeId}" FontFamily="Consolas,monospace" />
+                            </fa:FASettingsExpander.Footer>
+                        </fa:FASettingsExpander>
+                        <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ControlGroupId}"
+                                               Description="{x:Static langs:Resources.C_ControlGroupIdDescription}"
+                                               IconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}">
+                            <fa:FASettingsExpander.Footer>
+                                <TextBox Text="{Binding ViewModel.ControlGroupId}" MinWidth="260" />
+                            </fa:FASettingsExpander.Footer>
+                        </fa:FASettingsExpander>
+                        <fa:FASettingsExpander Header="{x:Static langs:Resources.C_ControlPlatform}"
+                                               Description="{x:Static langs:Resources.C_ControlPlatformDescription}"
+                                               IconSource="{sr:FluentIconSource {sr:Fi GlobeFilled}}">
+                            <fa:FASettingsExpander.Footer>
+                                <!-- 文案随控制面地址在"官方/第三方"之间切换，绝不让按钮写着官方却跳到第三方。 -->
+                                <Button Content="{Binding ViewModel.OpenControlPlaneLabel}"
+                                        Command="{Binding ViewModel.OpenControlPlaneCommand}" />
+                            </fa:FASettingsExpander.Footer>
+                        </fa:FASettingsExpander>
+                        <!-- 节点此时还没启连（HostedService 要等引导结束、Host 启动后才跑）：
+                             这里必须说清"什么时候连、去哪里看状态"，否则开关像是没生效。 -->
+                        <TextBlock Text="{x:Static langs:Resources.M_ControlConnectAfterSetup}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </ScrollViewer>
+
                 <ScrollViewer IsVisible="{Binding ViewModel.IsFullSetup}">
                     <StackPanel Margin="32" Spacing="8">
                         <TextBlock Text="{x:Static langs:Resources.C_PrivacyTitle}"
@@ -339,6 +401,7 @@
                                 <TextBlock Text="{x:Static langs:Resources.C_CompletedClass}" />
                                 <TextBlock Text="{x:Static langs:Resources.C_CompletedAppearance}" />
                                 <TextBlock Text="{x:Static langs:Resources.C_CompletedIntegration}" TextWrapping="Wrap" />
+                                <TextBlock Text="{x:Static langs:Resources.C_CompletedControl}" TextWrapping="Wrap" />
                                 <TextBlock Text="{x:Static langs:Resources.C_CompletedPrivacy}" TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>

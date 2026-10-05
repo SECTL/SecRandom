@@ -1,5 +1,6 @@
 using System.Text.Json;
 using SecRandom.Core.Models;
+using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Shared.Models.ControlNode;
 
@@ -45,10 +46,18 @@ public sealed class ControlSettingsCatalogTests
         string[] expectedCategories =
         [
             "float_position", "general", "appearance", "fair_draw", "default_draw", "roll_call", "quick_draw",
-            "lottery", "floating_window", "notification", "security", "linkage", "voice", "history", "update", "more"
+            "lottery", "floating_window", "notification", "linkage", "voice", "history", "update", "more",
+            // 计时器是后加的一类：控制台要能读到它，否则「计时器」页在集控里永远停在「未读取」
+            "timer"
         ];
 
         Assert.Equal(expectedCategories, described.Select(category => category.Id).ToArray());
+
+        // 安全设置住在加密的 data/config/security/settings.json 里，不再属于 settings.json 描述的配置面，
+        // 所以控制面既读不到也写不了它——这比"描述出来但标成只读"更彻底。
+        Assert.DoesNotContain(
+            described.SelectMany(category => category.Fields),
+            field => field.Path.StartsWith("security.", StringComparison.Ordinal));
 
         // 字段按路径字母序，类目内的顺序不随属性摆放位置变化。
         foreach (var category in described)
@@ -80,6 +89,53 @@ public sealed class ControlSettingsCatalogTests
 
         foreach (var field in fields.Values)
             Assert.Contains(field.Type, new[] { "bool", "int", "double", "string", "enum" });
+    }
+
+    [Fact]
+    public void 读取_计时器三种模式与阈值都在目录里且阈值带上限值()
+    {
+        var model = new MainConfigModel();
+        var fields = ControlSettingsCatalog.Describe(model)
+            .Single(category => category.Id == "timer")
+            .Fields
+            .ToDictionary(field => field.Path, StringComparer.Ordinal);
+
+        // 整类只有这四项：三种模式各一个开关 + 一个共用阈值。多出一项要么是模型里多写了字段，
+        // 要么是目录把不该露的也放了出来。
+        Assert.Equal(
+        [
+            "timer.auto_mini_window_after_seconds",
+            "timer.auto_mini_window_clock_enabled",
+            "timer.auto_mini_window_countdown_enabled",
+            "timer.auto_mini_window_stopwatch_enabled"
+        ], fields.Keys.Order(StringComparer.Ordinal).ToArray());
+
+        // 默认状态也是协议的一部分：倒计时开、秒表与时钟关
+        Assert.True((bool)fields["timer.auto_mini_window_countdown_enabled"].Value!);
+        Assert.False((bool)fields["timer.auto_mini_window_stopwatch_enabled"].Value!);
+        Assert.False((bool)fields["timer.auto_mini_window_clock_enabled"].Value!);
+        Assert.All(
+            new[]
+            {
+                "timer.auto_mini_window_countdown_enabled",
+                "timer.auto_mini_window_stopwatch_enabled",
+                "timer.auto_mini_window_clock_enabled"
+            },
+            path =>
+            {
+                Assert.True(fields[path].Writable);
+                Assert.Equal("bool", fields[path].Type);
+            });
+
+        // 阈值必须带上下限：控制台按它画数字框，也按它拒绝越界写入。
+        Assert.Equal("int", fields["timer.auto_mini_window_after_seconds"].Type);
+        Assert.Equal(
+            model.TimerSettings.AutoMiniWindowAfterSeconds,
+            fields["timer.auto_mini_window_after_seconds"].Value);
+        Assert.Equal((double)TimerSettingsConfig.MinAutoMiniWindowSeconds,
+            fields["timer.auto_mini_window_after_seconds"].Min);
+        Assert.Equal((double)TimerSettingsConfig.MaxAutoMiniWindowSeconds,
+            fields["timer.auto_mini_window_after_seconds"].Max);
     }
 
     [Fact]
@@ -354,8 +410,8 @@ public sealed class ControlSettingsCatalogTests
             }
         }
 
-        // 整类只读：安全、更新（以及通用下面的备份、证明留存）照常描述，但一个可写字段都没有。
-        foreach (var categoryId in new[] { "security", "update" })
+        // 整类只读：更新（以及通用下面的备份、证明留存）照常描述，但一个可写字段都没有。
+        foreach (var categoryId in new[] { "update" })
         {
             var fields = described.Single(category => category.Id == categoryId).Fields;
             Assert.NotEmpty(fields);
@@ -433,9 +489,9 @@ public sealed class ControlSettingsCatalogTests
             Assert.False(string.IsNullOrWhiteSpace(fields[path].Label));
         }
 
-        // 可写不等于"整类开放"：安全与更新这两个类目仍然一个可写字段都没有，
+        // 可写不等于"整类开放"：更新这个类目仍然一个可写字段都没有，
         // 备份与证明留存同样照旧。
-        foreach (var categoryId in new[] { "security", "update" })
+        foreach (var categoryId in new[] { "update" })
             Assert.All(
                 ControlSettingsCatalog.Describe(new MainConfigModel())
                     .Single(category => category.Id == categoryId)
@@ -475,7 +531,21 @@ public sealed class ControlSettingsCatalogTests
     [Fact]
     public void 写入_被描述但只读的路径同样拒绝()
     {
-        // 控制台会从读取结果里看到 security.* 这些字段，但写回来必须被挡住。
+        // 控制台会从读取结果里看到 general.backup.* 这些字段，但写回来必须被挡住。
+        var planned = ControlSettingsCatalog.TryPlan(
+            Payload("""{ "patch": { "general.backup.auto_backup_interval_days": 1 } }"""),
+            out var changes,
+            out var reason);
+
+        Assert.False(planned);
+        Assert.Empty(changes);
+        Assert.Equal("not_writable:general.backup.auto_backup_interval_days", reason);
+    }
+
+    [Fact]
+    public void 写入_安全设置既不可读也不可写()
+    {
+        // 安全设置已经搬进加密文件，控制面连字段名都不该看到，更不用说改。
         var planned = ControlSettingsCatalog.TryPlan(
             Payload("""{ "patch": { "security.security_enabled": false } }"""),
             out var changes,
@@ -586,11 +656,11 @@ public sealed class ControlSettingsCatalogTests
     {
         // 防御纵深：即使调用方不经过 TryPlan，只读路径也不该被 Apply 认下来。
         var model = new MainConfigModel();
-        var before = model.SecuritySettings.SecurityEnabled;
+        var before = model.General.Backup.AutoBackupIntervalDays;
 
-        ControlSettingsCatalog.Apply(model, [new ControlSettingsChange("security.security_enabled", true)]);
+        ControlSettingsCatalog.Apply(model, [new ControlSettingsChange("general.backup.auto_backup_interval_days", 1)]);
 
-        Assert.Equal(before, model.SecuritySettings.SecurityEnabled);
+        Assert.Equal(before, model.General.Backup.AutoBackupIntervalDays);
     }
 
     /// <summary>三语映射要么整个是 <c>null</c>，要么只包含三种语言且没有空串。</summary>

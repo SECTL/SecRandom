@@ -62,12 +62,12 @@ public static class ControlSettingsLabels
     private const string MiMo = "SettingsPages.Voice.MiMoResources";
     private const string FloatingWindow = "SettingsPages.FloatingWindow.Resources";
     private const string Notification = "SettingsPages.Notification.Resources";
-    private const string Security = "SettingsPages.Security.Resources";
     private const string Linkage = "SettingsPages.Linkage.Resources";
     private const string History = "SettingsPages.HistoryManagement.Resources";
     private const string Update = "SettingsPages.Update.Resources";
     private const string More = "SettingsPages.More.Resources";
     private const string Appearance = "SettingsPages.Personalized.Appearance.Resources";
+    private const string Timer = "SettingsPages.Personalized.Timer.Resources";
     private const string Basic = "SettingsPages.General.Basic.Resources";
     private const string Backup = "SettingsPages.General.Backup.Resources";
     private const string Privacy = "SettingsPages.General.Privacy.Resources";
@@ -126,12 +126,13 @@ public static class ControlSettingsLabels
         ["lottery"] = Lit("抽奖设置", "Lottery settings", "抽選設定"),
         ["floating_window"] = Lit("悬浮窗", "Floating window", "フローティングウィンドウ"),
         ["notification"] = Lit("通知", "Notifications", "通知"),
-        ["security"] = Lit("安全", "Security", "セキュリティ"),
         ["linkage"] = Lit("联动", "Linkage", "連携"),
         ["voice"] = Lit("语音", "Voice", "音声"),
         ["history"] = Lit("历史记录", "History", "履歴"),
         ["update"] = Lit("更新", "Updates", "更新"),
-        ["more"] = Lit("更多设置", "More settings", "その他の設定")
+        ["more"] = Lit("更多设置", "More settings", "その他の設定"),
+        // 计时器是独立一页（`settings.personalized.timer`）：类目名取那一页的页面标题口径。
+        ["timer"] = Lit("计时器", "Timer", "タイマー")
     };
 
     // ---------------------------------------------------------------- 路径级条目（同名不同义）
@@ -351,8 +352,10 @@ public static class ControlSettingsLabels
         ["animation_color_theme"] = R(Picking, "S_ColorTheme"),
         ["student_image"] = R(Picking, "S_StudentImage"),
         ["student_image_position"] = R(Picking, "S_StudentImagePosition"),
+        ["student_image_size"] = R(Picking, "S_StudentImageSize"),
         ["lottery_image"] = R(Picking, "S_LotteryImage"),
         ["lottery_image_position"] = R(Picking, "S_LotteryImagePosition"),
+        ["lottery_image_size"] = R(Picking, "S_LotteryImageSize"),
         ["animation_music"] = R(Picking, "S_AnimationMusic"),
         ["animation_music_loop"] = R(Picking, "S_AnimationMusicLoop"),
         ["animation_music_volume"] = R(Picking, "S_AnimationMusicVolume"),
@@ -426,38 +429,6 @@ public static class ControlSettingsLabels
         ["hide_on_foreground"] = R(FloatingWindow, "S_Interaction_HideOnForeground"),
         ["hide_on_foreground_window_titles"] = R(FloatingWindow, "S_Interaction_HideOnForegroundWindowTitles"),
         ["hide_on_foreground_process_names"] = R(FloatingWindow, "S_Interaction_HideOnForegroundProcessNames"),
-
-        // ---------------- 安全（保护范围里的每一项就是页面上的一个开关，标签直接取页面的行标题）
-        ["security_enabled"] = R(Security, "S_Enabled"),
-        ["password_enabled"] = R(Security, "S_Verification_Password"),
-        ["totp_enabled"] = R(Security, "S_Verification_Totp"),
-        ["usb_binding_enabled"] = R(Security, "S_Verification_UsbBinding"),
-        ["require_all_selected_factors"] = R(Security, "S_RequireAll"),
-        ["verify_before_sensitive_operations"] = R(Security, "S_Protection_SensitiveOperations"),
-        ["verify_before_linkage_operations"] = R(Security, "S_Protection_LinkageOperations"),
-        ["settings_integrity_check_enabled"] = R(Security, "S_SettingsIntegrity"),
-        ["settings_integrity_action"] = R(Security, "S_IntegrityAction"),
-        ["settings_integrity_restore_source"] = R(Security, "S_IntegrityRestoreSource"),
-        ["sudo_mode_enabled"] = R(Security, "S_SudoMode_Enabled"),
-        ["sudo_mode_duration_seconds"] = R(Security, "S_SudoMode_Duration"),
-        // 只读预览是独立的放行开关，不该借用"窗口与应用"那一整组说明。
-        ["allow_settings_preview"] = R(Security, "C_AllowSettingsPreview") with
-        {
-            Description = Lit(
-                "验证通过后允许只读预览设置页面，预览期间不会保存任何改动", "Allows read-only preview of settings after verification; nothing is saved while previewing", "認証後に設定画面の読み取り専用プレビューを許可します。プレビュー中は変更が保存されません")
-        },
-        ["protect_open_settings"] = R(Security, "C_OpenSettings", Security, "S_WindowOperations_D"),
-        ["protect_toggle_main_window"] = R(Security, "C_ToggleMainWindow", Security, "S_WindowOperations_D"),
-        ["protect_toggle_floating_window"] = R(Security, "C_ToggleFloatingWindow", Security, "S_WindowOperations_D"),
-        ["protect_restart"] = R(Security, "C_Restart", Security, "S_WindowOperations_D"),
-        ["protect_exit"] = R(Security, "C_Exit", Security, "S_WindowOperations_D"),
-        ["protect_roll_call_start"] = R(Security, "C_RollCallStart", Security, "S_DrawOperations_D"),
-        ["protect_roll_call_reset"] = R(Security, "C_RollCallReset", Security, "S_DrawOperations_D"),
-        ["protect_quick_draw_start"] = R(Security, "C_QuickDrawStart", Security, "S_DrawOperations_D"),
-        ["protect_quick_draw_reset"] = R(Security, "C_QuickDrawReset", Security, "S_DrawOperations_D"),
-        ["protect_lottery_start"] = R(Security, "C_LotteryStart", Security, "S_DrawOperations_D"),
-        ["protect_lottery_reset"] = R(Security, "C_LotteryReset", Security, "S_DrawOperations_D"),
-        ["protect_linkage"] = R(Security, "S_Protection_LinkageOperations"),
 
         // ---------------- 联动
         ["data_source"] = R(Linkage, "S_External_DataSource"),
@@ -545,6 +516,12 @@ public static class ControlSettingsLabels
         ["lottery_enabled"] = R(More, "S_LotteryEnabled"),
         ["roll_call_control_panel_position"] = R(More, "S_RollCallPanelPosition"),
         ["lottery_control_panel_position"] = R(More, "S_LotteryPanelPosition"),
+
+        // ---------------- 计时器：三种模式各一个开关，共用一个阈值
+        ["auto_mini_window_countdown_enabled"] = R(Timer, "S_AutoMiniWindow_Countdown"),
+        ["auto_mini_window_stopwatch_enabled"] = R(Timer, "S_AutoMiniWindow_Stopwatch"),
+        ["auto_mini_window_clock_enabled"] = R(Timer, "S_AutoMiniWindow_Clock"),
+        ["auto_mini_window_after_seconds"] = R(Timer, "S_AutoMiniWindow_Seconds"),
 
         // ---------------- 更多设置：页面控件开关（页面把整组开关放进一个多选框，没有逐项文案）
         ["roll_call_start_button"] = L(

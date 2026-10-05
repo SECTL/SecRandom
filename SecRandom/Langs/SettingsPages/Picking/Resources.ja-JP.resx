@@ -213,6 +213,12 @@
   <data name="S_StudentImagePosition_D" xml:space="preserve">
     <value>文字に対するメンバー画像の位置</value>
   </data>
+  <data name="S_StudentImageSize" xml:space="preserve">
+    <value>画像サイズ</value>
+  </data>
+  <data name="S_StudentImageSize_D" xml:space="preserve">
+    <value>抽選結果に表示するメンバー画像の一辺の長さ（ピクセル）</value>
+  </data>
   <data name="O_Repeat" xml:space="preserve">
     <value>重複を許可</value>
   </data>
@@ -422,6 +428,12 @@
   </data>
   <data name="S_LotteryImagePosition_D" xml:space="preserve">
     <value>文字に対する景品画像の位置</value>
+  </data>
+  <data name="S_LotteryImageSize" xml:space="preserve">
+    <value>景品画像サイズ</value>
+  </data>
+  <data name="S_LotteryImageSize_D" xml:space="preserve">
+    <value>くじ引き結果に表示する景品画像の一辺の長さ（ピクセル）</value>
   </data>
   <data name="C_BatchAvatar" xml:space="preserve">
     <value>アバターを一括設定</value>

@@ -82,6 +82,7 @@ services.AddSettingsPage<LotteryTablePreviewPage>(
 - `ConfigHandlerBase` 默认监听 `PropertyChanged` 自动保存；`MainConfigHandler` 还会对语言/主题/字体等变更触发 UI 行为。
 - 保存/读取 JSON 由 `SecRandom.Core/Services/Config/FileConfigService.cs` 实现，并从 desktop/mobile Host 注册；它不是插件 API。
 - 安全凭据不是普通配置：只能由 `SecRandom/Services/Security/SecurityCredentialStore` 写入 `data/config/security/credentials.json`。格式版本写在内容的 `FormatVersion` 字段，密码用 Argon2id 派生 AES-256-GCM 密钥；不得使用平台密钥库或读取旧凭据文件。
+- 安全设置（防护开关、因素选择、受保护操作、Sudo、防篡改校验）也不是普通配置：只能由 `SecRandom/Services/Security/SecuritySettingsStore` 写入 `data/config/security/settings.json`，内容用 AES-256-GCM 加密，密钥是设备本地的 `settings.key`。读不出来时按最严的一档生效，绝不回落到"防护全关"；它们不出现在 `MainConfigModel` 里，也不进任何导出与备份。
 
 ### 配置集合类保存（易踩坑）
 

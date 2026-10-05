@@ -46,12 +46,14 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
         get => _notificationSettings;
         set => SetProperty(ref _notificationSettings, value ?? new NotificationSettingsConfig());
     }
-    [ObservableProperty] private SecuritySettingsConfig _securitySettings = new();
     [ObservableProperty] private LinkageSettingsConfig _linkageSettings = new();
     [ObservableProperty] private VoiceSettingsConfig _voiceSettings = new();
     [ObservableProperty] private HistoryManagementSettingsConfig _historyManagementSettings = new();
     [ObservableProperty] private UpdateSettingsConfig _updateSettings = new();
     [ObservableProperty] private MoreSettingsConfig _moreSettings = new();
+
+    // 计时器
+    [ObservableProperty] private TimerSettingsConfig _timerSettings = new();
     [ObservableProperty] private List<int> _recentTimerPresetSeconds = [];
 
     [JsonPropertyName("moreSettings")]
@@ -86,6 +88,32 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
     public BackupConfig LegacyBackupOnLoad
     {
         set => General.ApplyLegacyBackup(value);
+    }
+
+    /// <summary>
+    ///     旧版把安全设置明文放在 settings.json 里。它现在住在 <c>data/config/security/settings.json</c>
+    ///     的加密信封中，这里只把旧文件里的那一段原样收下来，供首次迁移取走一次；
+    ///     该属性只写不读，因此下一次保存 settings.json 时明文副本就会被去掉。
+    /// </summary>
+    [JsonPropertyName("security_settings")]
+    public SecuritySettingsConfig LegacySecuritySettingsOnLoad
+    {
+        set => PendingLegacySecuritySettings = value;
+    }
+
+    /// <summary>等待迁移的旧版安全设置；没有旧文件时为 null。</summary>
+    [JsonIgnore]
+    public SecuritySettingsConfig? PendingLegacySecuritySettings { get; private set; }
+
+    /// <summary>
+    ///     取走迁移用的旧版安全设置，只返回一次：迁移只允许发生在加密文件不存在时，
+    ///     取走后就不会再被后续的重新加载重新捡起来。
+    /// </summary>
+    public SecuritySettingsConfig? ConsumeLegacySecuritySettings()
+    {
+        var pending = PendingLegacySecuritySettings;
+        PendingLegacySecuritySettings = null;
+        return pending;
     }
 
     public DrawSettingsConfigBase GetOverrideDrawSettings(

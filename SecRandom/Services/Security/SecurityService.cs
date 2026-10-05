@@ -10,14 +10,13 @@ using Avalonia.Controls;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs;
-using SecRandom.Core.Services.Config;
 using SecRandom.Platforms.Abstractions;
 using IntegrityAction = SecRandom.Core.Enums.Configs.SettingsIntegrityAction;
 
 namespace SecRandom.Services.Security;
 
 internal sealed class SecurityService(
-    MainConfigHandler configHandler,
+    SecuritySettingsStore settingsStore,
     SecurityCredentialStore credentialStore,
     ISecurityVerificationPrompt prompt,
     IUsbDeviceCatalog usbDeviceCatalog,
@@ -43,7 +42,7 @@ internal sealed class SecurityService(
 
     public event Action? SudoModeChanged;
 
-    private SecuritySettingsConfig Settings => configHandler.Data.SecuritySettings;
+    private SecuritySettingsConfig Settings => settingsStore.Data;
 
     /// <summary>
     ///     安全验证对话框的宿主根窗口。宿主尚未建立时（单元测试直接驱动本服务）
@@ -260,7 +259,7 @@ internal sealed class SecurityService(
                 if (!snapshot.IsProtectionDowngrade(SecuritySettingsSnapshot.Capture(Settings)) ||
                     IsProtectionDowngradeAuthorized())
                 {
-                    configHandler.Save();
+                    settingsStore.Save();
                     return Task.FromResult(true);
                 }
 
@@ -287,7 +286,7 @@ internal sealed class SecurityService(
                 if (snapshot.IsProtectionDowngrade(SecuritySettingsSnapshot.Capture(Settings)))
                     _protectionDowngradeAuthorizationUtc = _timeProvider.GetUtcNow();
 
-                configHandler.Save();
+                settingsStore.Save();
             }
 
             ActivateSettingsSudoMode();
@@ -497,7 +496,7 @@ internal sealed class SecurityService(
             _pendingTotpContext?.Dispose();
             _pendingTotpContext = null;
             _pendingTotpSecret = null;
-            configHandler.Save();
+            settingsStore.Save();
             return Task.FromResult(true);
         }
     }
@@ -554,7 +553,7 @@ internal sealed class SecurityService(
             Settings.TotpEnabled = false;
             Settings.UsbBindingEnabled = false;
             DisableOperationProtections();
-            configHandler.Save();
+            settingsStore.Save();
             return Task.FromResult(true);
         }
     }
@@ -791,7 +790,7 @@ internal sealed class SecurityService(
             if (!HasActiveUsbBindings(credentials.UsbBindings))
                 Settings.UsbBindingEnabled = false;
             NormalizeSettings(credentials);
-            configHandler.Save();
+            settingsStore.Save();
             return true;
         }
     }
@@ -815,7 +814,7 @@ internal sealed class SecurityService(
                 }
 
                 NormalizeSettings(metadata);
-                configHandler.Save();
+                settingsStore.Save();
                 return true;
             }
             catch
@@ -827,14 +826,12 @@ internal sealed class SecurityService(
     }
 
     /// <summary>
-    ///     导入/恢复前的一次新鲜验证。这里刻意不看任何 Sudo 状态：一次导入就能把整套防护换成
-    ///     被放宽的版本，所以只有「当前确实开着保护且存在可验证凭据」时才要求验证，否则放行
-    ///     （没有可放宽的保护，也没有可用于验证的凭据）。调用方必须已经处于能弹出验证对话框的
-    ///     线程上，宿主由 <c>SecurityArchivePreImportGuard</c> 负责把归档线程切回 UI 线程。
+    ///     导入/恢复前的一次新鲜验证。安全设置已经不随归档走了，但"导入一份备份"仍然是能重写这台
+    ///     机器配置的操作，所以保护开着时它照样要过一次验证。这里刻意不看任何 Sudo 状态：一次导入
+    ///     就是一次整体替换，值得为此单独确认一次。调用方必须已经处于能弹出验证对话框的线程上，
+    ///     宿主由 <c>SecurityArchivePreImportGuard</c> 负责把归档线程切回 UI 线程。
     /// </summary>
-    public async Task<bool> AuthorizeProtectionDowngradeAsync(
-        SecuritySettingsConfig candidate,
-        CancellationToken cancellationToken = default)
+    public async Task<bool> AuthorizeArchiveImportAsync(CancellationToken cancellationToken = default)
     {
         lock (_gate)
         {
@@ -843,10 +840,6 @@ internal sealed class SecurityService(
 
             var metadata = credentialStore.LoadMetadata();
             if (!metadata.IsReadable || GetRequiredFactors(metadata).Count == 0)
-                return true;
-
-            var current = SecuritySettingsSnapshot.Capture(Settings);
-            if (!current.IsProtectionDowngrade(SecuritySettingsSnapshot.Capture(candidate)))
                 return true;
         }
 

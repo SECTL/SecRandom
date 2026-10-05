@@ -31,6 +31,10 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     private bool _showStopwatchMilliseconds;
     private int _attachedViewCount;
     private bool _refreshTimerRunning;
+    private bool _autoMiniWindowTriggered;
+
+    /// <summary>页面上最后一次操作发生在哪一刻（_clock 的毫秒数）；打开页面本身算一次操作。</summary>
+    private long _lastActivityAt;
 
     public TimerViewModel(MainConfigHandler configHandler)
     {
@@ -43,10 +47,24 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
+    ///     计时走过设定时长、该自动缩成小窗时触发一次。窗口怎么切由 <c>TimerViewService</c> 决定：
+    ///     这个 ViewModel 只管计时与大窗/小窗共用的状态，不碰窗口。
+    /// </summary>
+    public event Action? AutoMiniWindowRequested;
+
+    /// <summary>
     ///     计时器视图或迷你窗可见时调用。两者可能同时存在（迷你窗由完整视图打开），因此按引用计数。
     /// </summary>
+    /// <remarks>
+    ///     从"没有视图"变成"有视图"（打开页面、或从小窗还原大窗）本身算一次操作：无操作计时从这一刻
+    ///     起算。少了这一步，页面一打开就会拿"上一次操作到现在"的时长去判定——应用开着一小时才打开
+    ///     计时器时，它会在打开的那一瞬间就缩下去。
+    /// </remarks>
     public void AttachRefresh()
     {
+        if (_attachedViewCount == 0)
+            NotifyUserActivity();
+
         _attachedViewCount++;
         Refresh();
     }
@@ -59,6 +77,20 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
         if (_attachedViewCount > 0)
             _attachedViewCount--;
 
+        UpdateRefreshTimer();
+    }
+
+    /// <summary>
+    ///     页面上发生了一次操作：把"无操作时间"清零，并重新允许自动缩小。
+    /// </summary>
+    /// <remarks>
+    ///     完整视图打开时也要调用一次——"刚打开页面"本身就是一次操作，无操作计时从这一刻起算。
+    ///     指针在窗口里移动也算：鼠标正停在窗口上时把它缩下去，比多等一会儿更让人意外。
+    /// </remarks>
+    public void NotifyUserActivity()
+    {
+        _lastActivityAt = _clock.ElapsedMilliseconds;
+        _autoMiniWindowTriggered = false;
         UpdateRefreshTimer();
     }
 
@@ -178,6 +210,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     {
         _isRunning = false;
         _finished = false;
+        _autoMiniWindowTriggered = false;
         if (IsCountdownMode)
             _remaining = TimeSpan.FromSeconds(_totalSeconds);
         else
@@ -248,6 +281,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
 
         _isRunning = false;
         _finished = false;
+        _autoMiniWindowTriggered = false;
         _mode = mode;
         Refresh();
     }
@@ -256,6 +290,8 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     {
         _isRunning = false;
         _finished = false;
+        // 重新设定时长＝新的一次计时：自动缩小的"这次已经缩过"要跟着重置
+        _autoMiniWindowTriggered = false;
         _remaining = value < TimeSpan.Zero ? TimeSpan.Zero : value;
         _totalSeconds = Math.Max(1, _remaining.TotalSeconds);
         if (remember)
@@ -353,6 +389,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
             return;
 
         UpdateTime();
+        TryRequestAutoMiniWindow();
         foreach (var name in new[]
         {
             nameof(IsCountdownMode), nameof(IsStopwatchMode), nameof(IsClockMode), nameof(HasControls),
@@ -367,9 +404,13 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
 
     /// <summary>
     ///     只在真正需要驱动界面时运行定时器：计时进行中需要 33ms（秒表毫秒显示与进度环），
-    ///     时钟模式可见时每秒刷新一次即可，静止的倒计时/秒表则完全不需要 tick。
+    ///     时钟模式可见时每秒刷新一次即可，静止的倒计时/秒表在**看着自动缩小时**每秒一次。
     ///     这样关闭计时器窗口后不会再有 30Hz 的空转刷新。
     /// </summary>
+    /// <remarks>
+    ///     「看着自动缩小」这一支不能省：页面停着不动时既没有计时在走、也不是时钟模式，
+    ///     如果这里不跑，"无操作一段时间"就永远等不到人来判定——那正是这个功能要处理的场景。
+    /// </remarks>
     private void UpdateRefreshTimer()
     {
         if (_disposed)
@@ -377,7 +418,8 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
 
         var ticking = _attachedViewCount > 0 && _isRunning;
         var clockVisible = _attachedViewCount > 0 && !_isRunning && IsClockMode;
-        var shouldRun = ticking || clockVisible;
+        var autoMiniWindowWatch = IsAutoMiniWindowWatchActive();
+        var shouldRun = ticking || clockVisible || autoMiniWindowWatch;
 
         if (shouldRun)
         {
@@ -394,6 +436,48 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
             _refreshTimer.Start();
         else
             _refreshTimer.Stop();
+    }
+
+    /// <summary>还需要盯着"有没有操作"：页面开着、当前模式开了自动缩小、这一段无操作还没缩过。</summary>
+    private bool IsAutoMiniWindowWatchActive() =>
+        _attachedViewCount > 0
+        && !_autoMiniWindowTriggered
+        && IsAutoMiniWindowEnabledForCurrentMode();
+
+    /// <summary>
+    ///     页面上一段时间没有任何操作时请求一次自动缩小。只评估、不切窗口：窗口归 TimerViewService 管。
+    /// </summary>
+    /// <remarks>
+    ///     看的是**人有没有在动这个页面**，不是计时走了多久：按开始、选预设、切模式、点按钮、鼠标在窗口里动，
+    ///     任何一次都会把无操作计时清零（见 <see cref="NotifyUserActivity" />）。三种模式各有开关，
+    ///     默认只开倒计时；同一段无操作只缩一次，下一次操作才重新开始算。
+    /// </remarks>
+    private void TryRequestAutoMiniWindow()
+    {
+        if (_disposed || _attachedViewCount == 0)
+            return;
+
+        var settings = _configHandler.Data.TimerSettings;
+        var idleSeconds = (_clock.ElapsedMilliseconds - _lastActivityAt) / 1000d;
+
+        if (!settings.ShouldShrinkToMiniWindow(IsAutoMiniWindowEnabledForCurrentMode(), idleSeconds, _autoMiniWindowTriggered))
+            return;
+
+        _autoMiniWindowTriggered = true;
+        AutoMiniWindowRequested?.Invoke();
+    }
+
+    /// <summary>当前模式（倒计时/秒表/时钟）有没有开自动缩小。</summary>
+    private bool IsAutoMiniWindowEnabledForCurrentMode()
+    {
+        var settings = _configHandler.Data.TimerSettings;
+        return _mode switch
+        {
+            TimerMode.Countdown => settings.AutoMiniWindowCountdownEnabled,
+            TimerMode.Stopwatch => settings.AutoMiniWindowStopwatchEnabled,
+            TimerMode.Clock => settings.AutoMiniWindowClockEnabled,
+            _ => false
+        };
     }
 
     private void UpdateTime()

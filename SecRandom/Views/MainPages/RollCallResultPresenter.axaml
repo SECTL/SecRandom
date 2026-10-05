@@ -6,7 +6,7 @@
              x:DataType="vm:RollCallPageViewModel">
     <UserControl.Resources>
         <DataTemplate x:Key="RollCallAvatarTemplate" DataType="vm:RollCallResultItem">
-            <Border Width="72" Height="72"
+            <Border Width="{Binding ImageSize}" Height="{Binding ImageSize}"
                     Background="{DynamicResource ControlFillColorSecondaryBrush}"
                     BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                     BorderThickness="1"
@@ -21,7 +21,7 @@
                                IsVisible="{Binding IsPlaceholderVisible}"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
-                               FontSize="36"
+                               FontSize="{Binding InitialFontSize}"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                 </Grid>
@@ -82,8 +82,9 @@
                                             HorizontalAlignment="Center">
                                     <ContentControl Content="{Binding}"
                                                     ContentTemplate="{StaticResource RollCallAvatarTemplate}"
+                                                    VerticalAlignment="Center"
                                                     IsVisible="{Binding IsImageBeforeText}" />
-                                    <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                    <StackPanel Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding DisplayText}"
                                                    Classes="result-name"
                                                     FontSize="{Binding #RootControl.DataContext.ResultFontSize}"
@@ -96,6 +97,7 @@
                                     </StackPanel>
                                     <ContentControl Content="{Binding}"
                                                     ContentTemplate="{StaticResource RollCallAvatarTemplate}"
+                                                    VerticalAlignment="Center"
                                                     IsVisible="{Binding IsImageAfterText}" />
                                 </StackPanel>
                             </Border>
@@ -104,8 +106,9 @@
                                         Spacing="6" HorizontalAlignment="Center">
                                 <ContentControl Content="{Binding}"
                                                 ContentTemplate="{StaticResource RollCallAvatarTemplate}"
+                                                VerticalAlignment="Center"
                                                 IsVisible="{Binding IsImageBeforeText}" />
-                                <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                <StackPanel Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding DisplayText}" Classes="result-name"
                                                Foreground="{Binding TextBrush}" Opacity="{Binding Opacity}"
                                                 FontSize="{Binding #RootControl.DataContext.ResultFontSize}"
@@ -118,6 +121,7 @@
                                 </StackPanel>
                                 <ContentControl Content="{Binding}"
                                                 ContentTemplate="{StaticResource RollCallAvatarTemplate}"
+                                                VerticalAlignment="Center"
                                                 IsVisible="{Binding IsImageAfterText}" />
                             </StackPanel>
                         </Grid>

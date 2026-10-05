@@ -33,6 +33,35 @@ public sealed class ControlNodeClient
 
     private ControlNodeLinkState _linkState = new(ControlNodeLinkStatus.Disabled);
 
+    /// <summary>当前活跃会话（没有连接时为 <c>null</c>）：注销只能发给一条已经建好的连接。</summary>
+    private ControlNodeSession? _activeSession;
+
+    /// <summary>
+    ///     自我注销（只在**退出登录**与**换组**时调用）。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <b>未连接时直接返回 false，不为注销去连一次</b>：注销是"把已经存在的登记撤掉"，
+    ///         专门建连反而会在退出路径上多花时间，还可能把已经停掉的服务又拉起来。
+    ///     </para>
+    ///     <para>
+    ///         退出程序/关窗口/后台驻留结束/崩溃恢复/更新重启**都不调用**：服务端"登记即列出"，
+    ///         离线只显示 <c>online:false</c>；在关闭路径上注销会让教室机一关软件就从控制台消失。
+    ///         一句话：**退出登录 = 注销；退出程序 = 不注销，保持 offline 可见**。
+    ///     </para>
+    /// </remarks>
+    public async Task<bool> DeregisterAsync(
+        string groupId,
+        TimeSpan timeout,
+        CancellationToken cancellationToken = default)
+    {
+        var session = Volatile.Read(ref _activeSession);
+        if (session is null)
+            return false;
+
+        return await session.DeregisterAsync(groupId, timeout, cancellationToken).ConfigureAwait(false);
+    }
+
     public ControlNodeClient(
         IControlNodeTransportFactory transportFactory,
         IControlNodeCredentialProvider credentialProvider,
@@ -189,6 +218,7 @@ public sealed class ControlNodeClient
                 SetLinkState(new ControlNodeLinkState(ControlNodeLinkStatus.Connected));
 
             session.Handshaken += OnHandshaken;
+            Volatile.Write(ref _activeSession, session);
             try
             {
                 return await session.RunAsync(cancellationToken).ConfigureAwait(false);
@@ -196,6 +226,7 @@ public sealed class ControlNodeClient
             finally
             {
                 session.Handshaken -= OnHandshaken;
+                Volatile.Write(ref _activeSession, null);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

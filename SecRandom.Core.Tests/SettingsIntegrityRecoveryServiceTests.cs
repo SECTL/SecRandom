@@ -34,8 +34,8 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
         Assert.Equal(newest, result.BackupName);
         Assert.NotNull(result.PreRestorePath);
         Assert.Equal(tampered, File.ReadAllText(result.PreRestorePath!));
-        Assert.Equal(SettingsIntegrityRestoreSource.LocalThenCloud,
-            fixture.Handler.Data.SecuritySettings.SettingsIntegrityRestoreSource);
+        Assert.Equal(BackupMarker(SettingsIntegrityRestoreSource.LocalThenCloud),
+            fixture.Handler.Data.General.Backup.AutoBackupIntervalDays);
     }
 
     [Fact]
@@ -51,8 +51,8 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
 
         Assert.True(result.Succeeded);
         Assert.Equal(usable, result.BackupName);
-        Assert.Equal(SettingsIntegrityRestoreSource.CloudThenLocal,
-            fixture.Handler.Data.SecuritySettings.SettingsIntegrityRestoreSource);
+        Assert.Equal(BackupMarker(SettingsIntegrityRestoreSource.CloudThenLocal),
+            fixture.Handler.Data.General.Backup.AutoBackupIntervalDays);
     }
 
     [Fact]
@@ -68,8 +68,8 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
 
         Assert.True(result.Succeeded);
         Assert.Equal(usable, result.BackupName);
-        Assert.Equal(SettingsIntegrityRestoreSource.CloudThenLocal,
-            fixture.Handler.Data.SecuritySettings.SettingsIntegrityRestoreSource);
+        Assert.Equal(BackupMarker(SettingsIntegrityRestoreSource.CloudThenLocal),
+            fixture.Handler.Data.General.Backup.AutoBackupIntervalDays);
     }
 
     [Fact]
@@ -191,14 +191,21 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
         var handler = new MainConfigHandler(
             NullLogger<MainConfigHandler>.Instance,
             new JsonFileConfigService(configPath));
-        handler.Data.SecuritySettings.SettingsIntegrityRestoreSource = source;
+        // 安全设置住在自己的加密文件里，settings.json 的恢复不再碰它
+        var securitySettings = new SecuritySettingsStore(
+            Path.Combine(directory, "security", "settings.json"),
+            handler,
+            credentialStore: null,
+            NullLogger<SecuritySettingsStore>.Instance);
+        securitySettings.Data.SettingsIntegrityRestoreSource = source;
         var service = new SettingsIntegrityRecoveryService(
             handler,
+            securitySettings,
             new StubImportExportService(),
             NullLogger<SettingsIntegrityRecoveryService>.Instance,
             configPath,
             backupDirectory);
-        return new RecoveryFixture(handler, service, configPath, backupDirectory);
+        return new RecoveryFixture(handler, securitySettings, service, configPath, backupDirectory);
     }
 
     private static string WriteCurrentSettings(RecoveryFixture fixture, SettingsIntegrityRestoreSource source)
@@ -242,12 +249,17 @@ public sealed class SettingsIntegrityRecoveryServiceTests : IDisposable
     private static MainConfigModel CreateSettings(SettingsIntegrityRestoreSource source)
     {
         var settings = new MainConfigModel();
-        settings.SecuritySettings.SettingsIntegrityRestoreSource = source;
+        // 安全设置已经不随备份走，所以这里用一个普通的设置值当"这是哪一份备份"的标记
+        settings.General.Backup.AutoBackupIntervalDays = BackupMarker(source);
         return settings;
     }
 
+    /// <summary>每份备份写一个不同的标记值，恢复后必须等于所选用备份里的那个值。</summary>
+    private static int BackupMarker(SettingsIntegrityRestoreSource source) => (int)source + 1;
+
     private sealed record RecoveryFixture(
         MainConfigHandler Handler,
+        SecuritySettingsStore SecuritySettings,
         SettingsIntegrityRecoveryService Service,
         string ConfigPath,
         string BackupDirectory);

@@ -65,6 +65,10 @@ public interface IControlDrawExecutor
     Task<ControlDrawExecution> DrawRollCallAsync(
         ControlDrawTriggerRequest request,
         CancellationToken cancellationToken);
+
+    Task<ControlDrawExecution> DrawLotteryAsync(
+        ControlDrawTriggerRequest request,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -96,9 +100,16 @@ public sealed class ControlDrawTriggerHandler(
 
         try
         {
-            var execution = request.IsRollCall
-                ? await executor.DrawRollCallAsync(request, cancellationToken).ConfigureAwait(false)
-                : await executor.DrawQuickAsync(cancellationToken).ConfigureAwait(false);
+            // 三条目标各有各的会话：快抽没有参数，点名与抽奖各自带着自己的名单/奖池与数量。
+            // 用 target 分派而不是"带参数就走点名"，是因为抽奖与点名的候选池、页面和回执目标都不同。
+            var execution = request.Target switch
+            {
+                ControlDrawTriggerRequest.TargetRollCall =>
+                    await executor.DrawRollCallAsync(request, cancellationToken).ConfigureAwait(false),
+                ControlDrawTriggerRequest.TargetLottery =>
+                    await executor.DrawLotteryAsync(request, cancellationToken).ConfigureAwait(false),
+                _ => await executor.DrawQuickAsync(cancellationToken).ConfigureAwait(false)
+            };
 
             // 抽取结果放 **detail**（协议里 command.result.detail），不是查询用的 result_payload：
             // 手机与旧控制台都按 detail 读这条回执。
@@ -160,13 +171,35 @@ public static class ControlDrawExecutionFactory
         };
     }
 
-    /// <summary>把 <c>invalid_value:&lt;字段&gt;:&lt;为什么&gt;</c> 拆成 <c>field</c>/<c>why</c>。</summary>
+    /// <summary>
+    ///     把 <c>invalid_value:&lt;字段&gt;:&lt;为什么&gt;</c> 或 <c>invalid_command:&lt;字段&gt;:&lt;为什么&gt;</c>
+    ///     拆成 <c>result_context { field, why }</c>。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <c>invalid_command</c> 以前不拆（回 <c>null</c>），因为当时没有一条它带字段名。
+    ///         <c>draw.trigger.conditions</c> 引入了 <c>invalid_command:conditions:unsupported_field</c>、
+    ///         <c>invalid_command:conditions:version_unsupported</c>、<c>invalid_command:student_list:required</c>：
+    ///         控制台要能直接说"是哪个字段、错在哪"，而不是让管理员从一个字符串里自己切。
+    ///     </para>
+    ///     <para>
+    ///         拆法对两种前缀完全一致，因此 <c>result_context</c> 的形状只有一种；
+    ///         原因码本身保持稳定（控制台不该依赖 result_context 的存在与否来判断成败）。
+    ///     </para>
+    /// </remarks>
     public static object? DescribeInvalid(string reason)
     {
-        if (!reason.StartsWith("invalid_value:", StringComparison.Ordinal))
+        const string valuePrefix = "invalid_value:";
+        const string commandPrefix = "invalid_command:";
+
+        string rest;
+        if (reason.StartsWith(valuePrefix, StringComparison.Ordinal))
+            rest = reason[valuePrefix.Length..];
+        else if (reason.StartsWith(commandPrefix, StringComparison.Ordinal))
+            rest = reason[commandPrefix.Length..];
+        else
             return null;
 
-        var rest = reason["invalid_value:".Length..];
         var separator = rest.IndexOf(':');
         return separator < 0
             ? new { field = rest, why = "invalid" }

@@ -274,4 +274,24 @@ Insider settings have lower priority than fair-draw rules. Selecting a member or
   <data name="M_ScheduleError_ClassIslandReadFailed" xml:space="preserve">
     <value>Unable to read the ClassIsland class state</value>
   </data>
+  <data name="S_ControlPlaneEndpoint" xml:space="preserve">
+    <value>Control plane</value>
+  </data>
+  <data name="C_RevealControlPlaneEndpoint" xml:space="preserve">
+    <value>Show control plane URL</value>
+  </data>
+  <data name="C_RevealControlPlaneEndpoint_D" xml:space="preserve">
+    <value>Temporarily shows the control plane URL card on the remote-control settings page</value>
+  </data>
+  <data name="M_ControlPlaneEndpoint_ConfirmTitle" xml:space="preserve">
+    <value>Show control plane URL</value>
+  </data>
+  <data name="M_ControlPlaneEndpoint" xml:space="preserve">
+    <value>The "Control plane URL" card is now shown on Settings &gt; General &gt; Remote Control. This is active only for the current run and is hidden after restart.
+
+The control plane URL decides which control plane the console (phone/tablet) talks to and defaults to the online service. With a self-hosted address, the console sends this account's access token to that address</value>
+  </data>
+  <data name="M_ControlPlaneEndpoint_Risk" xml:space="preserve">
+    <value>Change it only when you deploy and trust that control plane. The address must use https (plaintext http is allowed only for loopback). A wrong address makes the console unable to list groups and devices; to fall back, clear the field or click Restore default on the remote-control settings page</value>
+  </data>
 </root>

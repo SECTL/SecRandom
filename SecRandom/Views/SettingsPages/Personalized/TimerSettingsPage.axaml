@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Personalized.Timer"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:personalized="clr-namespace:SecRandom.Views.SettingsPages.Personalized"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SecRandom.Views.SettingsPages.Personalized.TimerSettingsPage"
+             x:DataType="personalized:TimerSettingsPage"
+             Loaded="OnLoaded"
+             Unloaded="OnUnloaded">
+    <ScrollViewer>
+        <StackPanel Classes="page-container animated-intro settings">
+            <!-- 三种模式各一个开关，阈值共用一个：它们问的是同一件事「多久之后缩」，分开填只会让人选错 -->
+            <sr:IconText x:Name="S_AutoMiniWindow"
+                         Text="{x:Static lsp:Resources.S_AutoMiniWindow}"
+                         Glyph="{sr:Fi ArrowMinimizeFilled}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_AutoMiniWindow_Countdown"
+                                   Header="{x:Static lsp:Resources.S_AutoMiniWindow_Countdown}"
+                                   Description="{x:Static lsp:Resources.S_AutoMiniWindow_Countdown_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TimerFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.AutoMiniWindowCountdownEnabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_AutoMiniWindow_Stopwatch"
+                                   Header="{x:Static lsp:Resources.S_AutoMiniWindow_Stopwatch}"
+                                   Description="{x:Static lsp:Resources.S_AutoMiniWindow_Stopwatch_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi HourglassFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.AutoMiniWindowStopwatchEnabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_AutoMiniWindow_Clock"
+                                   Header="{x:Static lsp:Resources.S_AutoMiniWindow_Clock}"
+                                   Description="{x:Static lsp:Resources.S_AutoMiniWindow_Clock_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ClockFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.AutoMiniWindowClockEnabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_AutoMiniWindow_Seconds"
+                                   Header="{x:Static lsp:Resources.S_AutoMiniWindow_Seconds}"
+                                   Description="{x:Static lsp:Resources.S_AutoMiniWindow_Seconds_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowClockwiseFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <NumericUpDown Value="{Binding Settings.AutoMiniWindowAfterSeconds}"
+                                       Minimum="{Binding MinimumAutoMiniWindowSeconds}"
+                                       Maximum="{Binding MaximumAutoMiniWindowSeconds}"
+                                       Increment="1"
+                                       MinWidth="150" />
+                        <!-- 常用值一键填入：数字框仍然可以随便填 -->
+                        <Button Content="{x:Static lsp:Resources.C_Preset30s}" Tag="30"
+                                Click="PresetSeconds_OnClick" Margin="8 0 0 0" />
+                        <Button Content="{x:Static lsp:Resources.C_Preset1m}" Tag="60"
+                                Click="PresetSeconds_OnClick" Margin="8 0 0 0" />
+                        <Button Content="{x:Static lsp:Resources.C_Preset5m}" Tag="300"
+                                Click="PresetSeconds_OnClick" Margin="8 0 0 0" />
+                    </WrapPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -274,4 +274,24 @@
   <data name="M_ScheduleError_ClassIslandReadFailed" xml:space="preserve">
     <value>ClassIsland の授業状態を読み取れません</value>
   </data>
+  <data name="S_ControlPlaneEndpoint" xml:space="preserve">
+    <value>集控コントロールプレーン</value>
+  </data>
+  <data name="C_RevealControlPlaneEndpoint" xml:space="preserve">
+    <value>コントロールプレーンのアドレスを表示</value>
+  </data>
+  <data name="C_RevealControlPlaneEndpoint_D" xml:space="preserve">
+    <value>集控設定ページにコントロールプレーンのアドレスカードを一時的に表示します</value>
+  </data>
+  <data name="M_ControlPlaneEndpoint_ConfirmTitle" xml:space="preserve">
+    <value>コントロールプレーンのアドレスを表示</value>
+  </data>
+  <data name="M_ControlPlaneEndpoint" xml:space="preserve">
+    <value>「設定 → 一般 → 集控」ページに「コントロールプレーンのアドレス」カードを表示しました。この表示は今回の実行中のみ有効で、再起動すると自動的に非表示に戻ります。
+
+コントロールプレーンのアドレスは、コンソール（スマートフォン／タブレット）が接続する集控プラットフォームを決めるもので、既定ではオンラインサービスを指します。自建のアドレスに変更すると、コンソールは本アカウントのアクセストークンをそのアドレスへ送信します</value>
+  </data>
+  <data name="M_ControlPlaneEndpoint_Risk" xml:space="preserve">
+    <value>自分で構築し、信頼できる集控プラットフォームの場合にのみ変更してください。アドレスには https が必要です（平文 http はループバックアドレスのみ許可されます）。誤ったアドレスを設定すると、コンソールはグループとデバイスを取得できなくなります。既定に戻すには集控設定ページで入力欄を空にするか「既定に戻す」を押してください</value>
+  </data>
 </root>

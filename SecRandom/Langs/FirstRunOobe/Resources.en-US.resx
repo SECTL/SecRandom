@@ -89,6 +89,22 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="C_ShowStartupWindowDescription" xml:space="preserve"><value>Choose whether the main window opens automatically when SecRandom starts</value></data>
   <data name="C_ExternalIntegration" xml:space="preserve"><value>External links and integration</value></data>
   <data name="C_ExternalIntegrationDescription" xml:space="preserve"><value>Register secrandom:// so external applications can open SecRandom</value></data>
+  <data name="C_ControlTitle" xml:space="preserve"><value>Remote control</value></data>
+  <data name="C_ControlDescription" xml:space="preserve"><value>When enabled, this device joins the control platform as a node and can have its state read, its draws locked, and draws sent to it remotely. The switch and identity live in this device's own state file, and importing settings never turns it on</value></data>
+  <data name="C_ControlRemoteEnabled" xml:space="preserve"><value>Allow remote control</value></data>
+  <data name="C_ControlRemoteEnabledDescription" xml:space="preserve"><value>This switch belongs to this device alone; while it is off no command from the control platform is executed</value></data>
+  <data name="C_ControlDisplayName" xml:space="preserve"><value>Display name</value></data>
+  <data name="C_ControlDisplayNameDescription" xml:space="preserve"><value>The name shown for this device in the control platform device list; leave it empty to report the host name</value></data>
+  <data name="C_ControlNodeId" xml:space="preserve"><value>Node ID</value></data>
+  <data name="C_ControlNodeIdDescription" xml:space="preserve"><value>Generated at install time and kept stable; use it to register this device on the control platform</value></data>
+  <data name="C_ControlGroupId" xml:space="preserve"><value>Group ID</value></data>
+  <data name="C_ControlGroupIdDescription" xml:space="preserve"><value>Provided by the control platform once the group exists; the node must be registered in that group first or the connection is refused</value></data>
+  <data name="C_ControlPlatform" xml:space="preserve"><value>Control platform</value></data>
+  <data name="C_ControlPlatformDescription" xml:space="preserve"><value>Opens the control platform web console in your browser to manage the devices in this group</value></data>
+  <data name="C_OpenControlPlane_Official" xml:space="preserve"><value>Open SecRandom control platform</value></data>
+  <data name="C_OpenControlPlane_ThirdParty" xml:space="preserve"><value>Open third-party hosted control platform</value></data>
+  <data name="M_ControlConnectAfterSetup" xml:space="preserve"><value>This device connects to the control platform after setup is completed and SecRandom starts; the connection status is then available in Settings > General > Remote control</value></data>
+  <data name="M_ControlPlatformOpenFailed" xml:space="preserve"><value>Could not open the control platform; retry from Settings</value></data>
   <data name="C_PrivacyTitle" xml:space="preserve"><value>Privacy</value></data>
   <data name="C_PrivacyDescription" xml:space="preserve"><value>Choose the diagnostic and online-status information that SecRandom may send after startup. You can change these options later in Settings</value></data>
   <data name="C_PrivacyEncouragement" xml:space="preserve"><value>Please enable them~ It would be a great help for our future updates</value></data>
@@ -100,11 +116,12 @@ The official GNU GPLv3 text controls. This acknowledgement does not require you 
   <data name="O_OnlineStatusMode_Anonymous" xml:space="preserve"><value>Anonymous reporting</value></data>
   <data name="O_OnlineStatusMode_Off" xml:space="preserve"><value>Do not report</value></data>
   <data name="C_CompleteTitle" xml:space="preserve"><value>Setup complete</value></data>
-  <data name="C_CompleteDescription" xml:space="preserve"><value>Click Finish to enter SecRandom after reading the verifiable-draw notice and acknowledging the privacy policy and GPLv3. You can change lists, lottery, appearance, desktop integration, and privacy later</value></data>
+  <data name="C_CompleteDescription" xml:space="preserve"><value>Click Finish to enter SecRandom after reading the verifiable-draw notice and acknowledging the privacy policy and GPLv3. You can change lists, lottery, appearance, desktop integration, remote control, and privacy later</value></data>
   <data name="C_CompletedItems" xml:space="preserve"><value>Configured items</value></data>
   <data name="C_CompletedClass" xml:space="preserve"><value>Manage member lists and prize pools from List Management</value></data>
   <data name="C_CompletedAppearance" xml:space="preserve"><value>Change draw entry points, theme, and floating-window appearance in Settings</value></data>
   <data name="C_CompletedIntegration" xml:space="preserve"><value>External-link settings do not disable the app's internal single-instance communication</value></data>
+  <data name="C_CompletedControl" xml:space="preserve"><value>The remote-control switch, display name, and group ID can be changed in Remote control settings</value></data>
   <data name="C_CompletedPrivacy" xml:space="preserve"><value>Telemetry and online-status reporting can be changed in Privacy Settings</value></data>
   <data name="C_OverwriteTitle" xml:space="preserve"><value>Confirm list overwrite</value></data>
   <data name="C_Overwrite" xml:space="preserve"><value>Overwrite</value></data>

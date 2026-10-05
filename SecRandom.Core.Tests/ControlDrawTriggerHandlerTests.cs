@@ -133,12 +133,122 @@ public sealed class ControlDrawTriggerHandlerTests
     }
 
     [Fact]
+    public async Task 抽奖载荷把解析结果交给抽奖执行器()
+    {
+        var executor = new RecordingExecutor();
+
+        var outcome = await CreateHandler(executor, locked: false).ExecuteAsync(
+            Payload("""{ "target": "lottery", "list_name": "元旦抽奖", "count": 2 }"""),
+            CancellationToken.None);
+
+        Assert.True(outcome.Ok, outcome.Reason);
+        Assert.Equal(0, executor.QuickCalls);
+        // 抽奖走的是抽奖那条路：不能悄悄落到点名或快抽上。
+        Assert.Null(executor.LastRollCallRequest);
+        Assert.NotNull(executor.LastLotteryRequest);
+        Assert.Equal("元旦抽奖", executor.LastLotteryRequest!.ListName);
+        Assert.Equal(2, executor.LastLotteryRequest.Count);
+    }
+
+    [Theory]
+    // 奖品没有性别与分组：带了就是"不适用"，**不静默忽略**。
+    [InlineData("""{ "target": "lottery", "list_name": "元旦抽奖", "gender": "男" }""", "invalid_value:gender:not_applicable", "gender")]
+    [InlineData("""{ "target": "lottery", "list_name": "元旦抽奖", "group": "A组" }""", "invalid_value:group:not_applicable", "group")]
+    public async Task 抽奖载荷带性别或分组时在动手之前就被拒绝(string json, string expectedReason, string expectedField)
+    {
+        var executor = new RecordingExecutor();
+
+        var outcome = await CreateHandler(executor, locked: false).ExecuteAsync(Payload(json), CancellationToken.None);
+
+        Assert.False(outcome.Ok);
+        Assert.Equal(expectedReason, outcome.Reason);
+        Assert.Equal(expectedField, outcome.Detail!.Value.GetProperty("field").GetString());
+        Assert.Equal("not_applicable", outcome.Detail!.Value.GetProperty("why").GetString());
+        // 拒绝发生在执行之前：抽奖执行器一次都没被调用。
+        Assert.Null(executor.LastLotteryRequest);
+        Assert.Equal(0, executor.QuickCalls);
+    }
+
+    [Fact]
+    public async Task 抽奖成功回执带上奖池与抽到的奖品()
+    {
+        var executor = new RecordingExecutor
+        {
+            Lottery = RemoteDrawOutcome.DrawnFrom(
+                [new ControlDrawnMember("P01", "一等奖"), new ControlDrawnMember("P02", null)],
+                "元旦抽奖")
+        };
+
+        var outcome = await CreateHandler(executor, locked: false).ExecuteAsync(
+            Payload("""{ "target": "lottery", "list_name": "元旦抽奖", "count": 2 }"""),
+            CancellationToken.None);
+
+        Assert.True(outcome.Ok, outcome.Reason);
+        var detail = outcome.Detail!.Value;
+        Assert.Equal("lottery", detail.GetProperty("target").GetString());
+        Assert.Equal("元旦抽奖", detail.GetProperty("list_name").GetString());
+        Assert.Equal(2, detail.GetProperty("count").GetInt32());
+
+        var drawn = detail.GetProperty("drawn");
+        Assert.Equal(2, drawn.GetArrayLength());
+        Assert.Equal("P01", drawn[0].GetProperty("id").GetString());
+        Assert.Equal("一等奖", drawn[0].GetProperty("name").GetString());
+        Assert.Equal("P02", drawn[1].GetProperty("id").GetString());
+    }
+
+    [Fact]
+    public async Task 抽奖正在抽取时回busy()
+    {
+        var executor = new RecordingExecutor { Lottery = RemoteDrawOutcome.Busy() };
+
+        var outcome = await CreateHandler(executor, locked: false).ExecuteAsync(
+            Payload("""{ "target": "lottery", "list_name": "元旦抽奖" }"""),
+            CancellationToken.None);
+
+        Assert.False(outcome.Ok);
+        Assert.Equal("busy", outcome.Reason);
+        Assert.True(outcome.Detail!.Value.GetProperty("drawing").GetBoolean());
+        Assert.NotNull(executor.LastLotteryRequest);
+    }
+
+    [Fact]
+    public async Task 本机关闭抽奖时给出可识别的拒绝原因()
+    {
+        var executor = new RecordingExecutor { Lottery = RemoteDrawOutcome.Denied("lottery_disabled") };
+
+        var outcome = await CreateHandler(executor, locked: false).ExecuteAsync(
+            Payload("""{ "target": "lottery", "list_name": "元旦抽奖" }"""),
+            CancellationToken.None);
+
+        Assert.False(outcome.Ok);
+        Assert.Equal("draw_denied", outcome.Reason);
+        // 细因必须是 lottery_disabled：手机据此说"这台机器已关闭抽奖功能"，而不是笼统的"设备拒绝了"。
+        Assert.Equal("lottery_disabled", outcome.Detail!.Value.GetProperty("reason").GetString());
+    }
+
+    [Fact]
+    public async Task 本机锁定抽取时抽奖同样直接拒绝()
+    {
+        var executor = new RecordingExecutor();
+
+        var outcome = await CreateHandler(executor, locked: true).ExecuteAsync(
+            Payload("""{ "target": "lottery", "list_name": "元旦抽奖" }"""),
+            CancellationToken.None);
+
+        Assert.False(outcome.Ok);
+        Assert.Equal("draw_locked", outcome.Reason);
+        Assert.Null(executor.LastLotteryRequest);
+    }
+
+    // ---------------------------------------------------------------- 奖池条件（纯判定放在载荷测试里）
+
+    [Fact]
     public async Task 载荷写错时在动手之前就被挡住()
     {
         var executor = new RecordingExecutor();
 
         var outcome = await CreateHandler(executor, locked: false).ExecuteAsync(
-            Payload("""{ "target": "lottery" }"""),
+            Payload("""{ "target": "raffle" }"""),
             CancellationToken.None);
 
         Assert.False(outcome.Ok);
@@ -146,6 +256,7 @@ public sealed class ControlDrawTriggerHandlerTests
         Assert.Equal("target", outcome.Detail!.Value.GetProperty("field").GetString());
         Assert.Equal(0, executor.QuickCalls);
         Assert.Null(executor.LastRollCallRequest);
+        Assert.Null(executor.LastLotteryRequest);
     }
 
     [Fact]
@@ -208,11 +319,16 @@ public sealed class ControlDrawTriggerHandlerTests
 
         public ControlDrawTriggerRequest? LastRollCallRequest { get; private set; }
 
+        public ControlDrawTriggerRequest? LastLotteryRequest { get; private set; }
+
         public RemoteDrawOutcome Quick { get; init; } =
             RemoteDrawOutcome.DrawnFrom([new ControlDrawnMember("01", "张三")], "快抽默认名单");
 
         public RemoteDrawOutcome RollCall { get; init; } =
             RemoteDrawOutcome.DrawnFrom([new ControlDrawnMember("01", "张三")], "高一（1）班");
+
+        public RemoteDrawOutcome Lottery { get; init; } =
+            RemoteDrawOutcome.DrawnFrom([new ControlDrawnMember("P01", "一等奖")], "元旦抽奖");
 
         public bool ThrowOnQuick { get; init; }
 
@@ -231,6 +347,14 @@ public sealed class ControlDrawTriggerHandlerTests
         {
             LastRollCallRequest = request;
             return Task.FromResult(ControlDrawExecutionFactory.From(RollCall, ControlDrawTriggerRequest.TargetRollCall, RollCall.ListName));
+        }
+
+        public Task<ControlDrawExecution> DrawLotteryAsync(
+            ControlDrawTriggerRequest request,
+            CancellationToken cancellationToken)
+        {
+            LastLotteryRequest = request;
+            return Task.FromResult(ControlDrawExecutionFactory.From(Lottery, ControlDrawTriggerRequest.TargetLottery, Lottery.ListName));
         }
     }
 }

@@ -20,11 +20,39 @@ namespace SecRandom.ViewModels.Mobile;
 ///         才能让人知道下一步该做什么。
 ///     </para>
 /// </remarks>
-public sealed record DeviceRow(GroupDto Group, NodeDto Node)
+/// <param name="Group">这一行挂在哪个组下面。</param>
+/// <param name="Node">节点本身。</param>
+/// <param name="IsSelf">
+///     这台设备就是本机（按 <c>node_id</c> 比对）。**只做标识，不做过滤**：本机照样留在列表里，
+///     因为"我要给这台机器本身下发命令"是合法需求，藏起来只会让人以为设备没连上。
+/// </param>
+public sealed record DeviceRow(GroupDto Group, NodeDto Node, bool IsSelf = false)
 {
     public string GroupId => Group.GroupId ?? string.Empty;
 
     public string NodeId => Node.NodeId ?? string.Empty;
+
+    /// <summary>本机徽章文案（不是本机时为空串；显隐由 <see cref="IsSelf" /> 控制）。</summary>
+    public string SelfBadgeText => IsSelf ? LR.RD_SelfBadge : string.Empty;
+
+    /// <summary>
+    ///     两个 <c>node_id</c> 是不是同一台设备。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         大小写与首尾空白都按"同一个"处理：node_id 是服务端与本机各自持有的稳定标识，
+    ///         两边格式化方式不同（例如一方补了空白、一方改过大小写）不该让"本机"这个标识漏掉——
+    ///         而它正是用来防止"手滑把命令发给自己"的，漏标就等于没有。
+    ///     </para>
+    ///     <para>
+    ///         任一侧为空即"不是本机"：本机没配置节点身份（手机根本没有节点）时，一台都不标，
+    ///         而不是把所有空 id 的行都标成"本机"。
+    ///     </para>
+    /// </remarks>
+    public static bool IsSameNode(string? ownNodeId, string? candidateNodeId) =>
+        !string.IsNullOrWhiteSpace(ownNodeId)
+        && !string.IsNullOrWhiteSpace(candidateNodeId)
+        && string.Equals(ownNodeId.Trim(), candidateNodeId.Trim(), StringComparison.OrdinalIgnoreCase);
 
     /// <summary>设备名（没填名字时回落节点 id，绝不留空）。</summary>
     public string DeviceLabel => Node.DisplayLabel;

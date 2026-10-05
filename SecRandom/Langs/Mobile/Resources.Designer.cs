@@ -513,6 +513,10 @@ public class Resources
     public static string RD_NoGroups => ResourceManager.GetString("RD_NoGroups", resourceCulture)!;
     public static string RD_NoNodes => ResourceManager.GetString("RD_NoNodes", resourceCulture)!;
     public static string RD_NoRoster => ResourceManager.GetString("RD_NoRoster", resourceCulture)!;
+    public static string RD_NoResult => ResourceManager.GetString("RD_NoResult", resourceCulture)!;
+    public static string RD_NoResult_D => ResourceManager.GetString("RD_NoResult_D", resourceCulture)!;
+    public static string RD_SelfBadge => ResourceManager.GetString("RD_SelfBadge", resourceCulture)!;
+    public static string RD_SelfSelectedHint => ResourceManager.GetString("RD_SelfSelectedHint", resourceCulture)!;
     public static string RD_NotAdmin => ResourceManager.GetString("RD_NotAdmin", resourceCulture)!;
     public static string RD_NotOperator => ResourceManager.GetString("RD_NotOperator", resourceCulture)!;
     public static string RD_Truncated => ResourceManager.GetString("RD_Truncated", resourceCulture)!;
@@ -555,4 +559,23 @@ public class Resources
     public static string MA_SignOut => ResourceManager.GetString("MA_SignOut", resourceCulture)!;
     public static string MA_SignedOutHint => ResourceManager.GetString("MA_SignedOutHint", resourceCulture)!;
     public static string MA_Reauthorize => ResourceManager.GetString("MA_Reauthorize", resourceCulture)!;
+    public static string RD_ResultUnreadable => ResourceManager.GetString("RD_ResultUnreadable", resourceCulture)!;
+    public static string RD_NoRosterCandidate => ResourceManager.GetString("RD_NoRosterCandidate", resourceCulture)!;
+    public static string RD_Kind => ResourceManager.GetString("RD_Kind", resourceCulture)!;
+    public static string RD_KindRollCall => ResourceManager.GetString("RD_KindRollCall", resourceCulture)!;
+    public static string RD_KindLottery => ResourceManager.GetString("RD_KindLottery", resourceCulture)!;
+    public static string RD_Pool => ResourceManager.GetString("RD_Pool", resourceCulture)!;
+    public static string RD_LotteryNoScope => ResourceManager.GetString("RD_LotteryNoScope", resourceCulture)!;
+    public static string RD_DrawnPrizeCount => ResourceManager.GetString("RD_DrawnPrizeCount", resourceCulture)!;
+    public static string RD_LotteryDisabled => ResourceManager.GetString("RD_LotteryDisabled", resourceCulture)!;
+    public static string RD_Reset => ResourceManager.GetString("RD_Reset", resourceCulture)!;
+    public static string RD_Resetting => ResourceManager.GetString("RD_Resetting", resourceCulture)!;
+    public static string RD_ResetDone => ResourceManager.GetString("RD_ResetDone", resourceCulture)!;
+    public static string RD_ResetConfirm => ResourceManager.GetString("RD_ResetConfirm", resourceCulture)!;
+    public static string RD_Conditions => ResourceManager.GetString("RD_Conditions", resourceCulture)!;
+    public static string RD_PrizeTags => ResourceManager.GetString("RD_PrizeTags", resourceCulture)!;
+    public static string RD_PrizeTagsHint => ResourceManager.GetString("RD_PrizeTagsHint", resourceCulture)!;
+    public static string RD_Recipient => ResourceManager.GetString("RD_Recipient", resourceCulture)!;
+    public static string RD_RecipientNone => ResourceManager.GetString("RD_RecipientNone", resourceCulture)!;
+    public static string RD_ConditionsUnsupported => ResourceManager.GetString("RD_ConditionsUnsupported", resourceCulture)!;
 }

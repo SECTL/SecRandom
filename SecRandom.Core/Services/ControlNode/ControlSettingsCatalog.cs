@@ -35,10 +35,15 @@ namespace SecRandom.Core.Services.ControlNode;
 ///         一个永远改不动的重复控件）。这些一律**不描述**。
 ///     </para>
 ///     <para>
-///         相对的，策略性排除（安全、集控、更新、备份、桌面集成……）**照常描述但 Writable=false**：
+///         相对的，策略性排除（集控、更新、备份、桌面集成……）**照常描述但 Writable=false**：
 ///         控制台要能告诉管理员"这台机器有这项设置，是控制面不允许改"，而不是让人以为设备没有它，
 ///         于是去猜是自己名字写错了。每一类只读的原因见 <see cref="ReadOnlyPathSegments" /> 与
 ///         <see cref="ReadOnlyPaths" />。
+///     </para>
+///     <para>
+///         <b>安全设置连描述都没有</b>：它们已经搬进 <c>data/config/security/settings.json</c> 的加密
+///         信封，不再属于这份 settings.json 描述的配置面，因此目录里既没有 <c>security.*</c> 路径，
+///         <c>settings.write</c> 也自然碰不到它们——比"描述出来但标成只读"更彻底。
 ///     </para>
 ///     <para>
 ///         路径名是**协议的一部分**：控制台按它下发，改名等于让旧控制台发来的 patch 全部被拒。
@@ -68,12 +73,12 @@ public static class ControlSettingsCatalog
         (typeof(LotterySettingsConfig), "lottery"),
         (typeof(FloatingWindowSettingsConfig), "floating_window"),
         (typeof(NotificationSettingsConfig), "notification"),
-        (typeof(SecuritySettingsConfig), "security"),
         (typeof(LinkageSettingsConfig), "linkage"),
         (typeof(VoiceSettingsConfig), "voice"),
         (typeof(HistoryManagementSettingsConfig), "history"),
         (typeof(UpdateSettingsConfig), "update"),
-        (typeof(MoreSettingsConfig), "more")
+        (typeof(MoreSettingsConfig), "more"),
+        (typeof(TimerSettingsConfig), "timer")
     ];
 
     /// <summary>已发布到控制台的路径别名（自然名 → 协议名）。</summary>
@@ -102,8 +107,16 @@ public static class ControlSettingsCatalog
     {
         [nameof(RollCallSettingsConfig.HalfRepeat)] = (1, 20),
         [nameof(QuickDrawSettingsConfig.DisableAfterClick)] = (1, 20),
+        [nameof(DrawSettingsConfigBase.StudentImageSize)] =
+            (DrawSettingsConfigBase.MinImageSize, DrawSettingsConfigBase.MaxImageSize),
+        [nameof(LotterySettingsConfig.LotteryImageSize)] =
+            (DrawSettingsConfigBase.MinImageSize, DrawSettingsConfigBase.MaxImageSize),
         [nameof(VoiceSettingsConfig.VolumeSize)] = (0, 100),
-        [nameof(VoiceSettingsConfig.SpeechRate)] = (50, 200)
+        [nameof(VoiceSettingsConfig.SpeechRate)] = (50, 200),
+        // 计时器自动缩小的时间：页面上的输入框与远程写入共用同一对边界，
+        // 少了它，控制台只能看着一个没有上下限的数字框，越界值要到设备那边才被拒。
+        [nameof(TimerSettingsConfig.AutoMiniWindowAfterSeconds)] =
+            (TimerSettingsConfig.MinAutoMiniWindowSeconds, TimerSettingsConfig.MaxAutoMiniWindowSeconds)
     };
 
     /// <summary>路径**按 <c>.</c> 拆开后某一段与这些词完全相等**就只读。</summary>
