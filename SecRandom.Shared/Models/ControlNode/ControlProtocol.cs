@@ -28,6 +28,22 @@ public static class ControlCapabilities
     public const string DrawTrigger = "draw.trigger";
 
     /// <summary>
+    ///     设备的 <c>draw.trigger</c> 支持 <c>conditions</c> 子对象（版本 1：标签筛选 + 发放对象范围）。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <b>这是一张"能力声明"，不是一条可下发的命令</b>：控制台必须在发 <c>conditions</c> **之前**
+    ///         先看设备有没有声明它。原因很硬——本次改动之前的设备根本不认识 <c>conditions</c>，
+    ///         会把它当成"没写"从而**静默按整池抽**，而"设了条件其实没生效"是本项目的红线。
+    ///         版本号写在 payload 里挡不住这件事（老设备压根不看 payload），只有能力声明能挡。
+    ///     </para>
+    ///     <para>
+    ///         升版本时**新增**能力名（例如 <c>draw.trigger.conditions.v2</c>），不要改这一条的含义。
+    ///     </para>
+    /// </remarks>
+    public const string DrawTriggerConditions = "draw.trigger.conditions";
+
+    /// <summary>
     ///     清空"本轮临时记录"（动作命令）。
     /// </summary>
     /// <remarks>
@@ -79,6 +95,7 @@ public static class ControlCapabilities
         ProofList,
         DrawLock,
         DrawTrigger,
+        DrawTriggerConditions,
         MediaPlay,
         RosterRead,
         RosterWrite,

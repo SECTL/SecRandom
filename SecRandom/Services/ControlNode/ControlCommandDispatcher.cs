@@ -57,6 +57,10 @@ public sealed class ControlCommandDispatcher(
         ControlCapabilities.StatusRead,
         ControlCapabilities.DrawLock,
         ControlCapabilities.DrawTrigger,
+        // 声明的是**能力标记**而不是一条命令：控制台据此决定要不要发 `conditions`。
+        // 故意不写进 CanExecute（那里返回 false → capability_unsupported），
+        // 因为"支持条件"不是用户能单独执行的一条命令。
+        ControlCapabilities.DrawTriggerConditions,
         ControlCapabilities.DrawReset,
         ControlCapabilities.MediaPlay,
         ControlCapabilities.SettingsWrite,

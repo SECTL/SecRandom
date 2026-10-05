@@ -39,12 +39,17 @@ namespace SecRandom.Core.Services.ControlNode;
 /// <param name="Count">抽取人数（点名）或数量（抽奖）；空表示 1。快抽固定抽 1 个。</param>
 /// <param name="Gender">性别条件；空表示不限。取值必须存在于该名单；抽奖时存在即拒绝。</param>
 /// <param name="Group">分组条件；空表示不限。取值必须存在于该名单；抽奖时存在即拒绝。</param>
+/// <param name="Conditions">
+///     抽奖专用条件集（v1：奖品标签 + 发放对象范围）。**点名/快抽出现即拒绝**——它们是抽奖的维度，
+///     悄悄忽略等于"设了条件其实没生效"。见 <see cref="ControlDrawConditionSet" />。
+/// </param>
 public sealed record ControlDrawTriggerRequest(
     string Target,
     string? ListName,
     int? Count,
     string? Gender,
-    string? Group)
+    string? Group,
+    ControlDrawConditionSet? Conditions = null)
 {
     /// <summary>快抽：按本机快抽默认名单抽 1 个。旧控制台的按钮就是这个。</summary>
     public const string TargetQuick = "quick";
@@ -146,8 +151,174 @@ public sealed record ControlDrawTriggerRequest(
             count = parsed;
         }
 
+        // 条件集只属于抽奖：点名/快抽带着它一律拒绝（不接受再忽略）。
+        ControlDrawConditionSet? conditions = null;
+        if (element.TryGetProperty(ConditionsFieldName, out var conditionsElement))
+        {
+            if (!string.Equals(target, TargetLottery, StringComparison.Ordinal))
+            {
+                reason = $"invalid_command:{ConditionsFieldName}:not_applicable";
+                return false;
+            }
+
+            if (!ControlDrawConditionSet.TryParse(conditionsElement, out conditions, out reason))
+                return false;
+
+            if (conditions is { IsEmpty: true })
+                conditions = null;
+        }
+
         reason = string.Empty;
-        request = new ControlDrawTriggerRequest(target, listName, count, gender, group);
+        request = new ControlDrawTriggerRequest(target, listName, count, gender, group, conditions);
+        return true;
+    }
+
+    /// <summary>条件子对象的字段名（协议里就这一个名字，改它等于改协议）。</summary>
+    public const string ConditionsFieldName = "conditions";
+
+    private static bool TryReadOptionalText(JsonElement element, string name, out string? value, out string reason)
+    {
+        value = null;
+        reason = string.Empty;
+
+        if (!element.TryGetProperty(name, out var property))
+            return true;
+
+        if (property.ValueKind != JsonValueKind.String)
+        {
+            reason = $"invalid_value:{name}:type_mismatch";
+            return false;
+        }
+
+        var text = (property.GetString() ?? string.Empty).Trim();
+        value = text.Length == 0 ? null : text;
+        return true;
+    }
+}
+
+/// <summary>
+///     <c>draw.trigger.conditions</c>：抽奖专用的条件集（版本 1）。
+/// </summary>
+/// <remarks>
+///     <para>
+///         <b>为什么单独一个子对象，而不是往顶层加字段</b>：本次改动之前的设备不认识 <c>conditions</c>，
+///         于是会把它整体当成"没写"——但那正是我们要禁止的静默路径，所以真正的闸门是**能力声明**
+///         （<c>draw.trigger.conditions</c>，控制台只在设备声明了它时才发这个子对象）。
+///         子对象在这里的职责是另外两件事：给未来留版本位，以及让"这个设备认识的键"成为一个**封闭集合**——
+///         里面出现不认识的键就整条拒绝，将来加字段绝不会被悄悄忽略。
+///     </para>
+///     <para>
+///         <b>v1 的三个条件</b>：<see cref="PrizeTags" />（按标签筛奖品，**任一命中**）、
+///         <see cref="StudentList" />（奖品发给这个名单的学生）、以及只在后者存在时有意义的
+///         <see cref="Gender" />/<see cref="Group" />（筛的是**接收奖品的学生的范围**，不是奖品属性——
+///         奖品没有性别与分组，这正是顶层 <c>gender</c>/<c>group</c> 在抽奖档仍被拒的原因）。
+///     </para>
+/// </remarks>
+/// <param name="Version">条件集版本；v1 只接受 1，缺省即 1。</param>
+/// <param name="PrizeTags">只抽带这些标签的奖品（任一命中）；空集合等价于不筛。</param>
+/// <param name="StudentList">奖品的发放对象名单；出现即开启"奖品指定给学生"。</param>
+/// <param name="Gender">发放对象的性别范围；**必须与 <paramref name="StudentList" /> 同现**。</param>
+/// <param name="Group">发放对象的分组范围；**必须与 <paramref name="StudentList" /> 同现**。</param>
+public sealed record ControlDrawConditionSet(
+    int Version,
+    IReadOnlyList<string> PrizeTags,
+    string? StudentList,
+    string? Gender,
+    string? Group)
+{
+    /// <summary>本设备认识的 <c>conditions</c> 键的**封闭集合**；多一个键就整条拒绝。</summary>
+    private static readonly string[] KnownFields = ["version", "prize_tags", "student_list", "gender", "group"];
+
+    public const int CurrentVersion = 1;
+
+    /// <summary>三样条件都没写（用来把"空条件集"折成"没有条件"，语义与不带 conditions 完全一致）。</summary>
+    public bool IsEmpty =>
+        PrizeTags.Count == 0 && StudentList is null && Gender is null && Group is null;
+
+    /// <summary>解析条件子对象；失败原因直接回给控制台。</summary>
+    public static bool TryParse(
+        JsonElement element,
+        out ControlDrawConditionSet? conditions,
+        out string reason)
+    {
+        conditions = null;
+        reason = string.Empty;
+
+        if (element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return true;
+
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            reason = $"invalid_command:{ControlDrawTriggerRequest.ConditionsFieldName}:type_mismatch";
+            return false;
+        }
+
+        // 未知键一律拒绝：这是**将来加字段仍然安全**的唯一保证。
+        foreach (var property in element.EnumerateObject())
+        {
+            if (!KnownFields.Contains(property.Name, StringComparer.Ordinal))
+            {
+                reason = $"invalid_command:{ControlDrawTriggerRequest.ConditionsFieldName}:unsupported_field";
+                return false;
+            }
+        }
+
+        var version = CurrentVersion;
+        if (element.TryGetProperty("version", out var versionElement))
+        {
+            if (versionElement.ValueKind != JsonValueKind.Number || !versionElement.TryGetInt32(out version))
+            {
+                reason = "invalid_value:conditions.version:type_mismatch";
+                return false;
+            }
+
+            if (version != CurrentVersion)
+            {
+                reason = "invalid_command:conditions:version_unsupported";
+                return false;
+            }
+        }
+
+        var tags = Array.Empty<string>();
+        if (element.TryGetProperty("prize_tags", out var tagsElement))
+        {
+            if (tagsElement.ValueKind != JsonValueKind.Array)
+            {
+                reason = "invalid_value:prize_tags:type_mismatch";
+                return false;
+            }
+
+            var parsed = new List<string>();
+            foreach (var tagElement in tagsElement.EnumerateArray())
+            {
+                if (tagElement.ValueKind != JsonValueKind.String)
+                {
+                    reason = "invalid_value:prize_tags:type_mismatch";
+                    return false;
+                }
+
+                var tag = (tagElement.GetString() ?? string.Empty).Trim();
+                if (tag.Length > 0 && !parsed.Contains(tag, StringComparer.Ordinal))
+                    parsed.Add(tag);
+            }
+
+            tags = [.. parsed];
+        }
+
+        if (!TryReadOptionalText(element, "student_list", out var studentList, out reason)
+            || !TryReadOptionalText(element, "gender", out var gender, out reason)
+            || !TryReadOptionalText(element, "group", out var group, out reason))
+            return false;
+
+        // 没有发放对象名单时，性别/分组**没有可筛的东西**（奖品没有这两个属性）。
+        // 这里必须拒绝而不是丢掉：否则控制台以为"按第一组发的"，实际是整池发。
+        if (studentList is null && (gender is not null || group is not null))
+        {
+            reason = "invalid_command:student_list:required";
+            return false;
+        }
+
+        conditions = new ControlDrawConditionSet(version, tags, studentList, gender, group);
         return true;
     }
 
@@ -252,6 +423,71 @@ public static class ControlDrawConditions
         return true;
     }
 
+    /// <summary>
+    ///     校验"奖品发给谁"的范围；<paramref name="students" /> 为 <c>null</c> 表示该学生名单不存在。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         这是抽奖的**第二个维度**：奖品本身没有性别与分组，但"发给哪个范围的学生"有。
+    ///         顶层 <c>gender</c>/<c>group</c> 在抽奖档仍按 <c>not_applicable</c> 拒绝，
+    ///         抽奖要表达范围必须同时给出 <c>conditions.student_list</c>（解析阶段已强制这一条）。
+    ///     </para>
+    ///     <para>
+    ///         取值同样必须来自该名单（<c>not_in_list</c>），筛完没人给 <c>no_matching_member</c>：
+    ///         与点名那条一模一样的三段判定顺序，管理员排查时看到的说法也一致。
+    ///     </para>
+    /// </remarks>
+    public static bool TryResolveRecipients(
+        IReadOnlyList<Student>? students,
+        ControlDrawConditionSet conditions,
+        out IReadOnlyList<Student> matched,
+        out string reason)
+    {
+        ArgumentNullException.ThrowIfNull(conditions);
+
+        matched = [];
+        reason = string.Empty;
+
+        if (students is null)
+        {
+            reason = "invalid_value:student_list:not_found";
+            return false;
+        }
+
+        if (conditions.Gender is { } gender && !GenderOptions(students).Contains(gender, StringComparer.Ordinal))
+        {
+            reason = "invalid_value:gender:not_in_list";
+            return false;
+        }
+
+        if (conditions.Group is { } group && !GroupOptions(students).Contains(group, StringComparer.Ordinal))
+        {
+            reason = "invalid_value:group:not_in_list";
+            return false;
+        }
+
+        var candidates = students
+            .Where(static student => student.IsCandidate)
+            .Where(student => conditions.Gender is null
+                              || string.Equals(student.Gender, conditions.Gender, StringComparison.Ordinal))
+            .Where(student => conditions.Group is null
+                              || string.Equals(student.Group, conditions.Group, StringComparison.Ordinal))
+            .ToList();
+
+        if (candidates.Count == 0)
+        {
+            reason = conditions.Gender is not null
+                ? "invalid_value:gender:no_matching_member"
+                : conditions.Group is not null
+                    ? "invalid_value:group:no_matching_member"
+                    : "invalid_value:student_list:no_matching_member";
+            return false;
+        }
+
+        matched = candidates;
+        return true;
+    }
+
     private static IReadOnlyList<string> Options(IEnumerable<Student> members, Func<Student, string> selector) =>
         members
             .Select(selector)
@@ -261,13 +497,35 @@ public static class ControlDrawConditions
             .Order(StringComparer.Ordinal)
             .ToList();
 
+    /// <summary>奖池里出现过的标签（去重、稳定排序）。空值不出现。</summary>
+    /// <remarks>
+    ///     归一化复用 <c>roster.read</c> 的 <see cref="ControlRosterMemberPayload.NormalizeTags" />：
+    ///     控制台先用 <c>roster.read</c> 拿到可选标签、再用同一批值发条件，
+    ///     两边合一处的解析才不会出现"列表里有的标签，发过去说不存在"。
+    /// </remarks>
+    public static IReadOnlyList<string> PrizeTagOptions(IEnumerable<Prize> prizes)
+    {
+        ArgumentNullException.ThrowIfNull(prizes);
+
+        return prizes
+            .SelectMany(prize => ControlRosterMemberPayload.NormalizeTags(prize.Tags) ?? [])
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToList();
+    }
+
     /// <summary>
     ///     按奖池校验一次抽奖请求；奖池不存在（<paramref name="prizes" /> 为 <c>null</c>）也在这里拒绝。
     /// </summary>
     /// <remarks>
     ///     <para>
-    ///         与点名那条的差别只有一个：**没有条件**。奖品没有性别与分组，抽奖只按可用库存收敛数量，
-    ///         因此这里不认 <c>gender</c>/<c>group</c>——它们早在解析阶段就被 <c>not_applicable</c> 拒掉了。
+    ///         <b>先筛后数</b>：标签筛选先作用在候选池上，<c>count</c> 的上界是**筛选之后**的候选数——
+    ///         否则"按标签只剩 2 个奖品，却按整池的 5 个放行"会在抽取层变成一次说不清的失败。
+    ///         调用方拿到 <paramref name="matched" /> 之后还会按本机剩余库存再收敛一次。
+    ///     </para>
+    ///     <para>
+    ///         奖品本身仍然没有性别/分组：抽奖要表达"发给哪个范围的学生"必须用
+    ///         <see cref="TryResolveRecipients" />（顶层 gender/group 在抽奖档依旧是 <c>not_applicable</c>）。
     ///     </para>
     ///     <para>
     ///         把"奖池不存在"也收进来，是为了让"名字写错"与"奖池里没有奖品"各有各的原因码：
@@ -300,6 +558,35 @@ public static class ControlDrawConditions
         {
             reason = "invalid_value:list_name:no_candidate";
             return false;
+        }
+
+        if (request.Conditions is { PrizeTags.Count: > 0 } conditions)
+        {
+            // 取值域取**整个奖池**（含停用的奖品），而不是只看候选：控制台是按 `roster.read` 的成员
+            // 派生选项的，那份成员带着 `enabled` 标记、也包含停用的奖品。若这里只认候选的标签，
+            // 控制台会拿到一个"列表里有、发过去说不存在"的值，而真实原因其实是"那个奖品被停用了"。
+            var available = PrizeTagOptions(prizes);
+            foreach (var tag in conditions.PrizeTags)
+            {
+                if (!available.Contains(tag, StringComparer.Ordinal))
+                {
+                    reason = "invalid_value:prize_tags:not_in_list";
+                    return false;
+                }
+            }
+
+            // v1 语义：**任一命中**（OR）。标签是老师自己打的，一个奖品同时带两个标签在真实用法里罕见，
+            // 交集会永远筛空——多一个 tag_match 开关只是多一种把课堂抽空的方式。
+            candidates = candidates
+                .Where(prize => (ControlRosterMemberPayload.NormalizeTags(prize.Tags) ?? [])
+                    .Any(tag => conditions.PrizeTags.Contains(tag, StringComparer.Ordinal)))
+                .ToList();
+
+            if (candidates.Count == 0)
+            {
+                reason = "invalid_value:prize_tags:no_matching_member";
+                return false;
+            }
         }
 
         if (request.Count is { } count && count > candidates.Count)

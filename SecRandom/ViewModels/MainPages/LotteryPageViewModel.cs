@@ -498,11 +498,32 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         if (!ControlDrawConditions.TryResolvePrizes(prizes, request, out _, out var reason))
             return RemoteDrawOutcome.Invalid(reason);
 
+        // 发放对象范围（v1 条件集里的第二个维度）：奖品没有性别/分组，但"发给哪个范围的学生"有。
+        // 名单存在性用不切换活动档案的快照判定；范围筛选沿用与点名同一条规则。
+        StudentList? recipientList = null;
+        if (request.Conditions is { StudentList: { } studentListName } conditions)
+        {
+            recipientList = _profileCatalogManager.LoadStudentList(studentListName);
+            if (!ControlDrawConditions.TryResolveRecipients(
+                    recipientList?.Students, conditions, out _, out var recipientReason))
+                return RemoteDrawOutcome.Invalid(recipientReason);
+        }
+
         // 切换页面选择与共享档案：抽取用的候选池取自共享档案，只改页面选择会抽到上一次的奖池。
         if (string.Equals(SelectedPrizeListName, poolName, StringComparison.Ordinal))
             _profileService.LoadPrizeProfile(poolName);
         else
             SelectedPrizeListName = poolName;
+
+        // 先切发放对象与范围，再算数量：MaximumDrawCount 与候选池都跟着当前选择走。
+        if (request.Conditions is { StudentList: { } assignmentList } assignmentConditions)
+        {
+            if (!string.Equals(SelectedStudentListName, assignmentList, StringComparison.Ordinal))
+                SelectedStudentListName = assignmentList;
+
+            SelectedGroup = assignmentConditions.Group ?? AllGroupsOption;
+            SelectedGender = assignmentConditions.Gender ?? AllGendersOption;
+        }
 
         RefreshCounts();
 

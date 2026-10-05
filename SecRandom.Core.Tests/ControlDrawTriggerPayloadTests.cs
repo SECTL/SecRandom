@@ -1,5 +1,6 @@
 using System.Text.Json;
 using SecRandom.Core.Services.ControlNode;
+using SecRandom.Shared.Models.ControlNode;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Tests;
@@ -209,11 +210,12 @@ public sealed class ControlDrawTriggerPayloadTests
     private static ControlDrawTriggerRequest Lottery(string? listName, int? count) =>
         new(ControlDrawTriggerRequest.TargetLottery, listName, count, null, null);
 
-    private static Prize Prize(string id, bool exists = true, string? name = null) => new()
+    private static Prize Prize(string id, bool exists = true, string? name = null, string? tags = null) => new()
     {
         Id = id,
         Name = name ?? (id.Length == 0 ? string.Empty : $"{id} 号奖品"),
-        Exists = exists
+        Exists = exists,
+        Tags = tags ?? string.Empty
     };
 
     // ---------------------------------------------------------------- 条件取值域
@@ -321,6 +323,210 @@ public sealed class ControlDrawTriggerPayloadTests
         Assert.True(ControlDrawConditions.TryResolve(members, request, out var matched, out var reason), reason);
         Assert.Equal(["01", "02"], matched.Select(student => student.Id));
     }
+
+    // ---------------------------------------------------------------- conditions（draw.trigger.conditions v1）
+
+    [Fact]
+    public void 条件集_v1把标签与发放范围都读出来()
+    {
+        var parsed = ControlDrawTriggerRequest.TryParse(
+            Payload("""
+                    { "target": "lottery", "list_name": "元旦抽奖", "count": 2,
+                      "conditions": { "version": 1, "prize_tags": ["文具", " 文具 ", "书籍"],
+                                      "student_list": "高一（1）班", "gender": "男", "group": "第一组" } }
+                    """),
+            out var request,
+            out var reason);
+
+        Assert.True(parsed, reason);
+        var conditions = Assert.IsType<ControlDrawConditionSet>(request.Conditions);
+        Assert.Equal(1, conditions.Version);
+        Assert.Equal(["文具", "书籍"], conditions.PrizeTags); // 去空白 + 去重
+        Assert.Equal("高一（1）班", conditions.StudentList);
+        Assert.Equal("男", conditions.Gender);
+        Assert.Equal("第一组", conditions.Group);
+    }
+
+    [Theory]
+    // version 只认 1；未来版本由**新能力名**表达，不是在这里放行。
+    [InlineData("""{ "target": "lottery", "conditions": { "version": 2 } }""", "invalid_command:conditions:version_unsupported")]
+    [InlineData("""{ "target": "lottery", "conditions": { "version": "1" } }""", "invalid_value:conditions.version:type_mismatch")]
+    // 条件集里的键是**封闭集合**：多一个就整条拒绝，将来加字段才不会被静默忽略。
+    [InlineData("""{ "target": "lottery", "conditions": { "tag_match": "all" } }""", "invalid_command:conditions:unsupported_field")]
+    // 类型写错
+    [InlineData("""{ "target": "lottery", "conditions": [] }""", "invalid_command:conditions:type_mismatch")]
+    [InlineData("""{ "target": "lottery", "conditions": { "prize_tags": "文具" } }""", "invalid_value:prize_tags:type_mismatch")]
+    [InlineData("""{ "target": "lottery", "conditions": { "prize_tags": [1] } }""", "invalid_value:prize_tags:type_mismatch")]
+    // 范围必须与发放名单同现：没有名单就没有可筛的东西（奖品没有性别/分组）。
+    [InlineData("""{ "target": "lottery", "conditions": { "gender": "男" } }""", "invalid_command:student_list:required")]
+    [InlineData("""{ "target": "lottery", "conditions": { "group": "第一组" } }""", "invalid_command:student_list:required")]
+    // 条件集只属于抽奖：点名/快抽带着它一律拒绝，不静默忽略。
+    [InlineData("""{ "target": "roll_call", "conditions": { "prize_tags": ["文具"] } }""", "invalid_command:conditions:not_applicable")]
+    public void 条件集写错或写不认识的东西都被拒绝(string json, string expectedReason)
+    {
+        Assert.False(ControlDrawTriggerRequest.TryParse(Payload(json), out _, out var reason));
+        Assert.Equal(expectedReason, reason);
+    }
+
+    [Theory]
+    // 空条件集折成"没有条件"：下面这条回归同时钉住"不出现 conditions 时行为与今天逐字一致"。
+    [InlineData("""{ "target": "lottery", "list_name": "元旦抽奖" }""")]
+    [InlineData("""{ "target": "lottery", "list_name": "元旦抽奖", "conditions": {} }""")]
+    [InlineData("""{ "target": "lottery", "list_name": "元旦抽奖", "conditions": { "prize_tags": [] } }""")]
+    [InlineData("""{ "target": "lottery", "list_name": "元旦抽奖", "conditions": { "student_list": "  " } }""")]
+    public void 没有条件或空条件集时与老语义完全一致(string json)
+    {
+        var parsed = ControlDrawTriggerRequest.TryParse(Payload(json), out var request, out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.Null(request.Conditions);
+
+        // 顶层 gender/group 对抽奖仍然是 not_applicable：旧原因码一个字都没改。
+        Assert.False(ControlDrawTriggerRequest.TryParse(
+            Payload("""{ "target": "lottery", "gender": "男" }"""), out _, out var rejected));
+        Assert.Equal("invalid_value:gender:not_applicable", rejected);
+    }
+
+    [Fact]
+    public void 标签选项从奖池派生而不是写死()
+    {
+        var pool = new[]
+        {
+            Prize("P01", tags: "文具 红色"),
+            Prize("P02", tags: "书籍"),
+            Prize("P03", tags: "文具"),
+            Prize("P04")
+        };
+
+        // Ordinal 排序：书(4E66) < 文(6587) < 红(7EA2)。选项列表只用于取值校验，顺序稳定即可。
+        Assert.Equal(["书籍", "文具", "红色"], ControlDrawConditions.PrizeTagOptions(pool));
+    }
+
+    [Fact]
+    public void 标签筛选是任一命中并且只留下命中的奖品()
+    {
+        var pool = new[]
+        {
+            Prize("P01", tags: "文具"),
+            Prize("P02", tags: "书籍"),
+            Prize("P03", tags: "零食")
+        };
+        var request = Lottery("元旦抽奖", 2, new ControlDrawConditionSet(1, ["文具", "书籍"], null, null, null));
+
+        Assert.True(ControlDrawConditions.TryResolvePrizes(pool, request, out var matched, out var reason), reason);
+        Assert.Equal(["P01", "P02"], matched.Select(prize => prize.Id));
+    }
+
+    [Fact]
+    public void 标签不在奖池里时拒绝并指明字段()
+    {
+        var pool = new[] { Prize("P01", tags: "文具") };
+        var request = Lottery("元旦抽奖", 1, new ControlDrawConditionSet(1, ["不存在"], null, null, null));
+
+        Assert.False(ControlDrawConditions.TryResolvePrizes(pool, request, out _, out var reason));
+        Assert.Equal("invalid_value:prize_tags:not_in_list", reason);
+    }
+
+    [Fact]
+    public void 标签筛完没有奖品时拒绝()
+    {
+        // 标签存在于池子里（贴在一个**停用**的奖品上），但没有任何可抽的奖品带它：
+        // 这时才是"筛完没有候选"，而不是"这个标签不存在"——两者的下一步处置完全不同。
+        var pool = new[] { Prize("P01", tags: "文具"), Prize("P02", tags: "书籍", exists: false) };
+        var request = Lottery("元旦抽奖", 1, new ControlDrawConditionSet(1, ["书籍"], null, null, null));
+
+        Assert.False(ControlDrawConditions.TryResolvePrizes(pool, request, out _, out var reason));
+        Assert.Equal("invalid_value:prize_tags:no_matching_member", reason);
+    }
+
+    [Fact]
+    public void 标签筛选之后数量按筛后的候选数收敛()
+    {
+        var pool = new[] { Prize("P01", tags: "文具"), Prize("P02", tags: "书籍"), Prize("P03", tags: "书籍") };
+        var request = Lottery("元旦抽奖", 3, new ControlDrawConditionSet(1, ["书籍"], null, null, null));
+
+        // 整池有 3 个，但按标签只剩 2 个：上界必须是 2，否则"请求 3 个"会被放行到抽取层再失败。
+        Assert.False(ControlDrawConditions.TryResolvePrizes(pool, request, out _, out var reason));
+        Assert.Equal("invalid_value:count:out_of_range:1..2", reason);
+    }
+
+    [Fact]
+    public void 发放名单不存在时拒绝()
+    {
+        var conditions = new ControlDrawConditionSet(1, [], "不存在的名单", null, null);
+
+        Assert.False(ControlDrawConditions.TryResolveRecipients(null, conditions, out _, out var reason));
+        Assert.Equal("invalid_value:student_list:not_found", reason);
+    }
+
+    [Fact]
+    public void 发放范围取值不在名单里时拒绝并指明字段()
+    {
+        var members = new[] { Student("01", "张三", "男", "第一组") };
+
+        Assert.False(ControlDrawConditions.TryResolveRecipients(
+            members, new ControlDrawConditionSet(1, [], "高一（1）班", "女", null), out _, out var genderReason));
+        Assert.Equal("invalid_value:gender:not_in_list", genderReason);
+
+        Assert.False(ControlDrawConditions.TryResolveRecipients(
+            members, new ControlDrawConditionSet(1, [], "高一（1）班", null, "第二组"), out _, out var groupReason));
+        Assert.Equal("invalid_value:group:not_in_list", groupReason);
+    }
+
+    [Fact]
+    public void 发放范围筛完没有学生时拒绝()
+    {
+        var members = new[] { Student("01", "张三", "男", "第一组") };
+
+        Assert.False(ControlDrawConditions.TryResolveRecipients(
+            members, new ControlDrawConditionSet(1, [], "高一（1）班", "女", null), out _, out var genderReason));
+        Assert.Equal("invalid_value:gender:not_in_list", genderReason);
+
+        // 取值存在、但那个人被停用了：这时才是"筛完没有可发放的对象"。
+        var disabledStudent = Student("01", "张三", "女", "第一组");
+        disabledStudent.Exists = false;
+        var disabled = new[] { disabledStudent };
+        Assert.False(ControlDrawConditions.TryResolveRecipients(
+            disabled, new ControlDrawConditionSet(1, [], "高一（1）班", "女", null), out _, out var emptyReason));
+        Assert.Equal("invalid_value:gender:no_matching_member", emptyReason);
+    }
+
+    [Fact]
+    public void 发放范围能筛出学生时按范围收敛()
+    {
+        var members = new[]
+        {
+            Student("01", "张三", "男", "第一组"),
+            Student("02", "李四", "女", "第一组"),
+            Student("03", "王五", "男", "第二组")
+        };
+
+        Assert.True(ControlDrawConditions.TryResolveRecipients(
+            members, new ControlDrawConditionSet(1, [], "高一（1）班", "男", "第一组"),
+            out var matched, out var reason), reason);
+        Assert.Equal(["01"], matched.Select(student => student.Id));
+    }
+
+    [Fact]
+    public void 设备声明了条件能力()
+    {
+        // 控制台据此决定要不要发 conditions——没有它就只能拒绝或明说"这台设备不支持条件"。
+        Assert.Contains(ControlCapabilities.DrawTriggerConditions, ControlCapabilities.Known);
+
+        var dispatcher = File.ReadAllText(GetRepositoryPath(
+            @"SecRandom/Services/ControlNode/ControlCommandDispatcher.cs"));
+        Assert.Contains("ControlCapabilities.DrawTriggerConditions,", dispatcher, StringComparison.Ordinal);
+    }
+
+    private static ControlDrawTriggerRequest Lottery(
+        string? listName,
+        int? count,
+        ControlDrawConditionSet? conditions = null) =>
+        new(ControlDrawTriggerRequest.TargetLottery, listName, count, null, null, conditions);
+
+    private static string GetRepositoryPath(string relativePath) => Path.Combine(
+        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../..")),
+        relativePath);
 
     // ---------------------------------------------------------------- 回执
 
