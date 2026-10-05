@@ -230,8 +230,39 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
             return;
 
         var groupId = value?.Trim() ?? string.Empty;
+        var previousGroup = _stateStore.Current.GroupId;
+
+        // **换组要先注销旧组**：不注销的话，这台设备会同时挂在新旧两个组的列表里。
+        // 只在确实换了组时发；注销是尽力而为（超时/失败只记日志），绝不能挡住按新组重连。
+        // 与另一半的区别：**退出程序不注销**（服务端"登记即列出"，关掉软件应保持 offline 可见）。
+        if (!string.IsNullOrWhiteSpace(previousGroup)
+            && !string.Equals(previousGroup, groupId, StringComparison.Ordinal))
+        {
+            _ = DeregisterAsync(previousGroup);
+        }
+
         _stateStore.Update(state => state with { GroupId = groupId });
         _client.Wake();
+    }
+
+    /// <summary>注销的等待上限：换组/退出都不能被它拖住。</summary>
+    private static readonly TimeSpan DeregisterTimeout = TimeSpan.FromSeconds(3);
+
+    /// <summary>尽力而为地注销某个组里的登记；失败只记日志。</summary>
+    private async Task DeregisterAsync(string groupId)
+    {
+        try
+        {
+            var deregistered = await _client.DeregisterAsync(groupId, DeregisterTimeout).ConfigureAwait(true);
+
+            if (!deregistered)
+                _logger.LogInformation("集控注销未得到确认（可能未连接或超时）：{Group}", groupId);
+        }
+        catch (Exception exception)
+        {
+            // 注销失败不能影响换组/退出：残留登记由服务端超时或管理员清理兜底。
+            _logger.LogWarning(exception, "集控注销失败：{Group}", groupId);
+        }
     }
 
     partial void OnDisplayNameChanged(string value)

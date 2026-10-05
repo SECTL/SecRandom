@@ -10,7 +10,7 @@
     <UserControl.Resources>
         <DataTemplate x:Key="QuickDrawAvatarTemplate"
                       DataType="vm:QuickDrawResultItem">
-            <Border Width="64" Height="64"
+            <Border Width="{Binding ImageSize}" Height="{Binding ImageSize}"
                     Background="{DynamicResource ControlFillColorSecondaryBrush}"
                     CornerRadius="8">
                 <Grid>
@@ -23,7 +23,7 @@
                                IsVisible="{Binding IsPlaceholderVisible}"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
-                               FontSize="32"
+                               FontSize="{Binding InitialFontSize}"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                 </Grid>

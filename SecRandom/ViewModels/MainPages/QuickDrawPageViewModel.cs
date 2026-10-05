@@ -690,7 +690,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             BuildImage(student),
             StudentImageSettings.StudentImage,
             StudentImageSettings.StudentImagePosition,
-            AvatarInitialResolver.Resolve(student.Name, student.Id));
+            AvatarInitialResolver.Resolve(student.Name, student.Id),
+            StudentImageSettings.StudentImageSize);
     }
 
     private QuickDrawResultItem CreateNotificationResultItem(string item)
@@ -709,7 +710,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             null,
             false,
             StudentImagePositionMode.Top,
-            item.Trim()[0].ToString());
+            item.Trim()[0].ToString(),
+            StudentImageSettings.StudentImageSize);
     }
 
     private string FormatStudent(Student student)
@@ -795,10 +797,12 @@ public sealed record QuickDrawResultItem(
     Bitmap? Image,
     bool IsImageEnabled,
     StudentImagePositionMode ImagePosition,
-    string Initial)
+    string Initial,
+    int ImageSize)
 {
     public bool IsImageVisible => IsImageEnabled && Image is not null;
     public bool IsPlaceholderVisible => IsImageEnabled && Image is null;
+    public double InitialFontSize => ImageSize * 0.5;
     public Orientation ImageLayoutOrientation => ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Right
         ? Orientation.Horizontal
         : Orientation.Vertical;

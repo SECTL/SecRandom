@@ -182,6 +182,9 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private StudentImagePositionMode LotteryImagePosition => Config.LotterySettings.OverrideStudentImageSettings
         ? Config.LotterySettings.LotteryImagePosition
         : Config.DefaultDrawSettings.StudentImagePosition;
+    private int LotteryImageSize => Config.LotterySettings.OverrideStudentImageSettings
+        ? Config.LotterySettings.LotteryImageSize
+        : Config.DefaultDrawSettings.StudentImageSize;
     private string CurrentGroupScope => SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup;
     private string CurrentGenderScope => SelectedGender == AllGendersOption ? string.Empty : SelectedGender;
 
@@ -925,7 +928,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             BuildImage(prize),
             IsLotteryImageEnabled,
             LotteryImagePosition,
-            AvatarInitialResolver.Resolve(prize.Name, prize.Id));
+            AvatarInitialResolver.Resolve(prize.Name, prize.Id),
+            LotteryImageSize);
     }
 
     private List<LotteryDisplayPrize> BuildDisplayPrizes(IReadOnlyList<Prize> prizes, IReadOnlyList<Student> assignedStudents)
@@ -1263,10 +1267,12 @@ public sealed record LotteryResultItem(
     Bitmap? Image,
     bool IsImageEnabled,
     StudentImagePositionMode ImagePosition,
-    string Initial)
+    string Initial,
+    int ImageSize)
 {
     public bool IsImageVisible => IsImageEnabled && Image is not null;
     public bool IsPlaceholderVisible => IsImageEnabled && Image is null;
+    public double InitialFontSize => ImageSize * 0.5;
     public Orientation ImageLayoutOrientation => ImagePosition is StudentImagePositionMode.Left or StudentImagePositionMode.Right
         ? Orientation.Horizontal
         : Orientation.Vertical;

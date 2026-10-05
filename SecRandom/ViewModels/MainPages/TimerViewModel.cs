@@ -31,6 +31,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     private bool _showStopwatchMilliseconds;
     private int _attachedViewCount;
     private bool _refreshTimerRunning;
+    private bool _autoMiniWindowTriggered;
 
     public TimerViewModel(MainConfigHandler configHandler)
     {
@@ -41,6 +42,12 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
         // 定时器不在这里启动：只有视图可见且计时真的在走时才需要刷新
         Refresh();
     }
+
+    /// <summary>
+    ///     计时走过设定时长、该自动缩成小窗时触发一次。窗口怎么切由 <c>TimerViewService</c> 决定：
+    ///     这个 ViewModel 只管计时与大窗/小窗共用的状态，不碰窗口。
+    /// </summary>
+    public event Action? AutoMiniWindowRequested;
 
     /// <summary>
     ///     计时器视图或迷你窗可见时调用。两者可能同时存在（迷你窗由完整视图打开），因此按引用计数。
@@ -178,6 +185,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     {
         _isRunning = false;
         _finished = false;
+        _autoMiniWindowTriggered = false;
         if (IsCountdownMode)
             _remaining = TimeSpan.FromSeconds(_totalSeconds);
         else
@@ -248,6 +256,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
 
         _isRunning = false;
         _finished = false;
+        _autoMiniWindowTriggered = false;
         _mode = mode;
         Refresh();
     }
@@ -256,6 +265,8 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     {
         _isRunning = false;
         _finished = false;
+        // 重新设定时长＝新的一次计时：自动缩小的"这次已经缩过"要跟着重置
+        _autoMiniWindowTriggered = false;
         _remaining = value < TimeSpan.Zero ? TimeSpan.Zero : value;
         _totalSeconds = Math.Max(1, _remaining.TotalSeconds);
         if (remember)
@@ -353,6 +364,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
             return;
 
         UpdateTime();
+        TryRequestAutoMiniWindow();
         foreach (var name in new[]
         {
             nameof(IsCountdownMode), nameof(IsStopwatchMode), nameof(IsClockMode), nameof(HasControls),
@@ -394,6 +406,30 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
             _refreshTimer.Start();
         else
             _refreshTimer.Stop();
+    }
+
+    /// <summary>
+    ///     计时走过设定阈值时请求一次自动缩小。只评估、不切窗口：窗口归 TimerViewService 管。
+    /// </summary>
+    /// <remarks>
+    ///     走过的时间按**本次计时已经走了多久**算（倒计时用"总时长 − 剩余"，秒表用累计时间），
+    ///     与"还剩多少"无关。时钟模式不参与：它没有"开始"这个动作。
+    /// </remarks>
+    private void TryRequestAutoMiniWindow()
+    {
+        if (_disposed || IsClockMode)
+            return;
+
+        var runningSeconds = IsCountdownMode
+            ? _totalSeconds - _remaining.TotalSeconds
+            : _elapsed.TotalSeconds;
+
+        if (!_configHandler.Data.TimerSettings.ShouldShrinkToMiniWindow(
+                _isRunning, runningSeconds, _autoMiniWindowTriggered))
+            return;
+
+        _autoMiniWindowTriggered = true;
+        AutoMiniWindowRequested?.Invoke();
     }
 
     private void UpdateTime()

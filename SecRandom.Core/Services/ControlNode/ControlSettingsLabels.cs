@@ -67,6 +67,7 @@ public static class ControlSettingsLabels
     private const string Update = "SettingsPages.Update.Resources";
     private const string More = "SettingsPages.More.Resources";
     private const string Appearance = "SettingsPages.Personalized.Appearance.Resources";
+    private const string Timer = "SettingsPages.Personalized.Timer.Resources";
     private const string Basic = "SettingsPages.General.Basic.Resources";
     private const string Backup = "SettingsPages.General.Backup.Resources";
     private const string Privacy = "SettingsPages.General.Privacy.Resources";
@@ -129,7 +130,9 @@ public static class ControlSettingsLabels
         ["voice"] = Lit("语音", "Voice", "音声"),
         ["history"] = Lit("历史记录", "History", "履歴"),
         ["update"] = Lit("更新", "Updates", "更新"),
-        ["more"] = Lit("更多设置", "More settings", "その他の設定")
+        ["more"] = Lit("更多设置", "More settings", "その他の設定"),
+        // 计时器是独立一页（`settings.personalized.timer`）：类目名取那一页的页面标题口径。
+        ["timer"] = Lit("计时器", "Timer", "タイマー")
     };
 
     // ---------------------------------------------------------------- 路径级条目（同名不同义）
@@ -349,8 +352,10 @@ public static class ControlSettingsLabels
         ["animation_color_theme"] = R(Picking, "S_ColorTheme"),
         ["student_image"] = R(Picking, "S_StudentImage"),
         ["student_image_position"] = R(Picking, "S_StudentImagePosition"),
+        ["student_image_size"] = R(Picking, "S_StudentImageSize"),
         ["lottery_image"] = R(Picking, "S_LotteryImage"),
         ["lottery_image_position"] = R(Picking, "S_LotteryImagePosition"),
+        ["lottery_image_size"] = R(Picking, "S_LotteryImageSize"),
         ["animation_music"] = R(Picking, "S_AnimationMusic"),
         ["animation_music_loop"] = R(Picking, "S_AnimationMusicLoop"),
         ["animation_music_volume"] = R(Picking, "S_AnimationMusicVolume"),
@@ -511,6 +516,10 @@ public static class ControlSettingsLabels
         ["lottery_enabled"] = R(More, "S_LotteryEnabled"),
         ["roll_call_control_panel_position"] = R(More, "S_RollCallPanelPosition"),
         ["lottery_control_panel_position"] = R(More, "S_LotteryPanelPosition"),
+
+        // ---------------- 计时器
+        ["auto_mini_window_enabled"] = R(Timer, "S_AutoMiniWindow"),
+        ["auto_mini_window_after_seconds"] = R(Timer, "S_AutoMiniWindow_AfterSeconds"),
 
         // ---------------- 更多设置：页面控件开关（页面把整组开关放进一个多选框，没有逐项文案）
         ["roll_call_start_button"] = L(

@@ -96,6 +96,8 @@
   <data name="S_StudentImage_D" xml:space="preserve"><value>在抽取结果中显示成员头像</value></data>
   <data name="S_StudentImagePosition" xml:space="preserve"><value>头像位置</value></data>
   <data name="S_StudentImagePosition_D" xml:space="preserve"><value>成员头像相对文字的位置</value></data>
+  <data name="S_StudentImageSize" xml:space="preserve"><value>头像大小</value></data>
+  <data name="S_StudentImageSize_D" xml:space="preserve"><value>抽取结果中头像的显示边长，单位为像素</value></data>
   <data name="O_Repeat" xml:space="preserve"><value>允许重复</value></data>
   <data name="O_NoRepeat" xml:space="preserve"><value>不重复</value></data>
   <data name="O_HalfRepeat" xml:space="preserve"><value>半重复</value></data>
@@ -204,6 +206,12 @@
   </data>
   <data name="S_LotteryImagePosition_D" xml:space="preserve">
     <value>奖品图片相对文字的位置</value>
+  </data>
+  <data name="S_LotteryImageSize" xml:space="preserve">
+    <value>奖品图片大小</value>
+  </data>
+  <data name="S_LotteryImageSize_D" xml:space="preserve">
+    <value>抽奖结果中奖品图片的显示边长，单位为像素</value>
   </data>
   <data name="C_BatchAvatar" xml:space="preserve">
     <value>批量设置头像</value>

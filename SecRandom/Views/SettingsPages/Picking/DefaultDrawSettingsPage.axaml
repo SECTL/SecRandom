@@ -227,6 +227,20 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_StudentImageSize"
+                                   Header="{x:Static lp:Resources.S_StudentImageSize}"
+                                   Description="{x:Static lp:Resources.S_StudentImageSize_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ImageFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <Grid ColumnDefinitions="260,Auto" ColumnSpacing="12">
+                        <Slider Minimum="24" Maximum="200" TickFrequency="8" IsSnapToTickEnabled="True"
+                                Value="{Binding Settings.StudentImageSize}" />
+                        <TextBlock Grid.Column="1" MinWidth="52" TextAlignment="Right" VerticalAlignment="Center"
+                                   Text="{Binding Settings.StudentImageSize, StringFormat={}{0}px}" />
+                    </Grid>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <Separator Margin="0 12 0 4" />
             <sr:IconText Text="{x:Static lp:Resources.Section_Music}" Glyph="{sr:Fi Speaker2Filled}" Margin="0 0 0 4" />
             <local:DrawMusicSettingsExpander x:Name="MusicSettingsExpander"

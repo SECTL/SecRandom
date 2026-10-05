@@ -1391,6 +1391,9 @@ public partial class App : Application
                     // 手机没有浮窗
                     services.AddSettingsPage<FloatingWindowSettingsPage>(Langs.Common.Resources
                         .Settings_FloatingWindow);
+                    // 计时器页紧随浮窗页：计时器的入口就在浮窗上，且两者都只有桌面端有
+                    services.AddSettingsPage<TimerSettingsPage>(Langs.SettingsPages.Personalized.Timer
+                        .Resources.Page_Title);
                 }
                 services.AddSettingsPage<MusicSettingsPage>(Langs.SettingsPages.Personalized.Music.Resources
                     .Page_Title);

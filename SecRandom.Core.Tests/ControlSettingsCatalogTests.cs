@@ -1,5 +1,6 @@
 using System.Text.Json;
 using SecRandom.Core.Models;
+using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Shared.Models.ControlNode;
 
@@ -45,7 +46,9 @@ public sealed class ControlSettingsCatalogTests
         string[] expectedCategories =
         [
             "float_position", "general", "appearance", "fair_draw", "default_draw", "roll_call", "quick_draw",
-            "lottery", "floating_window", "notification", "linkage", "voice", "history", "update", "more"
+            "lottery", "floating_window", "notification", "linkage", "voice", "history", "update", "more",
+            // 计时器是后加的一类：控制台要能读到它，否则「计时器」页在集控里永远停在「未读取」
+            "timer"
         ];
 
         Assert.Equal(expectedCategories, described.Select(category => category.Id).ToArray());
@@ -86,6 +89,35 @@ public sealed class ControlSettingsCatalogTests
 
         foreach (var field in fields.Values)
             Assert.Contains(field.Type, new[] { "bool", "int", "double", "string", "enum" });
+    }
+
+    [Fact]
+    public void 读取_计时器两项都在目录里且阈值带上限值()
+    {
+        var model = new MainConfigModel();
+        var fields = ControlSettingsCatalog.Describe(model)
+            .Single(category => category.Id == "timer")
+            .Fields
+            .ToDictionary(field => field.Path, StringComparer.Ordinal);
+
+        // 整类只有这两项：开关与阈值。多出一项要么是模型里多写了字段，要么是目录把不该露的也放了出来。
+        Assert.Equal(
+            ["timer.auto_mini_window_after_seconds", "timer.auto_mini_window_enabled"],
+            fields.Keys.Order(StringComparer.Ordinal).ToArray());
+
+        Assert.True(fields["timer.auto_mini_window_enabled"].Writable);
+        Assert.Equal("bool", fields["timer.auto_mini_window_enabled"].Type);
+        Assert.Equal(model.TimerSettings.AutoMiniWindowEnabled, fields["timer.auto_mini_window_enabled"].Value);
+
+        // 阈值必须带上下限：控制台按它画数字框，也按它拒绝越界写入。
+        Assert.Equal("int", fields["timer.auto_mini_window_after_seconds"].Type);
+        Assert.Equal(
+            model.TimerSettings.AutoMiniWindowAfterSeconds,
+            fields["timer.auto_mini_window_after_seconds"].Value);
+        Assert.Equal((double)TimerSettingsConfig.MinAutoMiniWindowSeconds,
+            fields["timer.auto_mini_window_after_seconds"].Min);
+        Assert.Equal((double)TimerSettingsConfig.MaxAutoMiniWindowSeconds,
+            fields["timer.auto_mini_window_after_seconds"].Max);
     }
 
     [Fact]

@@ -77,7 +77,8 @@ public static class ControlSettingsCatalog
         (typeof(VoiceSettingsConfig), "voice"),
         (typeof(HistoryManagementSettingsConfig), "history"),
         (typeof(UpdateSettingsConfig), "update"),
-        (typeof(MoreSettingsConfig), "more")
+        (typeof(MoreSettingsConfig), "more"),
+        (typeof(TimerSettingsConfig), "timer")
     ];
 
     /// <summary>已发布到控制台的路径别名（自然名 → 协议名）。</summary>
@@ -106,8 +107,16 @@ public static class ControlSettingsCatalog
     {
         [nameof(RollCallSettingsConfig.HalfRepeat)] = (1, 20),
         [nameof(QuickDrawSettingsConfig.DisableAfterClick)] = (1, 20),
+        [nameof(DrawSettingsConfigBase.StudentImageSize)] =
+            (DrawSettingsConfigBase.MinImageSize, DrawSettingsConfigBase.MaxImageSize),
+        [nameof(LotterySettingsConfig.LotteryImageSize)] =
+            (DrawSettingsConfigBase.MinImageSize, DrawSettingsConfigBase.MaxImageSize),
         [nameof(VoiceSettingsConfig.VolumeSize)] = (0, 100),
-        [nameof(VoiceSettingsConfig.SpeechRate)] = (50, 200)
+        [nameof(VoiceSettingsConfig.SpeechRate)] = (50, 200),
+        // 计时器自动缩小的时间：页面上的输入框与远程写入共用同一对边界，
+        // 少了它，控制台只能看着一个没有上下限的数字框，越界值要到设备那边才被拒。
+        [nameof(TimerSettingsConfig.AutoMiniWindowAfterSeconds)] =
+            (TimerSettingsConfig.MinAutoMiniWindowSeconds, TimerSettingsConfig.MaxAutoMiniWindowSeconds)
     };
 
     /// <summary>路径**按 <c>.</c> 拆开后某一段与这些词完全相等**就只读。</summary>

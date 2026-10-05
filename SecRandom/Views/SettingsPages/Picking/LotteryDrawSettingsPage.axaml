@@ -334,6 +334,18 @@
                         </ComboBox>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem x:Name="S_LotteryImageSize" Content="{x:Static lp:Resources.S_LotteryImageSize}"
+                                           Description="{x:Static lp:Resources.S_LotteryImageSize_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <Grid ColumnDefinitions="180,Auto" ColumnSpacing="12">
+                            <Slider Minimum="24" Maximum="200" TickFrequency="8" IsSnapToTickEnabled="True"
+                                    Value="{Binding Settings.LotteryImageSize}" />
+                            <TextBlock Grid.Column="1" MinWidth="52" TextAlignment="Right" VerticalAlignment="Center"
+                                       Text="{Binding Settings.LotteryImageSize, StringFormat={}{0}px}" />
+                        </Grid>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
             <local:DrawMusicSettingsExpander Header="{x:Static lp:Resources.Section_Music}"

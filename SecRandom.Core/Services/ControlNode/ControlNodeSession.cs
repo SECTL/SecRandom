@@ -30,6 +30,9 @@ public sealed class ControlNodeSession
     private readonly ControlCommandLedger _ledger;
 
     private readonly SemaphoreSlim _sendGate = new(1, 1);
+
+    /// <summary>等 <c>node.deregister.ack</c> 的一次性信号；同一时刻最多一个注销在飞。</summary>
+    private volatile TaskCompletionSource<bool>? _deregisterAck;
     private readonly SemaphoreSlim _stateChangedSignal = new(0, 1);
     private readonly Queue<DateTimeOffset> _recentCommands = new();
 
@@ -286,6 +289,12 @@ public sealed class ControlNodeSession
 
             case ControlFrameTypes.DesiredState:
                 ApplyDesiredState(frame);
+                break;
+
+            case ControlFrameTypes.DeregisterAck:
+                // `deregistered:false` 也算成功（幂等：本来就没登记）。收到任何 ack 即成功，
+                // 未知字段一律忽略——协议允许服务端在后面加字段。
+                _deregisterAck?.TrySetResult(true);
                 break;
 
             case ControlFrameTypes.Error:
@@ -557,6 +566,59 @@ public sealed class ControlNodeSession
             DisplayName = ControlNodeDisplayName.Resolve(state.DisplayName, _options.HostName),
             DesiredStateRevision = state.AppliedDesiredStateRevision
         };
+    }
+
+    /// <summary>
+    ///     自我注销：发一帧 <c>node.deregister</c> 并等 <c>node.deregister.ack</c>。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <b>只在退出登录与换组时由上层调用</b>；退出程序/关窗口/崩溃恢复/更新重启**都不调用**——
+    ///         服务端是"登记即列出"，关掉软件就注销会让这台教室机从控制台消失。
+    ///     </para>
+    ///     <para>
+    ///         走 <see cref="SendFrameAsync" />（因此排队在 <c>_sendGate</c> 后面）：直接写传输会插到
+    ///         <c>hello</c>/心跳中间，把帧泵的顺序打乱。超时或发送失败都**只返回 false**，
+    ///         绝不把异常抛给调用方——注销是尽力而为，退出流程不能因为它卡住。
+    ///     </para>
+    /// </remarks>
+    public async Task<bool> DeregisterAsync(string groupId, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(groupId))
+            return false;
+
+        var ack = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _deregisterAck = ack;
+
+        try
+        {
+            var sent = await SendFrameAsync(
+                new ControlFrame { Type = ControlFrameTypes.Deregister, GroupId = groupId },
+                cancellationToken).ConfigureAwait(false);
+
+            if (!sent)
+                return false;
+
+            using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutSource.CancelAfter(timeout);
+
+            var completed = await Task.WhenAny(ack.Task, Task.Delay(Timeout.Infinite, timeoutSource.Token))
+                .ConfigureAwait(false);
+            return completed == ack.Task;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogDebug(exception, "发送集控注销帧失败（不影响退出流程）。");
+            return false;
+        }
+        finally
+        {
+            _deregisterAck = null;
+        }
     }
 
     private async Task<bool> SendFrameAsync(ControlFrame frame, CancellationToken cancellationToken)

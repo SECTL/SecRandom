@@ -6,7 +6,7 @@
              x:DataType="vm:RollCallPageViewModel">
     <UserControl.Resources>
         <DataTemplate x:Key="RollCallAvatarTemplate" DataType="vm:RollCallResultItem">
-            <Border Width="72" Height="72"
+            <Border Width="{Binding ImageSize}" Height="{Binding ImageSize}"
                     Background="{DynamicResource ControlFillColorSecondaryBrush}"
                     BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                     BorderThickness="1"
@@ -21,7 +21,7 @@
                                IsVisible="{Binding IsPlaceholderVisible}"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
-                               FontSize="36"
+                               FontSize="{Binding InitialFontSize}"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                 </Grid>
