@@ -33,6 +33,9 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     private bool _refreshTimerRunning;
     private bool _autoMiniWindowTriggered;
 
+    /// <summary>时钟模式这一次显示是从什么时候开始的；-1 = 当前没有在显示时钟。</summary>
+    private long _clockDisplayStartedAt = -1;
+
     public TimerViewModel(MainConfigHandler configHandler)
     {
         _configHandler = configHandler;
@@ -55,6 +58,8 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     public void AttachRefresh()
     {
         _attachedViewCount++;
+        if (IsClockMode)
+            BeginClockDisplay();
         Refresh();
     }
 
@@ -65,6 +70,10 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     {
         if (_attachedViewCount > 0)
             _attachedViewCount--;
+
+        // 时钟没有"暂停"：窗口收起来就算这一次显示结束，下次打开重新计时
+        if (_attachedViewCount == 0)
+            _clockDisplayStartedAt = -1;
 
         UpdateRefreshTimer();
     }
@@ -258,6 +267,16 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
         _finished = false;
         _autoMiniWindowTriggered = false;
         _mode = mode;
+        if (mode == TimerMode.Clock)
+        {
+            if (_attachedViewCount > 0)
+                BeginClockDisplay();
+        }
+        else
+        {
+            _clockDisplayStartedAt = -1;
+        }
+
         Refresh();
     }
 
@@ -409,27 +428,43 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    ///     计时走过设定阈值时请求一次自动缩小。只评估、不切窗口：窗口归 TimerViewService 管。
+    ///     计时（或时钟显示）走过设定阈值时请求一次自动缩小。只评估、不切窗口：窗口归 TimerViewService 管。
     /// </summary>
     /// <remarks>
-    ///     走过的时间按**本次计时已经走了多久**算（倒计时用"总时长 − 剩余"，秒表用累计时间），
-    ///     与"还剩多少"无关。时钟模式不参与：它没有"开始"这个动作。
+    ///     走过的时间按**本次会话已经走了多久**算：倒计时用"总时长 − 剩余"，秒表用累计时间，
+    ///     时钟用它**已经显示了多久**（它没有开始/暂停，窗口开着就是在走）。三种模式各有开关，
+    ///     默认只开倒计时。时钟模式在窗口没显示时不计时，因此必须挂在可视期间才有意义。
     /// </remarks>
     private void TryRequestAutoMiniWindow()
     {
-        if (_disposed || IsClockMode)
+        if (_disposed || _attachedViewCount == 0)
             return;
 
-        var runningSeconds = IsCountdownMode
-            ? _totalSeconds - _remaining.TotalSeconds
-            : _elapsed.TotalSeconds;
+        var settings = _configHandler.Data.TimerSettings;
+        var (enabled, elapsedSeconds) = _mode switch
+        {
+            TimerMode.Countdown when _isRunning =>
+                (settings.AutoMiniWindowCountdownEnabled, _totalSeconds - _remaining.TotalSeconds),
+            TimerMode.Stopwatch when _isRunning =>
+                (settings.AutoMiniWindowStopwatchEnabled, _elapsed.TotalSeconds),
+            TimerMode.Clock when _clockDisplayStartedAt >= 0 =>
+                (settings.AutoMiniWindowClockEnabled,
+                    (_clock.ElapsedMilliseconds - _clockDisplayStartedAt) / 1000d),
+            _ => (false, 0d)
+        };
 
-        if (!_configHandler.Data.TimerSettings.ShouldShrinkToMiniWindow(
-                _isRunning, runningSeconds, _autoMiniWindowTriggered))
+        if (!settings.ShouldShrinkToMiniWindow(enabled, elapsedSeconds, _autoMiniWindowTriggered))
             return;
 
         _autoMiniWindowTriggered = true;
         AutoMiniWindowRequested?.Invoke();
+    }
+
+    /// <summary>开始一次时钟显示：阈值从头算，这一次已经缩过的标记也一起清掉。</summary>
+    private void BeginClockDisplay()
+    {
+        _clockDisplayStartedAt = _clock.ElapsedMilliseconds;
+        _autoMiniWindowTriggered = false;
     }
 
     private void UpdateTime()

@@ -517,9 +517,11 @@ public static class ControlSettingsLabels
         ["roll_call_control_panel_position"] = R(More, "S_RollCallPanelPosition"),
         ["lottery_control_panel_position"] = R(More, "S_LotteryPanelPosition"),
 
-        // ---------------- 计时器
-        ["auto_mini_window_enabled"] = R(Timer, "S_AutoMiniWindow"),
-        ["auto_mini_window_after_seconds"] = R(Timer, "S_AutoMiniWindow_AfterSeconds"),
+        // ---------------- 计时器：三种模式各一个开关，共用一个阈值
+        ["auto_mini_window_countdown_enabled"] = R(Timer, "S_AutoMiniWindow_Countdown"),
+        ["auto_mini_window_stopwatch_enabled"] = R(Timer, "S_AutoMiniWindow_Stopwatch"),
+        ["auto_mini_window_clock_enabled"] = R(Timer, "S_AutoMiniWindow_Clock"),
+        ["auto_mini_window_after_seconds"] = R(Timer, "S_AutoMiniWindow_Seconds"),
 
         // ---------------- 更多设置：页面控件开关（页面把整组开关放进一个多选框，没有逐项文案）
         ["roll_call_start_button"] = L(

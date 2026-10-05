@@ -6,7 +6,16 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Page_Title" xml:space="preserve"><value>计时器</value></data>
   <data name="S_AutoMiniWindow" xml:space="preserve"><value>自动缩小为小窗</value></data>
-  <data name="S_AutoMiniWindow_D" xml:space="preserve"><value>计时进行到设定时长后自动关闭大窗并打开置顶小窗</value></data>
+  <data name="S_AutoMiniWindow_D" xml:space="preserve"><value>计时走到设定时长后自动关闭大窗并打开置顶小窗</value></data>
+  <data name="S_AutoMiniWindow_Countdown" xml:space="preserve"><value>倒计时</value></data>
+  <data name="S_AutoMiniWindow_Countdown_D" xml:space="preserve"><value>倒计时进行到设定时长后自动缩成小窗</value></data>
+  <data name="S_AutoMiniWindow_Stopwatch" xml:space="preserve"><value>秒表</value></data>
+  <data name="S_AutoMiniWindow_Stopwatch_D" xml:space="preserve"><value>秒表计时到设定时长后自动缩成小窗</value></data>
+  <data name="S_AutoMiniWindow_Clock" xml:space="preserve"><value>时钟</value></data>
+  <data name="S_AutoMiniWindow_Clock_D" xml:space="preserve"><value>时钟显示到设定时长后自动缩成小窗</value></data>
   <data name="S_AutoMiniWindow_Seconds" xml:space="preserve"><value>自动缩小时间</value></data>
-  <data name="S_AutoMiniWindow_Seconds_D" xml:space="preserve"><value>计时开始多少秒之后自动缩成小窗</value></data>
+  <data name="S_AutoMiniWindow_Seconds_D" xml:space="preserve"><value>计时（时钟为显示时长）多少秒之后自动缩成小窗</value></data>
+  <data name="C_Preset30s" xml:space="preserve"><value>30 秒</value></data>
+  <data name="C_Preset1m" xml:space="preserve"><value>1 分钟</value></data>
+  <data name="C_Preset5m" xml:space="preserve"><value>5 分钟</value></data>
 </root>

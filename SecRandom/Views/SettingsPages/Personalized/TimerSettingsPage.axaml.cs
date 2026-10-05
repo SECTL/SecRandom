@@ -12,11 +12,12 @@ using SecRandom.ViewModels;
 namespace SecRandom.Views.SettingsPages.Personalized;
 
 /// <summary>
-///     计时器设置：计时进行到设定时长之后自动缩成小窗。
+///     计时器设置：倒计时/秒表/时钟各自是否自动缩成小窗，以及走到多久之后缩。
 /// </summary>
 /// <remarks>
 ///     页面只写 <c>MainConfigModel.TimerSettings</c>：真正的窗口切换在应用层的 <c>TimerViewService</c>
-///     里（它订阅 <c>TimerViewModel.AutoMiniWindowRequested</c>），设置改完不需要重启，下一次计时就生效。
+///     里（它订阅 <c>TimerViewModel.AutoMiniWindowRequested</c>），设置改完不需要重启，
+///     下一次计时（时钟是下一次显示）就生效；正在走的那一次不会中途被缩下去。
 /// </remarks>
 [PageInfo("settings.personalized.timer", FluentIcons.TimerFilled, "settings.personalized")]
 public partial class TimerSettingsPage : UserControl
@@ -55,6 +56,16 @@ public partial class TimerSettingsPage : UserControl
 
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
         _isSettingsSubscribed = false;
+    }
+
+    /// <summary>常用值快捷按钮：按钮的 <c>Tag</c> 就是秒数，写进设置后照常走 PropertyChanged 落盘。</summary>
+    private void PresetSeconds_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string tag } || !int.TryParse(tag, out var seconds))
+            return;
+
+        Settings.AutoMiniWindowAfterSeconds = Math.Clamp(
+            seconds, TimerSettingsConfig.MinAutoMiniWindowSeconds, TimerSettingsConfig.MaxAutoMiniWindowSeconds);
     }
 
     private void SubscribeSettings()

@@ -60,6 +60,33 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Timer {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 30 秒.
+        /// </summary>
+        public static string C_Preset30s {
+            get {
+                return ResourceManager.GetString("C_Preset30s", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 1 分钟.
+        /// </summary>
+        public static string C_Preset1m {
+            get {
+                return ResourceManager.GetString("C_Preset1m", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 5 分钟.
+        /// </summary>
+        public static string C_Preset5m {
+            get {
+                return ResourceManager.GetString("C_Preset5m", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 计时器.
         /// </summary>
         public static string Page_Title {
@@ -78,11 +105,47 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Timer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 计时进行到设定时长后自动关闭大窗并打开置顶小窗.
+        ///   Looks up a localized string similar to 计时走到设定时长后自动关闭大窗并打开置顶小窗.
         /// </summary>
         public static string S_AutoMiniWindow_D {
             get {
                 return ResourceManager.GetString("S_AutoMiniWindow_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 时钟.
+        /// </summary>
+        public static string S_AutoMiniWindow_Clock {
+            get {
+                return ResourceManager.GetString("S_AutoMiniWindow_Clock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 时钟显示到设定时长后自动缩成小窗.
+        /// </summary>
+        public static string S_AutoMiniWindow_Clock_D {
+            get {
+                return ResourceManager.GetString("S_AutoMiniWindow_Clock_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 倒计时.
+        /// </summary>
+        public static string S_AutoMiniWindow_Countdown {
+            get {
+                return ResourceManager.GetString("S_AutoMiniWindow_Countdown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 倒计时进行到设定时长后自动缩成小窗.
+        /// </summary>
+        public static string S_AutoMiniWindow_Countdown_D {
+            get {
+                return ResourceManager.GetString("S_AutoMiniWindow_Countdown_D", resourceCulture);
             }
         }
         
@@ -96,11 +159,29 @@ namespace SecRandom.Langs.SettingsPages.Personalized.Timer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 计时开始多少秒之后自动缩成小窗.
+        ///   Looks up a localized string similar to 计时（时钟为显示时长）多少秒之后自动缩成小窗.
         /// </summary>
         public static string S_AutoMiniWindow_Seconds_D {
             get {
                 return ResourceManager.GetString("S_AutoMiniWindow_Seconds_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 秒表.
+        /// </summary>
+        public static string S_AutoMiniWindow_Stopwatch {
+            get {
+                return ResourceManager.GetString("S_AutoMiniWindow_Stopwatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 秒表计时到设定时长后自动缩成小窗.
+        /// </summary>
+        public static string S_AutoMiniWindow_Stopwatch_D {
+            get {
+                return ResourceManager.GetString("S_AutoMiniWindow_Stopwatch_D", resourceCulture);
             }
         }
     }

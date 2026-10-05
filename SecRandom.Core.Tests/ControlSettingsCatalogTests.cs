@@ -92,7 +92,7 @@ public sealed class ControlSettingsCatalogTests
     }
 
     [Fact]
-    public void 读取_计时器两项都在目录里且阈值带上限值()
+    public void 读取_计时器三种模式与阈值都在目录里且阈值带上限值()
     {
         var model = new MainConfigModel();
         var fields = ControlSettingsCatalog.Describe(model)
@@ -100,14 +100,32 @@ public sealed class ControlSettingsCatalogTests
             .Fields
             .ToDictionary(field => field.Path, StringComparer.Ordinal);
 
-        // 整类只有这两项：开关与阈值。多出一项要么是模型里多写了字段，要么是目录把不该露的也放了出来。
+        // 整类只有这四项：三种模式各一个开关 + 一个共用阈值。多出一项要么是模型里多写了字段，
+        // 要么是目录把不该露的也放了出来。
         Assert.Equal(
-            ["timer.auto_mini_window_after_seconds", "timer.auto_mini_window_enabled"],
-            fields.Keys.Order(StringComparer.Ordinal).ToArray());
+        [
+            "timer.auto_mini_window_after_seconds",
+            "timer.auto_mini_window_clock_enabled",
+            "timer.auto_mini_window_countdown_enabled",
+            "timer.auto_mini_window_stopwatch_enabled"
+        ], fields.Keys.Order(StringComparer.Ordinal).ToArray());
 
-        Assert.True(fields["timer.auto_mini_window_enabled"].Writable);
-        Assert.Equal("bool", fields["timer.auto_mini_window_enabled"].Type);
-        Assert.Equal(model.TimerSettings.AutoMiniWindowEnabled, fields["timer.auto_mini_window_enabled"].Value);
+        // 默认状态也是协议的一部分：倒计时开、秒表与时钟关
+        Assert.True((bool)fields["timer.auto_mini_window_countdown_enabled"].Value!);
+        Assert.False((bool)fields["timer.auto_mini_window_stopwatch_enabled"].Value!);
+        Assert.False((bool)fields["timer.auto_mini_window_clock_enabled"].Value!);
+        Assert.All(
+            new[]
+            {
+                "timer.auto_mini_window_countdown_enabled",
+                "timer.auto_mini_window_stopwatch_enabled",
+                "timer.auto_mini_window_clock_enabled"
+            },
+            path =>
+            {
+                Assert.True(fields[path].Writable);
+                Assert.Equal("bool", fields[path].Type);
+            });
 
         // 阈值必须带上下限：控制台按它画数字框，也按它拒绝越界写入。
         Assert.Equal("int", fields["timer.auto_mini_window_after_seconds"].Type);
