@@ -35,15 +35,21 @@ namespace SecRandom.Services.ControlNode;
 ///         <c>node.restart</c> 已被服务端主动否决（不在授权表里），客户端也**不得实现**：
 ///         重启教室机等于打断正在上的课，且远程无法恢复。
 ///     </para>
+///     <para>
+///         <c>draw.trigger</c> 现在**带参数**：<c>target</c>/<c>list_name</c>/<c>count</c>/<c>gender</c>/<c>group</c>。
+///         不带载荷仍然是"按快抽默认名单抽一次"（旧控制台按钮的行为，必须保持），
+///         带 <c>target=roll_call</c> 则用点名会话在指定名单与条件下抽，并把结果留在教室机屏幕上。
+///         载荷解析与条件判定在 Core 的 <c>ControlDrawTriggerRequest</c> / <c>ControlDrawConditions</c> 里，
+///         落地执行在 <c>ControlDrawTriggerHandler</c> + <c>ControlPageDrawExecutor</c>。
+///     </para>
 /// </remarks>
 public sealed class ControlCommandDispatcher(
-    IControlDrawGate drawGate,
+    ControlDrawTriggerHandler drawTrigger,
     ControlMediaPlayHandler mediaPlay,
     ControlSettingsPatchHandler settingsPatch,
     ControlRosterPushHandler rosterPush,
     ControlRosterReadHandler rosterRead,
-    ControlSettingsReadHandler settingsRead,
-    ILogger<ControlCommandDispatcher> logger) : IControlCommandDispatcher
+    ControlSettingsReadHandler settingsRead) : IControlCommandDispatcher
 {
     public IReadOnlyList<string> DeclaredCapabilities { get; } =
     [
@@ -95,7 +101,8 @@ public sealed class ControlCommandDispatcher(
         {
             // 状态读取由心跳持续上报（版本/在线/当前名单摘要），命令形式只需确认收到即可。
             ControlCapabilities.StatusRead => ControlCommandOutcome.Success,
-            ControlCapabilities.DrawTrigger => await TriggerQuickDrawAsync(cancellationToken).ConfigureAwait(false),
+            ControlCapabilities.DrawTrigger =>
+                await drawTrigger.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
             ControlCapabilities.MediaPlay =>
                 await mediaPlay.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
             ControlCapabilities.SettingsWrite =>
@@ -118,45 +125,13 @@ public sealed class ControlCommandDispatcher(
         try
         {
             return await Dispatcher.UIThread.InvokeAsync(
-                () => IAppHost.GetService<QuickDrawPageViewModel>().IsDrawing);
+                () => IAppHost.GetService<QuickDrawPageViewModel>().IsDrawing
+                      || IAppHost.GetService<RollCallPageViewModel>().IsDrawing);
         }
         catch (Exception)
         {
             // 取不到状态时不阻断命令：宁可让命令继续，也不要因为读不到界面状态就永久拒绝远程操作。
             return false;
-        }
-    }
-
-    private async Task<ControlCommandOutcome> TriggerQuickDrawAsync(CancellationToken cancellationToken)
-    {
-        if (drawGate.IsDrawLocked)
-            return ControlCommandOutcome.Failure("draw_locked", new { draw_locked = true });
-
-        try
-        {
-            var drawn = await Dispatcher.UIThread.InvokeAsync(async () =>
-            {
-                // 页面 ViewModel 在这里才解析：Host 启动是在线程池线程上构造托管服务的，
-                // 在构造函数里创建界面对象会把它绑到错误的线程上。
-                var quickDraw = IAppHost.GetService<QuickDrawPageViewModel>();
-
-                // 让课堂看到滚动动画与结果：远程抽取不能悄悄发生。
-                App.ShowQuickDrawWindow();
-                return await quickDraw.StartRemoteDrawAsync(cancellationToken);
-            });
-
-            return drawn
-                ? ControlCommandOutcome.Success
-                : ControlCommandOutcome.Failure("draw_denied");
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception exception)
-        {
-            logger.LogWarning(exception, "集控远程抽取执行失败。");
-            return ControlCommandOutcome.Failure(ControlRejectReasons.ExecutionFailed);
         }
     }
 }

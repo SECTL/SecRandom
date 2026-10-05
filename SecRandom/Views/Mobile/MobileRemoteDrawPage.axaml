@@ -1,0 +1,151 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:SecRandom.Views.Mobile"
+             xmlns:langs="using:SecRandom.Langs.Mobile"
+             xmlns:cp="using:SecRandom.Shared.Models.ControlPlane"
+             xmlns:vm="using:SecRandom.ViewModels.Mobile"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:system="clr-namespace:System;assembly=System.Runtime"
+             x:Class="SecRandom.Views.Mobile.MobileRemoteDrawPage"
+             x:DataType="local:MobileRemoteDrawPage">
+
+    <UserControl.Styles>
+        <!-- 不能用于抽取的设备照样列出，但整行置灰：藏起来只会让人以为设备没连上。 -->
+        <Style Selector="Border.device-disabled">
+            <Setter Property="Opacity" Value="0.45" />
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="720" Margin="12" Spacing="10" Classes="animated-intro">
+
+            <TextBlock Text="{x:Static langs:Resources.P_RemoteDraw}" FontSize="20" FontWeight="SemiBold" />
+            <TextBlock Text="{x:Static langs:Resources.RD_Hint}" Opacity="0.7" TextWrapping="Wrap" />
+
+            <!-- 未登录、没有组、没有设备、角色不足、设备不支持：每一种都要说清楚，不留空白页。 -->
+            <Border IsVisible="{Binding ViewModel.HasEmptyState}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8"
+                    Padding="12">
+                <TextBlock Text="{Binding ViewModel.EmptyStateText}" TextWrapping="Wrap" />
+            </Border>
+
+            <!-- 设备选择：跨组扁平列表，名称/组/在线/本机开关/能否抽取一眼看全。 -->
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <StackPanel Grid.Column="0" Spacing="2">
+                    <TextBlock Text="{x:Static langs:Resources.RD_SelectedDevice}" FontSize="12" Opacity="0.6" />
+                    <TextBlock Text="{Binding ViewModel.DeviceSummary}" TextWrapping="Wrap" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding ViewModel.DevicesCountText}" FontSize="12" Opacity="0.6" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        VerticalAlignment="Top"
+                        Content="{x:Static langs:Resources.RD_Refresh}"
+                        Command="{Binding ViewModel.RefreshCommand}" />
+            </Grid>
+
+            <ListBox ItemsSource="{Binding ViewModel.Devices}"
+                     SelectedItem="{Binding ViewModel.SelectedDevice}"
+                     MaxHeight="360"
+                     HorizontalAlignment="Stretch">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:DeviceRow">
+                        <Border Classes.device-disabled="{Binding !IsUsable}" Padding="2">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="{Binding DeviceLabel}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{Binding GroupLabel}" FontSize="12" Opacity="0.7" />
+                                    <TextBlock Text="{Binding StatusText}" FontSize="12" Opacity="0.7" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding UnavailableReason}"
+                                           IsVisible="{Binding HasUnavailableReason}"
+                                           FontSize="12"
+                                           Opacity="0.8"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- 部分组读不到：只说那一组，其余设备照常可用。 -->
+            <Border IsVisible="{Binding ViewModel.HasUnavailableGroups}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8"
+                    Padding="12">
+                <ItemsControl ItemsSource="{Binding ViewModel.UnavailableGroups}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="system:String">
+                            <TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+
+            <Button Content="{x:Static langs:Resources.RD_LoadRoster}"
+                    Command="{Binding ViewModel.LoadRosterCommand}"
+                    IsEnabled="{Binding ViewModel.CanLoadRoster}"
+                    HorizontalAlignment="Stretch" />
+
+            <sr:Field Label="{x:Static langs:Resources.RD_List}" IsVisible="{Binding ViewModel.HasRoster}">
+                <ComboBox ItemsSource="{Binding ViewModel.Rosters}"
+                          SelectedItem="{Binding ViewModel.SelectedRoster}"
+                          HorizontalAlignment="Stretch">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RosterOption">
+                            <TextBlock Text="{Binding DisplayLabel}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </sr:Field>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding ViewModel.HasRoster}">
+                <sr:Field Grid.Column="0" Label="{x:Static langs:Resources.RD_Gender}">
+                    <ComboBox ItemsSource="{Binding ViewModel.GenderOptions}"
+                              SelectedItem="{Binding ViewModel.SelectedGender}"
+                              HorizontalAlignment="Stretch" />
+                </sr:Field>
+                <sr:Field Grid.Column="1" Label="{x:Static langs:Resources.RD_GroupScope}">
+                    <ComboBox ItemsSource="{Binding ViewModel.GroupOptions}"
+                              SelectedItem="{Binding ViewModel.SelectedGroupScope}"
+                              HorizontalAlignment="Stretch" />
+                </sr:Field>
+            </Grid>
+
+            <sr:Field Label="{x:Static langs:Resources.RD_Count}" IsVisible="{Binding ViewModel.HasRoster}">
+                <ComboBox ItemsSource="{Binding ViewModel.CountOptions}"
+                          SelectedItem="{Binding ViewModel.SelectedCount}"
+                          HorizontalAlignment="Stretch" />
+            </sr:Field>
+
+            <Button Classes="accent"
+                    Content="{x:Static langs:Resources.RD_Draw}"
+                    Command="{Binding ViewModel.DrawCommand}"
+                    IsEnabled="{Binding ViewModel.CanDraw}"
+                    HorizontalContentAlignment="Center"
+                    HorizontalAlignment="Stretch" />
+
+            <ProgressBar IsIndeterminate="True" IsVisible="{Binding ViewModel.IsBusy}" />
+
+            <TextBlock Text="{Binding ViewModel.StatusText}" TextWrapping="Wrap" />
+
+            <Border IsVisible="{Binding ViewModel.HasResult}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8"
+                    Padding="12">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="{x:Static langs:Resources.RD_Drawn}" FontWeight="SemiBold" />
+                    <ItemsControl ItemsSource="{Binding ViewModel.DrawnMembers}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="cp:NodeCommandDrawnMember">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{Binding DisplayLabel}" FontSize="16" />
+                                    <TextBlock Text="{Binding SecondaryLabel}" Opacity="0.6" FontSize="14" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

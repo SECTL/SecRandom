@@ -1,4 +1,6 @@
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using SecRandom.Core.Models;
 using SecRandom.Shared.Models.ControlNode;
 using SecRandom.Shared.Models.Profile;
@@ -63,6 +65,57 @@ public sealed record ControlMediaPlayRequest(string Action, string Text)
 public sealed record ControlSettingsChange(string Path, object Value);
 
 /// <summary>
+///     集控**入站载荷**的字节预算：一份载荷必须装得进一帧（64 KiB）才可能被执行。
+/// </summary>
+/// <remarks>
+///     <para>
+///         为什么写在解析的最前面：超限帧是**发送侧无法补救**的——客户端传输层
+///         （<c>WebSocketControlNodeTransport</c>）收到超过 <see cref="ControlProtocolJson.MaxFrameBytes" />
+///         的帧会直接结束整条连接，连一个 <c>command.result</c> 都回不去。
+///         控制台看到的是设备掉线，而真实原因是"这条命令太大"。
+///     </para>
+///     <para>
+///         所以写入类载荷（<c>settings.write</c> / <c>roster.write</c>）在读任何字段之前先量字节：
+///         量法与传输层同一把尺子（同一份 <see cref="ControlProtocolJson" /> 序列化设置），
+///         报出的 <c>payload_too_large:&lt;bytes&gt;:&lt;budget&gt;</c> 里带着两个真实数字，
+///         控制台据此就能告诉管理员"这份数据比一帧能装下的大多少"，而不是让他去猜设备为什么掉线。
+///     </para>
+/// </remarks>
+internal static class ControlPayloadBudget
+{
+    /// <summary>
+    ///     载荷在预算之内吗？超预算时 <paramref name="reason" /> 是可直接回给控制台的原因码。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         量的是**真实序列化结果**（<c>GetRawText()</c> 之后按 UTF-8 计字节），
+    ///         不是字符数：一个中文字符 3 个字节，按字符数估会把预算高估三倍，
+    ///         而这条闸门差一点点就是一次掉线。非对象/空载荷一律放过，交给各自的字段校验去拒绝。
+    ///     </para>
+    ///     <para>
+    ///         ⚠️ 调用方**必须用一个自己的局部变量**接 <paramref name="reason" /> 再决定是否赋给
+    ///         真正的原因码：本方法在通过时也会写这个 out 参数，直接传调用方的 <c>reason</c>
+    ///         会把"invalid_command"这类默认原因码清成空串，于是后面所有
+    ///         <c>return false</c> 都返回一个**没有原因**的拒绝。
+    ///     </para>
+    /// </remarks>
+    public static bool IsWithinBudget(JsonElement? payload, out string reason)
+    {
+        reason = string.Empty;
+
+        if (payload is not { ValueKind: not JsonValueKind.Undefined } element)
+            return true;
+
+        var bytes = Encoding.UTF8.GetByteCount(element.GetRawText());
+        if (bytes <= ControlProtocolJson.PayloadBudgetBytes)
+            return true;
+
+        reason = $"payload_too_large:{bytes}:{ControlProtocolJson.PayloadBudgetBytes}";
+        return false;
+    }
+}
+
+/// <summary>
 ///     <c>settings.write</c> 可远程写入的设置白名单。
 /// </summary>
 /// <remarks>
@@ -95,11 +148,26 @@ public static class ControlSettingsWhitelist
     ///     校验整份 patch 并给出可应用的计划。**任何一项不可写就整体失败**，
     ///     原因里带上具体路径：否则管理员只看到"被拒绝"，分不清是自己发错了名字还是设备不支持。
     /// </summary>
+    /// <remarks>
+    ///     解析之前先过字节预算：一份超限的 patch 同样发不出去（超限帧会让整条集控连接被断掉），
+    ///     而"哪一项不可写"是**在这份载荷确实能送达**之后才轮得到的问题。
+    /// </remarks>
     public static bool TryPlan(
         JsonElement? payload,
         out IReadOnlyList<ControlSettingsChange> changes,
-        out string reason) =>
-        ControlSettingsCatalog.TryPlan(payload, out changes, out reason);
+        out string reason)
+    {
+        changes = [];
+
+        // 用局部变量接：通过时这个 out 参数也会被写，直接传 reason 会把上面的默认原因码清掉。
+        if (!ControlPayloadBudget.IsWithinBudget(payload, out var budgetReason))
+        {
+            reason = budgetReason;
+            return false;
+        }
+
+        return ControlSettingsCatalog.TryPlan(payload, out changes, out reason);
+    }
 
     /// <summary>把已校验的变更应用到配置模型上。调用方负责线程与落盘。</summary>
     public static void Apply(MainConfigModel model, IReadOnlyList<ControlSettingsChange> changes) =>
@@ -138,29 +206,60 @@ public static class RosterWriteModes
 ///     已规范化的标签（trim / 丢空项 / 去重，分隔符与名单导入一致）。
 ///     <c>null</c> = 本次未下发（合并时保留设备上的原值）；<c>[]</c> = 明确清空。
 /// </param>
+/// <param name="SpecificVoiceAlias">「特殊语音」的 TTS 别名。<c>null</c> = 本次未下发，空串 = 明确清空。</param>
+/// <param name="SpecificVoicePrefix">「特殊语音」的播报前缀，同上。</param>
+/// <param name="SpecificVoiceSuffix">「特殊语音」的播报后缀，同上。</param>
 public sealed record ControlRosterStudentInput(
     string Id,
     string Name,
     string Gender,
     string Group,
     bool Exists,
-    IReadOnlyList<string>? Tags = null)
+    IReadOnlyList<string>? Tags = null,
+    string? SpecificVoiceAlias = null,
+    string? SpecificVoicePrefix = null,
+    string? SpecificVoiceSuffix = null)
 {
+    /// <summary>本条载荷下发的特殊语音三个字段（<c>null</c> 表示这一项本次不下发）。</summary>
+    /// <remarks>
+    ///     派生出来的取值助手，**不是**协议字段，所以 <c>[JsonIgnore]</c> 必须留着：
+    ///     System.Text.Json 认得公开属性，一旦这个记录被序列化（量载荷尺寸、日志、调试导出都会），
+    ///     每条成员就会多出一个 <c>"specific_voice":{"alias":…,"prefix":…,"suffix":…}</c>——
+    ///     三个值换个名字重抄一遍，一个都没下发时也白送 35 字节。
+    ///     协议里的字段只有那一组扁平的 <c>specific_voice_*</c>（§4.5.6）。
+    /// </remarks>
+    [JsonIgnore]
+    public ControlSpecificVoiceValues SpecificVoice =>
+        new(SpecificVoiceAlias, SpecificVoicePrefix, SpecificVoiceSuffix);
+
     /// <summary>把这条输入落成一个名单成员（<c>replace</c> 重建与 <c>merge</c> 追加共用）。</summary>
     /// <remarks>
-    ///     没下发标签时**显式**落成空串：<c>replace</c> 是按载荷重建整份名单，载荷里没给就是
-    ///     设备上没有，不能指望 <see cref="Student.Tags" /> 的默认值"恰好是空的"。
-    ///     合并模式命中已有成员时走不到这里，否则一次改名就会清掉那台机器的标签。
+    ///     <para>
+    ///         没下发标签时**显式**落成空串：<c>replace</c> 是按载荷重建整份名单，载荷里没给就是
+    ///         设备上没有，不能指望 <see cref="Student.Tags" /> 的默认值"恰好是空的"。
+    ///         合并模式命中已有成员时走不到这里，否则一次改名就会清掉那台机器的标签。
+    ///     </para>
+    ///     <para>
+    ///         特殊语音同一条规则，但连"显式落空"都不用写：新建的成员身上本来就没有那个附加设置键，
+    ///         <see cref="ControlSpecificVoiceValues.WriteTo" /> 在三个字段都没下发时什么都不做，
+    ///         落到设备上就是"这个人没有专属语音"。
+    ///     </para>
     /// </remarks>
-    public Student ToStudent() => new()
+    public Student ToStudent()
     {
-        Id = Id,
-        Name = Name,
-        Gender = Gender,
-        Group = Group,
-        Exists = Exists,
-        Tags = Tags is { Count: > 0 } tags ? string.Join(' ', tags) : string.Empty
-    };
+        var student = new Student
+        {
+            Id = Id,
+            Name = Name,
+            Gender = Gender,
+            Group = Group,
+            Exists = Exists,
+            Tags = Tags is { Count: > 0 } tags ? string.Join(' ', tags) : string.Empty
+        };
+
+        SpecificVoice.WriteTo(student);
+        return student;
+    }
 }
 
 /// <summary>
@@ -182,25 +281,46 @@ public sealed record ControlRosterStudentInput(
 ///     已规范化的标签（trim / 丢空项 / 去重，分隔符与名单导入一致）。
 ///     <c>null</c> = 本次未下发（合并时保留设备上的原值）；<c>[]</c> = 明确清空。
 /// </param>
+/// <param name="SpecificVoiceAlias">「特殊语音」的 TTS 别名。<c>null</c> = 本次未下发，空串 = 明确清空。</param>
+/// <param name="SpecificVoicePrefix">「特殊语音」的播报前缀，同上。</param>
+/// <param name="SpecificVoiceSuffix">「特殊语音」的播报后缀，同上。</param>
 public sealed record ControlRosterPrizeInput(
     string Id,
     string Name,
     int Count,
     double Weight,
     bool Exists,
-    IReadOnlyList<string>? Tags = null)
+    IReadOnlyList<string>? Tags = null,
+    string? SpecificVoiceAlias = null,
+    string? SpecificVoicePrefix = null,
+    string? SpecificVoiceSuffix = null)
 {
+    /// <summary>本条载荷下发的特殊语音三个字段（<c>null</c> 表示这一项本次不下发）。</summary>
+    /// <remarks>派生属性，不是协议字段，理由同 <see cref="ControlRosterStudentInput.SpecificVoice" />。</remarks>
+    [JsonIgnore]
+    public ControlSpecificVoiceValues SpecificVoice =>
+        new(SpecificVoiceAlias, SpecificVoicePrefix, SpecificVoiceSuffix);
+
     /// <summary>把这条输入落成一个奖品（<c>replace</c> 重建与 <c>merge</c> 追加共用）。</summary>
-    /// <remarks>没下发标签时显式落成空串，理由同 <see cref="ControlRosterStudentInput.ToStudent" />。</remarks>
-    public Prize ToPrize() => new()
+    /// <remarks>
+    ///     没下发标签时显式落成空串，理由同 <see cref="ControlRosterStudentInput.ToStudent" />；
+    ///     特殊语音也与学生那侧同一条规则（它是**两种名单共用**的附加设置）。
+    /// </remarks>
+    public Prize ToPrize()
     {
-        Id = Id,
-        Name = Name,
-        Count = Count,
-        Weight = Weight,
-        Exists = Exists,
-        Tags = Tags is { Count: > 0 } tags ? string.Join(' ', tags) : string.Empty
-    };
+        var prize = new Prize
+        {
+            Id = Id,
+            Name = Name,
+            Count = Count,
+            Weight = Weight,
+            Exists = Exists,
+            Tags = Tags is { Count: > 0 } tags ? string.Join(' ', tags) : string.Empty
+        };
+
+        SpecificVoice.WriteTo(prize);
+        return prize;
+    }
 }
 
 /// <summary>
@@ -227,7 +347,22 @@ public sealed record ControlRosterPushRequest(
     string RosterKind = ControlRosterPushRequest.StudentsKind,
     IReadOnlyList<ControlRosterPrizeInput>? Prizes = null)
 {
-    /// <summary>单次下发的人数上限。</summary>
+    /// <summary>
+    ///     单次下发的人数上限——**只是粗筛，真正的闸门是字节预算**。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         人数相等**不等于**字节数相等：姓名长度、标签条数、特殊语音的别名/前缀/后缀
+    ///         都会让"同样 60 人"差出几倍；2000 个长姓名成员的载荷约 190–280 KB，
+    ///         是 64 KiB 单帧上限的 3–4 倍，一次下发就能把那台机器的集控连接打掉。
+    ///         真正决定能不能送达的是 <see cref="ControlProtocolJson.PayloadBudgetBytes" />，
+    ///         见 <see cref="TryParse" /> 开头的 <c>payload_too_large</c>。
+    ///     </para>
+    ///     <para>
+    ///         2000 这个数仍然保留：正常班级远小于此，上限只用于挡住明显异常的输入，
+    ///         让"一眼就错"的载荷在解析成员之前就被拒掉——它是快速筛，不是最终判据。
+    ///     </para>
+    /// </remarks>
     public const int MaxStudents = 2000;
 
     /// <summary>单次下发的奖品条数上限，**就是 <see cref="MaxStudents" />**。</summary>
@@ -259,6 +394,20 @@ public sealed record ControlRosterPushRequest(
 
         if (payload is not { ValueKind: JsonValueKind.Object } root)
             return false;
+
+        // 字节预算**先于一切解析**，而且点名与奖池两条分支共用这一道：
+        //   · 人数上限（MaxStudents）只是粗筛，拦不住"人数不多但字段很长"的载荷，
+        //     也拦不住姓名/标签/特殊语音把同样 60 人撑到几倍；
+        //   · 超限帧在传输层是致命的（整条连接被断掉，控制台只看到设备掉线），
+        //     所以必须在解析成员之前就说清楚"太大了"，而不是等到发送时才失败。
+        //
+        // 用局部变量接 reason：预算通过时它也会被写，直接传 reason 会把上面
+        // "invalid_command" 那个默认原因码清空，后续每个 return false 都会返回空原因。
+        if (!ControlPayloadBudget.IsWithinBudget(root, out var budgetReason))
+        {
+            reason = budgetReason;
+            return false;
+        }
 
         // 先分流再校验：类型决定后面该读哪个数组，判不出类型就没法继续。
         var kind = StudentsKind;
@@ -320,6 +469,13 @@ public sealed record ControlRosterPushRequest(
                 return false;
             }
 
+            if (!TryReadSpecificVoice(element, out var voice))
+            {
+                // 与 tags 同一条理由：认得的字段给了坏值就整条拒绝，不能悄悄降级成"没下发"。
+                reason = ControlRejectReasons.InvalidCommand;
+                return false;
+            }
+
             var student = new ControlRosterStudentInput(
                 ReadString(element, "id"),
                 ReadString(element, "name"),
@@ -328,7 +484,10 @@ public sealed record ControlRosterPushRequest(
                 // 缺 enabled 视为启用：兼容只发学号姓名的调用方。
                 !element.TryGetProperty("enabled", out var enabledElement)
                 || enabledElement.ValueKind != JsonValueKind.False,
-                tags);
+                tags,
+                voice.Alias,
+                voice.Prefix,
+                voice.Suffix);
 
             // 只排除"学号与姓名都空"的行（与本地导入同一条规则）。
             // **不能**用 IsCandidate 过滤：它要求 Exists（启用），而"已停用"是名单里的正常状态
@@ -357,10 +516,16 @@ public sealed record ControlRosterPushRequest(
 
     /// <summary>解析奖池载荷（<c>roster_kind: "prizes"</c> + <c>prizes[]</c>）。</summary>
     /// <remarks>
-    ///     校验次序、原因码与点名那一侧逐条对应：结构错 → <c>invalid_command</c>，
-    ///     某一行坏掉 → <c>invalid_prize_entry</c>，一行都不剩 → <c>empty_roster</c>，超上限 → <c>roster_too_large</c>。
-    ///     坏 <c>tags</c> 用的仍是点名那侧的 <c>invalid_command</c>（<see cref="TryReadTags" />），
-    ///     两个通道对同一个字段说的话必须一致。
+    ///     <para>
+    ///         字节预算不在这里重复判：<see cref="TryParse" /> 在**分流之前**已经统一量过一次，
+    ///         点名与奖池共用那一道闸门（奖池载荷同样是几百 KB 级，再量一次只是白白多复制一遍原始 JSON）。
+    ///     </para>
+    ///     <para>
+    ///         校验次序、原因码与点名那一侧逐条对应：结构错 → <c>invalid_command</c>，
+    ///         某一行坏掉 → <c>invalid_prize_entry</c>，一行都不剩 → <c>empty_roster</c>，超上限 → <c>roster_too_large</c>。
+    ///         坏 <c>tags</c> 用的仍是点名那侧的 <c>invalid_command</c>（<see cref="TryReadTags" />），
+    ///         两个通道对同一个字段说的话必须一致。
+    ///     </para>
     /// </remarks>
     private static bool TryParsePrizes(
         JsonElement root,
@@ -391,6 +556,13 @@ public sealed record ControlRosterPushRequest(
                 return false;
             }
 
+            if (!TryReadSpecificVoice(element, out var voice))
+            {
+                // 特殊语音在两种名单里是同一个字段名，坏值也回同一个码（与 tags 一致）。
+                reason = ControlRejectReasons.InvalidCommand;
+                return false;
+            }
+
             if (!TryReadCount(element, out var count) || !TryReadWeight(element, out var weight))
             {
                 reason = "invalid_prize_entry";
@@ -405,7 +577,10 @@ public sealed record ControlRosterPushRequest(
                 // 缺 enabled 视为启用：与学生那一侧同一条规则。
                 !element.TryGetProperty("enabled", out var enabledElement)
                 || enabledElement.ValueKind != JsonValueKind.False,
-                tags);
+                tags,
+                voice.Alias,
+                voice.Prefix,
+                voice.Suffix);
 
             // 只排除"编号与奖品名都空"的行（与本地导入、点名名单同一条规则）。
             if (string.IsNullOrWhiteSpace(prize.Id) && string.IsNullOrWhiteSpace(prize.Name))
@@ -508,6 +683,50 @@ public sealed record ControlRosterPushRequest(
         tags = ControlRosterMemberPayload.NormalizeTags(string.Join(' ', raw)) ?? [];
         return true;
     }
+
+    /// <summary>
+    ///     读一条成员输入里的三个「特殊语音」字段；返回 <c>false</c> 表示格式不合法。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         三态与 <c>tags</c> 逐条对应：字段缺失或 <c>null</c> = 本次不下发（合并时保留设备上的原值），
+    ///     空串 = 明确清空，非空 = 覆盖。三者都给了就整体下发，只给其中一项也只改那一项——
+    ///     三项是**同一件事的三个部分**（前缀 + 别名 + 后缀拼成一句播报），所以这里逐字段独立判三态，
+    ///     而不是"有一个没给就整组作废"。
+    ///     </para>
+    ///     <para>
+    ///         值只做 trim：纯空白等于空串（清空），与读通道"空串等于没有"是同一条约定。
+    ///     字段给了非字符串（数字、数组、对象）一律整条拒绝而不是当成"没下发"——
+    ///     当成没下发的话，控制台会以为写进去了，设备上却什么都没变。
+    ///     </para>
+    /// </remarks>
+    private static bool TryReadSpecificVoice(JsonElement element, out ControlSpecificVoiceValues voice)
+    {
+        voice = default;
+
+        if (!TryReadOptionalString(element, ControlSpecificVoiceValues.AliasField, out var alias)
+            || !TryReadOptionalString(element, ControlSpecificVoiceValues.PrefixField, out var prefix)
+            || !TryReadOptionalString(element, ControlSpecificVoiceValues.SuffixField, out var suffix))
+            return false;
+
+        voice = new ControlSpecificVoiceValues(alias, prefix, suffix);
+        return true;
+    }
+
+    /// <summary>读一个可省略的字符串字段：缺失或 <c>null</c> 是"没下发"，给了就必须是字符串。</summary>
+    private static bool TryReadOptionalString(JsonElement element, string propertyName, out string? value)
+    {
+        value = null;
+
+        if (!element.TryGetProperty(propertyName, out var property) || property.ValueKind == JsonValueKind.Null)
+            return true;
+
+        if (property.ValueKind != JsonValueKind.String)
+            return false;
+
+        value = (property.GetString() ?? string.Empty).Trim();
+        return true;
+    }
 }
 
 /// <summary><c>roster.write</c> 的合并规则。</summary>
@@ -526,6 +745,10 @@ public static class ControlRosterMerge
     ///         标签只在**本次下发了**的时候才写（<see cref="ControlRosterStudentInput.Tags" /> 为
     ///         <c>null</c> 就是没下发）。控制台常常只改一个人的名字，把"没提"当成"清空"
     ///         会让这一次改名变成整台机器的标签全灭。
+    ///     </para>
+    ///     <para>
+    ///         特殊语音同一条规则：<see cref="ControlRosterStudentInput.SpecificVoice" /> 三项全 <c>null</c>
+    ///         时一个字都不动，避免了"改个名字顺手把这台机器的专属语音清掉"。
     ///     </para>
     /// </remarks>
     public static List<Student> Merge(StudentList? existing, IReadOnlyList<ControlRosterStudentInput> incoming)
@@ -556,6 +779,9 @@ public static class ControlRosterMerge
                 if (student.Tags is { } tags)
                     current.Tags = string.Join(' ', tags);
 
+                // 没下发特殊语音就保持原值（WriteTo 自己判三态），下发了空串则是明确清空。
+                student.SpecificVoice.WriteTo(current);
+
                 continue;
             }
 
@@ -585,6 +811,10 @@ public static class ControlRosterMerge
     ///         标签只在**本次下发了**的时候才写（<see cref="ControlRosterPrizeInput.Tags" /> 为
     ///         <c>null</c> 就是没下发）；数量与权重是整行的字段，命中时照载荷覆盖。
     ///     </para>
+    ///     <para>
+    ///         特殊语音与学生那侧同一条规则（同一个附加设置、同一个三态），
+    ///         见 <see cref="Merge(StudentList?, IReadOnlyList{ControlRosterStudentInput})" />。
+    ///     </para>
     /// </remarks>
     public static List<Prize> MergePrizes(PrizeList? existing, IReadOnlyList<ControlRosterPrizeInput> incoming)
     {
@@ -613,6 +843,9 @@ public static class ControlRosterMerge
                 // 没下发标签就保持设备上的原值：这一行是"改个奖品名不该毁掉标签"的落点。
                 if (prize.Tags is { } tags)
                     current.Tags = string.Join(' ', tags);
+
+                // 没下发特殊语音就保持原值（WriteTo 自己判三态），下发了空串则是明确清空。
+                prize.SpecificVoice.WriteTo(current);
 
                 continue;
             }

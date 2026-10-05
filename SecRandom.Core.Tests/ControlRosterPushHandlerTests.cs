@@ -3,11 +3,14 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Services.ControlNode;
 using SecRandom.Shared;
+using SecRandom.Shared.Extensions;
+using SecRandom.Shared.Interfaces;
 using SecRandom.Shared.Models.ControlNode;
 using SecRandom.Shared.Models.Profile;
 
@@ -160,12 +163,160 @@ public sealed class ControlRosterPushHandlerTests : IDisposable
         Assert.Null(catalog.LoadPrizeList("元旦抽奖"));
     }
 
+    /// <summary>
+    ///     「特殊语音」跟着成员一起落盘，也一起被读回来。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         这条断言真正钉住的是**存储链**：附加设置存在 <c>Student.AttachedObjects</c> 里，
+    ///         名单文件用 snake_case 写盘、读回来时值是 <c>JsonElement</c>，
+    ///         必须由 <c>GetAttachedObject&lt;T&gt;</c> 按同一套命名策略反序列化。
+    ///         这一环断了的表现是"写进去成功、读出来永远没有"——没有异常，也没有日志。
+    ///     </para>
+    ///     <para>
+    ///         这里走的是 <see cref="IProfileCatalogManager.LoadStudentList" />（真的重新读文件），
+    ///         而不是拿着内存里那个对象自查。
+    ///     </para>
+    /// </remarks>
+    [Fact]
+    public void 名单下发_特殊语音随名单落盘并能重新读回来()
+    {
+        using var provider = CreateProvider();
+        var catalog = provider.GetRequiredService<IProfileCatalogManager>();
+        var handler = CreateHandler(provider);
+
+        var outcome = handler.Apply(Parse(
+            """
+            { "list_name": "高一1班", "mode": "replace",
+              "students": [ { "id": "01", "name": "张三",
+                              "specific_voice_alias": "张老师",
+                              "specific_voice_prefix": "请",
+                              "specific_voice_suffix": "上台" },
+                            { "id": "02", "name": "李四" } ] }
+            """));
+
+        Assert.True(outcome.Ok, outcome.Reason);
+
+        var list = catalog.LoadStudentList("高一1班");
+
+        Assert.NotNull(list);
+
+        var voice = Voice(Assert.Single(list.Students, student => student.Id == "01"));
+
+        Assert.NotNull(voice);
+        Assert.True(voice!.IsAttachSettingsEnabled);
+        Assert.Equal("张老师", voice.TtsAlias);
+        Assert.Equal("请", voice.Prefix);
+        Assert.Equal("上台", voice.Suffix);
+
+        // replace 下没提这一项的行在设备上就是"没有这项附加设置"，不是"有三个空串"。
+        Assert.Null(Voice(Assert.Single(list.Students, student => student.Id == "02")));
+
+        // 读通道从同一个键取同一份值。
+        var member = ControlRosterMemberPayload.FromStudent(Assert.Single(list.Students, student => student.Id == "01"));
+
+        Assert.Equal("张老师", member.SpecificVoiceAlias);
+    }
+
+    /// <summary>
+    ///     <c>merge</c> 下没提特殊语音时**一个字都不动**——控制台只回写改过的行，
+    ///     把"没提"当成"清空"会让一次改名顺手把这台机器的专属语音抹掉。
+    /// </summary>
+    [Fact]
+    public void 名单下发_合并模式没提特殊语音时不动设备上的值()
+    {
+        using var provider = CreateProvider();
+        var catalog = provider.GetRequiredService<IProfileCatalogManager>();
+        var handler = CreateHandler(provider);
+
+        var existing = new Student { Id = "01", Name = "张三" };
+        AttachVoice(existing, "张老师", "请", "上台");
+        Assert.True(catalog.ReplaceStudents("高一1班", [existing]));
+
+        var outcome = handler.Apply(Parse(
+            """
+            { "list_name": "高一1班", "mode": "merge",
+              "students": [ { "id": "01", "name": "张三丰" } ] }
+            """));
+
+        Assert.True(outcome.Ok, outcome.Reason);
+
+        var student = Assert.Single(catalog.LoadStudentList("高一1班")!.Students);
+
+        Assert.Equal("张三丰", student.Name);
+
+        var voice = Voice(student);
+
+        Assert.NotNull(voice);
+        Assert.Equal("张老师", voice!.TtsAlias);
+        Assert.Equal("请", voice.Prefix);
+        Assert.Equal("上台", voice.Suffix);
+        Assert.True(voice.IsAttachSettingsEnabled);
+    }
+
+    /// <summary>
+    ///     显式空串是"明确清空"：三项都给空串 → 附加设置开关跟着关掉，读通道于是什么都不报。
+    /// </summary>
+    /// <remarks>
+    ///     开关必须关：语音服务只在开关打开时读这三个值，留着一个"打开但三项全空"的附加设置，
+    ///     下一次读通道回出去的是一组空值，控制台会把它当成"设备上真的存了空"。
+    /// </remarks>
+    [Fact]
+    public void 名单下发_显式空串清空特殊语音并关掉开关()
+    {
+        using var provider = CreateProvider();
+        var catalog = provider.GetRequiredService<IProfileCatalogManager>();
+        var handler = CreateHandler(provider);
+
+        var existing = new Student { Id = "01", Name = "张三" };
+        AttachVoice(existing, "张老师", "请", "上台");
+        Assert.True(catalog.ReplaceStudents("高一1班", [existing]));
+
+        var outcome = handler.Apply(Parse(
+            """
+            { "list_name": "高一1班", "mode": "merge",
+              "students": [ { "id": "01", "name": "张三",
+                              "specific_voice_alias": "",
+                              "specific_voice_prefix": "",
+                              "specific_voice_suffix": "" } ] }
+            """));
+
+        Assert.True(outcome.Ok, outcome.Reason);
+
+        var student = Assert.Single(catalog.LoadStudentList("高一1班")!.Students);
+        var voice = Voice(student);
+
+        Assert.NotNull(voice);
+        Assert.False(voice!.IsAttachSettingsEnabled);
+        Assert.Equal(string.Empty, voice.TtsAlias);
+        Assert.Equal(string.Empty, voice.Prefix);
+        Assert.Equal(string.Empty, voice.Suffix);
+
+        var member = ControlRosterMemberPayload.FromStudent(student);
+
+        Assert.Null(member.SpecificVoiceAlias);
+        Assert.Null(member.SpecificVoicePrefix);
+        Assert.Null(member.SpecificVoiceSuffix);
+    }
+
     public void Dispose()
     {
         ResetDataRootForTests();
         if (Directory.Exists(_dataRoot))
             Directory.Delete(_dataRoot, recursive: true);
     }
+
+    private static SpecificAnnouncementAttachedSettings? Voice(IAttachableSettingsObject target) =>
+        target.GetAttachedObject<SpecificAnnouncementAttachedSettings>(ControlSpecificVoiceValues.SettingsId);
+
+    private static void AttachVoice(IAttachableSettingsObject target, string alias, string prefix, string suffix) =>
+        target.AttachedObjects[ControlSpecificVoiceValues.SettingsId] = new SpecificAnnouncementAttachedSettings
+        {
+            IsAttachSettingsEnabled = true,
+            TtsAlias = alias,
+            Prefix = prefix,
+            Suffix = suffix
+        };
 
     private static ControlRosterPushRequest Parse(string json)
     {

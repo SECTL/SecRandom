@@ -28,7 +28,7 @@
                   Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
             <TabStrip.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <UniformGrid Rows="1" Columns="4" />
+                    <UniformGrid Rows="1" Columns="5" />
                 </ItemsPanelTemplate>
             </TabStrip.ItemsPanel>
             
@@ -105,6 +105,7 @@
             <TabStripItem Content="{x:Static langs:Resources.N_Draw}" Tag="{sr:Fi PeopleFilled}" />
             <TabStripItem Content="{x:Static langs:Resources.N_History}" Tag="{sr:Fi HistoryFilled}" />
             <TabStripItem Content="{x:Static langs:Resources.N_Overview}" Tag="{sr:Fi HomeFilled}" />
+            <TabStripItem Content="{x:Static langs:Resources.N_RemoteDraw}" Tag="{sr:Fi SendFilled}" />
             <TabStripItem Content="{x:Static langs:Resources.N_Settings}" Tag="{sr:Fi SettingsFilled}" />
         </TabStrip>
     </Grid>

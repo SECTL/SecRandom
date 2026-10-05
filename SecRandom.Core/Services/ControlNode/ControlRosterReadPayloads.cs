@@ -86,7 +86,7 @@ public sealed record ControlRosterReadResponse(
     ///         三个字段本来就是为这件事设计的（界面上那句"只回传了前 N 条"就是它）。
     ///     </para>
     ///     <para>
-    ///         成员的体积差别很大（有人带标签、有人不带），所以先按实测字节估一个能留下的人数，
+    ///         成员的体积差别很大（有人带标签、有人不带，有人带特殊语音），所以先按实测字节估一个能留下的人数，
     ///         再实测一次收敛；最多收紧几轮就停，绝不无限循环。
     ///     </para>
     /// </remarks>
@@ -171,6 +171,16 @@ public sealed record ControlRosterListPayload(
 ///     标签。客户端把标签存成一个空格分隔的串（导入时就是这么规范化的），这里拆成数组，
 ///     控制台才能像本机列表页那样逐条渲染"标签"列。没有标签时为 <c>null</c>。
 /// </param>
+/// <param name="SpecificVoiceAlias">
+///     「特殊语音」的 TTS 别名（协议字段 <c>specific_voice_alias</c>）。
+///     只有附加设置开关打开、且确实填了值的人才报；没设置时为 <c>null</c>。
+/// </param>
+/// <param name="SpecificVoicePrefix">「特殊语音」的播报前缀（协议字段 <c>specific_voice_prefix</c>），同上。</param>
+/// <param name="SpecificVoiceSuffix">「特殊语音」的播报后缀（协议字段 <c>specific_voice_suffix</c>），同上。</param>
+/// <remarks>
+///     三个 <c>specific_voice_*</c> 字段是**同一件事**（见 <see cref="ControlSpecificVoiceValues" />），
+///     三态与 <c>tags</c> 一致：没值时不写出键，写通道里"缺字段"是"这次不下发"、空串是"明确清空"。
+/// </remarks>
 public sealed record ControlRosterMemberPayload(
     [property: JsonPropertyName("id")] string? Id,
     [property: JsonPropertyName("name")] string? Name,
@@ -179,33 +189,64 @@ public sealed record ControlRosterMemberPayload(
     [property: JsonPropertyName("count")] int? Count,
     [property: JsonPropertyName("weight")] double? Weight,
     [property: JsonPropertyName("enabled")] bool Enabled,
-    [property: JsonPropertyName("tags")] IReadOnlyList<string>? Tags = null)
+    [property: JsonPropertyName("tags")] IReadOnlyList<string>? Tags = null,
+    [property: JsonPropertyName(ControlSpecificVoiceValues.AliasField)]
+    string? SpecificVoiceAlias = null,
+    [property: JsonPropertyName(ControlSpecificVoiceValues.PrefixField)]
+    string? SpecificVoicePrefix = null,
+    [property: JsonPropertyName(ControlSpecificVoiceValues.SuffixField)]
+    string? SpecificVoiceSuffix = null)
 {
     /// <summary>把一个学生投影成控制台看到的成员。</summary>
     /// <remarks>
-    ///     投影留在 Core 而不是列表读取处理器里：**哪一项是"没有值"、哪一项是"有值"** 就是在这里定的，
-    ///     放在应用层就只能靠人读代码，放在这里可以被单元测试逐条钉住。
+    ///     <para>
+    ///         投影留在 Core 而不是列表读取处理器里：**哪一项是"没有值"、哪一项是"有值"** 就是在这里定的，
+    ///         放在应用层就只能靠人读代码，放在这里可以被单元测试逐条钉住。
+    ///     </para>
+    ///     <para>
+    ///         特殊语音三个值一次读出来（<see cref="ControlSpecificVoiceValues.Read" />）：它要按附加设置开关
+    ///         判"有没有生效"，逐字段各读一次既是三倍的 JsonElement 反序列化，也容易只改一处而漏掉另两处。
+    ///     </para>
     /// </remarks>
-    public static ControlRosterMemberPayload FromStudent(Student student) => new(
-        NullIfBlank(student.Id),
-        NullIfBlank(student.Name),
-        NullIfBlank(student.Gender),
-        NullIfBlank(student.Group),
-        null,
-        null,
-        student.Exists,
-        NormalizeTags(student.Tags));
+    public static ControlRosterMemberPayload FromStudent(Student student)
+    {
+        var voice = ControlSpecificVoiceValues.Read(student);
+        return new ControlRosterMemberPayload(
+            NullIfBlank(student.Id),
+            NullIfBlank(student.Name),
+            NullIfBlank(student.Gender),
+            NullIfBlank(student.Group),
+            null,
+            null,
+            student.Exists,
+            NormalizeTags(student.Tags),
+            voice.Alias,
+            voice.Prefix,
+            voice.Suffix);
+    }
 
     /// <summary>把一个奖品投影成控制台看到的成员（学生独有的性别与分组对奖品是 <c>null</c>）。</summary>
-    public static ControlRosterMemberPayload FromPrize(Prize prize) => new(
-        NullIfBlank(prize.Id),
-        NullIfBlank(prize.Name),
-        null,
-        null,
-        prize.Count,
-        prize.Weight,
-        prize.Exists,
-        NormalizeTags(prize.Tags));
+    /// <remarks>
+    ///     特殊语音对学生与奖品是**同一套字段、同一个存储键**（控件声明的
+    ///     <c>AttachedSettingsTargets.Student | AttachedSettingsTargets.Prize</c>），所以这里与
+    ///     <see cref="FromStudent" /> 逐条相同。
+    /// </remarks>
+    public static ControlRosterMemberPayload FromPrize(Prize prize)
+    {
+        var voice = ControlSpecificVoiceValues.Read(prize);
+        return new ControlRosterMemberPayload(
+            NullIfBlank(prize.Id),
+            NullIfBlank(prize.Name),
+            null,
+            null,
+            prize.Count,
+            prize.Weight,
+            prize.Exists,
+            NormalizeTags(prize.Tags),
+            voice.Alias,
+            voice.Prefix,
+            voice.Suffix);
+    }
 
     /// <summary>把列表里的标签串拆成协议里的标签数组；没有标签时返回 <c>null</c>。</summary>
     /// <remarks>

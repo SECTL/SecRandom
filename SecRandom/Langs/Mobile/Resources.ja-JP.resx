@@ -666,4 +666,63 @@
     <data name="M_SaveFailed" xml:space="preserve"><value>変更を保存できませんでした。</value></data>
     <data name="O_NoMusic" xml:space="preserve"><value>音楽を再生しない</value></data>
     <data name="O_RandomMusic" xml:space="preserve"><value>ランダム再生</value></data>
+    <data name="N_RemoteDraw" xml:space="preserve"><value>リモート</value></data>
+    <data name="P_RemoteDraw" xml:space="preserve"><value>リモート抽選</value></data>
+    <data name="RD_Hint" xml:space="preserve"><value>教室の端末と名簿を選んで抽選します</value></data>
+    <data name="RD_Group" xml:space="preserve"><value>グループ</value></data>
+    <data name="RD_Device" xml:space="preserve"><value>端末</value></data>
+    <data name="RD_Online" xml:space="preserve"><value>オンライン</value></data>
+    <data name="RD_Offline" xml:space="preserve"><value>オフライン</value></data>
+    <data name="RD_OfflineHint" xml:space="preserve"><value>端末はオフラインです。再接続後にコマンドが届きます。</value></data>
+    <data name="RD_Refresh" xml:space="preserve"><value>更新</value></data>
+    <data name="RD_LoadRoster" xml:space="preserve"><value>名簿を読み込む</value></data>
+    <data name="RD_List" xml:space="preserve"><value>名簿</value></data>
+    <data name="RD_Count" xml:space="preserve"><value>人数</value></data>
+    <data name="RD_Gender" xml:space="preserve"><value>性別</value></data>
+    <data name="RD_GroupScope" xml:space="preserve"><value>グループ条件</value></data>
+    <data name="RD_Any" xml:space="preserve"><value>指定なし</value></data>
+    <data name="RD_Draw" xml:space="preserve"><value>抽選</value></data>
+    <data name="RD_Drawing" xml:space="preserve"><value>抽選中…</value></data>
+    <data name="RD_Loading" xml:space="preserve"><value>読み込み中…</value></data>
+    <data name="RD_Drawn" xml:space="preserve"><value>抽選結果</value></data>
+    <data name="RD_DrawnCount" xml:space="preserve"><value>{0} 名を抽選しました</value></data>
+    <data name="RD_SignedOut" xml:space="preserve"><value>先に設定で SECTL アカウントにログインしてください。</value></data>
+    <data name="RD_NoGroups" xml:space="preserve"><value>このアカウントはまだグループに参加していません。</value></data>
+    <data name="RD_NoNodes" xml:space="preserve"><value>このグループには端末がありません。</value></data>
+    <data name="RD_NoRoster" xml:space="preserve"><value>名簿はまだ読み込まれていません。</value></data>
+    <data name="RD_NotAdmin" xml:space="preserve"><value>名簿の読み取りには管理者権限が必要です。</value></data>
+    <data name="RD_NotOperator" xml:space="preserve"><value>抽選の実行にはオペレーター権限が必要です。</value></data>
+    <data name="RD_Truncated" xml:space="preserve"><value>名簿が大きいため、先頭 {0} 名のみ読み込みました。</value></data>
+    <data name="RD_Total" xml:space="preserve"><value>全 {0} 名</value></data>
+    <data name="RD_Failed" xml:space="preserve"><value>抽選に失敗しました。</value></data>
+    <data name="RD_CommandTimeout" xml:space="preserve"><value>端末からまだ応答がありません。後でもう一度確認してください。</value></data>
+    <data name="RD_ListNotFound" xml:space="preserve"><value>この端末にその名簿はありません。</value></data>
+    <data name="RD_NotInList" xml:space="preserve"><value>その名簿に選択した条件のメンバーがいません。</value></data>
+    <data name="RD_OutOfRange" xml:space="preserve"><value>人数が許容範囲外です。</value></data>
+    <data name="RD_NoCandidate" xml:space="preserve"><value>条件に合うメンバーがいません。</value></data>
+    <data name="RD_InvalidValue" xml:space="preserve"><value>リクエストが不正です。</value></data>
+    <data name="RD_InvalidValueField" xml:space="preserve"><value>{0} の値が受け付けられませんでした。</value></data>
+    <data name="RD_LocalRemoteDisabled" xml:space="preserve"><value>その端末はローカルで遠隔操作が無効です。</value></data>
+    <data name="RD_DrawLocked" xml:space="preserve"><value>その端末は抽選がロックされています。</value></data>
+    <data name="RD_Busy" xml:space="preserve"><value>端末は抽選中です。少し待ってから再試行してください。</value></data>
+    <data name="RD_NoCapability" xml:space="preserve"><value>その端末はリモート抽選に対応していません。</value></data>
+    <data name="RD_Expired" xml:space="preserve"><value>コマンドは期限切れで実行されませんでした。</value></data>
+    <data name="RD_RateLimited" xml:space="preserve"><value>コマンドが多すぎます。後で再試行してください。</value></data>
+    <data name="RD_Denied" xml:space="preserve"><value>端末が抽選を拒否しました。</value></data>
+    <data name="RD_ClassTime" xml:space="preserve"><value>授業中は抽選できません。</value></data>
+    <data name="RD_Network" xml:space="preserve"><value>ネットワークに接続できません。</value></data>
+    <data name="RD_Unauthorized" xml:space="preserve"><value>ログイン状態が無効です。再度ログインしてください。</value></data>
+    <data name="RD_Forbidden" xml:space="preserve"><value>この操作を行う権限がありません。</value></data>
+    <data name="RD_NotFound" xml:space="preserve"><value>対象が見つかりません。</value></data>
+    <data name="RD_Error" xml:space="preserve"><value>エラー: {0}</value></data>
+    <data name="RD_SelectedDevice" xml:space="preserve"><value>現在の端末</value></data>
+    <data name="RD_DevicesCount" xml:space="preserve"><value>端末 {0} 台</value></data>
+    <data name="RD_LoadingDevices" xml:space="preserve"><value>端末を読み込み中…</value></data>
+    <data name="RD_NoDevicesHint" xml:space="preserve"><value>これらのグループには端末がありません。教室の端末は同じアカウントでログインし、このグループに参加する必要があります。</value></data>
+    <data name="RD_SelectDevice" xml:space="preserve"><value>操作する端末を選択してください。</value></data>
+    <data name="RD_RemoteDisabled" xml:space="preserve"><value>端末側で遠隔操作が無効</value></data>
+    <data name="RD_MissingRosterCapability" xml:space="preserve"><value>名簿読み取り非対応のため名簿を選べません</value></data>
+    <data name="RD_MissingDrawCapability" xml:space="preserve"><value>リモート抽選に非対応</value></data>
+    <data name="RD_OfflineQueued" xml:space="preserve"><value>オフライン。再接続後に実行</value></data>
+    <data name="RD_GroupLoadFailed" xml:space="preserve"><value>読み込みに失敗: {0}</value></data>
 </root>

@@ -53,6 +53,7 @@ using SecRandom.Services;
 using SecRandom.Services.Config;
 using SecRandom.Services.Auth;
 using SecRandom.Services.ControlNode;
+using SecRandom.Services.ControlPlane;
 using SecRandom.Services.Announcements;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
@@ -84,6 +85,7 @@ using SecRandom.Platforms.Abstractions;
 using MobileResources = SecRandom.Langs.Mobile.Resources;
 using SecRandom.ViewModels;
 using SecRandom.ViewModels.MainPages;
+using SecRandom.ViewModels.Mobile;
 using SecRandom.ViewModels.SettingsPages;
 using SecRandom.ViewModels.SettingsPages.History;
 using SecRandom.Views;
@@ -1166,6 +1168,10 @@ public partial class App : Application
                     services.AddSingleton<ControlRosterPushHandler>();
                     services.AddSingleton<ControlRosterReadHandler>();
                     services.AddSingleton<ControlSettingsReadHandler>();
+                    // 远程抽取：解析/闸门/回执在 ControlDrawTriggerHandler 里（可脱离界面单测），
+                    // 真正动手的那一步在 ControlPageDrawExecutor 里（要回到 UI 线程）。
+                    services.AddSingleton<IControlDrawExecutor, ControlPageDrawExecutor>();
+                    services.AddSingleton<ControlDrawTriggerHandler>();
                     services.AddSingleton<IControlCommandDispatcher, ControlCommandDispatcher>();
                     services.AddSingleton<ControlNodeClient>();
                     services.AddHostedService<ControlNodeHostedService>();
@@ -1184,6 +1190,15 @@ public partial class App : Application
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
                     serviceProvider.GetRequiredService<IImportExportService>(),
                     serviceProvider.GetRequiredService<ILogger<SettingsIntegrityRecoveryService>>()));
+
+                // 控制面（集控 REST）客户端：桌面与手机共用同一份实现与同一条 Bearer 边界
+                // （SectlAuthService.SendAuthorizedAsync），因此注册在共享分支里。
+                services.AddSingleton<IAuthorizedApiSender, SectlAuthorizedApiSender>();
+                services.AddSingleton<IControlPlaneDevicePreferenceStore, FileControlPlaneDevicePreferenceStore>();
+                services.AddSingleton<IControlPlaneClient>(provider => new ControlPlaneClient(
+                    provider.GetRequiredService<IAuthorizedApiSender>(),
+                    provider.GetRequiredService<ILogger<ControlPlaneClient>>(),
+                    ControlPlaneClient.DefaultBaseUrl));
 
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
                 services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");
@@ -1218,6 +1233,9 @@ public partial class App : Application
                     services.AddSingleton<CrashRecoveryViewState>();
                     services.AddTransient<CrashRecoveryView>();
                     services.AddViewRegistration<CrashRecoveryView>("system.crashRecovery");
+                    // 手机端"远程抽取"页的 ViewModel：页面每次进入都重建（FAFrame 不快取），
+                    // 它自己会记住上次选中的设备，因此不需要做成单例。
+                    services.AddTransient<MobileRemoteDrawViewModel>();
                 }
                 else
                 {
@@ -1230,6 +1248,7 @@ public partial class App : Application
                     services.AddKeyedTransient<UserControl, MobileDrawPage>(MobilePageIds.Draw);
                     services.AddKeyedTransient<UserControl, MobileHistoryPage>(MobilePageIds.History);
                     services.AddKeyedTransient<UserControl, MobileOverviewPage>(MobilePageIds.Overview);
+                    services.AddKeyedTransient<UserControl, MobileRemoteDrawPage>(MobilePageIds.RemoteDraw);
                 }
                 else
                 {

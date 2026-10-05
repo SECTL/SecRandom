@@ -1,6 +1,11 @@
+using System.Text;
 using System.Text.Json;
 using SecRandom.Core.Models;
+using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Services.ControlNode;
+using SecRandom.Shared.Extensions;
+using SecRandom.Shared.Interfaces;
+using SecRandom.Shared.Models.ControlNode;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Tests;
@@ -760,4 +765,373 @@ public sealed class ControlNodePayloadTests
         Assert.False(parsed);
         Assert.Equal($"roster_too_large:{ControlRosterPushRequest.MaxPrizes}", reason);
     }
+
+    // ---------------------------------------------------------------- roster.write（特殊语音）
+
+    /// <summary>
+    ///     「特殊语音」三项走与 <c>tags</c> 同一条三态规则：缺失 / <c>null</c> = 本次不下发，
+    ///     空串 = 明确清空，非空 = 覆盖。
+    /// </summary>
+    /// <remarks>
+    ///     它比 <c>tags</c> 更容易写错：三项是**同一件事的三个部分**（前缀 + 别名 + 后缀拼成一句播报），
+    ///     所以逐字段独立判三态——只给其中一项就只改那一项，而不是"有一个没给就整组作废"。
+    /// </remarks>
+    [Fact]
+    public void 名单下发_特殊语音三个字段被解析()
+    {
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload("""
+                    { "list_name": "高一（1）班", "mode": "merge",
+                      "students": [ { "id": "01", "name": "张三",
+                                      "specific_voice_alias": "  张老师  ",
+                                      "specific_voice_prefix": "请",
+                                      "specific_voice_suffix": "上台" } ] }
+                    """),
+            out var request,
+            out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.NotNull(request);
+
+        var student = request!.Students[0];
+
+        // 只 trim：协议里纯空白等于空串（清空），与读通道"空串等于没有"是同一条约定。
+        Assert.Equal("张老师", student.SpecificVoiceAlias);
+        Assert.Equal("请", student.SpecificVoicePrefix);
+        Assert.Equal("上台", student.SpecificVoiceSuffix);
+        Assert.True(student.SpecificVoice.HasAny);
+    }
+
+    [Theory]
+    [InlineData("""{ "id": "01" }""")]
+    [InlineData("""{ "id": "01", "specific_voice_alias": null, "specific_voice_prefix": null, "specific_voice_suffix": null }""")]
+    public void 名单下发_缺省与显式null都是本次未下发特殊语音(string entry)
+    {
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload($$"""{ "list_name": "高一", "students": [ {{entry}} ] }"""), out var request, out var reason);
+
+        Assert.True(parsed, reason);
+
+        var student = request!.Students[0];
+
+        Assert.Null(student.SpecificVoiceAlias);
+        Assert.Null(student.SpecificVoicePrefix);
+        Assert.Null(student.SpecificVoiceSuffix);
+        Assert.False(student.SpecificVoice.HasAny);
+
+        // replace 下"没下发"就等于这台设备上没有这行附加设置：不是三个空串，是根本没有这个键。
+        Assert.Null(Voice(student.ToStudent()));
+    }
+
+    [Fact]
+    public void 名单下发_合并模式未下发特殊语音时保留设备上的原值()
+    {
+        var existing = new StudentList("高一（1）班")
+        {
+            Students = [new Student { Id = "01", Name = "张三", Tags = "组长" }]
+        };
+
+        AttachVoice(existing.Students[0], "旧别名", "旧前缀", "旧后缀");
+
+        // 控制台只改了名字：三个字段一个字都没提。
+        var merged = ControlRosterMerge.Merge(
+            existing,
+            [new ControlRosterStudentInput("01", "张三丰", string.Empty, string.Empty, true)]);
+
+        var settings = Voice(merged[0]);
+
+        Assert.NotNull(settings);
+        Assert.Equal("旧别名", settings!.TtsAlias);
+        Assert.Equal("旧前缀", settings.Prefix);
+        Assert.Equal("旧后缀", settings.Suffix);
+        Assert.True(settings.IsAttachSettingsEnabled);
+    }
+
+    /// <summary>
+    ///     只给一项空串 → 只清那一项；另外两项与开关保持原样（这就是"逐字段判三态"的意思）。
+    /// </summary>
+    [Fact]
+    public void 名单下发_合并模式空串只清空给到的那一项()
+    {
+        var existing = new StudentList("高一（1）班")
+        {
+            Students = [new Student { Id = "01", Name = "张三" }]
+        };
+
+        AttachVoice(existing.Students[0], "旧别名", "旧前缀", "旧后缀");
+
+        var merged = ControlRosterMerge.Merge(
+            existing,
+            [new ControlRosterStudentInput("01", "张三", string.Empty, string.Empty, true, null, string.Empty)]);
+
+        var settings = Voice(merged[0]);
+
+        Assert.NotNull(settings);
+        Assert.Equal(string.Empty, settings!.TtsAlias);
+        Assert.Equal("旧前缀", settings.Prefix);
+        Assert.Equal("旧后缀", settings.Suffix);
+
+        // 还剩有效内容（前缀），开关必须继续开着，否则"清了个别名"顺手把播报关了。
+        Assert.True(settings.IsAttachSettingsEnabled);
+    }
+
+    /// <summary>
+    ///     三项都清空 → 开关跟着关掉，读通道于是什么也不报（否则会回一组空值给控制台）。
+    /// </summary>
+    [Fact]
+    public void 名单下发_三项都清空后开关关掉且读通道什么都不报()
+    {
+        var existing = new StudentList("高一（1）班")
+        {
+            Students = [new Student { Id = "01", Name = "张三" }]
+        };
+
+        AttachVoice(existing.Students[0], "旧别名", "旧前缀", "旧后缀");
+
+        var merged = ControlRosterMerge.Merge(
+            existing,
+            [
+                new ControlRosterStudentInput(
+                    "01", "张三", string.Empty, string.Empty, true, null, string.Empty, string.Empty, string.Empty)
+            ]);
+
+        var settings = Voice(merged[0]);
+
+        Assert.NotNull(settings);
+        Assert.False(settings!.IsAttachSettingsEnabled);
+
+        var member = ControlRosterMemberPayload.FromStudent(merged[0]);
+
+        Assert.Null(member.SpecificVoiceAlias);
+        Assert.Null(member.SpecificVoicePrefix);
+        Assert.Null(member.SpecificVoiceSuffix);
+    }
+
+    /// <summary>写进去的三项要能原样读回来——同一条 <c>SettingsId</c>，同一个附加设置对象。</summary>
+    [Fact]
+    public void 名单下发_写进去的特殊语音能被读通道原样读回()
+    {
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload("""
+                    { "list_name": "高一（1）班", "mode": "replace",
+                      "students": [ { "id": "01", "name": "张三",
+                                      "specific_voice_alias": "张老师",
+                                      "specific_voice_prefix": "请",
+                                      "specific_voice_suffix": "上台" } ] }
+                    """),
+            out var request,
+            out var reason);
+
+        Assert.True(parsed, reason);
+
+        var member = ControlRosterMemberPayload.FromStudent(request!.Students[0].ToStudent());
+
+        Assert.Equal("张老师", member.SpecificVoiceAlias);
+        Assert.Equal("请", member.SpecificVoicePrefix);
+        Assert.Equal("上台", member.SpecificVoiceSuffix);
+    }
+
+    [Theory]
+    [InlineData("""{ "id": "01", "specific_voice_alias": 7 }""")]
+    [InlineData("""{ "id": "01", "specific_voice_prefix": [ "请" ] }""")]
+    [InlineData("""{ "id": "01", "specific_voice_suffix": { "a": 1 } }""")]
+    [InlineData("""{ "id": "01", "specific_voice_alias": true }""")]
+    public void 名单下发_特殊语音给了非字符串整条拒绝(string entry)
+    {
+        // 与 tags 同一条理由：认得的字段给了坏值就整条拒绝，不能悄悄降级成"没下发"——
+        // 那会让控制台以为写进去了，设备上却什么都没变。
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload($$"""{ "list_name": "高一", "students": [ {{entry}} ] }"""), out var request, out var reason);
+
+        Assert.False(parsed);
+        Assert.Null(request);
+        Assert.Equal("invalid_command", reason);
+    }
+
+    /// <summary>
+    ///     奖池那侧用的是**同一组字段名、同一条三态规则**（特殊语音是两种名单共用的附加设置）。
+    /// </summary>
+    [Fact]
+    public void 奖池下发_特殊语音与学生那侧同一套语义()
+    {
+        var existing = new PrizeList("元旦抽奖")
+        {
+            Prizes = [new Prize { Id = "p1", Name = "一等奖", Count = 2, Weight = 1 }]
+        };
+
+        AttachVoice(existing.Prizes[0], "旧别名", "旧前缀", "旧后缀");
+
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload("""
+                    { "list_name": "元旦抽奖", "roster_kind": "prizes", "mode": "merge",
+                      "prizes": [ { "id": "p1", "name": "特等奖", "count": 3, "weight": 1,
+                                    "specific_voice_alias": "张老师" },
+                                  { "id": "p2", "name": "二等奖" } ] }
+                    """),
+            out var request,
+            out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.NotNull(request);
+
+        var merged = ControlRosterMerge.MergePrizes(existing, request!.Prizes!);
+
+        // 下发了一项：改名 + 换别名，前缀后缀没提就留着。
+        var first = Voice(merged[0]);
+        Assert.NotNull(first);
+        Assert.Equal("特等奖", merged[0].Name);
+        Assert.Equal("张老师", first!.TtsAlias);
+        Assert.Equal("旧前缀", first.Prefix);
+        Assert.Equal("旧后缀", first.Suffix);
+
+        // 一个字都没提的：连附加设置都不该被建出来。
+        Assert.Null(Voice(merged[1]));
+    }
+
+    [Theory]
+    [InlineData("""{ "name": "一等奖", "specific_voice_alias": 7 }""", "invalid_command")]
+    [InlineData("""{ "name": "一等奖", "specific_voice_prefix": { "a": 1 } }""", "invalid_command")]
+    public void 奖池下发_特殊语音给了非字符串整条拒绝(string entry, string expectedReason)
+    {
+        var parsed = ControlRosterPushRequest.TryParse(
+            Payload($$"""
+                     { "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [ {{entry}} ] }
+                     """),
+            out _,
+            out var reason);
+
+        Assert.False(parsed);
+        Assert.Equal(expectedReason, reason);
+    }
+
+    /// <summary>特殊语音在 <c>AttachedObjects</c> 里的键必须与控件注册的 Guid 逐字相同。</summary>
+    /// <remarks>
+    ///     键一旦对不上，读写两边都会"成功"，只是读出来永远是"这个人没设置过"——
+    ///     一个既没有异常也没有日志的静默失效。
+    /// </remarks>
+    [Fact]
+    public void 特殊语音的存储键就是控件声明的那个Guid()
+    {
+        Assert.Equal(
+            "10F2C686-07D7-47E7-9A4F-B7A4724A6A10",
+            ControlSpecificVoiceValues.SettingsId.ToString().ToUpperInvariant());
+        Assert.Equal(
+            Guid.Parse(GlobalConstants.SpecificAnnouncementAttachedSettings),
+            ControlSpecificVoiceValues.SettingsId);
+    }
+
+    // ---------------------------------------------------------------- 载荷字节预算
+
+    /// <summary>
+    ///     构造一份名单/奖池载荷：<paramref name="students" /> 条，每条的姓名是
+    ///     <paramref name="nameLength" /> 个中文字加两位序号。
+    /// </summary>
+    private static string RosterJson(int students, int nameLength, bool prizes = false)
+    {
+        var name = new string('同', nameLength);
+        var entries = string.Join(
+            ",",
+            Enumerable.Range(1, students).Select(index =>
+                $$"""{ "id": "{{index:0000}}", "name": "{{name}}{{index:00}}" }"""));
+
+        return prizes
+            ? $$"""{ "list_name": "元旦抽奖", "roster_kind": "prizes", "prizes": [{{entries}}] }"""
+            : $$"""{ "list_name": "高一（1）班", "students": [{{entries}}] }""";
+    }
+
+    /// <summary>断言原因码就是 <c>payload_too_large:&lt;bytes&gt;:&lt;budget&gt;</c>，且两个数都对得上。</summary>
+    private static void AssertPayloadTooLarge(string json, string reason)
+    {
+        Assert.StartsWith("payload_too_large:", reason);
+
+        var parts = reason.Split(':');
+        Assert.Equal(3, parts.Length);
+
+        // 报出的必须是**真实序列化字节数**：控制台据此判断这份数据比一帧大多少。
+        var bytes = int.Parse(parts[1]);
+        Assert.Equal(Encoding.UTF8.GetByteCount(json), bytes);
+        Assert.True(bytes > ControlProtocolJson.PayloadBudgetBytes);
+        Assert.Equal(ControlProtocolJson.PayloadBudgetBytes, int.Parse(parts[2]));
+    }
+
+    /// <summary>
+    ///     超预算的名单载荷必须在**解析成员之前**被拒。
+    /// </summary>
+    /// <remarks>
+    ///     这不是"操作失败"而是更糟：超限帧在客户端传输层会让整条集控连接被断开
+    ///     （连一个 <c>command.result</c> 都回不去），控制台看到的是"设备掉线"。
+    ///     所以设备侧必须在解析前就量出"这份数据装不进一帧"。
+    /// </remarks>
+    [Fact]
+    public void 名单下发_超字节预算被拒绝()
+    {
+        // 2000 人 × 60 字姓名：约 300 KB，是 60 KiB 预算的四倍以上——人数上限是拦不住它的。
+        var json = RosterJson(students: 2000, nameLength: 60);
+
+        var parsed = ControlRosterPushRequest.TryParse(Payload(json), out var request, out var reason);
+
+        Assert.False(parsed);
+        Assert.Null(request);
+        AssertPayloadTooLarge(json, reason);
+    }
+
+    /// <summary>奖池走的是同一条命令、同一个闸门：奖品名一长，60 条的奖池也会超限。</summary>
+    [Fact]
+    public void 奖池下发_超字节预算被拒绝()
+    {
+        var json = RosterJson(students: 2000, nameLength: 60, prizes: true);
+
+        var parsed = ControlRosterPushRequest.TryParse(Payload(json), out var request, out var reason);
+
+        Assert.False(parsed);
+        Assert.Null(request);
+        AssertPayloadTooLarge(json, reason);
+    }
+
+    /// <summary>
+    ///     正常班级规模必须照常通过：字节闸门不是拿来挡正常用法的。
+    /// </summary>
+    [Fact]
+    public void 名单下发_正常班级规模在预算内通过()
+    {
+        var json = RosterJson(students: 60, nameLength: 3);
+
+        Assert.True(
+            Encoding.UTF8.GetByteCount(json) < ControlProtocolJson.PayloadBudgetBytes,
+            "60 人的正常班级必须远在预算之内，否则这条用例的断言方向就反了");
+
+        var parsed = ControlRosterPushRequest.TryParse(Payload(json), out var request, out var reason);
+
+        Assert.True(parsed, reason);
+        Assert.Equal(60, request!.Students.Count);
+    }
+
+    /// <summary>
+    ///     一条超大的 <c>settings.write</c> patch 同样发不出去：同一条投递通道、同一个上限。
+    /// </summary>
+    [Fact]
+    public void 设置白名单_超字节预算的patch被拒绝()
+    {
+        // 用一段超长字符串把整份 patch 顶过预算（真实设置项本身都有范围校验，撑不了这么大）。
+        var filler = new string('x', ControlProtocolJson.PayloadBudgetBytes);
+        var json = $$"""{ "patch": { "voice.volume": 30 }, "filler": "{{filler}}" }""";
+
+        var planned = ControlSettingsWhitelist.TryPlan(Payload(json), out var changes, out var reason);
+
+        Assert.False(planned);
+        Assert.Empty(changes);
+        AssertPayloadTooLarge(json, reason);
+    }
+
+    private static void AttachVoice(IAttachableSettingsObject target, string alias, string prefix, string suffix) =>
+        target.AttachedObjects[ControlSpecificVoiceValues.SettingsId] = new SpecificAnnouncementAttachedSettings
+        {
+            IsAttachSettingsEnabled = true,
+            TtsAlias = alias,
+            Prefix = prefix,
+            Suffix = suffix
+        };
+
+    private static SpecificAnnouncementAttachedSettings? Voice(IAttachableSettingsObject target) =>
+        target.GetAttachedObject<SpecificAnnouncementAttachedSettings>(ControlSpecificVoiceValues.SettingsId);
 }

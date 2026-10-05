@@ -13,6 +13,10 @@ public static class MobilePageIds
     public const string Draw = "main.rollCall";
     public const string History = "main.history";
     public const string Overview = "main.overview";
+
+    /// <summary>手机端的"远程抽取"页：选教室设备、读名单、带条件下发抽取。</summary>
+    public const string RemoteDraw = "main.remoteDraw";
+
     public const string Settings = "root.settings";
     public const string Update = "settings.update";
 }
@@ -22,6 +26,7 @@ public enum MobileDestination
     Draw,
     History,
     Overview,
+    RemoteDraw,
     Settings
 }
 

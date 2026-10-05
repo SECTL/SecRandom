@@ -27,7 +27,7 @@ public sealed class WebSocketControlNodeTransport(ClientWebSocket socket, ILogge
     {
         var payload = Encoding.UTF8.GetBytes(ControlProtocolJson.Serialize(frame));
         if (payload.Length > MaxFrameBytes)
-            throw new ControlFrameTooLargeException(frame.Type, payload.Length, MaxFrameBytes);
+            throw new ControlFrameTooLargeException(frame.Type ?? "unknown", payload.Length, MaxFrameBytes);
 
         await socket.SendAsync(payload, WebSocketMessageType.Text, endOfMessage: true, cancellationToken)
             .ConfigureAwait(false);

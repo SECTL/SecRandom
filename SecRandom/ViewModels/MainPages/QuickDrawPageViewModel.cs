@@ -18,9 +18,11 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
 using QuickDrawResources = SecRandom.Langs.MainPages.QuickDraw.Resources;
+using SecRandom.Services.ControlNode;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Linkage;
 using SecRandom.Services.Notification;
@@ -385,15 +387,24 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     ///     集控节点远程触发的一次快抽。
     /// </summary>
     /// <remarks>
-    ///     远程命令**绝不拉起交互式验证**：教室机可能没人，一个等密码输入的对话框会让命令一直挂着。
-    ///     因此先用非交互闸门判定，需要本机输入密码/TOTP/USB 时直接拒绝（控制台看到"设备拒绝"），
-    ///     通过后再走与本地、IPC 完全相同的抽取与事务提交路径。
+    ///     <para>
+    ///         远程命令**绝不拉起交互式验证**：教室机可能没人，一个等密码输入的对话框会让命令一直挂着。
+    ///         因此先用非交互闸门判定，需要本机输入密码/TOTP/USB 时直接拒绝（控制台看到"设备拒绝"），
+    ///         通过后再走与本地、IPC 完全相同的抽取与事务提交路径。
+    ///     </para>
+    ///     <para>
+    ///         返回值从"成功/失败"升级成带原因与抽中名单的结局，是为了让手机端能显示**抽到了谁**
+    ///         与"为什么没抽成"——旧控制台只按 ok/原因码判读，这一层不影响它们。
+    ///     </para>
     /// </remarks>
-    public async Task<bool> StartRemoteDrawAsync(CancellationToken cancellationToken = default)
+    public async Task<RemoteDrawOutcome> StartRemoteDrawAsync(CancellationToken cancellationToken = default)
     {
         SecurityOperation[] operations = [SecurityOperation.QuickDrawStart, SecurityOperation.LinkageAction];
-        if (_linkageDrawCoordinator.EvaluateGate(operations) != LinkageDrawGate.Allowed)
-            return false;
+        if (ControlDrawGateRejections.From(_linkageDrawCoordinator.EvaluateGate(operations)) is { } rejection)
+            return rejection;
+
+        if (IsDrawing)
+            return RemoteDrawOutcome.Busy();
 
         LastDrawnStudent = null;
         var authorized = await _linkageDrawCoordinator.AuthorizeAsync(
@@ -401,7 +412,16 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             StartAuthorizedTriggeredDrawAsync,
             cancellationToken);
 
-        return authorized && LastDrawnStudent is not null;
+        if (!authorized)
+            return RemoteDrawOutcome.Denied("local_verification_required");
+
+        // 授权通过却没抽到人：名单空、候选池被重复限制掏空等。页面上已经写了原因，
+        // 这里给控制台一个能分辨的细因，而不是笼统的"被拒绝"。
+        return LastDrawnStudent is null
+            ? RemoteDrawOutcome.Denied("no_candidate")
+            : RemoteDrawOutcome.DrawnFrom(
+                [ControlDrawnMembers.FromStudent(LastDrawnStudent)],
+                SelectedStudentListName);
     }
 
     private void RefreshStudentLists()

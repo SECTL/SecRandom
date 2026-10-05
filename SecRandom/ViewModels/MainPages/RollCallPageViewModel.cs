@@ -24,8 +24,10 @@ using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Helpers;
+using SecRandom.Services.ControlNode;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Linkage;
 using SecRandom.Services.Notification;
@@ -47,6 +49,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     private readonly DrawEngine _drawEngine;
     private readonly IProfileService _profileService;
+    private readonly IProfileCatalogManager _profileCatalogManager;
     private readonly IDrawTemporaryRecordService _temporaryRecordService;
     private readonly IDrawCommitService _drawCommitService;
     private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
@@ -81,6 +84,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         MainConfigHandler configHandler,
         DrawEngine drawEngine,
         IProfileService profileService,
+        IProfileCatalogManager profileCatalogManager,
         IDrawTemporaryRecordService temporaryRecordService,
         IDrawCommitService drawCommitService,
         ILogger<RollCallPageViewModel> logger,
@@ -96,6 +100,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         _configHandler = configHandler;
         _drawEngine = drawEngine;
         _profileService = profileService;
+        _profileCatalogManager = profileCatalogManager;
         _temporaryRecordService = temporaryRecordService;
         _drawCommitService = drawCommitService;
         _logger = logger;
@@ -392,6 +397,83 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             _ = StartDrawCoreAsync();
             return Task.CompletedTask;
         });
+
+    /// <summary>
+    ///     集控 / 手机端远程点名：指定名单与条件抽一次，结果留在这一页上给课堂看。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         与本地抽取走**同一条**路径（同一份候选池、同一套重复规则、同一个事务提交）：
+    ///         远程只是"替老师按了按钮"，不是第二条抽取实现。差别只在三处：条件由载荷指定、
+    ///         先做无交互闸门判定、结果回执要带上抽到了谁。
+    ///     </para>
+    ///     <para>
+    ///         名单存在性用 <see cref="IProfileCatalogManager.LoadStudentList" /> 判定：
+    ///         它读的是**不切换活动档案**的快照，所以"名单不存在/条件不成立"这些拒绝
+    ///         不会在拒绝之前先把教室机的页面切到别的名单上。
+    ///     </para>
+    ///     <para>
+    ///         条件校验在切换之前完成（<see cref="ControlDrawConditions.TryResolve" />），
+    ///         通过之后才切名单与筛选条件——切过去就意味着这台机器接下来的点名都在这条名单上，
+    ///         一个注定被拒绝的命令不该留下这个副作用。
+    ///     </para>
+    ///     <para>
+    ///         这里**不弹交互式验证**：手机那头没人能替教室机输密码。先问 <c>EvaluateGate</c>，
+    ///         需要本机验证时直接拒绝，控制台/手机看到"设备拒绝"而不是一条挂住的命令。
+    ///     </para>
+    /// </remarks>
+    public async Task<RemoteDrawOutcome> StartRemoteDrawAsync(
+        ControlDrawTriggerRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        SecurityOperation[] operations = [SecurityOperation.RollCallStart, SecurityOperation.LinkageAction];
+        if (ControlDrawGateRejections.From(_linkageDrawCoordinator.EvaluateGate(operations)) is { } rejection)
+            return rejection;
+
+        if (IsDrawing)
+            return RemoteDrawOutcome.Busy();
+
+        RefreshLists();
+        var listName = request.ListName ?? SelectedStudentListName;
+        if (string.IsNullOrWhiteSpace(listName) || !StudentListNames.Contains(listName))
+            return RemoteDrawOutcome.Invalid("invalid_value:list_name:not_found");
+
+        var members = _profileCatalogManager.LoadStudentList(listName)?.Students;
+        if (members is null || members.Count == 0)
+            return RemoteDrawOutcome.Invalid("invalid_value:list_name:no_candidate");
+
+        if (!ControlDrawConditions.TryResolve(members, request, out _, out var reason))
+            return RemoteDrawOutcome.Invalid(reason);
+
+        // 切换页面选择与共享档案：抽取用的候选池取自共享档案，只改页面选择会抽到上一次的名单。
+        if (string.Equals(SelectedStudentListName, listName, StringComparison.Ordinal))
+            _profileService.LoadStudentProfile(listName);
+        else
+            SelectedStudentListName = listName;
+
+        SelectedGender = request.Gender ?? AllGendersOption;
+        SelectedGroup = request.Group ?? AllGroupsOption;
+        RefreshCounts();
+        DrawCount = request.Count ?? 1;
+
+        if (!CanStartDraw)
+            return RemoteDrawOutcome.Invalid("invalid_value:list_name:no_candidate");
+
+        // 抽完才换引用：失败路径不清空上一轮结果，因此不能用"结果非空"判断这次是否成功。
+        var previousResult = _lastResultStudents;
+        var authorized = await _linkageDrawCoordinator.AuthorizeAsync(operations, StartDrawCoreAsync, cancellationToken)
+            .ConfigureAwait(true);
+
+        if (!authorized)
+            return RemoteDrawOutcome.Denied("local_verification_required");
+
+        if (ReferenceEquals(previousResult, _lastResultStudents) || _lastResultStudents.Count == 0)
+            return RemoteDrawOutcome.Denied("no_candidate");
+
+        return RemoteDrawOutcome.DrawnFrom(ControlDrawnMembers.FromStudents(_lastResultStudents), listName);
+    }
 
     public Task ToggleDrawFromShortcutAsync() => StartDrawAsync();
 
