@@ -98,6 +98,22 @@ public sealed record ControlNodeState
     public bool RemoteControlEnabled { get; init; }
 
     /// <summary>
+    ///     本机是否在主界面显示"远程抽取"页（控制端入口）。**默认关闭**，只能由用户在这台机器上打开。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         它和 <see cref="RemoteControlEnabled" /> 放在同一个文件里，是因为两者的**安全属性相同**：
+    ///         都是"这台设备自己的开关"，因此都不能进 <c>settings.json</c>——一次设置导入或备份恢复
+    ///         不该能替用户打开一个会把本机令牌发往控制面的入口（见 <c>IControlPlaneEndpointStore</c> 的同类理由）。
+    ///     </para>
+    ///     <para>
+    ///         它**不是**权限决定项：真的能不能抽取仍由服务端按组成员角色判定，这个开关只决定界面显不显示。
+    ///         服务端也永远读不到它，<c>desired_state</c> 里没有对应字段。
+    ///     </para>
+    /// </remarks>
+    public bool RemoteDrawPageEnabled { get; init; }
+
+    /// <summary>
     ///     控制台里显示的名称。**由用户在这台机器上填写**；留空时上报主机名。
     /// </summary>
     /// <remarks>

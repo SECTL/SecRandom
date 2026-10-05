@@ -1258,6 +1258,12 @@ public partial class App : Application
                 // （SectlAuthService.SendAuthorizedAsync），因此注册在共享分支里。
                 services.AddSingleton<IAuthorizedApiSender, SectlAuthorizedApiSender>();
                 services.AddSingleton<IControlPlaneDevicePreferenceStore, FileControlPlaneDevicePreferenceStore>();
+                // 控制面基址是可配置的（自建/私有部署），但它**不进 settings.json**：这个地址每次请求都会
+                // 收到本账号的令牌，一次设置导入不该能把令牌指到别的服务器上。见 IControlPlaneEndpointStore。
+                services.AddSingleton<IControlPlaneEndpointStore>(provider => new FileControlPlaneEndpointStore(
+                    provider.GetRequiredService<ILogger<FileControlPlaneEndpointStore>>()));
+                // 这张设置卡默认藏着，由调试页的总开关放出来（与"内幕设置"同一条运行时逻辑）。
+                services.AddSingleton<IControlPlaneEndpointSettingsGate, ControlPlaneEndpointSettingsGate>();
                 services.AddSingleton<IControlPlaneClient>(provider => new ControlPlaneClient(
                     provider.GetRequiredService<IAuthorizedApiSender>(),
                     provider.GetRequiredService<ILogger<ControlPlaneClient>>(),
@@ -1265,12 +1271,6 @@ public partial class App : Application
 
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
                 services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");
-                // 控制面基址是可配置的（自建/私有部署），但它**不进 settings.json**：这个地址每次请求都会
-                // 收到本账号的令牌，一次设置导入不该能把令牌指到别的服务器上。见 IControlPlaneEndpointStore。
-                services.AddSingleton<IControlPlaneEndpointStore>(provider => new FileControlPlaneEndpointStore(
-                    provider.GetRequiredService<ILogger<FileControlPlaneEndpointStore>>()));
-                // 这张设置卡默认藏着，由调试页的总开关放出来（与"内幕设置"同一条运行时逻辑）。
-                services.AddSingleton<IControlPlaneEndpointSettingsGate, ControlPlaneEndpointSettingsGate>();
                 services.AddAttachedSettingsControl<SpecificAnnouncementAttachedSettingsControl>(
                     Langs.AttachedSettings.Resources.C_SpecificVoice);
 
@@ -1290,6 +1290,10 @@ public partial class App : Application
                 services.AddSingleton<LotteryPageViewModel>();
                 services.AddTransient<RollCallHistoryViewModel>();
                 services.AddTransient<HomeSettingsPageViewModel>();
+                // "远程抽取"页的 ViewModel：**桌面/平板/手机三个宿主共用同一份**。它只跟协议有关，
+                // 与谁是控制端/被控端无关，因此注册在共享分支；页面每次进入都重建（FAFrame 不快取），
+                // 它自己会记住上次选中的设备，不需要做成单例。
+                services.AddTransient<MobileRemoteDrawViewModel>();
                 services.AddTransient<LotteryHistoryViewModel>();
 
                 // 杂项 Views
@@ -1302,9 +1306,6 @@ public partial class App : Application
                     services.AddSingleton<CrashRecoveryViewState>();
                     services.AddTransient<CrashRecoveryView>();
                     services.AddViewRegistration<CrashRecoveryView>("system.crashRecovery");
-                    // 手机端"远程抽取"页的 ViewModel：页面每次进入都重建（FAFrame 不快取），
-                    // 它自己会记住上次选中的设备，因此不需要做成单例。
-                    services.AddTransient<MobileRemoteDrawViewModel>();
                     // 设置页顶部的账号区：页面每次进入重建，订阅在页面离树时释放。
                     services.AddTransient<MobileAccountSectionViewModel>();
                 }
@@ -1327,10 +1328,10 @@ public partial class App : Application
                     services.AddMainPage<LotteryPage>(Langs.Common.Resources.Feat_Lottery);
                     services.AddMainPage<HistoryPage>(Langs.Common.Resources.Feat_History);
 
-                    // 平板：它同时是控制端，但用的是**桌面主界面**（单窗口宿主里的 MainView），没有底部导航栏，
-                    // 因此"远程抽取"作为侧栏的一项出现。页面与 ViewModel 与手机端**完全同一份**
-                    // （MobileRemoteDrawPage / MobileRemoteDrawViewModel），协议一改只有一处要改。
-                    if (hostShape.UsesDesktopMainView)
+                    // 桌面的侧栏主页面。真正"谁看得见"由 `MainView` 按 `AppHostShape` 的规则切换**可见性**
+                    // （桌面默认隐藏，用户在 设置→通用→集控 里打开）——**注册永远都在**，
+                    // 因为运行时增删侧栏项会让 FluentAvalonia 丢选中态并以 null 触发 ItemInvoked。
+                    if (hostShape.UsesRemoteDrawSidebarPage)
                         services.AddMainPage<MobileRemoteDrawPage>(MobileResources.P_RemoteDraw);
                 }
 
