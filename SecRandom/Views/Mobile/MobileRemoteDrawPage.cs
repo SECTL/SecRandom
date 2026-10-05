@@ -15,11 +15,13 @@ namespace SecRandom.Views.Mobile;
 /// </summary>
 /// <remarks>
 ///     <para>
-///         <b>同一份页面对应两个入口</b>：手机底部导航的第 5 档按 <see cref="MobilePageIds.RemoteDraw" />
-///         取这个页面；平板用桌面主界面（<c>MainView</c>），没有底部导航栏，于是把同一个键注册成**主界面侧栏的一项**
-///         （<c>AddMainPage</c>，因此需要下面这个 <see cref="PageInfo" />）。
-///         两个入口共用同一个页面类型与同一个 ViewModel——为平板另写一套 UI 或 VM，
-///         等于让协议一改就要改两处。
+///         <b>这是手机版式的那个视图</b>：底部导航的第 5 档按 <see cref="MobilePageIds.RemoteDraw" /> 取它。
+///         桌面与平板用桌面主页面版式的 <c>Views/MainPages/RemoteDrawPage</c>（左侧结果区 + 右侧控制区），
+///         因为竖排表单在桌面尺寸上既浪费宽度也不像这个应用的其他主页。
+///     </para>
+///     <para>
+///         <b>但 ViewModel 只有一份</b>（<see cref="MobileRemoteDrawViewModel" />）：协议、状态与命令两个
+///         视图共用，UI 差异只是版式差异。谁为某个宿主复制一份 VM，协议一改就会有一边先烂掉。
 ///     </para>
 /// </remarks>
 [PageInfo(MobilePageIds.RemoteDraw, FluentIcons.SendFilled, location: PageLocation.Top)]

@@ -1,10 +1,14 @@
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.DependencyInjection;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Extensions.Registry;
+using SecRandom.Core.Services;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Mobile;
 using SecRandom.Services.ControlNode;
 using SecRandom.ViewModels.Mobile;
+using SecRandom.Views.MainPages;
 using SecRandom.Views.Mobile;
 
 namespace SecRandom.Core.Tests;
@@ -198,18 +202,110 @@ public sealed class TabletControlHostTests
 
         // 桌面 + 平板：远程抽取页注册成主界面侧栏的一项（桌面只是默认隐藏它，注册永远都在）。
         Assert.Contains("if (hostShape.UsesRemoteDrawSidebarPage)", source, StringComparison.Ordinal);
-        Assert.Contains("services.AddMainPage<MobileRemoteDrawPage>(MobileResources.P_RemoteDraw);", source, StringComparison.Ordinal);
+        Assert.Contains("services.AddMainPage<RemoteDrawPage>(MobileResources.P_RemoteDraw);", source, StringComparison.Ordinal);
 
-        // 手机：底部导航按 key 取同一个页面——这条注册不能被侧栏入口取代。
+        // 手机：底部导航按 key 取**手机视图**——两个视图各注册在自己的宿主上，不存在第三份。
         Assert.Contains(
             "services.AddKeyedTransient<UserControl, MobileRemoteDrawPage>(MobilePageIds.RemoteDraw);",
             source,
             StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "services.AddKeyedTransient<UserControl, RemoteDrawPage>",
+            source,
+            StringComparison.Ordinal);
 
-        // ViewModel 必须注册在**共享**分支：桌面要能解析它，而它原来只写在 `if (isMobile)` 里。
+        // ViewModel 必须注册在**共享**分支：两个视图都要能解析它，而它原来只写在 `if (isMobile)` 里。
         Assert.Contains("services.AddTransient<MobileRemoteDrawViewModel>();", source, StringComparison.Ordinal);
         var mobileOnlyViews = SectionOf(source, "// 杂项 Views", "// 界面 Views");
         Assert.DoesNotContain("MobileRemoteDrawViewModel", mobileOnlyViews, StringComparison.Ordinal);
+    }
+
+    // ---------------------------------------------------------------- 一份 VM + 两个视图
+
+    [Fact]
+    public void 两个视图_构造函数指向同一个ViewModel()
+    {
+        // 这是"一份 VM 两个视图"的结构性钉子：两个页面的构造函数参数都是同一个 VM 类型。
+        // 谁哪天为桌面复制一份 VM，这里立刻红——协议逻辑分叉正是这个项目吃过两次亏的地方。
+        var phone = Assert.Single(typeof(MobileRemoteDrawPage).GetConstructors()).GetParameters();
+        var desktop = Assert.Single(typeof(RemoteDrawPage).GetConstructors()).GetParameters();
+
+        Assert.Equal(typeof(MobileRemoteDrawViewModel), Assert.Single(phone).ParameterType);
+        Assert.Equal(typeof(MobileRemoteDrawViewModel), Assert.Single(desktop).ParameterType);
+
+        // 页面类型本身必须是两个，且分居桌面主页面目录与手机视图目录：一眼能看出没有第三份。
+        Assert.NotEqual(typeof(MobileRemoteDrawPage), typeof(RemoteDrawPage));
+        Assert.Equal("SecRandom.Views.Mobile", typeof(MobileRemoteDrawPage).Namespace);
+        Assert.Equal("SecRandom.Views.MainPages", typeof(RemoteDrawPage).Namespace);
+
+        // 两个视图共用同一个页面 id（手机底部档 / 桌面侧栏项），语义不变。
+        Assert.Equal(MobilePageIds.RemoteDraw, typeof(RemoteDrawPage).GetCustomAttribute<PageInfo>()!.Id);
+        Assert.Equal(MobilePageIds.RemoteDraw, typeof(MobileRemoteDrawPage).GetCustomAttribute<PageInfo>()!.Id);
+    }
+
+    [Fact]
+    public void 侧栏顺序_远程抽取紧跟在抽奖之后()
+    {
+        var source = ReadAppSource();
+
+        // 顺序由"注册顺序 + PageLocation"决定：远程抽取必须紧跟在抽奖注册之后，且与抽奖同一个位置分组
+        // （这个应用里桌面主页都在 Bottom 组，Top 组是空的——把它注册到 Top 会跑到侧栏最上面去）。
+        var lotteryIndex = source.IndexOf("services.AddMainPage<LotteryPage>(", StringComparison.Ordinal);
+        var remoteIndex = source.IndexOf("services.AddMainPage<RemoteDrawPage>(", StringComparison.Ordinal);
+        var historyIndex = source.IndexOf("services.AddMainPage<HistoryPage>(", StringComparison.Ordinal);
+
+        Assert.True(lotteryIndex >= 0 && remoteIndex >= 0 && historyIndex >= 0, "找不到三条主页面注册");
+        Assert.True(
+            lotteryIndex < remoteIndex && remoteIndex < historyIndex,
+            "注册顺序必须是 抽奖 → 远程抽取 → 历史（实际："
+            + $"lottery={lotteryIndex}, remoteDraw={remoteIndex}, history={historyIndex}）");
+
+        // 位置分组与抽奖一致（Bottom），否则侧栏里不会挨在一起。
+        Assert.Equal(
+            typeof(LotteryPage).GetCustomAttribute<PageInfo>()!.Location,
+            typeof(RemoteDrawPage).GetCustomAttribute<PageInfo>()!.Location);
+
+        // 注册顺序确实就是侧栏顺序：注册表按调用顺序追加，因此上一条"紧随其后"＝侧栏里紧随其后。
+        PagesRegistryService.MainItems.Clear();
+        try
+        {
+            var services = new ServiceCollection();
+            services.AddMainPage<RollCallPage>("点名");
+            services.AddMainPage<LotteryPage>("抽奖");
+            services.AddMainPage<RemoteDrawPage>("远程抽取");
+            services.AddMainPage<HistoryPage>("历史");
+
+            var ids = PagesRegistryService.MainItems.Select(info => info.Id).ToList();
+            var lotteryAt = ids.IndexOf("main.lottery");
+            var remoteAt = ids.IndexOf(MobilePageIds.RemoteDraw);
+
+            Assert.True(lotteryAt >= 0 && remoteAt >= 0, $"注册表里缺少页面：{string.Join(" → ", ids)}");
+            Assert.True(
+                remoteAt == lotteryAt + 1,
+                $"期望「远程抽取」紧跟在「抽奖」之后，实际顺序：{string.Join(" → ", ids)}");
+        }
+        finally
+        {
+            PagesRegistryService.MainItems.Clear();
+        }
+    }
+
+    [Fact]
+    public void 桌面版式_结果区只绑回执派生的成员()
+    {
+        var xaml = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/MainPages/RemoteDrawPage.axaml"));
+
+        // 左侧结果区列的是 VM 里由回执填充的 DrawnMembers，空态/失败态则绑 HasResult 与 EmptyStateText，
+        // 视图自己不产生成员、也不在没有回执时拼一句"抽到了某某"。
+        Assert.Contains("ItemsSource=\"{Binding ViewModel.DrawnMembers}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("IsVisible=\"{Binding ViewModel.HasResult}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("IsVisible=\"{Binding !ViewModel.HasResult}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("IsVisible=\"{Binding ViewModel.HasEmptyState}\"", xaml, StringComparison.Ordinal);
+
+        // VM 的 DrawnMembers 只有一个来源：回执（detail.drawn）解析出来的成员。
+        var viewModelSource = File.ReadAllText(GetRepositoryPath(@"SecRandom/ViewModels/Mobile/MobileRemoteDrawViewModel.cs"));
+        Assert.Contains("foreach (var member in finished.DrawnMembers())", viewModelSource, StringComparison.Ordinal);
+        Assert.Contains("DrawnMembers.Add(member);", viewModelSource, StringComparison.Ordinal);
     }
 
     [Fact]

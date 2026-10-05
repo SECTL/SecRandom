@@ -1326,13 +1326,18 @@ public partial class App : Application
                 {
                     services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
                     services.AddMainPage<LotteryPage>(Langs.Common.Resources.Feat_Lottery);
-                    services.AddMainPage<HistoryPage>(Langs.Common.Resources.Feat_History);
 
-                    // 桌面的侧栏主页面。真正"谁看得见"由 `MainView` 按 `AppHostShape` 的规则切换**可见性**
-                    // （桌面默认隐藏，用户在 设置→通用→集控 里打开）——**注册永远都在**，
-                    // 因为运行时增删侧栏项会让 FluentAvalonia 丢选中态并以 null 触发 ItemInvoked。
+                    // 桌面/平板：远程抽取排在**抽奖下面**——侧栏顺序由注册顺序 + 同一个 PageLocation 决定，
+                    // 因此这一条必须紧跟在抽奖注册之后，并和抽奖页一样是 Bottom（主界面侧栏的页脚组，
+                    // 桌面三个主页都在这组里；Top 组在这个应用里是空的）。手机走底部第 5 档，不受影响。
+                    //
+                    // 桌面**默认隐藏**这一项（用户在 设置→通用→集控 里打开）：真正"谁看得见"由 MainView
+                    // 按 AppHostShape 的规则切换 IsVisible——注册永远都在，因为运行时增删侧栏项会让
+                    // FluentAvalonia 丢选中态并以 null 触发 ItemInvoked。
                     if (hostShape.UsesRemoteDrawSidebarPage)
-                        services.AddMainPage<MobileRemoteDrawPage>(MobileResources.P_RemoteDraw);
+                        services.AddMainPage<RemoteDrawPage>(MobileResources.P_RemoteDraw);
+
+                    services.AddMainPage<HistoryPage>(Langs.Common.Resources.Feat_History);
                 }
 
                 // 设置界面 Views

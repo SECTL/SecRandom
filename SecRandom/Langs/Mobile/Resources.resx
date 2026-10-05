@@ -745,4 +745,5 @@
     <data name="RD_Resetting" xml:space="preserve"><value>正在重置…</value></data>
     <data name="RD_ResetDone" xml:space="preserve"><value>已重置本轮，清掉 {0} 条抽取进度</value></data>
     <data name="RD_ResetConfirm" xml:space="preserve"><value>再点一次确认重置</value></data>
+    <data name="RD_NoResult" xml:space="preserve"><value>还没有结果。下发抽取后，设备回执里抽到的人或奖品会显示在这里</value></data>
 </root>

@@ -513,6 +513,7 @@ public class Resources
     public static string RD_NoGroups => ResourceManager.GetString("RD_NoGroups", resourceCulture)!;
     public static string RD_NoNodes => ResourceManager.GetString("RD_NoNodes", resourceCulture)!;
     public static string RD_NoRoster => ResourceManager.GetString("RD_NoRoster", resourceCulture)!;
+    public static string RD_NoResult => ResourceManager.GetString("RD_NoResult", resourceCulture)!;
     public static string RD_NotAdmin => ResourceManager.GetString("RD_NotAdmin", resourceCulture)!;
     public static string RD_NotOperator => ResourceManager.GetString("RD_NotOperator", resourceCulture)!;
     public static string RD_Truncated => ResourceManager.GetString("RD_Truncated", resourceCulture)!;

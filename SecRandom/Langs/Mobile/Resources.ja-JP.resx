@@ -745,4 +745,5 @@
     <data name="RD_Resetting" xml:space="preserve"><value>リセット中…</value></data>
     <data name="RD_ResetDone" xml:space="preserve"><value>ラウンドをリセットし、抽選記録を {0} 件消去しました</value></data>
     <data name="RD_ResetConfirm" xml:space="preserve"><value>もう一度タップして確定</value></data>
+    <data name="RD_NoResult" xml:space="preserve"><value>結果はまだありません。送信すると、端末の応答に含まれる当選者や景品がここに表示されます</value></data>
 </root>

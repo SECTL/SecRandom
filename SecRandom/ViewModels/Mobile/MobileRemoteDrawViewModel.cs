@@ -141,6 +141,17 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
 
     public bool HasResult => DrawnMembers.Count > 0;
 
+    /// <summary>
+    ///     结果区标题旁的计数（"抽到 N 人" / "抽到 N 个奖品"）。没有回执时是空串。
+    /// </summary>
+    /// <remarks>
+    ///     抽奖抽的是奖品、点名抽的是人，量词不能混用；放在 VM 里而不是各视图里拼，
+    ///     是为了让手机视图与桌面视图显示同一句话——两侧各写一遍必然有一天对不上。
+    /// </remarks>
+    public string DrawnCountText => DrawnMembers.Count == 0
+        ? string.Empty
+        : string.Format(IsLotteryTarget ? LR.RD_DrawnPrizeCount : LR.RD_DrawnCount, DrawnMembers.Count);
+
     /// <summary>当前选的是抽奖：名单下拉读奖池，且没有性别/分组条件。</summary>
     public bool IsLotteryTarget => string.Equals(
         SelectedDrawKind?.Target, ControlDrawTriggerRequest.TargetLottery, StringComparison.Ordinal);
@@ -872,6 +883,7 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         OnPropertyChanged(nameof(HasSelection));
         OnPropertyChanged(nameof(HasRoster));
         OnPropertyChanged(nameof(HasResult));
+        OnPropertyChanged(nameof(DrawnCountText));
         OnPropertyChanged(nameof(HasUnavailableGroups));
         OnPropertyChanged(nameof(HasEmptyState));
         OnPropertyChanged(nameof(HasLoadFailure));

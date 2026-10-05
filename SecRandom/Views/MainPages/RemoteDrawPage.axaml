@@ -1,0 +1,231 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:SecRandom.Views.MainPages"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:langs="using:SecRandom.Langs.Mobile"
+             xmlns:cp="using:SecRandom.Shared.Models.ControlPlane"
+             xmlns:vm="using:SecRandom.ViewModels.Mobile"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:system="clr-namespace:System;assembly=System.Runtime"
+             x:Class="SecRandom.Views.MainPages.RemoteDrawPage"
+             x:DataType="local:RemoteDrawPage">
+
+    <UserControl.Styles>
+        <!-- 不能用于抽取的设备照样列出，但整行置灰：藏起来只会让人以为设备没连上。 -->
+        <Style Selector="Border.device-disabled">
+            <Setter Property="Opacity" Value="0.45" />
+        </Style>
+        <!-- 桌面版式：左侧结果区占满剩余宽度，右侧控制区固定宽度，彼此不随内容跳动。 -->
+        <Style Selector="TextBlock.section-title">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="15" />
+        </Style>
+        <Style Selector="TextBlock.hint">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Opacity" Value="0.7" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="*,360" ColumnSpacing="16" Margin="16" MinHeight="560">
+
+        <!--
+            ============ 左：结果区 ============
+            这里**只显示远端设备回执里真的返回了什么**（detail.drawn 的成员/奖品）：没有回执就不列表，
+            用状态文案说明当前处在"还没抽 / 失败 / 超时 / 被拒"的哪一种。左侧不自己造结果，
+            也不在缺回执时编一句"抽到了某某"。
+        -->
+        <Border Grid.Column="0" CornerRadius="8" Padding="16"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+            <DockPanel LastChildFill="True">
+
+                <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0 0 0 12">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Classes="section-title" Text="{x:Static langs:Resources.RD_Drawn}" />
+                        <TextBlock Text="{Binding ViewModel.DrawnCountText}"
+                                   VerticalAlignment="Center"
+                                   Opacity="0.7" />
+                    </StackPanel>
+                    <TextBlock Classes="hint" Text="{Binding ViewModel.DeviceSummary}" />
+                </StackPanel>
+
+                <!-- 回执状态：未抽/执行中/失败/超时/被拒都走这一行（文案由 VM 按错误码给）。 -->
+                <StackPanel DockPanel.Dock="Bottom" Spacing="6" Margin="0 12 0 0">
+                    <ProgressBar IsIndeterminate="True" IsVisible="{Binding ViewModel.IsBusy}" />
+                    <TextBlock Text="{Binding ViewModel.StatusText}" TextWrapping="Wrap" />
+                </StackPanel>
+
+                <Grid>
+                    <!-- 有回执成员：只渲染回执里的成员。 -->
+                    <ScrollViewer IsVisible="{Binding ViewModel.HasResult}"
+                                  VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding ViewModel.DrawnMembers}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="cp:NodeCommandDrawnMember">
+                                    <Border Padding="10" Margin="0 0 0 8" CornerRadius="6"
+                                            Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                                        <StackPanel Orientation="Horizontal" Spacing="12">
+                                            <TextBlock Text="{Binding DisplayLabel}" FontSize="20" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding SecondaryLabel}" FontSize="14"
+                                                       Opacity="0.6" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- 没有可显示的结果：空态/失败态都在这里，理由由 VM 的 EmptyStateText 给出。 -->
+                    <StackPanel IsVisible="{Binding !ViewModel.HasResult}"
+                                VerticalAlignment="Center" HorizontalAlignment="Center"
+                                MaxWidth="420" Spacing="10">
+                        <TextBlock Text="{x:Static langs:Resources.RD_NoResult}"
+                                   TextAlignment="Center" TextWrapping="Wrap" Opacity="0.65" />
+                        <TextBlock Text="{Binding ViewModel.EmptyStateText}"
+                                   IsVisible="{Binding ViewModel.HasEmptyState}"
+                                   TextAlignment="Center" TextWrapping="Wrap" />
+                        <!-- 未登录/凭据失效时直接给下一步，不留一个只能看的空白区。 -->
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <Button Content="{x:Static langs:Resources.RD_Refresh}"
+                                    Command="{Binding ViewModel.RefreshCommand}" />
+                            <Button Classes="accent"
+                                    Content="{x:Static langs:Resources.RD_SignIn}"
+                                    Command="{Binding ViewModel.SignInCommand}"
+                                    IsVisible="{Binding ViewModel.NeedsSignIn}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </DockPanel>
+        </Border>
+
+        <!--
+            ============ 右：控制区 ============
+            与点名/抽奖页同一套桌面版式：右侧固定宽度的操作面板，纵向排列、控件等高。
+        -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="10">
+                <TextBlock Classes="hint" Text="{x:Static langs:Resources.RD_Hint}" />
+
+                <sr:Field Label="{x:Static langs:Resources.RD_Kind}">
+                    <ComboBox ItemsSource="{Binding ViewModel.DrawKindOptions}"
+                              SelectedItem="{Binding ViewModel.SelectedDrawKind}"
+                              HorizontalAlignment="Stretch">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RemoteDrawKindOption">
+                                <TextBlock Text="{Binding Label}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </sr:Field>
+
+                <!-- 设备选择：名称/组/在线/本机开关/能否抽取一眼看全，不可用的整行置灰。 -->
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <StackPanel Grid.Column="0" Spacing="2">
+                        <TextBlock Classes="hint" Text="{x:Static langs:Resources.RD_SelectedDevice}" />
+                        <TextBlock Text="{Binding ViewModel.DeviceSummary}" TextWrapping="Wrap" FontWeight="SemiBold" />
+                        <TextBlock Classes="hint" Text="{Binding ViewModel.DevicesCountText}" />
+                    </StackPanel>
+                    <Button Grid.Column="1" VerticalAlignment="Top"
+                            Content="{x:Static langs:Resources.RD_Refresh}"
+                            Command="{Binding ViewModel.RefreshCommand}" />
+                </Grid>
+
+                <ListBox ItemsSource="{Binding ViewModel.Devices}"
+                         SelectedItem="{Binding ViewModel.SelectedDevice}"
+                         MaxHeight="200"
+                         HorizontalAlignment="Stretch">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:DeviceRow">
+                            <Border Classes.device-disabled="{Binding !IsUsable}" Padding="2">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="{Binding DeviceLabel}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{Binding GroupLabel}" FontSize="12" Opacity="0.7" />
+                                        <TextBlock Text="{Binding StatusText}" FontSize="12" Opacity="0.7" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding UnavailableReason}"
+                                               IsVisible="{Binding HasUnavailableReason}"
+                                               FontSize="12" Opacity="0.8" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- 部分组读不到：只说那一组（带服务端错误码），其余设备照常可用。 -->
+                <Border IsVisible="{Binding ViewModel.HasUnavailableGroups}"
+                        CornerRadius="8" Padding="12"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                    <StackPanel Spacing="8">
+                        <ItemsControl ItemsSource="{Binding ViewModel.UnavailableGroups}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="system:String">
+                                    <TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button Content="{x:Static langs:Resources.RD_Refresh}"
+                                Command="{Binding ViewModel.RefreshCommand}"
+                                HorizontalAlignment="Left" />
+                    </StackPanel>
+                </Border>
+
+                <Button Content="{x:Static langs:Resources.RD_LoadRoster}"
+                        Command="{Binding ViewModel.LoadRosterCommand}"
+                        IsEnabled="{Binding ViewModel.CanLoadRoster}"
+                        HorizontalAlignment="Stretch" />
+
+                <sr:Field Label="{Binding ViewModel.ListFieldLabel}" IsVisible="{Binding ViewModel.HasRoster}">
+                    <ComboBox ItemsSource="{Binding ViewModel.Rosters}"
+                              SelectedItem="{Binding ViewModel.SelectedRoster}"
+                              HorizontalAlignment="Stretch">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RosterOption">
+                                <TextBlock Text="{Binding DisplayLabel}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </sr:Field>
+
+                <!-- 抽奖没有性别/分组这两个维度：两块条件整块隐藏，并说明为什么不显示。 -->
+                <TextBlock Classes="hint"
+                           Text="{x:Static langs:Resources.RD_LotteryNoScope}"
+                           IsVisible="{Binding ViewModel.IsLotteryScopeHintVisible}" />
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding ViewModel.IsScopeSelectorVisible}">
+                    <sr:Field Grid.Column="0" Label="{x:Static langs:Resources.RD_Gender}">
+                        <ComboBox ItemsSource="{Binding ViewModel.GenderOptions}"
+                                  SelectedItem="{Binding ViewModel.SelectedGender}"
+                                  HorizontalAlignment="Stretch" />
+                    </sr:Field>
+                    <sr:Field Grid.Column="1" Label="{x:Static langs:Resources.RD_GroupScope}">
+                        <ComboBox ItemsSource="{Binding ViewModel.GroupOptions}"
+                                  SelectedItem="{Binding ViewModel.SelectedGroupScope}"
+                                  HorizontalAlignment="Stretch" />
+                    </sr:Field>
+                </Grid>
+
+                <sr:Field Label="{x:Static langs:Resources.RD_Count}" IsVisible="{Binding ViewModel.HasRoster}">
+                    <ComboBox ItemsSource="{Binding ViewModel.CountOptions}"
+                              SelectedItem="{Binding ViewModel.SelectedCount}"
+                              HorizontalAlignment="Stretch" />
+                </sr:Field>
+
+                <Button Classes="accent"
+                        Content="{x:Static langs:Resources.RD_Draw}"
+                        Command="{Binding ViewModel.DrawCommand}"
+                        IsEnabled="{Binding ViewModel.CanDraw}"
+                        HorizontalContentAlignment="Center"
+                        HorizontalAlignment="Stretch" />
+
+                <!-- 重置本轮：次级按钮（破坏性动作，因此要按两次，第一次只把文案换成确认提示）。 -->
+                <Button Content="{Binding ViewModel.ResetButtonText}"
+                        Command="{Binding ViewModel.ResetRoundCommand}"
+                        IsEnabled="{Binding ViewModel.CanReset}"
+                        IsVisible="{Binding ViewModel.HasRoster}"
+                        HorizontalContentAlignment="Center"
+                        HorizontalAlignment="Stretch" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
