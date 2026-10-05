@@ -113,11 +113,35 @@ public static class ControlFrameTypes
     public const string Ack = "command.ack";
     public const string Result = "command.result";
 
+    /// <summary>
+    ///     自我注销：把"我在这个组里的登记"撤掉，服务端据此把本机从该组列表移除。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <b>只在两处发：退出登录、换组。</b>**绝对不在退出程序/关窗口/后台驻留结束/崩溃恢复/更新重启时发**——
+    ///         服务端现在是"登记即列出"，离线只显示 <c>online:false</c>；关掉软件就发注销，
+    ///         等于老师一关教室机，它就从控制台上消失了（这正是用户抱怨过的现象）。
+    ///         区别一句话：**退出登录 = 注销；退出程序 = 不注销，保持 offline 可见**。
+    ///     </para>
+    ///     <para>
+    ///         语义是"只注销自己这个 node_id"（凭据已由节点通道校验），因此**不需要组角色**：
+    ///         教室机的账号往往不是组管理员，走控制台那套 DELETE 会因权限失败。
+    ///     </para>
+    ///     <para>
+    ///         幂等：重复注销、或本机在该组里从未登记过（<c>node_not_found</c>）都按**成功**处理，
+    ///         不能因此报错或阻塞退出流程。
+    ///     </para>
+    /// </remarks>
+    public const string Deregister = "node.deregister";
+
     // 服务端 → 节点
     public const string HelloAck = "hello.ack";
     public const string Command = "command";
     public const string DesiredState = "desired_state";
     public const string Error = "error";
+
+    /// <summary>服务端对 <see cref="Deregister" /> 的确认帧（帧形状与服务端约定后补齐）。</summary>
+    public const string DeregisterAck = "node.deregister.ack";
 }
 
 /// <summary>
